@@ -1552,9 +1552,9 @@ footer{
     <div class="nl-right">
       <div class="nl-form-label">ENTER YOUR EMAIL TO JOIN THE GRID</div>
       <div class="nl-input-row">
-        <input class="nl-input" type="email" placeholder="your@email.com">
-        <button class="nl-sub">JOIN →</button>
-      </div>
+  <input class="nl-input" type="email" placeholder="your@email.com" id="nl-email-input">
+  <a href="#" onclick="var e=document.getElementById('nl-email-input').value;if(e){window.open('https://magic.beehiiv.com/v1/38d9c611-753d-437a-b092-faada5bdbebe?email='+encodeURIComponent(e),'_blank');}return false;" class="nl-sub" style="text-decoration:none;">JOIN →</a>
+</div>
       <div class="nl-privacy">No spam. Unsubscribe any time. We hate corpos too.</div>
       <div class="nl-powered">Powered by <span>Beehiiv</span></div>
     </div>
