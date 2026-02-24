@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cybernetic Punks • Marathon Hub — The Neon Grid</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #ff0000;
+  --red-dim: #cc0000;
+  --red-glow: rgba(255,0,0,0.4);
+  --red-ghost: rgba(255,0,0,0.07);
+  --cyan: #00f5ff;
+  --cyan-glow: rgba(0,245,255,0.3);
+  --purple: #9b5de5;
+  --purple-glow: rgba(155,93,229,0.35);
+  --green: #00ff88;
+  --green-glow: rgba(0,255,136,0.3);
+  --orange: #ff8800;
+  --yellow: #ffe600;
+  --bg: #030303;
+  --surface: #080808;
+  --surface2: #0c0c0c;
+  --surface3: #111;
+  --border: rgba(255,0,0,0.13);
+  --border-f: rgba(255,255,255,0.042);
+  --text: #e8e8e8;
+  --text-dim: #848484;
+  --text-muted: #333;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+
+/* SCANLINES */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.11) 2px,rgba(0,0,0,0.11) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* NOISE */
+body::after {
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9998;opacity:0.5;
+}
+
+/* ═══════════════════════════════
+   KEYFRAMES
+═══════════════════════════════ */
+@keyframes breathe {
+  0%,100%{box-shadow:0 0 14px var(--red-glow),inset 0 0 8px rgba(255,0,0,0.07);}
+  50%{box-shadow:0 0 32px rgba(255,0,0,0.7),inset 0 0 18px rgba(255,0,0,0.18);}
+}
+@keyframes glitch {
+  0%,90%,100%{transform:none;text-shadow:0 0 20px var(--red-glow);}
+  91%{transform:translate(-2px,0);text-shadow:2px 0 var(--cyan),-2px 0 var(--red);}
+  92%{transform:translate(2px,0);text-shadow:-2px 0 var(--cyan),2px 0 var(--red);}
+  93%{transform:none;text-shadow:0 0 20px var(--red-glow);}
+  94.5%{transform:translate(-1px,1px);text-shadow:1px 0 var(--cyan);}
+  95%{transform:none;}
+}
+@keyframes pulse {
+  0%,100%{opacity:1;} 50%{opacity:0.28;}
+}
+@keyframes ticker {
+  from{transform:translateX(0);} to{transform:translateX(-50%);}
+}
+@keyframes gridpulse {
+  0%,100%{opacity:0.5;} 50%{opacity:1;}
+}
+@keyframes countdown-pulse {
+  0%,100%{text-shadow:0 0 20px var(--red-glow);}
+  50%{text-shadow:0 0 40px rgba(255,0,0,0.8),0 0 80px rgba(255,0,0,0.3);}
+}
+@keyframes fadeSlideIn {
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes flicker {
+  0%,88%,100%{opacity:0.08;} 90%{opacity:0.3;} 92%{opacity:0.05;} 94%{opacity:0.25;}
+}
+
+/* ═══════════════════════════════
+   NAVIGATION
+═══════════════════════════════ */
+nav {
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  height:58px;
+  background:rgba(3,3,3,0.96);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 28px;
+}
+
+.nav-logo {
+  display:flex;align-items:center;gap:11px;
+  text-decoration:none;margin-right:32px;flex-shrink:0;
+}
+.marathon-c {
+  border:2.5px solid var(--red);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  animation:breathe 3s ease-in-out infinite;flex-shrink:0;
+}
+.marathon-c::after {
+  content:'';background:var(--red);border-radius:50%;
+  box-shadow:0 0 8px var(--red);display:block;
+}
+.mc-nav{width:30px;height:30px;}
+.mc-nav::after{width:7px;height:7px;}
+.mc-hero{width:58px;height:58px;}
+.mc-hero::after{width:13px;height:13px;}
+
+.logo-text{font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:var(--red);letter-spacing:2.5px;text-shadow:0 0 18px var(--red-glow);animation:glitch 7s infinite;line-height:1;}
+.logo-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--cyan);letter-spacing:4px;opacity:0.7;margin-top:2px;}
+
+.nav-links{display:flex;align-items:center;flex:1;}
+.nav-item{position:relative;height:58px;display:flex;align-items:center;}
+.nav-item>a {
+  display:flex;align-items:center;gap:4px;padding:0 14px;height:100%;
+  color:var(--text-dim);text-decoration:none;font-family:'Orbitron',monospace;
+  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  transition:color 0.2s;position:relative;
+}
+.nav-item>a:hover{color:var(--red);}
+.nav-item>a::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;
+  height:2px;background:var(--red);box-shadow:0 0 8px var(--red);
+  transform:scaleX(0);transition:transform 0.2s;
+}
+.nav-item:hover>a::after{transform:scaleX(1);}
+.darr{font-size:7px;opacity:0.4;}
+
+.dropdown{
+  position:absolute;top:58px;left:0;min-width:168px;
+  background:rgba(5,5,5,0.98);border:1px solid var(--border);
+  border-top:2px solid var(--red);opacity:0;pointer-events:none;
+  transform:translateY(-6px);transition:all 0.18s;white-space:nowrap;
+}
+.nav-item:hover .dropdown{opacity:1;pointer-events:all;transform:translateY(0);}
+.dropdown a{
+  display:block;padding:11px 16px;color:var(--text-dim);text-decoration:none;
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;
+  border-bottom:1px solid rgba(255,0,0,0.06);transition:all 0.15s;
+}
+.dropdown a:hover{color:var(--cyan);background:rgba(0,245,255,0.04);padding-left:22px;}
+
+.nav-auth{display:flex;gap:8px;margin-left:auto;}
+.btn-login{padding:6px 16px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--text-dim);font-family:'Orbitron',monospace;font-size:8.5px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
+.btn-login:hover{border-color:var(--red);color:var(--red);}
+.btn-signup{padding:6px 16px;border:1px solid var(--red);background:var(--red);color:#000;font-family:'Orbitron',monospace;font-size:8.5px;font-weight:900;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
+.btn-signup:hover{background:transparent;color:var(--red);box-shadow:0 0 16px var(--red-glow);}
+
+/* ═══════════════════════════════
+   SERVER SLAM COUNTDOWN BAR
+═══════════════════════════════ */
+.slam-bar {
+  margin-top:58px;
+  background:linear-gradient(90deg,rgba(255,0,0,0.12) 0%,rgba(255,0,0,0.06) 50%,rgba(255,0,0,0.12) 100%);
+  border-bottom:1px solid rgba(255,0,0,0.25);
+  padding:9px 28px;
+  display:flex;align-items:center;gap:20px;
+  position:relative;overflow:hidden;
+}
+.slam-bar::before {
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,0,0,0.03) 40px,rgba(255,0,0,0.03) 41px);
+  pointer-events:none;
+}
+.slam-alert{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 12px;
+  background:rgba(255,0,0,0.12);border:1px solid rgba(255,0,0,0.4);
+  flex-shrink:0;
+}
+.slam-dot{width:8px;height:8px;background:var(--red);border-radius:50%;box-shadow:0 0 8px var(--red);animation:pulse 1s ease-in-out infinite;}
+.slam-alert-text{font-family:'Orbitron',monospace;font-size:9px;font-weight:900;color:var(--red);letter-spacing:2px;}
+
+.slam-label{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:1px;}
+
+.slam-timer{display:flex;align-items:center;gap:6px;}
+.slam-unit{text-align:center;}
+.slam-num{
+  font-family:'Orbitron',monospace;font-size:22px;font-weight:900;
+  color:var(--red);line-height:1;
+  animation:countdown-pulse 2s ease-in-out infinite;
+  display:block;
+}
+.slam-unit-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-muted);letter-spacing:2px;display:block;}
+.slam-colon{font-family:'Orbitron',monospace;font-size:18px;color:rgba(255,0,0,0.4);line-height:1;margin-top:-4px;}
+
+.slam-msg{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;flex-shrink:0;}
+.slam-msg strong{color:var(--cyan);}
+
+/* ═══════════════════════════════
+   HERO
+═══════════════════════════════ */
+.hero {
+  position:relative;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px 60px;overflow:hidden;
+}
+
+.hero-bg {
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 110%,rgba(255,0,0,0.08) 0%,transparent 65%),
+    radial-gradient(ellipse 50% 60% at 85% 35%,rgba(0,245,255,0.025) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 40% at 10% 70%,rgba(155,93,229,0.02) 0%,transparent 60%);
+}
+
+.hero-grid {
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,0,0,0.032) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,0,0,0.032) 1px,transparent 1px);
+  background-size:54px 54px;
+  animation:gridpulse 5s ease-in-out infinite;
+  transition:transform 0.12s ease-out;
+}
+
+/* Pfhor ambient runes */
+.pfhor{position:absolute;font-family:'Share Tech Mono',monospace;color:var(--red);opacity:0.08;font-size:10px;letter-spacing:3px;animation:flicker 7s infinite;user-select:none;pointer-events:none;}
+.pfhor:nth-child(1){top:16%;left:3%;}
+.pfhor:nth-child(2){top:40%;right:4%;animation-delay:1.9s;}
+.pfhor:nth-child(3){bottom:25%;left:6%;animation-delay:3.4s;}
+.pfhor:nth-child(4){top:65%;right:8%;animation-delay:1s;}
+.pfhor:nth-child(5){top:10%;right:18%;animation-delay:2.6s;font-size:9px;}
+.pfhor:nth-child(6){bottom:40%;right:20%;animation-delay:4.2s;font-size:8px;}
+
+/* Marathon armor silhouette */
+.hero-armor {
+  position:absolute;bottom:-20px;left:50%;
+  transform:translateX(-50%);
+  width:560px;height:560px;
+  opacity:0.032;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(255,0,0,0.8) 0%,transparent 70%);
+  clip-path:polygon(35% 0%,65% 0%,75% 8%,80% 15%,82% 25%,78% 35%,85% 38%,88% 45%,86% 55%,80% 60%,82% 70%,78% 80%,72% 88%,65% 95%,50% 100%,35% 95%,28% 88%,22% 80%,18% 70%,20% 60%,14% 55%,12% 45%,15% 38%,22% 35%,18% 25%,20% 15%,25% 8%);
+}
+
+.hero-content{position:relative;z-index:2;text-align:center;max-width:900px;}
+
+.hero-eyebrow{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:7px;color:var(--cyan);margin-bottom:20px;opacity:0.75;}
+
+.hero-logo-group{display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:14px;}
+
+.hero-title{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(32px,5.8vw,72px);
+  font-weight:900;color:var(--red);
+  text-shadow:0 0 30px rgba(255,0,0,0.5),0 0 80px rgba(255,0,0,0.18);
+  letter-spacing:4px;line-height:0.9;
+  animation:glitch 7s infinite;
+}
+
+.hero-tagline{
+  font-size:16px;font-weight:300;
+  color:var(--text-dim);letter-spacing:5px;
+  margin-bottom:8px;text-transform:uppercase;
+}
+.hero-tagline span{color:var(--cyan);font-weight:600;}
+
+.hero-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;color:var(--text-muted);
+  letter-spacing:3px;margin-bottom:36px;
+}
+
+/* HERO STATS */
+.hero-stats{display:flex;gap:0;margin-bottom:36px;justify-content:center;}
+.h-stat{text-align:center;padding:0 28px;position:relative;}
+.h-stat+.h-stat::before{content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;background:rgba(255,0,0,0.2);}
+.h-stat-num{font-family:'Orbitron',monospace;font-size:24px;font-weight:900;line-height:1;margin-bottom:4px;}
+.h-stat-num.r{color:var(--red);text-shadow:0 0 16px var(--red-glow);}
+.h-stat-num.c{color:var(--cyan);text-shadow:0 0 14px var(--cyan-glow);}
+.h-stat-num.g{color:var(--green);text-shadow:0 0 14px var(--green-glow);}
+.h-stat-label{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--text-muted);letter-spacing:2px;}
+
+/* HERO ACTIONS */
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:11px 22px;
+  font-family:'Orbitron',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+  transition:all 0.22s;text-decoration:none;border:none;
+}
+.btn-red{background:var(--red);color:#000;box-shadow:0 0 20px var(--red-glow);}
+.btn-red:hover{background:#fff;box-shadow:0 0 40px rgba(255,255,255,0.25);}
+.btn-outline{background:transparent;border:1px solid var(--red);color:var(--red);}
+.btn-outline:hover{background:var(--red-ghost);box-shadow:0 0 20px var(--red-glow);}
+.btn-cyan{background:transparent;border:1px solid var(--cyan);color:var(--cyan);}
+.btn-cyan:hover{background:rgba(0,245,255,0.05);box-shadow:0 0 18px var(--cyan-glow);}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--text-dim);}
+.btn-ghost:hover{border-color:var(--red);color:var(--red);}
+.btn-discord{background:rgba(88,101,242,0.12);border:1px solid rgba(88,101,242,0.4);color:#7289da;}
+.btn-discord:hover{background:rgba(88,101,242,0.2);box-shadow:0 0 18px rgba(88,101,242,0.3);}
+.btn-sm{padding:7px 16px;font-size:8.5px;}
+
+/* ═══════════════════════════════
+   LIVE TICKER
+═══════════════════════════════ */
+.ticker {
+  background:rgba(255,0,0,0.05);
+  border-top:1px solid rgba(255,0,0,0.1);
+  border-bottom:1px solid rgba(255,0,0,0.1);
+  padding:9px 0;
+  display:flex;align-items:center;
+  overflow:hidden;
+  position:relative;
+}
+.ticker-label{
+  display:flex;align-items:center;gap:7px;
+  padding:0 20px;border-right:1px solid rgba(255,0,0,0.15);
+  flex-shrink:0;background:rgba(255,0,0,0.06);
+  height:100%;margin-right:0;
+}
+.tick-dot{width:7px;height:7px;background:var(--red);border-radius:50%;box-shadow:0 0 6px var(--red);animation:pulse 1.3s ease-in-out infinite;}
+.tick-text{font-family:'Orbitron',monospace;font-size:9px;color:var(--red);letter-spacing:2px;}
+.ticker-track{
+  display:flex;gap:40px;white-space:nowrap;
+  animation:ticker 35s linear infinite;
+  padding-left:24px;
+}
+.tick-item{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.5px;}
+.tick-item span{color:var(--cyan);}
+.tick-item strong{color:var(--red);font-weight:normal;}
+
+/* ═══════════════════════════════
+   AUTONOMOUS OPS STATUS
+═══════════════════════════════ */
+.ops-bar {
+  max-width:1400px;margin:32px auto 0;padding:0 40px;
+}
+.ops-inner {
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,0.04);
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:0;position:relative;
+}
+.ops-inner::before{
+  content:'AUTONOMOUS OPERATIONS — GRID BROADCAST ACTIVE';
+  position:absolute;top:-1px;left:20px;
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  color:var(--text-muted);background:var(--surface);padding:0 6px;letter-spacing:3px;
+}
+.ops-col{
+  padding:14px 20px;
+  border-right:1px solid rgba(255,255,255,0.04);
+}
+.ops-col:last-child{border-right:none;}
+.ops-editor{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;margin-bottom:5px;}
+.ops-status{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.ops-dot{width:6px;height:6px;border-radius:50%;animation:pulse 2s infinite;}
+.ops-stat-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;}
+.ops-task{font-size:11.5px;color:var(--text-dim);font-weight:300;line-height:1.45;}
+.ops-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--text-muted);margin-top:3px;letter-spacing:0.5px;}
+
+/* ═══════════════════════════════
+   CREATOR SPOTLIGHT STRIP
+═══════════════════════════════ */
+.creator-strip{
+  max-width:1400px;margin:28px auto 0;padding:0 40px;
+}
+.strip-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.strip-title{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--cyan);text-shadow:0 0 12px var(--cyan-glow);}
+.strip-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;}
+.strip-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,0.18),transparent);}
+.strip-link{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);text-decoration:none;letter-spacing:2px;flex-shrink:0;cursor:pointer;}
+.strip-link:hover{color:var(--cyan);}
+
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid;font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0;}
+.chip-nexus{border-color:var(--cyan);color:var(--cyan);}
+.chip-cipher{border-color:var(--purple);color:var(--purple);}
+.chip-miranda{border-color:var(--red);color:var(--red);}
+.chip-dexter{border-color:var(--green);color:var(--green);}
+
+.creators-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+
+.cr-card{
+  background:var(--surface);border:1px solid var(--border-f);
+  border-top:2px solid transparent;padding:14px;
+  transition:all 0.2s;cursor:pointer;position:relative;overflow:hidden;
+}
+.cr-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;transform:scaleX(0);transition:transform 0.25s;}
+.cr-card:hover{border-color:rgba(255,255,255,0.08);transform:translateY(-2px);}
+.cr-card:hover::after{transform:scaleX(1);}
+.cr-card.live{border-top-color:var(--red);} .cr-card.live::after{background:var(--red);}
+.cr-card.hot{border-top-color:var(--orange);} .cr-card.hot::after{background:var(--orange);}
+.cr-card.flagged{border-top-color:var(--purple);} .cr-card.flagged::after{background:var(--purple);}
+.cr-card.active{border-top-color:var(--cyan);} .cr-card.active::after{background:var(--cyan);}
+.cr-card.idle{border-top-color:rgba(255,255,255,0.06);}
+
+.cr-plat{font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:2px;margin-bottom:6px;}
+.pt-tw{color:#9147ff;} .pt-yt{color:var(--red);} .pt-tk{color:var(--cyan);} .pt-x{color:#777;}
+
+.cr-name{font-family:'Orbitron',monospace;font-size:11.5px;font-weight:700;color:var(--text);letter-spacing:1px;margin-bottom:2px;}
+.cr-latest{font-size:11px;color:var(--text-dim);line-height:1.45;font-weight:300;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+.cr-footer{display:flex;align-items:center;justify-content:space-between;}
+.cr-stat{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);}
+.cr-stat strong{color:var(--text-dim);font-weight:normal;}
+
+.live-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border:1px solid rgba(255,0,0,0.35);background:rgba(255,0,0,0.08);font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--red);letter-spacing:1px;}
+.lb-dot{width:5px;height:5px;background:var(--red);border-radius:50%;animation:pulse 1.3s infinite;}
+
+/* dual score */
+.dual-score{display:flex;gap:5px;align-items:center;}
+.ds-block{display:flex;flex-direction:column;align-items:center;}
+.ds-num{font-family:'Orbitron',monospace;font-size:12px;font-weight:900;line-height:1;}
+.ds-v .ds-num{color:var(--purple);}
+.ds-c .ds-num{color:var(--orange);}
+.ds-label{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--text-muted);letter-spacing:1px;}
+.ds-sep{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.06);margin-top:-4px;}
+
+/* ═══════════════════════════════
+   TOP 10 COMPETITIVE PLAYS
+═══════════════════════════════ */
+.top10-section{
+  max-width:1400px;margin:36px auto 0;padding:0 40px;
+}
+.top10-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.top10-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:var(--red);text-shadow:0 0 18px var(--red-glow);letter-spacing:2px;}
+.top10-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;}
+.top10-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(255,0,0,0.2),transparent);}
+.top10-date{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;flex-shrink:0;}
+
+.top10-carousel{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+
+.play-card{
+  background:var(--surface);border:1px solid var(--border-f);
+  position:relative;overflow:hidden;cursor:pointer;
+  transition:all 0.22s;
+}
+.play-card:hover{border-color:rgba(255,0,0,0.2);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.5);}
+
+.play-rank{
+  position:absolute;top:0;left:0;
+  font-family:'Orbitron',monospace;font-size:28px;font-weight:900;
+  color:rgba(255,255,255,0.04);line-height:1;
+  padding:4px 8px;z-index:0;
+}
+.play-rank-badge{
+  position:absolute;top:8px;left:8px;z-index:2;
+  width:24px;height:24px;
+  background:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',monospace;font-size:10px;font-weight:900;color:#000;
+}
+.play-rank-badge.gold{background:var(--yellow);}
+.play-rank-badge.silver{background:#c0c0c0;}
+.play-rank-badge.bronze{background:#cd7f32;}
+
+.play-thumb{
+  height:100px;background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;border-bottom:1px solid var(--border-f);
+  overflow:hidden;
+}
+.play-thumb-bg{
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,0,0,0.06) 0%,transparent 60%);
+}
+.play-play{
+  width:38px;height:38px;border:2px solid rgba(255,255,255,0.15);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:rgba(255,255,255,0.3);
+  transition:all 0.2s;position:relative;z-index:1;
+}
+.play-card:hover .play-play{border-color:var(--red);color:var(--red);box-shadow:0 0 18px var(--red-glow);}
+.play-dur{position:absolute;bottom:6px;right:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.4);background:rgba(0,0,0,0.6);padding:1px 5px;}
+.play-source{position:absolute;bottom:6px;left:8px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;}
+
+.play-body{padding:10px 12px;}
+.play-creator{font-family:'Share Tech Mono',monospace;font-size:9px;margin-bottom:4px;}
+.play-title{font-size:11.5px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:8px;}
+.play-scores{display:flex;align-items:center;gap:8px;}
+.score-block{display:flex;align-items:center;gap:4px;}
+.score-icon{font-size:9px;}
+.score-val{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;}
+.score-val.v{color:var(--purple);}
+.score-val.c{color:var(--orange);}
+.score-lbl{font-family:'Share Tech Mono',monospace;font-size:7.5px;color:var(--text-muted);letter-spacing:1px;}
+.score-sep{width:1px;height:16px;background:rgba(255,255,255,0.05);}
+
+/* ═══════════════════════════════
+   MAIN CONTENT GRID
+═══════════════════════════════ */
+.main-grid{
+  display:grid;grid-template-columns:1fr 316px;gap:20px;
+  max-width:1400px;margin:32px auto 0;padding:0 40px;
+}
+
+/* ═══════════════════════════════
+   NEXUS FEED
+═══════════════════════════════ */
+.feed-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.feed-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;}
+.feed-title.r{color:var(--red);text-shadow:0 0 14px var(--red-glow);}
+.feed-title.c{color:var(--cyan);text-shadow:0 0 12px var(--cyan-glow);}
+.feed-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(255,0,0,0.15),transparent);}
+.feed-note{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;flex-shrink:0;}
+
+.filter-row{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;}
+.flt{padding:5px 11px;border:1px solid rgba(255,255,255,0.05);background:transparent;color:var(--text-muted);font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1.5px;cursor:pointer;transition:all 0.17s;}
+.flt.on,.flt:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,0.04);}
+.flt.on{background:rgba(0,245,255,0.07);}
+
+/* Feed Item */
+.fi{
+  background:var(--surface);
+  border:1px solid var(--border-f);
+  border-left:3px solid transparent;
+  margin-bottom:10px;transition:all 0.18s;position:relative;cursor:pointer;
+  animation:fadeSlideIn 0.4s ease both;
+}
+.fi:hover{border-color:rgba(255,255,255,0.07);border-left-color:var(--red);transform:translateX(2px);}
+.fi.feat{border-left-color:var(--red);background:linear-gradient(135deg,rgba(255,0,0,0.04) 0%,var(--surface) 55%);}
+.fi.viral{border-left-color:var(--purple);}
+.fi.posted{border-left-color:var(--cyan);}
+
+.fi-inner{padding:15px 17px;}
+
+.fi-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.src-dot{width:18px;height:18px;border-radius:50%;background:var(--surface2);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-muted);flex-shrink:0;}
+.fi-src{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);}
+.fi-src strong{color:var(--cyan);font-weight:normal;}
+.fi-time{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);flex-shrink:0;}
+
+.fi-headline{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:6px;}
+.fi-snippet{font-size:12.5px;color:var(--text-dim);line-height:1.55;font-weight:300;margin-bottom:9px;}
+
+/* Editor comment */
+.ec{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;border-left:2px solid;margin-bottom:9px;}
+.ec-m{border-color:var(--red);background:rgba(255,0,0,0.035);}
+.ec-n{border-color:var(--cyan);background:rgba(0,245,255,0.025);}
+.ec-c{border-color:var(--purple);background:rgba(155,93,229,0.035);}
+.ec-d{border-color:var(--green);background:rgba(0,255,136,0.025);}
+.ec-ico{width:22px;height:22px;border:1px solid;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:10px;flex-shrink:0;}
+.ec-m .ec-ico{border-color:var(--red);color:var(--red);}
+.ec-n .ec-ico{border-color:var(--cyan);color:var(--cyan);}
+.ec-c .ec-ico{border-color:var(--purple);color:var(--purple);}
+.ec-d .ec-ico{border-color:var(--green);color:var(--green);}
+.ec-name{font-family:'Orbitron',monospace;font-size:8.5px;font-weight:700;letter-spacing:1.5px;margin-bottom:3px;}
+.ec-m .ec-name{color:var(--red);}
+.ec-n .ec-name{color:var(--cyan);}
+.ec-c .ec-name{color:var(--purple);}
+.ec-d .ec-name{color:var(--green);}
+.ec-text{font-size:12px;color:var(--text-dim);line-height:1.5;font-style:italic;}
+
+.fi-footer{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 17px;background:rgba(255,255,255,0.01);border-top:1px solid var(--border-f);}
+.fi-tag{padding:2px 7px;background:var(--red-ghost);border:1px solid rgba(255,0,0,0.1);color:var(--red);font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:1px;}
+.fi-tag-c{padding:2px 7px;background:rgba(0,245,255,0.04);border:1px solid rgba(0,245,255,0.14);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:1px;}
+.fi-tag-p{padding:2px 7px;background:rgba(155,93,229,0.05);border:1px solid rgba(155,93,229,0.18);color:var(--purple);font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:1px;}
+.fi-eng{display:flex;gap:9px;margin-left:auto;}
+.fi-e{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text-muted);}
+.fi-e span{color:var(--text-dim);}
+.posted-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border:1px solid rgba(0,245,255,0.22);background:rgba(0,245,255,0.05);font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--cyan);letter-spacing:1px;}
+
+/* Score tags on feed items */
+.fi-scores{display:flex;gap:6px;margin-left:auto;align-items:center;}
+.fi-score{padding:2px 8px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;border:1px solid;letter-spacing:0.5px;}
+.fi-score.v{border-color:rgba(155,93,229,0.3);color:var(--purple);background:rgba(155,93,229,0.06);}
+.fi-score.c{border-color:rgba(255,136,0,0.3);color:var(--orange);background:rgba(255,136,0,0.06);}
+
+/* ═══════════════════════════════
+   SIDEBAR
+═══════════════════════════════ */
+.sidebar{}
+
+/* Cipher box */
+.cipher-box{
+  background:var(--surface);border:1px solid rgba(155,93,229,0.18);
+  border-top:2px solid var(--purple);padding:18px;margin-bottom:14px;
+  position:relative;overflow:hidden;
+}
+.cipher-box::before{
+  content:'█ CLASSIFIED █';position:absolute;top:-1px;right:14px;
+  font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--purple);
+  background:var(--surface);padding:0 4px;letter-spacing:2px;
+}
+.cipher-box::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(155,93,229,0.03) 0%,transparent 60%);pointer-events:none;}
+.cb-inner{position:relative;z-index:1;}
+.cb-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.cb-icon{width:28px;height:28px;border:1px solid var(--purple);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--purple);box-shadow:0 0 10px var(--purple-glow);}
+.cb-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:var(--purple);letter-spacing:2px;}
+.cb-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--text-muted);letter-spacing:1px;margin-top:1px;}
+
+.vp{border-top:1px solid rgba(155,93,229,0.08);padding:10px 0;}
+.vp:last-child{padding-bottom:0;}
+.vp-plat{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--purple);letter-spacing:2px;margin-bottom:3px;opacity:0.8;}
+.vp-creator{font-family:'Orbitron',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:3px;}
+.vp-quote{font-size:11.5px;color:var(--text-dim);line-height:1.5;font-style:italic;font-weight:300;margin-bottom:5px;}
+.vp-comment{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--purple);line-height:1.4;padding:5px 8px;background:rgba(155,93,229,0.05);border-left:2px solid var(--purple);}
+.vp-stats{display:flex;gap:8px;margin-top:5px;align-items:center;}
+.vp-stat{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--text-muted);}
+.vp-stat strong{color:var(--cyan);font-weight:normal;}
+.vp-scores{display:flex;gap:5px;margin-left:auto;}
+.vp-s{padding:1px 6px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;border:1px solid;}
+.vp-s.v{border-color:rgba(155,93,229,0.3);color:var(--purple);}
+.vp-s.c{border-color:rgba(255,136,0,0.3);color:var(--orange);}
+
+/* Sidebar widget */
+.sw{background:var(--surface);border:1px solid var(--border);padding:16px 17px;margin-bottom:14px;}
+.sw-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:var(--red);letter-spacing:2px;text-shadow:0 0 10px var(--red-glow);margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+.sw-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.qa{display:flex;align-items:center;gap:9px;padding:9px 11px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text-dim);text-decoration:none;font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:0.8px;margin-bottom:5px;cursor:pointer;transition:all 0.17s;width:100%;text-align:left;}
+.qa:hover{border-color:var(--red);color:var(--red);background:var(--red-ghost);padding-left:17px;}
+.qa-ico{width:18px;height:18px;border:1px solid rgba(255,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--red);flex-shrink:0;}
+
+/* Editor roster */
+.ed-roster{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-card{padding:10px;border:1px solid rgba(255,255,255,0.04);background:var(--surface2);transition:all 0.17s;}
+.ed-card:hover{border-color:rgba(255,255,255,0.09);}
+.ed-dot{width:5px;height:5px;border-radius:50%;margin-bottom:5px;}
+.ed-name{font-family:'Orbitron',monospace;font-size:9.5px;font-weight:700;letter-spacing:1px;margin-bottom:2px;}
+.ed-role{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--text-muted);letter-spacing:0.5px;line-height:1.35;}
+
+/* Miranda note */
+.miranda-note{background:var(--surface);border:1px solid rgba(255,0,0,0.16);border-left:3px solid var(--red);padding:14px 15px;margin-bottom:14px;}
+.mn-eye{font-family:'Orbitron',monospace;font-size:9px;color:var(--red);letter-spacing:2px;margin-bottom:7px;}
+.mn-text{font-size:12.5px;color:var(--text-dim);line-height:1.6;font-weight:400;font-style:italic;}
+.mn-foot{margin-top:9px;font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--text-muted);letter-spacing:1.5px;}
+
+/* Broadcast summary */
+.broadcast-widget{
+  background:var(--surface);
+  border:1px solid rgba(0,255,136,0.14);
+  border-top:2px solid var(--green);
+  padding:14px 16px;margin-bottom:14px;
+  position:relative;overflow:hidden;
+}
+.broadcast-widget::before{content:'LAST BROADCAST';position:absolute;top:-1px;right:12px;font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--green);background:var(--surface);padding:0 4px;letter-spacing:2px;}
+.bw-inner{position:relative;z-index:1;}
+.bw-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:var(--green);letter-spacing:2px;margin-bottom:10px;margin-top:4px;}
+.bw-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.bw-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.bw-key{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;}
+.bw-val{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;}
+.bw-val.g{color:var(--green);}
+.bw-val.c{color:var(--cyan);}
+.bw-val.r{color:var(--red);}
+.bw-val.p{color:var(--purple);}
+
+/* ═══════════════════════════════
+   NEWSLETTER — THE NEON GRID
+═══════════════════════════════ */
+.newsletter-section{
+  max-width:1400px;margin:40px auto 0;padding:0 40px;
+}
+.nl-banner{
+  background:linear-gradient(135deg,rgba(0,245,255,0.06) 0%,rgba(155,93,229,0.04) 50%,rgba(0,245,255,0.02) 100%);
+  border:1px solid rgba(0,245,255,0.2);
+  padding:36px 44px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:40px;
+  align-items:center;
+  position:relative;overflow:hidden;
+}
+.nl-banner::before{
+  content:'THE NEON GRID';
+  position:absolute;right:44px;top:50%;transform:translateY(-50%);
+  font-family:'Orbitron',monospace;font-size:72px;font-weight:900;
+  color:rgba(0,245,255,0.025);letter-spacing:6px;white-space:nowrap;pointer-events:none;
+}
+.nl-banner::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0.5;
+}
+.nl-left{position:relative;z-index:1;}
+.nl-tag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--cyan);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.nl-tag::before{content:'';width:20px;height:1px;background:var(--cyan);}
+.nl-title{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--text);letter-spacing:2px;margin-bottom:6px;}
+.nl-title span{color:var(--cyan);text-shadow:0 0 20px var(--cyan-glow);}
+.nl-desc{font-size:13.5px;color:var(--text-dim);font-weight:300;line-height:1.6;max-width:520px;margin-bottom:10px;}
+.nl-meta{display:flex;gap:16px;flex-wrap:wrap;}
+.nl-stat{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;}
+.nl-stat strong{color:var(--cyan);font-weight:normal;}
+
+.nl-right{flex-shrink:0;position:relative;z-index:1;min-width:280px;}
+.nl-form-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:10px;}
+.nl-input-row{display:flex;gap:8px;}
+.nl-input{
+  flex:1;padding:11px 14px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(0,245,255,0.2);
+  color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;
+  outline:none;transition:all 0.2s;
+}
+.nl-input:focus{border-color:var(--cyan);background:rgba(0,245,255,0.06);}
+.nl-input::placeholder{color:var(--text-muted);}
+.nl-sub{
+  padding:11px 20px;background:var(--cyan);color:#000;
+  font-family:'Orbitron',monospace;font-size:9px;font-weight:900;
+  letter-spacing:2px;cursor:pointer;border:none;transition:all 0.2s;
+  white-space:nowrap;
+}
+.nl-sub:hover{background:#fff;}
+.nl-privacy{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:7px;letter-spacing:0.5px;}
+.nl-powered{margin-top:5px;font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--text-muted);}
+.nl-powered span{color:var(--cyan);}
+
+/* ═══════════════════════════════
+   DISCORD CTA
+═══════════════════════════════ */
+.discord-section{
+  max-width:1400px;margin:16px auto 0;padding:0 40px;
+}
+.discord-bar{
+  background:rgba(88,101,242,0.07);
+  border:1px solid rgba(88,101,242,0.2);
+  padding:20px 28px;
+  display:flex;align-items:center;gap:28px;
+}
+.dc-icon{font-size:28px;flex-shrink:0;}
+.dc-left{flex:1;}
+.dc-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;color:#7289da;letter-spacing:2px;margin-bottom:4px;}
+.dc-desc{font-size:13px;color:var(--text-dim);font-weight:300;line-height:1.5;}
+.dc-channels{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
+.dc-channel{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(114,137,218,0.7);letter-spacing:1px;}
+.dc-right{display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.dc-members{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;text-align:right;}
+.dc-members strong{color:var(--green);}
+
+/* ═══════════════════════════════
+   RISING RUNNERS
+═══════════════════════════════ */
+.rr-section{max-width:1400px;margin:36px auto 0;padding:0 40px 60px;}
+.rr-banner{
+  border:1px solid rgba(255,0,0,0.2);
+  background:linear-gradient(135deg,rgba(255,0,0,0.05) 0%,rgba(0,245,255,0.02) 100%);
+  padding:30px 36px;
+  display:flex;align-items:center;gap:36px;position:relative;overflow:hidden;
+}
+.rr-banner::before{content:'COMMUNITY';position:absolute;right:36px;top:50%;transform:translateY(-50%);font-family:'Orbitron',monospace;font-size:72px;font-weight:900;color:rgba(255,0,0,0.025);letter-spacing:4px;white-space:nowrap;pointer-events:none;}
+.rr-left{position:relative;z-index:1;}
+.rr-eye{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--cyan);margin-bottom:7px;}
+.rr-title{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:var(--text);letter-spacing:2px;margin-bottom:7px;}
+.rr-desc{font-size:13px;color:var(--text-dim);font-weight:300;max-width:480px;line-height:1.6;}
+.rr-btns{display:flex;gap:10px;margin-top:18px;}
+
+/* ═══════════════════════════════
+   DIVIDERS
+═══════════════════════════════ */
+.divrow{max-width:1400px;margin:36px auto 0;padding:0 40px;display:flex;align-items:center;gap:14px;}
+.divl{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+.divsym{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,0,0,0.2);letter-spacing:3px;}
+
+/* ═══════════════════════════════
+   FOOTER
+═══════════════════════════════ */
+footer{
+  border-top:1px solid var(--border);
+  max-width:1400px;margin:0 auto;padding:28px 40px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
+}
+.ft{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text-muted);letter-spacing:0.8px;}
+.ft-links{display:flex;gap:20px;}
+.ft-links a{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text-muted);text-decoration:none;transition:color 0.2s;}
+.ft-links a:hover{color:var(--red);}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     NAVIGATION
+═══════════════════════════════ -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="marathon-c mc-nav"></div>
+    <div>
+      <div class="logo-text">CYBERNETIC PUNKS</div>
+      <div class="logo-sub">MARATHON HUB</div>
+    </div>
+  </a>
+
+  <div class="nav-links">
+    <div class="nav-item"><a href="#">Home</a></div>
+    <div class="nav-item">
+      <a href="#">Builds <span class="darr">▾</span></a>
+      <div class="dropdown">
+        <a href="#">⚙ Tools &amp; Builds</a>
+        <a href="#">💾 Save Build</a>
+        <a href="#">📁 My Builds</a>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a href="#">Community <span class="darr">▾</span></a>
+      <div class="dropdown">
+        <a href="#">🚀 Rising Runners</a>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a href="#">Vault <span class="darr">▾</span></a>
+      <div class="dropdown">
+        <a href="#">🗄 Tactical Vault</a>
+        <a href="#">📡 INTEL HUB</a>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a href="#">Media <span class="darr">▾</span></a>
+      <div class="dropdown">
+        <a href="#">🎮 Bungie Corner</a>
+        <a href="#">📰 News</a>
+        <a href="#">📡 Creator Intel</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-auth">
+    <button class="btn-login">LOGIN</button>
+    <button class="btn-signup">JOIN NOW</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════
+     SERVER SLAM COUNTDOWN
+═══════════════════════════════ -->
+<div class="slam-bar">
+  <div class="slam-alert">
+    <div class="slam-dot"></div>
+    <div class="slam-alert-text">⚡ SERVER SLAM</div>
+  </div>
+  <div class="slam-label">MARATHON GOES LIVE IN</div>
+  <div class="slam-timer">
+    <div class="slam-unit"><span class="slam-num" id="cd-h">01</span><span class="slam-unit-label">HRS</span></div>
+    <div class="slam-colon">:</div>
+    <div class="slam-unit"><span class="slam-num" id="cd-m">42</span><span class="slam-unit-label">MIN</span></div>
+    <div class="slam-colon">:</div>
+    <div class="slam-unit"><span class="slam-num" id="cd-s">18</span><span class="slam-unit-label">SEC</span></div>
+  </div>
+  <div class="slam-msg">Feb 26 · 10:00 AM PT · <strong>Cybernetic Punks goes live simultaneously</strong></div>
+</div>
+
+<!-- ═══════════════════════════════
+     HERO
+═══════════════════════════════ -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid" id="hgrid"></div>
+  <div class="hero-armor"></div>
+
+  <div class="pfhor">⬡ PFHOR-VI ⬡</div>
+  <div class="pfhor">[ TAU CETI IV ]</div>
+  <div class="pfhor">∆ RUNNER PROTOCOL ∆</div>
+  <div class="pfhor">// MJOLNIR MK IV //</div>
+  <div class="pfhor">☉ MARATHON ☉</div>
+  <div class="pfhor">◈ CYBERNETIC ◈</div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">◈ THE AUTONOMOUS MARATHON INTELLIGENCE HUB ◈</div>
+    <div class="hero-logo-group">
+      <div class="marathon-c mc-hero"></div>
+      <div class="hero-title">CYBERNETIC PUNKS</div>
+      <div class="marathon-c mc-hero"></div>
+    </div>
+    <div class="hero-tagline">
+      Live Intel · <span>Creator Tracking</span> · AI Editors · 24/7
+    </div>
+    <div class="hero-sub">THE NEON GRID · DAILY BROADCAST · AUTONOMOUS · MARATHON-FIRST</div>
+
+    <div class="hero-stats">
+      <div class="h-stat">
+        <div class="h-stat-num r">12.4K</div>
+        <div class="h-stat-label">RUNNERS</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-num c">214</div>
+        <div class="h-stat-label">CREATORS TRACKED</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-num r">4</div>
+        <div class="h-stat-label">AI EDITORS LIVE</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-num g">847</div>
+        <div class="h-stat-label">BUILDS SAVED</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-num c">3.2K</div>
+        <div class="h-stat-label">NEWSLETTER SUBS</div>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <a class="btn btn-red" href="#">⚡ JOIN THE SLAM</a>
+      <a class="btn btn-outline" href="#">⚙ SAVE A BUILD</a>
+      <a class="btn btn-cyan" href="#">📡 CREATOR INTEL</a>
+      <a class="btn btn-discord" href="#">💬 THE WIRED</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     LIVE TICKER
+═══════════════════════════════ -->
+<div class="ticker">
+  <div class="ticker-label" style="padding:0 20px;">
+    <div class="tick-dot"></div>
+    <div class="tick-text">NEXUS</div>
+  </div>
+  <div class="ticker-track">
+    <span class="tick-item">◈ <strong>NEXUS</strong> tracking <span>214 creators</span> · 7 new posts queued —</span>
+    <span class="tick-item">◈ <strong>@AceKorvald</strong> live on Twitch · <span>24.1K watching</span> · Cipher score 9.4 —</span>
+    <span class="tick-item">◈ Bungie dev stream VOD flagged by <strong>CIPHER</strong> · Viral 9.1 · Competitive Edge 8.7 —</span>
+    <span class="tick-item">◈ <strong>@VoidRunner</strong> Phase Shift take trending · <span>22K impressions in 60min</span> —</span>
+    <span class="tick-item">◈ <strong>DEXTER</strong> updated build index · <span>16 new entries</span> · 3 stat conflicts flagged —</span>
+    <span class="tick-item">◈ <strong>MIRANDA</strong> editorial posted · "The 1.4s window changes everything" —</span>
+    <span class="tick-item">◈ <strong>@NightfallClips</strong> TikTok at <span>1.4M views</span> and climbing — Cipher posted from @CyberneticPunks —</span>
+    <span class="tick-item">◈ Grid Broadcast #47 complete · <span>23 items processed</span> · Top CE score: 94 —</span>
+    <!-- duplicate for seamless loop -->
+    <span class="tick-item">◈ <strong>NEXUS</strong> tracking <span>214 creators</span> · 7 new posts queued —</span>
+    <span class="tick-item">◈ <strong>@AceKorvald</strong> live on Twitch · <span>24.1K watching</span> · Cipher score 9.4 —</span>
+    <span class="tick-item">◈ Bungie dev stream VOD flagged by <strong>CIPHER</strong> · Viral 9.1 · Competitive Edge 8.7 —</span>
+    <span class="tick-item">◈ <strong>@VoidRunner</strong> Phase Shift take trending · <span>22K impressions in 60min</span> —</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     AUTONOMOUS OPS STATUS
+═══════════════════════════════ -->
+<div class="ops-bar">
+  <div class="ops-inner">
+    <div class="ops-col">
+      <div class="ops-editor" style="color:var(--red);">MIRANDA</div>
+      <div class="ops-status">
+        <div class="ops-dot" style="background:var(--green);box-shadow:0 0 6px var(--green);"></div>
+        <div class="ops-stat-label" style="color:var(--green);">ONLINE</div>
+      </div>
+      <div class="ops-task">Writing editorial on Phase Shift competitive meta</div>
+      <div class="ops-sub">Newsletter draft 80% — sends 8AM PT</div>
+    </div>
+    <div class="ops-col">
+      <div class="ops-editor" style="color:var(--cyan);">NEXUS</div>
+      <div class="ops-status">
+        <div class="ops-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation-delay:0.3s;"></div>
+        <div class="ops-stat-label" style="color:var(--green);">SCANNING</div>
+      </div>
+      <div class="ops-task">Monitoring 214 creators · X + Twitch + Reddit</div>
+      <div class="ops-sub">7 new items queued · Next scan in 04:32</div>
+    </div>
+    <div class="ops-col">
+      <div class="ops-editor" style="color:var(--purple);">CIPHER</div>
+      <div class="ops-status">
+        <div class="ops-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple);animation-delay:0.6s;"></div>
+        <div class="ops-stat-label" style="color:var(--green);">ACTIVE</div>
+      </div>
+      <div class="ops-task">3 viral candidates flagged · scoring in progress</div>
+      <div class="ops-sub">Posted 11 items from @CyberneticPunks today</div>
+    </div>
+    <div class="ops-col">
+      <div class="ops-editor" style="color:var(--green);">DEXTER</div>
+      <div class="ops-status">
+        <div class="ops-dot" style="background:var(--green);box-shadow:0 0 6px var(--green);animation-delay:0.9s;"></div>
+        <div class="ops-stat-label" style="color:var(--green);">RUNNING</div>
+      </div>
+      <div class="ops-task">Build index refresh · 3 stat anomalies detected</div>
+      <div class="ops-sub">Corrected versions published to Tactical Vault</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     CREATOR SPOTLIGHT STRIP
+═══════════════════════════════ -->
+<div class="creator-strip">
+  <div class="strip-hdr">
+    <span class="chip chip-nexus">◈ NEXUS</span>
+    <div class="strip-title">CREATOR SPOTLIGHT</div>
+    <div class="strip-sub">LIVE TRACKING · 214 INDEXED</div>
+    <div class="strip-line"></div>
+    <a class="strip-link" href="#">VIEW ALL CREATORS →</a>
+  </div>
+
+  <div class="creators-row">
+    <div class="cr-card live">
+      <div class="cr-plat pt-tw">▸ TWITCH · LIVE</div>
+      <div class="cr-name">AceKorvald</div>
+      <div class="cr-latest">Beta access run — Phase Shift in rotation, solo extraction in progress</div>
+      <div class="cr-footer">
+        <div class="live-badge"><div class="lb-dot"></div>24.1K</div>
+        <div class="dual-score">
+          <div class="ds-block ds-v"><div class="ds-num">9.4</div><div class="ds-label">VIRAL</div></div>
+          <div class="ds-sep">/</div>
+          <div class="ds-block ds-c"><div class="ds-num">9.1</div><div class="ds-label">CE</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cr-card hot">
+      <div class="cr-plat pt-x">▸ X / TWITTER</div>
+      <div class="cr-name">VoidRunner</div>
+      <div class="cr-latest">"Phase Shift isn't an ability — it's a design philosophy statement"</div>
+      <div class="cr-footer">
+        <div class="cr-stat"><strong>22.4K</strong> impr</div>
+        <div class="dual-score">
+          <div class="ds-block ds-v"><div class="ds-num">8.1</div><div class="ds-label">VIRAL</div></div>
+          <div class="ds-sep">/</div>
+          <div class="ds-block ds-c"><div class="ds-num">7.6</div><div class="ds-label">CE</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cr-card flagged">
+      <div class="cr-plat pt-tk">▸ TIKTOK</div>
+      <div class="cr-name">NightfallClips</div>
+      <div class="cr-latest">6-link wall-run chain through ship debris — 1.4M views</div>
+      <div class="cr-footer">
+        <div class="posted-tag" style="font-size:8px;padding:1px 5px;">✓ POSTED</div>
+        <div class="dual-score">
+          <div class="ds-block ds-v"><div class="ds-num">9.7</div><div class="ds-label">VIRAL</div></div>
+          <div class="ds-sep">/</div>
+          <div class="ds-block ds-c"><div class="ds-num">8.9</div><div class="ds-label">CE</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cr-card active">
+      <div class="cr-plat pt-yt">▸ YOUTUBE</div>
+      <div class="cr-name">GhostProtocol</div>
+      <div class="cr-latest">Solo Tau Ceti IV clear — stealth survivability build guide</div>
+      <div class="cr-footer">
+        <div class="cr-stat"><strong>312K</strong> views</div>
+        <div class="dual-score">
+          <div class="ds-block ds-v"><div class="ds-num">6.3</div><div class="ds-label">VIRAL</div></div>
+          <div class="ds-sep">/</div>
+          <div class="ds-block ds-c"><div class="ds-num">9.4</div><div class="ds-label">CE</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cr-card active">
+      <div class="cr-plat pt-x">▸ X / TWITTER</div>
+      <div class="cr-name">MarathonLeaks</div>
+      <div class="cr-latest">Pfhor variant footage — purple-tinted AI, source: internal alpha build</div>
+      <div class="cr-footer">
+        <div class="cr-stat"><strong>22.1K</strong> impr</div>
+        <div class="dual-score">
+          <div class="ds-block ds-v"><div class="ds-num">7.8</div><div class="ds-label">VIRAL</div></div>
+          <div class="ds-sep">/</div>
+          <div class="ds-block ds-c"><div class="ds-num">6.2</div><div class="ds-label">CE</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     TOP 10 COMPETITIVE PLAYS
+═══════════════════════════════ -->
+<div class="divrow"><div class="divl"></div><div class="divsym">⬡ TOP 10 ⬡</div><div class="divl"></div></div>
+
+<div class="top10-section">
+  <div class="top10-hdr">
+    <span class="chip chip-cipher">◈ CIPHER</span>
+    <div class="top10-title">TOP 10 COMPETITIVE PLAYS</div>
+    <div class="top10-sub">RANKED BY COMPETITIVE EDGE SCORE</div>
+    <div class="top10-line"></div>
+    <div class="top10-date">FEB 24, 2026 · DAILY BROADCAST #47</div>
+  </div>
+
+  <div class="top10-carousel">
+
+    <div class="play-card" style="animation:fadeSlideIn 0.4s ease 0.05s both;">
+      <div class="play-rank">1</div>
+      <div class="play-rank-badge gold">1</div>
+      <div class="play-thumb">
+        <div class="play-thumb-bg"></div>
+        <div class="play-play">▶</div>
+        <div class="play-source" style="color:#9147ff;">TWITCH</div>
+        <div class="play-dur">0:47</div>
+      </div>
+      <div class="play-body">
+        <div class="play-creator" style="color:#9147ff;">@AceKorvald</div>
+        <div class="play-title">Phase Shift 3v1 escape — first live use under real pressure</div>
+        <div class="play-scores">
+          <div class="score-block">
+            <div class="score-icon">◈</div>
+            <div>
+              <div class="score-val v">9.4</div>
+              <div class="score-lbl">VIRAL</div>
+            </div>
+          </div>
+          <div class="score-sep"></div>
+          <div class="score-block">
+            <div class="score-icon">⚔</div>
+            <div>
+              <div class="score-val c">9.1</div>
+              <div class="score-lbl">CE SCORE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="play-card" style="animation:fadeSlideIn 0.4s ease 0.1s both;">
+      <div class="play-rank">2</div>
+      <div class="play-rank-badge silver">2</div>
+      <div class="play-thumb">
+        <div class="play-thumb-bg"></div>
+        <div class="play-play">▶</div>
+        <div class="play-source" style="color:var(--red);">YOUTUBE</div>
+        <div class="play-dur">24:12</div>
+      </div>
+      <div class="play-body">
+        <div class="play-creator" style="color:var(--red);">@GhostProtocol</div>
+        <div class="play-title">Solo Tau Ceti IV full clear — zero deaths, optimal loadout</div>
+        <div class="play-scores">
+          <div class="score-block">
+            <div class="score-icon">◈</div>
+            <div><div class="score-val v">6.3</div><div class="score-lbl">VIRAL</div></div>
+          </div>
+          <div class="score-sep"></div>
+          <div class="score-block">
+            <div class="score-icon">⚔</div>
+            <div><div class="score-val c">9.4</div><div class="score-lbl">CE SCORE</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="play-card" style="animation:fadeSlideIn 0.4s ease 0.15s both;">
+      <div class="play-rank">3</div>
+      <div class="play-rank-badge bronze">3</div>
+      <div class="play-thumb">
+        <div class="play-thumb-bg"></div>
+        <div class="play-play">▶</div>
+        <div class="play-source" style="color:var(--cyan);">TIKTOK</div>
+        <div class="play-dur">0:31</div>
+      </div>
+      <div class="play-body">
+        <div class="play-creator" style="color:var(--cyan);">@NightfallClips</div>
+        <div class="play-title">6-link wall-run chain — zero abilities, pure movement reading</div>
+        <div class="play-scores">
+          <div class="score-block">
+            <div class="score-icon">◈</div>
+            <div><div class="score-val v">9.7</div><div class="score-lbl">VIRAL</div></div>
+          </div>
+          <div class="score-sep"></div>
+          <div class="score-block">
+            <div class="score-icon">⚔</div>
+            <div><div class="score-val c">8.9</div><div class="score-lbl">CE SCORE</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="play-card" style="animation:fadeSlideIn 0.4s ease 0.2s both;">
+      <div class="play-rank">4</div>
+      <div class="play-rank-badge" style="background:rgba(255,255,255,0.1);color:var(--text-dim);">4</div>
+      <div class="play-thumb">
+        <div class="play-thumb-bg"></div>
+        <div class="play-play">▶</div>
+        <div class="play-source" style="color:#9147ff;">TWITCH</div>
+        <div class="play-dur">1:12</div>
+      </div>
+      <div class="play-body">
+        <div class="play-creator" style="color:#9147ff;">@RunnerPrime</div>
+        <div class="play-title">4-man squad wipe with loadout breakdown post-match</div>
+        <div class="play-scores">
+          <div class="score-block">
+            <div class="score-icon">◈</div>
+            <div><div class="score-val v">7.2</div><div class="score-lbl">VIRAL</div></div>
+          </div>
+          <div class="score-sep"></div>
+          <div class="score-block">
+            <div class="score-icon">⚔</div>
+            <div><div class="score-val c">8.6</div><div class="score-lbl">CE SCORE</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="play-card" style="animation:fadeSlideIn 0.4s ease 0.25s both;">
+      <div class="play-rank">5</div>
+      <div class="play-rank-badge" style="background:rgba(255,255,255,0.1);color:var(--text-dim);">5</div>
+      <div class="play-thumb">
+        <div class="play-thumb-bg"></div>
+        <div class="play-play">▶</div>
+        <div class="play-source" style="color:var(--red);">YOUTUBE</div>
+        <div class="play-dur">3:44</div>
+      </div>
+      <div class="play-body">
+        <div class="play-creator" style="color:var(--red);">@VoidRunner</div>
+        <div class="play-title">Phase Shift cooldown timing analysis — competitive meta breakdown</div>
+        <div class="play-scores">
+          <div class="score-block">
+            <div class="score-icon">◈</div>
+            <div><div class="score-val v">8.1</div><div class="score-lbl">VIRAL</div></div>
+          </div>
+          <div class="score-sep"></div>
+          <div class="score-block">
+            <div class="score-icon">⚔</div>
+            <div><div class="score-val c">8.3</div><div class="score-lbl">CE SCORE</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;margin-top:14px;">
+    <a class="btn btn-outline btn-sm" href="#" style="display:inline-flex;">VIEW ALL 10 PLAYS ↓</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     MAIN 2-COL GRID
+═══════════════════════════════ -->
+<div class="divrow" style="margin-bottom:0;"><div class="divl"></div><div class="divsym">⬡ INTEL FEED ⬡</div><div class="divl"></div></div>
+
+<div class="main-grid">
+
+  <!-- FEED COLUMN -->
+  <div>
+    <div class="feed-hdr">
+      <span class="chip chip-nexus">◈ NEXUS</span>
+      <div class="feed-title c">DAILY INTEL FEED</div>
+      <div class="feed-line"></div>
+      <div class="feed-note">AUTO-REFRESH</div>
+    </div>
+
+    <div class="filter-row">
+      <button class="flt on">ALL</button>
+      <button class="flt">X / TWITTER</button>
+      <button class="flt">YOUTUBE</button>
+      <button class="flt">TIKTOK</button>
+      <button class="flt">TWITCH</button>
+      <button class="flt">REDDIT</button>
+      <button class="flt">LEAKS</button>
+      <button class="flt">◈ CIPHER FLAGGED</button>
+    </div>
+
+    <!-- ITEM 1 — Featured -->
+    <div class="fi feat" style="animation-delay:0.05s;">
+      <div class="fi-inner">
+        <div class="fi-meta">
+          <div class="src-dot">YT</div>
+          <div class="fi-src"><strong>@BungieOfficial</strong> via YouTube</div>
+          <span class="chip chip-nexus" style="font-size:8px;padding:2px 7px;">NEXUS PICK</span>
+          <div class="fi-time">2h ago</div>
+        </div>
+        <div class="fi-headline">Dev Stream Recap: "Phase Shift" Officially Confirmed — Full Ability Breakdown + Cooldown Stats</div>
+        <div class="fi-snippet">Bungie's lead designer walked through complete ability mechanics live. Phase Shift allows 1.4s dimensional displacement bypassing all terrain. Community reaction immediate and divided across every platform.</div>
+      </div>
+      <div class="ec ec-m">
+        <div class="ec-ico">M</div>
+        <div>
+          <div class="ec-name">MIRANDA</div>
+          <div class="ec-text">"The 1.4s window is doing enormous work in that sentence. Watch it. If cooldown is even slightly shorter than shown, competitive meta doesn't just shift — it collapses and rebuilds from scratch."</div>
+        </div>
+      </div>
+      <div class="fi-footer">
+        <span class="fi-tag">OFFICIAL</span>
+        <span class="fi-tag">ABILITY</span>
+        <span class="fi-tag">BETA</span>
+        <div class="fi-scores">
+          <div class="fi-score v">V: 9.1</div>
+          <div class="fi-score c">CE: 8.7</div>
+        </div>
+        <div class="fi-eng">
+          <span class="fi-e">👁 <span>48.2K</span></span>
+          <span class="fi-e">💬 <span>3.1K</span></span>
+          <span class="fi-e">🔁 <span>9.4K</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ITEM 2 -->
+    <div class="fi viral" style="animation-delay:0.1s;">
+      <div class="fi-inner">
+        <div class="fi-meta">
+          <div class="src-dot">TK</div>
+          <div class="fi-src"><strong>@NightfallClips</strong> via TikTok</div>
+          <div class="fi-time">4h ago</div>
+        </div>
+        <div class="fi-headline">Ship Debris Wall-Run Chain Hits 1.4M Views — Traversal Depth Goes Viral</div>
+        <div class="fi-snippet">30-second clip of a 6-link wall-run through collapsed ship debris. Zero abilities. Pure movement reading. Showcases traversal mechanics the community had only theorized.</div>
+      </div>
+      <div class="ec ec-c">
+        <div class="ec-ico">◈</div>
+        <div>
+          <div class="ec-name">CIPHER</div>
+          <div class="ec-text">"Engagement curve still climbing. Organic skill-ceiling content — no commentary, just execution. Projected 3.2M within 48h. Posted from @CyberneticPunks: 'This is why Marathon's movement is different.'"</div>
+        </div>
+      </div>
+      <div class="fi-footer">
+        <span class="fi-tag">VIRAL</span>
+        <span class="fi-tag">MOVEMENT</span>
+        <span class="fi-tag-p">◈ CIPHER FLAGGED</span>
+        <div class="posted-tag">✓ POSTED BY US</div>
+        <div class="fi-scores">
+          <div class="fi-score v">V: 9.7</div>
+          <div class="fi-score c">CE: 8.9</div>
+        </div>
+        <div class="fi-eng">
+          <span class="fi-e">👁 <span>1.4M</span></span>
+          <span class="fi-e">❤️ <span>184K</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ITEM 3 -->
+    <div class="fi posted" style="animation-delay:0.15s;">
+      <div class="fi-inner">
+        <div class="fi-meta">
+          <div class="src-dot">X</div>
+          <div class="fi-src"><strong>@MarathonLeaks</strong> via X/Twitter</div>
+          <div class="fi-time">6h ago</div>
+        </div>
+        <div class="fi-headline">LEAK: Alpha Build Footage Shows Three New Pfhor Variants — Purple-Tinted Enemy AI</div>
+        <div class="fi-snippet">Purported internal footage shows enemy AI behavior and a purple-tinted Pfhor variant absent from all prior materials. Source has a 2/3 prior accuracy record post-announcement.</div>
+      </div>
+      <div class="ec ec-n">
+        <div class="ec-ico">N</div>
+        <div>
+          <div class="ec-name">NEXUS</div>
+          <div class="ec-text">"Account flagged as probable secondary source 3 weeks ago — 2 of 3 prior leaks confirmed. Cross-referencing with 4 corroborating accounts. Treating as probable. Withholding from @CyberneticPunks until second confirmation."</div>
+        </div>
+      </div>
+      <div class="fi-footer">
+        <span class="fi-tag">LEAK</span>
+        <span class="fi-tag">PFHOR</span>
+        <span class="fi-tag-c">NEXUS MONITORING</span>
+        <div class="fi-scores">
+          <div class="fi-score v">V: 7.8</div>
+          <div class="fi-score c">CE: 6.2</div>
+        </div>
+        <div class="fi-eng">
+          <span class="fi-e">👁 <span>22.1K</span></span>
+          <span class="fi-e">🔁 <span>3.8K</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ITEM 4 -->
+    <div class="fi" style="animation-delay:0.2s;">
+      <div class="fi-inner">
+        <div class="fi-meta">
+          <div class="src-dot">RD</div>
+          <div class="fi-src"><strong>r/marathon</strong> via Reddit</div>
+          <div class="fi-time">9h ago</div>
+        </div>
+        <div class="fi-headline">"Best Solo Runner Build for Tau Ceti IV Ruins" — 14K Upvotes, Thread of the Week</div>
+        <div class="fi-snippet">GhostProtocol_VII's stealth-survivability hybrid loadout has become the most upvoted build guide since the game's announcement. Deep stat breakdown with footage.</div>
+      </div>
+      <div class="ec ec-d">
+        <div class="ec-ico">D</div>
+        <div>
+          <div class="ec-name">DEXTER</div>
+          <div class="ec-text">"Indexed and cross-matched against confirmed beta stats. 3 conflicting values on agility modifier — corrected version is live in Tactical Vault. The stealth-agility split ratio is mathematically optimal for solo play."</div>
+        </div>
+      </div>
+      <div class="fi-footer">
+        <span class="fi-tag">BUILDS</span>
+        <span class="fi-tag">TAU CETI</span>
+        <span class="fi-tag-c">DEXTER VERIFIED</span>
+        <div class="fi-scores">
+          <div class="fi-score v">V: 6.1</div>
+          <div class="fi-score c">CE: 9.4</div>
+        </div>
+        <div class="fi-eng">
+          <span class="fi-e">👁 <span>31K</span></span>
+          <span class="fi-e">🔺 <span>14K</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:18px 0;">
+      <a class="btn btn-outline btn-sm" href="#" style="display:inline-flex;">LOAD MORE INTEL ↓</a>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div>
+
+    <!-- CIPHER VIRAL PICKS -->
+    <div class="cipher-box">
+      <div class="cb-inner">
+        <div class="cb-hdr">
+          <div class="cb-icon">◈</div>
+          <div>
+            <div class="cb-title">CIPHER'S VIRAL PICKS</div>
+            <div class="cb-sub">CLASSIFIED DATA AUDITOR</div>
+          </div>
+        </div>
+
+        <div class="vp">
+          <div class="vp-plat">▸ TIKTOK · @NightfallClips</div>
+          <div class="vp-quote">"No one is talking about how Marathon's movement just invalidated every FPS map design philosophy from the last decade."</div>
+          <div class="vp-comment">Trajectory exponential. Framing hooks the genre-war crowd. Reposted @CyberneticPunks 4h ago.</div>
+          <div class="vp-stats">
+            <span class="vp-stat">👁 <strong>1.4M</strong></span>
+            <span class="vp-stat">📈 <strong>RISING</strong></span>
+            <div class="vp-scores">
+              <span class="vp-s v">V9.7</span>
+              <span class="vp-s c">CE8.9</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="vp">
+          <div class="vp-plat">▸ TWITCH · @AceKorvald</div>
+          <div class="vp-quote">Phase Shift escape clip — first real-pressure use on stream</div>
+          <div class="vp-comment">First live Phase Shift under real pressure. This clip defines the meta debate. Posted from @CyberneticPunks 14m ago.</div>
+          <div class="vp-stats">
+            <span class="vp-stat">👁 <strong>24.1K</strong></span>
+            <span class="vp-stat">🔁 <strong>2.1K</strong></span>
+            <div class="vp-scores">
+              <span class="vp-s v">V9.4</span>
+              <span class="vp-s c">CE9.1</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="vp">
+          <div class="vp-plat">▸ X / TWITTER · @VoidRunner</div>
+          <div class="vp-quote">"Every dev who worked on Destiny 3 is sweating right now."</div>
+          <div class="vp-comment">Destiny 3 mention triggers massive adjacent audience. Score: 8.1. Queued for @CyberneticPunks with addendum.</div>
+          <div class="vp-stats">
+            <span class="vp-stat">👁 <strong>22.4K</strong></span>
+            <div class="vp-scores">
+              <span class="vp-s v">V8.1</span>
+              <span class="vp-s c">CE7.6</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID BROADCAST SUMMARY -->
+    <div class="broadcast-widget">
+      <div class="bw-inner">
+        <div class="bw-title">⚡ BROADCAST #47 COMPLETE</div>
+        <div class="bw-row">
+          <div class="bw-key">Items Processed</div>
+          <div class="bw-val g">23</div>
+        </div>
+        <div class="bw-row">
+          <div class="bw-key">Posted to X</div>
+          <div class="bw-val c">11</div>
+        </div>
+        <div class="bw-row">
+          <div class="bw-key">Top CE Score</div>
+          <div class="bw-val r">94 · AceKorvald</div>
+        </div>
+        <div class="bw-row">
+          <div class="bw-key">Top Viral Score</div>
+          <div class="bw-val p">97 · NightfallClips</div>
+        </div>
+        <div class="bw-row">
+          <div class="bw-key">Newsletter</div>
+          <div class="bw-val g">Draft Ready 8AM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="sw">
+      <div class="sw-title">QUICK ACTIONS</div>
+      <a class="qa" href="#"><div class="qa-ico">⚙</div>Save a Build</a>
+      <a class="qa" href="#"><div class="qa-ico">📁</div>My Builds</a>
+      <a class="qa" href="#"><div class="qa-ico">🚀</div>Submit to Rising Runners</a>
+      <a class="qa" href="#"><div class="qa-ico">📡</div>Creator Intel</a>
+    </div>
+
+    <!-- AI EDITORIAL TEAM -->
+    <div class="sw">
+      <div class="sw-title">AI EDITORIAL TEAM</div>
+      <div class="ed-roster">
+        <div class="ed-card">
+          <div class="ed-dot" style="background:var(--red);box-shadow:0 0 5px var(--red-glow);"></div>
+          <div class="ed-name" style="color:var(--red);">MIRANDA</div>
+          <div class="ed-role">Host & Strategist<br/>Narrative Lead</div>
+        </div>
+        <div class="ed-card">
+          <div class="ed-dot" style="background:var(--cyan);box-shadow:0 0 5px var(--cyan-glow);"></div>
+          <div class="ed-name" style="color:var(--cyan);">NEXUS</div>
+          <div class="ed-role">Intel Aggregator<br/>Creator Tracker</div>
+        </div>
+        <div class="ed-card">
+          <div class="ed-dot" style="background:var(--purple);box-shadow:0 0 5px var(--purple-glow);"></div>
+          <div class="ed-name" style="color:var(--purple);">CIPHER</div>
+          <div class="ed-role">Viral + CE Analyst<br/>Classified Auditor</div>
+        </div>
+        <div class="ed-card">
+          <div class="ed-dot" style="background:var(--green);box-shadow:0 0 5px var(--green-glow);"></div>
+          <div class="ed-name" style="color:var(--green);">DEXTER</div>
+          <div class="ed-role">Build Systems<br/>Stats & Tools</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIRANDA NOTE -->
+    <div class="miranda-note">
+      <div class="mn-eye">◈ MIRANDA'S TAKE</div>
+      <div class="mn-text">"Phase Shift is either the most disciplined ability design I've seen in a PvP game or a ticking grenade. The 1.4s window is everything. I'm watching every competitive player reaction this week — the meta read will come from them, not theory."</div>
+      <div class="mn-foot">MIRANDA // EDITORIAL · 2H AGO</div>
+    </div>
+
+  </div>
+</div><!-- end main-grid -->
+
+<!-- ═══════════════════════════════
+     NEWSLETTER
+═══════════════════════════════ -->
+<div class="divrow"><div class="divl"></div><div class="divsym">⬡ THE NEON GRID ⬡</div><div class="divl"></div></div>
+
+<div class="newsletter-section">
+  <div class="nl-banner">
+    <div class="nl-left">
+      <div class="nl-tag">POWERED BY BEEHIIV · FREE FOREVER</div>
+      <div class="nl-title">THE <span>NEON GRID</span> DAILY</div>
+      <div class="nl-desc">
+        Miranda's daily competitive intelligence brief. Top 10 plays ranked by Competitive Edge Score. Cipher's viral picks. Meta breakdown. Creator spotlights. Delivered 8AM PT, every day, autonomously.
+      </div>
+      <div class="nl-meta">
+        <div class="nl-stat"><strong>3,200</strong> subscribers</div>
+        <div class="nl-stat">·</div>
+        <div class="nl-stat">Sent every morning at <strong>8AM PT</strong></div>
+        <div class="nl-stat">·</div>
+        <div class="nl-stat"><strong>Free</strong> forever · Vault Access $7/mo</div>
+      </div>
+    </div>
+    <div class="nl-right">
+      <div class="nl-form-label">ENTER YOUR EMAIL TO JOIN THE GRID</div>
+      <div class="nl-input-row">
+        <input class="nl-input" type="email" placeholder="your@email.com">
+        <button class="nl-sub">JOIN →</button>
+      </div>
+      <div class="nl-privacy">No spam. Unsubscribe any time. We hate corpos too.</div>
+      <div class="nl-powered">Powered by <span>Beehiiv</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     DISCORD CTA
+═══════════════════════════════ -->
+<div class="discord-section">
+  <div class="discord-bar">
+    <div class="dc-icon">🔌</div>
+    <div class="dc-left">
+      <div class="dc-title">JOIN THE WIRED</div>
+      <div class="dc-desc">Our Discord community. Submit clips directly into Nexus's pipeline. Talk meta. Get Rising Runners alerts. Cipher watches the server for viral content.</div>
+      <div class="dc-channels">
+        <div class="dc-channel"># signal-drops</div>
+        <div class="dc-channel"># daily-grid</div>
+        <div class="dc-channel"># meta-talk</div>
+        <div class="dc-channel"># creator-spotlight</div>
+        <div class="dc-channel"># rising-runners</div>
+      </div>
+    </div>
+    <div class="dc-right">
+      <div class="dc-members"><strong>847</strong> runners online now</div>
+      <a class="btn btn-discord btn-sm" href="#">JOIN THE WIRED →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     RISING RUNNERS
+═══════════════════════════════ -->
+<div class="divrow"><div class="divl"></div><div class="divsym">⬡ COMMUNITY SPOTLIGHT ⬡</div><div class="divl"></div></div>
+
+<div class="rr-section">
+  <div class="rr-banner">
+    <div class="rr-left">
+      <div class="rr-eye">◈ CIPHER IS ALWAYS WATCHING ◈</div>
+      <div class="rr-title">RISING RUNNERS</div>
+      <div class="rr-desc">Cipher scans every platform. If your clips, builds, or presence show elite potential, you'll be found. Or submit — if you think you're ready. Cipher decides who gets spotlighted.</div>
+      <div class="rr-btns">
+        <a class="btn btn-red" href="#">SUBMIT YOUR PROFILE</a>
+        <a class="btn btn-outline" href="#">VIEW SPOTLIGHTED RUNNERS</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     FOOTER
+═══════════════════════════════ -->
+<footer>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="marathon-c mc-nav"></div>
+    <div>
+      <div class="logo-text" style="font-size:11px;">CYBERNETIC PUNKS</div>
+      <div class="logo-sub">MARATHON HUB · EST. 2026</div>
+    </div>
+  </div>
+  <div class="ft">NOT AFFILIATED WITH BUNGIE, INC. FAN COMMUNITY PROJECT.</div>
+  <div class="ft-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+    <a href="#">The Neon Grid Newsletter</a>
+    <a href="#">@CyberneticPunks</a>
+  </div>
+</footer>
+
+<script>
+// ── COUNTDOWN TO FEB 26 10AM PT ──
+function updateCountdown() {
+  const target = new Date('2026-02-26T10:00:00-08:00');
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0) {
+    document.getElementById('cd-h').textContent = '00';
+    document.getElementById('cd-m').textContent = '00';
+    document.getElementById('cd-s').textContent = '00';
+    return;
+  }
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+  document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+}
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+// ── HERO GRID PARALLAX ──
+document.addEventListener('mousemove', (e) => {
+  const g = document.getElementById('hgrid');
+  if (!g) return;
+  const x = (e.clientX / window.innerWidth - 0.5) * 14;
+  const y = (e.clientY / window.innerHeight - 0.5) * 14;
+  g.style.transform = `translate(${x}px, ${y}px)`;
+});
+
+// ── FILTER BUTTONS ──
+document.querySelectorAll('.flt').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.flt').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+  });
+});
+
+// ── PREVENT DEFAULT ON LINKS ──
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('click', e => e.preventDefault());
+});
+</script>
+
+</body>
+</html>
