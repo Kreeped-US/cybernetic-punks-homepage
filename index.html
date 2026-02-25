@@ -797,7 +797,36 @@ footer{
 .ft-links{display:flex;gap:20px;}
 .ft-links a{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text-muted);text-decoration:none;transition:color 0.2s;}
 .ft-links a:hover{color:var(--red);}
-</style>
+/* ════ MOBILE RESPONSIVE FIXES ════ */
+@media (max-width: 768px) {
+ 
+  /* Stop anything from going off-screen */
+  body { overflow-x: hidden; }
+ 
+  /* Stack the main feed + sidebar vertically */
+  .main-grid {
+    grid-template-columns: 1fr !important;
+  }
+ 
+  /* Creator strip: 5 columns → 2 columns */
+  .creator-strip {
+    grid-template-columns: 1fr 1fr !important;
+  }
+ 
+  /* Top 10 carousel: each card goes full width */
+  .play-card {
+    min-width: 85vw !important;
+  }
+ 
+  /* Shrink page padding so content isn't cramped */
+  .page-wrap, .content-wrap, .section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+ 
+  /* Nav: hide desktop links, keep logo and hamburger */
+  .nav-links { display: none !important; }
+}</style>
 </head>
 <body>
 
