@@ -461,7 +461,8 @@ nav {
 .top10-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(255,0,0,0.2),transparent);}
 .top10-date{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;flex-shrink:0;}
 
-.top10-carousel{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.top10-carousel{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:10px;}
+.top10-carousel .play-card{flex-shrink:0;width:calc(20% - 8px);min-width:260px;}
 
 .play-card{
   background:var(--surface);border:1px solid var(--border-f);
