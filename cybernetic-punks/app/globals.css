@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 html {
   scrollbar-width: thin;
@@ -10,11 +8,6 @@ html {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #ff0000; }
-
-body {
-  background: #020202;
-  overflow-x: hidden;
-}
 
 body::before {
   content: '';
