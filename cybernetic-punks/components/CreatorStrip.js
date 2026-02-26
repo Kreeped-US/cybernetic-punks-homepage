@@ -8,7 +8,7 @@ export default function CreatorStrip({ creators = [] }) {
       </div>
       <div className="flex gap-4 overflow-x-auto pb-2">
         {creators.map((c, i) => (
-          <div key={i} className="flex-shrink-0 w-48 border border-white/5 bg-white/[0.02] p-4 hover:border-red-600/30 transition-colors">
+          <div key={i} className="flex-shrink-0 w-48 border border-white/5 bg-white/[0.02] p-4 hover:border-red-600/40 hover:bg-white/[0.04] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
             <div className="flex items-center justify-between mb-2">
               <span className="font-mono text-[8px] tracking-widest" style={{ color: c.platform_color || '#888' }}>
                 {c.platform}

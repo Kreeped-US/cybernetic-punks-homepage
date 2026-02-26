@@ -1,4 +1,4 @@
-export default function NexusFeed({ items = [] }) {
+export default function NexusFeed({ items = [] }) {'use client';
   return (
     <section className="py-8 px-7">
       <div className="flex items-center gap-3 mb-6">
@@ -8,7 +8,7 @@ export default function NexusFeed({ items = [] }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {items.map((item, i) => (
-          <div key={i} className="border border-white/5 bg-white/[0.02] p-5 hover:border-cyan-400/20 transition-colors">
+          <div key={i} className="border border-white/5 bg-white/[0.02] p-5 hover:border-cyan-400/30 hover:bg-white/[0.04] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
             <div className="flex items-center gap-2 mb-3">
               <span className="font-mono text-[7px] tracking-widest text-cyan-400 border border-cyan-400/20 px-2 py-0.5">
                 {item.editor}
