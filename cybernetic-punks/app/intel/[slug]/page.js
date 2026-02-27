@@ -12,10 +12,11 @@ const EDITOR_STYLES = {
 };
 
 export async function generateMetadata({ params }) {
+  const { slug } = await params;
   const { data: item } = await supabase
     .from('feed_items')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
   if (!item) return { title: 'Intel Not Found | Cybernetic Punks' };
@@ -39,10 +40,11 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function IntelPage({ params }) {
+  const { slug } = await params;
   const { data: item } = await supabase
     .from('feed_items')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
   if (!item) notFound();
@@ -110,12 +112,8 @@ export default async function IntelPage({ params }) {
             </div>
           )}
         </div>
-        <a
-          href="/"
-          className="font-mono text-[9px] tracking-widest text-white/20 hover:text-red-600 transition-colors"
-        >
-          &larr; BACK TO THE GRID
-        </a>
+        
+        <a href="/" className="font-mono text-[9px] tracking-widest text-white/20 hover:text-red-600 transition-colors">{"← BACK TO THE GRID"}</a>
       </article>
       <Footer />
     </main>
