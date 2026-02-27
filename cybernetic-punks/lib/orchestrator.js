@@ -1,4 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
+function generateSlug(headline) {
+  return headline
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
+    .substring(0, 80);
+}
 import { callEditor } from './editorCore';
 
 const supabase = createClient(
@@ -107,6 +116,7 @@ async function cipherGradePlay(payload) {
     ce_score: result.ce_score,
     viral_score: payload.viral_score || 0,
     is_published: true,
+    slug: generateSlug(result.headline),
   }).select().single();
 
   await logEditorAction('CIPHER', 'GRADE_PLAY', `Graded ${title} — Runner Grade ${result.runner_grade}`, 'feed_item', feedItem.data?.id, result);
@@ -142,6 +152,7 @@ async function nexusGenerateFeed(payload) {
     ce_score: result.grid_pulse,
     viral_score: 0,
     is_published: true,
+    slug: generateSlug(result.headline),
   }).select().single();
 
   await logEditorAction('NEXUS', 'GENERATE_FEED', `Generated meta intel — Grid Pulse ${result.grid_pulse}`, 'feed_item', feedItem.data?.id, result);
@@ -176,6 +187,7 @@ async function ghostCommunityPulse(payload) {
     ce_score: 0,
     viral_score: 0,
     is_published: true,
+    slug: generateSlug(result.headline),
   }).select().single();
 
   await logEditorAction('GHOST', 'COMMUNITY_PULSE', `Published community pulse on: ${topic}`, 'feed_item', feedItem.data?.id, result);
@@ -214,6 +226,7 @@ async function dexterGradeBuild(payload) {
     ce_score: result.ce_score,
     viral_score: 0,
     is_published: true,
+    slug: generateSlug(result.headline),
   }).select().single();
 
   await logEditorAction('DEXTER', 'GRADE_BUILD', `Graded ${buildName} — Loadout Grade ${result.loadout_grade}`, 'feed_item', feedItem.data?.id, result);
