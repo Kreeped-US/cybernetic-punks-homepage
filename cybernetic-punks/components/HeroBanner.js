@@ -1,32 +1,28 @@
 export default function HeroBanner() {
   const cards = [
     {
-      label: 'VIRAL SCORE',
+      label: 'RUNNER GRADE',
+      editor: 'CIPHER',
+      color: '#ff0000',
+      example: 'S+',
+      suffix: ' TIER',
+      desc: 'CIPHER\'s competitive assessment of every play. Mechanical skill, strategic depth, and meta impact — ranked from D to S+.',
+    },
+    {
+      label: 'GRID PULSE',
+      editor: 'NEXUS',
       color: '#00f5ff',
       example: '9.4',
       suffix: '/ 10',
-      desc: 'Measures engagement velocity — views, shares, and discussion momentum across YouTube, Twitch, and X.',
+      desc: 'NEXUS rates how much a piece of intel actually shifts the meta. High pulse means the community needs to pay attention.',
     },
     {
-      label: 'CE SCORE',
-      color: '#ff0000',
-      example: '8.7',
-      suffix: '/ 10',
-      desc: 'Competitive Edge rating. Tracks mechanical skill, strategy depth, and how much a play shifts the meta.',
-    },
-    {
-      label: 'CIPHER RANK',
-      color: '#00ff88',
-      example: 'S+',
+      label: 'LOADOUT GRADE',
+      editor: 'DEXTER',
+      color: '#ff8800',
+      example: 'A',
       suffix: ' TIER',
-      desc: 'Composite intelligence rank combining Viral and CE scores. Only elite plays reach S tier.',
-    },
-    {
-      label: 'NEXUS FEED',
-      color: '#9b5de5',
-      example: '6H',
-      suffix: ' CYCLE',
-      desc: 'Live meta updates pulled every 6 hours by autonomous editors. No manual curation required.',
+      desc: 'DEXTER scores every build against the current meta. Know what\'s viable before you drop into Tau Ceti.',
     },
   ];
 
@@ -43,20 +39,23 @@ export default function HeroBanner() {
           THE <span className="text-red-600">NEON</span> GRID
         </h1>
         <p className="font-mono text-sm text-white/40 tracking-widest mb-10 max-w-xl mx-auto leading-relaxed">
-          CIPHER scores competitive plays. NEXUS tracks the meta. Five autonomous editors run 24/7 so you never miss what matters.
+          CIPHER grades competitive plays. NEXUS pulses the meta. DEXTER rates every build. Five autonomous editors. Zero downtime.
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto mb-10">
           {cards.map((card, i) => (
-            <div key={i} className="bg-white/[0.02] p-5 text-left hover:bg-white/[0.04] transition-all duration-200"
+            <div key={i} className="bg-white/[0.02] p-6 text-left hover:bg-white/[0.04] transition-all duration-200"
               style={{border: `1px solid ${card.color}30`}}
             >
-              <div className="font-mono text-[8px] font-black tracking-widest mb-3"
-                style={{color: card.color}}
-              >
-                {card.label}
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-mono text-[8px] font-black tracking-widest" style={{color: card.color}}>
+                  {card.label}
+                </div>
+                <div className="font-mono text-[7px] tracking-widest text-white/20 border border-white/10 px-2 py-0.5">
+                  {card.editor}
+                </div>
               </div>
               <div className="flex items-baseline gap-1 mb-3">
-                <span className="font-mono text-3xl font-black" style={{color: card.color}}>
+                <span className="font-mono text-4xl font-black" style={{color: card.color}}>
                   {card.example}
                 </span>
                 <span className="font-mono text-[9px] opacity-60" style={{color: card.color}}>
