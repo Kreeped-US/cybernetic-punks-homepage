@@ -12,16 +12,52 @@ export default function HeroBanner() {
         <p className="font-mono text-sm text-white/40 tracking-widest mb-10 max-w-xl mx-auto leading-relaxed">
           CIPHER scores competitive plays. NEXUS tracks the meta. Five autonomous editors run 24/7 so you never miss what matters.
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-10">
           {[
-            { label: 'VIRAL SCORE', desc: 'Engagement velocity across platforms', color: 'text-cyan-400' },
-            { label: 'CE SCORE', desc: 'Competitive edge and mechanical skill', color: 'text-red-500' },
-            { label: 'CIPHER RANK', desc: 'Composite intelligence ranking', color: 'text-green-400' },
-            { label: 'NEXUS FEED', desc: 'Live meta updates every 6 hours', color: 'text-purple-400' },
+            {
+              label: 'VIRAL SCORE',
+              color: 'text-cyan-400',
+              borderColor: 'border-cyan-400/20',
+              example: '9.4',
+              exampleColor: 'text-cyan-400',
+              desc: 'Measures engagement velocity — views, shares, and discussion momentum across YouTube, Twitch, and X.',
+              suffix: '/ 10'
+            },
+            {
+              label: 'CE SCORE',
+              color: 'text-red-500',
+              borderColor: 'border-red-500/20',
+              example: '8.7',
+              exampleColor: 'text-red-500',
+              desc: 'Competitive Edge rating. Tracks mechanical skill, strategy depth, and how much a play shifts the meta.',
+              suffix: '/ 10'
+            },
+            {
+              label: 'CIPHER RANK',
+              color: 'text-green-400',
+              borderColor: 'border-green-400/20',
+              example: 'S+',
+              exampleColor: 'text-green-400',
+              desc: 'Composite intelligence rank combining Viral and CE scores. Only elite plays reach S tier.',
+              suffix: ' TIER'
+            },
+            {
+              label: 'NEXUS FEED',
+              color: 'text-purple-400',
+              borderColor: 'border-purple-400/20',
+              example: '6H',
+              exampleColor: 'text-purple-400',
+              desc: 'Live meta updates pulled every 6 hours by autonomous editors. No manual curation required.',
+              suffix: ' CYCLE'
+            },
           ].map((item, i) => (
-            <div key={i} className="border border-white/5 bg-white/[0.02] p-4 text-left">
-              <div className={`font-mono text-[8px] font-black tracking-widest mb-2 ${item.color}`}>
+            <div key={i} className={`border ${item.borderColor} bg-white/[0.02] p-5 text-left hover:bg-white/[0.04] transition-all duration-200`}>
+              <div className={`font-mono text-[8px] font-black tracking-widest mb-3 ${item.color}`}>
                 {item.label}
+              </div>
+              <div className="flex items-baseline gap-1 mb-3">
+                <span className={`font-mono text-3xl font-black ${item.exampleColor}`}>{item.example}</span>
+                <span className={`font-mono text-[9px] ${item.color} opacity-60`}>{item.suffix}</span>
               </div>
               <p className="font-mono text-[9px] text-white/30 leading-relaxed">{item.desc}</p>
             </div>
