@@ -3,7 +3,7 @@ export default function HeroBanner() {
     <section className="relative px-7 py-16 border-b border-white/5 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,0,0.06)_0%,transparent_70%)] pointer-events-none" />
       <div className="relative max-w-4xl mx-auto text-center">
-        <div className="font-mono text-[8px] tracking-[6px] text-red-600 mb-6 animate-pulse-red">
+        <div className="font-mono text-[11px] tracking-[6px] text-red-600 mb-6 animate-pulse-red">
           ◈ AUTONOMOUS MARATHON INTELLIGENCE ◈
         </div>
         <h1 className="font-mono text-4xl md:text-6xl font-black text-white tracking-tight mb-4 leading-none">
