@@ -11,6 +11,7 @@ const EDITOR_STYLES = {
   DEXTER:  { color: '#ff8800', bg: 'rgba(255,136,0,0.1)',   symbol: '⬢' },
 };
 
+
 export default function NexusFeed({ items = [] }) {
   return (
     <section className="py-8 px-7">
