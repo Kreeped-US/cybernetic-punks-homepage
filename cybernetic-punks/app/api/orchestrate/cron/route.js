@@ -71,10 +71,11 @@ async function processEditor(editorName, prompt) {
 
 export async function GET(request) {
   try {
+    const isVercelCron = request.headers.get('x-vercel-cron') === '1';
     const authHeader = request.headers.get('authorization');
     const expectedKey = process.env.ORCHESTRATOR_SECRET || 'dev-secret';
 
-    if (authHeader !== 'Bearer ' + expectedKey) {
+    if (!isVercelCron && authHeader !== 'Bearer ' + expectedKey) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
