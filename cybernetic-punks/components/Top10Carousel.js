@@ -8,7 +8,13 @@ export default function Top10Carousel({ plays = [] }) {
       </div>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {plays.map((play, i) => (
-          <div key={i} className="flex-shrink-0 w-64 border border-white/5 bg-white/[0.02] hover:border-red-600/40 hover:bg-white/[0.04] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+          <a
+            key={i}
+            href={`https://www.youtube.com/watch?v=${play.youtube_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-shrink-0 w-64 border border-white/5 bg-white/[0.02] hover:border-red-600/40 hover:bg-white/[0.04] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer block"
+          >
             <div className="relative">
               <img
                 src={`https://img.youtube.com/vi/${play.youtube_id}/hqdefault.jpg`}
@@ -41,7 +47,7 @@ export default function Top10Carousel({ plays = [] }) {
                 </div>
               </div>
             </div>
-          </div>
+          </a>
         ))}
       </div>
     </section>
