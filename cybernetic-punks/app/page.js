@@ -1,4 +1,5 @@
 import HeroBanner from '@/components/HeroBanner';
+import DevTicker from '@/components/DevTicker';
 import WhatsNew from '@/components/WhatsNew';
 import MetaPreview from '@/components/MetaPreview';
 import BuildsSection from '@/components/BuildsSection';
@@ -11,7 +12,8 @@ import Footer from '@/components/Footer';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black text-white pt-14">
+    <main className="min-h-screen bg-black text-white pt-24">
+      <DevTicker />
       <HeroBanner />
       <WhatsNew />
       <MetaPreview />
