@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
+import { callEditor } from './editorCore';
+import { postTweet } from './twitter';
+
 function generateSlug(headline) {
   return headline
     .toLowerCase()
@@ -8,7 +11,6 @@ function generateSlug(headline) {
     .trim()
     .substring(0, 80);
 }
-import { callEditor } from './editorCore';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -34,6 +36,33 @@ async function queuePost(editor, platform, content, metadata = {}) {
     status: 'QUEUED',
     metadata,
   });
+}
+
+/**
+ * Publish a feed item to Supabase and auto-tweet it
+ * Called by all editor functions after generating content
+ */
+async function publishAndTweet(editor, insertData, logAction, logSummary, result) {
+  const feedItem = await supabase.from('feed_items').insert({
+    ...insertData,
+    is_published: true,
+    slug: generateSlug(insertData.headline),
+  }).select().single();
+
+  const item = feedItem.data;
+
+  // Log the editor action
+  await logEditorAction(editor, logAction, logSummary, 'feed_item', item?.id, result);
+
+  // Auto-tweet if the item was published successfully
+  if (item) {
+    const tweetId = await postTweet(item);
+    if (tweetId) {
+      await logEditorAction(editor, 'TWEET', `Tweeted: ${item.headline}`, 'feed_item', item.id, { tweet_id: tweetId });
+    }
+  }
+
+  return item;
 }
 
 export async function runTask(taskType, payload = {}) {
@@ -107,7 +136,7 @@ async function cipherGradePlay(payload) {
     }
   `);
 
-  const feedItem = await supabase.from('feed_items').insert({
+  await publishAndTweet('CIPHER', {
     headline: result.headline,
     body: result.body,
     editor: 'CIPHER',
@@ -115,11 +144,7 @@ async function cipherGradePlay(payload) {
     tags: result.tags,
     ce_score: result.ce_score,
     viral_score: payload.viral_score || 0,
-    is_published: true,
-    slug: generateSlug(result.headline),
-  }).select().single();
-
-  await logEditorAction('CIPHER', 'GRADE_PLAY', `Graded ${title} — Runner Grade ${result.runner_grade}`, 'feed_item', feedItem.data?.id, result);
+  }, 'GRADE_PLAY', `Graded ${title} — Runner Grade ${result.runner_grade}`, result);
 
   return result;
 }
@@ -143,7 +168,7 @@ async function nexusGenerateFeed(payload) {
     }
   `);
 
-  const feedItem = await supabase.from('feed_items').insert({
+  await publishAndTweet('NEXUS', {
     headline: result.headline,
     body: result.body,
     editor: 'NEXUS',
@@ -151,11 +176,7 @@ async function nexusGenerateFeed(payload) {
     tags: result.tags,
     ce_score: result.grid_pulse,
     viral_score: 0,
-    is_published: true,
-    slug: generateSlug(result.headline),
-  }).select().single();
-
-  await logEditorAction('NEXUS', 'GENERATE_FEED', `Generated meta intel — Grid Pulse ${result.grid_pulse}`, 'feed_item', feedItem.data?.id, result);
+  }, 'GENERATE_FEED', `Generated meta intel — Grid Pulse ${result.grid_pulse}`, result);
 
   return result;
 }
@@ -178,7 +199,7 @@ async function ghostCommunityPulse(payload) {
     }
   `);
 
-  const feedItem = await supabase.from('feed_items').insert({
+  await publishAndTweet('GHOST', {
     headline: result.headline,
     body: result.body,
     editor: 'GHOST',
@@ -186,11 +207,7 @@ async function ghostCommunityPulse(payload) {
     tags: result.tags,
     ce_score: 0,
     viral_score: 0,
-    is_published: true,
-    slug: generateSlug(result.headline),
-  }).select().single();
-
-  await logEditorAction('GHOST', 'COMMUNITY_PULSE', `Published community pulse on: ${topic}`, 'feed_item', feedItem.data?.id, result);
+  }, 'COMMUNITY_PULSE', `Published community pulse on: ${topic}`, result);
 
   return result;
 }
@@ -217,7 +234,7 @@ async function dexterGradeBuild(payload) {
     }
   `);
 
-  const feedItem = await supabase.from('feed_items').insert({
+  await publishAndTweet('DEXTER', {
     headline: result.headline,
     body: result.body,
     editor: 'DEXTER',
@@ -225,11 +242,7 @@ async function dexterGradeBuild(payload) {
     tags: result.tags,
     ce_score: result.ce_score,
     viral_score: 0,
-    is_published: true,
-    slug: generateSlug(result.headline),
-  }).select().single();
-
-  await logEditorAction('DEXTER', 'GRADE_BUILD', `Graded ${buildName} — Loadout Grade ${result.loadout_grade}`, 'feed_item', feedItem.data?.id, result);
+  }, 'GRADE_BUILD', `Graded ${buildName} — Loadout Grade ${result.loadout_grade}`, result);
 
   return result;
 }
