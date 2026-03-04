@@ -1,7 +1,7 @@
 'use client';
 
 export default function DiscordCTA() {
-  var discordUrl = 'https://discord.gg/YOUR-INVITE-CODE';
+  var discordUrl = 'https://discord.gg/fgxdSD7SJj';
 
   return (
     <section
