@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 // Hardcoded until meta_tiers Supabase table is built
 const META_TIERS = {
   S: [
@@ -86,127 +88,144 @@ export default function MetaPreview() {
             AUTO-UPDATED EVERY 6 HOURS
           </div>
         </div>
+        <Link
+          href="/meta"
+          style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 11,
+            color: '#00f5ff',
+            letterSpacing: 1,
+            textDecoration: 'none',
+            transition: 'opacity 0.2s',
+          }}
+          onMouseEnter={(e) => (e.target.style.opacity = '0.7')}
+          onMouseLeave={(e) => (e.target.style.opacity = '1')}
+        >
+          VIEW FULL TIER LIST →
+        </Link>
       </div>
 
       {/* Tier rows */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          flexDirection: 'column',
-        }}
-      >
-        {Object.entries(META_TIERS).map(([tier, items]) => {
-          const style = TIER_STYLES[tier];
-          return (
-            <div
-              key={tier}
-              style={{
-                display: 'flex',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
-              {/* Tier badge */}
+      <Link href="/meta" style={{ textDecoration: 'none' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 12,
+            flexDirection: 'column',
+          }}
+        >
+          {Object.entries(META_TIERS).map(([tier, items]) => {
+            const style = TIER_STYLES[tier];
+            return (
               <div
+                key={tier}
                 style={{
-                  width: 52,
-                  minHeight: 52,
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'Orbitron, monospace',
-                  fontSize: 22,
-                  fontWeight: 900,
-                  background: style.bg,
-                  color: style.color,
-                  borderRadius: 8,
-                  border: `1px solid ${style.border}`,
+                  gap: 12,
+                  alignItems: 'stretch',
                 }}
               >
-                {tier}
-              </div>
+                {/* Tier badge */}
+                <div
+                  style={{
+                    width: 52,
+                    minHeight: 52,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'Orbitron, monospace',
+                    fontSize: 22,
+                    fontWeight: 900,
+                    background: style.bg,
+                    color: style.color,
+                    borderRadius: 8,
+                    border: '1px solid ' + style.border,
+                  }}
+                >
+                  {tier}
+                </div>
 
-              {/* Items */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 10,
-                  flex: 1,
-                  flexWrap: 'wrap',
-                }}
-              >
-                {items.map((item, i) => {
-                  const trend = TREND_DISPLAY[item.trend];
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        flex: '1 1 200px',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: 8,
-                        padding: '14px 18px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor =
-                          'rgba(0,245,255,0.2)';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor =
-                          'rgba(255,255,255,0.06)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
+                {/* Items */}
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 10,
+                    flex: 1,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {items.map((item, i) => {
+                    const trend = TREND_DISPLAY[item.trend];
+                    return (
                       <div
+                        key={i}
                         style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
+                          flex: '1 1 200px',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: 8,
+                          padding: '14px 18px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor =
+                            'rgba(0,245,255,0.2)';
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor =
+                            'rgba(255,255,255,0.06)';
+                          e.currentTarget.style.transform = 'translateY(0)';
                         }}
                       >
-                        <span
+                        <div
                           style={{
-                            fontFamily: 'Orbitron, monospace',
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: '#fff',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
                           }}
                         >
-                          {item.name}
-                        </span>
-                        <span
+                          <span
+                            style={{
+                              fontFamily: 'Orbitron, monospace',
+                              fontSize: 14,
+                              fontWeight: 600,
+                              color: '#fff',
+                            }}
+                          >
+                            {item.name}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: 'Share Tech Mono, monospace',
+                              fontSize: 10,
+                              color: trend.color,
+                            }}
+                          >
+                            {trend.label}
+                          </span>
+                        </div>
+                        <div
                           style={{
                             fontFamily: 'Share Tech Mono, monospace',
                             fontSize: 10,
-                            color: trend.color,
+                            color: 'rgba(255,255,255,0.35)',
+                            marginTop: 6,
+                            letterSpacing: 1,
                           }}
                         >
-                          {trend.label}
-                        </span>
+                          {item.type.toUpperCase()}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          fontFamily: 'Share Tech Mono, monospace',
-                          fontSize: 10,
-                          color: 'rgba(255,255,255,0.35)',
-                          marginTop: 6,
-                          letterSpacing: 1,
-                        }}
-                      >
-                        {item.type.toUpperCase()}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </Link>
     </section>
   );
 }
