@@ -26,75 +26,6 @@ export const metadata = {
   },
 };
 
-const FEATURED_BUILDS = [
-  {
-    name: 'The Extractor',
-    grade: 'A',
-    style: 'Balanced',
-    desc: 'Get in, grab loot, get out alive. Built for consistency across all maps.',
-    weapons: ['Volt-9 SMG', 'Pulse Pistol'],
-    shell: 'Scout',
-    color: '#00ff88',
-    strengths: ['Fast extraction times', 'Good survivability', 'Works solo or team'],
-    weaknesses: ['Low burst damage', 'Loses 1v1 to aggressive builds'],
-  },
-  {
-    name: 'Glass Cannon',
-    grade: 'A-',
-    style: 'Aggressive',
-    desc: 'Maximum damage, minimum survivability. High risk, high reward on every run.',
-    weapons: ['Rail Rifle', 'Frag Launcher'],
-    shell: 'Striker',
-    color: '#ff0000',
-    strengths: ['Fastest TTK in the game', 'Wins almost every 1v1', 'Great for PvP zones'],
-    weaknesses: ['Dies fast to focus fire', 'Poor extraction survival', 'Expensive to lose'],
-  },
-  {
-    name: 'Rookie Runner',
-    grade: 'B+',
-    style: 'Beginner',
-    desc: "Forgiving loadout for your first dozen runs. You'll live longer than you expect.",
-    weapons: ['Auto Rifle', 'Sidearm'],
-    shell: 'Rook',
-    color: '#00f5ff',
-    strengths: ['Very forgiving', 'Cheap to replace', 'Good for learning maps'],
-    weaknesses: ['Low ceiling in PvP', 'Outscaled by A-tier builds', 'Limited utility'],
-  },
-  {
-    name: 'Zone Controller',
-    grade: 'A',
-    style: 'Support',
-    desc: 'Lock down areas with turrets and grenades. Your squad wins fights before they start.',
-    weapons: ['Pulse Rifle', 'Smoke Launcher'],
-    shell: 'Sentinel',
-    color: '#ff8800',
-    strengths: ['Best area denial in game', 'Forces enemies to rotate', 'Team force multiplier'],
-    weaknesses: ['Weak in open areas', 'Relies on team coordination', 'Slow repositioning'],
-  },
-  {
-    name: 'Silent Operator',
-    grade: 'B',
-    style: 'Stealth',
-    desc: 'Avoid every fight, grab high-value loot, extract before anyone knows you were there.',
-    weapons: ['Suppressed SMG', 'Scanner'],
-    shell: 'Wraith',
-    color: '#9b5de5',
-    strengths: ['Safest extraction rate', 'Can access contested loot', 'Zero noise signature'],
-    weaknesses: ['Cannot win direct fights', 'Useless if spotted', 'Slow loot speed'],
-  },
-  {
-    name: 'Heavy Hitter',
-    grade: 'B+',
-    style: 'Tank',
-    desc: 'Absorb damage and push through enemy positions. The frontline your team needs.',
-    weapons: ['Shotgun', 'LMG'],
-    shell: 'Rook',
-    color: '#ff0000',
-    strengths: ['Highest effective HP', 'Wins close range fights', 'Great point presence'],
-    weaknesses: ['Slow movement', 'Struggles at range', 'High gear cost per run'],
-  },
-];
-
 function getGradeColor(grade) {
   if (!grade) return '#ff8800';
   if (grade.startsWith('S')) return '#ff0000';
@@ -104,7 +35,25 @@ function getGradeColor(grade) {
 }
 
 export default async function BuildsPage() {
-  // Fetch recent DEXTER posts server-side
+  // Fetch live builds from Supabase
+  let builds = [];
+  let lastUpdated = null;
+
+  try {
+    const { data, error } = await supabase
+      .from('builds')
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      builds = data;
+      lastUpdated = new Date(data[0].updated_at);
+    }
+  } catch (err) {
+    console.error('BuildsPage fetch error:', err);
+  }
+
+  // Fetch recent DEXTER posts
   let recentBuilds = [];
   try {
     const { data } = await supabase
@@ -117,7 +66,7 @@ export default async function BuildsPage() {
 
     if (data) recentBuilds = data;
   } catch (err) {
-    console.error('BuildsPage fetch error:', err);
+    console.error('BuildsPage recent fetch error:', err);
   }
 
   return (
@@ -141,7 +90,7 @@ export default async function BuildsPage() {
             color: 'rgba(255,255,255,0.3)',
             letterSpacing: 1,
           }}>
-            GRADED BY DEXTER • UPDATED EVERY 6 HOURS
+            {lastUpdated ? 'LAST UPDATED ' + lastUpdated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : 'GRADED BY DEXTER • UPDATED EVERY 6 HOURS'}
           </div>
         </div>
         <p style={{
@@ -159,148 +108,174 @@ export default async function BuildsPage() {
 
       {/* Build cards grid */}
       <section style={{ maxWidth: 1200, margin: '0 auto 64px', padding: '0 24px' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 16,
-        }}>
-          {FEATURED_BUILDS.map((build, i) => {
-            const gradeColor = getGradeColor(build.grade);
-            return (
-              <div
-                key={i}
-                style={{
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 10,
-                  padding: 24,
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Top accent */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 2,
-                  background: 'linear-gradient(90deg, ' + build.color + '44, transparent)',
-                }} />
+        {builds.length === 0 ? (
+          <div style={{
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: 10,
+            padding: '48px 28px',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontFamily: 'Share Tech Mono, monospace',
+              fontSize: 12,
+              color: 'rgba(255,255,255,0.25)',
+              letterSpacing: 1,
+            }}>
+              BUILD DATA LOADING • CHECK BACK SHORTLY
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 16,
+          }}>
+            {builds.map((build, i) => {
+              const gradeColor = getGradeColor(build.grade);
+              const buildColor = build.color || '#ff8800';
+              return (
+                <div
+                  key={i}
+                  style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 10,
+                    padding: 24,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Top accent */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    background: 'linear-gradient(90deg, ' + buildColor + '44, transparent)',
+                  }} />
 
-                {/* Header row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div>
-                    <div style={{
-                      fontFamily: 'Share Tech Mono, monospace',
-                      fontSize: 10,
-                      color: build.color,
-                      letterSpacing: 2,
-                      marginBottom: 4,
-                    }}>
-                      {build.style.toUpperCase()} LOADOUT • {build.shell.toUpperCase()} SHELL
+                  {/* Header row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <div>
+                      <div style={{
+                        fontFamily: 'Share Tech Mono, monospace',
+                        fontSize: 10,
+                        color: buildColor,
+                        letterSpacing: 2,
+                        marginBottom: 4,
+                      }}>
+                        {build.style.toUpperCase()} LOADOUT{build.shell ? ' • ' + build.shell.toUpperCase() + ' SHELL' : ''}
+                      </div>
+                      <div style={{
+                        fontFamily: 'Orbitron, monospace',
+                        fontSize: 20,
+                        fontWeight: 700,
+                        color: '#fff',
+                      }}>
+                        {build.name}
+                      </div>
                     </div>
                     <div style={{
                       fontFamily: 'Orbitron, monospace',
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: '#fff',
+                      fontSize: 22,
+                      fontWeight: 900,
+                      color: gradeColor,
+                      background: gradeColor + '15',
+                      borderRadius: 6,
+                      padding: '6px 14px',
+                      border: '1px solid ' + gradeColor + '33',
                     }}>
-                      {build.name}
+                      {build.grade}
                     </div>
                   </div>
-                  <div style={{
-                    fontFamily: 'Orbitron, monospace',
-                    fontSize: 22,
-                    fontWeight: 900,
-                    color: gradeColor,
-                    background: gradeColor + '15',
-                    borderRadius: 6,
-                    padding: '6px 14px',
-                    border: '1px solid ' + gradeColor + '33',
+
+                  {/* Description */}
+                  <p style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: 14,
+                    color: 'rgba(255,255,255,0.5)',
+                    margin: '0 0 16px',
+                    lineHeight: 1.5,
                   }}>
-                    {build.grade}
-                  </div>
-                </div>
+                    {build.description}
+                  </p>
 
-                {/* Description */}
-                <p style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: 14,
-                  color: 'rgba(255,255,255,0.5)',
-                  margin: '0 0 16px',
-                  lineHeight: 1.5,
-                }}>
-                  {build.desc}
-                </p>
-
-                {/* Weapons */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                  {build.weapons.map((w, j) => (
-                    <span key={j} style={{
-                      fontFamily: 'Share Tech Mono, monospace',
-                      fontSize: 10,
-                      letterSpacing: 1,
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: 4,
-                      padding: '4px 10px',
-                      color: 'rgba(255,255,255,0.5)',
-                    }}>
-                      {w}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Strengths + Weaknesses */}
-                <div style={{ display: 'flex', gap: 20 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontFamily: 'Share Tech Mono, monospace',
-                      fontSize: 9,
-                      color: '#00ff88',
-                      letterSpacing: 2,
-                      marginBottom: 6,
-                    }}>
-                      STRENGTHS
+                  {/* Weapons */}
+                  {build.weapons && build.weapons.length > 0 && (
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                      {build.weapons.map((w, j) => (
+                        <span key={j} style={{
+                          fontFamily: 'Share Tech Mono, monospace',
+                          fontSize: 10,
+                          letterSpacing: 1,
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: 4,
+                          padding: '4px 10px',
+                          color: 'rgba(255,255,255,0.5)',
+                        }}>
+                          {w}
+                        </span>
+                      ))}
                     </div>
-                    {build.strengths.map((s, j) => (
-                      <div key={j} style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: 12,
-                        color: 'rgba(255,255,255,0.35)',
-                        lineHeight: 1.6,
-                      }}>
-                        + {s}
+                  )}
+
+                  {/* Strengths + Weaknesses */}
+                  <div style={{ display: 'flex', gap: 20 }}>
+                    {build.strengths && build.strengths.length > 0 && (
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontFamily: 'Share Tech Mono, monospace',
+                          fontSize: 9,
+                          color: '#00ff88',
+                          letterSpacing: 2,
+                          marginBottom: 6,
+                        }}>
+                          STRENGTHS
+                        </div>
+                        {build.strengths.map((s, j) => (
+                          <div key={j} style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: 12,
+                            color: 'rgba(255,255,255,0.35)',
+                            lineHeight: 1.6,
+                          }}>
+                            + {s}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontFamily: 'Share Tech Mono, monospace',
-                      fontSize: 9,
-                      color: '#ff0000',
-                      letterSpacing: 2,
-                      marginBottom: 6,
-                    }}>
-                      WEAKNESSES
-                    </div>
-                    {build.weaknesses.map((w, j) => (
-                      <div key={j} style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: 12,
-                        color: 'rgba(255,255,255,0.35)',
-                        lineHeight: 1.6,
-                      }}>
-                        - {w}
+                    )}
+                    {build.weaknesses && build.weaknesses.length > 0 && (
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontFamily: 'Share Tech Mono, monospace',
+                          fontSize: 9,
+                          color: '#ff0000',
+                          letterSpacing: 2,
+                          marginBottom: 6,
+                        }}>
+                          WEAKNESSES
+                        </div>
+                        {build.weaknesses.map((w, j) => (
+                          <div key={j} style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: 12,
+                            color: 'rgba(255,255,255,0.35)',
+                            lineHeight: 1.6,
+                          }}>
+                            - {w}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Recent DEXTER intel */}
