@@ -1,6 +1,7 @@
 import { callEditor } from '@/lib/editorCore';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
+import { postTweet } from '@/lib/twitter';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -46,15 +47,29 @@ async function processEditor(editorName, prompt) {
     if (editorName === 'CIPHER') insertData.ce_score = result.ce_score || 0;
     if (editorName === 'NEXUS') insertData.ce_score = result.grid_pulse || 0;
     if (editorName === 'DEXTER') insertData.ce_score = result.ce_score || 0;
-    if (editorName === 'GHOST') insertData.source = 'REDDIT';
+    if (editorName === 'GHOST') {
+      insertData.source = 'REDDIT';
+      insertData.ce_score = result.mood_score || 0;
+    }
 
-    const { error } = await supabase.from('feed_items').insert(insertData).select().single();
+    const { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
 
     if (error) {
       return { editor: editorName, success: false, error: error.message };
     }
 
-    return { editor: editorName, success: true, headline: result.headline };
+    // Auto-tweet the published item
+    let tweetId = null;
+    if (feedItem) {
+      tweetId = await postTweet(feedItem);
+    }
+
+    return {
+      editor: editorName,
+      success: true,
+      headline: result.headline,
+      tweeted: tweetId ? true : false,
+    };
 
   } catch (err) {
     return { editor: editorName, success: false, error: err.message };

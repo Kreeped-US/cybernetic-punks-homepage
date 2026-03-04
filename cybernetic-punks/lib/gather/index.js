@@ -1,4 +1,5 @@
 import { gatherYouTube, formatForEditor } from './youtube';
+import { gatherReddit, formatForGhost } from './reddit';
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
@@ -6,17 +7,14 @@ export async function gatherAll() {
   const youtubeVideos = await gatherYouTube();
   console.log('[GATHER] YouTube: ' + youtubeVideos.length + ' videos collected');
 
-  // Reddit placeholder - will feed GHOST when wired up
-  // const redditPosts = await gatherReddit();
-
-  // Bungie official placeholder - will supplement NEXUS when wired up
-  // const bungieNews = await gatherBungie();
+  const redditPosts = await gatherReddit();
+  console.log('[GATHER] Reddit: ' + redditPosts.length + ' posts collected');
 
   const prompts = {
     CIPHER: formatForEditor(youtubeVideos, 'CIPHER'),
     NEXUS: formatForEditor(youtubeVideos, 'NEXUS'),
     DEXTER: formatForEditor(youtubeVideos, 'DEXTER'),
-    GHOST: null,
+    GHOST: formatForGhost(redditPosts),
   };
 
   const active = Object.entries(prompts).filter(([, v]) => v !== null).map(([k]) => k);
