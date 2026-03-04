@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
-  const links = ['Home','Builds','Community','Vault','Media'];
+  const links = ['Home','Builds','What\'s Meta','Editors','Discord'];
   const href = n => n === 'Home' ? '/' : `/${n.toLowerCase()}`;
 
   return (
