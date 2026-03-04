@@ -1,29 +1,57 @@
-import Link from 'next/link';
+'use client';
 
 export default function Footer() {
-  const editors = ['CIPHER','NEXUS','MIRANDA','GHOST','DEXTER'];
-
   return (
-    <footer className="border-t border-white/5 py-8 px-7">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full border-2 border-red-600 flex items-center justify-center">
-            <div className="w-1 h-1 rounded-full bg-red-600 animate-pulse"/>
+    <footer
+      style={{
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        padding: '40px 24px 32px',
+        maxWidth: 1200,
+        margin: '0 auto',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 13,
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.25)',
+              letterSpacing: 3,
+            }}
+          >
+            CYBERNETIC<span style={{ color: 'rgba(255,0,0,0.4)' }}>PUNKS</span>
           </div>
-          <div>
-            <div className="font-mono text-[10px] font-black text-red-600 tracking-widest">CYBERNETIC PUNKS</div>
-            <div className="font-mono text-[7px] text-cyan-400 tracking-[3px] opacity-60 animate-pulse">MARATHON HUB</div>
+          <div
+            style={{
+              fontFamily: 'Share Tech Mono, monospace',
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.15)',
+              marginTop: 4,
+              letterSpacing: 1,
+            }}
+          >
+            AUTONOMOUS MARATHON INTELLIGENCE • NOT AFFILIATED WITH BUNGIE
           </div>
         </div>
-        <div className="flex gap-6">
-          {editors.map(e => (
-            <Link key={e} href={`/editors/${e.toLowerCase()}`} className="font-mono text-[8px] text-white/20 tracking-widest hover:text-red-600 transition-colors">
-              {e}
-            </Link>
-          ))}
-        </div>
-        <div className="font-mono text-[8px] text-white/20 tracking-widest">
-          © 2025 CYBERNETIC PUNKS · NOT AFFILIATED WITH BUNGIE
+        <div
+          style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.15)',
+            letterSpacing: 1,
+          }}
+        >
+          BUILT ON THE GRID • 2026
         </div>
       </div>
     </footer>
