@@ -1,6 +1,8 @@
 // lib/gather/youtube.js
 // Fetches latest Marathon-related videos from YouTube Data API v3
-// Used by the cron to feed real data to CIPHER and DEXTER
+// Now includes auto-generated transcript fetching for CIPHER analysis
+
+import { fetchTranscripts } from './transcript.js';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
@@ -15,7 +17,7 @@ const SEARCH_QUERIES = [
 
 /**
  * Fetch latest Marathon videos from YouTube
- * Returns an array of video objects with title, channel, description, stats, etc.
+ * Returns an array of video objects with title, channel, description, stats, and transcripts
  */
 export async function gatherYouTube() {
   const apiKey = process.env.YOUTUBE_API_KEY;
@@ -95,6 +97,7 @@ export async function gatherYouTube() {
           comment_count: stats.commentCount || 0,
           duration: parseDuration(stats.duration || 'PT0S'),
           query_source: query,
+          transcript: null, // Will be populated below
         });
       }
     }
@@ -110,6 +113,19 @@ export async function gatherYouTube() {
     // Sort by view count (most popular first)
     unique.sort((a, b) => b.view_count - a.view_count);
 
+    // Fetch transcripts for top 5 videos
+    const top5Ids = unique.slice(0, 5).map(v => v.youtube_id);
+    if (top5Ids.length > 0) {
+      const transcriptMap = await fetchTranscripts(top5Ids);
+
+      // Attach transcripts to video objects
+      for (const video of unique) {
+        if (transcriptMap[video.youtube_id]) {
+          video.transcript = transcriptMap[video.youtube_id];
+        }
+      }
+    }
+
     console.log(`[GATHER:YOUTUBE] Found ${unique.length} unique Marathon videos`);
     return unique;
 
@@ -122,33 +138,54 @@ export async function gatherYouTube() {
 /**
  * Format gathered videos into a text summary for an editor to analyze
  * Each editor gets a different framing of the same data
+ * CIPHER now gets full transcripts when available
  */
 export function formatForEditor(videos, editor) {
   if (!videos.length) return null;
 
   const videoSummaries = videos.slice(0, 5).map((v, i) => {
-    return `${i + 1}. "${v.title}" by ${v.channel}
+    let summary = `${i + 1}. "${v.title}" by ${v.channel}
    Views: ${v.view_count.toLocaleString()} | Likes: ${v.like_count.toLocaleString()} | Comments: ${v.comment_count.toLocaleString()}
    Duration: ${v.duration}
    Description: ${v.description.slice(0, 200)}
    YouTube ID: ${v.youtube_id}`;
+
+    // Include transcript for CIPHER if available
+    if (editor === 'CIPHER' && v.transcript) {
+      summary += `\n   TRANSCRIPT:\n   ${v.transcript}`;
+    }
+
+    // Note when transcript is missing for CIPHER
+    if (editor === 'CIPHER' && !v.transcript) {
+      summary += `\n   TRANSCRIPT: Not available — grade based on metadata only`;
+    }
+
+    return summary;
   }).join('\n\n');
 
   switch (editor) {
     case 'CIPHER':
-      return `Here are the latest Marathon gameplay videos trending on YouTube. Analyze the most noteworthy one for competitive play quality. Grade the play and creator.
+      return `Here are the latest Marathon gameplay videos trending on YouTube. Some include full auto-generated transcripts of creator narration. Use the transcript to analyze actual gameplay decisions, mechanical skill, and strategic thinking when available.
 
 ${videoSummaries}
 
-Pick the video that demonstrates the highest competitive skill or most interesting strategic play. Respond with JSON:
+Pick the video that demonstrates the highest competitive skill or most interesting strategic play. If a transcript is available, use it to analyze specific moments, decisions, and skill demonstrations. If no transcript is available, grade conservatively based on metadata alone.
+
+Respond with JSON:
 {
   "runner_grade": "S+|S|A|B|C|D",
+  "grade_confidence": "high|medium|low",
   "headline": "punchy editorial headline under 80 chars",
   "body": "2-3 sentence CIPHER analysis of why this play earned this grade",
   "ce_score": 0.0-10.0,
   "tags": ["TAG1", "TAG2"],
   "source_video_id": "the youtube_id you analyzed"
-}`;
+}
+
+grade_confidence rules:
+- "high" = transcript was available and you analyzed actual gameplay narration
+- "medium" = partial transcript or short/unclear narration
+- "low" = no transcript, grading from metadata only — do NOT give S or S+ with low confidence`;
 
     case 'DEXTER':
       return `Here are the latest Marathon build and loadout videos on YouTube. Analyze the most interesting build or loadout discussion.
