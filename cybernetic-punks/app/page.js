@@ -1,8 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import HeroBanner from '@/components/HeroBanner';
+import WhatsNew from '@/components/WhatsNew';
 import CreatorStrip from '@/components/CreatorStrip';
-import NexusFeed from '@/components/NexusFeed';
 import Top10Carousel from '@/components/Top10Carousel';
+import NexusFeed from '@/components/NexusFeed';
+import CommunityPulse from '@/components/CommunityPulse';
 import DiscordBar from '@/components/DiscordBar';
 import Footer from '@/components/Footer';
 
@@ -26,9 +28,11 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-black text-white pt-14">
       <HeroBanner />
+      <WhatsNew />
       <CreatorStrip creators={creators} />
       <Top10Carousel plays={plays} />
       <NexusFeed items={feedItems} />
+      <CommunityPulse />
       <DiscordBar />
       <Footer />
     </main>
