@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import HeroBanner from '@/components/HeroBanner';
 import WhatsNew from '@/components/WhatsNew';
+import MetaPreview from '@/components/MetaPreview';
+import BuildsSection from '@/components/BuildsSection';
 import CreatorStrip from '@/components/CreatorStrip';
 import Top10Carousel from '@/components/Top10Carousel';
 import NexusFeed from '@/components/NexusFeed';
@@ -29,6 +31,8 @@ export default async function Home() {
     <main className="min-h-screen bg-black text-white pt-14">
       <HeroBanner />
       <WhatsNew />
+      <MetaPreview />
+      <BuildsSection />
       <CreatorStrip creators={creators} />
       <Top10Carousel plays={plays} />
       <NexusFeed items={feedItems} />
