@@ -7,14 +7,44 @@ const mono = Share_Tech_Mono({ weight: '400', subsets: ['latin'], variable: '--f
 const rajdhani = Rajdhani({ subsets: ['latin'], weight: ['300','400','500','600','700'] });
 
 export const metadata = {
-  title: 'Cybernetic Punks | Marathon Intelligence Hub',
-  description: 'Autonomous Marathon intelligence. Daily competitive plays, creator tracking, and Cipher scoring.',
-  openGraph: {
-    title: 'Cybernetic Punks | Marathon Hub',
-    description: 'Cipher-ranked plays. Creator intelligence. Tau Ceti meta.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+  metadataBase: new URL('https://cyberneticpunks.com'),
+  title: {
+    default: 'CyberneticPunks — Marathon Intelligence Hub',
+    template: '%s | CyberneticPunks',
   },
-  twitter: { card: 'summary_large_image', images: ['/og-image.png'] },
+  description: 'Know what works before you drop in. AI-powered Marathon meta tracking, build analysis, and competitive play grades — updated every 6 hours.',
+  keywords: ['Marathon', 'Marathon game', 'Marathon builds', 'Marathon meta', 'Marathon loadouts', 'Marathon tier list', 'Bungie Marathon', 'extraction shooter', 'Marathon guide', 'Marathon tips'],
+  authors: [{ name: 'CyberneticPunks' }],
+  creator: 'CyberneticPunks',
+  openGraph: {
+    title: 'CyberneticPunks — Marathon Intelligence Hub',
+    description: 'Know what works before you drop in. AI-powered meta tracking, build analysis, and competitive play grades.',
+    url: 'https://cyberneticpunks.com',
+    siteName: 'CyberneticPunks',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'CyberneticPunks — Marathon Intelligence Hub' }],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CyberneticPunks — Marathon Intelligence Hub',
+    description: 'Know what works before you drop in. AI-powered meta tracking, build analysis, and play grades.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://cyberneticpunks.com',
+  },
 };
 
 export default function RootLayout({ children }) {

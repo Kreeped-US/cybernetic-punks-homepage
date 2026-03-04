@@ -19,22 +19,26 @@ export async function generateMetadata({ params }) {
     .eq('slug', slug)
     .single();
 
-  if (!item) return { title: 'Intel Not Found | Cybernetic Punks' };
+  if (!item) return { title: 'Intel Not Found' };
 
   return {
-    title: `${item.headline} | Cybernetic Punks`,
+    title: item.headline,
     description: item.body,
     openGraph: {
       title: item.headline,
       description: item.body,
       url: `https://cyberneticpunks.com/intel/${item.slug}`,
-      siteName: 'Cybernetic Punks',
+      siteName: 'CyberneticPunks',
       type: 'article',
+      publishedTime: item.created_at,
     },
     twitter: {
       card: 'summary_large_image',
       title: item.headline,
       description: item.body,
+    },
+    alternates: {
+      canonical: `https://cyberneticpunks.com/intel/${item.slug}`,
     },
   };
 }
@@ -54,9 +58,39 @@ export default async function IntelPage({ params }) {
     year: 'numeric', month: 'long', day: 'numeric'
   });
 
+  // JSON-LD Article schema for search engines
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: item.headline,
+    description: item.body,
+    author: {
+      '@type': 'Organization',
+      name: `CyberneticPunks ${item.editor}`,
+      url: 'https://cyberneticpunks.com',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'CyberneticPunks',
+      url: 'https://cyberneticpunks.com',
+    },
+    datePublished: item.created_at,
+    dateModified: item.created_at,
+    url: `https://cyberneticpunks.com/intel/${item.slug}`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://cyberneticpunks.com/intel/${item.slug}`,
+    },
+    keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',
+  };
+
   return (
     <main className="min-h-screen bg-black text-white pt-16">
       <Nav />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <article className="max-w-3xl mx-auto px-7 py-16">
         <div className="flex items-center gap-3 mb-8">
           <div
