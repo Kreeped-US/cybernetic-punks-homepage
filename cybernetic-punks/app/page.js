@@ -4,6 +4,7 @@ import WhatsNew from '@/components/WhatsNew';
 import MetaPreview from '@/components/MetaPreview';
 import BuildsSection from '@/components/BuildsSection';
 import TopPlays from '@/components/TopPlays';
+import TwitchLive from '@/components/TwitchLive';
 import CommunityPulse from '@/components/CommunityPulse';
 import IntelFeed from '@/components/IntelFeed';
 import EditorsStrip from '@/components/EditorsStrip';
@@ -19,6 +20,7 @@ export default function Home() {
       <MetaPreview />
       <BuildsSection />
       <TopPlays />
+      <TwitchLive />
       <CommunityPulse />
       <IntelFeed />
       <EditorsStrip />
