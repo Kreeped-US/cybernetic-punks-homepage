@@ -2,19 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-// Fallback data in case Supabase has no CIPHER posts yet
 const FALLBACK_PLAYS = [
-  { headline: 'Aztecross 1v3 Extract Clutch', tags: ['S+'], source: '' },
-  { headline: 'Pewpewchew Solo Wipe Squad', tags: ['S'], source: '' },
-  { headline: 'Datto Perfect Extraction Run', tags: ['A+'], source: '' },
-  { headline: 'Mtashed Sniper Montage', tags: ['A'], source: '' },
-  { headline: 'Fallout Plays Guide Highlights', tags: ['A'], source: '' },
+  { headline: 'Aztecross 1v3 Extract Clutch', tags: ['S+'], source: '', slug: '' },
+  { headline: 'Pewpewchew Solo Wipe Squad', tags: ['S'], source: '', slug: '' },
+  { headline: 'Datto Perfect Extraction Run', tags: ['A+'], source: '', slug: '' },
+  { headline: 'Mtashed Sniper Montage', tags: ['A'], source: '', slug: '' },
+  { headline: 'Fallout Plays Guide Highlights', tags: ['A'], source: '', slug: '' },
 ];
 
 function getGradeColor(grade) {
@@ -98,6 +98,21 @@ export default function TopPlays() {
             RANKED BY CIPHER • WATCH AND LEARN
           </div>
         </div>
+        <Link
+          href="/intel/cipher"
+          style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 11,
+            color: '#ff0000',
+            letterSpacing: 1,
+            textDecoration: 'none',
+            transition: 'opacity 0.2s',
+          }}
+          onMouseEnter={(e) => (e.target.style.opacity = '0.7')}
+          onMouseLeave={(e) => (e.target.style.opacity = '1')}
+        >
+          VIEW ALL PLAYS →
+        </Link>
       </div>
 
       {/* Horizontal scroll */}
@@ -114,9 +129,13 @@ export default function TopPlays() {
             play.tags && play.tags.length > 0 ? play.tags[0] : '';
           const gradeColor = getGradeColor(grade);
 
+          // Link to the intel article if slug exists, otherwise to /intel/cipher
+          const cardHref = play.slug ? '/intel/' + play.slug : '/intel/cipher';
+
           return (
-            <div
+            <Link
               key={i}
+              href={cardHref}
               style={{
                 minWidth: 210,
                 background: 'rgba(255,255,255,0.02)',
@@ -126,6 +145,8 @@ export default function TopPlays() {
                 cursor: 'pointer',
                 transition: 'all 0.3s',
                 flexShrink: 0,
+                textDecoration: 'none',
+                display: 'block',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = gradeColor + '44';
@@ -193,25 +214,6 @@ export default function TopPlays() {
 
               {/* YouTube link */}
               {play.source ? (
-                <a
-                  href={play.source}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    marginTop: 14,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontFamily: 'Share Tech Mono, monospace',
-                    fontSize: 10,
-                    color: 'rgba(255,255,255,0.25)',
-                    letterSpacing: 1,
-                    textDecoration: 'none',
-                  }}
-                >
-                  <span style={{ fontSize: 14 }}>▶</span> WATCH ON YOUTUBE
-                </a>
-              ) : (
                 <div
                   style={{
                     marginTop: 14,
@@ -226,8 +228,23 @@ export default function TopPlays() {
                 >
                   <span style={{ fontSize: 14 }}>▶</span> WATCH ON YOUTUBE
                 </div>
+              ) : (
+                <div
+                  style={{
+                    marginTop: 14,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: 'Share Tech Mono, monospace',
+                    fontSize: 10,
+                    color: 'rgba(255,255,255,0.25)',
+                    letterSpacing: 1,
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>→</span> READ ANALYSIS
+                </div>
               )}
-            </div>
+            </Link>
           );
         })}
       </div>
