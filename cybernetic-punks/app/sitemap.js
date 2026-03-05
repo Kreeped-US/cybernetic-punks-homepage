@@ -1,6 +1,3 @@
-// app/sitemap.js
-// Dynamic sitemap for search engines — pulls all published intel pages from Supabase
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -11,36 +8,38 @@ const supabase = createClient(
 export default async function sitemap() {
   const baseUrl = 'https://cyberneticpunks.com';
 
-  // Static pages
   const staticPages = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'hourly',
-      priority: 1.0,
-    },
+    { url: baseUrl, lastModified: new Date(), changeFrequency: 'hourly', priority: 1 },
+    { url: baseUrl + '/meta', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: baseUrl + '/builds', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: baseUrl + '/editors', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: baseUrl + '/rising', lastModified: new Date(), changeFrequency: 'hourly', priority: 0.7 },
+    { url: baseUrl + '/intel/cipher', lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: baseUrl + '/intel/nexus', lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: baseUrl + '/intel/dexter', lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: baseUrl + '/intel/ghost', lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: baseUrl + '/intel/miranda', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
   ];
 
-  // Dynamic intel pages from Supabase
-  let intelPages = [];
+  let dynamicPages = [];
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('feed_items')
       .select('slug, created_at')
       .eq('is_published', true)
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      intelPages = data.map((item) => ({
-        url: `${baseUrl}/intel/${item.slug}`,
+    if (data) {
+      dynamicPages = data.map((item) => ({
+        url: baseUrl + '/intel/' + item.slug,
         lastModified: new Date(item.created_at),
         changeFrequency: 'weekly',
-        priority: 0.8,
+        priority: 0.7,
       }));
     }
   } catch (err) {
-    console.error('[SITEMAP] Error fetching feed_items:', err.message);
+    console.error('Sitemap fetch error:', err);
   }
 
-  return [...staticPages, ...intelPages];
+  return [...staticPages, ...dynamicPages];
 }

@@ -1,32 +1,37 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 
-export default function TwitchLive() {
-  const [streamers, setStreamers] = useState([]);
+export default function RisingRunners() {
+  const [runners, setRunners] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchLive() {
+    async function fetchRunners() {
       try {
         const res = await fetch('/api/twitch-live');
         if (!res.ok) return;
         const data = await res.json();
         if (data.streamers && data.streamers.length > 0) {
-          setStreamers(data.streamers);
+          // Filter to smaller streamers (under 100 viewers)
+          // Sort by viewer count ascending so the smallest get featured first
+          const rising = data.streamers
+            .filter((s) => s.viewer_count < 100)
+            .sort((a, b) => a.viewer_count - b.viewer_count);
+          setRunners(rising.slice(0, 6));
         }
       } catch (err) {
-        console.log('[TwitchLive] Fetch error:', err.message);
+        console.log('[RisingRunners] Fetch error:', err.message);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchLive();
+    fetchRunners();
   }, []);
 
-  if (!loading && streamers.length === 0) return null;
+  // Don't show if nobody qualifies
+  if (!loading && runners.length === 0) return null;
 
   return (
     <section
@@ -59,18 +64,7 @@ export default function TwitchLive() {
               gap: 10,
             }}
           >
-            <span
-              style={{
-                display: 'inline-block',
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: '#ff0000',
-                boxShadow: '0 0 8px #ff0000',
-                animation: 'pulse-glow 2s ease-in-out infinite',
-              }}
-            />
-            LIVE NOW
+            <span style={{ color: '#00ff88' }}>◇</span> RISING RUNNERS
           </h2>
           <div
             style={{
@@ -81,42 +75,26 @@ export default function TwitchLive() {
               marginTop: 4,
             }}
           >
-            MARATHON STREAMERS ON TWITCH • {streamers.length} LIVE
+            UP-AND-COMING MARATHON STREAMERS • SUPPORT THE GRIND
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'baseline' }}>
-          <Link
-            href="/rising"
-            style={{
-              fontFamily: 'Share Tech Mono, monospace',
-              fontSize: 11,
-              color: '#00ff88',
-              letterSpacing: 1,
-              textDecoration: 'none',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            RISING RUNNERS →
-          </Link>
-          <a
-            href="https://www.twitch.tv/directory/game/Marathon"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontFamily: 'Share Tech Mono, monospace',
-              fontSize: 11,
-              color: '#9b5de5',
-              letterSpacing: 1,
-              textDecoration: 'none',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            VIEW ALL ON TWITCH →
-          </a>
-        </div>
+        <a
+          href="https://www.twitch.tv/directory/game/Marathon"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 11,
+            color: '#00ff88',
+            letterSpacing: 1,
+            textDecoration: 'none',
+            transition: 'opacity 0.2s',
+          }}
+        >
+          BROWSE ALL ON TWITCH →
+        </a>
       </div>
 
-      {/* Streamer cards */}
       {loading ? (
         <div
           style={{
@@ -127,33 +105,29 @@ export default function TwitchLive() {
             padding: '24px 0',
           }}
         >
-          SCANNING TWITCH...
+          SCANNING FOR RISING RUNNERS...
         </div>
       ) : (
         <div
           style={{
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 14,
-            overflowX: 'auto',
-            paddingBottom: 8,
           }}
         >
-          {streamers.map((streamer, i) => (
+          {runners.map((runner, i) => (
             <a
               key={i}
-              href={streamer.stream_url}
+              href={runner.stream_url}
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                minWidth: 220,
-                maxWidth: 260,
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(155,93,229,0.15)',
+                background: 'rgba(0,255,136,0.02)',
+                border: '1px solid rgba(0,255,136,0.08)',
                 borderRadius: 10,
                 overflow: 'hidden',
                 cursor: 'pointer',
                 transition: 'all 0.3s',
-                flexShrink: 0,
                 textDecoration: 'none',
                 display: 'block',
               }}
@@ -162,14 +136,14 @@ export default function TwitchLive() {
               <div
                 style={{
                   width: '100%',
-                  height: 124,
-                  background: streamer.thumbnail_url
-                    ? 'url(' + streamer.thumbnail_url + ') center/cover no-repeat'
-                    : 'linear-gradient(135deg, rgba(155,93,229,0.2), rgba(0,0,0,0.8))',
+                  height: 140,
+                  background: runner.thumbnail_url
+                    ? 'url(' + runner.thumbnail_url + ') center/cover no-repeat'
+                    : 'linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,0,0,0.8))',
                   position: 'relative',
                 }}
               >
-                {/* LIVE badge */}
+                {/* RISING badge */}
                 <div
                   style={{
                     position: 'absolute',
@@ -178,26 +152,14 @@ export default function TwitchLive() {
                     fontFamily: 'Orbitron, monospace',
                     fontSize: 9,
                     fontWeight: 700,
-                    color: '#fff',
-                    background: '#ff0000',
+                    color: '#000',
+                    background: '#00ff88',
                     borderRadius: 4,
                     padding: '3px 8px',
                     letterSpacing: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
                   }}
                 >
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: '#fff',
-                      animation: 'pulse-glow 1.5s ease-in-out infinite',
-                    }}
-                  />
-                  LIVE
+                  RISING
                 </div>
 
                 {/* Viewer count */}
@@ -214,27 +176,42 @@ export default function TwitchLive() {
                     padding: '2px 8px',
                   }}
                 >
-                  {streamer.viewer_count.toLocaleString()} watching
+                  {runner.viewer_count} watching
                 </div>
+
+                {/* LIVE dot */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 8,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: '#ff0000',
+                    boxShadow: '0 0 6px #ff0000',
+                    animation: 'pulse-glow 1.5s ease-in-out infinite',
+                  }}
+                />
               </div>
 
               {/* Info */}
-              <div style={{ padding: '12px 14px' }}>
+              <div style={{ padding: '14px 16px' }}>
                 <div
                   style={{
                     fontFamily: 'Orbitron, monospace',
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: 700,
-                    color: '#9b5de5',
+                    color: '#00ff88',
                     marginBottom: 4,
                   }}
                 >
-                  {streamer.user_name}
+                  {runner.user_name}
                 </div>
                 <div
                   style={{
                     fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: 12,
+                    fontSize: 13,
                     color: 'rgba(255,255,255,0.4)',
                     lineHeight: 1.3,
                     overflow: 'hidden',
@@ -243,7 +220,18 @@ export default function TwitchLive() {
                     WebkitBoxOrient: 'vertical',
                   }}
                 >
-                  {streamer.title}
+                  {runner.title}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'Share Tech Mono, monospace',
+                    fontSize: 10,
+                    color: 'rgba(0,255,136,0.4)',
+                    marginTop: 8,
+                    letterSpacing: 1,
+                  }}
+                >
+                  SUPPORT THIS RUNNER →
                 </div>
               </div>
             </a>
