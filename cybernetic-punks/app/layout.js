@@ -42,6 +42,9 @@ export const metadata = {
       'max-snippet': -1,
     },
   },
+  verification: {
+    google: 'M2lvAyNiEj7COYx4hguAd1l3TOOP7WwkQ1EjY3qoi0I',
+  },
   alternates: {
     canonical: 'https://cyberneticpunks.com',
   },
