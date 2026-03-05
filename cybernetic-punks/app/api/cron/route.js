@@ -20,58 +20,68 @@ function generateSlug(headline) {
   return base + '-' + hash;
 }
 
+function isTwitchContent(result) {
+  // Explicit source_type
+  if (result.source_type === 'twitch') return true;
+
+  // Check tags for twitch indicators
+  const tags = (result.tags || []).map(t => t.toLowerCase());
+  if (tags.some(t => t.includes('twitch') || t.includes('clip'))) return true;
+
+  // Check headline for clip/twitch mentions
+  const headline = (result.headline || '').toLowerCase();
+  if (headline.includes('clip') || headline.includes('twitch')) return true;
+
+  return false;
+}
+
 function resolveMediaInfo(result, rawData, editorName) {
   const videoId = result.source_video_id || null;
-  const sourceType = result.source_type || null;
+  const isTwitch = isTwitchContent(result);
 
-  // If Claude says it's a Twitch clip
-  if (sourceType === 'twitch') {
-    // Try to find the exact clip by ID
-    if (videoId && rawData.twitchClips) {
-      const clip = rawData.twitchClips.find(c => c.id === videoId);
-      if (clip) {
-        return { thumbnail: clip.thumbnail, source_url: clip.clip_url };
+  // TWITCH CONTENT
+  if (isTwitch && rawData.twitchClips && rawData.twitchClips.length > 0) {
+    // Try exact clip ID match
+    if (videoId) {
+      const exactMatch = rawData.twitchClips.find(c => c.id === videoId);
+      if (exactMatch) {
+        return { thumbnail: exactMatch.thumbnail, source_url: exactMatch.clip_url, source: 'TWITCH' };
+      }
+
+      // Try partial match
+      const partialMatch = rawData.twitchClips.find(c =>
+        c.id.includes(videoId) || videoId.includes(c.id)
+      );
+      if (partialMatch) {
+        return { thumbnail: partialMatch.thumbnail, source_url: partialMatch.clip_url, source: 'TWITCH' };
       }
     }
 
-    // Fallback: try to match by partial ID or title keywords from headline
-    if (rawData.twitchClips && rawData.twitchClips.length > 0) {
-      // Try matching clip by searching for the video ID substring in clip IDs
-      if (videoId) {
-        const partialMatch = rawData.twitchClips.find(c =>
-          c.id.includes(videoId) || videoId.includes(c.id)
-        );
-        if (partialMatch) {
-          return { thumbnail: partialMatch.thumbnail, source_url: partialMatch.clip_url };
-        }
-      }
-
-      // Last resort for Twitch: use the top clip's thumbnail
-      const topClip = rawData.twitchClips[0];
-      return { thumbnail: topClip.thumbnail, source_url: topClip.clip_url };
-    }
+    // Use top clip as fallback for Twitch content
+    const topClip = rawData.twitchClips[0];
+    return { thumbnail: topClip.thumbnail, source_url: topClip.clip_url, source: 'TWITCH' };
   }
 
-  // If Claude returned a YouTube video ID
-  if (videoId && !sourceType) {
-    if (videoId.length >= 8) {
-      return {
-        thumbnail: 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
-        source_url: 'https://www.youtube.com/watch?v=' + videoId,
-      };
-    }
+  // YOUTUBE CONTENT - Claude returned a video ID
+  if (videoId && !isTwitch && videoId.length >= 8) {
+    return {
+      thumbnail: 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
+      source_url: 'https://www.youtube.com/watch?v=' + videoId,
+      source: 'YOUTUBE',
+    };
   }
 
-  // FALLBACK: Use the top YouTube video from gathered data
+  // FALLBACK: Use top YouTube video
   if (['CIPHER', 'NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
     const topVideo = rawData.youtubeVideos[0];
     return {
       thumbnail: topVideo.thumbnail || 'https://img.youtube.com/vi/' + topVideo.youtube_id + '/hqdefault.jpg',
       source_url: 'https://www.youtube.com/watch?v=' + topVideo.youtube_id,
+      source: 'YOUTUBE',
     };
   }
 
-  return { thumbnail: null, source_url: null };
+  return { thumbnail: null, source_url: null, source: 'YOUTUBE' };
 }
 
 async function processEditor(editorName, prompt, rawData) {
@@ -88,13 +98,13 @@ async function processEditor(editorName, prompt, rawData) {
 
     const media = resolveMediaInfo(result, rawData, editorName);
 
-    console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' url=' + (media.source_url ? 'YES' : 'NULL') + ' source_type=' + (result.source_type || 'youtube'));
+    console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' source=' + media.source);
 
     const insertData = {
       headline: result.headline,
       body: result.body,
       editor: editorName,
-      source: result.source_type === 'twitch' ? 'TWITCH' : 'YOUTUBE',
+      source: media.source,
       tags: result.tags || [],
       ce_score: 0,
       viral_score: 0,
