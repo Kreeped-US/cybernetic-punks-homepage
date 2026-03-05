@@ -1,13 +1,61 @@
 'use client';
 
-export default function CommunityPulse() {
-  // Hardcoded until GHOST is wired to Reddit intake
-  const moodScore = 6;
-  const moodMax = 10;
-  const moodSummary =
-    'Players excited about core gameplay loop but frustrated with queue times and extraction spawn balance.';
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
-  return (
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return 'just now';
+  if (hours < 24) return hours + 'h ago';
+  return Math.floor(hours / 24) + 'd ago';
+}
+
+export default function CommunityPulse() {
+  const [pulse, setPulse] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPulse() {
+      try {
+        const { data, error } = await supabase
+          .from('feed_items')
+          .select('headline, body, ce_score, created_at, slug')
+          .eq('editor', 'GHOST')
+          .eq('is_published', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!error && data) {
+          setPulse(data);
+        }
+      } catch (err) {
+        console.error('CommunityPulse fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPulse();
+  }, []);
+
+  // Fallback values
+  const moodScore = pulse ? Math.round(pulse.ce_score) || 5 : 5;
+  const moodMax = 10;
+  const summary = pulse ? pulse.body : 'Scanning community sentiment from Reddit...';
+  const headline = pulse ? pulse.headline : 'Awaiting GHOST data';
+  const updated = pulse ? timeAgo(pulse.created_at) : '';
+  const slug = pulse ? pulse.slug : null;
+
+  const content = (
     <section
       style={{
         maxWidth: 1200,
@@ -25,6 +73,8 @@ export default function CommunityPulse() {
           alignItems: 'center',
           gap: 28,
           flexWrap: 'wrap',
+          cursor: slug ? 'pointer' : 'default',
+          transition: 'border-color 0.2s',
         }}
       >
         {/* GHOST icon */}
@@ -70,7 +120,7 @@ export default function CommunityPulse() {
               marginBottom: 6,
             }}
           >
-            HOW&apos;S THE COMMUNITY FEELING?
+            {headline}
           </div>
 
           {/* Mood bar */}
@@ -114,7 +164,7 @@ export default function CommunityPulse() {
             <strong style={{ color: '#00ff88' }}>
               {moodScore}.0 / {moodMax}
             </strong>{' '}
-            — {moodSummary}
+            — {summary}
           </div>
         </div>
 
@@ -128,11 +178,32 @@ export default function CommunityPulse() {
             minWidth: 80,
           }}
         >
-          UPDATED
-          <br />
-          Coming soon
+          {updated ? (
+            <>
+              UPDATED
+              <br />
+              {updated}
+            </>
+          ) : (
+            <>
+              UPDATED
+              <br />
+              Every 6 hours
+            </>
+          )}
         </div>
       </div>
     </section>
   );
+
+  // Wrap in Link if we have a slug
+  if (slug) {
+    return (
+      <Link href={'/intel/' + slug} style={{ textDecoration: 'none' }}>
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }
