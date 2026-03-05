@@ -9,16 +9,11 @@ export default function RisingRunners() {
   useEffect(() => {
     async function fetchRunners() {
       try {
-        const res = await fetch('/api/twitch-live');
+        const res = await fetch('/api/rising-runners');
         if (!res.ok) return;
         const data = await res.json();
-        if (data.streamers && data.streamers.length > 0) {
-          // Filter to smaller streamers (under 100 viewers)
-          // Sort by viewer count ascending so the smallest get featured first
-          const rising = data.streamers
-            .filter((s) => s.viewer_count < 100)
-            .sort((a, b) => a.viewer_count - b.viewer_count);
-          setRunners(rising.slice(0, 6));
+        if (data.runners && data.runners.length > 0) {
+          setRunners(data.runners.slice(0, 12));
         }
       } catch (err) {
         console.log('[RisingRunners] Fetch error:', err.message);
@@ -29,9 +24,6 @@ export default function RisingRunners() {
 
     fetchRunners();
   }, []);
-
-  // Don't show if nobody qualifies
-  if (!loading && runners.length === 0) return null;
 
   return (
     <section
@@ -106,6 +98,33 @@ export default function RisingRunners() {
           }}
         >
           SCANNING FOR RISING RUNNERS...
+        </div>
+      ) : runners.length === 0 ? (
+        <div
+          style={{
+            background: 'rgba(0,255,136,0.02)',
+            border: '1px solid rgba(0,255,136,0.08)',
+            borderRadius: 10,
+            padding: '40px 28px',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.3)',
+            letterSpacing: 1,
+            marginBottom: 8,
+          }}>
+            NO RISING RUNNERS LIVE RIGHT NOW
+          </div>
+          <div style={{
+            fontFamily: 'Rajdhani, sans-serif',
+            fontSize: 14,
+            color: 'rgba(255,255,255,0.2)',
+          }}>
+            Check back soon — Marathon is a 24/7 game and someone is always grinding.
+          </div>
         </div>
       ) : (
         <div
