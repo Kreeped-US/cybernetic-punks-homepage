@@ -1,14 +1,14 @@
 // lib/gather/reddit.js
 // Fetches Marathon-related Reddit posts using free public JSON endpoints
-// No API key needed — just adds .json to subreddit URLs
-// Used by GHOST editor to gauge community sentiment
+// Uses Reddit-compliant User-Agent format to avoid blocking from cloud servers
 
 const SUBREDDITS = [
   'MarathonTheGame',
   'Marathon',
 ];
 
-const USER_AGENT = 'CyberneticPunks/1.0 (Marathon Intelligence Hub)';
+// Reddit requires this format: platform:app_id:version (by /u/username)
+const USER_AGENT = 'web:cyberneticpunks:1.0 (by /u/CyberneticPunksBot)';
 
 /**
  * Fetch hot posts from a subreddit using public JSON endpoint
@@ -20,8 +20,15 @@ async function fetchSubreddit(subreddit, sort = 'hot', limit = 10) {
     const res = await fetch(url, {
       headers: {
         'User-Agent': USER_AGENT,
+        'Accept': 'application/json',
       },
+      next: { revalidate: 21600 }, // Cache for 6 hours on Vercel
     });
+
+    if (res.status === 429) {
+      console.log(`[GATHER:REDDIT] Rate limited on r/${subreddit} — will retry next cycle`);
+      return [];
+    }
 
     if (!res.ok) {
       console.error(`[GATHER:REDDIT] Failed to fetch r/${subreddit}: ${res.status}`);
@@ -61,9 +68,9 @@ export async function gatherReddit() {
   const allPosts = [];
 
   for (const sub of SUBREDDITS) {
-    // Small delay between requests to be respectful
+    // 2 second delay between requests to respect Reddit rate limits
     if (allPosts.length > 0) {
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 2000));
     }
 
     const hot = await fetchSubreddit(sub, 'hot', 10);
