@@ -53,6 +53,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${orbitron.variable} ${mono.variable} ${rajdhani.className}`}>
+      <head>
+        <meta name="google-site-verification" content="M2lvAyNiEj7COYx4hguAd1l3TOOP7WwkQ1EjY3qoi0I" />
+      </head>
       <body className="bg-black text-white antialiased">
         <Nav />
         {children}
