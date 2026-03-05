@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -15,6 +16,7 @@ const CARD_CONFIG = [
     label: "WHAT'S META",
     icon: '⬡',
     color: '#00f5ff',
+    href: '/meta',
     fallbackValue: 'Scanning...',
     fallbackSub: 'Updated every 6 hours',
   },
@@ -23,6 +25,7 @@ const CARD_CONFIG = [
     label: 'BEST BUILD',
     icon: '⬢',
     color: '#ff8800',
+    href: '/builds',
     fallbackValue: 'Scanning...',
     fallbackSub: 'Updated every 6 hours',
   },
@@ -31,6 +34,7 @@ const CARD_CONFIG = [
     label: 'PLAY OF THE DAY',
     icon: '◈',
     color: '#ff0000',
+    href: '/intel/cipher',
     fallbackValue: 'Scanning...',
     fallbackSub: 'Updated every 6 hours',
   },
@@ -228,7 +232,7 @@ export default function HeroBanner() {
         Just what&apos;s winning right now.
       </p>
 
-      {/* Value cards — live Supabase data, no editor names */}
+      {/* Value cards — live Supabase data, clickable */}
       <div
         className="flex justify-center flex-wrap"
         style={{
@@ -238,17 +242,20 @@ export default function HeroBanner() {
         }}
       >
         {displayCards.map((card, i) => (
-          <div
+          <Link
             key={i}
-            className="relative overflow-hidden cursor-pointer"
+            href={card.href}
+            className="relative overflow-hidden"
             style={{
               background: 'rgba(255,255,255,0.03)',
               border: `1px solid ${card.color}22`,
               borderRadius: 8,
               padding: '20px 28px',
               minWidth: 200,
-flex: '1 1 0',
+              flex: '1 1 0',
               transition: 'all 0.3s ease',
+              textDecoration: 'none',
+              display: 'block',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = card.color + '66';
@@ -305,7 +312,7 @@ flex: '1 1 0',
             >
               {card.sub}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
