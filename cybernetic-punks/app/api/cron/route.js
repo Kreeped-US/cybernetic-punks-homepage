@@ -24,18 +24,37 @@ function resolveMediaInfo(result, rawData, editorName) {
   const videoId = result.source_video_id || null;
   const sourceType = result.source_type || null;
 
-  // If Claude returned a Twitch clip ID, look it up
-  if (sourceType === 'twitch' && videoId && rawData.twitchClips) {
-    const clip = rawData.twitchClips.find(c => c.id === videoId);
-    if (clip) {
-      return { thumbnail: clip.thumbnail, source_url: clip.clip_url };
+  // If Claude says it's a Twitch clip
+  if (sourceType === 'twitch') {
+    // Try to find the exact clip by ID
+    if (videoId && rawData.twitchClips) {
+      const clip = rawData.twitchClips.find(c => c.id === videoId);
+      if (clip) {
+        return { thumbnail: clip.thumbnail, source_url: clip.clip_url };
+      }
+    }
+
+    // Fallback: try to match by partial ID or title keywords from headline
+    if (rawData.twitchClips && rawData.twitchClips.length > 0) {
+      // Try matching clip by searching for the video ID substring in clip IDs
+      if (videoId) {
+        const partialMatch = rawData.twitchClips.find(c =>
+          c.id.includes(videoId) || videoId.includes(c.id)
+        );
+        if (partialMatch) {
+          return { thumbnail: partialMatch.thumbnail, source_url: partialMatch.clip_url };
+        }
+      }
+
+      // Last resort for Twitch: use the top clip's thumbnail
+      const topClip = rawData.twitchClips[0];
+      return { thumbnail: topClip.thumbnail, source_url: topClip.clip_url };
     }
   }
 
-  // If Claude returned a YouTube video ID, use it
+  // If Claude returned a YouTube video ID
   if (videoId && !sourceType) {
-    // Verify it looks like a YouTube ID (11 chars)
-    if (videoId.length === 11 || videoId.length >= 8) {
+    if (videoId.length >= 8) {
       return {
         thumbnail: 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
         source_url: 'https://www.youtube.com/watch?v=' + videoId,
@@ -44,7 +63,6 @@ function resolveMediaInfo(result, rawData, editorName) {
   }
 
   // FALLBACK: Use the top YouTube video from gathered data
-  // This ensures we always get a thumbnail for YouTube-based editors
   if (['CIPHER', 'NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
     const topVideo = rawData.youtubeVideos[0];
     return {
@@ -70,7 +88,7 @@ async function processEditor(editorName, prompt, rawData) {
 
     const media = resolveMediaInfo(result, rawData, editorName);
 
-    console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' url=' + (media.source_url ? 'YES' : 'NULL'));
+    console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' url=' + (media.source_url ? 'YES' : 'NULL') + ' source_type=' + (result.source_type || 'youtube'));
 
     const insertData = {
       headline: result.headline,
