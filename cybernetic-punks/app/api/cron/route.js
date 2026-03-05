@@ -20,7 +20,43 @@ function generateSlug(headline) {
   return base + '-' + hash;
 }
 
-async function processEditor(editorName, prompt) {
+function resolveMediaInfo(result, rawData, editorName) {
+  const videoId = result.source_video_id || null;
+  const sourceType = result.source_type || null;
+
+  // If Claude returned a Twitch clip ID, look it up
+  if (sourceType === 'twitch' && videoId && rawData.twitchClips) {
+    const clip = rawData.twitchClips.find(c => c.id === videoId);
+    if (clip) {
+      return { thumbnail: clip.thumbnail, source_url: clip.clip_url };
+    }
+  }
+
+  // If Claude returned a YouTube video ID, use it
+  if (videoId && !sourceType) {
+    // Verify it looks like a YouTube ID (11 chars)
+    if (videoId.length === 11 || videoId.length >= 8) {
+      return {
+        thumbnail: 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
+        source_url: 'https://www.youtube.com/watch?v=' + videoId,
+      };
+    }
+  }
+
+  // FALLBACK: Use the top YouTube video from gathered data
+  // This ensures we always get a thumbnail for YouTube-based editors
+  if (['CIPHER', 'NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
+    const topVideo = rawData.youtubeVideos[0];
+    return {
+      thumbnail: topVideo.thumbnail || 'https://img.youtube.com/vi/' + topVideo.youtube_id + '/hqdefault.jpg',
+      source_url: 'https://www.youtube.com/watch?v=' + topVideo.youtube_id,
+    };
+  }
+
+  return { thumbnail: null, source_url: null };
+}
+
+async function processEditor(editorName, prompt, rawData) {
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
   }
@@ -32,16 +68,22 @@ async function processEditor(editorName, prompt) {
       return { editor: editorName, success: false, error: 'Parse error or missing headline' };
     }
 
+    const media = resolveMediaInfo(result, rawData, editorName);
+
+    console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' url=' + (media.source_url ? 'YES' : 'NULL'));
+
     const insertData = {
       headline: result.headline,
       body: result.body,
       editor: editorName,
-      source: 'YOUTUBE',
+      source: result.source_type === 'twitch' ? 'TWITCH' : 'YOUTUBE',
       tags: result.tags || [],
       ce_score: 0,
       viral_score: 0,
       is_published: true,
       slug: generateSlug(result.headline),
+      thumbnail: media.thumbnail,
+      source_url: media.source_url,
     };
 
     if (editorName === 'CIPHER') insertData.ce_score = result.ce_score || 0;
@@ -50,6 +92,8 @@ async function processEditor(editorName, prompt) {
     if (editorName === 'GHOST') {
       insertData.source = 'REDDIT';
       insertData.ce_score = result.mood_score || 0;
+      insertData.thumbnail = null;
+      insertData.source_url = null;
     }
 
     const { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
@@ -58,7 +102,6 @@ async function processEditor(editorName, prompt) {
       return { editor: editorName, success: false, error: error.message };
     }
 
-    // Auto-tweet the published item
     let tweetId = null;
     if (feedItem) {
       tweetId = await postTweet(feedItem);
@@ -69,6 +112,7 @@ async function processEditor(editorName, prompt) {
       success: true,
       headline: result.headline,
       tweeted: tweetId ? true : false,
+      has_thumbnail: media.thumbnail ? true : false,
     };
 
   } catch (err) {
@@ -79,12 +123,13 @@ async function processEditor(editorName, prompt) {
 export async function GET() {
   try {
     const prompts = await gatherAll();
+    const rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [] };
 
     const results = await Promise.all([
-      processEditor('CIPHER', prompts.CIPHER),
-      processEditor('NEXUS', prompts.NEXUS),
-      processEditor('DEXTER', prompts.DEXTER),
-      processEditor('GHOST', prompts.GHOST),
+      processEditor('CIPHER', prompts.CIPHER, rawData),
+      processEditor('NEXUS', prompts.NEXUS, rawData),
+      processEditor('DEXTER', prompts.DEXTER, rawData),
+      processEditor('GHOST', prompts.GHOST, rawData),
     ]);
 
     const succeeded = results.filter(r => r.success).length;
