@@ -42,8 +42,13 @@ function isTwitchClipUrl(url) {
 
 function extractTwitchClipSlug(url) {
   if (!url) return null;
-  const match = url.match(/clips\.twitch\.tv\/(\S+?)(?:\?|$)/) || url.match(/twitch\.tv\/\w+\/clip\/(\S+?)(?:\?|$)/);
-  return match ? match[1] : null;
+  // Format: clips.twitch.tv/SLUG
+  const match1 = url.match(/clips\.twitch\.tv\/([A-Za-z0-9_-]+)/);
+  if (match1) return match1[1];
+  // Format: twitch.tv/username/clip/SLUG
+  const match2 = url.match(/twitch\.tv\/[^/]+\/clip\/([A-Za-z0-9_-]+)/);
+  if (match2) return match2[1];
+  return null;
 }
 
 // ─── METADATA ───────────────────────────────────────────────
@@ -182,7 +187,7 @@ function ArticlePage({ item }) {
         {/* Twitch clip embed */}
         {isTwitch && twitchSlug && (
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 10, marginBottom: 24, border: '1px solid rgba(155,93,229,0.2)' }}>
-            <iframe src={'https://clips.twitch.tv/embed?clip=' + twitchSlug + '&parent=cyberneticpunks.com'} title={item.headline} allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
+            <iframe src={'https://clips.twitch.tv/embed?clip=' + twitchSlug + '&parent=cyberneticpunks.com&parent=www.cyberneticpunks.com'} title={item.headline} allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
           </div>
         )}
 
