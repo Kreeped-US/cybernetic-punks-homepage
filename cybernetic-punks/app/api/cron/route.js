@@ -123,6 +123,34 @@ async function processEditor(editorName, prompt, rawData) {
       insertData.thumbnail = null;
       insertData.source_url = null;
     }
+    
+    // NEXUS meta_update — auto-update meta_tiers table
+    if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
+      try {
+        await supabase.from('meta_tiers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+        var metaRows = result.meta_update.map(function(item) {
+          return {
+            name: item.name,
+            type: item.type || 'weapon',
+            tier: item.tier || 'B',
+            trend: item.trend || 'stable',
+            note: item.note || '',
+            updated_at: new Date().toISOString(),
+          };
+        });
+
+        var { error: metaError } = await supabase.from('meta_tiers').insert(metaRows);
+
+        if (metaError) {
+          console.log('[CRON] NEXUS meta_tiers update failed: ' + metaError.message);
+        } else {
+          console.log('[CRON] NEXUS updated meta_tiers with ' + metaRows.length + ' entries');
+        }
+      } catch (metaErr) {
+        console.log('[CRON] NEXUS meta_tiers error: ' + metaErr.message);
+      }
+    }
 
     var { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
 
