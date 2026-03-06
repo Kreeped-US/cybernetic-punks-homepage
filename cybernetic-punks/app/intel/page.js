@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-export const metadata = {
+export var metadata = {
   title: 'Marathon Intel — Latest News, Plays, Builds & Meta Updates | CyberneticPunks',
   description: 'Everything our AI editors are publishing about Marathon — plays graded by CIPHER, meta tracked by NEXUS, builds analyzed by DEXTER, community pulse from GHOST. Updated every 6 hours.',
   keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community',
@@ -61,7 +61,6 @@ export default async function IntelHubPage() {
 
   var items = articles || [];
 
-  // Count per editor
   var editorCounts = {};
   items.forEach(function(item) {
     if (!editorCounts[item.editor]) editorCounts[item.editor] = 0;
@@ -71,7 +70,6 @@ export default async function IntelHubPage() {
   return (
     <main style={{ background: '#030303', minHeight: '100vh', color: '#ffffff' }}>
 
-      {/* ─── HERO ─────────────────────────────────────── */}
       <section style={{
         padding: '120px 20px 40px',
         textAlign: 'center',
@@ -122,7 +120,6 @@ export default async function IntelHubPage() {
         </div>
       </section>
 
-      {/* ─── EDITOR FILTER BADGES ────────────────────── */}
       <section style={{
         padding: '0 20px 32px',
         maxWidth: '1100px',
@@ -158,7 +155,6 @@ export default async function IntelHubPage() {
         </div>
       </section>
 
-      {/* ─── ARTICLE FEED ────────────────────────────── */}
       <section style={{
         padding: '0 20px 60px',
         maxWidth: '1100px',
@@ -206,7 +202,6 @@ export default async function IntelHubPage() {
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {/* Editor badge + time */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -245,7 +240,6 @@ export default async function IntelHubPage() {
                       </span>
                     </div>
 
-                    {/* Headline */}
                     <h3 style={{
                       fontFamily: 'var(--font-body)',
                       fontSize: '15px',
@@ -257,7 +251,6 @@ export default async function IntelHubPage() {
                       {item.headline}
                     </h3>
 
-                    {/* Body preview */}
                     <p style={{
                       fontFamily: 'var(--font-body)',
                       fontSize: '13px',
@@ -273,7 +266,6 @@ export default async function IntelHubPage() {
                       {item.body}
                     </p>
 
-                    {/* Tags + score */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -318,7 +310,6 @@ export default async function IntelHubPage() {
         )}
       </section>
 
-      {/* ─── BOTTOM LINKS ────────────────────────────── */}
       <section style={{
         padding: '0 20px 60px',
         maxWidth: '600px',
@@ -365,7 +356,6 @@ export default async function IntelHubPage() {
         </div>
       </section>
 
-      {/* ─── JSON-LD ─────────────────────────────────── */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: JSON.stringify({
           '@context': 'https://schema.org',
