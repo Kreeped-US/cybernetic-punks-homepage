@@ -20,6 +20,8 @@ export default async function sitemap() {
     { url: baseUrl + '/intel/dexter', lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: baseUrl + '/intel/ghost', lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: baseUrl + '/intel/miranda', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
+    { url: baseUrl + '/stats', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: baseUrl + '/leaderboard', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
   ];
 
   let dynamicPages = [];
