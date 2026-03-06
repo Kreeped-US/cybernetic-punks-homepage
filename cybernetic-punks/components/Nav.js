@@ -16,6 +16,7 @@ export default function Nav() {
     { label: 'HOME', href: '/' },
     { label: "WHAT'S META", href: '/#meta' },
     { label: 'BUILDS', href: '/#builds' },
+    { label: 'STATS', href: '/stats' },
     { label: 'EDITORS', href: '/editors' },
     { label: 'DISCORD', href: 'https://discord.gg/fgxdSD7SJj', external: true },
   ];
