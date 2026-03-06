@@ -9,6 +9,7 @@ export default async function sitemap() {
   const baseUrl = 'https://cyberneticpunks.com';
 
   const staticPages = [
+    { url: baseUrl + '/intel', lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'hourly', priority: 1 },
     { url: baseUrl + '/meta', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: baseUrl + '/builds', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
