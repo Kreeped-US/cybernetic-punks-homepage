@@ -22,8 +22,8 @@ const EDITOR_STYLES = {
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const hours = Math.floor(diff / 3600000);
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var hours = Math.floor(diff / 3600000);
   if (hours < 1) return 'just now';
   if (hours < 24) return hours + 'h ago';
   return Math.floor(hours / 24) + 'd ago';
@@ -31,7 +31,7 @@ function timeAgo(dateStr) {
 
 function extractYouTubeId(url) {
   if (!url) return null;
-  const match = url.match(/(?:v=|\/)([\w-]{11})(?:\?|&|$)/);
+  var match = url.match(/(?:v=|\/)([\w-]{11})(?:\?|&|$)/);
   return match ? match[1] : null;
 }
 
@@ -42,41 +42,65 @@ function isTwitchClipUrl(url) {
 
 function extractTwitchClipSlug(url) {
   if (!url) return null;
-  // Format: clips.twitch.tv/SLUG
-  const match1 = url.match(/clips\.twitch\.tv\/([A-Za-z0-9_-]+)/);
+  var match1 = url.match(/clips\.twitch\.tv\/([A-Za-z0-9_-]+)/);
   if (match1) return match1[1];
-  // Format: twitch.tv/username/clip/SLUG
-  const match2 = url.match(/twitch\.tv\/[^/]+\/clip\/([A-Za-z0-9_-]+)/);
+  var match2 = url.match(/twitch\.tv\/[^/]+\/clip\/([A-Za-z0-9_-]+)/);
   if (match2) return match2[1];
   return null;
 }
 
 // ─── METADATA ───────────────────────────────────────────────
 export async function generateMetadata({ params }) {
-  const { slug } = await params;
-  const editorConfig = EDITORS[slug.toLowerCase()];
+  var { slug } = await params;
+  var editorConfig = EDITORS[slug.toLowerCase()];
   if (editorConfig) {
     return {
-      title: editorConfig.metaTitle, description: editorConfig.metaDesc,
-      openGraph: { title: editorConfig.metaTitle + ' — CyberneticPunks', description: editorConfig.metaDesc, url: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase(), siteName: 'CyberneticPunks', type: 'website' },
-      twitter: { card: 'summary_large_image', title: editorConfig.metaTitle, description: editorConfig.metaDesc },
+      title: editorConfig.metaTitle,
+      description: editorConfig.metaDesc,
+      openGraph: {
+        title: editorConfig.metaTitle + ' — CyberneticPunks',
+        description: editorConfig.metaDesc,
+        url: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase(),
+        siteName: 'CyberneticPunks',
+        type: 'website',
+        images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        site: '@Cybernetic87250',
+        title: editorConfig.metaTitle,
+        description: editorConfig.metaDesc,
+        images: ['/og-image.png'],
+      },
       alternates: { canonical: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase() },
     };
   }
 
-  const { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).single();
+  var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).single();
   if (!item) return { title: 'Intel Not Found' };
 
-  const meta = {
-    title: item.headline, description: item.body,
-    openGraph: { title: item.headline, description: item.body, url: 'https://cyberneticpunks.com/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at },
-    twitter: { card: 'summary_large_image', title: item.headline, description: item.body },
+  var desc = item.body && item.body.length > 200 ? item.body.slice(0, 197) + '...' : item.body;
+  var meta = {
+    title: item.headline,
+    description: desc,
+    openGraph: {
+      title: item.headline,
+      description: desc,
+      url: 'https://cyberneticpunks.com/intel/' + item.slug,
+      siteName: 'CyberneticPunks',
+      type: 'article',
+      publishedTime: item.created_at,
+      images: [{ url: item.thumbnail || '/og-image.png', width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@Cybernetic87250',
+      title: item.headline,
+      description: desc,
+      images: [item.thumbnail || '/og-image.png'],
+    },
     alternates: { canonical: 'https://cyberneticpunks.com/intel/' + item.slug },
   };
-  if (item.thumbnail) {
-    meta.openGraph.images = [{ url: item.thumbnail, width: 480, height: 360 }];
-    meta.twitter.images = [item.thumbnail];
-  }
   return meta;
 }
 
@@ -102,20 +126,22 @@ function EditorLanePage({ config, items }) {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {items.map((item, i) => (
-              <Link key={i} href={'/intel/' + item.slug} style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid ' + config.color + '33', borderRadius: 8, padding: '18px 22px', textDecoration: 'none', overflow: 'hidden' }}>
-                {item.thumbnail && (<div style={{ width: 120, height: 68, borderRadius: 6, flexShrink: 0, background: 'url(' + item.thumbnail + ') center/cover no-repeat' }} />)}
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{item.headline}</h3>
-                  <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.4 }}>{item.body && item.body.length > 150 ? item.body.slice(0, 150) + '...' : item.body}</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                  {item.tags && item.tags.length > 0 && (<span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: config.color, background: config.color + '12', borderRadius: 4, padding: '4px 10px' }}>{item.tags[0]}</span>)}
-                  {item.ce_score > 0 && (<span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: config.color }}>{item.ce_score}</span>)}
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', minWidth: 48, textAlign: 'right' }}>{timeAgo(item.created_at)}</span>
-                </div>
-              </Link>
-            ))}
+            {items.map(function(item, i) {
+              return (
+                <Link key={i} href={'/intel/' + item.slug} style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid ' + config.color + '33', borderRadius: 8, padding: '18px 22px', textDecoration: 'none', overflow: 'hidden' }}>
+                  {item.thumbnail && (<div style={{ width: 120, height: 68, borderRadius: 6, flexShrink: 0, background: 'url(' + item.thumbnail + ') center/cover no-repeat' }} />)}
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{item.headline}</h3>
+                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.4 }}>{item.body && item.body.length > 150 ? item.body.slice(0, 150) + '...' : item.body}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                    {item.tags && item.tags.length > 0 && (<span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: config.color, background: config.color + '12', borderRadius: 4, padding: '4px 10px' }}>{item.tags[0]}</span>)}
+                    {item.ce_score > 0 && (<span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: config.color }}>{item.ce_score}</span>)}
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', minWidth: 48, textAlign: 'right' }}>{timeAgo(item.created_at)}</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>
@@ -129,17 +155,17 @@ function EditorLanePage({ config, items }) {
 
 // ─── ARTICLE PAGE ───────────────────────────────────────────
 function ArticlePage({ item }) {
-  const editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
-  const publishedAt = new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const videoId = extractYouTubeId(item.source_url);
-  const isTwitch = isTwitchClipUrl(item.source_url);
-  const twitchSlug = extractTwitchClipSlug(item.source_url);
-  const articleUrl = 'https://cyberneticpunks.com/intel/' + item.slug;
+  var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
+  var publishedAt = new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  var videoId = extractYouTubeId(item.source_url);
+  var isTwitch = isTwitchClipUrl(item.source_url);
+  var twitchSlug = extractTwitchClipSlug(item.source_url);
+  var articleUrl = 'https://cyberneticpunks.com/intel/' + item.slug;
 
-  const shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — graded by ' + item.editor + ' on CyberneticPunks') + '&url=' + encodeURIComponent(articleUrl);
-  const shareReddit = 'https://www.reddit.com/submit?url=' + encodeURIComponent(articleUrl) + '&title=' + encodeURIComponent(item.headline);
+  var shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — graded by ' + item.editor + ' on CyberneticPunks') + '&url=' + encodeURIComponent(articleUrl);
+  var shareReddit = 'https://www.reddit.com/submit?url=' + encodeURIComponent(articleUrl) + '&title=' + encodeURIComponent(item.headline);
 
-  const jsonLd = {
+  var jsonLd = {
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline, description: item.body,
     author: { '@type': 'Organization', name: 'CyberneticPunks ' + item.editor, url: 'https://cyberneticpunks.com' },
@@ -151,7 +177,7 @@ function ArticlePage({ item }) {
   };
   if (item.thumbnail) jsonLd.image = item.thumbnail;
 
-  const videoJsonLd = videoId ? {
+  var videoJsonLd = videoId ? {
     '@context': 'https://schema.org', '@type': 'VideoObject',
     name: item.headline, description: item.body,
     thumbnailUrl: item.thumbnail || 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
@@ -177,21 +203,18 @@ function ArticlePage({ item }) {
 
         <h1 className="font-mono text-2xl md:text-3xl font-black text-white leading-tight mb-6">{item.headline}</h1>
 
-        {/* YouTube embed */}
         {videoId && (
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 10, marginBottom: 24, border: '1px solid rgba(255,255,255,0.06)' }}>
             <iframe src={'https://www.youtube.com/embed/' + videoId} title={item.headline} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
           </div>
         )}
 
-        {/* Twitch clip embed */}
         {isTwitch && twitchSlug && (
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 10, marginBottom: 24, border: '1px solid rgba(155,93,229,0.2)' }}>
             <iframe src={'https://clips.twitch.tv/embed?clip=' + twitchSlug + '&parent=cyberneticpunks.com&parent=www.cyberneticpunks.com'} title={item.headline} allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
           </div>
         )}
 
-        {/* Thumbnail fallback if no embed */}
         {!videoId && !isTwitch && item.thumbnail && (
           <div style={{ marginBottom: 24, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
             <img src={item.thumbnail} alt={item.headline} style={{ width: '100%', display: 'block' }} />
@@ -215,12 +238,11 @@ function ArticlePage({ item }) {
           )}
           {item.tags && item.tags.length > 0 && (
             <div className="ml-auto flex gap-2 items-center flex-wrap">
-              {item.tags.map((tag, i) => (<span key={i} className="font-mono text-[8px] text-white/20 border border-white/10 px-3 py-1">{tag}</span>))}
+              {item.tags.map(function(tag, i) { return (<span key={i} className="font-mono text-[8px] text-white/20 border border-white/10 px-3 py-1">{tag}</span>); })}
             </div>
           )}
         </div>
 
-        {/* Social share bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 16, paddingBottom: 24, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginRight: 8 }}>SHARE</div>
           <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#fff', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '8px 16px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -231,7 +253,6 @@ function ArticlePage({ item }) {
           </a>
         </div>
 
-        {/* Watch source link */}
         {item.source_url && (
           <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 24, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 1, color: isTwitch ? '#9b5de5' : '#ff0000', textDecoration: 'none' }}>
             ▶ {isTwitch ? 'WATCH ON TWITCH' : 'WATCH FULL VIDEO ON YOUTUBE'}
@@ -249,18 +270,18 @@ function ArticlePage({ item }) {
 
 // ─── MAIN ROUTER ────────────────────────────────────────────
 export default async function IntelPage({ params }) {
-  const { slug } = await params;
-  const editorConfig = EDITORS[slug.toLowerCase()];
+  var { slug } = await params;
+  var editorConfig = EDITORS[slug.toLowerCase()];
   if (editorConfig) {
-    let items = [];
+    var items = [];
     try {
-      const { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).order('created_at', { ascending: false }).limit(20);
+      var { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).order('created_at', { ascending: false }).limit(20);
       if (data) items = data;
     } catch (err) { console.error('EditorLanePage fetch error:', err); }
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  const { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).single();
+  var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).single();
   if (!item) notFound();
   return <ArticlePage item={item} />;
 }

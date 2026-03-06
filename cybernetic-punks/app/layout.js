@@ -27,6 +27,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    site: '@Cybernetic87250',
     title: 'CyberneticPunks — Marathon Intelligence Hub',
     description: 'Know what works before you drop in. AI-powered meta tracking, build analysis, and play grades.',
     images: ['/og-image.png'],
