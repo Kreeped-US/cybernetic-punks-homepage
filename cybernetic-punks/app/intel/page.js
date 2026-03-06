@@ -2,7 +2,7 @@
 // INTEL HUB — All editor content in one chronological feed
 // SEO hub page linking to every article on the site
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export const metadata = {
