@@ -19,6 +19,8 @@ var NAV_ITEMS = [
     children: [
       { label: 'META TIER LIST', href: '/meta', desc: "What's winning right now" },
       { label: 'BUILD LAB', href: '/builds', desc: 'Shell builds & weapon tiers' },
+      { label: 'RANKED GUIDE', href: '/ranked', desc: 'Holotags, tiers & how to climb', color: '#ffd700' },
+      { label: '◎ FIELD GUIDES', href: '/guides', desc: 'Shell breakdowns & strategy', color: '#9b5de5' },
       { label: 'STATS TRACKER', href: '/stats', desc: 'Player lookup & performance' },
       { label: 'LEADERBOARD', href: '/leaderboard', desc: 'Global ranked standings' },
       { label: 'SERVER STATUS', href: '/status', desc: 'Is Marathon down?' },
