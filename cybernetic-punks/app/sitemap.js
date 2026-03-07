@@ -50,8 +50,3 @@ export default async function sitemap() {
 
   return [...staticPages, ...dynamicPages];
 }
-```
-
-Save, then commit and push in GitHub Desktop:
-```
-feat: /ranked page + /guides in nav and sitemap
