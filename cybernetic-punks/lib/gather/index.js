@@ -4,6 +4,7 @@ import { gatherTwitchClips, formatClipsForCipher } from './twitch';
 import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
+import { runDexterStatPipeline } from './dexter-stats.js';
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
@@ -53,6 +54,13 @@ export async function gatherAll() {
     steamPlayerCount,
     steamReviews,
   };
+
+  // DEXTER stat extraction — fills NULL shell/weapon stats from all sources
+  await runDexterStatPipeline({
+    videos: youtubeVideos || [],
+    redditPosts: redditPosts || [],
+    steamReviews: steamReviews?.reviews || [],
+  });
 
   const active = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v !== null).map(([k]) => k);
   const inactive = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v === null).map(([k]) => k);
