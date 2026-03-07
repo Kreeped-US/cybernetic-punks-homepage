@@ -1,41 +1,8 @@
-// components/MetaPreview.js
-// Homepage "What's Meta Right Now" section — LIVE from Supabase meta_tiers table
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
-
-var TIER_ORDER = ['S', 'A', 'B', 'C', 'D'];
-
-var TIER_STYLES = {
-  S: { bg: 'rgba(255,0,0,0.12)', color: '#ff0000', border: 'rgba(255,0,0,0.2)' },
-  A: { bg: 'rgba(255,136,0,0.1)', color: '#ff8800', border: 'rgba(255,136,0,0.15)' },
-  B: { bg: 'rgba(255,204,0,0.08)', color: '#ffcc00', border: 'rgba(255,204,0,0.12)' },
-  C: { bg: 'rgba(0,245,255,0.06)', color: '#00f5ff', border: 'rgba(0,245,255,0.1)' },
-  D: { bg: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.3)', border: 'rgba(255,255,255,0.06)' },
-};
-
-var TREND_DISPLAY = {
-  up: { label: '▲ RISING', color: '#00ff88' },
-  down: { label: '▼ FALLING', color: '#ff0000' },
-  stable: { label: '● STABLE', color: 'rgba(255,255,255,0.3)' },
-};
-
-var TYPE_COLORS = {
-  weapon: '#ff0000',
-  strategy: '#00f5ff',
-  loadout: '#ff8800',
-  shell: '#cc44ff',
-  ability: '#00ff88',
-};
-
-function getTypeColor(type) {
-  if (!type) return '#444';
-  var key = type.toLowerCase();
-  return TYPE_COLORS[key] || '#444';
-}
 
 function formatUpdatedAt(dateStr) {
   if (!dateStr) return '';
@@ -49,36 +16,54 @@ function formatUpdatedAt(dateStr) {
   return 'UPDATED ' + diffD + 'D AGO';
 }
 
+var TAG_COLORS = {
+  'SHIFTING':       '#ff8800',
+  'STABILIZING':    '#00f5ff',
+  'RANKED_FOCUS':   '#ffd700',
+  'LAUNCH_PHASE':   '#ff0000',
+  'THIEF_RISING':   '#cc44ff',
+  'META_FRACTURE':  '#ff0000',
+  'CONTENT_RUSH':   '#ff8800',
+  'OPTIMIZATION':   '#00f5ff',
+};
+
+function TagPill({ tag }) {
+  var color = TAG_COLORS[tag] || '#555';
+  return (
+    <span style={{
+      fontFamily: 'Share Tech Mono, monospace',
+      fontSize: 10,
+      color: color,
+      padding: '2px 7px',
+      background: color + '18',
+      border: '1px solid ' + color + '33',
+      borderRadius: 3,
+      letterSpacing: 1,
+    }}>
+      {tag.replace(/_/g, ' ')}
+    </span>
+  );
+}
+
 export default function MetaPreview() {
-  var [tiers, setTiers] = useState({});
+  var [articles, setArticles] = useState([]);
   var [loading, setLoading] = useState(true);
-  var [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(function() {
     async function fetchMeta() {
-      var { data, error } = await supabase
-        .from('meta_tiers')
-        .select('*')
-        .order('updated_at', { ascending: false });
+      var { data } = await supabase
+        .from('feed_items')
+        .select('id, headline, slug, tags, created_at, body')
+        .eq('editor', 'NEXUS')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(4);
 
-      if (data && data.length > 0) {
-        // Group by tier
-        var grouped = {};
-        data.forEach(function(item) {
-          var t = item.tier || 'B';
-          if (!grouped[t]) grouped[t] = [];
-          grouped[t].push(item);
-        });
-        setTiers(grouped);
-        setLastUpdated(data[0].updated_at);
-      }
+      setArticles(data || []);
       setLoading(false);
     }
     fetchMeta();
   }, []);
-
-  // Only show tiers that have entries, in order
-  var activeTiers = TIER_ORDER.filter(function(t) { return tiers[t] && tiers[t].length > 0; });
 
   return (
     <section id="meta" style={{
@@ -113,13 +98,12 @@ export default function MetaPreview() {
             color: 'rgba(255,255,255,0.35)',
             letterSpacing: 1,
             marginTop: 4,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
           }}>
-            <span>NEXUS — META STRATEGIST</span>
-            {lastUpdated && (
-              <span style={{ color: '#00f5ff', opacity: 0.5 }}>{formatUpdatedAt(lastUpdated)}</span>
+            NEXUS — META STRATEGIST
+            {articles[0] && (
+              <span style={{ color: '#00f5ff', opacity: 0.5, marginLeft: 12 }}>
+                {formatUpdatedAt(articles[0].created_at)}
+              </span>
             )}
           </div>
         </div>
@@ -134,18 +118,17 @@ export default function MetaPreview() {
         </Link>
       </div>
 
-      {/* Loading state */}
       {loading ? (
         <div style={{
           textAlign: 'center',
           padding: '40px',
           fontFamily: 'Share Tech Mono, monospace',
           fontSize: 13,
-          color: '#444',
+          color: '#333',
         }}>
-          LOADING META DATA...
+          SCANNING META...
         </div>
-      ) : activeTiers.length === 0 ? (
+      ) : articles.length === 0 ? (
         <div style={{
           textAlign: 'center',
           padding: '40px',
@@ -153,130 +136,102 @@ export default function MetaPreview() {
           fontSize: 13,
           color: '#444',
           background: 'rgba(255,255,255,0.02)',
-          borderRadius: 8,
           border: '1px dashed rgba(255,255,255,0.06)',
+          borderRadius: 8,
         }}>
-          META TIERS LOADING — CHECK BACK SOON
+          NEXUS INITIALIZING — META INTEL INCOMING
         </div>
       ) : (
-        <Link href="/meta" style={{ textDecoration: 'none' }}>
-          <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
-            {activeTiers.map(function(tier) {
-              var style = TIER_STYLES[tier] || TIER_STYLES.D;
-              var items = tiers[tier];
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Featured latest article */}
+          <Link href={'/intel/' + articles[0].slug} style={{ textDecoration: 'none' }}>
+            <div style={{
+              background: 'rgba(0,245,255,0.04)',
+              border: '1px solid rgba(0,245,255,0.15)',
+              borderLeft: '3px solid #00f5ff',
+              borderRadius: 8,
+              padding: '18px 20px',
+              cursor: 'pointer',
+            }}>
+              <div style={{
+                fontFamily: 'Orbitron, monospace',
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#fff',
+                marginBottom: 8,
+                lineHeight: 1.3,
+              }}>
+                {articles[0].headline}
+              </div>
+              <div style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.4)',
+                marginBottom: 10,
+                lineHeight: 1.5,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}>
+                {articles[0].body?.replace(/\*\*/g, '').slice(0, 140)}...
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {(articles[0].tags || []).slice(0, 4).map(function(tag) {
+                  return <TagPill key={tag} tag={tag} />;
+                })}
+              </div>
+            </div>
+          </Link>
 
+          {/* Previous 3 as compact rows */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 8 }}>
+            {articles.slice(1).map(function(article) {
               return (
-                <div key={tier} style={{
-                  display: 'flex',
-                  gap: 12,
-                  alignItems: 'stretch',
-                }}>
-                  {/* Tier badge */}
+                <Link key={article.id} href={'/intel/' + article.slug} style={{ textDecoration: 'none' }}>
                   <div style={{
-                    width: 52,
-                    minHeight: 52,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'Orbitron, monospace',
-                    fontSize: 22,
-                    fontWeight: 900,
-                    background: style.bg,
-                    color: style.color,
-                    borderRadius: 8,
-                    border: '1px solid ' + style.border,
-                    flexShrink: 0,
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 6,
+                    padding: '12px 14px',
+                    cursor: 'pointer',
                   }}>
-                    {tier}
+                    <div style={{
+                      fontFamily: 'var(--font-body, Rajdhani, sans-serif)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#ccc',
+                      marginBottom: 6,
+                      lineHeight: 1.3,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}>
+                      {article.headline}
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {(article.tags || []).slice(0, 2).map(function(tag) {
+                        return <TagPill key={tag} tag={tag} />;
+                      })}
+                    </div>
                   </div>
-
-                  {/* Items */}
-                  <div style={{
-                    display: 'flex',
-                    gap: 10,
-                    flex: 1,
-                    flexWrap: 'wrap',
-                  }}>
-                    {items.map(function(item) {
-                      var trend = TREND_DISPLAY[item.trend] || TREND_DISPLAY.stable;
-                      var typeColor = getTypeColor(item.type);
-
-                      return (
-                        <div key={item.id} style={{
-                          flex: '1 1 220px',
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          borderRadius: 8,
-                          padding: '14px 18px',
-                          cursor: 'pointer',
-                          transition: 'border-color 0.2s, transform 0.2s',
-                        }}>
-                          {/* Name + trend */}
-                          <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: 6,
-                          }}>
-                            <span style={{
-                              fontFamily: 'Orbitron, monospace',
-                              fontSize: 14,
-                              fontWeight: 600,
-                              color: '#fff',
-                            }}>
-                              {item.name}
-                            </span>
-                            <span style={{
-                              fontFamily: 'Share Tech Mono, monospace',
-                              fontSize: 10,
-                              color: trend.color,
-                            }}>
-                              {trend.label}
-                            </span>
-                          </div>
-
-                          {/* Type badge */}
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                          }}>
-                            <span style={{
-                              fontFamily: 'Share Tech Mono, monospace',
-                              fontSize: 10,
-                              color: typeColor,
-                              letterSpacing: 1,
-                              padding: '2px 6px',
-                              background: typeColor + '11',
-                              border: '1px solid ' + typeColor + '22',
-                              borderRadius: 3,
-                            }}>
-                              {(item.type || 'META').toUpperCase()}
-                            </span>
-                            {/* Note preview */}
-                            {item.note && (
-                              <span style={{
-                                fontFamily: 'Rajdhani, sans-serif',
-                                fontSize: 12,
-                                color: 'rgba(255,255,255,0.3)',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                flex: 1,
-                              }}>
-                                {item.note}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                </Link>
               );
             })}
           </div>
-        </Link>
+
+          <Link href="/sitrep" style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 11,
+            color: 'rgba(0,245,255,0.5)',
+            letterSpacing: 1,
+            textDecoration: 'none',
+            marginTop: 4,
+          }}>
+            FULL META SITREP →
+          </Link>
+        </div>
       )}
     </section>
   );

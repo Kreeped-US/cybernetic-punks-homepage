@@ -1,41 +1,26 @@
-// components/BuildsSection.js
-// Homepage preview of DEXTER's Build Lab — shows latest builds + shell quick links
-// Pulls live data from Supabase instead of hardcoded content
-
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 
-const DEXTER_ORANGE = '#ff8800';
-const CYAN = '#00f5ff';
-const RED = '#ff0000';
+var DEXTER_ORANGE = '#ff8800';
 
-const SHELLS = [
+var SHELLS = [
   { name: 'Destroyer', icon: '⬢', color: '#ff4444' },
-  { name: 'Vandal', icon: '⬡', color: '#ff8800' },
-  { name: 'Recon', icon: '◈', color: '#00f5ff' },
-  { name: 'Assassin', icon: '◇', color: '#cc44ff' },
-  { name: 'Triage', icon: '◎', color: '#00ff88' },
-  { name: 'Thief', icon: '⬠', color: '#ffcc00' },
+  { name: 'Vandal',    icon: '⬡', color: '#ff8800' },
+  { name: 'Recon',     icon: '◈', color: '#00f5ff' },
+  { name: 'Assassin',  icon: '◇', color: '#cc44ff' },
+  { name: 'Triage',    icon: '◎', color: '#00ff88' },
+  { name: 'Thief',     icon: '⬠', color: '#ffcc00' },
 ];
 
 export default function BuildsSection() {
-  const [builds, setBuilds] = useState([]);
-  const [recentArticles, setRecentArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  var [articles, setArticles] = useState([]);
+  var [loading, setLoading] = useState(true);
 
   useEffect(function() {
     async function fetchData() {
-      // Fetch curated builds (top 3)
-      const { data: buildsData } = await supabase
-        .from('builds')
-        .select('*')
-        .order('updated_at', { ascending: false })
-        .limit(3);
-
-      // Fetch latest DEXTER articles (top 4)
-      const { data: articles } = await supabase
+      var { data } = await supabase
         .from('feed_items')
         .select('id, headline, slug, thumbnail, ce_score, tags, created_at')
         .eq('editor', 'DEXTER')
@@ -43,8 +28,7 @@ export default function BuildsSection() {
         .order('created_at', { ascending: false })
         .limit(4);
 
-      setBuilds(buildsData || []);
-      setRecentArticles(articles || []);
+      setArticles(data || []);
       setLoading(false);
     }
     fetchData();
@@ -133,143 +117,92 @@ export default function BuildsSection() {
           padding: '40px',
           fontFamily: 'var(--font-mono)',
           fontSize: '13px',
-          color: '#444',
+          color: '#333',
         }}>
-          LOADING BUILD DATA...
+          SCANNING BUILDS...
+        </div>
+      ) : articles.length === 0 ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '40px',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '13px',
+          color: '#444',
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px dashed rgba(255,255,255,0.06)',
+          borderRadius: 8,
+        }}>
+          DEXTER INITIALIZING — BUILD ANALYSIS INCOMING
         </div>
       ) : (
-        <>
-          {/* Curated Build Cards */}
-          {builds.length > 0 && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '14px',
-              marginBottom: '24px',
-            }}>
-              {builds.map(function(build) {
-                return (
-                  <Link key={build.id} href="/builds" style={{
-                    display: 'block',
-                    background: '#0a0a0a',
-                    border: '1px solid ' + (build.color || DEXTER_ORANGE) + '33',
-                    borderRadius: '6px',
-                    padding: '16px',
-                    textDecoration: 'none',
-                    position: 'relative',
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '12px',
+        }}>
+          {articles.map(function(article) {
+            var ceRaw = article.ce_score;
+            var ceDisplay = ceRaw
+              ? (ceRaw > 10 ? (ceRaw / 100).toFixed(1) : Number(ceRaw).toFixed(1))
+              : null;
+
+            return (
+              <Link key={article.id} href={'/intel/' + article.slug} style={{
+                display: 'flex',
+                gap: '12px',
+                background: '#0a0a0a',
+                border: '1px solid #1a1a1a',
+                borderTop: '2px solid ' + DEXTER_ORANGE + '55',
+                borderRadius: '6px',
+                padding: '12px',
+                textDecoration: 'none',
+              }}>
+                {article.thumbnail && (
+                  <div style={{
+                    width: '80px',
+                    minWidth: '80px',
+                    height: '55px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
                   }}>
-                    <div style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '14px',
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: '22px',
-                      fontWeight: 700,
-                      color: build.grade === 'S' ? RED : DEXTER_ORANGE,
-                      opacity: 0.25,
-                    }}>
-                      {build.grade}
-                    </div>
-                    <div style={{
+                    <img src={article.thumbnail} alt="" style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      opacity: 0.85,
+                    }} />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    lineHeight: 1.3,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    marginBottom: '4px',
+                  }}>
+                    {article.headline}
+                  </div>
+                  {ceDisplay && (
+                    <span style={{
                       fontFamily: 'var(--font-mono)',
                       fontSize: '10px',
-                      color: build.color || DEXTER_ORANGE,
-                      letterSpacing: '1px',
-                      textTransform: 'uppercase',
-                      marginBottom: '4px',
+                      color: Number(ceDisplay) >= 8 ? '#00ff88' : DEXTER_ORANGE,
                     }}>
-                      {build.shell} · {build.style}
-                    </div>
-                    <div style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      color: '#ffffff',
-                      marginBottom: '6px',
-                    }}>
-                      {build.name}
-                    </div>
-                    {build.weapons && (
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '10px',
-                        color: '#555',
-                      }}>
-                        {build.weapons.join(' · ')}
-                      </div>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Latest DEXTER Articles */}
-          {recentArticles.length > 0 && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '12px',
-            }}>
-              {recentArticles.map(function(article) {
-                return (
-                  <Link key={article.id} href={'/intel/' + article.slug} style={{
-                    display: 'flex',
-                    gap: '12px',
-                    background: '#0a0a0a',
-                    border: '1px solid #1a1a1a',
-                    borderRadius: '6px',
-                    padding: '12px',
-                    textDecoration: 'none',
-                  }}>
-                    {article.thumbnail && (
-                      <div style={{
-                        width: '80px',
-                        minWidth: '80px',
-                        height: '55px',
-                        borderRadius: '4px',
-                        overflow: 'hidden',
-                      }}>
-                        <img src={article.thumbnail} alt="" style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }} />
-                      </div>
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: '#ffffff',
-                        lineHeight: 1.3,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}>
-                        {article.headline}
-                      </div>
-                      {article.ce_score && (
-                        <span style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '10px',
-                          color: article.ce_score >= 80 ? RED : DEXTER_ORANGE,
-                          marginTop: '4px',
-                          display: 'inline-block',
-                        }}>
-                          CE:{article.ce_score}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </>
+                      CE {ceDisplay}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       )}
     </section>
   );
