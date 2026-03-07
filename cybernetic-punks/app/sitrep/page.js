@@ -227,7 +227,7 @@ export default async function SitrepPage() {
                   borderRadius: '4px',
                   whiteSpace: 'nowrap',
                 }}>
-                  CONFIDENCE {latest.ce_score}/10
+                  SIGNAL STRENGTH {latest.ce_score}/10
                 </div>
               )}
             </div>
