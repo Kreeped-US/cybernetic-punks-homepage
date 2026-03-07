@@ -1,4 +1,4 @@
-import { callEditor } from '@/lib/editorCore';
+import { callEditor, buildMirandaPrompt } from '@/lib/editorCore';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { postTweet, postFromQueue } from '@/lib/twitter';
@@ -21,17 +21,11 @@ function generateSlug(headline) {
 }
 
 function isTwitchContent(result) {
-  // Explicit source_type
   if (result.source_type === 'twitch') return true;
-
-  // Check tags for twitch indicators
   var tags = (result.tags || []).map(function(t) { return t.toLowerCase(); });
   if (tags.some(function(t) { return t.includes('twitch') || t.includes('clip'); })) return true;
-
-  // Check headline for clip/twitch mentions
   var headline = (result.headline || '').toLowerCase();
   if (headline.includes('clip') || headline.includes('twitch')) return true;
-
   return false;
 }
 
@@ -39,16 +33,12 @@ function resolveMediaInfo(result, rawData, editorName) {
   var videoId = result.source_video_id || null;
   var isTwitch = isTwitchContent(result);
 
-  // TWITCH CONTENT
   if (isTwitch && rawData.twitchClips && rawData.twitchClips.length > 0) {
-    // Try exact clip ID match
     if (videoId) {
       var exactMatch = rawData.twitchClips.find(function(c) { return c.id === videoId; });
       if (exactMatch) {
         return { thumbnail: exactMatch.thumbnail, source_url: exactMatch.clip_url, source: 'TWITCH' };
       }
-
-      // Try partial match
       var partialMatch = rawData.twitchClips.find(function(c) {
         return c.id.includes(videoId) || videoId.includes(c.id);
       });
@@ -56,13 +46,10 @@ function resolveMediaInfo(result, rawData, editorName) {
         return { thumbnail: partialMatch.thumbnail, source_url: partialMatch.clip_url, source: 'TWITCH' };
       }
     }
-
-    // Use top clip as fallback for Twitch content
     var topClip = rawData.twitchClips[0];
     return { thumbnail: topClip.thumbnail, source_url: topClip.clip_url, source: 'TWITCH' };
   }
 
-  // YOUTUBE CONTENT - Claude returned a video ID
   if (videoId && !isTwitch && videoId.length >= 8) {
     return {
       thumbnail: 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
@@ -71,7 +58,6 @@ function resolveMediaInfo(result, rawData, editorName) {
     };
   }
 
-  // FALLBACK: Use top YouTube video
   if (['CIPHER', 'NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
     var topVideo = rawData.youtubeVideos[0];
     return {
@@ -90,7 +76,15 @@ async function processEditor(editorName, prompt, rawData) {
   }
 
   try {
-    var result = await callEditor(editorName, prompt);
+    var result;
+
+    // MIRANDA gets her prompt built from raw data, then passed as the user message
+    if (editorName === 'MIRANDA') {
+      var mirandaPrompt = buildMirandaPrompt(prompt);
+      result = await callEditor('MIRANDA', mirandaPrompt);
+    } else {
+      result = await callEditor(editorName, prompt);
+    }
 
     if (!result || !result.headline || result._parseError) {
       return { editor: editorName, success: false, error: 'Parse error or missing headline' };
@@ -115,7 +109,7 @@ async function processEditor(editorName, prompt, rawData) {
     };
 
     if (editorName === 'CIPHER') insertData.ce_score = result.ce_score || 0;
-    if (editorName === 'NEXUS') insertData.ce_score = result.grid_pulse || 0;
+    if (editorName === 'NEXUS')  insertData.ce_score = result.grid_pulse || 0;
     if (editorName === 'DEXTER') insertData.ce_score = result.ce_score || 0;
     if (editorName === 'GHOST') {
       insertData.source = 'REDDIT';
@@ -123,7 +117,13 @@ async function processEditor(editorName, prompt, rawData) {
       insertData.thumbnail = null;
       insertData.source_url = null;
     }
-    
+    if (editorName === 'MIRANDA') {
+      insertData.source = 'GUIDE';
+      insertData.ce_score = result.ce_score || 0;
+      insertData.thumbnail = result.thumbnail || null;
+      insertData.source_url = result.source_url || null;
+    }
+
     // NEXUS meta_update — auto-update meta_tiers table
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
       try {
@@ -141,7 +141,6 @@ async function processEditor(editorName, prompt, rawData) {
         });
 
         var { error: metaError } = await supabase.from('meta_tiers').insert(metaRows);
-
         if (metaError) {
           console.log('[CRON] NEXUS meta_tiers update failed: ' + metaError.message);
         } else {
@@ -158,7 +157,6 @@ async function processEditor(editorName, prompt, rawData) {
       return { editor: editorName, success: false, error: error.message };
     }
 
-    // Queue the tweet (does NOT post immediately)
     var queued = false;
     if (feedItem) {
       queued = await postTweet(feedItem);
@@ -183,15 +181,15 @@ export async function GET() {
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [] };
 
     var results = await Promise.all([
-      processEditor('CIPHER', prompts.CIPHER, rawData),
-      processEditor('NEXUS', prompts.NEXUS, rawData),
-      processEditor('DEXTER', prompts.DEXTER, rawData),
-      processEditor('GHOST', prompts.GHOST, rawData),
+      processEditor('CIPHER',  prompts.CIPHER,  rawData),
+      processEditor('NEXUS',   prompts.NEXUS,   rawData),
+      processEditor('DEXTER',  prompts.DEXTER,  rawData),
+      processEditor('GHOST',   prompts.GHOST,   rawData),
+      processEditor('MIRANDA', prompts.MIRANDA, rawData),
     ]);
 
     var succeeded = results.filter(function(r) { return r.success; }).length;
 
-    // Post ONE tweet from the queue (oldest unposted, respects daily cap)
     var tweetResult = await postFromQueue();
 
     return Response.json({

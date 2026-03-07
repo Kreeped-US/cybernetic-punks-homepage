@@ -1,20 +1,28 @@
 import { gatherYouTube, formatForEditor } from './youtube';
 import { gatherReddit, formatForGhost } from './reddit';
 import { gatherTwitchClips, formatClipsForCipher } from './twitch';
+import { refreshWikiData } from './wiki';
+import { gatherMirandaData } from './miranda';
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
 
+  // Wiki refresh runs first — self-throttles to 24h per table
+  const wikiResults = await refreshWikiData();
+  console.log('[GATHER] Wiki refresh:', wikiResults);
+
   // Gather from all sources in parallel
-  const [youtubeVideos, redditPosts, twitchClips] = await Promise.all([
+  const [youtubeVideos, redditPosts, twitchClips, mirandaData] = await Promise.all([
     gatherYouTube(),
     gatherReddit(),
     gatherTwitchClips(),
+    gatherMirandaData(),
   ]);
 
   console.log('[GATHER] YouTube: ' + youtubeVideos.length + ' videos collected');
   console.log('[GATHER] Reddit: ' + redditPosts.length + ' posts collected');
   console.log('[GATHER] Twitch: ' + twitchClips.length + ' clips collected');
+  console.log('[GATHER] Miranda: ' + mirandaData.videos.length + ' guide videos, ' + mirandaData.shellContext.length + ' shells');
 
   // CIPHER gets YouTube videos + Twitch clips combined
   let cipherPrompt = formatForEditor(youtubeVideos, 'CIPHER');
@@ -26,10 +34,11 @@ export async function gatherAll() {
   }
 
   const prompts = {
-    CIPHER: cipherPrompt,
-    NEXUS: formatForEditor(youtubeVideos, 'NEXUS'),
-    DEXTER: formatForEditor(youtubeVideos, 'DEXTER'),
-    GHOST: formatForGhost(redditPosts),
+    CIPHER:  cipherPrompt,
+    NEXUS:   formatForEditor(youtubeVideos, 'NEXUS'),
+    DEXTER:  formatForEditor(youtubeVideos, 'DEXTER'),
+    GHOST:   formatForGhost(redditPosts),
+    MIRANDA: mirandaData,  // raw data — cron builds prompt via buildMirandaPrompt()
   };
 
   // Pass raw data along for thumbnail/URL extraction in cron route

@@ -49,11 +49,11 @@ Example meta_update:
 
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 
-  MIRANDA: `You are MIRANDA, the newsletter editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
+  MIRANDA: `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
-Your lane: Weekly digest. You compile the most important content from all editors into a newsletter that Marathon players actually want to read. You write for humans, not algorithms.
+Your lane: Player development. You write structured guides, shell breakdowns, mod analysis, and survival tips for new and improving Runners.
 
-Your voice: Sharp, curated, slightly warmer than the other editors. You know what matters and you cut everything else.
+Your voice: Calm, structured, authoritative. You teach without condescending. You call players Runners.
 
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 
@@ -76,12 +76,92 @@ TAGGING RULES: When analyzing build content, ALWAYS include the Runner Shell nam
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 };
 
+export function buildMirandaPrompt(data) {
+  const { videos, redditPosts, shellContext, weaponContext, modContext } = data;
+
+  const videoSummaries = videos.slice(0, 6).map(v =>
+    `TITLE: ${v.title}\nCHANNEL: ${v.channelTitle}\nDESC: ${v.description?.slice(0, 200)}\nVIDEO_ID: ${v.videoId}`
+  ).join('\n---\n');
+
+  const redditSummaries = redditPosts.slice(0, 5).map(p =>
+    `TITLE: ${p.title}\nFLAIR: ${p.flair}\nCONTENT: ${p.selftext}\nSCORE: ${p.score}`
+  ).join('\n---\n');
+
+  const shellData = shellContext.length > 0
+    ? shellContext.map(s => [
+        `${s.name}: Role=${s.role}, Difficulty=${s.difficulty}, BestFor=${s.best_for}`,
+        s.active_ability_name    ? `  Active: ${s.active_ability_name} — ${s.active_ability_description || 'TBD'}${s.active_ability_cooldown_seconds ? ' (' + s.active_ability_cooldown_seconds + 's cooldown)' : ''}` : '  Active: TBD',
+        s.passive_ability_name   ? `  Passive: ${s.passive_ability_name} — ${s.passive_ability_description || 'TBD'}` : '  Passive: TBD',
+        s.trait_1_name           ? `  Trait: ${s.trait_1_name} — ${s.trait_1_description}` : '',
+        s.base_health            ? `  Health=${s.base_health}, Shield=${s.base_shield || 'N/A'}, Speed=${s.base_speed || 'TBD'}` : '',
+        s.ranked_tier            ? `  Ranked Solo=${s.ranked_tier_solo || s.ranked_tier}, Squad=${s.ranked_tier_squad || s.ranked_tier}${s.ranked_notes ? ' — ' + s.ranked_notes : ''}` : '',
+        s.strengths?.length      ? `  Strengths: ${s.strengths.join(', ')}` : '',
+        s.weaknesses?.length     ? `  Weaknesses: ${s.weaknesses.join(', ')}` : '',
+        s.synergizes_with?.length ? `  Pairs with: ${s.synergizes_with.join(', ')}` : ''
+      ].filter(Boolean).join('\n')
+      ).join('\n\n')
+    : 'Shell data seeding in progress.';
+
+  const weaponData = weaponContext.length > 0
+    ? weaponContext.slice(0, 20).map(w =>
+        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${w.damage ? ', Dmg=' + w.damage : ''}${w.fire_rate ? ', RPM=' + w.fire_rate : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}`
+      ).join('\n')
+    : 'Weapon data seeding in progress.';
+
+  const modData = modContext.length > 0
+    ? modContext.map(m =>
+        `${m.name} [${m.slot_type}]: ${m.effect_summary}${m.ranked_notes ? ' — Ranked: ' + m.ranked_notes : ''}`
+      ).join('\n')
+    : 'Mod data seeding in progress.';
+
+  return `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
+
+You are the only editor who teaches rather than reports. Write structured guides for new and improving Runners.
+
+Marathon ranked mode launches soon. Holotags set your extraction score target. Die = lose gear AND rank points. Reference ranked implications when relevant.
+
+VERIFIED SHELL DATA (abilities, traits, cooldowns, ranked tiers):
+${shellData}
+
+VERIFIED WEAPON DATA:
+${weaponData}
+
+VERIFIED MOD DATA:
+${modData}
+
+YOUTUBE GUIDE CONTENT:
+${videoSummaries}
+
+REDDIT COMMUNITY TIPS:
+${redditSummaries}
+
+Choose the most useful guide topic for Runners right now. Reference real shell abilities, weapon stats, and mod names.
+
+Return ONLY valid JSON — no other text:
+{
+  "headline": "guide headline under 80 chars",
+  "body": "200-350 words with **bold section headers**. Name real shells, weapons, mods. Be specific and actionable. Note ranked context where relevant.",
+  "guide_category": "beginner|extraction|shell-guide|weapon-guide|mod-guide|progression|map-guide|ranked",
+  "shells_covered": ["shell names mentioned"],
+  "weapons_covered": ["weapon names mentioned"],
+  "mods_covered": ["mod names mentioned"],
+  "difficulty_rating": "Beginner|Intermediate|Advanced",
+  "ranked_relevant": true,
+  "tags": ["3-5 tags — include ranked if relevant"],
+  "ce_score": 0.0,
+  "source_type": "guide",
+  "thumbnail": "YouTube thumbnail URL or null",
+  "source_url": "most relevant YouTube or Reddit URL"
+}`;
+}
+
 export async function callEditor(editor, userPrompt) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
 
-  // NEXUS needs more tokens for the meta_update array
-  var maxTokens = editor === 'NEXUS' ? 2048 : 1024;
+  var maxTokens = 1024;
+  if (editor === 'NEXUS') maxTokens = 2048;
+  if (editor === 'MIRANDA') maxTokens = 1536;
 
   var message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
