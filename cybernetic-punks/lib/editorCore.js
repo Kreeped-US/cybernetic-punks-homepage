@@ -89,7 +89,7 @@ Output format: Always respond with valid JSON only. No markdown, no explanation,
 };
 
 export function buildMirandaPrompt(data) {
-  const { videos, redditPosts, shellContext, weaponContext, modContext } = data;
+  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext } = data;
 
   const videoSummaries = videos.slice(0, 6).map(v =>
     `TITLE: ${v.title}\nCHANNEL: ${v.channelTitle}\nDESC: ${v.description?.slice(0, 200)}\nVIDEO_ID: ${v.videoId}`
@@ -126,6 +126,14 @@ export function buildMirandaPrompt(data) {
       ).join('\n')
     : 'Mod data seeding in progress.';
 
+  const bungieNewsData = devNews?.length > 0
+    ? devNews.map(n => `TITLE: ${n.title}\nURL: ${n.url}`).join('\n---\n')
+    : 'No recent Bungie news found.';
+
+  const devRedditData = devRedditPosts?.length > 0
+    ? devRedditPosts.map(p => `TITLE: ${p.title}\nAUTHOR: ${p.author}\nCONTENT: ${p.selftext}\nURL: ${p.url}`).join('\n---\n')
+    : 'No recent official Reddit posts found.';
+
   return `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
 You are the only editor who teaches rather than reports. Write structured guides for new and improving Runners.
@@ -141,29 +149,35 @@ ${weaponData}
 VERIFIED MOD DATA:
 ${modData}
 
+OFFICIAL DEV NEWS (Bungie.net — prioritize if recent):
+${bungieNewsData}
+
+OFFICIAL DEV REDDIT POSTS (Bungie/official accounts on r/Marathon):
+${devRedditData}
+
 YOUTUBE GUIDE CONTENT:
 ${videoSummaries}
 
 REDDIT COMMUNITY TIPS:
 ${redditSummaries}
 
-Choose the most useful guide topic for Runners right now. Reference real shell abilities, weapon stats, and mod names.
+Choose the most useful guide topic for Runners right now. Reference real shell abilities, weapon stats, and mod names. If there is recent official dev news, prioritize covering it — players want to know what Bungie just announced. Mark dev-sourced guides with guide_category "dev-update" and include "dev-update" in tags.
 
 Return ONLY valid JSON — no other text:
 {
   "headline": "guide headline under 80 chars",
   "body": "200-350 words with **bold section headers**. Name real shells, weapons, mods. Be specific and actionable. Note ranked context where relevant.",
-  "guide_category": "beginner|extraction|shell-guide|weapon-guide|mod-guide|progression|map-guide|ranked",
+  "guide_category": "beginner|extraction|shell-guide|weapon-guide|mod-guide|progression|map-guide|ranked|dev-update",
   "shells_covered": ["shell names mentioned"],
   "weapons_covered": ["weapon names mentioned"],
   "mods_covered": ["mod names mentioned"],
   "difficulty_rating": "Beginner|Intermediate|Advanced",
   "ranked_relevant": true,
-  "tags": ["3-5 tags — include ranked if relevant"],
+  "tags": ["3-5 tags — include ranked and/or dev-update if relevant"],
   "ce_score": 0.0,
   "source_type": "guide",
   "thumbnail": "YouTube thumbnail URL or null",
-  "source_url": "most relevant YouTube or Reddit URL"
+  "source_url": "most relevant YouTube, Reddit, or Bungie.net URL"
 }`;
 }
 
