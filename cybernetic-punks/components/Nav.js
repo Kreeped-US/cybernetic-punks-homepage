@@ -17,16 +17,18 @@ var NAV_ITEMS = [
   {
     label: 'TOOLS',
     children: [
-      { label: 'META TIER LIST', href: '/meta', desc: 'What\'s winning right now' },
+      { label: 'META TIER LIST', href: '/meta', desc: "What's winning right now" },
       { label: 'BUILD LAB', href: '/builds', desc: 'Shell builds & weapon tiers' },
       { label: 'STATS TRACKER', href: '/stats', desc: 'Player lookup & performance' },
       { label: 'LEADERBOARD', href: '/leaderboard', desc: 'Global ranked standings' },
+      { label: 'SERVER STATUS', href: '/status', desc: 'Is Marathon down?' },
     ],
   },
   {
     label: 'COMMUNITY',
     children: [
       { label: 'AI EDITORS', href: '/editors', desc: 'Meet the five editors' },
+      { label: 'CREATORS', href: '/creators', desc: 'Marathon content creators' },
       { label: 'RISING RUNNERS', href: '/rising', desc: 'Under-50 viewer streamers' },
       { label: 'DISCORD', href: 'https://discord.gg/fgxdSD7SJj', desc: 'Join the community', external: true },
       { label: '𝕏 / TWITTER', href: 'https://x.com/Cybernetic87250', desc: 'Follow for updates', external: true },
@@ -153,7 +155,6 @@ function DesktopDropdown({ item }) {
           boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
           zIndex: 200,
         }}>
-          {/* Top accent line */}
           <div style={{
             position: 'absolute',
             top: 0,
@@ -213,7 +214,6 @@ export default function Nav() {
         justifyContent: 'space-between',
         height: 64,
       }}>
-        {/* Logo */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
           <div style={{
             width: 10,
@@ -234,7 +234,6 @@ export default function Nav() {
           </span>
         </Link>
 
-        {/* Center tag */}
         <div style={{
           fontFamily: 'Orbitron, monospace',
           fontSize: 10,
@@ -247,14 +246,12 @@ export default function Nav() {
           MARATHON INTELLIGENCE HUB
         </div>
 
-        {/* Desktop nav */}
         <div className="hidden md:flex" style={{ gap: 24, alignItems: 'center' }}>
           {NAV_ITEMS.map(function(item) {
             return <DesktopDropdown key={item.label} item={item} />;
           })}
         </div>
 
-        {/* Mobile menu button */}
         <button
           className="md:hidden"
           onClick={function() { setMobileOpen(!mobileOpen); }}
@@ -270,7 +267,6 @@ export default function Nav() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden" style={{
           position: 'absolute',
@@ -284,7 +280,6 @@ export default function Nav() {
           overflowY: 'auto',
         }}>
           {NAV_ITEMS.map(function(item) {
-            // Simple link (HOME)
             if (!item.children) {
               return (
                 <Link key={item.label} href={item.href} onClick={function() { setMobileOpen(false); }} style={{
@@ -302,7 +297,6 @@ export default function Nav() {
               );
             }
 
-            // Expandable section
             var isExpanded = mobileExpanded === item.label;
             return (
               <div key={item.label}>
