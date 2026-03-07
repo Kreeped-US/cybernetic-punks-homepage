@@ -190,7 +190,7 @@ export default async function BuildsPage() {
   // Fetch DEXTER articles
   const { data: dexterArticles } = await supabase
     .from('feed_items')
-    .select('id, headline, slug, tags, ce_score, thumbnail, source_video_id, created_at')
+    .select('id, headline, slug, tags, ce_score, thumbnail, created_at')
     .eq('editor', 'DEXTER')
     .eq('is_published', true)
     .order('created_at', { ascending: false })
@@ -200,7 +200,6 @@ export default async function BuildsPage() {
   const shellNames = SHELLS.map(s => s.name.toLowerCase());
   const articlesByShell = {};
   const generalArticles = [];
-  const seenVideoIds = {};
 
   (dexterArticles || []).forEach(article => {
     const tags = (article.tags || []).map(t => t.toLowerCase());
@@ -214,17 +213,13 @@ export default async function BuildsPage() {
       }
     }
 
-    const videoId = article.source_video_id || article.id;
-    const dedupeKey = matchedShell ? matchedShell + '_' + videoId : 'general_' + videoId;
-
-    if (seenVideoIds[dedupeKey]) return; // skip duplicate
-    seenVideoIds[dedupeKey] = true;
-
     if (matchedShell) {
       if (!articlesByShell[matchedShell]) articlesByShell[matchedShell] = [];
-      articlesByShell[matchedShell].push(article);
+      if (articlesByShell[matchedShell].length < 4) {
+        articlesByShell[matchedShell].push(article);
+      }
     } else {
-      generalArticles.push(article);
+      if (generalArticles.length < 12) generalArticles.push(article);
     }
   });
 
