@@ -12,6 +12,7 @@ var NAV_ITEMS = [
       { label: '⬡ NEXUS', href: '/intel/nexus', desc: 'Meta tracking & strategy', color: '#00f5ff' },
       { label: '⬢ DEXTER', href: '/intel/dexter', desc: 'Build analysis & loadouts', color: '#ff8800' },
       { label: '◇ GHOST', href: '/intel/ghost', desc: 'Community pulse & sentiment', color: '#00ff88' },
+      { label: '⬡ SITREP', href: '/sitrep', desc: 'Daily meta situation report', color: '#00f5ff' },
     ],
   },
   {
