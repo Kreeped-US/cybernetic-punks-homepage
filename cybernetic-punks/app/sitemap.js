@@ -26,6 +26,7 @@ export default async function sitemap() {
     { url: baseUrl + '/leaderboard',    lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/status',         lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/creators',       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
+    { url: 'https://cyberneticpunks.com/sitrep', lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
   ];
 
   let dynamicPages = [];
