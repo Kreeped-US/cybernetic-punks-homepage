@@ -15,7 +15,6 @@ const DAILY_TWEET_CAP = 4;
 // MIRANDA only — educational guide format
 
 function buildMirandaTweet(item) {
-  // Pick an intro line based on guide category
   var tags = (item.tags || []).map(function(t) { return t.toLowerCase(); });
   var intro = '◎ RUNNER TIP';
   if (tags.includes('shell-guide'))  intro = '◎ SHELL GUIDE';
@@ -24,6 +23,7 @@ function buildMirandaTweet(item) {
   if (tags.includes('ranked'))       intro = '◎ RANKED TIP';
   if (tags.includes('beginner'))     intro = '◎ BEGINNER GUIDE';
   if (tags.includes('extraction'))   intro = '◎ EXTRACTION TIP';
+  if (tags.includes('dev-update'))   intro = '◎ DEV UPDATE';
 
   var text = intro + '\n\n' + item.headline;
   text = text + '\n\nFull guide → cyberneticpunks.com/intel/' + item.slug;
@@ -36,7 +36,6 @@ function buildMirandaTweet(item) {
 // Only MIRANDA tweets — all other editors are skipped
 
 export async function queueTweet(feedItem) {
-  // Only queue MIRANDA content
   if (feedItem.editor !== 'MIRANDA') {
     console.log('[TWITTER] Skipping ' + feedItem.editor + ' — MIRANDA only mode');
     return false;
@@ -45,7 +44,6 @@ export async function queueTweet(feedItem) {
   try {
     var tweetText = buildMirandaTweet(feedItem);
 
-    // X has a 280 character limit
     if (tweetText.length > 280) {
       tweetText = tweetText.substring(0, 277) + '...';
     }
@@ -58,6 +56,9 @@ export async function queueTweet(feedItem) {
       ce_score: feedItem.ce_score || 0,
       source: feedItem.source || 'GUIDE',
       tweet_text: tweetText,
+      content: tweetText,
+      platform: 'twitter',
+      status: 'pending',
       is_posted: false,
     });
 
@@ -99,7 +100,6 @@ export async function postFromQueue() {
     return null;
   }
 
-  // Get oldest unposted MIRANDA tweet
   var { data: nextTweet, error: fetchError } = await supabase
     .from('post_queue')
     .select('*')
@@ -114,12 +114,13 @@ export async function postFromQueue() {
     return null;
   }
 
-  var tweetId = await sendTweet(nextTweet.tweet_text);
+  var tweetText = nextTweet.tweet_text || nextTweet.content;
+  var tweetId = await sendTweet(tweetText);
 
   if (tweetId) {
     await supabase
       .from('post_queue')
-      .update({ is_posted: true, posted_at: new Date().toISOString() })
+      .update({ is_posted: true, posted_at: new Date().toISOString(), status: 'posted' })
       .eq('id', nextTweet.id);
 
     console.log('[TWITTER] Posted MIRANDA tweet — ID ' + tweetId);
