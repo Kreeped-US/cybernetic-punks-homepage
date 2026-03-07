@@ -1,6 +1,5 @@
 // lib/twitter.js
-// Tweet queue system — queues tweets from each cron run, posts 1 per run
-// Max 5 tweets per day, evenly spaced across 6-hour cron cycles
+// Tweet queue system — MIRANDA only, 4 posts per day (1 per cron run)
 
 import { TwitterApi } from 'twitter-api-v2';
 import { createClient } from '@supabase/supabase-js';
@@ -10,81 +9,41 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const DAILY_TWEET_CAP = 5;
+const DAILY_TWEET_CAP = 4;
 
-// ─── BETTER TWEET FORMATS ──────────────────────────────────────
-// More personality, hashtags for discovery, varied structure
+// ─── TWEET FORMAT ──────────────────────────────────────────────
+// MIRANDA only — educational guide format
 
-const EDITOR_FORMATS = {
-  CIPHER: function(item) {
-    var grade = '';
-    if (item.ce_score) {
-      if (item.ce_score >= 9) grade = 'S-TIER PLAY';
-      else if (item.ce_score >= 7) grade = 'A-TIER PLAY';
-      else grade = 'PLAY GRADED';
-    }
-    var text = '◈ ' + (grade || 'PLAY ANALYSIS') + '\n\n' + item.headline;
-    if (item.ce_score) text = text + '\n\nCE Score: ' + item.ce_score + '/10';
-    text = text + '\n\ncyberneticpunks.com/intel/' + item.slug;
-    text = text + '\n\n#Marathon #MarathonGame #FPS';
-    return text;
-  },
+function buildMirandaTweet(item) {
+  // Pick an intro line based on guide category
+  var tags = (item.tags || []).map(function(t) { return t.toLowerCase(); });
+  var intro = '◎ RUNNER TIP';
+  if (tags.includes('shell-guide'))  intro = '◎ SHELL GUIDE';
+  if (tags.includes('weapon-guide')) intro = '◎ WEAPON TIP';
+  if (tags.includes('mod-guide'))    intro = '◎ MOD BREAKDOWN';
+  if (tags.includes('ranked'))       intro = '◎ RANKED TIP';
+  if (tags.includes('beginner'))     intro = '◎ BEGINNER GUIDE';
+  if (tags.includes('extraction'))   intro = '◎ EXTRACTION TIP';
 
-  NEXUS: function(item) {
-    var text = '⬡ META UPDATE\n\n' + item.headline;
-    if (item.ce_score) text = text + '\n\nGrid Pulse: ' + item.ce_score + '/10';
-    text = text + '\n\ncyberneticpunks.com/intel/' + item.slug;
-    text = text + '\n\n#Marathon #MarathonMeta';
-    return text;
-  },
+  var text = intro + '\n\n' + item.headline;
+  text = text + '\n\nFull guide → cyberneticpunks.com/intel/' + item.slug;
+  text = text + '\n\n#Marathon #MarathonTheGame';
 
-  DEXTER: function(item) {
-    var shellTag = '';
-    if (item.tags && item.tags.length > 0) {
-      var shells = ['destroyer', 'vandal', 'recon', 'assassin', 'triage', 'thief'];
-      for (var i = 0; i < item.tags.length; i++) {
-        if (shells.indexOf(item.tags[i].toLowerCase()) !== -1) {
-          shellTag = ' #' + item.tags[i].charAt(0).toUpperCase() + item.tags[i].slice(1).toLowerCase();
-          break;
-        }
-      }
-    }
-    var text = '⬢ BUILD ANALYSIS\n\n' + item.headline;
-    if (item.ce_score) text = text + '\n\nLoadout Grade: ' + item.ce_score + '/10';
-    text = text + '\n\ncyberneticpunks.com/intel/' + item.slug;
-    text = text + '\n\n#Marathon #MarathonBuilds' + shellTag;
-    return text;
-  },
-
-  GHOST: function(item) {
-    var mood = '';
-    if (item.ce_score) {
-      if (item.ce_score >= 7) mood = 'Community is buzzing';
-      else if (item.ce_score >= 4) mood = 'Mixed signals from the community';
-      else mood = 'Community tension rising';
-    }
-    var text = '◇ COMMUNITY PULSE\n\n' + item.headline;
-    if (mood) text = text + '\n\n' + mood;
-    text = text + '\n\ncyberneticpunks.com/intel/' + item.slug;
-    text = text + '\n\n#Marathon #MarathonCommunity';
-    return text;
-  },
-
-  MIRANDA: function(item) {
-    var text = '◎ WEEKLY DIGEST\n\n' + item.headline;
-    text = text + '\n\ncyberneticpunks.com/intel/' + item.slug;
-    text = text + '\n\n#Marathon';
-    return text;
-  },
-};
+  return text;
+}
 
 // ─── QUEUE A TWEET ──────────────────────────────────────────────
-// Called after each article is saved — adds to post_queue, does NOT tweet yet
+// Only MIRANDA tweets — all other editors are skipped
 
 export async function queueTweet(feedItem) {
+  // Only queue MIRANDA content
+  if (feedItem.editor !== 'MIRANDA') {
+    console.log('[TWITTER] Skipping ' + feedItem.editor + ' — MIRANDA only mode');
+    return false;
+  }
+
   try {
-    var formatFn = EDITOR_FORMATS[feedItem.editor] || EDITOR_FORMATS.CIPHER;
-    var tweetText = formatFn(feedItem);
+    var tweetText = buildMirandaTweet(feedItem);
 
     // X has a 280 character limit
     if (tweetText.length > 280) {
@@ -97,7 +56,7 @@ export async function queueTweet(feedItem) {
       slug: feedItem.slug,
       tags: feedItem.tags || [],
       ce_score: feedItem.ce_score || 0,
-      source: feedItem.source || 'YOUTUBE',
+      source: feedItem.source || 'GUIDE',
       tweet_text: tweetText,
       is_posted: false,
     });
@@ -107,7 +66,7 @@ export async function queueTweet(feedItem) {
       return false;
     }
 
-    console.log('[TWITTER] Queued tweet for ' + feedItem.editor + ': ' + feedItem.headline.substring(0, 50));
+    console.log('[TWITTER] Queued MIRANDA tweet: ' + feedItem.headline.substring(0, 50));
     return true;
 
   } catch (err) {
@@ -117,10 +76,9 @@ export async function queueTweet(feedItem) {
 }
 
 // ─── POST FROM QUEUE ────────────────────────────────────────────
-// Called once per cron run — posts the oldest unposted tweet if under daily cap
+// Called once per cron run — posts oldest unposted tweet if under daily cap
 
 export async function postFromQueue() {
-  // Check how many tweets we've posted in the last 24 hours
   var oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   var { data: recentTweets, error: countError } = await supabase
@@ -141,31 +99,30 @@ export async function postFromQueue() {
     return null;
   }
 
-  // Get the oldest unposted tweet
+  // Get oldest unposted MIRANDA tweet
   var { data: nextTweet, error: fetchError } = await supabase
     .from('post_queue')
     .select('*')
     .eq('is_posted', false)
+    .eq('editor', 'MIRANDA')
     .order('created_at', { ascending: true })
     .limit(1)
     .single();
 
   if (fetchError || !nextTweet) {
-    console.log('[TWITTER] No tweets in queue');
+    console.log('[TWITTER] No MIRANDA tweets in queue');
     return null;
   }
 
-  // Post it
   var tweetId = await sendTweet(nextTweet.tweet_text);
 
   if (tweetId) {
-    // Mark as posted
     await supabase
       .from('post_queue')
       .update({ is_posted: true, posted_at: new Date().toISOString() })
       .eq('id', nextTweet.id);
 
-    console.log('[TWITTER] Posted from queue: ' + nextTweet.editor + ' — tweet ID ' + tweetId);
+    console.log('[TWITTER] Posted MIRANDA tweet — ID ' + tweetId);
     return { tweetId: tweetId, editor: nextTweet.editor, headline: nextTweet.headline };
   }
 
@@ -202,8 +159,7 @@ async function sendTweet(tweetText) {
   }
 }
 
-// ─── LEGACY EXPORT (keeping for backwards compatibility) ────────
-// If anything else calls postTweet directly, it now queues instead
+// ─── LEGACY EXPORT ──────────────────────────────────────────────
 
 export async function postTweet(feedItem) {
   return await queueTweet(feedItem);
