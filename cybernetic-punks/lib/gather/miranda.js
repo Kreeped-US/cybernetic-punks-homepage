@@ -1,5 +1,5 @@
 // lib/gather/miranda.js
-// MIRANDA gather — YouTube guides + Reddit help + dev news + all 3 stat tables
+// MIRANDA gather — YouTube guides + Reddit help + Steam dev news + all 3 stat tables
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -86,46 +86,17 @@ async function fetchRedditGuides() {
   return posts.sort((a, b) => b.score - a.score).slice(0, 10);
 }
 
-// ─── DEV NEWS: Bungie.net ─────────────────────────────────────
-// Fetches the Bungie news page and extracts recent article titles + URLs
+// ─── DEV NEWS: Steam news feed ────────────────────
+// Steam news is reliable and includes all Bungie patch notes
 
-async function fetchBungieNews() {
+async function fetchSteamDevNews() {
   try {
-    const res = await fetch('https://www.bungie.net/en/News', {
-      headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0 (https://cyberneticpunks.com)' }
-    });
-    if (!res.ok) throw new Error(`Bungie.net returned ${res.status}`);
-    const html = await res.text();
-
-    const articles = [];
-
-    // Extract article titles and links from Bungie news page
-    const linkRe = /<a[^>]+href="(\/en\/News\/Article\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-    let m;
-    while ((m = linkRe.exec(html)) !== null) {
-      const href = m[1];
-      const text = m[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-      if (text.length > 10 && text.length < 200) {
-        articles.push({
-          title: text,
-          url:   'https://www.bungie.net' + href
-        });
-      }
-    }
-
-    // Deduplicate by URL
-    const seen = new Set();
-    const unique = articles.filter(a => {
-      if (seen.has(a.url)) return false;
-      seen.add(a.url);
-      return true;
-    });
-
-    console.log(`[miranda.js] Bungie.net: ${unique.length} articles found`);
-    return unique.slice(0, 5);
-
+    const { fetchSteamNews } = await import('./steam.js');
+    const articles = await fetchSteamNews();
+    console.log(`[miranda.js] Steam dev news: ${articles.length} articles`);
+    return articles;
   } catch (err) {
-    console.error('[miranda.js] Bungie.net fetch failed:', err.message);
+    console.error('[miranda.js] Steam news failed:', err.message);
     return [];
   }
 }
@@ -138,7 +109,6 @@ async function fetchDevRedditPosts() {
   const devAuthors = ['Bungie', 'BungieHelp', 'BungieIntel', 'marathon_game'];
 
   try {
-    // Search for Official flair
     for (const sub of ['Marathon', 'MarathonTheGame']) {
       try {
         const res = await fetch(
@@ -150,12 +120,12 @@ async function fetchDevRedditPosts() {
         for (const item of (d?.data?.children || [])) {
           const p = item.data;
           devPosts.push({
-            title:    p.title,
-            selftext: p.selftext?.slice(0, 600) || '',
-            score:    p.score,
-            url:      `https://reddit.com${p.permalink}`,
-            author:   p.author,
-            flair:    p.link_flair_text || 'Official',
+            title:      p.title,
+            selftext:   p.selftext?.slice(0, 600) || '',
+            score:      p.score,
+            url:        `https://reddit.com${p.permalink}`,
+            author:     p.author,
+            flair:      p.link_flair_text || 'Official',
             isOfficial: true
           });
         }
@@ -163,7 +133,6 @@ async function fetchDevRedditPosts() {
         console.error(`[miranda.js] Dev Reddit r/${sub}:`, err.message);
       }
 
-      // Also check new posts for known dev authors
       try {
         const res2 = await fetch(
           `https://old.reddit.com/r/${sub}/new.json?limit=25`,
@@ -175,12 +144,12 @@ async function fetchDevRedditPosts() {
           const p = item.data;
           if (devAuthors.some(a => p.author?.toLowerCase().includes(a.toLowerCase()))) {
             devPosts.push({
-              title:    p.title,
-              selftext: p.selftext?.slice(0, 600) || '',
-              score:    p.score,
-              url:      `https://reddit.com${p.permalink}`,
-              author:   p.author,
-              flair:    p.link_flair_text || 'Dev Post',
+              title:      p.title,
+              selftext:   p.selftext?.slice(0, 600) || '',
+              score:      p.score,
+              url:        `https://reddit.com${p.permalink}`,
+              author:     p.author,
+              flair:      p.link_flair_text || 'Dev Post',
               isOfficial: true
             });
           }
@@ -193,7 +162,6 @@ async function fetchDevRedditPosts() {
     console.error('[miranda.js] fetchDevRedditPosts failed:', err.message);
   }
 
-  // Deduplicate by URL
   const seen = new Set();
   return devPosts.filter(p => {
     if (seen.has(p.url)) return false;
@@ -248,14 +216,14 @@ export async function gatherMirandaData() {
   const [videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext] = await Promise.all([
     fetchYouTubeGuides(),
     fetchRedditGuides(),
-    fetchBungieNews(),
+    fetchSteamDevNews(),
     fetchDevRedditPosts(),
     fetchShellContext(),
     fetchWeaponContext(),
     fetchModContext()
   ]);
 
-  console.log(`[miranda.js] ${videos.length} videos, ${redditPosts.length} Reddit, ${devNews.length} Bungie news, ${devRedditPosts.length} dev posts`);
+  console.log(`[miranda.js] ${videos.length} videos, ${redditPosts.length} Reddit, ${devNews.length} Steam news, ${devRedditPosts.length} dev posts`);
   console.log(`[miranda.js] Context: ${shellContext.length} shells, ${weaponContext.length} weapons, ${modContext.length} mods`);
 
   return { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext };

@@ -78,7 +78,22 @@ function timeAgo(dateStr) {
   return Math.floor(diffH / 24) + 'd ago';
 }
 
+async function getLiveSteamPlayers() {
+  try {
+    const res = await fetch(
+      'https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=3065800',
+      { next: { revalidate: 60 } }
+    );
+    const d = await res.json();
+    return d?.response?.player_count || null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function StatusPage() {
+  var steamPlayers = await getLiveSteamPlayers();
+
   var { data: serverStatus } = await supabase
     .from('server_status')
     .select('*')
@@ -139,6 +154,52 @@ export default async function StatusPage() {
           </div>
         </div>
       </section>
+
+      {/* ─── LIVE PLAYER COUNT ───────────────────────── */}
+      {steamPlayers && (
+        <section style={{
+          padding: '0 20px 30px',
+          maxWidth: '900px',
+          margin: '0 auto',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: '#0a0a0a',
+            border: '1px solid ' + GREEN + '33',
+            borderRadius: '8px',
+            padding: '14px 28px',
+          }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: GREEN,
+              boxShadow: '0 0 10px ' + GREEN,
+              animation: 'pulse-glow 2s ease-in-out infinite',
+            }} />
+            <span style={{
+              fontFamily: 'var(--font-heading)',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: GREEN,
+              letterSpacing: '2px',
+            }}>
+              {steamPlayers.toLocaleString()}
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              color: '#555',
+              letterSpacing: '1px',
+            }}>
+              RUNNERS IN-GAME (STEAM)
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* ─── SERVER STATUS PANELS ────────────────────── */}
       <section style={{

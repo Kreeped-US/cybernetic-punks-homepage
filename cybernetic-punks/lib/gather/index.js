@@ -3,6 +3,7 @@ import { gatherReddit, formatForGhost } from './reddit';
 import { gatherTwitchClips, formatClipsForCipher } from './twitch';
 import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
+import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
@@ -11,18 +12,22 @@ export async function gatherAll() {
   const wikiResults = await refreshWikiData();
   console.log('[GATHER] Wiki refresh:', wikiResults);
 
-  // Gather from all sources in parallel
-  const [youtubeVideos, redditPosts, twitchClips, mirandaData] = await Promise.all([
+  // Gather from all sources in parallel — including Steam
+  const [youtubeVideos, redditPosts, twitchClips, mirandaData, steamPlayerCount, steamReviews] = await Promise.all([
     gatherYouTube(),
     gatherReddit(),
     gatherTwitchClips(),
     gatherMirandaData(),
+    fetchSteamPlayerCount(),
+    fetchSteamReviews(),
   ]);
 
   console.log('[GATHER] YouTube: ' + youtubeVideos.length + ' videos collected');
   console.log('[GATHER] Reddit: ' + redditPosts.length + ' posts collected');
   console.log('[GATHER] Twitch: ' + twitchClips.length + ' clips collected');
   console.log('[GATHER] Miranda: ' + mirandaData.videos.length + ' guide videos, ' + mirandaData.shellContext.length + ' shells');
+  console.log('[GATHER] Steam: ' + (steamPlayerCount ? steamPlayerCount.toLocaleString() + ' live players' : 'player count unavailable'));
+  console.log('[GATHER] Steam reviews: ' + (steamReviews?.reviews?.length || 0) + ' recent reviews');
 
   // CIPHER gets YouTube videos + Twitch clips combined
   let cipherPrompt = formatForEditor(youtubeVideos, 'CIPHER');
@@ -37,14 +42,16 @@ export async function gatherAll() {
     CIPHER:  cipherPrompt,
     NEXUS:   formatForEditor(youtubeVideos, 'NEXUS'),
     DEXTER:  formatForEditor(youtubeVideos, 'DEXTER'),
-    GHOST:   formatForGhost(redditPosts),
-    MIRANDA: mirandaData,  // raw data — cron builds prompt via buildMirandaPrompt()
+    GHOST:   formatForGhost(redditPosts, steamReviews),
+    MIRANDA: mirandaData,
   };
 
-  // Pass raw data along for thumbnail/URL extraction in cron route
+  // Pass raw data along for thumbnail/URL extraction + Steam data for status page
   prompts._rawData = {
     youtubeVideos,
     twitchClips,
+    steamPlayerCount,
+    steamReviews,
   };
 
   const active = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v !== null).map(([k]) => k);
