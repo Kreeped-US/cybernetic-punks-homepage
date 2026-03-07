@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     q: 'When does Marathon ranked mode launch?',
-    a: 'Ranked is confirmed for the second half of March 2026, within Season 1. Check /meta for ranked meta analysis from NEXUS — updated every 6 hours.'
+    a: 'Ranked is confirmed for the end of March 2026, within Season 1. Check /meta for ranked meta analysis from NEXUS — updated every 6 hours.'
   },
   {
     q: 'What are all the Marathon ranked tiers?',
@@ -83,14 +83,36 @@ export default function RankedPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      {/* Header */}
+      {/* ─── COUNTDOWN BANNER ─────────────────────────── */}
+      <div style={{
+        background: '#ffd70010',
+        border: '1px solid #ffd70044',
+        borderLeft: 'none',
+        borderRight: 'none',
+        padding: '12px 24px',
+        textAlign: 'center',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '12px',
+          color: '#ffd700',
+          letterSpacing: '2px',
+        }}>
+          ⚡ RANKED MODE DROPS END OF MARCH — HOLOTAG SEASON 1 BEGINS SOON —{' '}
+          <Link href="/ranked#holotag" style={{ color: '#ffd700', textDecoration: 'underline' }}>
+            PREP YOUR SHELL NOW
+          </Link>
+        </span>
+      </div>
+
+      {/* ─── HEADER ───────────────────────────────────── */}
       <div style={{ padding: '48px 24px 32px', maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
           <span style={{
             padding: '4px 10px', backgroundColor: '#ffd70015',
             border: '1px solid #ffd70044', color: '#ffd700',
             fontSize: '10px', letterSpacing: '3px', fontFamily: 'var(--font-mono)'
-          }}>LAUNCHING MARCH 2026</span>
+          }}>LAUNCHING END OF MARCH 2026</span>
           <span style={{
             padding: '4px 10px', backgroundColor: '#ff000015',
             border: '1px solid #ff000044', color: '#ff0000',
@@ -115,7 +137,7 @@ export default function RankedPage() {
             <Link key={l.href} href={l.href} style={{
               padding: '10px 20px',
               backgroundColor: l.color + '15',
-              border: `1px solid ${l.color}44`,
+              border: '1px solid ' + l.color + '44',
               color: l.color, textDecoration: 'none',
               fontSize: '12px', letterSpacing: '2px',
               fontFamily: 'var(--font-mono)'
@@ -124,8 +146,8 @@ export default function RankedPage() {
         </div>
       </div>
 
-      {/* Holotag Mechanic */}
-      <section style={{ padding: '0 24px 48px', maxWidth: '900px', margin: '0 auto' }}>
+      {/* ─── HOLOTAG MECHANIC ─────────────────────────── */}
+      <section id="holotag" style={{ padding: '0 24px 48px', maxWidth: '900px', margin: '0 auto' }}>
         <h2 style={{
           fontFamily: 'var(--font-heading)', fontSize: '22px',
           color: '#ffd700', marginBottom: '16px', letterSpacing: '2px'
@@ -149,7 +171,7 @@ export default function RankedPage() {
           ].map(s => (
             <div key={s.n} style={{
               flex: '1', minWidth: '110px', padding: '12px',
-              borderTop: `2px solid ${s.c}`, backgroundColor: '#0a0a0a', margin: '1px'
+              borderTop: '2px solid ' + s.c, backgroundColor: '#0a0a0a', margin: '1px'
             }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: s.c, marginBottom: '4px' }}>{s.n}</div>
               <div style={{ fontFamily: 'var(--font-heading)', fontSize: '11px', letterSpacing: '1px', marginBottom: '4px' }}>{s.l}</div>
@@ -159,7 +181,7 @@ export default function RankedPage() {
         </div>
       </section>
 
-      {/* Tier Breakdown */}
+      {/* ─── TIER BREAKDOWN ───────────────────────────── */}
       <section style={{ padding: '0 24px 48px', maxWidth: '900px', margin: '0 auto' }}>
         <h2 style={{
           fontFamily: 'var(--font-heading)', fontSize: '22px',
@@ -169,7 +191,7 @@ export default function RankedPage() {
           {TIERS.map(t => (
             <div key={t.name} style={{
               display: 'flex', alignItems: 'flex-start', gap: '20px',
-              padding: '16px 20px', border: `1px solid ${t.color}33`,
+              padding: '16px 20px', border: '1px solid ' + t.color + '33',
               backgroundColor: '#0a0a0a'
             }}>
               <div style={{ minWidth: '100px' }}>
@@ -182,7 +204,7 @@ export default function RankedPage() {
                   color: t.div ? '#555' : t.color,
                   fontFamily: 'var(--font-mono)', marginTop: '2px'
                 }}>
-                  {t.div ? `${t.div} DIVISIONS` : 'TOP 500'}
+                  {t.div ? t.div + ' DIVISIONS' : 'TOP 500'}
                 </div>
               </div>
               <div style={{ fontSize: '14px', color: '#999', lineHeight: 1.5 }}>{t.desc}</div>
@@ -191,7 +213,7 @@ export default function RankedPage() {
         </div>
       </section>
 
-      {/* Key Rules */}
+      {/* ─── KEY RULES ────────────────────────────────── */}
       <section style={{ padding: '0 24px 48px', maxWidth: '900px', margin: '0 auto' }}>
         <h2 style={{
           fontFamily: 'var(--font-heading)', fontSize: '22px',
@@ -201,7 +223,7 @@ export default function RankedPage() {
           {[
             { icon: '🏆', title: 'Cosmetic Rewards Only',          body: 'No power advantages from ranked. Rewards are titles, skins, and milestone cosmetics.' },
             { icon: '🔄', title: 'Full Season Reset',              body: 'Rank progress resets each season. Cosmetics and titles carry over.' },
-            { icon: '⚡', title: 'Seasonal Rewards Don\'t Expire', body: 'Miss a season? Come back later and still complete it.' },
+            { icon: '⚡', title: "Seasonal Rewards Don't Expire",  body: 'Miss a season? Come back later and still complete it.' },
             { icon: '🎯', title: 'Solo Queue Supported',           body: 'Ranked supports solo play with its own rewards track separate from squad ranked.' }
           ].map((c, i) => (
             <div key={i} style={{ padding: '18px', border: '1px solid #1a1a1a', backgroundColor: '#0a0a0a' }}>
@@ -213,7 +235,7 @@ export default function RankedPage() {
         </div>
       </section>
 
-      {/* Live intel callout */}
+      {/* ─── LIVE INTEL CALLOUT ───────────────────────── */}
       <section style={{ padding: '0 24px 48px', maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ border: '1px solid #00f5ff22', backgroundColor: '#00f5ff08', padding: '24px' }}>
           <div style={{
@@ -244,7 +266,7 @@ export default function RankedPage() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* ─── FAQ ──────────────────────────────────────── */}
       <section style={{ padding: '0 24px 80px', maxWidth: '900px', margin: '0 auto' }}>
         <h2 style={{
           fontFamily: 'var(--font-heading)', fontSize: '22px',
@@ -259,6 +281,7 @@ export default function RankedPage() {
           ))}
         </div>
       </section>
+
     </main>
   );
 }
