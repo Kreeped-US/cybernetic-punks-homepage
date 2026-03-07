@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-export var revalidate = 60; // Revalidate every 60 seconds
+export var revalidate = 60;
 
 export var metadata = {
   title: 'Marathon Server Status — Is Marathon Down? Live Status & Weekly Reset | CyberneticPunks',
@@ -37,32 +37,32 @@ var YELLOW = '#ffcc00';
 var PURPLE = '#9b5de5';
 
 var PLATFORM_INFO = {
-  steam: { label: 'STEAM (PC)', icon: '⊞' },
-  playstation: { label: 'PLAYSTATION 5', icon: '△' },
-  xbox: { label: 'XBOX SERIES X|S', icon: '⊕' },
+  steam:       { label: 'STEAM (PC)',       icon: '⊞' },
+  playstation: { label: 'PLAYSTATION 5',    icon: '△' },
+  xbox:        { label: 'XBOX SERIES X|S',  icon: '⊕' },
 };
 
 var STATUS_STYLES = {
-  online: { color: GREEN, label: 'ONLINE' },
-  issues: { color: YELLOW, label: 'ISSUES' },
+  online:      { color: GREEN,  label: 'ONLINE' },
+  issues:      { color: YELLOW, label: 'ISSUES' },
   maintenance: { color: ORANGE, label: 'MAINTENANCE' },
-  offline: { color: RED, label: 'OFFLINE' },
+  offline:     { color: RED,    label: 'OFFLINE' },
 };
 
 var ERROR_CODES = [
-  { code: 'BASIL', desc: 'Basic disconnect. Try logging back in. If persistent, check server status above.', severity: 'low' },
-  { code: 'BROCCOLI', desc: 'GPU not detected or driver crash. Update your GPU drivers and verify your graphics card is properly installed.', severity: 'high' },
-  { code: 'GINGER', desc: 'A crew member disconnected during matchmaking. Usually resolves on the disconnected player\'s end.', severity: 'low' },
-  { code: 'CURRANT', desc: 'Network connectivity issue. Check your ISP status, restart your router, and try a wired connection.', severity: 'medium' },
-  { code: 'WEASEL', desc: 'Lost connection to Bungie servers. Often a server-side issue during high traffic or maintenance windows.', severity: 'high' },
-  { code: 'ANTEATER', desc: 'Unable to connect to Bungie. Check your NAT type, firewall settings, and ensure BattlEye is not blocked.', severity: 'medium' },
+  { code: 'BASIL',    desc: 'Basic disconnect. Try logging back in. If persistent, check server status above.',                                         severity: 'low' },
+  { code: 'BROCCOLI', desc: 'GPU not detected or driver crash. Update your GPU drivers and verify your graphics card is properly installed.',            severity: 'high' },
+  { code: 'GINGER',   desc: "A crew member disconnected during matchmaking. Usually resolves on the disconnected player's end.",                        severity: 'low' },
+  { code: 'CURRANT',  desc: 'Network connectivity issue. Check your ISP status, restart your router, and try a wired connection.',                      severity: 'medium' },
+  { code: 'WEASEL',   desc: 'Lost connection to Bungie servers. Often a server-side issue during high traffic or maintenance windows.',                  severity: 'high' },
+  { code: 'ANTEATER', desc: 'Unable to connect to Bungie. Check your NAT type, firewall settings, and ensure BattlEye is not blocked.',                 severity: 'medium' },
 ];
 
 var RESET_DEFAULTS = [
-  { title: 'RANKED ZONES', desc: 'Competitive zones rotate weekly. New Holotag targets and zone selection each reset.', icon: '◎', color: PURPLE },
-  { title: 'FACTION CONTRACTS', desc: 'New contracts from all six factions. Complete them for reputation and seasonal upgrades.', icon: '⬡', color: CYAN },
-  { title: 'ARMORY STOCK', desc: 'Weapons, mods, and gear in the Armory refresh weekly. Check for new Prestige-tier items.', icon: '⬢', color: ORANGE },
-  { title: 'EVENTS & MODIFIERS', desc: 'Rotating map events, enemy spawns, and environmental conditions change with each reset.', icon: '◈', color: RED },
+  { title: 'RANKED ZONES',       desc: 'Competitive zones rotate weekly. New Holotag targets and zone selection each reset.',             icon: '◎', color: PURPLE },
+  { title: 'FACTION CONTRACTS',  desc: 'New contracts from all six factions. Complete them for reputation and seasonal upgrades.',        icon: '⬡', color: CYAN },
+  { title: 'ARMORY STOCK',       desc: 'Weapons, mods, and gear in the Armory refresh weekly. Check for new Prestige-tier items.',       icon: '⬢', color: ORANGE },
+  { title: 'EVENTS & MODIFIERS', desc: 'Rotating map events, enemy spawns, and environmental conditions change with each reset.',        icon: '◈', color: RED },
 ];
 
 function timeAgo(dateStr) {
@@ -91,8 +91,35 @@ async function getLiveSteamPlayers() {
   }
 }
 
+async function getSteamReviews() {
+  try {
+    const res = await fetch(
+      'https://store.steampowered.com/appreviews/3065800?json=1&filter=recent&language=english&num_per_page=8&review_type=all',
+      { next: { revalidate: 300 } }
+    );
+    const d = await res.json();
+    const reviews = (d?.reviews || [])
+      .map(r => ({
+        text: r.review?.slice(0, 180) || '',
+        voted_up: r.voted_up,
+        playtime_hours: Math.round((r.author?.playtime_at_review || 0) / 60),
+      }))
+      .filter(r => r.text.length > 20);
+    const summary = d?.query_summary;
+    return {
+      reviews,
+      total: summary?.total_reviews || 0,
+      positive_percent: summary?.review_score_desc || 'Unknown',
+      total_positive: summary?.total_positive || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default async function StatusPage() {
   var steamPlayers = await getLiveSteamPlayers();
+  var steamReviews = await getSteamReviews();
 
   var { data: serverStatus } = await supabase
     .from('server_status')
@@ -122,10 +149,7 @@ export default async function StatusPage() {
     <main style={{ background: '#030303', minHeight: '100vh', color: '#ffffff' }}>
 
       {/* ─── HERO ─────────────────────────────────────── */}
-      <section style={{
-        padding: '120px 20px 40px',
-        textAlign: 'center',
-      }}>
+      <section style={{ padding: '120px 20px 40px', textAlign: 'center' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <h1 style={{
             fontFamily: 'var(--font-heading)',
@@ -145,11 +169,7 @@ export default async function StatusPage() {
           }}>
             Live Marathon server status across all platforms. Plus weekly reset schedule, ranked zone rotations, and error code reference.
           </p>
-          <div style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            color: '#444',
-          }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#444' }}>
             FOLLOW <a href="https://x.com/BungieHelp" target="_blank" rel="noopener noreferrer" style={{ color: CYAN, textDecoration: 'none' }}>@BUNGIEHELP</a> FOR OFFICIAL UPDATES
           </div>
         </div>
@@ -157,12 +177,7 @@ export default async function StatusPage() {
 
       {/* ─── LIVE PLAYER COUNT ───────────────────────── */}
       {steamPlayers && (
-        <section style={{
-          padding: '0 20px 30px',
-          maxWidth: '900px',
-          margin: '0 auto',
-          textAlign: 'center',
-        }}>
+        <section style={{ padding: '0 20px 30px', maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -189,24 +204,113 @@ export default async function StatusPage() {
             }}>
               {steamPlayers.toLocaleString()}
             </span>
-            <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              color: '#555',
-              letterSpacing: '1px',
-            }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#555', letterSpacing: '1px' }}>
               RUNNERS IN-GAME (STEAM)
             </span>
           </div>
         </section>
       )}
 
+      {/* ─── STEAM REVIEW SENTIMENT ──────────────────── */}
+      {steamReviews && steamReviews.reviews.length > 0 && (
+        <section style={{ padding: '0 20px 40px', maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            marginBottom: '16px',
+            flexWrap: 'wrap',
+            gap: '8px',
+          }}>
+            <h2 style={{
+              fontFamily: 'var(--font-heading)',
+              fontSize: '16px',
+              color: '#fff',
+              margin: 0,
+              letterSpacing: '1px',
+            }}>
+              STEAM <span style={{ color: GREEN }}>REVIEW SENTIMENT</span>
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: GREEN, letterSpacing: '1px' }}>
+                {steamReviews.positive_percent}
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#444' }}>
+                {steamReviews.total.toLocaleString()} REVIEWS
+              </span>
+            </div>
+          </div>
+
+          {/* Sentiment bar */}
+          {steamReviews.total > 0 && (
+            <div style={{
+              height: '4px',
+              background: '#1a1a1a',
+              borderRadius: '2px',
+              marginBottom: '20px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                width: Math.round((steamReviews.total_positive / steamReviews.total) * 100) + '%',
+                background: 'linear-gradient(90deg, ' + GREEN + ', ' + CYAN + ')',
+                borderRadius: '2px',
+              }} />
+            </div>
+          )}
+
+          {/* Review cards */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: '10px',
+          }}>
+            {steamReviews.reviews.slice(0, 6).map(function(review, i) {
+              var sentimentColor = review.voted_up ? GREEN : RED;
+              var sentimentLabel = review.voted_up ? '👍 RECOMMENDED' : '👎 NOT RECOMMENDED';
+              return (
+                <div key={i} style={{
+                  background: '#0a0a0a',
+                  border: '1px solid #1a1a1a',
+                  borderLeft: '2px solid ' + sentimentColor + '55',
+                  borderRadius: '6px',
+                  padding: '14px 16px',
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px',
+                  }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: sentimentColor, letterSpacing: '1px' }}>
+                      {sentimentLabel}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#333' }}>
+                      {review.playtime_hours}h played
+                    </span>
+                  </div>
+                  <p style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '12px',
+                    color: '#666',
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}>
+                    {review.text}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#333', marginTop: '12px', textAlign: 'right' }}>
+            SOURCE: STEAM · RECENT REVIEWS · REFRESHED EVERY 5 MIN
+          </div>
+        </section>
+      )}
+
       {/* ─── SERVER STATUS PANELS ────────────────────── */}
-      <section style={{
-        padding: '0 20px 40px',
-        maxWidth: '900px',
-        margin: '0 auto',
-      }}>
+      <section style={{ padding: '0 20px 40px', maxWidth: '900px', margin: '0 auto' }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -216,7 +320,6 @@ export default async function StatusPage() {
             var info = PLATFORM_INFO[platform];
             var data = statusMap[platform];
             var status = data ? STATUS_STYLES[data.status] || STATUS_STYLES.online : STATUS_STYLES.online;
-
             return (
               <div key={platform} style={{
                 background: '#0a0a0a',
@@ -235,14 +338,7 @@ export default async function StatusPage() {
                 }}>
                   {info.label}
                 </div>
-
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  marginBottom: '8px',
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
                   <div style={{
                     width: '10px',
                     height: '10px',
@@ -260,25 +356,13 @@ export default async function StatusPage() {
                     {status.label}
                   </span>
                 </div>
-
                 {data && data.note && (
-                  <div style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '12px',
-                    color: '#555',
-                    marginTop: '6px',
-                  }}>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#555', marginTop: '6px' }}>
                     {data.note}
                   </div>
                 )}
-
                 {data && data.updated_at && (
-                  <div style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '10px',
-                    color: '#333',
-                    marginTop: '8px',
-                  }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#333', marginTop: '8px' }}>
                     Updated {timeAgo(data.updated_at)}
                   </div>
                 )}
@@ -290,17 +374,8 @@ export default async function StatusPage() {
 
       {/* ─── RECENT INCIDENTS ────────────────────────── */}
       {incidentList.length > 0 && (
-        <section style={{
-          padding: '0 20px 40px',
-          maxWidth: '900px',
-          margin: '0 auto',
-        }}>
-          <h2 style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '18px',
-            color: '#fff',
-            marginBottom: '16px',
-          }}>
+        <section style={{ padding: '0 20px 40px', maxWidth: '900px', margin: '0 auto' }}>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#fff', marginBottom: '16px' }}>
             RECENT INCIDENTS
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -314,47 +389,21 @@ export default async function StatusPage() {
                   borderRadius: '6px',
                   padding: '14px 18px',
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '6px',
-                  }}>
-                    <span style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#fff',
-                    }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, color: '#fff' }}>
                       {inc.title}
                     </span>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '10px',
-                      color: '#444',
-                    }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#444' }}>
                       {timeAgo(inc.created_at)}
                     </span>
                   </div>
                   {inc.description && (
-                    <p style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '13px',
-                      color: '#666',
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#666', margin: 0, lineHeight: 1.5 }}>
                       {inc.description}
                     </p>
                   )}
                   {inc.resolved && (
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '10px',
-                      color: GREEN,
-                      marginTop: '6px',
-                      display: 'inline-block',
-                    }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: GREEN, marginTop: '6px', display: 'inline-block' }}>
                       ✓ RESOLVED
                     </span>
                   )}
@@ -366,12 +415,7 @@ export default async function StatusPage() {
       )}
 
       {/* ─── WEEKLY RESET ────────────────────────────── */}
-      <section style={{
-        padding: '40px 20px',
-        maxWidth: '900px',
-        margin: '0 auto',
-        borderTop: '1px solid #1a1a1a',
-      }}>
+      <section style={{ padding: '40px 20px', maxWidth: '900px', margin: '0 auto', borderTop: '1px solid #1a1a1a' }}>
         <div style={{
           display: 'flex',
           alignItems: 'baseline',
@@ -380,63 +424,25 @@ export default async function StatusPage() {
           flexWrap: 'wrap',
           gap: '8px',
         }}>
-          <h2 style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '20px',
-            color: '#fff',
-            margin: 0,
-          }}>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', color: '#fff', margin: 0 }}>
             WEEKLY <span style={{ color: CYAN }}>RESET</span>
           </h2>
-          <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            color: '#444',
-            letterSpacing: '1px',
-          }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#444', letterSpacing: '1px' }}>
             RESETS EVERY TUESDAY · 10 AM PT / 1 PM ET / 6 PM GMT
           </span>
         </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '14px',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '14px' }}>
           {resetItems ? resetItems.map(function(item) {
             return (
-              <div key={item.id} style={{
-                background: '#0a0a0a',
-                border: '1px solid #1a1a1a',
-                borderRadius: '8px',
-                padding: '20px',
-              }}>
-                <div style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '13px',
-                  color: CYAN,
-                  letterSpacing: '1px',
-                  marginBottom: '8px',
-                }}>
+              <div key={item.id} style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '8px', padding: '20px' }}>
+                <div style={{ fontFamily: 'var(--font-heading)', fontSize: '13px', color: CYAN, letterSpacing: '1px', marginBottom: '8px' }}>
                   {item.category}
                 </div>
-                <div style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: '#fff',
-                  marginBottom: '6px',
-                }}>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: '15px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
                   {item.title}
                 </div>
                 {item.description && (
-                  <p style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    color: '#666',
-                    lineHeight: 1.5,
-                    margin: 0,
-                  }}>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#666', lineHeight: 1.5, margin: 0 }}>
                     {item.description}
                   </p>
                 )}
@@ -444,35 +450,14 @@ export default async function StatusPage() {
             );
           }) : RESET_DEFAULTS.map(function(item) {
             return (
-              <div key={item.title} style={{
-                background: '#0a0a0a',
-                border: '1px solid ' + item.color + '22',
-                borderRadius: '8px',
-                padding: '20px',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '10px',
-                }}>
+              <div key={item.title} style={{ background: '#0a0a0a', border: '1px solid ' + item.color + '22', borderRadius: '8px', padding: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                   <span style={{ fontSize: '18px', color: item.color }}>{item.icon}</span>
-                  <span style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: '13px',
-                    color: item.color,
-                    letterSpacing: '1px',
-                  }}>
+                  <span style={{ fontFamily: 'var(--font-heading)', fontSize: '13px', color: item.color, letterSpacing: '1px' }}>
                     {item.title}
                   </span>
                 </div>
-                <p style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '13px',
-                  color: '#666',
-                  lineHeight: 1.5,
-                  margin: 0,
-                }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#666', lineHeight: 1.5, margin: 0 }}>
                   {item.desc}
                 </p>
               </div>
@@ -482,29 +467,13 @@ export default async function StatusPage() {
       </section>
 
       {/* ─── ERROR CODE REFERENCE ────────────────────── */}
-      <section style={{
-        padding: '40px 20px 60px',
-        maxWidth: '900px',
-        margin: '0 auto',
-        borderTop: '1px solid #1a1a1a',
-      }}>
-        <h2 style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: '20px',
-          color: '#fff',
-          marginBottom: '8px',
-        }}>
+      <section style={{ padding: '40px 20px 60px', maxWidth: '900px', margin: '0 auto', borderTop: '1px solid #1a1a1a' }}>
+        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', color: '#fff', marginBottom: '8px' }}>
           MARATHON ERROR CODES
         </h2>
-        <p style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '14px',
-          color: '#666',
-          marginBottom: '20px',
-        }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', marginBottom: '20px' }}>
           Common error codes and what to do about them. If none of the below fixes work, post on Bungie&apos;s Help forum.
         </p>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {ERROR_CODES.map(function(err) {
             var sevColor = err.severity === 'high' ? RED : err.severity === 'medium' ? ORANGE : '#555';
@@ -518,22 +487,10 @@ export default async function StatusPage() {
                 border: '1px solid #1a1a1a',
                 borderRadius: '6px',
               }}>
-                <span style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  color: sevColor,
-                  minWidth: '100px',
-                  letterSpacing: '1px',
-                }}>
+                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '14px', fontWeight: 700, color: sevColor, minWidth: '100px', letterSpacing: '1px' }}>
                   {err.code}
                 </span>
-                <span style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '13px',
-                  color: '#888',
-                  lineHeight: 1.5,
-                }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#888', lineHeight: 1.5 }}>
                   {err.desc}
                 </span>
               </div>
@@ -543,12 +500,7 @@ export default async function StatusPage() {
       </section>
 
       {/* ─── CROSS LINKS ─────────────────────────────── */}
-      <section style={{
-        padding: '0 20px 80px',
-        maxWidth: '600px',
-        margin: '0 auto',
-        textAlign: 'center',
-      }}>
+      <section style={{ padding: '0 20px 80px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <Link href="/" style={{
             fontFamily: 'var(--font-heading)',
