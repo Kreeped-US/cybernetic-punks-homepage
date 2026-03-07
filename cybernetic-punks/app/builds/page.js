@@ -1,6 +1,6 @@
 // app/builds/page.js
 // DEXTER'S BUILD LAB — Shell-organized build hub with weapon quick-ref
-// Pulls DEXTER articles from Supabase, deduped by source video
+// Pulls DEXTER articles from Supabase, enriched with shell_stats + weapon_stats
 
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
@@ -50,9 +50,9 @@ const WEAPON_CATEGORIES = [
   {
     category: 'SMGs',
     picks: [
-      { name: 'BRRT SMG',        tier: 'S', ammo: 'Medium Rounds', note: 'Highest SMG damage per shot. Corridor king.' },
-      { name: 'Bully SMG',       tier: 'A', ammo: 'Medium Rounds', note: 'Burst-fire. Consistent close-range performer.' },
-      { name: 'V22 Volt Thrower',tier: 'B', ammo: 'Volt Battery',  note: 'Lock-on system. Niche but modable.' },
+      { name: 'BRRT SMG',         tier: 'S', ammo: 'Medium Rounds', note: 'Highest SMG damage per shot. Corridor king.' },
+      { name: 'Bully SMG',        tier: 'A', ammo: 'Medium Rounds', note: 'Burst-fire. Consistent close-range performer.' },
+      { name: 'V22 Volt Thrower', tier: 'B', ammo: 'Volt Battery',  note: 'Lock-on system. Niche but modable.' },
     ],
   },
   {
@@ -87,8 +87,8 @@ const WEAPON_CATEGORIES = [
   {
     category: 'Railguns',
     picks: [
-      { name: 'Ares RG',    tier: 'S', ammo: 'Volt Cells', note: 'Charged devastation. Ammo is scarce.' },
-      { name: 'V00 Zeus RG',tier: 'B', ammo: 'Volt Cells', note: 'Alternative energy rail. Lower tier.' },
+      { name: 'Ares RG',     tier: 'S', ammo: 'Volt Cells', note: 'Charged devastation. Ammo is scarce.' },
+      { name: 'V00 Zeus RG', tier: 'B', ammo: 'Volt Cells', note: 'Alternative energy rail. Lower tier.' },
     ],
   },
   {
@@ -101,7 +101,6 @@ const WEAPON_CATEGORIES = [
   },
 ];
 
-// Real Marathon weapon builds — no placeholders
 const DEXTER_PICKS = [
   {
     id: 'extractor',
@@ -177,16 +176,12 @@ const DEXTER_PICKS = [
   },
 ];
 
-const TIER_COLORS = {
-  S: '#ff0000',
-  A: '#ff8800',
-  B: '#ffcc00',
-  C: '#00f5ff',
-  D: '#666666',
-};
+const TIER_COLORS = { S: '#ff0000', A: '#ff8800', B: '#ffcc00', C: '#00f5ff', D: '#666666' };
+const RANKED_TIER_COLORS = { S: '#ff0000', A: '#ff8800', B: '#ffcc00', C: '#00f5ff', D: '#666' };
 
 // ─── PAGE COMPONENT ─────────────────────────────────────────────
 export default async function BuildsPage() {
+
   // Fetch DEXTER articles
   const { data: dexterArticles } = await supabase
     .from('feed_items')
@@ -196,7 +191,29 @@ export default async function BuildsPage() {
     .order('created_at', { ascending: false })
     .limit(60);
 
-  // Group by shell — dedupe by source_video_id within each shell
+  // Fetch shell stats for all shells
+  let shellMap = {};
+  try {
+    const { data: shellData } = await supabase
+      .from('shell_stats')
+      .select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_desc, passive_ability_name, passive_ability_desc, ranked_tier_solo, ranked_tier_squad, strengths, weaknesses');
+    if (shellData) {
+      for (const s of shellData) shellMap[s.name.toLowerCase()] = s;
+    }
+  } catch (err) {}
+
+  // Fetch weapon stats for enrichment
+  let weaponMap = {};
+  try {
+    const { data: weaponData } = await supabase
+      .from('weapon_stats')
+      .select('name, category, ammo_type, damage, fire_rate, magazine_size, reload_time, range_rating, ranked_viable');
+    if (weaponData) {
+      for (const w of weaponData) weaponMap[w.name.toLowerCase()] = w;
+    }
+  } catch (err) {}
+
+  // Group articles by shell — cap at 4 per shell
   const shellNames = SHELLS.map(s => s.name.toLowerCase());
   const articlesByShell = {};
   const generalArticles = [];
@@ -242,7 +259,7 @@ export default async function BuildsPage() {
           transform: 'translateX(-50%)',
           width: '600px',
           height: '600px',
-          background: `radial-gradient(circle, ${DEXTER_ORANGE}15 0%, transparent 70%)`,
+          background: 'radial-gradient(circle, ' + DEXTER_ORANGE + '15 0%, transparent 70%)',
           pointerEvents: 'none',
         }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', margin: '0 auto' }}>
@@ -251,7 +268,7 @@ export default async function BuildsPage() {
             alignItems: 'center',
             gap: '10px',
             padding: '6px 16px',
-            border: `1px solid ${DEXTER_ORANGE}44`,
+            border: '1px solid ' + DEXTER_ORANGE + '44',
             borderRadius: '4px',
             marginBottom: '20px',
             fontSize: '13px',
@@ -295,6 +312,7 @@ export default async function BuildsPage() {
       <section style={{ padding: '0 20px 40px', maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
           {SHELLS.map(shell => {
+            const stats = shellMap[shell.name.toLowerCase()];
             const count = articlesByShell[shell.name.toLowerCase()]?.length || 0;
             return (
               <a key={shell.name} href={'#shell-' + shell.name.toLowerCase()} style={{
@@ -302,6 +320,7 @@ export default async function BuildsPage() {
                 padding: '16px',
                 background: '#0a0a0a',
                 border: '1px solid ' + shell.color + '33',
+                borderTop: '2px solid ' + shell.color + '88',
                 borderRadius: '6px',
                 textDecoration: 'none',
               }}>
@@ -317,9 +336,42 @@ export default async function BuildsPage() {
                 }}>
                   <span>{shell.icon}</span> {shell.name.toUpperCase()}
                 </div>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#666' }}>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#666', marginBottom: '8px' }}>
                   {shell.role} · {count} {count === 1 ? 'guide' : 'guides'}
                 </div>
+                {/* Ranked badges if available */}
+                {stats && (stats.ranked_tier_solo || stats.ranked_tier_squad) && (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {stats.ranked_tier_solo && (
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '9px',
+                        color: RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888',
+                        background: (RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888') + '18',
+                        border: '1px solid ' + (RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888') + '33',
+                        borderRadius: '3px',
+                        padding: '1px 6px',
+                        letterSpacing: '1px',
+                      }}>
+                        SOLO {stats.ranked_tier_solo}
+                      </span>
+                    )}
+                    {stats.ranked_tier_squad && (
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '9px',
+                        color: RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888',
+                        background: (RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888') + '18',
+                        border: '1px solid ' + (RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888') + '33',
+                        borderRadius: '3px',
+                        padding: '1px 6px',
+                        letterSpacing: '1px',
+                      }}>
+                        SQUAD {stats.ranked_tier_squad}
+                      </span>
+                    )}
+                  </div>
+                )}
               </a>
             );
           })}
@@ -383,36 +435,57 @@ export default async function BuildsPage() {
                 {cat.category}
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {cat.picks.map(weapon => (
-                  <div key={weapon.name} style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '10px',
-                    padding: '8px 0',
-                    borderBottom: '1px solid #111111',
-                  }}>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      color: TIER_COLORS[weapon.tier],
-                      minWidth: '20px',
+                {cat.picks.map(weapon => {
+                  const wStats = weaponMap[weapon.name.toLowerCase()];
+                  return (
+                    <div key={weapon.name} style={{
+                      padding: '10px 0',
+                      borderBottom: '1px solid #111111',
                     }}>
-                      {weapon.tier}
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, color: '#ffffff', marginBottom: '2px' }}>
-                        {weapon.name}
+                      {/* Top row */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                        <span style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: TIER_COLORS[weapon.tier],
+                          minWidth: '20px',
+                          paddingTop: '1px',
+                        }}>
+                          {weapon.tier}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, color: '#ffffff', marginBottom: '2px' }}>
+                            {weapon.name}
+                          </div>
+                          <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#666' }}>
+                            {weapon.note}
+                          </div>
+                        </div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#444', whiteSpace: 'nowrap' }}>
+                          {weapon.ammo}
+                        </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#666' }}>
-                        {weapon.note}
-                      </div>
+                      {/* Stat strip from DB if available */}
+                      {wStats && (wStats.damage || wStats.fire_rate || wStats.range_rating || wStats.magazine_size) && (
+                        <div style={{
+                          display: 'flex',
+                          gap: '12px',
+                          marginTop: '8px',
+                          paddingLeft: '30px',
+                          flexWrap: 'wrap',
+                        }}>
+                          {wStats.damage && <MiniStat label="DMG" value={wStats.damage} color={RED} />}
+                          {wStats.fire_rate && <MiniStat label="RPM" value={wStats.fire_rate} color={DEXTER_ORANGE} />}
+                          {wStats.magazine_size && <MiniStat label="MAG" value={wStats.magazine_size} color="#ffcc00" />}
+                          {wStats.reload_time && <MiniStat label="RELOAD" value={wStats.reload_time + 's'} color="#888" />}
+                          {wStats.range_rating && <MiniStat label="RANGE" value={wStats.range_rating} color={CYAN} />}
+                          {wStats.ranked_viable === false && <MiniStat label="RANKED" value="AVOID" color={RED} />}
+                        </div>
+                      )}
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#444', whiteSpace: 'nowrap' }}>
-                      {weapon.ammo}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -428,106 +501,155 @@ export default async function BuildsPage() {
           Hand-graded loadouts rated by effectiveness, versatility, and skill floor. Real weapons. Real shells.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-          {DEXTER_PICKS.map(build => (
-            <div key={build.id} style={{
-              background: '#0a0a0a',
-              border: '1px solid ' + build.color + '33',
-              borderRadius: '6px',
-              padding: '20px',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                fontFamily: 'var(--font-heading)',
-                fontSize: '28px',
-                fontWeight: 700,
-                color: build.grade.startsWith('S') ? RED : build.grade.startsWith('A') ? DEXTER_ORANGE : CYAN,
-                opacity: 0.25,
-                lineHeight: 1,
+          {DEXTER_PICKS.map(build => {
+            const shellStats = shellMap[build.shell.toLowerCase()];
+            return (
+              <div key={build.id} style={{
+                background: '#0a0a0a',
+                border: '1px solid ' + build.color + '33',
+                borderTop: '2px solid ' + build.color + '88',
+                borderRadius: '6px',
+                padding: '20px',
+                position: 'relative',
+                overflow: 'hidden',
               }}>
-                {build.grade}
-              </div>
-              <div style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                color: build.color,
-                letterSpacing: '1px',
-                marginBottom: '6px',
-                textTransform: 'uppercase',
-              }}>
-                {build.shell} · {build.style}
-              </div>
-              <h3 style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '18px',
-                fontWeight: 700,
-                color: '#ffffff',
-                margin: '0 0 10px 0',
-              }}>
-                {build.name}
-              </h3>
-              <p style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '13px',
-                color: '#888',
-                lineHeight: 1.5,
-                marginBottom: '14px',
-              }}>
-                {build.description}
-              </p>
-              <div style={{ marginBottom: '12px' }}>
+                {/* Grade watermark */}
+                <div style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  color: build.grade.startsWith('S') ? RED : build.grade.startsWith('A') ? DEXTER_ORANGE : CYAN,
+                  opacity: 0.2,
+                  lineHeight: 1,
+                }}>
+                  {build.grade}
+                </div>
+
+                {/* Shell + style label */}
                 <div style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '10px',
-                  color: '#444',
+                  fontSize: '11px',
+                  color: build.color,
                   letterSpacing: '1px',
                   marginBottom: '6px',
+                  textTransform: 'uppercase',
                 }}>
-                  WEAPONS
+                  {build.shell} · {build.style}
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {build.weapons.map(w => (
-                    <span key={w} style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '11px',
-                      color: '#ccc',
-                      padding: '3px 8px',
-                      background: '#111',
-                      borderRadius: '3px',
-                      border: '1px solid #222',
-                    }}>
-                      {w}
-                    </span>
-                  ))}
+
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  margin: '0 0 10px 0',
+                }}>
+                  {build.name}
+                </h3>
+
+                <p style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '13px',
+                  color: '#888',
+                  lineHeight: 1.5,
+                  marginBottom: '14px',
+                }}>
+                  {build.description}
+                </p>
+
+                {/* Shell stat strip from DB */}
+                {shellStats && (shellStats.base_health || shellStats.base_speed || shellStats.active_ability_name || shellStats.ranked_tier_solo) && (
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                    padding: '10px 12px',
+                    background: '#111',
+                    borderRadius: '4px',
+                    marginBottom: '14px',
+                    border: '1px solid #1a1a1a',
+                  }}>
+                    {shellStats.base_health && <MiniStat label="HP" value={shellStats.base_health} color={GREEN} />}
+                    {shellStats.base_shield && <MiniStat label="SHIELD" value={shellStats.base_shield} color={CYAN} />}
+                    {shellStats.base_speed && <MiniStat label="SPEED" value={shellStats.base_speed} color="#ffcc00" />}
+                    {shellStats.active_ability_name && <MiniStat label="ACTIVE" value={shellStats.active_ability_name} color={DEXTER_ORANGE} />}
+                    {shellStats.passive_ability_name && <MiniStat label="PASSIVE" value={shellStats.passive_ability_name} color={DEXTER_ORANGE} />}
+                    {shellStats.ranked_tier_solo && <MiniStat label="SOLO" value={shellStats.ranked_tier_solo} color={RANKED_TIER_COLORS[shellStats.ranked_tier_solo] || '#888'} />}
+                    {shellStats.ranked_tier_squad && <MiniStat label="SQUAD" value={shellStats.ranked_tier_squad} color={RANKED_TIER_COLORS[shellStats.ranked_tier_squad] || '#888'} />}
+                  </div>
+                )}
+
+                {/* Weapons */}
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '10px',
+                    color: '#444',
+                    letterSpacing: '1px',
+                    marginBottom: '6px',
+                  }}>
+                    WEAPONS
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {build.weapons.map(w => {
+                      const wStats = weaponMap[w.toLowerCase()];
+                      return (
+                        <div key={w}>
+                          <span style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            color: '#ccc',
+                            padding: '3px 8px',
+                            background: '#111',
+                            borderRadius: '3px',
+                            border: '1px solid #222',
+                            display: 'block',
+                            marginBottom: wStats && (wStats.damage || wStats.fire_rate) ? '4px' : '0',
+                          }}>
+                            {w}
+                          </span>
+                          {wStats && (wStats.damage || wStats.fire_rate || wStats.range_rating) && (
+                            <div style={{ display: 'flex', gap: '8px', paddingLeft: '4px' }}>
+                              {wStats.damage && <MiniStat label="DMG" value={wStats.damage} color={RED} />}
+                              {wStats.fire_rate && <MiniStat label="RPM" value={wStats.fire_rate} color={DEXTER_ORANGE} />}
+                              {wStats.range_rating && <MiniStat label="RNG" value={wStats.range_rating} color={CYAN} />}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Strengths / Weaknesses */}
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: GREEN, letterSpacing: '1px', marginBottom: '4px' }}>
+                      STRENGTHS
+                    </div>
+                    {build.strengths.map(s => (
+                      <div key={s} style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#777', lineHeight: 1.6 }}>
+                        + {s}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: RED, letterSpacing: '1px', marginBottom: '4px' }}>
+                      WEAKNESSES
+                    </div>
+                    {build.weaknesses.map(w => (
+                      <div key={w} style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#777', lineHeight: 1.6 }}>
+                        − {w}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: GREEN, letterSpacing: '1px', marginBottom: '4px' }}>
-                    STRENGTHS
-                  </div>
-                  {build.strengths.map(s => (
-                    <div key={s} style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#777', lineHeight: 1.6 }}>
-                      + {s}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: RED, letterSpacing: '1px', marginBottom: '4px' }}>
-                    WEAKNESSES
-                  </div>
-                  {build.weaknesses.map(w => (
-                    <div key={w} style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#777', lineHeight: 1.6 }}>
-                      − {w}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -535,6 +657,8 @@ export default async function BuildsPage() {
       {SHELLS.map(shell => {
         const shellKey = shell.name.toLowerCase();
         const articles = articlesByShell[shellKey] || [];
+        const stats = shellMap[shellKey];
+
         return (
           <section key={shell.name} id={'shell-' + shellKey} style={{
             padding: '40px 20px',
@@ -542,40 +666,136 @@ export default async function BuildsPage() {
             margin: '0 auto',
             borderTop: '1px solid ' + shell.color + '22',
           }}>
+            {/* Shell header */}
             <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
+              background: '#0a0a0a',
+              border: '1px solid ' + shell.color + '22',
+              borderLeft: '3px solid ' + shell.color,
+              borderRadius: '6px',
+              padding: '20px 24px',
               marginBottom: '20px',
             }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '20px', color: shell.color }}>{shell.icon}</span>
-                  <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: shell.color, margin: 0 }}>
-                    {shell.name.toUpperCase()}
-                  </h2>
-                  <span style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '11px',
-                    color: '#666',
-                    padding: '2px 8px',
-                    border: '1px solid #222',
-                    borderRadius: '3px',
-                  }}>
-                    {shell.role}
-                  </span>
+              {/* Name + role row */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginBottom: stats ? '16px' : '0',
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '20px', color: shell.color }}>{shell.icon}</span>
+                    <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: shell.color, margin: 0 }}>
+                      {shell.name.toUpperCase()}
+                    </h2>
+                    <span style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '11px',
+                      color: '#666',
+                      padding: '2px 8px',
+                      border: '1px solid #222',
+                      borderRadius: '3px',
+                    }}>
+                      {shell.role}
+                    </span>
+                  </div>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', margin: 0 }}>
+                    {shell.description}
+                  </p>
                 </div>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', margin: 0 }}>
-                  {shell.description}
-                </p>
+
+                {/* Ranked badges */}
+                {stats && (stats.ranked_tier_solo || stats.ranked_tier_squad) && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {stats.ranked_tier_solo && (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          fontFamily: 'var(--font-heading)',
+                          fontSize: '22px',
+                          fontWeight: 900,
+                          color: RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888',
+                          lineHeight: 1,
+                        }}>
+                          {stats.ranked_tier_solo}
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#444', letterSpacing: '1px', marginTop: '2px' }}>
+                          SOLO
+                        </div>
+                      </div>
+                    )}
+                    {stats.ranked_tier_solo && stats.ranked_tier_squad && (
+                      <div style={{ width: '1px', height: '32px', background: '#222' }} />
+                    )}
+                    {stats.ranked_tier_squad && (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          fontFamily: 'var(--font-heading)',
+                          fontSize: '22px',
+                          fontWeight: 900,
+                          color: RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888',
+                          lineHeight: 1,
+                        }}>
+                          {stats.ranked_tier_squad}
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#444', letterSpacing: '1px', marginTop: '2px' }}>
+                          SQUAD
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: '#444' }}>
-                {articles.length} {articles.length === 1 ? 'article' : 'articles'}
-              </div>
+
+              {/* Full stat strip */}
+              {stats && (
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '20px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid rgba(255,255,255,0.04)',
+                }}>
+                  {stats.base_health && (
+                    <StatBlock label="BASE HP" value={stats.base_health} color={GREEN} />
+                  )}
+                  {stats.base_shield && (
+                    <StatBlock label="SHIELD" value={stats.base_shield} color={CYAN} />
+                  )}
+                  {stats.base_speed && (
+                    <StatBlock label="SPEED" value={stats.base_speed} color="#ffcc00" />
+                  )}
+                  {stats.active_ability_name && (
+                    <StatBlock label="ACTIVE ABILITY" value={stats.active_ability_name} color={DEXTER_ORANGE} desc={stats.active_ability_desc} />
+                  )}
+                  {stats.passive_ability_name && (
+                    <StatBlock label="PASSIVE ABILITY" value={stats.passive_ability_name} color={DEXTER_ORANGE} desc={stats.passive_ability_desc} />
+                  )}
+                  {stats.strengths && (
+                    <StatBlock label="STRENGTHS" value={stats.strengths} color={GREEN} />
+                  )}
+                  {stats.weaknesses && (
+                    <StatBlock label="WEAKNESSES" value={stats.weaknesses} color={RED} />
+                  )}
+                </div>
+              )}
+
+              {/* No stats yet placeholder */}
+              {!stats && (
+                <div style={{
+                  marginTop: '12px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  color: '#333',
+                  letterSpacing: '1px',
+                }}>
+                  STAT DATABASE POPULATING — DEXTER EXTRACTING EVERY 6H
+                </div>
+              )}
             </div>
 
+            {/* Articles */}
             {articles.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px' }}>
                 {articles.map(article => (
@@ -749,7 +969,8 @@ function ArticleCard({ article, accentColor }) {
   );
 }
 
-// ─── HELPERS ────────────────────────────────────────────────────
+// ─── COMPONENTS ─────────────────────────────────────────────────
+
 function Stat({ label, value, color }) {
   return (
     <div style={{ textAlign: 'center' }}>
@@ -776,6 +997,39 @@ function AmmoTag({ name, color }) {
     }}>
       {name}
     </span>
+  );
+}
+
+// Inline mini stat for weapon rows and build cards
+function MiniStat({ label, value, color }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px' }}>
+        {label}
+      </span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: color, fontWeight: 700 }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// Full stat block for shell headers
+function StatBlock({ label, value, color, desc }) {
+  return (
+    <div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '2px' }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: color, fontWeight: 700, lineHeight: 1.2 }}>
+        {value}
+      </div>
+      {desc && (
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: '#555', marginTop: '2px', lineHeight: 1.4, maxWidth: '160px' }}>
+          {desc}
+        </div>
+      )}
+    </div>
   );
 }
 
