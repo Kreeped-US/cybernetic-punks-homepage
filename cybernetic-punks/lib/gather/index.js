@@ -57,14 +57,22 @@ export async function gatherAll() {
   };
 
   // DEXTER stat extraction — fills NULL shell/weapon stats from all sources
-  await runDexterStatPipeline({
-    videos: youtubeVideos || [],
-    redditPosts: redditPosts || [],
-    steamReviews: steamReviews?.reviews || [],
-  });
-  
-  // MOD stat extraction — fills NULL mod_stats from Clutchbase + wiki
-  await gatherModStats();
+  try {
+    await runDexterStatPipeline({
+      videos: youtubeVideos || [],
+      redditPosts: redditPosts || [],
+      steamReviews: steamReviews?.reviews || [],
+    });
+  } catch (err) {
+    console.error('[GATHER] runDexterStatPipeline failed:', err.message);
+  }
+
+  // MOD stat extraction — fills NULL mod_stats from Clutchbase
+  try {
+    await gatherModStats();
+  } catch (err) {
+    console.error('[GATHER] gatherModStats failed:', err.message);
+  }
 
   const active = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v !== null).map(([k]) => k);
   const inactive = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v === null).map(([k]) => k);
