@@ -130,15 +130,19 @@ async function processEditor(editorName, prompt, rawData) {
         await supabase.from('meta_tiers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
         var metaRows = result.meta_update.map(function(item) {
-          return {
-            name: item.name,
-            type: item.type || 'weapon',
-            tier: item.tier || 'B',
-            trend: item.trend || 'stable',
-            note: item.note || '',
-            updated_at: new Date().toISOString(),
-          };
-        });
+  return {
+    name: item.name,
+    type: item.type || 'weapon',
+    tier: item.tier || 'B',
+    trend: item.trend || 'stable',
+    note: item.note || '',
+    ranked_note: item.ranked_note || null,
+    ranked_tier_solo: item.ranked_tier_solo || null,
+    ranked_tier_squad: item.ranked_tier_squad || null,
+    holotag_tier: item.holotag_tier || null,
+    updated_at: new Date().toISOString(),
+  };
+});
 
         var { error: metaError } = await supabase.from('meta_tiers').insert(metaRows);
         if (metaError) {
