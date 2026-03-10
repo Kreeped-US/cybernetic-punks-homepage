@@ -5,7 +5,6 @@ import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
-import { gatherModStats } from './mod-stats.js';
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
@@ -65,13 +64,6 @@ export async function gatherAll() {
     });
   } catch (err) {
     console.error('[GATHER] runDexterStatPipeline failed:', err.message);
-  }
-
-  // MOD stat extraction — fills NULL mod_stats from Clutchbase
-  try {
-    await gatherModStats();
-  } catch (err) {
-    console.error('[GATHER] gatherModStats failed:', err.message);
   }
 
   const active = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v !== null).map(([k]) => k);

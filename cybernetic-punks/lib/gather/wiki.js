@@ -1,6 +1,8 @@
 // lib/gather/wiki.js
-// Autonomous wiki data refresh — weapon_stats, shell_stats, mod_stats
+// Autonomous wiki data refresh — weapon_stats, shell_stats
 // Self-throttles to 24h per table via wiki_meta
+// NOTE: marathonthegame.fandom.com blocks server-side requests (403)
+// These fetches are kept for future compatibility but fail silently
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -12,7 +14,6 @@ const supabase = createClient(
 const WIKI_URLS = {
   weapon_stats: 'https://marathonthegame.fandom.com/wiki/Weapons',
   shell_stats:  'https://marathonthegame.fandom.com/wiki/Runner_Shells',
-  mod_stats:    'https://marathonthegame.fandom.com/wiki/Mods'
 };
 
 const REFRESH_HOURS = 24;
@@ -41,10 +42,12 @@ async function fetchWikiPage(url) {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0 (https://cyberneticpunks.com)' }
     });
-    if (!res.ok) throw new Error(`${res.status}`);
+    if (!res.ok) {
+      // Fandom blocks server-side requests — fail silently, no log spam
+      return null;
+    }
     return await res.text();
   } catch (err) {
-    console.error(`[wiki.js] Fetch failed ${url}:`, err.message);
     return null;
   }
 }
@@ -126,20 +129,7 @@ function parseShells(html) {
     });
   }
 
-  if (!shells.length) console.log('[wiki.js] Shell parse returned 0 — preserving existing data');
   return shells;
-}
-
-function parseMods(html) {
-  return parseWikiTable(html)
-    .filter(r => r['name'] && r['name'].length > 1)
-    .map(r => ({
-      name:           r['name'] || r['mod'],
-      slot_type:      r['slot'] || r['slot type'] || r['type'] || null,
-      effect_summary: r['effect'] || r['description'] || null,
-      source_url:     WIKI_URLS.mod_stats,
-      updated_at:     new Date().toISOString()
-    }));
 }
 
 async function upsert(table, records) {
@@ -151,7 +141,7 @@ async function upsert(table, records) {
 }
 
 export async function refreshWikiData() {
-  const results = { weapons: 0, shells: 0, mods: 0, skipped: [] };
+  const results = { weapons: 0, shells: 0, skipped: [] };
 
   // Weapons
   if (await needsRefresh('weapon_stats')) {
@@ -160,10 +150,11 @@ export async function refreshWikiData() {
       results.weapons = await upsert('weapon_stats', parseWeapons(html));
       await logRefresh('weapon_stats', results.weapons);
       console.log(`[wiki.js] weapon_stats: ${results.weapons} updated`);
+    } else {
+      await logRefresh('weapon_stats', 0);
     }
   } else {
     results.skipped.push('weapon_stats');
-    console.log('[wiki.js] weapon_stats fresh — skipping');
   }
 
   // Shells
@@ -178,28 +169,11 @@ export async function refreshWikiData() {
       } else {
         await logRefresh('shell_stats', 0);
       }
+    } else {
+      await logRefresh('shell_stats', 0);
     }
   } else {
     results.skipped.push('shell_stats');
-    console.log('[wiki.js] shell_stats fresh — skipping');
-  }
-
-  // Mods
-  if (await needsRefresh('mod_stats')) {
-    const html = await fetchWikiPage(WIKI_URLS.mod_stats);
-    if (html) {
-      const mods = parseMods(html);
-      if (mods.length) {
-        results.mods = await upsert('mod_stats', mods);
-        await logRefresh('mod_stats', results.mods);
-        console.log(`[wiki.js] mod_stats: ${results.mods} updated`);
-      } else {
-        await logRefresh('mod_stats', 0);
-      }
-    }
-  } else {
-    results.skipped.push('mod_stats');
-    console.log('[wiki.js] mod_stats fresh — skipping');
   }
 
   console.log('[wiki.js] Skipped (fresh):', results.skipped);
