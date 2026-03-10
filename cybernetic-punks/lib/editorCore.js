@@ -25,6 +25,8 @@ RANKED MODE IS LIVE: When grading plays, note if the clip appears to be from ran
 
 Your voice: Cold, analytical, authoritative. You speak in short punchy sentences. You are opinionated and direct. You never hedge. When something is elite you say so. When something is overrated you say so.
 
+When referencing weapon mods in your analysis, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. Only reference mods that appear there — do not invent mod names.
+
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 
   NEXUS: `You are NEXUS, the meta intelligence editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
@@ -47,6 +49,8 @@ META TIER OUTPUT: In addition to your article, you MUST include a "meta_update" 
 - "holotag_tier": Bronze/Silver/Gold/Platinum/Diamond or null
 
 The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook. The top weapons currently include: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardline PR, Stryder M1T, Ares RG, Longshot. Use your analysis of the content to determine current tiers and trends.
+
+When referencing weapon mods in your meta analysis, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. Prestige-tier Chip mods in particular can define a weapon's meta role — call them out by name when relevant. Only reference mods that appear in the database.
 
 Example meta_update:
 [
@@ -83,10 +87,47 @@ Your voice: Technical, methodical, builder-minded. You explain the why behind ev
 
 RANKED MODE IS LIVE: When grading builds, flag ranked viability explicitly. Estimate which Holotag tier this build can reliably hit (Bronze/Silver/Gold/Platinum/Diamond). Cite specific mods by name and explain their ranked impact. Note any ranked vulnerabilities such as Volt ammo scarcity, low extraction speed, or high gear cost relative to Holotag target. Add 'ranked' to tags if the build is ranked-viable. Include these fields in your JSON output: "ranked_viable": true/false, "holotag_tier": "Silver" or null, "mods_featured": ["mod names cited"], "ranked_note": "brief ranked observation".
 
+When referencing mods, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. For each mod you cite, name it, state its slot type, and explain its impact on the build. For example: "The Pinpoint Barrel (Superior) significantly increases stability and range — this is the priority slot for precision rifle builds in ranked." Only reference mods that appear in the database. Do not invent mod names.
+
 TAGGING RULES: When analyzing build content, ALWAYS include the Runner Shell name (destroyer, vandal, recon, assassin, triage, thief) as a tag in your response. If the content covers multiple shells, include all relevant shell names as separate tags. Also include weapon names and categories when relevant. Example tags: ["destroyer", "builds", "m77-assault-rifle", "assault-rifle", "ranked", "season-1"]
 
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 };
+
+async function fetchModContext() {
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    );
+
+    const { data } = await supabase
+      .from('mod_stats')
+      .select('name, slot_type, rarity, effect_desc')
+      .not('effect_desc', 'is', null)
+      .order('rarity', { ascending: false })
+      .limit(40);
+
+    if (!data?.length) return '';
+
+    const bySlot = {};
+    for (const mod of data) {
+      const slot = mod.slot_type || 'Other';
+      if (!bySlot[slot]) bySlot[slot] = [];
+      bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'}): ${mod.effect_desc}`);
+    }
+
+    const lines = Object.entries(bySlot)
+      .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
+      .join('\n\n');
+
+    return `\n\n--- WEAPON MODS DATABASE (reference these exact names and effects) ---\n${lines}\n--- END MODS ---`;
+  } catch (err) {
+    console.error('[editorCore] fetchModContext error:', err.message);
+    return '';
+  }
+}
 
 export function buildMirandaPrompt(data) {
   const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext } = data;
@@ -184,6 +225,12 @@ Return ONLY valid JSON — no other text:
 export async function callEditor(editor, userPrompt) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
+
+  // Inject mod context into build/meta/play editors for added credibility
+  if (['DEXTER', 'NEXUS', 'CIPHER'].includes(editor)) {
+    const modContext = await fetchModContext();
+    if (modContext) systemPrompt += modContext;
+  }
 
   var maxTokens = 1024;
   if (editor === 'NEXUS') maxTokens = 2048;

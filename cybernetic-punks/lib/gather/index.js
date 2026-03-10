@@ -5,6 +5,7 @@ import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
+import { gatherModStats } from './mod-stats.js';
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
@@ -61,6 +62,9 @@ export async function gatherAll() {
     redditPosts: redditPosts || [],
     steamReviews: steamReviews?.reviews || [],
   });
+  
+  // MOD stat extraction — fills NULL mod_stats from Clutchbase + wiki
+  await gatherModStats();
 
   const active = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v !== null).map(([k]) => k);
   const inactive = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v === null).map(([k]) => k);
