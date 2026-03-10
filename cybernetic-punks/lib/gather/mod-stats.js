@@ -238,8 +238,8 @@ async function upsertMods(mods) {
 
   // Fetch existing rows so we can respect the null-only rule
   const { data: existing, error: fetchErr } = await supabase
-    .from('mod_stats')
-    .select('slug, name, slot_type, rarity, effect_desc, credit_value');
+  .from('mod_stats')
+  .select('slug, name, slot_type, rarity, effect_desc, credit_value, effect_summary');
 
   if (fetchErr) {
     console.error('[mod-stats] Failed to fetch existing mods:', fetchErr.message);
@@ -258,14 +258,15 @@ async function upsertMods(mods) {
     if (!exists) {
       // New mod — insert
       const { error } = await supabase.from('mod_stats').insert({
-        name: mod.name,
-        slug: mod.slug,
-        slot_type: mod.slot_type || null,
-        rarity: mod.rarity || null,
-        effect_desc: mod.effect_desc || null,
-        credit_value: mod.credit_value || null,
-        updated_at: new Date().toISOString(),
-      });
+  name: mod.name,
+  slug: mod.slug,
+  slot_type: mod.slot_type || null,
+  rarity: mod.rarity || null,
+  effect_desc: mod.effect_desc || null,
+  effect_summary: mod.effect_desc || null,
+  credit_value: mod.credit_value || null,
+  updated_at: new Date().toISOString(),
+});
 
       if (error) {
         console.error(`[mod-stats] Insert failed for "${mod.name}":`, error.message);
