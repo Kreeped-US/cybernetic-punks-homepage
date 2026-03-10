@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+import Nav from '@/components/Nav';
+import Footer from '@/components/Footer';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -112,6 +114,7 @@ export default async function MetaPage() {
 
   return (
     <main className="min-h-screen bg-black text-white pt-24" style={{ paddingBottom: 80 }}>
+      <Nav />
 
       {/* ─── HERO ────────────────────────────────────── */}
       <section style={{ maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px' }}>
@@ -231,6 +234,19 @@ export default async function MetaPage() {
                                   letterSpacing: 1,
                                 }}>
                                   SQUAD {item.ranked_tier_squad}
+                                </span>
+                              )}
+                              {item.holotag_tier && (
+                                <span style={{
+                                  fontFamily: 'Share Tech Mono, monospace',
+                                  fontSize: 9,
+                                  color: '#ffd700',
+                                  background: 'rgba(255,215,0,0.1)',
+                                  borderRadius: 4,
+                                  padding: '2px 8px',
+                                  letterSpacing: 1,
+                                }}>
+                                  HOLOTAG {item.holotag_tier}
                                 </span>
                               )}
                             </div>
@@ -396,6 +412,7 @@ export default async function MetaPage() {
         </Link>
       </section>
 
+      <Footer />
     </main>
   );
 }
