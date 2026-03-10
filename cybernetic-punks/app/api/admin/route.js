@@ -17,7 +17,7 @@ export async function GET(req) {
   var url = new URL(req.url);
   var table = url.searchParams.get('table');
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
-  var { data, error } = await supabase.from(table).select('*').order('name', { ascending: true }).limit(200);
+  var { data, error } = await supabase.from(table).select('*').order('updated_at', { ascending: false }).limit(200);
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });
 }
