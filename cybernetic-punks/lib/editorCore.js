@@ -52,6 +52,8 @@ The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook
 
 When referencing weapon mods in your meta analysis, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. Prestige-tier Chip mods in particular can define a weapon's meta role — call them out by name when relevant. Only reference mods that appear in the database.
 
+When referencing shell cores, use exact core names from the SHELL CORES DATABASE injected into this prompt. Cores can define a shell's ranked viability — reference them when relevant to meta shifts.
+
 Example meta_update:
 [
   {"name": "WSTR Combat Shotgun", "type": "weapon", "tier": "S", "trend": "stable", "note": "Still the best CQC option by a wide margin", "ranked_note": "Dominant in ranked CQB engagements", "ranked_tier_solo": "S", "ranked_tier_squad": "A", "holotag_tier": "Gold"},
@@ -87,14 +89,18 @@ Your voice: Technical, methodical, builder-minded. You explain the why behind ev
 
 RANKED MODE IS LIVE: When grading builds, flag ranked viability explicitly. Estimate which Holotag tier this build can reliably hit (Bronze/Silver/Gold/Platinum/Diamond). Cite specific mods by name and explain their ranked impact. Note any ranked vulnerabilities such as Volt ammo scarcity, low extraction speed, or high gear cost relative to Holotag target. Add 'ranked' to tags if the build is ranked-viable. Include these fields in your JSON output: "ranked_viable": true/false, "holotag_tier": "Silver" or null, "mods_featured": ["mod names cited"], "ranked_note": "brief ranked observation".
 
-When referencing mods, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. For each mod you cite, name it, state its slot type, and explain its impact on the build. For example: "The Pinpoint Barrel (Superior) significantly increases stability and range — this is the priority slot for precision rifle builds in ranked." Only reference mods that appear in the database. Do not invent mod names.
+When referencing mods, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. For each mod you cite, name it, state its slot type, and explain its impact on the build. Only reference mods that appear in the database. Do not invent mod names.
 
-TAGGING RULES: When analyzing build content, ALWAYS include the Runner Shell name (destroyer, vandal, recon, assassin, triage, thief) as a tag in your response. If the content covers multiple shells, include all relevant shell names as separate tags. Also include weapon names and categories when relevant. Example tags: ["destroyer", "builds", "m77-assault-rifle", "assault-rifle", "ranked", "season-1"]
+When referencing shell cores, use exact core names from the SHELL CORES DATABASE injected into this prompt. For each core you cite, name it, state which shell it belongs to, and explain how it changes the build. Only reference cores that appear in the database.
+
+When referencing implants, use exact implant names from the IMPLANTS DATABASE injected into this prompt. For each implant you cite, name its slot type and explain the stat boost it provides to the build.
+
+TAGGING RULES: When analyzing build content, ALWAYS include the Runner Shell name (destroyer, vandal, recon, assassin, triage, thief, rook) as a tag in your response. If the content covers multiple shells, include all relevant shell names as separate tags. Also include weapon names and categories when relevant. Example tags: ["destroyer", "builds", "m77-assault-rifle", "assault-rifle", "ranked", "season-1"]
 
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 };
 
-async function fetchModContext() {
+async function fetchGameContext() {
   try {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
@@ -102,29 +108,63 @@ async function fetchModContext() {
       process.env.SUPABASE_SERVICE_KEY
     );
 
-    const { data } = await supabase
-      .from('mod_stats')
-      .select('name, slot_type, rarity, effect_desc')
-      .not('effect_desc', 'is', null)
-      .order('rarity', { ascending: false })
-      .limit(40);
+    const [modsRes, coresRes, implantsRes] = await Promise.all([
+      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(40),
+      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating').order('rarity', { ascending: false }).limit(40),
+      supabase.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').order('rarity', { ascending: false }).limit(40),
+    ]);
 
-    if (!data?.length) return '';
+    let output = '';
 
-    const bySlot = {};
-    for (const mod of data) {
-      const slot = mod.slot_type || 'Other';
-      if (!bySlot[slot]) bySlot[slot] = [];
-      bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'}): ${mod.effect_desc}`);
+    // Mods
+    if (modsRes.data?.length) {
+      const bySlot = {};
+      for (const mod of modsRes.data) {
+        const slot = mod.slot_type || 'Other';
+        if (!bySlot[slot]) bySlot[slot] = [];
+        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'}): ${mod.effect_desc}`);
+      }
+      const lines = Object.entries(bySlot)
+        .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
+        .join('\n\n');
+      output += `\n\n--- WEAPON MODS DATABASE (use exact names only) ---\n${lines}\n--- END MODS ---`;
     }
 
-    const lines = Object.entries(bySlot)
-      .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
-      .join('\n\n');
+    // Cores
+    if (coresRes.data?.length) {
+      const byRunner = {};
+      for (const core of coresRes.data) {
+        const runner = core.required_runner || 'Unknown';
+        if (!byRunner[runner]) byRunner[runner] = [];
+        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}): ${core.effect_desc || 'Effect TBD'}`);
+      }
+      const lines = Object.entries(byRunner)
+        .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
+        .join('\n\n');
+      output += `\n\n--- SHELL CORES DATABASE (shell-specific upgrades, use exact names) ---\n${lines}\n--- END CORES ---`;
+    }
 
-    return `\n\n--- WEAPON MODS DATABASE (reference these exact names and effects) ---\n${lines}\n--- END MODS ---`;
+    // Implants
+    if (implantsRes.data?.length) {
+      const bySlot = {};
+      for (const imp of implantsRes.data) {
+        const slot = imp.slot_type || 'Other';
+        if (!bySlot[slot]) bySlot[slot] = [];
+        const stats = [
+          imp.stat_1_label && imp.stat_1_value ? `${imp.stat_1_label}: ${imp.stat_1_value}` : null,
+          imp.stat_2_label && imp.stat_2_value ? `${imp.stat_2_label}: ${imp.stat_2_value}` : null,
+        ].filter(Boolean).join(', ');
+        bySlot[slot].push(`${imp.name} (${imp.rarity})${imp.passive_name ? ' — ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}`);
+      }
+      const lines = Object.entries(bySlot)
+        .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
+        .join('\n\n');
+      output += `\n\n--- IMPLANTS DATABASE (slot upgrades that boost shell stats) ---\n${lines}\n--- END IMPLANTS ---`;
+    }
+
+    return output;
   } catch (err) {
-    console.error('[editorCore] fetchModContext error:', err.message);
+    console.error('[editorCore] fetchGameContext error:', err.message);
     return '';
   }
 }
@@ -226,10 +266,10 @@ export async function callEditor(editor, userPrompt) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
 
-  // Inject mod context into build/meta/play editors for added credibility
+  // Inject full game context into build/meta/play editors
   if (['DEXTER', 'NEXUS', 'CIPHER'].includes(editor)) {
-    const modContext = await fetchModContext();
-    if (modContext) systemPrompt += modContext;
+    const gameContext = await fetchGameContext();
+    if (gameContext) systemPrompt += gameContext;
   }
 
   var maxTokens = 1024;
