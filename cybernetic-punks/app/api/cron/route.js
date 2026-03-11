@@ -87,6 +87,7 @@ async function processEditor(editorName, prompt, rawData) {
     }
 
     if (!result || !result.headline || result._parseError) {
+      console.log('[CRON] ' + editorName + ' failed: ' + JSON.stringify(result).slice(0, 200));
       return { editor: editorName, success: false, error: 'Parse error or missing headline' };
     }
 
