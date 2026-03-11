@@ -29,14 +29,50 @@ const KNOWN_WEAPONS = [
 
 const KNOWN_SHELLS = ['Assassin','Destroyer','Recon','Rook','Thief','Triage','Vandal'];
 
+// Category → default weapon fallback when no exact name is found
+const CATEGORY_FALLBACKS = [
+  { keywords: ['shotgun'],             weapon: 'WSTR Combat Shotgun' },
+  { keywords: ['smg','submachine'],    weapon: 'BRRT SMG' },
+  { keywords: ['assault','ar','rifle'],weapon: 'M77 Assault Rifle' },
+  { keywords: ['sniper','marksman'],   weapon: 'Hardline PR' },
+  { keywords: ['lmg','machine gun'],   weapon: 'Retaliator LMG' },
+  { keywords: ['rail','railgun'],      weapon: 'Ares RG' },
+  { keywords: ['volt','electric'],     weapon: 'V22 Volt Thrower' },
+  { keywords: ['pistol','sidearm'],    weapon: 'CE Tactical Sidearm' },
+  { keywords: ['scout','longshot'],    weapon: 'Longshot' },
+];
+
+// Role/strategy → default shell fallback when no exact shell is named
+const SHELL_FALLBACKS = [
+  { keywords: ['aggressive','rush','push','combat','fragger'], shell: 'Destroyer' },
+  { keywords: ['stealth','flank','assassin','silent'],         shell: 'Assassin' },
+  { keywords: ['support','heal','triage','medic'],             shell: 'Triage' },
+  { keywords: ['scout','recon','intel','vision'],              shell: 'Recon' },
+  { keywords: ['loot','extract','thief','theft','resources'],  shell: 'Thief' },
+  { keywords: ['tank','rook','anchor','hold'],                 shell: 'Rook' },
+  { keywords: ['versati','flex','all-around','balanced'],      shell: 'Vandal' },
+];
+
 function extractWeaponNames(tags, body) {
   const text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
-  return KNOWN_WEAPONS.filter(w => text.includes(w.toLowerCase()));
+  const exact = KNOWN_WEAPONS.filter(w => text.includes(w.toLowerCase()));
+  if (exact.length > 0) return exact;
+  // Category fallback
+  for (const fb of CATEGORY_FALLBACKS) {
+    if (fb.keywords.some(k => text.includes(k))) return [fb.weapon];
+  }
+  return [];
 }
 
 function extractShellName(tags, body) {
   const text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
-  return KNOWN_SHELLS.find(s => text.includes(s.toLowerCase())) || null;
+  const exact = KNOWN_SHELLS.find(s => text.includes(s.toLowerCase()));
+  if (exact) return exact;
+  // Category fallback
+  for (const fb of SHELL_FALLBACKS) {
+    if (fb.keywords.some(k => text.includes(k))) return fb.shell;
+  }
+  return null;
 }
 
 function timeAgo(dateStr) {

@@ -97,6 +97,11 @@ When referencing implants, use exact implant names from the IMPLANTS DATABASE in
 
 TAGGING RULES: When analyzing build content, ALWAYS include the Runner Shell name (destroyer, vandal, recon, assassin, triage, thief, rook) as a tag in your response. If the content covers multiple shells, include all relevant shell names as separate tags. Also include weapon names and categories when relevant. Example tags: ["destroyer", "builds", "m77-assault-rifle", "assault-rifle", "ranked", "season-1"]
 
+LOADOUT REQUIREMENT — THIS IS MANDATORY: Every article you publish MUST name at least one specific Runner Shell by exact name (Destroyer, Vandal, Recon, Assassin, Triage, Thief, or Rook) AND at least one specific weapon by its full exact name (e.g. "WSTR Combat Shotgun", "BRRT SMG", "M77 Assault Rifle"). If the source content does not specify these, you MUST make a recommendation yourself based on the strategy described. For example: if the content discusses a shotgun strategy, recommend "WSTR Combat Shotgun" and the shell that best fits. If a green rarity mod buffs shotguns, say "This slots best into a Destroyer + WSTR Combat Shotgun build." Never publish a build article that only talks about categories. Always name the specific shell and weapon even if you are extrapolating from the available evidence.
+
+The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook.
+Key weapons: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardline PR, Stryder M1T, Ares RG, Longshot, Retaliator LMG, V22 Volt Thrower, Copperhead RF.
+
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 };
 
@@ -273,7 +278,7 @@ export async function callEditor(editor, userPrompt) {
   }
 
   var maxTokens = 1024;
-  if (editor === 'NEXUS') maxTokens = 3072;
+  if (editor === 'NEXUS') maxTokens = 2048;
   if (editor === 'MIRANDA') maxTokens = 1536;
 
   var message = await client.messages.create({
