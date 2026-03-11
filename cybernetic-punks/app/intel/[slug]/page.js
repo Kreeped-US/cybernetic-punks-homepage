@@ -11,27 +11,19 @@ const supabaseService = createClient(
 );
 
 const EDITORS = {
-  cipher: { name: 'CIPHER', symbol: '◈', color: '#ff0000', role: 'Play Analyst', desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'CIPHER — Marathon Play Analysis & Competitive Grades', metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
-  nexus: { name: 'NEXUS', symbol: '⬡', color: '#00f5ff', role: 'Meta Strategist', desc: 'Tracks what weapons and strategies are actually winning right now.', metaTitle: 'NEXUS — Marathon Meta Tracking & Strategy Intel', metaDesc: 'Live Marathon meta intelligence. What weapons and loadouts are winning — tracked every 6 hours.' },
-  ghost: { name: 'GHOST', symbol: '◇', color: '#00ff88', role: 'Community Pulse', desc: "Reads Reddit and Discord so you don't have to scroll all day.", metaTitle: 'GHOST — Marathon Community Sentiment & Player Pulse', metaDesc: 'What Marathon players actually think. Community sentiment from Reddit and Discord.' },
-  dexter: { name: 'DEXTER', symbol: '⬢', color: '#ff8800', role: 'Build Engineer', desc: 'Tests loadouts and tells you what to run before you drop in.', metaTitle: 'DEXTER — Marathon Build Analysis & Loadout Grades', metaDesc: 'Best Marathon builds and loadouts graded F to S.' },
-  miranda: { name: 'MIRANDA', symbol: '◎', color: '#9b5de5', role: 'Field Guide', desc: 'Deep-dive guides on shells, weapons, mods, and extraction strategy.', metaTitle: 'MIRANDA — Marathon Field Guides', metaDesc: 'Shell breakdowns, weapon analysis, and ranked prep for Marathon Runners.' },
+  cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff0000', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.',                         metaTitle: 'CIPHER — Marathon Play Analysis & Competitive Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
+  nexus:   { name: 'NEXUS',   symbol: '⬡', color: '#00f5ff', role: 'Meta Strategist',  desc: 'Tracks what weapons and strategies are actually winning right now.',                                                                                metaTitle: 'NEXUS — Marathon Meta Tracking & Strategy Intel',       metaDesc: 'Live Marathon meta intelligence. What weapons and loadouts are winning — tracked every 6 hours.' },
+  ghost:   { name: 'GHOST',   symbol: '◇', color: '#00ff88', role: 'Community Pulse',  desc: "Reads Reddit and Discord so you don't have to scroll all day.",                                                                                    metaTitle: 'GHOST — Marathon Community Sentiment & Player Pulse',   metaDesc: 'What Marathon players actually think. Community sentiment from Reddit and Discord.' },
+  dexter:  { name: 'DEXTER',  symbol: '⬢', color: '#ff8800', role: 'Build Engineer',   desc: 'Tests loadouts and tells you what to run before you drop in.',                                                                                    metaTitle: 'DEXTER — Marathon Build Analysis & Loadout Grades',     metaDesc: 'Best Marathon builds and loadouts graded F to S.' },
+  miranda: { name: 'MIRANDA', symbol: '◎', color: '#9b5de5', role: 'Field Guide',      desc: 'Deep-dive guides on shells, weapons, mods, and extraction strategy.',                                                                             metaTitle: 'MIRANDA — Marathon Field Guides',                       metaDesc: 'Shell breakdowns, weapon analysis, and ranked prep for Marathon Runners.' },
 };
 
 const EDITOR_STYLES = {
-  CIPHER:  { color: '#ff0000', symbol: '◈', label: 'CIPHER' },
-  NEXUS:   { color: '#00f5ff', symbol: '⬡', label: 'NEXUS' },
-  MIRANDA: { color: '#9b5de5', symbol: '◎', label: 'MIRANDA' },
-  GHOST:   { color: '#00ff88', symbol: '◇', label: 'GHOST' },
-  DEXTER:  { color: '#ff8800', symbol: '⬢', label: 'DEXTER' },
-};
-
-const TIER_COLORS = {
-  'S': '#ffd700', 'S+': '#ffd700',
-  'A': '#00ff88',
-  'B': '#00f5ff',
-  'C': '#ff8800',
-  'D': '#ff4444',
+  CIPHER:  { color: '#ff0000', symbol: '◈', label: 'CIPHER',  bg: 'rgba(255,0,0,0.04)',    border: 'rgba(255,0,0,0.15)'   },
+  NEXUS:   { color: '#00f5ff', symbol: '⬡', label: 'NEXUS',   bg: 'rgba(0,245,255,0.04)',  border: 'rgba(0,245,255,0.15)' },
+  MIRANDA: { color: '#9b5de5', symbol: '◎', label: 'MIRANDA', bg: 'rgba(155,93,229,0.04)', border: 'rgba(155,93,229,0.15)'},
+  GHOST:   { color: '#00ff88', symbol: '◇', label: 'GHOST',   bg: 'rgba(0,255,136,0.04)',  border: 'rgba(0,255,136,0.15)' },
+  DEXTER:  { color: '#ff8800', symbol: '⬢', label: 'DEXTER',  bg: 'rgba(255,136,0,0.04)',  border: 'rgba(255,136,0,0.15)' },
 };
 
 function timeAgo(dateStr) {
@@ -56,214 +48,30 @@ function extractYouTubeId(url) {
 }
 
 function isTwitchClipUrl(url) {
-  if (!url) return false;
-  return url.includes('twitch.tv') || url.includes('clips.twitch.tv');
+  return url && (url.includes('twitch.tv') || url.includes('clips.twitch.tv'));
 }
 
 function extractTwitchClipSlug(url) {
   if (!url) return null;
-  var match1 = url.match(/clips\.twitch\.tv\/([A-Za-z0-9_-]+)/);
-  if (match1) return match1[1];
-  var match2 = url.match(/twitch\.tv\/[^/]+\/clip\/([A-Za-z0-9_-]+)/);
-  if (match2) return match2[1];
-  return null;
+  var m = url.match(/clips\.twitch\.tv\/([A-Za-z0-9_-]+)/) || url.match(/twitch\.tv\/[^/]+\/clip\/([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
 }
 
-// ─── BODY PARSER ────────────────────────────────────────────
-// Converts "**Section Header** body text **Next Header** more text"
-// into an array of {type: 'header'|'para', content} objects
 function parseBody(body) {
   if (!body) return [];
-  var parts = body.split(/\*\*([^*]{1,60})\*\*/);
+  var parts = body.split(/\*\*([^*]{1,80})\*\*/);
   var elements = [];
   parts.forEach(function(part, i) {
     if (i % 2 === 0) {
-      // Regular text — split by newlines
-      var lines = part.split(/\n+/);
-      lines.forEach(function(line, j) {
+      part.split(/\n+/).forEach(function(line, j) {
         var t = line.trim();
         if (t) elements.push({ type: 'para', content: t, key: 'p-' + i + '-' + j });
       });
     } else {
-      // Bold segment — section header
       elements.push({ type: 'header', content: part.trim(), key: 'h-' + i });
     }
   });
   return elements;
-}
-
-// ─── STAT BAR ───────────────────────────────────────────────
-function StatBar({ label, value, max, color }) {
-  var pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
-  return (
-    <div style={{ marginBottom: '10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px' }}>{label}</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: color }}>{value}</span>
-      </div>
-      <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
-        <div style={{ height: '3px', width: pct + '%', background: color, borderRadius: '2px', boxShadow: '0 0 6px ' + color + '66' }} />
-      </div>
-    </div>
-  );
-}
-
-// ─── SHELL STAT CARD ────────────────────────────────────────
-function ShellCard({ shell }) {
-  return (
-    <div style={{
-      border: '1px solid rgba(155,93,229,0.2)',
-      borderLeft: '3px solid #9b5de5',
-      borderRadius: '6px',
-      padding: '16px',
-      background: 'rgba(155,93,229,0.04)',
-      marginBottom: '12px',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-        <div>
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '14px', fontWeight: 800, color: '#fff', letterSpacing: '1px' }}>
-            {shell.name?.toUpperCase()}
-          </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: '#9b5de5', letterSpacing: '2px', marginTop: '2px' }}>SHELL DATA</div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          {shell.hp && (
-            <div>
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: 900, color: '#00ff88', lineHeight: 1 }}>{shell.hp}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px' }}>HP</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {shell.hp && <StatBar label="HP" value={shell.hp} max={200} color="#00ff88" />}
-      {shell.armor && <StatBar label="ARMOR" value={shell.armor} max={100} color="#00f5ff" />}
-
-      {shell.passive_desc && (
-        <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'rgba(255,255,255,0.25)', letterSpacing: '2px', marginBottom: '4px' }}>PASSIVE</div>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>{shell.passive_desc}</div>
-        </div>
-      )}
-      {shell.active_name && (
-        <div style={{ marginTop: '10px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: '#9b5de5', letterSpacing: '2px', marginBottom: '4px' }}>ACTIVE — {shell.active_name?.toUpperCase()}</div>
-          {shell.active_desc && <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>{shell.active_desc}</div>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── WEAPON STAT CARD ───────────────────────────────────────
-function WeaponCard({ weapon }) {
-  return (
-    <div style={{
-      border: '1px solid rgba(255,136,0,0.2)',
-      borderLeft: '3px solid #ff8800',
-      borderRadius: '6px',
-      padding: '16px',
-      background: 'rgba(255,136,0,0.03)',
-      marginBottom: '12px',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-        <div>
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '14px', fontWeight: 800, color: '#fff', letterSpacing: '1px' }}>
-            {weapon.name?.toUpperCase()}
-          </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: '#ff8800', letterSpacing: '2px', marginTop: '2px' }}>
-            {weapon.weapon_type?.toUpperCase() || 'WEAPON'} // FIELD DATA
-          </div>
-        </div>
-        {weapon.damage && (
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: 900, color: '#ff8800', lineHeight: 1 }}>{weapon.damage}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px' }}>DMG</div>
-          </div>
-        )}
-      </div>
-      {weapon.damage && <StatBar label="DAMAGE" value={weapon.damage} max={120} color="#ff8800" />}
-      {weapon.fire_rate && <StatBar label="FIRE RATE" value={weapon.fire_rate} max={900} color="#ff4444" />}
-      {(weapon.magazine_size || weapon.magazine) && <StatBar label="MAGAZINE" value={weapon.magazine_size || weapon.magazine} max={60} color="#00f5ff" />}
-    </div>
-  );
-}
-
-// ─── MOD STAT CARD ──────────────────────────────────────────
-function ModCard({ mod }) {
-  return (
-    <div style={{
-      border: '1px solid rgba(255,0,0,0.15)',
-      borderLeft: '3px solid #ff0000',
-      borderRadius: '6px',
-      padding: '14px 16px',
-      background: 'rgba(255,0,0,0.02)',
-      marginBottom: '10px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      gap: '12px',
-    }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '13px', fontWeight: 700, color: '#fff' }}>{mod.name}</div>
-          {mod.rarity && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: '#ff0000', border: '1px solid rgba(255,0,0,0.3)', padding: '2px 6px', borderRadius: '3px' }}>
-              {mod.rarity.toUpperCase()}
-            </span>
-          )}
-        </div>
-        {mod.slot_type && <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'rgba(255,255,255,0.25)', letterSpacing: '2px', marginBottom: '6px' }}>{mod.slot_type.toUpperCase()} SLOT</div>}
-        {mod.effect_desc && <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{mod.effect_desc}</div>}
-      </div>
-    </div>
-  );
-}
-
-// ─── BODY RENDERER ──────────────────────────────────────────
-function BodyRenderer({ parsed, editorColor }) {
-  return (
-    <div>
-      {parsed.map(function(el) {
-        if (el.type === 'header') {
-          return (
-            <div key={el.key} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              margin: '36px 0 16px',
-              paddingBottom: '10px',
-              borderBottom: '1px solid rgba(255,255,255,0.05)',
-            }}>
-              <div style={{ width: '3px', height: '20px', background: editorColor, borderRadius: '2px', flexShrink: 0, boxShadow: '0 0 8px ' + editorColor + '66' }} />
-              <h2 style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '16px',
-                fontWeight: 800,
-                color: editorColor,
-                margin: 0,
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-              }}>
-                {el.content}
-              </h2>
-            </div>
-          );
-        }
-        return (
-          <p key={el.key} style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '16px',
-            color: 'rgba(255,255,255,0.65)',
-            lineHeight: 1.8,
-            margin: '0 0 16px',
-          }}>
-            {el.content}
-          </p>
-        );
-      })}
-    </div>
-  );
 }
 
 // ─── METADATA ───────────────────────────────────────────────
@@ -291,40 +99,90 @@ export async function generateMetadata({ params }) {
   };
 }
 
+// ─── STAT BAR ───────────────────────────────────────────────
+function StatBar({ label, value, max, color }) {
+  var pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>{label}</span>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: color }}>{value}</span>
+      </div>
+      <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
+        <div style={{ height: 2, width: pct + '%', background: color, borderRadius: 2, boxShadow: '0 0 6px ' + color + '66' }} />
+      </div>
+    </div>
+  );
+}
+
 // ─── EDITOR LANE PAGE ───────────────────────────────────────
 function EditorLanePage({ config, items }) {
   return (
     <main className="min-h-screen bg-black text-white pt-24" style={{ paddingBottom: 80 }}>
       <Nav />
-      <section style={{ maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
-          <div style={{ fontSize: 48, color: config.color, filter: 'drop-shadow(0 0 12px ' + config.color + '44)' }}>{config.symbol}</div>
+
+      {/* Hero */}
+      <section style={{
+        maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px',
+        position: 'relative',
+      }}>
+        <div style={{
+          position: 'absolute', top: 0, left: 24, right: 24, height: 1,
+          background: 'linear-gradient(90deg, transparent, ' + config.color + '44, transparent)',
+        }} />
+        <div style={{ paddingTop: 32, display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: config.color + '10',
+            border: '1px solid ' + config.color + '30',
+            fontSize: 28, color: config.color,
+            boxShadow: '0 0 24px ' + config.color + '20',
+            flexShrink: 0,
+          }}>{config.symbol}</div>
           <div>
-            <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, color: config.color, letterSpacing: 3, margin: 0 }}>{config.name}</h1>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, marginTop: 4 }}>{config.role.toUpperCase()} • {items.length} ARTICLES</div>
+            <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, color: config.color, letterSpacing: 3, margin: 0, textShadow: '0 0 30px ' + config.color + '44' }}>{config.name}</h1>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 6 }}>{config.role.toUpperCase()} · {items.length} ARTICLES PUBLISHED</div>
           </div>
         </div>
-        <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.5)', maxWidth: 700, lineHeight: 1.6, margin: 0 }}>{config.desc}</p>
+        <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.45)', maxWidth: 600, lineHeight: 1.6, margin: 0 }}>{config.desc}</p>
       </section>
+
+      {/* Articles */}
       <section style={{ maxWidth: 1200, margin: '0 auto 64px', padding: '0 24px' }}>
         {items.length === 0 ? (
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '48px 28px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{config.name} HASN&apos;T PUBLISHED YET</div>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>{config.name} HASN&apos;T PUBLISHED YET</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {items.map(function(item, i) {
               return (
-                <Link key={i} href={'/intel/' + item.slug} style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid ' + config.color + '33', borderRadius: 8, padding: '18px 22px', textDecoration: 'none', overflow: 'hidden' }}>
-                  {item.thumbnail && (<div style={{ width: 120, height: 68, borderRadius: 6, flexShrink: 0, background: 'url(' + item.thumbnail + ') center/cover no-repeat' }} />)}
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{item.headline}</h3>
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.4 }}>{item.body && item.body.length > 150 ? item.body.slice(0, 150) + '...' : item.body}</p>
+                <Link key={i} href={'/intel/' + item.slug} style={{
+                  display: 'flex', alignItems: 'center', gap: 16,
+                  background: i === 0 ? config.color + '08' : 'rgba(255,255,255,0.015)',
+                  border: '1px solid ' + (i === 0 ? config.color + '25' : 'rgba(255,255,255,0.04)'),
+                  borderLeft: '3px solid ' + (i === 0 ? config.color : config.color + '30'),
+                  borderRadius: 6, padding: '16px 20px', textDecoration: 'none',
+                  transition: 'background 0.2s',
+                }}>
+                  {item.thumbnail && (
+                    <div style={{ width: 100, height: 58, borderRadius: 4, flexShrink: 0, background: 'url(' + item.thumbnail + ') center/cover no-repeat', opacity: 0.8 }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.75)', margin: '0 0 4px', lineHeight: 1.3 }}>{item.headline}</h3>
+                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.body && item.body.slice(0, 120)}
+                    </p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    {item.tags && item.tags.length > 0 && (<span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: config.color, background: config.color + '12', borderRadius: 4, padding: '4px 10px' }}>{item.tags[0]}</span>)}
-                    {item.ce_score > 0 && (<span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: config.color }}>{item.ce_score}</span>)}
-                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', minWidth: 48, textAlign: 'right' }}>{timeAgo(item.created_at)}</span>
+                    {item.tags?.[0] && (
+                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: config.color, background: config.color + '12', borderRadius: 3, padding: '3px 8px', letterSpacing: 1 }}>{item.tags[0]}</span>
+                    )}
+                    {item.ce_score > 0 && (
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: config.color }}>{item.ce_score}</span>
+                    )}
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', minWidth: 44, textAlign: 'right' }}>{timeAgo(item.created_at)}</span>
                   </div>
                 </Link>
               );
@@ -332,11 +190,39 @@ function EditorLanePage({ config, items }) {
           </div>
         )}
       </section>
+
       <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-        <Link href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.2)', textDecoration: 'none' }}>← BACK TO THE GRID</Link>
+        <Link href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>← BACK TO THE GRID</Link>
       </section>
       <Footer />
     </main>
+  );
+}
+
+// ─── BODY RENDERER ──────────────────────────────────────────
+function BodyRenderer({ parsed, editorColor }) {
+  return (
+    <div>
+      {parsed.map(function(el) {
+        if (el.type === 'header') {
+          return (
+            <div key={el.key} style={{ margin: '40px 0 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 3, height: 18, background: editorColor, borderRadius: 2, flexShrink: 0, boxShadow: '0 0 10px ' + editorColor + '88' }} />
+              <h2 style={{
+                fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800,
+                color: editorColor, margin: 0, letterSpacing: 2, textTransform: 'uppercase',
+              }}>{el.content}</h2>
+            </div>
+          );
+        }
+        return (
+          <p key={el.key} style={{
+            fontFamily: 'Rajdhani, sans-serif', fontSize: 17,
+            color: 'rgba(255,255,255,0.72)', lineHeight: 1.85, margin: '0 0 18px',
+          }}>{el.content}</p>
+        );
+      })}
+    </div>
   );
 }
 
@@ -350,16 +236,15 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
   var articleUrl = 'https://cyberneticpunks.com/intel/' + item.slug;
   var rt = readTime(item.body);
 
-  // Find which shells/weapons/mods are mentioned in the body
   var bodyLower = (item.body || '').toLowerCase();
   var mentionedShells = (shells || []).filter(s => s.name && bodyLower.includes(s.name.toLowerCase()));
   var mentionedWeapons = (weapons || []).filter(w => w.name && bodyLower.includes(w.name.toLowerCase()));
-  var mentionedMods = (mods || []).filter(m => m.name && bodyLower.includes(m.name.toLowerCase())).slice(0, 6);
-
+  var mentionedMods = (mods || []).filter(m => m.name && bodyLower.includes(m.name.toLowerCase())).slice(0, 5);
   var hasDataRef = mentionedShells.length > 0 || mentionedWeapons.length > 0 || mentionedMods.length > 0;
   var parsed = parseBody(item.body);
+  var hasThumbnail = !!(item.thumbnail || (videoId));
 
-  var shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — graded by ' + item.editor + ' on CyberneticPunks') + '&url=' + encodeURIComponent(articleUrl);
+  var shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — via @Cybernetic87250') + '&url=' + encodeURIComponent(articleUrl);
   var shareReddit = 'https://www.reddit.com/submit?url=' + encodeURIComponent(articleUrl) + '&title=' + encodeURIComponent(item.headline);
 
   var jsonLd = {
@@ -368,184 +253,278 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
     author: { '@type': 'Organization', name: 'CyberneticPunks ' + item.editor, url: 'https://cyberneticpunks.com' },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
     datePublished: item.created_at, dateModified: item.created_at,
-    url: articleUrl,
-    mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+    url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',
   };
   if (item.thumbnail) jsonLd.image = item.thumbnail;
-  var videoJsonLd = videoId ? {
-    '@context': 'https://schema.org', '@type': 'VideoObject',
-    name: item.headline, description: item.body,
-    thumbnailUrl: item.thumbnail || 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
-    uploadDate: item.created_at, embedUrl: 'https://www.youtube.com/embed/' + videoId, contentUrl: item.source_url,
-  } : null;
 
   return (
     <main style={{ backgroundColor: '#030303', minHeight: '100vh', color: '#fff' }}>
       <Nav />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {videoJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoJsonLd) }} />}
 
-      {/* ─── ARTICLE LAYOUT ───────────────────────────── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: hasDataRef ? '1fr 300px' : '1fr', gap: '48px', paddingTop: '100px', paddingBottom: '80px', alignItems: 'start' }}>
+      {/* ── CINEMATIC ARTICLE HERO ── */}
+      <div style={{ position: 'relative', width: '100%', minHeight: 340, overflow: 'hidden' }}>
 
-          {/* ─── MAIN COLUMN ────────────────────────────── */}
-          <article>
-            {/* Byline */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <div style={{
-                width: '36px', height: '36px', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: editor.color + '15',
-                border: '1px solid ' + editor.color + '40',
-                fontSize: '16px', color: editor.color,
-                flexShrink: 0,
-              }}>
-                {editor.symbol}
-              </div>
-              <div>
-                <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', color: editor.color, textDecoration: 'none' }}>
-                  {editor.label}
-                </Link>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginTop: '2px' }}>
-                  {publishedAt} · {rt}
+        {/* Background — thumbnail blurred or solid */}
+        {hasThumbnail ? (
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: 'url(' + (item.thumbnail || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg')) + ')',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            filter: 'blur(12px) brightness(0.25) saturate(1.4)',
+            transform: 'scale(1.08)',
+          }} />
+        ) : (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(135deg, ' + editor.color + '0a 0%, #030303 100%)',
+          }} />
+        )}
+
+        {/* Noise texture overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.04\'/%3E%3C/svg%3E")',
+          backgroundSize: '200px 200px',
+          opacity: 0.4,
+          pointerEvents: 'none',
+        }} />
+
+        {/* Bottom fade */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 160, background: 'linear-gradient(to top, #030303 0%, transparent 100%)', pointerEvents: 'none' }} />
+
+        {/* Top fade */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to bottom, #030303 0%, transparent 100%)', pointerEvents: 'none' }} />
+
+        {/* Editor color line at top */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, ' + editor.color + ', transparent)' }} />
+
+        {/* Content */}
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1200, margin: '0 auto', padding: '96px 24px 48px' }}>
+
+          {/* Editor badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: editor.color + '15', border: '1px solid ' + editor.color + '35',
+              borderRadius: 4, padding: '5px 12px',
+            }}>
+              <span style={{ color: editor.color, fontSize: 12 }}>{editor.symbol}</span>
+              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 2 }}>
+                {editor.label}
+              </Link>
+            </div>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>
+              {publishedAt} · {rt}
+            </span>
+            {item.source && (
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: 3, letterSpacing: 1 }}>
+                {item.source}
+              </span>
+            )}
+          </div>
+
+          {/* Headline */}
+          <h1 style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 'clamp(24px, 4vw, 42px)',
+            fontWeight: 900, color: '#ffffff',
+            lineHeight: 1.15, letterSpacing: 0.5,
+            margin: '0 0 20px', maxWidth: 800,
+            textShadow: '0 2px 40px rgba(0,0,0,0.8)',
+          }}>
+            {item.headline}
+          </h1>
+
+          {/* Score + tags row */}
+          {(item.ce_score > 0 || (item.tags && item.tags.length > 0)) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {item.ce_score > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'baseline', gap: 6,
+                  background: editor.color + '15', border: '1px solid ' + editor.color + '30',
+                  borderRadius: 4, padding: '6px 14px',
+                }}>
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}>
+                    {item.editor === 'NEXUS' ? 'GRID PULSE' : item.editor === 'DEXTER' ? 'LOADOUT GRADE' : 'CE SCORE'}
+                  </span>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: editor.color }}>{item.ce_score}</span>
                 </div>
+              )}
+              {item.tags && item.tags.slice(0, 4).map(function(tag, i) {
+                return (
+                  <span key={i} style={{
+                    fontFamily: 'Share Tech Mono, monospace', fontSize: 9,
+                    color: 'rgba(255,255,255,0.3)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.03)',
+                    padding: '5px 10px', borderRadius: 3, letterSpacing: 1,
+                  }}>{tag}</span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── ARTICLE BODY ── */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 80px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: hasDataRef ? '1fr 300px' : '1fr', gap: 56, alignItems: 'start' }}>
+
+          {/* ── MAIN COLUMN ── */}
+          <article style={{ paddingTop: 40 }}>
+
+            {/* Media embed */}
+            {videoId && (
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 8, marginBottom: 36, border: '1px solid ' + editor.color + '20', boxShadow: '0 4px 40px rgba(0,0,0,0.4)' }}>
+                <iframe
+                  src={'https://www.youtube.com/embed/' + videoId}
+                  title={item.headline}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                />
               </div>
-              {item.source && (
-                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.08)', padding: '4px 10px', borderRadius: '3px' }}>
-                  {item.source}
-                </span>
+            )}
+            {isTwitch && twitchSlug && (
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 8, marginBottom: 36, border: '1px solid rgba(155,93,229,0.25)' }}>
+                <iframe
+                  src={'https://clips.twitch.tv/embed?clip=' + twitchSlug + '&parent=cyberneticpunks.com&parent=www.cyberneticpunks.com'}
+                  title={item.headline} allowFullScreen
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                />
+              </div>
+            )}
+
+            {/* Body */}
+            <div style={{
+              borderLeft: '1px solid ' + editor.color + '18',
+              paddingLeft: 28,
+            }}>
+              <BodyRenderer parsed={parsed} editorColor={editor.color} />
+            </div>
+
+            {/* Share + source */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              paddingTop: 28, marginTop: 40,
+              borderTop: '1px solid rgba(255,255,255,0.05)',
+              flexWrap: 'wrap',
+            }}>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginRight: 4 }}>SHARE</div>
+              <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>
+                𝕏 POST
+              </a>
+              <a href={shareReddit} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>
+                REDDIT
+              </a>
+              {item.source_url && (
+                <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, opacity: 0.8 }}>
+                  ▶ {isTwitch ? 'TWITCH' : 'YOUTUBE'} ↗
+                </a>
               )}
             </div>
 
-            {/* Headline */}
-            <h1 style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 'clamp(22px, 4vw, 36px)',
-              fontWeight: 900,
-              color: '#fff',
-              lineHeight: 1.15,
-              letterSpacing: '0.5px',
-              margin: '0 0 28px',
-            }}>
-              {item.headline}
-            </h1>
+            <div style={{ marginTop: 20 }}>
+              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>
+                ← MORE FROM {item.editor}
+              </Link>
+            </div>
+          </article>
 
-            {/* Score bar */}
-            {item.ce_score > 0 && (
+          {/* ── SIDEBAR ── */}
+          {hasDataRef && (
+            <aside style={{ position: 'sticky', top: 100, paddingTop: 40 }}>
               <div style={{
-                display: 'flex',
-                gap: '24px',
-                padding: '14px 20px',
-                background: editor.color + '08',
-                border: '1px solid ' + editor.color + '20',
-                borderRadius: '6px',
-                marginBottom: '28px',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderTop: '2px solid ' + editor.color,
+                borderRadius: 8,
+                padding: 20,
               }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'rgba(255,255,255,0.25)', letterSpacing: '2px', marginBottom: '4px' }}>
-                    {item.editor === 'NEXUS' ? 'GRID PULSE' : item.editor === 'DEXTER' ? 'LOADOUT GRADE' : 'CE SCORE'}
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', fontWeight: 900, color: editor.color }}>{item.ce_score}</div>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: editor.color, letterSpacing: 3, marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  DATA REFERENCE
                 </div>
-                {item.tags && item.tags.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    {item.tags.map(function(tag, i) {
+
+                {mentionedShells.map(function(shell, i) {
+                  return (
+                    <div key={i} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 8 }}>RUNNER SHELL</div>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#00f5ff', marginBottom: 4 }}>{shell.name}</div>
+                      {shell.role && <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10 }}>{shell.role}</div>}
+                      {shell.base_health && <StatBar label="HP" value={shell.base_health} max={200} color="#00ff88" />}
+                      {shell.base_shield && <StatBar label="SHIELD" value={shell.base_shield} max={100} color="#00f5ff" />}
+                      {shell.active_ability_name && (
+                        <div style={{ marginTop: 10 }}>
+                          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff8800', letterSpacing: 2, marginBottom: 4 }}>ACTIVE — {shell.active_ability_name}</div>
+                          {shell.active_ability_description && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{shell.active_ability_description.slice(0, 120)}</div>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {mentionedWeapons.map(function(weapon, i) {
+                  return (
+                    <div key={i} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 8 }}>WEAPON</div>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#ff8800', marginBottom: 4 }}>{weapon.name}</div>
+                      {weapon.weapon_type && <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10 }}>{weapon.weapon_type} · {weapon.ammo_type || ''}</div>}
+                      {weapon.damage && <StatBar label="DAMAGE" value={weapon.damage} max={200} color="#ff8800" />}
+                      {weapon.fire_rate && <StatBar label="FIRE RATE" value={weapon.fire_rate} max={1000} color="#ff4444" />}
+                      {weapon.magazine_size && <StatBar label="MAGAZINE" value={weapon.magazine_size} max={60} color="#00f5ff" />}
+                    </div>
+                  );
+                })}
+
+                {mentionedMods.length > 0 && (
+                  <div>
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 12 }}>MODS REFERENCED</div>
+                    {mentionedMods.map(function(mod, i) {
                       return (
-                        <span key={i} style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.08)', padding: '4px 10px', borderRadius: '3px' }}>
-                          {tag}
-                        </span>
+                        <div key={i} style={{ marginBottom: 12 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#fff' }}>{mod.name}</div>
+                            {mod.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#ff0000', border: '1px solid rgba(255,0,0,0.3)', padding: '1px 5px', borderRadius: 2 }}>{mod.rarity.toUpperCase()}</span>}
+                          </div>
+                          {mod.slot_type && <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 4 }}>{mod.slot_type.toUpperCase()} SLOT</div>}
+                          {mod.effect_desc && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{mod.effect_desc}</div>}
+                        </div>
                       );
                     })}
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Media */}
-            {videoId && (
-              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <iframe src={'https://www.youtube.com/embed/' + videoId} title={item.headline} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
-              </div>
-            )}
-            {isTwitch && twitchSlug && (
-              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', marginBottom: '28px', border: '1px solid rgba(155,93,229,0.2)' }}>
-                <iframe src={'https://clips.twitch.tv/embed?clip=' + twitchSlug + '&parent=cyberneticpunks.com&parent=www.cyberneticpunks.com'} title={item.headline} allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
-              </div>
-            )}
-            {!videoId && !isTwitch && item.thumbnail && (
-              <div style={{ marginBottom: '28px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <img src={item.thumbnail} alt={item.headline} style={{ width: '100%', display: 'block' }} />
-              </div>
-            )}
-
-            {/* Body with section parsing */}
-            <BodyRenderer parsed={parsed} editorColor={editor.color} />
-
-            {/* ─── MOBILE DATA REFERENCE (small screens) ── */}
-            {hasDataRef && (
-              <div style={{ marginTop: '40px', display: 'none' }} className="mobile-data-ref">
-                <DataReference shells={mentionedShells} weapons={mentionedWeapons} mods={mentionedMods} />
-              </div>
-            )}
-
-            {/* Share + Source */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '24px', marginTop: '32px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', marginRight: '4px' }}>SHARE</div>
-              <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#fff', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '5px', padding: '8px 14px', textDecoration: 'none' }}>
-                𝕏 POST
-              </a>
-              <a href={shareReddit} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#fff', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '5px', padding: '8px 14px', textDecoration: 'none' }}>
-                REDDIT
-              </a>
-              {item.source_url && (
-                <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: '10px', color: isTwitch ? '#9b5de5' : '#ff0000', textDecoration: 'none', letterSpacing: '1px' }}>
-                  ▶ {isTwitch ? 'TWITCH' : 'YOUTUBE'}
-                </a>
-              )}
-            </div>
-
-            <div style={{ marginTop: '24px' }}>
-              <Link href="/guides" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', color: 'rgba(255,255,255,0.2)', textDecoration: 'none' }}>
-                ← BACK TO FIELD GUIDES
-              </Link>
-            </div>
-          </article>
-
-          {/* ─── SIDEBAR ────────────────────────────────── */}
-          {hasDataRef && (
-            <aside style={{ position: 'sticky', top: '100px' }}>
-              <DataReference shells={mentionedShells} weapons={mentionedWeapons} mods={mentionedMods} />
             </aside>
           )}
         </div>
 
-        {/* ─── RELATED INTEL ──────────────────────────────── */}
+        {/* ── RELATED INTEL ── */}
         {related && related.length > 0 && (
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '48px', paddingBottom: '80px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(255,255,255,0.2)', letterSpacing: '3px', marginBottom: '20px' }}>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 48, marginTop: 20 }}>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginBottom: 20 }}>
               RELATED INTEL
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
               {related.map(function(rel, i) {
                 var relEditor = EDITOR_STYLES[rel.editor] || EDITOR_STYLES.CIPHER;
                 return (
                   <Link key={i} href={'/intel/' + rel.slug} style={{ textDecoration: 'none' }}>
                     <div style={{
                       border: '1px solid rgba(255,255,255,0.05)',
-                      borderLeft: '2px solid ' + relEditor.color + '44',
-                      borderRadius: '6px',
-                      padding: '16px',
-                      background: '#080808',
+                      borderTop: '2px solid ' + relEditor.color + '44',
+                      borderRadius: 6, padding: '16px 18px',
+                      background: 'rgba(255,255,255,0.015)',
+                      transition: 'background 0.2s',
                     }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: relEditor.color, letterSpacing: '2px', marginBottom: '8px' }}>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: relEditor.color, letterSpacing: 2, marginBottom: 8 }}>
                         {relEditor.symbol} {relEditor.label}
                       </div>
-                      <div style={{ fontFamily: 'var(--font-heading)', fontSize: '13px', fontWeight: 700, color: '#fff', lineHeight: 1.3, marginBottom: '8px' }}>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 8 }}>
                         {rel.headline}
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'rgba(255,255,255,0.2)' }}>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>
                         {timeAgo(rel.created_at)}
                       </div>
                     </div>
@@ -559,33 +538,6 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
 
       <Footer />
     </main>
-  );
-}
-
-// ─── DATA REFERENCE SIDEBAR COMPONENT ───────────────────────
-function DataReference({ shells, weapons, mods }) {
-  return (
-    <div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '3px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        DATA REFERENCE
-      </div>
-      {shells.map(function(shell, i) {
-        return <ShellCard key={i} shell={shell} />;
-      })}
-      {weapons.map(function(weapon, i) {
-        return <WeaponCard key={i} weapon={weapon} />;
-      })}
-      {mods.length > 0 && (
-        <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', margin: '16px 0 10px' }}>
-            MODS REFERENCED
-          </div>
-          {mods.map(function(mod, i) {
-            return <ModCard key={i} mod={mod} />;
-          })}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -603,11 +555,10 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  // Fetch article + all supporting data in parallel
   var [itemResult, shellResult, weaponResult, modResult, relatedResult] = await Promise.all([
     supabase.from('feed_items').select('*').eq('slug', slug).single(),
-    supabaseService.from('shell_stats').select('name, passive_desc, active_name, active_desc, hp, armor').limit(20),
-    supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, magazine, weapon_type').limit(40),
+    supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name').limit(20),
+    supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type').limit(40),
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(60),
     supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).neq('slug', slug).order('created_at', { ascending: false }).limit(6),
   ]);
