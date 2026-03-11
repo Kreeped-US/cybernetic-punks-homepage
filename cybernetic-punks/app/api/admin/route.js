@@ -5,7 +5,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-const ALLOWED_TABLES = ['weapon_stats', 'shell_stats', 'mod_stats', 'implant_stats', 'ammo_stats', 'shell_stat_values'];
+const ALLOWED_TABLES = [
+  'weapon_stats',
+  'shell_stats',
+  'mod_stats',
+  'implant_stats',
+  'ammo_stats',
+  'shell_stat_values',
+  'core_stats',
+];
 
 function checkAuth(req) {
   var auth = req.headers.get('x-admin-password');
@@ -17,7 +25,8 @@ export async function GET(req) {
   var url = new URL(req.url);
   var table = url.searchParams.get('table');
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
-  var { data, error } = await supabase.from(table).select('*').order('updated_at', { ascending: false }).limit(200);
+  var orderCol = table === 'shell_stat_values' ? 'updated_at' : ['core_stats', 'implant_stats'].includes(table) ? 'created_at' : 'name';
+  var { data, error } = await supabase.from(table).select('*').order(orderCol, { ascending: true }).limit(200);
   console.log('[ADMIN GET]', table, 'rows:', data?.length, 'error:', error?.message);
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });

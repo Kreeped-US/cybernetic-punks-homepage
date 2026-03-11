@@ -138,14 +138,14 @@ export function formatForEditor(videos, editor) {
     let summary = `${i + 1}. "${v.title}" by ${v.channel}
    Views: ${v.view_count.toLocaleString()} | Likes: ${v.like_count.toLocaleString()} | Comments: ${v.comment_count.toLocaleString()}
    Duration: ${v.duration}
-   Description: ${v.description.slice(0, 200)}
+   Description: ${v.description.slice(0, 800)}
    YouTube ID: ${v.youtube_id}`;
 
     if (editor === 'CIPHER' && v.transcript) {
       summary += `\n   TRANSCRIPT:\n   ${v.transcript}`;
     }
     if (editor === 'CIPHER' && !v.transcript) {
-      summary += `\n   TRANSCRIPT: Not available — grade based on metadata only`;
+      summary += `\n   TRANSCRIPT: Not available. Use the title, description, view count, and channel reputation to build your analysis. Infer the play style, shell choice, and decision-making from context clues in the description. Be specific — extract any weapon names, shell names, or tactical details mentioned.`;
     }
 
     return summary;

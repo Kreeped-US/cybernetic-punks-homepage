@@ -1,55 +1,88 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 
-// ─── TABLE SCHEMAS ───────────────────────────────────────────────────────────
-// Defines which fields show in the form for each table
+// ─── TABLE SCHEMAS ────────────────────────────────────────────────────────────
 const SCHEMAS = {
   weapon_stats: [
-    { key: 'name',            label: 'Name',           type: 'text',     required: true },
-    { key: 'damage',          label: 'Damage',         type: 'number' },
-    { key: 'fire_rate',       label: 'Fire Rate (RPM)', type: 'number' },
-    { key: 'magazine_size',   label: 'Magazine Size',  type: 'number' },
-    { key: 'range_rating',    label: 'Range Rating',   type: 'select', options: ['CQB', 'Mid', 'Long', 'Flex'] },
-    { key: 'ranked_viable',   label: 'Ranked Viable',  type: 'boolean' },
+    // Identity
+    { key: 'name',                label: 'Name',                 type: 'text',    required: true,  group: 'Identity' },
+    { key: 'weapon_type',         label: 'Weapon Type',          type: 'select',  group: 'Identity', options: ['AR', 'SMG', 'Shotgun', 'Sniper Rifle', 'Precision Rifle', 'LMG', 'Pistol', 'Melee', 'Railgun'] },
+    { key: 'ammo_type',           label: 'Ammo Type',            type: 'select',  group: 'Identity', options: ['Light Rounds', 'Heavy Rounds', 'MIPS', 'Volt Cells', 'Volt Battery', 'None'] },
+    { key: 'firing_mode',         label: 'Firing Mode',          type: 'select',  group: 'Identity', options: ['Full Auto', 'Semi-Auto', 'Single Shot', 'Burst', 'Melee'] },
+    { key: 'rarity',              label: 'Rarity',               type: 'select',  group: 'Identity', options: ['Standard', 'Enhanced', 'Deluxe', 'Superior'] },
+    // Firepower
+    { key: 'firepower_score',     label: 'Firepower Score',      type: 'number',  group: 'Firepower' },
+    { key: 'damage',              label: 'Damage (Body)',         type: 'number',  group: 'Firepower' },
+    { key: 'precision_multiplier',label: 'Precision Multiplier', type: 'number',  group: 'Firepower' },
+    { key: 'fire_rate',           label: 'Fire Rate (RPM)',       type: 'number',  group: 'Firepower' },
+    // Accuracy
+    { key: 'accuracy_score',      label: 'Accuracy Score',       type: 'number',  group: 'Accuracy' },
+    { key: 'hipfire_spread',      label: 'Hipfire Spread (°)',    type: 'number',  group: 'Accuracy' },
+    { key: 'crouch_spread_bonus', label: 'Crouch Spread Bonus %', type: 'number', group: 'Accuracy' },
+    { key: 'moving_inaccuracy',   label: 'Moving Inaccuracy %',  type: 'number',  group: 'Accuracy' },
+    // Handling
+    { key: 'handling_score',      label: 'Handling Score',       type: 'number',  group: 'Handling' },
+    { key: 'equip_speed',         label: 'Equip Speed (s)',       type: 'number',  group: 'Handling' },
+    { key: 'ads_speed',           label: 'ADS Speed (s)',         type: 'number',  group: 'Handling' },
+    { key: 'weight',              label: 'Weight %',             type: 'number',  group: 'Handling' },
+    { key: 'recoil',              label: 'Recoil %',             type: 'number',  group: 'Handling' },
+    { key: 'aim_assist',          label: 'Aim Assist (°)',        type: 'number',  group: 'Handling' },
+    { key: 'reload_speed',        label: 'Reload Speed (s)',      type: 'number',  group: 'Handling' },
+    // Range & Magazine
+    { key: 'range_meters',        label: 'Range (m)',             type: 'number',  group: 'Range & Mag' },
+    { key: 'range_rating',        label: 'Range Rating',          type: 'select',  group: 'Range & Mag', options: ['CQB', 'Mid', 'Long', 'Flex'] },
+    { key: 'magazine_size',       label: 'Magazine Size',         type: 'number',  group: 'Range & Mag' },
+    { key: 'zoom',                label: 'Zoom (x)',              type: 'number',  group: 'Range & Mag' },
+    // Flags
+    { key: 'ranked_viable',       label: 'Ranked Viable',         type: 'boolean', group: 'Flags' },
+    { key: 'shield_compatible',   label: 'Shield Compatible',     type: 'boolean', group: 'Flags' },
+    { key: 'verified',            label: 'Verified',              type: 'boolean', group: 'Flags' },
+    { key: 'verified_source',     label: 'Verified Source',       type: 'select',  group: 'Flags', options: ['in-game', 'tauceti.gg', 'both'] },
   ],
+
   shell_stats: [
-    { key: 'name',                       label: 'Name',              type: 'text', required: true },
-    { key: 'role',                       label: 'Role',              type: 'text' },
-    { key: 'difficulty',                 label: 'Difficulty',        type: 'select', options: ['Low', 'Medium', 'High'] },
-    { key: 'base_health',                label: 'Base Health',       type: 'number' },
-    { key: 'base_shield',                label: 'Base Shield',       type: 'number' },
-    { key: 'base_speed',                 label: 'Speed Label',       type: 'text' },
-    { key: 'prime_ability_name',         label: 'Prime Ability',     type: 'text' },
-    { key: 'prime_ability_description',  label: 'Prime Ability Desc',type: 'textarea' },
-    { key: 'tactical_ability_name',      label: 'Tactical Ability',  type: 'text' },
-    { key: 'tactical_ability_description', label: 'Tactical Ability Desc', type: 'textarea' },
-    { key: 'trait_1_name',               label: 'Trait 1',           type: 'text' },
-    { key: 'trait_1_description',        label: 'Trait 1 Desc',      type: 'textarea' },
-    { key: 'trait_2_name',               label: 'Trait 2',           type: 'text' },
-    { key: 'trait_2_description',        label: 'Trait 2 Desc',      type: 'textarea' },
-    { key: 'ranked_tier_solo',           label: 'Ranked Solo Tier',  type: 'select', options: ['S', 'A', 'B', 'C', 'D'] },
-    { key: 'ranked_tier_squad',          label: 'Ranked Squad Tier', type: 'select', options: ['S', 'A', 'B', 'C', 'D'] },
-    { key: 'best_for',                   label: 'Best For',          type: 'text' },
-    { key: 'recommended_playstyle',      label: 'Playstyle',         type: 'textarea' },
+    { key: 'name',                          label: 'Name',              type: 'text',     required: true },
+    { key: 'role',                          label: 'Role',              type: 'text' },
+    { key: 'difficulty',                    label: 'Difficulty',        type: 'select',   options: ['Low', 'Medium', 'High'] },
+    { key: 'base_health',                   label: 'Base Health',       type: 'number' },
+    { key: 'base_shield',                   label: 'Base Shield',       type: 'number' },
+    { key: 'base_speed',                    label: 'Speed Label',       type: 'text' },
+    { key: 'prime_ability_name',            label: 'Prime Ability',     type: 'text' },
+    { key: 'prime_ability_description',     label: 'Prime Ability Desc', type: 'textarea' },
+    { key: 'tactical_ability_name',         label: 'Tactical Ability',  type: 'text' },
+    { key: 'tactical_ability_description',  label: 'Tactical Ability Desc', type: 'textarea' },
+    { key: 'trait_1_name',                  label: 'Trait 1',           type: 'text' },
+    { key: 'trait_1_description',           label: 'Trait 1 Desc',      type: 'textarea' },
+    { key: 'trait_2_name',                  label: 'Trait 2',           type: 'text' },
+    { key: 'trait_2_description',           label: 'Trait 2 Desc',      type: 'textarea' },
+    { key: 'ranked_tier_solo',              label: 'Ranked Solo Tier',  type: 'select',   options: ['S', 'A', 'B', 'C', 'D'] },
+    { key: 'ranked_tier_squad',             label: 'Ranked Squad Tier', type: 'select',   options: ['S', 'A', 'B', 'C', 'D'] },
+    { key: 'best_for',                      label: 'Best For',          type: 'text' },
+    { key: 'recommended_playstyle',         label: 'Playstyle',         type: 'textarea' },
   ],
+
   shell_stat_values: [
-    { key: 'shell_name',  label: 'Shell Name',  type: 'select', options: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'], required: true },
-    { key: 'stat_name',   label: 'Stat Name',   type: 'select', options: ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'], required: true },
+    { key: 'shell_name',  label: 'Shell Name',  type: 'select', required: true, options: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'stat_name',   label: 'Stat Name',   type: 'select', required: true, options: ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'] },
     { key: 'stat_value',  label: 'Stat Value',  type: 'number', required: true },
   ],
+
   mod_stats: [
-    { key: 'name',               label: 'Name',               type: 'text', required: true },
-    { key: 'slot_type',          label: 'Slot Type',          type: 'select', options: ['Barrel', 'Chip', 'Optic', 'Magazine', 'Grip', 'Generator', 'Shield'] },
-    { key: 'rarity',             label: 'Rarity',             type: 'select', options: ['Standard', 'Enhanced', 'Deluxe', 'Superior'] },
-    { key: 'effect_desc',        label: 'Effect Description', type: 'textarea' },
-    { key: 'credit_value',       label: 'Credit Value',       type: 'number' },
-    { key: 'ranked_viable',      label: 'Ranked Viable',      type: 'boolean' },
+    { key: 'name',          label: 'Name',               type: 'text',    required: true },
+    { key: 'slot_type',     label: 'Slot Type',          type: 'select',  options: ['Barrel', 'Chip', 'Optic', 'Magazine', 'Grip', 'Generator', 'Shield'] },
+    { key: 'rarity',        label: 'Rarity',             type: 'select',  options: ['Standard', 'Enhanced', 'Deluxe', 'Superior'] },
+    { key: 'effect_desc',   label: 'Effect Description', type: 'textarea' },
+    { key: 'credit_value',  label: 'Credit Value',       type: 'number' },
+    { key: 'ranked_viable', label: 'Ranked Viable',      type: 'boolean' },
   ],
+
   implant_stats: [
-    { key: 'name',           label: 'Name',           type: 'text', required: true },
-    { key: 'slot_type',      label: 'Slot Type',      type: 'select', options: ['Head', 'Torso', 'Legs', 'Shield'], required: true },
-    { key: 'rarity',         label: 'Rarity',         type: 'select', options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'], required: true },
-    { key: 'compatible_with',label: 'Compatible With',type: 'select', options: ['Shell', 'Weapon', 'Both'] },
+    { key: 'name',           label: 'Name',           type: 'text',    required: true },
+    { key: 'slug',           label: 'Slug',           type: 'text' },
+    { key: 'slot_type',      label: 'Slot Type',      type: 'select',  required: true, options: ['Head', 'Torso', 'Legs', 'Shield'] },
+    { key: 'rarity',         label: 'Rarity',         type: 'select',  required: true, options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
+    { key: 'compatible_with',label: 'Compatible With',type: 'select',  options: ['Shell', 'Weapon', 'Both'] },
+    { key: 'required_runner',label: 'Required Runner',type: 'select',  options: ['', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
     { key: 'passive_name',   label: 'Passive Name',   type: 'text' },
     { key: 'passive_desc',   label: 'Passive Desc',   type: 'textarea' },
     { key: 'stat_1_label',   label: 'Stat 1 Label',   type: 'text' },
@@ -60,24 +93,40 @@ const SCHEMAS = {
     { key: 'stat_3_value',   label: 'Stat 3 Value',   type: 'text' },
     { key: 'credit_value',   label: 'Credit Value',   type: 'number' },
     { key: 'ranked_viable',  label: 'Ranked Viable',  type: 'boolean' },
+    { key: 'verified',       label: 'Verified',       type: 'boolean' },
     { key: 'notes',          label: 'Notes',          type: 'textarea' },
   ],
+
   ammo_stats: [
-    { key: 'name',                  label: 'Name',             type: 'text', required: true },
-    { key: 'damage_type',           label: 'Damage Type',      type: 'select', options: ['Kinetic', 'Volt'] },
-    { key: 'damage_modifier_pct',   label: 'Damage Modifier %',type: 'number' },
-    { key: 'special_effect',        label: 'Special Effect',   type: 'textarea' },
-    { key: 'notes',                 label: 'Notes',            type: 'textarea' },
+    { key: 'name',                label: 'Name',              type: 'text',    required: true },
+    { key: 'damage_type',         label: 'Damage Type',       type: 'select',  options: ['Kinetic', 'Volt'] },
+    { key: 'damage_modifier_pct', label: 'Damage Modifier %', type: 'number' },
+    { key: 'special_effect',      label: 'Special Effect',    type: 'textarea' },
+    { key: 'notes',               label: 'Notes',             type: 'textarea' },
+  ],
+
+  core_stats: [
+    { key: 'name',            label: 'Name',            type: 'text',    required: true },
+    { key: 'slug',            label: 'Slug',            type: 'text' },
+    { key: 'rarity',          label: 'Rarity',          type: 'select',  required: true, options: ['Standard', 'Deluxe', 'Superior', 'Prestige'] },
+    { key: 'required_runner', label: 'Required Runner', type: 'select',  required: true, options: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'effect_desc',     label: 'Effect Description', type: 'textarea' },
+    { key: 'credit_value',    label: 'Credit Value',    type: 'number' },
+    { key: 'ranked_viable',   label: 'Ranked Viable',   type: 'boolean' },
+    { key: 'meta_rating',     label: 'Meta Rating',     type: 'select',  options: ['', 'S', 'A', 'B', 'C', 'D'] },
+    { key: 'verified',        label: 'Verified',        type: 'boolean' },
+    { key: 'notes',           label: 'Notes',           type: 'textarea' },
   ],
 };
 
 const TABS = [
-  { key: 'weapon_stats',      label: 'WEAPONS',  color: '#ff8800' },
-  { key: 'shell_stats',       label: 'SHELLS',   color: '#00f5ff' },
+  { key: 'weapon_stats',      label: 'WEAPONS',     color: '#ff8800' },
+  { key: 'shell_stats',       label: 'SHELLS',      color: '#00f5ff' },
   { key: 'shell_stat_values', label: 'SHELL STATS', color: '#00ff88' },
-  { key: 'mod_stats',         label: 'MODS',     color: '#ff0000' },
-  { key: 'implant_stats',     label: 'IMPLANTS', color: '#9b5de5' },
-  { key: 'ammo_stats',        label: 'AMMO',     color: '#ffd700' },
+  { key: 'mod_stats',         label: 'MODS',        color: '#ff0000' },
+  { key: 'core_stats',        label: 'CORES',       color: '#ffd700' },
+  { key: 'implant_stats',     label: 'IMPLANTS',    color: '#9b5de5' },
+  { key: 'ammo_stats',        label: 'AMMO',        color: '#00ff88' },
 ];
 
 const S = {
@@ -86,23 +135,45 @@ const S = {
   border: 'rgba(255,255,255,0.07)',
   text: '#ffffff',
   muted: 'rgba(255,255,255,0.35)',
-  input: { background: '#111', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 4, padding: '8px 12px', fontFamily: 'Share Tech Mono, monospace', fontSize: 13, width: '100%', boxSizing: 'border-box' },
+  input: {
+    background: '#111',
+    border: '1px solid rgba(255,255,255,0.1)',
+    color: '#fff',
+    borderRadius: 4,
+    padding: '8px 12px',
+    fontFamily: 'Share Tech Mono, monospace',
+    fontSize: 13,
+    width: '100%',
+    boxSizing: 'border-box',
+  },
 };
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+// ─── WEAPON FORM GROUPS ───────────────────────────────────────────────────────
+const WEAPON_GROUPS = ['Identity', 'Firepower', 'Accuracy', 'Handling', 'Range & Mag', 'Flags'];
+const GROUP_COLORS = {
+  Identity:     '#ffffff',
+  Firepower:    '#ff0000',
+  Accuracy:     '#00f5ff',
+  Handling:     '#ff8800',
+  'Range & Mag':'#9b5de5',
+  Flags:        '#00ff88',
+};
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [password, setPassword]     = useState('');
-  const [authed, setAuthed]         = useState(false);
-  const [authError, setAuthError]   = useState('');
-  const [activeTab, setActiveTab]   = useState('weapon_stats');
-  const [rows, setRows]             = useState([]);
-  const [loading, setLoading]       = useState(false);
-  const [editingRow, setEditingRow] = useState(null);
+  const [password, setPassword]       = useState('');
+  const [authed, setAuthed]           = useState(false);
+  const [authError, setAuthError]     = useState('');
+  const [activeTab, setActiveTab]     = useState('weapon_stats');
+  const [rows, setRows]               = useState([]);
+  const [loading, setLoading]         = useState(false);
+  const [editingRow, setEditingRow]   = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData]     = useState({});
-  const [saving, setSaving]         = useState(false);
-  const [toast, setToast]           = useState(null);
-  const [search, setSearch]         = useState('');
+  const [formData, setFormData]       = useState({});
+  const [saving, setSaving]           = useState(false);
+  const [toast, setToast]             = useState(null);
+  const [search, setSearch]           = useState('');
+  const [filterRunner, setFilterRunner] = useState('');
 
   function showToast(msg, ok = true) {
     setToast({ msg, ok });
@@ -127,6 +198,7 @@ export default function AdminPage() {
     setLoading(true);
     setRows([]);
     setSearch('');
+    setFilterRunner('');
     try {
       const res = await fetch('/api/admin?table=' + table, { headers: apiHeaders() });
       const json = await res.json();
@@ -145,14 +217,18 @@ export default function AdminPage() {
     setEditingRow(row.id);
     setFormData({ ...row });
     setShowAddForm(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function startAdd() {
     setShowAddForm(true);
     setEditingRow(null);
     const defaults = {};
-    SCHEMAS[activeTab].forEach(f => { defaults[f.key] = f.type === 'boolean' ? true : ''; });
+    (SCHEMAS[activeTab] || []).forEach(f => {
+      defaults[f.key] = f.type === 'boolean' ? true : '';
+    });
     setFormData(defaults);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function cancelForm() {
@@ -167,6 +243,7 @@ export default function AdminPage() {
       const updates = { ...formData };
       delete updates.id;
       delete updates.updated_at;
+      delete updates.created_at;
       const res = await fetch('/api/admin', {
         method: 'PATCH',
         headers: apiHeaders(),
@@ -189,9 +266,9 @@ export default function AdminPage() {
       const row = { ...formData };
       delete row.id;
       delete row.updated_at;
-      // Convert number fields
-      SCHEMAS[activeTab].forEach(f => {
-        if (f.type === 'number' && row[f.key] !== '' && row[f.key] !== null) {
+      delete row.created_at;
+      (SCHEMAS[activeTab] || []).forEach(f => {
+        if (f.type === 'number' && row[f.key] !== '' && row[f.key] !== null && row[f.key] !== undefined) {
           row[f.key] = Number(row[f.key]);
         }
         if (f.type === 'boolean') row[f.key] = row[f.key] === true || row[f.key] === 'true';
@@ -235,10 +312,13 @@ export default function AdminPage() {
 
   var activeTabConfig = TABS.find(t => t.key === activeTab);
   var schema = SCHEMAS[activeTab] || [];
+  var isWeapons = activeTab === 'weapon_stats';
+  var isCoresOrImplants = activeTab === 'core_stats' || activeTab === 'implant_stats';
+
   var filtered = rows.filter(r => {
-    if (!search) return true;
-    var s = search.toLowerCase();
-    return Object.values(r).some(v => v && String(v).toLowerCase().includes(s));
+    var matchSearch = !search || Object.values(r).some(v => v && String(v).toLowerCase().includes(search.toLowerCase()));
+    var matchRunner = !filterRunner || r.required_runner === filterRunner || r.shell_name === filterRunner;
+    return matchSearch && matchRunner;
   });
 
   // ─── LOGIN SCREEN ──────────────────────────────────────────────────────────
@@ -273,6 +353,130 @@ export default function AdminPage() {
     );
   }
 
+  // ─── FORM RENDERER ────────────────────────────────────────────────────────
+  function renderForm() {
+    if (isWeapons) {
+      // Grouped weapon form
+      return (
+        <div>
+          {WEAPON_GROUPS.map(group => {
+            var groupFields = schema.filter(f => f.group === group);
+            return (
+              <div key={group} style={{ marginBottom: 24 }}>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: GROUP_COLORS[group], letterSpacing: 3, marginBottom: 12, paddingBottom: 6, borderBottom: '1px solid ' + GROUP_COLORS[group] + '22' }}>
+                  {group.toUpperCase()}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                  {groupFields.map(field => renderField(field))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+    // Standard form
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+        {schema.map(field => renderField(field))}
+      </div>
+    );
+  }
+
+  function renderField(field) {
+    return (
+      <div key={field.key}>
+        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted, letterSpacing: 2, marginBottom: 5 }}>
+          {field.label}{field.required ? ' *' : ''}
+        </div>
+        {field.type === 'textarea' ? (
+          <textarea
+            value={formData[field.key] || ''}
+            onChange={e => updateField(field.key, e.target.value)}
+            rows={3}
+            style={{ ...S.input, resize: 'vertical' }}
+          />
+        ) : field.type === 'select' ? (
+          <select
+            value={formData[field.key] || ''}
+            onChange={e => updateField(field.key, e.target.value)}
+            style={{ ...S.input }}
+          >
+            <option value="">— Select —</option>
+            {(field.options || []).map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        ) : field.type === 'boolean' ? (
+          <select
+            value={String(formData[field.key] ?? true)}
+            onChange={e => updateField(field.key, e.target.value === 'true')}
+            style={{ ...S.input }}
+          >
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        ) : (
+          <input
+            type={field.type === 'number' ? 'number' : 'text'}
+            value={formData[field.key] ?? ''}
+            onChange={e => updateField(field.key, e.target.value)}
+            style={{ ...S.input }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ─── ROW PREVIEW ──────────────────────────────────────────────────────────
+  function rowPreview(row) {
+    if (activeTab === 'weapon_stats') {
+      return (
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>{row.name}</span>
+          {row.weapon_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>{row.weapon_type}</span>}
+          {row.ammo_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.ammo_type}</span>}
+          {row.damage && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000' }}>DMG {row.damage}</span>}
+          {row.fire_rate && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800' }}>{row.fire_rate} RPM</span>}
+          {row.verified && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88' }}>✓ VERIFIED</span>}
+        </div>
+      );
+    }
+    if (activeTab === 'core_stats') {
+      return (
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>{row.name}</span>
+          {row.required_runner && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>{row.required_runner}</span>}
+          {row.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.rarity}</span>}
+          {row.meta_rating && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700' }}>META {row.meta_rating}</span>}
+          {row.verified && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88' }}>✓</span>}
+        </div>
+      );
+    }
+    if (activeTab === 'implant_stats') {
+      return (
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>{row.name}</span>
+          {row.slot_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>{row.slot_type}</span>}
+          {row.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.rarity}</span>}
+          {row.passive_name && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{row.passive_name}</span>}
+          {row.verified && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88' }}>✓</span>}
+        </div>
+      );
+    }
+    // Default
+    return (
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+          {row.name || (row.shell_name + ' — ' + row.stat_name)}
+        </span>
+        {schema.slice(1, 4).map(f => row[f.key] !== null && row[f.key] !== undefined && row[f.key] !== '' && (
+          <span key={f.key} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted }}>
+            {f.label}: <span style={{ color: activeTabConfig?.color }}>{String(row[f.key])}</span>
+          </span>
+        ))}
+      </div>
+    );
+  }
+
   // ─── ADMIN PANEL ──────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: S.bg, color: S.text, fontFamily: 'Rajdhani, sans-serif' }}>
@@ -285,7 +489,7 @@ export default function AdminPage() {
       )}
 
       {/* Header */}
-      <div style={{ padding: '20px 32px', borderBottom: '1px solid ' + S.border, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '20px 32px', borderBottom: '1px solid ' + S.border, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.bg, zIndex: 100 }}>
         <div>
           <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#9b5de5', letterSpacing: 2 }}>◎ DATA ADMIN</div>
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted, letterSpacing: 2, marginTop: 2 }}>CYBERNETICPUNKS.COM</div>
@@ -294,10 +498,10 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>
         {TABS.map(tab => (
           <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{
-            padding: '14px 20px',
+            padding: '14px 18px',
             background: 'transparent',
             border: 'none',
             borderBottom: activeTab === tab.key ? '2px solid ' + tab.color : '2px solid transparent',
@@ -315,24 +519,39 @@ export default function AdminPage() {
 
       <div style={{ padding: '28px 32px' }}>
 
-        {/* Table header */}
+        {/* Table controls */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: activeTabConfig?.color }}>
               {activeTabConfig?.label}
             </div>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted }}>
-              {filtered.length} ROWS
+              {filtered.length} / {rows.length} ROWS
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input
               type="text"
               placeholder="Search..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ ...S.input, width: 200 }}
+              style={{ ...S.input, width: 180 }}
             />
+            {isCoresOrImplants && (
+              <select
+                value={filterRunner}
+                onChange={e => setFilterRunner(e.target.value)}
+                style={{ ...S.input, width: 140 }}
+              >
+                <option value="">All Runners</option>
+                {['Assassin','Destroyer','Recon','Rook','Thief','Triage','Vandal'].map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            )}
+            <button onClick={() => loadTable(activeTab)} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer' }}>
+              ↺ REFRESH
+            </button>
             <button onClick={startAdd} style={{ padding: '8px 18px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap' }}>
               + ADD ROW
             </button>
@@ -343,55 +562,14 @@ export default function AdminPage() {
         {(showAddForm || editingRow) && (
           <div style={{ background: S.surface, border: '1px solid ' + (activeTabConfig?.color + '33'), borderRadius: 8, padding: 24, marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: activeTabConfig?.color, letterSpacing: 2, marginBottom: 20 }}>
-              {showAddForm ? '+ NEW ROW' : '✎ EDITING ROW'}
+              {showAddForm ? '+ NEW ' + (activeTabConfig?.label || 'ROW') : '✎ EDITING — ' + (formData.name || formData.shell_name || '')}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
-              {schema.map(field => (
-                <div key={field.key}>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted, letterSpacing: 2, marginBottom: 5 }}>
-                    {field.label}{field.required ? ' *' : ''}
-                  </div>
-                  {field.type === 'textarea' ? (
-                    <textarea
-                      value={formData[field.key] || ''}
-                      onChange={e => updateField(field.key, e.target.value)}
-                      rows={3}
-                      style={{ ...S.input, resize: 'vertical' }}
-                    />
-                  ) : field.type === 'select' ? (
-                    <select
-                      value={formData[field.key] || ''}
-                      onChange={e => updateField(field.key, e.target.value)}
-                      style={{ ...S.input }}
-                    >
-                      <option value="">— Select —</option>
-                      {field.options.map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                  ) : field.type === 'boolean' ? (
-                    <select
-                      value={String(formData[field.key])}
-                      onChange={e => updateField(field.key, e.target.value === 'true')}
-                      style={{ ...S.input }}
-                    >
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type === 'number' ? 'number' : 'text'}
-                      value={formData[field.key] ?? ''}
-                      onChange={e => updateField(field.key, e.target.value)}
-                      style={{ ...S.input }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+            {renderForm()}
+            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
               <button
                 onClick={showAddForm ? saveNew : saveEdit}
                 disabled={saving}
-                style={{ padding: '10px 24px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}
+                style={{ padding: '10px 28px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}
               >
                 {saving ? 'SAVING...' : 'SAVE'}
               </button>
@@ -402,13 +580,13 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Table */}
+        {/* Rows */}
         {loading ? (
-          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '40px 0', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>
             LOADING...
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '40px 0', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>
             NO ROWS FOUND
           </div>
         ) : (
@@ -416,7 +594,7 @@ export default function AdminPage() {
             {filtered.map(row => (
               <div key={row.id} style={{
                 background: editingRow === row.id ? activeTabConfig?.color + '08' : S.surface,
-                border: '1px solid ' + (editingRow === row.id ? activeTabConfig?.color + '33' : S.border),
+                border: '1px solid ' + (editingRow === row.id ? activeTabConfig?.color + '44' : S.border),
                 borderLeft: '3px solid ' + (editingRow === row.id ? activeTabConfig?.color : activeTabConfig?.color + '33'),
                 borderRadius: 6,
                 padding: '14px 18px',
@@ -425,20 +603,9 @@ export default function AdminPage() {
                 gap: 16,
                 flexWrap: 'wrap',
               }}>
-                {/* Primary fields preview */}
                 <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 3 }}>
-                    {row.name || row.shell_name + ' — ' + row.stat_name}
-                  </div>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    {schema.slice(1, 4).map(f => row[f.key] !== null && row[f.key] !== undefined && row[f.key] !== '' && (
-                      <span key={f.key} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted }}>
-                        {f.label}: <span style={{ color: activeTabConfig?.color }}>{String(row[f.key])}</span>
-                      </span>
-                    ))}
-                  </div>
+                  {rowPreview(row)}
                 </div>
-                {/* Actions */}
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <button onClick={() => startEdit(row)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid ' + activeTabConfig?.color + '44', borderRadius: 4, color: activeTabConfig?.color, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>
                     EDIT
