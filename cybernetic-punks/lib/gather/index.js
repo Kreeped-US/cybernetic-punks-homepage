@@ -73,8 +73,8 @@ export async function gatherAll() {
   if (bungieNewsContext) dexterPrompt = (dexterPrompt || '') + bungieNewsContext;
 
   // ── GHOST ──────────────────────────────────────────────────────
-  let ghostPrompt = formatForGhost(redditPosts, steamReviews);
-  if (xGhostContext) ghostPrompt = (ghostPrompt || '') + xGhostContext;
+  // xPulse passed directly so formatForGhost can structure it properly in the prompt
+  let ghostPrompt = formatForGhost(redditPosts, steamReviews, xPulse);
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
   // ── MIRANDA ────────────────────────────────────────────────────

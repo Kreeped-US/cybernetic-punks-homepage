@@ -117,56 +117,91 @@ export async function gatherReddit() {
 }
 
 /**
- * Format Reddit posts + Steam reviews into a prompt for GHOST
+ * Format Reddit posts + Steam reviews + X posts into a prompt for GHOST
+ * xData shape: { posts: [], officialPosts: [], patchPosts: [] }
  */
-export function formatForGhost(posts, steamData) {
-  if (!posts.length) return null;
+export function formatForGhost(posts, steamData, xData) {
+  const hasReddit = posts && posts.length > 0;
+  const hasX = xData && xData.posts && xData.posts.length > 0;
+  const hasSteam = steamData && steamData.reviews && steamData.reviews.length > 0;
 
-  const postSummaries = posts.slice(0, 10).map((p, i) => {
-    return `${i + 1}. "${p.title}" by u/${p.author} in r/${p.subreddit}
+  if (!hasReddit && !hasX) return null;
+
+  // ── REDDIT SECTION ─────────────────────────────────
+  let redditSection = '';
+  if (hasReddit) {
+    const postSummaries = posts.slice(0, 10).map((p, i) => {
+      return `${i + 1}. "${p.title}" by u/${p.author} in r/${p.subreddit}
    Score: ${p.score} | Upvote ratio: ${Math.round(p.upvote_ratio * 100)}% | Comments: ${p.num_comments}
    Flair: ${p.flair || 'None'}
    ${p.selftext ? 'Body: ' + p.selftext.slice(0, 200) : '(Link post)'}`;
-  }).join('\n\n');
+    }).join('\n\n');
+    redditSection = `REDDIT DISCUSSIONS (r/MarathonTheGame + r/Marathon):\n${postSummaries}`;
+  } else {
+    redditSection = 'REDDIT: No posts available this cycle.';
+  }
 
-  // Build Steam review section if available
+  // ── STEAM SECTION ──────────────────────────────────
   let steamSection = '';
-  if (steamData && steamData.reviews && steamData.reviews.length > 0) {
+  if (hasSteam) {
     const reviewSummaries = steamData.reviews.slice(0, 8).map((r, i) => {
       const sentiment = r.voted_up ? '👍' : '👎';
       return `${i + 1}. ${sentiment} [${r.playtime_hours}h played] "${r.text.slice(0, 200)}"`;
     }).join('\n\n');
-
-    steamSection = `
-
-STEAM REVIEW SENTIMENT (${steamData.positivePercent}):
-${reviewSummaries}
-
-Note: Steam reviews represent the broader playerbase (purchased the game), while Reddit tends to represent the vocal community minority. Weight them accordingly.`;
+    steamSection = `\n\nSTEAM REVIEWS (${steamData.positivePercent} overall):\n${reviewSummaries}\n\nNote: Steam reviews = broader paying playerbase. Reddit = vocal minority. Weight accordingly.`;
   }
 
-  return `Here are the hottest Marathon community discussions on Reddit right now, plus recent Steam reviews from actual players. Analyze what the community is actually feeling — the frustrations, the excitement, the debates.
+  // ── X SECTION ──────────────────────────────────────
+  let xSection = '';
+  if (hasX) {
+    const topPosts = xData.posts.slice(0, 15).map((p, i) =>
+      `${i + 1}. @${p.author}${p.is_official ? ' [OFFICIAL]' : ''}: "${p.text.slice(0, 220)}"\n   ❤ ${p.likes} | 🔁 ${p.retweets} | 💬 ${p.replies}`
+    ).join('\n\n');
 
-REDDIT DISCUSSIONS:
-${postSummaries}
-${steamSection}
+    let officialBlock = '';
+    if (xData.officialPosts && xData.officialPosts.length > 0) {
+      officialBlock = '\n\nOFFICIAL MARATHON/BUNGIE POSTS ON X:\n' +
+        xData.officialPosts.map(p => `@${p.author}: "${p.text.slice(0, 300)}"`).join('\n\n');
+    }
 
-Based on all sources, what is the overall community mood? What are players most concerned about? What are they excited about? Note if Reddit and Steam sentiment diverge significantly.
+    let patchBlock = '';
+    if (xData.patchPosts && xData.patchPosts.length > 0) {
+      patchBlock = '\n\nPATCH/UPDATE REACTIONS ON X:\n' +
+        xData.patchPosts.slice(0, 6).map(p =>
+          `@${p.author} (❤${p.likes}): "${p.text.slice(0, 220)}"`
+        ).join('\n\n');
+    }
 
-Respond with JSON:
+    xSection = `\n\nX (TWITTER) COMMUNITY — TOP POSTS BY ENGAGEMENT:\n${topPosts}${officialBlock}${patchBlock}`;
+  }
+
+  // ── PROMPT ─────────────────────────────────────────
+  const sourceList = [hasReddit && 'Reddit', hasSteam && 'Steam', hasX && 'X (Twitter)'].filter(Boolean).join(', ');
+
+  return `You are analyzing Marathon community sentiment across ${sourceList}. Your job is to surface what real players are actually saying — not what creators or press say.
+
+${redditSection}${steamSection}${xSection}
+
+Synthesize all sources. X is real-time street-level reaction. Reddit is vocal community discussion. Steam is the paying playerbase. When they diverge, say so and explain why.
+
+If there are patch reactions on X, lead with those — patches are the most time-sensitive community events.
+If an official Bungie/Marathon account posted on X, reference it directly.
+Write like a journalist embedded in the community, not a PR summary.
+
+Respond with ONLY valid JSON:
 {
-  "headline": "community pulse headline under 80 chars",
-  "body": "2-3 sentences capturing what the community actually thinks right now. Reference Steam vs Reddit if they diverge.",
-  "mood_score": 1-10,
-  "top_concern": "the #1 thing players are frustrated about",
-  "top_excitement": "the #1 thing players are excited about",
+  "headline": "punchy community pulse headline under 80 chars — lead with X patch reaction if available",
+  "body": "3-4 sentences. Quote specific posts or reactions where impactful. Call out Reddit vs Steam vs X divergence if it exists. Reference patch discussion if present.",
+  "mood_score": 1,
+  "top_concern": "the single biggest frustration players are expressing right now",
+  "top_excitement": "the single biggest thing players are hyped about right now",
   "steam_sentiment": "positive|mixed|negative",
-  "tags": ["TAG1", "TAG2"]
+  "x_sentiment": "positive|mixed|negative|not_available",
+  "top_x_take": "the most liked/RTed take on X in one sentence, or null",
+  "patch_reaction": "community reaction to any patch/update if present, or null",
+  "has_official_x_post": false,
+  "tags": ["TAG1", "TAG2", "TAG3"]
 }
 
-mood_score guide:
-- 1-3: Community is angry/frustrated
-- 4-5: Mixed feelings, debates ongoing
-- 6-7: Generally positive with some concerns
-- 8-10: Community is hyped/excited`;
+mood_score guide: 1-3 angry, 4-5 mixed, 6-7 positive with concerns, 8-10 hyped`;
 }
