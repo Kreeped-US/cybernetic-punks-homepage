@@ -2,6 +2,7 @@
 // Server component — fetches all data, passes to MetaClient.
 // MetaClient handles both Mode 1 (live tier list) and Mode 2 (interactive builder).
 
+import { Suspense } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
@@ -73,13 +74,15 @@ export default async function MetaPage() {
   return (
     <main className="min-h-screen bg-black text-white pt-24" style={{ paddingBottom: 80 }}>
       <Nav />
-      <MetaClient
-        metaTiers={metaTiers}
-        weapons={weapons}
-        shells={shells}
-        modCount={modCount}
-        recentPosts={recentPosts}
-      />
+      <Suspense fallback={null}>
+        <MetaClient
+          metaTiers={metaTiers}
+          weapons={weapons}
+          shells={shells}
+          modCount={modCount}
+          recentPosts={recentPosts}
+        />
+      </Suspense>
       <Footer />
     </main>
   );
