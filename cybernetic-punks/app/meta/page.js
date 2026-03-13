@@ -48,10 +48,10 @@ export default async function MetaPage() {
         .order('updated_at', { ascending: false }),
       supabase
         .from('weapon_stats')
-        .select('name, weapon_type, ammo_type, damage, fire_rate, range_rating, ranked_viable, firepower_score, accuracy_score'),
+        .select('name, weapon_type, ammo_type, damage, fire_rate, range_rating, ranked_viable, firepower_score, accuracy_score, image_filename'),
       supabase
         .from('shell_stats')
-        .select('name, role, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad'),
+        .select('name, role, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, image_filename'),
       supabase.from('mod_stats').select('id', { count: 'exact', head: true }),
       supabase
         .from('feed_items')

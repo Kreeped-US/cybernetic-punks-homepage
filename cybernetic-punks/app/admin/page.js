@@ -38,6 +38,7 @@ const SCHEMAS = {
     { key: 'shield_compatible',   label: 'Shield Compatible',     type: 'boolean', group: 'Flags' },
     { key: 'verified',            label: 'Verified',              type: 'boolean', group: 'Flags' },
     { key: 'verified_source',     label: 'Verified Source',       type: 'select',  group: 'Flags', options: ['in-game', 'tauceti.gg', 'both'] },
+    { key: 'image_filename',      label: 'Image Filename',         type: 'text',    group: 'Flags', placeholder: 'e.g. longshot.webp' },
   ],
 
   shell_stats: [
@@ -59,6 +60,7 @@ const SCHEMAS = {
     { key: 'ranked_tier_squad',             label: 'Ranked Squad Tier', type: 'select',   options: ['S', 'A', 'B', 'C', 'D'] },
     { key: 'best_for',                      label: 'Best For',          type: 'text' },
     { key: 'recommended_playstyle',         label: 'Playstyle',         type: 'textarea' },
+    { key: 'image_filename',                label: 'Image Filename',    type: 'text', placeholder: 'e.g. thief.webp' },
   ],
 
   shell_stat_values: [
@@ -415,12 +417,25 @@ export default function AdminPage() {
             <option value="false">No</option>
           </select>
         ) : (
-          <input
-            type={field.type === 'number' ? 'number' : 'text'}
-            value={formData[field.key] ?? ''}
-            onChange={e => updateField(field.key, e.target.value)}
-            style={{ ...S.input }}
-          />
+          <>
+            <input
+              type={field.type === 'number' ? 'number' : 'text'}
+              value={formData[field.key] ?? ''}
+              onChange={e => updateField(field.key, e.target.value)}
+              placeholder={field.placeholder || ''}
+              style={{ ...S.input }}
+            />
+            {field.key === 'image_filename' && formData[field.key] && (
+              <div style={{ marginTop: 8 }}>
+                <img
+                  src={`/images/${activeTab === 'shell_stats' ? 'shells' : 'weapons'}/${formData[field.key]}`}
+                  alt={formData.name || 'preview'}
+                  style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }}
+                  onError={e => { e.target.style.display = 'none'; }}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     );

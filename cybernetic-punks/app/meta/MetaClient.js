@@ -42,6 +42,24 @@ const WEAPON_TYPE_ICONS = {
   'HEAVY':          '⊟',
 };
 
+// Returns image src or null. Works for both pool items (item.raw) and raw DB rows.
+function getImageSrc(nameOrItem, kind) {
+  if (!nameOrItem) return null;
+  // Pool item object
+  if (typeof nameOrItem === 'object' && nameOrItem.raw) {
+    const fn = nameOrItem.raw.image_filename;
+    if (!fn) return null;
+    const folder = nameOrItem.kind === 'shell' ? 'shells' : 'weapons';
+    return `/images/${folder}/${fn}`;
+  }
+  // Raw DB row
+  if (typeof nameOrItem === 'object' && nameOrItem.image_filename) {
+    const folder = kind === 'shell' ? 'shells' : 'weapons';
+    return `/images/${folder}/${nameOrItem.image_filename}`;
+  }
+  return null;
+}
+
 const TREND_DISPLAY = {
   up:     { label: '▲ RISING',  color: '#00ff88' },
   down:   { label: '▼ FALLING', color: '#ff0000' },
@@ -763,15 +781,23 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                             )}
 
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-                              {/* Category icon */}
-                              <div style={{
-                                fontFamily: 'monospace', fontSize: 20, width: 28, textAlign: 'center',
-                                color: typeColor, opacity: 0.5, flexShrink: 0, lineHeight: 1, marginTop: 2,
-                              }}>
-                                {typeKey === 'shell'
-                                  ? (SHELL_SYMBOLS[item.name] || '⬠')
-                                  : getWeaponIcon(weaponData?.weapon_type)}
-                              </div>
+                              {/* Category icon / image */}
+                              {(() => {
+                                const imgSrc = getImageSrc(shellData || weaponData, typeKey);
+                                return imgSrc ? (
+                                  <img src={imgSrc} alt={item.name}
+                                    style={{ width: 40, height: 28, objectFit: 'contain', flexShrink: 0, opacity: 0.85 }}
+                                    onError={e => { e.target.style.display = 'none'; }}
+                                  />
+                                ) : (
+                                  <div style={{
+                                    fontFamily: 'monospace', fontSize: 20, width: 28, textAlign: 'center',
+                                    color: typeColor, opacity: 0.5, flexShrink: 0, lineHeight: 1, marginTop: 2,
+                                  }}>
+                                    {typeKey === 'shell' ? (SHELL_SYMBOLS[item.name] || '⬠') : getWeaponIcon(weaponData?.weapon_type)}
+                                  </div>
+                                );
+                              })()}
 
                               <div style={{ flex: 1, minWidth: 200 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
@@ -1141,6 +1167,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
 // ─── TIER PILL (item inside a tier row) ──────────────────────
 function TierPill({ item, zone, onDragStart, onDragEnd, onClick, accentColor, draggable = true }) {
   const icon = item.kind === 'shell' ? (SHELL_SYMBOLS[item.name] || '⬠') : getWeaponIcon(item.raw?.weapon_type);
+  const imgSrc = getImageSrc(item);
   return (
     <div
       draggable={draggable}
@@ -1153,11 +1180,17 @@ function TierPill({ item, zone, onDragStart, onDragEnd, onClick, accentColor, dr
         padding: '5px 10px', borderRadius: 5,
         background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
         cursor: draggable ? 'grab' : 'default',
-        userSelect: 'none',
-        transition: 'background 0.15s',
+        userSelect: 'none', transition: 'background 0.15s',
       }}
     >
-      <span style={{ fontSize: 12, opacity: 0.5, lineHeight: 1 }}>{icon}</span>
+      {imgSrc ? (
+        <img src={imgSrc} alt={item.name}
+          style={{ width: 24, height: 16, objectFit: 'contain', opacity: 0.8, flexShrink: 0 }}
+          onError={e => { e.target.style.display = 'none'; }}
+        />
+      ) : (
+        <span style={{ fontSize: 12, opacity: 0.5, lineHeight: 1 }}>{icon}</span>
+      )}
       <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>
         {item.name}
       </span>
@@ -1168,6 +1201,7 @@ function TierPill({ item, zone, onDragStart, onDragEnd, onClick, accentColor, dr
 // ─── POOL CARD (item in unranked pool) ───────────────────────
 function PoolCard({ item, onDragStart, onDragEnd, onClick }) {
   const icon = item.kind === 'shell' ? (SHELL_SYMBOLS[item.name] || '⬠') : getWeaponIcon(item.raw?.weapon_type);
+  const imgSrc = getImageSrc(item);
   return (
     <div
       draggable
@@ -1180,7 +1214,14 @@ function PoolCard({ item, onDragStart, onDragEnd, onClick }) {
         userSelect: 'none', transition: 'background 0.15s',
       }}
     >
-      <div style={{ fontSize: 18, opacity: 0.4, marginBottom: 6, lineHeight: 1 }}>{icon}</div>
+      {imgSrc ? (
+        <img src={imgSrc} alt={item.name}
+          style={{ width: '100%', height: 44, objectFit: 'contain', marginBottom: 6, opacity: 0.85 }}
+          onError={e => { e.target.style.display = 'none'; }}
+        />
+      ) : (
+        <div style={{ fontSize: 18, opacity: 0.4, marginBottom: 6, lineHeight: 1 }}>{icon}</div>
+      )}
       <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5, marginBottom: 4 }}>
         {item.name}
       </div>
