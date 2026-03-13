@@ -1,7 +1,6 @@
 // lib/gather/xpulse.js
 // X API v2 recent search — Marathon community pulse
 // Requires X_BEARER_TOKEN env var (pay-per-use credit model)
-// Set in Vercel env: X_BEARER_TOKEN = your Bearer Token from developer.twitter.com
 
 const X_SEARCH_URL = 'https://api.twitter.com/2/tweets/search/recent';
 
@@ -12,12 +11,16 @@ const SEARCH_QUERIES = [
   '("Marathon meta" OR "Marathon build" OR "Marathon tier list") -is:retweet lang:en',
 ];
 
-// Official Marathon/Bungie accounts to always pull from
+// Official Marathon/Bungie accounts — dedicated pull regardless of keyword match
+// @MarathonDevTeam is the active dev comms account (LUX changes, patch notes, etc.)
 const OFFICIAL_ACCOUNTS = [
   'Bungie',
   'MarathonTheGame',
+  'MarathonDevTeam',
   'BungieHelp',
 ];
+
+const OFFICIAL_QUERY = `(from:Bungie OR from:MarathonTheGame OR from:MarathonDevTeam OR from:BungieHelp) -is:retweet`;
 
 async function searchX(query, maxResults = 20) {
   const token = process.env.X_BEARER_TOKEN;
@@ -70,7 +73,9 @@ async function searchX(query, maxResults = 20) {
       retweets: t.public_metrics?.retweet_count || 0,
       replies: t.public_metrics?.reply_count || 0,
       url: `https://x.com/${users[t.author_id]?.username || 'i'}/status/${t.id}`,
-      is_official: OFFICIAL_ACCOUNTS.some(a => (users[t.author_id]?.username || '').toLowerCase() === a.toLowerCase()),
+      is_official: OFFICIAL_ACCOUNTS.some(a =>
+        (users[t.author_id]?.username || '').toLowerCase() === a.toLowerCase()
+      ),
     }));
   } catch (err) {
     console.log(`[xpulse.js] Search failed for "${query.slice(0, 40)}...": ${err.message}`);
@@ -85,14 +90,21 @@ export async function gatherXPulse() {
     return { posts: [], officialPosts: [], patchPosts: [] };
   }
 
-  // Stagger requests to avoid rate limit spikes
   const results = [];
+
+  // Always pull official accounts directly — don't rely on keyword matches
+  console.log('[xpulse.js] Fetching official account posts...');
+  const officialDirect = await searchX(OFFICIAL_QUERY, 20);
+  results.push(...officialDirect);
+  console.log(`[xpulse.js] Official direct fetch: ${officialDirect.length} posts`);
+
+  await new Promise(r => setTimeout(r, 1000));
+
+  // Community searches
   for (const query of SEARCH_QUERIES) {
     const posts = await searchX(query, 20);
     results.push(...posts);
-    if (SEARCH_QUERIES.indexOf(query) < SEARCH_QUERIES.length - 1) {
-      await new Promise(r => setTimeout(r, 1000));
-    }
+    await new Promise(r => setTimeout(r, 1000));
   }
 
   // Deduplicate by tweet ID
@@ -112,7 +124,9 @@ export async function gatherXPulse() {
     p.text.toLowerCase().includes('update') ||
     p.text.toLowerCase().includes('hotfix') ||
     p.text.toLowerCase().includes('fix') ||
-    p.text.toLowerCase().includes('balance')
+    p.text.toLowerCase().includes('balance') ||
+    p.text.toLowerCase().includes('nerf') ||
+    p.text.toLowerCase().includes('buff')
   );
 
   console.log(`[xpulse.js] Gathered ${unique.length} X posts (${officialPosts.length} official, ${patchPosts.length} patch-related)`);
