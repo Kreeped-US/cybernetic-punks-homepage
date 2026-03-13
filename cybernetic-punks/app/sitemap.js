@@ -13,6 +13,7 @@ export default async function sitemap() {
     { url: baseUrl + '/intel',               lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/meta',                lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/builds',              lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/ranked', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
     { url: baseUrl + '/play-of-the-day',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/top-build',           lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/editors',             lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
