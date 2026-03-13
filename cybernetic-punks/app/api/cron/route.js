@@ -168,11 +168,15 @@ async function processEditor(editorName, prompt, rawData) {
 
     // Queue MIRANDA's tier list promo tweet separately
     if (editorName === 'MIRANDA' && result.promo_tweet && feedItem) {
-      await supabase.from('post_queue').insert({
-        feed_item_id: feedItem.id,
-        tweet_text: result.promo_tweet,
-        status: 'pending',
-      });
+  await supabase.from('post_queue').insert({
+    tweet_text: result.promo_tweet,
+    content: result.promo_tweet,
+    editor: 'MIRANDA',
+    platform: 'twitter',
+    status: 'pending',
+    headline: 'Tier List Promo',
+    slug: feedItem.slug,
+  });
       console.log('[CRON] MIRANDA promo tweet queued: ' + result.promo_tweet.slice(0, 60));
     }
 
