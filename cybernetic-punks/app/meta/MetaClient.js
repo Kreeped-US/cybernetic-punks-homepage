@@ -167,9 +167,31 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+// Preload an image, resolving with the element or null on failure
+function loadImage(src) {
+  return new Promise(resolve => {
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
 async function generateTierImage(tierItems, runnerTag) {
   // Wait for fonts
   try { await document.fonts.ready; } catch (_) {}
+
+  // Pre-load all item images before touching the canvas
+  const imageCache = {};
+  for (const items of Object.values(tierItems)) {
+    for (const item of items) {
+      const src = getImageSrc(item);
+      if (src && !imageCache[src]) {
+        imageCache[src] = await loadImage(src);
+      }
+    }
+  }
 
   const W = 1200, H = 630;
   const canvas = document.createElement('canvas');
@@ -191,29 +213,24 @@ async function generateTierImage(tierItems, runnerTag) {
   for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
   // ── HEADER ──
-  // Red dot logo
   ctx.fillStyle = '#ff0000';
   ctx.beginPath(); ctx.arc(36, 36, 5, 0, Math.PI * 2); ctx.fill();
 
-  // Site name
   ctx.fillStyle = 'rgba(255,255,255,0.8)';
   ctx.font = '700 13px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('CYBERNETICPUNKS', 50, 41);
 
-  // Title right
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = '900 22px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText('MARATHON TIER LIST', W - 32, 36);
 
-  // Runner tag
   const tag = runnerTag?.trim() || 'ANONYMOUS RUNNER';
   ctx.fillStyle = 'rgba(255,255,255,0.28)';
   ctx.font = '400 11px "Share Tech Mono", monospace, sans-serif';
   ctx.fillText('by ' + tag.toUpperCase(), W - 32, 54);
 
-  // Header divider
   ctx.fillStyle = 'rgba(255,255,255,0.06)';
   ctx.fillRect(24, 66, W - 48, 1);
 
@@ -228,6 +245,11 @@ async function generateTierImage(tierItems, runnerTag) {
     S: 'rgba(255,0,0,0.07)', A: 'rgba(255,136,0,0.05)', B: 'rgba(0,245,255,0.04)',
     C: 'rgba(255,255,255,0.02)', D: 'rgba(255,255,255,0.01)', F: 'rgba(255,0,0,0.015)',
   };
+
+  const pillH = 44;
+  const pillGap = 6;
+  const imgW = 40, imgH = 28;
+  const textPadL = 10, textPadR = 14;
 
   TIERS.forEach((tier, i) => {
     const y = rowStart + i * rowH;
@@ -251,37 +273,49 @@ async function generateTierImage(tierItems, runnerTag) {
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
     ctx.fillRect(96, y + 8, 1, rowH - 18);
 
-    // Items
     ctx.textAlign = 'left';
     let x = 108;
-    const pillH = 32;
-    const pillPad = 14;
-    const pillGap = 6;
     const maxX = W - 48;
+    const pillY = y + (rowH - pillH) / 2;
 
     items.forEach(item => {
+      const src = getImageSrc(item);
+      const imgEl = src ? imageCache[src] : null;
       const label = item.name;
-      ctx.font = '700 11px Orbitron, Arial, sans-serif';
-      const textW = ctx.measureText(label).width;
-      const pillW = textW + pillPad * 2;
 
-      if (x + pillW > maxX) return; // skip if overflow
+      ctx.font = '700 10px Orbitron, Arial, sans-serif';
+      const textW = ctx.measureText(label).width;
+
+      // Pill width: image slot (if image exists) + text + padding
+      const hasImg = !!imgEl;
+      const pillW = (hasImg ? imgW + 6 : 0) + textW + textPadL + textPadR;
+
+      if (x + pillW > maxX) return;
 
       // Pill background
       ctx.fillStyle = 'rgba(255,255,255,0.07)';
-      roundRect(ctx, x, y + (rowH - pillH) / 2, pillW, pillH, 4);
+      roundRect(ctx, x, pillY, pillW, pillH, 5);
       ctx.fill();
 
-      // Pill border
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
       ctx.lineWidth = 1;
-      roundRect(ctx, x, y + (rowH - pillH) / 2, pillW, pillH, 4);
+      roundRect(ctx, x, pillY, pillW, pillH, 5);
       ctx.stroke();
 
+      // Draw image if loaded
+      if (hasImg) {
+        const imgX = x + 8;
+        const imgDrawY = pillY + (pillH - imgH) / 2;
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(imgEl, imgX, imgDrawY, imgW, imgH);
+        ctx.globalAlpha = 1;
+      }
+
       // Label
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.font = '700 11px Orbitron, Arial, sans-serif';
-      ctx.fillText(label, x + pillPad, y + (rowH - pillH) / 2 + 20);
+      const labelX = x + (hasImg ? imgW + 14 : textPadL);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '700 10px Orbitron, Arial, sans-serif';
+      ctx.fillText(label, labelX, pillY + pillH / 2 + 4);
 
       x += pillW + pillGap;
     });
@@ -302,7 +336,6 @@ async function generateTierImage(tierItems, runnerTag) {
   ctx.fillStyle = 'rgba(0,245,255,0.04)';
   ctx.fillRect(24, bottomY + 2, W - 48, H - bottomY - 26);
 
-  // URL
   ctx.fillStyle = 'rgba(255,255,255,0.75)';
   ctx.font = '700 17px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'center';
