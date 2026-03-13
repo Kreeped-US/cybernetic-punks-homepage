@@ -297,7 +297,7 @@ export async function callEditor(editor, userPrompt) {
 
   var maxTokens = 1024;
   if (editor === 'NEXUS') maxTokens = 2048;
-  if (editor === 'MIRANDA') maxTokens = 1536;
+  if (editor === 'MIRANDA') maxTokens = 2048;
 
   var message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
