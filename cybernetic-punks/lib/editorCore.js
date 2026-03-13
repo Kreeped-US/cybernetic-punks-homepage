@@ -115,8 +115,8 @@ async function fetchGameContext() {
 
     const [modsRes, coresRes, implantsRes] = await Promise.all([
       supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(40),
-      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating').order('rarity', { ascending: false }).limit(40),
-      supabase.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').order('rarity', { ascending: false }).limit(40),
+      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(40),
+      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value').order('rarity', { ascending: false }).limit(40),
     ]);
 
     let output = '';
@@ -141,7 +141,7 @@ async function fetchGameContext() {
       for (const core of coresRes.data) {
         const runner = core.required_runner || 'Unknown';
         if (!byRunner[runner]) byRunner[runner] = [];
-        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}): ${core.effect_desc || 'Effect TBD'}`);
+        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}`);
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
@@ -158,8 +158,10 @@ async function fetchGameContext() {
         const stats = [
           imp.stat_1_label && imp.stat_1_value ? `${imp.stat_1_label}: ${imp.stat_1_value}` : null,
           imp.stat_2_label && imp.stat_2_value ? `${imp.stat_2_label}: ${imp.stat_2_value}` : null,
+          imp.stat_3_label && imp.stat_3_value ? `${imp.stat_3_label}: ${imp.stat_3_value}` : null,
+          imp.stat_4_label && imp.stat_4_value ? `${imp.stat_4_label}: ${imp.stat_4_value}` : null,
         ].filter(Boolean).join(', ');
-        bySlot[slot].push(`${imp.name} (${imp.rarity})${imp.passive_name ? ' — ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}`);
+        bySlot[slot].push(`${imp.name} (${imp.rarity})${imp.description ? ' — ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
@@ -297,7 +299,7 @@ export async function callEditor(editor, userPrompt) {
 
   var maxTokens = 1024;
   if (editor === 'NEXUS') maxTokens = 2048;
-  if (editor === 'MIRANDA') maxTokens = 2048;
+  if (editor === 'MIRANDA') maxTokens = 1536;
 
   var message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',

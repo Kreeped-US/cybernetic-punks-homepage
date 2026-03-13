@@ -19,6 +19,16 @@ const WEAPONS = [
   'Retaliator LMG', 'Conquest LMG', 'V22 Volt Thrower', 'Magnum MC',
 ];
 
+const CORES = [
+  'Break and Enter', 'Double Agent', 'Ghost Protocol', 'Overclock',
+  'Second Wind', 'Tactical Surge', 'Combat Flow', 'Iron Will',
+];
+
+const IMPLANTS = [
+  'Augmented Capacitors V4', 'Neural Accelerator', 'Bone Lace Mk2',
+  'Reflex Booster', 'Shield Surge', 'Combat Stimulator',
+];
+
 // ─── WIKI / FAN SITE SOURCES ─────────────────────────────────
 
 const WIKI_URLS = [
@@ -58,9 +68,11 @@ async function fetchWikiContent() {
 
 // ─── CLAUDE STAT EXTRACTION ──────────────────────────────────
 
-async function extractStatsWithClaude(sourceTexts, shells, weapons) {
+async function extractStatsWithClaude(sourceTexts, shells, weapons, cores, implants) {
   const shellList = shells.join(', ');
   const weaponList = weapons.join(', ');
+  const coreList = (cores || []).join(', ') || 'Extract any cores found';
+  const implantList = (implants || []).join(', ') || 'Extract any implants found';
 
   const combinedContent = sourceTexts
     .map(s => `[SOURCE: ${s.source}]\n${s.content}`)
@@ -73,6 +85,8 @@ Extract any numerical stats you can find for the following Marathon game entitie
 
 SHELLS TO EXTRACT: ${shellList}
 WEAPONS TO EXTRACT: ${weaponList}
+CORES TO EXTRACT: ${coreList}
+IMPLANTS TO EXTRACT: ${implantList}
 
 For each shell, extract if available:
 - base_health (number, e.g. 150)
@@ -90,6 +104,21 @@ For each weapon, extract if available:
 - fire_rate (number, RPM)
 - magazine_size (number)
 - reload_time (number, seconds)
+
+For each core, extract if available:
+- effect_desc (text, what the core does, max 150 chars)
+- ability_type (text: which ability it modifies e.g. "Prime", "Tactical", "Passive", "Grapple")
+- is_shell_exclusive (boolean: true if locked to one shell, false if universal)
+- meta_rating (text: "S", "A", "B", "C", "D" based on ranked viability)
+
+For each implant, extract if available:
+- description (text, overall effect description, max 150 chars)
+- stat_1_label + stat_1_value (e.g. "Hardware" / "-10")
+- stat_2_label + stat_2_value
+- stat_3_label + stat_3_value
+- stat_4_label + stat_4_value
+- passive_name (text, name of passive effect if any)
+- passive_desc (text, description of passive effect if any)
 
 SOURCE CONTENT:
 ${combinedContent}
@@ -115,6 +144,13 @@ Respond ONLY with a valid JSON object in this exact format, no preamble, no mark
     "Conquest LMG": { "damage": null, "fire_rate": null, "magazine_size": null, "reload_time": null },
     "V22 Volt Thrower": { "damage": null, "fire_rate": null, "magazine_size": null, "reload_time": null },
     "Magnum MC": { "damage": null, "fire_rate": null, "magazine_size": null, "reload_time": null }
+  },
+  "cores": {
+    "Break and Enter": { "effect_desc": null, "ability_type": null, "is_shell_exclusive": null, "meta_rating": null },
+    "Universal Core": { "effect_desc": null, "ability_type": null, "is_shell_exclusive": null, "meta_rating": null }
+  },
+  "implants": {
+    "Augmented Capacitors V4": { "description": null, "stat_1_label": null, "stat_1_value": null, "stat_2_label": null, "stat_2_value": null, "stat_3_label": null, "stat_3_value": null, "passive_name": null, "passive_desc": null }
   }
 }
 
@@ -253,7 +289,7 @@ export async function runDexterStatPipeline(existingData = {}) {
   }
 
   console.log('[dexter-stats] Sending', allSources.length, 'sources to Claude for extraction...');
-  const extracted = await extractStatsWithClaude(allSources, SHELLS, WEAPONS);
+  const extracted = await extractStatsWithClaude(allSources, SHELLS, WEAPONS, CORES, IMPLANTS);
 
   if (!extracted) {
     console.log('[dexter-stats] Extraction returned null — skipping DB writes');
@@ -277,6 +313,39 @@ export async function runDexterStatPipeline(existingData = {}) {
     }
   }
 
-  console.log('[dexter-stats] Pipeline complete —', shellsUpdated, 'shells updated,', weaponsUpdated, 'weapons updated');
-  return { shellsUpdated, weaponsUpdated };
+  let coresUpdated = 0;
+  let implantsUpdated = 0;
+
+  if (extracted.cores) {
+    for (const [name, stats] of Object.entries(extracted.cores)) {
+      const update = {};
+      for (const field of ['effect_desc', 'ability_type', 'is_shell_exclusive', 'meta_rating']) {
+        if (stats[field] !== null && stats[field] !== undefined) update[field] = stats[field];
+      }
+      if (Object.keys(update).length > 0) {
+        update.updated_at = new Date().toISOString();
+        const { error } = await supabase.from('core_stats').update(update).eq('name', name);
+        if (!error) { coresUpdated++; console.log('[dexter-stats] Core updated:', name, Object.keys(update)); }
+        else console.error('[dexter-stats] Core update failed:', name, error.message);
+      }
+    }
+  }
+
+  if (extracted.implants) {
+    for (const [name, stats] of Object.entries(extracted.implants)) {
+      const update = {};
+      for (const field of ['description', 'stat_1_label', 'stat_1_value', 'stat_2_label', 'stat_2_value', 'stat_3_label', 'stat_3_value', 'stat_4_label', 'stat_4_value', 'passive_name', 'passive_desc']) {
+        if (stats[field] !== null && stats[field] !== undefined) update[field] = stats[field];
+      }
+      if (Object.keys(update).length > 0) {
+        update.updated_at = new Date().toISOString();
+        const { error } = await supabase.from('implant_stats').update(update).eq('name', name);
+        if (!error) { implantsUpdated++; console.log('[dexter-stats] Implant updated:', name, Object.keys(update)); }
+        else console.error('[dexter-stats] Implant update failed:', name, error.message);
+      }
+    }
+  }
+
+  console.log('[dexter-stats] Pipeline complete —', shellsUpdated, 'shells,', weaponsUpdated, 'weapons,', coresUpdated, 'cores,', implantsUpdated, 'implants updated');
+  return { shellsUpdated, weaponsUpdated, coresUpdated, implantsUpdated };
 }
