@@ -249,6 +249,16 @@ ${redditSummaries}
 
 Choose the most useful guide topic for Runners right now. Reference real shell abilities, weapon stats, and mod names. If there is recent official dev news, prioritize covering it — players want to know what Bungie just announced. Mark dev-sourced guides with guide_category "dev-update" and include "dev-update" in tags.
 
+Also write ONE short promotional tweet for the CyberneticPunks.com interactive tier list builder at cyberneticpunks.com/meta — keep it under 220 chars, punchy and witty. The tier list lets players drag-and-drop weapons and shells into S/A/B/C/D/F tiers and generate a shareable image. Pick a different angle each time from this menu of vibes:
+- Competitive trash talk: "You think that loadout is S-tier? Prove it. cyberneticpunks.com/meta"
+- Challenge the reader: "Hot take: Thief is A, not S. Fight me — build your own tier list first. cyberneticpunks.com/meta #Marathon"
+- Confident authority: "NEXUS updates the meta every 6 hours. Your friends are wrong. We have data. cyberneticpunks.com/meta"
+- Reaction bait: "Someone just put Knife in S-tier on our builder and I'm not okay. cyberneticpunks.com/meta #MarathonGame"
+- FOMO: "Everyone's sharing their Marathon tier list. Where's yours? cyberneticpunks.com/meta"
+- Dry wit: "Spent 40 minutes in ranked dying to a Longshot. Longshot is S-tier now. I have a builder to prove it. cyberneticpunks.com/meta"
+- Direct challenge: "Stop complaining about the meta in chat. Make a tier list. cyberneticpunks.com/meta #Marathon"
+- Deadpan: "Our AI updates the Marathon tier list every 6 hours. Your hot takes update... whenever. cyberneticpunks.com/meta"
+
 Return ONLY valid JSON — no other text:
 {
   "headline": "guide headline under 80 chars",
@@ -263,7 +273,8 @@ Return ONLY valid JSON — no other text:
   "ce_score": 0.0,
   "source_type": "guide",
   "thumbnail": "YouTube thumbnail URL or null",
-  "source_url": "most relevant YouTube, Reddit, or Bungie.net URL"
+  "source_url": "most relevant YouTube, Reddit, or Bungie.net URL",
+  "promo_tweet": "witty tier list promo tweet under 220 chars — pick a different vibe each time"
 }`;
 }
 
