@@ -11,12 +11,10 @@ export default async function sitemap() {
   const staticPages = [
     { url: baseUrl,                          lastModified: new Date(), changeFrequency: 'hourly',  priority: 1   },
     { url: baseUrl + '/intel',               lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
-    { url: baseUrl + '/meta',                lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/meta',                lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/builds',              lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
-    { url: baseUrl + '/ranked',              lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: baseUrl + '/play-of-the-day',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/top-build',           lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
-    { url: baseUrl + '/guides',              lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/editors',             lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
     { url: baseUrl + '/rising',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.7 },
     { url: baseUrl + '/intel/cipher',        lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
@@ -24,9 +22,6 @@ export default async function sitemap() {
     { url: baseUrl + '/intel/dexter',        lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/intel/ghost',         lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/intel/miranda',       lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
-    { url: baseUrl + '/status',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
-    { url: baseUrl + '/creators',            lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
-    { url: baseUrl + '/sitrep',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
   ];
 
   let dynamicPages = [];

@@ -1,5 +1,6 @@
 // lib/gather/miranda.js
-// MIRANDA gather — YouTube guides + Reddit help + Steam dev news + all 3 stat tables
+// MIRANDA gather — YouTube guides + Reddit hot/new + Steam dev news + all 3 stat tables
+// Includes recent-headline dedup so MIRANDA never covers the same topic twice in a row
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -19,8 +20,10 @@ const GUIDE_QUERIES = [
   'Marathon ranked mode tips how to rank up',
   'Marathon Holotag guide ranked explained',
   'Marathon survival tips how to win',
-  'Marathon mod guide best mods explained'
+  'Marathon mod guide best mods explained',
 ];
+
+// ─── YOUTUBE ─────────────────────────────────────────────────
 
 async function fetchYouTubeGuides() {
   const videos = [];
@@ -41,7 +44,7 @@ async function fetchYouTubeGuides() {
           channelTitle: item.snippet.channelTitle,
           description:  item.snippet.description,
           thumbnail:    item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.default?.url,
-          query: q
+          query: q,
         });
       }
     } catch (err) {
@@ -57,37 +60,65 @@ async function fetchYouTubeGuides() {
   });
 }
 
+// ─── REDDIT ──────────────────────────────────────────────────
+// Uses hot.json + new.json directly — flair search returns 0 on these subs
+// Filters for posts that are likely guides/tips/questions by keyword
+
+const GUIDE_KEYWORDS = [
+  'guide', 'tip', 'help', 'question', 'how to', 'how do', 'best', 'ranked',
+  'holotag', 'loadout', 'shell', 'extract', 'survive', 'beginner', 'advice',
+  'what is', 'explain', 'build', 'strategy', 'mod', 'weapon', 'ability',
+];
+
+function isGuideRelevant(post) {
+  const text = ((post.title || '') + ' ' + (post.link_flair_text || '')).toLowerCase();
+  return GUIDE_KEYWORDS.some(kw => text.includes(kw));
+}
+
 async function fetchRedditGuides() {
   const posts = [];
+  const seen = new Set();
+
   for (const sub of ['Marathon', 'MarathonTheGame']) {
-    for (const flair of ['Guide', 'Tips', 'Help', 'Question', 'Ranked']) {
+    for (const feed of ['hot', 'new']) {
       try {
         const res = await fetch(
-          `https://old.reddit.com/r/${sub}/search.json?q=flair:${flair}&restrict_sr=1&sort=new&limit=5`,
+          `https://old.reddit.com/r/${sub}/${feed}.json?limit=25`,
           { headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0' } }
         );
-        if (!res.ok) continue;
+        if (!res.ok) {
+          console.log(`[miranda.js] Reddit r/${sub}/${feed} returned ${res.status}`);
+          continue;
+        }
         const d = await res.json();
-        for (const item of (d?.data?.children || [])) {
+        const children = d?.data?.children || [];
+        for (const item of children) {
           const p = item.data;
+          if (!p?.title) continue;
+          if (seen.has(p.id)) continue;
+          if (!isGuideRelevant(p)) continue;
+          seen.add(p.id);
           posts.push({
             title:    p.title,
-            selftext: p.selftext?.slice(0, 500) || '',
-            score:    p.score,
+            selftext: (p.selftext || '').slice(0, 500),
+            score:    p.score || 0,
             url:      `https://reddit.com${p.permalink}`,
-            flair:    p.link_flair_text || flair
+            flair:    p.link_flair_text || '',
+            created:  p.created_utc,
           });
         }
+        console.log(`[miranda.js] Reddit r/${sub}/${feed}: ${children.length} posts, ${posts.length} relevant so far`);
       } catch (err) {
-        console.error(`[miranda.js] Reddit r/${sub} ${flair}:`, err.message);
+        console.error(`[miranda.js] Reddit r/${sub}/${feed}:`, err.message);
       }
     }
   }
+
+  // Sort by score desc, take top 10
   return posts.sort((a, b) => b.score - a.score).slice(0, 10);
 }
 
-// ─── DEV NEWS: Steam news feed ────────────────────
-// Steam news is reliable and includes all Bungie patch notes
+// ─── DEV NEWS: Steam ──────────────────────────────────────────
 
 async function fetchSteamDevNews() {
   try {
@@ -102,75 +133,50 @@ async function fetchSteamDevNews() {
 }
 
 // ─── DEV NEWS: Reddit official posts ─────────────────────────
-// Looks for Official flair or Bungie account posts in r/Marathon
+
+const DEV_AUTHORS = ['Bungie', 'BungieHelp', 'BungieIntel', 'marathon_game'];
 
 async function fetchDevRedditPosts() {
   const devPosts = [];
-  const devAuthors = ['Bungie', 'BungieHelp', 'BungieIntel', 'marathon_game'];
+  const seen = new Set();
 
-  try {
-    for (const sub of ['Marathon', 'MarathonTheGame']) {
-      try {
-        const res = await fetch(
-          `https://old.reddit.com/r/${sub}/search.json?q=flair:Official&restrict_sr=1&sort=new&limit=5`,
-          { headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0' } }
-        );
-        if (!res.ok) continue;
-        const d = await res.json();
-        for (const item of (d?.data?.children || [])) {
-          const p = item.data;
-          devPosts.push({
-            title:      p.title,
-            selftext:   p.selftext?.slice(0, 600) || '',
-            score:      p.score,
-            url:        `https://reddit.com${p.permalink}`,
-            author:     p.author,
-            flair:      p.link_flair_text || 'Official',
-            isOfficial: true
-          });
-        }
-      } catch (err) {
-        console.error(`[miranda.js] Dev Reddit r/${sub}:`, err.message);
+  for (const sub of ['Marathon', 'MarathonTheGame']) {
+    // Scan new posts for dev author matches
+    try {
+      const res = await fetch(
+        `https://old.reddit.com/r/${sub}/new.json?limit=25`,
+        { headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0' } }
+      );
+      if (!res.ok) continue;
+      const d = await res.json();
+      for (const item of (d?.data?.children || [])) {
+        const p = item.data;
+        if (!p?.title) continue;
+        if (seen.has(p.id)) continue;
+        const isDevAuthor = DEV_AUTHORS.some(a => (p.author || '').toLowerCase().includes(a.toLowerCase()));
+        const isOfficialFlair = (p.link_flair_text || '').toLowerCase().includes('official');
+        if (!isDevAuthor && !isOfficialFlair) continue;
+        seen.add(p.id);
+        devPosts.push({
+          title:      p.title,
+          selftext:   (p.selftext || '').slice(0, 600),
+          score:      p.score || 0,
+          url:        `https://reddit.com${p.permalink}`,
+          author:     p.author,
+          flair:      p.link_flair_text || 'Official',
+          isOfficial: true,
+        });
       }
-
-      try {
-        const res2 = await fetch(
-          `https://old.reddit.com/r/${sub}/new.json?limit=25`,
-          { headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0' } }
-        );
-        if (!res2.ok) continue;
-        const d2 = await res2.json();
-        for (const item of (d2?.data?.children || [])) {
-          const p = item.data;
-          if (devAuthors.some(a => p.author?.toLowerCase().includes(a.toLowerCase()))) {
-            devPosts.push({
-              title:      p.title,
-              selftext:   p.selftext?.slice(0, 600) || '',
-              score:      p.score,
-              url:        `https://reddit.com${p.permalink}`,
-              author:     p.author,
-              flair:      p.link_flair_text || 'Dev Post',
-              isOfficial: true
-            });
-          }
-        }
-      } catch (err) {
-        console.error(`[miranda.js] Dev author scan r/${sub}:`, err.message);
-      }
+      console.log(`[miranda.js] Dev Reddit r/${sub}: ${devPosts.length} dev posts found`);
+    } catch (err) {
+      console.error(`[miranda.js] Dev Reddit r/${sub}:`, err.message);
     }
-  } catch (err) {
-    console.error('[miranda.js] fetchDevRedditPosts failed:', err.message);
   }
 
-  const seen = new Set();
-  return devPosts.filter(p => {
-    if (seen.has(p.url)) return false;
-    seen.add(p.url);
-    return true;
-  }).slice(0, 5);
+  return devPosts.slice(0, 5);
 }
 
-// ─── STAT CONTEXT FETCHERS ────────────────────────────────────
+// ─── STAT CONTEXT ─────────────────────────────────────────────
 
 async function fetchShellContext() {
   try {
@@ -208,23 +214,44 @@ async function fetchModContext() {
   }
 }
 
+// ─── RECENT MIRANDA HEADLINES (dedup) ────────────────────────
+// Pulled into the prompt so MIRANDA knows what she's already covered
+// and avoids writing the same guide topic twice in a row
+
+async function fetchRecentMirandaHeadlines() {
+  try {
+    const { data } = await supabase
+      .from('feed_items')
+      .select('headline, created_at')
+      .eq('editor', 'MIRANDA')
+      .order('created_at', { ascending: false })
+      .limit(12);
+    return (data || []).map(r => r.headline);
+  } catch (err) {
+    console.error('[miranda.js] Recent headlines fetch:', err.message);
+    return [];
+  }
+}
+
 // ─── MAIN EXPORT ─────────────────────────────────────────────
 
 export async function gatherMirandaData() {
   console.log('[miranda.js] Gathering...');
 
-  const [videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext] = await Promise.all([
+  const [videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines] = await Promise.all([
     fetchYouTubeGuides(),
     fetchRedditGuides(),
     fetchSteamDevNews(),
     fetchDevRedditPosts(),
     fetchShellContext(),
     fetchWeaponContext(),
-    fetchModContext()
+    fetchModContext(),
+    fetchRecentMirandaHeadlines(),
   ]);
 
-  console.log(`[miranda.js] ${videos.length} videos, ${redditPosts.length} Reddit, ${devNews.length} Steam news, ${devRedditPosts.length} dev posts`);
+  console.log(`[miranda.js] ${videos.length} videos, ${redditPosts.length} Reddit posts, ${devNews.length} Steam news, ${devRedditPosts.length} dev posts`);
   console.log(`[miranda.js] Context: ${shellContext.length} shells, ${weaponContext.length} weapons, ${modContext.length} mods`);
+  console.log(`[miranda.js] Dedup: ${recentHeadlines.length} recent headlines loaded`);
 
-  return { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext };
+  return { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines };
 }

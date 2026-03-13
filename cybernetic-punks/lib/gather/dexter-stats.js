@@ -25,8 +25,8 @@ const WIKI_URLS = [
   'https://marathon.wiki.gg/wiki/Shells',
   'https://marathon.wiki.gg/wiki/Weapons',
   'https://marathon.wiki.gg/wiki/Marathon_Wiki',
-  'https://www.mararthon.gg/shells',
-  'https://www.mararthon.gg/weapons',
+  'https://www.marathon.gg/shells',
+  'https://www.marathon.gg/weapons',
 ];
 
 async function fetchWikiContent() {
@@ -39,7 +39,6 @@ async function fetchWikiContent() {
       });
       if (!res.ok) continue;
       const html = await res.text();
-      // Strip HTML tags, keep text content
       const text = html
         .replace(/<script[\s\S]*?<\/script>/gi, '')
         .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -130,7 +129,7 @@ Only populate fields where you found clear numerical or textual evidence in the 
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -149,7 +148,6 @@ Only populate fields where you found clear numerical or textual evidence in the 
 // ─── SUPABASE WRITERS ────────────────────────────────────────
 
 async function updateShellStats(shellName, stats) {
-  // Build update object — only include non-null extracted values
   const update = {};
   const fields = [
     'base_health', 'base_shield', 'base_speed',
@@ -215,10 +213,7 @@ async function updateWeaponStats(weaponName, stats) {
 export async function runDexterStatPipeline(existingData = {}) {
   console.log('[dexter-stats] Starting DEXTER stat extraction pipeline...');
 
-  // 1. Fetch wiki content
   const wikiSources = await fetchWikiContent();
-
-  // 2. Combine with existing pipeline data already gathered this cron run
   const allSources = [...wikiSources];
 
   if (existingData.videos && existingData.videos.length > 0) {
@@ -257,7 +252,6 @@ export async function runDexterStatPipeline(existingData = {}) {
     return { shellsUpdated: 0, weaponsUpdated: 0 };
   }
 
-  // 3. Extract stats via Claude
   console.log('[dexter-stats] Sending', allSources.length, 'sources to Claude for extraction...');
   const extracted = await extractStatsWithClaude(allSources, SHELLS, WEAPONS);
 
@@ -266,7 +260,6 @@ export async function runDexterStatPipeline(existingData = {}) {
     return { shellsUpdated: 0, weaponsUpdated: 0 };
   }
 
-  // 4. Write to Supabase
   let shellsUpdated = 0;
   let weaponsUpdated = 0;
 

@@ -175,7 +175,7 @@ async function fetchGameContext() {
 }
 
 export function buildMirandaPrompt(data) {
-  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext } = data;
+  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines } = data;
 
   const videoSummaries = videos.slice(0, 6).map(v =>
     `TITLE: ${v.title}\nCHANNEL: ${v.channelTitle}\nDESC: ${v.description?.slice(0, 200)}\nVIDEO_ID: ${v.videoId}`
@@ -220,6 +220,10 @@ export function buildMirandaPrompt(data) {
     ? devRedditPosts.map(p => `TITLE: ${p.title}\nAUTHOR: ${p.author}\nCONTENT: ${p.selftext}\nURL: ${p.url}`).join('\n---\n')
     : 'No recent official Reddit posts found.';
 
+  const recentHeadlinesBlock = recentHeadlines?.length > 0
+    ? recentHeadlines.map((h, i) => `${i + 1}. ${h}`).join('\n')
+    : 'None yet — all topics are fair game.';
+
   return `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
 You are the only editor who teaches rather than reports. Write structured guides for new and improving Runners.
@@ -247,7 +251,10 @@ ${videoSummaries}
 REDDIT COMMUNITY TIPS:
 ${redditSummaries}
 
-Choose the most useful guide topic for Runners right now. Reference real shell abilities, weapon stats, and mod names. If there is recent official dev news, prioritize covering it — players want to know what Bungie just announced. Mark dev-sourced guides with guide_category "dev-update" and include "dev-update" in tags.
+TOPICS ALREADY COVERED — DO NOT REPEAT THESE:
+${recentHeadlinesBlock}
+
+Choose the most useful guide topic for Runners right now. Pick something DIFFERENT from the already-covered list above — if you find yourself writing a similar headline, choose a different angle entirely. Reference real shell abilities, weapon stats, and mod names. If there is recent official dev news, prioritize covering it — players want to know what Bungie just announced. Mark dev-sourced guides with guide_category "dev-update" and include "dev-update" in tags.
 
 Also write ONE short promotional tweet for the CyberneticPunks.com interactive tier list builder at cyberneticpunks.com/meta — keep it under 220 chars, punchy and witty. The tier list lets players drag-and-drop weapons and shells into S/A/B/C/D/F tiers and generate a shareable image. Pick a different angle each time from this menu of vibes:
 - Competitive trash talk: "You think that loadout is S-tier? Prove it. cyberneticpunks.com/meta"
