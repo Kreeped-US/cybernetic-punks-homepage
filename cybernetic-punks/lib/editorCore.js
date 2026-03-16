@@ -121,7 +121,6 @@ async function fetchGameContext() {
 
     let output = '';
 
-    // Mods
     if (modsRes.data?.length) {
       const bySlot = {};
       for (const mod of modsRes.data) {
@@ -135,7 +134,6 @@ async function fetchGameContext() {
       output += `\n\n--- WEAPON MODS DATABASE (use exact names only) ---\n${lines}\n--- END MODS ---`;
     }
 
-    // Cores
     if (coresRes.data?.length) {
       const byRunner = {};
       for (const core of coresRes.data) {
@@ -149,7 +147,6 @@ async function fetchGameContext() {
       output += `\n\n--- SHELL CORES DATABASE (shell-specific upgrades, use exact names) ---\n${lines}\n--- END CORES ---`;
     }
 
-    // Implants
     if (implantsRes.data?.length) {
       const bySlot = {};
       for (const imp of implantsRes.data) {
@@ -177,7 +174,7 @@ async function fetchGameContext() {
 }
 
 export function buildMirandaPrompt(data) {
-  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines } = data;
+  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines, xData } = data;
 
   const videoSummaries = videos.slice(0, 6).map(v =>
     `TITLE: ${v.title}\nCHANNEL: ${v.channelTitle}\nDESC: ${v.description?.slice(0, 200)}\nVIDEO_ID: ${v.videoId}`
@@ -226,11 +223,59 @@ export function buildMirandaPrompt(data) {
     ? recentHeadlines.map((h, i) => `${i + 1}. ${h}`).join('\n')
     : 'None yet — all topics are fair game.';
 
+  // X community intelligence — events and creator posts (inline formatted for MIRANDA)
+  let xIntelBlock = '';
+  if (xData?.posts?.length) {
+    let xOut = '\n\n--- X COMMUNITY INTELLIGENCE ---';
+
+    if (xData.eventPosts?.length > 0) {
+      xOut += '\n\n⚡ ACTIVE EVENTS / TOURNAMENTS DETECTED — COVER THESE IMMEDIATELY:\n';
+      xOut += xData.eventPosts.slice(0, 6).map(p =>
+        `@${p.author}${p.is_community ? ' [COMMUNITY VOICE]' : ''}: "${p.text.slice(0, 300)}"\n   ❤ ${p.likes} | 🔁 ${p.retweets} | URL: ${p.url}`
+      ).join('\n\n');
+      xOut += '\n\nINSTRUCTION: If event/tournament data is present above, write your article about THAT EVENT. Cover it in CyberneticPunks voice — who ran it, what happened, why it matters to the Marathon community. Do not write a generic guide when a real community event is happening.';
+    }
+
+    if (xData.officialPosts?.length > 0) {
+      xOut += '\n\nOFFICIAL BUNGIE/MARATHON POSTS:\n';
+      xOut += xData.officialPosts.slice(0, 5).map(p =>
+        `@${p.author}: "${p.text.slice(0, 300)}"`
+      ).join('\n\n');
+    }
+
+    if (xData.communityPosts?.length > 0) {
+      xOut += '\n\nCOMMUNITY CREATOR POSTS (marathonaire, luckyy10p, Nirvous_, chriscovent, vivaladoctor, marathongameHQ, marathongg_, ziegler_dev, taucetiGG):\n';
+      xOut += xData.communityPosts.slice(0, 10).map(p =>
+        `@${p.author}: "${p.text.slice(0, 250)}"\n   ❤ ${p.likes} | 🔁 ${p.retweets}`
+      ).join('\n\n');
+      xOut += '\n\nINSTRUCTION: These are trusted community voices. Use their posts as source material and spin them into original CyberneticPunks content — our analysis, our take, our voice. Never copy verbatim. Reference the community discussion but own the narrative.';
+    }
+
+    if (xData.patchPosts?.length > 0) {
+      xOut += '\n\nPATCH/BALANCE DISCUSSION:\n';
+      xOut += xData.patchPosts.slice(0, 4).map(p =>
+        `@${p.author}: "${p.text.slice(0, 200)}"`
+      ).join('\n\n');
+    }
+
+    xOut += '\n--- END X INTELLIGENCE ---';
+    xIntelBlock = xOut;
+  }
+
   return `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
-You are the only editor who teaches rather than reports. Write structured guides for new and improving Runners.
+You are the only editor who teaches rather than reports. Your primary job is to write structured guides for new and improving Runners — BUT you are also an event reporter. If there is a community tournament, cup, or event happening in the X intelligence below, you MUST cover it as your article instead of a generic guide.
 
-Marathon ranked mode launches soon. Holotags set your extraction score target. Die = lose gear AND rank points. Reference ranked implications when relevant.
+Marathon ranked mode is live. Holotags set your extraction score target. Die = lose gear AND rank points. Reference ranked implications when relevant.
+
+CONTENT PRIORITY ORDER:
+1. Active community events / tournaments (from X intelligence below) — cover immediately
+2. Official Bungie dev news / patch notes — always relevant
+3. Hot community creator discourse (from X) — spin into our own take
+4. Guide content based on YouTube and Reddit
+
+COMMUNITY VOICE RULE: When you see posts from @marathonaire, @luckyy10p, @Nirvous_, @chriscovent, @vivaladoctor, @marathongameHQ, @marathongg_, @ziegler_dev, or @taucetiGG — these are trusted Marathon voices. Use their takes as source material. Write in CyberneticPunks voice. Own the narrative. Never copy verbatim.
+${xIntelBlock}
 
 VERIFIED SHELL DATA (abilities, traits, cooldowns, ranked tiers):
 ${shellData}
@@ -256,9 +301,9 @@ ${redditSummaries}
 TOPICS ALREADY COVERED — DO NOT REPEAT THESE:
 ${recentHeadlinesBlock}
 
-Choose the most useful guide topic for Runners right now. Pick something DIFFERENT from the already-covered list above — if you find yourself writing a similar headline, choose a different angle entirely. Reference real shell abilities, weapon stats, and mod names. If there is recent official dev news, prioritize covering it — players want to know what Bungie just announced. Mark dev-sourced guides with guide_category "dev-update" and include "dev-update" in tags.
+Choose the most useful topic based on the priority order above. If a community event is in the X data, write about that. If a creator is posting about something noteworthy, write our take on it. Otherwise pick a guide topic different from the already-covered list. Reference real shell abilities, weapon stats, and mod names. Mark dev-sourced content with guide_category "dev-update". Mark event/tournament coverage with guide_category "community-event".
 
-Also write ONE short promotional tweet for the CyberneticPunks.com interactive tier list builder at cyberneticpunks.com/meta — keep it under 220 chars, punchy and witty. The tier list lets players drag-and-drop weapons and shells into S/A/B/C/D/F tiers and generate a shareable image. Pick a different angle each time from this menu of vibes:
+Also write ONE short promotional tweet for the CyberneticPunks.com interactive tier list builder at cyberneticpunks.com/meta — keep it under 220 chars, punchy and witty. Pick a different angle each time from this menu of vibes:
 - Competitive trash talk: "You think that loadout is S-tier? Prove it. cyberneticpunks.com/meta"
 - Challenge the reader: "Hot take: Thief is A, not S. Fight me — build your own tier list first. cyberneticpunks.com/meta #Marathon"
 - Confident authority: "NEXUS updates the meta every 6 hours. Your friends are wrong. We have data. cyberneticpunks.com/meta"
@@ -272,17 +317,17 @@ Return ONLY valid JSON — no other text:
 {
   "headline": "guide headline under 80 chars",
   "body": "200-350 words with **bold section headers**. Name real shells, weapons, mods. Be specific and actionable. Note ranked context where relevant.",
-  "guide_category": "beginner|extraction|shell-guide|weapon-guide|mod-guide|progression|map-guide|ranked|dev-update",
+  "guide_category": "beginner|extraction|shell-guide|weapon-guide|mod-guide|progression|map-guide|ranked|dev-update|community-event",
   "shells_covered": ["shell names mentioned"],
   "weapons_covered": ["weapon names mentioned"],
   "mods_covered": ["mod names mentioned"],
   "difficulty_rating": "Beginner|Intermediate|Advanced",
   "ranked_relevant": true,
-  "tags": ["3-5 tags — include ranked and/or dev-update if relevant"],
+  "tags": ["3-5 tags — include ranked and/or dev-update and/or community-event if relevant"],
   "ce_score": 0.0,
   "source_type": "guide",
   "thumbnail": "YouTube thumbnail URL or null",
-  "source_url": "most relevant YouTube, Reddit, or Bungie.net URL",
+  "source_url": "most relevant YouTube, Reddit, Bungie.net, or X post URL",
   "promo_tweet": "witty tier list promo tweet under 220 chars — pick a different vibe each time"
 }`;
 }
@@ -297,9 +342,10 @@ export async function callEditor(editor, userPrompt) {
     if (gameContext) systemPrompt += gameContext;
   }
 
+  // Max tokens per editor — confirmed architecture
   var maxTokens = 1024;
-  if (editor === 'NEXUS') maxTokens = 2048;
-  if (editor === 'MIRANDA') maxTokens = 1536;
+  if (editor === 'NEXUS') maxTokens = 3072;
+  if (editor === 'MIRANDA') maxTokens = 2048;
 
   var message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',

@@ -43,7 +43,7 @@ export async function gatherAll() {
   console.log('[GATHER] Steam: ' + (steamPlayerCount ? steamPlayerCount.toLocaleString() + ' live players' : 'player count unavailable'));
   console.log('[GATHER] Steam reviews: ' + (steamReviews?.reviews?.length || 0) + ' recent reviews');
   console.log('[GATHER] Bungie news: ' + bungieNews.length + ' articles (' + bungieNews.filter(a => a.is_patch_note).length + ' patch-related)');
-  console.log('[GATHER] X pulse: ' + (xPulse?.posts?.length || 0) + ' posts (' + (xPulse?.officialPosts?.length || 0) + ' official)');
+  console.log('[GATHER] X pulse: ' + (xPulse?.posts?.length || 0) + ' posts (' + (xPulse?.officialPosts?.length || 0) + ' official, ' + (xPulse?.communityPosts?.length || 0) + ' community, ' + (xPulse?.eventPosts?.length || 0) + ' events)');
 
   // Format Bungie news for injection into editor prompts
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
@@ -92,6 +92,7 @@ export async function gatherAll() {
   };
 
   // Pass raw data along for thumbnail/URL extraction
+  // ✅ xData is the canonical key used by cron route + editorCore buildMirandaPrompt
   prompts._rawData = {
     youtubeVideos,
     twitchClips,
@@ -99,6 +100,7 @@ export async function gatherAll() {
     steamReviews,
     bungieNews,
     xPulse,
+    xData: xPulse,
   };
 
   // DEXTER stat extraction — fills NULL shell/weapon stats from all sources

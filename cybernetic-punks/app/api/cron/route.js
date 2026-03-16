@@ -79,7 +79,8 @@ async function processEditor(editorName, prompt, rawData) {
     var result;
 
     if (editorName === 'MIRANDA') {
-      var mirandaPrompt = buildMirandaPrompt(prompt);
+      // ✅ Pass xData from rawData so MIRANDA can see community/event posts
+      var mirandaPrompt = buildMirandaPrompt({ ...prompt, xData: rawData.xData || null });
       result = await callEditor('MIRANDA', mirandaPrompt);
     } else {
       result = await callEditor(editorName, prompt);
@@ -168,15 +169,15 @@ async function processEditor(editorName, prompt, rawData) {
 
     // Queue MIRANDA's tier list promo tweet separately
     if (editorName === 'MIRANDA' && result.promo_tweet && feedItem) {
-  await supabase.from('post_queue').insert({
-    tweet_text: result.promo_tweet,
-    content: result.promo_tweet,
-    editor: 'MIRANDA',
-    platform: 'twitter',
-    status: 'pending',
-    headline: 'Tier List Promo',
-    slug: feedItem.slug,
-  });
+      await supabase.from('post_queue').insert({
+        tweet_text: result.promo_tweet,
+        content: result.promo_tweet,
+        editor: 'MIRANDA',
+        platform: 'twitter',
+        status: 'pending',
+        headline: 'Tier List Promo',
+        slug: feedItem.slug,
+      });
       console.log('[CRON] MIRANDA promo tweet queued: ' + result.promo_tweet.slice(0, 60));
     }
 
@@ -196,7 +197,7 @@ async function processEditor(editorName, prompt, rawData) {
 export async function GET() {
   try {
     var prompts = await gatherAll();
-    var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [] };
+    var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null };
 
     var results = await Promise.all([
       processEditor('CIPHER',  prompts.CIPHER,  rawData),
