@@ -1,6 +1,9 @@
 // app/api/steam-count/route.js
 // Returns live Marathon concurrent player count from Steam's public API.
+// Also writes snapshot to Supabase for 24h peak tracking.
 // Cached by Next.js for 5 minutes — no API key required.
+
+import { createClient } from '@supabase/supabase-js';
 
 const MARATHON_APP_ID = 3065800;
 const STEAM_URL = `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${MARATHON_APP_ID}`;
@@ -18,12 +21,22 @@ export async function GET() {
     }
 
     const json = await res.json();
-
-    // Steam returns: { response: { player_count: number, result: 1 } }
     const count = json?.response?.player_count ?? null;
 
     if (count === null) {
       return Response.json({ count: null, error: 'Unexpected Steam response' }, { status: 502 });
+    }
+
+    // Write snapshot to Supabase for 24h peak tracking
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_KEY
+      );
+      await supabase.from('steam_snapshots').insert({ player_count: count });
+    } catch (dbErr) {
+      // Don't fail the request if DB write fails — just log it
+      console.error('[steam-count] snapshot write failed:', dbErr.message);
     }
 
     return Response.json({ count }, {

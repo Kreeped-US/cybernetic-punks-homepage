@@ -2,33 +2,47 @@
 // Aggregates live Marathon stats: Steam current/peak, Twitch viewer count
 // Cached 5 minutes — called client-side from HeroBanner
 
-export const revalidate = 300; // 5 min edge cache
+import { createClient } from '@supabase/supabase-js';
+
+export const revalidate = 300;
 
 const MARATHON_APP_ID = 3065800;
-const MARATHON_GAME_NAME = 'Marathon'; // Twitch game name
+const MARATHON_GAME_NAME = 'Marathon';
 
-async function fetchSteamStats() {
+async function fetchSteamCurrent() {
   try {
-    // Current players
-    const currentRes = await fetch(
+    const res = await fetch(
       `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${MARATHON_APP_ID}`,
       { next: { revalidate: 300 } }
     );
-    const currentJson = await currentRes.json();
-    const current = currentJson?.response?.player_count ?? null;
-
-    // 24h peak via SteamSpy (free, no key required)
-    const spyRes = await fetch(
-      `https://steamspy.com/api.php?request=appdetails&appid=${MARATHON_APP_ID}`,
-      { next: { revalidate: 300 } }
-    );
-    const spyJson = await spyRes.json();
-    const peak24h = spyJson?.ccu ?? null; // SteamSpy `ccu` = 24h peak concurrent
-
-    return { current, peak24h };
+    const json = await res.json();
+    return json?.response?.player_count ?? null;
   } catch (err) {
-    console.log('[live-stats] Steam fetch failed:', err.message);
-    return { current: null, peak24h: null };
+    console.log('[live-stats] Steam current fetch failed:', err.message);
+    return null;
+  }
+}
+
+async function fetchSteamPeak24h() {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    );
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from('steam_snapshots')
+      .select('player_count')
+      .gte('recorded_at', since)
+      .order('player_count', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data) return null;
+    return data.player_count;
+  } catch (err) {
+    console.log('[live-stats] Steam peak fetch failed:', err.message);
+    return null;
   }
 }
 
@@ -42,7 +56,6 @@ async function fetchTwitchStats() {
   }
 
   try {
-    // Get game ID for Marathon
     const gameRes = await fetch(
       `https://api.twitch.tv/helix/games?name=${encodeURIComponent(MARATHON_GAME_NAME)}`,
       {
@@ -57,7 +70,6 @@ async function fetchTwitchStats() {
     const gameId = gameJson?.data?.[0]?.id;
     if (!gameId) return { viewers: null, streams: null };
 
-    // Get live streams for Marathon
     const streamsRes = await fetch(
       `https://api.twitch.tv/helix/streams?game_id=${gameId}&first=100`,
       {
@@ -72,10 +84,7 @@ async function fetchTwitchStats() {
     const streams = streamsJson?.data || [];
     const totalViewers = streams.reduce((sum, s) => sum + (s.viewer_count || 0), 0);
 
-    return {
-      viewers: totalViewers,
-      streams: streams.length,
-    };
+    return { viewers: totalViewers, streams: streams.length };
   } catch (err) {
     console.log('[live-stats] Twitch fetch failed:', err.message);
     return { viewers: null, streams: null };
@@ -83,20 +92,15 @@ async function fetchTwitchStats() {
 }
 
 export async function GET() {
-  const [steam, twitch] = await Promise.all([
-    fetchSteamStats(),
+  const [current, peak24h, twitch] = await Promise.all([
+    fetchSteamCurrent(),
+    fetchSteamPeak24h(),
     fetchTwitchStats(),
   ]);
 
   return Response.json({
-    steam: {
-      current: steam.current,
-      peak24h: steam.peak24h,
-    },
-    twitch: {
-      viewers: twitch.viewers,
-      streams: twitch.streams,
-    },
+    steam: { current, peak24h },
+    twitch: { viewers: twitch.viewers, streams: twitch.streams },
     fetchedAt: new Date().toISOString(),
   }, {
     headers: {
