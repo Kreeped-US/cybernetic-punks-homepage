@@ -77,7 +77,7 @@ const SCHEMAS = {
     { key: 'slot_type',          label: 'Slot Type',      type: 'select',  required: true, options: ['Head', 'Torso', 'Legs', 'Shield'] },
     { key: 'rarity',             label: 'Rarity',         type: 'select',  required: true, options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
     { key: 'compatible_with',    label: 'Compatible With',type: 'select',  options: ['Shell', 'Weapon', 'Both'] },
-    { key: 'required_runner',    label: 'Required Runner',type: 'select',  options: ['', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'required_runner',    label: 'Required Runner',type: 'select',  nullableSelect: true, options: ['Universal', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
     { key: 'description',        label: 'Description',    type: 'textarea' },
     { key: 'passive_name',       label: 'Passive Name',   type: 'text' },
     { key: 'passive_desc',       label: 'Passive Desc',   type: 'textarea' },
@@ -107,7 +107,7 @@ const SCHEMAS = {
     { key: 'name',               label: 'Name',               type: 'text',    required: true },
     { key: 'slug',               label: 'Slug',               type: 'text' },
     { key: 'rarity',             label: 'Rarity',             type: 'select',  required: true, options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
-    { key: 'required_runner',    label: 'Required Runner',    type: 'select',  options: ['', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'required_runner',    label: 'Required Runner',    type: 'select',  nullableSelect: true, options: ['Universal', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
     { key: 'effect_desc',        label: 'Effect Description', type: 'textarea' },
     { key: 'ability_type',       label: 'Ability Type',       type: 'select',  options: ['', 'Prime', 'Tactical', 'Passive', 'Grapple', 'Universal'] },
     { key: 'is_shell_exclusive', label: 'Shell Exclusive',    type: 'boolean' },
@@ -118,6 +118,9 @@ const SCHEMAS = {
     { key: 'notes',              label: 'Notes',              type: 'textarea' },
   ],
 };
+
+// Fields that use 'Universal' as the UI label for a null DB value
+const NULLABLE_SELECT_NULL_VALUE = 'Universal';
 
 const TABS = [
   { key: 'weapon_stats',      label: 'WEAPONS',     color: '#ff8800' },
@@ -157,6 +160,37 @@ const GROUP_COLORS = {
   'Range & Mag':'#9b5de5',
   Flags:        '#00ff88',
 };
+
+// Convert a DB row's null required_runner to 'Universal' for display in selects
+function rowToFormData(row, schema) {
+  const formData = { ...row };
+  schema.forEach(field => {
+    if (field.nullableSelect && (formData[field.key] === null || formData[field.key] === undefined || formData[field.key] === '')) {
+      formData[field.key] = NULLABLE_SELECT_NULL_VALUE;
+    }
+  });
+  return formData;
+}
+
+// Convert 'Universal' back to null before saving to DB
+function formDataToRow(formData, schema) {
+  const row = { ...formData };
+  schema.forEach(field => {
+    if (field.nullableSelect && row[field.key] === NULLABLE_SELECT_NULL_VALUE) {
+      row[field.key] = null;
+    }
+    if (field.type === 'number' && row[field.key] !== '' && row[field.key] !== null && row[field.key] !== undefined) {
+      row[field.key] = Number(row[field.key]);
+    }
+    if (field.type === 'boolean') {
+      row[field.key] = row[field.key] === true || row[field.key] === 'true';
+    }
+    if (row[field.key] === '') {
+      row[field.key] = null;
+    }
+  });
+  return row;
+}
 
 export default function AdminPage() {
   const [password, setPassword]         = useState('');
@@ -205,7 +239,8 @@ export default function AdminPage() {
 
   function startEdit(row) {
     setEditingRow(row.id);
-    setFormData({ ...row });
+    // Convert null required_runner → 'Universal' for display
+    setFormData(rowToFormData(row, SCHEMAS[activeTab] || []));
     setShowAddForm(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -214,7 +249,11 @@ export default function AdminPage() {
     setShowAddForm(true);
     setEditingRow(null);
     const defaults = {};
-    (SCHEMAS[activeTab] || []).forEach(f => { defaults[f.key] = f.type === 'boolean' ? true : ''; });
+    (SCHEMAS[activeTab] || []).forEach(f => {
+      if (f.type === 'boolean') defaults[f.key] = true;
+      else if (f.nullableSelect) defaults[f.key] = NULLABLE_SELECT_NULL_VALUE;
+      else defaults[f.key] = '';
+    });
     setFormData(defaults);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -224,7 +263,8 @@ export default function AdminPage() {
   async function saveEdit() {
     setSaving(true);
     try {
-      const updates = { ...formData };
+      const schema = SCHEMAS[activeTab] || [];
+      const updates = formDataToRow({ ...formData }, schema);
       delete updates.id; delete updates.updated_at; delete updates.created_at;
       const res = await fetch('/api/admin', { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify({ table: activeTab, id: editingRow, updates }) });
       const json = await res.json();
@@ -239,13 +279,9 @@ export default function AdminPage() {
   async function saveNew() {
     setSaving(true);
     try {
-      const row = { ...formData };
+      const schema = SCHEMAS[activeTab] || [];
+      const row = formDataToRow({ ...formData }, schema);
       delete row.id; delete row.updated_at; delete row.created_at;
-      (SCHEMAS[activeTab] || []).forEach(f => {
-        if (f.type === 'number' && row[f.key] !== '' && row[f.key] !== null && row[f.key] !== undefined) row[f.key] = Number(row[f.key]);
-        if (f.type === 'boolean') row[f.key] = row[f.key] === true || row[f.key] === 'true';
-        if (row[f.key] === '') row[f.key] = null;
-      });
       const res = await fetch('/api/admin', { method: 'POST', headers: apiHeaders(), body: JSON.stringify({ table: activeTab, row }) });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
@@ -276,7 +312,10 @@ export default function AdminPage() {
 
   var filtered = rows.filter(r => {
     var matchSearch = !search || Object.values(r).some(v => v && String(v).toLowerCase().includes(search.toLowerCase()));
-    var matchRunner = !filterRunner || r.required_runner === filterRunner || r.shell_name === filterRunner;
+    var matchRunner = !filterRunner
+      || (filterRunner === 'Universal' && (r.required_runner === null || r.required_runner === '' || r.required_runner === undefined))
+      || r.required_runner === filterRunner
+      || r.shell_name === filterRunner;
     return matchSearch && matchRunner;
   });
 
@@ -328,9 +367,13 @@ export default function AdminPage() {
         {field.type === 'textarea' ? (
           <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={3} style={{ ...S.input, resize: 'vertical' }} />
         ) : field.type === 'select' ? (
-          <select value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
-            <option value="">— Select —</option>
-            {(field.options || []).map(o => <option key={o} value={o}>{o}</option>)}
+          <select value={formData[field.key] ?? (field.nullableSelect ? NULLABLE_SELECT_NULL_VALUE : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
+            {!field.nullableSelect && <option value="">— Select —</option>}
+            {(field.options || []).map(o => (
+              <option key={o} value={o}>
+                {o === '' ? '— None —' : o}
+              </option>
+            ))}
           </select>
         ) : field.type === 'boolean' ? (
           <select value={String(formData[field.key] ?? true)} onChange={e => updateField(field.key, e.target.value === 'true')} style={{ ...S.input }}>
@@ -368,7 +411,9 @@ export default function AdminPage() {
       return (
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>{row.name}</span>
-          {row.required_runner && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>{row.required_runner}</span>}
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>
+            {row.required_runner || 'UNIVERSAL'}
+          </span>
           {row.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.rarity}</span>}
           {row.ability_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800' }}>{row.ability_type}</span>}
           {row.meta_rating && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700' }}>META {row.meta_rating}</span>}
@@ -436,6 +481,7 @@ export default function AdminPage() {
             {isCoresOrImplants && (
               <select value={filterRunner} onChange={e => setFilterRunner(e.target.value)} style={{ ...S.input, width: 140 }}>
                 <option value="">All Runners</option>
+                <option value="Universal">Universal</option>
                 {['Assassin','Destroyer','Recon','Rook','Thief','Triage','Vandal'].map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             )}
