@@ -8,11 +8,11 @@ var NAV_ITEMS = [
     label: 'INTEL',
     children: [
       { label: 'ALL INTEL', href: '/intel', desc: 'Every article, every editor' },
-      { label: '◈ CIPHER', href: '/intel/cipher', desc: 'Play analysis & grades', color: '#ff0000' },
-      { label: '⬡ NEXUS', href: '/intel/nexus', desc: 'Meta tracking & strategy', color: '#00f5ff' },
-      { label: '⬢ DEXTER', href: '/intel/dexter', desc: 'Build analysis & loadouts', color: '#ff8800' },
-      { label: '◇ GHOST', href: '/intel/ghost', desc: 'Community pulse & sentiment', color: '#00ff88' },
-      { label: '⬡ SITREP', href: '/sitrep', desc: 'Daily meta situation report', color: '#00f5ff' },
+      { label: 'CIPHER', href: '/intel/cipher', desc: 'Play analysis & grades', color: '#ff0000' },
+      { label: 'NEXUS', href: '/intel/nexus', desc: 'Meta tracking & strategy', color: '#00f5ff' },
+      { label: 'DEXTER', href: '/intel/dexter', desc: 'Build analysis & loadouts', color: '#ff8800' },
+      { label: 'GHOST', href: '/intel/ghost', desc: 'Community pulse & sentiment', color: '#00ff88' },
+      { label: 'SITREP', href: '/sitrep', desc: 'Daily meta situation report', color: '#00f5ff' },
     ],
   },
   {
@@ -20,8 +20,9 @@ var NAV_ITEMS = [
     children: [
       { label: 'META TIER LIST', href: '/meta', desc: "What's winning right now" },
       { label: 'BUILD LAB', href: '/builds', desc: 'Shell builds & weapon tiers' },
+      { label: 'BUILD ADVISOR', href: '/advisor', desc: 'AI-engineered loadouts by DEXTER', color: '#ff8800' },
       { label: 'RANKED GUIDE', href: '/ranked', desc: 'Holotags, tiers & how to climb', color: '#ffd700' },
-      { label: '◎ FIELD GUIDES', href: '/guides', desc: 'Shell breakdowns & strategy', color: '#9b5de5' },
+      { label: 'FIELD GUIDES', href: '/guides', desc: 'Shell breakdowns & strategy', color: '#9b5de5' },
       { label: 'STATS TRACKER', href: '/stats', desc: 'Player lookup & performance' },
       { label: 'LEADERBOARD', href: '/leaderboard', desc: 'Global ranked standings' },
       { label: 'SERVER STATUS', href: '/status', desc: 'Is Marathon down?' },
@@ -34,7 +35,7 @@ var NAV_ITEMS = [
       { label: 'CREATORS', href: '/creators', desc: 'Marathon content creators' },
       { label: 'RISING RUNNERS', href: '/rising', desc: 'Under-50 viewer streamers' },
       { label: 'DISCORD', href: 'https://discord.gg/fgxdSD7SJj', desc: 'Join the community', external: true },
-      { label: '𝕏 / TWITTER', href: 'https://x.com/Cybernetic87250', desc: 'Follow for updates', external: true },
+      { label: 'X / TWITTER', href: 'https://x.com/Cybernetic87250', desc: 'Follow for updates', external: true },
     ],
   },
 ];
@@ -64,7 +65,7 @@ function DropdownItem({ item, onClick }) {
         letterSpacing: 1,
         color: item.color || '#ffffff',
       }}>
-        {item.label} {item.external ? '↗' : ''}
+        {item.label} {item.external ? 'ext' : ''}
       </span>
       {item.desc && (
         <span style={{
@@ -138,7 +139,7 @@ function DesktopDropdown({ item }) {
           transition: 'transform 0.2s',
           transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
         }}>
-          ▼
+          v
         </span>
       </button>
 
@@ -166,7 +167,6 @@ function DesktopDropdown({ item }) {
             height: '1px',
             background: 'linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent)',
           }} />
-
           {item.children.map(function(child) {
             return <DropdownItem key={child.label} item={child} onClick={function() { setOpen(false); }} />;
           })}
@@ -266,7 +266,7 @@ export default function Nav() {
             cursor: 'pointer',
           }}
         >
-          {mobileOpen ? '✕' : '☰'}
+          {mobileOpen ? 'X' : '='}
         </button>
       </div>
 
@@ -325,7 +325,7 @@ export default function Nav() {
                     transition: 'transform 0.2s',
                     transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                   }}>
-                    ▼
+                    v
                   </span>
                 </button>
 
@@ -357,7 +357,7 @@ export default function Nav() {
                             letterSpacing: 1,
                             color: child.color || 'rgba(255,255,255,0.6)',
                           }}>
-                            {child.label} {child.external ? '↗' : ''}
+                            {child.label} {child.external ? 'ext' : ''}
                           </span>
                           {child.desc && (
                             <span style={{
