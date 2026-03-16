@@ -114,7 +114,7 @@ function confidencePct(item) {
   const c = item.grade_confidence;
   if (c === 'high') return '94%';
   if (c === 'medium') return '75%';
-  return null; // don't show for low confidence
+  return null;
 }
 
 function statPct(val, max) {
@@ -133,6 +133,13 @@ function tierColor(tier) {
 function truncate(str, max) {
   if (!str) return '';
   return str.length > max ? str.slice(0, max).trimEnd() + '…' : str;
+}
+
+function formatNum(n) {
+  if (n == null) return '—';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toLocaleString();
 }
 
 // ─── SUB-COMPONENTS ─────────────────────────────────────────
@@ -219,11 +226,54 @@ function ShellInlineCard({ shell, accentColor }) {
   );
 }
 
+// ─── LIVE STAT CELL ─────────────────────────────────────────
+function LiveStatCell({ value, label, color, isLive = false, sublabel = null }) {
+  return (
+    <div style={{ background: '#030303', padding: '14px 16px', textAlign: 'center', position: 'relative' }}>
+      {isLive && (
+        <div style={{
+          position: 'absolute', top: 8, right: 10,
+          display: 'flex', alignItems: 'center', gap: 4,
+        }}>
+          <div style={{
+            width: 4, height: 4, borderRadius: '50%',
+            background: color, boxShadow: `0 0 5px ${color}`,
+            animation: 'heroPulse 2s ease-in-out infinite',
+          }} />
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: color, opacity: 0.7, letterSpacing: 1 }}>LIVE</span>
+        </div>
+      )}
+      <div style={{
+        fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 800,
+        lineHeight: 1, color: color,
+        textShadow: isLive ? `0 0 12px ${color}40` : 'none',
+      }}>
+        {value}
+      </div>
+      {sublabel && (
+        <div style={{
+          fontFamily: 'Share Tech Mono, monospace', fontSize: 8,
+          color: color, opacity: 0.4, letterSpacing: 1, marginTop: 3,
+        }}>
+          {sublabel}
+        </div>
+      )}
+      <div style={{
+        fontFamily: 'Share Tech Mono, monospace', fontSize: 8,
+        color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: sublabel ? 2 : 6,
+      }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
 export default function HeroBanner() {
   const [countdown, setCountdown] = useState(() => formatCountdown(getSecondsToNextCron()));
   const [data, setData] = useState(null);
+  const [liveStats, setLiveStats] = useState(null);
   const intervalRef = useRef(null);
 
   // Countdown ticker
@@ -234,7 +284,24 @@ export default function HeroBanner() {
     return () => clearInterval(intervalRef.current);
   }, []);
 
-  // Data fetch
+  // Live stats fetch (Steam + Twitch) — separate from main data, refreshes every 5min
+  useEffect(() => {
+    async function fetchLive() {
+      try {
+        const res = await fetch('/api/live-stats', { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const json = await res.json();
+          setLiveStats(json);
+        }
+      } catch (_) { /* silently fall back to — */ }
+    }
+    fetchLive();
+    // Refresh every 5 minutes
+    const liveInterval = setInterval(fetchLive, 5 * 60 * 1000);
+    return () => clearInterval(liveInterval);
+  }, []);
+
+  // Main data fetch
   useEffect(() => {
     async function fetchAll() {
       try {
@@ -266,58 +333,39 @@ export default function HeroBanner() {
           supabase.from('feed_items').select('*', { count: 'exact', head: true }).eq('editor', 'MIRANDA').gte('created_at', todayISO),
         ]);
 
-        // Sort meta tiers client-side (S → A → B → C → D → F)
         const metaTiers = (metaTiersRaw.data || [])
           .sort((a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99))
           .slice(0, 6);
 
-        // Weapon lookup map
         const weaponMap = {};
         (allWeapons.data || []).forEach(w => { weaponMap[w.name.toLowerCase()] = w; });
         const shellMap = {};
         (allShells.data || []).forEach(s => { shellMap[s.name.toLowerCase()] = s; });
 
-        // CIPHER weapons
         const cipher = cipherLatest.data;
         const cipherWeaponNames = cipher ? scanWeapons(cipher.tags, cipher.body) : [];
         const cipherWeapons = cipherWeaponNames.map(n => weaponMap[n.toLowerCase()]).filter(Boolean).slice(0, 2);
 
-        // DEXTER weapons + shell
         const dexter = dexterLatest.data;
         const dexterWeaponNames = dexter ? scanWeapons(dexter.tags, dexter.body) : [];
         const dexterWeapons = dexterWeaponNames.map(n => weaponMap[n.toLowerCase()]).filter(Boolean).slice(0, 1);
         const dexterShellName = dexter ? scanShell(dexter.tags, dexter.body) : null;
         const dexterShell = dexterShellName ? shellMap[dexterShellName.toLowerCase()] || { name: dexterShellName } : null;
 
-        // Mods featured
         const dexterMods = Array.isArray(dexter?.mods_featured)
           ? dexter.mods_featured.slice(0, 3).join(' • ')
           : null;
 
-        // GHOST mood
         const ghost = ghostLatest.data;
         const moodScore = ghost?.ce_score ?? null;
         const moodText = ghost ? truncate(ghost.headline || ghost.body, 120) : null;
 
-        // Steam count (optional — try fetching from our own API)
-        let steamCount = null;
-        try {
-          const steamRes = await fetch('/api/steam-count', { signal: AbortSignal.timeout(3000) });
-          if (steamRes.ok) {
-            const steamJson = await steamRes.json();
-            steamCount = steamJson.count ?? null;
-          }
-        } catch (_) { /* Steam count unavailable — shows — */ }
-
         setData({
-          // Data strip
           weaponCount: weaponCount.count ?? 0,
           coreCount: coreCount.count ?? 0,
           modCount: modCount.count ?? 0,
           metaShifts: metaShifts.count ?? 0,
           topTierName: topTier.data?.name ?? null,
-          steamCount,
-          // Spotlight cards
           cipher,
           cipherWeapons,
           cipherGrade: computeGrade(cipher, 'CIPHER'),
@@ -331,7 +379,6 @@ export default function HeroBanner() {
           ghost,
           moodScore,
           moodText,
-          // Pulse strip
           pulse: {
             cipher: cipherToday.count ?? 0,
             nexus: nexusToday.count ?? 0,
@@ -349,6 +396,7 @@ export default function HeroBanner() {
   }, []);
 
   const d = data;
+  const ls = liveStats;
 
   // ─── RENDER ───────────────────────────────────────────────
   return (
@@ -394,60 +442,72 @@ export default function HeroBanner() {
         </div>
 
         {/* ── SECTION 2: LIVE DATA STRIP ── */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1,
-          background: 'rgba(0,245,255,0.04)',
-          border: '1px solid rgba(0,245,255,0.06)',
-          borderRadius: 8, overflow: 'hidden',
-          margin: '16px 0 28px',
-        }}>
-          {[
-            {
-              value: d?.steamCount != null ? d.steamCount.toLocaleString() : '—',
-              label: 'RUNNERS ONLINE',
-              color: '#00ff88',
-            },
-            {
-              value: d != null ? String(d.weaponCount) : '—',
-              label: 'WEAPONS TRACKED',
-              color: '#00f5ff',
-            },
-            {
-              value: d != null ? String(d.coreCount) : '—',
-              label: 'CORES INDEXED',
-              color: '#ff8800',
-            },
-            {
-              value: d != null ? String(d.modCount) : '—',
-              label: 'MODS CATALOGED',
-              color: 'rgba(255,255,255,0.4)',
-            },
-            {
-              value: d != null ? String(d.metaShifts) : '—',
-              label: 'META SHIFTS TODAY',
-              color: '#ff0000',
-            },
-            {
-              value: d?.topTierName ? 'S' : '—',
-              label: d?.topTierName ? `TOP TIER: ${d.topTierName.toUpperCase()}` : 'TOP TIER',
-              color: '#ffd700',
-            },
-          ].map((cell, i) => (
-            <div key={i} style={{ background: '#030303', padding: '14px 16px', textAlign: 'center' }}>
-              <div style={{
-                fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 800,
-                lineHeight: 1, color: cell.color,
-              }}>
-                {cell.value}
-              </div>
-              <div style={{
-                fontFamily: 'Share Tech Mono, monospace', fontSize: 8,
-                color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 6,
-              }}>
-                {cell.label}
-              </div>
-            </div>
-          ))}
+        {/* Top row: live gaming stats (Steam + Twitch) */}
+        <div style={{ marginTop: 16 }}>
+          {/* Live Gaming Bar */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1,
+            background: 'rgba(0,255,136,0.03)',
+            border: '1px solid rgba(0,255,136,0.08)',
+            borderRadius: '8px 8px 0 0', overflow: 'hidden',
+          }}>
+            <LiveStatCell
+              value={ls?.steam?.current != null ? formatNum(ls.steam.current) : (d?.steamCount != null ? formatNum(d.steamCount) : '—')}
+              label="RUNNERS ONLINE"
+              color="#00ff88"
+              isLive={true}
+            />
+            <LiveStatCell
+              value={ls?.steam?.peak24h != null ? formatNum(ls.steam.peak24h) : '—'}
+              label="24H PEAK"
+              color="#00ff88"
+              sublabel="STEAM"
+            />
+            <LiveStatCell
+              value={ls?.twitch?.viewers != null ? formatNum(ls.twitch.viewers) : '—'}
+              label="WATCHING NOW"
+              color="#9b5de5"
+              isLive={ls?.twitch?.viewers != null}
+              sublabel="TWITCH"
+            />
+            <LiveStatCell
+              value={ls?.twitch?.streams != null ? String(ls.twitch.streams) : '—'}
+              label="LIVE STREAMS"
+              color="#9b5de5"
+              sublabel="TWITCH"
+            />
+          </div>
+
+          {/* Intel DB Bar */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1,
+            background: 'rgba(0,245,255,0.03)',
+            border: '1px solid rgba(0,245,255,0.06)',
+            borderTop: 'none',
+            borderRadius: '0 0 8px 8px', overflow: 'hidden',
+            marginBottom: 28,
+          }}>
+            <LiveStatCell
+              value={d != null ? String(d.weaponCount) : '—'}
+              label="WEAPONS TRACKED"
+              color="#00f5ff"
+            />
+            <LiveStatCell
+              value={d != null ? String(d.modCount) : '—'}
+              label="MODS CATALOGED"
+              color="#00f5ff"
+            />
+            <LiveStatCell
+              value={d != null ? String(d.metaShifts) : '—'}
+              label="META SHIFTS TODAY"
+              color="#ff0000"
+            />
+            <LiveStatCell
+              value={d?.topTierName ? 'S' : '—'}
+              label={d?.topTierName ? `TOP TIER: ${d.topTierName.toUpperCase()}` : 'TOP TIER'}
+              color="#ffd700"
+            />
+          </div>
         </div>
 
         {/* ── SECTION 3: HEADLINE ── */}
@@ -629,7 +689,6 @@ export default function HeroBanner() {
           <span style={{ fontSize: 18, color: '#00ff88', opacity: 0.4, flexShrink: 0 }}>◇</span>
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(0,255,136,0.4)', letterSpacing: 2, flexShrink: 0 }}>GHOST</span>
           <div style={{ width: 1, height: 20, background: 'rgba(0,255,136,0.1)', flexShrink: 0 }} />
-          {/* Mood meter */}
           <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
             {Array.from({ length: 10 }, (_, i) => {
               const filled = d?.moodScore != null ? i < Math.round(d.moodScore) : false;
@@ -667,7 +726,7 @@ export default function HeroBanner() {
           .hero-spotlight-grid { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 700px) {
-          .hero-data-strip { grid-template-columns: repeat(3, 1fr) !important; }
+          .hero-data-strip { grid-template-columns: repeat(2, 1fr) !important; }
           .hero-pulse-strip { overflow-x: auto; }
         }
       `}</style>
@@ -693,10 +752,7 @@ function SpotlightCard({ href, accentColor, editorSymbol, editorName, badgeLabel
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Top accent line */}
       <div style={{ height: 2, background: `linear-gradient(90deg, ${accentColor}, ${accentColor}18)`, flexShrink: 0 }} />
-
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px 10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: accentColor, boxShadow: `0 0 6px ${accentColor}`, flexShrink: 0 }} />
@@ -712,13 +768,9 @@ function SpotlightCard({ href, accentColor, editorSymbol, editorName, badgeLabel
           {badgeLabel}
         </span>
       </div>
-
-      {/* Content */}
       <div style={{ padding: '0 18px 14px', flex: 1 }}>
         {loading ? <LoadingState /> : children}
       </div>
-
-      {/* Footer */}
       <div style={{
         padding: '10px 18px',
         borderTop: '1px solid rgba(255,255,255,0.03)',
@@ -727,9 +779,6 @@ function SpotlightCard({ href, accentColor, editorSymbol, editorName, badgeLabel
       }}>
         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: accentColor + '80', letterSpacing: 1 }}>
           VIEW FULL {badgeLabel} →
-        </span>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.1)', letterSpacing: 1 }}>
-          {/* timestamp rendered inside children if needed */}
         </span>
       </div>
     </Link>
