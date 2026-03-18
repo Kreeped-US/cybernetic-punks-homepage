@@ -70,6 +70,10 @@ function resolveMediaInfo(result, rawData, editorName) {
   return { thumbnail: null, source_url: null, source: 'YOUTUBE' };
 }
 
+function sleep(ms) {
+  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
 async function processEditor(editorName, prompt, rawData) {
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
@@ -79,11 +83,10 @@ async function processEditor(editorName, prompt, rawData) {
     var result;
 
     if (editorName === 'MIRANDA') {
-      // ✅ Pass xData from rawData so MIRANDA can see community/event posts
       var mirandaPrompt = buildMirandaPrompt({ ...prompt, xData: rawData.xData || null });
-      result = await callEditor('MIRANDA', mirandaPrompt);
+      result = await callEditor('MIRANDA', mirandaPrompt, supabase);
     } else {
-      result = await callEditor(editorName, prompt);
+      result = await callEditor(editorName, prompt, supabase);
     }
 
     if (!result || !result.headline || result._parseError) {
@@ -126,24 +129,29 @@ async function processEditor(editorName, prompt, rawData) {
     }
 
     // NEXUS meta_update — auto-update meta_tiers table
+    // Hard filter: only weapon and shell types allowed through
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
       try {
         await supabase.from('meta_tiers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-        var metaRows = result.meta_update.map(function(item) {
-          return {
-            name: item.name,
-            type: item.type || 'weapon',
-            tier: item.tier || 'B',
-            trend: item.trend || 'stable',
-            note: item.note || '',
-            ranked_note: item.ranked_note || null,
-            ranked_tier_solo: item.ranked_tier_solo || null,
-            ranked_tier_squad: item.ranked_tier_squad || null,
-            holotag_tier: item.holotag_tier || null,
-            updated_at: new Date().toISOString(),
-          };
-        });
+        var metaRows = result.meta_update
+          .filter(function(item) {
+            return item.type === 'weapon' || item.type === 'shell';
+          })
+          .map(function(item) {
+            return {
+              name: item.name,
+              type: item.type,
+              tier: item.tier || 'B',
+              trend: item.trend || 'stable',
+              note: item.note || '',
+              ranked_note: item.ranked_note || null,
+              ranked_tier_solo: item.ranked_tier_solo || null,
+              ranked_tier_squad: item.ranked_tier_squad || null,
+              holotag_tier: item.holotag_tier || null,
+              updated_at: new Date().toISOString(),
+            };
+          });
 
         var { error: metaError } = await supabase.from('meta_tiers').insert(metaRows);
         if (metaError) {
@@ -167,7 +175,7 @@ async function processEditor(editorName, prompt, rawData) {
       queued = await postTweet(feedItem);
     }
 
-    // Queue MIRANDA's tier list promo tweet separately
+    // Queue MIRANDA's site promo tweet separately
     if (editorName === 'MIRANDA' && result.promo_tweet && feedItem) {
       await supabase.from('post_queue').insert({
         tweet_text: result.promo_tweet,
@@ -175,7 +183,7 @@ async function processEditor(editorName, prompt, rawData) {
         editor: 'MIRANDA',
         platform: 'twitter',
         status: 'pending',
-        headline: 'Tier List Promo',
+        headline: 'Site Promo',
         slug: feedItem.slug,
       });
       console.log('[CRON] MIRANDA promo tweet queued: ' + result.promo_tweet.slice(0, 60));
@@ -199,16 +207,23 @@ export async function GET() {
     var prompts = await gatherAll();
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null };
 
-    var results = await Promise.all([
-      processEditor('CIPHER',  prompts.CIPHER,  rawData),
-      processEditor('NEXUS',   prompts.NEXUS,   rawData),
-      processEditor('DEXTER',  prompts.DEXTER,  rawData),
-      processEditor('GHOST',   prompts.GHOST,   rawData),
-      processEditor('MIRANDA', prompts.MIRANDA, rawData),
-    ]);
+    // Staggered sequential calls — prevents hitting 30k input token/min rate limit
+    var results = [];
+    var editors = [
+      { name: 'CIPHER',  prompt: prompts.CIPHER  },
+      { name: 'NEXUS',   prompt: prompts.NEXUS   },
+      { name: 'DEXTER',  prompt: prompts.DEXTER  },
+      { name: 'GHOST',   prompt: prompts.GHOST   },
+      { name: 'MIRANDA', prompt: prompts.MIRANDA },
+    ];
+
+    for (var i = 0; i < editors.length; i++) {
+      if (i > 0) await sleep(15000); // 15s gap — lets token usage reset between editors
+      var editorResult = await processEditor(editors[i].name, editors[i].prompt, rawData);
+      results.push(editorResult);
+    }
 
     var succeeded = results.filter(function(r) { return r.success; }).length;
-
     var tweetResult = await postFromQueue();
 
     return Response.json({
