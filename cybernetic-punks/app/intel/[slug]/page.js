@@ -89,7 +89,7 @@ export async function generateMetadata({ params }) {
   }
   var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).single();
   if (!item) return { title: 'Intel Not Found' };
-  var desc = item.body && item.body.length > 200 ? item.body.slice(0, 197) + '...' : item.body;
+  var desc = item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline;
   return {
     title: item.headline,
     description: desc,
@@ -247,10 +247,16 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
   var shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — via @Cybernetic87250') + '&url=' + encodeURIComponent(articleUrl);
   var shareReddit = 'https://www.reddit.com/submit?url=' + encodeURIComponent(articleUrl) + '&title=' + encodeURIComponent(item.headline);
 
+  // ── FIX 1: Properly truncated description for JSON-LD ──
   var jsonLd = {
     '@context': 'https://schema.org', '@type': 'Article',
-    headline: item.headline, description: item.body,
-    author: { '@type': 'Organization', name: 'CyberneticPunks ' + item.editor, url: 'https://cyberneticpunks.com' },
+    headline: item.headline,
+    description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
+    author: {
+      '@type': 'Organization',
+      name: item.editor + ' — CyberneticPunks',
+      url: 'https://cyberneticpunks.com/intel/' + item.editor.toLowerCase(),
+    },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
     datePublished: item.created_at, dateModified: item.created_at,
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
@@ -555,15 +561,34 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  var [itemResult, shellResult, weaponResult, modResult, relatedResult] = await Promise.all([
+  // ── FIX 2: Fetch article first, then use its tags for related articles ──
+  var [itemResult, shellResult, weaponResult, modResult] = await Promise.all([
     supabase.from('feed_items').select('*').eq('slug', slug).single(),
     supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name').limit(20),
     supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type').limit(40),
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(60),
-    supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).neq('slug', slug).order('created_at', { ascending: false }).limit(6),
   ]);
 
   if (!itemResult.data) notFound();
+
+  // Tag-based related articles — finds articles sharing the most tags
+  var related = [];
+  try {
+    var articleTags = itemResult.data.tags || [];
+    if (articleTags.length > 0) {
+      var rpcResult = await supabase.rpc('get_related_articles', {
+        p_article_id: itemResult.data.id,
+        p_tags: articleTags,
+        p_limit: 6,
+      });
+      if (!rpcResult.error && rpcResult.data) related = rpcResult.data;
+    }
+    // Fallback to recent articles if no tags or RPC returns nothing
+    if (related.length === 0) {
+      var fallback = await supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).neq('slug', slug).order('created_at', { ascending: false }).limit(6);
+      if (!fallback.error && fallback.data) related = fallback.data;
+    }
+  } catch (err) { /* non-fatal — page still renders without related */ }
 
   return (
     <ArticlePage
@@ -571,7 +596,7 @@ export default async function IntelPage({ params }) {
       shells={shellResult.data || []}
       weapons={weaponResult.data || []}
       mods={modResult.data || []}
-      related={relatedResult.data || []}
+      related={related}
     />
   );
 }
