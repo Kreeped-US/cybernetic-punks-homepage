@@ -94,12 +94,16 @@ export default async function BuildsPage() {
     metaTiersRes,
     dexterArticlesRes,
     topDexterRes,
+    shellStatValuesRes,
+    coresRes,
   ] = await Promise.all([
     supabase.from('weapon_stats').select('id, name, weapon_type, ammo_type, rarity, damage, fire_rate, firepower_score, accuracy_score, handling_score, range_rating, magazine_size, ranked_viable, image_filename').order('firepower_score', { ascending: false, nullsFirst: false }),
-    supabase.from('shell_stats').select('id, name, role, difficulty, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, trait_1_name, ranked_tier_solo, ranked_tier_squad, best_for, image_filename').order('name'),
+    supabase.from('shell_stats').select('id, name, role, difficulty, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, trait_1_name, ranked_tier_solo, ranked_tier_squad, best_for, recommended_playstyle, image_filename').order('name'),
     supabase.from('meta_tiers').select('name, type, tier, trend, note, ranked_note, updated_at').order('tier'),
     supabase.from('feed_items').select('id, headline, slug, tags, ce_score, thumbnail, created_at, body').eq('editor', 'DEXTER').eq('is_published', true).order('created_at', { ascending: false }).limit(48),
     supabase.from('feed_items').select('id, headline, slug, tags, ce_score, thumbnail, created_at').eq('editor', 'DEXTER').eq('is_published', true).order('ce_score', { ascending: false }).limit(6),
+    supabase.from('shell_stat_values').select('shell_name, stat_name, stat_value').order('shell_name'),
+    supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, ability_type, meta_rating').order('rarity', { ascending: false }),
   ]);
 
   var weapons = weaponsRes.data || [];
@@ -107,6 +111,37 @@ export default async function BuildsPage() {
   var metaTiers = metaTiersRes.data || [];
   var dexterArticles = dexterArticlesRes.data || [];
   var topBuilds = topDexterRes.data || [];
+  var shellStatValues = shellStatValuesRes.data || [];
+  var allCores = coresRes.data || [];
+
+  // Build shell stat values lookup: { 'Thief': { 'Agility': 85, 'Loot Speed': 90, ... } }
+  var shellStatMap = {};
+  shellStatValues.forEach(function(sv) {
+    if (!shellStatMap[sv.shell_name]) shellStatMap[sv.shell_name] = {};
+    shellStatMap[sv.shell_name][sv.stat_name] = sv.stat_value;
+  });
+
+  // Build cores lookup: { 'Thief': [...], 'null': [...universal] }
+  var coresByShell = {};
+  var universalCores = [];
+  allCores.forEach(function(c) {
+    if (!c.required_runner) {
+      universalCores.push(c);
+    } else {
+      if (!coresByShell[c.required_runner]) coresByShell[c.required_runner] = [];
+      coresByShell[c.required_runner].push(c);
+    }
+  });
+
+  // Stat display order for shell_stat_values
+  var STAT_ORDER = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Hardware', 'Finisher Siphon', 'Revive Speed', 'Firewall', 'Fall Resistance', 'Ping Duration'];
+  var STAT_COLORS = {
+    'Heat Capacity': '#ff4444', 'Agility': '#00f5ff', 'Loot Speed': '#ffd700',
+    'Melee Damage': '#ff8800', 'Prime Recovery': '#cc44ff', 'Tactical Recovery': '#9b5de5',
+    'Self-Repair Speed': '#00ff88', 'Hardware': '#888888', 'Finisher Siphon': '#ff6644',
+    'Revive Speed': '#00ff88', 'Firewall': '#00f5ff', 'Fall Resistance': '#ccaa44',
+    'Ping Duration': '#88aaff',
+  };
 
   // Build meta lookup maps
   var metaWeaponMap = {};
@@ -342,80 +377,188 @@ export default async function BuildsPage() {
         <section style={{ padding: '0 20px 48px', maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ marginBottom: 20 }}>
             <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px 0', letterSpacing: 2 }}>RUNNER SHELLS</h2>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>LIVE STATS FROM DATABASE — HP / SHIELD / ABILITIES / RANKED TIER</div>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>LIVE DATA — HP / SHIELD / UNIQUE STATS / ABILITIES / CORES / RANKED TIERS</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {shells.map(function(shell) {
               var color = SHELL_COLORS[shell.name] || ORANGE;
               var metaTier = metaShellMap[shell.name.toLowerCase()];
               var articleCount = (articlesByShell[shell.name.toLowerCase()] || []).length;
-              var hpPct = maxHp > 0 ? Math.round((shell.base_health || 0) / maxHp * 100) : 0;
-              var shieldPct = maxHp > 0 ? Math.round((shell.base_shield || 0) / maxHp * 100) : 0;
+              var shellStats = shellStatMap[shell.name] || {};
+              var shellCores = (coresByShell[shell.name] || []).slice(0, 3);
+              var topUniversalCores = universalCores.slice(0, 2);
+              var hasStats = Object.keys(shellStats).length > 0;
+              var displayTier = metaTier ? metaTier.tier : shell.ranked_tier_solo;
+
+              // Get ordered stats that exist for this shell
+              var orderedStats = STAT_ORDER.filter(function(s) { return shellStats[s] != null; });
+              var maxStatVal = orderedStats.length > 0 ? Math.max.apply(null, orderedStats.map(function(s) { return shellStats[s] || 0; })) : 100;
 
               return (
-                <a key={shell.id} href={'#shell-' + shell.name.toLowerCase()} className="shell-card" style={{ display: 'block', background: '#0a0a0a', border: '1px solid ' + color + '22', borderTop: '3px solid ' + color + '88', borderRadius: 8, padding: '18px 16px', textDecoration: 'none' }}>
-                  {/* Header */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <a key={shell.id} href={'#shell-' + shell.name.toLowerCase()} className="shell-card" style={{ display: 'block', background: '#0a0a0a', border: '1px solid ' + color + '22', borderLeft: '4px solid ' + color, borderRadius: 8, textDecoration: 'none', overflow: 'hidden' }}>
+
+                  {/* TOP ACCENT LINE */}
+                  <div style={{ height: 2, background: 'linear-gradient(90deg, ' + color + ', ' + color + '18)', flexShrink: 0 }} />
+
+                  <div style={{ padding: '20px 20px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+
+                    {/* COL 1: Identity + HP/Shield + Abilities */}
                     <div>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 2 }}>{shell.name.toUpperCase()}</div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{shell.role || ''}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      {metaTier && <TierBadge tier={metaTier.tier} size="lg" />}
-                      {!metaTier && shell.ranked_tier_solo && <TierBadge tier={shell.ranked_tier_solo} size="lg" />}
-                    </div>
-                  </div>
+                      {/* Name + tier */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                        <div>
+                          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: color, letterSpacing: 2, marginBottom: 3 }}>{shell.name.toUpperCase()}</div>
+                          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>{shell.role || ''}</div>
+                          {shell.best_for && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4, lineHeight: 1.4 }}>{shell.best_for}</div>}
+                        </div>
+                        {displayTier && <TierBadge tier={displayTier} size="lg" />}
+                      </div>
 
-                  {/* HP / Shield bars */}
-                  {(shell.base_health || shell.base_shield) && (
-                    <div style={{ marginBottom: 12 }}>
-                      {shell.base_health && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: GREEN, letterSpacing: 1, width: 20 }}>HP</span>
-                          {statBar(shell.base_health, maxHp, GREEN)}
-                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: GREEN, width: 28, textAlign: 'right' }}>{shell.base_health}</span>
+                      {/* HP + Shield bars */}
+                      {(shell.base_health || shell.base_shield) && (
+                        <div style={{ marginBottom: 14 }}>
+                          {shell.base_health && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+                              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: GREEN, letterSpacing: 1, width: 18, flexShrink: 0 }}>HP</span>
+                              {statBar(shell.base_health, maxHp, GREEN)}
+                              <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: GREEN, width: 30, textAlign: 'right', flexShrink: 0 }}>{shell.base_health}</span>
+                            </div>
+                          )}
+                          {shell.base_shield && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: CYAN, letterSpacing: 1, width: 18, flexShrink: 0 }}>SH</span>
+                              {statBar(shell.base_shield, maxHp, CYAN)}
+                              <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: CYAN, width: 30, textAlign: 'right', flexShrink: 0 }}>{shell.base_shield}</span>
+                            </div>
+                          )}
                         </div>
                       )}
-                      {shell.base_shield && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: CYAN, letterSpacing: 1, width: 20 }}>SH</span>
-                          {statBar(shell.base_shield, maxHp, CYAN)}
-                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: CYAN, width: 28, textAlign: 'right' }}>{shell.base_shield}</span>
+
+                      {/* Abilities */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {shell.prime_ability_name && (
+                          <div style={{ background: color + '10', border: '1px solid ' + color + '25', borderRadius: 4, padding: '6px 10px' }}>
+                            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: color + '88', letterSpacing: 2, marginBottom: 2 }}>PRIME</div>
+                            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 1 }}>{shell.prime_ability_name}</div>
+                          </div>
+                        )}
+                        {shell.tactical_ability_name && (
+                          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '6px 10px' }}>
+                            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 2 }}>TACTICAL</div>
+                            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: 1 }}>{shell.tactical_ability_name}</div>
+                          </div>
+                        )}
+                        {shell.trait_1_name && (
+                          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 4, padding: '6px 10px' }}>
+                            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: 2, marginBottom: 2 }}>TRAIT</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{shell.trait_1_name}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* COL 2: Shell Stat Values radar */}
+                    <div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 3, marginBottom: 12 }}>SHELL STATS</div>
+                      {hasStats ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          {orderedStats.map(function(statName) {
+                            var val = shellStats[statName];
+                            var statColor = STAT_COLORS[statName] || 'rgba(255,255,255,0.4)';
+                            var pct = maxStatVal > 0 ? Math.round((val / maxStatVal) * 100) : 0;
+                            return (
+                              <div key={statName} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', width: 80, flexShrink: 0, letterSpacing: 0.5 }}>{statName.toUpperCase().slice(0, 12)}</span>
+                                <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: pct + '%', background: statColor, borderRadius: 2 }} />
+                                </div>
+                                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 9, fontWeight: 700, color: statColor, width: 26, textAlign: 'right', flexShrink: 0 }}>{val}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.12)', letterSpacing: 1, paddingTop: 8 }}>
+                          STATS SEEDING — CHECK BACK SOON
+                        </div>
+                      )}
+
+                      {/* Ranked tiers */}
+                      <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+                        {shell.ranked_tier_solo && (
+                          <div style={{ textAlign: 'center', background: (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '12', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '33', borderRadius: 4, padding: '6px 10px' }}>
+                            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: TIER_COLORS[shell.ranked_tier_solo] || '#888', lineHeight: 1 }}>{shell.ranked_tier_solo}</div>
+                            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 3 }}>SOLO</div>
+                          </div>
+                        )}
+                        {shell.ranked_tier_squad && (
+                          <div style={{ textAlign: 'center', background: (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '12', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '33', borderRadius: 4, padding: '6px 10px' }}>
+                            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: TIER_COLORS[shell.ranked_tier_squad] || '#888', lineHeight: 1 }}>{shell.ranked_tier_squad}</div>
+                            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 3 }}>SQUAD</div>
+                          </div>
+                        )}
+                        {metaTier && metaTier.note && (
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.3)', alignSelf: 'center', flex: 1, lineHeight: 1.4 }}>
+                            {metaTier.note}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* COL 3: Cores */}
+                    <div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 3, marginBottom: 12 }}>TOP CORES</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {shellCores.length > 0 ? shellCores.map(function(core) {
+                          var r = RARITY_COLORS[core.rarity] || RARITY_COLORS.Standard;
+                          return (
+                            <div key={core.name} style={{ background: r.bg, border: '1px solid ' + r.border, borderRadius: 4, padding: '8px 10px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: core.effect_desc ? 4 : 0 }}>
+                                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: r.color, letterSpacing: 1, lineHeight: 1.2 }}>{core.name}</div>
+                                {core.ability_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: r.color + '88', letterSpacing: 1, flexShrink: 0, marginLeft: 4 }}>{core.ability_type.toUpperCase()}</span>}
+                              </div>
+                              {core.effect_desc && (
+                                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.4 }}>
+                                  {core.effect_desc.slice(0, 80)}{core.effect_desc.length > 80 ? '...' : ''}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }) : (
+                          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.12)', letterSpacing: 1 }}>NO CORES SEEDED YET</div>
+                        )}
+
+                        {/* Show 1 universal core as bonus */}
+                        {topUniversalCores.length > 0 && shellCores.length < 3 && (
+                          <div>
+                            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: 2, marginTop: 4, marginBottom: 4 }}>UNIVERSAL</div>
+                            {topUniversalCores.slice(0, 1).map(function(core) {
+                              var r = RARITY_COLORS[core.rarity] || RARITY_COLORS.Standard;
+                              return (
+                                <div key={core.name} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '8px 10px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: 1 }}>{core.name}</div>
+                                    {core.ability_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{core.ability_type.toUpperCase()}</span>}
+                                  </div>
+                                  {core.effect_desc && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 1.4 }}>{core.effect_desc.slice(0, 70)}{core.effect_desc.length > 70 ? '...' : ''}</div>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Article link */}
+                      {articleCount > 0 && (
+                        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ORANGE + '88', letterSpacing: 1 }}>
+                            {articleCount} BUILD GUIDE{articleCount !== 1 ? 'S' : ''} &rarr;
+                          </span>
                         </div>
                       )}
                     </div>
-                  )}
 
-                  {/* Abilities */}
-                  {shell.prime_ability_name && (
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '99', letterSpacing: 1, marginBottom: 3 }}>
-                      PRIME: <span style={{ color: 'rgba(255,255,255,0.5)' }}>{shell.prime_ability_name}</span>
-                    </div>
-                  )}
-                  {shell.tactical_ability_name && (
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 1, marginBottom: 10 }}>
-                      TACTICAL: <span style={{ color: 'rgba(255,255,255,0.4)' }}>{shell.tactical_ability_name}</span>
-                    </div>
-                  )}
-
-                  {/* Footer */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {shell.ranked_tier_solo && (
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: TIER_COLORS[shell.ranked_tier_solo] || '#888', background: (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '14', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '33', borderRadius: 2, padding: '2px 5px', letterSpacing: 1 }}>
-                          SOLO {shell.ranked_tier_solo}
-                        </span>
-                      )}
-                      {shell.ranked_tier_squad && (
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: TIER_COLORS[shell.ranked_tier_squad] || '#888', background: (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '14', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '33', borderRadius: 2, padding: '2px 5px', letterSpacing: 1 }}>
-                          SQUAD {shell.ranked_tier_squad}
-                        </span>
-                      )}
-                    </div>
-                    {articleCount > 0 && (
-                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ORANGE + '77', letterSpacing: 1 }}>{articleCount} GUIDE{articleCount !== 1 ? 'S' : ''}</span>
-                    )}
                   </div>
                 </a>
               );
