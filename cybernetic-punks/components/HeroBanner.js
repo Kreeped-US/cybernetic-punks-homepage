@@ -494,24 +494,7 @@ export default function HeroBanner() {
           </div>
         )}
 
-        {/* GHOST MOOD BAR */}
-        <div style={{ display:'flex', flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:16, background:'rgba(0,255,136,0.015)', border:'1px solid rgba(0,255,136,0.06)', borderRadius:8, padding:isMobile?'14px 16px':'14px 20px', marginBottom:8 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:18, color:'#00ff88', opacity:0.4, flexShrink:0 }}>G</span>
-            <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(0,255,136,0.4)', letterSpacing:2, flexShrink:0 }}>GHOST</span>
-            {d?.moodScore!=null && <span style={{ fontFamily:'Orbitron, monospace', fontSize:14, fontWeight:700, color:'#00ff88', flexShrink:0 }}>{d.moodScore.toFixed(1)}</span>}
-          </div>
-          <div style={{ display:'flex', gap:3, width:isMobile?'100%':'auto', flexShrink:0 }}>
-            {Array.from({length:10}, function(_,i){
-              var filled = d?.moodScore!=null ? i<Math.round(d.moodScore) : false;
-              return <div key={i} style={{ flex:isMobile?1:'none', width:isMobile?'auto':20, height:4, borderRadius:2, background:filled?'#00ff88':'rgba(255,255,255,0.04)', boxShadow:filled?'0 0 4px rgba(0,255,136,0.3)':'none' }} />;
-            })}
-          </div>
-          <span style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.3)', flex:1, lineHeight:1.4 }}>
-            {d?.moodText??(d===null?'...':'AWAITING GHOST DATA')}
-          </span>
-          {!isMobile && <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.1)', letterSpacing:1, flexShrink:0 }}>REDDIT + X + STEAM</span>}
-        </div>
+
 
       </div>
 
