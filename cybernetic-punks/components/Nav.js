@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 
 var NAV_ITEMS = [
   { label: 'HOME', href: '/' },
+  { label: 'SHELLS', href: '/shells' },
   {
     label: 'INTEL',
     children: [
@@ -23,8 +24,6 @@ var NAV_ITEMS = [
       { label: 'BUILD ADVISOR', href: '/advisor', desc: 'AI-engineered loadouts by DEXTER', color: '#ff8800' },
       { label: 'RANKED GUIDE', href: '/ranked', desc: 'Holotags, tiers & how to climb', color: '#ffd700' },
       { label: 'FIELD GUIDES', href: '/guides', desc: 'Shell breakdowns & strategy', color: '#9b5de5' },
-      { label: 'STATS TRACKER', href: '/stats', desc: 'Player lookup & performance' },
-      { label: 'LEADERBOARD', href: '/leaderboard', desc: 'Global ranked standings' },
       { label: 'SERVER STATUS', href: '/status', desc: 'Is Marathon down?' },
     ],
   },
@@ -32,8 +31,6 @@ var NAV_ITEMS = [
     label: 'COMMUNITY',
     children: [
       { label: 'AI EDITORS', href: '/editors', desc: 'Meet the five editors' },
-      { label: 'CREATORS', href: '/creators', desc: 'Marathon content creators' },
-      { label: 'RISING RUNNERS', href: '/rising', desc: 'Under-50 viewer streamers' },
       { label: 'DISCORD', href: 'https://discord.gg/fgxdSD7SJj', desc: 'Join the community', external: true },
       { label: 'X / TWITTER', href: 'https://x.com/Cybernetic87250', desc: 'Follow for updates', external: true },
     ],
