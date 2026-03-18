@@ -1,1047 +1,600 @@
 // app/builds/page.js
-// DEXTER'S BUILD LAB — Shell-organized build hub with weapon quick-ref
-// Pulls DEXTER articles from Supabase, enriched with shell_stats + weapon_stats
+// DEXTER BUILD LAB — Live data, weapon stats, meta pulse, shell intel
 
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 
 export const revalidate = 300;
 
-// ─── SEO METADATA ───────────────────────────────────────────────
 export const metadata = {
   title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides | CyberneticPunks',
-  description: 'DEXTER grades the builds. Auto-updated Marathon loadout guides for every Runner Shell — Destroyer, Vandal, Recon, Assassin, Triage, Thief. Weapon tier list, core combos, and meta analysis updated every 6 hours.',
-  keywords: 'Marathon builds, Marathon loadouts, Marathon best weapons, Marathon Destroyer build, Marathon Assassin build, Marathon Thief build, Marathon weapon tier list, Marathon cores, Marathon implants, best Marathon shell, Marathon Season 1 meta',
+  description: 'DEXTER grades the builds. Live weapon stats, shell rankings, meta tier data and loadout guides for every Runner Shell — updated every 6 hours.',
+  keywords: 'Marathon builds, Marathon loadouts, Marathon best weapons, Marathon weapon stats, Marathon shell tier list, Marathon cores, Marathon meta',
   openGraph: {
-    title: "Marathon Builds & Loadouts — DEXTER's Build Lab | CyberneticPunks",
-    description: 'Auto-updated Marathon build guides for every Runner Shell. Weapon tiers, core combos, and loadout analysis refreshed every 6 hours.',
+    title: "Marathon Builds — DEXTER's Build Lab | CyberneticPunks",
+    description: 'Live weapon stats, shell rankings, meta tiers and loadout analysis. Updated every 6 hours by DEXTER.',
     url: 'https://cyberneticpunks.com/builds',
     type: 'website',
   },
 };
 
-// ─── CONSTANTS ──────────────────────────────────────────────────
-const DEXTER_ORANGE = '#ff8800';
+// ─── CONSTANTS ──────────────────────────────────────────────
+const ORANGE = '#ff8800';
 const CYAN = '#00f5ff';
-const BLACK = '#030303';
 const RED = '#ff0000';
 const GREEN = '#00ff88';
+const BLACK = '#030303';
 
-const SHELLS = [
-  { name: 'Destroyer', role: 'Frontline Combat',   icon: '⬢', color: '#ff4444', description: 'Thrusters, aggression, Search & Destroy. Built to push fights.' },
-  { name: 'Vandal',    role: 'Mobility Specialist', icon: '⬡', color: '#ff8800', description: 'Jump jets, movement chaining, chaos in motion.' },
-  { name: 'Recon',     role: 'Intel Gatherer',      icon: '◈', color: '#00f5ff', description: 'Echo Pulse, scanning, information warfare.' },
-  { name: 'Assassin',  role: 'Stealth Operator',    icon: '◇', color: '#cc44ff', description: 'Active Camo, Shadow Dive, invisibility kills.' },
-  { name: 'Triage',    role: 'Combat Support',      icon: '◎', color: '#00ff88', description: 'Healing, team sustain, frontline medic.' },
-  { name: 'Thief',     role: 'Loot Specialist',     icon: '⬠', color: '#ffcc00', description: 'X-Ray Visor, Pickpocket Drone, extraction expert.' },
-];
+const RARITY_COLORS = {
+  Standard:  { color: '#888888', bg: '#88888818', border: '#88888833' },
+  Enhanced:  { color: '#00ff88', bg: '#00ff8812', border: '#00ff8830' },
+  Deluxe:    { color: '#00f5ff', bg: '#00f5ff12', border: '#00f5ff30' },
+  Superior:  { color: '#9b5de5', bg: '#9b5de512', border: '#9b5de530' },
+  Prestige:  { color: '#ffd700', bg: '#ffd70012', border: '#ffd70030' },
+};
 
-const WEAPON_CATEGORIES = [
-  {
-    category: 'Assault Rifles',
-    picks: [
-      { name: 'M77 Assault Rifle', tier: 'S', ammo: 'Medium Rounds', note: 'Best all-rounder. Damage, range, accuracy.' },
-      { name: 'Overrun AR',        tier: 'S', ammo: 'Medium Rounds', note: '720 RPM pressure. Forgiving for new players.' },
-      { name: 'Impact HAR',        tier: 'A', ammo: 'Heavy Rounds',  note: 'Hardest-hitting AR. High recoil, high reward.' },
-      { name: 'V75 Scar',          tier: 'B', ammo: 'Volt Battery',  note: 'Energy AR. Spinning barrel, unique feel.' },
-      { name: 'CE Tactical',       tier: 'B', ammo: 'Light Rounds',  note: 'Starter AR. Prestige mod unlocks invis on kill.' },
-    ],
-  },
-  {
-    category: 'SMGs',
-    picks: [
-      { name: 'BRRT SMG',         tier: 'S', ammo: 'Medium Rounds', note: 'Highest SMG damage per shot. Corridor king.' },
-      { name: 'Bully SMG',        tier: 'A', ammo: 'Medium Rounds', note: 'Burst-fire. Consistent close-range performer.' },
-      { name: 'V22 Volt Thrower', tier: 'B', ammo: 'Volt Battery',  note: 'Lock-on system. Niche but modable.' },
-    ],
-  },
-  {
-    category: 'Shotguns',
-    picks: [
-      { name: 'WSTR Combat Shotgun', tier: 'S', ammo: 'MIPS', note: 'Double-barrel delete button. Iconic.' },
-      { name: 'Copperhead RF',       tier: 'A', ammo: 'MIPS', note: 'Semi-auto. More range than WSTR.' },
-    ],
-  },
-  {
-    category: 'Precision Rifles',
-    picks: [
-      { name: 'Hardline PR',  tier: 'S', ammo: 'Medium Rounds', note: 'MIDA vibes. Rewarding for headshot players.' },
-      { name: 'Stryder M1T', tier: 'S', ammo: 'Medium Rounds', note: 'Destiny players will feel right at home.' },
-    ],
-  },
-  {
-    category: 'Sniper Rifles',
-    picks: [
-      { name: 'Longshot', tier: 'S', ammo: 'MIPS', note: 'Top long-range pick. Clean sightlines.' },
-      { name: 'Outland',  tier: 'A', ammo: 'MIPS', note: 'Solid secondary sniper option.' },
-    ],
-  },
-  {
-    category: 'Machine Guns',
-    picks: [
-      { name: 'Retaliator LMG', tier: 'A', ammo: 'Heavy Rounds', note: 'Area denial. Shield mod slot.' },
-      { name: 'Conquest LMG',   tier: 'A', ammo: 'Light Rounds',  note: 'Lighter LMG option. Good sustained fire.' },
-      { name: 'Demolition HMG', tier: 'B', ammo: 'Heavy Rounds', note: 'Slow but devastating. Niche use.' },
-    ],
-  },
-  {
-    category: 'Railguns',
-    picks: [
-      { name: 'Ares RG',     tier: 'S', ammo: 'Volt Cells', note: 'Charged devastation. Ammo is scarce.' },
-      { name: 'V00 Zeus RG', tier: 'B', ammo: 'Volt Cells', note: 'Alternative energy rail. Lower tier.' },
-    ],
-  },
-  {
-    category: 'Sidearms',
-    picks: [
-      { name: 'Magnum MC',    tier: 'A', ammo: 'Heavy Rounds',  note: 'Hand cannon. Best pistol if you can aim.' },
-      { name: 'Misriah 2442', tier: 'A', ammo: 'Medium Rounds', note: 'Reliable backup. Solid stats.' },
-      { name: 'CE Tactical',  tier: 'B', ammo: 'Medium Rounds', note: 'Budget sidearm. Good for new runners.' },
-    ],
-  },
-];
+const TIER_COLORS = { S: RED, A: ORANGE, B: CYAN, C: '#aaaaaa', D: '#555555' };
 
-const DEXTER_PICKS = [
-  {
-    id: 'extractor',
-    shell: 'Thief',
-    style: 'Stealth · Solo',
-    grade: 'A',
-    name: 'The Extractor',
-    description: 'Get in, grab loot, get out alive. WSTR up close, Hardline PR for mid-range threats. Built for consistent extraction across all maps.',
-    weapons: ['WSTR Combat Shotgun', 'Hardline PR'],
-    strengths: ['Fast extraction times', 'Strong in CQC', 'Works solo or team'],
-    weaknesses: ['Loses mid-range duels', 'Low sustained ammo'],
-    color: '#ffcc00',
-  },
-  {
-    id: 'aggressor',
-    shell: 'Destroyer',
-    style: 'Striker · Aggressive',
-    grade: 'A',
-    name: 'The Aggressor',
-    description: 'Maximum pressure build. BRRT SMG deletes runners in corridors, Ares RG punishes anyone who tries to disengage.',
-    weapons: ['BRRT SMG', 'Ares RG'],
-    strengths: ['Fastest TTK in close range', 'Wins almost every 1v1', 'Thruster synergy'],
-    weaknesses: ['Volt Cells scarce', 'Poor at long range', 'Expensive to lose'],
-    color: '#ff4444',
-  },
-  {
-    id: 'marksman',
-    shell: 'Recon',
-    style: 'Precision · Mid-Range',
-    grade: 'A',
-    name: 'The Marksman',
-    description: 'Stryder M1T for mid-range consistency, Magnum MC as a punishing sidearm. Echo Pulse gives you target info before engagements even start.',
-    weapons: ['Stryder M1T', 'Magnum MC'],
-    strengths: ['High skill ceiling', 'Excellent sightline control', 'Good information advantage'],
-    weaknesses: ['Weak in CQC', 'Requires aim discipline', 'Low area denial'],
-    color: '#00f5ff',
-  },
-  {
-    id: 'rookie',
-    shell: 'Rook',
-    style: 'Beginner · Balanced',
-    grade: 'B+',
-    name: 'Rookie Runner',
-    description: 'M77 Assault Rifle carries you through most engagements. Misriah 2442 as backup. Forgiving kit for your first dozen runs.',
-    weapons: ['M77 Assault Rifle', 'Misriah 2442'],
-    strengths: ['Very forgiving', 'Cheap to replace on death', 'Good for learning maps'],
-    weaknesses: ['Low ceiling in PvP', 'Outscaled by A-tier builds', 'Limited utility'],
-    color: '#aaaaaa',
-  },
-  {
-    id: 'frontline',
-    shell: 'Vandal',
-    style: 'Frontline · Squad',
-    grade: 'A-',
-    name: 'Jump Jet Frontline',
-    description: 'Retaliator LMG for area denial, WSTR Combat Shotgun to punish anyone who pushes. Vandal jump jets let you reposition after every burst.',
-    weapons: ['Retaliator LMG', 'WSTR Combat Shotgun'],
-    strengths: ['Best area denial in game', 'Forces enemy rotations', 'Team force multiplier'],
-    weaknesses: ['Heavy loadout slows movement', 'Relies on team follow-up', 'Expensive'],
-    color: '#ff8800',
-  },
-  {
-    id: 'sniper',
-    shell: 'Assassin',
-    style: 'Stealth · Long Range',
-    grade: 'B+',
-    name: 'Silent Operator',
-    description: 'Longshot from concealment, Overrun AR for any runner who gets close. Active Camo lets you reposition between shots safely.',
-    weapons: ['Longshot', 'Overrun AR'],
-    strengths: ['Safe repositioning', 'High-value target elimination', 'Zero noise signature'],
-    weaknesses: ['Useless if spotted', 'Slow loot speed', 'MIPS ammo scarce'],
-    color: '#cc44ff',
-  },
-];
+const SHELL_COLORS = {
+  Destroyer: '#ff3333', Vandal: '#ff8800', Recon: '#00f5ff',
+  Assassin: '#cc44ff', Triage: '#00ff88', Thief: '#ffd700', Rook: '#aaaaaa',
+};
 
-const TIER_COLORS = { S: '#ff0000', A: '#ff8800', B: '#ffcc00', C: '#00f5ff', D: '#666666' };
-const RANKED_TIER_COLORS = { S: '#ff0000', A: '#ff8800', B: '#ffcc00', C: '#00f5ff', D: '#666' };
+const AMMO_COLORS = {
+  'Light Rounds': '#aaaaaa', 'Medium Rounds': '#cc9944', 'Heavy Rounds': '#ff6644',
+  'Volt Cells': '#8844ff', 'Volt Battery': '#00f5ff', 'MIPS': '#ffd700', 'None': '#444',
+};
 
-// ─── PAGE COMPONENT ─────────────────────────────────────────────
-export default async function BuildsPage() {
-
-  // Fetch DEXTER articles
-  const { data: dexterArticles } = await supabase
-    .from('feed_items')
-    .select('id, headline, slug, tags, ce_score, thumbnail, created_at')
-    .eq('editor', 'DEXTER')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .limit(60);
-
-  // Fetch shell stats for all shells
-  let shellMap = {};
-  try {
-    const { data: shellData } = await supabase
-      .from('shell_stats')
-      .select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_desc, passive_ability_name, passive_ability_desc, ranked_tier_solo, ranked_tier_squad, strengths, weaknesses');
-    if (shellData) {
-      for (const s of shellData) shellMap[s.name.toLowerCase()] = s;
-    }
-  } catch (err) {}
-
-  // Fetch weapon stats for enrichment
-  let weaponMap = {};
-  try {
-    const { data: weaponData } = await supabase
-      .from('weapon_stats')
-      .select('name, category, ammo_type, damage, fire_rate, magazine_size, reload_time, range_rating, ranked_viable');
-    if (weaponData) {
-      for (const w of weaponData) weaponMap[w.name.toLowerCase()] = w;
-    }
-  } catch (err) {}
-
-  // Group articles by shell — cap at 4 per shell
-  const shellNames = SHELLS.map(s => s.name.toLowerCase());
-  const articlesByShell = {};
-  const generalArticles = [];
-
-  (dexterArticles || []).forEach(article => {
-    const tags = (article.tags || []).map(t => t.toLowerCase());
-    const headline = (article.headline || '').toLowerCase();
-    let matchedShell = null;
-
-    for (const shell of shellNames) {
-      if (tags.includes(shell) || headline.includes(shell)) {
-        matchedShell = shell;
-        break;
-      }
-    }
-
-    if (matchedShell) {
-      if (!articlesByShell[matchedShell]) articlesByShell[matchedShell] = [];
-      if (articlesByShell[matchedShell].length < 4) {
-        articlesByShell[matchedShell].push(article);
-      }
-    } else {
-      if (generalArticles.length < 12) generalArticles.push(article);
-    }
-  });
-
-  const totalUniqueArticles = Object.values(articlesByShell).reduce((sum, arr) => sum + arr.length, 0) + generalArticles.length;
-
+function statBar(val, max, color) {
+  var pct = Math.min(100, Math.round(((val || 0) / max) * 100));
   return (
-    <main style={{ background: BLACK, minHeight: '100vh', color: '#ffffff' }}>
-
-      {/* ─── HERO ─────────────────────────────────────── */}
-      <section style={{
-        padding: '120px 20px 60px',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div style={{
-          position: 'absolute',
-          top: '-50%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, ' + DEXTER_ORANGE + '15 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', margin: '0 auto' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '6px 16px',
-            border: '1px solid ' + DEXTER_ORANGE + '44',
-            borderRadius: '4px',
-            marginBottom: '20px',
-            fontSize: '13px',
-            fontFamily: 'var(--font-mono)',
-            color: DEXTER_ORANGE,
-            letterSpacing: '2px',
-          }}>
-            <span style={{ fontSize: '16px' }}>⬢</span> DEXTER — BUILD ENGINEER
-          </div>
-          <h1 style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: 'clamp(2rem, 6vw, 3.5rem)',
-            fontWeight: 700,
-            lineHeight: 1.1,
-            margin: '0 0 16px 0',
-            color: '#ffffff',
-          }}>
-            BUILD <span style={{ color: DEXTER_ORANGE }}>LAB</span>
-          </h1>
-          <p style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '17px',
-            color: '#999999',
-            lineHeight: 1.6,
-            maxWidth: '600px',
-            margin: '0 auto 24px',
-          }}>
-            Loadout guides for every Runner Shell — graded, explained, and
-            updated every 6 hours from what top creators are actually running.
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', flexWrap: 'wrap' }}>
-            <Stat label="BUILDS ANALYZED"  value={totalUniqueArticles} color={DEXTER_ORANGE} />
-            <Stat label="RUNNER SHELLS"    value="6"                   color={CYAN} />
-            <Stat label="WEAPONS TRACKED"  value="28"                  color={RED} />
-            <Stat label="UPDATE CYCLE"     value="6H"                  color={GREEN} />
-          </div>
-        </div>
-      </section>
-
-      {/* ─── SHELL QUICK NAV ─────────────────────────── */}
-      <section style={{ padding: '0 20px 40px', maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-          {SHELLS.map(shell => {
-            const stats = shellMap[shell.name.toLowerCase()];
-            const count = articlesByShell[shell.name.toLowerCase()]?.length || 0;
-            return (
-              <a key={shell.name} href={'#shell-' + shell.name.toLowerCase()} style={{
-                display: 'block',
-                padding: '16px',
-                background: '#0a0a0a',
-                border: '1px solid ' + shell.color + '33',
-                borderTop: '2px solid ' + shell.color + '88',
-                borderRadius: '6px',
-                textDecoration: 'none',
-              }}>
-                <div style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '13px',
-                  color: shell.color,
-                  letterSpacing: '1px',
-                  marginBottom: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}>
-                  <span>{shell.icon}</span> {shell.name.toUpperCase()}
-                </div>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-                  {shell.role} · {count} {count === 1 ? 'guide' : 'guides'}
-                </div>
-                {/* Ranked badges if available */}
-                {stats && (stats.ranked_tier_solo || stats.ranked_tier_squad) && (
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {stats.ranked_tier_solo && (
-                      <span style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '9px',
-                        color: RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888',
-                        background: (RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888') + '18',
-                        border: '1px solid ' + (RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888') + '33',
-                        borderRadius: '3px',
-                        padding: '1px 6px',
-                        letterSpacing: '1px',
-                      }}>
-                        SOLO {stats.ranked_tier_solo}
-                      </span>
-                    )}
-                    {stats.ranked_tier_squad && (
-                      <span style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '9px',
-                        color: RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888',
-                        background: (RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888') + '18',
-                        border: '1px solid ' + (RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888') + '33',
-                        borderRadius: '3px',
-                        padding: '1px 6px',
-                        letterSpacing: '1px',
-                      }}>
-                        SQUAD {stats.ranked_tier_squad}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </a>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ─── WEAPON QUICK REFERENCE ──────────────────── */}
-      <section style={{ padding: '40px 20px', maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
-            WEAPON QUICK REFERENCE
-          </h2>
-          <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            color: DEXTER_ORANGE,
-            padding: '2px 8px',
-            border: '1px solid ' + DEXTER_ORANGE + '44',
-            borderRadius: '3px',
-            letterSpacing: '1px',
-          }}>
-            SEASON 1
-          </span>
-        </div>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', marginBottom: '24px' }}>
-          28 weapons across 8 categories · 5 ammo types · 5 rarity tiers (Standard → Prestige)
-        </p>
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px',
-          marginBottom: '24px',
-          padding: '12px 16px',
-          background: '#0a0a0a',
-          borderRadius: '6px',
-          border: '1px solid #1a1a1a',
-        }}>
-          <AmmoTag name="Light Rounds"  color="#aaaaaa" />
-          <AmmoTag name="Medium Rounds" color="#ccaa88" />
-          <AmmoTag name="Heavy Rounds"  color="#ff6644" />
-          <AmmoTag name="Volt Battery"  color="#00f5ff" />
-          <AmmoTag name="Volt Cells"    color="#8844ff" />
-          <AmmoTag name="MIPS"          color="#ffcc00" />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-          {WEAPON_CATEGORIES.map(cat => (
-            <div key={cat.category} style={{
-              background: '#0a0a0a',
-              border: '1px solid #1a1a1a',
-              borderRadius: '6px',
-              padding: '16px',
-            }}>
-              <h3 style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '13px',
-                color: DEXTER_ORANGE,
-                letterSpacing: '1px',
-                marginBottom: '12px',
-                textTransform: 'uppercase',
-              }}>
-                {cat.category}
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {cat.picks.map(weapon => {
-                  const wStats = weaponMap[weapon.name.toLowerCase()];
-                  return (
-                    <div key={weapon.name} style={{
-                      padding: '10px 0',
-                      borderBottom: '1px solid #111111',
-                    }}>
-                      {/* Top row */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                        <span style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          color: TIER_COLORS[weapon.tier],
-                          minWidth: '20px',
-                          paddingTop: '1px',
-                        }}>
-                          {weapon.tier}
-                        </span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, color: '#ffffff', marginBottom: '2px' }}>
-                            {weapon.name}
-                          </div>
-                          <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#666' }}>
-                            {weapon.note}
-                          </div>
-                        </div>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#444', whiteSpace: 'nowrap' }}>
-                          {weapon.ammo}
-                        </span>
-                      </div>
-                      {/* Stat strip from DB if available */}
-                      {wStats && (wStats.damage || wStats.fire_rate || wStats.range_rating || wStats.magazine_size) && (
-                        <div style={{
-                          display: 'flex',
-                          gap: '12px',
-                          marginTop: '8px',
-                          paddingLeft: '30px',
-                          flexWrap: 'wrap',
-                        }}>
-                          {wStats.damage && <MiniStat label="DMG" value={wStats.damage} color={RED} />}
-                          {wStats.fire_rate && <MiniStat label="RPM" value={wStats.fire_rate} color={DEXTER_ORANGE} />}
-                          {wStats.magazine_size && <MiniStat label="MAG" value={wStats.magazine_size} color="#ffcc00" />}
-                          {wStats.reload_time && <MiniStat label="RELOAD" value={wStats.reload_time + 's'} color="#888" />}
-                          {wStats.range_rating && <MiniStat label="RANGE" value={wStats.range_rating} color={CYAN} />}
-                          {wStats.ranked_viable === false && <MiniStat label="RANKED" value="AVOID" color={RED} />}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── DEXTER'S PICKS ──────────────────────────── */}
-      <section style={{ padding: '40px 20px', maxWidth: '1100px', margin: '0 auto' }}>
-        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: '#ffffff', marginBottom: '8px' }}>
-          DEXTER&apos;S PICKS
-        </h2>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', marginBottom: '24px' }}>
-          Hand-graded loadouts rated by effectiveness, versatility, and skill floor. Real weapons. Real shells.
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-          {DEXTER_PICKS.map(build => {
-            const shellStats = shellMap[build.shell.toLowerCase()];
-            return (
-              <div key={build.id} style={{
-                background: '#0a0a0a',
-                border: '1px solid ' + build.color + '33',
-                borderTop: '2px solid ' + build.color + '88',
-                borderRadius: '6px',
-                padding: '20px',
-                position: 'relative',
-                overflow: 'hidden',
-              }}>
-                {/* Grade watermark */}
-                <div style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  color: build.grade.startsWith('S') ? RED : build.grade.startsWith('A') ? DEXTER_ORANGE : CYAN,
-                  opacity: 0.2,
-                  lineHeight: 1,
-                }}>
-                  {build.grade}
-                </div>
-
-                {/* Shell + style label */}
-                <div style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  color: build.color,
-                  letterSpacing: '1px',
-                  marginBottom: '6px',
-                  textTransform: 'uppercase',
-                }}>
-                  {build.shell} · {build.style}
-                </div>
-
-                <h3 style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '18px',
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  margin: '0 0 10px 0',
-                }}>
-                  {build.name}
-                </h3>
-
-                <p style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '13px',
-                  color: '#888',
-                  lineHeight: 1.5,
-                  marginBottom: '14px',
-                }}>
-                  {build.description}
-                </p>
-
-                {/* Shell stat strip from DB */}
-                {shellStats && (shellStats.base_health || shellStats.base_speed || shellStats.active_ability_name || shellStats.ranked_tier_solo) && (
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '10px',
-                    padding: '10px 12px',
-                    background: '#111',
-                    borderRadius: '4px',
-                    marginBottom: '14px',
-                    border: '1px solid #1a1a1a',
-                  }}>
-                    {shellStats.base_health && <MiniStat label="HP" value={shellStats.base_health} color={GREEN} />}
-                    {shellStats.base_shield && <MiniStat label="SHIELD" value={shellStats.base_shield} color={CYAN} />}
-                    {shellStats.base_speed && <MiniStat label="SPEED" value={shellStats.base_speed} color="#ffcc00" />}
-                    {shellStats.active_ability_name && <MiniStat label="ACTIVE" value={shellStats.active_ability_name} color={DEXTER_ORANGE} />}
-                    {shellStats.passive_ability_name && <MiniStat label="PASSIVE" value={shellStats.passive_ability_name} color={DEXTER_ORANGE} />}
-                    {shellStats.ranked_tier_solo && <MiniStat label="SOLO" value={shellStats.ranked_tier_solo} color={RANKED_TIER_COLORS[shellStats.ranked_tier_solo] || '#888'} />}
-                    {shellStats.ranked_tier_squad && <MiniStat label="SQUAD" value={shellStats.ranked_tier_squad} color={RANKED_TIER_COLORS[shellStats.ranked_tier_squad] || '#888'} />}
-                  </div>
-                )}
-
-                {/* Weapons */}
-                <div style={{ marginBottom: '14px' }}>
-                  <div style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '10px',
-                    color: '#444',
-                    letterSpacing: '1px',
-                    marginBottom: '6px',
-                  }}>
-                    WEAPONS
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {build.weapons.map(w => {
-                      const wStats = weaponMap[w.toLowerCase()];
-                      return (
-                        <div key={w}>
-                          <span style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '11px',
-                            color: '#ccc',
-                            padding: '3px 8px',
-                            background: '#111',
-                            borderRadius: '3px',
-                            border: '1px solid #222',
-                            display: 'block',
-                            marginBottom: wStats && (wStats.damage || wStats.fire_rate) ? '4px' : '0',
-                          }}>
-                            {w}
-                          </span>
-                          {wStats && (wStats.damage || wStats.fire_rate || wStats.range_rating) && (
-                            <div style={{ display: 'flex', gap: '8px', paddingLeft: '4px' }}>
-                              {wStats.damage && <MiniStat label="DMG" value={wStats.damage} color={RED} />}
-                              {wStats.fire_rate && <MiniStat label="RPM" value={wStats.fire_rate} color={DEXTER_ORANGE} />}
-                              {wStats.range_rating && <MiniStat label="RNG" value={wStats.range_rating} color={CYAN} />}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Strengths / Weaknesses */}
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: GREEN, letterSpacing: '1px', marginBottom: '4px' }}>
-                      STRENGTHS
-                    </div>
-                    {build.strengths.map(s => (
-                      <div key={s} style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#777', lineHeight: 1.6 }}>
-                        + {s}
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: RED, letterSpacing: '1px', marginBottom: '4px' }}>
-                      WEAKNESSES
-                    </div>
-                    {build.weaknesses.map(w => (
-                      <div key={w} style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: '#777', lineHeight: 1.6 }}>
-                        − {w}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ─── SHELL SECTIONS ──────────────────────────── */}
-      {SHELLS.map(shell => {
-        const shellKey = shell.name.toLowerCase();
-        const articles = articlesByShell[shellKey] || [];
-        const stats = shellMap[shellKey];
-
-        return (
-          <section key={shell.name} id={'shell-' + shellKey} style={{
-            padding: '40px 20px',
-            maxWidth: '1100px',
-            margin: '0 auto',
-            borderTop: '1px solid ' + shell.color + '22',
-          }}>
-            {/* Shell header */}
-            <div style={{
-              background: '#0a0a0a',
-              border: '1px solid ' + shell.color + '22',
-              borderLeft: '3px solid ' + shell.color,
-              borderRadius: '6px',
-              padding: '20px 24px',
-              marginBottom: '20px',
-            }}>
-              {/* Name + role row */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '12px',
-                marginBottom: stats ? '16px' : '0',
-              }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '20px', color: shell.color }}>{shell.icon}</span>
-                    <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: shell.color, margin: 0 }}>
-                      {shell.name.toUpperCase()}
-                    </h2>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '11px',
-                      color: '#666',
-                      padding: '2px 8px',
-                      border: '1px solid #222',
-                      borderRadius: '3px',
-                    }}>
-                      {shell.role}
-                    </span>
-                  </div>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', margin: 0 }}>
-                    {shell.description}
-                  </p>
-                </div>
-
-                {/* Ranked badges */}
-                {stats && (stats.ranked_tier_solo || stats.ranked_tier_squad) && (
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {stats.ranked_tier_solo && (
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontFamily: 'var(--font-heading)',
-                          fontSize: '22px',
-                          fontWeight: 900,
-                          color: RANKED_TIER_COLORS[stats.ranked_tier_solo] || '#888',
-                          lineHeight: 1,
-                        }}>
-                          {stats.ranked_tier_solo}
-                        </div>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#444', letterSpacing: '1px', marginTop: '2px' }}>
-                          SOLO
-                        </div>
-                      </div>
-                    )}
-                    {stats.ranked_tier_solo && stats.ranked_tier_squad && (
-                      <div style={{ width: '1px', height: '32px', background: '#222' }} />
-                    )}
-                    {stats.ranked_tier_squad && (
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontFamily: 'var(--font-heading)',
-                          fontSize: '22px',
-                          fontWeight: 900,
-                          color: RANKED_TIER_COLORS[stats.ranked_tier_squad] || '#888',
-                          lineHeight: 1,
-                        }}>
-                          {stats.ranked_tier_squad}
-                        </div>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#444', letterSpacing: '1px', marginTop: '2px' }}>
-                          SQUAD
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Full stat strip */}
-              {stats && (
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '20px',
-                  paddingTop: '16px',
-                  borderTop: '1px solid rgba(255,255,255,0.04)',
-                }}>
-                  {stats.base_health && (
-                    <StatBlock label="BASE HP" value={stats.base_health} color={GREEN} />
-                  )}
-                  {stats.base_shield && (
-                    <StatBlock label="SHIELD" value={stats.base_shield} color={CYAN} />
-                  )}
-                  {stats.base_speed && (
-                    <StatBlock label="SPEED" value={stats.base_speed} color="#ffcc00" />
-                  )}
-                  {stats.active_ability_name && (
-                    <StatBlock label="ACTIVE ABILITY" value={stats.active_ability_name} color={DEXTER_ORANGE} desc={stats.active_ability_desc} />
-                  )}
-                  {stats.passive_ability_name && (
-                    <StatBlock label="PASSIVE ABILITY" value={stats.passive_ability_name} color={DEXTER_ORANGE} desc={stats.passive_ability_desc} />
-                  )}
-                  {stats.strengths && (
-                    <StatBlock label="STRENGTHS" value={stats.strengths} color={GREEN} />
-                  )}
-                  {stats.weaknesses && (
-                    <StatBlock label="WEAKNESSES" value={stats.weaknesses} color={RED} />
-                  )}
-                </div>
-              )}
-
-              {/* No stats yet placeholder */}
-              {!stats && (
-                <div style={{
-                  marginTop: '12px',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '10px',
-                  color: '#333',
-                  letterSpacing: '1px',
-                }}>
-                  STAT DATABASE POPULATING — DEXTER EXTRACTING EVERY 6H
-                </div>
-              )}
-            </div>
-
-            {/* Articles */}
-            {articles.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px' }}>
-                {articles.map(article => (
-                  <ArticleCard key={article.id} article={article} accentColor={shell.color} />
-                ))}
-              </div>
-            ) : (
-              <div style={{
-                padding: '30px',
-                textAlign: 'center',
-                background: '#0a0a0a',
-                borderRadius: '6px',
-                border: '1px dashed #1a1a1a',
-              }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: '#444', margin: 0 }}>
-                  DEXTER is gathering {shell.name} build intel — check back soon.
-                </p>
-              </div>
-            )}
-          </section>
-        );
-      })}
-
-      {/* ─── GENERAL BUILD ARTICLES ──────────────────── */}
-      {generalArticles.length > 0 && (
-        <section style={{ padding: '40px 20px', maxWidth: '1100px', margin: '0 auto', borderTop: '1px solid #1a1a1a' }}>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: '#ffffff', marginBottom: '8px' }}>
-            GENERAL BUILD INTEL
-          </h2>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', marginBottom: '24px' }}>
-            Cross-shell analysis, weapon comparisons, and meta trends.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px' }}>
-            {generalArticles.slice(0, 12).map(article => (
-              <ArticleCard key={article.id} article={article} accentColor={DEXTER_ORANGE} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── BOTTOM CTA ──────────────────────────────── */}
-      <section style={{ padding: '60px 20px', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: '#444', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>
-          BUILDS ANALYZED BY
-        </p>
-        <p style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', color: DEXTER_ORANGE, marginBottom: '8px' }}>
-          ⬢ DEXTER
-        </p>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#666', lineHeight: 1.6, marginBottom: '24px' }}>
-          Build Engineer for CyberneticPunks. DEXTER monitors top Marathon
-          creators around the clock and auto-publishes loadout analysis every 6 hours.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <Link href="/intel/dexter" style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '13px',
-            color: DEXTER_ORANGE,
-            padding: '10px 24px',
-            border: '1px solid ' + DEXTER_ORANGE,
-            borderRadius: '4px',
-            textDecoration: 'none',
-            letterSpacing: '1px',
-          }}>
-            ALL DEXTER ARTICLES →
-          </Link>
-          <Link href="/editors" style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '13px',
-            color: '#666',
-            padding: '10px 24px',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            textDecoration: 'none',
-            letterSpacing: '1px',
-          }}>
-            MEET ALL EDITORS →
-          </Link>
-        </div>
-      </section>
-
-      {/* ─── JSON-LD ─────────────────────────────────── */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: 'Marathon Builds and Loadouts — DEXTER Build Lab',
-          description: 'Auto-updated Marathon build guides for every Runner Shell with weapon tier rankings and loadout analysis.',
-          url: 'https://cyberneticpunks.com/builds',
-          mainEntity: {
-            '@type': 'ItemList',
-            name: 'Marathon Runner Shell Build Guides',
-            numberOfItems: SHELLS.length,
-            itemListElement: SHELLS.map((shell, i) => ({
-              '@type': 'ListItem',
-              position: i + 1,
-              name: shell.name + ' Build Guide',
-              url: 'https://cyberneticpunks.com/builds#shell-' + shell.name.toLowerCase(),
-            })),
-          },
-        }),
-      }} />
-    </main>
-  );
-}
-
-// ─── ARTICLE CARD ────────────────────────────────────────────────
-function ArticleCard({ article, accentColor }) {
-  return (
-    <Link href={'/intel/' + article.slug} style={{
-      display: 'flex',
-      gap: '14px',
-      background: '#0a0a0a',
-      border: '1px solid #1a1a1a',
-      borderLeft: '2px solid ' + accentColor + '44',
-      borderRadius: '6px',
-      padding: '14px',
-      textDecoration: 'none',
-    }}>
-      {article.thumbnail && (
-        <div style={{ width: '100px', minWidth: '100px', height: '70px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
-          <img src={article.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h3 style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '14px',
-          fontWeight: 600,
-          color: '#ffffff',
-          margin: '0 0 6px 0',
-          lineHeight: 1.3,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-        }}>
-          {article.headline}
-        </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {article.ce_score && (
-            <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              fontWeight: 700,
-              color: article.ce_score >= 8 ? RED : article.ce_score >= 6 ? DEXTER_ORANGE : CYAN,
-            }}>
-              CE:{article.ce_score}
-            </span>
-          )}
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#444' }}>
-            {timeAgo(article.created_at)}
-          </span>
-          {article.tags && article.tags.slice(0, 2).map(tag => (
-            <span key={tag} style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '9px',
-              color: '#555',
-              padding: '1px 6px',
-              background: '#111',
-              borderRadius: '2px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// ─── COMPONENTS ─────────────────────────────────────────────────
-
-function Stat({ label, value, color }) {
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', fontWeight: 700, color: color, lineHeight: 1 }}>
-        {value}
-      </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#555', letterSpacing: '1px', marginTop: '4px' }}>
-        {label}
-      </div>
+    <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: pct + '%', background: color, borderRadius: 2, transition: 'width 0.6s ease' }} />
     </div>
   );
 }
 
-function AmmoTag({ name, color }) {
+function TierBadge({ tier, size = 'sm' }) {
+  if (!tier) return null;
+  var color = TIER_COLORS[tier] || '#555';
+  var fs = size === 'lg' ? 18 : 11;
+  var pad = size === 'lg' ? '4px 12px' : '2px 7px';
   return (
-    <span style={{
-      fontFamily: 'var(--font-mono)',
-      fontSize: '11px',
-      color: color,
-      padding: '3px 10px',
-      background: color + '11',
-      border: '1px solid ' + color + '33',
-      borderRadius: '3px',
-    }}>
-      {name}
+    <span style={{ fontFamily: 'Orbitron, monospace', fontSize: fs, fontWeight: 900, color, background: color + '18', border: '1px solid ' + color + '44', borderRadius: 3, padding: pad, letterSpacing: 1, flexShrink: 0 }}>
+      {tier}
     </span>
   );
 }
 
-// Inline mini stat for weapon rows and build cards
-function MiniStat({ label, value, color }) {
+function RarityBadge({ rarity }) {
+  if (!rarity) return null;
+  var r = RARITY_COLORS[rarity] || RARITY_COLORS.Standard;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px' }}>
-        {label}
-      </span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: color, fontWeight: 700 }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// Full stat block for shell headers
-function StatBlock({ label, value, color, desc }) {
-  return (
-    <div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px', marginBottom: '2px' }}>
-        {label}
-      </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: color, fontWeight: 700, lineHeight: 1.2 }}>
-        {value}
-      </div>
-      {desc && (
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: '#555', marginTop: '2px', lineHeight: 1.4, maxWidth: '160px' }}>
-          {desc}
-        </div>
-      )}
-    </div>
+    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: r.color, background: r.bg, border: '1px solid ' + r.border, borderRadius: 3, padding: '2px 6px', letterSpacing: 1, flexShrink: 0 }}>
+      {rarity.toUpperCase()}
+    </span>
   );
 }
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
-  const now = new Date();
-  const then = new Date(dateStr);
-  const diffMs = now - then;
-  const diffH = Math.floor(diffMs / (1000 * 60 * 60));
-  if (diffH < 1) return 'just now';
-  if (diffH < 24) return diffH + 'h ago';
-  const diffD = Math.floor(diffH / 24);
-  if (diffD < 7) return diffD + 'd ago';
-  return Math.floor(diffD / 7) + 'w ago';
+  var h = Math.floor((Date.now() - new Date(dateStr).getTime()) / 3600000);
+  if (h < 1) return 'just now';
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+// ─── PAGE ────────────────────────────────────────────────────
+export default async function BuildsPage() {
+
+  // Fetch everything in parallel
+  var [
+    weaponsRes,
+    shellsRes,
+    metaTiersRes,
+    dexterArticlesRes,
+    topDexterRes,
+  ] = await Promise.all([
+    supabase.from('weapon_stats').select('id, name, weapon_type, ammo_type, rarity, damage, fire_rate, firepower_score, accuracy_score, handling_score, range_rating, magazine_size, ranked_viable, image_filename').order('firepower_score', { ascending: false, nullsFirst: false }),
+    supabase.from('shell_stats').select('id, name, role, difficulty, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, trait_1_name, ranked_tier_solo, ranked_tier_squad, best_for, image_filename').order('name'),
+    supabase.from('meta_tiers').select('name, type, tier, trend, note, ranked_note, updated_at').order('tier'),
+    supabase.from('feed_items').select('id, headline, slug, tags, ce_score, thumbnail, created_at, body').eq('editor', 'DEXTER').eq('is_published', true).order('created_at', { ascending: false }).limit(48),
+    supabase.from('feed_items').select('id, headline, slug, tags, ce_score, thumbnail, created_at').eq('editor', 'DEXTER').eq('is_published', true).order('ce_score', { ascending: false }).limit(6),
+  ]);
+
+  var weapons = weaponsRes.data || [];
+  var shells = shellsRes.data || [];
+  var metaTiers = metaTiersRes.data || [];
+  var dexterArticles = dexterArticlesRes.data || [];
+  var topBuilds = topDexterRes.data || [];
+
+  // Build meta lookup maps
+  var metaWeaponMap = {};
+  var metaShellMap = {};
+  metaTiers.forEach(function(t) {
+    if (t.type === 'weapon') metaWeaponMap[t.name.toLowerCase()] = t;
+    if (t.type === 'shell') metaShellMap[t.name.toLowerCase()] = t;
+  });
+
+  // Top meta items
+  var metaWeapons = metaTiers.filter(function(t) { return t.type === 'weapon'; }).sort(function(a, b) { return (Object.keys(TIER_COLORS).indexOf(a.tier)) - (Object.keys(TIER_COLORS).indexOf(b.tier)); }).slice(0, 8);
+  var metaShellsList = metaTiers.filter(function(t) { return t.type === 'shell'; }).sort(function(a, b) { return (Object.keys(TIER_COLORS).indexOf(a.tier)) - (Object.keys(TIER_COLORS).indexOf(b.tier)); });
+  var lastMetaUpdate = metaTiers[0]?.updated_at;
+
+  // Group weapons by category
+  var weaponsByCategory = {};
+  weapons.forEach(function(w) {
+    var cat = w.weapon_type || 'Other';
+    if (!weaponsByCategory[cat]) weaponsByCategory[cat] = [];
+    weaponsByCategory[cat].push(w);
+  });
+
+  // Group articles by shell tag
+  var SHELL_NAMES = ['assassin','destroyer','recon','rook','thief','triage','vandal'];
+  var articlesByShell = {};
+  var generalArticles = [];
+  dexterArticles.forEach(function(a) {
+    var tags = (a.tags || []).map(function(t) { return t.toLowerCase(); });
+    var headline = (a.headline || '').toLowerCase();
+    var matched = null;
+    for (var i = 0; i < SHELL_NAMES.length; i++) {
+      if (tags.includes(SHELL_NAMES[i]) || headline.includes(SHELL_NAMES[i])) { matched = SHELL_NAMES[i]; break; }
+    }
+    if (matched) {
+      if (!articlesByShell[matched]) articlesByShell[matched] = [];
+      if (articlesByShell[matched].length < 3) articlesByShell[matched].push(a);
+    } else if (generalArticles.length < 6) {
+      generalArticles.push(a);
+    }
+  });
+
+  // Stats for hero
+  var totalGraded = dexterArticles.length;
+  var topWeaponMeta = metaWeapons.find(function(t) { return t.tier === 'S'; });
+  var topShellMeta = metaShellsList.find(function(t) { return t.tier === 'S'; });
+
+  // Max stats for bar scaling
+  var maxFpr = Math.max.apply(null, weapons.map(function(w) { return w.firepower_score || 0; }).concat([1]));
+  var maxAcc = Math.max.apply(null, weapons.map(function(w) { return w.accuracy_score || 0; }).concat([1]));
+  var maxDmg = Math.max.apply(null, weapons.map(function(w) { return w.damage || 0; }).concat([1]));
+  var maxRpm = Math.max.apply(null, weapons.map(function(w) { return w.fire_rate || 0; }).concat([1]));
+  var maxHp = Math.max.apply(null, shells.map(function(s) { return s.base_health || 0; }).concat([1]));
+
+  return (
+    <main style={{ background: BLACK, minHeight: '100vh', color: '#fff' }}>
+      <style>{`
+        @keyframes buildPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        @keyframes buildReveal { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .build-card { transition: border-color 0.2s, transform 0.2s; }
+        .build-card:hover { border-color: rgba(255,136,0,0.3) !important; transform: translateY(-2px); }
+        .weapon-row { transition: background 0.15s; }
+        .weapon-row:hover { background: rgba(255,255,255,0.03) !important; }
+        .shell-card { transition: border-color 0.2s, transform 0.2s; }
+        .shell-card:hover { transform: translateY(-3px); }
+      `}</style>
+
+      {/* ─── HERO ──────────────────────────────────────── */}
+      <section style={{ padding: '120px 20px 0', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 500, background: 'radial-gradient(ellipse at 50% 0%, ' + ORANGE + '0f 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.015, backgroundImage: 'linear-gradient(' + ORANGE + ' 1px, transparent 1px), linear-gradient(90deg, ' + ORANGE + ' 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          {/* Badge */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '6px 16px', border: '1px solid ' + ORANGE + '44', borderRadius: 4, marginBottom: 20, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: ORANGE, letterSpacing: 3 }}>
+            <span style={{ animation: 'buildPulse 2s ease-in-out infinite' }}>[D]</span>
+            DEXTER BUILD ENGINEER
+          </div>
+
+          <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 16px 0', letterSpacing: 3 }}>
+            BUILD <span style={{ color: ORANGE }}>LAB</span>
+          </h1>
+          <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 560, marginBottom: 32 }}>
+            Live weapon stats, shell rankings, and meta analysis — sourced from the database and updated every 6 hours by DEXTER.
+          </p>
+
+          {/* Live stat strip */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1, background: ORANGE + '18', border: '1px solid ' + ORANGE + '33', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
+            {[
+              { val: String(weapons.length), label: 'WEAPONS IN DB', color: ORANGE },
+              { val: String(shells.length), label: 'RUNNER SHELLS', color: CYAN },
+              { val: String(totalGraded), label: 'BUILDS GRADED', color: RED },
+              { val: topWeaponMeta ? topWeaponMeta.name.split(' ')[0].toUpperCase() : '—', label: 'S-TIER WEAPON', color: RED },
+              { val: topShellMeta ? topShellMeta.name.toUpperCase() : '—', label: 'S-TIER SHELL', color: ORANGE },
+              { val: metaTiers.length > 0 ? String(metaTiers.length) : '—', label: 'META ENTRIES', color: '#ffd700' },
+            ].map(function(cell, i) {
+              return (
+                <div key={i} style={{ background: BLACK, padding: '16px 18px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: cell.color, lineHeight: 1, marginBottom: 6 }}>{cell.val}</div>
+                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>{cell.label}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Advisor CTA */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', paddingBottom: 48 }}>
+            <Link href="/advisor" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '12px 24px', background: ORANGE + '18', border: '1px solid ' + ORANGE + '55', borderRadius: 6, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: ORANGE, letterSpacing: 2 }}>
+              [D] GET YOUR BUILD ENGINEERED &rarr;
+            </Link>
+            <Link href="/meta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '12px 24px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 }}>
+              VIEW TIER LIST &rarr;
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── META PULSE ────────────────────────────────── */}
+      {metaTiers.length > 0 && (
+        <section style={{ padding: '0 20px 48px', maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: CYAN, boxShadow: '0 0 8px ' + CYAN, animation: 'buildPulse 2s ease-in-out infinite' }} />
+                <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: CYAN, margin: 0, letterSpacing: 2 }}>META PULSE</h2>
+              </div>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>
+                LIVE FROM NEXUS — {lastMetaUpdate ? 'UPDATED ' + timeAgo(lastMetaUpdate).toUpperCase() : 'LIVE'}
+              </div>
+            </div>
+            <Link href="/meta" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: CYAN, textDecoration: 'none', letterSpacing: 2, padding: '6px 14px', border: '1px solid ' + CYAN + '33', borderRadius: 4 }}>
+              FULL TIER LIST &rarr;
+            </Link>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+
+            {/* Weapon meta */}
+            <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid ' + CYAN, borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: CYAN + '88', letterSpacing: 3 }}>WEAPONS</div>
+              </div>
+              {metaWeapons.slice(0, 6).map(function(item, i) {
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderBottom: i < 5 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                    <TierBadge tier={item.tier} />
+                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: item.tier === 'S' ? '#fff' : 'rgba(255,255,255,0.65)', flex: 1 }}>{item.name}</span>
+                    {item.note && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', maxWidth: 120, lineHeight: 1.4, textAlign: 'right' }}>{item.note}</span>}
+                    <span style={{ fontSize: 11, color: item.trend === 'up' ? GREEN : item.trend === 'down' ? RED : 'rgba(255,255,255,0.15)', flexShrink: 0 }}>
+                      {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : '●'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Shell meta */}
+            <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid ' + ORANGE, borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: ORANGE + '88', letterSpacing: 3 }}>SHELLS</div>
+              </div>
+              {metaShellsList.slice(0, 7).map(function(item, i) {
+                var shellColor = SHELL_COLORS[item.name] || ORANGE;
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderBottom: i < 6 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                    <TierBadge tier={item.tier} />
+                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: shellColor, flex: 1 }}>{item.name}</span>
+                    {item.ranked_note && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', maxWidth: 110, lineHeight: 1.4, textAlign: 'right' }}>{item.ranked_note.slice(0, 40)}</span>}
+                    <span style={{ fontSize: 11, color: item.trend === 'up' ? GREEN : item.trend === 'down' ? RED : 'rgba(255,255,255,0.15)', flexShrink: 0 }}>
+                      {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : '●'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── TOP DEXTER PICKS ──────────────────────────── */}
+      {topBuilds.length > 0 && (
+        <section style={{ padding: '0 20px 48px', maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px 0', letterSpacing: 2 }}>
+                [D] DEXTER&apos;S TOP BUILDS
+              </h2>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>HIGHEST RATED — SORTED BY CE SCORE</div>
+            </div>
+            <Link href="/intel/dexter" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: ORANGE, textDecoration: 'none', letterSpacing: 2, padding: '6px 14px', border: '1px solid ' + ORANGE + '33', borderRadius: 4 }}>ALL BUILDS &rarr;</Link>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
+            {topBuilds.map(function(article, i) {
+              var tags = (article.tags || []).map(function(t) { return t.toLowerCase(); });
+              var shellTag = ['assassin','destroyer','recon','rook','thief','triage','vandal'].find(function(s) { return tags.includes(s); });
+              var shellColor = shellTag ? SHELL_COLORS[shellTag.charAt(0).toUpperCase() + shellTag.slice(1)] || ORANGE : ORANGE;
+              var grade = article.ce_score >= 9 ? 'S' : article.ce_score >= 7 ? 'A' : article.ce_score >= 5 ? 'B' : 'C';
+              var gradeColor = TIER_COLORS[grade] || ORANGE;
+
+              return (
+                <Link key={article.id} href={'/intel/' + article.slug} className="build-card" style={{ display: 'flex', gap: 14, background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '3px solid ' + shellColor + '66', borderRadius: 8, padding: '16px', textDecoration: 'none' }}>
+                  {/* Grade */}
+                  <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, color: gradeColor, lineHeight: 1, textShadow: '0 0 16px ' + gradeColor + '44' }}>{grade}</div>
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 3 }}>GRADE</div>
+                  </div>
+                  {/* Content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      {article.headline}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {shellTag && (
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: shellColor, background: shellColor + '14', border: '1px solid ' + shellColor + '30', borderRadius: 2, padding: '2px 6px', letterSpacing: 1 }}>
+                          {shellTag.toUpperCase()}
+                        </span>
+                      )}
+                      {tags.includes('ranked') && (
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ffd700', background: '#ffd70014', border: '1px solid #ffd70030', borderRadius: 2, padding: '2px 6px', letterSpacing: 1 }}>RANKED</span>
+                      )}
+                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }}>{timeAgo(article.created_at)}</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ─── SHELL COMMAND CENTER ──────────────────────── */}
+      {shells.length > 0 && (
+        <section style={{ padding: '0 20px 48px', maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px 0', letterSpacing: 2 }}>RUNNER SHELLS</h2>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>LIVE STATS FROM DATABASE — HP / SHIELD / ABILITIES / RANKED TIER</div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+            {shells.map(function(shell) {
+              var color = SHELL_COLORS[shell.name] || ORANGE;
+              var metaTier = metaShellMap[shell.name.toLowerCase()];
+              var articleCount = (articlesByShell[shell.name.toLowerCase()] || []).length;
+              var hpPct = maxHp > 0 ? Math.round((shell.base_health || 0) / maxHp * 100) : 0;
+              var shieldPct = maxHp > 0 ? Math.round((shell.base_shield || 0) / maxHp * 100) : 0;
+
+              return (
+                <a key={shell.id} href={'#shell-' + shell.name.toLowerCase()} className="shell-card" style={{ display: 'block', background: '#0a0a0a', border: '1px solid ' + color + '22', borderTop: '3px solid ' + color + '88', borderRadius: 8, padding: '18px 16px', textDecoration: 'none' }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 2 }}>{shell.name.toUpperCase()}</div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{shell.role || ''}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      {metaTier && <TierBadge tier={metaTier.tier} size="lg" />}
+                      {!metaTier && shell.ranked_tier_solo && <TierBadge tier={shell.ranked_tier_solo} size="lg" />}
+                    </div>
+                  </div>
+
+                  {/* HP / Shield bars */}
+                  {(shell.base_health || shell.base_shield) && (
+                    <div style={{ marginBottom: 12 }}>
+                      {shell.base_health && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: GREEN, letterSpacing: 1, width: 20 }}>HP</span>
+                          {statBar(shell.base_health, maxHp, GREEN)}
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: GREEN, width: 28, textAlign: 'right' }}>{shell.base_health}</span>
+                        </div>
+                      )}
+                      {shell.base_shield && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: CYAN, letterSpacing: 1, width: 20 }}>SH</span>
+                          {statBar(shell.base_shield, maxHp, CYAN)}
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: CYAN, width: 28, textAlign: 'right' }}>{shell.base_shield}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Abilities */}
+                  {shell.prime_ability_name && (
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '99', letterSpacing: 1, marginBottom: 3 }}>
+                      PRIME: <span style={{ color: 'rgba(255,255,255,0.5)' }}>{shell.prime_ability_name}</span>
+                    </div>
+                  )}
+                  {shell.tactical_ability_name && (
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 1, marginBottom: 10 }}>
+                      TACTICAL: <span style={{ color: 'rgba(255,255,255,0.4)' }}>{shell.tactical_ability_name}</span>
+                    </div>
+                  )}
+
+                  {/* Footer */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {shell.ranked_tier_solo && (
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: TIER_COLORS[shell.ranked_tier_solo] || '#888', background: (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '14', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '33', borderRadius: 2, padding: '2px 5px', letterSpacing: 1 }}>
+                          SOLO {shell.ranked_tier_solo}
+                        </span>
+                      )}
+                      {shell.ranked_tier_squad && (
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: TIER_COLORS[shell.ranked_tier_squad] || '#888', background: (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '14', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '33', borderRadius: 2, padding: '2px 5px', letterSpacing: 1 }}>
+                          SQUAD {shell.ranked_tier_squad}
+                        </span>
+                      )}
+                    </div>
+                    {articleCount > 0 && (
+                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ORANGE + '77', letterSpacing: 1 }}>{articleCount} GUIDE{articleCount !== 1 ? 'S' : ''}</span>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ─── WEAPON ARSENAL ────────────────────────────── */}
+      {weapons.length > 0 && (
+        <section style={{ padding: '0 20px 48px', maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px 0', letterSpacing: 2 }}>WEAPON ARSENAL</h2>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>{weapons.length} WEAPONS — LIVE STATS — FIREPOWER / ACCURACY / HANDLING</div>
+          </div>
+
+          {/* Ammo legend */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+            {Object.entries(AMMO_COLORS).filter(function(e) { return e[0] !== 'None'; }).map(function(entry) {
+              return (
+                <span key={entry[0]} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: entry[1], background: entry[1] + '14', border: '1px solid ' + entry[1] + '33', borderRadius: 3, padding: '3px 8px', letterSpacing: 1 }}>
+                  {entry[0].toUpperCase()}
+                </span>
+              );
+            })}
+          </div>
+
+          {Object.entries(weaponsByCategory).map(function(entry) {
+            var category = entry[0];
+            var categoryWeapons = entry[1];
+            return (
+              <div key={category} style={{ marginBottom: 24 }}>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: ORANGE, letterSpacing: 4, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid ' + ORANGE + '22', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {category.toUpperCase()}
+                  <span style={{ color: 'rgba(255,255,255,0.15)', fontWeight: 400 }}>{categoryWeapons.length} WEAPONS</span>
+                </div>
+
+                <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, overflow: 'hidden' }}>
+                  {/* Column headers */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 80px 80px', gap: 0, padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.02)' }}>
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2 }}>WEAPON</span>
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2 }}>STATS</span>
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, textAlign: 'center' }}>AMMO</span>
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, textAlign: 'center' }}>META</span>
+                  </div>
+
+                  {categoryWeapons.map(function(weapon, i) {
+                    var metaTier = metaWeaponMap[weapon.name.toLowerCase()];
+                    var ammoColor = AMMO_COLORS[weapon.ammo_type] || '#888';
+                    var r = RARITY_COLORS[weapon.rarity] || RARITY_COLORS.Standard;
+                    var hasFpr = weapon.firepower_score != null;
+                    var hasDmg = weapon.damage != null;
+
+                    return (
+                      <div key={weapon.id} className="weapon-row" style={{ display: 'grid', gridTemplateColumns: '200px 1fr 80px 80px', gap: 0, padding: '12px 16px', borderBottom: i < categoryWeapons.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: 'transparent', alignItems: 'center' }}>
+
+                        {/* Name + rarity */}
+                        <div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: weapon.ranked_viable === false ? 'rgba(255,255,255,0.35)' : '#fff', marginBottom: 4, lineHeight: 1 }}>{weapon.name}</div>
+                          <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                            {weapon.rarity && <RarityBadge rarity={weapon.rarity} />}
+                            {weapon.ranked_viable === false && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: RED + '88', letterSpacing: 1 }}>AVOID RANKED</span>}
+                          </div>
+                        </div>
+
+                        {/* Stat bars */}
+                        <div style={{ paddingRight: 16 }}>
+                          {hasFpr ? (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', width: 24 }}>FPR</span>
+                                {statBar(weapon.firepower_score, maxFpr, ORANGE)}
+                                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ORANGE, width: 28, textAlign: 'right' }}>{weapon.firepower_score}</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', width: 24 }}>ACC</span>
+                                {statBar(weapon.accuracy_score, maxAcc, CYAN)}
+                                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: CYAN, width: 28, textAlign: 'right' }}>{weapon.accuracy_score}</span>
+                              </div>
+                            </>
+                          ) : hasDmg ? (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', width: 24 }}>DMG</span>
+                                {statBar(weapon.damage, maxDmg, RED)}
+                                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: RED, width: 28, textAlign: 'right' }}>{weapon.damage}</span>
+                              </div>
+                              {weapon.fire_rate && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', width: 24 }}>RPM</span>
+                                  {statBar(weapon.fire_rate, maxRpm, ORANGE)}
+                                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ORANGE, width: 28, textAlign: 'right' }}>{weapon.fire_rate}</span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 1 }}>STATS PENDING</span>
+                          )}
+                        </div>
+
+                        {/* Ammo */}
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ammoColor, background: ammoColor + '14', border: '1px solid ' + ammoColor + '30', borderRadius: 3, padding: '3px 6px', letterSpacing: 1, display: 'inline-block' }}>
+                            {(weapon.ammo_type || 'N/A').replace(' Rounds', '').replace(' Battery', '').toUpperCase()}
+                          </span>
+                        </div>
+
+                        {/* Meta tier */}
+                        <div style={{ textAlign: 'center' }}>
+                          {metaTier ? (
+                            <div>
+                              <TierBadge tier={metaTier.tier} />
+                              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: metaTier.trend === 'up' ? GREEN : metaTier.trend === 'down' ? RED : 'rgba(255,255,255,0.2)', marginTop: 3 }}>
+                                {metaTier.trend === 'up' ? '▲ UP' : metaTier.trend === 'down' ? '▼ DN' : '● ---'}
+                              </div>
+                            </div>
+                          ) : (
+                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.1)', letterSpacing: 1 }}>—</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {/* ─── SHELL BUILD SECTIONS ──────────────────────── */}
+      {shells.map(function(shell) {
+        var color = SHELL_COLORS[shell.name] || ORANGE;
+        var articles = articlesByShell[shell.name.toLowerCase()] || [];
+        if (articles.length === 0) return null;
+
+        return (
+          <section key={shell.id} id={'shell-' + shell.name.toLowerCase()} style={{ padding: '0 20px 40px', maxWidth: 1100, margin: '0 auto', borderTop: '1px solid ' + color + '18' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '24px 0 16px' }}>
+              <div style={{ width: 4, height: 40, background: color, borderRadius: 2, flexShrink: 0 }} />
+              <div>
+                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: color, letterSpacing: 2 }}>{shell.name.toUpperCase()}</div>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 2 }}>{shell.role || ''} — {articles.length} BUILD GUIDE{articles.length !== 1 ? 'S' : ''}</div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10 }}>
+              {articles.map(function(article) {
+                var grade = article.ce_score >= 9 ? 'S' : article.ce_score >= 7 ? 'A' : article.ce_score >= 5 ? 'B' : 'C';
+                var gradeColor = TIER_COLORS[grade] || ORANGE;
+                return (
+                  <Link key={article.id} href={'/intel/' + article.slug} className="build-card" style={{ display: 'flex', gap: 14, background: '#0a0a0a', border: '1px solid ' + color + '18', borderLeft: '3px solid ' + color + '55', borderRadius: 8, padding: '14px', textDecoration: 'none' }}>
+                    <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 24, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{grade}</div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 2 }}>CE</div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{article.headline}</div>
+                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(article.created_at)}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+
+      {/* ─── BOTTOM CTA ──────────────────────────────── */}
+      <section style={{ padding: '48px 20px 80px', textAlign: 'center', maxWidth: 600, margin: '0 auto' }}>
+        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: ORANGE + '88', letterSpacing: 3, marginBottom: 12 }}>[D] DEXTER BUILD ENGINEER</div>
+        <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 16, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, marginBottom: 24 }}>
+          Want a personalized build? Tell DEXTER your shell and playstyle — get a complete loadout with mods, cores, and implants in seconds.
+        </p>
+        <Link href="/advisor" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 32px', background: ORANGE + '18', border: '1px solid ' + ORANGE + '55', borderRadius: 6, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: ORANGE, letterSpacing: 3 }}>
+          LAUNCH BUILD ADVISOR &rarr;
+        </Link>
+      </section>
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Marathon Builds and Loadouts — DEXTER Build Lab', description: 'Live weapon stats and shell rankings with build guides for Marathon.', url: 'https://cyberneticpunks.com/builds' }) }} />
+    </main>
+  );
 }
