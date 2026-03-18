@@ -308,27 +308,51 @@ ${recentHeadlinesBlock}
 
 Choose the most useful topic based on the priority order above. If a community event is in the X data, write about that. If a creator is posting about something noteworthy, write our take on it. Otherwise pick a guide topic different from the already-covered list. Reference real shell abilities, weapon stats, and mod names. Mark dev-sourced content with guide_category "dev-update". Mark event/tournament coverage with guide_category "community-event".
 
-Also write ONE short promotional tweet — alternating each cycle between our two key tools. Pick ONE tool and ONE angle. Never repeat the same angle twice in a row. Keep it under 220 chars.
+Also write ONE short promotional tweet about CyberneticPunks.com. Your ONLY job with this tweet is to promote what our site offers — not guides, not game tips, not commentary. Pick ONE site feature and ONE angle. Rotate through different features each cycle. Never repeat the same angle twice in a row. Keep it under 220 chars.
 
-TOOL 1 — META TIER LIST (cyberneticpunks.com/meta): Interactive drag-and-drop tier list. Runners rank weapons and shells, generate a shareable image, post it to X.
-Promo angles for /meta:
-- "You think that loadout is S-tier? Prove it. cyberneticpunks.com/meta #Marathon"
-- "Hot take: Thief is A, not S. Fight me — build your tier list first. cyberneticpunks.com/meta #MarathonGame"
-- "NEXUS updates the meta every 6 hours. Your friends are wrong. We have data. cyberneticpunks.com/meta"
-- "Someone just put Knife in S-tier on our builder and I am not okay. cyberneticpunks.com/meta #MarathonGame"
-- "Everyone is sharing their Marathon tier list. Where is yours? cyberneticpunks.com/meta"
-- "Our AI updates the Marathon tier list every 6 hours. Your hot takes update... whenever. cyberneticpunks.com/meta"
+WHAT WE OFFER — rotate through these features:
 
-TOOL 2 — BUILD ADVISOR (cyberneticpunks.com/advisor): AI-powered loadout generator. Pick your shell, playstyle, rank target. DEXTER engineers a full build — weapons, mods, cores, implants — and generates a shareable card.
-Promo angles for /advisor:
-- "Stop guessing your loadout. Tell DEXTER your shell and he will engineer the rest. cyberneticpunks.com/advisor #Marathon"
-- "DEXTER just engineered a Thief extraction build — mods, cores, implants, all of it. In seconds. cyberneticpunks.com/advisor #MarathonGame"
-- "What shell are you running? DEXTER will build the loadout. You just have to extract. cyberneticpunks.com/advisor #Marathon"
-- "Runners are getting AI-engineered builds for free. You are still guessing? cyberneticpunks.com/advisor #MarathonGame"
-- "Spent an hour theory-crafting a build. DEXTER did it better in 10 seconds. cyberneticpunks.com/advisor #Marathon"
-- "Pick your shell. Pick your playstyle. DEXTER handles the rest. cyberneticpunks.com/advisor #Marathon"
-- "Pushing Diamond ranked? DEXTER will tell you exactly what to run. cyberneticpunks.com/advisor #MarathonGame"
-- "Just got my Assassin build graded A by DEXTER. Download the card. Post it. cyberneticpunks.com/advisor #Marathon"
+FEATURE 1 — AUTONOMOUS AI EDITORS (cyberneticpunks.com):
+5 AI editors publishing Marathon intelligence every 6 hours automatically.
+Angles:
+- "5 AI editors covering Marathon 24/7. No days off. No opinions without data. cyberneticpunks.com #Marathon"
+- "While you were sleeping, CIPHER graded plays, NEXUS updated the tier list, DEXTER built loadouts. cyberneticpunks.com"
+- "The most autonomous Marathon site on the internet. Updates every 6 hours. cyberneticpunks.com #MarathonGame"
+
+FEATURE 2 — LIVE META TIER LIST (cyberneticpunks.com/meta):
+AI-updated weapon and shell tiers every 6 hours. Drag-and-drop builder to make your own shareable image.
+Angles:
+- "NEXUS updates the Marathon meta every 6 hours. Your friends are wrong. We have data. cyberneticpunks.com/meta"
+- "The tier list that never goes stale. AI-updated every 6 hours. cyberneticpunks.com/meta #MarathonGame"
+- "Build your own Marathon tier list. Generate a shareable image. Post it. cyberneticpunks.com/meta"
+
+FEATURE 3 — BUILD ADVISOR (cyberneticpunks.com/advisor):
+DEXTER engineers complete loadouts — weapons, mods, cores, implants — and generates a shareable card.
+Angles:
+- "Free AI build advisor. Pick your shell. DEXTER handles the rest. cyberneticpunks.com/advisor #Marathon"
+- "Stop guessing your loadout. DEXTER engineers it in seconds. cyberneticpunks.com/advisor #MarathonGame"
+- "AI-engineered Marathon builds with shareable cards. Free. cyberneticpunks.com/advisor"
+
+FEATURE 4 — SHELL GUIDES (cyberneticpunks.com/shells):
+Dedicated hub pages for every shell — stats, abilities, cores, implants, meta tier, ranked viability.
+Angles:
+- "Every Marathon shell has its own intel hub. Stats, abilities, cores, ranked tier. cyberneticpunks.com/shells"
+- "Looking for the best Thief build? Full shell guide with live meta data. cyberneticpunks.com/shells/thief #Marathon"
+- "7 shell guides. Live meta tiers. AI-updated every 6 hours. cyberneticpunks.com/shells #MarathonGame"
+
+FEATURE 5 — RANKED GUIDE (cyberneticpunks.com/ranked):
+Complete ranked mode guide — Holotag system, tier breakdown, shell tier list, rewards, live countdown.
+Angles:
+- "Everything you need for Marathon ranked in one place. cyberneticpunks.com/ranked #MarathonRanked"
+- "Live ranked countdown + full Holotag breakdown + shell tier list. Free. cyberneticpunks.com/ranked"
+- "The most complete Marathon ranked guide on the internet. cyberneticpunks.com/ranked #Marathon"
+
+FEATURE 6 — INTEL FEED (cyberneticpunks.com/intel):
+Every article from all 5 editors — graded, tagged, and searchable.
+Angles:
+- "Every Marathon play graded. Every meta shift tracked. Every trend covered. cyberneticpunks.com/intel #Marathon"
+- "CIPHER has graded hundreds of Marathon plays. See what scores S-tier. cyberneticpunks.com/intel/cipher"
+- "Marathon intelligence published every 6 hours by 5 AI editors. cyberneticpunks.com/intel"
 
 Return ONLY valid JSON — no other text:
 {
@@ -345,7 +369,7 @@ Return ONLY valid JSON — no other text:
   "source_type": "guide",
   "thumbnail": "YouTube thumbnail URL or null",
   "source_url": "most relevant YouTube, Reddit, Bungie.net, or X post URL",
-  "promo_tweet": "under 220 chars — alternate between /meta and /advisor angles each cycle"
+  "promo_tweet": "under 220 chars — promote ONE site feature, never repeat the same angle twice"
 }`;
 }
 
@@ -404,8 +428,8 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
 
   // Max tokens per editor — confirmed architecture
   var maxTokens = 1024;
-  if (editor === 'NEXUS') maxTokens = 3072;
-  if (editor === 'MIRANDA') maxTokens = 2048;
+  if (editor === 'NEXUS') maxTokens = 2048;
+  if (editor === 'MIRANDA') maxTokens = 512;
 
   var message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
