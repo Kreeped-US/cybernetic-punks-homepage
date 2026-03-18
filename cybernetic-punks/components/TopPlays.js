@@ -9,26 +9,51 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-function getGradeColor(grade) {
-  if (!grade) return '#ff8800';
-  const g = grade.toUpperCase();
-  if (g.startsWith('S')) return '#ff0000';
-  if (g.startsWith('A')) return '#ff8800';
-  return 'rgba(255,255,255,0.4)';
+const GRADE_COLORS = {
+  'S+': '#ff0000', 'S': '#ff0000', 'A+': '#ff8800', 'A': '#ff8800',
+  'B': '#00f5ff', 'C': '#aaaaaa', 'D': '#555555',
+};
+
+const GRADE_GLOWS = {
+  'S+': 'rgba(255,0,0,0.25)', 'S': 'rgba(255,0,0,0.2)',
+  'A+': 'rgba(255,136,0,0.2)', 'A': 'rgba(255,136,0,0.18)',
+  'B': 'rgba(0,245,255,0.12)', 'C': 'rgba(255,255,255,0.05)', 'D': 'transparent',
+};
+
+function computeGrade(item) {
+  if (item.runner_grade) return item.runner_grade;
+  var s = item.ce_score;
+  if (s >= 9) return 'S+';
+  if (s >= 8) return 'S';
+  if (s >= 7) return 'A+';
+  if (s >= 6) return 'A';
+  if (s >= 4) return 'B';
+  return 'C';
 }
 
-export default function TopPlays() {
-  const [plays, setPlays] = useState(null);
+function getShellTag(tags) {
+  var shells = ['assassin','destroyer','recon','rook','thief','triage','vandal'];
+  if (!tags) return null;
+  return tags.find(function(t) { return shells.includes(t.toLowerCase()); }) || null;
+}
 
-  useEffect(() => {
+const SHELL_COLORS = {
+  assassin: '#cc44ff', destroyer: '#ff3333', recon: '#00f5ff',
+  rook: '#aaaaaa', thief: '#ffd700', triage: '#00ff88', vandal: '#ff8800',
+};
+
+export default function TopPlays() {
+  var [plays, setPlays] = useState(null);
+
+  useEffect(function() {
     async function fetchPlays() {
       try {
-        const { data, error } = await supabase
+        var { data, error } = await supabase
           .from('feed_items')
-          .select('headline, tags, source, slug, thumbnail, source_url')
+          .select('id, headline, tags, slug, ce_score, runner_grade, grade_confidence, created_at')
           .eq('editor', 'CIPHER')
           .eq('is_published', true)
-          .order('created_at', { ascending: false })
+          .order('ce_score', { ascending: false })
           .limit(5);
 
         if (error) throw error;
@@ -44,70 +69,113 @@ export default function TopPlays() {
 
   return (
     <section style={{ maxWidth: 1200, margin: '0 auto 64px', padding: '0 24px' }}>
+
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2, margin: 0 }}>
-            <span style={{ color: '#ff0000' }}>◈</span> PLAYS WORTH WATCHING
+            <span style={{ color: '#ff0000' }}>◈</span> CIPHER&apos;S TOP GRADES
           </h2>
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginTop: 4 }}>
-            RANKED BY CIPHER • YOUTUBE + TWITCH
+            HIGHEST RATED PLAYS — SORTED BY CE SCORE
           </div>
         </div>
         <Link href="/intel/cipher" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#ff0000', letterSpacing: 1, textDecoration: 'none' }}>
-          VIEW ALL PLAYS →
+          VIEW ALL PLAYS &rarr;
         </Link>
       </div>
 
-      <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8 }}>
-        {plays.map((play, i) => {
-          const grade = play.tags && play.tags.length > 0 ? play.tags[0] : '';
-          const gradeColor = getGradeColor(grade);
-          const cardHref = play.slug ? '/intel/' + play.slug : '/intel/cipher';
-          const isTwitch = play.source === 'TWITCH';
+      {/* Grade cards */}
+      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+        {plays.map(function(play, i) {
+          var grade = computeGrade(play);
+          var gradeColor = GRADE_COLORS[grade] || '#ff8800';
+          var gradeGlow = GRADE_GLOWS[grade] || 'transparent';
+          var shellTag = getShellTag(play.tags);
+          var shellColor = shellTag ? SHELL_COLORS[shellTag.toLowerCase()] || '#888' : null;
+          var isTopGrade = grade === 'S+' || grade === 'S';
 
           return (
             <Link
-              key={i}
-              href={cardHref}
+              key={play.id || i}
+              href={play.slug ? '/intel/' + play.slug : '/intel/cipher'}
               style={{
-                minWidth: 240, maxWidth: 280,
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 10, cursor: 'pointer', transition: 'all 0.3s',
-                flexShrink: 0, textDecoration: 'none', display: 'block', overflow: 'hidden',
+                minWidth: 220, maxWidth: 260, flexShrink: 0,
+                display: 'flex', flexDirection: 'column',
+                background: isTopGrade ? 'rgba(255,0,0,0.04)' : 'rgba(255,255,255,0.02)',
+                border: '1px solid ' + (isTopGrade ? 'rgba(255,0,0,0.15)' : 'rgba(255,255,255,0.06)'),
+                borderTop: '3px solid ' + gradeColor,
+                borderRadius: 10, textDecoration: 'none', overflow: 'hidden',
+                transition: 'transform 0.2s, border-color 0.2s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = gradeColor + '44'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={function(e) {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.borderColor = gradeColor + '55';
+              }}
+              onMouseLeave={function(e) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = isTopGrade ? 'rgba(255,0,0,0.15)' : 'rgba(255,255,255,0.06)';
+              }}
             >
+              {/* Grade display */}
               <div style={{
-                width: '100%', height: 140, position: 'relative',
-                background: play.thumbnail
-                  ? 'url(' + play.thumbnail + ') center/cover no-repeat'
-                  : 'linear-gradient(135deg, rgba(255,0,0,0.15), rgba(0,0,0,0.8))',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '28px 20px 20px',
+                background: gradeGlow,
+                position: 'relative',
               }}>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)' }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#fff', paddingLeft: 3 }}>▶</div>
-                </div>
-                <div style={{ position: 'absolute', top: 8, left: 8, fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: i === 0 ? '#ff0000' : i < 3 ? '#ff8800' : 'rgba(255,255,255,0.4)', background: 'rgba(0,0,0,0.7)', borderRadius: 4, padding: '2px 8px' }}>
+                {/* Rank number */}
+                <div style={{
+                  position: 'absolute', top: 10, left: 12,
+                  fontFamily: 'Share Tech Mono, monospace', fontSize: 9,
+                  color: 'rgba(255,255,255,0.2)', letterSpacing: 1,
+                }}>
                   #{i + 1}
                 </div>
-                {grade && (
-                  <div style={{ position: 'absolute', top: 8, right: 8, fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: gradeColor, background: 'rgba(0,0,0,0.7)', borderRadius: 4, padding: '2px 8px' }}>
-                    {grade}
+
+                {/* Big grade letter */}
+                <div style={{
+                  fontFamily: 'Orbitron, monospace', fontSize: 64, fontWeight: 900,
+                  color: gradeColor, lineHeight: 1,
+                  textShadow: '0 0 30px ' + gradeColor + '66',
+                }}>
+                  {grade}
+                </div>
+
+                {/* Shell tag top right */}
+                {shellTag && (
+                  <div style={{
+                    position: 'absolute', top: 10, right: 12,
+                    fontFamily: 'Share Tech Mono, monospace', fontSize: 8,
+                    color: shellColor, background: shellColor + '18',
+                    border: '1px solid ' + shellColor + '33',
+                    borderRadius: 3, padding: '2px 6px', letterSpacing: 1,
+                  }}>
+                    {shellTag.toUpperCase()}
                   </div>
                 )}
-                {/* Source badge */}
-                <div style={{ position: 'absolute', bottom: 8, left: 8, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1, color: isTwitch ? '#9b5de5' : '#ff0000', background: 'rgba(0,0,0,0.7)', borderRadius: 4, padding: '2px 8px' }}>
-                  {isTwitch ? 'TWITCH' : 'YOUTUBE'}
-                </div>
               </div>
 
-              <div style={{ padding: '14px 16px' }}>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: '#fff', lineHeight: 1.3, marginBottom: 8 }}>
+              {/* Content */}
+              <div style={{ padding: '12px 16px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{
+                  fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600,
+                  color: 'rgba(255,255,255,0.85)', lineHeight: 1.35,
+                  overflow: 'hidden', display: '-webkit-box',
+                  WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                }}>
                   {play.headline}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>
-                  <span style={{ fontSize: 12 }}>→</span> READ CIPHER ANALYSIS
+
+                {/* Score + CTA */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>CE</span>
+                    <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: gradeColor }}>{play.ce_score?.toFixed(1) || '—'}</span>
+                  </div>
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000', opacity: 0.7, letterSpacing: 1 }}>
+                    READ &rarr;
+                  </span>
                 </div>
               </div>
             </Link>
