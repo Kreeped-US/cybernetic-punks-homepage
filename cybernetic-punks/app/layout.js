@@ -57,7 +57,7 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="google-site-verification" content="M2lvAyNiEj7COYx4hguAd1l3TOOP7WwkQ1EjY3qoi0I" />
       </head>
-      <body className="bg-black text-white antialiased">
+      <body className="bg-black antialiased" style={{ color: 'rgba(255,255,255,0.88)', fontSize: '15px' }}>
         <Nav />
         {children}
       </body>
