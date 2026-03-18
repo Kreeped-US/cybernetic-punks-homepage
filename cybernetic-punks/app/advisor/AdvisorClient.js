@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useIsMobile } from '@/lib/useIsMobile';
+import { track } from '@/lib/useTrack';
 
 const SHELLS = [
   { name: 'Destroyer', color: '#ff3333', role: 'Frontline Combat',    desc: 'Thrusters. Aggression. Close-range dominance.' },
@@ -160,12 +161,14 @@ export default function AdvisorClient() {
       clearInterval(scanRef.current); setScanProgress(100);
       await new Promise(function(r){ setTimeout(r,400); });
       setBuild(json.build); setPhase('result');
+      track('advisor_generate', { shell: selectedShell, playstyle, rankTarget, teamSize });
     } catch(err) { clearInterval(scanRef.current); setError(err.message); setPhase('input'); }
   }
 
   function downloadShareCard() {
     if (!build||!shellConfig) return;
     var img = generateShareCard(build, shellConfig);
+    track('advisor_share', { shell: build && build.shell ? build.shell : null });
     var a = document.createElement('a');
     a.href=img; a.download='dexter-build-'+(build.shell||'unknown').toLowerCase()+'-'+Date.now()+'.png'; a.click();
   }

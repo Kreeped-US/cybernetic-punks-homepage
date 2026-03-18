@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import UsageStats from '@/components/UsageStats';
 
 const SCHEMAS = {
   weapon_stats: [
@@ -118,7 +119,6 @@ const SCHEMAS = {
   ],
 };
 
-// Fields that use 'Universal' as the UI label for a null DB value
 const NULLABLE_SELECT_NULL_VALUE = 'Universal';
 
 const TABS = [
@@ -160,7 +160,6 @@ const GROUP_COLORS = {
   Flags:        '#00ff88',
 };
 
-// Convert a DB row's null required_runner to 'Universal' for display in selects
 function rowToFormData(row, schema) {
   const formData = { ...row };
   schema.forEach(field => {
@@ -171,7 +170,6 @@ function rowToFormData(row, schema) {
   return formData;
 }
 
-// Convert 'Universal' back to null before saving to DB
 function formDataToRow(formData, schema) {
   const row = { ...formData };
   schema.forEach(field => {
@@ -238,7 +236,6 @@ export default function AdminPage() {
 
   function startEdit(row) {
     setEditingRow(row.id);
-    // Convert null required_runner → 'Universal' for display
     setFormData(rowToFormData(row, SCHEMAS[activeTab] || []));
     setShowAddForm(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -459,6 +456,11 @@ export default function AdminPage() {
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted, letterSpacing: 2, marginTop: 2 }}>CYBERNETICPUNKS.COM</div>
         </div>
         <a href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted, textDecoration: 'none', letterSpacing: 2 }}>← BACK TO SITE</a>
+      </div>
+
+      {/* ── USAGE STATS ── */}
+      <div style={{ padding: '24px 32px 0', borderBottom: '1px solid ' + S.border }}>
+        <UsageStats password={password} />
       </div>
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>

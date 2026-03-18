@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { track } from '@/lib/useTrack';
 
 // ─── CONSTANTS ───────────────────────────────────────────────
 
@@ -42,17 +43,14 @@ const WEAPON_TYPE_ICONS = {
   'HEAVY':          '⊟',
 };
 
-// Returns image src or null. Works for both pool items (item.raw) and raw DB rows.
 function getImageSrc(nameOrItem, kind) {
   if (!nameOrItem) return null;
-  // Pool item object
   if (typeof nameOrItem === 'object' && nameOrItem.raw) {
     const fn = nameOrItem.raw.image_filename;
     if (!fn) return null;
     const folder = nameOrItem.kind === 'shell' ? 'shells' : 'weapons';
     return `/images/${folder}/${fn}`;
   }
-  // Raw DB row
   if (typeof nameOrItem === 'object' && nameOrItem.image_filename) {
     const folder = kind === 'shell' ? 'shells' : 'weapons';
     return `/images/${folder}/${nameOrItem.image_filename}`;
@@ -167,7 +165,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// Preload an image, resolving with the element or null on failure
 function loadImage(src) {
   return new Promise(resolve => {
     const img = new window.Image();
@@ -179,10 +176,8 @@ function loadImage(src) {
 }
 
 async function generateTierImage(tierItems, runnerTag) {
-  // Wait for fonts
   try { await document.fonts.ready; } catch (_) {}
 
-  // Pre-load all item images before touching the canvas
   const imageCache = {};
   for (const items of Object.values(tierItems)) {
     for (const item of items) {
@@ -198,21 +193,17 @@ async function generateTierImage(tierItems, runnerTag) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Background
   ctx.fillStyle = '#030303';
   ctx.fillRect(0, 0, W, H);
 
-  // Scanlines
   ctx.fillStyle = 'rgba(0,245,255,0.005)';
   for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
 
-  // Grid lines
   ctx.strokeStyle = 'rgba(0,245,255,0.012)';
   ctx.lineWidth = 1;
   for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-  // ── HEADER ──
   ctx.fillStyle = '#ff0000';
   ctx.beginPath(); ctx.arc(36, 36, 5, 0, Math.PI * 2); ctx.fill();
 
@@ -234,7 +225,6 @@ async function generateTierImage(tierItems, runnerTag) {
   ctx.fillStyle = 'rgba(255,255,255,0.06)';
   ctx.fillRect(24, 66, W - 48, 1);
 
-  // ── TIER ROWS ──
   const rowStart = 74;
   const rowH = 71;
   const tierColors = {
@@ -255,21 +245,17 @@ async function generateTierImage(tierItems, runnerTag) {
     const y = rowStart + i * rowH;
     const items = tierItems[tier] || [];
 
-    // Row bg
     ctx.fillStyle = tierBgs[tier];
     ctx.fillRect(24, y, W - 48, rowH - 2);
 
-    // Left accent bar
     ctx.fillStyle = tierColors[tier];
     ctx.fillRect(24, y, 3, rowH - 2);
 
-    // Tier letter
     ctx.fillStyle = tierColors[tier];
     ctx.font = '900 30px Orbitron, Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(tier, 66, y + 44);
 
-    // Separator
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
     ctx.fillRect(96, y + 8, 1, rowH - 18);
 
@@ -286,13 +272,11 @@ async function generateTierImage(tierItems, runnerTag) {
       ctx.font = '700 10px Orbitron, Arial, sans-serif';
       const textW = ctx.measureText(label).width;
 
-      // Pill width: image slot (if image exists) + text + padding
       const hasImg = !!imgEl;
       const pillW = (hasImg ? imgW + 6 : 0) + textW + textPadL + textPadR;
 
       if (x + pillW > maxX) return;
 
-      // Pill background
       ctx.fillStyle = 'rgba(255,255,255,0.07)';
       roundRect(ctx, x, pillY, pillW, pillH, 5);
       ctx.fill();
@@ -302,7 +286,6 @@ async function generateTierImage(tierItems, runnerTag) {
       roundRect(ctx, x, pillY, pillW, pillH, 5);
       ctx.stroke();
 
-      // Draw image if loaded
       if (hasImg) {
         const imgX = x + 8;
         const imgDrawY = pillY + (pillH - imgH) / 2;
@@ -311,7 +294,6 @@ async function generateTierImage(tierItems, runnerTag) {
         ctx.globalAlpha = 1;
       }
 
-      // Label
       const labelX = x + (hasImg ? imgW + 14 : textPadL);
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.font = '700 10px Orbitron, Arial, sans-serif';
@@ -327,7 +309,6 @@ async function generateTierImage(tierItems, runnerTag) {
     }
   });
 
-  // ── BOTTOM BAR ──
   const bottomY = rowStart + TIERS.length * rowH + 2;
 
   ctx.fillStyle = 'rgba(255,255,255,0.05)';
@@ -358,18 +339,11 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Tab state
   const [activeTab, setActiveTab] = useState('live');
-
-  // Shared list from URL ?list= param
   const [sharedList, setSharedList] = useState(null);
-
-  // Live tier list state
   const [movements, setMovements] = useState({});
   const [countdown, setCountdown] = useState('');
   const [toast, setToast] = useState(false);
-
-  // Builder state
   const [filter, setFilter] = useState('weapons');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [unranked, setUnranked] = useState([]);
@@ -380,16 +354,13 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [mobilePickTarget, setMobilePickTarget] = useState(null); // item being assigned on mobile
+  const [mobilePickTarget, setMobilePickTarget] = useState(null);
 
-  // Drag state
   const dragItem = useRef(null);
   const dragSource = useRef(null);
 
-  // Weapon categories
   const weaponTypes = getUniqueWeaponTypes(weapons);
 
-  // Sorted tiers for Mode 1
   const sortedTiers = { S: [], A: [], B: [], C: [], D: [], F: [] };
   (metaTiers || []).forEach(item => {
     const t = (item.tier || 'C').toUpperCase();
@@ -413,6 +384,11 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     return () => clearInterval(id);
   }, []);
 
+  // ── TRACK META VIEW ──
+  useEffect(() => {
+    track('meta_view');
+  }, []);
+
   // Mobile detection
   useEffect(() => {
     setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
@@ -426,7 +402,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         const decoded = JSON.parse(atob(listParam));
         setSharedList(decoded);
         setActiveTab('builder');
-        // Reconstruct tier state from shared data
         const newTiers = { S: [], A: [], B: [], C: [], D: [], F: [] };
         (decoded.items || []).forEach(({ n, t }) => {
           const item = buildPoolItems(weapons, shells, 'everything', '').find(i => i.name === n);
@@ -471,9 +446,8 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
 
   // Rebuild unranked pool when filter changes
   useEffect(() => {
-    if (sharedList) return; // don't reset if viewing a shared list
+    if (sharedList) return;
     const pool = buildPoolItems(weapons, shells, filter, categoryFilter);
-    // Remove items already placed in tiers
     const placed = new Set(Object.values(tierItems).flat().map(i => i.id));
     setUnranked(pool.filter(i => !placed.has(i.id)));
   }, [filter, categoryFilter, weapons, shells]);
@@ -482,12 +456,10 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
 
   function moveItem(itemId, sourceZone, destZone) {
     if (sourceZone === destZone) return;
-
     let item;
     let newUnranked = [...unranked];
     let newTiers = { S: [...tierItems.S], A: [...tierItems.A], B: [...tierItems.B], C: [...tierItems.C], D: [...tierItems.D], F: [...tierItems.F] };
 
-    // Find and remove from source
     if (sourceZone === 'unranked') {
       const idx = newUnranked.findIndex(i => i.id === itemId);
       if (idx === -1) return;
@@ -499,7 +471,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
       item = arr.splice(idx, 1)[0];
     }
 
-    // Add to destination
     if (destZone === 'unranked') {
       newUnranked.push(item);
     } else {
@@ -521,8 +492,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     setSharedList(null);
     if (searchParams.get('list')) router.replace('/meta');
   }
-
-  // ── DRAG HANDLERS ──
 
   function onDragStart(e, itemId, sourceZone) {
     dragItem.current = itemId;
@@ -549,8 +518,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     dragSource.current = null;
   }
 
-  // ── MOBILE TAP ASSIGN ──
-
   function onMobileTap(item, sourceZone) {
     if (!isMobile) return;
     setMobilePickTarget({ item, sourceZone });
@@ -562,16 +529,12 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     setMobilePickTarget(null);
   }
 
-  // ── IMAGE GENERATION ──
-
   async function handleGenerate() {
     setIsGenerating(true);
     setGeneratedImage(null);
     try {
       const dataUrl = await generateTierImage(tierItems, runnerTag);
       setGeneratedImage(dataUrl);
-
-      // Build shareable URL
       const allPlaced = Object.entries(tierItems).flatMap(([t, items]) =>
         items.map(i => ({ n: i.name, t }))
       );
@@ -585,6 +548,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
 
   function handleDownload() {
     if (!generatedImage) return;
+    track('tierlist_share');
     const a = document.createElement('a');
     a.href = generatedImage;
     a.download = `marathon-tier-list-${Date.now()}.png`;
@@ -611,15 +575,12 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     });
   }
 
-  // ── RENDER ──
-
   const placedCount = Object.values(tierItems).flat().length;
   const totalItems = placedCount + unranked.length;
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 80px' }}>
 
-      {/* ── TOAST ── */}
       {toast && (
         <div style={{
           position: 'fixed', top: 90, right: 24, zIndex: 9999,
@@ -632,7 +593,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         </div>
       )}
 
-      {/* ── MOBILE TIER PICKER OVERLAY ── */}
       {mobilePickTarget && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9998,
@@ -745,9 +705,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         })}
       </div>
 
-      {/* ════════════════════════════════════════════════
-          MODE 1: NEXUS LIVE TIER LIST
-          ════════════════════════════════════════════════ */}
+      {/* MODE 1: NEXUS LIVE TIER LIST */}
       {activeTab === 'live' && (
         <section style={{ marginBottom: 64 }}>
           {metaTiers.length === 0 ? (
@@ -769,7 +727,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                 const isSTop = tier === 'S';
                 return (
                   <div key={tier} style={isSTop ? { filter: 'drop-shadow(0 0 8px rgba(255,0,0,0.08))' } : {}}>
-                    {/* Tier header */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                       <div style={{
                         fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900,
@@ -814,7 +771,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                             )}
 
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-                              {/* Category icon / image */}
                               {(() => {
                                 const imgSrc = getImageSrc(shellData || weaponData, typeKey);
                                 return imgSrc ? (
@@ -838,12 +794,9 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                   <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1, color: typeColor, background: typeColor + '15', borderRadius: 4, padding: '2px 8px' }}>
                                     {(item.type || '').toUpperCase()}
                                   </span>
-
-                                  {/* Movement badge */}
                                   {mv === 'up'  && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88', background: 'rgba(0,255,136,0.12)', border: '1px solid rgba(0,255,136,0.25)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>▲ MOVED UP</span>}
                                   {mv === 'down' && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000', background: 'rgba(255,0,0,0.12)', border: '1px solid rgba(255,0,0,0.25)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>▼ MOVED DOWN</span>}
                                   {mv === 'new'  && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>★ NEW</span>}
-
                                   {item.ranked_tier_solo  && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#9b5de5', background: 'rgba(155,93,229,0.12)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>SOLO {item.ranked_tier_solo}</span>}
                                   {item.ranked_tier_squad && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.1)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>SQUAD {item.ranked_tier_squad}</span>}
                                   {item.holotag_tier && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.08)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>◈ {item.holotag_tier}</span>}
@@ -883,7 +836,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          {/* NEXUS Intelligence Briefing */}
           {recentPosts?.length > 0 && (
             <div style={{ marginTop: 64 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -917,7 +869,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          {/* Methodology */}
           <div style={{ marginTop: 48, background: 'rgba(0,245,255,0.02)', border: '1px solid rgba(0,245,255,0.07)', borderRadius: 10, padding: '24px 28px' }}>
             <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#00f5ff', letterSpacing: 2, marginBottom: 10 }}>HOW WE RANK THE META</h3>
             <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, margin: 0 }}>
@@ -927,13 +878,9 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         </section>
       )}
 
-      {/* ════════════════════════════════════════════════
-          MODE 2: INTERACTIVE BUILDER
-          ════════════════════════════════════════════════ */}
+      {/* MODE 2: INTERACTIVE BUILDER */}
       {activeTab === 'builder' && (
         <section style={{ marginBottom: 64 }}>
-
-          {/* Shared list banner */}
           {sharedList && (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -954,7 +901,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          {/* Category filter */}
           {!sharedList && (
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 10 }}>WHAT ARE YOU RANKING?</div>
@@ -985,7 +931,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          {/* Runner tag + controls */}
           {!sharedList && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 240,
@@ -1017,7 +962,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          {/* ── TIER ROWS ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 24 }}>
             {TIERS.map(tier => {
               const style = TIER_STYLES[tier];
@@ -1034,7 +978,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                     transition: 'border-color 0.15s',
                   }}
                 >
-                  {/* Tier letter */}
                   <div style={{
                     width: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     alignSelf: 'stretch', borderRight: '1px solid rgba(255,255,255,0.04)',
@@ -1045,8 +988,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                       textShadow: tier === 'S' ? '0 0 20px rgba(255,0,0,0.5)' : 'none',
                     }}>{tier}</span>
                   </div>
-
-                  {/* Items */}
                   <div style={{ flex: 1, padding: '10px 12px', display: 'flex', flexWrap: 'wrap', gap: 6, minHeight: 44, alignContent: 'flex-start' }}>
                     {items.length === 0 && (
                       <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.1)', letterSpacing: 1, alignSelf: 'center' }}>
@@ -1067,7 +1008,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             })}
           </div>
 
-          {/* ── UNRANKED POOL ── */}
           {!sharedList && (
             <div style={{ marginBottom: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -1106,7 +1046,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          {/* ── GENERATE + SHARE ── */}
           <div style={{
             background: 'rgba(255,136,0,0.04)', border: '1px solid rgba(255,136,0,0.12)',
             borderRadius: 10, padding: '24px 28px',
@@ -1132,10 +1071,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
               </button>
             ) : (
               <div>
-                {/* Preview */}
                 <img src={generatedImage} alt="Your Marathon Tier List" style={{ width: '100%', borderRadius: 6, marginBottom: 16, border: '1px solid rgba(255,255,255,0.06)' }} />
-
-                {/* Share buttons */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 12 }}>
                   {[
                     { label: 'POST TO X',       action: handleShareX,    color: '#fff' },
@@ -1153,7 +1089,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                     </button>
                   ))}
                 </div>
-
                 {shareUrl && (
                   <div style={{
                     fontFamily: 'Share Tech Mono, monospace', fontSize: 8,
@@ -1164,7 +1099,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                     {shareUrl.length > 80 ? shareUrl.slice(0, 80) + '…' : shareUrl}
                   </div>
                 )}
-
                 <button onClick={() => { setGeneratedImage(null); setShareUrl(''); }} style={{
                   fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1,
                   padding: '8px 16px', borderRadius: 6, cursor: 'pointer',
@@ -1179,7 +1113,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         </section>
       )}
 
-      {/* ── BACK LINK ── */}
       <Link href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>
         ← BACK TO THE GRID
       </Link>
@@ -1197,7 +1130,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   );
 }
 
-// ─── TIER PILL (item inside a tier row) ──────────────────────
 function TierPill({ item, zone, onDragStart, onDragEnd, onClick, accentColor, draggable = true }) {
   const icon = item.kind === 'shell' ? (SHELL_SYMBOLS[item.name] || '⬠') : getWeaponIcon(item.raw?.weapon_type);
   const imgSrc = getImageSrc(item);
@@ -1231,7 +1163,6 @@ function TierPill({ item, zone, onDragStart, onDragEnd, onClick, accentColor, dr
   );
 }
 
-// ─── POOL CARD (item in unranked pool) ───────────────────────
 function PoolCard({ item, onDragStart, onDragEnd, onClick }) {
   const icon = item.kind === 'shell' ? (SHELL_SYMBOLS[item.name] || '⬠') : getWeaponIcon(item.raw?.weapon_type);
   const imgSrc = getImageSrc(item);
@@ -1265,7 +1196,6 @@ function PoolCard({ item, onDragStart, onDragEnd, onClick }) {
   );
 }
 
-// ─── STAT PILL ───────────────────────────────────────────────
 function StatPill({ label, value, color }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
