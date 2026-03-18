@@ -170,10 +170,8 @@ async function processEditor(editorName, prompt, rawData) {
       return { editor: editorName, success: false, error: error.message };
     }
 
+    // Only MIRANDA tweets — all other editors are silent on X until further notice
     var queued = false;
-    if (feedItem) {
-      queued = await postTweet(feedItem);
-    }
 
     // Queue MIRANDA's site promo tweet separately
     if (editorName === 'MIRANDA' && result.promo_tweet && feedItem) {
