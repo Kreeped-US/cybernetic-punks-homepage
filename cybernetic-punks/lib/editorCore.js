@@ -37,28 +37,34 @@ Your voice: Urgent, precise, data-driven. You write like a mission briefing. Eve
 
 RANKED MODE IS LIVE: Factor ranked play into all meta analysis. Note ranked viability in Solo and Squad separately where relevant. Consider Holotag mechanics — high-value extraction builds are favored over pure combat builds in ranked. Flag meta shifts driven by ranked vs casual play. Add ranked_note, ranked_tier_solo, ranked_tier_squad, and holotag_tier to meta_update entries where relevant.
 
-META TIER OUTPUT: In addition to your article, you MUST include a "meta_update" array in your JSON response. This array should contain 5-10 items representing the current meta state based on what you see in the content. Each item needs:
-- "name": weapon name, shell name, strategy name, or ability name (keep it short and recognizable)
-- "type": one of "weapon", "shell", "strategy", "loadout", or "ability"
+META TIER OUTPUT: In addition to your article, you MUST include a "meta_update" array in your JSON response. This array should contain 5-10 items representing the current meta state. CRITICAL RULES:
+- Only use "type": "weapon" or "type": "shell" — no other types. Never use "strategy", "ability", "loadout", or any other value.
+- For weapons: use exact weapon names from the weapons list below
+- For shells: use exact shell names — Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook
+
+Each item needs:
+- "name": exact weapon name or exact shell name only
+- "type": ONLY "weapon" or "shell" — nothing else
 - "tier": S, A, B, C, or D based on current meta viability
-- "trend": "up" if gaining popularity/effectiveness, "down" if falling off, "stable" if unchanged
+- "trend": "up", "down", or "stable"
 - "note": one short sentence explaining why (max 80 characters)
 - "ranked_note": ranked-specific note or null
 - "ranked_tier_solo": S/A/B/C/D or null
 - "ranked_tier_squad": S/A/B/C/D or null
 - "holotag_tier": Bronze/Silver/Gold/Platinum/Diamond or null
 
-The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook. The top weapons currently include: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardline PR, Stryder M1T, Ares RG, Longshot. Use your analysis of the content to determine current tiers and trends.
+The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook.
+Top weapons: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardline PR, Stryder M1T, Ares RG, Longshot, Retaliator LMG, Magnum MC, V75 Scar, Impact HAR, Copperhead RF, Bully SMG.
 
-When referencing weapon mods in your meta analysis, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. Prestige-tier Chip mods in particular can define a weapon's meta role — call them out by name when relevant. Only reference mods that appear in the database.
+When referencing weapon mods, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. Only reference mods that appear in the database.
+When referencing shell cores, use exact core names from the SHELL CORES DATABASE injected into this prompt.
 
-When referencing shell cores, use exact core names from the SHELL CORES DATABASE injected into this prompt. Cores can define a shell's ranked viability — reference them when relevant to meta shifts.
-
-Example meta_update:
+Example meta_update (weapons and shells ONLY — no strategies, no abilities):
 [
-  {"name": "WSTR Combat Shotgun", "type": "weapon", "tier": "S", "trend": "stable", "note": "Still the best CQC option by a wide margin", "ranked_note": "Dominant in ranked CQB engagements", "ranked_tier_solo": "S", "ranked_tier_squad": "A", "holotag_tier": "Gold"},
-  {"name": "Thief", "type": "shell", "tier": "A", "trend": "up", "note": "Extraction focus paying off in ranked", "ranked_note": "S-tier solo ranked — built for Holotag extraction", "ranked_tier_solo": "S", "ranked_tier_squad": "B", "holotag_tier": "Silver"},
-  {"name": "Extract Rush", "type": "strategy", "tier": "B", "trend": "down", "note": "Players learning to counter early exits", "ranked_note": null, "ranked_tier_solo": null, "ranked_tier_squad": null, "holotag_tier": null}
+  {"name": "WSTR Combat Shotgun", "type": "weapon", "tier": "S", "trend": "stable", "note": "Still the best CQC option by a wide margin", "ranked_note": "Dominant in ranked CQB", "ranked_tier_solo": "S", "ranked_tier_squad": "A", "holotag_tier": "Gold"},
+  {"name": "M77 Assault Rifle", "type": "weapon", "tier": "A", "trend": "up", "note": "Versatile — thriving in ranked mid-range", "ranked_note": "Reliable ranked AR", "ranked_tier_solo": "A", "ranked_tier_squad": "A", "holotag_tier": "Silver"},
+  {"name": "Thief", "type": "shell", "tier": "S", "trend": "up", "note": "Extraction focus paying off in ranked solo", "ranked_note": "S-tier solo ranked — built for Holotag extraction", "ranked_tier_solo": "S", "ranked_tier_squad": "B", "holotag_tier": "Silver"},
+  {"name": "Vandal", "type": "shell", "tier": "A", "trend": "stable", "note": "Best all-rounder for new ranked players", "ranked_note": "Forgiving kit for ranked learning curve", "ranked_tier_solo": "A", "ranked_tier_squad": "A", "holotag_tier": "Bronze"}
 ]
 
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
@@ -343,7 +349,37 @@ Return ONLY valid JSON — no other text:
 }`;
 }
 
-export async function callEditor(editor, userPrompt) {
+
+// ── SEO KEYWORD INTENT LAYER ─────────────────────────────────────
+// Pulls the highest-priority untargeted keyword for an editor each cron cycle
+async function getTargetKeyword(editor, supabase) {
+  try {
+    var cutoff = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
+    var { data } = await supabase
+      .from('seo_keywords')
+      .select('id, keyword, target_shell, target_weapon')
+      .eq('target_editor', editor)
+      .or('last_targeted_at.is.null,last_targeted_at.lt.' + cutoff)
+      .order('priority', { ascending: true })
+      .order('last_targeted_at', { ascending: true, nullsFirst: true })
+      .limit(1)
+      .single();
+
+    if (!data) return null;
+
+    // Mark keyword as used
+    await supabase
+      .from('seo_keywords')
+      .update({ last_targeted_at: new Date().toISOString(), times_targeted: supabase.rpc ? undefined : undefined })
+      .eq('id', data.id);
+
+    return data;
+  } catch (err) {
+    return null; // Non-fatal — keyword targeting is best-effort
+  }
+}
+
+export async function callEditor(editor, userPrompt, supabaseClient) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
 
@@ -351,6 +387,19 @@ export async function callEditor(editor, userPrompt) {
   if (['DEXTER', 'NEXUS', 'CIPHER'].includes(editor)) {
     const gameContext = await fetchGameContext();
     if (gameContext) systemPrompt += gameContext;
+  }
+
+  // SEO keyword injection — target a specific search query this cycle
+  if (supabaseClient) {
+    var kwData = await getTargetKeyword(editor, supabaseClient);
+    if (kwData) {
+      systemPrompt += '\n\n--- SEO TARGET FOR THIS ARTICLE ---\n';
+      systemPrompt += 'TARGET KEYWORD: "' + kwData.keyword + '"\n';
+      if (kwData.target_shell) systemPrompt += 'FOCUS SHELL: ' + kwData.target_shell + '\n';
+      if (kwData.target_weapon) systemPrompt += 'FOCUS WEAPON: ' + kwData.target_weapon + '\n';
+      systemPrompt += 'INSTRUCTION: Write this article so it naturally answers the search query "' + kwData.keyword + '" for a player searching Google. Include the keyword phrase naturally in the headline and body. Do not force it — make it read naturally.\n';
+      systemPrompt += '--- END SEO TARGET ---\n';
+    }
   }
 
   // Max tokens per editor — confirmed architecture
