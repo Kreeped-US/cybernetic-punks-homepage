@@ -429,6 +429,7 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
   // Max tokens per editor — confirmed architecture
   var maxTokens = 1024;
   if (editor === 'NEXUS') maxTokens = 2048;
+  if (editor === 'CIPHER') maxTokens = 1536;
   if (editor === 'MIRANDA') maxTokens = 768;
 
   var message = await client.messages.create({
