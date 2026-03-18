@@ -13,8 +13,11 @@ export default async function sitemap() {
     { url: baseUrl + '/intel',               lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/meta',                lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/builds',              lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/advisor',             lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
+    { url: baseUrl + '/shells',              lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
     { url: baseUrl + '/play-of-the-day',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/top-build',           lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/ranked',              lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.7 },
     { url: baseUrl + '/editors',             lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
     { url: baseUrl + '/grid',                lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
     { url: baseUrl + '/stats',               lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
@@ -22,6 +25,7 @@ export default async function sitemap() {
     { url: baseUrl + '/sitrep',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/status',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.8 },
     { url: baseUrl + '/rising',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.7 },
+    // Editor lane pages
     { url: baseUrl + '/intel/cipher',        lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/intel/nexus',         lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/intel/dexter',        lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
@@ -29,13 +33,35 @@ export default async function sitemap() {
     { url: baseUrl + '/intel/miranda',       lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
   ];
 
+  // Shell hub pages — auto-includes any new shells added to the DB
+  let shellPages = [];
+  try {
+    const { data: shells } = await supabase
+      .from('shell_stats')
+      .select('name, updated_at')
+      .order('name');
+
+    if (shells) {
+      shellPages = shells.map((s) => ({
+        url: baseUrl + '/shells/' + s.name.toLowerCase(),
+        lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
+        changeFrequency: 'daily',
+        priority: 0.85,
+      }));
+    }
+  } catch (err) {
+    console.error('Sitemap shell fetch error:', err);
+  }
+
+  // Article pages — capped at 500 to keep sitemap lean
   let dynamicPages = [];
   try {
     const { data } = await supabase
       .from('feed_items')
       .select('slug, created_at')
       .eq('is_published', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
 
     if (data) {
       dynamicPages = data.map((item) => ({
@@ -49,5 +75,5 @@ export default async function sitemap() {
     console.error('Sitemap fetch error:', err);
   }
 
-  return [...staticPages, ...dynamicPages];
+  return [...staticPages, ...shellPages, ...dynamicPages];
 }
