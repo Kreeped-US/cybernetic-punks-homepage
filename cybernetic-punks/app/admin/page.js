@@ -70,6 +70,7 @@ const SCHEMAS = {
     { key: 'effect_desc',   label: 'Effect Description', type: 'textarea' },
     { key: 'credit_value',  label: 'Credit Value',       type: 'number' },
     { key: 'ranked_viable', label: 'Ranked Viable',      type: 'boolean' },
+    { key: 'image_filename', label: 'Image Filename',     type: 'text',    placeholder: 'e.g. barrel-mod.webp' },
   ],
 
   implant_stats: [
@@ -93,6 +94,7 @@ const SCHEMAS = {
     { key: 'ranked_viable',      label: 'Ranked Viable',  type: 'boolean' },
     { key: 'verified',           label: 'Verified',       type: 'boolean' },
     { key: 'notes',              label: 'Notes',          type: 'textarea' },
+    { key: 'image_filename',     label: 'Image Filename', type: 'text',    placeholder: 'e.g. implant-name.webp' },
   ],
 
   ammo_stats: [
@@ -116,6 +118,7 @@ const SCHEMAS = {
     { key: 'meta_rating',        label: 'Meta Rating',        type: 'select',  options: ['', 'S', 'A', 'B', 'C', 'D'] },
     { key: 'verified',           label: 'Verified',           type: 'boolean' },
     { key: 'notes',              label: 'Notes',              type: 'textarea' },
+    { key: 'image_filename',     label: 'Image Filename',     type: 'text',    placeholder: 'e.g. core-name.webp' },
   ],
 };
 
@@ -381,7 +384,7 @@ export default function AdminPage() {
             <input type={field.type === 'number' ? 'number' : 'text'} value={formData[field.key] ?? ''} onChange={e => updateField(field.key, e.target.value)} placeholder={field.placeholder || ''} style={{ ...S.input }} />
             {field.key === 'image_filename' && formData[field.key] && (
               <div style={{ marginTop: 8 }}>
-                <img src={`/images/${activeTab === 'shell_stats' ? 'shells' : 'weapons'}/${formData[field.key]}`} alt={formData.name || 'preview'} style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }} onError={e => { e.target.style.display = 'none'; }} />
+                <img src={`/images/${activeTab === 'shell_stats' ? 'shells' : activeTab === 'mod_stats' ? 'mods' : activeTab === 'core_stats' ? 'cores' : activeTab === 'implant_stats' ? 'implants' : 'weapons'}/${formData[field.key]}`} alt={formData.name || 'preview'} style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }} onError={e => { e.target.style.display = 'none'; }} />
               </div>
             )}
           </>
