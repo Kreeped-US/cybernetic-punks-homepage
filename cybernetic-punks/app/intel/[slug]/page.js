@@ -385,9 +385,17 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
                 var isLast = i === comments.length - 1;
                 return (
                   <div key={i} style={{ padding: '16px 20px', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.03)', display: 'flex', gap: 14 }}>
-                    {/* Editor avatar */}
-                    <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', background: commentEditor.color + '15', border: '1px solid ' + commentEditor.color + '33', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontFamily: 'monospace', fontSize: 14, color: commentEditor.color }}>{commentEditor.symbol}</span>
+                    {/* Editor avatar — uses portrait image with symbol fallback */}
+                    <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: '50%', background: commentEditor.color + '15', border: '2px solid ' + commentEditor.color + '44', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img
+                        src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'}
+                        alt={comment.editor}
+                        width={40}
+                        height={40}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }}
+                        onError={function(e) { e.target.style.display = 'none'; }}
+                      />
+                      <span style={{ fontFamily: 'monospace', fontSize: 14, color: commentEditor.color, zIndex: -1 }}>{commentEditor.symbol}</span>
                     </div>
                     {/* Comment body */}
                     <div style={{ flex: 1, minWidth: 0 }}>
