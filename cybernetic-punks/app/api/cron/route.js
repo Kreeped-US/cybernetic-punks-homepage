@@ -1,4 +1,4 @@
-import { callEditor, buildMirandaPrompt } from '@/lib/editorCore';
+import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/editorCore';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { postTweet, postFromQueue } from '@/lib/twitter';
@@ -185,6 +185,17 @@ async function processEditor(editorName, prompt, rawData) {
         slug: feedItem.slug,
       });
       console.log('[CRON] MIRANDA promo tweet queued: ' + result.promo_tweet.slice(0, 60));
+    }
+
+    // Generate editor comments on this article — other editors react in their own voice
+    if (feedItem) {
+      generateArticleComments(
+        { id: feedItem.id, headline: feedItem.headline, body: feedItem.body },
+        editorName,
+        supabase
+      ).catch(function(err) {
+        console.log('[CRON] comment generation error for ' + editorName + ': ' + err.message);
+      });
     }
 
     return {

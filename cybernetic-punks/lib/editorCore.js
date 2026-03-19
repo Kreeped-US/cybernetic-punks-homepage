@@ -466,3 +466,81 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
     return { raw: text };
   }
 }
+
+// ─── EDITOR COMMENT VOICES ──────────────────────────────────
+// Each editor has a distinct reaction voice for commenting on other editors' articles
+
+const COMMENT_VOICES = {
+  CIPHER: `You are CIPHER, the competitive play analyst. You are cold, analytical, and direct. When you comment on another editor's article you cut straight to the competitive implication. You speak in short punchy sentences. You never hedge. Max 2-3 sentences. No emojis. Pure signal.`,
+
+  NEXUS: `You are NEXUS, the meta strategist. You see everything through the lens of what it means for the meta. When you comment on another editor's article you connect it to the bigger picture — what shifts, what stays, what this means for weapon and shell viability. Max 2-3 sentences. Data-driven tone.`,
+
+  DEXTER: `You are DEXTER, the build engineer. You respond to other articles by thinking about how it affects loadout choices. What does this mean for the build meta? What should runners equip now? Max 2-3 sentences. Technical but accessible.`,
+
+  GHOST: `You are GHOST, the community pulse tracker. You represent what players are actually thinking on the ground. When you comment you bring in the community angle — how will players react, what are they already saying, what's the real-world impact on the average runner. Max 2-3 sentences. Grounded, community-first.`,
+
+  MIRANDA: `You are MIRANDA, the field guide editor. You are calm, structured, and slightly warmer than the other editors. When you comment you think about what this means for new and improving runners — practical implications, what they should do with this information. Max 2-3 sentences. Helpful and clear.`,
+};
+
+export async function generateArticleComments(article, publishingEditor, supabaseClient) {
+  // All editors except the one who wrote the article comment on it
+  var commentEditors = ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'].filter(function(e) {
+    return e !== publishingEditor;
+  });
+
+  // Pick 2-3 editors to comment — not all 4, keeps it natural
+  var numCommenters = Math.random() > 0.5 ? 3 : 2;
+  var shuffled = commentEditors.sort(function() { return Math.random() - 0.5; });
+  var selected = shuffled.slice(0, numCommenters);
+
+  var comments = [];
+
+  for (var i = 0; i < selected.length; i++) {
+    var editor = selected[i];
+    try {
+      var prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content — reference actual details from the article.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text — no JSON, no labels, no quotes around it. Just the comment itself.';
+
+      var message = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 120,
+        system: COMMENT_VOICES[editor],
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      var commentText = message.content[0].text.trim();
+
+      if (commentText && commentText.length > 10) {
+        comments.push({ editor: editor, body: commentText });
+      }
+
+      // Small gap between comment calls
+      await new Promise(function(resolve) { setTimeout(resolve, 2000); });
+
+    } catch (err) {
+      console.log('[editorCore] comment generation failed for ' + editor + ': ' + err.message);
+    }
+  }
+
+  // Insert comments into DB
+  if (comments.length > 0 && supabaseClient) {
+    try {
+      var rows = comments.map(function(c) {
+        return {
+          article_id: article.id,
+          editor: c.editor,
+          body: c.body,
+        };
+      });
+      var { error } = await supabaseClient.from('article_comments').insert(rows);
+      if (error) {
+        console.log('[editorCore] comment insert error: ' + error.message);
+      } else {
+        console.log('[editorCore] inserted ' + comments.length + ' comments for article: ' + article.headline.slice(0, 50));
+      }
+    } catch (err) {
+      console.log('[editorCore] comment DB error: ' + err.message);
+    }
+  }
+
+  return comments;
+}

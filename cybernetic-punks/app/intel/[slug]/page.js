@@ -183,7 +183,7 @@ function BodyRenderer({ parsed, editorColor }) {
 }
 
 // Fix 6: Added implants to function signature
-function ArticlePage({ item, shells, weapons, mods, implants, related }) {
+function ArticlePage({ item, shells, weapons, mods, implants, comments, related }) {
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
   var publishedAt = new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   var videoId = extractYouTubeId(item.source_url);
@@ -371,6 +371,40 @@ function ArticlePage({ item, shells, weapons, mods, implants, related }) {
           )}
         </div>
 
+        {/* ── EDITOR COMMENTS ── */}
+        {comments && comments.length > 0 && (
+          <div className="rs" style={{ animationDelay:'0.35s', marginBottom: 14 }}>
+            <div style={{ background: '#050505', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 3 }}>EDITOR REACTIONS</div>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 1 }}>{comments.length} {comments.length === 1 ? 'COMMENT' : 'COMMENTS'}</div>
+              </div>
+              {comments.map(function(comment, i) {
+                var commentEditor = EDITOR_STYLES[comment.editor] || EDITOR_STYLES.CIPHER;
+                var isLast = i === comments.length - 1;
+                return (
+                  <div key={i} style={{ padding: '16px 20px', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.03)', display: 'flex', gap: 14 }}>
+                    {/* Editor avatar */}
+                    <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', background: commentEditor.color + '15', border: '1px solid ' + commentEditor.color + '33', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: 14, color: commentEditor.color }}>{commentEditor.symbol}</span>
+                    </div>
+                    {/* Comment body */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: commentEditor.color, letterSpacing: 1 }}>{comment.editor}</span>
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: commentEditor.color, background: commentEditor.color + '12', border: '1px solid ' + commentEditor.color + '25', borderRadius: 2, padding: '1px 6px', letterSpacing: 1 }}>EDITOR</span>
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)', marginLeft: 'auto' }}>{timeAgo(comment.created_at)}</span>
+                      </div>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.70)', lineHeight: 1.6 }}>{comment.body}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {related && related.length > 0 && (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 48, marginTop: 20 }}>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginBottom: 20 }}>RELATED INTEL</div>
@@ -419,6 +453,17 @@ export default async function IntelPage({ params }) {
     supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').limit(60),
   ]);
 
+  // Fetch editor comments for this article
+  var comments = [];
+  if (itemResult.data) {
+    var { data: commentData } = await supabase
+      .from('article_comments')
+      .select('editor, body, created_at')
+      .eq('article_id', itemResult.data.id)
+      .order('created_at', { ascending: true });
+    comments = commentData || [];
+  }
+
   if (!itemResult.data) notFound();
 
   var related = [];
@@ -442,6 +487,7 @@ export default async function IntelPage({ params }) {
       weapons={weaponResult.data || []}
       mods={modResult.data || []}
       implants={implantResult.data || []}
+      comments={comments}
       related={related}
     />
   );
