@@ -402,7 +402,7 @@ export default function HeroBanner() {
         </div>
 
         {/* SPOTLIGHT CARDS */}
-        <div style={{ display:isMobile?'flex':'grid', flexDirection:isMobile?'row':undefined, overflowX:isMobile?'auto':undefined, gridTemplateColumns:isMobile?undefined:'repeat(3, 1fr)', gap:isMobile?10:14, marginBottom:isMobile?20:28, paddingBottom:isMobile?4:0, WebkitOverflowScrolling:'touch' }}>
+        <div style={{ display:isMobile?'flex':'grid', flexDirection:isMobile?'row':undefined, flexWrap:isMobile?'nowrap':undefined, overflowX:isMobile?'auto':undefined, gridTemplateColumns:isMobile?undefined:'repeat(3, 1fr)', gap:isMobile?10:14, marginBottom:isMobile?20:28, paddingBottom:isMobile?4:0, WebkitOverflowScrolling:'touch' }}>
 
           <SpotlightCard href="/play-of-the-day" accentColor="#ff0000" editorSymbol="C" editorName="CIPHER" badgeLabel="PLAY OF THE DAY" loading={d===null} isMobile={isMobile}>
             {isMobile
