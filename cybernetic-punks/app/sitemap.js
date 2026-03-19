@@ -18,6 +18,7 @@ export default async function sitemap() {
     { url: baseUrl + '/top-build',           lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/ranked',              lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.7 },
     { url: baseUrl + '/editors',             lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
+    { url: baseUrl + '/guides',               lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/stats',               lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/leaderboard',         lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/status',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.8 },

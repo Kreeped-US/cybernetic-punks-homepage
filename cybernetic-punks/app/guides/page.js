@@ -6,6 +6,24 @@ import Footer from '@/components/Footer';
 export const metadata = {
   title: 'Marathon Field Guides — Shell Breakdowns, Ranked Prep & Strategy | CyberneticPunks',
   description: 'Shell ability breakdowns, mod analysis, ranked prep, and extraction strategy for Marathon Runners. Auto-updated every 6 hours by MIRANDA.',
+  openGraph: {
+    title: 'Marathon Field Guides — Shell Breakdowns, Ranked Prep & Strategy',
+    description: 'Shell ability breakdowns, mod analysis, ranked prep, and extraction strategy for Marathon Runners. Auto-updated every 6 hours by MIRANDA.',
+    url: 'https://cyberneticpunks.com/guides',
+    siteName: 'CyberneticPunks',
+    type: 'website',
+    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630, alt: 'Marathon Field Guides — CyberneticPunks' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@Cybernetic87250',
+    title: 'Marathon Field Guides — CyberneticPunks',
+    description: 'Shell ability breakdowns, mod analysis, ranked prep, and extraction strategy for Marathon Runners.',
+    images: ['https://cyberneticpunks.com/og-image.png'],
+  },
+  alternates: {
+    canonical: 'https://cyberneticpunks.com/guides',
+  },
 };
 
 export const revalidate = 300;
@@ -187,7 +205,7 @@ export default async function GuidesPage({ searchParams }) {
         }}>
           <span style={{ color: '#ffd700', fontSize: '16px' }}>◎</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#ffd700', letterSpacing: '1px' }}>
-            RANKED DROPS END OF MARCH —{' '}
+            RANKED IS LIVE —{' '}
             <Link href="/ranked" style={{ color: '#ffd700', textDecoration: 'underline' }}>
               Read the Ranked Guide
             </Link>
