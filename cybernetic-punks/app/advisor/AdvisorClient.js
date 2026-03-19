@@ -2,6 +2,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useIsMobile } from '@/lib/useIsMobile';
 import { track } from '@/lib/useTrack';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 const SHELLS = [
   { name: 'Destroyer', color: '#ff3333', role: 'Frontline Combat',    desc: 'Thrusters. Aggression. Close-range dominance.' },
@@ -23,11 +29,27 @@ const PLAYSTYLES = [
 ];
 
 const RANK_TARGETS = [
-  { id: 'casual',   label: 'CASUAL',        color: '#555555', desc: 'Just having fun' },
-  { id: 'bronze',   label: 'BRONZE-SILVER', color: '#cd7f32', desc: 'Learning ranked' },
-  { id: 'gold',     label: 'GOLD',          color: '#ffd700', desc: 'Consistent performer' },
-  { id: 'platinum', label: 'PLATINUM',      color: '#00f5ff', desc: 'High-level competitor' },
-  { id: 'diamond',  label: 'DIAMOND PUSH',  color: '#cc44ff', desc: 'Top tier grind' },
+  { id: 'unranked',  label: 'UNRANKED',  color: '#555555', holotag: null,     desc: 'Casual / no ranked' },
+  { id: 'bronze',    label: 'BRONZE',    color: '#cd7f32', holotag: '3,000',  desc: 'First steps in ranked' },
+  { id: 'silver',    label: 'SILVER',    color: '#aaaaaa', holotag: '5,000',  desc: 'Building consistency' },
+  { id: 'gold',      label: 'GOLD',      color: '#ffd700', holotag: '7,000',  desc: 'Reliable performer' },
+  { id: 'platinum',  label: 'PLATINUM',  color: '#00f5ff', holotag: '10,000', desc: 'High-level play' },
+  { id: 'diamond',   label: 'DIAMOND',   color: '#66ccff', holotag: '15,000', desc: 'Elite competitor' },
+  { id: 'pinnacle',  label: 'PINNACLE',  color: '#cc44ff', holotag: '20,000', desc: 'Top of the ladder' },
+];
+
+const PRIORITIES = [
+  { id: 'combat',     label: 'COMBAT POWER',    desc: 'Win every gunfight' },
+  { id: 'extraction', label: 'CLEAN EXTRACT',   desc: 'Get out with the loot' },
+  { id: 'survival',   label: 'SURVIVABILITY',   desc: 'Stay alive under pressure' },
+  { id: 'speed',      label: 'LOOT SPEED',      desc: 'Fast hands, fast feet' },
+];
+
+const EXPERIENCE_LEVELS = [
+  { id: 'new',         label: 'NEW RUNNER',   desc: 'First week in Marathon' },
+  { id: 'learning',    label: 'LEARNING',     desc: 'Getting the hang of it' },
+  { id: 'experienced', label: 'EXPERIENCED',  desc: 'Know the systems well' },
+  { id: 'veteran',     label: 'VETERAN',      desc: 'Deep meta knowledge' },
 ];
 
 const WEAPON_PREFS = [
@@ -129,6 +151,8 @@ export default function AdvisorClient() {
   var [rankTarget, setRankTarget] = useState('gold');
   var [weaponPref, setWeaponPref] = useState('');
   var [teamSize, setTeamSize] = useState('Solo');
+  var [priority, setPriority] = useState('combat');
+  var [experienceLevel, setExperienceLevel] = useState('learning');
   var [phase, setPhase] = useState('input');
   var [build, setBuild] = useState(null);
   var [error, setError] = useState(null);
@@ -169,7 +193,7 @@ export default function AdvisorClient() {
     if (!selectedShell) return;
     setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null);
     try {
-      var res = await fetch('/api/advisor', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ shell:selectedShell, playstyle, rankTarget, weaponPreference:weaponPref, teamSize }) });
+      var res = await fetch('/api/advisor', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ shell:selectedShell, playstyle, rankTarget, weaponPreference:weaponPref, teamSize, priority, experienceLevel }) });
       var json = await res.json();
       if (json.error) throw new Error(json.error);
       clearInterval(scanRef.current); setScanProgress(100);
@@ -248,8 +272,8 @@ export default function AdvisorClient() {
             </div>
           </div>
 
-          {/* OPTIONS GRID */}
-          <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit, minmax(280px, 1fr))', gap:isMobile?28:32, marginBottom:isMobile?36:40 }}>
+          {/* OPTIONS GRID — 2 col desktop, 1 col mobile */}
+          <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(2, 1fr)', gap:isMobile?28:32, marginBottom:isMobile?36:40 }}>
 
             {/* Playstyle */}
             <div>
@@ -268,61 +292,99 @@ export default function AdvisorClient() {
               </div>
             </div>
 
-            {/* Rank Target */}
+            {/* Priority Focus */}
             <div>
-              <SectionHeader num="03" label="RANK TARGET" isMobile={isMobile} />
-              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                {RANK_TARGETS.map(function(r) {
-                  var isSel=rankTarget===r.id;
+              <SectionHeader num="03" label="PRIORITY FOCUS" isMobile={isMobile} />
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8 }}>
+                {PRIORITIES.map(function(p) {
+                  var isSel=priority===p.id;
                   return (
-                    <div key={r.id} className="ab" onClick={function(){ setRankTarget(r.id); }}
-                      style={{ background:isSel?r.color+'0f':'#0a0a0a', border:'1px solid '+(isSel?r.color+'44':'rgba(255,255,255,0.06)'), borderLeft:'3px solid '+(isSel?r.color:'rgba(255,255,255,0.04)'), borderRadius:5, padding:isMobile?'13px 14px':'10px 13px', display:'flex', alignItems:'center', justifyContent:'space-between', minHeight:48 }}>
-                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?11:10, fontWeight:700, color:isSel?r.color:'rgba(255,255,255,0.32)', letterSpacing:1 }}>{r.label}</div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:11, color:'rgba(255,255,255,0.18)' }}>{r.desc}</div>
+                    <div key={p.id} className="ab" onClick={function(){ setPriority(p.id); }}
+                      style={{ background:isSel?'#ff880011':'#0a0a0a', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.06)'), borderRadius:6, padding:isMobile?'14px 12px':'12px 13px', minHeight:44 }}>
+                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:9, fontWeight:700, color:isSel?'#ff8800':'rgba(255,255,255,0.38)', letterSpacing:1, marginBottom:isMobile?4:3 }}>{p.label}</div>
+                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.2)', lineHeight:1.3 }}>{p.desc}</div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Weapon + Team */}
-            <div style={{ display:'flex', flexDirection:'column', gap:isMobile?24:26 }}>
-              <div>
-                <SectionHeader num="04" label="WEAPON PREFERENCE" sub="OPTIONAL" isMobile={isMobile} />
-                <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                  {WEAPON_PREFS.map(function(w) {
-                    var isSel=weaponPref===w.id;
-                    return (
-                      <button key={w.id} onClick={function(){ setWeaponPref(w.id); }}
-                        style={{ padding:isMobile?'10px 14px':'6px 11px', background:isSel?'#ff880011':'transparent', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.08)'), borderRadius:4, color:isSel?'#ff8800':'rgba(255,255,255,0.26)', fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?10:9, letterSpacing:1, cursor:'pointer', minHeight:44 }}>
-                        {w.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <SectionHeader num="05" label="TEAM SIZE" isMobile={isMobile} />
-                <div style={{ display:'flex', gap:10 }}>
-                  {['Solo','Squad'].map(function(size) {
-                    var isSel=teamSize===size;
-                    return (
-                      <button key={size} onClick={function(){ setTeamSize(size); }}
-                        style={{ flex:1, padding:isMobile?'16px':'13px', background:isSel?accentColor+'11':'#0a0a0a', border:'1px solid '+(isSel?accentColor+'44':'rgba(255,255,255,0.06)'), borderRadius:6, color:isSel?accentColor:'rgba(255,255,255,0.28)', fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:700, letterSpacing:2, cursor:'pointer', minHeight:48 }}>
-                        {size.toUpperCase()}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Rank Target */}
+            <div>
+              <SectionHeader num="04" label="RANK TARGET" isMobile={isMobile} />
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:6 }}>
+                {RANK_TARGETS.map(function(r) {
+                  var isSel=rankTarget===r.id;
+                  return (
+                    <div key={r.id} className="ab" onClick={function(){ setRankTarget(r.id); }}
+                      style={{ background:isSel?r.color+'0f':'#0a0a0a', border:'1px solid '+(isSel?r.color+'44':'rgba(255,255,255,0.06)'), borderTop:'2px solid '+(isSel?r.color:'transparent'), borderRadius:5, padding:isMobile?'12px 10px':'10px 12px', minHeight:44 }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:3 }}>
+                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:9, fontWeight:700, color:isSel?r.color:'rgba(255,255,255,0.32)', letterSpacing:1 }}>{r.label}</div>
+                        {r.holotag && <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:isSel?r.color+'99':'rgba(255,255,255,0.15)', letterSpacing:1 }}>{r.holotag}</div>}
+                      </div>
+                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?11:10, color:'rgba(255,255,255,0.18)', lineHeight:1.3 }}>{r.desc}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Experience Level */}
+            <div>
+              <SectionHeader num="05" label="EXPERIENCE LEVEL" isMobile={isMobile} />
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                {EXPERIENCE_LEVELS.map(function(e) {
+                  var isSel=experienceLevel===e.id;
+                  return (
+                    <div key={e.id} className="ab" onClick={function(){ setExperienceLevel(e.id); }}
+                      style={{ background:isSel?'#ff880011':'#0a0a0a', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.06)'), borderLeft:'3px solid '+(isSel?'#ff8800':'rgba(255,255,255,0.04)'), borderRadius:5, padding:isMobile?'12px 14px':'10px 13px', display:'flex', alignItems:'center', justifyContent:'space-between', minHeight:44 }}>
+                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:9, fontWeight:700, color:isSel?'#ff8800':'rgba(255,255,255,0.32)', letterSpacing:1 }}>{e.label}</div>
+                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:11, color:'rgba(255,255,255,0.18)' }}>{e.desc}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Weapon Preference */}
+            <div>
+              <SectionHeader num="06" label="WEAPON PREFERENCE" sub="OPTIONAL" isMobile={isMobile} />
+              <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                {WEAPON_PREFS.map(function(w) {
+                  var isSel=weaponPref===w.id;
+                  return (
+                    <button key={w.id} onClick={function(){ setWeaponPref(w.id); }}
+                      style={{ padding:isMobile?'10px 14px':'8px 13px', background:isSel?'#ff880011':'transparent', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.08)'), borderRadius:4, color:isSel?'#ff8800':'rgba(255,255,255,0.26)', fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?10:9, letterSpacing:1, cursor:'pointer', minHeight:44 }}>
+                      {w.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Team Size */}
+            <div>
+              <SectionHeader num="07" label="TEAM SIZE" isMobile={isMobile} />
+              <div style={{ display:'flex', gap:10 }}>
+                {['Solo','Squad'].map(function(size) {
+                  var isSel=teamSize===size;
+                  return (
+                    <button key={size} onClick={function(){ setTeamSize(size); }}
+                      style={{ flex:1, padding:isMobile?'16px':'13px', background:isSel?accentColor+'11':'#0a0a0a', border:'1px solid '+(isSel?accentColor+'44':'rgba(255,255,255,0.06)'), borderRadius:6, color:isSel?accentColor:'rgba(255,255,255,0.28)', fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:700, letterSpacing:2, cursor:'pointer', minHeight:48 }}>
+                      {size.toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
 
           {/* GENERATE BUTTON */}
           <div style={{ textAlign:'center' }}>
             {selectedShell && shellConfig && (
               <div style={{ marginBottom:12, fontFamily:'Share Tech Mono, monospace', fontSize:10, color:accentColor, letterSpacing:2 }}>
-                {selectedShell.toUpperCase()} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label} &bull; {(RANK_TARGETS.find(function(r){ return r.id===rankTarget; })||{}).label}
+                {selectedShell.toUpperCase()} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label} &bull; {(PRIORITIES.find(function(p){ return p.id===priority; })||{}).label} &bull; {(RANK_TARGETS.find(function(r){ return r.id===rankTarget; })||{}).label}
               </div>
             )}
             <button onClick={generateBuild} disabled={!selectedShell}
@@ -351,7 +413,7 @@ export default function AdvisorClient() {
           </div>
           <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:15, fontWeight:900, letterSpacing:4, color:accentColor, marginBottom:5 }}>DEXTER ANALYZING</div>
           <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?9:10, color:'rgba(255,255,255,0.22)', letterSpacing:2, marginBottom:28 }}>
-            {selectedShell?selectedShell.toUpperCase():''} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label}
+            {selectedShell?selectedShell.toUpperCase():''} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label} &bull; {(PRIORITIES.find(function(p){ return p.id===priority; })||{}).label}
           </div>
           <div style={{ width:'100%', height:2, background:'rgba(255,255,255,0.05)', borderRadius:2, overflow:'hidden', marginBottom:20 }}>
             <div style={{ height:'100%', width:scanProgress+'%', background:'linear-gradient(90deg, '+accentColor+'66, '+accentColor+')', borderRadius:2, transition:'width 0.3s ease', boxShadow:'0 0 8px '+accentColor }} />
@@ -394,7 +456,7 @@ export default function AdvisorClient() {
             <div>
               <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.22)', letterSpacing:3, marginBottom:3 }}>DEXTER BUILD ADVISOR</div>
               <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?12:13, fontWeight:700, color:accentColor, letterSpacing:2 }}>
-                {build.shell?build.shell.toUpperCase():''} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label}
+                {build.shell?build.shell.toUpperCase():''} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label} &bull; {(RANK_TARGETS.find(function(r){ return r.id===rankTarget; })||{}).label}
               </div>
             </div>
             <button onClick={function(){ setPhase('input'); setBuild(null); }} style={{ padding:'10px 18px', background:'transparent', border:'1px solid rgba(255,255,255,0.1)', borderRadius:4, color:'rgba(255,255,255,0.28)', fontFamily:'Share Tech Mono, monospace', fontSize:10, letterSpacing:2, cursor:'pointer', minHeight:44 }}>REBUILD</button>
