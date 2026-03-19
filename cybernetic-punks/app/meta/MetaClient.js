@@ -8,6 +8,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/useTrack';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 // ─── CONSTANTS ───────────────────────────────────────────────
 
@@ -340,6 +346,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('live');
+  const [usageCount, setUsageCount] = useState(null);
   const [sharedList, setSharedList] = useState(null);
   const [movements, setMovements] = useState({});
   const [countdown, setCountdown] = useState('');
@@ -387,6 +394,20 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   // ── TRACK META VIEW ──
   useEffect(() => {
     track('meta_view');
+  }, []);
+
+  // Usage count fetch
+  useEffect(() => {
+    async function fetchUsage() {
+      try {
+        const { count } = await supabase
+          .from('site_events')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_name', 'tierlist_share');
+        if (count && count > 0) setUsageCount(count);
+      } catch (_) {}
+    }
+    fetchUsage();
   }, []);
 
   // Mobile detection
@@ -631,6 +652,15 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00f5ff', boxShadow: '0 0 10px #00f5ff', animation: 'pulse-glow 2s infinite' }} />
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#00f5ff', letterSpacing: 3 }}>⬡ NEXUS — LIVE META INTELLIGENCE</span>
         </div>
+
+        {usageCount && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 20, marginBottom: 16 }}>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00f5ff', animation: 'pulse-glow 2s ease-in-out infinite' }} />
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#00f5ff', letterSpacing: 2 }}>
+              {usageCount.toLocaleString()} TIER LISTS SHARED BY RUNNERS
+            </span>
+          </div>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 12 }}>
           <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, letterSpacing: 2, margin: 0 }}>

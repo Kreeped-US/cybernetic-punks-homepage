@@ -10,12 +10,14 @@ import IntelFeed from '@/components/IntelFeed';
 import EditorsStrip from '@/components/EditorsStrip';
 import DiscordCTA from '@/components/DiscordCTA';
 import Footer from '@/components/Footer';
+import UsageCounterStrip from '@/components/UsageCounterStrip';
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white pt-24">
       <DevTicker />
       <HeroBanner />
+      <UsageCounterStrip />
       <WhatsNew />
       <MetaPreview />
       <BuildsSection />
