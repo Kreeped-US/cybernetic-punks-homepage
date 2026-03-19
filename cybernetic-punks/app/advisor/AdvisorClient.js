@@ -472,7 +472,7 @@ export default function AdvisorClient() {
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:accentColor+'66', letterSpacing:3, marginBottom:8 }}>DEXTER BUILD REPORT</div>
                   <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?'clamp(16px, 5vw, 22px)':'clamp(17px, 2.8vw, 28px)', fontWeight:900, color:'#fff', letterSpacing:isMobile?1:2, marginBottom:7, wordBreak:'break-word' }}>"{build.build_name||'CUSTOM BUILD'}"</div>
-                  <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:15, color:'rgba(255,255,255,0.42)', lineHeight:1.55 }}>{build.playstyle_summary}</div>
+                  <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:15, color:'rgba(255,255,255,0.78)', lineHeight:1.6 }}>{build.playstyle_summary}</div>
                 </div>
                 <div style={{ textAlign:'center', flexShrink:0 }}>
                   <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?56:72, fontWeight:900, color:gradeColor, lineHeight:1, animation:'gg 3s ease-in-out infinite' }}>{grade}</div>
@@ -487,39 +487,39 @@ export default function AdvisorClient() {
 
                 {/* Weapons */}
                 <div style={{ padding:isMobile?'18px 20px':'22px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d', borderBottom:'1px solid '+accentColor+'0d' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:accentColor+'66', letterSpacing:3, marginBottom:12 }}>WEAPONS</div>
+                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:accentColor+'bb', letterSpacing:3, marginBottom:12 }}>WEAPONS</div>
                   {build.primary_weapon && (
                     <div style={{ marginBottom:12 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
                         <div style={{ width:3, height:16, background:accentColor, borderRadius:2, flexShrink:0 }} />
-                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?12:11, fontWeight:700, color:'#fff', letterSpacing:1 }}>{build.primary_weapon.name}</div>
+                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?14:13, fontWeight:700, color:'#fff', letterSpacing:1 }}>{build.primary_weapon.name}</div>
                         <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:accentColor+'66', padding:'1px 4px', border:'1px solid '+accentColor+'22', borderRadius:2 }}>PRIMARY</div>
                       </div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.24)', paddingLeft:11 }}>{build.primary_weapon.reason}</div>
+                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.65)', paddingLeft:11, lineHeight:1.5 }}>{build.primary_weapon.reason}</div>
                     </div>
                   )}
                   {build.secondary_weapon && (
                     <div>
                       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
                         <div style={{ width:3, height:16, background:'rgba(255,255,255,0.18)', borderRadius:2, flexShrink:0 }} />
-                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?12:11, fontWeight:700, color:'rgba(255,255,255,0.52)', letterSpacing:1 }}>{build.secondary_weapon.name}</div>
+                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?14:13, fontWeight:700, color:'rgba(255,255,255,0.80)', letterSpacing:1 }}>{build.secondary_weapon.name}</div>
                         <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:'rgba(255,255,255,0.16)', padding:'1px 4px', border:'1px solid rgba(255,255,255,0.1)', borderRadius:2 }}>SECONDARY</div>
                       </div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.2)', paddingLeft:11 }}>{build.secondary_weapon.reason}</div>
+                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.60)', paddingLeft:11, lineHeight:1.5 }}>{build.secondary_weapon.reason}</div>
                     </div>
                   )}
                 </div>
 
                 {/* Mods */}
                 <div style={{ padding:isMobile?'18px 20px':'22px 26px', borderBottom:'1px solid '+accentColor+'0d' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:accentColor+'66', letterSpacing:3, marginBottom:12 }}>WEAPON MODS</div>
+                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:accentColor+'bb', letterSpacing:3, marginBottom:12 }}>WEAPON MODS</div>
                   {(build.mods||[]).map(function(mod,i){
                     return (
                       <div key={i} style={{ marginBottom:9, display:'flex', gap:7 }}>
                         <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:accentColor, background:accentColor+'12', border:'1px solid '+accentColor+'22', borderRadius:3, padding:'2px 4px', letterSpacing:1, flexShrink:0, height:'fit-content', marginTop:1 }}>{mod.slot?mod.slot.toUpperCase():''}</div>
                         <div>
-                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?11:10, fontWeight:700, color:'rgba(255,255,255,0.72)', letterSpacing:1, marginBottom:1 }}>{mod.name}</div>
-                          <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.2)' }}>{mod.reason}</div>
+                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:12, fontWeight:700, color:'rgba(255,255,255,0.90)', letterSpacing:1, marginBottom:2 }}>{mod.name}</div>
+                          <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.60)', lineHeight:1.4 }}>{mod.reason}</div>
                         </div>
                       </div>
                     );
@@ -528,16 +528,16 @@ export default function AdvisorClient() {
 
                 {/* Cores */}
                 <div style={{ padding:isMobile?'18px 20px':'22px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:accentColor+'66', letterSpacing:3, marginBottom:12 }}>SHELL CORES</div>
+                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:accentColor+'bb', letterSpacing:3, marginBottom:12 }}>SHELL CORES</div>
                   {(build.cores||[]).map(function(core,i){
                     return (
                       <div key={i} style={{ marginBottom:10 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
                           <div style={{ width:4, height:4, borderRadius:'50%', background:accentColor, flexShrink:0 }} />
-                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?11:10, fontWeight:700, color:'rgba(255,255,255,0.78)', letterSpacing:1 }}>{core.name}</div>
+                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:12, fontWeight:700, color:'rgba(255,255,255,0.90)', letterSpacing:1 }}>{core.name}</div>
                           {core.ability_type && <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:'rgba(255,255,255,0.16)', padding:'1px 3px', border:'1px solid rgba(255,255,255,0.08)', borderRadius:2 }}>{core.ability_type.toUpperCase()}</div>}
                         </div>
-                        <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.2)', paddingLeft:10 }}>{core.reason}</div>
+                        <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.60)', paddingLeft:10, lineHeight:1.4 }}>{core.reason}</div>
                       </div>
                     );
                   })}
@@ -546,16 +546,16 @@ export default function AdvisorClient() {
 
                 {/* Implants */}
                 <div style={{ padding:isMobile?'18px 20px':'22px 26px' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'#9b5de566', letterSpacing:3, marginBottom:12 }}>IMPLANTS</div>
+                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'#9b5de5bb', letterSpacing:3, marginBottom:12 }}>IMPLANTS</div>
                   {(build.implants||[]).map(function(imp,i){
                     return (
                       <div key={i} style={{ marginBottom:10 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
                           <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:'#9b5de5', background:'#9b5de511', border:'1px solid #9b5de522', borderRadius:3, padding:'1px 3px', letterSpacing:1, flexShrink:0 }}>{imp.slot?imp.slot.toUpperCase():''}</div>
-                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?11:10, fontWeight:700, color:'rgba(255,255,255,0.78)', letterSpacing:1 }}>{imp.name}</div>
+                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:12, fontWeight:700, color:'rgba(255,255,255,0.90)', letterSpacing:1 }}>{imp.name}</div>
                         </div>
-                        {imp.stat_change&&<div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'#9b5de5', letterSpacing:1, paddingLeft:10, marginBottom:1 }}>{imp.stat_change}</div>}
-                        <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.2)', paddingLeft:10 }}>{imp.reason}</div>
+                        {imp.stat_change&&<div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'#9b5de5', letterSpacing:1, paddingLeft:10, marginBottom:2 }}>{imp.stat_change}</div>}
+                        <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.60)', paddingLeft:10, lineHeight:1.4 }}>{imp.reason}</div>
                       </div>
                     );
                   })}
@@ -567,16 +567,16 @@ export default function AdvisorClient() {
               <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit, minmax(220px, 1fr))', borderTop:'1px solid '+accentColor+'12', position:'relative', zIndex:1 }}>
                 <div style={{ padding:isMobile?'16px 20px':'16px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d', borderBottom:isMobile?'1px solid '+accentColor+'0d':'none' }}>
                   <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'#00ff88', letterSpacing:3, marginBottom:9 }}>STRENGTHS</div>
-                  {(build.strengths||[]).map(function(s,i){ return <div key={i} style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.42)', marginBottom:3, display:'flex', gap:6 }}><span style={{ color:'#00ff88' }}>+</span>{s}</div>; })}
+                  {(build.strengths||[]).map(function(s,i){ return <div key={i} style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.72)', marginBottom:4, display:'flex', gap:6 }}><span style={{ color:'#00ff88' }}>+</span>{s}</div>; })}
                 </div>
                 <div style={{ padding:isMobile?'16px 20px':'16px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d', borderBottom:isMobile&&build.ranked_note?'1px solid '+accentColor+'0d':'none' }}>
                   <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'#ff4444', letterSpacing:3, marginBottom:9 }}>WEAKNESSES</div>
-                  {(build.weaknesses||[]).map(function(w,i){ return <div key={i} style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.42)', marginBottom:3, display:'flex', gap:6 }}><span style={{ color:'#ff4444' }}>-</span>{w}</div>; })}
+                  {(build.weaknesses||[]).map(function(w,i){ return <div key={i} style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.72)', marginBottom:4, display:'flex', gap:6 }}><span style={{ color:'#ff4444' }}>-</span>{w}</div>; })}
                 </div>
                 {build.ranked_note && (
                   <div style={{ padding:isMobile?'16px 20px':'16px 26px' }}>
                     <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'#ffd700', letterSpacing:3, marginBottom:9 }}>RANKED NOTE</div>
-                    <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.36)', lineHeight:1.55 }}>{build.ranked_note}</div>
+                    <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.70)', lineHeight:1.6 }}>{build.ranked_note}</div>
                   </div>
                 )}
               </div>
@@ -586,8 +586,8 @@ export default function AdvisorClient() {
           {/* DEXTER ANALYSIS */}
           <div className="rs" style={{ animationDelay:'0.2s', marginBottom:14 }}>
             <div style={{ background:'#050505', border:'1px solid '+accentColor+'12', borderLeft:'3px solid '+accentColor, borderRadius:8, padding:isMobile?'18px 18px':'20px 24px' }}>
-              <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'#ff8800', letterSpacing:3, marginBottom:10 }}>[D] DEXTER ANALYSIS</div>
-              <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?15:14, color:'rgba(255,255,255,0.46)', lineHeight:1.8 }}>{build.dexter_analysis}</div>
+              <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'#ff8800', letterSpacing:3, marginBottom:12 }}>[D] DEXTER ANALYSIS</div>
+              <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?16:15, color:'rgba(255,255,255,0.78)', lineHeight:1.85 }}>{build.dexter_analysis}</div>
             </div>
           </div>
 
