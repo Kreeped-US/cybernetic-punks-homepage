@@ -128,15 +128,13 @@ async function processEditor(editorName, prompt, rawData) {
       insertData.source_url = result.source_url || null;
     }
 
-    // NEXUS meta_update — auto-update meta_tiers table
+    // NEXUS meta_update — upsert into meta_tiers (preserves entries NEXUS didn't mention this cycle)
     // Hard filter: only weapon and shell types allowed through
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
       try {
-        await supabase.from('meta_tiers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-
         var metaRows = result.meta_update
           .filter(function(item) {
-            return item.type === 'weapon' || item.type === 'shell';
+            return (item.type === 'weapon' || item.type === 'shell') && item.name;
           })
           .map(function(item) {
             return {
@@ -153,11 +151,17 @@ async function processEditor(editorName, prompt, rawData) {
             };
           });
 
-        var { error: metaError } = await supabase.from('meta_tiers').insert(metaRows);
-        if (metaError) {
-          console.log('[CRON] NEXUS meta_tiers update failed: ' + metaError.message);
-        } else {
-          console.log('[CRON] NEXUS updated meta_tiers with ' + metaRows.length + ' entries');
+        if (metaRows.length > 0) {
+          // Upsert on name — updates existing entries, inserts new ones, never deletes
+          var { error: metaError } = await supabase
+            .from('meta_tiers')
+            .upsert(metaRows, { onConflict: 'name' });
+
+          if (metaError) {
+            console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
+          } else {
+            console.log('[CRON] NEXUS upserted meta_tiers with ' + metaRows.length + ' entries');
+          }
         }
       } catch (metaErr) {
         console.log('[CRON] NEXUS meta_tiers error: ' + metaErr.message);

@@ -346,6 +346,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('live');
+  const [liveFilter, setLiveFilter] = useState('all'); // 'all' | 'weapons' | 'shells'
   const [usageCount, setUsageCount] = useState(null);
   const [sharedList, setSharedList] = useState(null);
   const [movements, setMovements] = useState({});
@@ -738,6 +739,30 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
       {/* MODE 1: NEXUS LIVE TIER LIST */}
       {activeTab === 'live' && (
         <section style={{ marginBottom: 64 }}>
+
+          {/* WEAPONS / SHELLS / ALL toggle */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 4, width: 'fit-content' }}>
+            {[
+              { key: 'all',     label: 'ALL',     color: '#fff'    },
+              { key: 'weapons', label: 'WEAPONS', color: '#ff0000' },
+              { key: 'shells',  label: 'SHELLS',  color: '#00f5ff' },
+            ].map(function(opt) {
+              const isActive = liveFilter === opt.key;
+              return (
+                <button key={opt.key} onClick={() => setLiveFilter(opt.key)} style={{
+                  fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2,
+                  padding: '8px 20px', borderRadius: 5, border: 'none', cursor: 'pointer',
+                  background: isActive ? opt.color + '18' : 'transparent',
+                  borderBottom: isActive ? '2px solid ' + opt.color : '2px solid transparent',
+                  color: isActive ? opt.color : 'rgba(255,255,255,0.28)',
+                  transition: 'all 0.15s',
+                }}>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+
           {metaTiers.length === 0 ? (
             <div style={{
               padding: '40px 28px', background: 'rgba(0,245,255,0.02)',
@@ -753,7 +778,10 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
               {TIERS.filter(t => t !== 'F').map(tier => {
                 const style = TIER_STYLES[tier];
-                const items = sortedTiers[tier] || [];
+                const allItems = sortedTiers[tier] || [];
+                const items = liveFilter === 'all' ? allItems
+                  : liveFilter === 'weapons' ? allItems.filter(function(i) { return (i.type || '').toLowerCase() === 'weapon'; })
+                  : allItems.filter(function(i) { return (i.type || '').toLowerCase() === 'shell'; });
                 const isSTop = tier === 'S';
                 return (
                   <div key={tier} style={isSTop ? { filter: 'drop-shadow(0 0 8px rgba(255,0,0,0.08))' } : {}}>

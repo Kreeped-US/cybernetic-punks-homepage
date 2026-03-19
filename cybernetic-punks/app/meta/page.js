@@ -1,7 +1,4 @@
 // app/meta/page.js
-// Server component — fetches all data, passes to MetaClient.
-// MetaClient handles both Mode 1 (live tier list) and Mode 2 (interactive builder).
-
 import { Suspense } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Nav from '@/components/Nav';
@@ -24,11 +21,14 @@ export const metadata = {
     url: 'https://cyberneticpunks.com/meta',
     siteName: 'CyberneticPunks',
     type: 'website',
+    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630, alt: 'Marathon Meta Tier List — CyberneticPunks' }],
   },
   twitter: {
     card: 'summary_large_image',
+    site: '@Cybernetic87250',
     title: 'Marathon Meta Tier List — CyberneticPunks',
     description: 'Live Marathon tier list. What weapons, strategies, and loadouts are winning right now.',
+    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/meta' },
 };
@@ -62,11 +62,11 @@ export default async function MetaPage() {
         .limit(6),
     ]);
 
-    metaTiers = metaRes.data || [];
-    weapons   = weaponsRes.data || [];
-    shells    = shellsRes.data || [];
-    modCount  = modsRes.count || 0;
-    recentPosts = postsRes.data || [];
+    metaTiers   = metaRes.data   || [];
+    weapons     = weaponsRes.data || [];
+    shells      = shellsRes.data  || [];
+    modCount    = modsRes.count   || 0;
+    recentPosts = postsRes.data   || [];
   } catch (err) {
     console.error('[MetaPage] fetch error:', err);
   }

@@ -48,7 +48,16 @@ Your voice: Urgent, precise, data-driven. Write like a mission briefing. Every w
 
 RANKED MODE IS LIVE: Factor ranked play into all meta analysis. Note Solo vs Squad viability separately. Consider Holotag economics. Flag meta shifts driven by ranked vs casual play.
 
-META TIER OUTPUT: Include "meta_update" array with 5-10 items. ONLY "weapon" or "shell" types — never strategy/ability/loadout. Each item needs: name, type, tier (S/A/B/C/D), trend (up/down/stable), note (max 80 chars), ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier.
+META TIER OUTPUT — MANDATORY EVERY CYCLE:
+Include a "meta_update" array covering ALL weapons and ALL shells from the WEAPON STATS DATABASE and SHELL STATS DATABASE injected into this prompt. Every weapon and every shell must have an entry — do not skip any. Use the real stat values (damage, fire rate, range, HP, abilities) to justify every tier placement.
+
+ONLY "weapon" or "shell" types — never strategy/ability/loadout.
+Each item needs: name, type, tier (S/A/B/C/D), trend (up/down/stable), note (max 80 chars), ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier.
+
+GRADING CRITERIA:
+- Weapons: grade on damage output, fire rate, magazine size, range rating, ammo availability, and ranked viability. High damage + high fire rate = S candidate. Niche or low ranked_viable = C or D.
+- Shells: grade on extraction viability, ability uptime, ranked solo vs squad separately. Thief and Assassin excel solo. Triage excels squad. Rook is banned from ranked — always D in ranked context.
+- trends: compare against what you know about the previous meta cycle. If a weapon is newly dominant based on community discussion, mark "up". If it fell out of favor, "down".
 
 The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook.
 Top weapons: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardline PR, Stryder M1T, Ares RG, Longshot, Retaliator LMG, Magnum MC, V75 Scar, Impact HAR, Copperhead RF, Bully SMG.
@@ -137,10 +146,12 @@ async function fetchGameContext() {
       process.env.SUPABASE_SERVICE_KEY
     );
 
-    const [modsRes, coresRes, implantsRes] = await Promise.all([
+    const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes] = await Promise.all([
       supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(40),
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(40),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value').order('rarity', { ascending: false }).limit(40),
+      supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(30),
+      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes').limit(10),
     ]);
 
     let output = '';
@@ -188,6 +199,37 @@ async function fetchGameContext() {
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
         .join('\n\n');
       output += `\n\n--- IMPLANTS DATABASE (slot upgrades that boost shell stats) ---\n${lines}\n--- END IMPLANTS ---`;
+    }
+
+    // Weapon stats — full roster with real numbers for NEXUS tier grading
+    if (weaponsRes.data && weaponsRes.data.length > 0) {
+      const weaponLines = weaponsRes.data.map(function(w) {
+        var parts = [
+          w.weapon_type ? w.weapon_type.toUpperCase() : '',
+          w.ammo_type || '',
+          w.damage ? 'DMG:' + w.damage : '',
+          w.fire_rate ? 'RPM:' + w.fire_rate : '',
+          w.magazine_size ? 'MAG:' + w.magazine_size : '',
+          w.range_rating ? 'RANGE:' + w.range_rating : '',
+          w.ranked_viable === false ? '[RANKED-AVOID]' : '',
+        ].filter(Boolean).join(' | ');
+        return '  ' + w.name + (parts ? ' — ' + parts : '');
+      }).join('\n');
+      output += '\n\n--- WEAPON STATS DATABASE (use these real values when assigning meta tiers) ---\n' + weaponLines + '\n--- END WEAPONS ---';
+    }
+
+    // Shell stats — full roster with abilities and ranked viability
+    if (shellsRes.data && shellsRes.data.length > 0) {
+      const shellLines = shellsRes.data.map(function(s) {
+        return [
+          '  ' + s.name + (s.role ? ' [' + s.role + ']' : ''),
+          s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : '',
+          s.active_ability_name ? '    Active: ' + s.active_ability_name : '',
+          s.passive_ability_name ? '    Passive: ' + s.passive_ability_name : '',
+          (s.ranked_tier_solo || s.ranked_tier_squad) ? '    Ranked: Solo=' + (s.ranked_tier_solo || '?') + ' Squad=' + (s.ranked_tier_squad || '?') + (s.ranked_notes ? ' — ' + s.ranked_notes : '') : '',
+        ].filter(Boolean).join('\n');
+      }).join('\n\n');
+      output += '\n\n--- SHELL STATS DATABASE (use these values when assigning meta tiers) ---\n' + shellLines + '\n--- END SHELLS ---';
     }
 
     return output;
