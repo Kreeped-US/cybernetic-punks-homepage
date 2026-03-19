@@ -183,7 +183,7 @@ function LiveStatCell({ value, label, color, isLive, sublabel, isMobile }) {
 function SpotlightCard({ href, accentColor, editorSymbol, editorName, badgeLabel, loading, children, isMobile }) {
   var [hovered, setHovered] = useState(false);
   return (
-    <Link href={href} style={{ display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.015)', border:'1px solid '+(hovered?accentColor+'25':'rgba(255,255,255,0.04)'), borderRadius:10, overflow:'hidden', textDecoration:'none', transform:hovered&&!isMobile?'translateY(-2px)':'none', transition:'border-color 0.3s, transform 0.3s', minWidth:isMobile?'68vw':undefined, maxWidth:isMobile?'68vw':undefined, flexShrink:isMobile?0:undefined }}
+    <Link href={href} style={{ display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.015)', border:'1px solid '+(hovered?accentColor+'25':'rgba(255,255,255,0.04)'), borderRadius:10, overflow:'hidden', textDecoration:'none', transform:hovered&&!isMobile?'translateY(-2px)':'none', transition:'border-color 0.3s, transform 0.3s' }}
       onMouseEnter={function(){ setHovered(true); }}
       onMouseLeave={function(){ setHovered(false); }}
     >
@@ -402,7 +402,7 @@ export default function HeroBanner() {
         </div>
 
         {/* SPOTLIGHT CARDS */}
-        <div style={{ display:isMobile?'flex':'grid', flexDirection:isMobile?'row':undefined, flexWrap:isMobile?'nowrap':undefined, overflowX:isMobile?'auto':undefined, gridTemplateColumns:isMobile?undefined:'repeat(3, 1fr)', gap:isMobile?10:14, marginBottom:isMobile?20:28, paddingBottom:isMobile?4:0, WebkitOverflowScrolling:'touch' }}>
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3, 1fr)', gap:isMobile?8:14, marginBottom:isMobile?20:28 }}>
 
           <SpotlightCard href="/play-of-the-day" accentColor="#ff0000" editorSymbol="C" editorName="CIPHER" badgeLabel="PLAY OF THE DAY" loading={d===null} isMobile={isMobile}>
             {isMobile
