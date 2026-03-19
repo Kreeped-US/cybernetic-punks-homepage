@@ -1,4 +1,4 @@
-import { gatherYouTube, formatForEditor } from './youtube';
+import { gatherYouTube, formatForEditor, formatXForCipher, formatXForDexter } from './youtube';
 import { gatherReddit, formatForGhost } from './reddit';
 import { gatherTwitchClips, formatClipsForCipher } from './twitch';
 import { refreshWikiData } from './wiki';
@@ -11,11 +11,9 @@ import { runDexterStatPipeline } from './dexter-stats.js';
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
 
-  // Wiki refresh runs first — self-throttles to 24h per table
   const wikiResults = await refreshWikiData();
   console.log('[GATHER] Wiki refresh:', wikiResults);
 
-  // Gather from all sources in parallel
   const [
     youtubeVideos,
     redditPosts,
@@ -45,40 +43,57 @@ export async function gatherAll() {
   console.log('[GATHER] Bungie news: ' + bungieNews.length + ' articles (' + bungieNews.filter(a => a.is_patch_note).length + ' patch-related)');
   console.log('[GATHER] X pulse: ' + (xPulse?.posts?.length || 0) + ' posts (' + (xPulse?.officialPosts?.length || 0) + ' official, ' + (xPulse?.communityPosts?.length || 0) + ' community, ' + (xPulse?.eventPosts?.length || 0) + ' events)');
 
-  // Format Bungie news for injection into editor prompts
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
+  const xGhostContext     = formatXForGhost(xPulse);
+  const xNexusContext     = formatXForNexus(xPulse);
+  const xCipherContext    = formatXForCipher(xPulse);
+  const xDexterContext    = formatXForDexter(xPulse);
 
-  // Format X data for GHOST and NEXUS
-  const xGhostContext = formatXForGhost(xPulse);
-  const xNexusContext = formatXForNexus(xPulse);
+  var youtubeIsThin = youtubeVideos.length < 3;
+  if (youtubeIsThin) {
+    console.log('[GATHER] YouTube thin (' + youtubeVideos.length + ' videos) — X data will supplement CIPHER and DEXTER');
+  }
 
   // ── CIPHER ─────────────────────────────────────────────────────
-  let cipherPrompt = formatForEditor(youtubeVideos, 'CIPHER');
-  const twitchSection = formatClipsForCipher(twitchClips);
+  var cipherPrompt = formatForEditor(youtubeVideos, 'CIPHER');
+  var twitchSection = formatClipsForCipher(twitchClips);
+
   if (cipherPrompt && twitchSection) {
-    cipherPrompt += '\n\n--- TWITCH CLIPS ---\nThese are short highlight clips from live Marathon streams on Twitch. They may show exceptional plays, clutch moments, or interesting strategies. Grade them the same way you grade YouTube content.\n\n' + twitchSection;
+    cipherPrompt += '\n\n--- TWITCH CLIPS ---\nThese are short highlight clips from live Marathon streams on Twitch. Grade them the same way you grade YouTube content.\n\n' + twitchSection;
   } else if (!cipherPrompt && twitchSection) {
-    cipherPrompt = 'Here are the latest Marathon highlight clips from Twitch. Analyze the most noteworthy one for competitive play quality. Grade the play and creator.\n\n' + twitchSection + '\n\nPick the clip that demonstrates the highest competitive skill. Respond with JSON:\n{\n  "runner_grade": "S+|S|A|B|C|D",\n  "grade_confidence": "medium",\n  "headline": "punchy editorial headline under 80 chars",\n  "body": "2-3 sentence CIPHER analysis of why this play earned this grade",\n  "ce_score": 0.0-10.0,\n  "tags": ["TAG1", "TAG2"],\n  "source_video_id": "the clip id you analyzed",\n  "source_type": "twitch"\n}';
+    cipherPrompt = 'Here are the latest Marathon highlight clips from Twitch. Analyze the most noteworthy one for competitive play quality.\n\n' + twitchSection + '\n\nRespond with JSON:\n{\n  "runner_grade": "S+|S|A|B|C|D",\n  "grade_confidence": "medium",\n  "headline": "punchy editorial headline under 80 chars",\n  "body": "400-600 word CIPHER analysis with section headers using **HEADER** format",\n  "ce_score": 0.0,\n  "tags": ["TAG1"],\n  "source_video_id": "clip id",\n  "source_type": "twitch"\n}';
   }
-  // Inject Bungie news into CIPHER so it can reference patch context in play grades
+
+  // X data — always injected, primary when YouTube is thin
+  if (xCipherContext) {
+    cipherPrompt = (cipherPrompt || '') + xCipherContext;
+    if (!cipherPrompt.includes('Here are') && !cipherPrompt.includes('clips from')) {
+      cipherPrompt = 'No Marathon video content is available this cycle. Use the X community intelligence below to write a competitive analysis article.\n\n' + cipherPrompt;
+    }
+  }
   if (bungieNewsContext) cipherPrompt = (cipherPrompt || '') + bungieNewsContext;
 
   // ── NEXUS ──────────────────────────────────────────────────────
-  let nexusPrompt = formatForEditor(youtubeVideos, 'NEXUS');
+  var nexusPrompt = formatForEditor(youtubeVideos, 'NEXUS');
   if (bungieNewsContext) nexusPrompt = (nexusPrompt || '') + bungieNewsContext;
-  if (xNexusContext) nexusPrompt = (nexusPrompt || '') + xNexusContext;
+  if (xNexusContext)     nexusPrompt = (nexusPrompt || '') + xNexusContext;
 
   // ── DEXTER ─────────────────────────────────────────────────────
-  let dexterPrompt = formatForEditor(youtubeVideos, 'DEXTER');
+  var dexterPrompt = formatForEditor(youtubeVideos, 'DEXTER');
+
+  if (xDexterContext) {
+    dexterPrompt = (dexterPrompt || '') + xDexterContext;
+    if (!dexterPrompt.includes('Here are')) {
+      dexterPrompt = 'No Marathon build video content is available this cycle. Use the X community intelligence below to write a build analysis article.\n\n' + dexterPrompt;
+    }
+  }
   if (bungieNewsContext) dexterPrompt = (dexterPrompt || '') + bungieNewsContext;
 
   // ── GHOST ──────────────────────────────────────────────────────
-  // xPulse passed directly so formatForGhost can structure it properly in the prompt
-  let ghostPrompt = formatForGhost(redditPosts, steamReviews, xPulse);
+  var ghostPrompt = formatForGhost(redditPosts, steamReviews, xPulse);
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
   // ── MIRANDA ────────────────────────────────────────────────────
-  // Pass Bungie news into Miranda's data object for guide topic selection
   if (mirandaData && bungieNews.length > 0) {
     mirandaData.devNews = bungieNews.slice(0, 6);
   }
@@ -91,8 +106,6 @@ export async function gatherAll() {
     MIRANDA: mirandaData,
   };
 
-  // Pass raw data along for thumbnail/URL extraction
-  // ✅ xData is the canonical key used by cron route + editorCore buildMirandaPrompt
   prompts._rawData = {
     youtubeVideos,
     twitchClips,
@@ -103,7 +116,6 @@ export async function gatherAll() {
     xData: xPulse,
   };
 
-  // DEXTER stat extraction — fills NULL shell/weapon stats from all sources
   try {
     await runDexterStatPipeline({
       videos: youtubeVideos || [],
@@ -114,12 +126,10 @@ export async function gatherAll() {
     console.error('[GATHER] runDexterStatPipeline failed:', err.message);
   }
 
-  const active = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v !== null).map(([k]) => k);
+  const active   = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v !== null).map(([k]) => k);
   const inactive = Object.entries(prompts).filter(([k, v]) => k !== '_rawData' && v === null).map(([k]) => k);
   console.log('[GATHER] Ready: ' + active.join(', '));
-  if (inactive.length) {
-    console.log('[GATHER] Skipping (no data): ' + inactive.join(', '));
-  }
+  if (inactive.length) console.log('[GATHER] Skipping (no data): ' + inactive.join(', '));
 
   return prompts;
 }

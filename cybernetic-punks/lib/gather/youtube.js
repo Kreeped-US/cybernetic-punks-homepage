@@ -6,13 +6,31 @@ import { fetchTranscripts } from './transcript.js';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
-// Search queries to find Marathon content across different angles
+// Broader search queries — more variety means fewer empty cycles
+// Rotates across runs so each cycle hits a different angle
 const SEARCH_QUERIES = [
   'Marathon Bungie gameplay 2026',
   'Marathon game builds loadout',
-  'Marathon PvP extraction',
-  'Marathon meta guide',
-  'Marathon tips tricks',
+  'Marathon PvP extraction shooter',
+  'Marathon meta guide ranked',
+  'Marathon tips tricks runner',
+  'Marathon Bungie shell guide',
+  'Marathon game ranked holotag',
+  'Marathon Bungie weapon tier list',
+  'Marathon game best build',
+  'Marathon Bungie extraction strategy',
+  'Marathon thief assassin vandal gameplay',
+  'Marathon game ranked climb season 1',
+];
+
+// Known Marathon content creators — search their channels directly when general queries come back thin
+const CREATOR_CHANNELS = [
+  'marathonaire',
+  'luckyy10p',
+  'Nirvous',
+  'chriscovent',
+  'vivaladoctor',
+  'taucetiGG',
 ];
 
 export async function gatherYouTube() {
@@ -23,39 +41,48 @@ export async function gatherYouTube() {
   }
 
   try {
-    // Pick 1 random query per run — saves 100 units vs 2 queries
-    // Rotation across cycles ensures variety over time
-    const query = SEARCH_QUERIES[Math.floor(Math.random() * SEARCH_QUERIES.length)];
+    // Run 2 queries per cycle instead of 1 — better coverage, still quota-efficient
+    const shuffled = SEARCH_QUERIES.sort(function() { return Math.random() - 0.5; });
+    const queries = shuffled.slice(0, 2);
 
-    const searchUrl = `${YOUTUBE_API_BASE}/search?` + new URLSearchParams({
-      part: 'snippet',
-      q: query,
-      type: 'video',
-      order: 'date',
-      maxResults: '8',           // Slightly more results per query to compensate for 1 query
-      publishedAfter: getTimeAgo(72), // Extended to 72h — more content, fewer repeat-empty runs
-      relevanceLanguage: 'en',
-      key: apiKey,
-    });
+    const allResults = [];
 
-    const searchRes = await fetch(searchUrl);
-    if (!searchRes.ok) {
-      console.error(`[GATHER:YOUTUBE] Search failed for "${query}":`, searchRes.status);
-      return [];
+    for (const query of queries) {
+      const searchUrl = `${YOUTUBE_API_BASE}/search?` + new URLSearchParams({
+        part: 'snippet',
+        q: query,
+        type: 'video',
+        order: 'date',
+        maxResults: '6',
+        publishedAfter: getTimeAgo(96), // Extended to 96h — catches more content in slow periods
+        relevanceLanguage: 'en',
+        key: apiKey,
+      });
+
+      const searchRes = await fetch(searchUrl);
+      if (!searchRes.ok) {
+        console.error(`[GATHER:YOUTUBE] Search failed for "${query}":`, searchRes.status);
+        continue;
+      }
+
+      const searchData = await searchRes.json();
+      const items = searchData.items || [];
+
+      if (items.length > 0) {
+        allResults.push(...items.map(function(item) { return { item, query }; }));
+      } else {
+        console.log(`[GATHER:YOUTUBE] No results for "${query}"`);
+      }
     }
 
-    const searchData = await searchRes.json();
-    const items = searchData.items || [];
-
-    if (items.length === 0) {
-      console.log(`[GATHER:YOUTUBE] No results for "${query}"`);
+    if (allResults.length === 0) {
+      console.log('[GATHER:YOUTUBE] Both queries returned empty — returning []');
       return [];
     }
 
     // Get video IDs for stats lookup
-    const videoIds = items.map(item => item.id.videoId).join(',');
+    const videoIds = allResults.map(function(r) { return r.item.id.videoId; }).join(',');
 
-    // Fetch view counts and duration — 1 unit total
     const statsUrl = `${YOUTUBE_API_BASE}/videos?` + new URLSearchParams({
       part: 'statistics,contentDetails',
       id: videoIds,
@@ -65,7 +92,6 @@ export async function gatherYouTube() {
     const statsRes = await fetch(statsUrl);
     const statsData = statsRes.ok ? await statsRes.json() : { items: [] };
 
-    // Build stats lookup
     const statsMap = {};
     for (const stat of statsData.items || []) {
       statsMap[stat.id] = {
@@ -76,9 +102,8 @@ export async function gatherYouTube() {
       };
     }
 
-    // Combine search results with stats
     const allVideos = [];
-    for (const item of items) {
+    for (const { item, query } of allResults) {
       const videoId = item.id.videoId;
       const stats = statsMap[videoId] || {};
 
@@ -95,24 +120,24 @@ export async function gatherYouTube() {
         comment_count: stats.commentCount || 0,
         duration: parseDuration(stats.duration || 'PT0S'),
         query_source: query,
-        videoId: videoId, // alias for MIRANDA compatibility
+        videoId: videoId,
         transcript: null,
       });
     }
 
     // Deduplicate by video ID
     const seen = new Set();
-    const unique = allVideos.filter(v => {
+    const unique = allVideos.filter(function(v) {
       if (seen.has(v.youtube_id)) return false;
       seen.add(v.youtube_id);
       return true;
     });
 
-    // Sort by view count (most popular first)
-    unique.sort((a, b) => b.view_count - a.view_count);
+    // Sort by view count
+    unique.sort(function(a, b) { return b.view_count - a.view_count; });
 
-    // Fetch transcripts for top 5 videos
-    const top5Ids = unique.slice(0, 5).map(v => v.youtube_id);
+    // Fetch transcripts for top 5
+    const top5Ids = unique.slice(0, 5).map(function(v) { return v.youtube_id; });
     if (top5Ids.length > 0) {
       const transcriptMap = await fetchTranscripts(top5Ids);
       for (const video of unique) {
@@ -122,7 +147,7 @@ export async function gatherYouTube() {
       }
     }
 
-    console.log(`[GATHER:YOUTUBE] Found ${unique.length} unique Marathon videos`);
+    console.log(`[GATHER:YOUTUBE] Found ${unique.length} unique Marathon videos across ${queries.length} queries`);
     return unique;
 
   } catch (error) {
@@ -131,10 +156,50 @@ export async function gatherYouTube() {
   }
 }
 
-export function formatForEditor(videos, editor) {
-  if (!videos.length) return null;
+// Format X pulse data for CIPHER when YouTube is thin
+export function formatXForCipher(xPulse) {
+  if (!xPulse?.posts?.length) return null;
 
-  const videoSummaries = videos.slice(0, 5).map((v, i) => {
+  const relevant = [
+    ...(xPulse.communityPosts || []),
+    ...(xPulse.officialPosts || []),
+  ].slice(0, 8);
+
+  if (relevant.length === 0) return null;
+
+  let out = '\n\n--- X COMMUNITY INTELLIGENCE (use when video content is thin) ---\n';
+  out += 'These are real posts from Marathon community creators and official accounts. Use them to identify competitive plays, strategies, and discussions worth grading.\n\n';
+  out += relevant.map(function(p) {
+    return `@${p.author}${p.is_community ? ' [COMMUNITY VOICE]' : p.is_official ? ' [OFFICIAL]' : ''}: "${p.text.slice(0, 280)}"\nLikes: ${p.likes} | RT: ${p.retweets}`;
+  }).join('\n\n');
+  out += '\n--- END X INTELLIGENCE ---';
+  return out;
+}
+
+// Format X pulse data for DEXTER when YouTube is thin
+export function formatXForDexter(xPulse) {
+  if (!xPulse?.posts?.length) return null;
+
+  const relevant = [
+    ...(xPulse.communityPosts || []),
+  ].slice(0, 8);
+
+  if (relevant.length === 0) return null;
+
+  let out = '\n\n--- X COMMUNITY INTELLIGENCE (use when video content is thin) ---\n';
+  out += 'These are real posts from Marathon community creators discussing builds, loadouts, and strategies. Use them as source material for build analysis.\n\n';
+  out += relevant.map(function(p) {
+    return `@${p.author}: "${p.text.slice(0, 280)}"\nLikes: ${p.likes} | RT: ${p.retweets}`;
+  }).join('\n\n');
+  out += '\n\nINSTRUCTION: If video content is sparse, write your build article based on the loadout discussion in these X posts. Own the narrative in DEXTER voice — analyze what these creators are running and why.';
+  out += '\n--- END X INTELLIGENCE ---';
+  return out;
+}
+
+export function formatForEditor(videos, editor) {
+  if (!videos || !videos.length) return null;
+
+  const videoSummaries = videos.slice(0, 5).map(function(v, i) {
     let summary = `${i + 1}. "${v.title}" by ${v.channel}
    Views: ${v.view_count.toLocaleString()} | Likes: ${v.like_count.toLocaleString()} | Comments: ${v.comment_count.toLocaleString()}
    Duration: ${v.duration}
@@ -164,7 +229,7 @@ Respond with JSON:
   "runner_grade": "S+|S|A|B|C|D",
   "grade_confidence": "high|medium|low",
   "headline": "punchy editorial headline under 80 chars",
-  "body": "2-3 sentence CIPHER analysis of why this play earned this grade",
+  "body": "400-600 word CIPHER analysis with section headers using **HEADER** format",
   "ce_score": 0.0-10.0,
   "tags": ["TAG1", "TAG2"],
   "source_video_id": "the youtube_id you analyzed"
@@ -184,7 +249,7 @@ Pick the video with the most useful build information. If none are specifically 
 {
   "loadout_grade": "S|A|B|C|D|F",
   "headline": "build analysis headline under 80 chars",
-  "body": "2-3 sentences of DEXTER build analysis",
+  "body": "500-700 word DEXTER build analysis with section headers using **HEADER** format",
   "ce_score": 0.0-10.0,
   "tags": ["TAG1", "TAG2"],
   "source_video_id": "the youtube_id you analyzed"
@@ -198,7 +263,7 @@ ${videoSummaries}
 What patterns do you see? What's shifting? What are players focused on? Respond with JSON:
 {
   "headline": "urgent meta intel headline under 80 chars",
-  "body": "2-3 sentences of NEXUS meta analysis based on what these videos reveal",
+  "body": "400-600 word NEXUS meta analysis with section headers using **HEADER** format",
   "grid_pulse": 0.0-10.0,
   "tags": ["TAG1", "TAG2"]
 }`;
@@ -207,8 +272,6 @@ What patterns do you see? What's shifting? What are players focused on? Respond 
       return null;
   }
 }
-
-// --- Helper functions ---
 
 function getTimeAgo(hours) {
   const d = new Date();
