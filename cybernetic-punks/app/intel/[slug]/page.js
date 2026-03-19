@@ -99,7 +99,7 @@ export async function generateMetadata({ params }) {
       alternates: { canonical: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase() },
     };
   }
-  var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).single();
+  var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle();
   if (!item) return { title: 'Intel Not Found' };
   var desc = item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline;
   return {
@@ -468,7 +468,7 @@ export default async function IntelPage({ params }) {
 
   // Fix 5: Added implant_stats to Promise.all
   var [itemResult, shellResult, weaponResult, modResult, implantResult] = await Promise.all([
-    supabase.from('feed_items').select('*').eq('slug', slug).single(),
+    supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle(),
     supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name').limit(20),
     supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type').limit(40),
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(60),
