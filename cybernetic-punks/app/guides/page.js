@@ -66,6 +66,131 @@ function SectionDivider({ label }) {
   );
 }
 
+function GuideCard({ guide }) {
+  var catKey = guide.tags?.find(function(t) { return CATS[t]; }) || 'beginner';
+  var cat = CATS[catKey] || CATS['beginner'];
+  var rt = readTime(guide.body);
+  var bodyPreview = guide.body?.replace(/\*\*/g, '').slice(0, 110) || '';
+
+  return (
+    <Link href={'/intel/' + guide.slug} style={{ textDecoration: 'none', display: 'block' }}>
+      <div className="g-card" style={{ border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid ' + cat.color + '55', background: '#080808', borderRadius: 6, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {guide.thumbnail && (
+          <div style={{ position: 'relative', height: 120, overflow: 'hidden', flexShrink: 0 }}>
+            <img src={guide.thumbnail} alt={guide.headline} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 25%, #080808 100%)' }} />
+          </div>
+        )}
+        <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: cat.color, letterSpacing: 2 }}>{cat.label}</span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.18)' }}>{timeAgo(guide.created_at)}</span>
+          </div>
+          <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.35 }}>{guide.headline}</h3>
+          <p style={{ fontFamily: 'Rajdhani, sans-serif', color: 'rgba(255,255,255,0.38)', fontSize: 12, margin: 0, lineHeight: 1.5, flex: 1 }}>{bodyPreview}...</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 8 }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: cat.color + '99', letterSpacing: 1 }}>READ →</span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.15)' }}>{rt}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function GuideGrid({ guides }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
+      {guides.map(function(guide) { return <GuideCard key={guide.id} guide={guide} />; })}
+    </div>
+  );
+}
+
+function GroupedGuides({ guides }) {
+  // Group guides by their primary category tag
+  var groups = {};
+  var uncategorized = [];
+
+  for (var guide of guides) {
+    var catKey = guide.tags?.find(function(t) { return CATS[t]; });
+    if (catKey) {
+      if (!groups[catKey]) groups[catKey] = [];
+      groups[catKey].push(guide);
+    } else {
+      uncategorized.push(guide);
+    }
+  }
+
+  // Sort categories by guide count (most guides first)
+  var sortedKeys = Object.keys(groups).sort(function(a, b) { return groups[b].length - groups[a].length; });
+
+  if (sortedKeys.length === 0 && uncategorized.length === 0) return null;
+
+  // If everything is uncategorized just show a flat grid
+  if (sortedKeys.length === 0) {
+    return (
+      <>
+        <SectionDivider label="ALL GUIDES" />
+        <GuideGrid guides={uncategorized} />
+      </>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
+      {sortedKeys.map(function(key) {
+        var cat = CATS[key];
+        var catGuides = groups[key];
+        // Show max 6 per category in the grouped view
+        var shown = catGuides.slice(0, 6);
+        var hasMore = catGuides.length > 6;
+
+        return (
+          <div key={key}>
+            {/* Category header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid ' + cat.color + '18' }}>
+              <div style={{ width: 3, height: 22, background: cat.color, borderRadius: 2, flexShrink: 0, boxShadow: '0 0 10px ' + cat.color + '55' }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: cat.color, letterSpacing: 2 }}>{cat.label}</span>
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: cat.color + '66', background: cat.color + '10', border: '1px solid ' + cat.color + '20', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>{catGuides.length} {catGuides.length === 1 ? 'GUIDE' : 'GUIDES'}</span>
+                </div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.25)', marginTop: 3 }}>{cat.desc}</div>
+              </div>
+              <Link href={'/guides?cat=' + key} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: cat.color + '88', textDecoration: 'none', letterSpacing: 1, border: '1px solid ' + cat.color + '20', padding: '5px 12px', borderRadius: 4, background: cat.color + '06', flexShrink: 0 }}>
+                VIEW ALL →
+              </Link>
+            </div>
+
+            {/* Guide cards for this category */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
+              {shown.map(function(guide) { return <GuideCard key={guide.id} guide={guide} />; })}
+            </div>
+
+            {hasMore && (
+              <div style={{ marginTop: 12, textAlign: 'center' }}>
+                <Link href={'/guides?cat=' + key} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: cat.color + '77', textDecoration: 'none', letterSpacing: 2, border: '1px solid ' + cat.color + '18', padding: '8px 20px', borderRadius: 4, background: cat.color + '05' }}>
+                  + {catGuides.length - 6} MORE {cat.label} GUIDES →
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {uncategorized.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ width: 3, height: 22, background: 'rgba(255,255,255,0.2)', borderRadius: 2, flexShrink: 0 }} />
+            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>OTHER INTEL</span>
+          </div>
+          <GuideGrid guides={uncategorized.slice(0, 6)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function GuidesPage({ searchParams }) {
   var params = await searchParams;
   var activeFilter = params?.cat || null;
@@ -259,49 +384,15 @@ export default async function GuidesPage({ searchParams }) {
               </>
             )}
 
-            {/* Guide grid */}
-            <SectionDivider label={activeFilter ? (CATS[activeFilter]?.label || activeFilter.toUpperCase()) + ' GUIDES' : 'ALL GUIDES'} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 8 }}>
-              {(activeFilter ? guides : rest).map(function(guide) {
-                var catKey = guide.tags?.find(function(t) { return CATS[t]; }) || 'beginner';
-                var cat = CATS[catKey] || CATS['beginner'];
-                var rt = readTime(guide.body);
-                var bodyPreview = guide.body?.replace(/\*\*/g, '').slice(0, 120) || '';
-
-                return (
-                  <Link key={guide.id} href={'/intel/' + guide.slug} style={{ textDecoration: 'none', display: 'block' }}>
-                    <div className="g-card" style={{ border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid ' + cat.color + '55', borderTop: '1px solid ' + cat.color + '18', background: '#080808', borderRadius: 6, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                      {guide.thumbnail && (
-                        <div style={{ position: 'relative', height: 130, overflow: 'hidden', flexShrink: 0 }}>
-                          <img src={guide.thumbnail} alt={guide.headline} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }} />
-                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, #080808 100%)' }} />
-                          <div style={{ position: 'absolute', top: 10, left: 12 }}>
-                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: cat.color, background: '#080808cc', border: '1px solid ' + cat.color + '44', padding: '3px 8px', borderRadius: 3, letterSpacing: 2 }}>{cat.label}</span>
-                          </div>
-                        </div>
-                      )}
-                      <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        {!guide.thumbnail && (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: cat.color, letterSpacing: 2 }}>{cat.label}</span>
-                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(guide.created_at)}</span>
-                          </div>
-                        )}
-                        <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: '#fff', margin: '0 0 10px', lineHeight: 1.35, flex: 0 }}>{guide.headline}</h3>
-                        <p style={{ fontFamily: 'Rajdhani, sans-serif', color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: '0 0 14px', lineHeight: 1.55, flex: 1 }}>{bodyPreview}...</p>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 10 }}>
-                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: cat.color + 'aa', letterSpacing: 1 }}>READ →</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            {guide.thumbnail && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)' }}>{timeAgo(guide.created_at)}</span>}
-                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)' }}>{rt}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            {/* Guide grid — grouped by category when no filter active */}
+            {activeFilter ? (
+              <>
+                <SectionDivider label={(CATS[activeFilter]?.label || activeFilter.toUpperCase()) + ' GUIDES'} />
+                <GuideGrid guides={guides} />
+              </>
+            ) : (
+              <GroupedGuides guides={rest} />
+            )}
           </>
         )}
       </section>
