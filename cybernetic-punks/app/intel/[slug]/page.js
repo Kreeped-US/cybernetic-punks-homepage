@@ -59,16 +59,29 @@ function extractTwitchClipSlug(url) {
 
 function parseBody(body) {
   if (!body) return [];
-  var parts = body.split(/\*\*([^*]{1,80})\*\*/);
   var elements = [];
+  // Split on bold markers used as section headers
+  var parts = body.split(/\*\*([^*]{1,120})\*\*/);
   parts.forEach(function(part, i) {
     if (i % 2 === 0) {
-      part.split(/\n+/).forEach(function(line, j) {
-        var t = line.trim();
-        if (t) elements.push({ type: 'para', content: t, key: 'p-' + i + '-' + j });
+      // Regular text — split into paragraphs
+      part.split(/\n{2,}/).forEach(function(block, j) {
+        var t = block.trim();
+        if (!t) return;
+        // Handle single newlines within a paragraph as line breaks
+        var lines = t.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+        if (lines.length > 1) {
+          // Multi-line block — join into one paragraph
+          elements.push({ type: 'para', content: lines.join(' '), key: 'p-' + i + '-' + j });
+        } else if (lines.length === 1) {
+          elements.push({ type: 'para', content: lines[0], key: 'p-' + i + '-' + j });
+        }
       });
     } else {
-      elements.push({ type: 'header', content: part.trim(), key: 'h-' + i });
+      var headerText = part.trim();
+      if (headerText) {
+        elements.push({ type: 'header', content: headerText, key: 'h-' + i });
+      }
     }
   });
   return elements;
@@ -168,14 +181,15 @@ function BodyRenderer({ parsed, editorColor }) {
       {parsed.map(function(el) {
         if (el.type === 'header') {
           return (
-            <div key={el.key} style={{ margin: '40px 0 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 3, height: 18, background: editorColor, borderRadius: 2, flexShrink: 0, boxShadow: '0 0 10px ' + editorColor + '88' }} />
-              <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: editorColor, margin: 0, letterSpacing: 2, textTransform: 'uppercase' }}>{el.content}</h2>
+            <div key={el.key} style={{ margin: '36px 0 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 3, height: 20, background: editorColor, borderRadius: 2, flexShrink: 0, boxShadow: '0 0 12px ' + editorColor + '66' }} />
+              <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 900, color: editorColor, margin: 0, letterSpacing: 3, textTransform: 'uppercase', opacity: 0.9 }}>{el.content}</h2>
+              <div style={{ flex: 1, height: 1, background: editorColor + '18' }} />
             </div>
           );
         }
         return (
-          <p key={el.key} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.72)', lineHeight: 1.85, margin: '0 0 18px' }}>{el.content}</p>
+          <p key={el.key} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.80)', lineHeight: 1.9, margin: '0 0 20px', letterSpacing: 0.2 }}>{el.content}</p>
         );
       })}
     </div>
