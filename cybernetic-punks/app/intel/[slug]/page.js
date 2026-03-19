@@ -74,7 +74,6 @@ function parseBody(body) {
   return elements;
 }
 
-// ─── METADATA ───────────────────────────────────────────────
 export async function generateMetadata({ params }) {
   var { slug } = await params;
   var editorConfig = EDITORS[slug.toLowerCase()];
@@ -99,7 +98,6 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// ─── STAT BAR ───────────────────────────────────────────────
 function StatBar({ label, value, max, color }) {
   var pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
@@ -115,31 +113,14 @@ function StatBar({ label, value, max, color }) {
   );
 }
 
-// ─── EDITOR LANE PAGE ───────────────────────────────────────
 function EditorLanePage({ config, items }) {
   return (
     <main className="min-h-screen bg-black text-white pt-24" style={{ paddingBottom: 80 }}>
       <Nav />
-
-      {/* Hero */}
-      <section style={{
-        maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px',
-        position: 'relative',
-      }}>
-        <div style={{
-          position: 'absolute', top: 0, left: 24, right: 24, height: 1,
-          background: 'linear-gradient(90deg, transparent, ' + config.color + '44, transparent)',
-        }} />
+      <section style={{ maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 24, right: 24, height: 1, background: 'linear-gradient(90deg, transparent, ' + config.color + '44, transparent)' }} />
         <div style={{ paddingTop: 32, display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: config.color + '10',
-            border: '1px solid ' + config.color + '30',
-            fontSize: 28, color: config.color,
-            boxShadow: '0 0 24px ' + config.color + '20',
-            flexShrink: 0,
-          }}>{config.symbol}</div>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: config.color + '10', border: '1px solid ' + config.color + '30', fontSize: 28, color: config.color, boxShadow: '0 0 24px ' + config.color + '20', flexShrink: 0 }}>{config.symbol}</div>
           <div>
             <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, color: config.color, letterSpacing: 3, margin: 0, textShadow: '0 0 30px ' + config.color + '44' }}>{config.name}</h1>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 6 }}>{config.role.toUpperCase()} · {items.length} ARTICLES PUBLISHED</div>
@@ -147,8 +128,6 @@ function EditorLanePage({ config, items }) {
         </div>
         <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.45)', maxWidth: 600, lineHeight: 1.6, margin: 0 }}>{config.desc}</p>
       </section>
-
-      {/* Articles */}
       <section style={{ maxWidth: 1200, margin: '0 auto 64px', padding: '0 24px' }}>
         {items.length === 0 ? (
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '48px 28px', textAlign: 'center' }}>
@@ -158,30 +137,15 @@ function EditorLanePage({ config, items }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {items.map(function(item, i) {
               return (
-                <Link key={i} href={'/intel/' + item.slug} style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  background: i === 0 ? config.color + '08' : 'rgba(255,255,255,0.015)',
-                  border: '1px solid ' + (i === 0 ? config.color + '25' : 'rgba(255,255,255,0.04)'),
-                  borderLeft: '3px solid ' + (i === 0 ? config.color : config.color + '30'),
-                  borderRadius: 6, padding: '16px 20px', textDecoration: 'none',
-                  transition: 'background 0.2s',
-                }}>
-                  {item.thumbnail && (
-                    <div style={{ width: 100, height: 58, borderRadius: 4, flexShrink: 0, background: 'url(' + item.thumbnail + ') center/cover no-repeat', opacity: 0.8 }} />
-                  )}
+                <Link key={i} href={'/intel/' + item.slug} style={{ display: 'flex', alignItems: 'center', gap: 16, background: i === 0 ? config.color + '08' : 'rgba(255,255,255,0.015)', border: '1px solid ' + (i === 0 ? config.color + '25' : 'rgba(255,255,255,0.04)'), borderLeft: '3px solid ' + (i === 0 ? config.color : config.color + '30'), borderRadius: 6, padding: '16px 20px', textDecoration: 'none', transition: 'background 0.2s' }}>
+                  {item.thumbnail && <div style={{ width: 100, height: 58, borderRadius: 4, flexShrink: 0, background: 'url(' + item.thumbnail + ') center/cover no-repeat', opacity: 0.8 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.75)', margin: '0 0 4px', lineHeight: 1.3 }}>{item.headline}</h3>
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.body && item.body.slice(0, 120)}
-                    </p>
+                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.body && item.body.slice(0, 120)}</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    {item.tags?.[0] && (
-                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: config.color, background: config.color + '12', borderRadius: 3, padding: '3px 8px', letterSpacing: 1 }}>{item.tags[0]}</span>
-                    )}
-                    {item.ce_score > 0 && (
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: config.color }}>{item.ce_score}</span>
-                    )}
+                    {item.tags?.[0] && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: config.color, background: config.color + '12', borderRadius: 3, padding: '3px 8px', letterSpacing: 1 }}>{item.tags[0]}</span>}
+                    {item.ce_score > 0 && <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: config.color }}>{item.ce_score}</span>}
                     <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', minWidth: 44, textAlign: 'right' }}>{timeAgo(item.created_at)}</span>
                   </div>
                 </Link>
@@ -190,7 +154,6 @@ function EditorLanePage({ config, items }) {
           </div>
         )}
       </section>
-
       <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
         <Link href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>← BACK TO THE GRID</Link>
       </section>
@@ -199,7 +162,6 @@ function EditorLanePage({ config, items }) {
   );
 }
 
-// ─── BODY RENDERER ──────────────────────────────────────────
 function BodyRenderer({ parsed, editorColor }) {
   return (
     <div>
@@ -208,26 +170,20 @@ function BodyRenderer({ parsed, editorColor }) {
           return (
             <div key={el.key} style={{ margin: '40px 0 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 3, height: 18, background: editorColor, borderRadius: 2, flexShrink: 0, boxShadow: '0 0 10px ' + editorColor + '88' }} />
-              <h2 style={{
-                fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800,
-                color: editorColor, margin: 0, letterSpacing: 2, textTransform: 'uppercase',
-              }}>{el.content}</h2>
+              <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: editorColor, margin: 0, letterSpacing: 2, textTransform: 'uppercase' }}>{el.content}</h2>
             </div>
           );
         }
         return (
-          <p key={el.key} style={{
-            fontFamily: 'Rajdhani, sans-serif', fontSize: 17,
-            color: 'rgba(255,255,255,0.72)', lineHeight: 1.85, margin: '0 0 18px',
-          }}>{el.content}</p>
+          <p key={el.key} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.72)', lineHeight: 1.85, margin: '0 0 18px' }}>{el.content}</p>
         );
       })}
     </div>
   );
 }
 
-// ─── ARTICLE PAGE ───────────────────────────────────────────
-function ArticlePage({ item, shells, weapons, mods, related }) {
+// Fix 6: Added implants to function signature
+function ArticlePage({ item, shells, weapons, mods, implants, related }) {
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
   var publishedAt = new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   var videoId = extractYouTubeId(item.source_url);
@@ -240,23 +196,22 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
   var mentionedShells = (shells || []).filter(s => s.name && bodyLower.includes(s.name.toLowerCase()));
   var mentionedWeapons = (weapons || []).filter(w => w.name && bodyLower.includes(w.name.toLowerCase()));
   var mentionedMods = (mods || []).filter(m => m.name && bodyLower.includes(m.name.toLowerCase())).slice(0, 5);
-  var hasDataRef = mentionedShells.length > 0 || mentionedWeapons.length > 0 || mentionedMods.length > 0;
+  // Fix 6: implant body scanner
+  var mentionedImplants = (implants || []).filter(imp => imp.name && bodyLower.includes(imp.name.toLowerCase())).slice(0, 5);
+  // Fix 6: hasDataRef includes implants
+  var hasDataRef = mentionedShells.length > 0 || mentionedWeapons.length > 0 || mentionedMods.length > 0 || mentionedImplants.length > 0;
+
   var parsed = parseBody(item.body);
-  var hasThumbnail = !!(item.thumbnail || (videoId));
+  var hasThumbnail = !!(item.thumbnail || videoId);
 
   var shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — via @Cybernetic87250') + '&url=' + encodeURIComponent(articleUrl);
   var shareReddit = 'https://www.reddit.com/submit?url=' + encodeURIComponent(articleUrl) + '&title=' + encodeURIComponent(item.headline);
 
-  // ── FIX 1: Properly truncated description for JSON-LD ──
   var jsonLd = {
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
-    author: {
-      '@type': 'Organization',
-      name: item.editor + ' — CyberneticPunks',
-      url: 'https://cyberneticpunks.com/intel/' + item.editor.toLowerCase(),
-    },
+    author: { '@type': 'Organization', name: item.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/intel/' + item.editor.toLowerCase() },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
     datePublished: item.created_at, dateModified: item.created_at,
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
@@ -269,189 +224,76 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
       <Nav />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* ── CINEMATIC ARTICLE HERO ── */}
       <div style={{ position: 'relative', width: '100%', minHeight: 340, overflow: 'hidden' }}>
-
-        {/* Background — thumbnail blurred or solid */}
         {hasThumbnail ? (
-          <div style={{
-            position: 'absolute', inset: 0,
-            backgroundImage: 'url(' + (item.thumbnail || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg')) + ')',
-            backgroundSize: 'cover', backgroundPosition: 'center',
-            filter: 'blur(12px) brightness(0.25) saturate(1.4)',
-            transform: 'scale(1.08)',
-          }} />
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(' + (item.thumbnail || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg')) + ')', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(12px) brightness(0.25) saturate(1.4)', transform: 'scale(1.08)' }} />
         ) : (
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(135deg, ' + editor.color + '0a 0%, #030303 100%)',
-          }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, ' + editor.color + '0a 0%, #030303 100%)' }} />
         )}
-
-        {/* Noise texture overlay */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.04\'/%3E%3C/svg%3E")',
-          backgroundSize: '200px 200px',
-          opacity: 0.4,
-          pointerEvents: 'none',
-        }} />
-
-        {/* Bottom fade */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.04\'/%3E%3C/svg%3E")', backgroundSize: '200px 200px', opacity: 0.4, pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 160, background: 'linear-gradient(to top, #030303 0%, transparent 100%)', pointerEvents: 'none' }} />
-
-        {/* Top fade */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to bottom, #030303 0%, transparent 100%)', pointerEvents: 'none' }} />
-
-        {/* Editor color line at top */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, ' + editor.color + ', transparent)' }} />
 
-        {/* Content */}
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 1200, margin: '0 auto', padding: '96px 24px 48px' }}>
-
-          {/* Editor badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: editor.color + '15', border: '1px solid ' + editor.color + '35',
-              borderRadius: 4, padding: '5px 12px',
-            }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 4, padding: '5px 12px' }}>
               <span style={{ color: editor.color, fontSize: 12 }}>{editor.symbol}</span>
-              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 2 }}>
-                {editor.label}
-              </Link>
+              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 2 }}>{editor.label}</Link>
             </div>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>
-              {publishedAt} · {rt}
-            </span>
-            {item.source && (
-              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: 3, letterSpacing: 1 }}>
-                {item.source}
-              </span>
-            )}
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{publishedAt} · {rt}</span>
+            {item.source && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: 3, letterSpacing: 1 }}>{item.source}</span>}
           </div>
-
-          {/* Headline */}
-          <h1 style={{
-            fontFamily: 'Orbitron, monospace',
-            fontSize: 'clamp(24px, 4vw, 42px)',
-            fontWeight: 900, color: '#ffffff',
-            lineHeight: 1.15, letterSpacing: 0.5,
-            margin: '0 0 20px', maxWidth: 800,
-            textShadow: '0 2px 40px rgba(0,0,0,0.8)',
-          }}>
-            {item.headline}
-          </h1>
-
-          {/* Score + tags row */}
+          <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(24px, 4vw, 42px)', fontWeight: 900, color: '#ffffff', lineHeight: 1.15, letterSpacing: 0.5, margin: '0 0 20px', maxWidth: 800, textShadow: '0 2px 40px rgba(0,0,0,0.8)' }}>{item.headline}</h1>
           {(item.ce_score > 0 || (item.tags && item.tags.length > 0)) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               {item.ce_score > 0 && (
-                <div style={{
-                  display: 'flex', alignItems: 'baseline', gap: 6,
-                  background: editor.color + '15', border: '1px solid ' + editor.color + '30',
-                  borderRadius: 4, padding: '6px 14px',
-                }}>
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}>
-                    {item.editor === 'NEXUS' ? 'GRID PULSE' : item.editor === 'DEXTER' ? 'LOADOUT GRADE' : 'CE SCORE'}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, background: editor.color + '15', border: '1px solid ' + editor.color + '30', borderRadius: 4, padding: '6px 14px' }}>
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}>{item.editor === 'NEXUS' ? 'GRID PULSE' : item.editor === 'DEXTER' ? 'LOADOUT GRADE' : 'CE SCORE'}</span>
                   <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: editor.color }}>{item.ce_score}</span>
                 </div>
               )}
               {item.tags && item.tags.slice(0, 4).map(function(tag, i) {
-                return (
-                  <span key={i} style={{
-                    fontFamily: 'Share Tech Mono, monospace', fontSize: 9,
-                    color: 'rgba(255,255,255,0.3)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    background: 'rgba(255,255,255,0.03)',
-                    padding: '5px 10px', borderRadius: 3, letterSpacing: 1,
-                  }}>{tag}</span>
-                );
+                return <span key={i} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '5px 10px', borderRadius: 3, letterSpacing: 1 }}>{tag}</span>;
               })}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── ARTICLE BODY ── */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 80px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: hasDataRef ? '1fr 300px' : '1fr', gap: 56, alignItems: 'start' }}>
 
-          {/* ── MAIN COLUMN ── */}
           <article style={{ paddingTop: 40 }}>
-
-            {/* Media embed */}
             {videoId && (
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 8, marginBottom: 36, border: '1px solid ' + editor.color + '20', boxShadow: '0 4px 40px rgba(0,0,0,0.4)' }}>
-                <iframe
-                  src={'https://www.youtube.com/embed/' + videoId}
-                  title={item.headline}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                />
+                <iframe src={'https://www.youtube.com/embed/' + videoId} title={item.headline} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
               </div>
             )}
             {isTwitch && twitchSlug && (
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 8, marginBottom: 36, border: '1px solid rgba(155,93,229,0.25)' }}>
-                <iframe
-                  src={'https://clips.twitch.tv/embed?clip=' + twitchSlug + '&parent=cyberneticpunks.com&parent=www.cyberneticpunks.com'}
-                  title={item.headline} allowFullScreen
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                />
+                <iframe src={'https://clips.twitch.tv/embed?clip=' + twitchSlug + '&parent=cyberneticpunks.com&parent=www.cyberneticpunks.com'} title={item.headline} allowFullScreen style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} />
               </div>
             )}
-
-            {/* Body */}
-            <div style={{
-              borderLeft: '1px solid ' + editor.color + '18',
-              paddingLeft: 28,
-            }}>
+            <div style={{ borderLeft: '1px solid ' + editor.color + '18', paddingLeft: 28 }}>
               <BodyRenderer parsed={parsed} editorColor={editor.color} />
             </div>
-
-            {/* Share + source */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              paddingTop: 28, marginTop: 40,
-              borderTop: '1px solid rgba(255,255,255,0.05)',
-              flexWrap: 'wrap',
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 28, marginTop: 40, borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginRight: 4 }}>SHARE</div>
-              <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>
-                𝕏 POST
-              </a>
-              <a href={shareReddit} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>
-                REDDIT
-              </a>
-              {item.source_url && (
-                <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, opacity: 0.8 }}>
-                  ▶ {isTwitch ? 'TWITCH' : 'YOUTUBE'} ↗
-                </a>
-              )}
+              <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>𝕏 POST</a>
+              <a href={shareReddit} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>REDDIT</a>
+              {item.source_url && <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, opacity: 0.8 }}>▶ {isTwitch ? 'TWITCH' : 'YOUTUBE'} ↗</a>}
             </div>
-
             <div style={{ marginTop: 20 }}>
-              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>
-                ← MORE FROM {item.editor}
-              </Link>
+              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>← MORE FROM {item.editor}</Link>
             </div>
           </article>
 
           {/* ── SIDEBAR ── */}
           {hasDataRef && (
             <aside style={{ position: 'sticky', top: 100, paddingTop: 40 }}>
-              <div style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderTop: '2px solid ' + editor.color,
-                borderRadius: 8,
-                padding: 20,
-              }}>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: editor.color, letterSpacing: 3, marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  DATA REFERENCE
-                </div>
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid ' + editor.color, borderRadius: 8, padding: 20 }}>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: editor.color, letterSpacing: 3, marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>DATA REFERENCE</div>
 
                 {mentionedShells.map(function(shell, i) {
                   return (
@@ -485,7 +327,7 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
                 })}
 
                 {mentionedMods.length > 0 && (
-                  <div>
+                  <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 12 }}>MODS REFERENCED</div>
                     {mentionedMods.map(function(mod, i) {
                       return (
@@ -501,38 +343,46 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
                     })}
                   </div>
                 )}
+
+                {/* Fix 7: Implants sidebar section */}
+                {mentionedImplants.length > 0 && (
+                  <div style={{ marginTop: 4, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 12 }}>IMPLANTS REFERENCED</div>
+                    {mentionedImplants.map(function(imp, i) {
+                      return (
+                        <div key={i} style={{ marginBottom: 12 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#fff' }}>{imp.name}</div>
+                            {imp.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#9b5de5', border: '1px solid rgba(155,93,229,0.3)', padding: '1px 5px', borderRadius: 2 }}>{imp.rarity.toUpperCase()}</span>}
+                          </div>
+                          {imp.slot_type && <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(155,93,229,0.5)', letterSpacing: 2, marginBottom: 4 }}>{imp.slot_type.toUpperCase()} SLOT</div>}
+                          {imp.passive_name && <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#9b5de5', marginBottom: 3 }}>{imp.passive_name}</div>}
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {imp.stat_1_label && imp.stat_1_value && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.35)' }}>{imp.stat_1_label}: {imp.stat_1_value}</span>}
+                            {imp.stat_2_label && imp.stat_2_value && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.35)' }}>{imp.stat_2_label}: {imp.stat_2_value}</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </aside>
           )}
         </div>
 
-        {/* ── RELATED INTEL ── */}
         {related && related.length > 0 && (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 48, marginTop: 20 }}>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginBottom: 20 }}>
-              RELATED INTEL
-            </div>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginBottom: 20 }}>RELATED INTEL</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
               {related.map(function(rel, i) {
                 var relEditor = EDITOR_STYLES[rel.editor] || EDITOR_STYLES.CIPHER;
                 return (
                   <Link key={i} href={'/intel/' + rel.slug} style={{ textDecoration: 'none' }}>
-                    <div style={{
-                      border: '1px solid rgba(255,255,255,0.05)',
-                      borderTop: '2px solid ' + relEditor.color + '44',
-                      borderRadius: 6, padding: '16px 18px',
-                      background: 'rgba(255,255,255,0.015)',
-                      transition: 'background 0.2s',
-                    }}>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: relEditor.color, letterSpacing: 2, marginBottom: 8 }}>
-                        {relEditor.symbol} {relEditor.label}
-                      </div>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 8 }}>
-                        {rel.headline}
-                      </div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>
-                        {timeAgo(rel.created_at)}
-                      </div>
+                    <div style={{ border: '1px solid rgba(255,255,255,0.05)', borderTop: '2px solid ' + relEditor.color + '44', borderRadius: 6, padding: '16px 18px', background: 'rgba(255,255,255,0.015)', transition: 'background 0.2s' }}>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: relEditor.color, letterSpacing: 2, marginBottom: 8 }}>{relEditor.symbol} {relEditor.label}</div>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 8 }}>{rel.headline}</div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{timeAgo(rel.created_at)}</div>
                     </div>
                   </Link>
                 );
@@ -541,7 +391,6 @@ function ArticlePage({ item, shells, weapons, mods, related }) {
           </div>
         )}
       </div>
-
       <Footer />
     </main>
   );
@@ -561,41 +410,38 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  // ── FIX 2: Fetch article first, then use its tags for related articles ──
-  var [itemResult, shellResult, weaponResult, modResult] = await Promise.all([
+  // Fix 5: Added implant_stats to Promise.all
+  var [itemResult, shellResult, weaponResult, modResult, implantResult] = await Promise.all([
     supabase.from('feed_items').select('*').eq('slug', slug).single(),
     supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name').limit(20),
     supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type').limit(40),
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(60),
+    supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').limit(60),
   ]);
 
   if (!itemResult.data) notFound();
 
-  // Tag-based related articles — finds articles sharing the most tags
   var related = [];
   try {
     var articleTags = itemResult.data.tags || [];
     if (articleTags.length > 0) {
-      var rpcResult = await supabase.rpc('get_related_articles', {
-        p_article_id: itemResult.data.id,
-        p_tags: articleTags,
-        p_limit: 6,
-      });
+      var rpcResult = await supabase.rpc('get_related_articles', { p_article_id: itemResult.data.id, p_tags: articleTags, p_limit: 6 });
       if (!rpcResult.error && rpcResult.data) related = rpcResult.data;
     }
-    // Fallback to recent articles if no tags or RPC returns nothing
     if (related.length === 0) {
       var fallback = await supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).neq('slug', slug).order('created_at', { ascending: false }).limit(6);
       if (!fallback.error && fallback.data) related = fallback.data;
     }
-  } catch (err) { /* non-fatal — page still renders without related */ }
+  } catch (err) { /* non-fatal */ }
 
+  // Fix 5: Pass implants prop to ArticlePage
   return (
     <ArticlePage
       item={itemResult.data}
       shells={shellResult.data || []}
       weapons={weaponResult.data || []}
       mods={modResult.data || []}
+      implants={implantResult.data || []}
       related={related}
     />
   );

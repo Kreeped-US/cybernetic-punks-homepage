@@ -27,6 +27,8 @@ Your voice: Cold, analytical, authoritative. You speak in short punchy sentences
 
 When referencing weapon mods in your analysis, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. Only reference mods that appear there — do not invent mod names.
 
+When referencing implants in your analysis, use exact implant names from the IMPLANTS DATABASE injected into this prompt. Note the slot type (Head/Torso/Legs/Shield) and what stat boost it provides. If a player's implant loadout contributed to the play outcome — such as boosted Agility enabling a clutch escape or extra Hardware absorbing a fatal hit — call it out in your grade analysis.
+
 Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
 
   NEXUS: `You are NEXUS, the meta intelligence editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
@@ -58,6 +60,7 @@ Top weapons: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardl
 
 When referencing weapon mods, use exact mod names from the WEAPON MODS DATABASE injected into this prompt. Only reference mods that appear in the database.
 When referencing shell cores, use exact core names from the SHELL CORES DATABASE injected into this prompt.
+When referencing implants, use exact implant names from the IMPLANTS DATABASE injected into this prompt. Track which implants are becoming meta — especially Head implants that boost Prime Recovery or Ping Duration, and Torso implants that boost Hardware or Self-Repair Speed. When a particular implant is driving a shell's ranked viability, note it in your meta analysis. Include implant shifts alongside weapon and core meta when relevant.
 
 Example meta_update (weapons and shells ONLY — no strategies, no abilities):
 [
@@ -99,7 +102,7 @@ When referencing mods, use exact mod names from the WEAPON MODS DATABASE injecte
 
 When referencing shell cores, use exact core names from the SHELL CORES DATABASE injected into this prompt. For each core you cite, name it, state which shell it belongs to, and explain how it changes the build. Only reference cores that appear in the database.
 
-When referencing implants, use exact implant names from the IMPLANTS DATABASE injected into this prompt. For each implant you cite, name its slot type and explain the stat boost it provides to the build.
+When referencing implants, use exact implant names from the IMPLANTS DATABASE injected into this prompt. For each implant you cite, state the SLOT TYPE (Head/Torso/Legs/Shield), the EXACT STAT BOOSTS it provides (e.g. "Agility: +5, Hardware: -3"), and explain why those specific stat changes matter for this build. Recommend at least 2 implants in every build article — one Head or Torso implant and one Legs or Shield implant. Implants are how Runner Shells differentiate their stat profiles — a Thief with Agility-stacked implants plays completely differently from a Thief with Hardware-stacked implants. Implant recommendations are NOT optional in a complete build analysis.
 
 TAGGING RULES: When analyzing build content, ALWAYS include the Runner Shell name (destroyer, vandal, recon, assassin, triage, thief, rook) as a tag in your response. If the content covers multiple shells, include all relevant shell names as separate tags. Also include weapon names and categories when relevant. Example tags: ["destroyer", "builds", "m77-assault-rifle", "assault-rifle", "ranked", "season-1"]
 
@@ -180,7 +183,7 @@ async function fetchGameContext() {
 }
 
 export function buildMirandaPrompt(data) {
-  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines, xData } = data;
+  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, implantContext, recentHeadlines, xData } = data;
 
   const videoSummaries = videos.slice(0, 6).map(v =>
     `TITLE: ${v.title}\nCHANNEL: ${v.channelTitle}\nDESC: ${v.description?.slice(0, 200)}\nVIDEO_ID: ${v.videoId}`
@@ -216,6 +219,18 @@ export function buildMirandaPrompt(data) {
         `${m.name} [${m.slot_type}]: ${m.effect_summary}${m.ranked_notes ? ' — Ranked: ' + m.ranked_notes : ''}`
       ).join('\n')
     : 'Mod data seeding in progress.';
+
+  const implantData = implantContext && implantContext.length > 0
+    ? implantContext.map(imp => {
+        const stats = [
+          imp.stat_1_label && imp.stat_1_value ? `${imp.stat_1_label}: ${imp.stat_1_value}` : null,
+          imp.stat_2_label && imp.stat_2_value ? `${imp.stat_2_label}: ${imp.stat_2_value}` : null,
+          imp.stat_3_label && imp.stat_3_value ? `${imp.stat_3_label}: ${imp.stat_3_value}` : null,
+          imp.stat_4_label && imp.stat_4_value ? `${imp.stat_4_label}: ${imp.stat_4_value}` : null,
+        ].filter(Boolean).join(', ');
+        return `${imp.name} [${imp.slot_type}] (${imp.rarity})${stats ? ' — ' + stats : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}`;
+      }).join('\n')
+    : 'Implant data seeding in progress.';
 
   const bungieNewsData = devNews?.length > 0
     ? devNews.map(n => `TITLE: ${n.title}\nURL: ${n.url}`).join('\n---\n')
@@ -290,6 +305,9 @@ ${weaponData}
 
 VERIFIED MOD DATA:
 ${modData}
+
+VERIFIED IMPLANT DATA:
+${implantData}
 
 OFFICIAL DEV NEWS (Bungie.net — prioritize if recent):
 ${bungieNewsData}
