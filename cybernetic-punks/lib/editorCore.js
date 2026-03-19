@@ -503,7 +503,7 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
 
   // Max tokens per editor — bumped for article quality
   var maxTokens = 2048;  // DEXTER + GHOST default
-  if (editor === 'NEXUS')   maxTokens = 3072;  // needs room for article + meta_update array
+  if (editor === 'NEXUS')   maxTokens = 4096;  // needs room for article + full meta_update array (all weapons + shells)
   if (editor === 'CIPHER')  maxTokens = 2048;  // grading analysis needs depth
   if (editor === 'MIRANDA') maxTokens = 3072;  // longest guides on the site
   if (editor === 'GHOST')   maxTokens = 2048;  // community reports need context
