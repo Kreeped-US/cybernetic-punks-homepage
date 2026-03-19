@@ -407,7 +407,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
                         width={40}
                         height={40}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }}
-                        onError={function(e) { e.target.style.display = 'none'; }}
                       />
                       <span style={{ fontFamily: 'monospace', fontSize: 14, color: commentEditor.color, zIndex: -1 }}>{commentEditor.symbol}</span>
                     </div>
