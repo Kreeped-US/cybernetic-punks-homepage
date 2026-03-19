@@ -21,9 +21,7 @@ export const metadata = {
     description: 'Shell ability breakdowns, mod analysis, ranked prep, and extraction strategy for Marathon Runners.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
-  alternates: {
-    canonical: 'https://cyberneticpunks.com/guides',
-  },
+  alternates: { canonical: 'https://cyberneticpunks.com/guides' },
 };
 
 export const revalidate = 300;
@@ -34,21 +32,19 @@ const supabase = createClient(
 );
 
 const CATS = {
-  'beginner':     { label: 'BEGINNER',    color: '#00ff88' },
-  'extraction':   { label: 'EXTRACTION',  color: '#00f5ff' },
-  'shell-guide':  { label: 'SHELLS',      color: '#9b5de5' },
-  'weapon-guide': { label: 'WEAPONS',     color: '#ff8800' },
-  'mod-guide':    { label: 'MODS',        color: '#ff0000' },
-  'progression':  { label: 'PROGRESSION', color: '#ffffff' },
-  'map-guide':    { label: 'MAPS',        color: '#888888' },
-  'ranked':       { label: 'RANKED',      color: '#ffd700' },
+  'shell-guide':  { label: 'SHELLS',      color: '#9b5de5', desc: 'Shell ability breakdowns' },
+  'ranked':       { label: 'RANKED',      color: '#ffd700', desc: 'Ranked climb guides' },
+  'weapon-guide': { label: 'WEAPONS',     color: '#ff8800', desc: 'Weapon analysis' },
+  'extraction':   { label: 'EXTRACTION',  color: '#00f5ff', desc: 'Extraction strategy' },
+  'mod-guide':    { label: 'MODS',        color: '#ff0000', desc: 'Mod breakdowns' },
+  'beginner':     { label: 'BEGINNER',    color: '#00ff88', desc: 'New runner guides' },
+  'progression':  { label: 'PROGRESSION', color: '#ffffff', desc: 'Progression paths' },
+  'map-guide':    { label: 'MAPS',        color: '#888888', desc: 'Zone and map intel' },
 };
 
 function readTime(body) {
   if (!body) return '1 min';
-  var words = body.split(' ').length;
-  var mins = Math.max(1, Math.round(words / 200));
-  return mins + ' min read';
+  return Math.max(1, Math.round(body.split(' ').length / 200)) + ' min read';
 }
 
 function timeAgo(dateStr) {
@@ -60,11 +56,20 @@ function timeAgo(dateStr) {
   return Math.floor(hours / 24) + 'd ago';
 }
 
+function SectionDivider({ label }) {
+  return (
+    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6, textAlign: 'center', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+      {label}
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+    </div>
+  );
+}
+
 export default async function GuidesPage({ searchParams }) {
   var params = await searchParams;
   var activeFilter = params?.cat || null;
 
-  // Fetch guides + live stat counts in parallel
   var [guidesResult, shellResult, weaponResult, modResult] = await Promise.all([
     supabase
       .from('feed_items')
@@ -78,11 +83,10 @@ export default async function GuidesPage({ searchParams }) {
     supabase.from('mod_stats').select('id', { count: 'exact', head: true }),
   ]);
 
-  var shellCount = shellResult.count || 0;
+  var shellCount  = shellResult.count  || 0;
   var weaponCount = weaponResult.count || 0;
-  var modCount = modResult.count || 0;
+  var modCount    = modResult.count    || 0;
 
-  // Dedupe by headline prefix
   var seen = {};
   var allGuides = [];
   for (var guide of (guidesResult.data || [])) {
@@ -93,320 +97,247 @@ export default async function GuidesPage({ searchParams }) {
     if (allGuides.length >= 40) break;
   }
 
-  // Apply category filter
   var guides = activeFilter
-    ? allGuides.filter(g => g.tags && g.tags.includes(activeFilter))
+    ? allGuides.filter(function(g) { return g.tags && g.tags.includes(activeFilter); })
     : allGuides;
 
   var featured = guides[0] || null;
   var rest = guides.slice(1);
-
   var totalGuides = allGuides.length;
 
+  var catCounts = {};
+  for (var g of allGuides) {
+    if (!g.tags) continue;
+    for (var tag of g.tags) {
+      if (CATS[tag]) catCounts[tag] = (catCounts[tag] || 0) + 1;
+    }
+  }
+
   return (
-    <main style={{ backgroundColor: '#030303', minHeight: '100vh', color: '#ffffff', fontFamily: 'var(--font-body, Rajdhani, sans-serif)' }}>
+    <main style={{ backgroundColor: '#030303', minHeight: '100vh', color: '#fff', paddingTop: 80, overflowX: 'hidden' }}>
       <Nav />
 
-      {/* ─── HEADER ─────────────────────────────────────────── */}
-      <div style={{ paddingTop: '100px', padding: '100px 24px 0', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-          <span style={{ color: '#9b5de5', fontSize: '18px', filter: 'drop-shadow(0 0 8px #9b5de5)' }}>◎</span>
-          <span style={{ fontFamily: 'var(--font-mono)', color: '#9b5de5', fontSize: '11px', letterSpacing: '3px' }}>
-            MIRANDA // FIELD GUIDE
-          </span>
-        </div>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 900, margin: '0 0 16px', lineHeight: 1.05, letterSpacing: '2px' }}>
-          RUNNER FIELD GUIDES
-        </h1>
-        <p style={{ color: '#666', fontSize: '15px', maxWidth: '560px', lineHeight: 1.6, margin: '0 0 32px' }}>
-          Shell ability breakdowns, mod analysis, extraction strategy, ranked prep, and progression paths.
-          Built from verified game data. Updated every 6 hours.
-        </p>
+      <style>{`
+        @keyframes gScan { from{transform:translateY(-100vh)} to{transform:translateY(100vh)} }
+        @keyframes gPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+        .g-card { transition: border-color 0.15s, transform 0.15s; }
+        .g-card:hover { transform: translateY(-2px); }
+        .g-cat { transition: all 0.12s; }
+        .g-cat:hover { transform: translateY(-1px); }
+        .g-link { transition: background 0.12s; }
+        .g-link:hover { background: rgba(255,255,255,0.02) !important; }
+      `}</style>
 
-        {/* ─── LIVE STATS BAR ───────────────────────────────── */}
-        <div style={{
-          display: 'flex',
-          gap: '0',
-          marginBottom: '36px',
-          border: '1px solid rgba(155,93,229,0.15)',
-          borderRadius: '6px',
-          overflow: 'hidden',
-          maxWidth: '620px',
-        }}>
-          {[
-            { label: 'GUIDES PUBLISHED', value: totalGuides, color: '#9b5de5' },
-            { label: 'SHELLS DOCUMENTED', value: shellCount, color: '#00f5ff' },
-            { label: 'WEAPONS TRACKED', value: weaponCount, color: '#ff8800' },
-            { label: 'MODS INDEXED', value: modCount, color: '#ff0000' },
-          ].map((stat, i) => (
-            <div key={i} style={{
-              flex: 1,
-              padding: '14px 16px',
-              borderRight: i < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-              background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent',
-            }}>
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(18px, 3vw, 26px)', fontWeight: 900, color: stat.color, lineHeight: 1 }}>
-                {stat.value}
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'rgba(255,255,255,0.25)', letterSpacing: '1.5px', marginTop: '4px' }}>
-                {stat.label}
+      {/* Scan line */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(155,93,229,0.35), transparent)', animation: 'gScan 12s linear infinite', pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* ── HERO ─────────────────────────────────────────────── */}
+      <section style={{ position: 'relative', overflow: 'hidden', padding: '52px 24px 60px' }}>
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.012, backgroundImage: 'linear-gradient(rgba(0,245,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,245,255,1) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse at 50% 0%, rgba(155,93,229,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#9b5de5', background: 'rgba(155,93,229,0.08)', border: '1px solid rgba(155,93,229,0.25)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>◎ MIRANDA</span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>FIELD GUIDE EDITOR</span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88', background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.2)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#00ff88', animation: 'gPulse 2s ease-in-out infinite' }} />
+              UPDATED EVERY 6H
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'center' }}>
+            <div>
+              <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2.2rem, 6vw, 4rem)', fontWeight: 900, letterSpacing: 2, lineHeight: 1.05, margin: '0 0 16px' }}>
+                RUNNER<br /><span style={{ color: '#9b5de5', textShadow: '0 0 40px rgba(155,93,229,0.25)' }}>FIELD GUIDES</span>
+              </h1>
+              <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 16, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, maxWidth: 460, margin: '0 0 28px' }}>
+                Shell ability breakdowns, mod analysis, extraction strategy, ranked prep, and progression paths. Built from verified game data by MIRANDA.
+              </p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link href="/advisor" style={{ padding: '10px 20px', background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.28)', borderRadius: 5, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff8800', letterSpacing: 2 }}>⬢ BUILD ADVISOR →</Link>
+                <Link href="/ranked" style={{ padding: '10px 20px', background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.18)', borderRadius: 5, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ffd700', letterSpacing: 2 }}>RANKED GUIDE →</Link>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* ─── CATEGORY FILTERS ───────────────────────────────── */}
-      <div style={{ padding: '0 24px 28px', maxWidth: '1200px', margin: '0 auto', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <Link
-          href="/guides"
-          style={{
-            padding: '6px 14px',
-            border: '1px solid ' + (!activeFilter ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.1)'),
-            color: !activeFilter ? '#fff' : 'rgba(255,255,255,0.3)',
-            fontSize: '10px',
-            letterSpacing: '2px',
-            fontFamily: 'var(--font-mono)',
-            textDecoration: 'none',
-            borderRadius: '3px',
-            background: !activeFilter ? 'rgba(255,255,255,0.05)' : 'transparent',
-          }}
-        >
-          ALL
-        </Link>
-        {Object.entries(CATS).map(([key, cat]) => (
-          <Link key={key} href={activeFilter === key ? '/guides' : '/guides?cat=' + key} style={{
-            padding: '6px 14px',
-            border: '1px solid ' + (activeFilter === key ? cat.color : cat.color + '44'),
-            color: activeFilter === key ? '#000' : cat.color,
-            background: activeFilter === key ? cat.color : 'transparent',
-            fontSize: '10px',
-            letterSpacing: '2px',
-            fontFamily: 'var(--font-mono)',
-            textDecoration: 'none',
-            borderRadius: '3px',
-            transition: 'all 0.15s',
-          }}>
-            {cat.label}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              {[
+                { label: 'GUIDES PUBLISHED',  value: totalGuides,  color: '#9b5de5' },
+                { label: 'SHELLS DOCUMENTED', value: shellCount,   color: '#00f5ff' },
+                { label: 'WEAPONS TRACKED',   value: weaponCount,  color: '#ff8800' },
+                { label: 'MODS INDEXED',      value: modCount,     color: '#ff0000' },
+              ].map(function(stat, i) {
+                return (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderTop: '2px solid ' + stat.color + '44', borderRadius: 6, padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, color: stat.color, lineHeight: 1, marginBottom: 6 }}>{stat.value}</div>
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 2 }}>{stat.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CATEGORY STRIP ───────────────────────────────────── */}
+      <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
+        <SectionDivider label="GUIDE CATEGORIES" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 6 }}>
+          <Link href="/guides" className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: !activeFilter ? 'rgba(255,255,255,0.04)' : '#0a0a0a', border: '1px solid ' + (!activeFilter ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)'), borderLeft: '3px solid ' + (!activeFilter ? '#fff' : 'rgba(255,255,255,0.12)'), borderRadius: 5, textDecoration: 'none' }}>
+            <div>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: !activeFilter ? '#fff' : 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 2 }}>ALL</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>All categories</div>
+            </div>
+            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: !activeFilter ? '#fff' : 'rgba(255,255,255,0.2)' }}>{totalGuides}</span>
           </Link>
-        ))}
-      </div>
-
-      {/* ─── RANKED BANNER ──────────────────────────────────── */}
-      <div style={{ padding: '0 24px 32px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{
-          border: '1px solid #ffd70033',
-          background: 'linear-gradient(90deg, #ffd70008 0%, transparent 100%)',
-          padding: '14px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          borderRadius: '6px',
-        }}>
-          <span style={{ color: '#ffd700', fontSize: '16px' }}>◎</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#ffd700', letterSpacing: '1px' }}>
-            RANKED IS LIVE —{' '}
-            <Link href="/ranked" style={{ color: '#ffd700', textDecoration: 'underline' }}>
-              Read the Ranked Guide
-            </Link>
-            {' '}to prep your shell and loadout now
-          </span>
-          <div style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#ffd70066', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
-            RANKED SEASON 1
-          </div>
-        </div>
-      </div>
-
-      {guides.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 24px', color: '#444', fontFamily: 'var(--font-mono)' }}>
-          <div style={{ fontSize: '32px', marginBottom: '16px' }}>◎</div>
-          <div style={{ letterSpacing: '3px', fontSize: '12px' }}>
-            {activeFilter ? 'NO ' + (CATS[activeFilter]?.label || activeFilter.toUpperCase()) + ' GUIDES YET' : 'MIRANDA INITIALIZING — FIRST GUIDES INCOMING'}
-          </div>
-        </div>
-      ) : (
-        <div style={{ padding: '0 24px 80px', maxWidth: '1200px', margin: '0 auto' }}>
-
-          {/* ─── FEATURED HERO GUIDE ──────────────────────────── */}
-          {featured && !activeFilter && (
-            <Link href={'/intel/' + featured.slug} style={{ textDecoration: 'none', display: 'block', marginBottom: '28px' }}>
-              <div style={{
-                position: 'relative',
-                border: '1px solid rgba(155,93,229,0.25)',
-                borderTop: '3px solid #9b5de5',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                background: '#0a0a0a',
-                display: 'grid',
-                gridTemplateColumns: featured.thumbnail ? '1fr 400px' : '1fr',
-                minHeight: '220px',
-              }}>
-                <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                      <span style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '9px',
-                        letterSpacing: '2px',
-                        color: '#000',
-                        background: '#9b5de5',
-                        padding: '4px 10px',
-                        borderRadius: '3px',
-                      }}>
-                        FEATURED
-                      </span>
-                      {(() => {
-                        var catKey = featured.tags?.find(t => CATS[t]);
-                        var cat = catKey ? CATS[catKey] : null;
-                        return cat ? (
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', color: cat.color }}>
-                            {cat.label}
-                          </span>
-                        ) : null;
-                      })()}
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }}>
-                        {timeAgo(featured.created_at)}
-                      </span>
-                    </div>
-                    <h2 style={{
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: 'clamp(18px, 3vw, 26px)',
-                      fontWeight: 800,
-                      color: '#fff',
-                      margin: '0 0 12px',
-                      lineHeight: 1.2,
-                      letterSpacing: '0.5px',
-                    }}>
-                      {featured.headline}
-                    </h2>
-                    <p style={{ color: '#666', fontSize: '14px', lineHeight: 1.6, margin: 0, maxWidth: '520px' }}>
-                      {featured.body?.replace(/\*\*/g, '').slice(0, 180)}...
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#9b5de5', letterSpacing: '1px' }}>
-                      READ GUIDE →
-                    </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.2)' }}>
-                      {readTime(featured.body)}
-                    </span>
-                    {featured.tags && featured.tags.slice(0, 3).map((tag, i) => (
-                      <span key={i} style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: '3px' }}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+          {Object.entries(CATS).map(function([key, cat]) {
+            var isActive = activeFilter === key;
+            var count = catCounts[key] || 0;
+            return (
+              <Link key={key} href={isActive ? '/guides' : '/guides?cat=' + key} className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: isActive ? cat.color + '0e' : '#0a0a0a', border: '1px solid ' + (isActive ? cat.color + '30' : 'rgba(255,255,255,0.06)'), borderLeft: '3px solid ' + (isActive ? cat.color : cat.color + '33'), borderRadius: 5, textDecoration: 'none' }}>
+                <div>
+                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: isActive ? cat.color : cat.color + 'aa', letterSpacing: 2, marginBottom: 2 }}>{cat.label}</div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{cat.desc}</div>
                 </div>
-                {featured.thumbnail && (
-                  <div style={{
-                    backgroundImage: 'url(' + featured.thumbnail + ')',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    opacity: 0.6,
-                    position: 'relative',
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(90deg, #0a0a0a 0%, transparent 40%)',
-                    }} />
-                  </div>
-                )}
-              </div>
-            </Link>
-          )}
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: isActive ? cat.color : 'rgba(255,255,255,0.18)' }}>{count}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
-          {/* ─── GUIDE GRID ───────────────────────────────────── */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '16px',
-          }}>
-            {(activeFilter ? guides : rest).map(guide => {
-              var catKey = guide.tags?.find(t => CATS[t]) || 'beginner';
-              var cat = CATS[catKey] || CATS['beginner'];
-              var ceScore = guide.ce_score
-                ? (guide.ce_score > 10 ? (guide.ce_score / 100).toFixed(1) : Number(guide.ce_score).toFixed(1))
-                : null;
-              var rt = readTime(guide.body);
-
-              return (
-                <Link key={guide.id} href={'/intel/' + guide.slug} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
-                  <div style={{
-                    border: '1px solid #161616',
-                    borderTop: '2px solid ' + cat.color + '55',
-                    background: '#080808',
-                    overflow: 'hidden',
-                    borderRadius: '6px',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}>
-                    {guide.thumbnail && (
-                      <div style={{ position: 'relative', height: '150px', overflow: 'hidden' }}>
-                        <img src={guide.thumbnail} alt={guide.headline} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75 }} />
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, #080808 100%)' }} />
+      {/* ── GUIDE CONTENT ────────────────────────────────────── */}
+      <section style={{ padding: '0 24px 80px', maxWidth: 1100, margin: '0 auto' }}>
+        {guides.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 24px', background: '#0a0a0a', border: '1px solid rgba(155,93,229,0.1)', borderRadius: 10 }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 32, color: '#9b5de5', marginBottom: 16, opacity: 0.4 }}>◎</div>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.2)', letterSpacing: 3 }}>
+              {activeFilter ? 'NO ' + (CATS[activeFilter]?.label || activeFilter.toUpperCase()) + ' GUIDES YET' : 'MIRANDA INITIALIZING — FIRST GUIDES INCOMING'}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Featured */}
+            {featured && !activeFilter && (
+              <>
+                <SectionDivider label="FEATURED GUIDE" />
+                <Link href={'/intel/' + featured.slug} style={{ textDecoration: 'none', display: 'block', marginBottom: 32 }}>
+                  <div className="g-card" style={{ position: 'relative', border: '1px solid rgba(155,93,229,0.18)', borderTop: '3px solid #9b5de5', borderRadius: 10, overflow: 'hidden', background: '#080808', display: 'grid', gridTemplateColumns: featured.thumbnail ? '1fr 360px' : '1fr', minHeight: 240 }}>
+                    <div style={{ padding: '32px 36px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(135deg, rgba(155,93,229,0.04), transparent 60%)' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, color: '#000', background: '#9b5de5', padding: '4px 12px', borderRadius: 3 }}>FEATURED</span>
+                          {(() => {
+                            var catKey = featured.tags?.find(function(t) { return CATS[t]; });
+                            var cat = catKey ? CATS[catKey] : null;
+                            return cat ? <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, color: cat.color, background: cat.color + '12', border: '1px solid ' + cat.color + '30', padding: '4px 10px', borderRadius: 3 }}>{cat.label}</span> : null;
+                          })()}
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }}>{timeAgo(featured.created_at)}</span>
+                        </div>
+                        <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(16px, 2.5vw, 24px)', fontWeight: 900, color: '#fff', margin: '0 0 14px', lineHeight: 1.2 }}>
+                          {featured.headline}
+                        </h2>
+                        <p style={{ fontFamily: 'Rajdhani, sans-serif', color: 'rgba(255,255,255,0.45)', fontSize: 15, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>
+                          {featured.body?.replace(/\*\*/g, '').slice(0, 200)}...
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 24, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#9b5de5', letterSpacing: 2 }}>READ GUIDE →</span>
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>{readTime(featured.body)}</span>
+                        {featured.tags && featured.tags.slice(0, 3).map(function(tag, i) {
+                          return <span key={i} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: 3 }}>{tag}</span>;
+                        })}
+                      </div>
+                    </div>
+                    {featured.thumbnail && (
+                      <div style={{ backgroundImage: 'url(' + featured.thumbnail + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.55, position: 'relative' }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #080808 0%, transparent 40%)' }} />
                       </div>
                     )}
-                    <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '9px', letterSpacing: '2px', color: cat.color, fontFamily: 'var(--font-mono)' }}>
-                          {cat.label}
-                        </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {ceScore && (
-                            <span style={{
-                              fontSize: '9px',
-                              color: Number(ceScore) >= 8 ? '#00ff88' : Number(ceScore) >= 6 ? '#ff8800' : '#555',
-                              fontFamily: 'var(--font-mono)',
-                            }}>
-                              CE {ceScore}
-                            </span>
-                          )}
-                          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono)' }}>
-                            {timeAgo(guide.created_at)}
-                          </span>
+                  </div>
+                </Link>
+              </>
+            )}
+
+            {/* Guide grid */}
+            <SectionDivider label={activeFilter ? (CATS[activeFilter]?.label || activeFilter.toUpperCase()) + ' GUIDES' : 'ALL GUIDES'} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 8 }}>
+              {(activeFilter ? guides : rest).map(function(guide) {
+                var catKey = guide.tags?.find(function(t) { return CATS[t]; }) || 'beginner';
+                var cat = CATS[catKey] || CATS['beginner'];
+                var rt = readTime(guide.body);
+                var bodyPreview = guide.body?.replace(/\*\*/g, '').slice(0, 120) || '';
+
+                return (
+                  <Link key={guide.id} href={'/intel/' + guide.slug} style={{ textDecoration: 'none', display: 'block' }}>
+                    <div className="g-card" style={{ border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid ' + cat.color + '55', borderTop: '1px solid ' + cat.color + '18', background: '#080808', borderRadius: 6, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                      {guide.thumbnail && (
+                        <div style={{ position: 'relative', height: 130, overflow: 'hidden', flexShrink: 0 }}>
+                          <img src={guide.thumbnail} alt={guide.headline} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }} />
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, #080808 100%)' }} />
+                          <div style={{ position: 'absolute', top: 10, left: 12 }}>
+                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: cat.color, background: '#080808cc', border: '1px solid ' + cat.color + '44', padding: '3px 8px', borderRadius: 3, letterSpacing: 2 }}>{cat.label}</span>
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        {!guide.thumbnail && (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: cat.color, letterSpacing: 2 }}>{cat.label}</span>
+                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(guide.created_at)}</span>
+                          </div>
+                        )}
+                        <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: '#fff', margin: '0 0 10px', lineHeight: 1.35, flex: 0 }}>{guide.headline}</h3>
+                        <p style={{ fontFamily: 'Rajdhani, sans-serif', color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: '0 0 14px', lineHeight: 1.55, flex: 1 }}>{bodyPreview}...</p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 10 }}>
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: cat.color + 'aa', letterSpacing: 1 }}>READ →</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {guide.thumbnail && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)' }}>{timeAgo(guide.created_at)}</span>}
+                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)' }}>{rt}</span>
+                          </div>
                         </div>
                       </div>
-                      <h3 style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontSize: '14px',
-                        fontWeight: 700,
-                        color: '#fff',
-                        margin: '0 0 8px',
-                        lineHeight: 1.3,
-                        flex: 1,
-                      }}>
-                        {guide.headline}
-                      </h3>
-                      <p style={{
-                        color: '#555',
-                        fontSize: '12px',
-                        margin: '0 0 12px',
-                        lineHeight: 1.5,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}>
-                        {guide.body?.replace(/\*\*/g, '').slice(0, 130)}...
-                      </p>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '10px' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: cat.color + 'aa', letterSpacing: '1px' }}>
-                          READ →
-                        </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.15)' }}>
-                          {rt}
-                        </span>
-                      </div>
                     </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* ── MIRANDA CTA ──────────────────────────────────────── */}
+      <section style={{ padding: '0 24px 80px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ background: 'rgba(155,93,229,0.03)', border: '1px solid rgba(155,93,229,0.12)', borderLeft: '3px solid rgba(155,93,229,0.5)', borderRadius: 8, padding: '28px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 28, alignItems: 'center' }}>
+          <div>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#9b5de5', letterSpacing: 3, marginBottom: 10 }}>◎ CYBERNETICPUNKS — MIRANDA INTEL</div>
+            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.2, marginBottom: 10 }}>
+              GUIDES PUBLISHED<br /><span style={{ color: '#9b5de5' }}>EVERY 6 HOURS.</span>
+            </div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>
+              MIRANDA publishes structured shell guides, ranked prep, and extraction strategy — built from live database stats, not opinions.
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {[
+              { href: '/intel/miranda', label: '◎ ALL MIRANDA INTEL', sub: 'Full guide archive',   color: '#9b5de5' },
+              { href: '/advisor',       label: '⬢ BUILD ADVISOR',     sub: 'Get your ranked loadout', color: '#ff8800' },
+              { href: '/shells',        label: 'SHELL DATABASE',       sub: 'Full ability breakdowns', color: '#00f5ff' },
+              { href: '/ranked',        label: 'RANKED GUIDE',         sub: 'Season 1 intel',       color: '#ffd700' },
+            ].map(function(item) {
+              return (
+                <Link key={item.href} href={item.href} className="g-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: item.color + '06', border: '1px solid ' + item.color + '18', borderRadius: 5, textDecoration: 'none' }}>
+                  <div>
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: item.color, letterSpacing: 1 }}>{item.label}</div>
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: 1, marginTop: 1 }}>{item.sub}</div>
                   </div>
+                  <span style={{ color: item.color, opacity: 0.5, fontSize: 12 }}>→</span>
                 </Link>
               );
             })}
           </div>
         </div>
-      )}
+      </section>
 
       <Footer />
     </main>
