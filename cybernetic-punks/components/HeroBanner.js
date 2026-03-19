@@ -183,7 +183,7 @@ function LiveStatCell({ value, label, color, isLive, sublabel, isMobile }) {
 function SpotlightCard({ href, accentColor, editorSymbol, editorName, badgeLabel, loading, children, isMobile }) {
   var [hovered, setHovered] = useState(false);
   return (
-    <Link href={href} style={{ display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.015)', border:'1px solid '+(hovered?accentColor+'25':'rgba(255,255,255,0.04)'), borderRadius:10, overflow:'hidden', textDecoration:'none', transform:hovered&&!isMobile?'translateY(-2px)':'none', transition:'border-color 0.3s, transform 0.3s', minWidth:isMobile?'72vw':undefined, flexShrink:isMobile?0:undefined }}
+    <Link href={href} style={{ display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.015)', border:'1px solid '+(hovered?accentColor+'25':'rgba(255,255,255,0.04)'), borderRadius:10, overflow:'hidden', textDecoration:'none', transform:hovered&&!isMobile?'translateY(-2px)':'none', transition:'border-color 0.3s, transform 0.3s', minWidth:isMobile?'68vw':undefined, maxWidth:isMobile?'68vw':undefined, flexShrink:isMobile?0:undefined }}
       onMouseEnter={function(){ setHovered(true); }}
       onMouseLeave={function(){ setHovered(false); }}
     >
@@ -195,12 +195,12 @@ function SpotlightCard({ href, accentColor, editorSymbol, editorName, badgeLabel
         </div>
         <span style={{ fontFamily:'Orbitron, monospace', fontSize:9, fontWeight:700, letterSpacing:2, color:accentColor, background:accentColor+'14', border:'1px solid '+accentColor+'25', borderRadius:3, padding:'3px 8px' }}>{badgeLabel}</span>
       </div>
-      <div style={{ padding:'0 16px 12px', flex:1 }}>
+      <div style={{ padding:'0 16px 12px', flex:1, overflow:'hidden' }}>
         {loading ? <div style={{ padding:'16px 0', textAlign:'center' }}><div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.12)', letterSpacing:2 }}>LOADING...</div></div> : children}
       </div>
-      <div style={{ padding:'10px 16px', borderTop:'1px solid rgba(255,255,255,0.03)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, minHeight:44 }}>
+      {!isMobile && <div style={{ padding:'10px 16px', borderTop:'1px solid rgba(255,255,255,0.03)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, minHeight:44 }}>
         <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:accentColor+'80', letterSpacing:1 }}>VIEW FULL {badgeLabel} &rarr;</span>
-      </div>
+      </div>}
     </Link>
   );
 }
@@ -210,13 +210,14 @@ function MobileCipherCard({ d }) {
   if (!d?.cipher) return <EmptyState />;
   var tags = (d.cipher.tags || []).slice(0, 2);
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-      <div style={{ fontFamily:'Orbitron, monospace', fontSize:48, fontWeight:900, color:'#ff0000', lineHeight:1, textShadow:'0 0 20px rgba(255,0,0,0.3)', flexShrink:0 }}>{d.cipherGrade}</div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontFamily:'Orbitron, monospace', fontSize:13, fontWeight:700, color:'#fff', letterSpacing:1, lineHeight:1.3, marginBottom:6 }}>{truncate(d.cipher.headline, 55)}</div>
-        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-          {tags.map(function(t,i){ return <span key={i} style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,0,0,0.5)', background:'rgba(255,0,0,0.08)', border:'1px solid rgba(255,0,0,0.15)', borderRadius:2, padding:'2px 6px', letterSpacing:1 }}>{t.toUpperCase()}</span>; })}
-        </div>
+    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        <div style={{ fontFamily:'Orbitron, monospace', fontSize:32, fontWeight:900, color:'#ff0000', lineHeight:1, textShadow:'0 0 12px rgba(255,0,0,0.3)', flexShrink:0 }}>{d.cipherGrade}</div>
+        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.25)', letterSpacing:1, lineHeight:1.5 }}>RUNNER<br/>GRADE</div>
+      </div>
+      <div style={{ fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.85)', letterSpacing:0.5, lineHeight:1.35 }}>{truncate(d.cipher.headline, 40)}</div>
+      <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+        {tags.map(function(t,i){ return <span key={i} style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,0,0,0.5)', background:'rgba(255,0,0,0.08)', border:'1px solid rgba(255,0,0,0.12)', borderRadius:2, padding:'2px 5px', letterSpacing:1 }}>{t.toUpperCase()}</span>; })}
       </div>
     </div>
   );
@@ -227,15 +228,16 @@ function MobileDexterCard({ d }) {
   var shellName = d.dexterShell ? d.dexterShell.name : null;
   var weaponName = d.dexterWeapons.length > 0 ? d.dexterWeapons[0].name : null;
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-      <div style={{ fontFamily:'Orbitron, monospace', fontSize:48, fontWeight:900, color:'#ff8800', lineHeight:1, textShadow:'0 0 20px rgba(255,136,0,0.3)', flexShrink:0 }}>{d.dexterGrade}</div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontFamily:'Orbitron, monospace', fontSize:13, fontWeight:700, color:'#fff', letterSpacing:1, lineHeight:1.3, marginBottom:6 }}>{truncate(d.dexter.headline, 55)}</div>
-        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-          {shellName && <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,136,0,0.6)', background:'rgba(255,136,0,0.08)', border:'1px solid rgba(255,136,0,0.15)', borderRadius:2, padding:'2px 6px', letterSpacing:1 }}>{shellName.toUpperCase()}</span>}
-          {weaponName && <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.25)', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:2, padding:'2px 6px', letterSpacing:1 }}>{truncate(weaponName, 18)}</span>}
-          {d.dexter.ranked_viable && <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(0,255,136,0.6)', background:'rgba(0,255,136,0.06)', border:'1px solid rgba(0,255,136,0.15)', borderRadius:2, padding:'2px 6px', letterSpacing:1 }}>RANKED</span>}
-        </div>
+    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        <div style={{ fontFamily:'Orbitron, monospace', fontSize:32, fontWeight:900, color:'#ff8800', lineHeight:1, textShadow:'0 0 12px rgba(255,136,0,0.3)', flexShrink:0 }}>{d.dexterGrade}</div>
+        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.25)', letterSpacing:1, lineHeight:1.5 }}>BUILD<br/>GRADE</div>
+      </div>
+      <div style={{ fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.85)', letterSpacing:0.5, lineHeight:1.35 }}>{truncate(d.dexter.headline, 40)}</div>
+      <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+        {shellName && <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,136,0,0.6)', background:'rgba(255,136,0,0.08)', border:'1px solid rgba(255,136,0,0.12)', borderRadius:2, padding:'2px 5px', letterSpacing:1 }}>{shellName.toUpperCase()}</span>}
+        {weaponName && <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.25)', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:2, padding:'2px 5px', letterSpacing:1 }}>{truncate(weaponName, 14)}</span>}
+        {d.dexter.ranked_viable && <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(0,255,136,0.6)', background:'rgba(0,255,136,0.06)', border:'1px solid rgba(0,255,136,0.12)', borderRadius:2, padding:'2px 5px', letterSpacing:1 }}>RANKED</span>}
       </div>
     </div>
   );
