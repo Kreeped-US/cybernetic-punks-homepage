@@ -5,7 +5,10 @@
 import { useState, useEffect } from 'react';
 
 export function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(function() {
+    if (typeof window !== 'undefined') return window.innerWidth < breakpoint;
+    return false;
+  });
 
   useEffect(function() {
     var check = function() {
@@ -22,7 +25,13 @@ export function useIsMobile(breakpoint = 640) {
 }
 
 export function useIsTablet() {
-  const [isTablet, setIsTablet] = useState(false);
+  const [isTablet, setIsTablet] = useState(function() {
+    if (typeof window !== 'undefined') {
+      var w = window.innerWidth;
+      return w >= 640 && w < 1024;
+    }
+    return false;
+  });
 
   useEffect(function() {
     var check = function() {
