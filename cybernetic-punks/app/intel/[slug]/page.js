@@ -94,8 +94,8 @@ export async function generateMetadata({ params }) {
     return {
       title: editorConfig.metaTitle,
       description: editorConfig.metaDesc,
-      openGraph: { title: editorConfig.metaTitle + ' — CyberneticPunks', description: editorConfig.metaDesc, url: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase(), siteName: 'CyberneticPunks', type: 'website', images: [{ url: '/og-image.png', width: 1200, height: 630 }] },
-      twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: editorConfig.metaTitle, description: editorConfig.metaDesc, images: ['/og-image.png'] },
+      openGraph: { title: editorConfig.metaTitle + ' — CyberneticPunks', description: editorConfig.metaDesc, url: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase(), siteName: 'CyberneticPunks', type: 'website', images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }] },
+      twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: editorConfig.metaTitle, description: editorConfig.metaDesc, images: ['https://cyberneticpunks.com/og-image.png'] },
       alternates: { canonical: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase() },
     };
   }
@@ -105,8 +105,8 @@ export async function generateMetadata({ params }) {
   return {
     title: item.headline,
     description: desc,
-    openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at, images: [{ url: item.thumbnail || '/og-image.png', width: 1200, height: 630 }] },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: item.headline, description: desc, images: [item.thumbnail || '/og-image.png'] },
+    openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at, images: [{ url: item.thumbnail || 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }] },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: item.headline, description: desc, images: [item.thumbnail || 'https://cyberneticpunks.com/og-image.png'] },
     alternates: { canonical: 'https://cyberneticpunks.com/intel/' + item.slug },
   };
 }
