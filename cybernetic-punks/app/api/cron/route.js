@@ -1,4 +1,5 @@
 import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/editorCore';
+import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { postTweet, postFromQueue } from '@/lib/twitter';
@@ -161,6 +162,8 @@ async function processEditor(editorName, prompt, rawData) {
             console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
           } else {
             console.log('[CRON] NEXUS upserted meta_tiers with ' + metaRows.length + ' entries');
+            // Notify Discord #meta-updates — non-blocking
+            notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
           }
         }
       } catch (metaErr) {
@@ -202,6 +205,16 @@ async function processEditor(editorName, prompt, rawData) {
       });
     }
 
+    // Discord notifications — all non-blocking fire-and-forget
+    if (feedItem) {
+      // #intel-feed — MIRANDA articles only
+      if (editorName === 'MIRANDA') {
+        notifyIntelFeed(feedItem, editorName).catch(function(e) { console.log('[DISCORD] intel notify error: ' + e.message); });
+      }
+      // #ranked-intel — any editor, only if article is tagged ranked
+      notifyRankedIntel(feedItem, editorName).catch(function(e) { console.log('[DISCORD] ranked notify error: ' + e.message); });
+    }
+
     return {
       editor: editorName,
       success: true,
@@ -219,6 +232,11 @@ export async function GET() {
   try {
     var prompts = await gatherAll();
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null };
+
+    // Notify #patch-notes if Bungie patch content detected this cycle — non-blocking
+    if (rawData.bungieNews && rawData.bungieNews.length > 0) {
+      notifyPatchNotes(rawData.bungieNews).catch(function(e) { console.log('[DISCORD] patch notify error: ' + e.message); });
+    }
 
     // Staggered sequential calls — prevents hitting 30k input token/min rate limit
     var results = [];
