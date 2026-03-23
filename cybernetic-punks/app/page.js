@@ -11,6 +11,7 @@ import EditorsStrip from '@/components/EditorsStrip';
 import DiscordCTA from '@/components/DiscordCTA';
 import Footer from '@/components/Footer';
 import UsageCounterStrip from '@/components/UsageCounterStrip';
+import FeaturedThisCycle from '@/components/FeaturedThisCycle';
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
       <DevTicker />
       <HeroBanner />
       <UsageCounterStrip />
+      <FeaturedThisCycle />
       <WhatsNew />
       <MetaPreview />
       <BuildsSection />

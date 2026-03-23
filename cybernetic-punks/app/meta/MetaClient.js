@@ -663,16 +663,39 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
           <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, letterSpacing: 2, margin: 0 }}>
             MARATHON META <span style={{ color: '#ff0000' }}>TIER LIST</span>
           </h1>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>
-              LAST UPDATED: <span style={{ color: '#00f5ff' }}>{lastUpdated ? hoursAgo(lastUpdated) : 'PENDING'}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+            {/* Prominent updated badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 6 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00f5ff', animation: 'pulse-glow 2s infinite' }} />
+              <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#00f5ff', letterSpacing: 1 }}>
+                UPDATED {lastUpdated ? hoursAgo(lastUpdated).toUpperCase() : 'PENDING'}
+              </span>
             </div>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 4 }}>
-              NEXT UPDATE IN: <span style={{ color: 'rgba(255,255,255,0.4)' }}>{countdown}</span>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>
+              NEXT UPDATE IN: <span style={{ color: 'rgba(255,255,255,0.35)' }}>{countdown}</span>
+            </div>
+            {/* Share buttons */}
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[
+                { label: '𝕏 SHARE', color: '#ffffff', action: function() { window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('Marathon meta tier list updated — check what weapons and shells are actually winning right now') + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta') + '&hashtags=Marathon,MarathonGame', '_blank'); } },
+                { label: 'REDDIT',  color: '#ff4500', action: function() { window.open('https://www.reddit.com/r/Marathon/submit?title=' + encodeURIComponent('CyberneticPunks Marathon Meta Tier List — Updated ' + (lastUpdated ? hoursAgo(lastUpdated) : 'now')) + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta'), '_blank'); } },
+                { label: 'DISCORD', color: '#5865f2', action: function() { navigator.clipboard.writeText('https://cyberneticpunks.com/meta').catch(function(){}); window.open('https://cyberneticpunks.com/meta', '_blank'); } },
+              ].map(function(btn) {
+                return (
+                  <button key={btn.label} onClick={btn.action} style={{
+                    fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1,
+                    padding: '7px 12px', borderRadius: 5, cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid ' + btn.color + '33',
+                    color: btn.color, transition: 'background 0.15s',
+                  }}>
+                    {btn.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

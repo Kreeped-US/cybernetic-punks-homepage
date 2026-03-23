@@ -594,12 +594,21 @@ export default function AdvisorClient() {
           {/* SHARE */}
           <div className="rs" style={{ animationDelay:'0.3s' }}>
             <div style={{ background:'#050505', border:'1px solid rgba(255,255,255,0.05)', borderRadius:8, padding:isMobile?'18px 18px':'20px 24px' }}>
-              <div style={{ fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.55)', letterSpacing:2, marginBottom:4 }}>SHARE YOUR BUILD</div>
-              <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:12, color:'rgba(255,255,255,0.2)', marginBottom:16 }}>Download a 1200x630 share card or post directly to X.</div>
-              <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3, auto)', gap:8, justifyContent:isMobile?'stretch':'flex-start' }}>
-                <button className="sb" onClick={downloadShareCard} style={{ padding:'14px 20px', background:accentColor+'11', border:'1px solid '+accentColor+'44', borderRadius:5, color:accentColor, fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>DOWNLOAD CARD</button>
-                <button className="sb" onClick={shareToX} style={{ padding:'14px 20px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:5, color:'rgba(255,255,255,0.45)', fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>POST TO X</button>
-                <button className="sb" onClick={function(){ setPhase('input'); setBuild(null); }} style={{ padding:'14px 20px', background:'transparent', border:'1px solid rgba(255,255,255,0.07)', borderRadius:5, color:'rgba(255,255,255,0.22)', fontFamily:'Share Tech Mono, monospace', fontSize:10, letterSpacing:2, minHeight:48 }}>NEW BUILD</button>
+              {/* Share CTA */}
+              <div style={{ marginBottom:16, padding:'14px 16px', background:accentColor+'08', border:'1px solid '+accentColor+'22', borderLeft:'3px solid '+accentColor, borderRadius:6 }}>
+                <div style={{ fontFamily:'Orbitron, monospace', fontSize:13, fontWeight:900, color:accentColor, letterSpacing:1, marginBottom:4 }}>
+                  ⬢ SHARE YOUR DEXTER BUILD!
+                </div>
+                <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:14, color:'rgba(255,255,255,0.45)', lineHeight:1.5 }}>
+                  Post your loadout card to X or Discord and let the community see what you're running. Download a 1200×630 share card — built to post.
+                </div>
+              </div>
+              <div style={{ fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.55)', letterSpacing:2, marginBottom:12 }}>SHARE YOUR BUILD</div>
+              <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit, minmax(140px, 1fr))', gap:8 }}>
+                <button className="sb" onClick={downloadShareCard} style={{ padding:'14px 16px', background:accentColor+'11', border:'1px solid '+accentColor+'44', borderRadius:5, color:accentColor, fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>DOWNLOAD CARD</button>
+                <button className="sb" onClick={shareToX} style={{ padding:'14px 16px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:5, color:'rgba(255,255,255,0.45)', fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>POST TO X</button>
+                <button className="sb" onClick={function(){ navigator.clipboard.writeText('https://cyberneticpunks.com/advisor').catch(function(){}); }} style={{ padding:'14px 16px', background:'rgba(88,101,242,0.08)', border:'1px solid rgba(88,101,242,0.3)', borderRadius:5, color:'#5865f2', fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>COPY FOR DISCORD</button>
+                <button className="sb" onClick={function(){ setPhase('input'); setBuild(null); }} style={{ padding:'14px 16px', background:'transparent', border:'1px solid rgba(255,255,255,0.07)', borderRadius:5, color:'rgba(255,255,255,0.22)', fontFamily:'Share Tech Mono, monospace', fontSize:10, letterSpacing:2, minHeight:48 }}>NEW BUILD</button>
               </div>
             </div>
           </div>
