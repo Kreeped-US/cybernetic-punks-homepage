@@ -156,45 +156,6 @@ export async function gatherYouTube() {
   }
 }
 
-// Format X pulse data for CIPHER when YouTube is thin
-export function formatXForCipher(xPulse) {
-  if (!xPulse?.posts?.length) return null;
-
-  const relevant = [
-    ...(xPulse.communityPosts || []),
-    ...(xPulse.officialPosts || []),
-  ].slice(0, 8);
-
-  if (relevant.length === 0) return null;
-
-  let out = '\n\n--- X COMMUNITY INTELLIGENCE (use when video content is thin) ---\n';
-  out += 'These are real posts from Marathon community creators and official accounts. Use them to identify competitive plays, strategies, and discussions worth grading.\n\n';
-  out += relevant.map(function(p) {
-    return `@${p.author}${p.is_community ? ' [COMMUNITY VOICE]' : p.is_official ? ' [OFFICIAL]' : ''}: "${p.text.slice(0, 280)}"\nLikes: ${p.likes} | RT: ${p.retweets}`;
-  }).join('\n\n');
-  out += '\n--- END X INTELLIGENCE ---';
-  return out;
-}
-
-// Format X pulse data for DEXTER when YouTube is thin
-export function formatXForDexter(xPulse) {
-  if (!xPulse?.posts?.length) return null;
-
-  const relevant = [
-    ...(xPulse.communityPosts || []),
-  ].slice(0, 8);
-
-  if (relevant.length === 0) return null;
-
-  let out = '\n\n--- X COMMUNITY INTELLIGENCE (use when video content is thin) ---\n';
-  out += 'These are real posts from Marathon community creators discussing builds, loadouts, and strategies. Use them as source material for build analysis.\n\n';
-  out += relevant.map(function(p) {
-    return `@${p.author}: "${p.text.slice(0, 280)}"\nLikes: ${p.likes} | RT: ${p.retweets}`;
-  }).join('\n\n');
-  out += '\n\nINSTRUCTION: If video content is sparse, write your build article based on the loadout discussion in these X posts. Own the narrative in DEXTER voice — analyze what these creators are running and why.';
-  out += '\n--- END X INTELLIGENCE ---';
-  return out;
-}
 
 export function formatForEditor(videos, editor) {
   if (!videos || !videos.length) return null;

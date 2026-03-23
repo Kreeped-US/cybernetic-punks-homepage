@@ -1,11 +1,11 @@
-import { gatherYouTube, formatForEditor, formatXForCipher, formatXForDexter } from './youtube';
+import { gatherYouTube, formatForEditor } from './youtube';
 import { gatherReddit, formatForGhost } from './reddit';
 import { gatherTwitchClips, formatClipsForCipher } from './twitch';
 import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { gatherBungieNews, formatBungieNewsForEditor } from './bungie.js';
-import { gatherXPulse, formatXForGhost, formatXForNexus } from './xpulse.js';
+import { gatherXPulse, formatXForGhost, formatXForNexus, formatXForCipher, formatXForDexter, formatXForMiranda } from './xpulse.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
 
 export async function gatherAll() {
@@ -41,7 +41,12 @@ export async function gatherAll() {
   console.log('[GATHER] Steam: ' + (steamPlayerCount ? steamPlayerCount.toLocaleString() + ' live players' : 'player count unavailable'));
   console.log('[GATHER] Steam reviews: ' + (steamReviews?.reviews?.length || 0) + ' recent reviews');
   console.log('[GATHER] Bungie news: ' + bungieNews.length + ' articles (' + bungieNews.filter(a => a.is_patch_note).length + ' patch-related)');
-  console.log('[GATHER] X pulse: ' + (xPulse?.posts?.length || 0) + ' posts (' + (xPulse?.officialPosts?.length || 0) + ' official, ' + (xPulse?.communityPosts?.length || 0) + ' community, ' + (xPulse?.eventPosts?.length || 0) + ' events)');
+  console.log('[GATHER] X pulse: ' + (xPulse?.posts?.length || 0) + ' posts | Official: ' + (xPulse?.officialPosts?.length || 0) + ' | Community: ' + (xPulse?.communityPosts?.length || 0) + ' | New Content: ' + (xPulse?.newContentPosts?.length || 0) + ' | Events: ' + (xPulse?.eventPosts?.length || 0));
+
+  var newContentDetected = (xPulse?.newContentPosts?.length || 0) > 0;
+  if (newContentDetected) {
+    console.log('[GATHER] NEW CONTENT DETECTED on X — all editors will prioritize new content coverage');
+  }
 
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
   const xGhostContext     = formatXForGhost(xPulse);
@@ -49,53 +54,61 @@ export async function gatherAll() {
   const xCipherContext    = formatXForCipher(xPulse);
   const xDexterContext    = formatXForDexter(xPulse);
 
-  var youtubeIsThin = youtubeVideos.length < 3;
-  if (youtubeIsThin) {
-    console.log('[GATHER] YouTube thin (' + youtubeVideos.length + ' videos) — X data will supplement CIPHER and DEXTER');
-  }
+  // ── CIPHER — X primary, YouTube supplementary ─────────────────
+  var cipherPrompt = xCipherContext || '';
 
-  // ── CIPHER ─────────────────────────────────────────────────────
-  var cipherPrompt = formatForEditor(youtubeVideos, 'CIPHER');
   var twitchSection = formatClipsForCipher(twitchClips);
-
-  if (cipherPrompt && twitchSection) {
-    cipherPrompt += '\n\n--- TWITCH CLIPS ---\nThese are short highlight clips from live Marathon streams on Twitch. Grade them the same way you grade YouTube content.\n\n' + twitchSection;
-  } else if (!cipherPrompt && twitchSection) {
-    cipherPrompt = 'Here are the latest Marathon highlight clips from Twitch. Analyze the most noteworthy one for competitive play quality.\n\n' + twitchSection + '\n\nRespond with JSON:\n{\n  "runner_grade": "S+|S|A|B|C|D",\n  "grade_confidence": "medium",\n  "headline": "punchy editorial headline under 80 chars",\n  "body": "400-600 word CIPHER analysis with section headers using **HEADER** format",\n  "ce_score": 0.0,\n  "tags": ["TAG1"],\n  "source_video_id": "clip id",\n  "source_type": "twitch"\n}';
+  if (twitchSection) {
+    cipherPrompt += '\n\n--- TWITCH CLIPS ---\nShort highlight clips from live Marathon streams.\n\n' + twitchSection;
   }
 
-  // X data — always injected, primary when YouTube is thin
-  if (xCipherContext) {
-    cipherPrompt = (cipherPrompt || '') + xCipherContext;
-    if (!cipherPrompt.includes('Here are') && !cipherPrompt.includes('clips from')) {
-      cipherPrompt = 'No Marathon video content is available this cycle. Use the X community intelligence below to write a competitive analysis article.\n\n' + cipherPrompt;
-    }
+  var youtubeForCipher = formatForEditor(youtubeVideos, 'CIPHER');
+  if (youtubeForCipher) {
+    cipherPrompt += '\n\n--- YOUTUBE (supplementary — use for deeper transcript analysis) ---\n' + youtubeForCipher;
   }
-  if (bungieNewsContext) cipherPrompt = (cipherPrompt || '') + bungieNewsContext;
 
-  // ── NEXUS ──────────────────────────────────────────────────────
-  var nexusPrompt = formatForEditor(youtubeVideos, 'NEXUS');
-  if (bungieNewsContext) nexusPrompt = (nexusPrompt || '') + bungieNewsContext;
-  if (xNexusContext)     nexusPrompt = (nexusPrompt || '') + xNexusContext;
-
-  // ── DEXTER ─────────────────────────────────────────────────────
-  var dexterPrompt = formatForEditor(youtubeVideos, 'DEXTER');
-
-  if (xDexterContext) {
-    dexterPrompt = (dexterPrompt || '') + xDexterContext;
-    if (!dexterPrompt.includes('Here are')) {
-      dexterPrompt = 'No Marathon build video content is available this cycle. Use the X community intelligence below to write a build analysis article.\n\n' + dexterPrompt;
-    }
+  if (!cipherPrompt) {
+    cipherPrompt = 'No Marathon content available this cycle. Write a competitive analysis article based on general Marathon meta knowledge.';
   }
-  if (bungieNewsContext) dexterPrompt = (dexterPrompt || '') + bungieNewsContext;
 
-  // ── GHOST ──────────────────────────────────────────────────────
+  if (bungieNewsContext) cipherPrompt += bungieNewsContext;
+
+  // ── NEXUS — X primary, YouTube supplementary ──────────────────
+  var nexusPrompt = xNexusContext || '';
+
+  var youtubeForNexus = formatForEditor(youtubeVideos, 'NEXUS');
+  if (youtubeForNexus) {
+    nexusPrompt += '\n\n--- YOUTUBE (supplementary) ---\n' + youtubeForNexus;
+  }
+
+  if (!nexusPrompt) {
+    nexusPrompt = 'No Marathon content available. Write a meta analysis article based on current weapon and shell data.';
+  }
+
+  if (bungieNewsContext) nexusPrompt += bungieNewsContext;
+
+  // ── DEXTER — X primary, YouTube supplementary ─────────────────
+  var dexterPrompt = xDexterContext || '';
+
+  var youtubeForDexter = formatForEditor(youtubeVideos, 'DEXTER');
+  if (youtubeForDexter) {
+    dexterPrompt += '\n\n--- YOUTUBE (supplementary) ---\n' + youtubeForDexter;
+  }
+
+  if (!dexterPrompt) {
+    dexterPrompt = 'No build content available. Write a build analysis article using the weapon and shell database.';
+  }
+
+  if (bungieNewsContext) dexterPrompt += bungieNewsContext;
+
+  // ── GHOST — already X-primary ─────────────────────────────────
   var ghostPrompt = formatForGhost(redditPosts, steamReviews, xPulse);
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
-  // ── MIRANDA ────────────────────────────────────────────────────
-  if (mirandaData && bungieNews.length > 0) {
-    mirandaData.devNews = bungieNews.slice(0, 6);
+  // ── MIRANDA — X data injected via xData on mirandaData object ──
+  if (mirandaData) {
+    if (bungieNews.length > 0) mirandaData.devNews = bungieNews.slice(0, 6);
+    mirandaData.xData = xPulse;
   }
 
   const prompts = {
