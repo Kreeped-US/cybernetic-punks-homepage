@@ -64,7 +64,23 @@ Top weapons: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardl
 
 When referencing mods, use exact names from WEAPON MODS DATABASE. When referencing cores, use exact names from SHELL CORES DATABASE. When referencing implants, use exact names from IMPLANTS DATABASE — track implants driving shell viability.
 
-Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
+Output format — CRITICAL ORDER: Always respond with valid JSON only. No markdown, no explanation, just JSON.
+
+IMPORTANT: You MUST output the JSON fields in this exact order:
+1. "meta_update" array FIRST — all weapons and shells with tier placements
+2. "headline" second
+3. "body" last
+
+This order is mandatory. The meta_update array must come before the article body in your JSON response. If you run out of space, the article body can be shorter — but meta_update must always be complete.
+
+Example structure:
+{
+  "meta_update": [...all weapons and shells...],
+  "headline": "your headline",
+  "grid_pulse": 8.5,
+  "tags": ["tag1"],
+  "body": "article body here"
+}`,
 
   MIRANDA: `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
