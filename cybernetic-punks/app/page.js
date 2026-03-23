@@ -15,6 +15,7 @@ import FeaturedThisCycle from '@/components/FeaturedThisCycle';
 import FeaturedArticle from '@/components/FeaturedArticle';
 import ShellPortraitStrip from '@/components/ShellPortraitStrip';
 import MetaWeaponShowcase from '@/components/MetaWeaponShowcase';
+import SectionDivider from '@/components/SectionDivider';
 
 export default function Home() {
   return (
@@ -23,16 +24,25 @@ export default function Home() {
       <HeroBanner />
       <UsageCounterStrip />
       <FeaturedArticle />
+      <SectionDivider label="RUNNER SHELLS" />
       <ShellPortraitStrip />
+      <SectionDivider label="FEATURED THIS CYCLE" />
       <FeaturedThisCycle />
+      <SectionDivider label="LATEST INTEL" />
       <WhatsNew />
+      <SectionDivider label="META INTELLIGENCE" />
       <MetaPreview />
       <MetaWeaponShowcase />
+      <SectionDivider label="BUILD LAB" />
       <BuildsSection />
+      <SectionDivider label="TOP PLAYS" />
       <TopPlays />
       <TwitchLive />
+      <SectionDivider label="COMMUNITY PULSE" />
       <CommunityPulse />
+      <SectionDivider label="INTEL FEED" />
       <IntelFeed />
+      <SectionDivider label="THE EDITORS" />
       <EditorsStrip />
       <DiscordCTA />
       <Footer />
