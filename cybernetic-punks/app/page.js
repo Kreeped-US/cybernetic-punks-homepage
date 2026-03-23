@@ -1,9 +1,7 @@
 import HeroBanner from '@/components/HeroBanner';
 import DevTicker from '@/components/DevTicker';
-import WhatsNew from '@/components/WhatsNew';
 import MetaPreview from '@/components/MetaPreview';
 import BuildsSection from '@/components/BuildsSection';
-import TopPlays from '@/components/TopPlays';
 import TwitchLive from '@/components/TwitchLive';
 import CommunityPulse from '@/components/CommunityPulse';
 import IntelFeed from '@/components/IntelFeed';
@@ -28,15 +26,11 @@ export default function Home() {
       <ShellPortraitStrip />
       <SectionDivider label="FEATURED THIS CYCLE" />
       <FeaturedThisCycle />
-      <SectionDivider label="LATEST INTEL" />
-      <WhatsNew />
       <SectionDivider label="META INTELLIGENCE" />
       <MetaPreview />
       <MetaWeaponShowcase />
       <SectionDivider label="BUILD LAB" />
       <BuildsSection />
-      <SectionDivider label="TOP PLAYS" />
-      <TopPlays />
       <TwitchLive />
       <SectionDivider label="COMMUNITY PULSE" />
       <CommunityPulse />
