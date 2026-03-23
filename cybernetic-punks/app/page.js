@@ -1,7 +1,6 @@
 import HeroBanner from '@/components/HeroBanner';
 import DevTicker from '@/components/DevTicker';
 import MetaPreview from '@/components/MetaPreview';
-import BuildsSection from '@/components/BuildsSection';
 import TwitchLive from '@/components/TwitchLive';
 import CommunityPulse from '@/components/CommunityPulse';
 import IntelFeed from '@/components/IntelFeed';
@@ -29,8 +28,6 @@ export default function Home() {
       <SectionDivider label="META INTELLIGENCE" />
       <MetaPreview />
       <MetaWeaponShowcase />
-      <SectionDivider label="BUILD LAB" />
-      <BuildsSection />
       <TwitchLive />
       <SectionDivider label="COMMUNITY PULSE" />
       <CommunityPulse />
