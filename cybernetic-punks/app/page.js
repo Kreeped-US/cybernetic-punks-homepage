@@ -12,6 +12,7 @@ import DiscordCTA from '@/components/DiscordCTA';
 import Footer from '@/components/Footer';
 import UsageCounterStrip from '@/components/UsageCounterStrip';
 import FeaturedThisCycle from '@/components/FeaturedThisCycle';
+import FeaturedArticle from '@/components/FeaturedArticle';
 
 export default function Home() {
   return (
@@ -19,6 +20,7 @@ export default function Home() {
       <DevTicker />
       <HeroBanner />
       <UsageCounterStrip />
+      <FeaturedArticle />
       <FeaturedThisCycle />
       <WhatsNew />
       <MetaPreview />
