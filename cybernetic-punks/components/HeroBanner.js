@@ -401,64 +401,120 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        {/* SPOTLIGHT CARDS */}
-        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3, 1fr)', gap:isMobile?8:14, marginBottom:isMobile?20:28 }}>
+        {/* SPOTLIGHT CARDS — 2+1 layout: CIPHER hero left, DEXTER+NEXUS stacked right */}
+        {isMobile ? (
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
+            <SpotlightCard href="/play-of-the-day" accentColor="#ff0000" editorSymbol="C" editorName="CIPHER" badgeLabel="PLAY OF THE DAY" loading={d===null} isMobile={isMobile}>
+              <MobileCipherCard d={d} />
+            </SpotlightCard>
+            <SpotlightCard href="/top-build" accentColor="#ff8800" editorSymbol="D" editorName="DEXTER" badgeLabel="TOP BUILD" loading={d===null} isMobile={isMobile}>
+              <MobileDexterCard d={d} />
+            </SpotlightCard>
+            <SpotlightCard href="/meta" accentColor="#00f5ff" editorSymbol="N" editorName="NEXUS" badgeLabel="LIVE META" loading={d===null} isMobile={isMobile}>
+              <MobileNexusCard d={d} />
+            </SpotlightCard>
+          </div>
+        ) : (
+          <div style={{ display:'grid', gridTemplateColumns:'1.15fr 1fr', gridTemplateRows:'1fr 1fr', gap:14, marginBottom:28, height:460 }}>
 
-          <SpotlightCard href="/play-of-the-day" accentColor="#ff0000" editorSymbol="C" editorName="CIPHER" badgeLabel="PLAY OF THE DAY" loading={d===null} isMobile={isMobile}>
-            {isMobile
-              ? <MobileCipherCard d={d} />
-              : d?.cipher ? (
-                <>
-                  <div style={{ fontFamily:'Orbitron, monospace', fontSize:14, fontWeight:700, color:'#fff', letterSpacing:1, lineHeight:1.3, marginBottom:10 }}>{truncate(d.cipher.headline, 60)}</div>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:32, fontWeight:900, color:'#ff0000', lineHeight:1, textShadow:'0 0 20px rgba(255,0,0,0.3)' }}>{d.cipherGrade}</div>
-                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.25)', letterSpacing:1, lineHeight:1.6 }}>RUNNER GRADE{d.cipherConf?'\nCONF: '+d.cipherConf:''}</div>
+            {/* CIPHER — spans both rows, full height hero card */}
+            <Link href="/play-of-the-day" style={{ gridRow:'1 / 3', display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.015)', border:'1px solid rgba(255,0,0,0.1)', borderRadius:10, overflow:'hidden', textDecoration:'none', position:'relative', transition:'border-color 0.3s, transform 0.2s' }}
+              onMouseEnter={function(e){ e.currentTarget.style.borderColor='rgba(255,0,0,0.3)'; e.currentTarget.style.transform='translateY(-2px)'; }}
+              onMouseLeave={function(e){ e.currentTarget.style.borderColor='rgba(255,0,0,0.1)'; e.currentTarget.style.transform='none'; }}
+            >
+              {/* Top accent bar */}
+              <div style={{ height:2, background:'linear-gradient(90deg, #ff0000, #ff000018)', flexShrink:0 }} />
+
+              {/* Thumbnail background — blurred if available */}
+              {d?.cipher?.thumbnail && (
+                <div style={{ position:'absolute', inset:0, backgroundImage:'url('+d.cipher.thumbnail+')', backgroundSize:'cover', backgroundPosition:'center', filter:'blur(12px) brightness(0.15) saturate(1.3)', transform:'scale(1.05)', zIndex:0 }} />
+              )}
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(255,0,0,0.04) 0%, transparent 60%)', zIndex:0 }} />
+
+              {/* Content */}
+              <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'14px 18px 0' }}>
+                {/* Editor badge */}
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ width:6, height:6, borderRadius:'50%', background:'#ff0000', boxShadow:'0 0 6px #ff0000', flexShrink:0 }} />
+                    <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,0,0,0.6)', letterSpacing:2 }}>C CIPHER</span>
                   </div>
-                  {d.cipherWeapons.length>0 ? d.cipherWeapons.map(function(w,i){ return <WeaponInlineCard key={i} weapon={w} accentColor="#ff0000" />; }) : <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.15)', letterSpacing:1, padding:'8px 0' }}>LOADOUT SCANNING...</div>}
-                </>
-              ) : <EmptyState />
-            }
-          </SpotlightCard>
+                  <span style={{ fontFamily:'Orbitron, monospace', fontSize:9, fontWeight:700, letterSpacing:2, color:'#ff0000', background:'rgba(255,0,0,0.12)', border:'1px solid rgba(255,0,0,0.25)', borderRadius:3, padding:'3px 8px' }}>PLAY OF THE DAY</span>
+                </div>
 
-          <SpotlightCard href="/top-build" accentColor="#ff8800" editorSymbol="D" editorName="DEXTER" badgeLabel="TOP BUILD" loading={d===null} isMobile={isMobile}>
-            {isMobile
-              ? <MobileDexterCard d={d} />
-              : d?.dexter ? (
+                {d===null ? (
+                  <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.12)', letterSpacing:2 }}>LOADING...</div>
+                  </div>
+                ) : d?.cipher ? (
+                  <>
+                    {/* Large grade */}
+                    <div style={{ display:'flex', alignItems:'flex-end', gap:14, marginBottom:16 }}>
+                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:80, fontWeight:900, color:'#ff0000', lineHeight:0.9, textShadow:'0 0 40px rgba(255,0,0,0.35)' }}>{d.cipherGrade}</div>
+                      <div style={{ paddingBottom:8 }}>
+                        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.25)', letterSpacing:1, marginBottom:3 }}>RUNNER GRADE</div>
+                        {d.cipherConf && <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,0,0,0.4)', letterSpacing:1 }}>CONF: {d.cipherConf}</div>}
+                      </div>
+                    </div>
+
+                    {/* Headline */}
+                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:14, fontWeight:700, color:'#fff', letterSpacing:1, lineHeight:1.35, marginBottom:12 }}>{truncate(d.cipher.headline, 72)}</div>
+
+                    {/* Body preview */}
+                    <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:13, color:'rgba(255,255,255,0.35)', lineHeight:1.6, marginBottom:14, flex:1 }}>
+                      {truncate((d.cipher.body||'').replace(/\*\*/g,''), 180)}
+                    </div>
+
+                    {/* Weapons */}
+                    {d.cipherWeapons.length>0 ? d.cipherWeapons.map(function(w,i){ return <WeaponInlineCard key={i} weapon={w} accentColor="#ff0000" />; }) : (
+                      <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.12)', letterSpacing:1, padding:'6px 0' }}>LOADOUT SCANNING...</div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
+                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:64, fontWeight:900, color:'rgba(255,0,0,0.08)', lineHeight:1 }}>C</div>
+                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.12)', letterSpacing:2 }}>AWAITING NEXT CYCLE</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom CTA */}
+              <div style={{ position:'relative', zIndex:1, padding:'10px 18px', borderTop:'1px solid rgba(255,255,255,0.03)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
+                <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,0,0,0.5)', letterSpacing:1 }}>VIEW FULL PLAY OF THE DAY &rarr;</span>
+              </div>
+            </Link>
+
+            {/* DEXTER — top right */}
+            <SpotlightCard href="/top-build" accentColor="#ff8800" editorSymbol="D" editorName="DEXTER" badgeLabel="TOP BUILD" loading={d===null} isMobile={false}>
+              {d?.dexter ? (
                 <>
-                  <div style={{ fontFamily:'Orbitron, monospace', fontSize:14, fontWeight:700, color:'#fff', letterSpacing:1, lineHeight:1.3, marginBottom:10 }}>{truncate(d.dexter.headline, 60)}</div>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:32, fontWeight:900, color:'#ff8800', lineHeight:1, textShadow:'0 0 20px rgba(255,136,0,0.3)' }}>{d.dexterGrade}</div>
+                  <div style={{ fontFamily:'Orbitron, monospace', fontSize:13, fontWeight:700, color:'#fff', letterSpacing:1, lineHeight:1.3, marginBottom:8 }}>{truncate(d.dexter.headline, 55)}</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:28, fontWeight:900, color:'#ff8800', lineHeight:1, textShadow:'0 0 20px rgba(255,136,0,0.3)' }}>{d.dexterGrade}</div>
                     <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.25)', letterSpacing:1, lineHeight:1.6 }}>BUILD GRADE{d.dexter.ranked_viable?'\nRANKED VIABLE':''}</div>
                   </div>
                   <ShellInlineCard shell={d.dexterShell} accentColor="#ff8800" />
                   {d.dexterWeapons.map(function(w,i){ return <WeaponInlineCard key={i} weapon={w} accentColor="#ff8800" />; })}
-                  {d.dexterMods && <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,136,0,0.3)', letterSpacing:1, marginTop:6 }}>MODS: {d.dexterMods}</div>}
                 </>
-              ) : <EmptyState />
-            }
-          </SpotlightCard>
+              ) : <EmptyState />}
+            </SpotlightCard>
 
-          <SpotlightCard href="/meta" accentColor="#00f5ff" editorSymbol="N" editorName="NEXUS" badgeLabel="LIVE META" loading={d===null} isMobile={isMobile}>
-            {isMobile
-              ? <MobileNexusCard d={d} />
-              : (
-                <>
-                  <div style={{ fontFamily:'Orbitron, monospace', fontSize:14, fontWeight:700, color:'#fff', letterSpacing:1, marginBottom:14 }}>Current Season 1 Meta</div>
-                  {d?.metaTiers?.length>0 ? d.metaTiers.map(function(item,i){
-                    return (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 0', borderBottom:i<d.metaTiers.length-1?'1px solid rgba(255,255,255,0.02)':'none' }}>
-                        <span style={{ fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:900, width:24, textAlign:'center', color:tierColor(item.tier) }}>{item.tier}</span>
-                        <span style={{ fontFamily:'Rajdhani, sans-serif', fontSize:13, color:item.tier==='S'?'rgba(255,255,255,0.8)':'rgba(255,255,255,0.55)', flex:1 }}>{item.name}</span>
-                        <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.15)', letterSpacing:1 }}>{(item.type||'').toUpperCase()}</span>
-                        <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:item.trend==='up'?'#00ff88':item.trend==='down'?'#ff0000':'rgba(255,255,255,0.2)' }}>{item.trend==='up'?'^':item.trend==='down'?'v':'.'}</span>
-                      </div>
-                    );
-                  }) : <EmptyState />}
-                </>
-              )
-            }
-          </SpotlightCard>
-        </div>
+            {/* NEXUS — bottom right */}
+            <SpotlightCard href="/meta" accentColor="#00f5ff" editorSymbol="N" editorName="NEXUS" badgeLabel="LIVE META" loading={d===null} isMobile={false}>
+              {d?.metaTiers?.length>0 ? d.metaTiers.map(function(item,i){
+                return (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 0', borderBottom:i<d.metaTiers.length-1?'1px solid rgba(255,255,255,0.02)':'none' }}>
+                    <span style={{ fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:900, width:24, textAlign:'center', color:tierColor(item.tier) }}>{item.tier}</span>
+                    <span style={{ fontFamily:'Rajdhani, sans-serif', fontSize:13, color:item.tier==='S'?'rgba(255,255,255,0.8)':'rgba(255,255,255,0.55)', flex:1 }}>{item.name}</span>
+                    <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.15)', letterSpacing:1 }}>{(item.type||'').toUpperCase()}</span>
+                    <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:item.trend==='up'?'#00ff88':item.trend==='down'?'#ff0000':'rgba(255,255,255,0.2)' }}>{item.trend==='up'?'^':item.trend==='down'?'v':'.'}</span>
+                  </div>
+                );
+              }) : <EmptyState />}
+            </SpotlightCard>
+
+          </div>
+        )}
 
         {/* EDITOR PULSE STRIP */}
         {isMobile ? (
