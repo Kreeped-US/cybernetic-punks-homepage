@@ -2,7 +2,6 @@ import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/e
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
-import { postTweet, postFromQueue } from '@/lib/twitter';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -37,15 +36,11 @@ function resolveMediaInfo(result, rawData, editorName) {
   if (isTwitch && rawData.twitchClips && rawData.twitchClips.length > 0) {
     if (videoId) {
       var exactMatch = rawData.twitchClips.find(function(c) { return c.id === videoId; });
-      if (exactMatch) {
-        return { thumbnail: exactMatch.thumbnail, source_url: exactMatch.clip_url, source: 'TWITCH' };
-      }
+      if (exactMatch) return { thumbnail: exactMatch.thumbnail, source_url: exactMatch.clip_url, source: 'TWITCH' };
       var partialMatch = rawData.twitchClips.find(function(c) {
         return c.id.includes(videoId) || videoId.includes(c.id);
       });
-      if (partialMatch) {
-        return { thumbnail: partialMatch.thumbnail, source_url: partialMatch.clip_url, source: 'TWITCH' };
-      }
+      if (partialMatch) return { thumbnail: partialMatch.thumbnail, source_url: partialMatch.clip_url, source: 'TWITCH' };
     }
     var topClip = rawData.twitchClips[0];
     return { thumbnail: topClip.thumbnail, source_url: topClip.clip_url, source: 'TWITCH' };
@@ -96,7 +91,6 @@ async function processEditor(editorName, prompt, rawData) {
     }
 
     var media = resolveMediaInfo(result, rawData, editorName);
-
     console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' source=' + media.source);
 
     var insertData = {
@@ -129,14 +123,11 @@ async function processEditor(editorName, prompt, rawData) {
       insertData.source_url = result.source_url || null;
     }
 
-    // NEXUS meta_update — upsert into meta_tiers (preserves entries NEXUS didn't mention this cycle)
-    // Hard filter: only weapon and shell types allowed through
+    // NEXUS meta_update — upsert into meta_tiers
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
       try {
         var metaRows = result.meta_update
-          .filter(function(item) {
-            return (item.type === 'weapon' || item.type === 'shell') && item.name;
-          })
+          .filter(function(item) { return (item.type === 'weapon' || item.type === 'shell') && item.name; })
           .map(function(item) {
             return {
               name: item.name,
@@ -153,7 +144,6 @@ async function processEditor(editorName, prompt, rawData) {
           });
 
         if (metaRows.length > 0) {
-          // Upsert on name — updates existing entries, inserts new ones, never deletes
           var { error: metaError } = await supabase
             .from('meta_tiers')
             .upsert(metaRows, { onConflict: 'name' });
@@ -162,7 +152,6 @@ async function processEditor(editorName, prompt, rawData) {
             console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
           } else {
             console.log('[CRON] NEXUS upserted meta_tiers with ' + metaRows.length + ' entries');
-            // Notify Discord #meta-updates — non-blocking
             notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
           }
         }
@@ -177,24 +166,10 @@ async function processEditor(editorName, prompt, rawData) {
       return { editor: editorName, success: false, error: error.message };
     }
 
-    // Only MIRANDA tweets — all other editors are silent on X until further notice
-    var queued = false;
+    // ── TWITTER/X AUTO-POSTING DISABLED ──
+    // Suspended indefinitely. Post manually via @Cybernetic87250 when content is worth sharing.
 
-    // Queue MIRANDA's site promo tweet separately
-    if (editorName === 'MIRANDA' && result.promo_tweet && feedItem) {
-      await supabase.from('post_queue').insert({
-        tweet_text: result.promo_tweet,
-        content: result.promo_tweet,
-        editor: 'MIRANDA',
-        platform: 'twitter',
-        status: 'pending',
-        headline: 'Site Promo',
-        slug: feedItem.slug,
-      });
-      console.log('[CRON] MIRANDA promo tweet queued: ' + result.promo_tweet.slice(0, 60));
-    }
-
-    // Generate editor comments on this article — other editors react in their own voice
+    // Generate editor comments on this article
     if (feedItem) {
       generateArticleComments(
         { id: feedItem.id, headline: feedItem.headline, body: feedItem.body },
@@ -205,13 +180,11 @@ async function processEditor(editorName, prompt, rawData) {
       });
     }
 
-    // Discord notifications — all non-blocking fire-and-forget
+    // Discord notifications — non-blocking
     if (feedItem) {
-      // #intel-feed — MIRANDA articles only
       if (editorName === 'MIRANDA') {
         notifyIntelFeed(feedItem, editorName).catch(function(e) { console.log('[DISCORD] intel notify error: ' + e.message); });
       }
-      // #ranked-intel — any editor, only if article is tagged ranked
       notifyRankedIntel(feedItem, editorName).catch(function(e) { console.log('[DISCORD] ranked notify error: ' + e.message); });
     }
 
@@ -219,8 +192,7 @@ async function processEditor(editorName, prompt, rawData) {
       editor: editorName,
       success: true,
       headline: result.headline,
-      queued: queued,
-      has_thumbnail: media.thumbnail ? true : false,
+      has_thumbnail: !!media.thumbnail,
     };
 
   } catch (err) {
@@ -233,12 +205,10 @@ export async function GET() {
     var prompts = await gatherAll();
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null };
 
-    // Notify #patch-notes if Bungie patch content detected this cycle — non-blocking
     if (rawData.bungieNews && rawData.bungieNews.length > 0) {
       notifyPatchNotes(rawData.bungieNews).catch(function(e) { console.log('[DISCORD] patch notify error: ' + e.message); });
     }
 
-    // Staggered sequential calls — prevents hitting 30k input token/min rate limit
     var results = [];
     var editors = [
       { name: 'CIPHER',  prompt: prompts.CIPHER  },
@@ -249,20 +219,19 @@ export async function GET() {
     ];
 
     for (var i = 0; i < editors.length; i++) {
-      if (i > 0) await sleep(15000); // 15s gap — lets token usage reset between editors
+      if (i > 0) await sleep(15000);
       var editorResult = await processEditor(editors[i].name, editors[i].prompt, rawData);
       results.push(editorResult);
     }
 
     var succeeded = results.filter(function(r) { return r.success; }).length;
-    var tweetResult = await postFromQueue();
 
     return Response.json({
       success: true,
       timestamp: new Date().toISOString(),
       summary: succeeded + ' published, ' + (results.length - succeeded) + ' skipped',
       results: results,
-      tweet: tweetResult || 'No tweet posted this cycle',
+      tweet: 'Auto-posting disabled — post manually via @Cybernetic87250',
     });
 
   } catch (error) {
