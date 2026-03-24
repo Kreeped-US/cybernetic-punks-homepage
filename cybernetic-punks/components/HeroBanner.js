@@ -304,7 +304,7 @@ export default function HeroBanner() {
           supabase.from('mod_stats').select('*',{count:'exact',head:true}),
           supabase.from('meta_tiers').select('*',{count:'exact',head:true}).gte('updated_at',iso),
           supabase.from('meta_tiers').select('name,tier').eq('tier','S').order('updated_at',{ascending:false}).limit(1).single(),
-          supabase.from('feed_items').select('*').eq('editor','CIPHER').eq('is_published',true).order('ce_score',{ascending:false}).limit(1).single(),
+          supabase.from('feed_items').select('*').eq('editor','CIPHER').eq('is_published',true).order('created_at',{ascending:false}).limit(1).single(),
           supabase.from('feed_items').select('*').eq('editor','DEXTER').eq('is_published',true).order('created_at',{ascending:false}).limit(1).single(),
           supabase.from('meta_tiers').select('name,type,tier,trend').limit(12),
           supabase.from('feed_items').select('headline,body,tags,ce_score,created_at').eq('editor','GHOST').eq('is_published',true).order('created_at',{ascending:false}).limit(1).single(),
