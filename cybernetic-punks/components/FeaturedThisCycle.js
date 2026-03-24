@@ -2,13 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 const EDITORS = [
   { name: 'CIPHER',  symbol: '◈', color: '#ff0000', role: 'Play Analyst',   lane: '/intel/cipher'  },
   { name: 'NEXUS',   symbol: '⬡', color: '#00f5ff', role: 'Meta Strategy',  lane: '/intel/nexus'   },
@@ -34,33 +27,17 @@ export default function FeaturedThisCycle() {
   useEffect(function() {
     async function fetchLatest() {
       try {
-        var { data } = await supabase
-          .from('feed_items')
-          .select('headline, slug, body, editor, tags, thumbnail, ce_score, created_at')
-          .eq('is_published', true)
-          .order('created_at', { ascending: false })
-          .limit(25);
-
-        if (!data) return;
-
-        // One latest per editor, in editor order
-        var seen = {};
-        var result = [];
-        for (var item of data) {
-          if (!seen[item.editor]) {
-            seen[item.editor] = true;
-            result.push(item);
-          }
+        var res = await fetch('/api/homepage-data');
+        if (res.ok) {
+          var json = await res.json();
+          // recentFive is already one per editor, sorted
+          var result = (json.recentFive || []).sort(function(a, b) {
+            var ai = EDITORS.findIndex(function(e) { return e.name === a.editor; });
+            var bi = EDITORS.findIndex(function(e) { return e.name === b.editor; });
+            return ai - bi;
+          });
+          setArticles(result);
         }
-
-        // Sort by EDITORS array order
-        result.sort(function(a, b) {
-          var ai = EDITORS.findIndex(function(e) { return e.name === a.editor; });
-          var bi = EDITORS.findIndex(function(e) { return e.name === b.editor; });
-          return ai - bi;
-        });
-
-        setArticles(result);
         setLoaded(true);
       } catch (err) {
         console.error('[FeaturedThisCycle] fetch error:', err.message);

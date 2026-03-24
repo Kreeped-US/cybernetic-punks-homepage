@@ -2,13 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 const EDITOR_STYLES = {
   CIPHER:  { color: '#ff0000', symbol: '◈', role: 'Play Analyst'   },
   NEXUS:   { color: '#00f5ff', symbol: '⬡', role: 'Meta Strategy'  },
@@ -41,32 +34,11 @@ export default function FeaturedArticle() {
   useEffect(function() {
     async function fetchFeatured() {
       try {
-        var since = new Date(Date.now() - 24 * 3600000).toISOString();
-
-        // Try highest CE score in last 24h first
-        var { data } = await supabase
-          .from('feed_items')
-          .select('headline, slug, body, editor, tags, thumbnail, ce_score, created_at, source_url')
-          .eq('is_published', true)
-          .gte('created_at', since)
-          .gt('ce_score', 0)
-          .order('ce_score', { ascending: false })
-          .limit(1)
-          .single();
-
-        // Fallback: most recent article if no scored articles in 24h
-        if (!data) {
-          var fallback = await supabase
-            .from('feed_items')
-            .select('headline, slug, body, editor, tags, thumbnail, ce_score, created_at, source_url')
-            .eq('is_published', true)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          data = fallback.data;
+        var res = await fetch('/api/homepage-data');
+        if (res.ok) {
+          var json = await res.json();
+          if (json.featured) setArticle(json.featured);
         }
-
-        if (data) setArticle(data);
         setLoaded(true);
       } catch (err) {
         setLoaded(true);

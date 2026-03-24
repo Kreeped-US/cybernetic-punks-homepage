@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -33,15 +27,12 @@ export default function CommunityPulse() {
   useEffect(() => {
     async function fetchPulse() {
       try {
-        const { data, error } = await supabase
-          .from('feed_items')
-          .select('headline, body, ce_score, created_at, slug')
-          .eq('editor', 'GHOST')
-          .eq('is_published', true)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        if (!error && data) setPulse(data);
+        // Read from batched homepage-data endpoint
+        const res = await fetch('/api/homepage-data');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ghost) setPulse(json.ghost);
+        }
       } catch (err) {
         console.error('CommunityPulse fetch error:', err);
       } finally {

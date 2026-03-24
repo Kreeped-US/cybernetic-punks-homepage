@@ -2,13 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 const SHELL_COLORS = {
   Assassin:  '#cc44ff',
   Destroyer: '#ff3333',
@@ -41,11 +34,11 @@ export default function ShellPortraitStrip() {
   useEffect(function() {
     async function fetchShells() {
       try {
-        var { data } = await supabase
-          .from('shell_stats')
-          .select('name, role, base_health, base_shield, prime_ability_name, ranked_tier_solo, ranked_tier_squad, image_filename')
-          .order('name');
-        if (data) setShells(data);
+        var res = await fetch('/api/homepage-data');
+        if (res.ok) {
+          var json = await res.json();
+          if (json.shells) setShells(json.shells);
+        }
         setLoaded(true);
       } catch (_) { setLoaded(true); }
     }
