@@ -199,47 +199,72 @@ async function generateTierImage(tierItems, runnerTag) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
+  // ── BACKGROUND ──
   ctx.fillStyle = '#030303';
   ctx.fillRect(0, 0, W, H);
 
-  ctx.fillStyle = 'rgba(0,245,255,0.005)';
-  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
-
-  ctx.strokeStyle = 'rgba(0,245,255,0.012)';
+  // Grid texture — stronger than before so it reads at thumbnail size
+  ctx.strokeStyle = 'rgba(0,245,255,0.022)';
   ctx.lineWidth = 1;
   for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
+  // Scanlines — slightly more visible
+  ctx.fillStyle = 'rgba(0,245,255,0.008)';
+  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+
+  // ── HEADER ──
+  // Red pulse dot
   ctx.fillStyle = '#ff0000';
-  ctx.beginPath(); ctx.arc(36, 36, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowColor = '#ff0000';
+  ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.arc(36, 36, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
 
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.font = '700 13px Orbitron, Arial, sans-serif';
+  // Site name
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = '700 14px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('CYBERNETICPUNKS', 50, 41);
+  ctx.fillText('CYBERNETICPUNKS', 52, 42);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.font = '900 22px Orbitron, Arial, sans-serif';
+  // Title — larger and more prominent
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 24px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('MARATHON TIER LIST', W - 32, 36);
+  ctx.fillText('MARATHON TIER LIST', W - 32, 34);
 
-  const tag = runnerTag?.trim() || 'ANONYMOUS RUNNER';
-  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  // Season + date stamp — FIX 8: gives context at a glance
+  const now = new Date();
+  const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const dateStamp = 'SEASON 1 — ' + monthNames[now.getMonth()] + ' ' + now.getFullYear();
+  ctx.fillStyle = 'rgba(0,245,255,0.7)';
   ctx.font = '400 11px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText('by ' + tag.toUpperCase(), W - 32, 54);
+  ctx.fillText(dateStamp, W - 32, 52);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillRect(24, 66, W - 48, 1);
+  // Runner tag — FIX 5: orange and readable
+  const tag = runnerTag?.trim() || 'ANONYMOUS RUNNER';
+  ctx.fillStyle = '#ff8800';
+  ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
+  ctx.fillText('by ' + tag.toUpperCase(), W - 32, 68);
 
-  const rowStart = 74;
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(24, 78, W - 48, 1);
+
+  const rowStart = 86;
   const rowH = 71;
+
+  // FIX 6: stronger tier bg contrast — S-tier warm red tint, D/F noticeably dimmer
   const tierColors = {
     S: '#ff0000', A: '#ff8800', B: '#00f5ff',
     C: 'rgba(200,200,200,0.4)', D: 'rgba(150,150,150,0.25)', F: 'rgba(255,0,0,0.25)',
   };
   const tierBgs = {
-    S: 'rgba(255,0,0,0.07)', A: 'rgba(255,136,0,0.05)', B: 'rgba(0,245,255,0.04)',
-    C: 'rgba(255,255,255,0.02)', D: 'rgba(255,255,255,0.01)', F: 'rgba(255,0,0,0.015)',
+    S: 'rgba(255,0,0,0.12)',    // warmer red tint — premium
+    A: 'rgba(255,136,0,0.07)',
+    B: 'rgba(0,245,255,0.05)',
+    C: 'rgba(255,255,255,0.02)',
+    D: 'rgba(255,255,255,0.008)', // noticeably dimmer
+    F: 'rgba(255,0,0,0.02)',
   };
 
   const pillH = 44;
@@ -250,30 +275,41 @@ async function generateTierImage(tierItems, runnerTag) {
   TIERS.forEach((tier, i) => {
     const y = rowStart + i * rowH;
     const items = tierItems[tier] || [];
+    const isSTop = tier === 'S';
 
+    // Row background
     ctx.fillStyle = tierBgs[tier];
     ctx.fillRect(24, y, W - 48, rowH - 2);
 
+    // Left accent bar — thicker for S
     ctx.fillStyle = tierColors[tier];
-    ctx.fillRect(24, y, 3, rowH - 2);
+    ctx.fillRect(24, y, isSTop ? 5 : 3, rowH - 2);
 
+    // FIX 1: Tier letter — 56px, full color, S gets glow
+    if (isSTop) {
+      ctx.shadowColor = '#ff0000';
+      ctx.shadowBlur = 18;
+    }
     ctx.fillStyle = tierColors[tier];
-    ctx.font = '900 30px Orbitron, Arial, sans-serif';
+    ctx.font = '900 56px Orbitron, Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(tier, 66, y + 44);
+    ctx.fillText(tier, 72, y + rowH - 12);
+    ctx.shadowBlur = 0;
 
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    ctx.fillRect(96, y + 8, 1, rowH - 18);
+    // Divider after tier letter column
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillRect(108, y + 8, 1, rowH - 18);
 
     ctx.textAlign = 'left';
-    let x = 108;
+    let x = 120;
     const maxX = W - 48;
     const pillY = y + (rowH - pillH) / 2;
 
     items.forEach(item => {
       const src = getImageSrc(item);
       const imgEl = src ? imageCache[src] : null;
-      const label = item.name;
+      // FIX 4: uppercase weapon names
+      const label = item.name.toUpperCase();
 
       ctx.font = '700 10px Orbitron, Arial, sans-serif';
       const textW = ctx.measureText(label).width;
@@ -283,11 +319,12 @@ async function generateTierImage(tierItems, runnerTag) {
 
       if (x + pillW > maxX) return;
 
-      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      // Pill background — slightly brighter for S tier
+      ctx.fillStyle = isSTop ? 'rgba(255,0,0,0.1)' : 'rgba(255,255,255,0.07)';
       roundRect(ctx, x, pillY, pillW, pillH, 5);
       ctx.fill();
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.strokeStyle = isSTop ? 'rgba(255,0,0,0.25)' : 'rgba(255,255,255,0.1)';
       ctx.lineWidth = 1;
       roundRect(ctx, x, pillY, pillW, pillH, 5);
       ctx.stroke();
@@ -295,13 +332,16 @@ async function generateTierImage(tierItems, runnerTag) {
       if (hasImg) {
         const imgX = x + 8;
         const imgDrawY = pillY + (pillH - imgH) / 2;
-        ctx.globalAlpha = 0.85;
+        // FIX 3: brighter weapon images — filter via offscreen canvas
+        ctx.save();
+        ctx.filter = 'brightness(1.25) contrast(1.1)';
+        ctx.globalAlpha = 0.95;
         ctx.drawImage(imgEl, imgX, imgDrawY, imgW, imgH);
-        ctx.globalAlpha = 1;
+        ctx.restore();
       }
 
       const labelX = x + (hasImg ? imgW + 14 : textPadL);
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillStyle = isSTop ? '#ffffff' : 'rgba(255,255,255,0.88)';
       ctx.font = '700 10px Orbitron, Arial, sans-serif';
       ctx.fillText(label, labelX, pillY + pillH / 2 + 4);
 
@@ -311,28 +351,32 @@ async function generateTierImage(tierItems, runnerTag) {
     if (items.length === 0) {
       ctx.fillStyle = 'rgba(255,255,255,0.1)';
       ctx.font = '400 10px "Share Tech Mono", monospace, sans-serif';
-      ctx.fillText('EMPTY', 108, y + 40);
+      ctx.fillText('EMPTY', 120, y + rowH / 2 + 4);
     }
   });
 
-  const bottomY = rowStart + TIERS.length * rowH + 2;
+  // ── BOTTOM BAR ──
+  const bottomY = rowStart + TIERS.length * rowH + 4;
 
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
   ctx.fillRect(24, bottomY, W - 48, 1);
 
-  ctx.fillStyle = 'rgba(0,245,255,0.04)';
-  ctx.fillRect(24, bottomY + 2, W - 48, H - bottomY - 26);
+  // Bottom bg slightly tinted
+  ctx.fillStyle = 'rgba(0,245,255,0.06)';
+  ctx.fillRect(24, bottomY + 1, W - 48, H - bottomY - 24);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.75)';
-  ctx.font = '700 17px Orbitron, Arial, sans-serif';
+  // FIX 2: URL in full white, unmissable
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 20px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('CYBERNETICPUNKS.COM', W / 2, bottomY + 34);
+  ctx.fillText('CYBERNETICPUNKS.COM', W / 2, bottomY + 36);
 
-  ctx.fillStyle = 'rgba(0,245,255,0.6)';
-  ctx.font = '400 11px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText('CREATE YOUR OWN MARATHON TIER LIST → /meta', W / 2, bottomY + 54);
+  // CTA line in orange — the viral mechanism
+  ctx.fillStyle = '#ff8800';
+  ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
+  ctx.fillText('CREATE YOUR OWN MARATHON TIER LIST → /meta', W / 2, bottomY + 56);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.font = '400 10px "Share Tech Mono", monospace, sans-serif';
   ctx.fillText('5 EDITORS. 6 SOURCES. EVERY 6 HOURS.', W / 2, bottomY + 72);
 
