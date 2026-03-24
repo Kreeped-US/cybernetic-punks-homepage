@@ -222,16 +222,29 @@ export default function Nav() {
             borderRadius: '50%',
             boxShadow: '0 0 12px #ff0000, 0 0 24px rgba(255,0,0,0.3)',
             animation: 'pulse-glow 3s ease-in-out infinite',
+            flexShrink: 0,
           }} />
-          <span style={{
-            fontFamily: 'Orbitron, monospace',
-            fontSize: 16,
-            fontWeight: 700,
-            color: '#fff',
-            letterSpacing: 3,
-          }}>
-            CYBERNETIC<span style={{ color: '#ff0000' }}>PUNKS</span>
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <span style={{
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#fff',
+              letterSpacing: 3,
+              lineHeight: 1,
+            }}>
+              CYBERNETIC<span style={{ color: '#ff0000' }}>PUNKS</span>
+            </span>
+            <span style={{
+              fontFamily: 'Share Tech Mono, monospace',
+              fontSize: 7,
+              color: 'rgba(0,245,255,0.45)',
+              letterSpacing: 2,
+              lineHeight: 1,
+            }} className="hidden md:block">
+              MARATHON INTELLIGENCE HUB
+            </span>
+          </div>
         </Link>
 
         <div className="hidden md:flex" style={{ gap: 24, alignItems: 'center' }}>
