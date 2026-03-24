@@ -91,7 +91,7 @@ export default async function IntelHubPage() {
               <Link key={editorName} href={'/intel/' + editorName.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '11px', color: info.color, padding: '6px 14px', background: info.color + '11', border: '1px solid ' + info.color + '33', borderRadius: '4px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {/* Editor portrait in filter row */}
                 <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: info.color + '20', border: '1px solid ' + info.color + '44', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={'/images/editors/' + editorName.toLowerCase() + '.jpg'} alt={editorName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} onError={function(e) { e.target.style.display = 'none'; }} />
+                  <img src={'/images/editors/' + editorName.toLowerCase() + '.jpg'} alt={editorName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />
                   <span style={{ fontFamily: 'monospace', fontSize: 9, color: info.color }}>{info.symbol}</span>
                 </div>
                 {editorName} <span style={{ color: '#444' }}>({count})</span>
@@ -122,7 +122,7 @@ export default async function IntelHubPage() {
                       {/* ── Editor portrait byline ── */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                         <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: editor.color + '15', border: '1px solid ' + editor.color + '33', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} onError={function(e) { e.target.style.display = 'none'; }} />
+                          <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />
                           <span style={{ fontFamily: 'monospace', fontSize: 11, color: editor.color }}>{editor.symbol}</span>
                         </div>
                         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '10px', color: editor.color }}>{item.editor}</span>
