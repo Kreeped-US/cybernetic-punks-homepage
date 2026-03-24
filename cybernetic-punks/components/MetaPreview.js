@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '../lib/supabase';
-
 const TIER_COLORS = {
   S: '#ff0000', A: '#ff8800', B: '#00f5ff', C: '#aaaaaa', D: '#555555',
 };
@@ -31,14 +29,20 @@ export default function MetaPreview() {
 
   useEffect(function() {
     async function fetchTiers() {
-      var { data } = await supabase
-        .from('meta_tiers')
-        .select('name, type, tier, trend, note, updated_at')
-        .order('tier');
-
-      if (data && data.length > 0) {
-        setTiers(data);
-        setLastUpdated(data[0].updated_at);
+      try {
+        // Read from batched homepage-data endpoint — avoids duplicate Supabase calls
+        var res = await fetch('/api/homepage-data');
+        if (res.ok) {
+          var json = await res.json();
+          var data = json.metaTiers || [];
+          if (data.length > 0) {
+            setTiers(data);
+            var latest = data.reduce(function(a, b) { return a.updated_at > b.updated_at ? a : b; }, data[0]);
+            setLastUpdated(latest.updated_at);
+          }
+        }
+      } catch (err) {
+        console.error('MetaPreview fetch error:', err);
       }
       setLoading(false);
     }
