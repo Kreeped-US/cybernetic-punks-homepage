@@ -41,7 +41,7 @@ const SEARCH_QUERIES = [
   '("Marathon update" OR "Marathon patch" OR "Marathon hotfix" OR "Marathon nerf" OR "Marathon buff") -is:retweet lang:en',
   '("Marathon meta" OR "Marathon build" OR "Marathon tier" OR "Marathon loadout" OR "Marathon shell") -is:retweet lang:en',
   '("Marathon ranked" OR "Marathon holotag" OR "Marathon extraction") -is:retweet lang:en',
-  '(#MarathonGame OR #MarathonFPS OR #MarathonBungie) -is:retweet lang:en min_faves:5',
+  '(#MarathonGame OR #MarathonFPS OR #MarathonBungie) -is:retweet lang:en',
   '("Marathon tournament" OR "Marathon cup" OR "Marathon event" OR "#TaucetiCup") -is:retweet lang:en',
 ];
 
