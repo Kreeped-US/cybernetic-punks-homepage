@@ -234,18 +234,6 @@ export default function Nav() {
           </span>
         </Link>
 
-        <div style={{
-          fontFamily: 'Orbitron, monospace',
-          fontSize: 10,
-          letterSpacing: 2,
-          color: 'rgba(0,245,255,0.5)',
-          position: 'absolute',
-          left: '50%',
-          transform: 'translateX(-50%)',
-        }} className="hidden md:block">
-          MARATHON INTELLIGENCE HUB
-        </div>
-
         <div className="hidden md:flex" style={{ gap: 24, alignItems: 'center' }}>
           {NAV_ITEMS.map(function(item) {
             return <DesktopDropdown key={item.label} item={item} />;
