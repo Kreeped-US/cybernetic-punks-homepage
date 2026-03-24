@@ -13,7 +13,7 @@ export default function DiscordStrip() {
       padding: '0 24px 0',
     }}>
       <Link
-        href="https://discord.gg/fgxdSD7SJj"
+        href="https://discord.gg/PnhbdRYh3w"
         target="_blank"
         rel="noopener noreferrer"
         style={{ textDecoration: 'none', display: 'block' }}

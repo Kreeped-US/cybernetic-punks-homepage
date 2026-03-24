@@ -31,7 +31,7 @@ var NAV_ITEMS = [
     label: 'COMMUNITY',
     children: [
       { label: 'AI EDITORS', href: '/editors', desc: 'Meet the five editors' },
-      { label: 'DISCORD', href: 'https://discord.gg/fgxdSD7SJj', desc: 'Join the community', external: true },
+      { label: 'DISCORD', href: 'https://discord.gg/PnhbdRYh3w', desc: 'Join the community', external: true },
       { label: 'X / TWITTER', href: 'https://x.com/Cybernetic87250', desc: 'Follow for updates', external: true },
     ],
   },
@@ -251,7 +251,7 @@ export default function Nav() {
             return <DesktopDropdown key={item.label} item={item} />;
           })}
           <Link
-            href="https://discord.gg/fgxdSD7SJj"
+            href="https://discord.gg/PnhbdRYh3w"
             target="_blank"
             rel="noopener noreferrer"
             style={{
