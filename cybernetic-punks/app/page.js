@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 import UsageCounterStrip from '@/components/UsageCounterStrip';
 import FeaturedThisCycle from '@/components/FeaturedThisCycle';
 import EditorPulseBar from '@/components/EditorPulseBar';
+import DiscordStrip from '@/components/DiscordStrip';
 import FeaturedArticle from '@/components/FeaturedArticle';
 import ShellPortraitStrip from '@/components/ShellPortraitStrip';
 import MetaWeaponShowcase from '@/components/MetaWeaponShowcase';
@@ -22,6 +23,7 @@ export default function Home() {
       <HeroBanner />
       <EditorPulseBar />
       <UsageCounterStrip />
+      <DiscordStrip />
       <FeaturedArticle />
       <SectionDivider label="RUNNER SHELLS" />
       <ShellPortraitStrip />
