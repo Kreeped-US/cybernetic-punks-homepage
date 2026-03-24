@@ -133,7 +133,10 @@ function EditorLanePage({ config, items }) {
       <section style={{ maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 24, right: 24, height: 1, background: 'linear-gradient(90deg, transparent, ' + config.color + '44, transparent)' }} />
         <div style={{ paddingTop: 32, display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: config.color + '10', border: '1px solid ' + config.color + '30', fontSize: 28, color: config.color, boxShadow: '0 0 24px ' + config.color + '20', flexShrink: 0 }}>{config.symbol}</div>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', background: config.color + '10', border: '2px solid ' + config.color + '44', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px ' + config.color + '20' }}>
+            <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={config.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block', position: 'absolute', inset: 0 }} onError={function(e) { e.target.style.display = 'none'; }} />
+            <span style={{ fontFamily: 'monospace', fontSize: 28, color: config.color }}>{config.symbol}</span>
+          </div>
           <div>
             <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, color: config.color, letterSpacing: 3, margin: 0, textShadow: '0 0 30px ' + config.color + '44' }}>{config.name}</h1>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 6 }}>{config.role.toUpperCase()} · {items.length} ARTICLES PUBLISHED</div>
@@ -252,7 +255,10 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 1200, margin: '0 auto', padding: '96px 24px 48px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 4, padding: '5px 12px' }}>
-              <span style={{ color: editor.color, fontSize: 12 }}>{editor.symbol}</span>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: editor.color + '20', border: '1px solid ' + editor.color + '44', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} onError={function(e) { e.target.style.display = 'none'; }} />
+                <span style={{ fontFamily: 'monospace', fontSize: 10, color: editor.color }}>{editor.symbol}</span>
+              </div>
               <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 2 }}>{editor.label}</Link>
             </div>
             <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{publishedAt} · {rt}</span>
@@ -435,7 +441,13 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
                 return (
                   <Link key={i} href={'/intel/' + rel.slug} style={{ textDecoration: 'none' }}>
                     <div style={{ border: '1px solid rgba(255,255,255,0.05)', borderTop: '2px solid ' + relEditor.color + '44', borderRadius: 6, padding: '16px 18px', background: 'rgba(255,255,255,0.015)', transition: 'background 0.2s' }}>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: relEditor.color, letterSpacing: 2, marginBottom: 8 }}>{relEditor.symbol} {relEditor.label}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: relEditor.color + '15', border: '1px solid ' + relEditor.color + '33', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <img src={'/images/editors/' + rel.editor.toLowerCase() + '.jpg'} alt={rel.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} onError={function(e) { e.target.style.display = 'none'; }} />
+                          <span style={{ fontFamily: 'monospace', fontSize: 9, color: relEditor.color }}>{relEditor.symbol}</span>
+                        </div>
+                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: relEditor.color, letterSpacing: 2 }}>{relEditor.label}</span>
+                      </div>
                       <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 8 }}>{rel.headline}</div>
                       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{timeAgo(rel.created_at)}</div>
                     </div>

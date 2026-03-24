@@ -127,8 +127,10 @@ export default function IntelFeed() {
               ) : (
                 // ── DESKTOP LAYOUT ──
                 <>
-                  <div style={{ fontFamily: 'monospace', fontSize: 18, color: config.color, opacity: 0.6, width: 24, textAlign: 'center', flexShrink: 0 }}>
-                    {config.symbol}
+                  {/* Editor portrait */}
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: config.color + '15', border: '1px solid ' + config.color + '33', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={function(e) { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+                    <span style={{ display: 'none', fontFamily: 'monospace', fontSize: 12, color: config.color, position: 'absolute' }}>{config.symbol}</span>
                   </div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: config.color, width: 70, letterSpacing: 1, flexShrink: 0 }}>
                     {item.editor}
