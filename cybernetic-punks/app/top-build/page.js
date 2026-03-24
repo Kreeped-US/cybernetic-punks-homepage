@@ -70,20 +70,26 @@ const RARITY_COLORS = {
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-function extractWeaponNames(tags, body) {
+function extractWeaponNames(tags, body, allWeaponNames) {
   var text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
+  // Match against actual DB names first
+  var fromDB = (allWeaponNames || []).filter(function(w) { return text.includes(w.toLowerCase()); });
+  if (fromDB.length > 0) return fromDB;
+  // Fallback: hardcoded list
   var exact = KNOWN_WEAPONS.filter(function(w) { return text.includes(w.toLowerCase()); });
   if (exact.length > 0) return exact;
+  // Category fallback
   for (var fb of CATEGORY_FALLBACKS) {
     if (fb.keywords.some(function(k) { return text.includes(k); })) return [fb.weapon];
   }
   return [];
 }
 
-function extractShellName(tags, body) {
+function extractShellName(tags, body, allShellNames) {
   var text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
-  var exact = KNOWN_SHELLS.find(function(s) { return text.includes(s.toLowerCase()); });
-  if (exact) return exact;
+  // Match against actual DB names first
+  var fromDB = (allShellNames || KNOWN_SHELLS).find(function(s) { return text.includes(s.toLowerCase()); });
+  if (fromDB) return fromDB;
   for (var fb of SHELL_FALLBACKS) {
     if (fb.keywords.some(function(k) { return text.includes(k); })) return fb.shell;
   }
@@ -154,8 +160,10 @@ async function getData() {
   var weapons = [], shell = null, mods = [];
 
   if (featured) {
-    var weaponNames = extractWeaponNames(featured.tags, featured.body);
-    var shellName = extractShellName(featured.tags, featured.body);
+    var allWeaponNames = (allWeaponsRes.data || []).map(function(w) { return w.name; });
+    var weaponNames = extractWeaponNames(featured.tags, featured.body, allWeaponNames);
+    var allShellNames = (allShellsRes.data || []).map(function(s) { return s.name; });
+    var shellName = extractShellName(featured.tags, featured.body, allShellNames);
     weapons = (allWeaponsRes.data || []).filter(function(w) { return weaponNames.includes(w.name); });
     shell = (allShellsRes.data || []).find(function(s) { return s.name === shellName; }) || null;
     var modsData = allModsRes.data || [];
