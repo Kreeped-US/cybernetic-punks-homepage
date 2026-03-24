@@ -10,12 +10,12 @@ const supabase = createClient(
 );
 
 const FALLBACK_ITEMS = [
-  { text: 'RANKED MODE LAUNCHES MARCH 21 — HOLOTAG SEASON 1 BEGINS', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
-  { text: 'CRYO ARCHIVE NOW AVAILABLE — RUNNER LEVEL 25 + ALL FACTIONS REQUIRED', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
-  { text: 'PATCH 1.0.5 LIVE — COMBAT AUDIO REVERTED, VAULT STACK LIMITS INCREASED', source: 'BUNGIE', color: '#ff8800', href: null },
-  { text: 'ROOK AND SPONSORED KITS BANNED FROM RANKED PLAY', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
-  { text: 'SEASON 2 NIGHTFALL INCOMING — DIRE MARSH NIGHT VARIANT + SENTINEL SHELL', source: 'BUNGIE', color: '#ff8800', href: null },
-  { text: 'NO PAY-TO-WIN — ALL SEASONAL CONTENT FREE FOR ALL PLAYERS', source: 'BUNGIE', color: '#ff8800', href: null },
+  { text: 'SEASON 1 RANKED LIVE — WEEKENDS ONLY — HOLOTAG SYSTEM ACTIVE', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
+  { text: 'CRYO ARCHIVE ACTIVE — RUNNER LEVEL 25 + ALL FACTIONS REQUIRED', source: 'BUNGIE', color: '#ff8800', href: null },
+  { text: 'ROOK BANNED FROM RANKED — SPONSORED KITS ALSO PROHIBITED', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
+  { text: 'DIRE MARSH DUOS — LIMITED TIME EVENT ANNOUNCED BY BUNGIE DEV', source: 'INTEL', color: '#00f5ff', href: '/intel' },
+  { text: 'ZONE ROTATION: PERIMETER DIRE MARSH OUTPOST', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
+  { text: 'ALL SEASONAL CONTENT FREE — NO PAY-TO-WIN', source: 'BUNGIE', color: '#ff8800', href: null },
 ];
 
 const EDITOR_COLORS = {
@@ -69,6 +69,11 @@ export default function DevTicker() {
               color: EDITOR_COLORS[item.editor] || '#00f5ff',
               href: '/intel/' + item.slug,
             });
+            // Flag as breaking if recent article tags new content/event
+            var tags = item.tags || [];
+            var breakingTags = ['patch', 'update', 'new map', 'new mode', 'event', 'breaking', 'cryo archive', 'dire marsh'];
+            var isBreakingItem = breakingTags.some(function(t) { return tags.some(function(tag) { return tag.toLowerCase().includes(t); }) || item.headline.toLowerCase().includes(t); });
+            if (isBreakingItem) setHasPatch(true);
           });
         }
       } catch(_) {}
