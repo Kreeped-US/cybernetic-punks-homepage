@@ -237,10 +237,11 @@ export default function Nav() {
             </span>
             <span style={{
               fontFamily: 'Share Tech Mono, monospace',
-              fontSize: 7,
-              color: 'rgba(0,245,255,0.45)',
+              fontSize: 10,
+              color: 'rgba(0,245,255,0.7)',
               letterSpacing: 2,
               lineHeight: 1,
+              textAlign: 'center',
             }} className="hidden md:block">
               MARATHON INTELLIGENCE HUB
             </span>
