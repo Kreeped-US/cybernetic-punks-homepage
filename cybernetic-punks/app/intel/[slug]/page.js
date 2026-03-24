@@ -127,52 +127,188 @@ function StatBar({ label, value, max, color }) {
 }
 
 function EditorLanePage({ config, items }) {
+  var featured = items[0] || null;
+  var rest = items.slice(1);
+
+  // Compute stats
+  var avgScore = items.length > 0
+    ? (items.reduce(function(sum, i) { return sum + (i.ce_score || 0); }, 0) / items.length).toFixed(1)
+    : null;
+  var topScore = items.length > 0
+    ? Math.max.apply(null, items.map(function(i) { return i.ce_score || 0; }))
+    : null;
+  var allTags = [];
+  items.forEach(function(i) { (i.tags || []).forEach(function(t) { allTags.push(t); }); });
+  var tagCounts = {};
+  allTags.forEach(function(t) { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+  var topTag = Object.keys(tagCounts).sort(function(a, b) { return tagCounts[b] - tagCounts[a]; })[0] || null;
+
+  var OTHER_EDITORS = ['cipher','nexus','dexter','ghost','miranda'].filter(function(e) { return e !== config.name.toLowerCase(); });
+  var OTHER_EDITOR_CONFIG = {
+    cipher:  { symbol: '◈', color: '#ff0000', role: 'Play Analyst' },
+    nexus:   { symbol: '⬡', color: '#00f5ff', role: 'Meta Strategist' },
+    dexter:  { symbol: '⬢', color: '#ff8800', role: 'Build Engineer' },
+    ghost:   { symbol: '◇', color: '#00ff88', role: 'Community Pulse' },
+    miranda: { symbol: '◎', color: '#9b5de5', role: 'Field Guide' },
+  };
+
   return (
-    <main className="min-h-screen bg-black text-white pt-24" style={{ paddingBottom: 80 }}>
+    <main style={{ background: '#030303', minHeight: '100vh', color: '#fff', paddingBottom: 80, overflowX: 'hidden' }}>
       <Nav />
-      <section style={{ maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 24, right: 24, height: 1, background: 'linear-gradient(90deg, transparent, ' + config.color + '44, transparent)' }} />
-        <div style={{ paddingTop: 32, display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', background: config.color + '10', border: '2px solid ' + config.color + '44', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px ' + config.color + '20' }}>
-            <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={config.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block', position: 'absolute', inset: 0 }} />
-            <span style={{ fontFamily: 'monospace', fontSize: 28, color: config.color }}>{config.symbol}</span>
+
+      {/* Grid background */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.012, backgroundImage: 'linear-gradient(' + config.color + ' 1px, transparent 1px), linear-gradient(90deg, ' + config.color + ' 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
+      <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse at 50% 0%, ' + config.color + '10 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* ── HERO ── */}
+      <section style={{ position: 'relative', zIndex: 1, paddingTop: 96, borderBottom: '1px solid ' + config.color + '18' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 40px' }}>
+
+          {/* Breadcrumb */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2 }}>
+            <Link href="/intel" style={{ color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>INTEL</Link>
+            <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
+            <span style={{ color: config.color }}>{config.name}</span>
           </div>
-          <div>
-            <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, color: config.color, letterSpacing: 3, margin: 0, textShadow: '0 0 30px ' + config.color + '44' }}>{config.name}</h1>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 6 }}>{config.role.toUpperCase()} · {items.length} ARTICLES PUBLISHED</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 32, alignItems: 'flex-start' }}>
+            {/* Portrait */}
+            <div style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', background: config.color + '10', border: '2px solid ' + config.color + '44', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px ' + config.color + '22' }}>
+              <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={config.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />
+              <span style={{ fontFamily: 'monospace', fontSize: 44, color: config.color, opacity: 0.5 }}>{config.symbol}</span>
+            </div>
+
+            {/* Identity */}
+            <div>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: config.color + '88', letterSpacing: 3, marginBottom: 8 }}>AI EDITOR · CYBERNETICPUNKS.COM</div>
+              <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, color: config.color, letterSpacing: 4, margin: '0 0 8px', lineHeight: 1, textShadow: '0 0 40px ' + config.color + '33' }}>{config.name}</h1>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 16 }}>{config.role.toUpperCase()}</div>
+              <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 560, margin: '0 0 24px' }}>{config.desc}</p>
+
+              {/* Stats row */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'ARTICLES', value: items.length },
+                  avgScore > 0 && { label: 'AVG SCORE', value: avgScore },
+                  topScore > 0 && { label: 'TOP SCORE', value: topScore },
+                  topTag && { label: 'TOP TOPIC', value: topTag.toUpperCase().slice(0, 12) },
+                ].filter(Boolean).map(function(stat) {
+                  return (
+                    <div key={stat.label} style={{ background: config.color + '08', border: '1px solid ' + config.color + '20', borderTop: '2px solid ' + config.color + '44', borderRadius: 6, padding: '8px 16px' }}>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: config.color, lineHeight: 1 }}>{stat.value}</div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 3 }}>{stat.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
-        <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.45)', maxWidth: 600, lineHeight: 1.6, margin: 0 }}>{config.desc}</p>
       </section>
-      <section style={{ maxWidth: 1200, margin: '0 auto 64px', padding: '0 24px' }}>
+
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+
         {items.length === 0 ? (
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '48px 28px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>{config.name} HASN&apos;T PUBLISHED YET</div>
+          <div style={{ margin: '48px 0', background: 'rgba(255,255,255,0.02)', border: '1px solid ' + config.color + '18', borderRadius: 10, padding: '64px 28px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 40, color: config.color, opacity: 0.15, marginBottom: 16 }}>{config.symbol}</div>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>{config.name} IS STANDING BY — NEXT CYCLE SOON</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {items.map(function(item, i) {
-              return (
-                <Link key={i} href={'/intel/' + item.slug} style={{ display: 'flex', alignItems: 'center', gap: 16, background: i === 0 ? config.color + '08' : 'rgba(255,255,255,0.015)', border: '1px solid ' + (i === 0 ? config.color + '25' : 'rgba(255,255,255,0.04)'), borderLeft: '3px solid ' + (i === 0 ? config.color : config.color + '30'), borderRadius: 6, padding: '16px 20px', textDecoration: 'none', transition: 'background 0.2s' }}>
-                  {item.thumbnail && <div style={{ width: 100, height: 58, borderRadius: 4, flexShrink: 0, background: 'url(' + item.thumbnail + ') center/cover no-repeat', opacity: 0.8 }} />}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.75)', margin: '0 0 4px', lineHeight: 1.3 }}>{item.headline}</h3>
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.body && item.body.slice(0, 120)}</p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    {item.tags?.[0] && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: config.color, background: config.color + '12', borderRadius: 3, padding: '3px 8px', letterSpacing: 1 }}>{item.tags[0]}</span>}
-                    {item.ce_score > 0 && <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: config.color }}>{item.ce_score}</span>}
-                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', minWidth: 44, textAlign: 'right' }}>{timeAgo(item.created_at)}</span>
+          <>
+            {/* ── FEATURED ── */}
+            {featured && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '32px 0 20px' }}>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6 }}>LATEST INTEL</span>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                </div>
+
+                <Link href={'/intel/' + featured.slug} style={{ textDecoration: 'none', display: 'block', background: config.color + '06', border: '1px solid ' + config.color + '25', borderTop: '3px solid ' + config.color, borderRadius: 10, overflow: 'hidden', marginBottom: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: featured.thumbnail ? '1fr 280px' : '1fr', minHeight: 160 }}>
+                    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: config.color, background: config.color + '15', border: '1px solid ' + config.color + '30', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>LATEST</span>
+                          {featured.ce_score > 0 && (
+                            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: config.color, textShadow: '0 0 12px ' + config.color + '44' }}>{featured.ce_score}</span>
+                          )}
+                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }}>{timeAgo(featured.created_at)}</span>
+                        </div>
+                        <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 1, lineHeight: 1.3, margin: '0 0 12px' }}>{featured.headline}</h2>
+                        <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: 0 }}>
+                          {(featured.body || '').replace(/\*\*/g, '').slice(0, 200)}{featured.body && featured.body.length > 200 ? '...' : ''}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 16 }}>
+                        {(featured.tags || []).slice(0, 4).map(function(tag) {
+                          return <span key={tag} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>{tag.toUpperCase()}</span>;
+                        })}
+                      </div>
+                    </div>
+                    {featured.thumbnail && (
+                      <div style={{ backgroundImage: 'url(' + featured.thumbnail + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.7, minHeight: 160 }} />
+                    )}
                   </div>
                 </Link>
-              );
-            })}
-          </div>
+              </>
+            )}
+
+            {/* ── REST OF ARTICLES ── */}
+            {rest.length > 0 && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '28px 0 16px' }}>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6 }}>ALL INTEL</span>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 10, marginBottom: 12 }}>
+                  {rest.map(function(item, i) {
+                    return (
+                      <Link key={i} href={'/intel/' + item.slug} style={{ textDecoration: 'none', display: 'flex', background: '#080808', border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid ' + config.color + '44', borderRadius: 8, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+                        {item.thumbnail && (
+                          <div style={{ width: 80, flexShrink: 0, backgroundImage: 'url(' + item.thumbnail + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.75 }} />
+                        )}
+                        <div style={{ padding: '14px 16px', flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                            {item.ce_score > 0 && <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: config.color, flexShrink: 0 }}>{item.ce_score}</span>}
+                            {item.tags?.[0] && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: config.color + '88', background: config.color + '10', borderRadius: 2, padding: '1px 6px', letterSpacing: 1 }}>{item.tags[0].toUpperCase()}</span>}
+                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', flexShrink: 0 }}>{timeAgo(item.created_at)}</span>
+                          </div>
+                          <h3 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, margin: '0 0 5px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.headline}</h3>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </>
         )}
-      </section>
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-        <Link href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>← BACK TO THE GRID</Link>
-      </section>
+
+        {/* ── OTHER EDITORS ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '32px 0 16px' }}>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6 }}>OTHER EDITORS</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 48 }}>
+          {OTHER_EDITORS.map(function(slug) {
+            var e = OTHER_EDITOR_CONFIG[slug];
+            return (
+              <Link key={slug} href={'/intel/' + slug} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', background: e.color + '08', border: '1px solid ' + e.color + '22', borderRadius: 6, padding: '8px 16px' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: 13, color: e.color }}>{e.symbol}</span>
+                <div>
+                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: e.color, letterSpacing: 1 }}>{slug.toUpperCase()}</div>
+                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{e.role.toUpperCase()}</div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       <Footer />
     </main>
   );
@@ -471,7 +607,7 @@ export default async function IntelPage({ params }) {
   if (editorConfig) {
     var items = [];
     try {
-      var { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).order('created_at', { ascending: false }).limit(20);
+      var { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).order('created_at', { ascending: false }).limit(50);
       if (data) items = data;
     } catch (err) { console.error('EditorLanePage fetch error:', err); }
     return <EditorLanePage config={editorConfig} items={items} />;
