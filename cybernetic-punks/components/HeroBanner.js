@@ -340,13 +340,6 @@ export default function HeroBanner() {
   }, []);
 
   var d=data, ls=liveStats;
-  var EDITORS = [
-    { sym:'C', name:'CIPHER',  color:'#ff0000', status:d?.pulse?.cipher>0?'GRADED '+d.pulse.cipher+' TODAY':'AWAITING CYCLE' },
-    { sym:'N', name:'NEXUS',   color:'#00f5ff', status:d?.pulse?.nexus>0?d.pulse.nexus+' META SHIFTS':'AWAITING CYCLE' },
-    { sym:'D', name:'DEXTER',  color:'#ff8800', status:d?.pulse?.dexter>0?d.pulse.dexter+' BUILDS':'AWAITING CYCLE' },
-    { sym:'G', name:'GHOST',   color:'#00ff88', status:'SCANNING X + REDDIT' },
-    { sym:'M', name:'MIRANDA', color:'#9b5de5', status:d?.pulse?.miranda>0?d.pulse.miranda+' GUIDES':'AWAITING CYCLE' },
-  ];
 
   return (
     <div style={{ background:'#030303', paddingBottom:8, position:'relative', overflow:'hidden' }}>
@@ -516,41 +509,7 @@ export default function HeroBanner() {
           </div>
         )}
 
-        {/* EDITOR PULSE STRIP */}
-        {isMobile ? (
-          <div style={{ marginBottom:14 }}>
-            <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch', paddingBottom:6 }}>
-              <div style={{ display:'flex', gap:1, minWidth:'max-content', background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.03)', borderRadius:8, overflow:'hidden' }}>
-                {EDITORS.map(function(e,i){
-                  return (
-                    <div key={i} style={{ background:'#030303', padding:'12px 16px', display:'flex', alignItems:'center', gap:10, minWidth:140, flexShrink:0 }}>
-                      <span style={{ fontSize:13, color:e.color, opacity:0.5, flexShrink:0, fontFamily:'Orbitron, monospace', fontWeight:900 }}>{e.sym}</span>
-                      <div>
-                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:10, fontWeight:700, color:e.color, opacity:0.6, letterSpacing:1, marginBottom:2 }}>{e.name}</div>
-                        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.15)', letterSpacing:1 }}>{d===null?'...':e.status}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.1)', letterSpacing:1, textAlign:'center', marginTop:4 }}>scroll for all editors</div>
-          </div>
-        ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:1, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.03)', borderRadius:8, overflow:'hidden', marginBottom:16 }}>
-            {EDITORS.map(function(e,i){
-              return (
-                <div key={i} style={{ background:'#030303', padding:'12px 14px', display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontSize:16, color:e.color, opacity:0.4, flexShrink:0 }}>{e.sym}</span>
-                  <div>
-                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:10, fontWeight:700, color:e.color, opacity:0.6, letterSpacing:1, marginBottom:2 }}>{e.name}</div>
-                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.15)', letterSpacing:1 }}>{d===null?'...':e.status}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+
 
 
 

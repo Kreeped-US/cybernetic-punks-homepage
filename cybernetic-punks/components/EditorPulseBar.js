@@ -11,6 +11,16 @@ const EDITORS = [
   { name: 'MIRANDA', symbol: '◎', color: '#9b5de5', role: 'Field Guide'     },
 ];
 
+function editorStatus(name, count) {
+  if (name === 'GHOST') return 'SCANNING X + REDDIT';
+  if (!count || count === 0) return 'AWAITING CYCLE';
+  if (name === 'CIPHER')  return 'GRADED ' + count + ' TODAY';
+  if (name === 'NEXUS')   return count + ' META SHIFTS';
+  if (name === 'DEXTER')  return count + ' BUILDS';
+  if (name === 'MIRANDA') return count + ' GUIDES';
+  return count + ' TODAY';
+}
+
 function timeAgo(dateStr) {
   if (!dateStr) return null;
   var h = Math.floor((Date.now() - new Date(dateStr).getTime()) / 3600000);
@@ -103,8 +113,11 @@ export default function EditorPulseBar() {
                     <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: ed.color, opacity: 0.8, flexShrink: 0 }} />
                   )}
                 </div>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.22)', letterSpacing: 1, marginBottom: latest ? 3 : 0 }}>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.22)', letterSpacing: 1, marginBottom: 2 }}>
                   {ed.role.toUpperCase()}
+                </div>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: ed.color, opacity: 0.55, letterSpacing: 1, marginBottom: latest ? 3 : 0 }}>
+                  {editorStatus(ed.name, todayCount)}
                 </div>
                 {latest ? (
                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: 160 }}>
