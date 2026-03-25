@@ -269,6 +269,114 @@ function EmptyState() {
   );
 }
 
+var ADVISOR_SHELLS = ['Assassin','Destroyer','Recon','Rook','Thief','Triage','Vandal'];
+var ADVISOR_SHELL_COLORS = { Assassin:'#cc44ff', Destroyer:'#ff3333', Recon:'#00f5ff', Rook:'#aaaaaa', Thief:'#ffd700', Triage:'#00ff88', Vandal:'#ff8800' };
+var ADVISOR_SHELL_SYMBOLS = { Assassin:'◈', Destroyer:'⬢', Recon:'◇', Rook:'▣', Thief:'⬠', Triage:'◎', Vandal:'⬡' };
+var ADVISOR_SHELL_ROLES = { Assassin:'Stealth', Destroyer:'Combat', Recon:'Scout', Rook:'Tank', Thief:'Loot', Triage:'Support', Vandal:'Flex' };
+
+function AdvisorHeroPanel({ d, isMobile }) {
+  var [selected, setSelected] = useState(null);
+  var sTiers = (d?.metaTiers||[]).filter(function(t){ return t.type==='shell' && t.tier==='S'; });
+  var topShell = sTiers[0]?.name || null;
+  var activeShell = selected || topShell || 'Destroyer';
+  var shellColor = ADVISOR_SHELL_COLORS[activeShell] || '#ff8800';
+  var shellSymbol = ADVISOR_SHELL_SYMBOLS[activeShell] || '⬢';
+  var shellRole = ADVISOR_SHELL_ROLES[activeShell] || '';
+
+  return (
+    <div style={{ gridRow:'1 / 3', display:'flex', flexDirection:'column', background:'rgba(255,136,0,0.02)', border:'1px solid rgba(255,136,0,0.15)', borderRadius:10, overflow:'hidden', position:'relative' }}>
+      {/* Top accent bar */}
+      <div style={{ height:2, background:'linear-gradient(90deg, #ff8800, #ff880018)', flexShrink:0 }} />
+
+      {/* Subtle bg glow */}
+      <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 100%, '+shellColor+'0a 0%, transparent 60%)', pointerEvents:'none', zIndex:0, transition:'background 0.3s' }} />
+
+      <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'16px 18px 0' }}>
+
+        {/* Header badge */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ width:6, height:6, borderRadius:'50%', background:'#ff8800', boxShadow:'0 0 6px #ff8800', flexShrink:0 }} />
+            <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,136,0,0.7)', letterSpacing:2 }}>⬢ DEXTER</span>
+          </div>
+          <span style={{ fontFamily:'Orbitron, monospace', fontSize:9, fontWeight:700, letterSpacing:2, color:'#ff8800', background:'rgba(255,136,0,0.12)', border:'1px solid rgba(255,136,0,0.3)', borderRadius:3, padding:'3px 8px' }}>BUILD ADVISOR</span>
+        </div>
+
+        {/* Hero text */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontFamily:'Orbitron, monospace', fontSize:22, fontWeight:900, color:'#fff', letterSpacing:1, lineHeight:1.2, marginBottom:6 }}>
+            GET YOUR BUILD<br /><span style={{ color:'#ff8800' }}>ENGINEERED</span>
+          </div>
+          <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:13, color:'rgba(255,255,255,0.35)', lineHeight:1.5 }}>
+            Pick your shell. DEXTER pulls live meta data and builds a complete loadout — weapons, mods, cores, and implants.
+          </div>
+        </div>
+
+        {/* Selected shell preview */}
+        <div style={{ background:shellColor+'10', border:'1px solid '+shellColor+'25', borderRadius:8, padding:'12px 14px', marginBottom:16, display:'flex', alignItems:'center', gap:12, transition:'all 0.2s' }}>
+          <span style={{ fontFamily:'monospace', fontSize:28, color:shellColor, opacity:0.8 }}>{shellSymbol}</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:'Orbitron, monospace', fontSize:14, fontWeight:900, color:shellColor, letterSpacing:1, marginBottom:2 }}>{activeShell.toUpperCase()}</div>
+            <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.25)', letterSpacing:1 }}>{shellRole.toUpperCase()}</div>
+          </div>
+          {!selected && topShell && (
+            <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'#ff8800', background:'rgba(255,136,0,0.12)', border:'1px solid rgba(255,136,0,0.25)', borderRadius:2, padding:'2px 6px', letterSpacing:1 }}>S TIER</span>
+          )}
+        </div>
+
+        {/* Shell picker */}
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.2)', letterSpacing:3, marginBottom:8 }}>SELECT YOUR RUNNER</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:5 }}>
+            {ADVISOR_SHELLS.map(function(shell) {
+              var c = ADVISOR_SHELL_COLORS[shell];
+              var sym = ADVISOR_SHELL_SYMBOLS[shell];
+              var isActive = activeShell === shell;
+              return (
+                <button key={shell} onClick={function(){ setSelected(shell); }} style={{
+                  background: isActive ? c+'18' : 'rgba(255,255,255,0.02)',
+                  border: '1px solid '+(isActive ? c+'55' : 'rgba(255,255,255,0.06)'),
+                  borderRadius:5, padding:'7px 4px', cursor:'pointer',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+                  transition:'all 0.15s',
+                }}>
+                  <span style={{ fontFamily:'monospace', fontSize:13, color:isActive?c:'rgba(255,255,255,0.25)' }}>{sym}</span>
+                  <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:isActive?c:'rgba(255,255,255,0.2)', letterSpacing:0.5 }}>{shell.slice(0,4).toUpperCase()}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Meta context */}
+        {d?.metaTiers && d.metaTiers.filter(function(t){ return t.type==='shell'; }).length > 0 && (
+          <div style={{ flex:1, marginBottom:14 }}>
+            <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.2)', letterSpacing:3, marginBottom:8 }}>CURRENT META</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+              {d.metaTiers.filter(function(t){ return t.type==='shell'; }).slice(0,3).map(function(item,i){
+                return (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontFamily:'Orbitron, monospace', fontSize:10, fontWeight:900, color:tierColor(item.tier), width:18, textAlign:'center' }}>{item.tier}</span>
+                    <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.4)', flex:1 }}>{item.name}</span>
+                    <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:item.trend==='up'?'#00ff88':item.trend==='down'?'#ff4444':'rgba(255,255,255,0.15)' }}>{item.trend==='up'?'▲':item.trend==='down'?'▼':'●'}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CTA button */}
+      <div style={{ position:'relative', zIndex:1, padding:'12px 18px', borderTop:'1px solid rgba(255,255,255,0.04)', flexShrink:0 }}>
+        <a href={'/advisor?shell='+activeShell} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'12px 20px', background:'rgba(255,136,0,0.12)', border:'1px solid rgba(255,136,0,0.35)', borderRadius:6, textDecoration:'none', fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:700, color:'#ff8800', letterSpacing:2 }}>
+          BUILD {activeShell.toUpperCase()} LOADOUT →
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function HeroBanner() {
   var [countdown, setCountdown] = useState(function(){ return formatCountdown(getSecondsToNextCron()); });
   var [data, setData] = useState(null);
@@ -410,72 +518,8 @@ export default function HeroBanner() {
         ) : (
           <div style={{ display:'grid', gridTemplateColumns:'1.15fr 1fr', gridTemplateRows:'1fr 1fr', gap:14, marginBottom:28, height:460 }}>
 
-            {/* CIPHER — spans both rows, full height hero card */}
-            <Link href="/play-of-the-day" style={{ gridRow:'1 / 3', display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.015)', border:'1px solid rgba(255,0,0,0.1)', borderRadius:10, overflow:'hidden', textDecoration:'none', position:'relative', transition:'border-color 0.3s, transform 0.2s' }}
-              onMouseEnter={function(e){ e.currentTarget.style.borderColor='rgba(255,0,0,0.3)'; e.currentTarget.style.transform='translateY(-2px)'; }}
-              onMouseLeave={function(e){ e.currentTarget.style.borderColor='rgba(255,0,0,0.1)'; e.currentTarget.style.transform='none'; }}
-            >
-              {/* Top accent bar */}
-              <div style={{ height:2, background:'linear-gradient(90deg, #ff0000, #ff000018)', flexShrink:0 }} />
-
-              {/* Thumbnail background — blurred if available */}
-              {d?.cipher?.thumbnail && (
-                <div style={{ position:'absolute', inset:0, backgroundImage:'url('+d.cipher.thumbnail+')', backgroundSize:'cover', backgroundPosition:'center', filter:'blur(12px) brightness(0.15) saturate(1.3)', transform:'scale(1.05)', zIndex:0 }} />
-              )}
-              <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(255,0,0,0.04) 0%, transparent 60%)', zIndex:0 }} />
-
-              {/* Content */}
-              <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'14px 18px 0' }}>
-                {/* Editor badge */}
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <div style={{ width:6, height:6, borderRadius:'50%', background:'#ff0000', boxShadow:'0 0 6px #ff0000', flexShrink:0 }} />
-                    <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,0,0,0.6)', letterSpacing:2 }}>C CIPHER</span>
-                  </div>
-                  <span style={{ fontFamily:'Orbitron, monospace', fontSize:9, fontWeight:700, letterSpacing:2, color:'#ff0000', background:'rgba(255,0,0,0.12)', border:'1px solid rgba(255,0,0,0.25)', borderRadius:3, padding:'3px 8px' }}>PLAY OF THE DAY</span>
-                </div>
-
-                {d===null ? (
-                  <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.12)', letterSpacing:2 }}>LOADING...</div>
-                  </div>
-                ) : d?.cipher ? (
-                  <>
-                    {/* Large grade */}
-                    <div style={{ display:'flex', alignItems:'flex-end', gap:14, marginBottom:16 }}>
-                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:80, fontWeight:900, color:'#ff0000', lineHeight:0.9, textShadow:'0 0 40px rgba(255,0,0,0.35)' }}>{d.cipherGrade}</div>
-                      <div style={{ paddingBottom:8 }}>
-                        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.25)', letterSpacing:1, marginBottom:3 }}>RUNNER GRADE</div>
-                        {d.cipherConf && <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,0,0,0.4)', letterSpacing:1 }}>CONF: {d.cipherConf}</div>}
-                      </div>
-                    </div>
-
-                    {/* Headline */}
-                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:14, fontWeight:700, color:'#fff', letterSpacing:1, lineHeight:1.35, marginBottom:12 }}>{truncate(d.cipher.headline, 72)}</div>
-
-                    {/* Body preview */}
-                    <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:13, color:'rgba(255,255,255,0.35)', lineHeight:1.6, marginBottom:14, flex:1 }}>
-                      {truncate((d.cipher.body||'').replace(/\*\*/g,''), 180)}
-                    </div>
-
-                    {/* Weapons */}
-                    {d.cipherWeapons.length>0 ? d.cipherWeapons.map(function(w,i){ return <WeaponInlineCard key={i} weapon={w} accentColor="#ff0000" />; }) : (
-                      <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.12)', letterSpacing:1, padding:'6px 0' }}>LOADOUT SCANNING...</div>
-                    )}
-                  </>
-                ) : (
-                  <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
-                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:64, fontWeight:900, color:'rgba(255,0,0,0.08)', lineHeight:1 }}>C</div>
-                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.12)', letterSpacing:2 }}>AWAITING NEXT CYCLE</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom CTA */}
-              <div style={{ position:'relative', zIndex:1, padding:'10px 18px', borderTop:'1px solid rgba(255,255,255,0.03)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
-                <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,0,0,0.5)', letterSpacing:1 }}>VIEW FULL PLAY OF THE DAY &rarr;</span>
-              </div>
-            </Link>
+            {/* BUILD ADVISOR — spans both rows, full height hero card */}
+            <AdvisorHeroPanel d={d} isMobile={isMobile} />
 
             {/* DEXTER — top right */}
             <SpotlightCard href="/top-build" accentColor="#ff8800" editorSymbol="D" editorName="DEXTER" badgeLabel="TOP BUILD" loading={d===null} isMobile={false}>
