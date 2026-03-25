@@ -294,7 +294,7 @@ function AdvisorHeroPanel({ d, isMobile }) {
       {/* Subtle bg glow */}
       <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 100%, '+shellColor+'0a 0%, transparent 60%)', pointerEvents:'none', zIndex:0, transition:'background 0.3s' }} />
 
-      <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'16px 18px 0', overflowY:'auto', minHeight:0 }}>
+      <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'16px 18px 0', overflow:'hidden' }}>
 
         {/* Header badge */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
