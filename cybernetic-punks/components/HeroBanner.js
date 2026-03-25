@@ -284,7 +284,7 @@ function AdvisorHeroPanel({ d, isMobile }) {
   var shellRole = ADVISOR_SHELL_ROLES[activeShell] || '';
 
   return (
-    <div style={{ gridRow:'1 / 3', display:'flex', flexDirection:'column', background:'rgba(255,136,0,0.02)', border:'1px solid rgba(255,136,0,0.15)', borderRadius:10, overflow:'hidden', position:'relative' }}>
+    <div style={{ gridRow:'1 / 3', display:'flex', flexDirection:'column', background:'rgba(255,136,0,0.02)', border:'1px solid rgba(255,136,0,0.15)', borderRadius:10, overflow:'hidden', position:'relative', isolation:'isolate' }}>
       {/* Top accent bar */}
       <div style={{ height:2, background:'linear-gradient(90deg, #ff8800, #ff880018)', flexShrink:0 }} />
 
@@ -333,7 +333,7 @@ function AdvisorHeroPanel({ d, isMobile }) {
               var sym = ADVISOR_SHELL_SYMBOLS[shell];
               var isActive = activeShell === shell;
               return (
-                <button key={shell} onClick={function(){ setSelected(shell); }} style={{
+                <button key={shell} type="button" onClick={function(){ setSelected(shell); }} style={{
                   background: isActive ? c+'18' : 'rgba(255,255,255,0.02)',
                   border: '1px solid '+(isActive ? c+'55' : 'rgba(255,255,255,0.06)'),
                   borderRadius:5, padding:'7px 4px', cursor:'pointer',
@@ -369,9 +369,9 @@ function AdvisorHeroPanel({ d, isMobile }) {
 
       {/* CTA button */}
       <div style={{ position:'relative', zIndex:1, padding:'12px 18px', borderTop:'1px solid rgba(255,255,255,0.04)', flexShrink:0 }}>
-        <a href={'/advisor?shell='+activeShell} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'12px 20px', background:'rgba(255,136,0,0.12)', border:'1px solid rgba(255,136,0,0.35)', borderRadius:6, textDecoration:'none', fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:700, color:'#ff8800', letterSpacing:2 }}>
+        <Link href={'/advisor?shell='+activeShell} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'12px 20px', background:'rgba(255,136,0,0.12)', border:'1px solid rgba(255,136,0,0.35)', borderRadius:6, textDecoration:'none', fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:700, color:'#ff8800', letterSpacing:2 }}>
           BUILD {activeShell.toUpperCase()} LOADOUT →
-        </a>
+        </Link>
       </div>
     </div>
   );
