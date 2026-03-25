@@ -284,14 +284,17 @@ function AdvisorHeroPanel({ d, isMobile }) {
   var shellRole = ADVISOR_SHELL_ROLES[activeShell] || '';
 
   return (
-    <div style={{ gridRow:'1 / 3', display:'flex', flexDirection:'column', background:'rgba(255,136,0,0.02)', border:'1px solid rgba(255,136,0,0.15)', borderRadius:10, overflow:'hidden', position:'relative', isolation:'isolate' }}>
+    <Link href={'/advisor?shell='+activeShell} style={{ gridRow:'1 / 3', display:'flex', flexDirection:'column', background:'rgba(255,136,0,0.02)', border:'1px solid rgba(255,136,0,0.15)', borderRadius:10, overflow:'hidden', position:'relative', isolation:'isolate', textDecoration:'none', cursor:'pointer', transition:'border-color 0.2s' }}
+      onMouseEnter={function(e){ e.currentTarget.style.borderColor='rgba(255,136,0,0.4)'; }}
+      onMouseLeave={function(e){ e.currentTarget.style.borderColor='rgba(255,136,0,0.15)'; }}
+    >
       {/* Top accent bar */}
       <div style={{ height:2, background:'linear-gradient(90deg, #ff8800, #ff880018)', flexShrink:0 }} />
 
       {/* Subtle bg glow */}
       <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 100%, '+shellColor+'0a 0%, transparent 60%)', pointerEvents:'none', zIndex:0, transition:'background 0.3s' }} />
 
-      <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'16px 18px 0' }}>
+      <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'16px 18px 0', overflowY:'auto', minHeight:0 }}>
 
         {/* Header badge */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
@@ -333,7 +336,7 @@ function AdvisorHeroPanel({ d, isMobile }) {
               var sym = ADVISOR_SHELL_SYMBOLS[shell];
               var isActive = activeShell === shell;
               return (
-                <button key={shell} type="button" onClick={function(){ setSelected(shell); }} style={{
+                <button key={shell} type="button" onClick={function(e){ e.preventDefault(); e.stopPropagation(); setSelected(shell); }} style={{
                   background: isActive ? c+'18' : 'rgba(255,255,255,0.02)',
                   border: '1px solid '+(isActive ? c+'55' : 'rgba(255,255,255,0.06)'),
                   borderRadius:5, padding:'7px 4px', cursor:'pointer',
@@ -367,13 +370,13 @@ function AdvisorHeroPanel({ d, isMobile }) {
         )}
       </div>
 
-      {/* CTA button */}
-      <div style={{ position:'relative', zIndex:1, padding:'12px 18px', borderTop:'1px solid rgba(255,255,255,0.04)', flexShrink:0 }}>
-        <Link href={'/advisor?shell='+activeShell} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'12px 20px', background:'rgba(255,136,0,0.12)', border:'1px solid rgba(255,136,0,0.35)', borderRadius:6, textDecoration:'none', fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:700, color:'#ff8800', letterSpacing:2 }}>
+      {/* CTA strip */}
+      <div style={{ position:'relative', zIndex:1, padding:'10px 18px', borderTop:'1px solid rgba(255,255,255,0.04)', flexShrink:0, display:'flex', justifyContent:'center', alignItems:'center' }}>
+        <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,136,0,0.6)', letterSpacing:1 }}>
           BUILD {activeShell.toUpperCase()} LOADOUT →
-        </Link>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
