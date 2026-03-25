@@ -1,8 +1,6 @@
 // app/meta/page.js
 import { Suspense } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import Nav from '@/components/Nav';
-import Footer from '@/components/Footer';
 import MetaClient from './MetaClient';
 
 const supabase = createClient(
@@ -13,7 +11,7 @@ const supabase = createClient(
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'Marathon Meta Tier List — What Weapons & Builds Are Winning Right Now',
+  title: 'Marathon Meta Tier List — What Weapons & Builds Are Winning Right Now | CyberneticPunks',
   description: 'Live Marathon tier list updated every 6 hours. See which weapons, shells, and loadouts are dominating in Marathon right now. Tracked by AI editors analyzing YouTube, Reddit, and gameplay data.',
   openGraph: {
     title: 'Marathon Meta Tier List — CyberneticPunks',
@@ -73,7 +71,6 @@ export default async function MetaPage() {
 
   return (
     <main className="min-h-screen bg-black text-white pt-24" style={{ paddingBottom: 80 }}>
-      <Nav />
       <Suspense fallback={null}>
         <MetaClient
           metaTiers={metaTiers}
@@ -83,7 +80,6 @@ export default async function MetaPage() {
           recentPosts={recentPosts}
         />
       </Suspense>
-      <Footer />
     </main>
   );
 }
