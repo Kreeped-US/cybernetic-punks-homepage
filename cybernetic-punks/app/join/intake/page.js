@@ -32,11 +32,29 @@ export default async function IntakePage() {
   if (player.onboarding_complete) redirect('/me');
 
   const [weaponsRes, metaRes, modsRes, coresRes, implantsRes] = await Promise.all([
-    supabase.from('weapon_stats').select('name').order('name'),
-    supabase.from('meta_tiers').select('name, tier').order('name'),
-    supabase.from('mod_stats').select('name').order('name'),
-    supabase.from('core_stats').select('name').order('name'),
-    supabase.from('implant_stats').select('name').order('name'),
+    supabase
+      .from('weapon_stats')
+      .select('name, category, weapon_type, mod_slot_types, image_filename')
+      .order('category')
+      .order('name'),
+    supabase
+      .from('meta_tiers')
+      .select('name, tier')
+      .order('name'),
+    supabase
+      .from('mod_stats')
+      .select('name, slot_type, compatible_categories, rarity, effect_desc, effect_summary')
+      .order('slot_type')
+      .order('name'),
+    supabase
+      .from('core_stats')
+      .select('name, rarity, required_runner, is_shell_exclusive, effect_desc, ability_type')
+      .order('name'),
+    supabase
+      .from('implant_stats')
+      .select('name, slot_type, rarity, passive_desc, stat_1_label, stat_1_value')
+      .order('slot_type')
+      .order('name'),
   ]);
 
   return (
