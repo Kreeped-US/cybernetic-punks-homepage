@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
+
+// ─── COACH ACCESS ALLOWLIST ───────────────────────────────────────────────────
+// Add Bungie membership IDs here to grant access.
+// Your ID: 5969601
+// To open to public: set COACH_OPEN = true (or delete this block and the check below)
+const COACH_OPEN = false;
+const ALLOWED_IDS = [
+  '5969601', // Justin — Kreeped#2507
+];
+// ─────────────────────────────────────────────────────────────────────────────
 
 function getSupabase() {
   return createClient(
@@ -78,12 +88,18 @@ export async function GET(request) {
     }
 
     const bungieMembershipId = bungieUser.membershipId;
+
+    // ─── ALLOWLIST CHECK ─────────────────────────────────────────────────────
+    if (!COACH_OPEN && !ALLOWED_IDS.includes(bungieMembershipId)) {
+      return NextResponse.redirect(new URL('/join?error=closed_beta', request.url));
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const displayName = bungieUser.uniqueName || bungieUser.displayName || 'Runner';
     const avatarPath = bungieUser.profilePicturePath
       ? `https://www.bungie.net${bungieUser.profilePicturePath}`
       : null;
 
-    // Determine platform from first linked membership
     const primaryMembership = memberships[0];
     const platform = primaryMembership
       ? platformName(primaryMembership.membershipType)
@@ -115,7 +131,6 @@ export async function GET(request) {
       return NextResponse.redirect(new URL('/join?error=db_error', request.url));
     }
 
-    // Set session cookie — stores our internal player UUID
     const redirectTo = player.onboarding_complete ? '/me' : '/join/intake';
     const response = NextResponse.redirect(new URL(redirectTo, request.url));
 
@@ -123,14 +138,14 @@ export async function GET(request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 30,
       path: '/',
     });
 
-    // Clear the OAuth state cookie
     response.cookies.delete('bungie_oauth_state');
 
     return response;
+
   } catch (err) {
     console.error('OAuth callback error:', err);
     return NextResponse.redirect(new URL('/join?error=unknown', request.url));
