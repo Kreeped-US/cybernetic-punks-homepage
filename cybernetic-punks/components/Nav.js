@@ -25,6 +25,7 @@ var NAV_ITEMS = [
       { label: 'RANKED GUIDE', href: '/ranked', desc: 'Holotags, tiers & how to climb', color: '#ffd700' },
       { label: 'FIELD GUIDES', href: '/guides', desc: 'Shell breakdowns & strategy', color: '#9b5de5' },
       { label: 'SERVER STATUS', href: '/status', desc: 'Is Marathon down?' },
+      { label: 'PERSONAL COACH ✦', href: '/join', desc: 'AI loadout audit — closed beta', color: '#00f5ff', beta: true },
     ],
   },
   {
@@ -52,18 +53,33 @@ function DropdownItem({ item, onClick }) {
         textDecoration: 'none',
         borderBottom: '1px solid rgba(255,255,255,0.03)',
         transition: 'background 0.15s',
+        background: item.beta ? 'rgba(0,245,255,0.02)' : 'transparent',
       }}
-      onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-      onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
+      onMouseEnter={function(e) { e.currentTarget.style.background = item.beta ? 'rgba(0,245,255,0.05)' : 'rgba(255,255,255,0.04)'; }}
+      onMouseLeave={function(e) { e.currentTarget.style.background = item.beta ? 'rgba(0,245,255,0.02)' : 'transparent'; }}
     >
-      <span style={{
-        fontFamily: 'Share Tech Mono, monospace',
-        fontSize: 12,
-        letterSpacing: 1,
-        color: item.color || '#ffffff',
-      }}>
-        {item.label} {item.external ? 'ext' : ''}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{
+          fontFamily: 'Share Tech Mono, monospace',
+          fontSize: 12,
+          letterSpacing: 1,
+          color: item.color || '#ffffff',
+        }}>
+          {item.label} {item.external ? 'ext' : ''}
+        </span>
+        {item.beta && (
+          <span style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 7,
+            color: '#00f5ff',
+            background: 'rgba(0,245,255,0.1)',
+            border: '1px solid rgba(0,245,255,0.25)',
+            borderRadius: 3,
+            padding: '1px 5px',
+            letterSpacing: 1,
+          }}>BETA</span>
+        )}
+      </div>
       {item.desc && (
         <span style={{
           fontFamily: 'Rajdhani, sans-serif',
@@ -374,16 +390,22 @@ export default function Nav() {
                             padding: '12px 24px 12px 40px',
                             textDecoration: 'none',
                             borderBottom: '1px solid rgba(255,255,255,0.02)',
+                            background: child.beta ? 'rgba(0,245,255,0.02)' : 'transparent',
                           }}
                         >
-                          <span style={{
-                            fontFamily: 'Share Tech Mono, monospace',
-                            fontSize: 12,
-                            letterSpacing: 1,
-                            color: child.color || 'rgba(255,255,255,0.6)',
-                          }}>
-                            {child.label} {child.external ? 'ext' : ''}
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{
+                              fontFamily: 'Share Tech Mono, monospace',
+                              fontSize: 12,
+                              letterSpacing: 1,
+                              color: child.color || 'rgba(255,255,255,0.6)',
+                            }}>
+                              {child.label} {child.external ? 'ext' : ''}
+                            </span>
+                            {child.beta && (
+                              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#00f5ff', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.25)', borderRadius: 3, padding: '1px 5px', letterSpacing: 1 }}>BETA</span>
+                            )}
+                          </div>
                           {child.desc && (
                             <span style={{
                               fontFamily: 'Rajdhani, sans-serif',

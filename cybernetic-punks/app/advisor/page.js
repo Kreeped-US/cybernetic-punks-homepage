@@ -1,5 +1,5 @@
-// app/advisor/page.js
 import AdvisorClient from './AdvisorClient';
+import CoachCTA from '@/components/CoachCTA';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,5 +16,12 @@ export const metadata = {
 };
 
 export default function AdvisorPage() {
-  return <AdvisorClient />;
+  return (
+    <>
+      <AdvisorClient />
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 48px' }}>
+        <CoachCTA variant="banner" />
+      </div>
+    </>
+  );
 }

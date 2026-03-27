@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
+import CoachCTA from '@/components/CoachCTA';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -60,18 +61,14 @@ function extractTwitchClipSlug(url) {
 function parseBody(body) {
   if (!body) return [];
   var elements = [];
-  // Split on bold markers used as section headers
   var parts = body.split(/\*\*([^*]{1,120})\*\*/);
   parts.forEach(function(part, i) {
     if (i % 2 === 0) {
-      // Regular text — split into paragraphs
       part.split(/\n{2,}/).forEach(function(block, j) {
         var t = block.trim();
         if (!t) return;
-        // Handle single newlines within a paragraph as line breaks
         var lines = t.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
         if (lines.length > 1) {
-          // Multi-line block — join into one paragraph
           elements.push({ type: 'para', content: lines.join(' '), key: 'p-' + i + '-' + j });
         } else if (lines.length === 1) {
           elements.push({ type: 'para', content: lines[0], key: 'p-' + i + '-' + j });
@@ -130,7 +127,6 @@ function EditorLanePage({ config, items }) {
   var featured = items[0] || null;
   var rest = items.slice(1);
 
-  // Compute stats
   var avgScore = items.length > 0
     ? (items.reduce(function(sum, i) { return sum + (i.ce_score || 0); }, 0) / items.length).toFixed(1)
     : null;
@@ -156,15 +152,12 @@ function EditorLanePage({ config, items }) {
     <main style={{ background: '#030303', minHeight: '100vh', color: '#fff', paddingBottom: 80, overflowX: 'hidden' }}>
       <Nav />
 
-      {/* Grid background */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.012, backgroundImage: 'linear-gradient(' + config.color + ' 1px, transparent 1px), linear-gradient(90deg, ' + config.color + ' 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
       <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse at 50% 0%, ' + config.color + '10 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      {/* ── HERO ── */}
       <section style={{ position: 'relative', zIndex: 1, paddingTop: 96, borderBottom: '1px solid ' + config.color + '18' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 40px' }}>
 
-          {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2 }}>
             <Link href="/intel" style={{ color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>INTEL</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
@@ -172,20 +165,17 @@ function EditorLanePage({ config, items }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 32, alignItems: 'flex-start' }}>
-            {/* Portrait */}
             <div style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', background: config.color + '10', border: '2px solid ' + config.color + '44', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px ' + config.color + '22' }}>
               <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={config.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />
               <span style={{ fontFamily: 'monospace', fontSize: 44, color: config.color, opacity: 0.5 }}>{config.symbol}</span>
             </div>
 
-            {/* Identity */}
             <div>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: config.color + '88', letterSpacing: 3, marginBottom: 8 }}>AI EDITOR · CYBERNETICPUNKS.COM</div>
               <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, color: config.color, letterSpacing: 4, margin: '0 0 8px', lineHeight: 1, textShadow: '0 0 40px ' + config.color + '33' }}>{config.name}</h1>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 16 }}>{config.role.toUpperCase()}</div>
               <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 560, margin: '0 0 24px' }}>{config.desc}</p>
 
-              {/* Stats row */}
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {[
                   { label: 'ARTICLES', value: items.length },
@@ -215,7 +205,6 @@ function EditorLanePage({ config, items }) {
           </div>
         ) : (
           <>
-            {/* ── FEATURED ── */}
             {featured && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '32px 0 20px' }}>
@@ -254,7 +243,6 @@ function EditorLanePage({ config, items }) {
               </>
             )}
 
-            {/* ── REST OF ARTICLES ── */}
             {rest.length > 0 && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '28px 0 16px' }}>
@@ -287,7 +275,6 @@ function EditorLanePage({ config, items }) {
           </>
         )}
 
-        {/* ── OTHER EDITORS ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '32px 0 16px' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6 }}>OTHER EDITORS</span>
@@ -335,7 +322,6 @@ function BodyRenderer({ parsed, editorColor }) {
   );
 }
 
-// Fix 6: Added implants to function signature
 function ArticlePage({ item, shells, weapons, mods, implants, comments, related }) {
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
   var publishedAt = new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -349,9 +335,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
   var mentionedShells = (shells || []).filter(s => s.name && bodyLower.includes(s.name.toLowerCase()));
   var mentionedWeapons = (weapons || []).filter(w => w.name && bodyLower.includes(w.name.toLowerCase()));
   var mentionedMods = (mods || []).filter(m => m.name && bodyLower.includes(m.name.toLowerCase())).slice(0, 5);
-  // Fix 6: implant body scanner
   var mentionedImplants = (implants || []).filter(imp => imp.name && bodyLower.includes(imp.name.toLowerCase())).slice(0, 5);
-  // Fix 6: hasDataRef includes implants
   var hasDataRef = mentionedShells.length > 0 || mentionedWeapons.length > 0 || mentionedMods.length > 0 || mentionedImplants.length > 0;
 
   var parsed = parseBody(item.body);
@@ -436,16 +420,19 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 28, marginTop: 40, borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginRight: 4 }}>SHARE</div>
-              <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>𝕏 POST</a>
+              <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>POST</a>
               <a href={shareReddit} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#fff', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '8px 14px', textDecoration: 'none', letterSpacing: 1 }}>REDDIT</a>
               {item.source_url && <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, opacity: 0.8 }}>▶ {isTwitch ? 'TWITCH' : 'YOUTUBE'} ↗</a>}
             </div>
             <div style={{ marginTop: 20 }}>
               <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>← MORE FROM {item.editor}</Link>
             </div>
+
+            {/* ── COACH CTA ── */}
+            <CoachCTA variant="compact" />
+
           </article>
 
-          {/* ── SIDEBAR ── */}
           {hasDataRef && (
             <aside style={{ position: 'sticky', top: 100, paddingTop: 40 }}>
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid ' + editor.color, borderRadius: 8, padding: 20 }}>
@@ -500,7 +487,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
                   </div>
                 )}
 
-                {/* Fix 7: Implants sidebar section */}
                 {mentionedImplants.length > 0 && (
                   <div style={{ marginTop: 4, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 12 }}>IMPLANTS REFERENCED</div>
@@ -527,9 +513,8 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
           )}
         </div>
 
-        {/* ── EDITOR COMMENTS ── */}
         {comments && comments.length > 0 && (
-          <div className="rs" style={{ animationDelay:'0.35s', marginBottom: 14 }}>
+          <div style={{ marginBottom: 14 }}>
             <div style={{ background: '#050505', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 3 }}>EDITOR REACTIONS</div>
@@ -541,18 +526,10 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
                 var isLast = i === comments.length - 1;
                 return (
                   <div key={i} style={{ padding: '16px 20px', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.03)', display: 'flex', gap: 14 }}>
-                    {/* Editor avatar — uses portrait image with symbol fallback */}
                     <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: '50%', background: commentEditor.color + '15', border: '2px solid ' + commentEditor.color + '44', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img
-                        src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'}
-                        alt={comment.editor}
-                        width={40}
-                        height={40}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }}
-                      />
+                      <img src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'} alt={comment.editor} width={40} height={40} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} />
                       <span style={{ fontFamily: 'monospace', fontSize: 14, color: commentEditor.color, zIndex: -1 }}>{commentEditor.symbol}</span>
                     </div>
-                    {/* Comment body */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                         <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: commentEditor.color, letterSpacing: 1 }}>{comment.editor}</span>
@@ -599,7 +576,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
   );
 }
 
-// ─── MAIN ROUTER ────────────────────────────────────────────
 export default async function IntelPage({ params }) {
   var { slug } = await params;
   var editorConfig = EDITORS[slug.toLowerCase()];
@@ -613,7 +589,6 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  // Fix 5: Added implant_stats to Promise.all
   var [itemResult, shellResult, weaponResult, modResult, implantResult] = await Promise.all([
     supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle(),
     supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name').limit(20),
@@ -622,7 +597,6 @@ export default async function IntelPage({ params }) {
     supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').limit(60),
   ]);
 
-  // Fetch editor comments for this article
   var comments = [];
   if (itemResult.data) {
     var { data: commentData } = await supabase
@@ -648,7 +622,6 @@ export default async function IntelPage({ params }) {
     }
   } catch (err) { /* non-fatal */ }
 
-  // Fix 5: Pass implants prop to ArticlePage
   return (
     <ArticlePage
       item={itemResult.data}

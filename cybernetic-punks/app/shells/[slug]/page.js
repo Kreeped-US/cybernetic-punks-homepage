@@ -2,6 +2,7 @@
 import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import CoachCTA from '@/components/CoachCTA';
 
 export const revalidate = 300;
 
@@ -89,7 +90,6 @@ export default async function ShellHubPage({ params }) {
   var maxHp = 175;
   var isBanned = shellName === 'Rook';
 
-  // Parse strengths/weaknesses/counters/synergies — stored as arrays or comma strings
   function parseList(val) {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -118,7 +118,6 @@ export default async function ShellHubPage({ params }) {
         .sh-nav:hover { background: ${color}18 !important; border-color: ${color}44 !important; }
       `}</style>
 
-      {/* Grid background */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.012, backgroundImage: 'linear-gradient(' + color + ' 1px, transparent 1px), linear-gradient(90deg, ' + color + ' 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
       <div style={{ position: 'absolute', top: 0, left: '30%', width: 800, height: 600, background: 'radial-gradient(ellipse at 50% 0%, ' + color + '10 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
 
@@ -126,7 +125,6 @@ export default async function ShellHubPage({ params }) {
       <section style={{ paddingTop: 96, position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 0' }}>
 
-          {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2 }}>
             <Link href="/shells" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>SHELLS</Link>
             <span style={{ color: 'rgba(255,255,255,0.15)' }}>/</span>
@@ -134,8 +132,6 @@ export default async function ShellHubPage({ params }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-
-            {/* Left — identity */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <span style={{ fontFamily: 'monospace', fontSize: 32, color: color, opacity: 0.8 }}>{symbol}</span>
@@ -159,7 +155,6 @@ export default async function ShellHubPage({ params }) {
                 <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6, maxWidth: 480, marginBottom: 20 }}>{shell.best_for}</p>
               )}
 
-              {/* Badges row */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
                 {shell.difficulty && (
                   <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: color, background: color + '12', border: '1px solid ' + color + '30', borderRadius: 4, padding: '4px 12px', letterSpacing: 2 }}>
@@ -175,7 +170,6 @@ export default async function ShellHubPage({ params }) {
                 {metaTier?.trend === 'down' && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff4444', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 4, padding: '4px 12px', letterSpacing: 1 }}>▼ FALLING META</span>}
               </div>
 
-              {/* CTAs */}
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <Link href="/advisor" style={{ padding: '11px 22px', background: color + '14', border: '1px solid ' + color + '44', borderRadius: 6, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 2 }}>
                   [D] BUILD ADVISOR →
@@ -186,9 +180,7 @@ export default async function ShellHubPage({ params }) {
               </div>
             </div>
 
-            {/* Right — shell image + meta tier */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-              {/* Shell image */}
               <div style={{ width: 220, height: 220, background: color + '08', border: '1px solid ' + color + '22', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 100%, ' + color + '20 0%, transparent 65%)' }} />
                 {imgSrc ? (
@@ -198,7 +190,6 @@ export default async function ShellHubPage({ params }) {
                 )}
               </div>
 
-              {/* Meta tier card */}
               {metaTier && (
                 <div style={{ background: (TIER_COLORS[metaTier.tier] || '#888') + '10', border: '1px solid ' + (TIER_COLORS[metaTier.tier] || '#888') + '33', borderRadius: 8, padding: '14px 28px', textAlign: 'center', minWidth: 120 }}>
                   <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 4 }}>⬡ NEXUS META</div>
@@ -211,7 +202,7 @@ export default async function ShellHubPage({ params }) {
         </div>
       </section>
 
-      {/* ── STATS + RANKED BLOCK ── */}
+      {/* ── STATS ── */}
       <section style={{ position: 'relative', zIndex: 1, padding: '32px 24px 0', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
@@ -238,7 +229,6 @@ export default async function ShellHubPage({ params }) {
             );
           })}
 
-          {/* Ranked tiers */}
           {(shell.ranked_tier_solo || shell.ranked_tier_squad) && (
             <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '16px 18px' }}>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 12 }}>RANKED TIERS</div>
@@ -260,7 +250,6 @@ export default async function ShellHubPage({ params }) {
           )}
         </div>
 
-        {/* Ranked notes + meta note */}
         {(metaTier?.ranked_note || metaTier?.note || shell.ranked_notes || shell.holotag_tier_recommendation) && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 32 }}>
             {(metaTier?.note || metaTier?.ranked_note) && (
@@ -294,8 +283,6 @@ export default async function ShellHubPage({ params }) {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10, marginBottom: 32 }}>
-
-          {/* Active ability */}
           {(shell.active_ability_name || shell.prime_ability_name) && (
             <div style={{ background: color + '08', border: '1px solid ' + color + '25', borderTop: '2px solid ' + color, borderRadius: 8, padding: '18px 20px' }}>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 3, marginBottom: 10 }}>ACTIVE ABILITY</div>
@@ -307,7 +294,6 @@ export default async function ShellHubPage({ params }) {
                   {shell.active_ability_description || shell.active_ability_desc || shell.prime_ability_description}
                 </div>
               )}
-              {/* Ability stats */}
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {shell.active_ability_cooldown_seconds && (
                   <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 4, padding: '6px 10px', textAlign: 'center' }}>
@@ -337,7 +323,6 @@ export default async function ShellHubPage({ params }) {
             </div>
           )}
 
-          {/* Passive ability */}
           {(shell.passive_ability_name || shell.tactical_ability_name) && (
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderTop: '2px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '18px 20px' }}>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, marginBottom: 10 }}>PASSIVE / TACTICAL</div>
@@ -352,7 +337,6 @@ export default async function ShellHubPage({ params }) {
             </div>
           )}
 
-          {/* Traits */}
           {(shell.trait_1_name || shell.trait_2_name) && (
             <div style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: '18px 20px' }}>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: 3, marginBottom: 10 }}>PASSIVE TRAITS</div>
@@ -375,7 +359,7 @@ export default async function ShellHubPage({ params }) {
         </div>
       </section>
 
-      {/* ── STRENGTHS / WEAKNESSES / COUNTERS / SYNERGIES ── */}
+      {/* ── FIELD ANALYSIS ── */}
       {(strengths.length > 0 || weaknesses.length > 0 || counteredBy.length > 0 || synergizes.length > 0 || shell.recommended_playstyle) && (
         <section style={{ position: 'relative', zIndex: 1, padding: '0 24px 0', maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
@@ -385,7 +369,6 @@ export default async function ShellHubPage({ params }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, marginBottom: 32 }}>
-
             {shell.recommended_playstyle && (
               <div style={{ gridColumn: '1 / -1', background: color + '06', border: '1px solid ' + color + '18', borderLeft: '3px solid ' + color + '44', borderRadius: 8, padding: '16px 20px' }}>
                 <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '88', letterSpacing: 2, marginBottom: 8 }}>RECOMMENDED PLAYSTYLE</div>
@@ -533,6 +516,11 @@ export default async function ShellHubPage({ params }) {
           </div>
         </section>
       )}
+
+      {/* ── COACH CTA ── */}
+      <section style={{ position: 'relative', zIndex: 1, padding: '0 24px', maxWidth: 1100, margin: '0 auto' }}>
+        <CoachCTA variant="banner" />
+      </section>
 
       {/* ── OTHER SHELLS ── */}
       <section style={{ position: 'relative', zIndex: 1, padding: '0 24px 80px', maxWidth: 1100, margin: '0 auto' }}>
