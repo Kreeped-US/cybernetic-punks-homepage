@@ -7,7 +7,7 @@ import Link from 'next/link';
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides | CyberneticPunks',
+  title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides',
   description: 'DEXTER grades the builds. Live weapon stats, shell rankings, meta tier data and loadout guides for every Runner Shell — updated every 6 hours.',
   keywords: 'Marathon builds, Marathon loadouts, Marathon best weapons, Marathon weapon stats, Marathon shell tier list, Marathon cores, Marathon meta',
   openGraph: {
@@ -15,6 +15,9 @@ export const metadata = {
     description: 'Live weapon stats, shell rankings, meta tiers and loadout analysis. Updated every 6 hours by DEXTER.',
     url: 'https://cyberneticpunks.com/builds',
     type: 'website',
+  },
+  alternates: {
+    canonical: 'https://cyberneticpunks.com/builds',
   },
 };
 
@@ -458,7 +461,7 @@ export default async function BuildsPage() {
                       </div>
                     </div>
 
-                    {/* COL 2: Shell Stat Values radar */}
+                    {/* COL 2: Shell Stat Values */}
                     <div>
                       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 3, marginBottom: 12 }}>SHELL STATS</div>
                       {hasStats ? (

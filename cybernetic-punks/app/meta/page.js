@@ -11,7 +11,7 @@ const supabase = createClient(
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'Marathon Meta Tier List — What Weapons & Builds Are Winning Right Now | CyberneticPunks',
+  title: 'Marathon Meta Tier List — What Weapons & Builds Are Winning Right Now',
   description: 'Live Marathon tier list updated every 6 hours. See which weapons, shells, and loadouts are dominating in Marathon right now. Tracked by AI editors analyzing YouTube, Reddit, and gameplay data.',
   openGraph: {
     title: 'Marathon Meta Tier List — CyberneticPunks',

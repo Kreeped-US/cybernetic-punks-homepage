@@ -4,7 +4,7 @@ import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 
 export const metadata = {
-  title: 'Marathon Field Guides — Shell Breakdowns, Ranked Prep & Strategy | CyberneticPunks',
+  title: 'Marathon Field Guides — Shell Breakdowns, Ranked Prep & Strategy',
   description: 'Shell ability breakdowns, mod analysis, ranked prep, and extraction strategy for Marathon Runners. Auto-updated every 6 hours by MIRANDA.',
   openGraph: {
     title: 'Marathon Field Guides — Shell Breakdowns, Ranked Prep & Strategy',
@@ -107,7 +107,6 @@ function GuideGrid({ guides }) {
 }
 
 function GroupedGuides({ guides }) {
-  // Group guides by their primary category tag
   var groups = {};
   var uncategorized = [];
 
@@ -121,12 +120,10 @@ function GroupedGuides({ guides }) {
     }
   }
 
-  // Sort categories by guide count (most guides first)
   var sortedKeys = Object.keys(groups).sort(function(a, b) { return groups[b].length - groups[a].length; });
 
   if (sortedKeys.length === 0 && uncategorized.length === 0) return null;
 
-  // If everything is uncategorized just show a flat grid
   if (sortedKeys.length === 0) {
     return (
       <>
@@ -141,13 +138,11 @@ function GroupedGuides({ guides }) {
       {sortedKeys.map(function(key) {
         var cat = CATS[key];
         var catGuides = groups[key];
-        // Show max 6 per category in the grouped view
         var shown = catGuides.slice(0, 6);
         var hasMore = catGuides.length > 6;
 
         return (
           <div key={key}>
-            {/* Category header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid ' + cat.color + '18' }}>
               <div style={{ width: 3, height: 22, background: cat.color, borderRadius: 2, flexShrink: 0, boxShadow: '0 0 10px ' + cat.color + '55' }} />
               <div style={{ flex: 1 }}>
@@ -162,7 +157,6 @@ function GroupedGuides({ guides }) {
               </Link>
             </div>
 
-            {/* Guide cards for this category */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
               {shown.map(function(guide) { return <GuideCard key={guide.id} guide={guide} />; })}
             </div>
@@ -253,7 +247,6 @@ export default async function GuidesPage({ searchParams }) {
         .g-link:hover { background: rgba(255,255,255,0.02) !important; }
       `}</style>
 
-      {/* Scan line */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(155,93,229,0.35), transparent)', animation: 'gScan 12s linear infinite', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* ── HERO ─────────────────────────────────────────────── */}
@@ -342,7 +335,6 @@ export default async function GuidesPage({ searchParams }) {
           </div>
         ) : (
           <>
-            {/* Featured */}
             {featured && !activeFilter && (
               <>
                 <SectionDivider label="FEATURED GUIDE" />
@@ -384,7 +376,6 @@ export default async function GuidesPage({ searchParams }) {
               </>
             )}
 
-            {/* Guide grid — grouped by category when no filter active */}
             {activeFilter ? (
               <>
                 <SectionDivider label={(CATS[activeFilter]?.label || activeFilter.toUpperCase()) + ' GUIDES'} />
@@ -411,10 +402,10 @@ export default async function GuidesPage({ searchParams }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {[
-              { href: '/intel/miranda', label: '◎ ALL MIRANDA INTEL', sub: 'Full guide archive',   color: '#9b5de5' },
+              { href: '/intel/miranda', label: '◎ ALL MIRANDA INTEL', sub: 'Full guide archive',      color: '#9b5de5' },
               { href: '/advisor',       label: '⬢ BUILD ADVISOR',     sub: 'Get your ranked loadout', color: '#ff8800' },
               { href: '/shells',        label: 'SHELL DATABASE',       sub: 'Full ability breakdowns', color: '#00f5ff' },
-              { href: '/ranked',        label: 'RANKED GUIDE',         sub: 'Season 1 intel',       color: '#ffd700' },
+              { href: '/ranked',        label: 'RANKED GUIDE',         sub: 'Season 1 intel',          color: '#ffd700' },
             ].map(function(item) {
               return (
                 <Link key={item.href} href={item.href} className="g-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: item.color + '06', border: '1px solid ' + item.color + '18', borderRadius: 5, textDecoration: 'none' }}>
