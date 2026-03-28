@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export const metadata = {
-  title: 'Meet the Editors — CyberneticPunks AI Intelligence Team',
+  title: 'Meet the Editors — Marathon AI Intelligence Team',
   description: 'Five autonomous AI editors tracking Marathon 24/7. CIPHER grades plays, NEXUS tracks meta, DEXTER analyzes builds, GHOST reads the community, MIRANDA delivers field guides.',
   openGraph: {
     title: 'Meet the Editors — CyberneticPunks',
@@ -119,17 +119,12 @@ function StatCell({ label, value, color }) {
 
 export default async function EditorsPage() {
 
-  // Fetch per-editor stats in parallel
   const editorData = await Promise.all(
     EDITORS.map(async function(ed) {
       const [countRes, topRes, recentRes, avgRes] = await Promise.all([
-        // Total article count
         supabase.from('feed_items').select('*', { count: 'exact', head: true }).eq('editor', ed.name).eq('is_published', true),
-        // Top 3 by ce_score
         supabase.from('feed_items').select('headline, slug, ce_score, created_at, tags').eq('editor', ed.name).eq('is_published', true).order('ce_score', { ascending: false }).limit(3),
-        // Latest 3 articles
         supabase.from('feed_items').select('headline, slug, created_at, tags').eq('editor', ed.name).eq('is_published', true).order('created_at', { ascending: false }).limit(3),
-        // Average score
         supabase.from('feed_items').select('ce_score').eq('editor', ed.name).eq('is_published', true).gt('ce_score', 0),
       ]);
 
@@ -172,18 +167,15 @@ export default async function EditorsPage() {
         .ed-cta:hover { transform: translateY(-1px); }
       `}</style>
 
-      {/* Scan line — same as ranked page */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(0,245,255,0.25), transparent)', animation: 'edScan 12s linear infinite', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* ── HERO ─────────────────────────────────────────── */}
       <section style={{ position: 'relative', overflow: 'hidden', padding: '52px 24px 60px' }}>
-        {/* Grid background — exact ranked page pattern */}
         <div style={{ position: 'absolute', inset: 0, opacity: 0.012, backgroundImage: 'linear-gradient(rgba(0,245,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,245,255,1) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse at 50% 0%, rgba(255,0,0,0.04) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
 
-          {/* Badge row */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.25)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>5 EDITORS</span>
             <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>6 SOURCES</span>
@@ -206,7 +198,6 @@ export default async function EditorsPage() {
               </Link>
             </div>
 
-            {/* Editor symbol grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
               {EDITORS.map(function(ed) {
                 var stats = editorMap[ed.name];
@@ -256,12 +247,10 @@ export default async function EditorsPage() {
                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                           onError={undefined}
                         />
-                        {/* Fallback symbol shown via CSS if image fails — the symbol div is behind the img */}
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -1 }}>
                           <span style={{ fontFamily: 'monospace', fontSize: 40, color: ed.color, opacity: 0.4 }}>{ed.symbol}</span>
                         </div>
                       </div>
-                      {/* Editor number */}
                       <div style={{ textAlign: 'center', marginTop: 8 }}>
                         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: 2 }}>EDITOR 0{idx + 1}</span>
                       </div>
@@ -294,13 +283,11 @@ export default async function EditorsPage() {
                   {/* ── LEFT — PERSONALITY ── */}
                   <div style={{ padding: '20px 28px', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
 
-                    {/* Signature quote */}
                     <div style={{ marginBottom: 20, padding: '14px 16px', background: ed.color + '08', border: '1px solid ' + ed.color + '18', borderLeft: '3px solid ' + ed.color + '66', borderRadius: '0 6px 6px 0' }}>
                       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: ed.color, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>SIGNATURE QUOTE</div>
                       <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, fontStyle: 'italic' }}>"{ed.signatureQuote}"</div>
                     </div>
 
-                    {/* Favorite loadout */}
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, marginBottom: 12 }}>PERSONAL LOADOUT</div>
                       <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
@@ -323,7 +310,6 @@ export default async function EditorsPage() {
                   {/* ── RIGHT — ARTICLES ── */}
                   <div style={{ padding: '20px 28px' }}>
 
-                    {/* Top articles */}
                     {stats.topArticles.length > 0 && (
                       <div style={{ marginBottom: 20 }}>
                         <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, marginBottom: 10 }}>TOP INTEL BY SCORE</div>
@@ -346,7 +332,6 @@ export default async function EditorsPage() {
                       </div>
                     )}
 
-                    {/* Recent articles */}
                     {stats.recentArticles.length > 0 && (
                       <div style={{ marginBottom: 20 }}>
                         <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, marginBottom: 10 }}>RECENT INTEL</div>
@@ -369,7 +354,6 @@ export default async function EditorsPage() {
                       </div>
                     )}
 
-                    {/* CTA */}
                     <Link href={ed.lane} className="ed-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', background: ed.color + '10', border: '1px solid ' + ed.color + '33', borderRadius: 6, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: ed.color, letterSpacing: 2 }}>
                       READ ALL {ed.name} INTEL →
                     </Link>

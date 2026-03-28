@@ -8,7 +8,7 @@ import Link from 'next/link';
 export var revalidate = 60;
 
 export var metadata = {
-  title: 'Marathon Server Status — Is Marathon Down? Live Status & Weekly Reset | CyberneticPunks',
+  title: 'Marathon Server Status — Is Marathon Down? Live Status & Weekly Reset',
   description: 'Is Marathon down? Live server status for Steam, PlayStation 5, and Xbox. Weekly reset schedule, ranked zone rotations, faction contracts, Armory stock, and Marathon error code reference.',
   keywords: 'Marathon server status, is Marathon down, Marathon servers down, Marathon maintenance, Marathon weekly reset, Marathon reset schedule, Marathon ranked rotation, Marathon error codes, Marathon WEASEL, Marathon BROCCOLI, Marathon server issues, Marathon outage',
   openGraph: {
@@ -241,7 +241,6 @@ export default async function StatusPage() {
             </div>
           </div>
 
-          {/* Sentiment bar */}
           {steamReviews.total > 0 && (
             <div style={{
               height: '4px',
@@ -259,7 +258,6 @@ export default async function StatusPage() {
             </div>
           )}
 
-          {/* Review cards */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
