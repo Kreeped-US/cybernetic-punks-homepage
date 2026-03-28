@@ -5,7 +5,7 @@
 import Link from 'next/link';
 
 export var metadata = {
-  title: 'Marathon Stats Tracker — Player Stats, Extraction Rates & Performance | CyberneticPunks',
+  title: 'Marathon Stats Tracker — Player Stats, Extraction Rates & Performance',
   description: 'Track your Marathon stats — extraction rates, K/D ratio, loot value, weapon kills, Runner Shell performance, and ranked progression. Look up any player on Steam, PlayStation, or Xbox. Powered by CyberneticPunks.',
   keywords: 'Marathon stats, Marathon stats tracker, Marathon player stats, Marathon player lookup, Marathon K/D, Marathon extraction rate, Marathon weapon stats, Marathon ranked stats, Marathon leaderboard, Marathon performance tracker, Marathon Steam stats, Marathon PlayStation stats, Marathon Xbox stats',
   openGraph: {
@@ -137,7 +137,6 @@ export default function StatsPage() {
             Look up any Marathon player across Steam, PlayStation, and Xbox. Track extraction rates, weapon performance, Runner Shell stats, and ranked progression — the moment Bungie opens the Marathon API.
           </p>
 
-          {/* ─── SEARCH BAR (placeholder) ───────────── */}
           <div style={{
             maxWidth: '560px',
             margin: '0 auto 16px',
@@ -235,7 +234,6 @@ export default function StatsPage() {
                 position: 'relative',
                 overflow: 'hidden',
               }}>
-                {/* Background icon */}
                 <div style={{
                   position: 'absolute',
                   top: '12px',
@@ -490,7 +488,6 @@ export default function StatsPage() {
         }),
       }} />
 
-      {/* FAQ Schema */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: JSON.stringify({
           '@context': 'https://schema.org',

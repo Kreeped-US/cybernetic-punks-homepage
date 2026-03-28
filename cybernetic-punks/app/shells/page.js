@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const revalidate = 3600;
 
 export const metadata = {
-  title: 'Marathon Runner Shells — Complete Guide | CyberneticPunks',
+  title: 'Marathon Runner Shells — Complete Guide',
   description: 'Every Marathon Runner Shell ranked, analyzed, and broken down. Stats, abilities, cores, implants, and build guides for Assassin, Destroyer, Recon, Rook, Thief, Triage, and Vandal.',
   openGraph: {
     title: 'Marathon Runner Shells — Complete Guide | CyberneticPunks',
@@ -49,7 +49,6 @@ export default async function ShellsIndexPage() {
 
   var maxHp = Math.max.apply(null, shells.map(function(s) { return s.base_health || 0; }).concat([1]));
 
-  // Sort: S tier first, then A, B, etc. Banned/Rook last.
   var tierOrder = { S: 0, A: 1, B: 2, C: 3, D: 4, BAN: 5 };
   shells = shells.slice().sort(function(a, b) {
     var metaA = metaShellMap[a.name.toLowerCase()];
@@ -68,10 +67,7 @@ export default async function ShellsIndexPage() {
         .s-card:hover { transform: translateY(-4px); }
       `}</style>
 
-      {/* Grid background */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.012, backgroundImage: 'linear-gradient(rgba(0,245,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,245,255,1) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
-
-      {/* Hero radial glow */}
       <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 1000, height: 500, background: 'radial-gradient(ellipse at 50% 0%, rgba(0,245,255,0.05) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* ── HERO ── */}
@@ -88,7 +84,6 @@ export default async function ShellsIndexPage() {
           Seven Runner Shells. Each one a different philosophy of survival on Tau Ceti. Choose your approach — then know it completely.
         </p>
 
-        {/* Stats strip */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {[
             { label: 'SHELLS', value: shells.length, color: '#00f5ff' },
@@ -106,7 +101,6 @@ export default async function ShellsIndexPage() {
         </div>
       </section>
 
-      {/* ── SECTION DIVIDER ── */}
       <div style={{ maxWidth: 1100, margin: '0 auto 28px', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6 }}>SELECT YOUR RUNNER</span>
@@ -142,9 +136,7 @@ export default async function ShellsIndexPage() {
                   opacity: isBanned ? 0.65 : 1,
                 }}
               >
-                {/* Image + meta tier overlay */}
                 <div style={{ position: 'relative', height: 180, background: color + '08', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {/* Background glow */}
                   <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 100%, ' + color + '18 0%, transparent 70%)' }} />
 
                   {imgSrc ? (
@@ -157,7 +149,6 @@ export default async function ShellsIndexPage() {
                     <div style={{ fontFamily: 'monospace', fontSize: 60, color: color, opacity: 0.15, position: 'relative', zIndex: 1 }}>{symbol}</div>
                   )}
 
-                  {/* Meta tier badge */}
                   {meta && (
                     <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, background: '#030303cc', border: '1px solid ' + (TIER_COLORS[meta.tier] || '#888') + '44', borderRadius: 5, padding: '5px 10px', textAlign: 'center', backdropFilter: 'blur(4px)' }}>
                       <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: TIER_COLORS[meta.tier] || '#888', lineHeight: 1 }}>{meta.tier}</div>
@@ -165,14 +156,12 @@ export default async function ShellsIndexPage() {
                     </div>
                   )}
 
-                  {/* Banned badge */}
                   {isBanned && (
                     <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 2, background: 'rgba(255,0,0,0.15)', border: '1px solid rgba(255,0,0,0.3)', borderRadius: 4, padding: '4px 10px' }}>
                       <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff0000', letterSpacing: 2 }}>RANKED BANNED</span>
                     </div>
                   )}
 
-                  {/* Difficulty badge */}
                   {shell.difficulty && (
                     <div style={{ position: 'absolute', bottom: 10, left: 12, zIndex: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
                       <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: diffColor, background: '#030303aa', border: '1px solid ' + diffColor + '33', borderRadius: 3, padding: '2px 7px', letterSpacing: 1, backdropFilter: 'blur(4px)' }}>
@@ -182,25 +171,20 @@ export default async function ShellsIndexPage() {
                   )}
                 </div>
 
-                {/* Content */}
                 <div style={{ padding: '16px 18px' }}>
-                  {/* Name + symbol */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                     <span style={{ fontFamily: 'monospace', fontSize: 16, color: color, opacity: isBanned ? 0.4 : 0.8 }}>{symbol}</span>
                     <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: isBanned ? 'rgba(255,255,255,0.3)' : color, letterSpacing: 2 }}>{shell.name.toUpperCase()}</span>
                   </div>
 
-                  {/* Role */}
                   <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 8 }}>{(shell.role || '').toUpperCase()}</div>
 
-                  {/* Lore tagline */}
                   {shell.lore_tagline && (
                     <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: isBanned ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.45)', lineHeight: 1.5, marginBottom: 14, fontStyle: 'italic' }}>
                       "{shell.lore_tagline}"
                     </div>
                   )}
 
-                  {/* HP / Shield bars */}
                   {(shell.base_health || shell.base_shield) && (
                     <div style={{ marginBottom: 14 }}>
                       {shell.base_health && (
@@ -224,7 +208,6 @@ export default async function ShellsIndexPage() {
                     </div>
                   )}
 
-                  {/* Active ability */}
                   {shell.active_ability_name && (
                     <div style={{ marginBottom: 12 }}>
                       <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: color, background: color + '12', border: '1px solid ' + color + '28', borderRadius: 3, padding: '3px 8px', letterSpacing: 1 }}>
@@ -233,7 +216,6 @@ export default async function ShellsIndexPage() {
                     </div>
                   )}
 
-                  {/* Footer — ranked tiers + CTA */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ display: 'flex', gap: 5 }}>
                       {soloTier && soloTier !== 'BAN' && (
@@ -257,7 +239,6 @@ export default async function ShellsIndexPage() {
           })}
         </div>
 
-        {/* Bottom CTA strip */}
         <div style={{ marginTop: 28, display: 'flex', alignItems: 'center', gap: 12, padding: '20px 24px', background: 'rgba(255,136,0,0.03)', border: '1px solid rgba(255,136,0,0.1)', borderLeft: '3px solid rgba(255,136,0,0.4)', borderRadius: 8 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#ff8800', letterSpacing: 1, marginBottom: 4 }}>⬢ NOT SURE WHICH SHELL TO RUN?</div>

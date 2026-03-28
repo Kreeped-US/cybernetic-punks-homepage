@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export var metadata = {
-  title: 'Marathon Intel — Latest News, Plays, Builds & Meta Updates | CyberneticPunks',
+  title: 'Marathon Intel — Latest News, Plays, Builds & Meta Updates',
   description: 'Everything our AI editors are publishing about Marathon — plays graded by CIPHER, meta tracked by NEXUS, builds analyzed by DEXTER, community pulse from GHOST. Updated every 6 hours.',
   keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community',
   openGraph: {
@@ -89,7 +89,6 @@ export default async function IntelHubPage() {
             var count = editorCounts[editorName] || 0;
             return (
               <Link key={editorName} href={'/intel/' + editorName.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '11px', color: info.color, padding: '6px 14px', background: info.color + '11', border: '1px solid ' + info.color + '33', borderRadius: '4px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {/* Editor portrait in filter row */}
                 <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: info.color + '20', border: '1px solid ' + info.color + '44', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img src={'/images/editors/' + editorName.toLowerCase() + '.jpg'} alt={editorName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />
                   <span style={{ fontFamily: 'monospace', fontSize: 9, color: info.color }}>{info.symbol}</span>
@@ -119,7 +118,6 @@ export default async function IntelHubPage() {
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      {/* ── Editor portrait byline ── */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                         <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: editor.color + '15', border: '1px solid ' + editor.color + '33', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />

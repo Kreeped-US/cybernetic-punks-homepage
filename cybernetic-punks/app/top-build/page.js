@@ -9,8 +9,11 @@ const supabase = createClient(
 );
 
 export const metadata = {
-  title: "Top Build Today — DEXTER's #1 Marathon Loadout | CyberneticPunks",
+  title: "Top Build Today — DEXTER's #1 Marathon Loadout",
   description: "DEXTER's highest-rated Marathon build with full weapon stats, mod recommendations, and ranked strategy. Updated every 6 hours.",
+  alternates: {
+    canonical: 'https://cyberneticpunks.com/top-build',
+  },
 };
 
 export const revalidate = 3600;
@@ -72,13 +75,10 @@ const RARITY_COLORS = {
 
 function extractWeaponNames(tags, body, allWeaponNames) {
   var text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
-  // Match against actual DB names first
   var fromDB = (allWeaponNames || []).filter(function(w) { return text.includes(w.toLowerCase()); });
   if (fromDB.length > 0) return fromDB;
-  // Fallback: hardcoded list
   var exact = KNOWN_WEAPONS.filter(function(w) { return text.includes(w.toLowerCase()); });
   if (exact.length > 0) return exact;
-  // Category fallback
   for (var fb of CATEGORY_FALLBACKS) {
     if (fb.keywords.some(function(k) { return text.includes(k); })) return [fb.weapon];
   }
@@ -87,7 +87,6 @@ function extractWeaponNames(tags, body, allWeaponNames) {
 
 function extractShellName(tags, body, allShellNames) {
   var text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
-  // Match against actual DB names first
   var fromDB = (allShellNames || KNOWN_SHELLS).find(function(s) { return text.includes(s.toLowerCase()); });
   if (fromDB) return fromDB;
   for (var fb of SHELL_FALLBACKS) {
@@ -120,7 +119,6 @@ function computeGrade(item) {
   return 'C';
 }
 
-// Parse body text — strip **bold** into section headers, split paragraphs
 function parseBody(body) {
   if (!body) return [];
   var elements = [];
@@ -220,7 +218,6 @@ export default async function TopBuildPage() {
       <Nav />
       <div style={{ minHeight: '100vh', background: '#030303', color: '#fff', paddingTop: 64, overflowX: 'hidden' }}>
 
-        {/* Grid background */}
         <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.012, backgroundImage: 'linear-gradient(rgba(255,136,0,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,136,0,0.8) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
         <div style={{ position: 'absolute', top: 64, left: '50%', transform: 'translateX(-50%)', width: 900, height: 400, background: 'radial-gradient(ellipse at 50% 0%, rgba(255,136,0,0.06) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
 
@@ -228,7 +225,6 @@ export default async function TopBuildPage() {
         <div style={{ position: 'relative', zIndex: 1, borderBottom: '1px solid rgba(255,136,0,0.12)', padding: '48px 24px 40px' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
-            {/* Breadcrumb */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2 }}>
               <Link href="/" style={{ color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>HOME</Link>
               <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
@@ -237,7 +233,6 @@ export default async function TopBuildPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'flex-start' }}>
 
-              {/* Left */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff8800', boxShadow: '0 0 8px #ff8800' }} />
@@ -249,7 +244,6 @@ export default async function TopBuildPage() {
                   {featured?.headline || 'No Build Available'}
                 </h1>
 
-                {/* Tags row */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
                   {shell && (
                     <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: shellColor, background: shellColor + '15', border: '1px solid ' + shellColor + '35', borderRadius: 4, padding: '4px 12px', letterSpacing: 2 }}>
@@ -270,7 +264,6 @@ export default async function TopBuildPage() {
                   })}
                 </div>
 
-                {/* Weapons preview row */}
                 {(primaryWeapon || secondaryWeapon) && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {[primaryWeapon, secondaryWeapon].filter(Boolean).map(function(w, i) {
@@ -285,7 +278,6 @@ export default async function TopBuildPage() {
                 )}
               </div>
 
-              {/* Grade block */}
               <div style={{ background: gradeColor + '10', border: '1px solid ' + gradeColor + '33', borderRadius: 10, padding: '20px 32px', textAlign: 'center', flexShrink: 0 }}>
                 <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginBottom: 6 }}>LOADOUT GRADE</div>
                 <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 64, fontWeight: 900, color: gradeColor, lineHeight: 1, textShadow: '0 0 30px ' + gradeColor + '55' }}>{grade}</div>
@@ -297,16 +289,14 @@ export default async function TopBuildPage() {
           </div>
         </div>
 
-        {/* Orange rule */}
         <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #ff8800, transparent)', position: 'relative', zIndex: 1 }} />
 
-        {/* ── LOADOUT — Shell + Weapons ── */}
+        {/* ── LOADOUT ── */}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
           <Divider label="LOADOUT" />
 
           <div style={{ display: 'grid', gridTemplateColumns: shell ? '260px 1fr' : '1fr', gap: 20, marginBottom: 12 }}>
 
-            {/* Shell panel */}
             {shell && (
               <div style={{ background: shellColor + '06', border: '1px solid ' + shellColor + '22', borderTop: '2px solid ' + shellColor, borderRadius: 10, padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ textAlign: 'center', paddingBottom: 14, borderBottom: '1px solid ' + shellColor + '15' }}>
@@ -327,7 +317,6 @@ export default async function TopBuildPage() {
                   </div>
                 </div>
 
-                {/* Stats */}
                 {(shell.base_health || shell.base_shield) && (
                   <div>
                     {shell.base_health && <StatBar label="HEALTH" value={shell.base_health} max={175} color="#00ff88" />}
@@ -335,7 +324,6 @@ export default async function TopBuildPage() {
                   </div>
                 )}
 
-                {/* Abilities */}
                 {[
                   { label: 'ACTIVE', name: shell.active_ability_name || shell.prime_ability_name, color: shellColor },
                   { label: 'PASSIVE', name: shell.passive_ability_name || shell.tactical_ability_name, color: 'rgba(255,255,255,0.4)' },
@@ -354,7 +342,6 @@ export default async function TopBuildPage() {
               </div>
             )}
 
-            {/* Weapons */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[
                 { weapon: primaryWeapon, label: 'PRIMARY WEAPON' },
@@ -389,7 +376,6 @@ export default async function TopBuildPage() {
             </div>
           </div>
 
-          {/* Mods row */}
           {mods.length > 0 && (
             <>
               <Divider label="RECOMMENDED MODS" />
@@ -411,7 +397,6 @@ export default async function TopBuildPage() {
           <Divider label="DEXTER ANALYSIS" />
           <div style={{ display: 'grid', gridTemplateColumns: nexus ? '1fr 320px' : '1fr', gap: 28, marginBottom: 12 }}>
 
-            {/* Body */}
             <div style={{ borderLeft: '2px solid rgba(255,136,0,0.2)', paddingLeft: 24 }}>
               {parsed.length > 0 ? parsed.map(function(el) {
                 if (el.type === 'header') {
@@ -435,7 +420,6 @@ export default async function TopBuildPage() {
               )}
             </div>
 
-            {/* NEXUS sidebar */}
             {nexus && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.12)', borderTop: '2px solid rgba(0,245,255,0.4)', borderRadius: 8, padding: '18px 20px' }}>
@@ -454,7 +438,6 @@ export default async function TopBuildPage() {
             )}
           </div>
 
-          {/* ── MORE FROM DEXTER ── */}
           {moreBuilds.length > 0 && (
             <>
               <Divider label="MORE FROM DEXTER" />
