@@ -25,7 +25,8 @@ const SHELLS_RANKED = [
 const GRADE_COLORS = { S: '#ff0000', A: '#ff8800', B: '#00f5ff', C: '#888888', BAN: '#ff0000' };
 
 const FAQS = [
-  { q: 'When is Ranked active?', a: 'Ranked Mode launched March 21, 2026 and is available every weekend. Each weekend runs roughly Friday through Monday (~72 hours). The first weekend (March 21\u201324) featured Low Stakes only on Perimeter. Future weekends rotate through Perimeter, Dire Marsh, and Outpost. This is a beta \u2014 systems are subject to change.' },
+  // UPDATED: schedule changed March 25, 2026 — no longer weekends only
+  { q: 'When is Ranked active?', a: 'Ranked Mode launched March 21, 2026. After player feedback, Bungie updated the schedule on March 25: Ranked now runs Sunday 10 AM PT through Thursday 10 AM PT (4 days). Cryo Archive runs Thursday through Sunday. The first window (March 21\u201324) featured Low Stakes only on Perimeter. This is a beta \u2014 systems are subject to change.' },
   { q: 'What is a Holotag?', a: 'A Holotag is a mandatory pass you purchase before entering ranked. It adds to your crew\'s score target based on rarity. Higher rarity tags increase both the target and the scoring ceiling. Every Runner must carry a Holotag at all times during a ranked match. You can only purchase Holotags up to your current rank tier in the Armory.' },
   { q: 'What happens if I die in ranked?', a: 'Failing to exfiltrate results in a loss of ranked progress equal to your crew\'s combined loss penalty. Your gear is also lost. Holotags can be stolen from your body by enemy Runners.' },
   { q: 'What if I extract without hitting my target?', a: 'Exfiltrating without meeting the crew score target results in no ranked progress \u2014 no gain, no loss. This is your safe exit when a run goes wrong.' },
@@ -34,7 +35,8 @@ const FAQS = [
   { q: 'What are the ranked tiers?', a: 'Bronze, Silver, Gold, Platinum, Diamond, and Pinnacle \u2014 each with three subdivisions (III, II, I). You progress from III (entry) to I (peak) within each tier before advancing. Platinum and above unlocks high-stakes zones.' },
   { q: 'What are the ranked rewards?', a: 'Bronze: Ranked Emblem. Silver: Emblem + Player Background. Gold: Emblem + Destroyer Shell Style + Title. Platinum/Diamond: Emblem + Gun Style. Pinnacle: Emblem + Gun Style + Title. Rewards are milestone-based \u2014 drop from Pinnacle and you keep the Pinnacle cosmetic.' },
   { q: 'Do ranked rewards carry over between seasons?', a: 'Yes. Cosmetics earned through ranked are permanent. Rank progress resets each season. Liaison contract progression carries over.' },
-  { q: 'What is the gear ante?', a: 'A minimum loadout value threshold you must meet to queue. Low Stakes requires a 3,000 ante (roughly Enhanced green gear with a few Deluxe blue pieces) and a Bronze Holotag. High Stakes requires a 10,000 ante (Deluxe gear with a few Superior purple pieces) and a Platinum Holotag.' },
+  // UPDATED: added Runner Level 25 requirement
+  { q: 'What is the gear ante?', a: 'A minimum loadout value threshold you must meet to queue. You must also be Runner Level 25 before the queue unlocks. Low Stakes requires a 3,000 ante (roughly Enhanced green gear with a few Deluxe blue pieces) and a Bronze Holotag. High Stakes requires a 10,000 ante (Deluxe gear with a few Superior purple pieces) and a Platinum Holotag.' },
 ];
 
 function RankEmblem({ tier, size = 80, glow = false }) {
@@ -120,7 +122,8 @@ function Countdown() {
     return (
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 900, color: '#00ff88', letterSpacing: 4, textShadow: '0 0 30px rgba(0,255,136,0.4)' }}>RANKED IS LIVE</div>
-        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginTop: 8 }}>ACTIVE WEEKENDS ONLY</div>
+        {/* UPDATED: no longer weekends only — schedule changed March 25, 2026 */}
+        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginTop: 8 }}>SUN 10AM PT – THU 10AM PT</div>
       </div>
     );
   }
@@ -197,7 +200,8 @@ export default function RankedClient() {
           <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.25)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>● LIVE NOW</span>
             <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>SEASON 1 BETA</span>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,136,0,0.6)', background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.18)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>WEEKENDS ONLY</span>
+            {/* UPDATED: was WEEKENDS ONLY — schedule changed March 25, 2026 */}
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,136,0,0.6)', background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.18)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>SUN–THU ACTIVE</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'center' }}>
@@ -321,8 +325,16 @@ export default function RankedClient() {
               })}
 
               <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 10 }}>GEAR ANTE REQUIREMENTS</div>
+                {/* UPDATED: added Runner Level 25 requirement */}
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 10 }}>ENTRY REQUIREMENTS</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ background: 'rgba(255,215,0,0.04)', border: '1px solid rgba(255,215,0,0.15)', borderRadius: 5, padding: '10px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#ffd700', letterSpacing: 1 }}>RUNNER LEVEL</span>
+                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700' }}>LEVEL 25 REQUIRED</span>
+                    </div>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>The Ranked queue does not unlock until you reach Runner Level 25.</div>
+                  </div>
                   <div style={{ background: 'rgba(0,255,136,0.04)', border: '1px solid rgba(0,255,136,0.15)', borderRadius: 5, padding: '10px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                       <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#00ff88', letterSpacing: 1 }}>LOW STAKES</span>
@@ -375,24 +387,27 @@ export default function RankedClient() {
                 </div>
               </div>
 
+              {/* UPDATED: schedule changed March 25, 2026 — Cryo Archive and Ranked no longer overlap */}
               <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6, padding: '14px 18px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>↻</span>
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>SEASON 1 ZONE ROTATION</span>
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>SEASON 1 SCHEDULE</span>
                 </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                   {[
-                    { name: 'PERIMETER',  note: 'Week 1', color: '#00ff88' },
-                    { name: 'DIRE MARSH', note: 'Week 2', color: '#00f5ff' },
-                    { name: 'OUTPOST',    note: 'Week 3', color: '#ff8800' },
+                    { name: 'RANKED',       note: 'Sun 10AM – Thu 10AM PT', color: '#00f5ff' },
+                    { name: 'CRYO ARCHIVE', note: 'Thu 10AM – Sun 10AM PT', color: '#9b5de5' },
                   ].map(function(z) {
                     return (
-                      <div key={z.name} style={{ flex: 1, minWidth: 80, background: z.color + '08', border: '1px solid ' + z.color + '22', borderRadius: 4, padding: '8px 12px', textAlign: 'center' }}>
+                      <div key={z.name} style={{ flex: 1, minWidth: 120, background: z.color + '08', border: '1px solid ' + z.color + '22', borderRadius: 4, padding: '8px 12px', textAlign: 'center' }}>
                         <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 9, fontWeight: 700, color: z.color, letterSpacing: 1, marginBottom: 3 }}>{z.name}</div>
                         <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{z.note}</div>
                       </div>
                     );
                   })}
+                </div>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: 1, lineHeight: 1.5 }}>
+                  ★ Schedules split on March 25 after player feedback — Ranked and Cryo Archive no longer overlap. Map rotates weekly: Perimeter → Dire Marsh → Outpost.
                 </div>
               </div>
             </div>
