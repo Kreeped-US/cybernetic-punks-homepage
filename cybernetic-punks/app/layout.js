@@ -46,9 +46,8 @@ export const metadata = {
   verification: {
     google: 'M2lvAyNiEj7COYx4hguAd1l3TOOP7WwkQ1EjY3qoi0I',
   },
-  alternates: {
-    canonical: 'https://cyberneticpunks.com',
-  },
+  // NOTE: No alternates/canonical here — each page defines its own.
+  // Pages without a canonical will have none, which is correct.
 };
 
 export default function RootLayout({ children }) {
