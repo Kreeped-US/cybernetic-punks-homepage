@@ -5,7 +5,7 @@
 import Link from 'next/link';
 
 export var metadata = {
-  title: 'Marathon Leaderboard — Ranked Players, Top Runners & Global Rankings | CyberneticPunks',
+  title: 'Marathon Leaderboard — Ranked Players, Top Runners & Global Rankings',
   description: 'Marathon global leaderboard — track the top ranked players from Bronze to Master. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores.',
   keywords: 'Marathon leaderboard, Marathon ranked leaderboard, Marathon top players, Marathon rankings, Marathon ranked mode, Marathon best players, Marathon global leaderboard, Marathon Bronze, Marathon Silver, Marathon Gold, Marathon Platinum, Marathon Diamond, Marathon Master, Marathon ranked stats',
   openGraph: {
@@ -123,7 +123,6 @@ export default function LeaderboardPage() {
             Track the top Marathon runners worldwide. Ranked leaderboards from Bronze to Master — filterable by platform, region, and Runner Shell.
           </p>
 
-          {/* Filter bar (placeholder) */}
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -156,7 +155,6 @@ export default function LeaderboardPage() {
         maxWidth: '1100px',
         margin: '0 auto',
       }}>
-        {/* Table header */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '60px 1fr 90px 100px 100px 80px 100px',
@@ -179,7 +177,6 @@ export default function LeaderboardPage() {
           })}
         </div>
 
-        {/* Placeholder rows */}
         {PLACEHOLDER_ENTRIES.map(function(entry) {
           var shellColor = SHELL_COLORS[entry.shell] || '#444';
           return (
