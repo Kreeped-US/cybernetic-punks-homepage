@@ -10,7 +10,7 @@ const supabase = createClient(
 );
 
 const FALLBACK_ITEMS = [
-  { text: 'SEASON 1 RANKED LIVE — WEEKENDS ONLY — HOLOTAG SYSTEM ACTIVE', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
+  { text: 'SEASON 1 RANKED LIVE — SUN–THU — HOLOTAG SYSTEM ACTIVE', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
   { text: 'CRYO ARCHIVE ACTIVE — RUNNER LEVEL 25 + ALL FACTIONS REQUIRED', source: 'BUNGIE', color: '#ff8800', href: null },
   { text: 'ROOK BANNED FROM RANKED — SPONSORED KITS ALSO PROHIBITED', source: 'BUNGIE', color: '#ff8800', href: '/ranked' },
   { text: 'DIRE MARSH DUOS — LIMITED TIME EVENT ANNOUNCED BY BUNGIE DEV', source: 'INTEL', color: '#00f5ff', href: '/intel' },
@@ -32,9 +32,6 @@ export default function DevTicker() {
   var animRef = useRef(null);
   var posRef = useRef(0);
   var pausedRef = useRef(false);
-
-  // Keep pausedRef in sync
-  useEffect(function() { pausedRef.current = paused; }, [paused]);
 
   useEffect(function() {
     async function fetchAll() {
@@ -69,7 +66,6 @@ export default function DevTicker() {
               color: EDITOR_COLORS[item.editor] || '#00f5ff',
               href: '/intel/' + item.slug,
             });
-            // Flag as breaking if recent article tags new content/event
             var tags = item.tags || [];
             var breakingTags = ['patch', 'update', 'new map', 'new mode', 'event', 'breaking', 'cryo archive', 'dire marsh'];
             var isBreakingItem = breakingTags.some(function(t) { return tags.some(function(tag) { return tag.toLowerCase().includes(t); }) || item.headline.toLowerCase().includes(t); });
@@ -79,7 +75,6 @@ export default function DevTicker() {
       } catch(_) {}
 
       if (allItems.length > 0) {
-        // Shuffle
         for (var i = allItems.length - 1; i > 0; i--) {
           var j = Math.floor(Math.random() * (i + 1));
           var tmp = allItems[i]; allItems[i] = allItems[j]; allItems[j] = tmp;
@@ -90,16 +85,15 @@ export default function DevTicker() {
     fetchAll();
   }, []);
 
-  // JS-driven scroll so we can pause/resume cleanly and items are clickable
+  // JS-driven scroll — pausedRef is set synchronously so clicks always land
   useEffect(function() {
     var el = scrollRef.current;
     if (!el) return;
-    var speed = 0.5; // px per frame
+    var speed = 0.5;
 
     function step() {
       if (!pausedRef.current) {
         posRef.current += speed;
-        // Reset when we've scrolled half (since content is doubled)
         if (posRef.current >= el.scrollWidth / 2) {
           posRef.current = 0;
         }
@@ -116,17 +110,17 @@ export default function DevTicker() {
   var bgColor = isBreaking ? 'rgba(255,0,0,0.04)' : 'rgba(0,245,255,0.03)';
   var borderColor = isBreaking ? 'rgba(255,0,0,0.15)' : 'rgba(0,245,255,0.08)';
 
-  // Build items — doubled for seamless loop
   function renderItems(keyPrefix) {
     return items.map(function(item, i) {
       var isHovered = hoveredIndex === keyPrefix + i;
       var inner = (
-        <span style={{
-          display: 'inline-flex', alignItems: 'center',
-          marginRight: 28,
-          opacity: paused && !isHovered ? 0.5 : 1,
-          transition: 'opacity 0.15s',
-        }}
+        <span
+          style={{
+            display: 'inline-flex', alignItems: 'center',
+            marginRight: 28,
+            opacity: paused && !isHovered ? 0.5 : 1,
+            transition: 'opacity 0.15s',
+          }}
           onMouseEnter={function() { setHoveredIndex(keyPrefix + i); }}
           onMouseLeave={function() { setHoveredIndex(null); }}
         >
@@ -159,7 +153,6 @@ export default function DevTicker() {
         </span>
       );
 
-      // Wrap in Link only if there's an href
       if (item.href) {
         return (
           <Link key={keyPrefix + i} href={item.href} style={{ textDecoration: 'none', display: 'inline-flex' }}>
@@ -179,8 +172,8 @@ export default function DevTicker() {
         borderBottom: '1px solid ' + borderColor,
         overflow: 'hidden', display: 'flex', alignItems: 'center',
       }}
-      onMouseEnter={function() { setPaused(true); }}
-      onMouseLeave={function() { setPaused(false); setHoveredIndex(null); }}
+      onMouseEnter={function() { setPaused(true); pausedRef.current = true; }}
+      onMouseLeave={function() { setPaused(false); pausedRef.current = false; setHoveredIndex(null); }}
     >
       {/* Label */}
       <div style={{
