@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
+// Nav is rendered globally by layout.js — do not import or render it here
 
 export const metadata = {
   title: 'Marathon Field Guides — Shell Breakdowns, Ranked Prep & Strategy',
@@ -234,7 +234,7 @@ export default async function GuidesPage({ searchParams }) {
 
   return (
     <main style={{ backgroundColor: '#030303', minHeight: '100vh', color: '#fff', paddingTop: 80, overflowX: 'hidden' }}>
-      <Nav />
+      {/* Nav is rendered by layout.js — NOT here */}
 
       <style>{`
         @keyframes gScan { from{transform:translateY(-100vh)} to{transform:translateY(100vh)} }
