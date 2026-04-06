@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export const metadata = {
-  title: 'Meet the Editors — Marathon AI Intelligence Team',
+ title: 'Marathon AI Editors — 5 Autonomous Analysts | CyberneticPunks',
   description: 'Five autonomous AI editors tracking Marathon 24/7. CIPHER grades plays, NEXUS tracks meta, DEXTER analyzes builds, GHOST reads the community, MIRANDA delivers field guides.',
   openGraph: {
     title: 'Meet the Editors — CyberneticPunks',
