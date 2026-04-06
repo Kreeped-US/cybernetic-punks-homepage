@@ -19,11 +19,12 @@ const SHELL_SYMBOLS = {
 const TIER_COLORS = { S: '#ff0000', A: '#ff8800', B: '#00f5ff', C: '#aaaaaa', D: '#555555', BAN: '#ff0000' };
 
 const RARITY_COLORS = {
-  Standard: { color: '#888888', bg: '#88888814', border: '#88888830' },
-  Enhanced: { color: '#00ff88', bg: '#00ff8812', border: '#00ff8828' },
-  Deluxe:   { color: '#00f5ff', bg: '#00f5ff12', border: '#00f5ff28' },
-  Superior: { color: '#9b5de5', bg: '#9b5de512', border: '#9b5de528' },
-  Prestige: { color: '#ffd700', bg: '#ffd70012', border: '#ffd70028' },
+  Standard:   { color: '#888888', bg: '#88888814', border: '#88888830' },
+  Enhanced:   { color: '#00ff88', bg: '#00ff8812', border: '#00ff8828' },
+  Deluxe:     { color: '#00f5ff', bg: '#00f5ff12', border: '#00f5ff28' },
+  Superior:   { color: '#9b5de5', bg: '#9b5de512', border: '#9b5de528' },
+  Prestige:   { color: '#ffd700', bg: '#ffd70012', border: '#ffd70028' },
+  Contraband: { color: '#ff2d55', bg: '#ff2d5514', border: '#ff2d5530' },
 };
 
 const EDITOR_COLORS = {

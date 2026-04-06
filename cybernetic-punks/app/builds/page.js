@@ -29,11 +29,12 @@ const GREEN = '#00ff88';
 const BLACK = '#030303';
 
 const RARITY_COLORS = {
-  Standard:  { color: '#888888', bg: '#88888818', border: '#88888833' },
-  Enhanced:  { color: '#00ff88', bg: '#00ff8812', border: '#00ff8830' },
-  Deluxe:    { color: '#00f5ff', bg: '#00f5ff12', border: '#00f5ff30' },
-  Superior:  { color: '#9b5de5', bg: '#9b5de512', border: '#9b5de530' },
-  Prestige:  { color: '#ffd700', bg: '#ffd70012', border: '#ffd70030' },
+  Standard:   { color: '#888888', bg: '#88888818', border: '#88888833' },
+  Enhanced:   { color: '#00ff88', bg: '#00ff8812', border: '#00ff8830' },
+  Deluxe:     { color: '#00f5ff', bg: '#00f5ff12', border: '#00f5ff30' },
+  Superior:   { color: '#9b5de5', bg: '#9b5de512', border: '#9b5de530' },
+  Prestige:   { color: '#ffd700', bg: '#ffd70012', border: '#ffd70030' },
+  Contraband: { color: '#ff2d55', bg: '#ff2d5514', border: '#ff2d5530' },
 };
 
 const TIER_COLORS = { S: RED, A: ORANGE, B: CYAN, C: '#aaaaaa', D: '#555555' };
@@ -44,8 +45,14 @@ const SHELL_COLORS = {
 };
 
 const AMMO_COLORS = {
-  'Light Rounds': '#aaaaaa', 'Medium Rounds': '#cc9944', 'Heavy Rounds': '#ff6644',
-  'Volt Cells': '#8844ff', 'Volt Battery': '#00f5ff', 'MIPS': '#ffd700', 'None': '#444',
+  'Light Rounds':  '#aaaaaa',
+  'Medium Rounds': '#cc9944',
+  'Heavy Rounds':  '#ff6644',
+  'Volt Cells':    '#8844ff',
+  'Volt Battery':  '#00f5ff',
+  'MIPS':          '#ffd700',
+  'Hyphatic Gel':  '#39ff14',
+  'None':          '#444',
 };
 
 function statBar(val, max, color) {
@@ -90,7 +97,6 @@ function timeAgo(dateStr) {
 // ─── PAGE ────────────────────────────────────────────────────
 export default async function BuildsPage() {
 
-  // Fetch everything in parallel
   var [
     weaponsRes,
     shellsRes,
@@ -117,14 +123,12 @@ export default async function BuildsPage() {
   var shellStatValues = shellStatValuesRes.data || [];
   var allCores = coresRes.data || [];
 
-  // Build shell stat values lookup: { 'Thief': { 'Agility': 85, 'Loot Speed': 90, ... } }
   var shellStatMap = {};
   shellStatValues.forEach(function(sv) {
     if (!shellStatMap[sv.shell_name]) shellStatMap[sv.shell_name] = {};
     shellStatMap[sv.shell_name][sv.stat_name] = sv.stat_value;
   });
 
-  // Build cores lookup: { 'Thief': [...], 'null': [...universal] }
   var coresByShell = {};
   var universalCores = [];
   allCores.forEach(function(c) {
@@ -136,7 +140,6 @@ export default async function BuildsPage() {
     }
   });
 
-  // Stat display order for shell_stat_values
   var STAT_ORDER = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Hardware', 'Finisher Siphon', 'Revive Speed', 'Firewall', 'Fall Resistance', 'Ping Duration'];
   var STAT_COLORS = {
     'Heat Capacity': '#ff4444', 'Agility': '#00f5ff', 'Loot Speed': '#ffd700',
@@ -146,7 +149,6 @@ export default async function BuildsPage() {
     'Ping Duration': '#88aaff',
   };
 
-  // Build meta lookup maps
   var metaWeaponMap = {};
   var metaShellMap = {};
   metaTiers.forEach(function(t) {
@@ -154,12 +156,10 @@ export default async function BuildsPage() {
     if (t.type === 'shell') metaShellMap[t.name.toLowerCase()] = t;
   });
 
-  // Top meta items
   var metaWeapons = metaTiers.filter(function(t) { return t.type === 'weapon'; }).sort(function(a, b) { return (Object.keys(TIER_COLORS).indexOf(a.tier)) - (Object.keys(TIER_COLORS).indexOf(b.tier)); }).slice(0, 8);
   var metaShellsList = metaTiers.filter(function(t) { return t.type === 'shell'; }).sort(function(a, b) { return (Object.keys(TIER_COLORS).indexOf(a.tier)) - (Object.keys(TIER_COLORS).indexOf(b.tier)); });
   var lastMetaUpdate = metaTiers[0]?.updated_at;
 
-  // Group weapons by category
   var weaponsByCategory = {};
   weapons.forEach(function(w) {
     var cat = w.weapon_type || 'Other';
@@ -167,7 +167,6 @@ export default async function BuildsPage() {
     weaponsByCategory[cat].push(w);
   });
 
-  // Group articles by shell tag
   var SHELL_NAMES = ['assassin','destroyer','recon','rook','thief','triage','vandal'];
   var articlesByShell = {};
   var generalArticles = [];
@@ -186,12 +185,10 @@ export default async function BuildsPage() {
     }
   });
 
-  // Stats for hero
   var totalGraded = dexterArticles.length;
   var topWeaponMeta = metaWeapons.find(function(t) { return t.tier === 'S'; });
   var topShellMeta = metaShellsList.find(function(t) { return t.tier === 'S'; });
 
-  // Max stats for bar scaling
   var maxFpr = Math.max.apply(null, weapons.map(function(w) { return w.firepower_score || 0; }).concat([1]));
   var maxAcc = Math.max.apply(null, weapons.map(function(w) { return w.accuracy_score || 0; }).concat([1]));
   var maxDmg = Math.max.apply(null, weapons.map(function(w) { return w.damage || 0; }).concat([1]));
@@ -217,7 +214,6 @@ export default async function BuildsPage() {
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.015, backgroundImage: 'linear-gradient(' + ORANGE + ' 1px, transparent 1px), linear-gradient(90deg, ' + ORANGE + ' 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          {/* Badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '6px 16px', border: '1px solid ' + ORANGE + '44', borderRadius: 4, marginBottom: 20, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: ORANGE, letterSpacing: 3 }}>
             <span style={{ animation: 'buildPulse 2s ease-in-out infinite' }}>[D]</span>
             DEXTER BUILD ENGINEER
@@ -230,7 +226,6 @@ export default async function BuildsPage() {
             Live weapon stats, shell rankings, and meta analysis — sourced from the database and updated every 6 hours by DEXTER.
           </p>
 
-          {/* Live stat strip */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1, background: ORANGE + '18', border: '1px solid ' + ORANGE + '33', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
             {[
               { val: String(weapons.length), label: 'WEAPONS IN DB', color: ORANGE },
@@ -249,7 +244,6 @@ export default async function BuildsPage() {
             })}
           </div>
 
-          {/* Advisor CTA */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', paddingBottom: 48 }}>
             <Link href="/advisor" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '12px 24px', background: ORANGE + '18', border: '1px solid ' + ORANGE + '55', borderRadius: 6, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: ORANGE, letterSpacing: 2 }}>
               [D] GET YOUR BUILD ENGINEERED &rarr;
@@ -280,8 +274,6 @@ export default async function BuildsPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
-
-            {/* Weapon meta */}
             <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid ' + CYAN, borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: CYAN + '88', letterSpacing: 3 }}>WEAPONS</div>
@@ -300,7 +292,6 @@ export default async function BuildsPage() {
               })}
             </div>
 
-            {/* Shell meta */}
             <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid ' + ORANGE, borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: ORANGE + '88', letterSpacing: 3 }}>SHELLS</div>
@@ -346,12 +337,10 @@ export default async function BuildsPage() {
 
               return (
                 <Link key={article.id} href={'/intel/' + article.slug} className="build-card" style={{ display: 'flex', gap: 14, background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '3px solid ' + shellColor + '66', borderRadius: 8, padding: '16px', textDecoration: 'none' }}>
-                  {/* Grade */}
                   <div style={{ textAlign: 'center', flexShrink: 0 }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, color: gradeColor, lineHeight: 1, textShadow: '0 0 16px ' + gradeColor + '44' }}>{grade}</div>
                     <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 3 }}>GRADE</div>
                   </div>
-                  {/* Content */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {article.headline}
@@ -394,21 +383,15 @@ export default async function BuildsPage() {
               var hasStats = Object.keys(shellStats).length > 0;
               var displayTier = metaTier ? metaTier.tier : shell.ranked_tier_solo;
 
-              // Get ordered stats that exist for this shell
               var orderedStats = STAT_ORDER.filter(function(s) { return shellStats[s] != null; });
               var maxStatVal = orderedStats.length > 0 ? Math.max.apply(null, orderedStats.map(function(s) { return shellStats[s] || 0; })) : 100;
 
               return (
                 <a key={shell.id} href={'#shell-' + shell.name.toLowerCase()} className="shell-card" style={{ display: 'block', background: '#0a0a0a', border: '1px solid ' + color + '22', borderLeft: '4px solid ' + color, borderRadius: 8, textDecoration: 'none', overflow: 'hidden' }}>
-
-                  {/* TOP ACCENT LINE */}
                   <div style={{ height: 2, background: 'linear-gradient(90deg, ' + color + ', ' + color + '18)', flexShrink: 0 }} />
-
                   <div style={{ padding: '20px 20px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
 
-                    {/* COL 1: Identity + HP/Shield + Abilities */}
                     <div>
-                      {/* Name + tier */}
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                         <div>
                           <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: color, letterSpacing: 2, marginBottom: 3 }}>{shell.name.toUpperCase()}</div>
@@ -418,7 +401,6 @@ export default async function BuildsPage() {
                         {displayTier && <TierBadge tier={displayTier} size="lg" />}
                       </div>
 
-                      {/* HP + Shield bars */}
                       {(shell.base_health || shell.base_shield) && (
                         <div style={{ marginBottom: 14 }}>
                           {shell.base_health && (
@@ -438,7 +420,6 @@ export default async function BuildsPage() {
                         </div>
                       )}
 
-                      {/* Abilities */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {shell.prime_ability_name && (
                           <div style={{ background: color + '10', border: '1px solid ' + color + '25', borderRadius: 4, padding: '6px 10px' }}>
@@ -461,7 +442,6 @@ export default async function BuildsPage() {
                       </div>
                     </div>
 
-                    {/* COL 2: Shell Stat Values */}
                     <div>
                       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 3, marginBottom: 12 }}>SHELL STATS</div>
                       {hasStats ? (
@@ -487,7 +467,6 @@ export default async function BuildsPage() {
                         </div>
                       )}
 
-                      {/* Ranked tiers */}
                       <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
                         {shell.ranked_tier_solo && (
                           <div style={{ textAlign: 'center', background: (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '12', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '33', borderRadius: 4, padding: '6px 10px' }}>
@@ -509,7 +488,6 @@ export default async function BuildsPage() {
                       </div>
                     </div>
 
-                    {/* COL 3: Cores */}
                     <div>
                       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color + '77', letterSpacing: 3, marginBottom: 12 }}>TOP CORES</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -532,7 +510,6 @@ export default async function BuildsPage() {
                           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.12)', letterSpacing: 1 }}>NO CORES SEEDED YET</div>
                         )}
 
-                        {/* Show 1 universal core as bonus */}
                         {topUniversalCores.length > 0 && shellCores.length < 3 && (
                           <div>
                             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: 2, marginTop: 4, marginBottom: 4 }}>UNIVERSAL</div>
@@ -552,7 +529,6 @@ export default async function BuildsPage() {
                         )}
                       </div>
 
-                      {/* Article link */}
                       {articleCount > 0 && (
                         <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ORANGE + '88', letterSpacing: 1 }}>
@@ -578,7 +554,6 @@ export default async function BuildsPage() {
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>{weapons.length} WEAPONS — LIVE STATS — FIREPOWER / ACCURACY / HANDLING</div>
           </div>
 
-          {/* Ammo legend */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
             {Object.entries(AMMO_COLORS).filter(function(e) { return e[0] !== 'None'; }).map(function(entry) {
               return (
@@ -600,7 +575,6 @@ export default async function BuildsPage() {
                 </div>
 
                 <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, overflow: 'hidden' }}>
-                  {/* Column headers */}
                   <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 80px 80px', gap: 0, padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.02)' }}>
                     <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2 }}>WEAPON</span>
                     <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2 }}>STATS</span>
@@ -618,7 +592,6 @@ export default async function BuildsPage() {
                     return (
                       <div key={weapon.id} className="weapon-row" style={{ display: 'grid', gridTemplateColumns: '200px 1fr 80px 80px', gap: 0, padding: '12px 16px', borderBottom: i < categoryWeapons.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: 'transparent', alignItems: 'center' }}>
 
-                        {/* Name + rarity */}
                         <div>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: weapon.ranked_viable === false ? 'rgba(255,255,255,0.35)' : '#fff', marginBottom: 4, lineHeight: 1 }}>{weapon.name}</div>
                           <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
@@ -627,7 +600,6 @@ export default async function BuildsPage() {
                           </div>
                         </div>
 
-                        {/* Stat bars */}
                         <div style={{ paddingRight: 16 }}>
                           {hasFpr ? (
                             <>
@@ -662,14 +634,12 @@ export default async function BuildsPage() {
                           )}
                         </div>
 
-                        {/* Ammo */}
                         <div style={{ textAlign: 'center' }}>
                           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: ammoColor, background: ammoColor + '14', border: '1px solid ' + ammoColor + '30', borderRadius: 3, padding: '3px 6px', letterSpacing: 1, display: 'inline-block' }}>
                             {(weapon.ammo_type || 'N/A').replace(' Rounds', '').replace(' Battery', '').toUpperCase()}
                           </span>
                         </div>
 
-                        {/* Meta tier */}
                         <div style={{ textAlign: 'center' }}>
                           {metaTier ? (
                             <div>
