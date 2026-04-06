@@ -1,10 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
-import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import CoachCTA from '@/components/CoachCTA';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+// Nav is rendered globally by layout.js — do not import or render it here
 
 const supabaseService = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -150,7 +150,7 @@ function EditorLanePage({ config, items }) {
 
   return (
     <main style={{ background: '#030303', minHeight: '100vh', color: '#fff', paddingBottom: 80, overflowX: 'hidden' }}>
-      <Nav />
+      {/* Nav is rendered by layout.js — NOT here */}
 
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.012, backgroundImage: 'linear-gradient(' + config.color + ' 1px, transparent 1px), linear-gradient(90deg, ' + config.color + ' 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
       <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse at 50% 0%, ' + config.color + '10 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
@@ -358,7 +358,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
 
   return (
     <main style={{ backgroundColor: '#030303', minHeight: '100vh', color: '#fff' }}>
-      <Nav />
+      {/* Nav is rendered by layout.js — NOT here */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div style={{ position: 'relative', width: '100%', minHeight: 340, overflow: 'hidden' }}>
@@ -426,6 +426,13 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
             </div>
             <div style={{ marginTop: 20 }}>
               <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>← MORE FROM {item.editor}</Link>
+            </div>
+
+            {/* ── DEXTER CROSS-LINK ── */}
+            <div style={{ marginTop: 20 }}>
+              <Link href="/advisor" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#ff8800', textDecoration: 'none', letterSpacing: 1 }}>
+                ⬢ Want a build based on this intel? Ask DEXTER →
+              </Link>
             </div>
 
             {/* ── COACH CTA ── */}
