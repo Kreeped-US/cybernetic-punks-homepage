@@ -199,41 +199,33 @@ async function generateTierImage(tierItems, runnerTag) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // ── BACKGROUND ──
   ctx.fillStyle = '#030303';
   ctx.fillRect(0, 0, W, H);
 
-  // Grid texture — stronger than before so it reads at thumbnail size
   ctx.strokeStyle = 'rgba(0,245,255,0.022)';
   ctx.lineWidth = 1;
   for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-  // Scanlines — slightly more visible
   ctx.fillStyle = 'rgba(0,245,255,0.008)';
   for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
 
-  // ── HEADER ──
-  // Red pulse dot
   ctx.fillStyle = '#ff0000';
   ctx.shadowColor = '#ff0000';
   ctx.shadowBlur = 8;
   ctx.beginPath(); ctx.arc(36, 36, 6, 0, Math.PI * 2); ctx.fill();
   ctx.shadowBlur = 0;
 
-  // Site name
   ctx.fillStyle = 'rgba(255,255,255,0.9)';
   ctx.font = '700 14px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('CYBERNETICPUNKS', 52, 42);
 
-  // Title — larger and more prominent
   ctx.fillStyle = '#ffffff';
   ctx.font = '900 24px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText('MARATHON TIER LIST', W - 32, 34);
 
-  // Season + date stamp — FIX 8: gives context at a glance
   const now = new Date();
   const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   const dateStamp = 'SEASON 1 — ' + monthNames[now.getMonth()] + ' ' + now.getFullYear();
@@ -241,7 +233,6 @@ async function generateTierImage(tierItems, runnerTag) {
   ctx.font = '400 11px "Share Tech Mono", monospace, sans-serif';
   ctx.fillText(dateStamp, W - 32, 52);
 
-  // Runner tag — FIX 5: orange and readable
   const tag = runnerTag?.trim() || 'ANONYMOUS RUNNER';
   ctx.fillStyle = '#ff8800';
   ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
@@ -253,17 +244,16 @@ async function generateTierImage(tierItems, runnerTag) {
   const rowStart = 86;
   const rowH = 71;
 
-  // FIX 6: stronger tier bg contrast — S-tier warm red tint, D/F noticeably dimmer
   const tierColors = {
     S: '#ff0000', A: '#ff8800', B: '#00f5ff',
     C: 'rgba(200,200,200,0.4)', D: 'rgba(150,150,150,0.25)', F: 'rgba(255,0,0,0.25)',
   };
   const tierBgs = {
-    S: 'rgba(255,0,0,0.12)',    // warmer red tint — premium
+    S: 'rgba(255,0,0,0.12)',
     A: 'rgba(255,136,0,0.07)',
     B: 'rgba(0,245,255,0.05)',
     C: 'rgba(255,255,255,0.02)',
-    D: 'rgba(255,255,255,0.008)', // noticeably dimmer
+    D: 'rgba(255,255,255,0.008)',
     F: 'rgba(255,0,0,0.02)',
   };
 
@@ -277,15 +267,12 @@ async function generateTierImage(tierItems, runnerTag) {
     const items = tierItems[tier] || [];
     const isSTop = tier === 'S';
 
-    // Row background
     ctx.fillStyle = tierBgs[tier];
     ctx.fillRect(24, y, W - 48, rowH - 2);
 
-    // Left accent bar — thicker for S
     ctx.fillStyle = tierColors[tier];
     ctx.fillRect(24, y, isSTop ? 5 : 3, rowH - 2);
 
-    // FIX 1: Tier letter — 56px, full color, S gets glow
     if (isSTop) {
       ctx.shadowColor = '#ff0000';
       ctx.shadowBlur = 18;
@@ -296,7 +283,6 @@ async function generateTierImage(tierItems, runnerTag) {
     ctx.fillText(tier, 72, y + rowH - 12);
     ctx.shadowBlur = 0;
 
-    // Divider after tier letter column
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
     ctx.fillRect(108, y + 8, 1, rowH - 18);
 
@@ -308,7 +294,6 @@ async function generateTierImage(tierItems, runnerTag) {
     items.forEach(item => {
       const src = getImageSrc(item);
       const imgEl = src ? imageCache[src] : null;
-      // FIX 4: uppercase weapon names
       const label = item.name.toUpperCase();
 
       ctx.font = '700 10px Orbitron, Arial, sans-serif';
@@ -319,7 +304,6 @@ async function generateTierImage(tierItems, runnerTag) {
 
       if (x + pillW > maxX) return;
 
-      // Pill background — slightly brighter for S tier
       ctx.fillStyle = isSTop ? 'rgba(255,0,0,0.1)' : 'rgba(255,255,255,0.07)';
       roundRect(ctx, x, pillY, pillW, pillH, 5);
       ctx.fill();
@@ -332,7 +316,6 @@ async function generateTierImage(tierItems, runnerTag) {
       if (hasImg) {
         const imgX = x + 8;
         const imgDrawY = pillY + (pillH - imgH) / 2;
-        // FIX 3: brighter weapon images — filter via offscreen canvas
         ctx.save();
         ctx.filter = 'brightness(1.25) contrast(1.1)';
         ctx.globalAlpha = 0.95;
@@ -355,23 +338,19 @@ async function generateTierImage(tierItems, runnerTag) {
     }
   });
 
-  // ── BOTTOM BAR ──
   const bottomY = rowStart + TIERS.length * rowH + 4;
 
   ctx.fillStyle = 'rgba(255,255,255,0.07)';
   ctx.fillRect(24, bottomY, W - 48, 1);
 
-  // Bottom bg slightly tinted
   ctx.fillStyle = 'rgba(0,245,255,0.06)';
   ctx.fillRect(24, bottomY + 1, W - 48, H - bottomY - 24);
 
-  // FIX 2: URL in full white, unmissable
   ctx.fillStyle = '#ffffff';
   ctx.font = '700 20px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('CYBERNETICPUNKS.COM', W / 2, bottomY + 36);
 
-  // CTA line in orange — the viral mechanism
   ctx.fillStyle = '#ff8800';
   ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
   ctx.fillText('CREATE YOUR OWN MARATHON TIER LIST → /meta', W / 2, bottomY + 56);
@@ -390,7 +369,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('live');
-  const [liveFilter, setLiveFilter] = useState('all'); // 'all' | 'weapons' | 'shells'
+  const [liveFilter, setLiveFilter] = useState('all');
   const [usageCount, setUsageCount] = useState(null);
   const [sharedList, setSharedList] = useState(null);
   const [movements, setMovements] = useState({});
@@ -427,21 +406,16 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   const shellMap = {};
   (shells || []).forEach(s => { shellMap[s.name.toLowerCase()] = s; });
 
-  // ── EFFECTS ──
-
-  // Countdown ticker
   useEffect(() => {
     setCountdown(formatCronCountdown(getSecondsToNextCron()));
     const id = setInterval(() => setCountdown(formatCronCountdown(getSecondsToNextCron())), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // ── TRACK META VIEW ──
   useEffect(() => {
     track('meta_view');
   }, []);
 
-  // Usage count fetch
   useEffect(() => {
     async function fetchUsage() {
       try {
@@ -455,12 +429,10 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     fetchUsage();
   }, []);
 
-  // Mobile detection
   useEffect(() => {
     setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
   }, []);
 
-  // URL param — shared list
   useEffect(() => {
     const listParam = searchParams.get('list');
     if (listParam) {
@@ -480,7 +452,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     }
   }, [searchParams]);
 
-  // Tier movement badges
   useEffect(() => {
     if (!metaTiers?.length) return;
     try {
@@ -510,15 +481,12 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     } catch (_) {}
   }, [metaTiers]);
 
-  // Rebuild unranked pool when filter changes
   useEffect(() => {
     if (sharedList) return;
     const pool = buildPoolItems(weapons, shells, filter, categoryFilter);
     const placed = new Set(Object.values(tierItems).flat().map(i => i.id));
     setUnranked(pool.filter(i => !placed.has(i.id)));
   }, [filter, categoryFilter, weapons, shells]);
-
-  // ── BUILDER ACTIONS ──
 
   function moveItem(itemId, sourceZone, destZone) {
     if (sourceZone === destZone) return;
@@ -712,7 +680,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             MARATHON META <span style={{ color: '#ff0000' }}>TIER LIST</span>
           </h1>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-            {/* Prominent updated badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 6 }}>
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00f5ff', animation: 'pulse-glow 2s infinite' }} />
               <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#00f5ff', letterSpacing: 1 }}>
@@ -722,7 +689,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>
               NEXT UPDATE IN: <span style={{ color: 'rgba(255,255,255,0.35)' }}>{countdown}</span>
             </div>
-            {/* Share buttons */}
             <div style={{ display: 'flex', gap: 6 }}>
               {[
                 { label: '𝕏 SHARE', color: '#ffffff', action: function() { window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('Marathon meta tier list updated — check what weapons and shells are actually winning right now') + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta') + '&hashtags=Marathon,MarathonGame', '_blank'); } },
@@ -807,7 +773,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
       {activeTab === 'live' && (
         <section style={{ marginBottom: 64 }}>
 
-          {/* WEAPONS / SHELLS / ALL toggle */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 4, width: 'fit-content' }}>
             {[
               { key: 'all',     label: 'ALL',     color: '#fff'    },
@@ -1000,6 +965,47 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
               Rankings are generated by NEXUS (meta tracking) and CIPHER (competitive analysis) every 6 hours. Data sources include YouTube gameplay analysis, Reddit community sentiment from r/Marathon, and Bungie official communications. Stat overlays are pulled from our verified shell and weapon database. Trends indicate movement over the past 48 hours.
             </p>
           </div>
+
+          {/* ── DEXTER CTA ── */}
+          <div style={{
+            marginTop: 32,
+            background: 'rgba(255,136,0,0.03)',
+            border: '1px solid rgba(255,136,0,0.12)',
+            borderLeft: '3px solid rgba(255,136,0,0.5)',
+            borderRadius: 8,
+            padding: '24px 28px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 20,
+          }}>
+            <div>
+              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#ff8800', letterSpacing: 1, marginBottom: 6 }}>
+                ⬢ NOT SURE WHAT TO RUN?
+              </div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, maxWidth: 440 }}>
+                DEXTER engineers a complete loadout in seconds — shell, weapons, mods, cores, and implants tuned to your playstyle and rank target.
+              </div>
+            </div>
+            <Link href="/advisor" style={{
+              flexShrink: 0,
+              padding: '12px 24px',
+              background: 'rgba(255,136,0,0.1)',
+              border: '1px solid rgba(255,136,0,0.35)',
+              borderRadius: 6,
+              textDecoration: 'none',
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 11,
+              fontWeight: 700,
+              color: '#ff8800',
+              letterSpacing: 2,
+              whiteSpace: 'nowrap',
+            }}>
+              GET YOUR BUILD →
+            </Link>
+          </div>
+
         </section>
       )}
 
@@ -1230,7 +1236,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                   background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
                   color: 'rgba(255,255,255,0.3)',
                 }}>
-                  ← EDIT TIER LIST
+                  {String.fromCharCode(8592)} EDIT TIER LIST
                 </button>
               </div>
             )}
@@ -1239,7 +1245,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
       )}
 
       <Link href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>
-        ← BACK TO THE GRID
+        {String.fromCharCode(8592)} BACK TO THE GRID
       </Link>
 
       <style>{`
