@@ -359,6 +359,48 @@ export default async function ShellHubPage({ params }) {
         </div>
       </section>
 
+      {/* ── DEXTER BUILD CTA ── */}
+      <section style={{ position: 'relative', zIndex: 1, padding: '0 24px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{
+          background: color + '04',
+          border: '1px solid ' + color + '18',
+          borderLeft: '3px solid ' + color + '55',
+          borderRadius: 8,
+          padding: '20px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 16,
+          marginBottom: 32,
+        }}>
+          <div>
+            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 6 }}>
+              ⬢ BUILD A FULL {shellName.toUpperCase()} LOADOUT
+            </div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
+              Weapons, mods, cores, and implants — engineered for {shellName} by DEXTER in seconds.
+            </div>
+          </div>
+          <Link href={'/advisor?shell=' + slug} style={{
+            flexShrink: 0,
+            padding: '11px 22px',
+            background: color + '14',
+            border: '1px solid ' + color + '44',
+            borderRadius: 6,
+            textDecoration: 'none',
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 11,
+            fontWeight: 700,
+            color: color,
+            letterSpacing: 2,
+            whiteSpace: 'nowrap',
+          }}>
+            BUILD {shellName.toUpperCase()} LOADOUT →
+          </Link>
+        </div>
+      </section>
+
       {/* ── FIELD ANALYSIS ── */}
       {(strengths.length > 0 || weaknesses.length > 0 || counteredBy.length > 0 || synergizes.length > 0 || shell.recommended_playstyle) && (
         <section style={{ position: 'relative', zIndex: 1, padding: '0 24px 0', maxWidth: 1100, margin: '0 auto' }}>
