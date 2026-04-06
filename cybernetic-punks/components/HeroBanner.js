@@ -205,7 +205,6 @@ function SpotlightCard({ href, accentColor, editorSymbol, editorName, badgeLabel
   );
 }
 
-// ─── MOBILE CARD CONTENT — compact, no stat bars ────────────
 function MobileCipherCard({ d }) {
   if (!d?.cipher) return <EmptyState />;
   var tags = (d.cipher.tags || []).slice(0, 2);
@@ -288,15 +287,10 @@ function AdvisorHeroPanel({ d, isMobile }) {
       onMouseEnter={function(e){ e.currentTarget.style.borderColor='rgba(255,136,0,0.4)'; }}
       onMouseLeave={function(e){ e.currentTarget.style.borderColor='rgba(255,136,0,0.15)'; }}
     >
-      {/* Top accent bar */}
       <div style={{ height:2, background:'linear-gradient(90deg, #ff8800, #ff880018)', flexShrink:0 }} />
-
-      {/* Subtle bg glow */}
       <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 100%, '+shellColor+'0a 0%, transparent 60%)', pointerEvents:'none', zIndex:0, transition:'background 0.3s' }} />
 
       <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', flex:1, padding:'16px 18px 0', overflow:'hidden' }}>
-
-        {/* Header badge */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <div style={{ width:6, height:6, borderRadius:'50%', background:'#ff8800', boxShadow:'0 0 6px #ff8800', flexShrink:0 }} />
@@ -305,7 +299,6 @@ function AdvisorHeroPanel({ d, isMobile }) {
           <span style={{ fontFamily:'Orbitron, monospace', fontSize:9, fontWeight:700, letterSpacing:2, color:'#ff8800', background:'rgba(255,136,0,0.12)', border:'1px solid rgba(255,136,0,0.3)', borderRadius:3, padding:'3px 8px' }}>BUILD ADVISOR</span>
         </div>
 
-        {/* Hero text */}
         <div style={{ marginBottom:20 }}>
           <div style={{ fontFamily:'Orbitron, monospace', fontSize:22, fontWeight:900, color:'#fff', letterSpacing:1, lineHeight:1.2, marginBottom:6 }}>
             GET YOUR BUILD<br /><span style={{ color:'#ff8800' }}>ENGINEERED</span>
@@ -315,7 +308,6 @@ function AdvisorHeroPanel({ d, isMobile }) {
           </div>
         </div>
 
-        {/* Selected shell preview */}
         <div style={{ background:shellColor+'10', border:'1px solid '+shellColor+'25', borderRadius:8, padding:'12px 14px', marginBottom:16, display:'flex', alignItems:'center', gap:12, transition:'all 0.2s' }}>
           <span style={{ fontFamily:'monospace', fontSize:28, color:shellColor, opacity:0.8 }}>{shellSymbol}</span>
           <div style={{ flex:1 }}>
@@ -327,7 +319,6 @@ function AdvisorHeroPanel({ d, isMobile }) {
           )}
         </div>
 
-        {/* Shell picker */}
         <div style={{ marginBottom:16 }}>
           <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.2)', letterSpacing:3, marginBottom:8 }}>SELECT YOUR RUNNER</div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:5 }}>
@@ -351,7 +342,6 @@ function AdvisorHeroPanel({ d, isMobile }) {
           </div>
         </div>
 
-        {/* Meta context */}
         {d?.metaTiers && d.metaTiers.filter(function(t){ return t.type==='shell'; }).length > 0 && (
           <div style={{ flex:1, marginBottom:14 }}>
             <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.2)', letterSpacing:3, marginBottom:8 }}>CURRENT META</div>
@@ -370,7 +360,6 @@ function AdvisorHeroPanel({ d, isMobile }) {
         )}
       </div>
 
-      {/* CTA strip */}
       <div style={{ position:'relative', zIndex:1, padding:'10px 18px', borderTop:'1px solid rgba(255,255,255,0.04)', flexShrink:0, display:'flex', justifyContent:'center', alignItems:'center' }}>
         <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,136,0,0.6)', letterSpacing:1 }}>
           BUILD {activeShell.toUpperCase()} LOADOUT →
@@ -486,7 +475,7 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        {/* HEADLINE */}
+        {/* ── HEADLINE ── */}
         <div style={{ textAlign:'center', marginBottom:isMobile?22:32, padding:isMobile?'0 4px':'0' }}>
           <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?8:10, color:'rgba(0,245,255,0.4)', letterSpacing:isMobile?2:4, marginBottom:8 }}>AUTONOMOUS MARATHON INTELLIGENCE</div>
           <h1 style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?17:'clamp(20px, 3vw, 28px)', fontWeight:900, letterSpacing:isMobile?2:4, marginBottom:8, lineHeight:1.3, wordBreak:'break-word' }}>
@@ -494,18 +483,23 @@ export default function HeroBanner() {
             {' '}
             <span style={{ color:'rgba(255,255,255,0.85)' }}>EVERY 6 HOURS.</span>
           </h1>
-          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?12:'clamp(14px, 2vw, 18px)', fontWeight:700, letterSpacing:isMobile?3:6, color:'#00f5ff', textShadow:'0 0 20px rgba(0,245,255,0.15)', marginBottom:8 }}>
-            AUTONOMOUS INTELLIGENCE
+
+          {/* ── UPDATED: secondary line ── */}
+          <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:'clamp(16px, 2vw, 20px)', fontWeight:600, letterSpacing:isMobile?1:2, color:'rgba(255,255,255,0.5)', marginBottom:8 }}>
+            Know the meta before you drop in.
           </div>
-          <p style={{ fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?10:11, color:'rgba(255,255,255,0.2)', letterSpacing:1, marginBottom:8, lineHeight:1.6 }}>
-            {isMobile ? 'Weapons. Builds. Meta. Community. Updated every 6 hours.' : 'Weapons profiled. Loadouts engineered. Plays graded. Meta decoded. Community intercepted. No writers. No wait. No buzz.'}
+
+          {/* ── UPDATED: primary tagline ── */}
+          <p style={{ fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?10:11, color:'rgba(255,255,255,0.25)', letterSpacing:isMobile?1:2, marginBottom:8, lineHeight:1.6 }}>
+            Marathon intelligence. Tier lists. Builds. Guides. Updated every 6 hours.
           </p>
+
           <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?8:9, color:'rgba(255,255,255,0.08)', letterSpacing:isMobile?1:3 }}>
             YOUTUBE · REDDIT · X · STEAM · TWITCH · BUNGIE.NET
           </div>
         </div>
 
-        {/* SPOTLIGHT CARDS — 2+1 layout: CIPHER hero left, DEXTER+NEXUS stacked right */}
+        {/* SPOTLIGHT CARDS */}
         {isMobile ? (
           <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
             <SpotlightCard href="/play-of-the-day" accentColor="#ff0000" editorSymbol="C" editorName="CIPHER" badgeLabel="PLAY OF THE DAY" loading={d===null} isMobile={isMobile}>
@@ -520,11 +514,7 @@ export default function HeroBanner() {
           </div>
         ) : (
           <div style={{ display:'grid', gridTemplateColumns:'1.15fr 1fr', gridTemplateRows:'1fr 1fr', gap:14, marginBottom:28, height:460 }}>
-
-            {/* BUILD ADVISOR — spans both rows, full height hero card */}
             <AdvisorHeroPanel d={d} isMobile={isMobile} />
-
-            {/* DEXTER — top right */}
             <SpotlightCard href="/top-build" accentColor="#ff8800" editorSymbol="D" editorName="DEXTER" badgeLabel="TOP BUILD" loading={d===null} isMobile={false}>
               {d?.dexter ? (
                 <>
@@ -538,8 +528,6 @@ export default function HeroBanner() {
                 </>
               ) : <EmptyState />}
             </SpotlightCard>
-
-            {/* NEXUS — bottom right */}
             <SpotlightCard href="/meta" accentColor="#00f5ff" editorSymbol="N" editorName="NEXUS" badgeLabel="LIVE META" loading={d===null} isMobile={false}>
               {d?.metaTiers?.length>0 ? d.metaTiers.map(function(item,i){
                 return (
@@ -552,13 +540,8 @@ export default function HeroBanner() {
                 );
               }) : <EmptyState />}
             </SpotlightCard>
-
           </div>
         )}
-
-
-
-
 
       </div>
 
