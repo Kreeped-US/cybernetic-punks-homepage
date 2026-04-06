@@ -5,10 +5,10 @@ import UsageStats from '@/components/UsageStats';
 const SCHEMAS = {
   weapon_stats: [
     { key: 'name',                label: 'Name',                 type: 'text',    required: true,  group: 'Identity' },
-    { key: 'weapon_type',         label: 'Weapon Type',          type: 'select',  group: 'Identity', options: ['AR', 'SMG', 'Shotgun', 'Sniper Rifle', 'Precision Rifle', 'LMG', 'Pistol', 'Melee', 'Railgun'] },
-    { key: 'ammo_type',           label: 'Ammo Type',            type: 'select',  group: 'Identity', options: ['Light Rounds', 'Heavy Rounds', 'MIPS', 'Volt Cells', 'Volt Battery', 'None'] },
+    { key: 'weapon_type',         label: 'Weapon Type',          type: 'select',  group: 'Identity', options: ['AR', 'SMG', 'Shotgun', 'Sniper Rifle', 'Precision Rifle', 'LMG', 'Pistol', 'Melee', 'Railgun', 'Hybrid'] },
+    { key: 'ammo_type',           label: 'Ammo Type',            type: 'select',  group: 'Identity', options: ['Light Rounds', 'Heavy Rounds', 'MIPS', 'Volt Cells', 'Volt Battery', 'Hyphatic Gel', 'None'] },
     { key: 'firing_mode',         label: 'Firing Mode',          type: 'select',  group: 'Identity', options: ['Full Auto', 'Semi-Auto', 'Single Shot', 'Burst', 'Melee'] },
-    { key: 'rarity',              label: 'Rarity',               type: 'select',  group: 'Identity', options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
+    { key: 'rarity',              label: 'Rarity',               type: 'select',  group: 'Identity', options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige', 'Contraband'] },
     { key: 'firepower_score',     label: 'Firepower Score',      type: 'number',  group: 'Firepower' },
     { key: 'damage',              label: 'Damage (Body)',         type: 'number',  group: 'Firepower' },
     { key: 'precision_multiplier',label: 'Precision Multiplier', type: 'number',  group: 'Firepower' },
