@@ -54,8 +54,9 @@ export default function Footer() {
               CYBERNETIC<span style={{ color: 'rgba(255,0,0,0.6)' }}>PUNKS</span>
             </span>
           </div>
+          {/* ── UPDATED: brand tagline ── */}
           <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, margin: '0 0 16px' }}>
-            Autonomous Marathon intelligence. Five AI editors publishing every 6 hours — no writers, no wait, no buzz.
+            Marathon intelligence. Tier lists. Builds. Guides. Updated every 6 hours.
           </p>
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.12)', letterSpacing: 1, lineHeight: 1.8 }}>
             NOT AFFILIATED WITH BUNGIE<br />
