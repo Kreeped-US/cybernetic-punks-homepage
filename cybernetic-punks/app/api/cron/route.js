@@ -70,6 +70,37 @@ function sleep(ms) {
   return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
+// ── BUILD "DO NOT REPEAT" BLOCK ───────────────────────────────
+// Appended to each editor's prompt so they can't recycle recent angles
+function buildNoRepeatBlock(headlines) {
+  if (!headlines || headlines.length === 0) return '';
+  return (
+    '\n\n--- TOPICS YOU ALREADY COVERED — DO NOT REPEAT THESE ANGLES ---\n' +
+    headlines.map(function(h, i) { return (i + 1) + '. ' + h; }).join('\n') +
+    '\nChoose a completely different weapon, shell, strategy, or topic this cycle. ' +
+    'If the source material overlaps with a previous topic, find a fresh angle within it.\n---'
+  );
+}
+
+// ── BUILD PATCH PRIORITY BLOCK ────────────────────────────────
+// Injected into all editors when a new Bungie patch/update is detected
+function buildPatchPriorityBlock(patchItems) {
+  if (!patchItems || patchItems.length === 0) return '';
+  return (
+    '\n\n--- ⚠️ PRIORITY OVERRIDE: NEW OFFICIAL BUNGIE UPDATE DETECTED ---\n' +
+    'The following Bungie communications were just published:\n' +
+    patchItems.map(function(p) {
+      return '• ' + p.title + (p.url ? ' — ' + p.url : '');
+    }).join('\n') +
+    '\nYour article THIS CYCLE must reflect this update. ' +
+    'For NEXUS: adjust tier placements to account for any balance changes. ' +
+    'For DEXTER: flag any builds that are buffed or nerfed. ' +
+    'For CIPHER: assess ranked impact — what plays are stronger or weaker now. ' +
+    'For GHOST: cover community reaction to the patch. ' +
+    'This patch context takes priority over all other topics.\n---'
+  );
+}
+
 async function processEditor(editorName, prompt, rawData) {
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
@@ -152,6 +183,8 @@ async function processEditor(editorName, prompt, rawData) {
             console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
           } else {
             console.log('[CRON] NEXUS upserted meta_tiers with ' + metaRows.length + ' entries');
+            // notifyMetaUpdate only fires if there are actual movers (risers/fallers)
+            // — silent when meta is stable (handled inside notifyMetaUpdate)
             notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
           }
         }
@@ -203,12 +236,93 @@ async function processEditor(editorName, prompt, rawData) {
 export async function GET() {
   try {
     var prompts = await gatherAll();
-    var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null };
+    var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null, bungieNews: [] };
 
-    if (rawData.bungieNews && rawData.bungieNews.length > 0) {
-      notifyPatchNotes(rawData.bungieNews).catch(function(e) { console.log('[DISCORD] patch notify error: ' + e.message); });
+    // ── STEP 1: Fetch recent headlines for each editor ─────────────
+    // Used to prevent editors from repeating the same angles each cycle
+    var headlineResults = await Promise.all([
+      supabase.from('feed_items').select('headline').eq('editor', 'CIPHER').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'NEXUS').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'DEXTER').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'GHOST').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
+    ]);
+
+    var recentHeadlines = {
+      CIPHER: (headlineResults[0].data || []).map(function(r) { return r.headline; }),
+      NEXUS:  (headlineResults[1].data || []).map(function(r) { return r.headline; }),
+      DEXTER: (headlineResults[2].data || []).map(function(r) { return r.headline; }),
+      GHOST:  (headlineResults[3].data || []).map(function(r) { return r.headline; }),
+    };
+
+    console.log('[CRON] Recent headlines loaded — CIPHER:' + recentHeadlines.CIPHER.length + ' NEXUS:' + recentHeadlines.NEXUS.length + ' DEXTER:' + recentHeadlines.DEXTER.length + ' GHOST:' + recentHeadlines.GHOST.length);
+
+    // ── STEP 2: Detect patch notes ─────────────────────────────────
+    var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
+    var hasPatch = patchItems.length > 0;
+    var patchBlock = hasPatch ? buildPatchPriorityBlock(patchItems) : '';
+
+    if (hasPatch) {
+      console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', '));
     }
 
+    // ── STEP 3: Inject dedup + patch priority into each editor prompt ──
+    // CIPHER
+    if (typeof prompts.CIPHER === 'string') {
+      prompts.CIPHER += buildNoRepeatBlock(recentHeadlines.CIPHER);
+      if (hasPatch) prompts.CIPHER += patchBlock;
+    }
+
+    // NEXUS — patch block prepended so it comes before all other context
+    if (typeof prompts.NEXUS === 'string') {
+      if (hasPatch) prompts.NEXUS = patchBlock + '\n\n' + prompts.NEXUS;
+      prompts.NEXUS += buildNoRepeatBlock(recentHeadlines.NEXUS);
+    }
+
+    // DEXTER
+    if (typeof prompts.DEXTER === 'string') {
+      prompts.DEXTER += buildNoRepeatBlock(recentHeadlines.DEXTER);
+      if (hasPatch) prompts.DEXTER += patchBlock;
+    }
+
+    // GHOST
+    if (typeof prompts.GHOST === 'string') {
+      prompts.GHOST += buildNoRepeatBlock(recentHeadlines.GHOST);
+      if (hasPatch) prompts.GHOST += patchBlock;
+    }
+
+    // MIRANDA — recentHeadlines already handled inside buildMirandaPrompt via gatherMirandaData
+    // Patch priority injected via mirandaData.devNews (already set in gatherAll)
+
+    // ── STEP 4: Patch Discord notification with dedup ──────────────
+    // Only fires once per 23 hours — prevents same patch being posted every cycle
+    if (hasPatch) {
+      try {
+        var cutoff23h = new Date(Date.now() - 23 * 3600 * 1000).toISOString();
+        var { data: recentPatchNotif } = await supabase
+          .from('site_events')
+          .select('id')
+          .eq('event_name', 'patch_discord')
+          .gte('created_at', cutoff23h)
+          .limit(1);
+
+        if (!recentPatchNotif || recentPatchNotif.length === 0) {
+          notifyPatchNotes(rawData.bungieNews).catch(function(e) {
+            console.log('[DISCORD] patch notify error: ' + e.message);
+          });
+          await supabase.from('site_events').insert({ event_name: 'patch_discord' });
+          console.log('[CRON] Patch Discord notification sent — recorded in site_events');
+        } else {
+          console.log('[CRON] Patch already notified in last 23h — skipping Discord');
+        }
+      } catch (patchErr) {
+        console.log('[CRON] Patch dedup check failed: ' + patchErr.message + ' — sending anyway');
+        notifyPatchNotes(rawData.bungieNews).catch(function(e) {
+          console.log('[DISCORD] patch notify error: ' + e.message);
+        });
+      }
+    }
+
+    // ── STEP 5: Run editors ────────────────────────────────────────
     var results = [];
     var editors = [
       { name: 'CIPHER',  prompt: prompts.CIPHER  },
@@ -230,6 +344,7 @@ export async function GET() {
       success: true,
       timestamp: new Date().toISOString(),
       summary: succeeded + ' published, ' + (results.length - succeeded) + ' skipped',
+      patch_detected: hasPatch,
       results: results,
       tweet: 'Auto-posting disabled — post manually via @Cybernetic87250',
     });

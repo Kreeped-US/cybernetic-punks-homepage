@@ -69,14 +69,20 @@ export async function notifyIntelFeed(feedItem, editorName) {
   });
 }
 
-// ── META UPDATES — fires when NEXUS updates tier list ──────────
+// ── META UPDATES — ONLY fires when tiers actually move ─────────
+// If nothing changed this cycle, we stay silent. No spam.
 export async function notifyMetaUpdate(metaRows) {
   var url = process.env.DISCORD_WEBHOOK_META;
   if (!url || !metaRows || metaRows.length === 0) return;
 
-  // Highlight movers — items that went up or down
-  var risers = metaRows.filter(function(r) { return r.trend === 'up'; });
+  var risers  = metaRows.filter(function(r) { return r.trend === 'up'; });
   var fallers = metaRows.filter(function(r) { return r.trend === 'down'; });
+
+  // ── SILENT IF NO MOVERS — do not spam Discord with "meta stable" ──
+  if (risers.length === 0 && fallers.length === 0) {
+    console.log('[DISCORD] Meta stable — skipping Discord notification');
+    return;
+  }
 
   var fields = [];
 
@@ -100,23 +106,14 @@ export async function notifyMetaUpdate(metaRows) {
     });
   }
 
-  if (fields.length === 0) {
-    // No movers — just report the update happened
-    fields.push({
-      name: 'META STABLE',
-      value: metaRows.length + ' weapons and shells re-evaluated. No significant tier shifts this cycle.',
-      inline: false,
-    });
-  }
-
   await sendWebhook(url, {
     embeds: [{
       color: 0x00f5ff,
       author: {
-        name: '⬡ NEXUS — Meta Intelligence Update',
+        name: '⬡ NEXUS — Meta Shift Detected',
         url: 'https://cyberneticpunks.com/meta',
       },
-      title: 'Marathon Meta Tier List Updated',
+      title: 'Marathon Meta Tier Shifts',
       url: 'https://cyberneticpunks.com/meta',
       fields,
       footer: {
@@ -127,12 +124,12 @@ export async function notifyMetaUpdate(metaRows) {
   });
 }
 
-// ── PATCH NOTES — fires when Bungie news detected ─────────────
+// ── PATCH NOTES — fires when NEW Bungie patch is detected ──────
+// Deduplication is handled upstream in cron/route.js before this is called.
 export async function notifyPatchNotes(bungieNews) {
   var url = process.env.DISCORD_WEBHOOK_PATCH;
   if (!url || !bungieNews || bungieNews.length === 0) return;
 
-  // Only fire for patch-related news
   var patchItems = bungieNews.filter(function(n) { return n.is_patch_note; });
   if (patchItems.length === 0) return;
 

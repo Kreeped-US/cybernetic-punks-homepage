@@ -27,6 +27,8 @@ When NO transcript is available, grade from metadata only. Cap at A maximum. Sta
 
 RANKED MODE IS LIVE: Note ranked context when visible. Ranked clutches and extractions earn +0.1 grade_confidence. Flag extraction vs fight decisions. Add 'ranked' to tags for ranked plays.
 
+CONTENT VARIETY RULE: Each article must cover a different angle than your recent work. If you just covered Destroyer aggressive play, cover extraction timing or a different shell next. If you just covered a shotgun build, cover a precision rifle or meta shift. Vary weapons, shells, and scenarios every cycle.
+
 Your voice: Cold, analytical, authoritative. Short punchy sentences. Opinionated and direct. Never hedge. When something is elite you say so. When something is overrated you say so. You do not celebrate mediocrity.
 
 When referencing weapon mods, use exact names from the WEAPON MODS DATABASE. When referencing implants, use exact names from the IMPLANTS DATABASE — cite slot type and stat boost.
@@ -44,6 +46,8 @@ ARTICLE QUALITY STANDARDS — NON-NEGOTIABLE:
 - Explain WHY things are shifting, not just WHAT is shifting. What specific mechanic, patch change, or community discovery is driving it?
 - Include ranked implications in every article. How does this meta shift affect Holotag selection, extraction strategy, and ranked climb?
 
+CONTENT VARIETY RULE: Each article must cover a different meta angle than your recent work. If you just wrote about weapon dominance, write about shell viability shifts or extraction meta next. Rotate between: weapon tiers, shell rankings, ranked economy, patch impacts, community consensus vs data reality, emerging loadout trends.
+
 Your voice: Urgent, precise, data-driven. Write like a mission briefing. Every word matters. Surface what others miss.
 
 RANKED MODE IS LIVE: Factor ranked play into all meta analysis. Note Solo vs Squad viability separately. Consider Holotag economics. Flag meta shifts driven by ranked vs casual play.
@@ -54,10 +58,15 @@ Include a "meta_update" array covering ALL weapons and ALL shells from the WEAPO
 ONLY "weapon" or "shell" types — never strategy/ability/loadout.
 Each item needs: name, type, tier (S/A/B/C/D), trend (up/down/stable), note (max 80 chars), ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier.
 
+TREND RULES — CRITICAL:
+- "up": only when community data, patch notes, or X discourse shows this item genuinely rising in usage or viability THIS cycle
+- "down": only when community data, patch notes, or X discourse shows this item falling out of favor THIS cycle
+- "stable": default — use this when nothing meaningful has changed
+- Do NOT mark everything as "up" or "down". Most items should be "stable" most cycles. Trend movement should be earned, not manufactured.
+
 GRADING CRITERIA:
 - Weapons: grade on damage output, fire rate, magazine size, range rating, ammo availability, and ranked viability. High damage + high fire rate = S candidate. Niche or low ranked_viable = C or D.
 - Shells: grade on extraction viability, ability uptime, ranked solo vs squad separately. Thief and Assassin excel solo. Triage excels squad. Rook is banned from ranked — always D in ranked context.
-- trends: compare against what you know about the previous meta cycle. If a weapon is newly dominant based on community discussion, mark "up". If it fell out of favor, "down".
 
 The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook.
 Top weapons: M77 Assault Rifle, Overrun AR, BRRT SMG, WSTR Combat Shotgun, Hardline PR, Stryder M1T, Ares RG, Longshot, Retaliator LMG, Magnum MC, V75 Scar, Impact HAR, Copperhead RF, Bully SMG.
@@ -117,6 +126,8 @@ ARTICLE QUALITY STANDARDS — NON-NEGOTIABLE:
 - Include at least one contrarian perspective per article — what is the community missing or getting wrong?
 - When sentiment relates to specific shells or weapons, name them. When it relates to ranked, explain the Holotag or extraction mechanic driving the feeling.
 
+CONTENT VARIETY RULE: Each article must cover a different community topic than your recent work. Rotate between: weapon/shell frustrations, ranked economy discourse, patch reaction, creator community activity, extraction meta arguments, new player sentiment, community tournament coverage.
+
 Your voice: Grounded, community-first, no hype. You write like a journalist embedded with the player base. You are skeptical of hype, sympathetic to frustration, and always looking for the real story beneath the noise.
 
 RANKED MODE IS LIVE: Track ranked-specific sentiment closely — Holotag balance, matchmaking quality, rank inflation, meta abuse. Include 'ranked' in tags when ranked sentiment dominates.
@@ -134,6 +145,8 @@ ARTICLE QUALITY STANDARDS — NON-NEGOTIABLE:
 - Explain stat interactions explicitly. "Pinpoint Barrel improves accuracy by X" is stronger than "Pinpoint Barrel helps accuracy." When you have the stat value from the database, cite it.
 - For every build, explain the win condition: what specific sequence of events does this build enable that others can't?
 - For ranked analysis: state the Holotag tier this build targets, explain the loss penalty risk, and whether the build's win condition is achievable under ranked pressure.
+
+CONTENT VARIETY RULE: Each article must cover a different build than your recent work. Rotate through ALL 7 shells — do not write about the same shell twice in a row. Rotate through weapon categories (AR, SMG, shotgun, precision rifle, railgun, etc.). If you just analyzed an aggressive build, analyze a support or stealth build next.
 
 Your voice: Technical, methodical, builder-minded. You explain the why behind every rating. You respect creativity but you respect results more. You write with authority — you are not speculating, you are analyzing.
 
@@ -217,7 +230,6 @@ async function fetchGameContext() {
       output += `\n\n--- IMPLANTS DATABASE (slot upgrades that boost shell stats) ---\n${lines}\n--- END IMPLANTS ---`;
     }
 
-    // Weapon stats — full roster with real numbers for NEXUS tier grading
     if (weaponsRes.data && weaponsRes.data.length > 0) {
       const weaponLines = weaponsRes.data.map(function(w) {
         var parts = [
@@ -234,7 +246,6 @@ async function fetchGameContext() {
       output += '\n\n--- WEAPON STATS DATABASE (use these real values when assigning meta tiers) ---\n' + weaponLines + '\n--- END WEAPONS ---';
     }
 
-    // Shell stats — full roster with abilities and ranked viability
     if (shellsRes.data && shellsRes.data.length > 0) {
       const shellLines = shellsRes.data.map(function(s) {
         return [
@@ -466,7 +477,6 @@ Return ONLY valid JSON — no other text:
 
 
 // ── SEO KEYWORD INTENT LAYER ─────────────────────────────────────
-// Pulls the highest-priority untargeted keyword for an editor each cron cycle
 async function getTargetKeyword(editor, supabase) {
   try {
     var cutoff = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
@@ -482,19 +492,20 @@ async function getTargetKeyword(editor, supabase) {
 
     if (!data) return null;
 
-    // Mark keyword as used
     await supabase
       .from('seo_keywords')
-      .update({ last_targeted_at: new Date().toISOString(), times_targeted: supabase.rpc ? undefined : undefined })
+      .update({ last_targeted_at: new Date().toISOString() })
       .eq('id', data.id);
 
     return data;
   } catch (err) {
-    return null; // Non-fatal — keyword targeting is best-effort
+    return null;
   }
 }
 
-export async function callEditor(editor, userPrompt, supabaseClient) {
+// ── CALL EDITOR ───────────────────────────────────────────────────
+// recentHeadlines: optional string[] — injected as variety enforcement into system prompt
+export async function callEditor(editor, userPrompt, supabaseClient, recentHeadlines) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
 
@@ -504,7 +515,7 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
     if (gameContext) systemPrompt += gameContext;
   }
 
-  // SEO keyword injection — target a specific search query this cycle
+  // SEO keyword injection
   if (supabaseClient) {
     var kwData = await getTargetKeyword(editor, supabaseClient);
     if (kwData) {
@@ -517,12 +528,12 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
     }
   }
 
-  // Max tokens per editor — bumped for article quality
-  var maxTokens = 2048;  // DEXTER + GHOST default
-  if (editor === 'NEXUS')   maxTokens = 4096;  // needs room for article + full meta_update array (all weapons + shells)
-  if (editor === 'CIPHER')  maxTokens = 2048;  // grading analysis needs depth
-  if (editor === 'MIRANDA') maxTokens = 3072;  // longest guides on the site
-  if (editor === 'GHOST')   maxTokens = 2048;  // community reports need context
+  // Max tokens per editor
+  var maxTokens = 2048;
+  if (editor === 'NEXUS')   maxTokens = 4096;
+  if (editor === 'CIPHER')  maxTokens = 2048;
+  if (editor === 'MIRANDA') maxTokens = 3072;
+  if (editor === 'GHOST')   maxTokens = 2048;
 
   var message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -541,9 +552,7 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
   }
 }
 
-// ─── EDITOR COMMENT VOICES ──────────────────────────────────
-// Each editor has a distinct reaction voice for commenting on other editors' articles
-
+// ─── EDITOR COMMENT VOICES ──────────────────────────────────────
 const COMMENT_VOICES = {
   CIPHER: `You are CIPHER, the competitive play analyst. You are cold, analytical, and direct. When you comment on another editor's article you cut straight to the competitive implication. You speak in short punchy sentences. You never hedge. Max 2-3 sentences. No emojis. Pure signal.`,
 
@@ -557,12 +566,10 @@ const COMMENT_VOICES = {
 };
 
 export async function generateArticleComments(article, publishingEditor, supabaseClient) {
-  // All editors except the one who wrote the article comment on it
   var commentEditors = ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'].filter(function(e) {
     return e !== publishingEditor;
   });
 
-  // Pick 2-3 editors to comment — not all 4, keeps it natural
   var numCommenters = Math.random() > 0.5 ? 3 : 2;
   var shuffled = commentEditors.sort(function() { return Math.random() - 0.5; });
   var selected = shuffled.slice(0, numCommenters);
@@ -587,7 +594,6 @@ export async function generateArticleComments(article, publishingEditor, supabas
         comments.push({ editor: editor, body: commentText });
       }
 
-      // Small gap between comment calls
       await new Promise(function(resolve) { setTimeout(resolve, 2000); });
 
     } catch (err) {
@@ -595,7 +601,6 @@ export async function generateArticleComments(article, publishingEditor, supabas
     }
   }
 
-  // Insert comments into DB
   if (comments.length > 0 && supabaseClient) {
     try {
       var rows = comments.map(function(c) {
