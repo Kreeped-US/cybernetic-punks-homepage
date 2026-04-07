@@ -71,7 +71,6 @@ function sleep(ms) {
 }
 
 // ── BUILD "DO NOT REPEAT" BLOCK ───────────────────────────────
-// Appended to each editor's prompt so they can't recycle recent angles
 function buildNoRepeatBlock(headlines) {
   if (!headlines || headlines.length === 0) return '';
   return (
@@ -83,7 +82,6 @@ function buildNoRepeatBlock(headlines) {
 }
 
 // ── BUILD PATCH PRIORITY BLOCK ────────────────────────────────
-// Injected into all editors when a new Bungie patch/update is detected
 function buildPatchPriorityBlock(patchItems) {
   if (!patchItems || patchItems.length === 0) return '';
   return (
@@ -99,6 +97,21 @@ function buildPatchPriorityBlock(patchItems) {
     'For GHOST: cover community reaction to the patch. ' +
     'This patch context takes priority over all other topics.\n---'
   );
+}
+
+// ── BUILD DIRECTIVE BLOCK ─────────────────────────────────────
+// Injected when an editor has a pending directive queued via the admin panel
+function buildDirectiveBlock(directive) {
+  if (!directive) return '';
+  var block = '\n\n--- 🎯 EDITOR DIRECTIVE — THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\n';
+  block += 'You have been given a specific article assignment. This overrides your normal content selection.\n\n';
+  block += 'ASSIGNMENT: ' + directive.instruction + '\n';
+  if (directive.url) {
+    block += 'SOURCE URL: ' + directive.url + '\n';
+    block += 'Visit or reference this URL in your analysis. This is the primary source for your article.\n';
+  }
+  block += '\nWrite your article specifically about this topic. Do not default to generic meta analysis or build content — cover this directive directly and thoroughly.\n---';
+  return block;
 }
 
 async function processEditor(editorName, prompt, rawData) {
@@ -183,8 +196,7 @@ async function processEditor(editorName, prompt, rawData) {
             console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
           } else {
             console.log('[CRON] NEXUS upserted meta_tiers with ' + metaRows.length + ' entries');
-            // notifyMetaUpdate only fires if there are actual movers (risers/fallers)
-            // — silent when meta is stable (handled inside notifyMetaUpdate)
+            // Only fires if there are actual movers — silent when meta is stable
             notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
           }
         }
@@ -200,7 +212,7 @@ async function processEditor(editorName, prompt, rawData) {
     }
 
     // ── TWITTER/X AUTO-POSTING DISABLED ──
-    // Suspended indefinitely. Post manually via @Cybernetic87250 when content is worth sharing.
+    // Suspended indefinitely. Post manually via @Cybernetic87250.
 
     // Generate editor comments on this article
     if (feedItem) {
@@ -238,8 +250,29 @@ export async function GET() {
     var prompts = await gatherAll();
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null, bungieNews: [] };
 
-    // ── STEP 1: Fetch recent headlines for each editor ─────────────
-    // Used to prevent editors from repeating the same angles each cycle
+    // ── STEP 1: Fetch pending directives ──────────────────────────
+    var directiveMap = {};
+    try {
+      var { data: directives } = await supabase
+        .from('editor_directives')
+        .select('id, editor, instruction, url')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true });
+
+      // One directive per editor — take the oldest pending one per editor
+      (directives || []).forEach(function(d) {
+        if (!directiveMap[d.editor]) directiveMap[d.editor] = d;
+      });
+
+      var directiveCount = Object.keys(directiveMap).length;
+      if (directiveCount > 0) {
+        console.log('[CRON] Directives found: ' + Object.entries(directiveMap).map(function(e) { return e[0]; }).join(', '));
+      }
+    } catch (dirErr) {
+      console.log('[CRON] Directive fetch failed (non-fatal): ' + dirErr.message);
+    }
+
+    // ── STEP 2: Fetch recent headlines for dedup ──────────────────
     var headlineResults = await Promise.all([
       supabase.from('feed_items').select('headline').eq('editor', 'CIPHER').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
       supabase.from('feed_items').select('headline').eq('editor', 'NEXUS').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
@@ -254,9 +287,7 @@ export async function GET() {
       GHOST:  (headlineResults[3].data || []).map(function(r) { return r.headline; }),
     };
 
-    console.log('[CRON] Recent headlines loaded — CIPHER:' + recentHeadlines.CIPHER.length + ' NEXUS:' + recentHeadlines.NEXUS.length + ' DEXTER:' + recentHeadlines.DEXTER.length + ' GHOST:' + recentHeadlines.GHOST.length);
-
-    // ── STEP 2: Detect patch notes ─────────────────────────────────
+    // ── STEP 3: Detect patch notes ────────────────────────────────
     var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
     var hasPatch = patchItems.length > 0;
     var patchBlock = hasPatch ? buildPatchPriorityBlock(patchItems) : '';
@@ -265,36 +296,50 @@ export async function GET() {
       console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', '));
     }
 
-    // ── STEP 3: Inject dedup + patch priority into each editor prompt ──
+    // ── STEP 4: Inject directive + dedup + patch into each editor prompt ──
     // CIPHER
     if (typeof prompts.CIPHER === 'string') {
-      prompts.CIPHER += buildNoRepeatBlock(recentHeadlines.CIPHER);
-      if (hasPatch) prompts.CIPHER += patchBlock;
+      if (directiveMap['CIPHER']) prompts.CIPHER += buildDirectiveBlock(directiveMap['CIPHER']);
+      else {
+        prompts.CIPHER += buildNoRepeatBlock(recentHeadlines.CIPHER);
+        if (hasPatch) prompts.CIPHER += patchBlock;
+      }
     }
 
-    // NEXUS — patch block prepended so it comes before all other context
+    // NEXUS
     if (typeof prompts.NEXUS === 'string') {
-      if (hasPatch) prompts.NEXUS = patchBlock + '\n\n' + prompts.NEXUS;
-      prompts.NEXUS += buildNoRepeatBlock(recentHeadlines.NEXUS);
+      if (directiveMap['NEXUS']) {
+        prompts.NEXUS += buildDirectiveBlock(directiveMap['NEXUS']);
+      } else {
+        if (hasPatch) prompts.NEXUS = patchBlock + '\n\n' + prompts.NEXUS;
+        prompts.NEXUS += buildNoRepeatBlock(recentHeadlines.NEXUS);
+      }
     }
 
     // DEXTER
     if (typeof prompts.DEXTER === 'string') {
-      prompts.DEXTER += buildNoRepeatBlock(recentHeadlines.DEXTER);
-      if (hasPatch) prompts.DEXTER += patchBlock;
+      if (directiveMap['DEXTER']) prompts.DEXTER += buildDirectiveBlock(directiveMap['DEXTER']);
+      else {
+        prompts.DEXTER += buildNoRepeatBlock(recentHeadlines.DEXTER);
+        if (hasPatch) prompts.DEXTER += patchBlock;
+      }
     }
 
     // GHOST
     if (typeof prompts.GHOST === 'string') {
-      prompts.GHOST += buildNoRepeatBlock(recentHeadlines.GHOST);
-      if (hasPatch) prompts.GHOST += patchBlock;
+      if (directiveMap['GHOST']) prompts.GHOST += buildDirectiveBlock(directiveMap['GHOST']);
+      else {
+        prompts.GHOST += buildNoRepeatBlock(recentHeadlines.GHOST);
+        if (hasPatch) prompts.GHOST += patchBlock;
+      }
     }
 
-    // MIRANDA — recentHeadlines already handled inside buildMirandaPrompt via gatherMirandaData
-    // Patch priority injected via mirandaData.devNews (already set in gatherAll)
+    // MIRANDA — directive injected via mirandaData object
+    if (directiveMap['MIRANDA'] && prompts.MIRANDA && typeof prompts.MIRANDA === 'object') {
+      prompts.MIRANDA._directive = directiveMap['MIRANDA'];
+    }
 
-    // ── STEP 4: Patch Discord notification with dedup ──────────────
-    // Only fires once per 23 hours — prevents same patch being posted every cycle
+    // ── STEP 5: Patch Discord notification with dedup ─────────────
     if (hasPatch) {
       try {
         var cutoff23h = new Date(Date.now() - 23 * 3600 * 1000).toISOString();
@@ -322,7 +367,7 @@ export async function GET() {
       }
     }
 
-    // ── STEP 5: Run editors ────────────────────────────────────────
+    // ── STEP 6: Run editors ───────────────────────────────────────
     var results = [];
     var editors = [
       { name: 'CIPHER',  prompt: prompts.CIPHER  },
@@ -336,14 +381,29 @@ export async function GET() {
       if (i > 0) await sleep(15000);
       var editorResult = await processEditor(editors[i].name, editors[i].prompt, rawData);
       results.push(editorResult);
+
+      // ── STEP 7: Mark directive consumed if editor succeeded ───────
+      if (editorResult.success && directiveMap[editors[i].name]) {
+        try {
+          await supabase
+            .from('editor_directives')
+            .update({ status: 'consumed', consumed_at: new Date().toISOString() })
+            .eq('id', directiveMap[editors[i].name].id);
+          console.log('[CRON] Directive consumed for ' + editors[i].name + ': ' + directiveMap[editors[i].name].instruction.slice(0, 60));
+        } catch (consumeErr) {
+          console.log('[CRON] Failed to mark directive consumed: ' + consumeErr.message);
+        }
+      }
     }
 
     var succeeded = results.filter(function(r) { return r.success; }).length;
+    var directivesUsed = results.filter(function(r) { return r.success && directiveMap[r.editor]; }).length;
 
     return Response.json({
       success: true,
       timestamp: new Date().toISOString(),
       summary: succeeded + ' published, ' + (results.length - succeeded) + ' skipped',
+      directives_consumed: directivesUsed,
       patch_detected: hasPatch,
       results: results,
       tweet: 'Auto-posting disabled — post manually via @Cybernetic87250',

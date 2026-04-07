@@ -70,7 +70,7 @@ const SCHEMAS = {
     { key: 'effect_desc',   label: 'Effect Description', type: 'textarea' },
     { key: 'credit_value',  label: 'Credit Value',       type: 'number' },
     { key: 'ranked_viable', label: 'Ranked Viable',      type: 'boolean' },
-    { key: 'image_filename', label: 'Image Filename',     type: 'text',    placeholder: 'e.g. barrel-mod.webp' },
+    { key: 'image_filename', label: 'Image Filename',    type: 'text',    placeholder: 'e.g. barrel-mod.webp' },
   ],
 
   implant_stats: [
@@ -120,18 +120,26 @@ const SCHEMAS = {
     { key: 'notes',              label: 'Notes',              type: 'textarea' },
     { key: 'image_filename',     label: 'Image Filename',     type: 'text',    placeholder: 'e.g. core-name.webp' },
   ],
+
+  editor_directives: [
+    { key: 'editor',      label: 'Editor',      type: 'select',   required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'] },
+    { key: 'instruction', label: 'Instruction', type: 'textarea', required: true, placeholder: 'e.g. Cover the April 14 balance patch — Longshot nerf, Recon Echo Pulse buffs. Full breakdown of ranked impact.' },
+    { key: 'url',         label: 'Source URL',  type: 'text',     placeholder: 'e.g. https://x.com/BungieHelp/status/... or https://bungie.net/...' },
+    { key: 'status',      label: 'Status',      type: 'select',   options: ['pending', 'consumed'] },
+  ],
 };
 
 const NULLABLE_SELECT_NULL_VALUE = 'Universal';
 
 const TABS = [
-  { key: 'weapon_stats',      label: 'WEAPONS',     color: '#ff8800' },
-  { key: 'shell_stats',       label: 'SHELLS',      color: '#00f5ff' },
-  { key: 'shell_stat_values', label: 'SHELL STATS', color: '#00ff88' },
-  { key: 'mod_stats',         label: 'MODS',        color: '#ff0000' },
-  { key: 'core_stats',        label: 'CORES',       color: '#ffd700' },
-  { key: 'implant_stats',     label: 'IMPLANTS',    color: '#9b5de5' },
-  { key: 'ammo_stats',        label: 'AMMO',        color: '#00ff88' },
+  { key: 'editor_directives', label: 'DIRECTIVES', color: '#ff2d55' },
+  { key: 'weapon_stats',      label: 'WEAPONS',    color: '#ff8800' },
+  { key: 'shell_stats',       label: 'SHELLS',     color: '#00f5ff' },
+  { key: 'shell_stat_values', label: 'SHELL STATS',color: '#00ff88' },
+  { key: 'mod_stats',         label: 'MODS',       color: '#ff0000' },
+  { key: 'core_stats',        label: 'CORES',      color: '#ffd700' },
+  { key: 'implant_stats',     label: 'IMPLANTS',   color: '#9b5de5' },
+  { key: 'ammo_stats',        label: 'AMMO',       color: '#00ff88' },
 ];
 
 const S = {
@@ -162,6 +170,9 @@ const GROUP_COLORS = {
   'Range & Mag':'#9b5de5',
   Flags:        '#00ff88',
 };
+
+const EDITOR_COLORS = { CIPHER: '#ff0000', NEXUS: '#00f5ff', DEXTER: '#ff8800', GHOST: '#00ff88', MIRANDA: '#9b5de5' };
+const STATUS_COLORS = { pending: '#ff2d55', consumed: '#00ff88' };
 
 function rowToFormData(row, schema) {
   const formData = { ...row };
@@ -196,7 +207,7 @@ export default function AdminPage() {
   const [password, setPassword]         = useState('');
   const [authed, setAuthed]             = useState(false);
   const [authError, setAuthError]       = useState('');
-  const [activeTab, setActiveTab]       = useState('weapon_stats');
+  const [activeTab, setActiveTab]       = useState('editor_directives');
   const [rows, setRows]                 = useState([]);
   const [loading, setLoading]           = useState(false);
   const [editingRow, setEditingRow]     = useState(null);
@@ -209,7 +220,7 @@ export default function AdminPage() {
 
   function showToast(msg, ok = true) {
     setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   }
 
   function apiHeaders() {
@@ -253,6 +264,7 @@ export default function AdminPage() {
       else if (f.nullableSelect) defaults[f.key] = NULLABLE_SELECT_NULL_VALUE;
       else defaults[f.key] = '';
     });
+    if (activeTab === 'editor_directives') defaults.status = 'pending';
     setFormData(defaults);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -264,7 +276,7 @@ export default function AdminPage() {
     try {
       const schema = SCHEMAS[activeTab] || [];
       const updates = formDataToRow({ ...formData }, schema);
-      delete updates.id; delete updates.updated_at; delete updates.created_at;
+      delete updates.id; delete updates.updated_at; delete updates.created_at; delete updates.consumed_at;
       const res = await fetch('/api/admin', { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify({ table: activeTab, id: editingRow, updates }) });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
@@ -280,13 +292,13 @@ export default function AdminPage() {
     try {
       const schema = SCHEMAS[activeTab] || [];
       const row = formDataToRow({ ...formData }, schema);
-      delete row.id; delete row.updated_at; delete row.created_at;
+      delete row.id; delete row.updated_at; delete row.created_at; delete row.consumed_at;
       const res = await fetch('/api/admin', { method: 'POST', headers: apiHeaders(), body: JSON.stringify({ table: activeTab, row }) });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setRows([json.data, ...rows]);
       cancelForm();
-      showToast('Row added');
+      showToast(activeTab === 'editor_directives' ? 'Directive queued — fires on next cron cycle' : 'Row added');
     } catch (e) { showToast(e.message, false); }
     setSaving(false);
   }
@@ -306,8 +318,11 @@ export default function AdminPage() {
 
   var activeTabConfig = TABS.find(t => t.key === activeTab);
   var schema = SCHEMAS[activeTab] || [];
-  var isWeapons = activeTab === 'weapon_stats';
+  var isWeapons    = activeTab === 'weapon_stats';
+  var isDirectives = activeTab === 'editor_directives';
   var isCoresOrImplants = activeTab === 'core_stats' || activeTab === 'implant_stats';
+
+  var pendingCount = rows.filter(r => r.status === 'pending').length;
 
   var filtered = rows.filter(r => {
     var matchSearch = !search || Object.values(r).some(v => v && String(v).toLowerCase().includes(search.toLowerCase()));
@@ -350,6 +365,22 @@ export default function AdminPage() {
         </div>
       );
     }
+    if (isDirectives) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            {schema.filter(f => f.key === 'editor' || f.key === 'status').map(field => renderField(field))}
+          </div>
+          {schema.filter(f => f.key === 'instruction' || f.key === 'url').map(field => renderField(field))}
+          <div style={{ background: 'rgba(255,45,85,0.05)', border: '1px solid rgba(255,45,85,0.15)', borderLeft: '3px solid #ff2d55', borderRadius: 6, padding: '12px 16px' }}>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff2d55', letterSpacing: 2, marginBottom: 6 }}>HOW THIS WORKS</div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+              Set status to <strong style={{ color: '#ff2d55' }}>pending</strong>. The selected editor picks up your directive on the next cron cycle (0, 6, 12, 18 UTC) and writes an article about it — overriding whatever else they would have covered. Status auto-updates to <strong style={{ color: '#00ff88' }}>consumed</strong> after the cycle runs. Add a source URL to point the editor at a specific link.
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
         {schema.map(field => renderField(field))}
@@ -364,14 +395,12 @@ export default function AdminPage() {
           {field.label}{field.required ? ' *' : ''}
         </div>
         {field.type === 'textarea' ? (
-          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={3} style={{ ...S.input, resize: 'vertical' }} />
+          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
         ) : field.type === 'select' ? (
           <select value={formData[field.key] ?? (field.nullableSelect ? NULLABLE_SELECT_NULL_VALUE : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
             {!field.nullableSelect && <option value="">— Select —</option>}
             {(field.options || []).map(o => (
-              <option key={o} value={o}>
-                {o === '' ? '— None —' : o}
-              </option>
+              <option key={o} value={o}>{o === '' ? '— None —' : o}</option>
             ))}
           </select>
         ) : field.type === 'boolean' ? (
@@ -394,6 +423,18 @@ export default function AdminPage() {
   }
 
   function rowPreview(row) {
+    if (activeTab === 'editor_directives') {
+      var ec = EDITOR_COLORS[row.editor] || '#888';
+      var sc = STATUS_COLORS[row.status] || '#888';
+      return (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: ec, flexShrink: 0, minWidth: 60 }}>{row.editor}</span>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: sc, background: sc + '18', border: '1px solid ' + sc + '44', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>{(row.status || 'pending').toUpperCase()}</span>
+          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)', flex: 1, lineHeight: 1.4 }}>{(row.instruction || '').slice(0, 100)}{(row.instruction || '').length > 100 ? '...' : ''}</span>
+          {row.url && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(0,245,255,0.5)', flexShrink: 0 }}>URL ↗</span>}
+        </div>
+      );
+    }
     if (activeTab === 'weapon_stats') {
       return (
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -410,9 +451,7 @@ export default function AdminPage() {
       return (
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>{row.name}</span>
-          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>
-            {row.required_runner || 'UNIVERSAL'}
-          </span>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>{row.required_runner || 'UNIVERSAL'}</span>
           {row.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.rarity}</span>}
           {row.ability_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800' }}>{row.ability_type}</span>}
           {row.meta_rating && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700' }}>META {row.meta_rating}</span>}
@@ -461,24 +500,40 @@ export default function AdminPage() {
         <a href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted, textDecoration: 'none', letterSpacing: 2 }}>← BACK TO SITE</a>
       </div>
 
-      {/* ── USAGE STATS ── */}
       <div style={{ padding: '24px 32px 0', borderBottom: '1px solid ' + S.border }}>
         <UsageStats password={password} />
       </div>
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>
         {TABS.map(tab => (
-          <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{ padding: '14px 18px', background: 'transparent', border: 'none', borderBottom: activeTab === tab.key ? '2px solid ' + tab.color : '2px solid transparent', color: activeTab === tab.key ? tab.color : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{ padding: '14px 18px', background: 'transparent', border: 'none', borderBottom: activeTab === tab.key ? '2px solid ' + tab.color : '2px solid transparent', color: activeTab === tab.key ? tab.color : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative' }}>
             {tab.label}
+            {/* Pending badge on directives tab */}
+            {tab.key === 'editor_directives' && activeTab !== 'editor_directives' && pendingCount > 0 && (
+              <span style={{ position: 'absolute', top: 8, right: 4, width: 7, height: 7, borderRadius: '50%', background: '#ff2d55', boxShadow: '0 0 6px #ff2d55' }} />
+            )}
           </button>
         ))}
       </div>
 
       <div style={{ padding: '28px 32px' }}>
+
+        {isDirectives && (
+          <div style={{ background: 'rgba(255,45,85,0.03)', border: '1px solid rgba(255,45,85,0.12)', borderLeft: '3px solid #ff2d55', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
+            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff2d55', letterSpacing: 1, marginBottom: 6 }}>EDITOR DIRECTIVES</div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+              Queue a topic for any editor. On the next cron cycle the selected editor prioritizes your directive and writes an article about it. Add a source URL to point them at a specific patch note, X post, or Bungie article. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: activeTabConfig?.color }}>{activeTabConfig?.label}</div>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted }}>{filtered.length} / {rows.length} ROWS</div>
+            {isDirectives && pendingCount > 0 && (
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff2d55', background: 'rgba(255,45,85,0.1)', border: '1px solid rgba(255,45,85,0.3)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>{pendingCount} PENDING</div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...S.input, width: 180 }} />
@@ -490,19 +545,23 @@ export default function AdminPage() {
               </select>
             )}
             <button onClick={() => loadTable(activeTab)} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer' }}>↺ REFRESH</button>
-            <button onClick={startAdd} style={{ padding: '8px 18px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ ADD ROW</button>
+            <button onClick={startAdd} style={{ padding: '8px 18px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: isDirectives ? '#fff' : '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {isDirectives ? '+ QUEUE DIRECTIVE' : '+ ADD ROW'}
+            </button>
           </div>
         </div>
 
         {(showAddForm || editingRow) && (
           <div style={{ background: S.surface, border: '1px solid ' + (activeTabConfig?.color + '33'), borderRadius: 8, padding: 24, marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: activeTabConfig?.color, letterSpacing: 2, marginBottom: 20 }}>
-              {showAddForm ? '+ NEW ' + (activeTabConfig?.label || 'ROW') : '✎ EDITING — ' + (formData.name || formData.shell_name || '')}
+              {showAddForm
+                ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + (activeTabConfig?.label || 'ROW'))
+                : '✎ EDITING — ' + (formData.name || formData.shell_name || formData.editor || '')}
             </div>
             {renderForm()}
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-              <button onClick={showAddForm ? saveNew : saveEdit} disabled={saving} style={{ padding: '10px 28px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
-                {saving ? 'SAVING...' : 'SAVE'}
+              <button onClick={showAddForm ? saveNew : saveEdit} disabled={saving} style={{ padding: '10px 28px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: isDirectives ? '#fff' : '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                {saving ? 'SAVING...' : (isDirectives && showAddForm ? 'QUEUE DIRECTIVE' : 'SAVE')}
               </button>
               <button onClick={cancelForm} style={{ padding: '10px 24px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, cursor: 'pointer' }}>CANCEL</button>
             </div>
@@ -512,18 +571,25 @@ export default function AdminPage() {
         {loading ? (
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>LOADING...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>NO ROWS FOUND</div>
+          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>
+            {isDirectives ? 'NO DIRECTIVES QUEUED — CLICK "+ QUEUE DIRECTIVE" ABOVE' : 'NO ROWS FOUND'}
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {filtered.map(row => (
-              <div key={row.id} style={{ background: editingRow === row.id ? activeTabConfig?.color + '08' : S.surface, border: '1px solid ' + (editingRow === row.id ? activeTabConfig?.color + '44' : S.border), borderLeft: '3px solid ' + (editingRow === row.id ? activeTabConfig?.color : activeTabConfig?.color + '33'), borderRadius: 6, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 200 }}>{rowPreview(row)}</div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <button onClick={() => startEdit(row)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid ' + activeTabConfig?.color + '44', borderRadius: 4, color: activeTabConfig?.color, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>EDIT</button>
-                  <button onClick={() => deleteRow(row.id, row.name || row.shell_name)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 4, color: '#ff4444', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>DEL</button>
+            {filtered.map(row => {
+              var rowAccent = isDirectives
+                ? (row.status === 'pending' ? '#ff2d55' : '#00ff88')
+                : activeTabConfig?.color;
+              return (
+                <div key={row.id} style={{ background: editingRow === row.id ? rowAccent + '08' : S.surface, border: '1px solid ' + (editingRow === row.id ? rowAccent + '44' : S.border), borderLeft: '3px solid ' + (editingRow === row.id ? rowAccent : rowAccent + '55'), borderRadius: 6, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>{rowPreview(row)}</div>
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <button onClick={() => startEdit(row)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid ' + rowAccent + '44', borderRadius: 4, color: rowAccent, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>EDIT</button>
+                    <button onClick={() => deleteRow(row.id, row.name || (row.instruction || '').slice(0, 30) || row.shell_name)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 4, color: '#ff4444', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>DEL</button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
