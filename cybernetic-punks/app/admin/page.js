@@ -2,6 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import UsageStats from '@/components/UsageStats';
 
+const FACTION_NAMES = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
+const STAT_NAMES = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'];
+
 const SCHEMAS = {
   weapon_stats: [
     { key: 'name',                label: 'Name',                 type: 'text',    required: true,  group: 'Identity' },
@@ -59,18 +62,19 @@ const SCHEMAS = {
 
   shell_stat_values: [
     { key: 'shell_name',  label: 'Shell Name',  type: 'select', required: true, options: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
-    { key: 'stat_name',   label: 'Stat Name',   type: 'select', required: true, options: ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'] },
+    { key: 'stat_name',   label: 'Stat Name',   type: 'select', required: true, options: STAT_NAMES },
     { key: 'stat_value',  label: 'Stat Value',  type: 'number', required: true },
   ],
 
   mod_stats: [
-    { key: 'name',          label: 'Name',               type: 'text',    required: true },
-    { key: 'slot_type',     label: 'Slot Type',          type: 'select',  options: ['Barrel', 'Chip', 'Optic', 'Magazine', 'Grip', 'Generator', 'Shield'] },
-    { key: 'rarity',        label: 'Rarity',             type: 'select',  options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
-    { key: 'effect_desc',   label: 'Effect Description', type: 'textarea' },
-    { key: 'credit_value',  label: 'Credit Value',       type: 'number' },
-    { key: 'ranked_viable', label: 'Ranked Viable',      type: 'boolean' },
-    { key: 'image_filename', label: 'Image Filename',    type: 'text',    placeholder: 'e.g. barrel-mod.webp' },
+    { key: 'name',           label: 'Name',               type: 'text',    required: true },
+    { key: 'slot_type',      label: 'Slot Type',          type: 'select',  options: ['Barrel', 'Chip', 'Optic', 'Magazine', 'Grip', 'Generator', 'Shield'] },
+    { key: 'rarity',         label: 'Rarity',             type: 'select',  options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
+    { key: 'effect_desc',    label: 'Effect Description', type: 'textarea' },
+    { key: 'faction_source', label: 'Faction Source',     type: 'select',  nullableSelect: true, options: ['None', ...FACTION_NAMES] },
+    { key: 'credit_value',   label: 'Credit Value',       type: 'number' },
+    { key: 'ranked_viable',  label: 'Ranked Viable',      type: 'boolean' },
+    { key: 'image_filename', label: 'Image Filename',     type: 'text',    placeholder: 'e.g. barrel-mod.webp' },
   ],
 
   implant_stats: [
@@ -79,16 +83,17 @@ const SCHEMAS = {
     { key: 'slot_type',          label: 'Slot Type',      type: 'select',  required: true, options: ['Head', 'Torso', 'Legs', 'Shield'] },
     { key: 'rarity',             label: 'Rarity',         type: 'select',  required: true, options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
     { key: 'required_runner',    label: 'Required Runner',type: 'select',  nullableSelect: true, options: ['Universal', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'faction_source',     label: 'Faction Source', type: 'select',  nullableSelect: true, options: ['None', ...FACTION_NAMES] },
     { key: 'description',        label: 'Description',    type: 'textarea' },
     { key: 'passive_name',       label: 'Passive Name',   type: 'text' },
     { key: 'passive_desc',       label: 'Passive Desc',   type: 'textarea' },
-    { key: 'stat_1_label',       label: 'Stat 1',         type: 'select',  options: ['', 'Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'] },
+    { key: 'stat_1_label',       label: 'Stat 1',         type: 'select',  options: ['', ...STAT_NAMES] },
     { key: 'stat_1_value',       label: 'Stat 1 Value',   type: 'text',    placeholder: 'e.g. -10 or 30%' },
-    { key: 'stat_2_label',       label: 'Stat 2',         type: 'select',  options: ['', 'Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'] },
+    { key: 'stat_2_label',       label: 'Stat 2',         type: 'select',  options: ['', ...STAT_NAMES] },
     { key: 'stat_2_value',       label: 'Stat 2 Value',   type: 'text',    placeholder: 'e.g. -10 or 30%' },
-    { key: 'stat_3_label',       label: 'Stat 3',         type: 'select',  options: ['', 'Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'] },
+    { key: 'stat_3_label',       label: 'Stat 3',         type: 'select',  options: ['', ...STAT_NAMES] },
     { key: 'stat_3_value',       label: 'Stat 3 Value',   type: 'text',    placeholder: 'e.g. -10 or 30%' },
-    { key: 'stat_4_label',       label: 'Stat 4',         type: 'select',  options: ['', 'Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration'] },
+    { key: 'stat_4_label',       label: 'Stat 4',         type: 'select',  options: ['', ...STAT_NAMES] },
     { key: 'stat_4_value',       label: 'Stat 4 Value',   type: 'text',    placeholder: 'e.g. -10 or 30%' },
     { key: 'credit_value',       label: 'Credit Value',   type: 'number' },
     { key: 'ranked_viable',      label: 'Ranked Viable',  type: 'boolean' },
@@ -123,23 +128,63 @@ const SCHEMAS = {
 
   editor_directives: [
     { key: 'editor',      label: 'Editor',      type: 'select',   required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'] },
-    { key: 'instruction', label: 'Instruction', type: 'textarea', required: true, placeholder: 'e.g. Cover the April 14 balance patch — Longshot nerf, Recon Echo Pulse buffs. Full breakdown of ranked impact.' },
-    { key: 'url',         label: 'Source URL',  type: 'text',     placeholder: 'e.g. https://x.com/BungieHelp/status/... or https://bungie.net/...' },
+    { key: 'instruction', label: 'Instruction', type: 'textarea', required: true, placeholder: 'e.g. Cover the April 14 balance patch — Longshot nerf, Recon Echo Pulse buffs.' },
+    { key: 'url',         label: 'Source URL',  type: 'text',     placeholder: 'e.g. https://x.com/BungieHelp/status/...' },
     { key: 'status',      label: 'Status',      type: 'select',   options: ['pending', 'consumed'] },
+  ],
+
+  // ── FACTION SCHEMAS ──────────────────────────────────────────
+  factions: [
+    { key: 'name',           label: 'Faction Name',   type: 'select',   required: true, options: FACTION_NAMES },
+    { key: 'leader',         label: 'Leader',         type: 'text',     placeholder: 'e.g. CHIMERA' },
+    { key: 'focus',          label: 'Focus',          type: 'text',     placeholder: 'e.g. Melee / Combat' },
+    { key: 'description',    label: 'Description',    type: 'textarea', placeholder: 'What this faction specializes in and how to gain reputation' },
+    { key: 'image_filename', label: 'Image Filename', type: 'text',     placeholder: 'e.g. arachne.webp' },
+  ],
+
+  faction_stat_bonuses: [
+    { key: 'faction_name',  label: 'Faction',        type: 'select',   required: true, options: FACTION_NAMES },
+    { key: 'stat_name',     label: 'Stat Boosted',   type: 'select',   required: true, options: STAT_NAMES },
+    { key: 'stat_value',    label: 'Boost Amount',   type: 'number',   required: true, placeholder: 'e.g. 20' },
+    { key: 'rank_required', label: 'Rank Required',  type: 'number',   placeholder: 'e.g. 15' },
+    { key: 'credit_cost',   label: 'Credit Cost',    type: 'number',   placeholder: 'e.g. 2500' },
+    { key: 'material_cost', label: 'Material Cost',  type: 'text',     placeholder: 'e.g. 10 Unstable Gel, 2 Drone Node' },
+    { key: 'notes',         label: 'Notes',          type: 'textarea', placeholder: 'Any additional context' },
+  ],
+
+  faction_unlocks: [
+    { key: 'faction_name',  label: 'Faction',        type: 'select',   required: true, options: FACTION_NAMES },
+    { key: 'unlock_type',   label: 'Unlock Type',    type: 'select',   required: true, options: ['weapon', 'implant', 'mod', 'consumable', 'upgrade'] },
+    { key: 'item_name',     label: 'Item Name',      type: 'text',     required: true, placeholder: 'e.g. Pinpoint Barrel' },
+    { key: 'rank_required', label: 'Rank Required',  type: 'number',   placeholder: 'e.g. 12' },
+    { key: 'credit_cost',   label: 'Credit Cost',    type: 'number',   placeholder: 'e.g. 1500' },
+    { key: 'material_cost', label: 'Material Cost',  type: 'text',     placeholder: 'e.g. 5 Biomata Resin, 1 Synapse Cube' },
+    { key: 'notes',         label: 'Notes',          type: 'textarea', placeholder: 'e.g. Requires 10 salvageable items' },
+  ],
+
+  faction_materials: [
+    { key: 'faction_name',   label: 'Faction',       type: 'select',  required: true, options: FACTION_NAMES },
+    { key: 'material_name',  label: 'Material Name', type: 'text',    required: true, placeholder: 'e.g. Unstable Gel' },
+    { key: 'rarity',         label: 'Rarity',        type: 'select',  options: ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] },
   ],
 };
 
 const NULLABLE_SELECT_NULL_VALUE = 'Universal';
+const NULLABLE_SELECT_FACTION_NULL = 'None';
 
 const TABS = [
-  { key: 'editor_directives', label: 'DIRECTIVES', color: '#ff2d55' },
-  { key: 'weapon_stats',      label: 'WEAPONS',    color: '#ff8800' },
-  { key: 'shell_stats',       label: 'SHELLS',     color: '#00f5ff' },
-  { key: 'shell_stat_values', label: 'SHELL STATS',color: '#00ff88' },
-  { key: 'mod_stats',         label: 'MODS',       color: '#ff0000' },
-  { key: 'core_stats',        label: 'CORES',      color: '#ffd700' },
-  { key: 'implant_stats',     label: 'IMPLANTS',   color: '#9b5de5' },
-  { key: 'ammo_stats',        label: 'AMMO',       color: '#00ff88' },
+  { key: 'editor_directives',   label: 'DIRECTIVES',  color: '#ff2d55' },
+  { key: 'factions',            label: 'FACTIONS',    color: '#ffd700', group: 'faction' },
+  { key: 'faction_stat_bonuses',label: 'FACTION STATS',color: '#ffd700', group: 'faction' },
+  { key: 'faction_unlocks',     label: 'F. UNLOCKS',  color: '#ffd700', group: 'faction' },
+  { key: 'faction_materials',   label: 'F. MATERIALS',color: '#ffd700', group: 'faction' },
+  { key: 'weapon_stats',        label: 'WEAPONS',     color: '#ff8800' },
+  { key: 'shell_stats',         label: 'SHELLS',      color: '#00f5ff' },
+  { key: 'shell_stat_values',   label: 'SHELL STATS', color: '#00ff88' },
+  { key: 'mod_stats',           label: 'MODS',        color: '#ff0000' },
+  { key: 'core_stats',          label: 'CORES',       color: '#ffd700' },
+  { key: 'implant_stats',       label: 'IMPLANTS',    color: '#9b5de5' },
+  { key: 'ammo_stats',          label: 'AMMO',        color: '#00ff88' },
 ];
 
 const S = {
@@ -163,22 +208,22 @@ const S = {
 
 const WEAPON_GROUPS = ['Identity', 'Firepower', 'Accuracy', 'Handling', 'Range & Mag', 'Flags'];
 const GROUP_COLORS = {
-  Identity:     '#ffffff',
-  Firepower:    '#ff0000',
-  Accuracy:     '#00f5ff',
-  Handling:     '#ff8800',
-  'Range & Mag':'#9b5de5',
-  Flags:        '#00ff88',
+  Identity: '#ffffff', Firepower: '#ff0000', Accuracy: '#00f5ff',
+  Handling: '#ff8800', 'Range & Mag': '#9b5de5', Flags: '#00ff88',
 };
 
 const EDITOR_COLORS = { CIPHER: '#ff0000', NEXUS: '#00f5ff', DEXTER: '#ff8800', GHOST: '#00ff88', MIRANDA: '#9b5de5' };
 const STATUS_COLORS = { pending: '#ff2d55', consumed: '#00ff88' };
+const FACTION_COLORS = { Cyberacme: '#00f5ff', Nucaloric: '#00ff88', Traxus: '#ff8800', Mida: '#9b5de5', Arachne: '#ff0000', Sekiguchi: '#ffd700' };
 
 function rowToFormData(row, schema) {
   const formData = { ...row };
   schema.forEach(field => {
-    if (field.nullableSelect && (formData[field.key] === null || formData[field.key] === undefined || formData[field.key] === '')) {
-      formData[field.key] = NULLABLE_SELECT_NULL_VALUE;
+    if (field.nullableSelect) {
+      var nullVal = field.options && field.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
+      if (formData[field.key] === null || formData[field.key] === undefined || formData[field.key] === '') {
+        formData[field.key] = nullVal;
+      }
     }
   });
   return formData;
@@ -187,8 +232,9 @@ function rowToFormData(row, schema) {
 function formDataToRow(formData, schema) {
   const row = { ...formData };
   schema.forEach(field => {
-    if (field.nullableSelect && row[field.key] === NULLABLE_SELECT_NULL_VALUE) {
-      row[field.key] = null;
+    if (field.nullableSelect) {
+      var nullVal = field.options && field.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
+      if (row[field.key] === nullVal) row[field.key] = null;
     }
     if (field.type === 'number' && row[field.key] !== '' && row[field.key] !== null && row[field.key] !== undefined) {
       row[field.key] = Number(row[field.key]);
@@ -196,9 +242,7 @@ function formDataToRow(formData, schema) {
     if (field.type === 'boolean') {
       row[field.key] = row[field.key] === true || row[field.key] === 'true';
     }
-    if (row[field.key] === '') {
-      row[field.key] = null;
-    }
+    if (row[field.key] === '') row[field.key] = null;
   });
   return row;
 }
@@ -216,6 +260,7 @@ export default function AdminPage() {
   const [saving, setSaving]             = useState(false);
   const [toast, setToast]               = useState(null);
   const [search, setSearch]             = useState('');
+  const [filterFaction, setFilterFaction] = useState('');
   const [filterRunner, setFilterRunner] = useState('');
 
   function showToast(msg, ok = true) {
@@ -234,10 +279,7 @@ export default function AdminPage() {
   }
 
   const loadTable = useCallback(async (table) => {
-    setLoading(true);
-    setRows([]);
-    setSearch('');
-    setFilterRunner('');
+    setLoading(true); setRows([]); setSearch(''); setFilterFaction(''); setFilterRunner('');
     try {
       const res = await fetch('/api/admin?table=' + table, { headers: apiHeaders() });
       const json = await res.json();
@@ -256,12 +298,11 @@ export default function AdminPage() {
   }
 
   function startAdd() {
-    setShowAddForm(true);
-    setEditingRow(null);
+    setShowAddForm(true); setEditingRow(null);
     const defaults = {};
     (SCHEMAS[activeTab] || []).forEach(f => {
       if (f.type === 'boolean') defaults[f.key] = true;
-      else if (f.nullableSelect) defaults[f.key] = NULLABLE_SELECT_NULL_VALUE;
+      else if (f.nullableSelect) defaults[f.key] = f.options && f.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
       else defaults[f.key] = '';
     });
     if (activeTab === 'editor_directives') defaults.status = 'pending';
@@ -281,8 +322,7 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setRows(rows.map(r => r.id === editingRow ? json.data : r));
-      cancelForm();
-      showToast('Saved successfully');
+      cancelForm(); showToast('Saved successfully');
     } catch (e) { showToast(e.message, false); }
     setSaving(false);
   }
@@ -320,17 +360,19 @@ export default function AdminPage() {
   var schema = SCHEMAS[activeTab] || [];
   var isWeapons    = activeTab === 'weapon_stats';
   var isDirectives = activeTab === 'editor_directives';
+  var isFactionTab = ['factions', 'faction_stat_bonuses', 'faction_unlocks', 'faction_materials'].includes(activeTab);
   var isCoresOrImplants = activeTab === 'core_stats' || activeTab === 'implant_stats';
 
-  var pendingCount = rows.filter(r => r.status === 'pending').length;
+  var pendingCount = activeTab === 'editor_directives' ? rows.filter(r => r.status === 'pending').length : 0;
 
   var filtered = rows.filter(r => {
     var matchSearch = !search || Object.values(r).some(v => v && String(v).toLowerCase().includes(search.toLowerCase()));
+    var matchFaction = !filterFaction || r.faction_name === filterFaction;
     var matchRunner = !filterRunner
       || (filterRunner === 'Universal' && (r.required_runner === null || r.required_runner === '' || r.required_runner === undefined))
       || r.required_runner === filterRunner
       || r.shell_name === filterRunner;
-    return matchSearch && matchRunner;
+    return matchSearch && matchFaction && matchRunner;
   });
 
   if (!authed) {
@@ -375,7 +417,7 @@ export default function AdminPage() {
           <div style={{ background: 'rgba(255,45,85,0.05)', border: '1px solid rgba(255,45,85,0.15)', borderLeft: '3px solid #ff2d55', borderRadius: 6, padding: '12px 16px' }}>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff2d55', letterSpacing: 2, marginBottom: 6 }}>HOW THIS WORKS</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Set status to <strong style={{ color: '#ff2d55' }}>pending</strong>. The selected editor picks up your directive on the next cron cycle (0, 6, 12, 18 UTC) and writes an article about it — overriding whatever else they would have covered. Status auto-updates to <strong style={{ color: '#00ff88' }}>consumed</strong> after the cycle runs. Add a source URL to point the editor at a specific link.
+              Set status to <strong style={{ color: '#ff2d55' }}>pending</strong>. The selected editor picks up your directive on the next cron cycle and writes an article about it. Status auto-updates to <strong style={{ color: '#00ff88' }}>consumed</strong> after use.
             </div>
           </div>
         </div>
@@ -389,15 +431,16 @@ export default function AdminPage() {
   }
 
   function renderField(field) {
+    var nullVal = field.options && field.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
     return (
       <div key={field.key}>
         <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted, letterSpacing: 2, marginBottom: 5 }}>
           {field.label}{field.required ? ' *' : ''}
         </div>
         {field.type === 'textarea' ? (
-          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
+          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' || field.key === 'description' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
         ) : field.type === 'select' ? (
-          <select value={formData[field.key] ?? (field.nullableSelect ? NULLABLE_SELECT_NULL_VALUE : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
+          <select value={formData[field.key] ?? (field.nullableSelect ? nullVal : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
             {!field.nullableSelect && <option value="">— Select —</option>}
             {(field.options || []).map(o => (
               <option key={o} value={o}>{o === '' ? '— None —' : o}</option>
@@ -413,7 +456,7 @@ export default function AdminPage() {
             <input type={field.type === 'number' ? 'number' : 'text'} value={formData[field.key] ?? ''} onChange={e => updateField(field.key, e.target.value)} placeholder={field.placeholder || ''} style={{ ...S.input }} />
             {field.key === 'image_filename' && formData[field.key] && (
               <div style={{ marginTop: 8 }}>
-                <img src={`/images/${activeTab === 'shell_stats' ? 'shells' : activeTab === 'mod_stats' ? 'mods' : activeTab === 'core_stats' ? 'cores' : activeTab === 'implant_stats' ? 'implants' : 'weapons'}/${formData[field.key]}`} alt={formData.name || 'preview'} style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }} onError={e => { e.target.style.display = 'none'; }} />
+                <img src={`/images/${activeTab === 'shell_stats' ? 'shells' : activeTab === 'mod_stats' ? 'mods' : activeTab === 'core_stats' ? 'cores' : activeTab === 'implant_stats' ? 'implants' : activeTab === 'factions' ? 'factions' : 'weapons'}/${formData[field.key]}`} alt={formData.name || 'preview'} style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }} onError={e => { e.target.style.display = 'none'; }} />
               </div>
             )}
           </>
@@ -432,6 +475,52 @@ export default function AdminPage() {
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: sc, background: sc + '18', border: '1px solid ' + sc + '44', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>{(row.status || 'pending').toUpperCase()}</span>
           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)', flex: 1, lineHeight: 1.4 }}>{(row.instruction || '').slice(0, 100)}{(row.instruction || '').length > 100 ? '...' : ''}</span>
           {row.url && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(0,245,255,0.5)', flexShrink: 0 }}>URL ↗</span>}
+        </div>
+      );
+    }
+    if (activeTab === 'factions') {
+      var fc = FACTION_COLORS[row.name] || '#ffd700';
+      return (
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: fc }}>{row.name}</span>
+          {row.leader && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>LEADER: {row.leader}</span>}
+          {row.focus && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{row.focus}</span>}
+        </div>
+      );
+    }
+    if (activeTab === 'faction_stat_bonuses') {
+      var fc2 = FACTION_COLORS[row.faction_name] || '#ffd700';
+      return (
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: fc2, minWidth: 80 }}>{row.faction_name}</span>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#fff' }}>{row.stat_name}</span>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, color: '#00ff88' }}>+{row.stat_value}</span>
+          {row.rank_required && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 3, padding: '2px 7px' }}>RANK {row.rank_required}</span>}
+          {row.credit_cost && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.credit_cost.toLocaleString()} CR</span>}
+        </div>
+      );
+    }
+    if (activeTab === 'faction_unlocks') {
+      var fc3 = FACTION_COLORS[row.faction_name] || '#ffd700';
+      var typeColors = { weapon: '#ff0000', implant: '#9b5de5', mod: '#ff8800', consumable: '#00ff88', upgrade: '#00f5ff' };
+      var tc = typeColors[row.unlock_type] || '#888';
+      return (
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: fc3, minWidth: 80 }}>{row.faction_name}</span>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: tc, background: tc + '14', border: '1px solid ' + tc + '30', borderRadius: 3, padding: '2px 7px', letterSpacing: 1 }}>{(row.unlock_type || '').toUpperCase()}</span>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#fff' }}>{row.item_name}</span>
+          {row.rank_required && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 3, padding: '2px 7px' }}>RANK {row.rank_required}</span>}
+          {row.credit_cost && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.credit_cost.toLocaleString()} CR</span>}
+        </div>
+      );
+    }
+    if (activeTab === 'faction_materials') {
+      var fc4 = FACTION_COLORS[row.faction_name] || '#ffd700';
+      return (
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: fc4, minWidth: 80 }}>{row.faction_name}</span>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#fff' }}>{row.material_name}</span>
+          {row.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.rarity}</span>}
         </div>
       );
     }
@@ -455,7 +544,6 @@ export default function AdminPage() {
           {row.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.rarity}</span>}
           {row.ability_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800' }}>{row.ability_type}</span>}
           {row.meta_rating && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700' }}>META {row.meta_rating}</span>}
-          {row.verified && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88' }}>✓</span>}
         </div>
       );
     }
@@ -465,15 +553,14 @@ export default function AdminPage() {
           <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>{row.name}</span>
           {row.slot_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: activeTabConfig?.color }}>{row.slot_type}</span>}
           {row.rarity && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.rarity}</span>}
-          {row.passive_name && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{row.passive_name}</span>}
-          {row.verified && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88' }}>✓</span>}
+          {row.faction_source && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: FACTION_COLORS[row.faction_source] || '#888' }}>{row.faction_source}</span>}
         </div>
       );
     }
     return (
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>
-          {row.name || (row.shell_name + ' — ' + row.stat_name)}
+          {row.name || (row.shell_name + ' — ' + row.stat_name) || row.material_name || '—'}
         </span>
         {schema.slice(1, 4).map(f => row[f.key] !== null && row[f.key] !== undefined && row[f.key] !== '' && (
           <span key={f.key} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted }}>
@@ -504,12 +591,12 @@ export default function AdminPage() {
         <UsageStats password={password} />
       </div>
 
+      {/* Tab bar */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>
         {TABS.map(tab => (
-          <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{ padding: '14px 18px', background: 'transparent', border: 'none', borderBottom: activeTab === tab.key ? '2px solid ' + tab.color : '2px solid transparent', color: activeTab === tab.key ? tab.color : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative' }}>
+          <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{ padding: '14px 16px', background: activeTab === tab.key && tab.group === 'faction' ? 'rgba(255,215,0,0.04)' : 'transparent', border: 'none', borderBottom: activeTab === tab.key ? '2px solid ' + tab.color : '2px solid transparent', borderTop: tab.group === 'faction' && activeTab !== tab.key ? '2px solid rgba(255,215,0,0.12)' : '2px solid transparent', color: activeTab === tab.key ? tab.color : tab.group === 'faction' ? 'rgba(255,215,0,0.4)' : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative' }}>
             {tab.label}
-            {/* Pending badge on directives tab */}
-            {tab.key === 'editor_directives' && activeTab !== 'editor_directives' && pendingCount > 0 && (
+            {tab.key === 'editor_directives' && pendingCount > 0 && activeTab !== 'editor_directives' && (
               <span style={{ position: 'absolute', top: 8, right: 4, width: 7, height: 7, borderRadius: '50%', background: '#ff2d55', boxShadow: '0 0 6px #ff2d55' }} />
             )}
           </button>
@@ -518,11 +605,22 @@ export default function AdminPage() {
 
       <div style={{ padding: '28px 32px' }}>
 
+        {/* Faction tab header */}
+        {isFactionTab && (
+          <div style={{ background: 'rgba(255,215,0,0.03)', border: '1px solid rgba(255,215,0,0.12)', borderLeft: '3px solid #ffd700', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
+            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ffd700', letterSpacing: 1, marginBottom: 6 }}>FACTION SYSTEM</div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+              6 factions: <span style={{ color: '#00f5ff' }}>Cyberacme</span> · <span style={{ color: '#00ff88' }}>Nucaloric</span> · <span style={{ color: '#ff8800' }}>Traxus</span> · <span style={{ color: '#9b5de5' }}>Mida</span> · <span style={{ color: '#ff0000' }}>Arachne</span> · <span style={{ color: '#ffd700' }}>Sekiguchi</span>. Add faction info first, then stat bonuses and unlocks with rank requirements. Editors will reference rank requirements when recommending builds.
+            </div>
+          </div>
+        )}
+
+        {/* Directives header */}
         {isDirectives && (
           <div style={{ background: 'rgba(255,45,85,0.03)', border: '1px solid rgba(255,45,85,0.12)', borderLeft: '3px solid #ff2d55', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff2d55', letterSpacing: 1, marginBottom: 6 }}>EDITOR DIRECTIVES</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Queue a topic for any editor. On the next cron cycle the selected editor prioritizes your directive and writes an article about it. Add a source URL to point them at a specific patch note, X post, or Bungie article. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
+              Queue a topic for any editor. On the next cron cycle the selected editor prioritizes your directive. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
             </div>
           </div>
         )}
@@ -537,6 +635,13 @@ export default function AdminPage() {
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...S.input, width: 180 }} />
+            {/* Faction filter for faction sub-tables */}
+            {(activeTab === 'faction_stat_bonuses' || activeTab === 'faction_unlocks' || activeTab === 'faction_materials') && (
+              <select value={filterFaction} onChange={e => setFilterFaction(e.target.value)} style={{ ...S.input, width: 140 }}>
+                <option value="">All Factions</option>
+                {FACTION_NAMES.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            )}
             {isCoresOrImplants && (
               <select value={filterRunner} onChange={e => setFilterRunner(e.target.value)} style={{ ...S.input, width: 140 }}>
                 <option value="">All Runners</option>
@@ -554,9 +659,7 @@ export default function AdminPage() {
         {(showAddForm || editingRow) && (
           <div style={{ background: S.surface, border: '1px solid ' + (activeTabConfig?.color + '33'), borderRadius: 8, padding: 24, marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: activeTabConfig?.color, letterSpacing: 2, marginBottom: 20 }}>
-              {showAddForm
-                ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + (activeTabConfig?.label || 'ROW'))
-                : '✎ EDITING — ' + (formData.name || formData.shell_name || formData.editor || '')}
+              {showAddForm ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + activeTabConfig?.label) : '✎ EDITING — ' + (formData.name || formData.faction_name || formData.shell_name || formData.editor || formData.material_name || '')}
             </div>
             {renderForm()}
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
@@ -572,20 +675,22 @@ export default function AdminPage() {
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>LOADING...</div>
         ) : filtered.length === 0 ? (
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>
-            {isDirectives ? 'NO DIRECTIVES QUEUED — CLICK "+ QUEUE DIRECTIVE" ABOVE' : 'NO ROWS FOUND'}
+            {isFactionTab ? 'NO DATA YET — ADD YOUR FIRST ROW ABOVE' : isDirectives ? 'NO DIRECTIVES QUEUED' : 'NO ROWS FOUND'}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {filtered.map(row => {
               var rowAccent = isDirectives
                 ? (row.status === 'pending' ? '#ff2d55' : '#00ff88')
+                : isFactionTab
+                ? (FACTION_COLORS[row.faction_name || row.name] || '#ffd700')
                 : activeTabConfig?.color;
               return (
                 <div key={row.id} style={{ background: editingRow === row.id ? rowAccent + '08' : S.surface, border: '1px solid ' + (editingRow === row.id ? rowAccent + '44' : S.border), borderLeft: '3px solid ' + (editingRow === row.id ? rowAccent : rowAccent + '55'), borderRadius: 6, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>{rowPreview(row)}</div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     <button onClick={() => startEdit(row)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid ' + rowAccent + '44', borderRadius: 4, color: rowAccent, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>EDIT</button>
-                    <button onClick={() => deleteRow(row.id, row.name || (row.instruction || '').slice(0, 30) || row.shell_name)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 4, color: '#ff4444', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>DEL</button>
+                    <button onClick={() => deleteRow(row.id, row.name || row.item_name || row.material_name || (row.instruction || '').slice(0, 30) || row.shell_name)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 4, color: '#ff4444', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>DEL</button>
                   </div>
                 </div>
               );

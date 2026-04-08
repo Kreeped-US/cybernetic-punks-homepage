@@ -14,6 +14,10 @@ const ALLOWED_TABLES = [
   'shell_stat_values',
   'core_stats',
   'editor_directives',
+  'factions',
+  'faction_stat_bonuses',
+  'faction_unlocks',
+  'faction_materials',
 ];
 
 function checkAuth(req) {
@@ -31,8 +35,9 @@ export async function GET(req) {
   if (table === 'shell_stat_values') orderCol = 'updated_at';
   if (table === 'core_stats' || table === 'implant_stats') orderCol = 'created_at';
   if (table === 'editor_directives') orderCol = 'created_at';
+  if (table === 'faction_stat_bonuses' || table === 'faction_unlocks' || table === 'faction_materials') orderCol = 'faction_name';
 
-  var { data, error } = await supabase.from(table).select('*').order(orderCol, { ascending: false }).limit(200);
+  var { data, error } = await supabase.from(table).select('*').order(orderCol, { ascending: true }).limit(500);
   console.log('[ADMIN GET]', table, 'rows:', data?.length, 'error:', error?.message);
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });
