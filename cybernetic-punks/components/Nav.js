@@ -24,6 +24,7 @@ var NAV_ITEMS = [
       { label: 'BUILD LAB',         href: '/builds',  desc: 'Shell builds & weapon tiers' },
       { label: 'BUILD ADVISOR',     href: '/advisor', desc: 'AI-engineered loadouts by DEXTER',    color: '#ff8800' },
       { label: 'RANKED GUIDE',      href: '/ranked',  desc: 'Holotags, tiers & how to climb',      color: '#ffd700' },
+      { label: 'FACTIONS', href: '/factions', desc: 'Faction unlocks, rank requirements & investment guide', color: '#ffd700' },
       { label: 'FIELD GUIDES',      href: '/guides',  desc: 'Shell breakdowns & strategy',         color: '#9b5de5' },
       { label: 'SERVER STATUS',     href: '/status',  desc: 'Is Marathon down?' },
       { label: 'PERSONAL COACH ✦', href: '/join',    desc: 'AI loadout audit — closed beta',      color: '#00f5ff', beta: true },
