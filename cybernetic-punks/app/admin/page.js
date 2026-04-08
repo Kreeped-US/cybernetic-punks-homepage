@@ -135,11 +135,13 @@ const SCHEMAS = {
 
   // ── FACTION SCHEMAS ──────────────────────────────────────────
   factions: [
-    { key: 'name',           label: 'Faction Name',   type: 'select',   required: true, options: FACTION_NAMES },
-    { key: 'leader',         label: 'Leader',         type: 'text',     placeholder: 'e.g. CHIMERA' },
-    { key: 'focus',          label: 'Focus',          type: 'text',     placeholder: 'e.g. Melee / Combat' },
-    { key: 'description',    label: 'Description',    type: 'textarea', placeholder: 'What this faction specializes in and how to gain reputation' },
-    { key: 'image_filename', label: 'Image Filename', type: 'text',     placeholder: 'e.g. arachne.webp' },
+    { key: 'name',             label: 'Faction Name',    type: 'select',   required: true, options: FACTION_NAMES },
+    { key: 'leader',           label: 'Leader',          type: 'text',     placeholder: 'e.g. CHIMERA' },
+    { key: 'focus',            label: 'Focus',           type: 'text',     placeholder: 'e.g. Melee / Combat' },
+    { key: 'description',      label: 'Description',     type: 'textarea', placeholder: 'What this faction specializes in and how to gain reputation' },
+    { key: 'image_filename',   label: 'Image Filename',  type: 'text',     placeholder: 'e.g. arachne.webp' },
+    { key: 'max_credit_cost',  label: 'Max Credit Cost', type: 'number',   placeholder: 'e.g. 200000' },
+    { key: 'max_cost_summary', label: 'Max Materials',   type: 'textarea', placeholder: 'e.g. Unstable Diode x141, Unstable Gel x78, Unstable Gunmetal x75...' },
   ],
 
   faction_stat_bonuses: [
@@ -173,18 +175,18 @@ const NULLABLE_SELECT_NULL_VALUE = 'Universal';
 const NULLABLE_SELECT_FACTION_NULL = 'None';
 
 const TABS = [
-  { key: 'editor_directives',   label: 'DIRECTIVES',  color: '#ff2d55' },
-  { key: 'factions',            label: 'FACTIONS',    color: '#ffd700', group: 'faction' },
-  { key: 'faction_stat_bonuses',label: 'FACTION STATS',color: '#ffd700', group: 'faction' },
-  { key: 'faction_unlocks',     label: 'F. UNLOCKS',  color: '#ffd700', group: 'faction' },
-  { key: 'faction_materials',   label: 'F. MATERIALS',color: '#ffd700', group: 'faction' },
-  { key: 'weapon_stats',        label: 'WEAPONS',     color: '#ff8800' },
-  { key: 'shell_stats',         label: 'SHELLS',      color: '#00f5ff' },
-  { key: 'shell_stat_values',   label: 'SHELL STATS', color: '#00ff88' },
-  { key: 'mod_stats',           label: 'MODS',        color: '#ff0000' },
-  { key: 'core_stats',          label: 'CORES',       color: '#ffd700' },
-  { key: 'implant_stats',       label: 'IMPLANTS',    color: '#9b5de5' },
-  { key: 'ammo_stats',          label: 'AMMO',        color: '#00ff88' },
+  { key: 'editor_directives',    label: 'DIRECTIVES',   color: '#ff2d55' },
+  { key: 'factions',             label: 'FACTIONS',     color: '#ffd700', group: 'faction' },
+  { key: 'faction_stat_bonuses', label: 'FACTION STATS',color: '#ffd700', group: 'faction' },
+  { key: 'faction_unlocks',      label: 'F. UNLOCKS',   color: '#ffd700', group: 'faction' },
+  { key: 'faction_materials',    label: 'F. MATERIALS', color: '#ffd700', group: 'faction' },
+  { key: 'weapon_stats',         label: 'WEAPONS',      color: '#ff8800' },
+  { key: 'shell_stats',          label: 'SHELLS',       color: '#00f5ff' },
+  { key: 'shell_stat_values',    label: 'SHELL STATS',  color: '#00ff88' },
+  { key: 'mod_stats',            label: 'MODS',         color: '#ff0000' },
+  { key: 'core_stats',           label: 'CORES',        color: '#ffd700' },
+  { key: 'implant_stats',        label: 'IMPLANTS',     color: '#9b5de5' },
+  { key: 'ammo_stats',           label: 'AMMO',         color: '#00ff88' },
 ];
 
 const S = {
@@ -248,20 +250,20 @@ function formDataToRow(formData, schema) {
 }
 
 export default function AdminPage() {
-  const [password, setPassword]         = useState('');
-  const [authed, setAuthed]             = useState(false);
-  const [authError, setAuthError]       = useState('');
-  const [activeTab, setActiveTab]       = useState('editor_directives');
-  const [rows, setRows]                 = useState([]);
-  const [loading, setLoading]           = useState(false);
-  const [editingRow, setEditingRow]     = useState(null);
-  const [showAddForm, setShowAddForm]   = useState(false);
-  const [formData, setFormData]         = useState({});
-  const [saving, setSaving]             = useState(false);
-  const [toast, setToast]               = useState(null);
-  const [search, setSearch]             = useState('');
+  const [password, setPassword]           = useState('');
+  const [authed, setAuthed]               = useState(false);
+  const [authError, setAuthError]         = useState('');
+  const [activeTab, setActiveTab]         = useState('editor_directives');
+  const [rows, setRows]                   = useState([]);
+  const [loading, setLoading]             = useState(false);
+  const [editingRow, setEditingRow]       = useState(null);
+  const [showAddForm, setShowAddForm]     = useState(false);
+  const [formData, setFormData]           = useState({});
+  const [saving, setSaving]               = useState(false);
+  const [toast, setToast]                 = useState(null);
+  const [search, setSearch]               = useState('');
   const [filterFaction, setFilterFaction] = useState('');
-  const [filterRunner, setFilterRunner] = useState('');
+  const [filterRunner, setFilterRunner]   = useState('');
 
   function showToast(msg, ok = true) {
     setToast({ msg, ok });
@@ -356,19 +358,18 @@ export default function AdminPage() {
 
   function updateField(key, value) { setFormData(prev => ({ ...prev, [key]: value })); }
 
-  var activeTabConfig = TABS.find(t => t.key === activeTab);
-  var schema = SCHEMAS[activeTab] || [];
-  var isWeapons    = activeTab === 'weapon_stats';
-  var isDirectives = activeTab === 'editor_directives';
-  var isFactionTab = ['factions', 'faction_stat_bonuses', 'faction_unlocks', 'faction_materials'].includes(activeTab);
+  var activeTabConfig   = TABS.find(t => t.key === activeTab);
+  var schema            = SCHEMAS[activeTab] || [];
+  var isWeapons         = activeTab === 'weapon_stats';
+  var isDirectives      = activeTab === 'editor_directives';
+  var isFactionTab      = ['factions', 'faction_stat_bonuses', 'faction_unlocks', 'faction_materials'].includes(activeTab);
   var isCoresOrImplants = activeTab === 'core_stats' || activeTab === 'implant_stats';
-
-  var pendingCount = activeTab === 'editor_directives' ? rows.filter(r => r.status === 'pending').length : 0;
+  var pendingCount      = activeTab === 'editor_directives' ? rows.filter(r => r.status === 'pending').length : 0;
 
   var filtered = rows.filter(r => {
-    var matchSearch = !search || Object.values(r).some(v => v && String(v).toLowerCase().includes(search.toLowerCase()));
+    var matchSearch  = !search        || Object.values(r).some(v => v && String(v).toLowerCase().includes(search.toLowerCase()));
     var matchFaction = !filterFaction || r.faction_name === filterFaction;
-    var matchRunner = !filterRunner
+    var matchRunner  = !filterRunner
       || (filterRunner === 'Universal' && (r.required_runner === null || r.required_runner === '' || r.required_runner === undefined))
       || r.required_runner === filterRunner
       || r.shell_name === filterRunner;
@@ -438,7 +439,7 @@ export default function AdminPage() {
           {field.label}{field.required ? ' *' : ''}
         </div>
         {field.type === 'textarea' ? (
-          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' || field.key === 'description' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
+          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' || field.key === 'description' || field.key === 'max_cost_summary' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
         ) : field.type === 'select' ? (
           <select value={formData[field.key] ?? (field.nullableSelect ? nullVal : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
             {!field.nullableSelect && <option value="">— Select —</option>}
@@ -456,7 +457,12 @@ export default function AdminPage() {
             <input type={field.type === 'number' ? 'number' : 'text'} value={formData[field.key] ?? ''} onChange={e => updateField(field.key, e.target.value)} placeholder={field.placeholder || ''} style={{ ...S.input }} />
             {field.key === 'image_filename' && formData[field.key] && (
               <div style={{ marginTop: 8 }}>
-                <img src={`/images/${activeTab === 'shell_stats' ? 'shells' : activeTab === 'mod_stats' ? 'mods' : activeTab === 'core_stats' ? 'cores' : activeTab === 'implant_stats' ? 'implants' : activeTab === 'factions' ? 'factions' : 'weapons'}/${formData[field.key]}`} alt={formData.name || 'preview'} style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }} onError={e => { e.target.style.display = 'none'; }} />
+                <img
+                  src={`/images/${activeTab === 'shell_stats' ? 'shells' : activeTab === 'mod_stats' ? 'mods' : activeTab === 'core_stats' ? 'cores' : activeTab === 'implant_stats' ? 'implants' : activeTab === 'factions' ? 'factions' : 'weapons'}/${formData[field.key]}`}
+                  alt={formData.name || 'preview'}
+                  style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }}
+                  onError={e => { e.target.style.display = 'none'; }}
+                />
               </div>
             )}
           </>
@@ -485,6 +491,7 @@ export default function AdminPage() {
           <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: fc }}>{row.name}</span>
           {row.leader && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>LEADER: {row.leader}</span>}
           {row.focus && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{row.focus}</span>}
+          {row.max_credit_cost && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700' }}>MAX: {row.max_credit_cost.toLocaleString()} CR</span>}
         </div>
       );
     }
@@ -610,7 +617,7 @@ export default function AdminPage() {
           <div style={{ background: 'rgba(255,215,0,0.03)', border: '1px solid rgba(255,215,0,0.12)', borderLeft: '3px solid #ffd700', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ffd700', letterSpacing: 1, marginBottom: 6 }}>FACTION SYSTEM</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              6 factions: <span style={{ color: '#00f5ff' }}>Cyberacme</span> · <span style={{ color: '#00ff88' }}>Nucaloric</span> · <span style={{ color: '#ff8800' }}>Traxus</span> · <span style={{ color: '#9b5de5' }}>Mida</span> · <span style={{ color: '#ff0000' }}>Arachne</span> · <span style={{ color: '#ffd700' }}>Sekiguchi</span>. Add faction info first, then stat bonuses and unlocks with rank requirements. Editors will reference rank requirements when recommending builds.
+              6 factions: <span style={{ color: '#00ff41' }}>Cyberacme</span> · <span style={{ color: '#ff2d78' }}>Nucaloric</span> · <span style={{ color: '#ff6600' }}>Traxus</span> · <span style={{ color: '#cc44ff' }}>Mida</span> · <span style={{ color: '#ff1a1a' }}>Arachne</span> · <span style={{ color: '#c8b400' }}>Sekiguchi</span>. Add faction info first, then stat bonuses and unlocks with rank requirements. Editors will reference rank requirements when recommending builds.
             </div>
           </div>
         )}
@@ -635,7 +642,6 @@ export default function AdminPage() {
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...S.input, width: 180 }} />
-            {/* Faction filter for faction sub-tables */}
             {(activeTab === 'faction_stat_bonuses' || activeTab === 'faction_unlocks' || activeTab === 'faction_materials') && (
               <select value={filterFaction} onChange={e => setFilterFaction(e.target.value)} style={{ ...S.input, width: 140 }}>
                 <option value="">All Factions</option>
