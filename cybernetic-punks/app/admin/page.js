@@ -214,7 +214,7 @@ const GROUP_COLORS = {
 
 const EDITOR_COLORS = { CIPHER: '#ff0000', NEXUS: '#00f5ff', DEXTER: '#ff8800', GHOST: '#00ff88', MIRANDA: '#9b5de5' };
 const STATUS_COLORS = { pending: '#ff2d55', consumed: '#00ff88' };
-const FACTION_COLORS = { Cyberacme: '#00f5ff', Nucaloric: '#00ff88', Traxus: '#ff8800', Mida: '#9b5de5', Arachne: '#ff0000', Sekiguchi: '#ffd700' };
+const FACTION_COLORS = { Cyberacme: '#00ff41', Nucaloric: '#ff2d78', Traxus: '#ff6600', Mida: '#cc44ff', Arachne: '#ff1a1a', Sekiguchi: '#c8b400' };
 
 function rowToFormData(row, schema) {
   const formData = { ...row };
