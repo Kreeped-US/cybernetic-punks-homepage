@@ -30,7 +30,10 @@ const FACTION_FOCUS = {
   Sekiguchi:  'Energy / Capacitors',
 };
 
-// Which stats matter most per shell
+function factionImage(fname) {
+  return '/images/factions/' + fname.toLowerCase() + '.webp';
+}
+
 const SHELL_PRIORITY_STATS = {
   Destroyer: ['Melee Damage', 'Heat Capacity', 'Finisher Siphon'],
   Vandal:    ['Tactical Recovery', 'Prime Recovery', 'Agility'],
@@ -72,12 +75,12 @@ function StatPill({ label, value, color }) {
 }
 
 export default function FactionClient() {
-  const [data, setData]               = useState(null);
-  const [loading, setLoading]         = useState(true);
+  const [data, setData]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
   const [activeFaction, setActiveFaction] = useState('Arachne');
-  const [activeShell, setActiveShell] = useState('Destroyer');
-  const [unlockFilter, setUnlockFilter] = useState('all');
-  const [unlockSearch, setUnlockSearch] = useState('');
+  const [activeShell, setActiveShell]     = useState('Destroyer');
+  const [unlockFilter, setUnlockFilter]   = useState('all');
+  const [unlockSearch, setUnlockSearch]   = useState('');
   const [unlockFaction, setUnlockFaction] = useState('all');
 
   useEffect(function() {
@@ -87,18 +90,18 @@ export default function FactionClient() {
       .catch(function() { setLoading(false); });
   }, []);
 
-  var factions     = data?.factions     || [];
-  var statBonuses  = data?.statBonuses  || [];
-  var unlocks      = data?.unlocks      || [];
-  var materials    = data?.materials    || [];
+  var factions    = data?.factions    || [];
+  var statBonuses = data?.statBonuses || [];
+  var unlocks     = data?.unlocks     || [];
+  var materials   = data?.materials   || [];
 
-  var selectedFaction    = factions.find(function(f) { return f.name === activeFaction; }) || null;
-  var factionStats       = statBonuses.filter(function(s) { return s.faction_name === activeFaction; });
-  var factionUnlocks     = unlocks.filter(function(u) { return u.faction_name === activeFaction; });
-  var factionMaterials   = materials.filter(function(m) { return m.faction_name === activeFaction; });
-  var factionColor       = FACTION_COLORS[activeFaction] || '#00f5ff';
+  var selectedFaction  = factions.find(function(f) { return f.name === activeFaction; }) || null;
+  var factionStats     = statBonuses.filter(function(s) { return s.faction_name === activeFaction; });
+  var factionUnlocks   = unlocks.filter(function(u) { return u.faction_name === activeFaction; });
+  var factionMaterials = materials.filter(function(m) { return m.faction_name === activeFaction; });
+  var factionColor     = FACTION_COLORS[activeFaction] || '#00f5ff';
 
-  // Shell advisor logic
+  // Shell advisor
   var priorityStats = SHELL_PRIORITY_STATS[activeShell] || [];
   var advisorResults = FACTION_ORDER.map(function(fname) {
     var relevantBonuses = statBonuses.filter(function(s) {
@@ -111,24 +114,18 @@ export default function FactionClient() {
   // Unlock browser
   var filteredUnlocks = unlocks.filter(function(u) {
     var matchFaction = unlockFaction === 'all' || u.faction_name === unlockFaction;
-    var matchType    = unlockFilter === 'all' || u.unlock_type === unlockFilter;
+    var matchType    = unlockFilter === 'all'  || u.unlock_type === unlockFilter;
     var matchSearch  = !unlockSearch || u.item_name.toLowerCase().includes(unlockSearch.toLowerCase()) || (u.notes || '').toLowerCase().includes(unlockSearch.toLowerCase());
     return matchFaction && matchType && matchSearch;
   });
 
-  // Investment efficiency — best stat gain per rank
+  // Investment efficiency
   var efficiencyData = FACTION_ORDER.map(function(fname) {
-    var fStats = statBonuses.filter(function(s) { return s.faction_name === fname; });
+    var fStats    = statBonuses.filter(function(s) { return s.faction_name === fname; });
     var totalStat = fStats.reduce(function(acc, s) { return acc + (s.stat_value || 0); }, 0);
-    var maxRank = fStats.reduce(function(acc, s) { return Math.max(acc, s.rank_required || 0); }, 0);
-    var fData = factions.find(function(f) { return f.name === fname; });
-    return {
-      name: fname,
-      totalStat: totalStat,
-      maxRank: maxRank,
-      maxCreditCost: fData?.max_credit_cost || 0,
-      statCount: fStats.length,
-    };
+    var maxRank   = fStats.reduce(function(acc, s) { return Math.max(acc, s.rank_required || 0); }, 0);
+    var fData     = factions.find(function(f) { return f.name === fname; });
+    return { name: fname, totalStat, maxRank, maxCreditCost: fData?.max_credit_cost || 0, statCount: fStats.length };
   }).sort(function(a, b) { return b.totalStat - a.totalStat; });
 
   return (
@@ -139,8 +136,8 @@ export default function FactionClient() {
         @keyframes rScanLine { from{transform:translateY(-100vh)} to{transform:translateY(100vh)} }
         .f-btn  { transition: all 0.15s ease; cursor: pointer; }
         .f-btn:hover  { transform: translateY(-1px); }
-        .f-card { transition: border-color 0.2s, transform 0.15s; cursor: pointer; }
-        .f-card:hover { transform: translateY(-2px); }
+        .f-card { transition: all 0.2s ease; cursor: pointer; }
+        .f-card:hover { transform: translateY(-3px); }
         .f-row  { transition: background 0.12s; }
         .f-row:hover  { background: rgba(255,255,255,0.025) !important; }
         .f-tab  { transition: all 0.15s; cursor: pointer; }
@@ -174,24 +171,35 @@ export default function FactionClient() {
               </div>
             </div>
 
-            {/* Faction color grid */}
+            {/* ── FACTION CARDS WITH BACKGROUND IMAGES ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               {FACTION_ORDER.map(function(fname) {
                 var color  = FACTION_COLORS[fname];
                 var leader = FACTION_LEADERS[fname];
                 var focus  = FACTION_FOCUS[fname];
                 var fData  = factions.find(function(f) { return f.name === fname; });
+                var imgSrc = factionImage(fname);
                 return (
-                  <button key={fname} className="f-card" onClick={function() { setActiveFaction(fname); document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }}
-                    style={{ background: '#0a0a0a', border: '1px solid ' + color + '25', borderTop: '2px solid ' + color, borderRadius: 8, padding: '16px 14px', textAlign: 'left', cursor: 'pointer' }}>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 4 }}>{fname.toUpperCase()}</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 6 }}>{leader}</div>
-                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.3 }}>{focus}</div>
-                    {fData?.max_credit_cost > 0 && (
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color, marginTop: 8, letterSpacing: 1 }}>
-                        {fData.max_credit_cost.toLocaleString()} CR MAX
-                      </div>
-                    )}
+                  <button key={fname} className="f-card"
+                    onClick={function() { setActiveFaction(fname); document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }}
+                    style={{ position: 'relative', background: '#0a0a0a', border: '1px solid ' + color + '30', borderTop: '2px solid ' + color, borderRadius: 8, padding: 0, overflow: 'hidden', cursor: 'pointer', textAlign: 'left', minHeight: 140 }}>
+
+                    {/* Background image */}
+                    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(' + imgSrc + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18 }} />
+                    {/* Color overlay */}
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, ' + color + '15 0%, transparent 60%, rgba(0,0,0,0.4) 100%)' }} />
+
+                    {/* Content */}
+                    <div style={{ position: 'relative', zIndex: 1, padding: '16px 14px' }}>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 3, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{fname.toUpperCase()}</div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginBottom: 6 }}>{leader}</div>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.3, marginBottom: 8 }}>{focus}</div>
+                      {fData?.max_credit_cost > 0 && (
+                        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color, letterSpacing: 1, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                          {fData.max_credit_cost.toLocaleString()} CR MAX
+                        </div>
+                      )}
+                    </div>
                   </button>
                 );
               })}
@@ -204,16 +212,38 @@ export default function FactionClient() {
       <section id="faction-detail" style={{ padding: '0 24px 64px', maxWidth: 1100, margin: '0 auto' }}>
         <SectionDivider label="FACTION OVERVIEW" />
 
-        {/* Faction tab bar */}
+        {/* ── FACTION TAB BAR WITH LOGOS ── */}
         <div style={{ display: 'flex', gap: 3, marginBottom: 3, overflowX: 'auto', paddingBottom: 2 }}>
           {FACTION_ORDER.map(function(fname) {
             var active = activeFaction === fname;
             var color  = FACTION_COLORS[fname];
+            var imgSrc = factionImage(fname);
             return (
-              <button key={fname} className="f-tab" onClick={function() { setActiveFaction(fname); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 18px', background: active ? color + '10' : '#0a0a0a', border: '1px solid ' + (active ? color + '35' : 'rgba(255,255,255,0.05)'), borderBottom: '2px solid ' + (active ? color : 'transparent'), borderRadius: '6px 6px 0 0', cursor: 'pointer', flexShrink: 0, minWidth: 90 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: active ? color : 'rgba(255,255,255,0.15)', boxShadow: active ? '0 0 8px ' + color : 'none', animation: active ? 'rPulse 2s ease-in-out infinite' : 'none' }} />
-                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: active ? color : 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{fname.toUpperCase()}</span>
+              <button key={fname} className="f-tab"
+                onClick={function() { setActiveFaction(fname); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 14px', background: active ? color + '12' : '#0a0a0a', border: '1px solid ' + (active ? color + '40' : 'rgba(255,255,255,0.05)'), borderBottom: '2px solid ' + (active ? color : 'transparent'), borderRadius: '6px 6px 0 0', cursor: 'pointer', flexShrink: 0, minWidth: 90, position: 'relative', overflow: 'hidden' }}>
+
+                {/* Subtle bg image on active tab */}
+                {active && (
+                  <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(' + imgSrc + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.08 }} />
+                )}
+
+                {/* Faction logo */}
+                <div style={{ position: 'relative', zIndex: 1, width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + (active ? color + '60' : 'rgba(255,255,255,0.1)'), flexShrink: 0, background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img
+                    src={imgSrc}
+                    alt={fname}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: active ? 1 : 0.5 }}
+                  />
+                </div>
+
+                <span style={{ position: 'relative', zIndex: 1, fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: active ? color : 'rgba(255,255,255,0.25)', letterSpacing: 1, whiteSpace: 'nowrap' }}>
+                  {fname.toUpperCase()}
+                </span>
+
+                {active && (
+                  <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1, background: 'linear-gradient(90deg, transparent, ' + color + ', transparent)' }} />
+                )}
               </button>
             );
           })}
@@ -225,14 +255,24 @@ export default function FactionClient() {
             LOADING FACTION DATA...
           </div>
         ) : (
-          <div style={{ background: factionColor + '06', border: '1px solid ' + factionColor + '25', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ position: 'relative', background: factionColor + '06', border: '1px solid ' + factionColor + '25', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '28px', display: 'flex', flexDirection: 'column', gap: 24, overflow: 'hidden' }}>
+
+            {/* Subtle faction image behind detail panel */}
+            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '35%', backgroundImage: 'url(' + factionImage(activeFaction) + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.06, pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '40%', background: 'linear-gradient(to right, ' + factionColor + '06, transparent)', pointerEvents: 'none' }} />
 
             {/* Header row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 20, alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 26, fontWeight: 900, color: factionColor, textShadow: '0 0 20px ' + factionColor + '44', letterSpacing: 2 }}>{activeFaction.toUpperCase()}</span>
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>LEADER: {FACTION_LEADERS[activeFaction]}</span>
+                  {/* Logo in detail header */}
+                  <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + factionColor + '40', flexShrink: 0, background: '#0a0a0a' }}>
+                    <img src={factionImage(activeFaction)} alt={activeFaction} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <div>
+                    <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 26, fontWeight: 900, color: factionColor, textShadow: '0 0 20px ' + factionColor + '44', letterSpacing: 2, display: 'block', lineHeight: 1 }}>{activeFaction.toUpperCase()}</span>
+                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>LEADER: {FACTION_LEADERS[activeFaction]}</span>
+                  </div>
                 </div>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 580 }}>
                   {selectedFaction?.description || FACTION_FOCUS[activeFaction]}
@@ -247,8 +287,8 @@ export default function FactionClient() {
               )}
             </div>
 
-            {/* Stats + Unlocks + Materials in grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+            {/* Stats + Unlocks + Materials */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, position: 'relative', zIndex: 1 }}>
 
               {/* Stat bonuses */}
               <div style={{ background: '#0a0a0a', border: '1px solid ' + factionColor + '15', borderRadius: 8, overflow: 'hidden' }}>
@@ -343,12 +383,11 @@ export default function FactionClient() {
         <SectionDivider label="SHELL FACTION ADVISOR" />
         <div style={{ background: 'rgba(255,136,0,0.02)', border: '1px solid rgba(255,136,0,0.1)', borderLeft: '3px solid rgba(255,136,0,0.4)', borderRadius: 8, padding: '28px', marginBottom: 20 }}>
           <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff8800', letterSpacing: 2, marginBottom: 6 }}>WHICH FACTION SHOULD YOU PRIORITIZE?</div>
-          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 0 }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>
             Select your shell to see which factions provide the most relevant stat bonuses for your playstyle.
           </div>
         </div>
 
-        {/* Shell picker */}
         <div style={{ display: 'flex', gap: 3, marginBottom: 20, overflowX: 'auto', paddingBottom: 2 }}>
           {Object.keys(SHELL_PRIORITY_STATS).map(function(shell) {
             var active = activeShell === shell;
@@ -361,7 +400,6 @@ export default function FactionClient() {
           })}
         </div>
 
-        {/* Priority stats */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '14px 18px', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginRight: 4 }}>PRIORITY STATS:</span>
           {priorityStats.map(function(s) {
@@ -369,14 +407,17 @@ export default function FactionClient() {
           })}
         </div>
 
-        {/* Advisor results */}
         {advisorResults.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {advisorResults.map(function(result, idx) {
-              var color = FACTION_COLORS[result.faction];
+              var color  = FACTION_COLORS[result.faction];
+              var imgSrc = factionImage(result.faction);
               return (
-                <div key={result.faction} className="f-row" style={{ display: 'grid', gridTemplateColumns: '30px 140px 1fr auto', gap: 16, alignItems: 'center', background: '#0a0a0a', border: '1px solid ' + color + '15', borderLeft: '3px solid ' + color + (idx === 0 ? 'cc' : '44'), borderRadius: 6, padding: '14px 18px' }}>
+                <div key={result.faction} className="f-row" style={{ display: 'grid', gridTemplateColumns: '30px 52px 140px 1fr auto', gap: 14, alignItems: 'center', background: '#0a0a0a', border: '1px solid ' + color + '15', borderLeft: '3px solid ' + color + (idx === 0 ? 'cc' : '44'), borderRadius: 6, padding: '12px 18px' }}>
                   <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: idx === 0 ? color : 'rgba(255,255,255,0.2)' }}>#{idx + 1}</span>
+                  <div style={{ width: 36, height: 36, borderRadius: 6, overflow: 'hidden', border: '1px solid ' + color + '30', flexShrink: 0 }}>
+                    <img src={imgSrc} alt={result.faction} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
+                  </div>
                   <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: color, letterSpacing: 1 }}>{result.faction.toUpperCase()}</span>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {result.bonuses.map(function(b, bi) {
@@ -406,8 +447,12 @@ export default function FactionClient() {
             {efficiencyData.map(function(item) {
               var color  = FACTION_COLORS[item.name];
               var leader = FACTION_LEADERS[item.name];
+              var imgSrc = factionImage(item.name);
               return (
-                <div key={item.name} className="f-row" style={{ display: 'grid', gridTemplateColumns: '160px 1fr auto', gap: 16, alignItems: 'center', background: '#0a0a0a', border: '1px solid ' + color + '12', borderLeft: '3px solid ' + color + '66', borderRadius: 5, padding: '13px 18px' }}>
+                <div key={item.name} className="f-row" style={{ display: 'grid', gridTemplateColumns: '52px 160px 1fr auto', gap: 16, alignItems: 'center', background: '#0a0a0a', border: '1px solid ' + color + '12', borderLeft: '3px solid ' + color + '66', borderRadius: 5, padding: '12px 18px' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 6, overflow: 'hidden', border: '1px solid ' + color + '25', flexShrink: 0 }}>
+                    <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} />
+                  </div>
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: color, letterSpacing: 1 }}>{item.name.toUpperCase()}</div>
                     <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 2 }}>{leader}</div>
@@ -432,7 +477,8 @@ export default function FactionClient() {
                       </div>
                     )}
                   </div>
-                  <button className="f-btn" onClick={function() { setActiveFaction(item.name); document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }}
+                  <button className="f-btn"
+                    onClick={function() { setActiveFaction(item.name); document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }}
                     style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: color, background: color + '0e', border: '1px solid ' + color + '28', borderRadius: 4, padding: '6px 14px', cursor: 'pointer', letterSpacing: 1, flexShrink: 0 }}>
                     VIEW →
                   </button>
@@ -447,15 +493,9 @@ export default function FactionClient() {
       <section style={{ padding: '0 24px 64px', maxWidth: 1100, margin: '0 auto' }}>
         <SectionDivider label="UNLOCK BROWSER" />
 
-        {/* Filters */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <input
-            type="text"
-            placeholder="Search unlocks..."
-            value={unlockSearch}
-            onChange={function(e) { setUnlockSearch(e.target.value); }}
-            style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 4, padding: '8px 14px', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, width: 200 }}
-          />
+          <input type="text" placeholder="Search unlocks..." value={unlockSearch} onChange={function(e) { setUnlockSearch(e.target.value); }}
+            style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 4, padding: '8px 14px', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, width: 200 }} />
 
           <select value={unlockFaction} onChange={function(e) { setUnlockFaction(e.target.value); }}
             style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 4, padding: '8px 12px', fontFamily: 'Share Tech Mono, monospace', fontSize: 11, cursor: 'pointer' }}>
@@ -477,12 +517,10 @@ export default function FactionClient() {
           </div>
         </div>
 
-        {/* Results count */}
         <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#333', letterSpacing: 2, marginBottom: 10 }}>
           {filteredUnlocks.length} RESULT{filteredUnlocks.length !== 1 ? 'S' : ''}
         </div>
 
-        {/* Unlock rows */}
         {filteredUnlocks.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {filteredUnlocks.map(function(u, i) {
@@ -530,10 +568,10 @@ export default function FactionClient() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {[
-              { href: '/advisor',      color: '#ff8800', label: '⬢ BUILD ADVISOR',         desc: 'Get your full faction-aware build' },
-              { href: '/intel/dexter', color: '#ff8800', label: '⬢ DEXTER INTEL',          desc: 'Latest build analysis articles' },
-              { href: '/intel/miranda',color: '#9b5de5', label: '◎ FACTION GUIDES',        desc: 'MIRANDA progression guides' },
-              { href: '/builds',       color: '#444',    label: 'BUILD LAB',               desc: 'Full loadout browser' },
+              { href: '/advisor',       color: '#ff8800', label: '⬢ BUILD ADVISOR',   desc: 'Get your full faction-aware build' },
+              { href: '/intel/dexter',  color: '#ff8800', label: '⬢ DEXTER INTEL',    desc: 'Latest build analysis articles' },
+              { href: '/intel/miranda', color: '#9b5de5', label: '◎ FACTION GUIDES',  desc: 'MIRANDA progression guides' },
+              { href: '/builds',        color: '#444',    label: 'BUILD LAB',          desc: 'Full loadout browser' },
             ].map(function(l) {
               return (
                 <Link key={l.href} href={l.href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: l.color + '06', border: '1px solid ' + l.color + '18', borderRadius: 5, textDecoration: 'none' }}>
