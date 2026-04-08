@@ -155,14 +155,15 @@ const SCHEMAS = {
   ],
 
   faction_unlocks: [
-    { key: 'faction_name',  label: 'Faction',        type: 'select',   required: true, options: FACTION_NAMES },
-    { key: 'unlock_type',   label: 'Unlock Type',    type: 'select',   required: true, options: ['weapon', 'implant', 'mod', 'consumable', 'upgrade'] },
-    { key: 'item_name',     label: 'Item Name',      type: 'text',     required: true, placeholder: 'e.g. Pinpoint Barrel' },
-    { key: 'rank_required', label: 'Rank Required',  type: 'number',   placeholder: 'e.g. 12' },
-    { key: 'credit_cost',   label: 'Credit Cost',    type: 'number',   placeholder: 'e.g. 1500' },
-    { key: 'material_cost', label: 'Material Cost',  type: 'text',     placeholder: 'e.g. 5 Biomata Resin, 1 Synapse Cube' },
-    { key: 'notes',         label: 'Notes',          type: 'textarea', placeholder: 'e.g. Requires 10 salvageable items' },
-  ],
+  { key: 'faction_name',  label: 'Faction',        type: 'select',   required: true, options: FACTION_NAMES },
+  { key: 'unlock_type',   label: 'Unlock Type',     type: 'select',   required: true, options: ['weapon', 'implant', 'mod', 'consumable', 'upgrade', 'function'] },
+  { key: 'item_name',     label: 'Item Name',       type: 'text',     required: true, placeholder: 'e.g. TAC_AMP.EXE' },
+  { key: 'tier',          label: 'Tier',            type: 'number',   placeholder: '1 or 2' },
+  { key: 'rank_required', label: 'Rank Required',   type: 'number',   placeholder: 'e.g. 12' },
+  { key: 'credit_cost',   label: 'Credit Cost',     type: 'number',   placeholder: 'e.g. 1500' },
+  { key: 'material_cost', label: 'Material Cost',   type: 'text',     placeholder: 'e.g. Storage Drive x10, Unstable Diode x10' },
+  { key: 'notes',         label: 'Notes/Effect',    type: 'textarea', placeholder: 'e.g. Partially fills tactical ability charge at start of run' },
+],
 
   faction_materials: [
     { key: 'faction_name',   label: 'Faction',       type: 'select',  required: true, options: FACTION_NAMES },
