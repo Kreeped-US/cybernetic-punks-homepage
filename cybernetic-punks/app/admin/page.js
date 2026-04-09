@@ -166,9 +166,10 @@ const SCHEMAS = {
 ],
 
   faction_materials: [
-    { key: 'faction_name',   label: 'Faction',       type: 'select',  required: true, options: FACTION_NAMES },
-    { key: 'material_name',  label: 'Material Name', type: 'text',    required: true, placeholder: 'e.g. Unstable Gel' },
-    { key: 'rarity',         label: 'Rarity',        type: 'select',  options: ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] },
+    { key: 'faction_name',   label: 'Faction',         type: 'select',  required: true, options: FACTION_NAMES },
+    { key: 'material_name',  label: 'Material Name',   type: 'text',    required: true, placeholder: 'e.g. Unstable Gel' },
+    { key: 'rarity',         label: 'Rarity',          type: 'select',  options: ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] },
+    { key: 'image_filename', label: 'Image Filename',  type: 'text',    placeholder: 'e.g. unstable-gel.webp' },
   ],
 };
 
@@ -459,7 +460,7 @@ export default function AdminPage() {
             {field.key === 'image_filename' && formData[field.key] && (
               <div style={{ marginTop: 8 }}>
                 <img
-                  src={`/images/${activeTab === 'shell_stats' ? 'shells' : activeTab === 'mod_stats' ? 'mods' : activeTab === 'core_stats' ? 'cores' : activeTab === 'implant_stats' ? 'implants' : activeTab === 'factions' ? 'factions' : 'weapons'}/${formData[field.key]}`}
+                  src={`/images/${activeTab === 'shell_stats' ? 'shells' : activeTab === 'mod_stats' ? 'mods' : activeTab === 'core_stats' ? 'cores' : activeTab === 'implant_stats' ? 'implants' : activeTab === 'factions' ? 'factions' : activeTab === 'faction_materials' ? 'materials' : 'weapons'}/${formData[field.key]}`}
                   alt={formData.name || 'preview'}
                   style={{ height: 48, objectFit: 'contain', background: 'rgba(255,255,255,0.04)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', padding: 4 }}
                   onError={e => { e.target.style.display = 'none'; }}
