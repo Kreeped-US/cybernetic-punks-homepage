@@ -356,7 +356,14 @@ export default function FactionClient() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                       {factionMaterials.map(function(m, i) {
                         return (
-                          <span key={i} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: factionColor, background: factionColor + '0e', border: '1px solid ' + factionColor + '22', borderRadius: 3, padding: '4px 10px', letterSpacing: 1 }}>
+                          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: factionColor, background: factionColor + '0e', border: '1px solid ' + factionColor + '22', borderRadius: 3, padding: '4px 10px', letterSpacing: 1 }}>
+                            {m.image_filename && (
+                              <img
+                                src={'/images/materials/' + m.image_filename}
+                                alt={m.material_name}
+                                style={{ width: 18, height: 18, objectFit: 'contain', flexShrink: 0 }}
+                              />
+                            )}
                             {m.material_name}
                           </span>
                         );
