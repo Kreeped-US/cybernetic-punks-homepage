@@ -35,12 +35,12 @@ function factionImage(fname) {
 }
 
 const SHELL_PRIORITY_STATS = {
-  Destroyer: ['Melee Damage', 'Heat Capacity', 'Finisher Siphon'],
-  Vandal:    ['Tactical Recovery', 'Prime Recovery', 'Agility'],
-  Recon:     ['Ping Duration', 'Hardware', 'Firewall'],
-  Assassin:  ['Agility', 'Loot Speed', 'Melee Damage'],
-  Triage:    ['Revive Speed', 'Self-Repair Speed', 'Hardware'],
-  Thief:     ['Loot Speed', 'Agility', 'Fall Resistance'],
+  Destroyer: ['Melee Damage', 'Tactical Recovery', 'Hardware', 'Firewall'],
+  Vandal:    ['Heat Capacity', 'Agility', 'Prime Recovery'],
+  Recon:     ['Tactical Recovery', 'Finisher Siphon', 'Ping Duration'],
+  Assassin:  ['Prime Recovery', 'Firewall'],
+  Triage:    ['Prime Recovery', 'Self-Repair Speed', 'Revive Speed'],
+  Thief:     ['Loot Speed', 'Prime Recovery', 'Fall Resistance'],
   Rook:      ['Heat Capacity', 'Self-Repair Speed', 'Firewall'],
 };
 
