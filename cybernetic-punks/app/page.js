@@ -548,7 +548,7 @@ export default async function Home() {
             {feed.length > 0 ? feed.map(function(article) {
               var color   = EDITOR_COLORS[article.editor]  || '#888';
               var symbol  = EDITOR_SYMBOLS[article.editor] || '·';
-              var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.webp';
+              var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               return (
                 <Link key={article.id} href={'/intel/' + article.slug} className="intel-row"
                   style={{ display: 'block', padding: '14px 18px', borderBottom: '1px solid #1e2028', borderLeft: '2px solid ' + color + '44', textDecoration: 'none' }}>
@@ -589,7 +589,7 @@ export default async function Home() {
                   <Link key={ed} href={'/intel/' + ed.toLowerCase()} title={ed}
                     style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, textDecoration: 'none' }}>
                     <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#1a1d24', border: '1px solid ' + c + '30', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img src={'/images/editors/' + ed.toLowerCase() + '.webp'} alt={ed} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={'/images/editors/' + ed.toLowerCase() + '.jpg'} alt={ed} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: 1, color: c, textTransform: 'uppercase' }}>{s}</span>
                   </Link>
