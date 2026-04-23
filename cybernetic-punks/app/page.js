@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Footer from '@/components/Footer';
-import supabase from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 // ── EDITOR CONFIG ──────────────────────────────────────────────
 var EDITOR_COLORS = {
