@@ -1,51 +1,162 @@
 @import "tailwindcss";
 
-html {
-  scrollbar-width: thin;
-  scrollbar-color: #ff0000 #0a0a0a;
+/* ── DESIGN TOKENS ──────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-page:       #121418;
+  --bg-card:       #1a1d24;
+  --bg-card-hover: #1e2228;
+  --bg-input:      #1a1d24;
+  --bg-nav:        #0e1014;
+
+  /* Borders */
+  --border:        #22252e;
+  --border-subtle: #1e2028;
+
+  /* Accents */
+  --green:         #00ff41;
+  --red:           #ff2222;
+
+  /* Editor colors */
+  --cipher:        #ff2222;
+  --nexus:         #00d4ff;
+  --dexter:        #ff8800;
+  --ghost:         #00ff88;
+  --miranda:       #9b5de5;
+
+  /* Text */
+  --text-primary:   rgba(255,255,255,0.85);
+  --text-secondary: rgba(255,255,255,0.4);
+  --text-tertiary:  rgba(255,255,255,0.2);
+  --text-disabled:  rgba(255,255,255,0.1);
 }
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #0a0a0a; }
-::-webkit-scrollbar-thumb { background: #ff0000; }
+/* ── BASE ───────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #ff2222 #121418;
+}
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.08) 2px,
-    rgba(0,0,0,0.08) 4px
-  );
-  pointer-events: none;
-  z-index: 9999;
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: #121418; }
+::-webkit-scrollbar-thumb { background: #ff2222; }
+
+body {
+  background: var(--bg-page);
+}
+
+/* ── ANIMATIONS ─────────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
 @keyframes pulse-red {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50%       { opacity: 0.4; }
 }
 
 .animate-pulse-red {
   animation: pulse-red 2s ease-in-out infinite;
 }
 
-.glow-red {
-  text-shadow: 0 0 10px rgba(255,0,0,0.8);
+/* ── CARDS ──────────────────────────────────────────────────── */
+.cp-card {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: 3px;
+  padding:       20px;
 }
 
-.glow-cyan {
-  text-shadow: 0 0 10px rgba(0,245,255,0.8);
+.cp-card:hover {
+  background: var(--bg-card-hover);
 }
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+/* ── BUTTONS ────────────────────────────────────────────────── */
+.cp-btn-green {
+  display:        inline-block;
+  padding:        12px 24px;
+  background:     var(--green);
+  color:          #000;
+  font-size:      12px;
+  font-weight:    800;
+  letter-spacing: 1px;
+  border-radius:  2px;
+  border:         none;
+  cursor:         pointer;
+  text-decoration: none;
+  line-height:    1;
 }
 
-html {
-  scroll-behavior: smooth;
+.cp-btn-dark {
+  display:        inline-block;
+  padding:        12px 24px;
+  background:     #1e2028;
+  border:         1px solid #2a2d36;
+  color:          rgba(255,255,255,0.6);
+  font-size:      12px;
+  font-weight:    700;
+  letter-spacing: 1px;
+  border-radius:  2px;
+  cursor:         pointer;
+  text-decoration: none;
+  line-height:    1;
+}
+
+/* ── TIER BADGES ────────────────────────────────────────────── */
+.cp-tier {
+  display:        inline-block;
+  padding:        3px 10px;
+  font-size:      11px;
+  font-weight:    800;
+  letter-spacing: 1px;
+  border-radius:  2px;
+  line-height:    1.4;
+}
+
+.cp-tier-s { background: #ff2222; color: #fff; }
+.cp-tier-a { background: #ff8800; color: #000; }
+.cp-tier-b { background: #00d4ff; color: #000; }
+.cp-tier-c { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+.cp-tier-d { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.3); }
+
+/* ── TAGS / PILLS ───────────────────────────────────────────── */
+.cp-tag {
+  display:        inline-block;
+  padding:        2px 8px;
+  font-size:      8px;
+  font-weight:    700;
+  letter-spacing: 1px;
+  border-radius:  2px;
+  text-transform: uppercase;
+  line-height:    1.6;
+}
+
+.cp-tag-free   { background: rgba(0,255,65,0.1);   color: var(--green); }
+.cp-tag-beta   { background: rgba(155,93,229,0.1); color: var(--miranda); }
+.cp-tag-new    { background: rgba(255,136,0,0.1);  color: var(--dexter); }
+.cp-tag-live   { background: rgba(0,255,65,0.1);   color: var(--green); }
+
+/* ── SECTION LABELS ─────────────────────────────────────────── */
+.cp-section-label {
+  font-size:      10px;
+  font-weight:    700;
+  letter-spacing: 3px;
+  color:          rgba(255,255,255,0.2);
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom:  1px solid var(--border-subtle);
+  margin-bottom:  12px;
+}
+
+/* ── LIVE DOT ───────────────────────────────────────────────── */
+/* Only element allowed a glow */
+.cp-live-dot {
+  width:        5px;
+  height:       5px;
+  border-radius: 50%;
+  background:   var(--green);
+  box-shadow:   0 0 6px rgba(0,255,65,0.4);
+  flex-shrink:  0;
 }
