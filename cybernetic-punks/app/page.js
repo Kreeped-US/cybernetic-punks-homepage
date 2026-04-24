@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import HomeIntelFeed from './HomeIntelFeed';
+import HomeEditorReactions from './HomeEditorReactions';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { isMonetizationEnabled } from '@/lib/monetization';
@@ -855,6 +856,7 @@ export default async function Home() {
             </div>
           </div>
 
+          <HomeEditorReactions />
           <HomeIntelFeed articles={intelFeed} weeklyCount={weeklyCount} />
         </div>
 

@@ -600,7 +600,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
 
         {/* ══ COMMENTS ═════════════════════════════════════ */}
         {comments && comments.length > 0 && (
-          <div style={{ marginTop: 14 }}>
+          <div id="editor-reactions" style={{ marginTop: 14 }}>
             <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, overflow: 'hidden' }}>
               <div style={{ padding: '12px 18px', borderBottom: '1px solid #22252e', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Editor Reactions</div>
