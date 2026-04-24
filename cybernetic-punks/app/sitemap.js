@@ -5,6 +5,18 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+// Guide category slugs — must match app/guides/[category]/page.js CATEGORIES keys
+const GUIDE_CATEGORIES = [
+  'shells',
+  'ranked',
+  'weapons',
+  'mods',
+  'extraction',
+  'beginner',
+  'progression',
+  'maps',
+];
+
 export default async function sitemap() {
   const baseUrl = 'https://cyberneticpunks.com';
 
@@ -23,6 +35,7 @@ export default async function sitemap() {
     { url: baseUrl + '/shells',              lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/ranked',              lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: baseUrl + '/guides',              lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/factions',            lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
 
     // ── Tier 4: Supporting content (0.8)
     { url: baseUrl + '/status',              lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.8 },
@@ -40,8 +53,18 @@ export default async function sitemap() {
     { url: baseUrl + '/intel/miranda',       lastModified: new Date(), changeFrequency: 'daily',   priority: 0.75 },
   ];
 
-  // Shell hub pages — auto-includes any new shells added to the DB
+  // Guide category pages — 8 pre-rendered routes (0.85, high-value landing pages)
+  const guideCategoryPages = GUIDE_CATEGORIES.map((slug) => ({
+    url: baseUrl + '/guides/' + slug,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.85,
+  }));
+
+  // Shell hub pages (stat pages at /shells/[slug]) — auto-includes new shells
   let shellPages = [];
+  // Shell guide pages (NEW: /guides/shells/[name]) — auto-includes new shells
+  let shellGuidePages = [];
   try {
     const { data: shells } = await supabase
       .from('shell_stats')
@@ -51,6 +74,13 @@ export default async function sitemap() {
     if (shells) {
       shellPages = shells.map((s) => ({
         url: baseUrl + '/shells/' + s.name.toLowerCase(),
+        lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
+        changeFrequency: 'daily',
+        priority: 0.85,
+      }));
+
+      shellGuidePages = shells.map((s) => ({
+        url: baseUrl + '/guides/shells/' + s.name.toLowerCase(),
         lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
         changeFrequency: 'daily',
         priority: 0.85,
@@ -82,5 +112,11 @@ export default async function sitemap() {
     console.error('Sitemap fetch error:', err);
   }
 
-  return [...staticPages, ...shellPages, ...dynamicPages];
+  return [
+    ...staticPages,
+    ...guideCategoryPages,
+    ...shellPages,
+    ...shellGuidePages,
+    ...dynamicPages,
+  ];
 }

@@ -3,6 +3,7 @@
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import Footer from '@/components/Footer';
 
 export const revalidate = 300;
@@ -34,6 +35,18 @@ const BG = '#121418';
 const CARD_BG = '#1a1d24';
 const DEEP_BG = '#0e1014';
 const BORDER = '#22252e';
+
+// DB tag → clean URL slug map (matches [category]/page.js)
+const TAG_TO_SLUG = {
+  'shell-guide':  'shells',
+  'ranked':       'ranked',
+  'weapon-guide': 'weapons',
+  'mod-guide':    'mods',
+  'extraction':   'extraction',
+  'beginner':     'beginner',
+  'progression':  'progression',
+  'map-guide':    'maps',
+};
 
 const CATS = {
   'shell-guide':  { label: 'SHELL GUIDES',     color: '#9b5de5', desc: 'Ability breakdowns, playstyle analysis, and synergies for all 7 Runner Shells.', seoTerm: 'Marathon Shell Guides' },
@@ -118,16 +131,16 @@ function SectionHeader({ label, count, color, rightLink }) {
   );
 }
 
-function GuideCard({ guide, large }) {
+function GuideCard({ guide }) {
   var catKey = guide.tags?.find(function(t) { return CATS[t]; }) || 'beginner';
   var cat = CATS[catKey] || CATS['beginner'];
   var rt = readTime(guide.body);
-  var bodyPreview = (guide.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, large ? 180 : 110);
+  var bodyPreview = (guide.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, 110);
 
   return (
-    <Link href={'/intel/' + guide.slug} className="g-card" style={{ textDecoration: 'none', display: 'block', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <Link href={'/intel/' + guide.slug} className="g-card" style={{ textDecoration: 'none', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {guide.thumbnail && (
-        <div style={{ position: 'relative', height: large ? 140 : 110, overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ position: 'relative', height: 110, overflow: 'hidden', flexShrink: 0 }}>
           <img src={guide.thumbnail} alt={guide.headline} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, ' + CARD_BG + ')' }} />
         </div>
@@ -137,7 +150,7 @@ function GuideCard({ guide, large }) {
           <span style={{ fontFamily: 'monospace', fontSize: 8, color: cat.color, letterSpacing: 2, fontWeight: 700 }}>{cat.label}</span>
           <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{timeAgo(guide.created_at)}</span>
         </div>
-        <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: large ? 13 : 12, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.35 }}>{guide.headline}</h3>
+        <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.35 }}>{guide.headline}</h3>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, margin: 0, lineHeight: 1.5, flex: 1 }}>{bodyPreview}...</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid ' + BORDER, paddingTop: 8, marginTop: 4 }}>
           <span style={{ fontFamily: 'monospace', fontSize: 8, color: cat.color, letterSpacing: 1, fontWeight: 700 }}>READ GUIDE →</span>
@@ -159,7 +172,13 @@ function GuideGrid({ guides }) {
 // ─── PAGE ───────────────────────────────────────────────────
 export default async function GuidesPage({ searchParams }) {
   var params = await searchParams;
-  var activeFilter = params?.cat || null;
+
+  // BACKWARD COMPAT: if someone hits /guides?cat=shell-guide, 301 redirect them
+  // to the new canonical URL /guides/shells. Preserves any old bookmarks or
+  // indexed links while consolidating SEO equity on the new URLs.
+  if (params?.cat && TAG_TO_SLUG[params.cat]) {
+    redirect('/guides/' + TAG_TO_SLUG[params.cat]);
+  }
 
   var [guidesResult, dexterBuildsResult, nexusMetaResult, shellResult, weaponResult, modResult, shellListResult] = await Promise.all([
     supabase
@@ -170,7 +189,6 @@ export default async function GuidesPage({ searchParams }) {
       .order('created_at', { ascending: false })
       .limit(80),
 
-    // Cross-reference: DEXTER build articles for "related builds" section
     supabase
       .from('feed_items')
       .select('id, headline, slug, tags, thumbnail, ce_score, created_at')
@@ -179,7 +197,6 @@ export default async function GuidesPage({ searchParams }) {
       .order('ce_score', { ascending: false })
       .limit(4),
 
-    // Cross-reference: NEXUS meta for "related meta analysis"
     supabase
       .from('feed_items')
       .select('id, headline, slug, tags, thumbnail, ce_score, created_at')
@@ -192,7 +209,6 @@ export default async function GuidesPage({ searchParams }) {
     supabase.from('weapon_stats').select('id', { count: 'exact', head: true }),
     supabase.from('mod_stats').select('id', { count: 'exact', head: true }),
 
-    // Shell list with images for "Explore by Shell" nav
     supabase.from('shell_stats').select('name, image_filename, role').order('name'),
   ]);
 
@@ -214,12 +230,8 @@ export default async function GuidesPage({ searchParams }) {
     if (allGuides.length >= 40) break;
   }
 
-  var guides = activeFilter
-    ? allGuides.filter(function(g) { return g.tags && g.tags.includes(activeFilter); })
-    : allGuides;
-
-  var featured = guides[0] || null;
-  var rest = guides.slice(1);
+  var featured = allGuides[0] || null;
+  var rest = allGuides.slice(1);
   var totalGuides = allGuides.length;
 
   // Trending: last 7 days by ce_score
@@ -274,7 +286,7 @@ export default async function GuidesPage({ searchParams }) {
     name: 'Marathon Field Guides',
     description: 'Complete collection of Marathon game guides covering shells, weapons, mods, ranked mode, extraction strategy, and progression.',
     numberOfItems: totalGuides,
-    itemListElement: guides.slice(0, 10).map(function(g, i) {
+    itemListElement: allGuides.slice(0, 10).map(function(g, i) {
       return {
         '@type': 'ListItem',
         position: i + 1,
@@ -321,12 +333,6 @@ export default async function GuidesPage({ searchParams }) {
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
           <li>/</li>
           <li style={{ color: '#9b5de5' }}>GUIDES</li>
-          {activeFilter && CATS[activeFilter] && (
-            <>
-              <li>/</li>
-              <li style={{ color: '#fff' }}>{CATS[activeFilter].label}</li>
-            </>
-          )}
         </ol>
       </nav>
 
@@ -386,12 +392,16 @@ export default async function GuidesPage({ searchParams }) {
         </div>
       </section>
 
-      {/* ══ EXPLORE BY SHELL ════════════════════════════════ */}
+      {/* ══ EXPLORE BY SHELL (now links to dedicated guide pages) ═══ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
-        <SectionHeader label="EXPLORE BY SHELL" count={shellCount + ' SHELLS'} />
+        <SectionHeader
+          label="EXPLORE BY SHELL"
+          count={shellCount + ' SHELLS'}
+          rightLink={<Link href="/guides/shells" style={{ fontFamily: 'monospace', fontSize: 9, color: '#9b5de5', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL SHELL GUIDES →</Link>}
+        />
 
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 14, maxWidth: 720 }}>
-          Jump to guides for your Runner Shell. Each link takes you to the shell's detail page with ability breakdowns, stat tables, and related MIRANDA guides.
+          Jump to the dedicated guide page for each Runner Shell. Every shell has its own page with playstyle analysis, strengths and weaknesses, recommended builds, and MIRANDA strategy articles.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 5 }}>
@@ -400,7 +410,7 @@ export default async function GuidesPage({ searchParams }) {
             var imgSrc = dbShell?.image_filename ? '/images/shells/' + dbShell.image_filename : null;
             var guideCount = shellGuideCounts[shell.tag] || 0;
             return (
-              <Link key={shell.name} href={'/shells/' + shell.tag} className="g-shell" style={{ display: 'flex', gap: 10, alignItems: 'center', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + shell.color, borderRadius: '0 2px 2px 0', padding: '10px 12px', textDecoration: 'none' }}>
+              <Link key={shell.name} href={'/guides/shells/' + shell.tag} className="g-shell" style={{ display: 'flex', gap: 10, alignItems: 'center', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + shell.color, borderRadius: '0 2px 2px 0', padding: '10px 12px', textDecoration: 'none' }}>
                 <div style={{ width: 36, height: 36, flexShrink: 0, background: DEEP_BG, border: '1px solid ' + shell.color + '30', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   {imgSrc ? <img src={imgSrc} alt={shell.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 14, color: shell.color + '40' }}>◎</span>}
                 </div>
@@ -416,38 +426,31 @@ export default async function GuidesPage({ searchParams }) {
         </div>
       </section>
 
-      {/* ══ CATEGORY FILTER ═════════════════════════════════ */}
+      {/* ══ BROWSE BY CATEGORY (links to real /guides/[slug] routes) ══ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <SectionHeader label="BROWSE BY CATEGORY" />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 5 }}>
-          <Link href="/guides" className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + (!activeFilter ? '#fff' : 'rgba(255,255,255,0.2)'), borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
-            <div>
-              <div style={{ fontFamily: 'monospace', fontSize: 9, color: !activeFilter ? '#fff' : 'rgba(255,255,255,0.4)', letterSpacing: 2, marginBottom: 2, fontWeight: 700 }}>ALL GUIDES</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Every category</div>
-            </div>
-            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: !activeFilter ? '#fff' : 'rgba(255,255,255,0.25)' }}>{totalGuides}</span>
-          </Link>
           {Object.entries(CATS).map(function(entry) {
-            var key = entry[0];
+            var tag = entry[0];
             var cat = entry[1];
-            var isActive = activeFilter === key;
-            var count = catCounts[key] || 0;
+            var slug = TAG_TO_SLUG[tag];
+            var count = catCounts[tag] || 0;
             return (
-              <Link key={key} href={isActive ? '/guides' : '/guides?cat=' + key} className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + (isActive ? cat.color : cat.color + '44'), borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+              <Link key={tag} href={'/guides/' + slug} className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                 <div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: isActive ? cat.color : cat.color + 'cc', letterSpacing: 2, marginBottom: 2, fontWeight: 700 }}>{cat.label}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: cat.color, letterSpacing: 2, marginBottom: 2, fontWeight: 700 }}>{cat.label}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.desc.slice(0, 36)}</div>
                 </div>
-                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: isActive ? cat.color : 'rgba(255,255,255,0.25)' }}>{count}</span>
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.5)' }}>{count}</span>
               </Link>
             );
           })}
         </div>
       </section>
 
-      {/* ══ TRENDING (7 day top scores) ═════════════════════ */}
-      {trending.length > 0 && !activeFilter && (
+      {/* ══ TRENDING ════════════════════════════════════════ */}
+      {trending.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <SectionHeader label="TRENDING THIS WEEK" color="#00ff41" count={trending.length} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 6 }}>
@@ -457,7 +460,7 @@ export default async function GuidesPage({ searchParams }) {
       )}
 
       {/* ══ FEATURED GUIDE ══════════════════════════════════ */}
-      {featured && !activeFilter && (
+      {featured && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <SectionHeader label="FEATURED GUIDE" color="#9b5de5" />
           <Link href={'/intel/' + featured.slug} className="g-card" style={{ textDecoration: 'none', display: 'block' }}>
@@ -495,29 +498,13 @@ export default async function GuidesPage({ searchParams }) {
         </section>
       )}
 
-      {/* ══ GUIDE GRID ══════════════════════════════════════ */}
+      {/* ══ ALL GUIDES GRID ═════════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
-        {guides.length === 0 ? (
+        {allGuides.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2 }}>
             <div style={{ fontSize: 32, color: '#9b5de5', marginBottom: 16, opacity: 0.4 }}>◎</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700 }}>
-              {activeFilter ? 'NO ' + (CATS[activeFilter]?.label || activeFilter.toUpperCase()) + ' YET' : 'MIRANDA INITIALIZING'}
-            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700 }}>MIRANDA INITIALIZING</div>
           </div>
-        ) : activeFilter ? (
-          <>
-            <SectionHeader
-              label={(CATS[activeFilter]?.seoTerm || activeFilter.toUpperCase()).toUpperCase()}
-              color={CATS[activeFilter]?.color}
-              count={guides.length + ' GUIDES'}
-            />
-            {CATS[activeFilter] && (
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, marginBottom: 16, maxWidth: 720 }}>
-                {CATS[activeFilter].desc}
-              </p>
-            )}
-            <GuideGrid guides={guides} />
-          </>
         ) : (
           <>
             <SectionHeader label="ALL GUIDES" count={rest.length + ' GUIDES'} />
@@ -573,7 +560,7 @@ export default async function GuidesPage({ searchParams }) {
         </section>
       )}
 
-      {/* ══ FAQ (SEO GOLD) ══════════════════════════════════ */}
+      {/* ══ FAQ ═════════════════════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <SectionHeader label="FREQUENTLY ASKED" count={FAQS.length + ' QUESTIONS'} />
 
