@@ -1,10 +1,10 @@
 'use client';
 
 // app/meta/MetaClient.js
-// Mode 1: Enhanced NEXUS live tier list with movement badges + countdown
+// Mode 1: NEXUS live tier list with movement badges + countdown
 // Mode 2: Interactive drag-and-drop tier list builder with image generation + sharing
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/useTrack';
@@ -20,12 +20,12 @@ const supabase = createClient(
 const TIERS = ['S', 'A', 'B', 'C', 'D', 'F'];
 
 const TIER_STYLES = {
-  S: { bg: 'rgba(255,0,0,0.06)',     color: '#ff0000', border: 'rgba(255,0,0,0.2)',           label: 'DOMINANT' },
-  A: { bg: 'rgba(255,136,0,0.05)',   color: '#ff8800', border: 'rgba(255,136,0,0.12)',         label: 'STRONG'   },
-  B: { bg: 'rgba(0,245,255,0.04)',   color: '#00f5ff', border: 'rgba(0,245,255,0.08)',         label: 'VIABLE'   },
-  C: { bg: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.35)', border: 'rgba(255,255,255,0.05)', label: 'WEAK'  },
-  D: { bg: 'rgba(255,255,255,0.01)', color: 'rgba(255,255,255,0.2)',  border: 'rgba(255,255,255,0.03)', label: 'AVOID' },
-  F: { bg: 'rgba(255,0,0,0.015)',    color: 'rgba(255,0,0,0.25)',     border: 'rgba(255,0,0,0.06)',     label: 'F TIER' },
+  S: { bg: '#ff2222', fg: '#fff',    label: 'DOMINANT', accent: '#ff2222' },
+  A: { bg: '#ff8800', fg: '#000',    label: 'STRONG',   accent: '#ff8800' },
+  B: { bg: '#00d4ff', fg: '#000',    label: 'VIABLE',   accent: '#00d4ff' },
+  C: { bg: 'rgba(255,255,255,0.15)', fg: 'rgba(255,255,255,0.6)', label: 'WEAK',  accent: 'rgba(255,255,255,0.25)' },
+  D: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.3)', label: 'AVOID', accent: 'rgba(255,255,255,0.15)' },
+  F: { bg: 'rgba(255,34,34,0.15)',   fg: 'rgba(255,34,34,0.6)',   label: 'F TIER', accent: 'rgba(255,34,34,0.25)' },
 };
 
 const TIER_ORDER_MAP = { S: 0, A: 1, B: 2, C: 3, D: 4, F: 5 };
@@ -65,14 +65,14 @@ function getImageSrc(nameOrItem, kind) {
 }
 
 const TREND_DISPLAY = {
-  up:     { label: '▲ RISING',  color: '#00ff88' },
-  down:   { label: '▼ FALLING', color: '#ff0000' },
-  stable: { label: '● STABLE',  color: 'rgba(255,255,255,0.25)' },
+  up:     { label: '↑ RISING',  color: '#00ff41' },
+  down:   { label: '↓ FALLING', color: '#ff2222' },
+  stable: { label: '→ STABLE',  color: 'rgba(255,255,255,0.25)' },
 };
 
 const TYPE_COLORS = {
-  strategy: '#9b5de5', weapon: '#ff0000',
-  loadout: '#ff8800', shell: '#00f5ff', ability: '#ffd700',
+  strategy: '#9b5de5', weapon: '#ff2222',
+  loadout: '#ff8800', shell: '#00d4ff', ability: '#ffd700',
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────
@@ -156,6 +156,7 @@ function getUniqueWeaponTypes(weapons) {
 }
 
 // ─── CANVAS IMAGE GENERATOR ─────────────────────────────────
+// UNCHANGED — existing share image design is intentional brand asset
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -613,128 +614,133 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   const totalItems = placedCount + unranked.length;
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 80px' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 80px', fontFamily: 'system-ui, sans-serif' }}>
+
+      <style>{`
+        .meta-tier-row:hover { background: #1e2228 !important; }
+        .meta-pill:hover     { background: #22252e !important; }
+        .meta-btn:hover      { background: #1e2228 !important; }
+        .meta-share-btn:hover { background: rgba(255,255,255,0.05) !important; }
+      `}</style>
 
       {toast && (
         <div style={{
-          position: 'fixed', top: 90, right: 24, zIndex: 9999,
-          background: 'rgba(0,255,136,0.12)', border: '1px solid rgba(0,255,136,0.3)',
-          borderRadius: 8, padding: '12px 20px',
-          fontFamily: 'Share Tech Mono, monospace', fontSize: 11,
-          color: '#00ff88', letterSpacing: 2,
+          position: 'fixed', top: 64, right: 24, zIndex: 9999,
+          background: '#1a1d24', border: '1px solid #22252e',
+          borderLeft: '3px solid #00ff41',
+          borderRadius: 2, padding: '12px 18px',
+          fontSize: 10, fontWeight: 700, color: '#00ff41', letterSpacing: 2,
         }}>
-          ▲ TIERS UPDATED — {Object.keys(movements).length} CHANGE{Object.keys(movements).length !== 1 ? 'S' : ''}
+          ↑ TIERS UPDATED — {Object.keys(movements).length} CHANGE{Object.keys(movements).length !== 1 ? 'S' : ''}
         </div>
       )}
 
       {mobilePickTarget && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9998,
-          background: 'rgba(0,0,0,0.85)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
-        }}
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20 }}
           onClick={() => setMobilePickTarget(null)}
         >
-          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, color: '#fff', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 6, letterSpacing: 2, fontWeight: 700 }}>
             ASSIGN {mobilePickTarget.item.name.toUpperCase()}
           </div>
           {TIERS.map(t => (
             <button key={t} onClick={e => { e.stopPropagation(); onMobileAssign(t); }} style={{
-              width: 280, padding: '14px 0', borderRadius: 8,
-              background: TIER_STYLES[t]?.bg, border: `1px solid ${TIER_STYLES[t]?.color}55`,
-              color: TIER_STYLES[t]?.color, fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900,
-              cursor: 'pointer', letterSpacing: 4,
+              width: 280, padding: '14px 0', borderRadius: 2,
+              background: TIER_STYLES[t].bg,
+              border: '1px solid ' + TIER_STYLES[t].accent + '88',
+              color: TIER_STYLES[t].fg, fontSize: 22, fontWeight: 900, letterSpacing: 4,
+              cursor: 'pointer', fontFamily: 'inherit',
             }}>
               {t}
             </button>
           ))}
           <button onClick={() => onMobileAssign('unranked')} style={{
-            width: 280, padding: '10px 0', borderRadius: 8,
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-            color: 'rgba(255,255,255,0.4)', fontFamily: 'Share Tech Mono, monospace', fontSize: 11,
-            cursor: 'pointer', letterSpacing: 2,
+            width: 280, padding: '10px 0', borderRadius: 2,
+            background: '#1a1d24', border: '1px solid #22252e',
+            color: 'rgba(255,255,255,0.4)', fontSize: 10, cursor: 'pointer', letterSpacing: 2, fontFamily: 'inherit',
           }}>
             BACK TO UNRANKED
           </button>
         </div>
       )}
 
-      {/* ── HEADER ── */}
-      <section style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00f5ff', boxShadow: '0 0 10px #00f5ff', animation: 'pulse-glow 2s infinite' }} />
-          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#00f5ff', letterSpacing: 3 }}>⬡ NEXUS — LIVE META INTELLIGENCE</span>
+      {/* ══ HEADER ════════════════════════════════════════════ */}
+      <section style={{ marginBottom: 28, paddingTop: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
+          <span style={{ fontSize: 10, color: '#00ff41', letterSpacing: 3, fontWeight: 700 }}>NEXUS · LIVE META INTELLIGENCE</span>
         </div>
 
-        {usageCount && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 20, marginBottom: 16 }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00f5ff', animation: 'pulse-glow 2s ease-in-out infinite' }} />
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#00f5ff', letterSpacing: 2 }}>
-              {usageCount.toLocaleString()} TIER LISTS SHARED BY RUNNERS
-            </span>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 16 }}>
+          <div style={{ flex: 1, minWidth: 300 }}>
+            <h1 style={{ fontSize: 'clamp(32px, 4.5vw, 48px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1, margin: '0 0 12px', color: '#fff' }}>
+              Marathon Meta<br /><span style={{ color: '#00ff41' }}>Tier List</span>
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
+              What weapons, shells, and strategies are actually winning in Marathon right now. Updated every 6 hours by NEXUS.
+            </p>
           </div>
-        )}
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
-          <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 36, fontWeight: 900, letterSpacing: 2, margin: 0 }}>
-            MARATHON META <span style={{ color: '#ff0000' }}>TIER LIST</span>
-          </h1>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 6 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00f5ff', animation: 'pulse-glow 2s infinite' }} />
-              <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#00f5ff', letterSpacing: 1 }}>
+          {/* Status card */}
+          <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00ff41', borderRadius: '0 0 3px 3px', padding: '14px 18px', minWidth: 220 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, color: '#00ff41' }}>LIVE</span>
+              <div style={{ flex: 1 }} />
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontFamily: 'monospace' }}>
                 UPDATED {lastUpdated ? hoursAgo(lastUpdated).toUpperCase() : 'PENDING'}
               </span>
             </div>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>
-              NEXT UPDATE IN: <span style={{ color: 'rgba(255,255,255,0.35)' }}>{countdown}</span>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1.5, fontFamily: 'monospace' }}>
+              NEXT CYCLE · <span style={{ color: 'rgba(255,255,255,0.5)' }}>{countdown}</span>
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {[
-                { label: '𝕏 SHARE', color: '#ffffff', action: function() { window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('Marathon meta tier list updated — check what weapons and shells are actually winning right now') + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta') + '&hashtags=Marathon,MarathonGame', '_blank'); } },
-                { label: 'REDDIT',  color: '#ff4500', action: function() { window.open('https://www.reddit.com/r/Marathon/submit?title=' + encodeURIComponent('CyberneticPunks Marathon Meta Tier List — Updated ' + (lastUpdated ? hoursAgo(lastUpdated) : 'now')) + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta'), '_blank'); } },
-                { label: 'DISCORD', color: '#5865f2', action: function() { navigator.clipboard.writeText('https://cyberneticpunks.com/meta').catch(function(){}); window.open('https://cyberneticpunks.com/meta', '_blank'); } },
-              ].map(function(btn) {
-                return (
-                  <button key={btn.label} onClick={btn.action} style={{
-                    fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1,
-                    padding: '7px 12px', borderRadius: 5, cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid ' + btn.color + '33',
-                    color: btn.color, transition: 'background 0.15s',
-                  }}>
-                    {btn.label}
-                  </button>
-                );
-              })}
-            </div>
+            {usageCount && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #22252e', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontFamily: 'monospace' }}>
+                <span style={{ color: '#00ff41', fontWeight: 700 }}>{usageCount.toLocaleString()}</span> lists shared
+              </div>
+            )}
           </div>
         </div>
 
-        <div style={{ height: 1, background: 'linear-gradient(90deg, #00f5ff44, #00f5ff11, transparent)', marginBottom: 16 }} />
-
-        <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: 'rgba(255,255,255,0.45)', maxWidth: 700, lineHeight: 1.6, margin: 0 }}>
-          What weapons, shells, and strategies are actually winning in Marathon right now.
-        </p>
+        {/* Share strip */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, fontFamily: 'monospace', marginRight: 4 }}>SHARE</span>
+          {[
+            { label: 'X',       action: () => window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('Marathon meta tier list updated — check what weapons and shells are winning') + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta') + '&hashtags=Marathon,MarathonGame', '_blank') },
+            { label: 'REDDIT',  action: () => window.open('https://www.reddit.com/r/Marathon/submit?title=' + encodeURIComponent('CyberneticPunks Marathon Meta Tier List — Updated ' + (lastUpdated ? hoursAgo(lastUpdated) : 'now')) + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta'), '_blank') },
+            { label: 'COPY',    action: () => { navigator.clipboard.writeText('https://cyberneticpunks.com/meta').catch(() => {}); } },
+          ].map(btn => (
+            <button key={btn.label} className="meta-share-btn" onClick={btn.action} style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: 1,
+              padding: '5px 12px', borderRadius: 2, cursor: 'pointer',
+              background: 'transparent', border: '1px solid #22252e',
+              color: 'rgba(255,255,255,0.4)',
+              fontFamily: 'inherit', transition: 'background 0.1s',
+            }}>
+              {btn.label}
+            </button>
+          ))}
+        </div>
       </section>
 
-      {/* ── STATS STRIP ── */}
-      <section style={{ marginBottom: 36 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      {/* ══ STATS STRIP ═══════════════════════════════════════ */}
+      <section style={{ marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: '#1e2028' }}>
           {[
-            { label: 'WEAPONS TRACKED',   value: weapons?.length || 0,  color: '#ff0000' },
-            { label: 'SHELLS RANKED',      value: shells?.length  || 0,  color: '#00f5ff' },
-            { label: 'MODS INDEXED',       value: modCount || 0,         color: '#ff8800' },
-            { label: 'META SHIFTS TODAY',  value: metaShiftsToday,       color: '#00ff88' },
+            { label: 'Weapons Tracked', value: weapons?.length || 0,  color: '#ff2222' },
+            { label: 'Shells Ranked',    value: shells?.length  || 0,  color: '#00d4ff' },
+            { label: 'Mods Indexed',     value: modCount || 0,         color: '#ff8800' },
+            { label: 'Shifts Today',     value: metaShiftsToday,       color: '#00ff41' },
           ].map(stat => (
             <div key={stat.label} style={{
-              background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.08)',
-              borderTop: '2px solid ' + stat.color + '44', borderRadius: 8,
-              padding: '18px 20px', textAlign: 'center',
+              background: '#1a1d24',
+              borderTop: '2px solid ' + stat.color,
+              padding: '16px 18px',
             }}>
-              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, color: stat.color, lineHeight: 1, marginBottom: 8 }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: stat.color, lineHeight: 1, letterSpacing: '-1px', marginBottom: 6 }}>
                 {stat.value}
               </div>
-              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700 }}>
                 {stat.label}
               </div>
             </div>
@@ -742,26 +748,21 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         </div>
       </section>
 
-      {/* ── TAB BAR ── */}
-      <div style={{
-        display: 'flex', gap: 4,
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 10, padding: 4, marginBottom: 32,
-      }}>
+      {/* ══ TAB BAR ═══════════════════════════════════════════ */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #1e2028', marginBottom: 32 }}>
         {[
-          { key: 'live',    label: '⬡ NEXUS LIVE META',   color: '#00f5ff' },
-          { key: 'builder', label: '✎ CREATE YOUR OWN',  color: '#ff8800' },
+          { key: 'live',    label: 'LIVE META',     color: '#00ff41' },
+          { key: 'builder', label: 'CREATE YOUR OWN', color: '#ff8800' },
         ].map(tab => {
           const active = activeTab === tab.key;
           return (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
-              flex: 1, padding: '12px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-              background: active ? (tab.color + '18') : 'transparent',
-              borderBottom: active ? `2px solid ${tab.color}` : '2px solid transparent',
-              color: active ? tab.color : 'rgba(255,255,255,0.3)',
-              fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, letterSpacing: 2,
-              transition: 'all 0.2s',
+              padding: '12px 24px', background: 'transparent', border: 'none',
+              borderBottom: active ? '2px solid ' + tab.color : '2px solid transparent',
+              color: active ? '#fff' : 'rgba(255,255,255,0.3)',
+              fontSize: 11, fontWeight: 700, letterSpacing: 2,
+              cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'inherit',
+              transition: 'color 0.1s',
             }}>
               {tab.label}
             </button>
@@ -769,25 +770,26 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         })}
       </div>
 
-      {/* MODE 1: NEXUS LIVE TIER LIST */}
+      {/* ══ MODE 1: LIVE TIER LIST ══════════════════════════ */}
       {activeTab === 'live' && (
-        <section style={{ marginBottom: 64 }}>
+        <section style={{ marginBottom: 56 }}>
 
-          <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 4, width: 'fit-content' }}>
+          {/* Sub-filter */}
+          <div style={{ display: 'flex', gap: 0, marginBottom: 28, borderBottom: '1px solid #1e2028', width: 'fit-content' }}>
             {[
-              { key: 'all',     label: 'ALL',     color: '#fff'    },
-              { key: 'weapons', label: 'WEAPONS', color: '#ff0000' },
-              { key: 'shells',  label: 'SHELLS',  color: '#00f5ff' },
-            ].map(function(opt) {
+              { key: 'all',     label: 'ALL' },
+              { key: 'weapons', label: 'WEAPONS' },
+              { key: 'shells',  label: 'SHELLS' },
+            ].map(opt => {
               const isActive = liveFilter === opt.key;
               return (
                 <button key={opt.key} onClick={() => setLiveFilter(opt.key)} style={{
-                  fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2,
-                  padding: '8px 20px', borderRadius: 5, border: 'none', cursor: 'pointer',
-                  background: isActive ? opt.color + '18' : 'transparent',
-                  borderBottom: isActive ? '2px solid ' + opt.color : '2px solid transparent',
-                  color: isActive ? opt.color : 'rgba(255,255,255,0.28)',
-                  transition: 'all 0.15s',
+                  fontSize: 10, fontWeight: 700, letterSpacing: 2,
+                  padding: '8px 18px', background: 'transparent', cursor: 'pointer',
+                  border: 'none',
+                  borderBottom: isActive ? '2px solid #00ff41' : '2px solid transparent',
+                  color: isActive ? '#fff' : 'rgba(255,255,255,0.3)',
+                  fontFamily: 'inherit',
                 }}>
                   {opt.label}
                 </button>
@@ -796,48 +798,46 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
           </div>
 
           {metaTiers.length === 0 ? (
-            <div style={{
-              padding: '40px 28px', background: 'rgba(0,245,255,0.02)',
-              border: '1px solid rgba(0,245,255,0.08)', borderRadius: 10,
-              textAlign: 'center', marginBottom: 32,
-            }}>
-              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, color: '#00f5ff', letterSpacing: 2, marginBottom: 8 }}>⬡ NEXUS IS CALIBRATING</div>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ padding: '40px 28px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ fontSize: 12, color: '#00ff41', letterSpacing: 3, marginBottom: 8, fontWeight: 700 }}>NEXUS IS CALIBRATING</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6 }}>
                 Tier list populates automatically every 6 hours.
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {TIERS.filter(t => t !== 'F').map(tier => {
                 const style = TIER_STYLES[tier];
                 const allItems = sortedTiers[tier] || [];
                 const items = liveFilter === 'all' ? allItems
-                  : liveFilter === 'weapons' ? allItems.filter(function(i) { return (i.type || '').toLowerCase() === 'weapon'; })
-                  : allItems.filter(function(i) { return (i.type || '').toLowerCase() === 'shell'; });
-                const isSTop = tier === 'S';
+                  : liveFilter === 'weapons' ? allItems.filter(i => (i.type || '').toLowerCase() === 'weapon')
+                  : allItems.filter(i => (i.type || '').toLowerCase() === 'shell');
+
                 return (
-                  <div key={tier} style={isSTop ? { filter: 'drop-shadow(0 0 8px rgba(255,0,0,0.08))' } : {}}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <div key={tier}>
+                    {/* Tier header */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+                      {/* Large tier letter block — the "carved" feeling */}
                       <div style={{
-                        fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900,
-                        color: style.color, width: 48, textAlign: 'center',
-                        textShadow: isSTop ? '0 0 20px rgba(255,0,0,0.5)' : 'none',
-                      }}>{tier}</div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: style.color, letterSpacing: 2, opacity: 0.7 }}>{style.label}</div>
-                      <div style={{ flex: 1, height: 1, background: isSTop ? 'linear-gradient(90deg, rgba(255,0,0,0.4), rgba(255,0,0,0.05))' : style.border }} />
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>
+                        background: style.bg,
+                        color: style.fg,
+                        fontSize: 20, fontWeight: 900, letterSpacing: 1,
+                        padding: '6px 14px', borderRadius: 2, minWidth: 40, textAlign: 'center',
+                        fontFamily: 'Orbitron, monospace',
+                      }}>
+                        {tier}
+                      </div>
+                      <div style={{ fontSize: 10, color: style.accent, letterSpacing: 3, fontWeight: 700 }}>{style.label}</div>
+                      <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, fontFamily: 'monospace' }}>
                         {items.length} {items.length === 1 ? 'ENTRY' : 'ENTRIES'}
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 60 }}>
+                    {/* Tier items */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {items.length === 0 ? (
-                        <div style={{
-                          padding: '14px 20px', background: style.bg,
-                          border: '1px dashed ' + style.border, borderRadius: 8,
-                          fontFamily: 'Share Tech Mono, monospace', fontSize: 10,
-                          color: 'rgba(255,255,255,0.12)', letterSpacing: 1,
-                        }}>
+                        <div style={{ padding: '14px 18px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + style.accent, borderRadius: 3, fontSize: 10, color: 'rgba(255,255,255,0.15)', letterSpacing: 2, fontFamily: 'monospace' }}>
                           NO {style.label} ENTRIES — NEXUS IS TRACKING
                         </div>
                       ) : items.map((item, i) => {
@@ -847,75 +847,72 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                         const shellData = typeKey === 'shell' ? shellMap[item.name.toLowerCase()] : null;
                         const weaponData = typeKey === 'weapon' ? weaponMap[item.name.toLowerCase()] : null;
                         const mv = movements[item.name];
+                        const imgSrc = getImageSrc(shellData || weaponData, typeKey);
 
                         return (
-                          <div key={i} style={{
-                            background: style.bg, border: '1px solid ' + style.border,
-                            borderLeft: '3px solid ' + style.color, borderRadius: 8,
-                            padding: '16px 20px',
-                            boxShadow: isSTop ? '0 0 24px rgba(255,0,0,0.12)' : 'none',
-                            position: 'relative', overflow: 'hidden',
+                          <div key={i} className="meta-tier-row" style={{
+                            background: '#1a1d24', border: '1px solid #22252e',
+                            borderLeft: '3px solid ' + style.accent,
+                            borderRadius: '0 3px 3px 0', padding: '14px 18px',
+                            transition: 'background 0.1s',
                           }}>
-                            {isSTop && (
-                              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,0,0,0.3), transparent)' }} />
-                            )}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
 
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-                              {(() => {
-                                const imgSrc = getImageSrc(shellData || weaponData, typeKey);
-                                return imgSrc ? (
-                                  <img src={imgSrc} alt={item.name}
-                                    style={{ width: 40, height: 28, objectFit: 'contain', flexShrink: 0, opacity: 0.85 }}
-                                    onError={e => { e.target.style.display = 'none'; }}
-                                  />
+                              {/* Image / icon */}
+                              <div style={{ width: 52, height: 52, flexShrink: 0, background: '#0e1014', border: '1px solid #22252e', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                {imgSrc ? (
+                                  <img src={imgSrc} alt={item.name} style={{ width: 46, height: 46, objectFit: 'contain' }} onError={e => { e.target.style.display = 'none'; }} />
                                 ) : (
-                                  <div style={{
-                                    fontFamily: 'monospace', fontSize: 20, width: 28, textAlign: 'center',
-                                    color: typeColor, opacity: 0.5, flexShrink: 0, lineHeight: 1, marginTop: 2,
-                                  }}>
+                                  <span style={{ fontSize: 22, color: typeColor, opacity: 0.4 }}>
                                     {typeKey === 'shell' ? (SHELL_SYMBOLS[item.name] || '⬠') : getWeaponIcon(weaponData?.weapon_type)}
-                                  </div>
-                                );
-                              })()}
+                                  </span>
+                                )}
+                              </div>
 
+                              {/* Info */}
                               <div style={{ flex: 1, minWidth: 200 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
-                                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff' }}>{item.name}</span>
-                                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1, color: typeColor, background: typeColor + '15', borderRadius: 4, padding: '2px 8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5 }}>{item.name}</span>
+                                  <span style={{ fontSize: 8, letterSpacing: 2, color: typeColor, background: typeColor + '18', border: '1px solid ' + typeColor + '30', borderRadius: 2, padding: '2px 7px', fontWeight: 700, textTransform: 'uppercase' }}>
                                     {(item.type || '').toUpperCase()}
                                   </span>
-                                  {mv === 'up'  && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88', background: 'rgba(0,255,136,0.12)', border: '1px solid rgba(0,255,136,0.25)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>▲ MOVED UP</span>}
-                                  {mv === 'down' && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000', background: 'rgba(255,0,0,0.12)', border: '1px solid rgba(255,0,0,0.25)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>▼ MOVED DOWN</span>}
-                                  {mv === 'new'  && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>★ NEW</span>}
-                                  {item.ranked_tier_solo  && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#9b5de5', background: 'rgba(155,93,229,0.12)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>SOLO {item.ranked_tier_solo}</span>}
-                                  {item.ranked_tier_squad && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.1)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>SQUAD {item.ranked_tier_squad}</span>}
-                                  {item.holotag_tier && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.08)', borderRadius: 4, padding: '2px 8px', letterSpacing: 1 }}>◈ {item.holotag_tier}</span>}
+                                  {mv === 'up'   && <span style={{ fontSize: 8, color: '#00ff41', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>↑ MOVED UP</span>}
+                                  {mv === 'down' && <span style={{ fontSize: 8, color: '#ff2222', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>↓ MOVED DOWN</span>}
+                                  {mv === 'new'  && <span style={{ fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>★ NEW</span>}
+                                  {item.ranked_tier_solo  && <span style={{ fontSize: 8, color: '#9b5de5', background: 'rgba(155,93,229,0.08)', border: '1px solid rgba(155,93,229,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>SOLO {item.ranked_tier_solo}</span>}
+                                  {item.ranked_tier_squad && <span style={{ fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>SQUAD {item.ranked_tier_squad}</span>}
+                                  {item.holotag_tier && <span style={{ fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>◈ {item.holotag_tier}</span>}
                                 </div>
-                                {item.note && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>{item.note}</div>}
-                                {item.ranked_note && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: '#9b5de5', marginTop: 4, opacity: 0.8 }}>◎ {item.ranked_note}</div>}
+                                {item.note && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{item.note}</div>}
+                                {item.ranked_note && <div style={{ fontSize: 11, color: '#9b5de5', marginTop: 3, opacity: 0.8 }}>◎ {item.ranked_note}</div>}
+
+                                {/* Shell stats row */}
+                                {shellData && (
+                                  <div style={{ display: 'flex', gap: 12, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap' }}>
+                                    {shellData.role && <StatInline label="ROLE" value={shellData.role} />}
+                                    {shellData.base_health && <StatInline label="HP" value={shellData.base_health} color="#00ff41" />}
+                                    {shellData.base_shield && <StatInline label="SHIELD" value={shellData.base_shield} color="#00d4ff" />}
+                                    {shellData.prime_ability_name && <StatInline label="PRIME" value={shellData.prime_ability_name} color="#ff8800" />}
+                                    {shellData.tactical_ability_name && <StatInline label="TAC" value={shellData.tactical_ability_name} color="#ff8800" />}
+                                  </div>
+                                )}
+                                {/* Weapon stats row with bars */}
+                                {weaponData && (
+                                  <div style={{ display: 'flex', gap: 12, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap', alignItems: 'center' }}>
+                                    {weaponData.weapon_type && <StatInline label="TYPE" value={weaponData.weapon_type} />}
+                                    {weaponData.damage && <StatBar label="DMG" value={weaponData.damage} max={120} color="#ff8800" />}
+                                    {weaponData.fire_rate && <StatBar label="RPM" value={weaponData.fire_rate} max={800} color="#00d4ff" />}
+                                    {weaponData.range_rating && <StatInline label="RANGE" value={weaponData.range_rating} />}
+                                    {weaponData.ranked_viable === false && <StatInline label="RANKED" value="AVOID" color="#ff2222" />}
+                                  </div>
+                                )}
                               </div>
 
-                              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: trend.color, whiteSpace: 'nowrap', paddingTop: 2 }}>{trend.label}</div>
+                              {/* Trend */}
+                              <div style={{ fontSize: 10, color: trend.color, whiteSpace: 'nowrap', paddingTop: 4, fontWeight: 700, letterSpacing: 1, fontFamily: 'monospace', flexShrink: 0 }}>
+                                {trend.label}
+                              </div>
                             </div>
-
-                            {shellData && (
-                              <div style={{ display: 'flex', gap: 16, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap' }}>
-                                {shellData.role && <StatPill label="ROLE" value={shellData.role} color="#00f5ff" />}
-                                {shellData.base_health && <StatPill label="HP" value={shellData.base_health} color="#00ff88" />}
-                                {shellData.base_shield && <StatPill label="SHIELD" value={shellData.base_shield} color="#00f5ff" />}
-                                {shellData.prime_ability_name && <StatPill label="PRIME" value={shellData.prime_ability_name} color="#ff8800" />}
-                                {shellData.tactical_ability_name && <StatPill label="TACTICAL" value={shellData.tactical_ability_name} color="#ff8800" />}
-                              </div>
-                            )}
-                            {weaponData && (
-                              <div style={{ display: 'flex', gap: 16, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap' }}>
-                                {weaponData.weapon_type && <StatPill label="TYPE" value={weaponData.weapon_type} color="#ff0000" />}
-                                {weaponData.damage     && <StatPill label="DMG" value={weaponData.damage} color="#ff8800" />}
-                                {weaponData.fire_rate  && <StatPill label="RPM" value={weaponData.fire_rate} color="#ffd700" />}
-                                {weaponData.range_rating && <StatPill label="RANGE" value={weaponData.range_rating} color="#00f5ff" />}
-                                {weaponData.ranked_viable === false && <StatPill label="RANKED" value="AVOID" color="#ff0000" />}
-                              </div>
-                            )}
                           </div>
                         );
                       })}
@@ -926,31 +923,32 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
+          {/* Recent posts */}
           {recentPosts?.length > 0 && (
-            <div style={{ marginTop: 64 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: 2, margin: 0 }}>NEXUS INTELLIGENCE BRIEFING</h2>
-                <Link href="/intel/nexus" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#00f5ff', textDecoration: 'none', letterSpacing: 2 }}>VIEW FULL SITREP →</Link>
+            <div style={{ marginTop: 48 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>Intelligence Briefing</span>
+                <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+                <Link href="/intel/nexus" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', letterSpacing: 1, fontWeight: 700, letterSpacing: 2, fontFamily: 'monospace' }}>VIEW FULL SITREP →</Link>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {recentPosts.map((post, i) => {
-                  const editorColor = post.editor === 'CIPHER' ? '#ff0000' : '#00f5ff';
-                  const editorSymbol = post.editor === 'CIPHER' ? '◈' : '⬡';
+                  const editorColor = post.editor === 'CIPHER' ? '#ff2222' : '#00d4ff';
                   return (
                     <Link key={i} href={'/intel/' + post.slug} style={{
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '14px 18px',
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.05)',
-                      borderLeft: '3px solid ' + editorColor + '44',
-                      borderRadius: 8, textDecoration: 'none',
-                    }}>
-                      <span style={{ color: editorColor, opacity: 0.7, fontSize: 14 }}>{editorSymbol}</span>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: editorColor, width: 64, letterSpacing: 1, flexShrink: 0 }}>{post.editor}</span>
-                      <span style={{ flex: 1, fontFamily: 'Rajdhani, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.8)' }}>{post.headline}</span>
-                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, flexShrink: 0 }}>{hoursAgo(post.created_at)}</span>
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px',
+                      background: '#1a1d24', border: '1px solid #22252e',
+                      borderLeft: '3px solid ' + editorColor + '55',
+                      borderRadius: '0 3px 3px 0', textDecoration: 'none',
+                      transition: 'background 0.1s',
+                    }} className="meta-tier-row">
+                      <span style={{ width: 6, height: 6, borderRadius: 1, background: editorColor, flexShrink: 0 }} />
+                      <span style={{ fontSize: 9, fontWeight: 700, color: editorColor, width: 60, letterSpacing: 2, flexShrink: 0 }}>{post.editor}</span>
+                      <span style={{ flex: 1, fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>{post.headline}</span>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, flexShrink: 0, fontFamily: 'monospace' }}>{hoursAgo(post.created_at)}</span>
                       {post.tags?.[0] && (
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: editorColor, background: editorColor + '12', borderRadius: 4, padding: '3px 8px', flexShrink: 0, letterSpacing: 1 }}>{post.tags[0]}</span>
+                        <span style={{ fontSize: 8, color: editorColor, background: editorColor + '15', border: '1px solid ' + editorColor + '25', borderRadius: 2, padding: '2px 7px', flexShrink: 0, letterSpacing: 1.5, fontWeight: 700 }}>{post.tags[0]}</span>
                       )}
                     </Link>
                   );
@@ -959,48 +957,31 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          <div style={{ marginTop: 48, background: 'rgba(0,245,255,0.02)', border: '1px solid rgba(0,245,255,0.07)', borderRadius: 10, padding: '24px 28px' }}>
-            <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#00f5ff', letterSpacing: 2, marginBottom: 10 }}>HOW WE RANK THE META</h3>
-            <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, margin: 0 }}>
+          {/* Methodology */}
+          <div style={{ marginTop: 32, background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00d4ff', borderRadius: '0 0 3px 3px', padding: '20px 22px' }}>
+            <h3 style={{ fontSize: 10, fontWeight: 700, color: '#00d4ff', letterSpacing: 3, marginBottom: 8, margin: 0, textTransform: 'uppercase' }}>How we rank the meta</h3>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: '8px 0 0' }}>
               Rankings are generated by NEXUS (meta tracking) and CIPHER (competitive analysis) every 6 hours. Data sources include YouTube gameplay analysis, Reddit community sentiment from r/Marathon, and Bungie official communications. Stat overlays are pulled from our verified shell and weapon database. Trends indicate movement over the past 48 hours.
             </p>
           </div>
 
-          {/* ── DEXTER CTA ── */}
+          {/* DEXTER CTA */}
           <div style={{
-            marginTop: 32,
-            background: 'rgba(255,136,0,0.03)',
-            border: '1px solid rgba(255,136,0,0.12)',
-            borderLeft: '3px solid rgba(255,136,0,0.5)',
-            borderRadius: 8,
-            padding: '24px 28px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 20,
+            marginTop: 24, background: '#1a1d24', border: '1px solid #22252e',
+            borderTop: '2px solid #ff8800', borderRadius: '0 0 3px 3px',
+            padding: '22px 24px', display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
           }}>
             <div>
-              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#ff8800', letterSpacing: 1, marginBottom: 6 }}>
-                ⬢ NOT SURE WHAT TO RUN?
-              </div>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, maxWidth: 440 }}>
-                DEXTER engineers a complete loadout in seconds — shell, weapons, mods, cores, and implants tuned to your playstyle and rank target.
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#ff8800', letterSpacing: 2, marginBottom: 6, textTransform: 'uppercase' }}>Not sure what to run?</div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 460 }}>
+                DEXTER engineers a complete loadout in seconds — shell, weapons, mods, cores, and implants tuned to your playstyle.
               </div>
             </div>
             <Link href="/advisor" style={{
-              flexShrink: 0,
-              padding: '12px 24px',
-              background: 'rgba(255,136,0,0.1)',
-              border: '1px solid rgba(255,136,0,0.35)',
-              borderRadius: 6,
-              textDecoration: 'none',
-              fontFamily: 'Orbitron, monospace',
-              fontSize: 11,
-              fontWeight: 700,
-              color: '#ff8800',
-              letterSpacing: 2,
-              whiteSpace: 'nowrap',
+              padding: '11px 22px', background: '#ff8800', color: '#000',
+              fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2,
+              textDecoration: 'none', flexShrink: 0,
             }}>
               GET YOUR BUILD →
             </Link>
@@ -1009,23 +990,24 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         </section>
       )}
 
-      {/* MODE 2: INTERACTIVE BUILDER */}
+      {/* ══ MODE 2: BUILDER ══════════════════════════════════ */}
       {activeTab === 'builder' && (
-        <section style={{ marginBottom: 64 }}>
+        <section style={{ marginBottom: 56 }}>
+
           {sharedList && (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 20px', marginBottom: 20,
-              background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.2)',
-              borderRadius: 8,
+              padding: '10px 16px', marginBottom: 16,
+              background: '#1a1d24', border: '1px solid #22252e',
+              borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0',
             }}>
-              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,136,0,0.7)', letterSpacing: 2 }}>
-                VIEWING SHARED TIER LIST BY {(sharedList.tag || 'ANONYMOUS RUNNER').toUpperCase()}
+              <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>
+                VIEWING SHARED TIER LIST · {(sharedList.tag || 'ANONYMOUS RUNNER').toUpperCase()}
               </span>
               <button onClick={resetBuilder} style={{
-                fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800',
-                background: 'rgba(255,136,0,0.1)', border: '1px solid rgba(255,136,0,0.2)',
-                borderRadius: 4, padding: '4px 12px', cursor: 'pointer', letterSpacing: 1,
+                fontSize: 9, color: '#ff8800', fontWeight: 700,
+                background: 'transparent', border: '1px solid #ff880040',
+                borderRadius: 2, padding: '5px 11px', cursor: 'pointer', letterSpacing: 1, fontFamily: 'inherit',
               }}>
                 CREATE YOUR OWN →
               </button>
@@ -1033,67 +1015,64 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
           )}
 
           {!sharedList && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 10 }}>WHAT ARE YOU RANKING?</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[
-                  { key: 'weapons',    label: 'ALL WEAPONS' },
-                  { key: 'shells',     label: 'SHELLS ONLY' },
-                  { key: 'everything', label: 'WEAPONS + SHELLS' },
-                  ...weaponTypes.map(t => ({ key: 'category|' + t, label: t })),
-                ].map(opt => {
-                  const isCategory = opt.key.startsWith('category|');
-                  const filterKey = isCategory ? 'category' : opt.key;
-                  const catKey = isCategory ? opt.key.split('|')[1] : '';
-                  const active = filter === filterKey && (!isCategory || categoryFilter === catKey);
-                  return (
-                    <button key={opt.key} onClick={() => { setFilter(filterKey); setCategoryFilter(catKey); setGeneratedImage(null); }} style={{
-                      fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1,
-                      padding: '6px 14px', borderRadius: 4, cursor: 'pointer',
-                      background: active ? 'rgba(0,245,255,0.1)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${active ? 'rgba(0,245,255,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                      color: active ? '#00f5ff' : 'rgba(255,255,255,0.35)',
-                    }}>
-                      {opt.label}
-                    </button>
-                  );
-                })}
+            <>
+              {/* What to rank */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase' }}>What are you ranking?</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {[
+                    { key: 'weapons',    label: 'ALL WEAPONS' },
+                    { key: 'shells',     label: 'SHELLS ONLY' },
+                    { key: 'everything', label: 'WEAPONS + SHELLS' },
+                    ...weaponTypes.map(t => ({ key: 'category|' + t, label: t })),
+                  ].map(opt => {
+                    const isCategory = opt.key.startsWith('category|');
+                    const filterKey = isCategory ? 'category' : opt.key;
+                    const catKey = isCategory ? opt.key.split('|')[1] : '';
+                    const active = filter === filterKey && (!isCategory || categoryFilter === catKey);
+                    return (
+                      <button key={opt.key} onClick={() => { setFilter(filterKey); setCategoryFilter(catKey); setGeneratedImage(null); }} style={{
+                        fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                        padding: '6px 12px', borderRadius: 2, cursor: 'pointer',
+                        background: active ? 'rgba(0,255,65,0.1)' : 'transparent',
+                        border: '1px solid ' + (active ? 'rgba(0,255,65,0.3)' : '#22252e'),
+                        color: active ? '#00ff41' : 'rgba(255,255,255,0.4)',
+                        fontFamily: 'inherit',
+                      }}>
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+
+              {/* Runner tag + actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 240, background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '7px 12px' }}>
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, flexShrink: 0, fontWeight: 700 }}>RUNNER TAG</span>
+                  <input
+                    value={runnerTag}
+                    onChange={e => setRunnerTag(e.target.value)}
+                    placeholder="YOUR GAMERTAG"
+                    maxLength={32}
+                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 11, color: '#fff', letterSpacing: 1, fontFamily: 'Orbitron, monospace' }}
+                  />
+                </div>
+                <button onClick={resetBuilder} className="meta-btn" style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                  padding: '8px 14px', borderRadius: 2, cursor: 'pointer',
+                  background: 'transparent', border: '1px solid #22252e',
+                  color: 'rgba(255,255,255,0.35)', fontFamily: 'inherit',
+                }}>RESET</button>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace' }}>
+                  {placedCount} / {totalItems} PLACED
+                </div>
+              </div>
+            </>
           )}
 
-          {!sharedList && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 240,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 6, padding: '8px 14px',
-              }}>
-                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, flexShrink: 0 }}>RUNNER TAG</span>
-                <input
-                  value={runnerTag}
-                  onChange={e => setRunnerTag(e.target.value)}
-                  placeholder="YOUR GAMERTAG"
-                  maxLength={32}
-                  style={{
-                    flex: 1, background: 'none', border: 'none', outline: 'none',
-                    fontFamily: 'Orbitron, monospace', fontSize: 11, color: '#fff',
-                    letterSpacing: 1,
-                  }}
-                />
-              </div>
-              <button onClick={resetBuilder} style={{
-                fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1,
-                padding: '10px 16px', borderRadius: 6, cursor: 'pointer',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.35)',
-              }}>RESET</button>
-              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>
-                {placedCount} / {totalItems} PLACED
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 24 }}>
+          {/* Tier rows */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 22 }}>
             {TIERS.map(tier => {
               const style = TIER_STYLES[tier];
               const items = tierItems[tier] || [];
@@ -1102,26 +1081,21 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                   onDragOver={onDragOver}
                   onDrop={e => onDrop(e, tier)}
                   style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 0,
-                    background: style.bg, border: `1px solid ${style.border}`,
-                    borderLeft: `3px solid ${style.color}`,
-                    borderRadius: 8, minHeight: 64,
-                    transition: 'border-color 0.15s',
+                    display: 'flex', alignItems: 'stretch', gap: 0,
+                    background: '#1a1d24', border: '1px solid #22252e',
+                    borderLeft: '3px solid ' + style.accent,
+                    borderRadius: '0 3px 3px 0', minHeight: 60,
                   }}
                 >
                   <div style={{
-                    width: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    alignSelf: 'stretch', borderRight: '1px solid rgba(255,255,255,0.04)',
+                    width: 48, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: style.bg, color: style.fg,
                   }}>
-                    <span style={{
-                      fontFamily: 'Orbitron, monospace', fontSize: 26, fontWeight: 900,
-                      color: style.color,
-                      textShadow: tier === 'S' ? '0 0 20px rgba(255,0,0,0.5)' : 'none',
-                    }}>{tier}</span>
+                    <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, letterSpacing: 1 }}>{tier}</span>
                   </div>
-                  <div style={{ flex: 1, padding: '10px 12px', display: 'flex', flexWrap: 'wrap', gap: 6, minHeight: 44, alignContent: 'flex-start' }}>
+                  <div style={{ flex: 1, padding: '10px 12px', display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start' }}>
                     {items.length === 0 && (
-                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.1)', letterSpacing: 1, alignSelf: 'center' }}>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', letterSpacing: 2, alignSelf: 'center', fontWeight: 700, fontFamily: 'monospace' }}>
                         {sharedList ? 'EMPTY' : (isMobile ? 'TAP AN ITEM TO ASSIGN' : 'DRAG ITEMS HERE')}
                       </span>
                     )}
@@ -1129,7 +1103,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                       <TierPill key={item.id} item={item} zone={tier}
                         onDragStart={onDragStart} onDragEnd={onDragEnd}
                         onClick={isMobile ? () => onMobileTap(item, tier) : undefined}
-                        accentColor={style.color}
                         draggable={!sharedList}
                       />
                     ))}
@@ -1139,13 +1112,15 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             })}
           </div>
 
+          {/* Unranked pool */}
           {!sharedList && (
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>
-                  UNRANKED POOL — {unranked.length} ITEMS
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase' }}>
+                  Unranked Pool · {unranked.length} items
                 </span>
-                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: 1 }}>
+                <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: 1, fontFamily: 'monospace' }}>
                   {isMobile ? 'TAP TO ASSIGN' : 'DRAG INTO TIERS'}
                 </span>
               </div>
@@ -1153,18 +1128,13 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                 onDragOver={onDragOver}
                 onDrop={e => onDrop(e, 'unranked')}
                 style={{
-                  background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 8, padding: 12,
-                  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8,
+                  background: '#0e1014', border: '1px solid #22252e', borderRadius: 3, padding: 10,
+                  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 6,
                   minHeight: 80,
                 }}
               >
                 {unranked.length === 0 ? (
-                  <div style={{
-                    gridColumn: '1 / -1', textAlign: 'center',
-                    fontFamily: 'Share Tech Mono, monospace', fontSize: 10,
-                    color: 'rgba(0,255,136,0.4)', letterSpacing: 2, padding: '20px 0',
-                  }}>
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: 10, color: '#00ff41', letterSpacing: 2, padding: '16px 0', fontWeight: 700 }}>
                     ALL ITEMS RANKED ✓
                   </div>
                 ) : unranked.map(item => (
@@ -1177,12 +1147,10 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             </div>
           )}
 
-          <div style={{
-            background: 'rgba(255,136,0,0.04)', border: '1px solid rgba(255,136,0,0.12)',
-            borderRadius: 10, padding: '24px 28px',
-          }}>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,136,0,0.6)', letterSpacing: 2, marginBottom: 16 }}>
-              ⬢ GENERATE + SHARE YOUR TIER LIST
+          {/* Generate + Share */}
+          <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #ff8800', borderRadius: '0 0 3px 3px', padding: '22px 24px' }}>
+            <div style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, marginBottom: 14, fontWeight: 700, textTransform: 'uppercase' }}>
+              Generate + Share Your Tier List
             </div>
 
             {!generatedImage ? (
@@ -1190,53 +1158,48 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                 onClick={handleGenerate}
                 disabled={isGenerating || placedCount === 0}
                 style={{
-                  fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, letterSpacing: 2,
-                  padding: '14px 32px', borderRadius: 8, cursor: placedCount === 0 ? 'not-allowed' : 'pointer',
-                  background: isGenerating ? 'rgba(255,136,0,0.06)' : 'rgba(255,136,0,0.12)',
-                  border: '1px solid rgba(255,136,0,0.3)', color: '#ff8800',
-                  opacity: placedCount === 0 ? 0.4 : 1,
-                  width: '100%', transition: 'all 0.2s',
+                  fontSize: 12, fontWeight: 800, letterSpacing: 1.5,
+                  padding: '14px 28px', borderRadius: 2, cursor: placedCount === 0 ? 'not-allowed' : 'pointer',
+                  background: placedCount === 0 ? '#1e2028' : '#ff8800',
+                  color: placedCount === 0 ? 'rgba(255,255,255,0.25)' : '#000',
+                  border: placedCount === 0 ? '1px solid #22252e' : 'none',
+                  width: '100%', fontFamily: 'inherit',
                 }}
               >
                 {isGenerating ? 'GENERATING...' : placedCount === 0 ? 'ADD ITEMS TO TIERS FIRST' : 'GENERATE TIER LIST IMAGE'}
               </button>
             ) : (
               <div>
-                <img src={generatedImage} alt="Your Marathon Tier List" style={{ width: '100%', borderRadius: 6, marginBottom: 16, border: '1px solid rgba(255,255,255,0.06)' }} />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 12 }}>
+                <img src={generatedImage} alt="Your Marathon Tier List" style={{ width: '100%', borderRadius: 2, marginBottom: 14, border: '1px solid #22252e' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 10 }}>
                   {[
-                    { label: 'POST TO X',       action: handleShareX,    color: '#fff' },
+                    { label: 'POST TO X',       action: handleShareX,      color: '#fff' },
                     { label: 'POST TO REDDIT',  action: handleShareReddit, color: '#ff4500' },
-                    { label: copied ? 'COPIED!' : 'COPY LINK', action: handleCopyLink, color: '#00f5ff' },
-                    { label: 'DOWNLOAD',        action: handleDownload,   color: '#00ff88' },
+                    { label: copied ? 'COPIED!' : 'COPY LINK', action: handleCopyLink, color: '#00d4ff' },
+                    { label: 'DOWNLOAD',        action: handleDownload,    color: '#00ff41' },
                   ].map(btn => (
                     <button key={btn.label} onClick={btn.action} style={{
-                      fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1,
-                      padding: '10px 0', borderRadius: 6, cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.04)', border: `1px solid ${btn.color}22`,
-                      color: btn.color, transition: 'background 0.15s',
+                      fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                      padding: '10px 0', borderRadius: 2, cursor: 'pointer',
+                      background: 'transparent', border: '1px solid ' + btn.color + '30',
+                      color: btn.color, fontFamily: 'inherit',
                     }}>
                       {btn.label}
                     </button>
                   ))}
                 </div>
                 {shareUrl && (
-                  <div style={{
-                    fontFamily: 'Share Tech Mono, monospace', fontSize: 8,
-                    color: 'rgba(255,255,255,0.2)', letterSpacing: 1, wordBreak: 'break-all',
-                    background: 'rgba(255,255,255,0.02)', borderRadius: 4, padding: '8px 12px',
-                    marginBottom: 8,
-                  }}>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, wordBreak: 'break-all', background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, padding: '8px 10px', marginBottom: 8, fontFamily: 'monospace' }}>
                     {shareUrl.length > 80 ? shareUrl.slice(0, 80) + '…' : shareUrl}
                   </div>
                 )}
                 <button onClick={() => { setGeneratedImage(null); setShareUrl(''); }} style={{
-                  fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 1,
-                  padding: '8px 16px', borderRadius: 6, cursor: 'pointer',
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-                  color: 'rgba(255,255,255,0.3)',
+                  fontSize: 9, fontWeight: 700, letterSpacing: 1,
+                  padding: '7px 14px', borderRadius: 2, cursor: 'pointer',
+                  background: 'transparent', border: '1px solid #22252e',
+                  color: 'rgba(255,255,255,0.3)', fontFamily: 'inherit',
                 }}>
-                  {String.fromCharCode(8592)} EDIT TIER LIST
+                  ← EDIT TIER LIST
                 </button>
               </div>
             )}
@@ -1244,28 +1207,21 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         </section>
       )}
 
-      <Link href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>
-        {String.fromCharCode(8592)} BACK TO THE GRID
+      <Link href="/" style={{ fontSize: 10, letterSpacing: 2, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', fontFamily: 'monospace', fontWeight: 700 }}>
+        ← BACK TO THE GRID
       </Link>
-
-      <style>{`
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.75); }
-        }
-        @media (max-width: 768px) {
-          .stats-strip { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-      `}</style>
     </div>
   );
 }
 
-function TierPill({ item, zone, onDragStart, onDragEnd, onClick, accentColor, draggable = true }) {
+// ─── PILL / CARD COMPONENTS ──────────────────────────────────
+
+function TierPill({ item, zone, onDragStart, onDragEnd, onClick, draggable = true }) {
   const icon = item.kind === 'shell' ? (SHELL_SYMBOLS[item.name] || '⬠') : getWeaponIcon(item.raw?.weapon_type);
   const imgSrc = getImageSrc(item);
   return (
     <div
+      className="meta-pill"
       draggable={draggable}
       onDragStart={draggable ? e => onDragStart(e, item.id, zone) : undefined}
       onDragEnd={draggable ? onDragEnd : undefined}
@@ -1273,19 +1229,19 @@ function TierPill({ item, zone, onDragStart, onDragEnd, onClick, accentColor, dr
       title={item.subtext}
       style={{
         display: 'flex', alignItems: 'center', gap: 6,
-        padding: '5px 10px', borderRadius: 5,
-        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+        padding: '5px 10px', borderRadius: 2,
+        background: '#0e1014', border: '1px solid #22252e',
         cursor: draggable ? 'grab' : 'default',
-        userSelect: 'none', transition: 'background 0.15s',
+        userSelect: 'none', transition: 'background 0.1s',
       }}
     >
       {imgSrc ? (
         <img src={imgSrc} alt={item.name}
-          style={{ width: 24, height: 16, objectFit: 'contain', opacity: 0.8, flexShrink: 0 }}
+          style={{ width: 24, height: 16, objectFit: 'contain', flexShrink: 0 }}
           onError={e => { e.target.style.display = 'none'; }}
         />
       ) : (
-        <span style={{ fontSize: 12, opacity: 0.5, lineHeight: 1 }}>{icon}</span>
+        <span style={{ fontSize: 12, opacity: 0.4, lineHeight: 1 }}>{icon}</span>
       )}
       <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>
         {item.name}
@@ -1299,39 +1255,53 @@ function PoolCard({ item, onDragStart, onDragEnd, onClick }) {
   const imgSrc = getImageSrc(item);
   return (
     <div
+      className="meta-pill"
       draggable
       onDragStart={e => onDragStart(e, item.id, 'unranked')}
       onDragEnd={onDragEnd}
       onClick={onClick}
       style={{
-        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 7, padding: '10px 12px', cursor: 'grab',
-        userSelect: 'none', transition: 'background 0.15s',
+        background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2,
+        padding: '9px 10px', cursor: 'grab', userSelect: 'none',
+        transition: 'background 0.1s',
       }}
     >
       {imgSrc ? (
         <img src={imgSrc} alt={item.name}
-          style={{ width: '100%', height: 44, objectFit: 'contain', marginBottom: 6, opacity: 0.85 }}
+          style={{ width: '100%', height: 40, objectFit: 'contain', marginBottom: 5 }}
           onError={e => { e.target.style.display = 'none'; }}
         />
       ) : (
-        <div style={{ fontSize: 18, opacity: 0.4, marginBottom: 6, lineHeight: 1 }}>{icon}</div>
+        <div style={{ fontSize: 18, opacity: 0.3, marginBottom: 5, lineHeight: 1 }}>{icon}</div>
       )}
-      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5, marginBottom: 4 }}>
+      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5, marginBottom: 3 }}>
         {item.name}
       </div>
-      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>
+      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
         {item.subtext}
       </div>
     </div>
   );
 }
 
-function StatPill({ label, value, color }) {
+function StatInline({ label, value, color }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.22)', letterSpacing: 1 }}>{label}</span>
-      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color, fontWeight: 700 }}>{value}</span>
+      <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{label}</span>
+      <span style={{ fontSize: 10, color: color || 'rgba(255,255,255,0.7)', fontWeight: 700 }}>{value}</span>
+    </div>
+  );
+}
+
+function StatBar({ label, value, max, color }) {
+  const pct = Math.min((value / max) * 100, 100);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 100 }}>
+      <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{label}</span>
+      <div style={{ width: 40, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1, overflow: 'hidden' }}>
+        <div style={{ width: pct + '%', height: '100%', background: color, borderRadius: 1 }} />
+      </div>
+      <span style={{ fontSize: 10, color, fontWeight: 700, fontFamily: 'monospace' }}>{value}</span>
     </div>
   );
 }

@@ -70,7 +70,7 @@ export default async function MetaPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white pt-24" style={{ paddingBottom: 80 }}>
+    <main style={{ minHeight: '100vh', background: '#121418', color: '#fff', paddingTop: 48, paddingBottom: 80 }}>
       <Suspense fallback={null}>
         <MetaClient
           metaTiers={metaTiers}
