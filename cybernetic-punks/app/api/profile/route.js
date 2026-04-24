@@ -28,7 +28,7 @@ export async function PATCH(request) {
 
   var supabase = getSupabase();
   var { data, error } = await supabase
-    .from('user_profiles')  // verify: may be player_profiles in your DB
+    .from('player_profiles')
     .update(updates)
     .eq('id', playerId)
     .select()

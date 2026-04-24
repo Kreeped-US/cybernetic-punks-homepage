@@ -19,7 +19,7 @@ export default async function MePage() {
 
   var supabase = getSupabase();
   var { data: player } = await supabase
-    .from('user_profiles')  // verify: may be player_profiles in your DB
+    .from('player_profiles')
     .select('id, bungie_display_name, bungie_avatar_url, platform, favorite_shell, preferred_playstyle, created_at, subscription_tier, onboarding_complete')
     .eq('id', playerId)
     .single();

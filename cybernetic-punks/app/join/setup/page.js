@@ -19,7 +19,7 @@ export default async function SetupPage() {
 
   var supabase = getSupabase();
   var { data: player } = await supabase
-    .from('user_profiles')  // verify: may be player_profiles in your DB
+    .from('player_profiles')
     .select('id, bungie_display_name, onboarding_complete')
     .eq('id', playerId)
     .single();
