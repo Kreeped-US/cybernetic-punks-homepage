@@ -49,13 +49,43 @@ export default async function ShellHubPage({ params }) {
   var slug = (await params).slug;
   var shellName = slug.charAt(0).toUpperCase() + slug.slice(1);
 
-  var [shellRes, coresRes, implantsRes, metaTierRes, articlesRes, allShellsRes] = await Promise.all([
+  var [shellRes, coresRes, implantsRes, metaTierRes, articlesRes, allShellsRes, nexusTakeRes, dexterPicksRes] = await Promise.all([
     supabase.from('shell_stats').select('*').eq('name', shellName).single(),
     supabase.from('core_stats').select('name, rarity, effect_desc, ability_type, ranked_viable, required_runner').or('required_runner.eq.' + shellName + ',required_runner.is.null').order('rarity', { ascending: false }),
     supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').or('required_runner.eq.' + shellName + ',required_runner.is.null').order('rarity', { ascending: false }),
     supabase.from('meta_tiers').select('tier, trend, note, ranked_note').eq('name', shellName).eq('type', 'shell').maybeSingle(),
-    supabase.from('feed_items').select('id, headline, slug, tags, ce_score, editor, thumbnail, created_at').eq('is_published', true).contains('tags', [shellName.toLowerCase()]).order('created_at', { ascending: false }).limit(6),
+
+    // {shellName} Intel — now excludes NEXUS and DEXTER (they have dedicated panels above)
+    supabase
+      .from('feed_items')
+      .select('id, headline, slug, tags, ce_score, editor, thumbnail, created_at')
+      .eq('is_published', true)
+      .contains('tags', [shellName.toLowerCase()])
+      .in('editor', ['CIPHER', 'GHOST', 'MIRANDA'])
+      .order('created_at', { ascending: false })
+      .limit(6),
+
     supabase.from('shell_stats').select('name, role, image_filename'),
+
+    // NEXUS's Take — latest 2 NEXUS articles about this shell
+    supabase
+      .from('feed_items')
+      .select('id, headline, slug, body, ce_score, thumbnail, created_at')
+      .eq('editor', 'NEXUS')
+      .eq('is_published', true)
+      .contains('tags', [shellName.toLowerCase()])
+      .order('created_at', { ascending: false })
+      .limit(2),
+
+    // DEXTER's Picks — top 3 DEXTER builds for this shell, sorted by ce_score
+    supabase
+      .from('feed_items')
+      .select('id, headline, slug, body, ce_score, thumbnail, created_at')
+      .eq('editor', 'DEXTER')
+      .eq('is_published', true)
+      .contains('tags', [shellName.toLowerCase()])
+      .order('ce_score', { ascending: false })
+      .limit(3),
   ]);
 
   var shell = shellRes.data;
@@ -93,6 +123,8 @@ export default async function ShellHubPage({ params }) {
   var metaTier = metaTierRes.data;
   var articles = articlesRes.data || [];
   var allShells = allShellsRes.data || [];
+  var nexusTake = nexusTakeRes.data || [];
+  var dexterPicks = dexterPicksRes.data || [];
 
   function parseList(val) {
     if (!val) return [];
@@ -106,7 +138,6 @@ export default async function ShellHubPage({ params }) {
   var counteredBy = parseList(shell.countered_by);
   var synergizes = parseList(shell.synergizes_with);
 
-  // Resolve counter/synergy references to actual shell data for rich display
   var allShellMap = {};
   allShells.forEach(function(s) { allShellMap[s.name.toLowerCase()] = s; });
 
@@ -141,6 +172,8 @@ export default async function ShellHubPage({ params }) {
       viewerMatches={viewerMatches}
       pickPct={pickPct}
       faqItems={faqItems}
+      nexusTake={nexusTake}
+      dexterPicks={dexterPicks}
     />
   );
 }

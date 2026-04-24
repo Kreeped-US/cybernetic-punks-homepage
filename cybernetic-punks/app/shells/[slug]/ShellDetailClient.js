@@ -48,6 +48,7 @@ export default function ShellDetailClient({
   metaTier, shellCores, universalCores, articles,
   strengths, weaknesses, counteredShells, synergyShells,
   viewerMatches, pickPct, faqItems,
+  nexusTake, dexterPicks,
 }) {
   var [stickyVisible, setStickyVisible] = useState(false);
 
@@ -65,6 +66,10 @@ export default function ShellDetailClient({
   var isBanned = shellName === 'Rook';
   var tierStyle = metaTier ? TIER_COLORS[metaTier.tier] : null;
 
+  // Defensive defaults — gracefully handle missing props
+  var nexusArticles = nexusTake || [];
+  var dexterBuilds = dexterPicks || [];
+
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
 
@@ -73,6 +78,8 @@ export default function ShellDetailClient({
         .article-row:hover    { background: #1e2228 !important; }
         .counter-card:hover   { background: #1e2228 !important; }
         .bottom-nav:hover     { background: #1e2228 !important; }
+        .nx-take-card:hover   { background: #1e2228 !important; }
+        .dx-pick-card:hover   { background: #1e2228 !important; }
       `}</style>
 
       {/* ══ HERO ══════════════════════════════════════════════ */}
@@ -297,6 +304,48 @@ export default function ShellDetailClient({
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>{shell.holotag_tier_recommendation}</div>
                 </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* ══ NEXUS'S TAKE — featured NEXUS articles for this shell ══ */}
+        {nexusArticles.length > 0 && (
+          <section style={{ paddingTop: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <span style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬡ NEXUS's Take</span>
+              <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+              <Link href="/intel/nexus" style={{ fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL NEXUS →</Link>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 600 }}>
+              Latest meta intel for {shellName}, updated as the meta shifts.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 6 }}>
+              {nexusArticles.map(function(article) {
+                var bodyPreview = (article.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, 160);
+                return (
+                  <Link key={article.id} href={'/intel/' + article.slug} className="nx-take-card" style={{
+                    display: 'block',
+                    background: '#1a1d24', border: '1px solid #22252e',
+                    borderLeft: '3px solid #00d4ff',
+                    borderRadius: '0 3px 3px 0',
+                    padding: '14px 16px', textDecoration: 'none',
+                    transition: 'background 0.1s',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>⬡ NEXUS</span>
+                      {article.ce_score > 0 && (
+                        <span style={{ fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.14)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '1px 6px', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 800 }}>
+                          GP {article.ce_score}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1, fontWeight: 700 }}>{timeAgo(article.created_at)}</span>
+                    </div>
+                    <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#fff', margin: '0 0 8px', lineHeight: 1.35 }}>{article.headline}</h3>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.55, margin: 0 }}>{bodyPreview}...</p>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
@@ -578,7 +627,53 @@ export default function ShellDetailClient({
           </section>
         )}
 
-        {/* ══ ARTICLES ════════════════════════════════════════ */}
+        {/* ══ DEXTER'S PICKS — top builds for this shell ═══════ */}
+        {dexterBuilds.length > 0 && (
+          <section style={{ paddingTop: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ DEXTER's Picks</span>
+              <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+              <Link href={'/advisor?shell=' + slug} style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 600 }}>
+              Top {shellName} builds engineered by DEXTER, sorted by Combat Effectiveness score.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 6 }}>
+              {dexterBuilds.map(function(build) {
+                var score = build.ce_score || 0;
+                var grade = score >= 9 ? 'S' : score >= 7 ? 'A' : score >= 5 ? 'B' : 'C';
+                var gradeColors = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#666' };
+                var gradeColor = gradeColors[grade];
+                return (
+                  <Link key={build.id} href={'/intel/' + build.slug} className="dx-pick-card" style={{
+                    display: 'flex', gap: 12,
+                    background: '#1a1d24', border: '1px solid #22252e',
+                    borderLeft: '3px solid #ff8800',
+                    borderRadius: '0 3px 3px 0',
+                    padding: '12px 14px', textDecoration: 'none',
+                    transition: 'background 0.1s',
+                  }}>
+                    <div style={{ textAlign: 'center', flexShrink: 0, minWidth: 32 }}>
+                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 24, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{grade}</div>
+                      <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700, fontFamily: 'monospace' }}>CE {score}</div>
+                    </div>
+                    {build.thumbnail && (
+                      <img src={build.thumbnail} alt="" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 2, flexShrink: 0, border: '1px solid #22252e' }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 9, color: '#ff8800', letterSpacing: 2, marginBottom: 4, fontWeight: 700, fontFamily: 'monospace' }}>⬢ DEXTER BUILD</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{build.headline}</div>
+                      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700, fontFamily: 'monospace' }}>{timeAgo(build.created_at)}</div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ══ ARTICLES — CIPHER/GHOST/MIRANDA only (NEXUS/DEXTER above) ══ */}
         {articles.length > 0 && (
           <section style={{ paddingTop: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
