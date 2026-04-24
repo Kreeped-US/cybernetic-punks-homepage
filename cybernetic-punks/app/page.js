@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Footer from '@/components/Footer';
 import HomeIntelFeed from './HomeIntelFeed';
 import { supabase } from '@/lib/supabase';
+import { getLiveStats } from '@/lib/liveStats';
 import { isMonetizationEnabled } from '@/lib/monetization';
 
 // ── EDITOR CONFIG ──────────────────────────────────────────────
@@ -99,7 +100,6 @@ async function getHomepageData() {
         .order('name',  { ascending: true })
         .limit(14),
 
-      // Right panel (legacy — keep working) - 5 most recent one-per-editor
       supabase
         .from('feed_items')
         .select('id, headline, editor, created_at, slug, ce_score, tags')
@@ -123,7 +123,6 @@ async function getHomepageData() {
         .from('shell_stats')
         .select('name, image_filename, role'),
 
-      // Intel Feed full-width strip
       supabase
         .from('feed_items')
         .select('id, headline, slug, editor, tags, thumbnail, ce_score, created_at')
@@ -132,21 +131,18 @@ async function getHomepageData() {
         .order('created_at', { ascending: false })
         .limit(25),
 
-      // 7-day article count
       supabase
         .from('feed_items')
         .select('id', { count: 'exact', head: true })
         .eq('is_published', true)
         .gte('created_at', weekAgoIso),
 
-      // 7-day builds generated count
       supabase
         .from('site_events')
         .select('id', { count: 'exact', head: true })
         .eq('event_name', 'advisor_generate')
         .gte('created_at', weekAgoIso),
 
-      // Shells for THE FORGE panel
       supabase
         .from('shell_stats')
         .select('name, image_filename')
@@ -206,6 +202,7 @@ export const revalidate = 300;
 
 export default async function Home() {
   var data = await getHomepageData();
+  var liveStats = await getLiveStats();
   var tiers        = data.tiers;
   var sideFeed     = data.sideFeed;
   var weaponCount  = data.weaponCount;
@@ -222,9 +219,6 @@ export default async function Home() {
   var ranked  = rankedStatus();
   var monetizationOn = isMonetizationEnabled();
 
-  // === DATA FOR PRODUCT PANELS ===
-
-  // META GRID: top 3 S-tier + 2 A-tier
   var gridPreview = tiers.filter(function(t) { return t.tier === 'S'; }).slice(0, 3);
   if (gridPreview.length < 3) {
     var aFill = tiers.filter(function(t) { return t.tier === 'A'; }).slice(0, 3 - gridPreview.length);
@@ -232,7 +226,6 @@ export default async function Home() {
   }
   var firstMover = tiers.find(function(t) { return t.trend === 'up' || t.trend === 'down'; });
 
-  // THE FORGE: 7 shells + sample pick
   var sampleShells = ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'];
   var forgeShells = sampleShells.map(function(name) {
     var found = shells.find(function(s) { return s.name === name; });
@@ -243,7 +236,6 @@ export default async function Home() {
     };
   });
 
-  // RANKING BOARD: preview 3 rows using real data
   var boardS = tiers.filter(function(t) { return t.tier === 'S'; }).slice(0, 3);
   var boardA = tiers.filter(function(t) { return t.tier === 'A'; }).slice(0, 3);
   var boardB = tiers.filter(function(t) { return t.tier === 'B' || !t.tier; }).slice(0, 3);
@@ -316,6 +308,44 @@ export default async function Home() {
               {ranked}
             </span>
           </div>
+
+          {/* ══ PLAYER PULSE ═══════════════════════════════════════ */}
+          {(liveStats.steam || liveStats.twitch) && (
+            <div style={{ padding: '12px 18px', borderBottom: '1px solid #1e2028' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>Player Pulse</span>
+              </div>
+
+              {liveStats.steam && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '8px 10px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #00ff41', borderRadius: '0 2px 2px 0' }}>
+                  <div>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', marginBottom: 2 }}>STEAM LIVE</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: '#00ff41', lineHeight: 1, letterSpacing: '-0.5px' }}>
+                      {liveStats.steam.value.toLocaleString()}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700, textAlign: 'right' }}>
+                    RUNNERS<br />ONLINE
+                  </div>
+                </div>
+              )}
+
+              {liveStats.twitch && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #9146ff', borderRadius: '0 2px 2px 0' }}>
+                  <div>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', marginBottom: 2 }}>TWITCH LIVE</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: '#9146ff', lineHeight: 1, letterSpacing: '-0.5px' }}>
+                      {liveStats.twitch.value.toLocaleString()}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700, textAlign: 'right' }}>
+                    WATCHING<br />{liveStats.twitch.stream_count} STREAMS
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ flex: 1 }}>
             {sTiers.length > 0 && (
@@ -471,7 +501,6 @@ export default async function Home() {
         {/* ══ CENTER: Hero + Product Grid ═════════════════════ */}
         <div style={{ background: '#121418', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
 
-          {/* Atmospheric background */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
             <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(0,255,65,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
             <div style={{ position: 'absolute', top: -120, right: -120, width: 480, height: 480, border: '1px solid rgba(0,255,65,0.04)', transform: 'rotate(45deg)' }} />
@@ -480,7 +509,6 @@ export default async function Home() {
             <div style={{ position: 'absolute', top: 0, right: 80, width: 1, height: '100%', background: 'linear-gradient(180deg, transparent, rgba(0,255,65,0.05) 30%, rgba(0,255,65,0.05) 70%, transparent)' }} />
           </div>
 
-          {/* Hero */}
           <div style={{ position: 'relative', zIndex: 1, padding: '36px 24px 28px', borderBottom: '1px solid #1e2028' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'rgba(0,255,65,0.07)', border: '1px solid rgba(0,255,65,0.18)', borderRadius: 2, fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#00ff41', marginBottom: 20 }}>
               <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#00ff41' }} />
@@ -506,7 +534,6 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* ══ 2×2 PRODUCT GRID ═══════════════════════════════ */}
           <div style={{ position: 'relative', zIndex: 1, padding: '24px 24px 28px' }}>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -517,7 +544,6 @@ export default async function Home() {
 
             <div className="hp-product-grid" style={{ display: 'grid', gap: 10 }}>
 
-              {/* ══ PANEL 1: META GRID ═════════════════════════ */}
               <Link href="/meta" className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -529,7 +555,6 @@ export default async function Home() {
                 minHeight: 320,
                 position: 'relative',
               }}>
-                {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#00ff41', letterSpacing: 1, lineHeight: 1 }}>
@@ -545,7 +570,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Mini tier rows */}
                 <div style={{ marginTop: 14, flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {gridPreview.length > 0 ? gridPreview.map(function(item, idx) {
                     var imgSrc = imagePath(item.type, item.image_filename);
@@ -573,7 +597,6 @@ export default async function Home() {
                   )}
                 </div>
 
-                {/* Bottom strip */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e' }}>
                   <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
                     {weaponCount} weapons · {shellCount} shells
@@ -584,7 +607,6 @@ export default async function Home() {
                 </div>
               </Link>
 
-              {/* ══ PANEL 2: THE FORGE ═════════════════════════ */}
               <Link href="/advisor" className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -596,7 +618,6 @@ export default async function Home() {
                 minHeight: 320,
                 position: 'relative',
               }}>
-                {/* Header */}
                 <div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#ff8800', letterSpacing: 1, lineHeight: 1 }}>
                     THE FORGE
@@ -606,7 +627,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Shell portraits row */}
                 <div style={{ marginTop: 16, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {forgeShells.map(function(s) {
                     var imgSrc = s.image_filename ? '/images/shells/' + s.image_filename : null;
@@ -626,7 +646,6 @@ export default async function Home() {
                   Pick your shell. Get a full loadout in seconds.
                 </div>
 
-                {/* Sample build preview */}
                 <div style={{ marginTop: 14, padding: '10px 12px', background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #ffd700', borderRadius: '0 2px 2px 0', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -648,7 +667,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Bottom strip */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e' }}>
                   <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
                     {weeklyBuilds > 0 ? weeklyBuilds + ' forged this week' : 'Engineered from live data'}
@@ -659,7 +677,6 @@ export default async function Home() {
                 </div>
               </Link>
 
-              {/* ══ PANEL 3: RANKING BOARD ═════════════════════ */}
               <Link href="/meta#builder" className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -671,7 +688,6 @@ export default async function Home() {
                 minHeight: 320,
                 position: 'relative',
               }}>
-                {/* Header */}
                 <div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, lineHeight: 1 }}>
                     RANKING BOARD
@@ -681,9 +697,7 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Miniature tier list preview */}
                 <div style={{ marginTop: 16, flex: 1, background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, padding: '10px', display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', overflow: 'hidden' }}>
-                  {/* S row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ ...tierBg('S'), width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900, borderRadius: 2, flexShrink: 0, fontFamily: 'Orbitron, monospace' }}>S</div>
                     <div style={{ display: 'flex', gap: 3, flex: 1 }}>
@@ -697,7 +711,6 @@ export default async function Home() {
                       })}
                     </div>
                   </div>
-                  {/* A row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ ...tierBg('A'), width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900, borderRadius: 2, flexShrink: 0, fontFamily: 'Orbitron, monospace' }}>A</div>
                     <div style={{ display: 'flex', gap: 3, flex: 1 }}>
@@ -711,7 +724,6 @@ export default async function Home() {
                       })}
                     </div>
                   </div>
-                  {/* B row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ ...tierBg('B'), width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900, borderRadius: 2, flexShrink: 0, fontFamily: 'Orbitron, monospace' }}>B</div>
                     <div style={{ display: 'flex', gap: 3, flex: 1 }}>
@@ -726,14 +738,12 @@ export default async function Home() {
                     </div>
                   </div>
 
-                  {/* Watermark */}
                   <div style={{ marginTop: 'auto', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>CYBERNETICPUNKS.COM</div>
                     <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: 0.5, fontFamily: 'monospace' }}>by @YourTag</div>
                   </div>
                 </div>
 
-                {/* Bottom strip */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e' }}>
                   <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
                     Share on X · Reddit · Discord
@@ -744,7 +754,6 @@ export default async function Home() {
                 </div>
               </Link>
 
-              {/* ══ PANEL 4: THE AUDIT ═════════════════════════ */}
               <Link href={monetizationOn ? '/join' : '#'} className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -757,12 +766,10 @@ export default async function Home() {
                 position: 'relative',
                 cursor: monetizationOn ? 'pointer' : 'default',
               }}>
-                {/* Diagonal stripe texture overlay for locked state */}
                 {!monetizationOn && (
                   <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(155,93,229,0.015) 8px, rgba(155,93,229,0.015) 9px)', pointerEvents: 'none', borderRadius: '0 0 3px 3px' }} />
                 )}
 
-                {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#9b5de5', letterSpacing: 1, lineHeight: 1 }}>
@@ -784,7 +791,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Three editor portraits */}
                 <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-around', gap: 8, position: 'relative', zIndex: 1 }}>
                   {[
                     { name: 'DEXTER', color: '#ff8800', label: 'Build Score' },
@@ -803,7 +809,6 @@ export default async function Home() {
                   })}
                 </div>
 
-                {/* Sample audit output */}
                 <div style={{ marginTop: 14, padding: '12px', background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #9b5de5', borderRadius: '0 2px 2px 0', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5, position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ background: '#9b5de5', color: '#fff', padding: '4px 10px', fontSize: 18, fontWeight: 900, borderRadius: 2, fontFamily: 'Orbitron, monospace', lineHeight: 1 }}>A</div>
@@ -817,7 +822,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Bottom strip */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e', position: 'relative', zIndex: 1 }}>
                   <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
                     Bungie OAuth · Scored & saved
@@ -830,7 +834,6 @@ export default async function Home() {
 
             </div>
 
-            {/* Mobile meta strip */}
             <div className="hp-meta-strip" style={{ marginTop: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase' }}>Live Meta</span>
@@ -852,7 +855,6 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* ══ INTEL FEED FULL-WIDTH STRIP ════════════════════ */}
           <HomeIntelFeed articles={intelFeed} weeklyCount={weeklyCount} />
         </div>
 
@@ -929,7 +931,6 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* ── BOTTOM BAR ──────────────────────────────────────── */}
       <div style={{ background: '#0e1014', borderTop: '1px solid #1e2028', padding: '10px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', gap: 4 }}>
