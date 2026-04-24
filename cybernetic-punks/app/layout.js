@@ -1,5 +1,6 @@
 import { Orbitron, Share_Tech_Mono, Rajdhani } from 'next/font/google';
 import Nav from '@/components/Nav';
+import LivePulseStrip from '@/components/LivePulseStrip';
 import './globals.css';
 
 const orbitron = Orbitron({ subsets: ['latin'], variable: '--font-orbitron' });
@@ -56,6 +57,7 @@ export default function RootLayout({ children }) {
       <body className="bg-black antialiased" style={{ color: 'rgba(255,255,255,0.88)', fontSize: '15px' }}>
         <Nav />
         {children}
+        <LivePulseStrip />
       </body>
     </html>
   );
