@@ -2,385 +2,292 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+var SHELL_COLORS = {
+  Assassin:  '#cc44ff',
+  Destroyer: '#ff3333',
+  Recon:     '#00d4ff',
+  Rook:      '#666666',
+  Thief:     '#ffd700',
+  Triage:    '#00ff88',
+  Vandal:    '#ff8800',
+};
+
+var SHELL_SYMBOLS = {
+  Assassin:  '◈',
+  Destroyer: '⬡',
+  Recon:     '⬢',
+  Rook:      '◇',
+  Thief:     '◎',
+  Triage:    '◈',
+  Vandal:    '⬡',
+};
+
+var PLAYSTYLE_COLORS = {
+  AGGRESSIVE: '#ff2222',
+  CALCULATED: '#00d4ff',
+  EVASIVE:    '#00ff88',
+  ADAPTIVE:   '#9b5de5',
+};
+
 function platformLabel(p) {
-  return { ps5: 'PS5', xbox: 'XBOX', pc: 'PC · STEAM', bungie: 'PC' }[p] || 'PC';
+  return { ps5: 'PS5', xbox: 'XBOX', pc: 'PC · STEAM', steam: 'STEAM', bungie: 'PC' }[p] || 'PC';
 }
 
-function gradeColor(g) {
-  return { S: '#00ff88', A: '#00f5ff', B: '#ff8800', C: '#888', D: '#ff4444' }[g] || '#888';
+function memberSince(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
-function Divider({ label }) {
-  return (
-    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6, textAlign: 'center', margin: '28px 0 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-      {label}
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-    </div>
-  );
-}
+var SHELLS = [
+  { name: 'Assassin',  sym: '◈', color: '#cc44ff' },
+  { name: 'Destroyer', sym: '⬡', color: '#ff3333' },
+  { name: 'Recon',     sym: '⬢', color: '#00d4ff' },
+  { name: 'Rook',      sym: '◇', color: '#666666', banned: true },
+  { name: 'Thief',     sym: '◎', color: '#ffd700' },
+  { name: 'Triage',    sym: '◈', color: '#00ff88' },
+  { name: 'Vandal',    sym: '⬡', color: '#ff8800' },
+];
 
-function StatBar({ label, value, max = 10, color = '#ff8800', flag = false }) {
-  const pct = Math.round((value / max) * 100);
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: flag ? '#ff4444' : 'rgba(255,255,255,0.25)', letterSpacing: 1, width: 140, flexShrink: 0 }}>
-        {label}{flag ? ' ⚠' : ''}
-      </span>
-      <div style={{ flex: 1, background: 'rgba(255,255,255,0.06)', height: 3, borderRadius: 2 }}>
-        <div style={{ background: flag ? '#ff4444' : color, height: '100%', width: `${pct}%`, borderRadius: 2 }} />
-      </div>
-      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: flag ? '#ff4444' : color, minWidth: 32, textAlign: 'right' }}>
-        {value}/{max}
-      </span>
-    </div>
-  );
-}
+var PLAYSTYLES = [
+  { key: 'AGGRESSIVE', color: '#ff2222' },
+  { key: 'CALCULATED', color: '#00d4ff' },
+  { key: 'EVASIVE',    color: '#00ff88' },
+  { key: 'ADAPTIVE',   color: '#9b5de5' },
+];
 
-function EmptyAudit() {
-  return (
-    <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '3px solid rgba(0,245,255,0.3)', borderRadius: 5, padding: '32px', textAlign: 'center' }}>
-      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: 3, marginBottom: 12 }}>NO AUDIT ON FILE</div>
-      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, marginBottom: 24 }}>
-        Complete the Runner Intake to receive your full personalized audit from DEXTER, NEXUS, and MIRANDA.
-      </div>
-      <Link href="/join/intake" style={{ display: 'inline-block', background: 'rgba(0,245,255,0.07)', border: '1px solid rgba(0,245,255,0.4)', color: '#00f5ff', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: 3, padding: '12px 32px', borderRadius: 5, textDecoration: 'none' }}>
-        BEGIN INTAKE →
-      </Link>
-    </div>
-  );
-}
+export default function MeClient({ player }) {
+  var [editing, setEditing]         = useState(false);
+  var [editShell, setEditShell]     = useState(player.favorite_shell || null);
+  var [editStyle, setEditStyle]     = useState(player.preferred_playstyle || null);
+  var [saving, setSaving]           = useState(false);
+  var [saveError, setSaveError]     = useState(null);
 
-export default function MeClient({ player, audit, snapshot, auditHistory }) {
-  const [askEditor, setAskEditor] = useState('DEXTER');
-  const [question, setQuestion] = useState('');
-  const [asking, setAsking] = useState(false);
-  const [qaResult, setQaResult] = useState(null);
-  const [qaError, setQaError] = useState(false);
+  var displayName   = (player.bungie_display_name || '').replace(/#\d+/, '').trim();
+  var shellColor    = SHELL_COLORS[player.favorite_shell]   || '#00ff41';
+  var shellSymbol   = SHELL_SYMBOLS[player.favorite_shell]  || '◎';
+  var playstyleColor = PLAYSTYLE_COLORS[player.preferred_playstyle] || 'rgba(255,255,255,0.4)';
 
-  const dexter = audit?.dexter_analysis;
-  const nexus = audit?.nexus_analysis;
-  const miranda = audit?.miranda_analysis;
-  const recs = audit?.top_recommendations || [];
-  const score = audit?.composite_score;
-  const grade = audit?.letter_grade;
+  var initials = displayName.slice(0, 2).toUpperCase();
 
-  const initials = player.bungie_display_name.replace(/#\d+/, '').trim().slice(0, 2).toUpperCase();
-  const displayName = player.bungie_display_name.replace(/#\d+/, '').trim();
-
-  const handleAsk = async () => {
-    if (!question.trim() || asking) return;
-    setAsking(true);
-    setQaResult(null);
-    setQaError(false);
+  async function savePreferences() {
+    if (!editShell || !editStyle || saving) return;
+    setSaving(true);
+    setSaveError(null);
     try {
-      const res = await fetch('/api/ask-editor', {
-        method: 'POST',
+      var res = await fetch('/api/profile', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ editor: askEditor, question: question.trim() }),
+        body: JSON.stringify({ favorite_shell: editShell, preferred_playstyle: editStyle }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setQaResult({ editor: askEditor, question: question.trim(), answer: data.answer });
-        setQuestion('');
+        // Reload to show updated data
+        window.location.reload();
       } else {
-        setQaError(true);
+        setSaving(false);
+        setSaveError('Failed to save. Please try again.');
       }
-    } catch {
-      setQaError(true);
+    } catch (e) {
+      setSaving(false);
+      setSaveError('Network error. Please try again.');
     }
-    setAsking(false);
-  };
-
-  const EDITOR_COLORS = { DEXTER: '#ff8800', NEXUS: '#00f5ff', CIPHER: '#ff0000', MIRANDA: '#9b5de5', GHOST: '#00ff88' };
-  const EDITOR_SYMS = { DEXTER: '⬢', NEXUS: '⬡', CIPHER: '◈', MIRANDA: '◎', GHOST: '◇' };
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#030303', color: '#fff', fontFamily: 'Rajdhani, sans-serif', paddingTop: 80 }}>
+    <div style={{ minHeight: '100vh', background: '#121418', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
 
       <style>{`
-        @keyframes mPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .me-card { transition: border-color 0.15s; }
-        .me-card:hover { border-color: rgba(255,255,255,0.12) !important; }
-        .me-rec:hover { background: rgba(255,136,0,0.04) !important; }
+        .me-tool:hover { border-color: rgba(0,255,65,0.25) !important; background: #1e2228 !important; }
+        .me-row:hover  { background: rgba(255,255,255,0.02) !important; }
       `}</style>
 
-      {/* Grid bg */}
-      <div style={{ position: 'fixed', inset: 0, opacity: 0.012, backgroundImage: 'linear-gradient(rgba(0,245,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,1) 1px,transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
 
-      {/* Profile header */}
-      <div style={{ background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid rgba(0,245,255,0.08)', padding: '16px 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backdropFilter: 'blur(10px)', position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {player.bungie_avatar_url ? (
-            <img src={player.bungie_avatar_url} alt="avatar" width={40} height={40} style={{ borderRadius: '50%', border: '1px solid rgba(0,245,255,0.25)' }} />
-          ) : (
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Orbitron, monospace', fontSize: 13, color: '#00f5ff', fontWeight: 700 }}>{initials}</div>
-          )}
-          <div>
-            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>{displayName}</div>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 3 }}>{platformLabel(player.platform)} · {player.subscription_tier.toUpperCase()} TIER</div>
-          </div>
-        </div>
+        {/* ── PROFILE HEADER ──────────────────────────────── */}
+        <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + shellColor, borderRadius: '0 0 3px 3px', padding: '28px 28px 24px', marginBottom: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          {score != null && (
-            <>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, color: '#00f5ff', lineHeight: 1 }}>{score}</div>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 3 }}>RUNNER RATING</div>
-              </div>
-              <div style={{ background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 5, padding: '8px 18px', textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 24, fontWeight: 900, color: gradeColor(grade), lineHeight: 1 }}>{grade}</div>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginTop: 3 }}>GRADE</div>
-              </div>
-            </>
-          )}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Link href="/join/intake" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, padding: '8px 14px', textDecoration: 'none', letterSpacing: 2 }}>UPDATE LOADOUT</Link>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 36px', position: 'relative', zIndex: 1 }}>
-
-        {!audit ? <EmptyAudit /> : (
-          <>
-            {/* Top row — identity + DEXTER */}
-            <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 12, marginBottom: 12 }}>
-
-              {/* Identity panel */}
-              <div className="me-card" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '3px solid rgba(0,245,255,0.3)', borderRadius: 5, padding: '20px' }}>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(0,245,255,0.5)', letterSpacing: 3, marginBottom: 16 }}>RUNNER IDENTITY</div>
-                {[
-                  { label: 'SHELL', value: snapshot?.shell || '—', color: '#00f5ff' },
-                  { label: 'PRIMARY', value: snapshot?.primary_weapon || '—' },
-                  { label: 'SECONDARY', value: snapshot?.secondary_weapon || '—' },
-                  { label: 'PLAYSTYLE', value: snapshot?.playstyle || '—' },
-                  { label: 'SQUAD', value: snapshot?.squad_context || '—' },
-                  { label: 'ZONES', value: snapshot?.zones?.join(', ') || '—' },
-                  { label: 'HOURS/WEEK', value: snapshot?.hours_per_week || '—' },
-                ].map(item => (
-                  <div key={item.label} style={{ marginBottom: 10 }}>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 3 }}>{item.label}</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: item.color || 'rgba(255,255,255,0.65)' }}>{item.value}</div>
-                  </div>
-                ))}
-                <Link href="/join/intake" style={{ display: 'block', textAlign: 'center', fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '8px', textDecoration: 'none', marginTop: 16, letterSpacing: 2 }}>EDIT PROFILE</Link>
-              </div>
-
-              {/* DEXTER panel */}
-              <div className="me-card" style={{ background: '#0a0a0a', border: '1px solid rgba(255,136,0,0.1)', borderTop: '2px solid rgba(255,136,0,0.4)', borderRadius: 5, padding: '22px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ color: '#ff8800', fontSize: 22 }}>⬢</span>
-                    <div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800', letterSpacing: 3 }}>DEXTER · BUILD ANALYSIS</div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 2 }}>BUILD ENGINEER</div>
-                    </div>
-                  </div>
-                  {dexter?.build_score != null && (
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 26, fontWeight: 900, color: '#ff8800', lineHeight: 1 }}>{dexter.build_score}</div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginTop: 3 }}>BUILD SCORE</div>
-                    </div>
-                  )}
-                </div>
-
-                {dexter?.analysis_body && (
-                  <div style={{ background: 'rgba(255,136,0,0.03)', borderLeft: '2px solid rgba(255,136,0,0.25)', padding: '14px 16px', marginBottom: 18, borderRadius: '0 4px 4px 0' }}>
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, margin: 0 }}>{dexter.analysis_body}</p>
-                  </div>
-                )}
-
-                <div>
-                  <StatBar label="WEAPON SYNERGY" value={dexter?.weapon_synergy_score || 0} flag={dexter?.weapon_synergy_score < 5} />
-                  <StatBar label="MOD EFFICIENCY" value={dexter?.mod_efficiency_score || 0} flag={dexter?.mod_efficiency_score < 5} />
-                  <StatBar label="CORE ALIGNMENT" value={dexter?.core_alignment_score || 0} flag={dexter?.core_alignment_score < 5} />
-                  <StatBar label="IMPLANT STACK" value={dexter?.implant_stack_score || 0} flag={dexter?.implant_stack_score < 5} />
-                </div>
-              </div>
-            </div>
-
-            {/* Middle row — NEXUS + MIRANDA */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-
-              {/* NEXUS */}
-              <div className="me-card" style={{ background: '#0a0a0a', border: '1px solid rgba(0,245,255,0.1)', borderTop: '2px solid rgba(0,245,255,0.35)', borderRadius: 5, padding: '22px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <span style={{ color: '#00f5ff', fontSize: 22 }}>⬡</span>
-                  <div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00f5ff', letterSpacing: 3 }}>NEXUS · META POSITION</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 2 }}>META STRATEGIST</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-                  {[
-                    { label: 'SHELL TIER', value: nexus?.shell_tier || '—', color: nexus?.shell_tier === 'S' ? '#00ff88' : nexus?.shell_tier === 'A' ? '#00f5ff' : '#ff8800' },
-                    { label: 'TREND', value: nexus?.shell_trend === 'RISING' ? '↑' : nexus?.shell_trend === 'FALLING' ? '↓' : '↔', color: nexus?.shell_trend === 'RISING' ? '#00ff88' : nexus?.shell_trend === 'FALLING' ? '#ff4444' : 'rgba(255,255,255,0.5)' },
-                    { label: 'META SCORE', value: nexus?.meta_score || '—', color: '#00f5ff' },
-                  ].map(item => (
-                    <div key={item.label} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4, padding: '10px', textAlign: 'center' }}>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: item.color, lineHeight: 1 }}>{item.value}</div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginTop: 5 }}>{item.label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {nexus?.analysis_body && (
-                  <div style={{ background: 'rgba(0,245,255,0.02)', borderLeft: '2px solid rgba(0,245,255,0.2)', padding: '14px 16px', borderRadius: '0 4px 4px 0', marginBottom: 12 }}>
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, margin: 0 }}>{nexus.analysis_body}</p>
-                  </div>
-                )}
-
-                {nexus?.watch_items?.length > 0 && (
-                  <div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 8 }}>WATCH LIST</div>
-                    {nexus.watch_items.map((w, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 6 }}>
-                        <span style={{ color: '#ff8800', flexShrink: 0, fontSize: 12 }}>▸</span>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{w}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: 2, marginTop: 14 }}>
-                  UPDATED VIA NEXUS CRON · {new Date(audit.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </div>
-              </div>
-
-              {/* MIRANDA */}
-              <div className="me-card" style={{ background: '#0a0a0a', border: '1px solid rgba(155,93,229,0.1)', borderTop: '2px solid rgba(155,93,229,0.35)', borderRadius: 5, padding: '22px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <span style={{ color: '#9b5de5', fontSize: 22 }}>◎</span>
-                  <div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#9b5de5', letterSpacing: 3 }}>MIRANDA · RUNNER PROFILE</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 2 }}>FIELD GUIDE</div>
-                  </div>
-                </div>
-
-                {miranda?.runner_archetype && (
-                  <div style={{ background: 'rgba(155,93,229,0.05)', border: '1px solid rgba(155,93,229,0.15)', borderRadius: 5, padding: '12px 16px', marginBottom: 16, textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, color: '#9b5de5', letterSpacing: 3 }}>{miranda.runner_archetype}</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(155,93,229,0.5)', letterSpacing: 2, marginTop: 5 }}>YOUR RUNNER ARCHETYPE</div>
-                  </div>
-                )}
-
-                {miranda?.archetype_description && (
-                  <div style={{ background: 'rgba(155,93,229,0.02)', borderLeft: '2px solid rgba(155,93,229,0.2)', padding: '14px 16px', borderRadius: '0 4px 4px 0', marginBottom: 14 }}>
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, margin: 0 }}>{miranda.archetype_description}</p>
-                  </div>
-                )}
-
-                {miranda?.cross_editor_note && (
-                  <div style={{ background: 'rgba(255,136,0,0.03)', border: '1px solid rgba(255,136,0,0.1)', borderRadius: 5, padding: '12px 14px' }}>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#ff8800', letterSpacing: 2, marginBottom: 6 }}>⬢ CROSS-EDITOR NOTE</div>
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.8, margin: 0 }}>{miranda.cross_editor_note}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* DEXTER recommendations */}
-            {recs.length > 0 && (
-              <div className="me-card" style={{ background: '#0a0a0a', border: '1px solid rgba(255,136,0,0.1)', borderLeft: '3px solid rgba(255,136,0,0.4)', borderRadius: 5, padding: '22px', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                  <span style={{ color: '#ff8800', fontSize: 20 }}>⬢</span>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800', letterSpacing: 3 }}>DEXTER'S PRIORITY RECOMMENDATIONS</div>
-                </div>
-                {recs.map((rec, i) => (
-                  <div key={i} className="me-rec" style={{ background: 'rgba(255,136,0,0.02)', border: '1px solid rgba(255,136,0,0.08)', borderRadius: 5, padding: '16px 18px', marginBottom: 8, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: 'rgba(255,136,0,0.5)', flexShrink: 0, minWidth: 28 }}>
-                      {String(rec.priority || i + 1).padStart(2, '0')}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-                        {rec.slot && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3, padding: '2px 8px' }}>{rec.slot}</span>}
-                        {rec.action && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff8800', background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.2)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>{rec.action}</span>}
-                        {rec.recommended_item && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#fff', letterSpacing: 1 }}>→ {rec.recommended_item}</span>}
-                      </div>
-                      {rec.reason && <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, margin: 0 }}>{rec.reason}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Ask an Editor */}
-            <div className="me-card" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '3px solid rgba(0,245,255,0.2)', borderRadius: 5, padding: '22px', marginBottom: 12 }}>
-              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 16 }}>ASK AN EDITOR</div>
-
-              <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-                <select
-                  value={askEditor}
-                  onChange={e => setAskEditor(e.target.value)}
-                  style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', color: EDITOR_COLORS[askEditor], fontFamily: 'Share Tech Mono, monospace', fontSize: 10, padding: '10px 14px', borderRadius: 4, minWidth: 130 }}
-                >
-                  {['DEXTER', 'NEXUS', 'CIPHER', 'MIRANDA', 'GHOST'].map(e => (
-                    <option key={e} value={e}>{EDITOR_SYMS[e]} {e}</option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  value={question}
-                  onChange={e => setQuestion(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAsk()}
-                  placeholder="Ask anything about your build, loadout, or playstyle..."
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontFamily: 'Rajdhani, sans-serif', fontSize: 14, padding: '10px 16px', borderRadius: 4, outline: 'none' }}
+            {/* Avatar */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {player.bungie_avatar_url ? (
+                <img
+                  src={player.bungie_avatar_url}
+                  alt={displayName}
+                  style={{ width: 68, height: 68, borderRadius: '50%', border: '2px solid ' + shellColor + '60', display: 'block' }}
                 />
-                <button
-                  onClick={handleAsk}
-                  disabled={!question.trim() || asking}
-                  style={{ background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.35)', color: '#00f5ff', fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2, padding: '10px 20px', borderRadius: 4, cursor: !question.trim() || asking ? 'not-allowed' : 'pointer', opacity: !question.trim() || asking ? 0.4 : 1 }}
-                >
-                  {asking ? '...' : 'SEND'}
-                </button>
-              </div>
-
-              {qaError && (
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,100,100,0.6)', letterSpacing: 2, marginBottom: 12 }}>⚠ EDITOR UNAVAILABLE — PLEASE TRY AGAIN</div>
+              ) : (
+                <div style={{ width: 68, height: 68, borderRadius: '50%', background: '#1e2228', border: '2px solid ' + shellColor + '60', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 700, color: shellColor }}>
+                  {initials}
+                </div>
               )}
+              {/* Shell accent dot */}
+              <div style={{ position: 'absolute', bottom: 2, right: 2, width: 14, height: 14, borderRadius: '50%', background: '#121418', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid ' + shellColor + '40' }}>
+                <span style={{ fontSize: 8, color: shellColor }}>{shellSymbol}</span>
+              </div>
+            </div>
 
-              {qaResult && (
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${EDITOR_COLORS[qaResult.editor]}22`, borderLeft: `3px solid ${EDITOR_COLORS[qaResult.editor]}66`, borderRadius: 5, padding: '16px 18px' }}>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: EDITOR_COLORS[qaResult.editor], letterSpacing: 2, marginBottom: 6 }}>
-                    {EDITOR_SYMS[qaResult.editor]} {qaResult.editor} REPLIED ↓
-                  </div>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginBottom: 10 }}>YOU ASKED: "{qaResult.question}"</div>
-                  <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, margin: 0 }}>{qaResult.answer}</p>
+            {/* Name + meta */}
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: '-0.5px', margin: '0 0 6px', color: '#fff' }}>{displayName}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: 'rgba(255,255,255,0.35)', background: '#1e2028', border: '1px solid #22252e', borderRadius: 2, padding: '2px 8px' }}>
+                  {platformLabel(player.platform)}
+                </span>
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>
+                  SINCE {memberSince(player.created_at)}
+                </span>
+              </div>
+            </div>
+
+            {/* Badges */}
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+              <div style={{ padding: '5px 12px', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#00ff41' }} />
+                <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#00ff41', textTransform: 'uppercase' }}>Early Adopter</span>
+              </div>
+              {player.favorite_shell && (
+                <div style={{ padding: '5px 12px', background: shellColor + '10', border: '1px solid ' + shellColor + '30', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ fontSize: 12, color: shellColor }}>{shellSymbol}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: shellColor, textTransform: 'uppercase' }}>{player.favorite_shell}</span>
                 </div>
               )}
             </div>
+          </div>
+        </div>
 
-            {/* Audit history */}
-            {auditHistory.length > 1 && (
-              <div className="me-card" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '3px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '22px' }}>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, marginBottom: 16 }}>AUDIT HISTORY</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {auditHistory.map((a, i) => (
-                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 16, background: i === 0 ? 'rgba(0,245,255,0.02)' : 'transparent', border: `1px solid ${i === 0 ? 'rgba(0,245,255,0.08)' : 'rgba(255,255,255,0.04)'}`, borderRadius: 4, padding: '10px 14px' }}>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, width: 80 }}>
-                        {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        {/* ── MAIN GRID ────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 1, background: '#1e2028', marginBottom: 1 }}>
+
+          {/* Runner Card */}
+          <div style={{ background: '#121418', padding: '20px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 16 }}>Runner</div>
+
+            {!editing ? (
+              <>
+                {[
+                  { label: 'Shell',      value: player.favorite_shell      || '—', color: shellColor,      sym: player.favorite_shell ? shellSymbol : null },
+                  { label: 'Playstyle',  value: player.preferred_playstyle || '—', color: playstyleColor },
+                  { label: 'Platform',   value: platformLabel(player.platform),    color: 'rgba(255,255,255,0.5)' },
+                  { label: 'Member',     value: memberSince(player.created_at),    color: 'rgba(255,255,255,0.4)' },
+                ].map(function(item) {
+                  return (
+                    <div key={item.label} className="me-row" style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: 2 }}>
+                      <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        {item.sym && <span style={{ fontSize: 11, color: item.color }}>{item.sym}</span>}
+                        <span style={{ fontSize: 12, fontWeight: 600, color: item.color }}>{item.value}</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: gradeColor(a.letter_grade) }}>{a.letter_grade}</span>
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{a.composite_score}</span>
-                      </div>
-                      {i === 0 && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#00f5ff', background: 'rgba(0,245,255,0.06)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>LATEST</span>}
                     </div>
-                  ))}
+                  );
+                })}
+
+                <button
+                  onClick={function() { setEditing(true); }}
+                  style={{ display: 'block', width: '100%', textAlign: 'center', marginTop: 16, padding: '8px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'inherit' }}
+                >
+                  EDIT PREFERENCES
+                </button>
+              </>
+            ) : (
+              /* Inline edit */
+              <div>
+                <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', marginBottom: 10 }}>Shell</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 16 }}>
+                  {SHELLS.filter(function(s) { return !s.banned; }).map(function(sh) {
+                    var sel = editShell === sh.name;
+                    return (
+                      <button key={sh.name} onClick={function() { setEditShell(sh.name); }}
+                        style={{ padding: '4px 8px', background: sel ? sh.color + '18' : 'transparent', border: '1px solid ' + (sel ? sh.color + '60' : '#22252e'), borderRadius: 2, fontSize: 10, color: sel ? sh.color : 'rgba(255,255,255,0.35)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: sel ? 700 : 400 }}>
+                        {sh.name}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', marginBottom: 10 }}>Playstyle</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 16 }}>
+                  {PLAYSTYLES.map(function(p) {
+                    var sel = editStyle === p.key;
+                    return (
+                      <button key={p.key} onClick={function() { setEditStyle(p.key); }}
+                        style={{ padding: '6px 10px', background: sel ? p.color + '12' : 'transparent', border: '1px solid ' + (sel ? p.color + '40' : '#22252e'), borderRadius: 2, fontSize: 10, color: sel ? p.color : 'rgba(255,255,255,0.35)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', fontWeight: sel ? 700 : 400, letterSpacing: sel ? 1 : 0 }}>
+                        {p.key}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {saveError && <div style={{ fontSize: 9, color: 'rgba(255,100,100,0.7)', marginBottom: 8, letterSpacing: 1 }}>{saveError}</div>}
+
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={savePreferences} disabled={!editShell || !editStyle || saving}
+                    style={{ flex: 1, padding: '8px', background: editShell && editStyle ? '#00ff41' : '#1a1d24', color: editShell && editStyle ? '#000' : 'rgba(255,255,255,0.2)', fontSize: 9, fontWeight: 800, letterSpacing: 1, borderRadius: 2, border: 'none', cursor: editShell && editStyle ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
+                    {saving ? '...' : 'SAVE'}
+                  </button>
+                  <button onClick={function() { setEditing(false); setEditShell(player.favorite_shell); setEditStyle(player.preferred_playstyle); }}
+                    style={{ padding: '8px 12px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.25)', fontSize: 9, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    ✕
+                  </button>
                 </div>
               </div>
             )}
-          </>
-        )}
+          </div>
 
-        {/* Bottom CTAs */}
-        <div style={{ marginTop: 28, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link href="/advisor" style={{ padding: '10px 20px', background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.28)', borderRadius: 5, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff8800', letterSpacing: 2 }}>⬢ BUILD ADVISOR →</Link>
-          <Link href="/meta" style={{ padding: '10px 20px', background: 'rgba(0,245,255,0.05)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: 5, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#00f5ff', letterSpacing: 2 }}>⬡ LIVE META →</Link>
-          <Link href="/shells" style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 5, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}>SHELL GUIDES →</Link>
+          {/* Tools */}
+          <div style={{ background: '#121418', padding: '20px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 16 }}>Tools</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
+              {[
+                { href: '/meta',     icon: '⬡', color: '#00ff41', label: 'Meta Tier List',   desc: 'Live weapon & shell rankings' },
+                { href: '/advisor',  icon: '⬢', color: '#ff8800', label: 'Build Advisor',    desc: 'AI-engineered loadouts' },
+                { href: '/builds',   icon: '⬢', color: '#ff8800', label: 'Build Lab',        desc: 'Full loadout browser' },
+                { href: '/shells',   icon: '◎', color: '#00d4ff', label: 'Shell Guide',      desc: 'Abilities, stats, tiers' },
+                { href: '/ranked',   icon: '◈', color: '#ffd700', label: 'Ranked Guide',     desc: 'Holotags, tiers, how to climb' },
+                { href: '/factions', icon: '◇', color: '#9b5de5', label: 'Factions',         desc: 'Unlocks & investment guide' },
+              ].map(function(tool) {
+                return (
+                  <Link key={tool.href} href={tool.href} className="me-tool"
+                    style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + tool.color + '60', borderRadius: '0 0 3px 3px', padding: '14px 12px', textDecoration: 'none', display: 'block', transition: 'background 0.1s, border-color 0.1s' }}>
+                    <div style={{ fontSize: 18, color: tool.color, marginBottom: 7, opacity: 0.8 }}>{tool.icon}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.8)', marginBottom: 3 }}>{tool.label}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.5 }}>{tool.desc}</div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ── INTEL ─────────────────────────────────────────── */}
+        <div style={{ background: '#121418', border: '1px solid #22252e', borderRadius: 3, padding: '16px 20px', marginBottom: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>Latest Intel</div>
+            <Link href="/intel" style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>VIEW ALL →</Link>
+          </div>
+        </div>
+
+        {/* ── PERSONAL COACH — LOCKED ───────────────────────── */}
+        <div style={{ background: '#121418', border: '1px solid #22252e', borderRadius: 3, padding: '24px 24px', position: 'relative', overflow: 'hidden' }}>
+
+          {/* Locked overlay texture */}
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.012) 6px, rgba(255,255,255,0.012) 7px)', pointerEvents: 'none' }} />
+
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.15)' }}>🔒</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase' }}>Personal Coach</span>
+                <span style={{ padding: '2px 8px', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.2)', borderRadius: 2, fontSize: 8, fontWeight: 700, letterSpacing: 2, color: 'rgba(155,93,229,0.5)', textTransform: 'uppercase' }}>COMING SOON</span>
+              </div>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', lineHeight: 1.65, margin: 0, maxWidth: 480 }}>
+                Three AI editors will analyze your build, assess your meta position, and deliver a personalized coaching report. Early Adopters get priority access when this launches.
+              </p>
+            </div>
+            <div style={{ textAlign: 'center', padding: '12px 20px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, opacity: 0.6 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 4 }}>Your Status</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#00ff41', letterSpacing: 1 }}>EARLY ADOPTER</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', marginTop: 3 }}>Priority access confirmed</div>
+            </div>
+          </div>
         </div>
 
       </div>

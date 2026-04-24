@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import MeClient from './MeClient';
+import SetupClient from './SetupClient';
 
-export const metadata = { title: 'My Profile | CyberneticPunks' };
+export const metadata = { title: 'Set Up Your Profile | CyberneticPunks' };
 
 function getSupabase() {
   return createClient(
@@ -12,7 +12,7 @@ function getSupabase() {
   );
 }
 
-export default async function MePage() {
+export default async function SetupPage() {
   var cookieStore = await cookies();
   var playerId = cookieStore.get('cp_player_id')?.value;
   if (!playerId) redirect('/join');
@@ -20,12 +20,14 @@ export default async function MePage() {
   var supabase = getSupabase();
   var { data: player } = await supabase
     .from('user_profiles')  // verify: may be player_profiles in your DB
-    .select('id, bungie_display_name, bungie_avatar_url, platform, favorite_shell, preferred_playstyle, created_at, subscription_tier, onboarding_complete')
+    .select('id, bungie_display_name, onboarding_complete')
     .eq('id', playerId)
     .single();
 
   if (!player) redirect('/join');
-  if (!player.onboarding_complete) redirect('/join/setup');
+  if (player.onboarding_complete) redirect('/me');
 
-  return <MeClient player={player} />;
+  var displayName = (player.bungie_display_name || '').replace(/#\d+/, '').trim();
+
+  return <SetupClient displayName={displayName} />;
 }

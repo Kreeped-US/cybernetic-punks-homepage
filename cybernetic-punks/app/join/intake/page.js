@@ -56,7 +56,9 @@ export default async function IntakePage() {
       .order('slot_type')
       .order('name'),
   ]);
-
+// Redirect to simple setup while Personal Coach is pre-launch
+// Remove this line when coaching goes live for paid users
+redirect('/join/setup');
   return (
     <IntakeClient
       playerName={player.bungie_display_name}
