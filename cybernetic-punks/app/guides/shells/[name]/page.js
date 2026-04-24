@@ -251,15 +251,23 @@ export default async function ShellGuidePage({ params }) {
   };
 
   var articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: shell.title,
-    description: shell.description,
-    url: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
-    author: { '@type': 'Organization', name: 'CyberneticPunks' },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
-    mainEntityOfPage: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
-  };
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: shell.title,
+  description: shell.description,
+  url: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
+  image: shellImg ? 'https://cyberneticpunks.com' + shellImg : 'https://cyberneticpunks.com/og-image.png',
+  author: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'CyberneticPunks',
+    url: 'https://cyberneticpunks.com',
+    logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/og-image.png' }
+  },
+  datePublished: '2026-03-05',
+  dateModified: new Date().toISOString(),
+  mainEntityOfPage: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
+};
 
   var faqSchema = {
     '@context': 'https://schema.org',
