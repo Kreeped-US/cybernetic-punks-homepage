@@ -1,38 +1,46 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+
+// ── CONFIG ────────────────────────────────────────────────────
+const FACTION_ORDER = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
 
 const FACTION_COLORS = {
   Cyberacme: '#00ff41',
-  Nucaloric:  '#ff2d78',
-  Traxus:     '#ff6600',
-  Mida:       '#cc44ff',
-  Arachne:    '#ff1a1a',
-  Sekiguchi:  '#c8b400',
+  Nucaloric: '#ff2d78',
+  Traxus:    '#ff6600',
+  Mida:      '#cc44ff',
+  Arachne:   '#ff2222',
+  Sekiguchi: '#c8b400',
 };
 
 const FACTION_LEADERS = {
   Cyberacme: 'CNI',
-  Nucaloric:  'CAUS',
-  Traxus:     'VULCAN',
-  Mida:       '_GANTRY',
-  Arachne:    'CHIMERA',
-  Sekiguchi:  'NONA',
+  Nucaloric: 'CAUS',
+  Traxus:    'VULCAN',
+  Mida:      '_GANTRY',
+  Arachne:   'CHIMERA',
+  Sekiguchi: 'NONA',
 };
 
 const FACTION_FOCUS = {
   Cyberacme: 'Loot / Extraction',
-  Nucaloric:  'Support / Healing',
-  Traxus:     'Weapons / Mods',
-  Mida:       'Equipment / Grenades',
-  Arachne:    'Melee / Combat',
-  Sekiguchi:  'Energy / Capacitors',
+  Nucaloric: 'Support / Healing',
+  Traxus:    'Weapons / Mods',
+  Mida:      'Equipment / Grenades',
+  Arachne:   'Melee / Combat',
+  Sekiguchi: 'Energy / Capacitors',
 };
 
-function factionImage(fname) {
-  return '/images/factions/' + fname.toLowerCase() + '.webp';
-}
+const UNLOCK_TYPE_COLORS = {
+  weapon:     '#ff2222',
+  implant:    '#9b5de5',
+  mod:        '#ff8800',
+  consumable: '#00ff88',
+  upgrade:    '#00d4ff',
+  function:   '#ffd700',
+};
 
 const SHELL_PRIORITY_STATS = {
   Destroyer: ['Melee Damage', 'Tactical Recovery', 'Hardware', 'Firewall'],
@@ -44,64 +52,96 @@ const SHELL_PRIORITY_STATS = {
   Rook:      ['Heat Capacity', 'Self-Repair Speed', 'Firewall'],
 };
 
-const FACTION_ORDER = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
-
-const UNLOCK_TYPE_COLORS = {
-  weapon:     '#ff0000',
-  implant:    '#9b5de5',
-  mod:        '#ff8800',
-  consumable: '#00ff88',
-  upgrade:    '#00f5ff',
-  function:   '#ffd700',
+const SHELL_COLORS = {
+  Assassin: '#cc44ff', Destroyer: '#ff3333', Recon: '#00d4ff',
+  Rook: '#555555', Thief: '#ffd700', Triage: '#00ff88', Vandal: '#ff8800',
 };
 
-function SectionDivider({ label }) {
+const EDITOR_COLORS = {
+  CIPHER:  '#ff2222',
+  NEXUS:   '#00d4ff',
+  DEXTER:  '#ff8800',
+  GHOST:   '#00ff88',
+  MIRANDA: '#9b5de5',
+};
+
+const EDITOR_SYMBOLS = {
+  CIPHER: '◈', NEXUS: '⬡', DEXTER: '⬢', GHOST: '◇', MIRANDA: '◎',
+};
+
+// ── HELPERS ────────────────────────────────────────────────────
+function factionImage(fname) {
+  return '/images/factions/' + fname.toLowerCase() + '.webp';
+}
+
+function itemImage(type, filename) {
+  if (!filename) return null;
+  var folder = type + 's'; // weapon -> weapons, implant -> implants, mod -> mods
+  return '/images/' + folder + '/' + filename;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  var diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+function SectionHeader({ label, count, color }) {
   return (
-    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6, textAlign: 'center', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-      {label}
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: color || 'rgba(255,255,255,0.25)' }}>{label}</span>
+      <div style={{ flex: 1, height: 1, background: '#22252e' }} />
+      {count !== undefined && (
+        <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{count}</span>
+      )}
     </div>
   );
 }
 
 function StatPill({ label, value, color }) {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: color + '10', border: '1px solid ' + color + '28', borderRadius: 4, padding: '4px 10px' }}>
-      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>{label}</span>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: color + '10', border: '1px solid ' + color + '28', borderRadius: 2, padding: '3px 8px' }}>
+      <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700 }}>{label}</span>
       <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: color }}>+{value}</span>
     </div>
   );
 }
 
-export default function FactionClient() {
-  const [data, setData]                   = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [activeFaction, setActiveFaction] = useState('Arachne');
-  const [activeShell, setActiveShell]     = useState('Destroyer');
-  const [unlockFilter, setUnlockFilter]   = useState('all');
-  const [unlockSearch, setUnlockSearch]   = useState('');
-  const [unlockFaction, setUnlockFaction] = useState('all');
-
-  useEffect(function() {
-    fetch('/api/faction-data')
-      .then(function(r) { return r.json(); })
-      .then(function(d) { setData(d); setLoading(false); })
-      .catch(function() { setLoading(false); });
-  }, []);
+// ── MAIN ───────────────────────────────────────────────────────
+export default function FactionClient({ data }) {
+  var [activeFaction, setActiveFaction] = useState('Arachne');
+  var [activeShell, setActiveShell]     = useState('Destroyer');
+  var [unlockFilter, setUnlockFilter]   = useState('all');
+  var [unlockSearch, setUnlockSearch]   = useState('');
+  var [unlockFaction, setUnlockFaction] = useState('all');
 
   var factions    = data?.factions    || [];
   var statBonuses = data?.statBonuses || [];
   var unlocks     = data?.unlocks     || [];
   var materials   = data?.materials   || [];
+  var weapons     = data?.weapons     || [];
+  var implants    = data?.implants    || [];
+  var mods        = data?.mods        || [];
+  var articles    = data?.articles    || [];
 
-  var selectedFaction  = factions.find(function(f) { return f.name === activeFaction; }) || null;
-  var factionStats     = statBonuses.filter(function(s) { return s.faction_name === activeFaction; });
-  var factionUnlocks   = unlocks.filter(function(u) { return u.faction_name === activeFaction; });
-  var factionMaterials = materials.filter(function(m) { return m.faction_name === activeFaction; });
-  var factionColor     = FACTION_COLORS[activeFaction] || '#00f5ff';
+  var selectedFaction    = factions.find(function(f) { return f.name === activeFaction; }) || null;
+  var factionStats       = statBonuses.filter(function(s) { return s.faction_name === activeFaction; });
+  var factionUnlocks     = unlocks.filter(function(u) { return u.faction_name === activeFaction; });
+  var factionMaterials   = materials.filter(function(m) { return m.faction_name === activeFaction; });
+  var factionWeapons     = weapons.filter(function(w) { return w.faction_source === activeFaction; });
+  var factionImplants    = implants.filter(function(i) { return i.faction_source === activeFaction; });
+  var factionMods        = mods.filter(function(m) { return m.faction_source === activeFaction; });
+  var factionColor       = FACTION_COLORS[activeFaction] || '#00d4ff';
 
-  // Shell advisor
+  // Articles that reference this faction (tag match)
+  var factionArticles = articles.filter(function(a) {
+    var tags = (a.tags || []).map(function(t) { return (t || '').toLowerCase(); });
+    return tags.includes(activeFaction.toLowerCase()) || tags.includes('factions');
+  }).slice(0, 6);
+
+  // Shell advisor logic
   var priorityStats = SHELL_PRIORITY_STATS[activeShell] || [];
   var advisorResults = FACTION_ORDER.map(function(fname) {
     var relevantBonuses = statBonuses.filter(function(s) {
@@ -111,7 +151,7 @@ export default function FactionClient() {
     return { faction: fname, bonuses: relevantBonuses, totalBonus: totalBonus };
   }).filter(function(r) { return r.totalBonus > 0; }).sort(function(a, b) { return b.totalBonus - a.totalBonus; });
 
-  // Unlock browser
+  // Unlock browser filters
   var filteredUnlocks = unlocks.filter(function(u) {
     var matchFaction = unlockFaction === 'all' || u.faction_name === unlockFaction;
     var matchType    = unlockFilter === 'all'  || u.unlock_type === unlockFilter;
@@ -119,374 +159,519 @@ export default function FactionClient() {
     return matchFaction && matchType && matchSearch;
   });
 
-  // Investment efficiency
+  // Investment efficiency summary
   var efficiencyData = FACTION_ORDER.map(function(fname) {
     var fStats    = statBonuses.filter(function(s) { return s.faction_name === fname; });
     var totalStat = fStats.reduce(function(acc, s) { return acc + (s.stat_value || 0); }, 0);
     var maxRank   = fStats.reduce(function(acc, s) { return Math.max(acc, s.rank_required || 0); }, 0);
     var fData     = factions.find(function(f) { return f.name === fname; });
-    return { name: fname, totalStat, maxRank, maxCreditCost: fData?.max_credit_cost || 0, statCount: fStats.length };
-  }).sort(function(a, b) { return b.totalStat - a.totalStat; });
+    var itemCount = weapons.filter(function(w) { return w.faction_source === fname; }).length
+                  + implants.filter(function(i) { return i.faction_source === fname; }).length
+                  + mods.filter(function(m) { return m.faction_source === fname; }).length
+                  + unlocks.filter(function(u) { return u.faction_name === fname; }).length;
+    return { name: fname, totalStat, maxRank, maxCreditCost: fData?.max_credit_cost || 0, itemCount };
+  }).sort(function(a, b) { return b.itemCount - a.itemCount; });
+
+  // Counts for hero
+  var totalItems    = weapons.length + implants.length + mods.length;
+  var totalBonuses  = statBonuses.length;
+  var totalArticles = articles.length;
 
   return (
-    <main style={{ backgroundColor: '#030303', minHeight: '100vh', color: '#fff', paddingTop: 80, overflowX: 'hidden' }}>
+    <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
 
       <style>{`
-        @keyframes rPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes rScanLine { from{transform:translateY(-100vh)} to{transform:translateY(100vh)} }
-        .f-btn  { transition: all 0.15s ease; cursor: pointer; }
-        .f-btn:hover  { transform: translateY(-1px); }
-        .f-card { transition: all 0.2s ease; cursor: pointer; }
-        .f-card:hover { transform: translateY(-3px); }
-        .f-row  { transition: background 0.12s; }
-        .f-row:hover  { background: rgba(255,255,255,0.025) !important; }
-        .f-tab  { transition: all 0.15s; cursor: pointer; }
-        .f-tab:hover  { opacity: 0.85; }
+        .f-card        { transition: background 0.12s, border-color 0.12s; }
+        .f-card:hover  { background: #1e2228 !important; }
+        .f-row:hover   { background: #1e2228 !important; }
+        .f-btn         { transition: background 0.12s, border-color 0.12s, color 0.12s; cursor: pointer; }
+        .f-btn:hover   { background: #1e2228 !important; }
+        .f-tab-btn     { transition: background 0.12s, border-color 0.12s; cursor: pointer; }
+        .f-tab-btn:hover { background: #1e2228 !important; }
       `}</style>
 
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent)', animation: 'rScanLine 10s linear infinite', pointerEvents: 'none', zIndex: 0 }} />
+      {/* ══ HERO ════════════════════════════════════════════ */}
+      <section style={{ padding: '48px 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
+          <div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>6 FACTIONS</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.04)', border: '1px solid #22252e', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>SEASON 1</span>
+            </div>
 
-      {/* ── HERO ─────────────────────────────────────── */}
-      <section style={{ position: 'relative', overflow: 'hidden', padding: '56px 24px 64px' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.012, backgroundImage: 'linear-gradient(rgba(0,245,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,245,255,1) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse at 50% 0%, rgba(255,215,0,0.04) 0%, transparent 65%)', pointerEvents: 'none' }} />
+            <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2.2rem, 6vw, 4rem)', fontWeight: 900, letterSpacing: 1, lineHeight: 1.0, margin: '0 0 18px' }}>
+              FACTION<br /><span style={{ color: '#ffd700' }}>INTEL</span>
+            </h1>
 
-        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>6 FACTIONS</span>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3, padding: '4px 12px', letterSpacing: 2 }}>SEASON 1</span>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 460, marginBottom: 24 }}>
+              Six factions. Each controls access to weapons, mods, implants, and permanent stat upgrades. Level them up, buy unlocks with credits and materials, and build the Runner you want.
+            </p>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Link href="/advisor" style={{ padding: '11px 22px', background: '#ff8800', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+                BUILD ADVISOR →
+              </Link>
+              <Link href="/builds" style={{ padding: '11px 22px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+                BUILD LAB →
+              </Link>
+            </div>
+
+            {/* Live intel summary */}
+            {(totalItems > 0 || totalBonuses > 0) && (
+              <div style={{ marginTop: 24, padding: '12px 16px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ffd700', borderRadius: '0 2px 2px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#ffd700' }} />
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: '#ffd700' }}>LIVE DATA</span>
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+                  <strong style={{ color: '#fff' }}>{totalItems}</strong> faction-gated items ·{' '}
+                  <strong style={{ color: '#fff' }}>{totalBonuses}</strong> stat bonuses ·{' '}
+                  <strong style={{ color: '#fff' }}>{unlocks.length}</strong> unlocks tracked ·{' '}
+                  <strong style={{ color: '#fff' }}>{totalArticles}</strong> related articles
+                </div>
+              </div>
+            )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'center' }}>
-            <div>
-              <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2.5rem, 7vw, 4.5rem)', fontWeight: 900, letterSpacing: 2, lineHeight: 1.0, margin: '0 0 16px' }}>
-                FACTION<br /><span style={{ color: '#ffd700', textShadow: '0 0 40px rgba(255,215,0,0.2)' }}>INTEL</span>
-              </h1>
-              <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 16, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 440, marginBottom: 28 }}>
-                Six factions. Each controls access to weapons, mods, implants, and permanent stat upgrades. Level them up through missions, buy unlocks with credits and materials, and build the Runner you want.
-              </p>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <Link href="/advisor" style={{ padding: '10px 20px', background: 'rgba(255,136,0,0.1)', border: '1px solid rgba(255,136,0,0.35)', borderRadius: 5, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff8800', letterSpacing: 2 }}>[D] BUILD ADVISOR →</Link>
-                <Link href="/builds" style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, textDecoration: 'none', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}>BUILD LAB →</Link>
-              </div>
-            </div>
-
-            {/* ── FACTION CARDS WITH BACKGROUND IMAGES ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {FACTION_ORDER.map(function(fname) {
-                var color  = FACTION_COLORS[fname];
-                var leader = FACTION_LEADERS[fname];
-                var focus  = FACTION_FOCUS[fname];
-                var fData  = factions.find(function(f) { return f.name === fname; });
-                var imgSrc = factionImage(fname);
-                return (
-                  <button key={fname} className="f-card"
-                    onClick={function() { setActiveFaction(fname); document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }}
-                    style={{ position: 'relative', background: '#0a0a0a', border: '1px solid ' + color + '30', borderTop: '2px solid ' + color, borderRadius: 8, padding: 0, overflow: 'hidden', cursor: 'pointer', textAlign: 'left', minHeight: 140 }}>
-
-                    {/* Background image */}
-                    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(' + imgSrc + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18 }} />
-                    {/* Color overlay */}
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, ' + color + '15 0%, transparent 60%, rgba(0,0,0,0.4) 100%)' }} />
-
-                    {/* Content */}
-                    <div style={{ position: 'relative', zIndex: 1, padding: '16px 14px' }}>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 3, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{fname.toUpperCase()}</div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginBottom: 6 }}>{leader}</div>
-                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.3, marginBottom: 8 }}>{focus}</div>
-                      {fData?.max_credit_cost > 0 && (
-                        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: color, letterSpacing: 1, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
-                          {fData.max_credit_cost.toLocaleString()} CR MAX
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Faction grid with bg images */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            {FACTION_ORDER.map(function(fname) {
+              var color  = FACTION_COLORS[fname];
+              var leader = FACTION_LEADERS[fname];
+              var focus  = FACTION_FOCUS[fname];
+              var fData  = factions.find(function(f) { return f.name === fname; });
+              var imgSrc = factionImage(fname);
+              return (
+                <button key={fname} className="f-card"
+                  onClick={function() {
+                    setActiveFaction(fname);
+                    setTimeout(function() { document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }, 50);
+                  }}
+                  style={{
+                    position: 'relative',
+                    background: '#1a1d24',
+                    border: '1px solid #22252e',
+                    borderTop: '2px solid ' + color,
+                    borderRadius: '0 0 2px 2px',
+                    padding: 0,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    minHeight: 130,
+                  }}>
+                  <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(' + imgSrc + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, ' + color + '12 0%, transparent 60%, rgba(18,20,24,0.6) 100%)' }} />
+                  <div style={{ position: 'relative', zIndex: 1, padding: '14px 12px' }}>
+                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 3 }}>{fname.toUpperCase()}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginBottom: 6, fontWeight: 700 }}>{leader}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.3, marginBottom: 8 }}>{focus}</div>
+                    {fData?.max_credit_cost > 0 && (
+                      <div style={{ fontFamily: 'monospace', fontSize: 8, color: color, letterSpacing: 1, fontWeight: 700 }}>
+                        {fData.max_credit_cost.toLocaleString()} CR MAX
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── FACTION DETAIL ───────────────────────────── */}
-      <section id="faction-detail" style={{ padding: '0 24px 64px', maxWidth: 1100, margin: '0 auto' }}>
-        <SectionDivider label="FACTION OVERVIEW" />
+      {/* ══ FACTION TABS + DETAIL ═══════════════════════════ */}
+      <section id="faction-detail" style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+        <SectionHeader label="FACTION OVERVIEW" />
 
-        {/* ── FACTION TAB BAR WITH LOGOS ── */}
-        <div style={{ display: 'flex', gap: 3, marginBottom: 3, overflowX: 'auto', paddingBottom: 2 }}>
+        {/* Tab bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 3, marginBottom: 3 }}>
           {FACTION_ORDER.map(function(fname) {
             var active = activeFaction === fname;
             var color  = FACTION_COLORS[fname];
             var imgSrc = factionImage(fname);
             return (
-              <button key={fname} className="f-tab"
-                onClick={function() { setActiveFaction(fname); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 14px', background: active ? color + '12' : '#0a0a0a', border: '1px solid ' + (active ? color + '40' : 'rgba(255,255,255,0.05)'), borderBottom: '2px solid ' + (active ? color : 'transparent'), borderRadius: '6px 6px 0 0', cursor: 'pointer', flexShrink: 0, minWidth: 90, position: 'relative', overflow: 'hidden' }}>
-
-                {/* Subtle bg image on active tab */}
+              <button key={fname} className="f-tab-btn" onClick={function() { setActiveFaction(fname); }}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                  padding: '10px 8px',
+                  background: '#1a1d24',
+                  border: '1px solid ' + (active ? color + '55' : '#22252e'),
+                  borderTop: '2px solid ' + (active ? color : '#22252e'),
+                  borderRadius: '0 0 2px 2px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}>
                 {active && (
                   <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(' + imgSrc + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.08 }} />
                 )}
-
-                {/* Faction logo */}
-                <div style={{ position: 'relative', zIndex: 1, width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + (active ? color + '60' : 'rgba(255,255,255,0.1)'), flexShrink: 0, background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img
-                    src={imgSrc}
-                    alt={fname}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: active ? 1 : 0.5 }}
-                  />
+                <div style={{ position: 'relative', zIndex: 1, width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + (active ? color + '60' : '#22252e'), flexShrink: 0, background: '#0e1014' }}>
+                  <img src={imgSrc} alt={fname} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: active ? 1 : 0.5 }} />
                 </div>
-
-                <span style={{ position: 'relative', zIndex: 1, fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: active ? color : 'rgba(255,255,255,0.25)', letterSpacing: 1, whiteSpace: 'nowrap' }}>
+                <span style={{ position: 'relative', zIndex: 1, fontFamily: 'monospace', fontSize: 8, color: active ? color : 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>
                   {fname.toUpperCase()}
                 </span>
-
-                {active && (
-                  <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1, background: 'linear-gradient(90deg, transparent, ' + color + ', transparent)' }} />
-                )}
               </button>
             );
           })}
         </div>
 
-        {/* Faction detail panel */}
-        {loading ? (
-          <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 10px 10px', padding: 40, textAlign: 'center', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#333', letterSpacing: 2 }}>
-            LOADING FACTION DATA...
-          </div>
-        ) : (
-          <div style={{ position: 'relative', background: factionColor + '06', border: '1px solid ' + factionColor + '25', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '28px', display: 'flex', flexDirection: 'column', gap: 24, overflow: 'hidden' }}>
+        {/* Detail panel */}
+        <div style={{ position: 'relative', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + factionColor, borderRadius: '0 2px 2px 0', padding: 24, overflow: 'hidden' }}>
+          {/* Faction image bg */}
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '35%', backgroundImage: 'url(' + factionImage(activeFaction) + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.06, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '40%', background: 'linear-gradient(to right, #1a1d24, transparent)', pointerEvents: 'none' }} />
 
-            {/* Subtle faction image behind detail panel */}
-            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '35%', backgroundImage: 'url(' + factionImage(activeFaction) + ')', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.06, pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '40%', background: 'linear-gradient(to right, ' + factionColor + '06, transparent)', pointerEvents: 'none' }} />
-
-            {/* Header row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 20, alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
-                  {/* Logo in detail header */}
-                  <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + factionColor + '40', flexShrink: 0, background: '#0a0a0a' }}>
-                    <img src={factionImage(activeFaction)} alt={activeFaction} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                  <div>
-                    <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 26, fontWeight: 900, color: factionColor, textShadow: '0 0 20px ' + factionColor + '44', letterSpacing: 2, display: 'block', lineHeight: 1 }}>{activeFaction.toUpperCase()}</span>
-                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>LEADER: {FACTION_LEADERS[activeFaction]}</span>
-                  </div>
+          {/* Header */}
+          <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '1fr auto', gap: 20, alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 2, overflow: 'hidden', border: '1px solid ' + factionColor + '40', flexShrink: 0, background: '#0e1014' }}>
+                  <img src={factionImage(activeFaction)} alt={activeFaction} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 580 }}>
-                  {selectedFaction?.description || FACTION_FOCUS[activeFaction]}
+                <div>
+                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: factionColor, letterSpacing: 1, lineHeight: 1, marginBottom: 4 }}>{activeFaction.toUpperCase()}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, fontWeight: 700 }}>LEADER: {FACTION_LEADERS[activeFaction]}</div>
                 </div>
               </div>
-              {selectedFaction?.max_credit_cost > 0 && (
-                <div style={{ background: '#0a0a0a', border: '1px solid ' + factionColor + '20', borderRadius: 8, padding: '16px 20px', textAlign: 'center', flexShrink: 0 }}>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 6 }}>FULL MAX COST</div>
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: factionColor }}>{selectedFaction.max_credit_cost.toLocaleString()}</div>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2 }}>CREDITS</div>
-                </div>
-              )}
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, maxWidth: 540 }}>
+                {selectedFaction?.description || FACTION_FOCUS[activeFaction]}
+              </div>
             </div>
-
-            {/* Stats + Unlocks + Materials */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, position: 'relative', zIndex: 1 }}>
-
-              {/* Stat bonuses */}
-              <div style={{ background: '#0a0a0a', border: '1px solid ' + factionColor + '15', borderRadius: 8, overflow: 'hidden' }}>
-                <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: factionColor, letterSpacing: 2 }}>STAT BONUSES</span>
-                </div>
-                <div style={{ padding: '8px 0' }}>
-                  {factionStats.length > 0 ? factionStats.map(function(s, i) {
-                    return (
-                      <div key={i} className="f-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 18px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                        <div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, fontWeight: 600, color: '#fff' }}>{s.stat_name}</div>
-                          {s.rank_required && (
-                            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ffd700', letterSpacing: 1, marginTop: 2 }}>
-                              RANK {s.rank_required}{s.credit_cost ? ' · ' + s.credit_cost.toLocaleString() + ' CR' : ''}
-                            </div>
-                          )}
-                        </div>
-                        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: '#00ff88' }}>+{s.stat_value}</span>
-                      </div>
-                    );
-                  }) : (
-                    <div style={{ padding: '16px 18px', fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#222', letterSpacing: 1 }}>DATA PENDING</div>
-                  )}
-                </div>
+            {selectedFaction?.max_credit_cost > 0 && (
+              <div style={{ background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, padding: '12px 16px', textAlign: 'center', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 6, fontWeight: 700 }}>FULL MAX COST</div>
+                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: factionColor, lineHeight: 1 }}>{selectedFaction.max_credit_cost.toLocaleString()}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 4, fontWeight: 700 }}>CREDITS</div>
               </div>
+            )}
+          </div>
 
-              {/* Unlocks */}
-              <div style={{ background: '#0a0a0a', border: '1px solid ' + factionColor + '15', borderRadius: 8, overflow: 'hidden' }}>
-                <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: factionColor, letterSpacing: 2 }}>UNLOCKS</span>
-                </div>
-                <div style={{ padding: '8px 0', maxHeight: 280, overflowY: 'auto' }}>
-                  {factionUnlocks.length > 0 ? factionUnlocks.slice(0, 12).map(function(u, i) {
-                    var tc = UNLOCK_TYPE_COLORS[u.unlock_type] || '#888';
-                    return (
-                      <div key={i} className="f-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 18px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: tc, background: tc + '14', border: '1px solid ' + tc + '28', borderRadius: 2, padding: '1px 5px', letterSpacing: 1 }}>{(u.unlock_type || '').toUpperCase()}</span>
-                            {u.tier > 1 && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#ffd700', letterSpacing: 1 }}>T{u.tier}</span>}
+          {/* Stats + Unlocks + Materials */}
+          <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+            {/* Stat bonuses */}
+            <div style={{ background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: factionColor, letterSpacing: 1.5 }}>STAT BONUSES</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{factionStats.length}</span>
+              </div>
+              <div>
+                {factionStats.length > 0 ? factionStats.map(function(s, i) {
+                  return (
+                    <div key={i} className="f-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{s.stat_name}</div>
+                        {s.rank_required && (
+                          <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#ffd700', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>
+                            RANK {s.rank_required}{s.credit_cost ? ' · ' + s.credit_cost.toLocaleString() + ' CR' : ''}
                           </div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, fontWeight: 600, color: '#fff' }}>{u.item_name}</div>
-                        </div>
-                        {u.rank_required && (
-                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 3, padding: '2px 7px', letterSpacing: 1, flexShrink: 0, marginLeft: 8 }}>
-                            RK{u.rank_required}
-                          </span>
                         )}
                       </div>
-                    );
-                  }) : (
-                    <div style={{ padding: '16px 18px', fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#222', letterSpacing: 1 }}>DATA PENDING</div>
-                  )}
-                </div>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 900, color: '#00ff41' }}>+{s.stat_value}</span>
+                    </div>
+                  );
+                }) : (
+                  <div style={{ padding: '14px', fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>DATA PENDING</div>
+                )}
               </div>
+            </div>
 
-              {/* Materials */}
-              <div style={{ background: '#0a0a0a', border: '1px solid ' + factionColor + '15', borderRadius: 8, overflow: 'hidden' }}>
-                <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: factionColor, letterSpacing: 2 }}>FARM MATERIALS</span>
-                </div>
-                <div style={{ padding: '12px 18px' }}>
-                  {factionMaterials.length > 0 ? (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {factionMaterials.map(function(m, i) {
-                        return (
-                          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: factionColor, background: factionColor + '0e', border: '1px solid ' + factionColor + '22', borderRadius: 3, padding: '4px 10px', letterSpacing: 1 }}>
-                            {m.image_filename && (
-                              <img
-                                src={'/images/materials/' + m.image_filename}
-                                alt={m.material_name}
-                                style={{ width: 18, height: 18, objectFit: 'contain', flexShrink: 0 }}
-                              />
-                            )}
-                            {m.material_name}
-                          </span>
-                        );
-                      })}
+            {/* Unlocks */}
+            <div style={{ background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: factionColor, letterSpacing: 1.5 }}>UNLOCKS</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{factionUnlocks.length}</span>
+              </div>
+              <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+                {factionUnlocks.length > 0 ? factionUnlocks.map(function(u, i) {
+                  var tc = UNLOCK_TYPE_COLORS[u.unlock_type] || '#888';
+                  return (
+                    <div key={i} className="f-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: 7, color: tc, background: tc + '18', border: '1px solid ' + tc + '30', borderRadius: 2, padding: '1px 5px', letterSpacing: 1, fontWeight: 700 }}>{(u.unlock_type || '').toUpperCase()}</span>
+                          {u.tier > 1 && <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#ffd700', letterSpacing: 1, fontWeight: 700 }}>T{u.tier}</span>}
+                        </div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.item_name}</div>
+                      </div>
+                      {u.rank_required && (
+                        <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 2, padding: '2px 6px', letterSpacing: 1, flexShrink: 0, marginLeft: 6, fontWeight: 700 }}>RK{u.rank_required}</span>
+                      )}
                     </div>
-                  ) : (
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#222', letterSpacing: 1 }}>DATA PENDING</div>
-                  )}
-                  {selectedFaction?.max_cost_summary && (
-                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
-                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ffd700', letterSpacing: 1, display: 'block', marginBottom: 4 }}>TOTAL TO MAX:</span>
-                      {selectedFaction.max_cost_summary}
-                    </div>
-                  )}
-                </div>
+                  );
+                }) : (
+                  <div style={{ padding: '14px', fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>DATA PENDING</div>
+                )}
+              </div>
+            </div>
+
+            {/* Materials */}
+            <div style={{ background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: factionColor, letterSpacing: 1.5 }}>FARM MATERIALS</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{factionMaterials.length}</span>
+              </div>
+              <div style={{ padding: '12px 14px' }}>
+                {factionMaterials.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {factionMaterials.map(function(m, i) {
+                      return (
+                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9, color: factionColor, background: factionColor + '0e', border: '1px solid ' + factionColor + '28', borderRadius: 2, padding: '4px 8px', letterSpacing: 1, fontWeight: 700 }}>
+                          {m.image_filename && (
+                            <img src={'/images/materials/' + m.image_filename} alt={m.material_name} style={{ width: 16, height: 16, objectFit: 'contain', flexShrink: 0 }} />
+                          )}
+                          {m.material_name}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>DATA PENDING</div>
+                )}
+                {selectedFaction?.max_cost_summary && (
+                  <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#ffd700', letterSpacing: 1.5, marginBottom: 4, fontWeight: 700 }}>TOTAL TO MAX:</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{selectedFaction.max_cost_summary}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
+        </div>
       </section>
 
-      {/* ── SHELL ADVISOR ────────────────────────────── */}
-      <section style={{ padding: '0 24px 64px', maxWidth: 1100, margin: '0 auto' }}>
-        <SectionDivider label="SHELL FACTION ADVISOR" />
-        <div style={{ background: 'rgba(255,136,0,0.02)', border: '1px solid rgba(255,136,0,0.1)', borderLeft: '3px solid rgba(255,136,0,0.4)', borderRadius: 8, padding: '28px', marginBottom: 20 }}>
-          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff8800', letterSpacing: 2, marginBottom: 6 }}>WHICH FACTION SHOULD YOU PRIORITIZE?</div>
-          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>
-            Select your shell to see which factions provide the most relevant stat bonuses for your playstyle.
+      {/* ══ FACTION ARSENAL (cross-referenced items) ════════ */}
+      {(factionWeapons.length + factionImplants.length + factionMods.length) > 0 && (
+        <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+          <SectionHeader
+            label={activeFaction.toUpperCase() + ' ARSENAL'}
+            count={(factionWeapons.length + factionImplants.length + factionMods.length) + ' ITEMS'}
+            color={factionColor}
+          />
+
+          <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + factionColor, borderRadius: '0 2px 2px 0', padding: '12px 16px', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+              All items gated by <strong style={{ color: factionColor }}>{activeFaction}</strong> from your arsenal database. Each item is locked behind this faction's rank progression.
+            </div>
           </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 6 }}>
+            {factionWeapons.map(function(w) {
+              var imgSrc = itemImage('weapon', w.image_filename);
+              var rankedBad = w.ranked_viable === false;
+              return (
+                <div key={'w-' + w.name} className="f-card" style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff2222', borderRadius: '0 2px 2px 0', padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ width: 36, height: 36, flexShrink: 0, background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {imgSrc ? <img src={imgSrc} alt={w.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>⬢</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#ff2222', background: 'rgba(255,34,34,0.12)', border: '1px solid rgba(255,34,34,0.3)', borderRadius: 2, padding: '1px 4px', letterSpacing: 1, fontWeight: 700 }}>WEAPON</span>
+                      {rankedBad && <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#ff2222', letterSpacing: 1, fontWeight: 700 }}>⚠ NOT RANKED</span>}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>{w.name}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700 }}>{w.weapon_type || 'WEAPON'} · {w.rarity || '—'}</div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {factionImplants.map(function(i) {
+              var imgSrc = itemImage('implant', i.image_filename);
+              return (
+                <div key={'i-' + i.name} className="f-card" style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #9b5de5', borderRadius: '0 2px 2px 0', padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ width: 36, height: 36, flexShrink: 0, background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {imgSrc ? <img src={imgSrc} alt={i.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>◇</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#9b5de5', background: 'rgba(155,93,229,0.15)', border: '1px solid rgba(155,93,229,0.35)', borderRadius: 2, padding: '1px 4px', letterSpacing: 1, fontWeight: 700 }}>IMPLANT</span>
+                      {i.required_runner && i.required_runner !== 'Universal' && (
+                        <span style={{ fontFamily: 'monospace', fontSize: 7, color: SHELL_COLORS[i.required_runner] || '#888', letterSpacing: 1, fontWeight: 700 }}>{i.required_runner.toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>{i.name}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700 }}>{i.slot_type || '—'} · {i.rarity || '—'}</div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {factionMods.map(function(m) {
+              var imgSrc = itemImage('mod', m.image_filename);
+              return (
+                <div key={'m-' + m.name} className="f-card" style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ width: 36, height: 36, flexShrink: 0, background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {imgSrc ? <img src={imgSrc} alt={m.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>◆</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ marginBottom: 2 }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#ff8800', background: 'rgba(255,136,0,0.15)', border: '1px solid rgba(255,136,0,0.35)', borderRadius: 2, padding: '1px 4px', letterSpacing: 1, fontWeight: 700 }}>MOD</span>
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>{m.name}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700 }}>{m.slot_type || '—'} · {m.rarity || '—'}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ══ EDITOR ARTICLES (cross-referenced) ══════════════ */}
+      {factionArticles.length > 0 && (
+        <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+          <SectionHeader label={activeFaction.toUpperCase() + ' INTEL'} count={factionArticles.length + ' ARTICLES'} color={factionColor} />
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
+            {factionArticles.map(function(article) {
+              var color = EDITOR_COLORS[article.editor] || '#888';
+              var symbol = EDITOR_SYMBOLS[article.editor] || '·';
+              var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
+              return (
+                <Link key={article.id} href={'/intel/' + article.slug} className="f-card"
+                  style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
+                  {article.thumbnail && (
+                    <div style={{ height: 90, background: '#0e1014', overflow: 'hidden', position: 'relative' }}>
+                      <img src={article.thumbnail} alt={article.headline} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(26,29,36,0.95))' }} />
+                    </div>
+                  )}
+                  <div style={{ padding: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + color + '40', flexShrink: 0 }}>
+                        <img src={portrait} alt={article.editor} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: color }}>{symbol} {article.editor}</span>
+                      {article.ce_score > 0 && (
+                        <span style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 9, fontWeight: 800, color: color, background: color + '18', border: '1px solid ' + color + '30', borderRadius: 2, padding: '1px 5px' }}>{article.ce_score}</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 6 }}>
+                      {article.headline}
+                    </div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>{timeAgo(article.created_at)}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ══ SHELL FACTION ADVISOR ═══════════════════════════ */}
+      <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+        <SectionHeader label="SHELL FACTION ADVISOR" />
+
+        <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', padding: '14px 18px', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff8800', letterSpacing: 1, marginBottom: 4 }}>WHICH FACTION SHOULD YOU PRIORITIZE?</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Select your shell to see which factions provide the most relevant stat bonuses for your playstyle.</div>
         </div>
 
-        <div style={{ display: 'flex', gap: 3, marginBottom: 20, overflowX: 'auto', paddingBottom: 2 }}>
+        {/* Shell tabs */}
+        <div style={{ display: 'flex', gap: 3, marginBottom: 14, overflowX: 'auto', paddingBottom: 2 }}>
           {Object.keys(SHELL_PRIORITY_STATS).map(function(shell) {
             var active = activeShell === shell;
+            var sColor = SHELL_COLORS[shell] || '#888';
             return (
-              <button key={shell} className="f-tab" onClick={function() { setActiveShell(shell); }}
-                style={{ padding: '10px 18px', background: active ? 'rgba(255,136,0,0.08)' : '#0a0a0a', border: '1px solid ' + (active ? 'rgba(255,136,0,0.3)' : 'rgba(255,255,255,0.05)'), borderBottom: '2px solid ' + (active ? '#ff8800' : 'transparent'), borderRadius: '5px 5px 0 0', fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: active ? '#ff8800' : 'rgba(255,255,255,0.25)', letterSpacing: 1, cursor: 'pointer', flexShrink: 0 }}>
+              <button key={shell} className="f-tab-btn" onClick={function() { setActiveShell(shell); }}
+                style={{ padding: '8px 16px', background: '#1a1d24', border: '1px solid ' + (active ? sColor + '55' : '#22252e'), borderTop: '2px solid ' + (active ? sColor : '#22252e'), borderRadius: '0 0 2px 2px', fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: active ? sColor : 'rgba(255,255,255,0.3)', letterSpacing: 1, cursor: 'pointer', flexShrink: 0 }}>
                 {shell.toUpperCase()}
               </button>
             );
           })}
         </div>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '14px 18px', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>
-          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginRight: 4 }}>PRIORITY STATS:</span>
+        {/* Priority stats display */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14, padding: '12px 16px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginRight: 4, fontWeight: 700 }}>PRIORITY STATS:</span>
           {priorityStats.map(function(s) {
-            return <span key={s} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800', background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.2)', borderRadius: 3, padding: '3px 10px', letterSpacing: 1 }}>{s}</span>;
+            return <span key={s} style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.25)', borderRadius: 2, padding: '2px 8px', letterSpacing: 1, fontWeight: 700 }}>{s}</span>;
           })}
         </div>
 
+        {/* Rankings */}
         {advisorResults.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {advisorResults.map(function(result, idx) {
               var color  = FACTION_COLORS[result.faction];
               var imgSrc = factionImage(result.faction);
               return (
-                <div key={result.faction} className="f-row" style={{ display: 'grid', gridTemplateColumns: '30px 52px 140px 1fr auto', gap: 14, alignItems: 'center', background: '#0a0a0a', border: '1px solid ' + color + '15', borderLeft: '3px solid ' + color + (idx === 0 ? 'cc' : '44'), borderRadius: 6, padding: '12px 18px' }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: idx === 0 ? color : 'rgba(255,255,255,0.2)' }}>#{idx + 1}</span>
-                  <div style={{ width: 36, height: 36, borderRadius: 6, overflow: 'hidden', border: '1px solid ' + color + '30', flexShrink: 0 }}>
-                    <img src={imgSrc} alt={result.faction} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
+                <div key={result.faction} className="f-row" style={{ display: 'grid', gridTemplateColumns: '28px 44px 130px 1fr auto', gap: 12, alignItems: 'center', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + color + (idx === 0 ? 'ff' : '66'), borderRadius: '0 2px 2px 0', padding: '10px 14px' }}>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: idx === 0 ? color : 'rgba(255,255,255,0.25)' }}>#{idx + 1}</span>
+                  <div style={{ width: 32, height: 32, borderRadius: 2, overflow: 'hidden', border: '1px solid ' + color + '30', flexShrink: 0 }}>
+                    <img src={imgSrc} alt={result.faction} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: color, letterSpacing: 1 }}>{result.faction.toUpperCase()}</span>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                     {result.bonuses.map(function(b, bi) {
                       return <StatPill key={bi} label={b.stat_name} value={b.stat_value} color={color} />;
                     })}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: color }}>+{result.totalBonus}</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>TOTAL</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>TOTAL</div>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div style={{ padding: '32px', textAlign: 'center', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8 }}>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#222', letterSpacing: 2 }}>FACTION STAT DATA PENDING — ADD DATA VIA ADMIN PANEL</div>
+          <div style={{ padding: 28, textAlign: 'center', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2 }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, fontWeight: 700 }}>FACTION STAT DATA PENDING — ADD VIA ADMIN PANEL</div>
           </div>
         )}
       </section>
 
-      {/* ── INVESTMENT EFFICIENCY ────────────────────── */}
-      {efficiencyData.some(function(e) { return e.totalStat > 0; }) && (
-        <section style={{ padding: '0 24px 64px', maxWidth: 1100, margin: '0 auto' }}>
-          <SectionDivider label="FACTION INVESTMENT OVERVIEW" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* ══ INVESTMENT OVERVIEW ═════════════════════════════ */}
+      {efficiencyData.some(function(e) { return e.totalStat > 0 || e.itemCount > 0; }) && (
+        <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+          <SectionHeader label="INVESTMENT OVERVIEW" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {efficiencyData.map(function(item) {
               var color  = FACTION_COLORS[item.name];
               var leader = FACTION_LEADERS[item.name];
               var imgSrc = factionImage(item.name);
               return (
-                <div key={item.name} className="f-row" style={{ display: 'grid', gridTemplateColumns: '52px 160px 1fr auto', gap: 16, alignItems: 'center', background: '#0a0a0a', border: '1px solid ' + color + '12', borderLeft: '3px solid ' + color + '66', borderRadius: 5, padding: '12px 18px' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 6, overflow: 'hidden', border: '1px solid ' + color + '25', flexShrink: 0 }}>
-                    <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} />
+                <div key={item.name} className="f-row" style={{ display: 'grid', gridTemplateColumns: '44px 150px 1fr auto', gap: 14, alignItems: 'center', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + color, borderRadius: '0 2px 2px 0', padding: '10px 14px' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 2, overflow: 'hidden', border: '1px solid ' + color + '30', flexShrink: 0 }}>
+                    <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: color, letterSpacing: 1 }}>{item.name.toUpperCase()}</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 2 }}>{leader}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>{leader}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {item.itemCount > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>ITEMS:</span>
+                        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#fff' }}>{item.itemCount}</span>
+                      </div>
+                    )}
                     {item.totalStat > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>TOTAL STAT:</span>
-                        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#00ff88' }}>+{item.totalStat}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>STATS:</span>
+                        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#00ff41' }}>+{item.totalStat}</span>
                       </div>
                     )}
                     {item.maxRank > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>MAX RANK:</span>
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ffd700' }}>{item.maxRank}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>MAX RANK:</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: 10, color: '#ffd700', fontWeight: 700 }}>{item.maxRank}</span>
                       </div>
                     )}
                     {item.maxCreditCost > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>MAX CR:</span>
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{item.maxCreditCost.toLocaleString()}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>MAX CR:</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 700 }}>{item.maxCreditCost.toLocaleString()}</span>
                       </div>
                     )}
                   </div>
                   <button className="f-btn"
-                    onClick={function() { setActiveFaction(item.name); document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }}
-                    style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: color, background: color + '0e', border: '1px solid ' + color + '28', borderRadius: 4, padding: '6px 14px', cursor: 'pointer', letterSpacing: 1, flexShrink: 0 }}>
+                    onClick={function() {
+                      setActiveFaction(item.name);
+                      setTimeout(function() { document.getElementById('faction-detail')?.scrollIntoView({ behavior: 'smooth' }); }, 50);
+                    }}
+                    style={{ fontFamily: 'monospace', fontSize: 9, color: color, background: color + '0e', border: '1px solid ' + color + '30', borderRadius: 2, padding: '5px 12px', cursor: 'pointer', letterSpacing: 1, flexShrink: 0, fontWeight: 700 }}>
                     VIEW →
                   </button>
                 </div>
@@ -496,16 +681,17 @@ export default function FactionClient() {
         </section>
       )}
 
-      {/* ── UNLOCK BROWSER ───────────────────────────── */}
-      <section style={{ padding: '0 24px 64px', maxWidth: 1100, margin: '0 auto' }}>
-        <SectionDivider label="UNLOCK BROWSER" />
+      {/* ══ UNLOCK BROWSER ══════════════════════════════════ */}
+      <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+        <SectionHeader label="UNLOCK BROWSER" count={filteredUnlocks.length + ' / ' + unlocks.length} />
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <input type="text" placeholder="Search unlocks..." value={unlockSearch} onChange={function(e) { setUnlockSearch(e.target.value); }}
-            style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 4, padding: '8px 14px', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, width: 200 }} />
+            style={{ background: '#1a1d24', border: '1px solid #22252e', color: '#fff', borderRadius: 2, padding: '8px 12px', fontFamily: 'monospace', fontSize: 12, width: 200, outline: 'none' }} />
 
           <select value={unlockFaction} onChange={function(e) { setUnlockFaction(e.target.value); }}
-            style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 4, padding: '8px 12px', fontFamily: 'Share Tech Mono, monospace', fontSize: 11, cursor: 'pointer' }}>
+            style={{ background: '#1a1d24', border: '1px solid #22252e', color: '#fff', borderRadius: 2, padding: '8px 10px', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', outline: 'none' }}>
             <option value="all">All Factions</option>
             {FACTION_ORDER.map(function(f) { return <option key={f} value={f}>{f}</option>; })}
           </select>
@@ -513,10 +699,10 @@ export default function FactionClient() {
           <div style={{ display: 'flex', gap: 3 }}>
             {['all', 'weapon', 'mod', 'implant', 'function', 'consumable', 'upgrade'].map(function(type) {
               var active = unlockFilter === type;
-              var color  = type === 'all' ? '#00f5ff' : UNLOCK_TYPE_COLORS[type] || '#888';
+              var color  = type === 'all' ? '#00d4ff' : UNLOCK_TYPE_COLORS[type] || '#888';
               return (
-                <button key={type} className="f-tab" onClick={function() { setUnlockFilter(type); }}
-                  style={{ padding: '7px 12px', background: active ? color + '12' : '#0a0a0a', border: '1px solid ' + (active ? color + '35' : 'rgba(255,255,255,0.06)'), borderBottom: '2px solid ' + (active ? color : 'transparent'), borderRadius: '4px 4px 0 0', fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: active ? color : 'rgba(255,255,255,0.2)', letterSpacing: 1, cursor: 'pointer' }}>
+                <button key={type} className="f-tab-btn" onClick={function() { setUnlockFilter(type); }}
+                  style={{ padding: '6px 12px', background: '#1a1d24', border: '1px solid ' + (active ? color + '50' : '#22252e'), borderTop: '2px solid ' + (active ? color : '#22252e'), borderRadius: '0 0 2px 2px', fontFamily: 'monospace', fontSize: 9, color: active ? color : 'rgba(255,255,255,0.3)', letterSpacing: 1, cursor: 'pointer', fontWeight: 700 }}>
                   {type.toUpperCase()}
                 </button>
               );
@@ -524,32 +710,29 @@ export default function FactionClient() {
           </div>
         </div>
 
-        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#333', letterSpacing: 2, marginBottom: 10 }}>
-          {filteredUnlocks.length} RESULT{filteredUnlocks.length !== 1 ? 'S' : ''}
-        </div>
-
+        {/* Results */}
         {filteredUnlocks.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {filteredUnlocks.map(function(u, i) {
               var fcolor = FACTION_COLORS[u.faction_name] || '#888';
               var tcolor = UNLOCK_TYPE_COLORS[u.unlock_type] || '#888';
               return (
-                <div key={i} className="f-row" style={{ display: 'grid', gridTemplateColumns: '110px 80px 1fr auto', gap: 14, alignItems: 'center', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.04)', borderLeft: '2px solid ' + fcolor + '44', borderRadius: 4, padding: '12px 16px' }}>
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: fcolor, letterSpacing: 1 }}>{u.faction_name.toUpperCase()}</span>
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: tcolor, background: tcolor + '12', border: '1px solid ' + tcolor + '25', borderRadius: 3, padding: '2px 7px', letterSpacing: 1, textAlign: 'center' }}>{(u.unlock_type || '').toUpperCase()}</span>
+                <div key={i} className="f-row" style={{ display: 'grid', gridTemplateColumns: '110px 80px 1fr auto', gap: 12, alignItems: 'center', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + fcolor, borderRadius: '0 2px 2px 0', padding: '10px 14px' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: fcolor, letterSpacing: 1, fontWeight: 700 }}>{u.faction_name.toUpperCase()}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 8, color: tcolor, background: tcolor + '14', border: '1px solid ' + tcolor + '30', borderRadius: 2, padding: '2px 6px', letterSpacing: 1, textAlign: 'center', fontWeight: 700 }}>{(u.unlock_type || '').toUpperCase()}</span>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: '#fff' }}>{u.item_name}</span>
-                      {u.tier > 1 && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#ffd700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '1px 5px', letterSpacing: 1 }}>TIER {u.tier}</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{u.item_name}</span>
+                      {u.tier > 1 && <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#ffd700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 2, padding: '1px 5px', letterSpacing: 1, fontWeight: 700 }}>TIER {u.tier}</span>}
                     </div>
-                    {u.notes && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 2, lineHeight: 1.4 }}>{u.notes}</div>}
+                    {u.notes && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.4 }}>{u.notes}</div>}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     {u.rank_required && (
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 3, padding: '3px 8px', letterSpacing: 1, marginBottom: 3 }}>RANK {u.rank_required}</div>
+                      <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#ffd700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1, marginBottom: 3, fontWeight: 700 }}>RANK {u.rank_required}</div>
                     )}
                     {u.credit_cost > 0 && (
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{u.credit_cost.toLocaleString()} CR</div>
+                      <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700 }}>{u.credit_cost.toLocaleString()} CR</div>
                     )}
                   </div>
                 </div>
@@ -557,36 +740,40 @@ export default function FactionClient() {
             })}
           </div>
         ) : (
-          <div style={{ padding: '40px', textAlign: 'center', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8 }}>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#222', letterSpacing: 2 }}>
+          <div style={{ padding: 32, textAlign: 'center', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2 }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, fontWeight: 700 }}>
               {unlocks.length === 0 ? 'UNLOCK DATA PENDING — ADD VIA ADMIN PANEL' : 'NO RESULTS MATCH YOUR FILTERS'}
             </div>
           </div>
         )}
       </section>
 
-      {/* ── LIVE INTEL CTA ───────────────────────────── */}
-      <section style={{ padding: '0 24px 80px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ background: 'rgba(255,215,0,0.02)', border: '1px solid rgba(255,215,0,0.08)', borderLeft: '3px solid rgba(255,215,0,0.35)', borderRadius: 8, padding: '28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24, alignItems: 'center' }}>
+      {/* ══ CTA ═════════════════════════════════════════════ */}
+      <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ffd700', borderRadius: '0 2px 2px 0', padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ffd700', letterSpacing: 3, marginBottom: 10 }}>DEXTER — BUILD ENGINEER</div>
-            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.2, marginBottom: 10 }}>FACTION-AWARE<br /><span style={{ color: '#ffd700' }}>BUILD ANALYSIS.</span></div>
-            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>DEXTER cites exact faction rank requirements and costs for every item he recommends. Know the full investment before you commit.</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#ffd700', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>DEXTER — BUILD ENGINEER</div>
+            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
+              FACTION-AWARE<br /><span style={{ color: '#ffd700' }}>BUILD ANALYSIS.</span>
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+              DEXTER cites exact faction rank requirements and costs for every item he recommends. Know the full investment before you commit.
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { href: '/advisor',       color: '#ff8800', label: '⬢ BUILD ADVISOR',   desc: 'Get your full faction-aware build' },
-              { href: '/intel/dexter',  color: '#ff8800', label: '⬢ DEXTER INTEL',    desc: 'Latest build analysis articles' },
-              { href: '/intel/miranda', color: '#9b5de5', label: '◎ FACTION GUIDES',  desc: 'MIRANDA progression guides' },
-              { href: '/builds',        color: '#444',    label: 'BUILD LAB',          desc: 'Full loadout browser' },
+              { href: '/advisor',       color: '#ff8800', label: '⬢ BUILD ADVISOR',    desc: 'Get your faction-aware build' },
+              { href: '/intel/dexter',  color: '#ff8800', label: '⬢ DEXTER INTEL',     desc: 'Latest build analysis' },
+              { href: '/intel/miranda', color: '#9b5de5', label: '◎ FACTION GUIDES',   desc: 'MIRANDA progression' },
+              { href: '/builds',        color: '#00d4ff', label: 'BUILD LAB',           desc: 'Full loadout browser' },
             ].map(function(l) {
               return (
-                <Link key={l.href} href={l.href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: l.color + '06', border: '1px solid ' + l.color + '18', borderRadius: 5, textDecoration: 'none' }}>
+                <Link key={l.href} href={l.href} className="f-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + l.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                   <div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: l.color, letterSpacing: 1 }}>{l.label}</div>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: 1, marginTop: 1 }}>{l.desc}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 10, color: l.color, letterSpacing: 1, fontWeight: 700 }}>{l.label}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>{l.desc}</div>
                   </div>
-                  <span style={{ color: l.color, opacity: 0.5, fontSize: 12 }}>→</span>
+                  <span style={{ color: l.color, opacity: 0.5, fontSize: 13 }}>→</span>
                 </Link>
               );
             })}
