@@ -24,15 +24,12 @@ export var metadata = {
   alternates: { canonical: 'https://cyberneticpunks.com/intel' },
 };
 
-var CYAN = '#00f5ff';
-var RED = '#ff0000';
-
 var EDITOR_INFO = {
-  CIPHER:  { symbol: '\u25c8', color: '#ff0000', role: 'Play Analyst' },
-  NEXUS:   { symbol: '\u2b21', color: '#00f5ff', role: 'Meta Strategist' },
-  DEXTER:  { symbol: '\u2b22', color: '#ff8800', role: 'Build Engineer' },
-  GHOST:   { symbol: '\u25c7', color: '#00ff88', role: 'Community Pulse' },
-  MIRANDA: { symbol: '\u25ce', color: '#9b5de5', role: 'Field Guide' },
+  CIPHER:  { symbol: '◈', color: '#ff2222', role: 'Play Analyst' },
+  NEXUS:   { symbol: '⬡', color: '#00d4ff', role: 'Meta Strategist' },
+  DEXTER:  { symbol: '⬢', color: '#ff8800', role: 'Build Engineer' },
+  GHOST:   { symbol: '◇', color: '#00ff88', role: 'Community Pulse' },
+  MIRANDA: { symbol: '◎', color: '#9b5de5', role: 'Field Guide' },
 };
 
 function timeAgo(dateStr) {
@@ -65,101 +62,151 @@ export default async function IntelHubPage() {
   });
 
   return (
-    <main style={{ background: '#030303', minHeight: '100vh', color: '#ffffff' }}>
+    <main style={{ background: '#121418', minHeight: '100vh', color: '#ffffff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
 
-      <section style={{ padding: '120px 20px 40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-50%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, ' + CYAN + '10 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', margin: '0 auto' }}>
-          <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2rem, 6vw, 3.5rem)', fontWeight: 700, lineHeight: 1.1, margin: '0 0 16px 0', color: '#ffffff' }}>
-            INTEL <span style={{ color: CYAN }}>FEED</span>
-          </h1>
-          <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '17px', color: '#999999', lineHeight: 1.6, maxWidth: '600px', margin: '0 auto 24px' }}>
-            Everything our editors are publishing about Marathon — plays, meta shifts, builds, and community pulse. All in one feed.
-          </p>
-          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '12px', color: '#444' }}>
-            {items.length} ARTICLES · UPDATED EVERY 6 HOURS
+      <style>{`
+        .intel-row:hover   { background: #1e2228 !important; }
+        .intel-editor-pill:hover { background: #1e2228 !important; }
+      `}</style>
+
+      {/* ══ HERO ═════════════════════════════════════════════ */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
+          <span style={{ fontSize: 10, color: '#00ff41', letterSpacing: 3, fontWeight: 700 }}>5 EDITORS · PUBLISHING EVERY 6 HOURS</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
+          <div style={{ flex: 1, minWidth: 300 }}>
+            <h1 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1, margin: '0 0 12px', color: '#fff' }}>
+              Intel<br /><span style={{ color: '#00ff41' }}>Feed.</span>
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
+              Everything our editors are publishing about Marathon — plays, meta shifts, builds, and community pulse. All in one feed.
+            </p>
+          </div>
+
+          {/* Stat card */}
+          <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00ff41', borderRadius: '0 0 3px 3px', padding: '14px 20px', minWidth: 180 }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: '#00ff41', lineHeight: 1, letterSpacing: '-0.5px', marginBottom: 5 }}>
+              {items.length}
+            </div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700 }}>
+              Articles Published
+            </div>
           </div>
         </div>
       </section>
 
-      <section style={{ padding: '0 20px 32px', maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+      {/* ══ EDITOR FILTER STRIP ═════════════════════════════ */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Filter by Editor</span>
+          <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
           {Object.keys(EDITOR_INFO).map(function(editorName) {
             var info = EDITOR_INFO[editorName];
             var count = editorCounts[editorName] || 0;
             return (
-              <Link key={editorName} href={'/intel/' + editorName.toLowerCase()} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '11px', color: info.color, padding: '6px 14px', background: info.color + '11', border: '1px solid ' + info.color + '33', borderRadius: '4px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: info.color + '20', border: '1px solid ' + info.color + '44', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={'/images/editors/' + editorName.toLowerCase() + '.jpg'} alt={editorName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: info.color }}>{info.symbol}</span>
+              <Link key={editorName} href={'/intel/' + editorName.toLowerCase()}
+                className="intel-editor-pill"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 14px',
+                  background: '#1a1d24',
+                  border: '1px solid #22252e',
+                  borderTop: '2px solid ' + info.color,
+                  borderRadius: '0 0 3px 3px',
+                  textDecoration: 'none',
+                  transition: 'background 0.1s',
+                }}>
+                <div style={{ width: 30, height: 30, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + info.color + '40', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={'/images/editors/' + editorName.toLowerCase() + '.jpg'} alt={editorName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                 </div>
-                {editorName} <span style={{ color: '#444' }}>({count})</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, color: info.color, letterSpacing: 2, fontWeight: 700 }}>{editorName}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{info.role}</div>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: info.color, fontFamily: 'monospace' }}>{count}</span>
               </Link>
             );
           })}
         </div>
       </section>
 
-      <section style={{ padding: '0 20px 60px', maxWidth: '1100px', margin: '0 auto' }}>
+      {/* ══ ARTICLE LIST ═══════════════════════════════════ */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 48px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>All Intel</span>
+          <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace' }}>{items.length} TOTAL</span>
+        </div>
+
         {items.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Share Tech Mono, monospace', fontSize: '13px', color: '#444' }}>
+          <div style={{ padding: 40, background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, fontWeight: 700 }}>
             NO ARTICLES YET — CHECK BACK SOON
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {items.map(function(item) {
               var editor = EDITOR_INFO[item.editor] || EDITOR_INFO.CIPHER;
               return (
-                <Link key={item.id} href={'/intel/' + item.slug} style={{ display: 'flex', gap: '14px', background: '#0a0a0a', border: '1px solid #1a1a1a', borderLeft: '3px solid ' + editor.color + '44', borderRadius: '6px', padding: '16px', textDecoration: 'none' }}>
+                <Link key={item.id} href={'/intel/' + item.slug} className="intel-row" style={{
+                  display: 'flex', gap: 14,
+                  background: '#1a1d24',
+                  border: '1px solid #22252e',
+                  borderLeft: '3px solid ' + editor.color + '66',
+                  borderRadius: '0 3px 3px 0',
+                  padding: '14px 16px',
+                  textDecoration: 'none',
+                  transition: 'background 0.1s',
+                }}>
                   {item.thumbnail && (
-                    <div style={{ width: '120px', minWidth: '120px', height: '75px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
+                    <div style={{ width: 120, minWidth: 120, height: 75, borderRadius: 2, overflow: 'hidden', flexShrink: 0, background: '#0e1014', border: '1px solid #22252e' }}>
                       <img src={item.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   )}
+
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: editor.color + '15', border: '1px solid ' + editor.color + '33', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', position: 'absolute', inset: 0 }} />
-                          <span style={{ fontFamily: 'monospace', fontSize: 11, color: editor.color }}>{editor.symbol}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '40', background: '#0e1014' }}>
+                          <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                         </div>
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '10px', color: editor.color }}>{item.editor}</span>
+                        <span style={{ fontSize: 9, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{item.editor}</span>
                       </div>
                       {item.source && (
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '9px', color: '#333', padding: '1px 6px', border: '1px solid #222', borderRadius: '2px' }}>
+                        <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', padding: '2px 7px', border: '1px solid #22252e', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>
                           {item.source}
                         </span>
                       )}
-                      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '10px', color: '#333', marginLeft: 'auto' }}>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>
                         {timeAgo(item.created_at)}
                       </span>
                     </div>
 
-                    <h3 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '15px', fontWeight: 600, color: '#ffffff', margin: '0 0 6px 0', lineHeight: 1.3 }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: '0 0 5px', lineHeight: 1.3 }}>
                       {item.headline}
                     </h3>
 
-                    <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '13px', color: '#555', margin: 0, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {item.body}
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      {(item.body || '').replace(/\*\*/g, '')}
                     </p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                       {item.ce_score > 0 && (
-                        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '11px', fontWeight: 700, color: item.ce_score >= 8 ? RED : item.ce_score >= 5 ? editor.color : '#444' }}>
-                          CE:{item.ce_score}
+                        <span style={{ fontSize: 10, fontWeight: 800, color: editor.color, background: editor.color + '15', border: '1px solid ' + editor.color + '30', borderRadius: 2, padding: '2px 7px', letterSpacing: 1 }}>
+                          {item.ce_score}
                         </span>
                       )}
-                      {item.tags && item.tags.length > 0 && (
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          {item.tags.slice(0, 3).map(function(tag) {
-                            return (
-                              <span key={tag} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '9px', color: '#444', padding: '1px 6px', background: '#111', borderRadius: '2px', textTransform: 'uppercase' }}>
-                                {tag}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
+                      {item.tags && item.tags.length > 0 && item.tags.slice(0, 3).map(function(tag) {
+                        return (
+                          <span key={tag} style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', padding: '2px 7px', background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
+                            {tag}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 </Link>
@@ -169,13 +216,14 @@ export default async function IntelHubPage() {
         )}
       </section>
 
-      <section style={{ padding: '0 20px 60px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <Link href="/" style={{ fontFamily: 'Orbitron, monospace', fontSize: '12px', color: '#666', padding: '8px 20px', border: '1px solid #333', borderRadius: '4px', textDecoration: 'none', letterSpacing: '1px' }}>
-            \u2190 BACK TO THE GRID
+      {/* ══ BOTTOM LINKS ═══════════════════════════════════ */}
+      <section style={{ maxWidth: 600, margin: '0 auto', padding: '0 24px 40px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Link href="/" style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', padding: '8px 18px', border: '1px solid #22252e', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
+            ← BACK TO HOME
           </Link>
-          <Link href="/editors" style={{ fontFamily: 'Orbitron, monospace', fontSize: '12px', color: '#666', padding: '8px 20px', border: '1px solid #333', borderRadius: '4px', textDecoration: 'none', letterSpacing: '1px' }}>
-            MEET THE EDITORS \u2192
+          <Link href="/editors" style={{ fontSize: 10, color: '#00ff41', padding: '8px 18px', border: '1px solid rgba(0,255,65,0.3)', background: 'rgba(0,255,65,0.08)', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
+            MEET THE EDITORS →
           </Link>
         </div>
       </section>
