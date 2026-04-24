@@ -1,3 +1,6 @@
+// app/advisor/page.js
+import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import AdvisorClient from './AdvisorClient';
 import CoachCTA from '@/components/CoachCTA';
 
@@ -18,13 +21,56 @@ export const metadata = {
   },
 };
 
-export default function AdvisorPage() {
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
+
+function playstyleToId(ps) {
+  if (!ps) return null;
+  var map = {
+    AGGRESSIVE: 'aggressive',
+    CALCULATED: 'balanced',
+    EVASIVE:    'extraction',
+    ADAPTIVE:   'balanced',
+  };
+  return map[ps] || null;
+}
+
+export default async function AdvisorPage({ searchParams }) {
+  var sp = await searchParams;
+  var urlShell = sp?.shell || null;
+
+  // Pre-fill from logged-in user profile
+  var profilePrefill = null;
+  try {
+    var cookieStore = await cookies();
+    var playerId = cookieStore.get('cp_player_id')?.value;
+    if (playerId) {
+      var supabase = getSupabase();
+      var { data: player } = await supabase
+        .from('player_profiles')
+        .select('favorite_shell, preferred_playstyle, bungie_display_name')
+        .eq('id', playerId)
+        .single();
+      if (player) {
+        profilePrefill = {
+          shell:     player.favorite_shell || null,
+          playstyle: playstyleToId(player.preferred_playstyle),
+          name:      (player.bungie_display_name || '').replace(/#\d+/, '').trim() || null,
+        };
+      }
+    }
+  } catch (_) {}
+
   return (
     <>
-      <AdvisorClient />
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 48px' }}>
-        <CoachCTA variant="banner" />
-      </div>
+      <AdvisorClient
+        urlShell={urlShell}
+        profilePrefill={profilePrefill}
+      />
     </>
   );
 }

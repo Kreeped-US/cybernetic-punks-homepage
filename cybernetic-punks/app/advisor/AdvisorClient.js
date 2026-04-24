@@ -1,7 +1,9 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { useIsMobile } from '@/lib/useIsMobile';
 import { track } from '@/lib/useTrack';
+import { isMonetizationEnabled } from '@/lib/monetization';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -12,14 +14,14 @@ const supabase = createClient(
 const SHELLS = [
   { name: 'Destroyer', color: '#ff3333', role: 'Frontline Combat',    desc: 'Thrusters. Aggression. Close-range dominance.' },
   { name: 'Vandal',    color: '#ff8800', role: 'Mobility Specialist', desc: 'Jump jets. Movement chaining. Chaos in motion.' },
-  { name: 'Recon',     color: '#00f5ff', role: 'Intel Gatherer',      desc: 'Echo Pulse. Scanning. Information warfare.' },
+  { name: 'Recon',     color: '#00d4ff', role: 'Intel Gatherer',      desc: 'Echo Pulse. Scanning. Information warfare.' },
   { name: 'Assassin',  color: '#cc44ff', role: 'Stealth Operator',    desc: 'Active Camo. Shadow Dive. Invisible kills.' },
   { name: 'Triage',    color: '#00ff88', role: 'Combat Support',      desc: 'Healing. Team sustain. Frontline medic.' },
   { name: 'Thief',     color: '#ffd700', role: 'Loot Specialist',     desc: 'X-Ray Visor. Pickpocket Drone. Extraction expert.' },
-  { name: 'Rook',      color: '#aaaaaa', role: 'Anchor Tank',         desc: 'Fortify. Hold ground. Absorb punishment.' },
+  { name: 'Rook',      color: '#888888', role: 'Anchor Tank',         desc: 'Fortify. Hold ground. Absorb punishment.' },
 ];
 
-const EDITOR_SYMBOLS = { Destroyer:'[X]', Vandal:'[O]', Recon:'[R]', Assassin:'[A]', Triage:'[T]', Thief:'[S]', Rook:'[K]' };
+const SHELL_SYMBOLS = { Destroyer:'⬢', Vandal:'⬡', Recon:'◇', Assassin:'◈', Triage:'◎', Thief:'⬠', Rook:'▣' };
 
 const PLAYSTYLES = [
   { id: 'aggressive', label: 'AGGRESSIVE', desc: 'Push fights, create chaos, high TTK' },
@@ -33,7 +35,7 @@ const RANK_TARGETS = [
   { id: 'bronze',    label: 'BRONZE',    color: '#cd7f32', holotag: '3,000',  desc: 'First steps in ranked' },
   { id: 'silver',    label: 'SILVER',    color: '#aaaaaa', holotag: '5,000',  desc: 'Building consistency' },
   { id: 'gold',      label: 'GOLD',      color: '#ffd700', holotag: '7,000',  desc: 'Reliable performer' },
-  { id: 'platinum',  label: 'PLATINUM',  color: '#00f5ff', holotag: '10,000', desc: 'High-level play' },
+  { id: 'platinum',  label: 'PLATINUM',  color: '#00d4ff', holotag: '10,000', desc: 'High-level play' },
   { id: 'diamond',   label: 'DIAMOND',   color: '#66ccff', holotag: '15,000', desc: 'Elite competitor' },
   { id: 'pinnacle',  label: 'PINNACLE',  color: '#cc44ff', holotag: '20,000', desc: 'Top of the ladder' },
 ];
@@ -62,19 +64,21 @@ const WEAPON_PREFS = [
   { id: 'Railgun', label: 'RAILGUN' },
 ];
 
-const GRADE_COLORS = { S: '#ff0000', A: '#ff8800', B: '#ffd700', C: '#00f5ff', D: '#666666' };
+const GRADE_COLORS = { S: '#ff2222', A: '#ff8800', B: '#ffd700', C: '#00d4ff', D: '#666' };
 
 const SCAN_STEPS = [
-  'INITIALIZING DEXTER BUILD ENGINE...',
-  'ACCESSING MOD DATABASE...',
-  'SCANNING CORE REGISTRY...',
-  'ANALYZING IMPLANT SYNERGIES...',
-  'CROSS-REFERENCING META TIER DATA...',
-  'CALCULATING WEAPON PAIRING EFFICIENCY...',
-  'OPTIMIZING FOR TARGET RANK...',
-  'DEXTER ENGINEERING LOADOUT...',
-  'FINALIZING BUILD PARAMETERS...',
+  'INITIALIZING DEXTER BUILD ENGINE',
+  'ACCESSING MOD DATABASE',
+  'SCANNING CORE REGISTRY',
+  'ANALYZING IMPLANT SYNERGIES',
+  'CROSS-REFERENCING META TIER DATA',
+  'CALCULATING WEAPON PAIRING EFFICIENCY',
+  'OPTIMIZING FOR TARGET RANK',
+  'DEXTER ENGINEERING LOADOUT',
+  'FINALIZING BUILD PARAMETERS',
 ];
+
+// ─── SHARE CARD (unchanged — brand asset) ──────────────────
 
 function generateShareCard(build, shellConfig) {
   var canvas = document.createElement('canvas');
@@ -131,23 +135,40 @@ function generateShareCard(build, shellConfig) {
   return canvas.toDataURL('image/png');
 }
 
-function SectionHeader({ num, label, sub, isMobile }) {
+// ─── SECTION HEADER ─────────────────────────────────────────
+
+function SectionHeader({ num, label, sub }) {
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-      <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'#ff8800', letterSpacing:3, padding:'4px 10px', border:'1px solid #ff880030', borderRadius:3, flexShrink:0 }}>{num}</div>
-      <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?11:12, fontWeight:700, color:'rgba(255,255,255,0.65)', letterSpacing:2 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+      <div style={{ fontSize: 9, fontWeight: 800, color: '#ff8800', letterSpacing: 2, padding: '3px 8px', background: 'rgba(255,136,0,0.1)', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, flexShrink: 0, fontFamily: 'monospace' }}>{num}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 2, textTransform: 'uppercase' }}>
         {label}
-        {sub && <span style={{ color:'rgba(255,255,255,0.18)', fontSize:9, marginLeft:8 }}>{sub}</span>}
+        {sub && <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, marginLeft: 8, fontWeight: 600 }}>{sub}</span>}
       </div>
-      <div style={{ flex:1, height:1, background:'rgba(255,255,255,0.04)' }} />
+      <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
     </div>
   );
 }
 
-export default function AdvisorClient() {
-  var [selectedShell, setSelectedShell] = useState(null);
+// ─── MAIN COMPONENT ─────────────────────────────────────────
+
+export default function AdvisorClient({ urlShell, profilePrefill }) {
+  // Initial state reflects URL param > profile > nothing
+  var initialShell = null;
+  if (urlShell) {
+    var match = SHELLS.find(function(s) { return s.name.toLowerCase() === urlShell.toLowerCase(); });
+    if (match) initialShell = match.name;
+  }
+  if (!initialShell && profilePrefill?.shell) {
+    var pmatch = SHELLS.find(function(s) { return s.name === profilePrefill.shell; });
+    if (pmatch) initialShell = pmatch.name;
+  }
+
+  var initialPlaystyle = profilePrefill?.playstyle || 'balanced';
+
+  var [selectedShell, setSelectedShell] = useState(initialShell);
   var [usageCount, setUsageCount] = useState(null);
-  var [playstyle, setPlaystyle] = useState('balanced');
+  var [playstyle, setPlaystyle] = useState(initialPlaystyle);
   var [rankTarget, setRankTarget] = useState('gold');
   var [weaponPref, setWeaponPref] = useState('');
   var [teamSize, setTeamSize] = useState('Solo');
@@ -158,24 +179,33 @@ export default function AdvisorClient() {
   var [error, setError] = useState(null);
   var [scanStep, setScanStep] = useState(0);
   var [scanProgress, setScanProgress] = useState(0);
+  var [stickyVisible, setStickyVisible] = useState(false);
+
   var scanRef = useRef(null);
   var isMobile = useIsMobile(640);
+  var monetizationOn = isMonetizationEnabled();
+  var isPrefilled = !!profilePrefill?.shell;
 
-  var shellConfig = SHELLS.find(function(s){ return s.name===selectedShell; });
+  var shellConfig = SHELLS.find(function(s) { return s.name === selectedShell; });
   var accentColor = shellConfig ? shellConfig.color : '#ff8800';
 
+  // Scan animation
   useEffect(function() {
-    if (phase!=='loading') return;
-    var step=0, prog=0;
+    if (phase !== 'loading') return;
+    var step = 0, prog = 0;
     scanRef.current = setInterval(function() {
-      prog += Math.random()*12+3;
-      if (prog>=100) prog=99;
-      setScanProgress(Math.min(99,prog));
-      if (prog > (step+1)*(100/SCAN_STEPS.length)) { step=Math.min(step+1,SCAN_STEPS.length-1); setScanStep(step); }
+      prog += Math.random() * 12 + 3;
+      if (prog >= 100) prog = 99;
+      setScanProgress(Math.min(99, prog));
+      if (prog > (step + 1) * (100 / SCAN_STEPS.length)) {
+        step = Math.min(step + 1, SCAN_STEPS.length - 1);
+        setScanStep(step);
+      }
     }, 280);
-    return function(){ clearInterval(scanRef.current); };
+    return function() { clearInterval(scanRef.current); };
   }, [phase]);
 
+  // Usage count
   useEffect(function() {
     async function fetchUsage() {
       try {
@@ -189,120 +219,192 @@ export default function AdvisorClient() {
     fetchUsage();
   }, []);
 
+  // Sticky generate bar on scroll (input phase only)
+  useEffect(function() {
+    if (phase !== 'input') return;
+    function onScroll() {
+      setStickyVisible(window.scrollY > 400 && !!selectedShell);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return function() { window.removeEventListener('scroll', onScroll); };
+  }, [phase, selectedShell]);
+
   async function generateBuild() {
     if (!selectedShell) return;
     setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null);
     try {
-      var res = await fetch('/api/advisor', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ shell:selectedShell, playstyle, rankTarget, weaponPreference:weaponPref, teamSize, priority, experienceLevel }) });
+      var res = await fetch('/api/advisor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shell: selectedShell, playstyle, rankTarget, weaponPreference: weaponPref, teamSize, priority, experienceLevel }),
+      });
       var json = await res.json();
       if (json.error) throw new Error(json.error);
-      clearInterval(scanRef.current); setScanProgress(100);
-      await new Promise(function(r){ setTimeout(r,400); });
-      setBuild(json.build); setPhase('result');
+      clearInterval(scanRef.current);
+      setScanProgress(100);
+      await new Promise(function(r) { setTimeout(r, 400); });
+      setBuild(json.build);
+      setPhase('result');
       track('advisor_generate', { shell: selectedShell, playstyle, rankTarget, teamSize });
-    } catch(err) { clearInterval(scanRef.current); setError(err.message); setPhase('input'); }
+    } catch (err) {
+      clearInterval(scanRef.current);
+      setError(err.message);
+      setPhase('input');
+    }
   }
 
   function downloadShareCard() {
-    if (!build||!shellConfig) return;
+    if (!build || !shellConfig) return;
     var img = generateShareCard(build, shellConfig);
-    track('advisor_share', { shell: build && build.shell ? build.shell : null });
+    track('advisor_share', { shell: build?.shell || null });
     var a = document.createElement('a');
-    a.href=img; a.download='dexter-build-'+(build.shell||'unknown').toLowerCase()+'-'+Date.now()+'.png'; a.click();
+    a.href = img;
+    a.download = 'dexter-build-' + (build.shell || 'unknown').toLowerCase() + '-' + Date.now() + '.png';
+    a.click();
   }
 
   function shareToX() {
-    var text='Just got my '+(build&&build.shell?build.shell:'')+' build engineered by DEXTER at CyberneticPunks\n\n"'+(build&&build.build_name?build.build_name:'')+'" - Grade: '+(build&&build.loadout_grade?build.loadout_grade:'')+'\n'+(build&&build.primary_weapon?build.primary_weapon.name:'')+' + '+(build&&build.secondary_weapon?build.secondary_weapon.name:'')+'\n\ncyberneticpunks.com/advisor #Marathon #MarathonGame';
-    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text),'_blank');
+    var text = 'Just got my ' + (build?.shell || '') + ' build engineered by DEXTER at CyberneticPunks\n\n"' + (build?.build_name || '') + '" — Grade: ' + (build?.loadout_grade || '') + '\n' + (build?.primary_weapon?.name || '') + ' + ' + (build?.secondary_weapon?.name || '') + '\n\ncyberneticpunks.com/advisor #Marathon #MarathonGame';
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
   }
 
+  // ══════════════════════════════════════════════════════════
   // INPUT PHASE
-  if (phase==='input') {
+  // ══════════════════════════════════════════════════════════
+
+  if (phase === 'input') {
     return (
-      <div style={{ background:'#030303', minHeight:'100vh', color:'#fff', paddingTop:96, overflowX:'hidden' }}>
+      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 100, fontFamily: 'system-ui, sans-serif' }}>
+
         <style>{`
-          @keyframes aPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-          .sc { transition:all 0.2s ease; cursor:pointer; }
-          .sc:hover { transform:translateY(-2px); }
-          .ab { transition:all 0.15s ease; cursor:pointer; }
+          .advisor-shell:hover       { background: #1e2228 !important; border-color: #2a2e38 !important; }
+          .advisor-option:hover      { background: #1e2228 !important; }
+          .advisor-weapon-pref:hover { background: #1e2228 !important; }
         `}</style>
 
-        <div style={{ textAlign:'center', padding:isMobile?'0 16px 40px':'0 24px 52px', maxWidth:820, margin:'0 auto' }}>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:10, padding:'6px 18px', border:'1px solid #ff880033', borderRadius:4, marginBottom:20, fontFamily:'Share Tech Mono, monospace', fontSize:11, color:'#ff8800', letterSpacing:3 }}>
-            <span style={{ animation:'aPulse 2s ease-in-out infinite' }}>[D]</span>
-            DEXTER BUILD ADVISOR
+        {/* ══ HERO ═══════════════════════════════════════════ */}
+        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 24px 32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ff8800', boxShadow: '0 0 6px rgba(255,136,0,0.5)' }} />
+            <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700 }}>DEXTER · BUILD ENGINE</span>
           </div>
-          <h1 style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?22:'clamp(24px, 5vw, 50px)', fontWeight:900, letterSpacing:isMobile?2:4, lineHeight:1.1, marginBottom:12 }}>
-            <span style={{ color:'#ff8800' }}>ENGINEER</span>{' '}
-            <span style={{ color:'rgba(255,255,255,0.88)' }}>YOUR BUILD</span>
-          </h1>
-          <p style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:16, color:'rgba(255,255,255,0.28)', lineHeight:1.6, maxWidth:500, margin:'0 auto 10px' }}>
-            Tell DEXTER your shell and playstyle. Get a complete loadout from live meta data.
-          </p>
-          {usageCount && (
-            <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', background:'rgba(255,136,0,0.08)', border:'1px solid rgba(255,136,0,0.2)', borderRadius:20, marginBottom:8 }}>
-              <div style={{ width:5, height:5, borderRadius:'50%', background:'#ff8800', animation:'aPulse 2s ease-in-out infinite' }} />
-              <span style={{ fontFamily:'Share Tech Mono, monospace', fontSize:10, color:'#ff8800', letterSpacing:2 }}>
-                {usageCount.toLocaleString()} BUILDS GENERATED BY RUNNERS
-              </span>
+
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 24 }}>
+            <div style={{ flex: 1, minWidth: 300 }}>
+              <h1 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1, margin: '0 0 12px', color: '#fff' }}>
+                {isPrefilled && profilePrefill.name ? (
+                  <>Welcome back,<br /><span style={{ color: '#ff8800' }}>{profilePrefill.name}.</span></>
+                ) : (
+                  <>Engineer your<br /><span style={{ color: '#ff8800' }}>build.</span></>
+                )}
+              </h1>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
+                {isPrefilled
+                  ? 'We\'ve pre-filled your profile preferences. Tweak anything, then let DEXTER engineer the full loadout from live meta data.'
+                  : 'Tell DEXTER your shell and playstyle. Get a complete loadout — weapons, mods, cores, implants — engineered from live meta data.'}
+              </p>
+            </div>
+
+            {usageCount && (
+              <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #ff8800', borderRadius: '0 0 3px 3px', padding: '14px 18px', minWidth: 180 }}>
+                <div style={{ fontSize: 24, fontWeight: 900, color: '#ff8800', lineHeight: 1, letterSpacing: '-0.5px', marginBottom: 5 }}>
+                  {usageCount.toLocaleString()}
+                </div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700 }}>
+                  Builds Generated
+                </div>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div style={{ padding: '12px 16px', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.3)', borderLeft: '3px solid #ff2222', borderRadius: '0 3px 3px 0', fontSize: 11, color: '#ff4444', letterSpacing: 1, fontWeight: 700, marginBottom: 20 }}>
+              ERROR · {error}
             </div>
           )}
-          {error && <div style={{ marginTop:14, padding:'12px 16px', background:'#ff000012', border:'1px solid #ff000033', borderRadius:6, fontFamily:'Share Tech Mono, monospace', fontSize:11, color:'#ff4444' }}>ERROR: {error}</div>}
-        </div>
+        </section>
 
-        <div style={{ maxWidth:1100, margin:'0 auto', padding:isMobile?'0 16px 80px':'0 24px 80px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
 
-          {/* SHELL GRID — 2 col mobile, auto-fill desktop */}
-          <div style={{ marginBottom:isMobile?32:40 }}>
-            <SectionHeader num="01" label="SELECT YOUR RUNNER" isMobile={isMobile} />
-            <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2, 1fr)':'repeat(auto-fill, minmax(142px, 1fr))', gap:isMobile?10:10 }}>
+          {/* ══ SHELL SELECTION ═══════════════════════════════ */}
+          <section style={{ marginBottom: 32 }}>
+            <SectionHeader num="01" label="Select Your Runner" />
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
               {SHELLS.map(function(shell) {
-                var isSel = selectedShell===shell.name;
+                var isSel = selectedShell === shell.name;
                 return (
-                  <div key={shell.name} className="sc" onClick={function(){ setSelectedShell(shell.name); }}
-                    style={{ background:isSel?shell.color+'13':'#0a0a0a', border:'1px solid '+(isSel?shell.color+'66':'rgba(255,255,255,0.06)'), borderTop:'3px solid '+(isSel?shell.color:'rgba(255,255,255,0.04)'), borderRadius:8, padding:isMobile?'14px 12px':'16px 13px', position:'relative', boxShadow:isSel?'0 0 22px '+shell.color+'1e':'none', minHeight:44 }}>
-                    {isSel && <div style={{ position:'absolute', top:8, right:8, width:6, height:6, borderRadius:'50%', background:shell.color, boxShadow:'0 0 8px '+shell.color, animation:'aPulse 1.5s ease-in-out infinite' }} />}
-                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:14, fontWeight:900, color:shell.color, opacity:isSel?1:0.3, marginBottom:6, letterSpacing:1 }}>{EDITOR_SYMBOLS[shell.name]||shell.name[0]}</div>
-                    <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:11, fontWeight:700, color:isSel?shell.color:'rgba(255,255,255,0.62)', letterSpacing:1, marginBottom:3 }}>{shell.name.toUpperCase()}</div>
-                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.18)', letterSpacing:1, marginBottom:isMobile?4:6 }}>{shell.role.toUpperCase()}</div>
-                    {!isMobile && <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:11, color:'rgba(255,255,255,0.16)', lineHeight:1.4 }}>{shell.desc}</div>}
+                  <div key={shell.name} className="advisor-shell" onClick={function() { setSelectedShell(shell.name); }}
+                    style={{
+                      background:   isSel ? shell.color + '12' : '#1a1d24',
+                      border:       '1px solid ' + (isSel ? shell.color + '50' : '#22252e'),
+                      borderTop:    '2px solid ' + (isSel ? shell.color : '#22252e'),
+                      borderRadius: '0 0 3px 3px',
+                      padding:      isMobile ? '12px 10px' : '14px 12px',
+                      cursor:       'pointer',
+                      position:     'relative',
+                      transition:   'background 0.1s, border-color 0.1s',
+                    }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+                      <span style={{ fontSize: 16, color: isSel ? shell.color : 'rgba(255,255,255,0.3)' }}>{SHELL_SYMBOLS[shell.name] || '◈'}</span>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 900, color: isSel ? shell.color : 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>{shell.name.toUpperCase()}</span>
+                    </div>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1.5, marginBottom: isMobile ? 0 : 5, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>{shell.role}</div>
+                    {!isMobile && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 1.4 }}>{shell.desc}</div>}
+                    {isSel && <div style={{ position: 'absolute', top: 8, right: 8, width: 5, height: 5, borderRadius: '50%', background: shell.color, boxShadow: '0 0 5px ' + shell.color }} />}
                   </div>
                 );
               })}
             </div>
-          </div>
+          </section>
 
-          {/* OPTIONS GRID — 2 col desktop, 1 col mobile */}
-          <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(2, 1fr)', gap:isMobile?28:32, marginBottom:isMobile?36:40 }}>
+          {/* ══ OPTIONS GRID ════════════════════════════════ */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 24, marginBottom: 32 }}>
 
             {/* Playstyle */}
             <div>
-              <SectionHeader num="02" label="PLAYSTYLE" isMobile={isMobile} />
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8 }}>
+              <SectionHeader num="02" label="Playstyle" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
                 {PLAYSTYLES.map(function(p) {
-                  var isSel=playstyle===p.id;
+                  var isSel = playstyle === p.id;
                   return (
-                    <div key={p.id} className="ab" onClick={function(){ setPlaystyle(p.id); }}
-                      style={{ background:isSel?'#ff880011':'#0a0a0a', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.06)'), borderRadius:6, padding:isMobile?'14px 12px':'12px 13px', minHeight:44 }}>
-                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:9, fontWeight:700, color:isSel?'#ff8800':'rgba(255,255,255,0.38)', letterSpacing:1, marginBottom:isMobile?4:3 }}>{p.label}</div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.2)', lineHeight:1.3 }}>{p.desc}</div>
+                    <div key={p.id} className="advisor-option" onClick={function() { setPlaystyle(p.id); }}
+                      style={{
+                        background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
+                        border:       '1px solid ' + (isSel ? 'rgba(255,136,0,0.35)' : '#22252e'),
+                        borderLeft:   '3px solid ' + (isSel ? '#ff8800' : '#22252e'),
+                        borderRadius: '0 3px 3px 0',
+                        padding:      '11px 13px',
+                        cursor:       'pointer',
+                        transition:   'background 0.1s',
+                      }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: isSel ? '#ff8800' : 'rgba(255,255,255,0.5)', letterSpacing: 1.5, marginBottom: 3, fontFamily: 'monospace' }}>{p.label}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.4 }}>{p.desc}</div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Priority Focus */}
+            {/* Priority */}
             <div>
-              <SectionHeader num="03" label="PRIORITY FOCUS" isMobile={isMobile} />
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8 }}>
+              <SectionHeader num="03" label="Priority Focus" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
                 {PRIORITIES.map(function(p) {
-                  var isSel=priority===p.id;
+                  var isSel = priority === p.id;
                   return (
-                    <div key={p.id} className="ab" onClick={function(){ setPriority(p.id); }}
-                      style={{ background:isSel?'#ff880011':'#0a0a0a', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.06)'), borderRadius:6, padding:isMobile?'14px 12px':'12px 13px', minHeight:44 }}>
-                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:9, fontWeight:700, color:isSel?'#ff8800':'rgba(255,255,255,0.38)', letterSpacing:1, marginBottom:isMobile?4:3 }}>{p.label}</div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:10, color:'rgba(255,255,255,0.2)', lineHeight:1.3 }}>{p.desc}</div>
+                    <div key={p.id} className="advisor-option" onClick={function() { setPriority(p.id); }}
+                      style={{
+                        background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
+                        border:       '1px solid ' + (isSel ? 'rgba(255,136,0,0.35)' : '#22252e'),
+                        borderLeft:   '3px solid ' + (isSel ? '#ff8800' : '#22252e'),
+                        borderRadius: '0 3px 3px 0',
+                        padding:      '11px 13px',
+                        cursor:       'pointer',
+                        transition:   'background 0.1s',
+                      }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: isSel ? '#ff8800' : 'rgba(255,255,255,0.5)', letterSpacing: 1.5, marginBottom: 3, fontFamily: 'monospace' }}>{p.label}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.4 }}>{p.desc}</div>
                     </div>
                   );
                 })}
@@ -311,50 +413,81 @@ export default function AdvisorClient() {
 
             {/* Rank Target */}
             <div>
-              <SectionHeader num="04" label="RANK TARGET" isMobile={isMobile} />
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:6 }}>
+              <SectionHeader num="04" label="Rank Target" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 5 }}>
                 {RANK_TARGETS.map(function(r) {
-                  var isSel=rankTarget===r.id;
+                  var isSel = rankTarget === r.id;
                   return (
-                    <div key={r.id} className="ab" onClick={function(){ setRankTarget(r.id); }}
-                      style={{ background:isSel?r.color+'0f':'#0a0a0a', border:'1px solid '+(isSel?r.color+'44':'rgba(255,255,255,0.06)'), borderTop:'2px solid '+(isSel?r.color:'transparent'), borderRadius:5, padding:isMobile?'12px 10px':'10px 12px', minHeight:44 }}>
-                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:3 }}>
-                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:9, fontWeight:700, color:isSel?r.color:'rgba(255,255,255,0.32)', letterSpacing:1 }}>{r.label}</div>
-                        {r.holotag && <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:isSel?r.color+'99':'rgba(255,255,255,0.15)', letterSpacing:1 }}>{r.holotag}</div>}
+                    <div key={r.id} className="advisor-option" onClick={function() { setRankTarget(r.id); }}
+                      style={{
+                        background:   isSel ? r.color + '15' : '#1a1d24',
+                        border:       '1px solid ' + (isSel ? r.color + '40' : '#22252e'),
+                        borderTop:    '2px solid ' + (isSel ? r.color : '#22252e'),
+                        borderRadius: '0 0 3px 3px',
+                        padding:      '10px 12px',
+                        cursor:       'pointer',
+                        transition:   'background 0.1s',
+                      }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: isSel ? r.color : 'rgba(255,255,255,0.4)', letterSpacing: 1.5, fontFamily: 'monospace' }}>{r.label}</div>
+                        {r.holotag && <div style={{ fontSize: 8, color: isSel ? r.color + 'aa' : 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{r.holotag}</div>}
                       </div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?11:10, color:'rgba(255,255,255,0.18)', lineHeight:1.3 }}>{r.desc}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', lineHeight: 1.4 }}>{r.desc}</div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Experience Level */}
+            {/* Experience */}
             <div>
-              <SectionHeader num="05" label="EXPERIENCE LEVEL" isMobile={isMobile} />
-              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              <SectionHeader num="05" label="Experience Level" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 {EXPERIENCE_LEVELS.map(function(e) {
-                  var isSel=experienceLevel===e.id;
+                  var isSel = experienceLevel === e.id;
                   return (
-                    <div key={e.id} className="ab" onClick={function(){ setExperienceLevel(e.id); }}
-                      style={{ background:isSel?'#ff880011':'#0a0a0a', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.06)'), borderLeft:'3px solid '+(isSel?'#ff8800':'rgba(255,255,255,0.04)'), borderRadius:5, padding:isMobile?'12px 14px':'10px 13px', display:'flex', alignItems:'center', justifyContent:'space-between', minHeight:44 }}>
-                      <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?10:9, fontWeight:700, color:isSel?'#ff8800':'rgba(255,255,255,0.32)', letterSpacing:1 }}>{e.label}</div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?12:11, color:'rgba(255,255,255,0.18)' }}>{e.desc}</div>
+                    <div key={e.id} className="advisor-option" onClick={function() { setExperienceLevel(e.id); }}
+                      style={{
+                        background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
+                        border:       '1px solid ' + (isSel ? 'rgba(255,136,0,0.35)' : '#22252e'),
+                        borderLeft:   '3px solid ' + (isSel ? '#ff8800' : '#22252e'),
+                        borderRadius: '0 3px 3px 0',
+                        padding:      '10px 13px',
+                        cursor:       'pointer',
+                        display:      'flex',
+                        alignItems:   'center',
+                        justifyContent: 'space-between',
+                        transition:   'background 0.1s',
+                      }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: isSel ? '#ff8800' : 'rgba(255,255,255,0.5)', letterSpacing: 1.5, fontFamily: 'monospace' }}>{e.label}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{e.desc}</div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Weapon Preference */}
+            {/* Weapon pref */}
             <div>
-              <SectionHeader num="06" label="WEAPON PREFERENCE" sub="OPTIONAL" isMobile={isMobile} />
-              <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+              <SectionHeader num="06" label="Weapon Preference" sub="OPTIONAL" />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                 {WEAPON_PREFS.map(function(w) {
-                  var isSel=weaponPref===w.id;
+                  var isSel = weaponPref === w.id;
                   return (
-                    <button key={w.id} onClick={function(){ setWeaponPref(w.id); }}
-                      style={{ padding:isMobile?'10px 14px':'8px 13px', background:isSel?'#ff880011':'transparent', border:'1px solid '+(isSel?'#ff880044':'rgba(255,255,255,0.08)'), borderRadius:4, color:isSel?'#ff8800':'rgba(255,255,255,0.26)', fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?10:9, letterSpacing:1, cursor:'pointer', minHeight:44 }}>
+                    <button key={w.id} className="advisor-weapon-pref" onClick={function() { setWeaponPref(w.id); }}
+                      style={{
+                        padding:      '8px 12px',
+                        background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
+                        border:       '1px solid ' + (isSel ? 'rgba(255,136,0,0.35)' : '#22252e'),
+                        borderRadius: 2,
+                        color:        isSel ? '#ff8800' : 'rgba(255,255,255,0.4)',
+                        fontSize:     10,
+                        fontWeight:   700,
+                        letterSpacing: 1.5,
+                        cursor:       'pointer',
+                        fontFamily:   'inherit',
+                        transition:   'background 0.1s',
+                      }}>
                       {w.label}
                     </button>
                   );
@@ -362,164 +495,249 @@ export default function AdvisorClient() {
               </div>
             </div>
 
-            {/* Team Size */}
+            {/* Team */}
             <div>
-              <SectionHeader num="07" label="TEAM SIZE" isMobile={isMobile} />
-              <div style={{ display:'flex', gap:10 }}>
-                {['Solo','Squad'].map(function(size) {
-                  var isSel=teamSize===size;
+              <SectionHeader num="07" label="Team Size" />
+              <div style={{ display: 'flex', gap: 6 }}>
+                {['Solo', 'Squad'].map(function(size) {
+                  var isSel = teamSize === size;
                   return (
-                    <button key={size} onClick={function(){ setTeamSize(size); }}
-                      style={{ flex:1, padding:isMobile?'16px':'13px', background:isSel?accentColor+'11':'#0a0a0a', border:'1px solid '+(isSel?accentColor+'44':'rgba(255,255,255,0.06)'), borderRadius:6, color:isSel?accentColor:'rgba(255,255,255,0.28)', fontFamily:'Orbitron, monospace', fontSize:12, fontWeight:700, letterSpacing:2, cursor:'pointer', minHeight:48 }}>
+                    <button key={size} onClick={function() { setTeamSize(size); }}
+                      style={{
+                        flex:         1,
+                        padding:      '14px',
+                        background:   isSel ? accentColor + '12' : '#1a1d24',
+                        border:       '1px solid ' + (isSel ? accentColor + '40' : '#22252e'),
+                        borderTop:    '2px solid ' + (isSel ? accentColor : '#22252e'),
+                        borderRadius: '0 0 3px 3px',
+                        color:        isSel ? accentColor : 'rgba(255,255,255,0.5)',
+                        fontFamily:   'Orbitron, monospace',
+                        fontSize:     12,
+                        fontWeight:   700,
+                        letterSpacing: 2,
+                        cursor:       'pointer',
+                      }}>
                       {size.toUpperCase()}
                     </button>
                   );
                 })}
               </div>
             </div>
-
           </div>
 
-          {/* GENERATE BUTTON */}
-          <div style={{ textAlign:'center' }}>
+          {/* ══ GENERATE ═══════════════════════════════════ */}
+          <div style={{ textAlign: 'center' }}>
             {selectedShell && shellConfig && (
-              <div style={{ marginBottom:12, fontFamily:'Share Tech Mono, monospace', fontSize:10, color:accentColor, letterSpacing:2 }}>
-                {selectedShell.toUpperCase()} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label} &bull; {(PRIORITIES.find(function(p){ return p.id===priority; })||{}).label} &bull; {(RANK_TARGETS.find(function(r){ return r.id===rankTarget; })||{}).label}
+              <div style={{ marginBottom: 12, fontSize: 10, color: accentColor, letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>
+                {selectedShell.toUpperCase()} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(PRIORITIES.find(function(p) { return p.id === priority; }) || {}).label} · {(RANK_TARGETS.find(function(r) { return r.id === rankTarget; }) || {}).label}
               </div>
             )}
             <button onClick={generateBuild} disabled={!selectedShell}
-              style={{ padding:isMobile?'18px 40px':'17px 56px', background:selectedShell?accentColor+'13':'#0d0d0d', border:'1px solid '+(selectedShell?accentColor+'55':'rgba(255,255,255,0.07)'), borderRadius:6, color:selectedShell?accentColor:'rgba(255,255,255,0.16)', fontFamily:'Orbitron, monospace', fontSize:isMobile?13:13, fontWeight:900, letterSpacing:isMobile?2:4, cursor:selectedShell?'pointer':'not-allowed', boxShadow:selectedShell?'0 0 26px '+accentColor+'18':'none', transition:'all 0.3s ease', width:isMobile?'100%':'auto', minHeight:56 }}>
-              {selectedShell ? 'ANALYZE '+selectedShell.toUpperCase()+' BUILD' : 'SELECT A RUNNER FIRST'}
+              style={{
+                padding:      isMobile ? '16px 40px' : '15px 52px',
+                background:   selectedShell ? accentColor : '#1a1d24',
+                color:        selectedShell ? '#000' : 'rgba(255,255,255,0.2)',
+                border:       selectedShell ? 'none' : '1px solid #22252e',
+                borderRadius: 2,
+                fontSize:     13,
+                fontWeight:   900,
+                letterSpacing: 1.5,
+                cursor:       selectedShell ? 'pointer' : 'not-allowed',
+                fontFamily:   'inherit',
+                width:        isMobile ? '100%' : 'auto',
+              }}>
+              {selectedShell ? 'ENGINEER ' + selectedShell.toUpperCase() + ' BUILD →' : 'SELECT A RUNNER FIRST'}
             </button>
           </div>
         </div>
+
+        {/* ══ STICKY GENERATE BAR ═══════════════════════════ */}
+        {stickyVisible && (
+          <div style={{
+            position:  'fixed',
+            bottom:    16,
+            left:      '50%',
+            transform: 'translateX(-50%)',
+            zIndex:    100,
+            maxWidth:  'calc(100vw - 32px)',
+          }}>
+            <button onClick={generateBuild}
+              style={{
+                display:      'flex',
+                alignItems:   'center',
+                gap:          14,
+                padding:      '12px 18px',
+                background:   '#0e1014',
+                border:       '1px solid #22252e',
+                borderTop:    '2px solid ' + accentColor,
+                borderRadius: '0 0 4px 4px',
+                boxShadow:    '0 4px 20px rgba(0,0,0,0.5)',
+                cursor:       'pointer',
+                whiteSpace:   'nowrap',
+                fontFamily:   'inherit',
+              }}>
+              <span style={{ fontSize: 18, color: accentColor, lineHeight: 1 }}>{shellConfig ? SHELL_SYMBOLS[shellConfig.name] : '⬢'}</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: accentColor, letterSpacing: 2, marginBottom: 2, textTransform: 'uppercase' }}>Ready</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Engineer {selectedShell}</div>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 800, color: accentColor, marginLeft: 4 }}>→</span>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
+  // ══════════════════════════════════════════════════════════
   // LOADING PHASE
-  if (phase==='loading') {
+  // ══════════════════════════════════════════════════════════
+
+  if (phase === 'loading') {
     return (
-      <div style={{ background:'#030303', minHeight:'100vh', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', padding:'0 20px' }}>
+      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
+
         <style>{`
-          @keyframes sp { 0%,100%{opacity:0.3} 50%{opacity:1} }
-          @keyframes gf { 0%,100%{opacity:0.03} 50%{opacity:0.06} }
-          @keyframes md { from{opacity:0;transform:translateY(-7px)} to{opacity:1;transform:translateY(0)} }
+          @keyframes advisorPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+          @keyframes fadeInSlide { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
-        <div style={{ position:'fixed', inset:0, pointerEvents:'none', backgroundImage:'linear-gradient('+accentColor+'18 1px, transparent 1px), linear-gradient(90deg, '+accentColor+'18 1px, transparent 1px)', backgroundSize:'40px 40px', animation:'gf 3s ease-in-out infinite' }} />
-        <div style={{ position:'relative', zIndex:1, textAlign:'center', maxWidth:540, width:'100%' }}>
-          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?52:64, fontWeight:900, color:accentColor, textShadow:'0 0 40px '+accentColor+'66', marginBottom:16, animation:'sp 1.5s ease-in-out infinite' }}>
-            {selectedShell?selectedShell[0].toUpperCase():'D'}
+
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 520, width: '100%' }}>
+          <div style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: isMobile ? 48 : 60,
+            fontWeight: 900,
+            color: accentColor,
+            marginBottom: 16,
+            animation: 'advisorPulse 1.5s ease-in-out infinite',
+            letterSpacing: 2,
+          }}>
+            {selectedShell ? SHELL_SYMBOLS[selectedShell] : '⬢'}
           </div>
-          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:15, fontWeight:900, letterSpacing:4, color:accentColor, marginBottom:5 }}>DEXTER ANALYZING</div>
-          <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?9:10, color:'rgba(255,255,255,0.22)', letterSpacing:2, marginBottom:28 }}>
-            {selectedShell?selectedShell.toUpperCase():''} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label} &bull; {(PRIORITIES.find(function(p){ return p.id===priority; })||{}).label}
+
+          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, letterSpacing: 3, color: accentColor, marginBottom: 5 }}>DEXTER ANALYZING</div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 24, fontFamily: 'monospace', fontWeight: 700 }}>
+            {selectedShell ? selectedShell.toUpperCase() : ''} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(PRIORITIES.find(function(p) { return p.id === priority; }) || {}).label}
           </div>
-          <div style={{ width:'100%', height:2, background:'rgba(255,255,255,0.05)', borderRadius:2, overflow:'hidden', marginBottom:20 }}>
-            <div style={{ height:'100%', width:scanProgress+'%', background:'linear-gradient(90deg, '+accentColor+'66, '+accentColor+')', borderRadius:2, transition:'width 0.3s ease', boxShadow:'0 0 8px '+accentColor }} />
+
+          <div style={{ width: '100%', height: 2, background: '#1e2028', borderRadius: 1, overflow: 'hidden', marginBottom: 18 }}>
+            <div style={{ height: '100%', width: scanProgress + '%', background: accentColor, borderRadius: 1, transition: 'width 0.3s ease' }} />
           </div>
-          <div style={{ background:'#050505', border:'1px solid '+accentColor+'18', borderRadius:8, padding:'18px 20px', textAlign:'left', minHeight:160 }}>
-            {SCAN_STEPS.slice(0,scanStep+1).map(function(step,i){
+
+          <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + accentColor, borderRadius: '0 3px 3px 0', padding: '16px 18px', textAlign: 'left', minHeight: 160 }}>
+            {SCAN_STEPS.slice(0, scanStep + 1).map(function(step, i) {
               return (
-                <div key={i} style={{ fontFamily:'Share Tech Mono, monospace', fontSize:isMobile?9:10, color:i===scanStep?accentColor:'rgba(255,255,255,0.16)', letterSpacing:1, marginBottom:6, lineHeight:1.6, animation:'md 0.3s ease' }}>
-                  <span style={{ marginRight:10, color:i===scanStep?accentColor:'rgba(255,255,255,0.1)' }}>{i===scanStep?'>':'v'}</span>
+                <div key={i} style={{ fontSize: 10, color: i === scanStep ? accentColor : 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 6, lineHeight: 1.6, animation: 'fadeInSlide 0.3s ease', fontFamily: 'monospace', fontWeight: 700 }}>
+                  <span style={{ marginRight: 10, color: i === scanStep ? accentColor : 'rgba(255,255,255,0.15)' }}>{i === scanStep ? '▸' : '✓'}</span>
                   {step}
-                  {i===scanStep&&<span style={{ animation:'sp 0.8s ease-in-out infinite' }}>_</span>}
+                  {i === scanStep && <span style={{ animation: 'advisorPulse 0.8s ease-in-out infinite' }}>_</span>}
                 </div>
               );
             })}
           </div>
-          <div style={{ marginTop:12, fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'rgba(255,255,255,0.1)', letterSpacing:3 }}>{Math.round(scanProgress)}% COMPLETE</div>
+
+          <div style={{ marginTop: 12, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, fontFamily: 'monospace', fontWeight: 700 }}>
+            {Math.round(scanProgress)}% COMPLETE
+          </div>
         </div>
       </div>
     );
   }
 
+  // ══════════════════════════════════════════════════════════
   // RESULT PHASE
-  if (phase==='result'&&build) {
-    var grade=build.loadout_grade||'A';
-    var gradeColor=GRADE_COLORS[grade]||'#ff8800';
+  // ══════════════════════════════════════════════════════════
+
+  if (phase === 'result' && build) {
+    var grade = build.loadout_grade || 'A';
+    var gradeColor = GRADE_COLORS[grade] || '#ff8800';
 
     return (
-      <div style={{ background:'#030303', minHeight:'100vh', color:'#fff', paddingTop:96, overflowX:'hidden' }}>
-        <style>{`
-          @keyframes rr { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-          @keyframes gg { 0%,100%{text-shadow:0 0 20px ${gradeColor}33} 50%{text-shadow:0 0 55px ${gradeColor}66} }
-          .rs { animation:rr 0.5s ease both; }
-          .sb { transition:all 0.2s ease; cursor:pointer; }
-          .sb:hover { filter:brightness(1.12); }
-        `}</style>
-        <div style={{ maxWidth:1100, margin:'0 auto', padding:isMobile?'0 16px 80px':'0 24px 80px' }}>
+      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
 
-          {/* HEADER */}
-          <div className="rs" style={{ animationDelay:'0s', marginBottom:22, display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+        <style>{`
+          @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+          .result-block { animation: fadeUp 0.4s ease both; }
+          .share-btn:hover { background: #1e2228 !important; }
+        `}</style>
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 40px' }}>
+
+          {/* ══ HEADER ═══════════════════════════════════════ */}
+          <div className="result-block" style={{ marginBottom: 18, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'rgba(255,255,255,0.22)', letterSpacing:3, marginBottom:3 }}>DEXTER BUILD ADVISOR</div>
-              <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?12:13, fontWeight:700, color:accentColor, letterSpacing:2 }}>
-                {build.shell?build.shell.toUpperCase():''} &bull; {(PLAYSTYLES.find(function(p){ return p.id===playstyle; })||{}).label} &bull; {(RANK_TARGETS.find(function(r){ return r.id===rankTarget; })||{}).label}
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 4, fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase' }}>DEXTER Build Advisor</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: accentColor, letterSpacing: 2, fontFamily: 'monospace' }}>
+                {build.shell ? build.shell.toUpperCase() : ''} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(RANK_TARGETS.find(function(r) { return r.id === rankTarget; }) || {}).label}
               </div>
             </div>
-            <button onClick={function(){ setPhase('input'); setBuild(null); }} style={{ padding:'10px 18px', background:'transparent', border:'1px solid rgba(255,255,255,0.1)', borderRadius:4, color:'rgba(255,255,255,0.28)', fontFamily:'Share Tech Mono, monospace', fontSize:10, letterSpacing:2, cursor:'pointer', minHeight:44 }}>REBUILD</button>
+            <button onClick={function() { setPhase('input'); setBuild(null); }}
+              style={{ padding: '8px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.4)', fontSize: 10, letterSpacing: 2, cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}>
+              REBUILD
+            </button>
           </div>
 
-          {/* MAIN BUILD CARD */}
-          <div className="rs" style={{ animationDelay:'0.1s' }}>
-            <div style={{ background:'linear-gradient(135deg, '+accentColor+'07, #050505)', border:'1px solid '+accentColor+'28', borderTop:'3px solid '+accentColor, borderRadius:12, overflow:'hidden', marginBottom:14, position:'relative' }}>
-              <div style={{ position:'absolute', inset:0, pointerEvents:'none', background:'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px)' }} />
+          {/* ══ MAIN BUILD CARD ═══════════════════════════════ */}
+          <div className="result-block" style={{ animationDelay: '0.1s' }}>
+            <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '3px solid ' + accentColor, borderRadius: '0 0 3px 3px', overflow: 'hidden', marginBottom: 12 }}>
 
               {/* Top — grade + name */}
-              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', padding:isMobile?'20px 20px 16px':'26px 30px 20px', gap:16, flexWrap:'wrap', borderBottom:'1px solid '+accentColor+'12', position:'relative', zIndex:1 }}>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:accentColor+'66', letterSpacing:3, marginBottom:8 }}>DEXTER BUILD REPORT</div>
-                  <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?'clamp(16px, 5vw, 22px)':'clamp(17px, 2.8vw, 28px)', fontWeight:900, color:'#fff', letterSpacing:isMobile?1:2, marginBottom:7, wordBreak:'break-word' }}>"{build.build_name||'CUSTOM BUILD'}"</div>
-                  <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:15, color:'rgba(255,255,255,0.78)', lineHeight:1.6 }}>{build.playstyle_summary}</div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: isMobile ? '20px' : '24px 28px', gap: 16, flexWrap: 'wrap', borderBottom: '1px solid #22252e' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 8, color: accentColor + 'aa', letterSpacing: 3, marginBottom: 8, fontWeight: 700, fontFamily: 'monospace' }}>DEXTER BUILD REPORT</div>
+                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: isMobile ? 18 : 24, fontWeight: 900, color: '#fff', letterSpacing: 1, marginBottom: 8, wordBreak: 'break-word', lineHeight: 1.2 }}>
+                    "{build.build_name || 'CUSTOM BUILD'}"
+                  </div>
+                  <div style={{ fontSize: isMobile ? 13 : 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{build.playstyle_summary}</div>
                 </div>
-                <div style={{ textAlign:'center', flexShrink:0 }}>
-                  <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?56:72, fontWeight:900, color:gradeColor, lineHeight:1, animation:'gg 3s ease-in-out infinite' }}>{grade}</div>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.16)', letterSpacing:2, marginTop:3 }}>LOADOUT GRADE</div>
-                  {build.ranked_viable && <div style={{ marginTop:8, padding:'3px 10px', background:'#00ff8811', border:'1px solid #00ff8833', borderRadius:3, fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'#00ff88', letterSpacing:2 }}>RANKED VIABLE</div>}
-                  {build.holotag_tier && <div style={{ marginTop:4, fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.18)', letterSpacing:1 }}>HOLOTAG: {build.holotag_tier.toUpperCase()}</div>}
+
+                <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                  <div style={{ background: gradeColor, color: gradeColor === '#ffd700' || gradeColor === '#ff8800' || gradeColor === '#00d4ff' ? '#000' : '#fff', fontSize: isMobile ? 44 : 56, fontWeight: 900, padding: isMobile ? '6px 20px' : '8px 24px', borderRadius: 2, fontFamily: 'Orbitron, monospace', lineHeight: 1, letterSpacing: 1 }}>
+                    {grade}
+                  </div>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 6, fontWeight: 700 }}>LOADOUT GRADE</div>
+                  {build.ranked_viable && <div style={{ marginTop: 6, padding: '2px 8px', background: 'rgba(0,255,65,0.1)', border: '1px solid rgba(0,255,65,0.3)', borderRadius: 2, fontSize: 8, color: '#00ff41', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>RANKED VIABLE</div>}
                 </div>
               </div>
 
-              {/* Loadout grid — 1 col mobile, 2 col desktop */}
-              <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(2, 1fr)', position:'relative', zIndex:1 }}>
+              {/* Loadout grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 1, background: '#22252e' }}>
 
                 {/* Weapons */}
-                <div style={{ padding:isMobile?'18px 20px':'22px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d', borderBottom:'1px solid '+accentColor+'0d' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:accentColor+'bb', letterSpacing:3, marginBottom:12 }}>WEAPONS</div>
+                <div style={{ padding: '18px 20px', background: '#1a1d24' }}>
+                  <div style={{ fontSize: 9, color: accentColor, letterSpacing: 3, marginBottom: 12, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>Weapons</div>
                   {build.primary_weapon && (
-                    <div style={{ marginBottom:12 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
-                        <div style={{ width:3, height:16, background:accentColor, borderRadius:2, flexShrink:0 }} />
-                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?14:13, fontWeight:700, color:'#fff', letterSpacing:1 }}>{build.primary_weapon.name}</div>
-                        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:accentColor+'66', padding:'1px 4px', border:'1px solid '+accentColor+'22', borderRadius:2 }}>PRIMARY</div>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                        <div style={{ width: 3, height: 14, background: accentColor, borderRadius: 1, flexShrink: 0 }} />
+                        <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#fff', letterSpacing: 0.5 }}>{build.primary_weapon.name}</div>
+                        <div style={{ fontSize: 7, color: accentColor, padding: '1px 5px', border: '1px solid ' + accentColor + '30', borderRadius: 2, letterSpacing: 1, fontWeight: 700 }}>PRIMARY</div>
                       </div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.65)', paddingLeft:11, lineHeight:1.5 }}>{build.primary_weapon.reason}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', paddingLeft: 11, lineHeight: 1.5 }}>{build.primary_weapon.reason}</div>
                     </div>
                   )}
                   {build.secondary_weapon && (
                     <div>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
-                        <div style={{ width:3, height:16, background:'rgba(255,255,255,0.18)', borderRadius:2, flexShrink:0 }} />
-                        <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?14:13, fontWeight:700, color:'rgba(255,255,255,0.80)', letterSpacing:1 }}>{build.secondary_weapon.name}</div>
-                        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:'rgba(255,255,255,0.16)', padding:'1px 4px', border:'1px solid rgba(255,255,255,0.1)', borderRadius:2 }}>SECONDARY</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                        <div style={{ width: 3, height: 14, background: 'rgba(255,255,255,0.2)', borderRadius: 1, flexShrink: 0 }} />
+                        <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.5 }}>{build.secondary_weapon.name}</div>
+                        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', padding: '1px 5px', border: '1px solid #22252e', borderRadius: 2, letterSpacing: 1, fontWeight: 700 }}>SECONDARY</div>
                       </div>
-                      <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.60)', paddingLeft:11, lineHeight:1.5 }}>{build.secondary_weapon.reason}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', paddingLeft: 11, lineHeight: 1.5 }}>{build.secondary_weapon.reason}</div>
                     </div>
                   )}
                 </div>
 
                 {/* Mods */}
-                <div style={{ padding:isMobile?'18px 20px':'22px 26px', borderBottom:'1px solid '+accentColor+'0d' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:accentColor+'bb', letterSpacing:3, marginBottom:12 }}>WEAPON MODS</div>
-                  {(build.mods||[]).map(function(mod,i){
+                <div style={{ padding: '18px 20px', background: '#1a1d24' }}>
+                  <div style={{ fontSize: 9, color: accentColor, letterSpacing: 3, marginBottom: 12, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>Weapon Mods</div>
+                  {(build.mods || []).map(function(mod, i) {
                     return (
-                      <div key={i} style={{ marginBottom:9, display:'flex', gap:7 }}>
-                        <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:accentColor, background:accentColor+'12', border:'1px solid '+accentColor+'22', borderRadius:3, padding:'2px 4px', letterSpacing:1, flexShrink:0, height:'fit-content', marginTop:1 }}>{mod.slot?mod.slot.toUpperCase():''}</div>
+                      <div key={i} style={{ marginBottom: 8, display: 'flex', gap: 7 }}>
+                        <div style={{ fontSize: 7, color: accentColor, background: accentColor + '14', border: '1px solid ' + accentColor + '30', borderRadius: 2, padding: '2px 5px', letterSpacing: 1, flexShrink: 0, fontWeight: 700, height: 'fit-content', marginTop: 1 }}>{mod.slot ? mod.slot.toUpperCase() : ''}</div>
                         <div>
-                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:12, fontWeight:700, color:'rgba(255,255,255,0.90)', letterSpacing:1, marginBottom:2 }}>{mod.name}</div>
-                          <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.60)', lineHeight:1.4 }}>{mod.reason}</div>
+                          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5, marginBottom: 2 }}>{mod.name}</div>
+                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>{mod.reason}</div>
                         </div>
                       </div>
                     );
@@ -527,92 +745,137 @@ export default function AdvisorClient() {
                 </div>
 
                 {/* Cores */}
-                <div style={{ padding:isMobile?'18px 20px':'22px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:accentColor+'bb', letterSpacing:3, marginBottom:12 }}>SHELL CORES</div>
-                  {(build.cores||[]).map(function(core,i){
+                <div style={{ padding: '18px 20px', background: '#1a1d24' }}>
+                  <div style={{ fontSize: 9, color: accentColor, letterSpacing: 3, marginBottom: 12, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>Shell Cores</div>
+                  {(build.cores || []).map(function(core, i) {
                     return (
-                      <div key={i} style={{ marginBottom:10 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
-                          <div style={{ width:4, height:4, borderRadius:'50%', background:accentColor, flexShrink:0 }} />
-                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:12, fontWeight:700, color:'rgba(255,255,255,0.90)', letterSpacing:1 }}>{core.name}</div>
-                          {core.ability_type && <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:'rgba(255,255,255,0.16)', padding:'1px 3px', border:'1px solid rgba(255,255,255,0.08)', borderRadius:2 }}>{core.ability_type.toUpperCase()}</div>}
+                      <div key={i} style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
+                          <div style={{ width: 4, height: 4, borderRadius: '50%', background: accentColor, flexShrink: 0 }} />
+                          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5 }}>{core.name}</div>
+                          {core.ability_type && <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', padding: '1px 4px', border: '1px solid #22252e', borderRadius: 2, letterSpacing: 1, fontWeight: 700 }}>{core.ability_type.toUpperCase()}</div>}
                         </div>
-                        <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.60)', paddingLeft:10, lineHeight:1.4 }}>{core.reason}</div>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', paddingLeft: 10, lineHeight: 1.45 }}>{core.reason}</div>
                       </div>
                     );
                   })}
-                  {(!build.cores||build.cores.length===0)&&<div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.12)', letterSpacing:1 }}>NO CORES SPECIFIED</div>}
+                  {(!build.cores || build.cores.length === 0) && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>NO CORES SPECIFIED</div>}
                 </div>
 
                 {/* Implants */}
-                <div style={{ padding:isMobile?'18px 20px':'22px 26px' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'#9b5de5bb', letterSpacing:3, marginBottom:12 }}>IMPLANTS</div>
-                  {(build.implants||[]).map(function(imp,i){
+                <div style={{ padding: '18px 20px', background: '#1a1d24' }}>
+                  <div style={{ fontSize: 9, color: '#9b5de5', letterSpacing: 3, marginBottom: 12, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>Implants</div>
+                  {(build.implants || []).map(function(imp, i) {
                     return (
-                      <div key={i} style={{ marginBottom:10 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
-                          <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:6, color:'#9b5de5', background:'#9b5de511', border:'1px solid #9b5de522', borderRadius:3, padding:'1px 3px', letterSpacing:1, flexShrink:0 }}>{imp.slot?imp.slot.toUpperCase():''}</div>
-                          <div style={{ fontFamily:'Orbitron, monospace', fontSize:isMobile?13:12, fontWeight:700, color:'rgba(255,255,255,0.90)', letterSpacing:1 }}>{imp.name}</div>
+                      <div key={i} style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
+                          <div style={{ fontSize: 7, color: '#9b5de5', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.25)', borderRadius: 2, padding: '2px 5px', letterSpacing: 1, flexShrink: 0, fontWeight: 700 }}>{imp.slot ? imp.slot.toUpperCase() : ''}</div>
+                          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5 }}>{imp.name}</div>
                         </div>
-                        {imp.stat_change&&<div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'#9b5de5', letterSpacing:1, paddingLeft:10, marginBottom:2 }}>{imp.stat_change}</div>}
-                        <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?13:12, color:'rgba(255,255,255,0.60)', paddingLeft:10, lineHeight:1.4 }}>{imp.reason}</div>
+                        {imp.stat_change && <div style={{ fontSize: 10, color: '#9b5de5', letterSpacing: 1, paddingLeft: 10, marginBottom: 2, fontFamily: 'monospace', fontWeight: 700 }}>{imp.stat_change}</div>}
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', paddingLeft: 10, lineHeight: 1.45 }}>{imp.reason}</div>
                       </div>
                     );
                   })}
-                  {(!build.implants||build.implants.length===0)&&<div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:7, color:'rgba(255,255,255,0.12)', letterSpacing:1 }}>NO IMPLANTS SPECIFIED</div>}
+                  {(!build.implants || build.implants.length === 0) && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>NO IMPLANTS SPECIFIED</div>}
                 </div>
               </div>
 
-              {/* Bottom strip */}
-              <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit, minmax(220px, 1fr))', borderTop:'1px solid '+accentColor+'12', position:'relative', zIndex:1 }}>
-                <div style={{ padding:isMobile?'16px 20px':'16px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d', borderBottom:isMobile?'1px solid '+accentColor+'0d':'none' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'#00ff88', letterSpacing:3, marginBottom:9 }}>STRENGTHS</div>
-                  {(build.strengths||[]).map(function(s,i){ return <div key={i} style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.72)', marginBottom:4, display:'flex', gap:6 }}><span style={{ color:'#00ff88' }}>+</span>{s}</div>; })}
+              {/* Strengths/weaknesses/ranked strip */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))', gap: 1, background: '#22252e', borderTop: '1px solid #22252e' }}>
+                <div style={{ padding: '14px 20px', background: '#1a1d24' }}>
+                  <div style={{ fontSize: 8, color: '#00ff41', letterSpacing: 3, marginBottom: 8, fontWeight: 700 }}>STRENGTHS</div>
+                  {(build.strengths || []).map(function(s, i) {
+                    return <div key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 4, display: 'flex', gap: 6, lineHeight: 1.5 }}><span style={{ color: '#00ff41', fontWeight: 900 }}>+</span>{s}</div>;
+                  })}
                 </div>
-                <div style={{ padding:isMobile?'16px 20px':'16px 26px', borderRight:isMobile?'none':'1px solid '+accentColor+'0d', borderBottom:isMobile&&build.ranked_note?'1px solid '+accentColor+'0d':'none' }}>
-                  <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'#ff4444', letterSpacing:3, marginBottom:9 }}>WEAKNESSES</div>
-                  {(build.weaknesses||[]).map(function(w,i){ return <div key={i} style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.72)', marginBottom:4, display:'flex', gap:6 }}><span style={{ color:'#ff4444' }}>-</span>{w}</div>; })}
+                <div style={{ padding: '14px 20px', background: '#1a1d24' }}>
+                  <div style={{ fontSize: 8, color: '#ff2222', letterSpacing: 3, marginBottom: 8, fontWeight: 700 }}>WEAKNESSES</div>
+                  {(build.weaknesses || []).map(function(w, i) {
+                    return <div key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 4, display: 'flex', gap: 6, lineHeight: 1.5 }}><span style={{ color: '#ff2222', fontWeight: 900 }}>−</span>{w}</div>;
+                  })}
                 </div>
                 {build.ranked_note && (
-                  <div style={{ padding:isMobile?'16px 20px':'16px 26px' }}>
-                    <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:8, color:'#ffd700', letterSpacing:3, marginBottom:9 }}>RANKED NOTE</div>
-                    <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?14:13, color:'rgba(255,255,255,0.70)', lineHeight:1.6 }}>{build.ranked_note}</div>
+                  <div style={{ padding: '14px 20px', background: '#1a1d24' }}>
+                    <div style={{ fontSize: 8, color: '#ffd700', letterSpacing: 3, marginBottom: 8, fontWeight: 700 }}>RANKED NOTE</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{build.ranked_note}</div>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* DEXTER ANALYSIS */}
-          <div className="rs" style={{ animationDelay:'0.2s', marginBottom:14 }}>
-            <div style={{ background:'#050505', border:'1px solid '+accentColor+'12', borderLeft:'3px solid '+accentColor, borderRadius:8, padding:isMobile?'18px 18px':'20px 24px' }}>
-              <div style={{ fontFamily:'Share Tech Mono, monospace', fontSize:9, color:'#ff8800', letterSpacing:3, marginBottom:12 }}>[D] DEXTER ANALYSIS</div>
-              <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:isMobile?16:15, color:'rgba(255,255,255,0.78)', lineHeight:1.85 }}>{build.dexter_analysis}</div>
+          {/* ══ DEXTER ANALYSIS ════════════════════════════════ */}
+          <div className="result-block" style={{ animationDelay: '0.2s', marginBottom: 12 }}>
+            <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + accentColor, borderRadius: '0 3px 3px 0', padding: '18px 22px' }}>
+              <div style={{ fontSize: 9, color: '#ff8800', letterSpacing: 3, marginBottom: 10, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>⬢ DEXTER Analysis</div>
+              <div style={{ fontSize: isMobile ? 14 : 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8 }}>{build.dexter_analysis}</div>
             </div>
           </div>
 
-          {/* SHARE */}
-          <div className="rs" style={{ animationDelay:'0.3s' }}>
-            <div style={{ background:'#050505', border:'1px solid rgba(255,255,255,0.05)', borderRadius:8, padding:isMobile?'18px 18px':'20px 24px' }}>
-              {/* Share CTA */}
-              <div style={{ marginBottom:16, padding:'14px 16px', background:accentColor+'08', border:'1px solid '+accentColor+'22', borderLeft:'3px solid '+accentColor, borderRadius:6 }}>
-                <div style={{ fontFamily:'Orbitron, monospace', fontSize:13, fontWeight:900, color:accentColor, letterSpacing:1, marginBottom:4 }}>
-                  ⬢ SHARE YOUR DEXTER BUILD!
-                </div>
-                <div style={{ fontFamily:'Rajdhani, sans-serif', fontSize:14, color:'rgba(255,255,255,0.45)', lineHeight:1.5 }}>
-                  Post your loadout card to X or Discord and let the community see what you're running. Download a 1200×630 share card — built to post.
+          {/* ══ PERSONAL COACH TEASER (locked by flag) ═══════ */}
+          {!monetizationOn && (
+            <div className="result-block" style={{ animationDelay: '0.25s', marginBottom: 12 }}>
+              <div style={{ position: 'relative', overflow: 'hidden', background: '#0e1014', border: '1px solid #22252e', borderRadius: 3 }}>
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.008) 8px, rgba(255,255,255,0.008) 9px)', pointerEvents: 'none' }} />
+                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, rgba(155,93,229,0.5) 30%, rgba(155,93,229,0.5) 70%, transparent)' }} />
+                <div style={{ position: 'relative', zIndex: 1, padding: '22px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                  <div style={{ flex: 1, minWidth: 260 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>🔒</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase' }}>This is a generic build.</span>
+                      <span style={{ padding: '2px 7px', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.25)', borderRadius: 2, fontSize: 8, fontWeight: 700, letterSpacing: 2, color: 'rgba(155,93,229,0.6)', textTransform: 'uppercase' }}>Personal Coach · Coming Soon</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: 0 }}>
+                      The Personal Coach will analyze your actual gameplay — not archetypes — and engineer a build tuned to your hands, your map habits, and the fights you keep losing. Early Adopters get priority access.
+                    </p>
+                  </div>
+                  {profilePrefill ? (
+                    <div style={{ padding: '10px 14px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, textAlign: 'center', flexShrink: 0 }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: '#00ff41', letterSpacing: 1.5, marginBottom: 2 }}>EARLY ADOPTER</div>
+                      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)' }}>Priority access confirmed</div>
+                    </div>
+                  ) : (
+                    <Link href="/join" style={{ padding: '10px 18px', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 2, color: '#9b5de5', fontSize: 11, fontWeight: 800, letterSpacing: 1, textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                      CLAIM EARLY ADOPTER →
+                    </Link>
+                  )}
                 </div>
               </div>
-              <div style={{ fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.55)', letterSpacing:2, marginBottom:12 }}>SHARE YOUR BUILD</div>
-              <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit, minmax(140px, 1fr))', gap:8 }}>
-                <button className="sb" onClick={downloadShareCard} style={{ padding:'14px 16px', background:accentColor+'11', border:'1px solid '+accentColor+'44', borderRadius:5, color:accentColor, fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>DOWNLOAD CARD</button>
-                <button className="sb" onClick={shareToX} style={{ padding:'14px 16px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:5, color:'rgba(255,255,255,0.45)', fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>POST TO X</button>
-                <button className="sb" onClick={function(){ navigator.clipboard.writeText('https://cyberneticpunks.com/advisor').catch(function(){}); }} style={{ padding:'14px 16px', background:'rgba(88,101,242,0.08)', border:'1px solid rgba(88,101,242,0.3)', borderRadius:5, color:'#5865f2', fontFamily:'Orbitron, monospace', fontSize:11, fontWeight:700, letterSpacing:2, minHeight:48 }}>COPY FOR DISCORD</button>
-                <button className="sb" onClick={function(){ setPhase('input'); setBuild(null); }} style={{ padding:'14px 16px', background:'transparent', border:'1px solid rgba(255,255,255,0.07)', borderRadius:5, color:'rgba(255,255,255,0.22)', fontFamily:'Share Tech Mono, monospace', fontSize:10, letterSpacing:2, minHeight:48 }}>NEW BUILD</button>
+            </div>
+          )}
+
+          {/* ══ SHARE ══════════════════════════════════════════ */}
+          <div className="result-block" style={{ animationDelay: '0.3s' }}>
+            <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + accentColor, borderRadius: '0 0 3px 3px', padding: '18px 22px' }}>
+              <div style={{ marginBottom: 14, padding: '12px 14px', background: accentColor + '08', border: '1px solid ' + accentColor + '22', borderLeft: '3px solid ' + accentColor, borderRadius: '0 3px 3px 0' }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: accentColor, letterSpacing: 1.5, marginBottom: 4, fontFamily: 'Orbitron, monospace' }}>
+                  ⬢ SHARE YOUR DEXTER BUILD
+                </div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  Post your loadout card to X or Discord. 1200×630 — built to post.
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: 6 }}>
+                <button className="share-btn" onClick={downloadShareCard}
+                  style={{ padding: '12px 14px', background: accentColor, border: 'none', borderRadius: 2, color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 1, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  DOWNLOAD CARD
+                </button>
+                <button className="share-btn" onClick={shareToX}
+                  style={{ padding: '12px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.1s' }}>
+                  POST TO X
+                </button>
+                <button className="share-btn" onClick={function() { navigator.clipboard.writeText('https://cyberneticpunks.com/advisor').catch(function() {}); }}
+                  style={{ padding: '12px 14px', background: 'transparent', border: '1px solid rgba(88,101,242,0.35)', borderRadius: 2, color: '#5865f2', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.1s' }}>
+                  COPY FOR DISCORD
+                </button>
+                <button className="share-btn" onClick={function() { setPhase('input'); setBuild(null); }}
+                  style={{ padding: '12px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: 700, letterSpacing: 2, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.1s' }}>
+                  NEW BUILD
+                </button>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     );
