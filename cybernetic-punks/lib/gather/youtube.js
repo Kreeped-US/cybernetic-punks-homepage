@@ -1,6 +1,13 @@
 // lib/gather/youtube.js
 // Fetches latest Marathon-related videos from YouTube Data API v3
 // Includes auto-generated transcript fetching for CIPHER analysis
+//
+// Updated April 27, 2026: JSON output specs removed from formatForEditor.
+// Tool-use structured output (deployed in editorCore.js) enforces format
+// via per-editor tool schemas. Embedded JSON specs were drifting from the
+// actual schemas (e.g. asking for grade_confidence which doesn't exist in
+// publish_play_analysis). formatForEditor now provides content guidance
+// only — the tool schema handles the structural contract.
 
 import { fetchTranscripts } from './transcript.js';
 
@@ -156,6 +163,10 @@ export async function gatherYouTube() {
   }
 }
 
+// ─── EDITOR FORMATTERS ───────────────────────────────────────
+// Each editor gets the same video data with editor-specific guidance.
+// Output structure is enforced by tool schemas in editorCore.js — no
+// JSON output specs here.
 
 export function formatForEditor(videos, editor) {
   if (!videos || !videos.length) return null;
@@ -183,51 +194,44 @@ export function formatForEditor(videos, editor) {
 
 ${videoSummaries}
 
-Pick the video that demonstrates the highest competitive skill or most interesting strategic play. If a transcript is available, use it to analyze specific moments, decisions, and skill demonstrations. If no transcript is available, grade conservatively based on metadata alone.
+ANALYSIS GUIDANCE:
+- Pick the video that demonstrates the highest competitive skill or most interesting strategic play
+- If a transcript is available, use it to analyze specific moments, decisions, and skill demonstrations
+- If no transcript is available, grade conservatively from metadata alone — cap at A maximum
+- Set source_video_id to the YouTube ID of the video you analyzed
+- Set source_type to "youtube"
+- Be specific: extract weapon names, shell choices, tactical decisions from the source material
 
-Respond with JSON:
-{
-  "runner_grade": "S+|S|A|B|C|D",
-  "grade_confidence": "high|medium|low",
-  "headline": "punchy editorial headline under 80 chars",
-  "body": "400-600 word CIPHER analysis with section headers using **HEADER** format",
-  "ce_score": 0.0-10.0,
-  "tags": ["TAG1", "TAG2"],
-  "source_video_id": "the youtube_id you analyzed"
-}
-
-grade_confidence rules:
-- "high" = transcript was available and you analyzed actual gameplay narration
-- "medium" = partial transcript or short/unclear narration
-- "low" = no transcript, grading from metadata only — do NOT give S or S+ with low confidence`;
+Use the publish_play_analysis tool to publish your analysis.`;
 
     case 'DEXTER':
       return `Here are the latest Marathon build and loadout videos on YouTube. Analyze the most interesting build or loadout discussion.
 
 ${videoSummaries}
 
-Pick the video with the most useful build information. If none are specifically about builds, analyze the loadout/gear visible in the most popular gameplay video. Respond with JSON:
-{
-  "loadout_grade": "S|A|B|C|D|F",
-  "headline": "build analysis headline under 80 chars",
-  "body": "500-700 word DEXTER build analysis with section headers using **HEADER** format",
-  "ce_score": 0.0-10.0,
-  "tags": ["TAG1", "TAG2"],
-  "source_video_id": "the youtube_id you analyzed"
-}`;
+ANALYSIS GUIDANCE:
+- Pick the video with the most useful build information
+- If none are specifically about builds, analyze the loadout/gear visible in the most popular gameplay video
+- Set shell_focus to the shell the build centers on (Assassin/Destroyer/Recon/Rook/Thief/Triage/Vandal)
+- For ranked-relevant builds, set ranked_viable=true and specify holotag_target
+- Reference exact item names from the database (faction unlocks where applicable)
+- Explain the build's win condition explicitly
+
+Use the publish_build_analysis tool to publish your analysis.`;
 
     case 'NEXUS':
       return `Here are the latest Marathon videos trending on YouTube. Analyze what these videos collectively reveal about the current state of the Marathon meta and community interest.
 
 ${videoSummaries}
 
-What patterns do you see? What's shifting? What are players focused on? Respond with JSON:
-{
-  "headline": "urgent meta intel headline under 80 chars",
-  "body": "400-600 word NEXUS meta analysis with section headers using **HEADER** format",
-  "grid_pulse": 0.0-10.0,
-  "tags": ["TAG1", "TAG2"]
-}`;
+ANALYSIS GUIDANCE:
+- What patterns do you see across these videos? What's shifting? What are players focused on?
+- The meta_update array must cover ALL weapons and shells from the database — every entry needs name, type, tier, trend, note
+- Most items should be "stable" trend — only mark "up" or "down" with genuine evidence
+- Solo and Squad ranked tiers may differ — note both when relevant
+- grid_pulse 0-10 reflects intensity of meta shift this cycle (low = stable meta, high = major movement)
+
+Use the publish_meta_intel tool to publish your analysis.`;
 
     default:
       return null;
