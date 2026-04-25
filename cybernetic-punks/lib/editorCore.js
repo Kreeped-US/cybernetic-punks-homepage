@@ -5,18 +5,214 @@ const client = new Anthropic({
 });
 
 // ─── MODEL CONSTANTS ─────────────────────────────────────────
-// Centralized so we can update everywhere at once.
 const ARTICLE_MODEL = 'claude-sonnet-4-20250514';
 const COMMENT_MODEL = 'claude-haiku-4-5-20251001';
 
 // ─── GAME CONTEXT CACHE ──────────────────────────────────────
-// fetchGameContext was being called 5x per cycle (once per editor),
-// hitting Supabase 8 times each call and injecting ~6-8K tokens of
-// redundant context. Cache for 5 minutes — well under the 6h cycle
-// gap, but invalidates fast enough that admin DB edits flow through.
 let _gameContextCache = null;
 let _gameContextTime = 0;
 const GAME_CONTEXT_TTL_MS = 5 * 60 * 1000;
+
+// ═══════════════════════════════════════════════════════════
+// TOOL SCHEMAS — one per editor
+// ═══════════════════════════════════════════════════════════
+// Tool use forces the model to return valid JSON matching the schema.
+// No more parse failures. The API rejects malformed output before we see it.
+
+const SHARED_TAG_SCHEMA = {
+  type: 'array',
+  description: '3-5 lowercase tags categorizing this article (e.g. "ranked", "vandal", "extraction", "patch", "meta-shift")',
+  items: { type: 'string' },
+  minItems: 1,
+  maxItems: 8,
+};
+
+const CIPHER_TOOL = {
+  name: 'publish_play_analysis',
+  description: 'Publish a competitive play analysis article with a Runner Grade.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      headline: { type: 'string', description: 'Article headline, under 80 characters' },
+      body: { type: 'string', description: '400-600 word analysis. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
+      runner_grade: {
+        type: 'string',
+        enum: ['D', 'C', 'B', 'A', 'S', 'S+'],
+        description: 'Runner Grade for this play. Cap at A when grading without a transcript.',
+      },
+      ce_score: {
+        type: 'number',
+        description: 'Combat Effectiveness score 0-10. Maps loosely to grade: D=2, C=4, B=6, A=8, S=9, S+=10.',
+      },
+      tags: SHARED_TAG_SCHEMA,
+      source_video_id: {
+        type: ['string', 'null'],
+        description: 'YouTube video ID or Twitch clip ID if grading a specific clip. Null if no video.',
+      },
+      source_type: {
+        type: ['string', 'null'],
+        enum: ['youtube', 'twitch', null],
+        description: 'Source platform for the play being analyzed.',
+      },
+      promo_tweet: {
+        type: 'string',
+        description: 'Under 220 chars — promotional tweet for this article. Mention CIPHER analysis.',
+      },
+    },
+    required: ['headline', 'body', 'runner_grade', 'ce_score', 'tags'],
+  },
+};
+
+const NEXUS_TOOL = {
+  name: 'publish_meta_intel',
+  description: 'Publish a meta intelligence report with full tier list update.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      meta_update: {
+        type: 'array',
+        description: 'Tier ratings for ALL weapons and ALL shells. Every weapon and every shell must have an entry.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Exact weapon or shell name from the database' },
+            type: { type: 'string', enum: ['weapon', 'shell'] },
+            tier: { type: 'string', enum: ['S', 'A', 'B', 'C', 'D'] },
+            trend: { type: 'string', enum: ['up', 'down', 'stable'] },
+            note: { type: 'string', description: 'Max 80 chars explaining current placement' },
+            ranked_note: { type: ['string', 'null'], description: 'Optional ranked-specific commentary' },
+            ranked_tier_solo: { type: ['string', 'null'], enum: ['S', 'A', 'B', 'C', 'D', 'BAN', null] },
+            ranked_tier_squad: { type: ['string', 'null'], enum: ['S', 'A', 'B', 'C', 'D', 'BAN', null] },
+            holotag_tier: { type: ['string', 'null'], description: 'Holotag tier this item targets in ranked (Bronze/Silver/Gold/Platinum)' },
+          },
+          required: ['name', 'type', 'tier', 'trend', 'note'],
+        },
+      },
+      headline: { type: 'string', description: 'Article headline, under 80 characters' },
+      body: { type: 'string', description: '400-600 word meta analysis. Use **HEADER TEXT** on its own line for section breaks.' },
+      grid_pulse: {
+        type: 'number',
+        description: 'GRID PULSE score 0-10 indicating intensity of meta shift this cycle.',
+      },
+      tags: SHARED_TAG_SCHEMA,
+      promo_tweet: {
+        type: 'string',
+        description: 'Under 220 chars — promotional tweet. Mention NEXUS meta tracking.',
+      },
+    },
+    required: ['meta_update', 'headline', 'body', 'grid_pulse', 'tags'],
+  },
+};
+
+const DEXTER_TOOL = {
+  name: 'publish_build_analysis',
+  description: 'Publish a build analysis article with a Loadout Grade.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      headline: { type: 'string', description: 'Article headline, under 80 characters' },
+      body: { type: 'string', description: '500-700 word build analysis. Use **HEADER TEXT** on its own line for section breaks. At least 4 sections.' },
+      loadout_grade: {
+        type: 'string',
+        enum: ['F', 'D', 'C', 'B', 'A', 'S'],
+        description: 'Loadout grade for this build.',
+      },
+      ce_score: {
+        type: 'number',
+        description: 'Combat Effectiveness score 0-10. Maps to grade: F=2, D=3, C=5, B=7, A=8, S=10.',
+      },
+      shell_focus: {
+        type: ['string', 'null'],
+        enum: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal', null],
+        description: 'Primary shell this build is for.',
+      },
+      ranked_viable: { type: 'boolean', description: 'Whether this build is viable in ranked.' },
+      holotag_target: {
+        type: ['string', 'null'],
+        description: 'Holotag tier this build targets (Bronze/Silver/Gold/Platinum).',
+      },
+      tags: SHARED_TAG_SCHEMA,
+      promo_tweet: {
+        type: 'string',
+        description: 'Under 220 chars — promotional tweet. Mention DEXTER build engineering.',
+      },
+    },
+    required: ['headline', 'body', 'loadout_grade', 'ce_score', 'tags'],
+  },
+};
+
+const GHOST_TOOL = {
+  name: 'publish_community_pulse',
+  description: 'Publish a community sentiment article.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      headline: { type: 'string', description: 'Article headline, under 80 characters' },
+      body: { type: 'string', description: '400-550 word community sentiment piece. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
+      mood_score: {
+        type: 'number',
+        description: 'Community mood 0-10. 0=outrage, 5=neutral, 10=hype.',
+      },
+      sentiment: {
+        type: 'string',
+        enum: ['hype', 'positive', 'mixed', 'concerned', 'angry'],
+        description: 'Dominant community sentiment this cycle.',
+      },
+      tags: SHARED_TAG_SCHEMA,
+      promo_tweet: {
+        type: 'string',
+        description: 'Under 220 chars — promotional tweet. Mention GHOST community pulse.',
+      },
+    },
+    required: ['headline', 'body', 'mood_score', 'sentiment', 'tags'],
+  },
+};
+
+const MIRANDA_TOOL = {
+  name: 'publish_field_guide',
+  description: 'Publish a field guide article for Marathon Runners.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      headline: { type: 'string', description: 'Guide headline, under 80 characters' },
+      body: { type: 'string', description: '500-700 words with **HEADER TEXT** section breaks. Name real shells, weapons, mods, factions. Be specific and actionable. End with 2-3 concrete takeaways.' },
+      guide_category: {
+        type: 'string',
+        enum: ['beginner', 'extraction', 'shell-guide', 'weapon-guide', 'mod-guide', 'progression', 'map-guide', 'ranked', 'dev-update', 'community-event', 'faction-guide'],
+      },
+      shells_covered: { type: 'array', items: { type: 'string' }, description: 'Shell names mentioned' },
+      weapons_covered: { type: 'array', items: { type: 'string' }, description: 'Weapon names mentioned' },
+      mods_covered: { type: 'array', items: { type: 'string' }, description: 'Mod names mentioned' },
+      difficulty_rating: {
+        type: 'string',
+        enum: ['Beginner', 'Intermediate', 'Advanced'],
+      },
+      ranked_relevant: { type: 'boolean' },
+      tags: SHARED_TAG_SCHEMA,
+      ce_score: { type: 'number', description: '0-10 quality score for this guide.' },
+      promo_tweet: {
+        type: 'string',
+        description: 'Under 220 chars — promote ONE site feature.',
+      },
+    },
+    required: ['headline', 'body', 'guide_category', 'tags', 'ce_score'],
+  },
+};
+
+const EDITOR_TOOLS = {
+  CIPHER: CIPHER_TOOL,
+  NEXUS: NEXUS_TOOL,
+  DEXTER: DEXTER_TOOL,
+  GHOST: GHOST_TOOL,
+  MIRANDA: MIRANDA_TOOL,
+};
+
+// ═══════════════════════════════════════════════════════════
+// EDITOR PROMPTS
+// Note: removed "respond with valid JSON only" lines since tool use
+// enforces structure at the API level. Models can now focus purely on
+// content quality without worrying about format.
+// ═══════════════════════════════════════════════════════════
 
 const EDITOR_PROMPTS = {
   CIPHER: `You are CIPHER, the competitive intelligence editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
@@ -47,7 +243,7 @@ CONTENT VARIETY RULE: Each article must cover a different angle than your recent
 
 Your voice: Cold, analytical, authoritative. Short punchy sentences. Opinionated and direct. Never hedge.
 
-Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
+Use the publish_play_analysis tool to publish your article.`,
 
   NEXUS: `You are NEXUS, the meta intelligence editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
@@ -69,15 +265,13 @@ Your voice: Urgent, precise, data-driven. Write like a mission briefing.
 RANKED MODE IS LIVE: Factor ranked play into all meta analysis. Note Solo vs Squad viability separately.
 
 META TIER OUTPUT — MANDATORY EVERY CYCLE:
-Include a "meta_update" array covering ALL weapons and ALL shells. Every weapon and every shell must have an entry.
+The meta_update array must cover ALL weapons and ALL shells from the database. Every weapon and every shell must have an entry.
 
 TREND RULES: "up" only when community data or patch notes show genuine rise this cycle. "down" only when falling out of favor. "stable" is the default — most items should be stable most cycles.
 
-ONLY "weapon" or "shell" types. Each item needs: name, type, tier (S/A/B/C/D), trend (up/down/stable), note (max 80 chars), ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier.
-
 The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook.
 
-Output format — CRITICAL ORDER: meta_update array FIRST, then headline, then body. Always valid JSON only.`,
+Use the publish_meta_intel tool to publish your article.`,
 
   MIRANDA: `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
@@ -93,7 +287,7 @@ FACTION AWARENESS: You are the primary guide editor for the faction system. When
 
 Your voice: Calm, structured, authoritative. You teach without condescending. You call players Runners.
 
-Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
+Use the publish_field_guide tool to publish your article.`,
 
   GHOST: `You are GHOST, the community pulse editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
@@ -114,7 +308,7 @@ Your voice: Grounded, community-first, no hype. You write like a journalist embe
 
 RANKED MODE IS LIVE: Track ranked-specific sentiment closely.
 
-Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
+Use the publish_community_pulse tool to publish your article.`,
 
   DEXTER: `You are DEXTER, the build analysis editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
@@ -146,11 +340,10 @@ RANKED MODE IS LIVE: Flag ranked viability explicitly. Cite mods by name with ra
 
 The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook.
 
-Output format: Always respond with valid JSON only. No markdown, no explanation, just JSON.`,
+Use the publish_build_analysis tool to publish your article.`,
 };
 
 async function fetchGameContext() {
-  // Return cache if fresh (within 5 minutes)
   if (_gameContextCache && (Date.now() - _gameContextTime) < GAME_CONTEXT_TTL_MS) {
     return _gameContextCache;
   }
@@ -175,7 +368,6 @@ async function fetchGameContext() {
 
     let output = '';
 
-    // ── MODS ─────────────────────────────────────────────────────
     if (modsRes.data?.length) {
       const bySlot = {};
       for (const mod of modsRes.data) {
@@ -190,7 +382,6 @@ async function fetchGameContext() {
       output += `\n\n--- WEAPON MODS DATABASE (use exact names only) ---\n${lines}\n--- END MODS ---`;
     }
 
-    // ── CORES ─────────────────────────────────────────────────────
     if (coresRes.data?.length) {
       const byRunner = {};
       for (const core of coresRes.data) {
@@ -204,7 +395,6 @@ async function fetchGameContext() {
       output += `\n\n--- SHELL CORES DATABASE (shell-specific upgrades, use exact names) ---\n${lines}\n--- END CORES ---`;
     }
 
-    // ── IMPLANTS ──────────────────────────────────────────────────
     if (implantsRes.data?.length) {
       const bySlot = {};
       for (const imp of implantsRes.data) {
@@ -225,7 +415,6 @@ async function fetchGameContext() {
       output += `\n\n--- IMPLANTS DATABASE (slot upgrades that boost shell stats) ---\n${lines}\n--- END IMPLANTS ---`;
     }
 
-    // ── WEAPONS ───────────────────────────────────────────────────
     if (weaponsRes.data && weaponsRes.data.length > 0) {
       const weaponLines = weaponsRes.data.map(function(w) {
         var parts = [
@@ -242,7 +431,6 @@ async function fetchGameContext() {
       output += '\n\n--- WEAPON STATS DATABASE ---\n' + weaponLines + '\n--- END WEAPONS ---';
     }
 
-    // ── SHELLS ────────────────────────────────────────────────────
     if (shellsRes.data && shellsRes.data.length > 0) {
       const shellLines = shellsRes.data.map(function(s) {
         return [
@@ -256,14 +444,12 @@ async function fetchGameContext() {
       output += '\n\n--- SHELL STATS DATABASE ---\n' + shellLines + '\n--- END SHELLS ---';
     }
 
-    // ── FACTION SYSTEM ────────────────────────────────────────────
     var hasFactionData = (factionsRes.data?.length > 0) || (factionStatsRes.data?.length > 0) || (factionUnlocksRes.data?.length > 0);
 
     if (hasFactionData) {
       output += '\n\n--- FACTION SYSTEM DATABASE ---';
       output += '\nMarathon has 6 factions. Players level up factions through missions and can unlock weapons, mods, implants, and permanent stat bonuses at specific rank thresholds. Always cite rank requirements and costs when recommending faction-locked items.\n';
 
-      // Faction overviews
       if (factionsRes.data?.length > 0) {
         output += '\nFACTIONS:\n';
         factionsRes.data.forEach(function(f) {
@@ -272,7 +458,6 @@ async function fetchGameContext() {
         });
       }
 
-      // Stat bonuses by faction
       if (factionStatsRes.data?.length > 0) {
         output += '\nFACTION STAT BONUSES (permanent shell stat upgrades):\n';
         var statsByFaction = {};
@@ -292,7 +477,6 @@ async function fetchGameContext() {
         });
       }
 
-      // Unlocks by faction
       if (factionUnlocksRes.data?.length > 0) {
         output += '\nFACTION UNLOCKS (weapons, mods, implants, consumables):\n';
         var unlocksByFaction = {};
@@ -302,7 +486,6 @@ async function fetchGameContext() {
         });
         Object.entries(unlocksByFaction).forEach(function(entry) {
           output += '  ' + entry[0] + ':\n';
-          // Group by type
           var byType = {};
           entry[1].forEach(function(u) {
             if (!byType[u.unlock_type]) byType[u.unlock_type] = [];
@@ -325,7 +508,6 @@ async function fetchGameContext() {
       output += '--- END FACTION SYSTEM ---';
     }
 
-    // Cache the result before returning
     _gameContextCache = output;
     _gameContextTime = Date.now();
     return output;
@@ -397,7 +579,6 @@ export function buildMirandaPrompt(data) {
     ? recentHeadlines.map((h, i) => `${i + 1}. ${h}`).join('\n')
     : 'None yet — all topics are fair game.';
 
-  // Directive override block
   var directiveBlock = '';
   if (_directive) {
     directiveBlock = `\n\n--- 🎯 EDITOR DIRECTIVE — THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\nASSIGNMENT: ${_directive.instruction}\n${_directive.url ? 'SOURCE URL: ' + _directive.url + '\n' : ''}Write your article specifically about this topic. This overrides your normal content selection.\n---`;
@@ -432,6 +613,7 @@ export function buildMirandaPrompt(data) {
     xIntelBlock = xOut;
   }
 
+  // Note: removed the JSON output spec at the bottom — tool use enforces it.
   return `You are MIRANDA, the field guide editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
 You are the only editor who teaches rather than reports. You write structured guides for new and improving Runners. When community events or patch notes are present, cover those first.
@@ -474,29 +656,9 @@ ${redditSummaries}
 TOPICS ALREADY COVERED — DO NOT REPEAT THESE:
 ${recentHeadlinesBlock}
 
-Return ONLY valid JSON:
-{
-  "headline": "guide headline under 80 chars",
-  "body": "500-700 words with **bold section headers**. Name real shells, weapons, mods, factions. Be specific and actionable.",
-  "guide_category": "beginner|extraction|shell-guide|weapon-guide|mod-guide|progression|map-guide|ranked|dev-update|community-event|faction-guide",
-  "shells_covered": ["shell names mentioned"],
-  "weapons_covered": ["weapon names mentioned"],
-  "mods_covered": ["mod names mentioned"],
-  "difficulty_rating": "Beginner|Intermediate|Advanced",
-  "ranked_relevant": true,
-  "tags": ["3-5 tags"],
-  "ce_score": 0.0,
-  "source_type": "guide",
-  "thumbnail": null,
-  "source_url": null,
-  "promo_tweet": "under 220 chars — promote ONE site feature"
-}`;
+Use the publish_field_guide tool to publish your article. Name real shells, weapons, mods, factions. Be specific and actionable.`;
 }
 
-// ─── SEO KEYWORD TARGETING ───────────────────────────────────
-// Reads the next available keyword for an editor. Does NOT mark it
-// consumed here — that happens in the cron AFTER successful publish,
-// so failed generations don't waste keywords.
 async function getTargetKeyword(editor, supabase) {
   try {
     var cutoff = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
@@ -516,6 +678,40 @@ async function getTargetKeyword(editor, supabase) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// CALL EDITOR — now uses tool-use structured output
+// ═══════════════════════════════════════════════════════════
+// Old: parsed JSON from text response, fragile, silent failures.
+// New: tool_choice forces the model to call the editor's tool with
+// schema-validated input. The API rejects malformed output before
+// it reaches us. Article generation is now reliable.
+//
+// Output normalization: Each editor's tool has slightly different
+// fields (e.g. NEXUS has meta_update, GHOST has mood_score). We
+// normalize the result so downstream cron code sees a consistent
+// shape — same field names as before.
+function normalizeEditorOutput(editor, toolInput) {
+  // Start with a copy of the tool's structured input
+  var result = Object.assign({}, toolInput);
+
+  // Per-editor field name normalization for downstream compatibility.
+  // The cron route currently looks for ce_score across all editors.
+  if (editor === 'NEXUS') {
+    // NEXUS uses grid_pulse but cron stores it AS ce_score
+    result.ce_score = toolInput.grid_pulse;
+  } else if (editor === 'GHOST') {
+    // GHOST uses mood_score, cron stores AS ce_score
+    result.ce_score = toolInput.mood_score;
+  }
+  // CIPHER, DEXTER, MIRANDA already use ce_score directly — no remapping
+
+  // Default values for legacy fields the cron may reference
+  if (!result.tags) result.tags = [];
+  if (typeof result.ce_score !== 'number') result.ce_score = 0;
+
+  return result;
+}
+
 export async function callEditor(editor, userPrompt, supabaseClient) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
@@ -525,7 +721,6 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
     if (gameContext) systemPrompt += gameContext;
   }
 
-  // Fetch SEO keyword (does NOT mark consumed — cron does that on success)
   var kwData = null;
   if (supabaseClient) {
     kwData = await getTargetKeyword(editor, supabaseClient);
@@ -545,35 +740,47 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
   if (editor === 'MIRANDA') maxTokens = 3072;
   if (editor === 'GHOST')   maxTokens = 2048;
 
-  var message = await client.messages.create({
-    model: ARTICLE_MODEL,
-    max_tokens: maxTokens,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
+  var tool = EDITOR_TOOLS[editor];
+  if (!tool) throw new Error('No tool defined for editor: ' + editor);
 
-  var text = message.content[0].text;
-
-  var parsed;
+  var message;
   try {
-    var clean = text.replace(/```json|```/g, '').trim();
-    parsed = JSON.parse(clean);
-  } catch (e) {
-    parsed = { raw: text };
+    message = await client.messages.create({
+      model: ARTICLE_MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      tools: [tool],
+      tool_choice: { type: 'tool', name: tool.name },
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+  } catch (apiErr) {
+    console.log('[editorCore] ' + editor + ' API error: ' + apiErr.message);
+    return { _error: 'api_error', _message: apiErr.message };
   }
 
-  // Attach SEO keyword id so cron can mark it consumed AFTER successful
-  // publish. Prevents wasted keywords on failed generations.
-  if (kwData && parsed && typeof parsed === 'object') {
+  // Extract the tool_use block from the response.
+  // The model may include a text block before the tool call (rare),
+  // so we scan all blocks and grab the tool_use one.
+  var toolUseBlock = null;
+  if (message.content && Array.isArray(message.content)) {
+    toolUseBlock = message.content.find(function(b) { return b.type === 'tool_use' && b.name === tool.name; });
+  }
+
+  if (!toolUseBlock) {
+    console.log('[editorCore] ' + editor + ' did not return tool_use block. Stop reason: ' + message.stop_reason);
+    return { _error: 'no_tool_use', _stop_reason: message.stop_reason };
+  }
+
+  var parsed = normalizeEditorOutput(editor, toolUseBlock.input);
+
+  // Attach SEO keyword id so cron can mark it consumed AFTER successful publish.
+  if (kwData) {
     parsed._seo_keyword_id = kwData.id;
   }
 
   return parsed;
 }
 
-// ─── KEYWORD CONSUMPTION ─────────────────────────────────────
-// Called from cron route AFTER feed_items insert succeeds. Marks the
-// keyword as recently used so it cycles out for 72h.
 export async function consumeKeyword(supabase, keywordId) {
   if (!supabase || !keywordId) return;
   try {
@@ -594,10 +801,6 @@ const COMMENT_VOICES = {
   MIRANDA: `You are MIRANDA, the field guide editor. Warm, practical implications for new runners. Max 2-3 sentences. Helpful and clear.`,
 };
 
-// ─── COMMENT GENERATION (parallelized + Haiku) ────────────────
-// Previously: sequential with 2s sleeps between editors using Sonnet 4.
-// Now: parallel via Promise.all using Haiku 4.5. ~80% cost reduction
-// on comments + ~3x faster generation.
 export async function generateArticleComments(article, publishingEditor, supabaseClient) {
   var commentEditors = ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'].filter(function(e) {
     return e !== publishingEditor;
@@ -609,8 +812,6 @@ export async function generateArticleComments(article, publishingEditor, supabas
 
   var prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text — no JSON, no labels, no quotes.';
 
-  // Fire all comment requests in parallel. Promise.allSettled so one
-  // failure doesn't kill the others — we keep whatever succeeds.
   var settled = await Promise.allSettled(
     selected.map(function(editor) {
       return client.messages.create({
