@@ -66,10 +66,6 @@ function resolveMediaInfo(result, rawData, editorName) {
   return { thumbnail: null, source_url: null, source: 'YOUTUBE' };
 }
 
-function sleep(ms) {
-  return new Promise(function(resolve) { setTimeout(resolve, ms); });
-}
-
 // ── BUILD "DO NOT REPEAT" BLOCK ───────────────────────────────
 function buildNoRepeatBlock(headlines) {
   if (!headlines || headlines.length === 0) return '';
@@ -367,8 +363,11 @@ export async function GET() {
       }
     }
 
-    // ── STEP 6: Run editors ───────────────────────────────────────
-    var results = [];
+    // ── STEP 6: Run editors IN PARALLEL ───────────────────────────
+    // Previously: sequential loop with 15s sleep between each (60s dead time
+    // per cycle, ~10min total). Now: all 5 editors fire simultaneously via
+    // Promise.allSettled — cycle drops to ~3min. allSettled prevents one
+    // editor's failure from killing the others.
     var editors = [
       { name: 'CIPHER',  prompt: prompts.CIPHER  },
       { name: 'NEXUS',   prompt: prompts.NEXUS   },
@@ -377,19 +376,28 @@ export async function GET() {
       { name: 'MIRANDA', prompt: prompts.MIRANDA },
     ];
 
-    for (var i = 0; i < editors.length; i++) {
-      if (i > 0) await sleep(15000);
-      var editorResult = await processEditor(editors[i].name, editors[i].prompt, rawData);
-      results.push(editorResult);
+    var settledResults = await Promise.allSettled(
+      editors.map(function(e) { return processEditor(e.name, e.prompt, rawData); })
+    );
 
-      // ── STEP 7: Mark directive consumed if editor succeeded ───────
-      if (editorResult.success && directiveMap[editors[i].name]) {
+    // Unwrap settled results back to a flat results array
+    var results = settledResults.map(function(s, idx) {
+      if (s.status === 'fulfilled') return s.value;
+      return { editor: editors[idx].name, success: false, error: s.reason?.message || 'Unhandled rejection' };
+    });
+
+    // ── STEP 7: Mark directives consumed for editors that succeeded ──
+    // Done after parallel execution completes — same logic as before,
+    // just batched into its own pass.
+    for (var i = 0; i < results.length; i++) {
+      var r = results[i];
+      if (r.success && directiveMap[r.editor]) {
         try {
           await supabase
             .from('editor_directives')
             .update({ status: 'consumed', consumed_at: new Date().toISOString() })
-            .eq('id', directiveMap[editors[i].name].id);
-          console.log('[CRON] Directive consumed for ' + editors[i].name + ': ' + directiveMap[editors[i].name].instruction.slice(0, 60));
+            .eq('id', directiveMap[r.editor].id);
+          console.log('[CRON] Directive consumed for ' + r.editor + ': ' + directiveMap[r.editor].instruction.slice(0, 60));
         } catch (consumeErr) {
           console.log('[CRON] Failed to mark directive consumed: ' + consumeErr.message);
         }

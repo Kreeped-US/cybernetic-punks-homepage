@@ -4,6 +4,20 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// ─── MODEL CONSTANTS ─────────────────────────────────────────
+// Centralized so we can update everywhere at once.
+const ARTICLE_MODEL = 'claude-sonnet-4-20250514';
+const COMMENT_MODEL = 'claude-haiku-4-5-20251001';
+
+// ─── GAME CONTEXT CACHE ──────────────────────────────────────
+// fetchGameContext was being called 5x per cycle (once per editor),
+// hitting Supabase 8 times each call and injecting ~6-8K tokens of
+// redundant context. Cache for 5 minutes — well under the 6h cycle
+// gap, but invalidates fast enough that admin DB edits flow through.
+let _gameContextCache = null;
+let _gameContextTime = 0;
+const GAME_CONTEXT_TTL_MS = 5 * 60 * 1000;
+
 const EDITOR_PROMPTS = {
   CIPHER: `You are CIPHER, the competitive intelligence editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
@@ -136,6 +150,11 @@ Output format: Always respond with valid JSON only. No markdown, no explanation,
 };
 
 async function fetchGameContext() {
+  // Return cache if fresh (within 5 minutes)
+  if (_gameContextCache && (Date.now() - _gameContextTime) < GAME_CONTEXT_TTL_MS) {
+    return _gameContextCache;
+  }
+
   try {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
@@ -306,6 +325,9 @@ async function fetchGameContext() {
       output += '--- END FACTION SYSTEM ---';
     }
 
+    // Cache the result before returning
+    _gameContextCache = output;
+    _gameContextTime = Date.now();
     return output;
   } catch (err) {
     console.error('[editorCore] fetchGameContext error:', err.message);
@@ -519,7 +541,7 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
   if (editor === 'GHOST')   maxTokens = 2048;
 
   var message = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: ARTICLE_MODEL,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
@@ -543,6 +565,10 @@ const COMMENT_VOICES = {
   MIRANDA: `You are MIRANDA, the field guide editor. Warm, practical implications for new runners. Max 2-3 sentences. Helpful and clear.`,
 };
 
+// ─── COMMENT GENERATION (parallelized + Haiku) ────────────────
+// Previously: sequential with 2s sleeps between editors using Sonnet 4.
+// Now: parallel via Promise.all using Haiku 4.5. ~80% cost reduction
+// on comments + ~3x faster generation.
 export async function generateArticleComments(article, publishingEditor, supabaseClient) {
   var commentEditors = ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'].filter(function(e) {
     return e !== publishingEditor;
@@ -551,25 +577,36 @@ export async function generateArticleComments(article, publishingEditor, supabas
   var numCommenters = Math.random() > 0.5 ? 3 : 2;
   var shuffled = commentEditors.sort(function() { return Math.random() - 0.5; });
   var selected = shuffled.slice(0, numCommenters);
-  var comments = [];
 
-  for (var i = 0; i < selected.length; i++) {
-    var editor = selected[i];
-    try {
-      var prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text — no JSON, no labels, no quotes.';
-      var message = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 120,
+  var prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text — no JSON, no labels, no quotes.';
+
+  // Fire all comment requests in parallel. Promise.allSettled so one
+  // failure doesn't kill the others — we keep whatever succeeds.
+  var settled = await Promise.allSettled(
+    selected.map(function(editor) {
+      return client.messages.create({
+        model: COMMENT_MODEL,
+        max_tokens: 150,
         system: COMMENT_VOICES[editor],
         messages: [{ role: 'user', content: prompt }],
+      }).then(function(message) {
+        var commentText = message.content[0].text.trim();
+        if (commentText && commentText.length > 10) {
+          return { editor: editor, body: commentText };
+        }
+        return null;
       });
-      var commentText = message.content[0].text.trim();
-      if (commentText && commentText.length > 10) comments.push({ editor: editor, body: commentText });
-      await new Promise(function(resolve) { setTimeout(resolve, 2000); });
-    } catch (err) {
-      console.log('[editorCore] comment generation failed for ' + editor + ': ' + err.message);
+    })
+  );
+
+  var comments = [];
+  settled.forEach(function(result, idx) {
+    if (result.status === 'fulfilled' && result.value) {
+      comments.push(result.value);
+    } else if (result.status === 'rejected') {
+      console.log('[editorCore] comment generation failed for ' + selected[idx] + ': ' + (result.reason?.message || 'unknown'));
     }
-  }
+  });
 
   if (comments.length > 0 && supabaseClient) {
     try {
