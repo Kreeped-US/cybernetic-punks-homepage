@@ -1,13 +1,22 @@
 // app/stats/page.js
 // STATS HUB — Player lookup, extraction stats, weapon performance
 // SEO placeholder — ready to wire to Bungie Marathon API when available
+//
+// Updated April 27, 2026:
+// - Colors aligned to design system tokens (#121418 / #1a1d24 / #22252e)
+// - Fonts standardized to explicit Orbitron / system-ui / monospace
+// - Discord invite corrected to discord.gg/PnhbdRYh3w (was sending traffic
+//   to a wrong server)
+// - BreadcrumbList JSON-LD + visible breadcrumb added
+// - Cross-link bar expanded
+// - FAQ section + schema (already present) preserved
 
 import Link from 'next/link';
 
 export var metadata = {
   title: 'Marathon Stats Tracker — Player Stats, Extraction Rates & Performance',
   description: 'Track your Marathon stats — extraction rates, K/D ratio, loot value, weapon kills, Runner Shell performance, and ranked progression. Look up any player on Steam, PlayStation, or Xbox. Powered by CyberneticPunks.',
-  keywords: 'Marathon stats, Marathon stats tracker, Marathon player stats, Marathon player lookup, Marathon K/D, Marathon extraction rate, Marathon weapon stats, Marathon ranked stats, Marathon leaderboard, Marathon performance tracker, Marathon Steam stats, Marathon PlayStation stats, Marathon Xbox stats',
+  keywords: 'Marathon stats, Marathon stats tracker, Marathon player stats, Marathon player lookup, Marathon K/D, Marathon extraction rate, Marathon weapon stats, Marathon ranked stats, Marathon leaderboard, Marathon performance tracker, Marathon Steam stats, Marathon PlayStation stats, Marathon Xbox stats, Marathon Bungie name lookup, Marathon profile stats, Marathon weapon kills',
   openGraph: {
     title: 'Marathon Stats Tracker | CyberneticPunks',
     description: 'Look up any Marathon player. Track extraction rates, weapon performance, Runner Shell stats, and ranked progression.',
@@ -26,47 +35,55 @@ export var metadata = {
   alternates: { canonical: 'https://cyberneticpunks.com/stats' },
 };
 
-var CYAN = '#00f5ff';
-var RED = '#ff0000';
-var ORANGE = '#ff8800';
-var GREEN = '#00ff88';
-var PURPLE = '#9b5de5';
+// ─── DESIGN TOKENS (aligned to locked design system) ─────────
+var BG_PAGE   = '#121418';
+var BG_CARD   = '#1a1d24';
+var BG_DEEP   = '#0e1014';
+var BORDER    = '#22252e';
+var BORDER_SUBTLE = '#1e2028';
+
+// Editor colors (locked design system)
+var CIPHER  = '#ff2222';
+var NEXUS   = '#00d4ff';
+var DEXTER  = '#ff8800';
+var GHOST   = '#00ff88';
+var MIRANDA = '#9b5de5';
 
 var STAT_CATEGORIES = [
   {
     icon: '◎',
     title: 'EXTRACTION STATS',
-    color: GREEN,
+    color: GHOST,
     stats: ['Successful Extractions', 'Extraction Rate %', 'Total Loot Value Extracted', 'Average Loot Per Run', 'Longest Survival Streak', 'Rook Extractions'],
   },
   {
     icon: '◈',
     title: 'COMBAT PERFORMANCE',
-    color: RED,
+    color: CIPHER,
     stats: ['Total Kills (PvP)', 'Total Kills (PvE)', 'K/D Ratio', 'Headshot %', 'Assists', 'Finishers', 'Deaths', 'Revenge Kills'],
   },
   {
     icon: '⬢',
     title: 'WEAPON MASTERY',
-    color: ORANGE,
+    color: DEXTER,
     stats: ['Top Weapon by Kills', 'Kills Per Weapon Category', 'Accuracy by Weapon', 'Best Weapon K/D', 'Railgun Kills', 'Melee Kills'],
   },
   {
     icon: '⬡',
     title: 'SHELL PERFORMANCE',
-    color: CYAN,
+    color: NEXUS,
     stats: ['Time Played Per Shell', 'Win Rate Per Shell', 'Most Used Shell', 'Ability Kills Per Shell', 'Prime Ability Uses', 'Tactical Ability Uses'],
   },
   {
     icon: '◇',
     title: 'RANKED PROGRESSION',
-    color: PURPLE,
+    color: MIRANDA,
     stats: ['Current Rank', 'Peak Rank (Season)', 'Ranked Extraction Rate', 'Holotag Score Average', 'Ranked Wins', 'Season History'],
   },
   {
     icon: '⬠',
     title: 'ECONOMY & LOOT',
-    color: '#ffcc00',
+    color: '#ffd700',
     stats: ['Total Credits Earned', 'Prestige Items Extracted', 'Faction Reputation', 'Season Level', 'Backpack Capacity Used', 'Items Lost on Death'],
   },
 ];
@@ -77,13 +94,58 @@ var PLATFORMS = [
   { name: 'Xbox', icon: '⊕', color: '#107c10' },
 ];
 
+// ─── FAQ DATA — drives both visible section AND schema ───────
+var FAQS = [
+  {
+    q: 'When will Marathon stats tracking go live?',
+    a: "The moment Bungie releases the official Marathon API. Our infrastructure is built and ready to connect — player search, stat profiles, leaderboards, and weapon analytics will all activate simultaneously when the API endpoints become public.",
+  },
+  {
+    q: 'What platforms are supported?',
+    a: "Marathon supports full cross-play across Steam, PlayStation 5, and Xbox Series X|S. The CyberneticPunks stats tracker will search across all three platforms using Bungie Name lookup, identical to how Destiny 2 player tracking works today.",
+  },
+  {
+    q: 'Will my Marathon stats carry over between seasons?',
+    a: "Marathon wipes gear and progression each season, but CyberneticPunks will track your historical performance across every season. This gives you a complete picture of your improvement over time, even when in-game progression resets — your career stats persist permanently.",
+  },
+  {
+    q: 'How is CyberneticPunks different from Tracker.gg or MarathonDB?',
+    a: "CyberneticPunks combines stat tracking with AI-powered editorial analysis. Our editors CIPHER, NEXUS, and DEXTER provide context that raw numbers cannot — meta relevance for your favorite weapons, build viability for your loadouts, and competitive grading alongside your stats. Other trackers show you the data; CyberneticPunks tells you what it means.",
+  },
+  {
+    q: 'Is CyberneticPunks affiliated with Bungie?',
+    a: "No. CyberneticPunks is an independent fan-operated Marathon intelligence hub. Marathon is a trademark of Bungie, Inc. We use only publicly available data from official APIs once they become available.",
+  },
+  {
+    q: 'How accurate will the stats be?',
+    a: "All stats will be pulled directly from Bungie's official Marathon API once it ships, identical to how the Destiny 2 ecosystem works. Numbers refresh in real time after each match. There is no manual entry, screenshot parsing, or third-party estimation — only official Bungie data.",
+  },
+];
+
 export default function StatsPage() {
   return (
-    <main style={{ background: '#030303', minHeight: '100vh', color: '#ffffff' }}>
+    <main style={{ background: BG_PAGE, minHeight: '100vh', color: '#ffffff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
+
+      {/* ─── BREADCRUMB ──────────────────────────────── */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 24px 0' }}>
+        <nav style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: 10,
+          letterSpacing: 2,
+          fontFamily: 'monospace',
+          fontWeight: 700,
+        }}>
+          <Link href="/" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>HOME</Link>
+          <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
+          <span style={{ color: NEXUS }}>STATS</span>
+        </nav>
+      </div>
 
       {/* ─── HERO ─────────────────────────────────────── */}
       <section style={{
-        padding: '120px 20px 50px',
+        padding: '60px 20px 50px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
@@ -93,87 +155,88 @@ export default function StatsPage() {
           top: '-40%',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '700px',
-          height: '700px',
-          background: 'radial-gradient(circle, ' + CYAN + '08 0%, transparent 70%)',
+          width: 700,
+          height: 700,
+          background: 'radial-gradient(circle, ' + NEXUS + '08 0%, transparent 70%)',
           pointerEvents: 'none',
         }} />
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 800, margin: '0 auto' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: 8,
             padding: '5px 14px',
-            border: '1px solid ' + RED + '44',
-            borderRadius: '4px',
-            marginBottom: '20px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            color: RED,
-            letterSpacing: '2px',
+            border: '1px solid ' + CIPHER + '44',
+            borderRadius: 3,
+            marginBottom: 20,
+            fontFamily: 'monospace',
+            fontSize: 11,
+            color: CIPHER,
+            letterSpacing: 2,
+            fontWeight: 700,
           }}>
             ● AWAITING BUNGIE API
           </div>
 
           <h1 style={{
-            fontFamily: 'var(--font-heading)',
+            fontFamily: 'Orbitron, monospace',
             fontSize: 'clamp(2rem, 6vw, 3.5rem)',
-            fontWeight: 700,
+            fontWeight: 900,
             lineHeight: 1.1,
             margin: '0 0 16px 0',
+            letterSpacing: '-0.5px',
           }}>
-            RUNNER <span style={{ color: CYAN }}>STATS</span>
+            RUNNER <span style={{ color: NEXUS }}>STATS</span>
           </h1>
 
           <p style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '17px',
+            fontSize: 17,
             color: '#999',
             lineHeight: 1.6,
-            maxWidth: '620px',
+            maxWidth: 620,
             margin: '0 auto 30px',
           }}>
             Look up any Marathon player across Steam, PlayStation, and Xbox. Track extraction rates, weapon performance, Runner Shell stats, and ranked progression — the moment Bungie opens the Marathon API.
           </p>
 
           <div style={{
-            maxWidth: '560px',
+            maxWidth: 560,
             margin: '0 auto 16px',
             position: 'relative',
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              background: '#0a0a0a',
-              border: '1px solid #222',
-              borderRadius: '8px',
+              background: BG_CARD,
+              border: '1px solid ' + BORDER,
+              borderRadius: 3,
               padding: '14px 20px',
-              gap: '12px',
+              gap: 12,
               opacity: 0.5,
               cursor: 'not-allowed',
             }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', color: '#333' }}>⌕</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 16, color: 'rgba(255,255,255,0.3)' }}>⌕</span>
               <span style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '15px',
-                color: '#333',
+                fontSize: 15,
+                color: 'rgba(255,255,255,0.3)',
                 flex: 1,
                 textAlign: 'left',
               }}>
                 Search Bungie Name or Steam ID...
               </span>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 {PLATFORMS.map(function(p) {
                   return (
                     <span key={p.name} style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '14px',
-                      color: '#222',
+                      fontFamily: 'monospace',
+                      fontSize: 14,
+                      color: 'rgba(255,255,255,0.25)',
                       padding: '4px 8px',
-                      background: '#111',
-                      borderRadius: '4px',
-                      border: '1px solid #1a1a1a',
+                      background: BG_DEEP,
+                      borderRadius: 2,
+                      border: '1px solid ' + BORDER_SUBTLE,
+                      fontWeight: 700,
                     }}>
                       {p.icon}
                     </span>
@@ -184,10 +247,11 @@ export default function StatsPage() {
           </div>
 
           <p style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            color: '#333',
-            letterSpacing: '1px',
+            fontFamily: 'monospace',
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.25)',
+            letterSpacing: 1.5,
+            fontWeight: 700,
           }}>
             PLAYER SEARCH ACTIVATES WHEN BUNGIE API GOES LIVE
           </p>
@@ -197,48 +261,52 @@ export default function StatsPage() {
       {/* ─── WHAT WE'LL TRACK ────────────────────────── */}
       <section style={{
         padding: '40px 20px 60px',
-        maxWidth: '1100px',
+        maxWidth: 1100,
         margin: '0 auto',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h2 style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '22px',
-            fontWeight: 700,
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 24,
+            fontWeight: 800,
             color: '#fff',
-            marginBottom: '8px',
+            margin: '0 0 12px 0',
+            letterSpacing: '-0.3px',
           }}>
             EVERY STAT. EVERY RUNNER.
           </h2>
           <p style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '14px',
-            color: '#666',
+            fontSize: 14,
+            color: 'rgba(255,255,255,0.55)',
+            lineHeight: 1.6,
+            maxWidth: 720,
+            margin: '0 auto',
           }}>
-            CyberneticPunks will track everything the Bungie API exposes — here&apos;s what we&apos;re building for.
+            CyberneticPunks will track everything the Bungie Marathon API exposes — here&apos;s what we&apos;re building for.
           </p>
         </div>
 
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '16px',
+          gap: 12,
         }}>
           {STAT_CATEGORIES.map(function(cat) {
             return (
               <div key={cat.title} style={{
-                background: '#0a0a0a',
-                border: '1px solid ' + cat.color + '22',
-                borderRadius: '8px',
-                padding: '24px',
+                background: BG_CARD,
+                border: '1px solid ' + BORDER,
+                borderLeft: '3px solid ' + cat.color,
+                borderRadius: '0 3px 3px 0',
+                padding: 24,
                 position: 'relative',
                 overflow: 'hidden',
               }}>
                 <div style={{
                   position: 'absolute',
-                  top: '12px',
-                  right: '16px',
-                  fontSize: '40px',
+                  top: 12,
+                  right: 16,
+                  fontSize: 40,
                   color: cat.color,
                   opacity: 0.08,
                   lineHeight: 1,
@@ -247,19 +315,20 @@ export default function StatsPage() {
                 </div>
 
                 <div style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '13px',
+                  fontFamily: 'Orbitron, monospace',
+                  fontSize: 13,
+                  fontWeight: 800,
                   color: cat.color,
-                  letterSpacing: '1px',
-                  marginBottom: '14px',
+                  letterSpacing: 2,
+                  marginBottom: 14,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: 8,
                 }}>
                   <span>{cat.icon}</span> {cat.title}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {cat.stats.map(function(stat) {
                     return (
                       <div key={stat} style={{
@@ -267,19 +336,18 @@ export default function StatsPage() {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '6px 0',
-                        borderBottom: '1px solid #111',
+                        borderBottom: '1px solid rgba(255,255,255,0.04)',
                       }}>
                         <span style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: '13px',
-                          color: '#888',
+                          fontSize: 13,
+                          color: 'rgba(255,255,255,0.55)',
                         }}>
                           {stat}
                         </span>
                         <span style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '12px',
-                          color: '#222',
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          color: 'rgba(255,255,255,0.2)',
                         }}>
                           — —
                         </span>
@@ -296,63 +364,65 @@ export default function StatsPage() {
       {/* ─── HOW IT WILL WORK ────────────────────────── */}
       <section style={{
         padding: '40px 20px 60px',
-        maxWidth: '800px',
+        maxWidth: 800,
         margin: '0 auto',
       }}>
         <h2 style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: '20px',
-          fontWeight: 700,
+          fontFamily: 'Orbitron, monospace',
+          fontSize: 22,
+          fontWeight: 800,
           color: '#fff',
-          marginBottom: '24px',
+          marginBottom: 24,
           textAlign: 'center',
+          letterSpacing: '-0.3px',
         }}>
           HOW IT WORKS
         </h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            { step: '01', title: 'SEARCH ANY PLAYER', desc: 'Enter a Bungie Name, Steam ID, or gamertag. We search across all platforms with full cross-play support.', color: CYAN },
-            { step: '02', title: 'VIEW FULL PROFILE', desc: 'Extraction rates, K/D, weapon mastery, Runner Shell breakdown, ranked history — everything in one view.', color: GREEN },
-            { step: '03', title: 'COMPARE & COMPETE', desc: 'Stack your stats against friends, rivals, or top players on the global leaderboard.', color: ORANGE },
-            { step: '04', title: 'TRACK OVER TIME', desc: 'Season-over-season progression tracking. See how your performance evolves across wipes.', color: PURPLE },
+            { step: '01', title: 'SEARCH ANY PLAYER', desc: 'Enter a Bungie Name, Steam ID, or gamertag. We search across all platforms with full cross-play support.', color: NEXUS },
+            { step: '02', title: 'VIEW FULL PROFILE', desc: 'Extraction rates, K/D, weapon mastery, Runner Shell breakdown, ranked history — everything in one view.', color: GHOST },
+            { step: '03', title: 'COMPARE & COMPETE', desc: 'Stack your stats against friends, rivals, or top players on the global leaderboard.', color: DEXTER },
+            { step: '04', title: 'TRACK OVER TIME', desc: 'Season-over-season progression tracking. See how your performance evolves across wipes.', color: MIRANDA },
           ].map(function(item) {
             return (
               <div key={item.step} style={{
                 display: 'flex',
-                gap: '20px',
+                gap: 20,
                 alignItems: 'flex-start',
-                padding: '20px',
-                background: '#0a0a0a',
-                border: '1px solid #1a1a1a',
-                borderRadius: '8px',
+                padding: 20,
+                background: BG_CARD,
+                border: '1px solid ' + BORDER,
+                borderLeft: '3px solid ' + item.color,
+                borderRadius: '0 3px 3px 0',
               }}>
                 <div style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '24px',
-                  fontWeight: 700,
+                  fontFamily: 'Orbitron, monospace',
+                  fontSize: 26,
+                  fontWeight: 900,
                   color: item.color,
                   opacity: 0.3,
-                  minWidth: '40px',
+                  minWidth: 40,
                   lineHeight: 1,
                 }}>
                   {item.step}
                 </div>
                 <div>
                   <div style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: '14px',
+                    fontFamily: 'Orbitron, monospace',
+                    fontSize: 14,
+                    fontWeight: 800,
                     color: '#fff',
-                    letterSpacing: '1px',
-                    marginBottom: '6px',
+                    letterSpacing: 1.5,
+                    marginBottom: 6,
                   }}>
                     {item.title}
                   </div>
                   <div style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    color: '#666',
-                    lineHeight: 1.5,
+                    fontSize: 13,
+                    color: 'rgba(255,255,255,0.55)',
+                    lineHeight: 1.55,
                   }}>
                     {item.desc}
                   </div>
@@ -365,56 +435,60 @@ export default function StatsPage() {
 
       {/* ─── CTA ─────────────────────────────────────── */}
       <section style={{
-        padding: '40px 20px 80px',
+        padding: '40px 20px 60px',
         textAlign: 'center',
-        maxWidth: '600px',
+        maxWidth: 600,
         margin: '0 auto',
       }}>
         <div style={{
-          background: '#0a0a0a',
-          border: '1px solid ' + CYAN + '22',
-          borderRadius: '10px',
-          padding: '40px 30px',
+          background: BG_CARD,
+          border: '1px solid ' + BORDER,
+          borderTop: '2px solid ' + NEXUS,
+          borderRadius: '0 0 3px 3px',
+          padding: '32px 28px',
         }}>
           <div style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '18px',
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 18,
+            fontWeight: 800,
             color: '#fff',
-            marginBottom: '10px',
+            marginBottom: 10,
+            letterSpacing: '-0.2px',
           }}>
             BE FIRST TO KNOW
           </div>
           <p style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '14px',
-            color: '#666',
+            fontSize: 14,
+            color: 'rgba(255,255,255,0.55)',
             lineHeight: 1.6,
-            marginBottom: '20px',
+            marginBottom: 20,
           }}>
             CyberneticPunks will activate Marathon stats tracking the moment Bungie opens the API. Join our Discord to get notified instantly.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <a href="https://discord.gg/fgxdSD7SJj" target="_blank" rel="noopener noreferrer" style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '13px',
-              color: CYAN,
-              padding: '10px 24px',
-              border: '1px solid ' + CYAN,
-              borderRadius: '4px',
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <a href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer" style={{
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 12,
+              fontWeight: 700,
+              color: NEXUS,
+              padding: '10px 22px',
+              border: '1px solid ' + NEXUS,
+              borderRadius: 3,
               textDecoration: 'none',
-              letterSpacing: '1px',
+              letterSpacing: 1.5,
             }}>
               JOIN DISCORD
             </a>
             <Link href="/leaderboard" style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '13px',
-              color: '#666',
-              padding: '10px 24px',
-              border: '1px solid #333',
-              borderRadius: '4px',
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.5)',
+              padding: '10px 22px',
+              border: '1px solid ' + BORDER,
+              borderRadius: 3,
               textDecoration: 'none',
-              letterSpacing: '1px',
+              letterSpacing: 1.5,
             }}>
               VIEW LEADERBOARD →
             </Link>
@@ -422,59 +496,132 @@ export default function StatsPage() {
         </div>
       </section>
 
-      {/* ─── FAQ (SEO) ───────────────────────────────── */}
+      {/* ─── FAQ SECTION ─────────────────────────────── */}
       <section style={{
         padding: '0 20px 60px',
-        maxWidth: '800px',
+        maxWidth: 900,
         margin: '0 auto',
       }}>
-        <h2 style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: '18px',
-          fontWeight: 700,
-          color: '#fff',
-          marginBottom: '20px',
-          textAlign: 'center',
-        }}>
-          FREQUENTLY ASKED
-        </h2>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <h2 style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 24,
+            fontWeight: 800,
+            color: '#fff',
+            margin: '0 0 12px 0',
+            letterSpacing: '-0.3px',
+          }}>
+            FREQUENTLY ASKED QUESTIONS
+          </h2>
+          <p style={{
+            fontSize: 14,
+            color: 'rgba(255,255,255,0.55)',
+            lineHeight: 1.6,
+            maxWidth: 720,
+            margin: '0 auto',
+          }}>
+            Common questions about Marathon stats tracking, the Bungie API, and how CyberneticPunks compares to other trackers.
+          </p>
+        </div>
 
-        {[
-          { q: 'When will Marathon stats tracking go live?', a: 'The moment Bungie releases the official Marathon API. Our infrastructure is built and ready to connect — player search, stat profiles, leaderboards, and weapon analytics will all activate simultaneously.' },
-          { q: 'What platforms are supported?', a: 'Marathon supports full cross-play across Steam, PlayStation 5, and Xbox Series X|S. Our tracker will search across all platforms using Bungie Name lookup.' },
-          { q: 'Will my stats carry over between seasons?', a: 'Marathon wipes gear and progression each season, but we will track your historical performance across every season — giving you a complete picture of your improvement over time.' },
-          { q: 'How is this different from Tracker.gg or MarathonDB?', a: 'CyberneticPunks combines stat tracking with AI-powered analysis. Our editors CIPHER, NEXUS, and DEXTER provide context that raw numbers cannot — meta relevance, build viability, and competitive grading alongside your stats.' },
-          { q: 'Is CyberneticPunks affiliated with Bungie?', a: 'No. CyberneticPunks is an independent fan-operated intelligence hub. Marathon is a trademark of Bungie, Inc.' },
-        ].map(function(faq, i) {
-          return (
-            <div key={i} style={{
-              padding: '16px 0',
-              borderBottom: '1px solid #111',
-            }}>
-              <h3 style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '15px',
-                fontWeight: 600,
-                color: '#ccc',
-                marginBottom: '8px',
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {FAQS.map(function(faq, i) {
+            return (
+              <div key={i} style={{
+                padding: '18px 22px',
+                background: BG_CARD,
+                border: '1px solid ' + BORDER,
+                borderLeft: '3px solid ' + NEXUS,
+                borderRadius: '0 3px 3px 0',
               }}>
-                {faq.q}
-              </h3>
-              <p style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '13px',
-                color: '#666',
-                lineHeight: 1.6,
-                margin: 0,
-              }}>
-                {faq.a}
-              </p>
-            </div>
-          );
-        })}
+                <h3 style={{
+                  fontFamily: 'Orbitron, monospace',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: NEXUS,
+                  margin: '0 0 10px 0',
+                  letterSpacing: '0.3px',
+                }}>
+                  {faq.q}
+                </h3>
+                <p style={{
+                  fontSize: 13,
+                  color: 'rgba(255,255,255,0.65)',
+                  lineHeight: 1.65,
+                  margin: 0,
+                }}>
+                  {faq.a}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
-      {/* ─── JSON-LD ─────────────────────────────────── */}
+      {/* ─── CROSS-LINKS ─────────────────────────────── */}
+      <section style={{
+        padding: '0 20px 80px',
+        maxWidth: 800,
+        margin: '0 auto',
+        textAlign: 'center',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <Link href="/leaderboard" style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#ffd700',
+            padding: '8px 18px',
+            border: '1px solid #ffd70044',
+            borderRadius: 3,
+            textDecoration: 'none',
+            letterSpacing: 1.5,
+          }}>
+            LEADERBOARD →
+          </Link>
+          <Link href="/builds" style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 11,
+            fontWeight: 700,
+            color: DEXTER,
+            padding: '8px 18px',
+            border: '1px solid ' + DEXTER + '44',
+            borderRadius: 3,
+            textDecoration: 'none',
+            letterSpacing: 1.5,
+          }}>
+            BUILD LAB →
+          </Link>
+          <Link href="/meta" style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 11,
+            fontWeight: 700,
+            color: NEXUS,
+            padding: '8px 18px',
+            border: '1px solid ' + NEXUS + '44',
+            borderRadius: 3,
+            textDecoration: 'none',
+            letterSpacing: 1.5,
+          }}>
+            META TIER LIST →
+          </Link>
+          <Link href="/intel/dexter" style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 11,
+            fontWeight: 700,
+            color: 'rgba(255,255,255,0.5)',
+            padding: '8px 18px',
+            border: '1px solid ' + BORDER,
+            borderRadius: 3,
+            textDecoration: 'none',
+            letterSpacing: 1.5,
+          }}>
+            DEXTER INTEL →
+          </Link>
+        </div>
+      </section>
+
+      {/* ─── JSON-LD STRUCTURED DATA ─────────────────── */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: JSON.stringify({
           '@context': 'https://schema.org',
@@ -491,13 +638,38 @@ export default function StatsPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: [
-            { '@type': 'Question', name: 'When will Marathon stats tracking go live?', acceptedAnswer: { '@type': 'Answer', text: 'The moment Bungie releases the official Marathon API. Our infrastructure is built and ready to connect.' } },
-            { '@type': 'Question', name: 'What platforms are supported?', acceptedAnswer: { '@type': 'Answer', text: 'Marathon supports full cross-play across Steam, PlayStation 5, and Xbox Series X|S. Our tracker will search across all platforms.' } },
-            { '@type': 'Question', name: 'Will my stats carry over between seasons?', acceptedAnswer: { '@type': 'Answer', text: 'Marathon wipes gear each season, but CyberneticPunks tracks your historical performance across every season.' } },
-            { '@type': 'Question', name: 'How is this different from other trackers?', acceptedAnswer: { '@type': 'Answer', text: 'CyberneticPunks combines stat tracking with AI-powered analysis from our editor personas.' } },
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: 'https://cyberneticpunks.com',
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Stats Tracker',
+              item: 'https://cyberneticpunks.com/stats',
+            },
           ],
+        }),
+      }} />
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: FAQS.map(function(faq) {
+            return {
+              '@type': 'Question',
+              name: faq.q,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.a,
+              },
+            };
+          }),
         }),
       }} />
     </main>
