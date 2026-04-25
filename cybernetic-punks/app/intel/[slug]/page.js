@@ -26,6 +26,32 @@ const EDITOR_STYLES = {
   DEXTER:  { color: '#ff8800', symbol: '⬢', label: 'DEXTER'  },
 };
 
+// Color tokens for item categories — used for icon fallbacks and accents
+const ITEM_COLORS = {
+  shell:   '#00d4ff',
+  weapon:  '#ff8800',
+  mod:     '#ff2222',
+  implant: '#9b5de5',
+  core:    '#ffd700',
+};
+
+const ITEM_SYMBOLS = {
+  shell:   '◎',
+  weapon:  '⬢',
+  mod:     '◈',
+  implant: '◇',
+  core:    '⬡',
+};
+
+const RARITY_COLORS = {
+  Standard:   '#888',
+  Enhanced:   '#00ff41',
+  Deluxe:     '#00d4ff',
+  Superior:   '#9b5de5',
+  Prestige:   '#ffd700',
+  Contraband: '#ff2d55',
+};
+
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   var diff = Date.now() - new Date(dateStr).getTime();
@@ -57,30 +83,58 @@ function extractTwitchClipSlug(url) {
   return m ? m[1] : null;
 }
 
+// ─── BODY PARSER (FIXED) ─────────────────────────────────────
+// OLD parser turned every **bold** chunk into a giant section header,
+// even when the bold was inline in a sentence. This shredded paragraphs
+// like "Total investment: **Arachne Rank 25** (3 unlocks)..." into
+// fragmented headers and orphan sentence pieces.
+//
+// NEW parser: A header is ONLY a paragraph that consists ENTIRELY of
+// **bold text** — meaning the whole line/paragraph is wrapped. Inline
+// bold within a sentence stays as inline emphasis.
 function parseBody(body) {
   if (!body) return [];
   var elements = [];
-  var parts = body.split(/\*\*([^*]{1,120})\*\*/);
-  parts.forEach(function(part, i) {
-    if (i % 2 === 0) {
-      part.split(/\n{2,}/).forEach(function(block, j) {
-        var t = block.trim();
-        if (!t) return;
-        var lines = t.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
-        if (lines.length > 1) {
-          elements.push({ type: 'para', content: lines.join(' '), key: 'p-' + i + '-' + j });
-        } else if (lines.length === 1) {
-          elements.push({ type: 'para', content: lines[0], key: 'p-' + i + '-' + j });
-        }
-      });
-    } else {
-      var headerText = part.trim();
-      if (headerText) {
-        elements.push({ type: 'header', content: headerText, key: 'h-' + i });
-      }
+
+  // Split into paragraphs first (one or more blank lines)
+  var paragraphs = body.split(/\n{2,}/);
+
+  paragraphs.forEach(function(rawPara, paraIdx) {
+    var para = rawPara.trim();
+    if (!para) return;
+
+    // Check if entire paragraph is wrapped in **...** (a real header)
+    // Allow optional leading/trailing whitespace inside the wrapping
+    var headerMatch = para.match(/^\*\*\s*([^*]+?)\s*\*\*$/);
+    if (headerMatch && headerMatch[1].length <= 120) {
+      elements.push({ type: 'header', content: headerMatch[1].trim(), key: 'h-' + paraIdx });
+      return;
     }
+
+    // Otherwise treat as a paragraph with possible inline bold
+    // Collapse single newlines into spaces so multi-line paragraphs flow
+    var content = para.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+    elements.push({ type: 'para', content: content, key: 'p-' + paraIdx });
   });
+
   return elements;
+}
+
+// Renders a paragraph with **inline bold** support
+function ParagraphContent({ text }) {
+  // Split on **bold** segments while preserving the segments
+  var parts = text.split(/(\*\*[^*]+\*\*)/);
+  return (
+    <>
+      {parts.map(function(part, i) {
+        var boldMatch = part.match(/^\*\*([^*]+)\*\*$/);
+        if (boldMatch) {
+          return <strong key={i} style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700 }}>{boldMatch[1]}</strong>;
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
 }
 
 export async function generateMetadata({ params }) {
@@ -122,8 +176,161 @@ function StatBar({ label, value, max, color }) {
   );
 }
 
+// ─── INLINE STAT CARD ────────────────────────────────────────
+// Compact card rendered inline within the article body when an item
+// is mentioned for the first time. Image if available, themed icon
+// fallback otherwise. Click → scrolls to full sidebar entry.
+function InlineStatCard({ item, type, color }) {
+  var imgSrc = null;
+  if (type === 'shell' && item.image_filename) imgSrc = '/images/shells/' + item.image_filename;
+  else if (type === 'weapon' && item.image_filename) imgSrc = '/images/weapons/' + item.image_filename;
+  else if (type === 'implant' && item.image_filename) imgSrc = '/images/implants/' + item.image_filename;
+
+  var typeColor = color || ITEM_COLORS[type];
+  var symbol = ITEM_SYMBOLS[type] || '◈';
+  var rarityColor = item.rarity ? RARITY_COLORS[item.rarity] : null;
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        background: '#0e1014',
+        border: '1px solid #22252e',
+        borderLeft: '2px solid ' + typeColor,
+        borderRadius: '0 2px 2px 0',
+        padding: '4px 10px 4px 8px',
+        margin: '2px 4px 2px 0',
+        verticalAlign: 'middle',
+        maxWidth: '100%',
+      }}
+    >
+      {/* Image or icon */}
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 22,
+          height: 22,
+          background: '#1a1d24',
+          border: '1px solid ' + typeColor + '40',
+          borderRadius: 2,
+          flexShrink: 0,
+          overflow: 'hidden',
+        }}
+      >
+        {imgSrc ? (
+          <img src={imgSrc} alt={item.name} style={{ width: 20, height: 20, objectFit: 'contain' }} />
+        ) : (
+          <span style={{ fontSize: 11, color: typeColor, lineHeight: 1 }}>{symbol}</span>
+        )}
+      </span>
+
+      {/* Name + meta */}
+      <span style={{ display: 'inline-flex', flexDirection: 'column', minWidth: 0 }}>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: typeColor,
+            letterSpacing: 0.3,
+            fontFamily: 'Orbitron, monospace',
+            lineHeight: 1.2,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.name}
+        </span>
+        <span
+          style={{
+            fontSize: 7,
+            color: 'rgba(255,255,255,0.4)',
+            letterSpacing: 1.5,
+            fontWeight: 700,
+            fontFamily: 'monospace',
+            textTransform: 'uppercase',
+            lineHeight: 1.2,
+            display: 'flex',
+            gap: 6,
+            alignItems: 'center',
+          }}
+        >
+          {type === 'weapon' && item.weapon_type && <span>{item.weapon_type}</span>}
+          {type === 'shell' && item.role && <span>{item.role}</span>}
+          {type === 'mod' && item.slot_type && <span>{item.slot_type} MOD</span>}
+          {type === 'implant' && item.slot_type && <span>{item.slot_type}</span>}
+          {item.rarity && rarityColor && (
+            <span style={{ color: rarityColor }}>{item.rarity}</span>
+          )}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+// ─── INLINE-AWARE PARAGRAPH ──────────────────────────────────
+// Renders paragraph text with both inline **bold** AND inline stat
+// cards on the FIRST mention of each tracked item.
+// Once an item is rendered inline, it's marked in `mentionedSet` so
+// later mentions in the same article appear as plain bold text.
+function ParagraphWithCards({ text, allItems, mentionedSet }) {
+  // Build search list: longest names first to prevent partial matches
+  // (e.g. "Pinpoint Barrel Mk II" matches before "Pinpoint Barrel")
+  var sorted = allItems.slice().sort(function(a, b) {
+    return b.name.length - a.name.length;
+  });
+
+  // Tokenize into segments: { type: 'text' | 'card', value }
+  var segments = [{ type: 'text', value: text }];
+
+  sorted.forEach(function(item) {
+    if (mentionedSet.has(item.name)) return;
+    var nameLower = item.name.toLowerCase();
+    var newSegments = [];
+    var foundOnce = false;
+
+    segments.forEach(function(seg) {
+      if (foundOnce || seg.type !== 'text') {
+        newSegments.push(seg);
+        return;
+      }
+      var lower = seg.value.toLowerCase();
+      var idx = lower.indexOf(nameLower);
+      if (idx === -1) {
+        newSegments.push(seg);
+        return;
+      }
+      // Found a mention. Split into [before, card, after]
+      var before = seg.value.slice(0, idx);
+      var match = seg.value.slice(idx, idx + item.name.length);
+      var after = seg.value.slice(idx + item.name.length);
+      if (before) newSegments.push({ type: 'text', value: before });
+      newSegments.push({ type: 'card', item: item, displayName: match });
+      if (after) newSegments.push({ type: 'text', value: after });
+      foundOnce = true;
+      mentionedSet.add(item.name);
+    });
+
+    segments = newSegments;
+  });
+
+  return (
+    <>
+      {segments.map(function(seg, i) {
+        if (seg.type === 'card') {
+          return <InlineStatCard key={i} item={seg.item} type={seg.item._type} color={ITEM_COLORS[seg.item._type]} />;
+        }
+        // text segment — handle inline **bold**
+        return <ParagraphContent key={i} text={seg.value} />;
+      })}
+    </>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════
-// EDITOR LANE PAGE
+// EDITOR LANE PAGE (unchanged from before)
 // ═══════════════════════════════════════════════════════════
 
 function EditorLanePage({ config, items }) {
@@ -158,10 +365,7 @@ function EditorLanePage({ config, items }) {
         .lane-row:hover { background: #1e2228 !important; }
       `}</style>
 
-      {/* ══ HERO ═════════════════════════════════════════ */}
       <section style={{ position: 'relative', overflow: 'hidden', background: '#0e1014', borderBottom: '1px solid #1e2028' }}>
-
-        {/* Editor portrait as right-side wash */}
         <div style={{
           position: 'absolute', right: 0, top: 0, bottom: 0,
           width: '40%',
@@ -176,14 +380,11 @@ function EditorLanePage({ config, items }) {
           background: 'linear-gradient(to right, #0e1014 0%, transparent 100%)',
         }} />
 
-        {/* Vertical color stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, background: 'linear-gradient(180deg, ' + config.color + ' 0%, transparent 100%)' }} />
 
-        {/* Geometric accent */}
         <div style={{ position: 'absolute', top: -60, right: '30%', width: 240, height: 240, border: '1px solid ' + config.color + '12', transform: 'rotate(45deg)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '40px 24px 36px' }}>
-          {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
             <Link href="/intel" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>INTEL</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
@@ -191,7 +392,6 @@ function EditorLanePage({ config, items }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-            {/* Avatar */}
             <div style={{ width: 92, height: 92, borderRadius: '50%', overflow: 'hidden', border: '2px solid ' + config.color + '60', background: '#1a1d24', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={config.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
@@ -212,7 +412,6 @@ function EditorLanePage({ config, items }) {
             </div>
           </div>
 
-          {/* Stats grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 1, background: '#1e2028', marginTop: 24 }}>
             {[
               { label: 'Articles',  value: items.length },
@@ -246,7 +445,6 @@ function EditorLanePage({ config, items }) {
           </div>
         ) : (
           <>
-            {/* Featured latest */}
             {featured && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '32px 0 14px' }}>
@@ -316,7 +514,6 @@ function EditorLanePage({ config, items }) {
           </>
         )}
 
-        {/* Other editors */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '32px 0 12px' }}>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Other Editors</span>
           <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
@@ -350,10 +547,13 @@ function EditorLanePage({ config, items }) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// BODY RENDERER
+// BODY RENDERER (with inline stat cards)
 // ═══════════════════════════════════════════════════════════
 
-function BodyRenderer({ parsed, editorColor }) {
+function BodyRenderer({ parsed, editorColor, allItems }) {
+  // Track items that have been rendered as inline cards (first mention only)
+  var mentionedSet = new Set();
+
   return (
     <div>
       {parsed.map(function(el) {
@@ -367,9 +567,122 @@ function BodyRenderer({ parsed, editorColor }) {
           );
         }
         return (
-          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.85, margin: '0 0 18px', letterSpacing: 0.1 }}>{el.content}</p>
+          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.85, margin: '0 0 18px', letterSpacing: 0.1 }}>
+            <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
+          </p>
         );
       })}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// SIDEBAR ITEM CARD (with images)
+// ═══════════════════════════════════════════════════════════
+
+function SidebarItemCard({ item, type, editorColor }) {
+  var imgSrc = null;
+  if (type === 'shell' && item.image_filename) imgSrc = '/images/shells/' + item.image_filename;
+  else if (type === 'weapon' && item.image_filename) imgSrc = '/images/weapons/' + item.image_filename;
+  else if (type === 'implant' && item.image_filename) imgSrc = '/images/implants/' + item.image_filename;
+
+  var typeColor = ITEM_COLORS[type];
+  var symbol = ITEM_SYMBOLS[type];
+  var rarityColor = item.rarity ? RARITY_COLORS[item.rarity] : null;
+  var labels = {
+    shell: 'RUNNER SHELL',
+    weapon: 'WEAPON',
+    mod: 'MOD',
+    implant: 'IMPLANT',
+    core: 'CORE',
+  };
+
+  return (
+    <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+        {/* Thumbnail */}
+        <div style={{
+          width: 44, height: 44, flexShrink: 0,
+          background: '#0e1014', border: '1px solid ' + typeColor + '40',
+          borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
+        }}>
+          {imgSrc ? (
+            <img src={imgSrc} alt={item.name} style={{ width: 40, height: 40, objectFit: 'contain' }} />
+          ) : (
+            <span style={{ fontSize: 18, color: typeColor + '60' }}>{symbol}</span>
+          )}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 3, fontWeight: 700, fontFamily: 'monospace' }}>
+            {labels[type]}
+          </div>
+          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: typeColor, lineHeight: 1.3, marginBottom: 4 }}>
+            {item.name}
+          </div>
+          {/* Type info row */}
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+            {type === 'weapon' && item.weapon_type && (
+              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                {item.weapon_type}{item.ammo_type ? ' · ' + item.ammo_type : ''}
+              </span>
+            )}
+            {type === 'shell' && item.role && (
+              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                {item.role}
+              </span>
+            )}
+            {(type === 'mod' || type === 'implant') && item.slot_type && (
+              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                {item.slot_type} SLOT
+              </span>
+            )}
+            {item.rarity && rarityColor && (
+              <span style={{ fontSize: 7, color: rarityColor, border: '1px solid ' + rarityColor + '40', padding: '1px 5px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>
+                {item.rarity}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Type-specific body */}
+      {type === 'shell' && (
+        <>
+          {item.base_health && <StatBar label="HP" value={item.base_health} max={200} color="#00ff41" />}
+          {item.base_shield && <StatBar label="SHIELD" value={item.base_shield} max={100} color="#00d4ff" />}
+          {item.active_ability_name && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 8, color: '#ff8800', letterSpacing: 2, marginBottom: 3, fontWeight: 700 }}>ACTIVE — {item.active_ability_name}</div>
+              {item.active_ability_description && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{item.active_ability_description.slice(0, 120)}</div>}
+            </div>
+          )}
+        </>
+      )}
+
+      {type === 'weapon' && (
+        <>
+          {item.damage && <StatBar label="DAMAGE" value={item.damage} max={200} color="#ff8800" />}
+          {item.fire_rate && <StatBar label="FIRE RATE" value={item.fire_rate} max={1000} color="#ff2222" />}
+          {item.magazine_size && <StatBar label="MAGAZINE" value={item.magazine_size} max={60} color="#00d4ff" />}
+        </>
+      )}
+
+      {type === 'mod' && item.effect_desc && (
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55 }}>{item.effect_desc}</div>
+      )}
+
+      {type === 'implant' && (
+        <>
+          {item.passive_name && <div style={{ fontSize: 9, color: '#9b5de5', marginBottom: 4, fontWeight: 700, fontFamily: 'monospace' }}>{item.passive_name}</div>}
+          {item.passive_desc && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 6 }}>{item.passive_desc.slice(0, 120)}</div>}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {item.stat_1_label && item.stat_1_value && <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace', letterSpacing: 1 }}>{item.stat_1_label}: <strong style={{ color: '#9b5de5' }}>{item.stat_1_value}</strong></span>}
+            {item.stat_2_label && item.stat_2_value && <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace', letterSpacing: 1 }}>{item.stat_2_label}: <strong style={{ color: '#9b5de5' }}>{item.stat_2_value}</strong></span>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -387,12 +700,27 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
   var articleUrl = 'https://cyberneticpunks.com/intel/' + item.slug;
   var rt = readTime(item.body);
 
+  // Detect mentions and tag with item type for downstream rendering
   var bodyLower = (item.body || '').toLowerCase();
-  var mentionedShells = (shells || []).filter(s => s.name && bodyLower.includes(s.name.toLowerCase()));
-  var mentionedWeapons = (weapons || []).filter(w => w.name && bodyLower.includes(w.name.toLowerCase()));
-  var mentionedMods = (mods || []).filter(m => m.name && bodyLower.includes(m.name.toLowerCase())).slice(0, 5);
-  var mentionedImplants = (implants || []).filter(imp => imp.name && bodyLower.includes(imp.name.toLowerCase())).slice(0, 5);
-  var hasDataRef = mentionedShells.length > 0 || mentionedWeapons.length > 0 || mentionedMods.length > 0 || mentionedImplants.length > 0;
+  var mentionedShells = (shells || [])
+    .filter(function(s) { return s.name && bodyLower.includes(s.name.toLowerCase()); })
+    .map(function(s) { return Object.assign({}, s, { _type: 'shell' }); });
+  var mentionedWeapons = (weapons || [])
+    .filter(function(w) { return w.name && bodyLower.includes(w.name.toLowerCase()); })
+    .map(function(w) { return Object.assign({}, w, { _type: 'weapon' }); });
+  var mentionedMods = (mods || [])
+    .filter(function(m) { return m.name && bodyLower.includes(m.name.toLowerCase()); })
+    .slice(0, 8)
+    .map(function(m) { return Object.assign({}, m, { _type: 'mod' }); });
+  var mentionedImplants = (implants || [])
+    .filter(function(imp) { return imp.name && bodyLower.includes(imp.name.toLowerCase()); })
+    .slice(0, 8)
+    .map(function(imp) { return Object.assign({}, imp, { _type: 'implant' }); });
+
+  // Combined list for inline card rendering
+  var allMentionedItems = [].concat(mentionedShells, mentionedWeapons, mentionedMods, mentionedImplants);
+
+  var hasDataRef = allMentionedItems.length > 0;
 
   var parsed = parseBody(item.body);
   var hasThumbnail = !!(item.thumbnail || videoId);
@@ -420,10 +748,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
         .article-related:hover { background: #1e2228 !important; }
       `}</style>
 
-      {/* ══ ARTICLE HEADER ═══════════════════════════════════ */}
       <div style={{ position: 'relative', background: '#0e1014', borderBottom: '1px solid #1e2028', overflow: 'hidden' }}>
-
-        {/* Thumbnail as background wash */}
         {hasThumbnail && (
           <>
             <div style={{
@@ -437,11 +762,9 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
           </>
         )}
 
-        {/* Vertical color stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, background: 'linear-gradient(180deg, ' + editor.color + ' 0%, transparent 100%)' }} />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '36px 24px 32px' }}>
-          {/* Breadcrumb + meta */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
             <Link href={'/intel/' + item.editor.toLowerCase()} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '4px 10px', textDecoration: 'none' }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '50', background: '#0e1014' }}>
@@ -473,9 +796,8 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
         </div>
       </div>
 
-      {/* ══ ARTICLE BODY ═════════════════════════════════════ */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 64px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: hasDataRef ? '1fr 280px' : '1fr', gap: 44, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: hasDataRef ? '1fr 300px' : '1fr', gap: 44, alignItems: 'start' }}>
 
           <article style={{ paddingTop: 32, minWidth: 0 }}>
             {videoId && (
@@ -489,12 +811,10 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
               </div>
             )}
 
-            {/* Body with left accent border */}
             <div style={{ borderLeft: '1px solid ' + editor.color + '22', paddingLeft: 24 }}>
-              <BodyRenderer parsed={parsed} editorColor={editor.color} />
+              <BodyRenderer parsed={parsed} editorColor={editor.color} allItems={allMentionedItems} />
             </div>
 
-            {/* Share row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 24, marginTop: 32, borderTop: '1px solid #1e2028', flexWrap: 'wrap' }}>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginRight: 4, fontWeight: 700, fontFamily: 'monospace' }}>SHARE</div>
               <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '7px 13px', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>POST TO X</a>
@@ -506,7 +826,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
               <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700, fontFamily: 'monospace' }}>← MORE FROM {item.editor}</Link>
             </div>
 
-            {/* DEXTER cross-link */}
             <div style={{ marginTop: 20, padding: '12px 16px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0' }}>
               <Link href="/advisor" style={{ fontSize: 11, color: '#ff8800', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>
                 ⬢ Want a build based on this intel? Ask DEXTER →
@@ -521,78 +840,25 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
           {hasDataRef && (
             <aside style={{ position: 'sticky', top: 64, paddingTop: 32 }}>
               <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + editor.color, borderRadius: '0 0 3px 3px', padding: 18 }}>
-                <div style={{ fontSize: 9, color: editor.color, letterSpacing: 3, marginBottom: 18, paddingBottom: 10, borderBottom: '1px solid #22252e', fontWeight: 700, textTransform: 'uppercase' }}>Data Reference</div>
+                <div style={{ fontSize: 9, color: editor.color, letterSpacing: 3, marginBottom: 18, paddingBottom: 10, borderBottom: '1px solid #22252e', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Data Reference · {allMentionedItems.length} ITEMS
+                </div>
 
                 {mentionedShells.map(function(shell, i) {
-                  return (
-                    <div key={i} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 6, fontWeight: 700, fontFamily: 'monospace' }}>RUNNER SHELL</div>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#00d4ff', marginBottom: 3 }}>{shell.name}</div>
-                      {shell.role && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10, fontWeight: 700, textTransform: 'uppercase' }}>{shell.role}</div>}
-                      {shell.base_health && <StatBar label="HP" value={shell.base_health} max={200} color="#00ff41" />}
-                      {shell.base_shield && <StatBar label="SHIELD" value={shell.base_shield} max={100} color="#00d4ff" />}
-                      {shell.active_ability_name && (
-                        <div style={{ marginTop: 8 }}>
-                          <div style={{ fontSize: 8, color: '#ff8800', letterSpacing: 2, marginBottom: 3, fontWeight: 700 }}>ACTIVE — {shell.active_ability_name}</div>
-                          {shell.active_ability_description && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{shell.active_ability_description.slice(0, 120)}</div>}
-                        </div>
-                      )}
-                    </div>
-                  );
+                  return <SidebarItemCard key={'sh-' + i} item={shell} type="shell" editorColor={editor.color} />;
                 })}
 
                 {mentionedWeapons.map(function(weapon, i) {
-                  return (
-                    <div key={i} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 6, fontWeight: 700, fontFamily: 'monospace' }}>WEAPON</div>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#ff8800', marginBottom: 3 }}>{weapon.name}</div>
-                      {weapon.weapon_type && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10, fontWeight: 700, textTransform: 'uppercase' }}>{weapon.weapon_type} · {weapon.ammo_type || ''}</div>}
-                      {weapon.damage && <StatBar label="DAMAGE" value={weapon.damage} max={200} color="#ff8800" />}
-                      {weapon.fire_rate && <StatBar label="FIRE RATE" value={weapon.fire_rate} max={1000} color="#ff2222" />}
-                      {weapon.magazine_size && <StatBar label="MAGAZINE" value={weapon.magazine_size} max={60} color="#00d4ff" />}
-                    </div>
-                  );
+                  return <SidebarItemCard key={'wp-' + i} item={weapon} type="weapon" editorColor={editor.color} />;
                 })}
 
-                {mentionedMods.length > 0 && (
-                  <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 10, fontWeight: 700, fontFamily: 'monospace' }}>MODS REFERENCED</div>
-                    {mentionedMods.map(function(mod, i) {
-                      return (
-                        <div key={i} style={{ marginBottom: 10 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{mod.name}</div>
-                            {mod.rarity && <span style={{ fontSize: 7, color: '#ff2222', border: '1px solid rgba(255,34,34,0.3)', padding: '1px 5px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{mod.rarity}</span>}
-                          </div>
-                          {mod.slot_type && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 3, fontWeight: 700, textTransform: 'uppercase' }}>{mod.slot_type} SLOT</div>}
-                          {mod.effect_desc && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{mod.effect_desc}</div>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                {mentionedMods.map(function(mod, i) {
+                  return <SidebarItemCard key={'mo-' + i} item={mod} type="mod" editorColor={editor.color} />;
+                })}
 
-                {mentionedImplants.length > 0 && (
-                  <div style={{ paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 10, fontWeight: 700, fontFamily: 'monospace' }}>IMPLANTS REFERENCED</div>
-                    {mentionedImplants.map(function(imp, i) {
-                      return (
-                        <div key={i} style={{ marginBottom: 10 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{imp.name}</div>
-                            {imp.rarity && <span style={{ fontSize: 7, color: '#9b5de5', border: '1px solid rgba(155,93,229,0.3)', padding: '1px 5px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{imp.rarity}</span>}
-                          </div>
-                          {imp.slot_type && <div style={{ fontSize: 8, color: 'rgba(155,93,229,0.6)', letterSpacing: 2, marginBottom: 3, fontWeight: 700, textTransform: 'uppercase' }}>{imp.slot_type} SLOT</div>}
-                          {imp.passive_name && <div style={{ fontSize: 9, color: '#9b5de5', marginBottom: 3, fontWeight: 700, fontFamily: 'monospace' }}>{imp.passive_name}</div>}
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {imp.stat_1_label && imp.stat_1_value && <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', letterSpacing: 1 }}>{imp.stat_1_label}: {imp.stat_1_value}</span>}
-                            {imp.stat_2_label && imp.stat_2_value && <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', letterSpacing: 1 }}>{imp.stat_2_label}: {imp.stat_2_value}</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                {mentionedImplants.map(function(imp, i) {
+                  return <SidebarItemCard key={'im-' + i} item={imp} type="implant" editorColor={editor.color} />;
+                })}
               </div>
             </aside>
           )}
@@ -685,12 +951,15 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
+  // Note: Added image_filename to shells, weapons, implants queries so cards
+  // can render the visual representation of items mentioned in the body.
+  // Mods + cores have no images yet — they fall back to themed icon cards.
   var [itemResult, shellResult, weaponResult, modResult, implantResult] = await Promise.all([
     supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle(),
-    supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name').limit(20),
-    supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type').limit(40),
-    supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(60),
-    supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').limit(60),
+    supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name, image_filename').limit(20),
+    supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type, image_filename').limit(40),
+    supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(120),
+    supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, image_filename').limit(100),
   ]);
 
   var comments = [];
