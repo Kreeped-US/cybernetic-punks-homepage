@@ -117,91 +117,67 @@ export async function gatherReddit() {
 }
 
 /**
- * Format Reddit posts + Steam reviews + X posts into a prompt for GHOST
- * xData shape: { posts: [], officialPosts: [], patchPosts: [] }
+ * Format Reddit posts + Steam reviews into a community pulse prompt for GHOST.
+ *
+ * Updated April 27, 2026:
+ * - X intake removed (Free tier doesn't permit search endpoint)
+ * - JSON output spec removed (tool-use structured output enforces format
+ *   via the publish_community_pulse tool schema in editorCore.js)
+ * - Body length aligned to tool schema (400-550 words with section headers)
+ * - Third arg `xData` retained for backward compat but ignored — pass null
+ *
+ * Sources covered: Reddit (vocal community), Steam reviews (broader paying
+ * playerbase). Bungie news is appended separately by gather/index.js.
  */
-export function formatForGhost(posts, steamData, xData) {
+export function formatForGhost(posts, steamData, _legacyXData) {
   const hasReddit = posts && posts.length > 0;
-  const hasX = xData && xData.posts && xData.posts.length > 0;
   const hasSteam = steamData && steamData.reviews && steamData.reviews.length > 0;
 
-  if (!hasReddit && !hasX) return null;
+  if (!hasReddit && !hasSteam) return null;
 
   // ── REDDIT SECTION ─────────────────────────────────
   let redditSection = '';
   if (hasReddit) {
-    const postSummaries = posts.slice(0, 10).map((p, i) => {
+    const postSummaries = posts.slice(0, 12).map((p, i) => {
       return `${i + 1}. "${p.title}" by u/${p.author} in r/${p.subreddit}
    Score: ${p.score} | Upvote ratio: ${Math.round(p.upvote_ratio * 100)}% | Comments: ${p.num_comments}
    Flair: ${p.flair || 'None'}
-   ${p.selftext ? 'Body: ' + p.selftext.slice(0, 200) : '(Link post)'}`;
+   ${p.selftext ? 'Body: ' + p.selftext.slice(0, 240) : '(Link post)'}`;
     }).join('\n\n');
-    redditSection = `REDDIT DISCUSSIONS (r/MarathonTheGame + r/Marathon):\n${postSummaries}`;
+    redditSection = `--- REDDIT DISCUSSIONS (r/MarathonTheGame + r/Marathon) ---\n${postSummaries}\n--- END REDDIT ---`;
   } else {
-    redditSection = 'REDDIT: No posts available this cycle.';
+    redditSection = '--- REDDIT: No posts available this cycle ---';
   }
 
   // ── STEAM SECTION ──────────────────────────────────
   let steamSection = '';
   if (hasSteam) {
-    const reviewSummaries = steamData.reviews.slice(0, 8).map((r, i) => {
-      const sentiment = r.voted_up ? '👍' : '👎';
-      return `${i + 1}. ${sentiment} [${r.playtime_hours}h played] "${r.text.slice(0, 200)}"`;
+    const reviewSummaries = steamData.reviews.slice(0, 10).map((r, i) => {
+      const sentiment = r.voted_up ? 'POSITIVE' : 'NEGATIVE';
+      return `${i + 1}. [${sentiment}] [${r.playtime_hours}h played] "${r.text.slice(0, 240)}"`;
     }).join('\n\n');
-    steamSection = `\n\nSTEAM REVIEWS (${steamData.positivePercent} overall):\n${reviewSummaries}\n\nNote: Steam reviews = broader paying playerbase. Reddit = vocal minority. Weight accordingly.`;
-  }
-
-  // ── X SECTION ──────────────────────────────────────
-  let xSection = '';
-  if (hasX) {
-    const topPosts = xData.posts.slice(0, 15).map((p, i) =>
-      `${i + 1}. @${p.author}${p.is_official ? ' [OFFICIAL]' : ''}: "${p.text.slice(0, 220)}"\n   ❤ ${p.likes} | 🔁 ${p.retweets} | 💬 ${p.replies}`
-    ).join('\n\n');
-
-    let officialBlock = '';
-    if (xData.officialPosts && xData.officialPosts.length > 0) {
-      officialBlock = '\n\nOFFICIAL MARATHON/BUNGIE POSTS ON X:\n' +
-        xData.officialPosts.map(p => `@${p.author}: "${p.text.slice(0, 300)}"`).join('\n\n');
-    }
-
-    let patchBlock = '';
-    if (xData.patchPosts && xData.patchPosts.length > 0) {
-      patchBlock = '\n\nPATCH/UPDATE REACTIONS ON X:\n' +
-        xData.patchPosts.slice(0, 6).map(p =>
-          `@${p.author} (❤${p.likes}): "${p.text.slice(0, 220)}"`
-        ).join('\n\n');
-    }
-
-    xSection = `\n\nX (TWITTER) COMMUNITY — TOP POSTS BY ENGAGEMENT:\n${topPosts}${officialBlock}${patchBlock}`;
+    steamSection = `\n\n--- STEAM REVIEWS (${steamData.positivePercent || 'mixed'} overall) ---\n${reviewSummaries}\n\nNote: Steam reviews represent the broader paying playerbase. Reddit represents the vocal community. They often diverge — when they do, say so and explain why.\n--- END STEAM ---`;
   }
 
   // ── PROMPT ─────────────────────────────────────────
-  const sourceList = [hasReddit && 'Reddit', hasSteam && 'Steam', hasX && 'X (Twitter)'].filter(Boolean).join(', ');
+  // No JSON output spec — tool-use structured output enforces format via
+  // the publish_community_pulse tool schema (mood_score 0-10, sentiment enum,
+  // 400-550 word body with **HEADER** section breaks, etc.)
+  const sourceList = [hasReddit && 'Reddit', hasSteam && 'Steam reviews'].filter(Boolean).join(' + ');
 
-  return `You are analyzing Marathon community sentiment across ${sourceList}. Your job is to surface what real players are actually saying — not what creators or press say.
+  return `Your job: synthesize Marathon community sentiment from ${sourceList}. Surface what real players are actually saying — not what creators or press say.
 
-${redditSection}${steamSection}${xSection}
+${redditSection}${steamSection}
 
-Synthesize all sources. X is real-time street-level reaction. Reddit is vocal community discussion. Steam is the paying playerbase. When they diverge, say so and explain why.
+ANALYSIS GUIDANCE:
+- Reddit captures the vocal community — sustained discussion, frustrations, hot takes.
+- Steam reviews capture the broader paying playerbase — often more measured, focused on retention.
+- When the two sources diverge, that divergence IS the story. Lead with it.
+- Quote specific Redditors or reviewers when their phrasing captures the moment.
+- Call out the most discussed topic, the loudest frustration, and any surprising consensus.
+- Include at least one contrarian voice — the community is rarely unanimous.
 
-If there are patch reactions on X, lead with those — patches are the most time-sensitive community events.
-If an official Bungie/Marathon account posted on X, reference it directly.
-Write like a journalist embedded in the community, not a PR summary.
+If a patch or balance update is the dominant topic, lead with that. Otherwise lead with the loudest sentiment — whether positive or critical.
 
-Respond with ONLY valid JSON:
-{
-  "headline": "punchy community pulse headline under 80 chars — lead with X patch reaction if available",
-  "body": "3-4 sentences. Quote specific posts or reactions where impactful. Call out Reddit vs Steam vs X divergence if it exists. Reference patch discussion if present.",
-  "mood_score": 1,
-  "top_concern": "the single biggest frustration players are expressing right now",
-  "top_excitement": "the single biggest thing players are hyped about right now",
-  "steam_sentiment": "positive|mixed|negative",
-  "x_sentiment": "positive|mixed|negative|not_available",
-  "top_x_take": "the most liked/RTed take on X in one sentence, or null",
-  "patch_reaction": "community reaction to any patch/update if present, or null",
-  "has_official_x_post": false,
-  "tags": ["TAG1", "TAG2", "TAG3"]
-}
-
-mood_score guide: 1-3 angry, 4-5 mixed, 6-7 positive with concerns, 8-10 hyped`;
+Write like a journalist embedded in the community. No PR voice, no hype, no doom-posting. Just what people are actually saying and why it matters.`;
 }
