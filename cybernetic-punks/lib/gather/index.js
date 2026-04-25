@@ -5,8 +5,16 @@ import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { gatherBungieNews, formatBungieNewsForEditor } from './bungie.js';
-import { gatherXPulse, formatXForGhost, formatXForNexus, formatXForCipher, formatXForDexter, formatXForMiranda } from './xpulse.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
+
+// X API intake removed April 27, 2026 — Free tier doesn't permit search/recent
+// endpoint, and Basic tier ($200/mo) wasn't justified by the data quality lift.
+// Editors now run on YouTube + Reddit + Bungie news + Twitch + game database,
+// which collectively cover the same ground (community sentiment, dev news,
+// gameplay analysis) at zero recurring cost.
+//
+// If X is restored later (paid tier OR manual curation tool), wire it back
+// in here and update each editor's prompt builder below.
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
@@ -22,7 +30,6 @@ export async function gatherAll() {
     steamPlayerCount,
     steamReviews,
     bungieNews,
-    xPulse,
   ] = await Promise.all([
     gatherYouTube(),
     gatherReddit(),
@@ -31,7 +38,6 @@ export async function gatherAll() {
     fetchSteamPlayerCount(),
     fetchSteamReviews(),
     gatherBungieNews(),
-    gatherXPulse(),
   ]);
 
   console.log('[GATHER] YouTube: ' + youtubeVideos.length + ' videos collected');
@@ -41,74 +47,85 @@ export async function gatherAll() {
   console.log('[GATHER] Steam: ' + (steamPlayerCount ? steamPlayerCount.toLocaleString() + ' live players' : 'player count unavailable'));
   console.log('[GATHER] Steam reviews: ' + (steamReviews?.reviews?.length || 0) + ' recent reviews');
   console.log('[GATHER] Bungie news: ' + bungieNews.length + ' articles (' + bungieNews.filter(a => a.is_patch_note).length + ' patch-related)');
-  console.log('[GATHER] X pulse: ' + (xPulse?.posts?.length || 0) + ' posts | Official: ' + (xPulse?.officialPosts?.length || 0) + ' | Community: ' + (xPulse?.communityPosts?.length || 0) + ' | New Content: ' + (xPulse?.newContentPosts?.length || 0) + ' | Events: ' + (xPulse?.eventPosts?.length || 0));
-
-  var newContentDetected = (xPulse?.newContentPosts?.length || 0) > 0;
-  if (newContentDetected) {
-    console.log('[GATHER] NEW CONTENT DETECTED on X — all editors will prioritize new content coverage');
-  }
 
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
-  const xGhostContext     = formatXForGhost(xPulse);
-  const xNexusContext     = formatXForNexus(xPulse);
-  const xCipherContext    = formatXForCipher(xPulse);
-  const xDexterContext    = formatXForDexter(xPulse);
 
-  // ── CIPHER — X primary, YouTube supplementary ─────────────────
-  var cipherPrompt = xCipherContext || '';
+  // ── CIPHER — YouTube + Twitch primary ─────────────────────────
+  // Previously: X primary, YouTube supplementary.
+  // Now: YouTube/Twitch primary (these are CIPHER's natural fit anyway —
+  // gameplay clips with transcripts for play analysis).
+  var cipherPrompt = '';
+
+  var youtubeForCipher = formatForEditor(youtubeVideos, 'CIPHER');
+  if (youtubeForCipher) {
+    cipherPrompt += '--- YOUTUBE GAMEPLAY (PRIMARY SOURCE) ---\nFull-length gameplay videos with transcripts for play-by-play analysis.\n\n' + youtubeForCipher;
+  }
 
   var twitchSection = formatClipsForCipher(twitchClips);
   if (twitchSection) {
     cipherPrompt += '\n\n--- TWITCH CLIPS ---\nShort highlight clips from live Marathon streams.\n\n' + twitchSection;
   }
 
-  var youtubeForCipher = formatForEditor(youtubeVideos, 'CIPHER');
-  if (youtubeForCipher) {
-    cipherPrompt += '\n\n--- YOUTUBE (supplementary — use for deeper transcript analysis) ---\n' + youtubeForCipher;
-  }
-
   if (!cipherPrompt) {
-    cipherPrompt = 'No Marathon content available this cycle. Write a competitive analysis article based on general Marathon meta knowledge.';
+    cipherPrompt = 'No gameplay content available this cycle. Write a competitive analysis article based on general Marathon meta knowledge — patterns you observe in current ranked play, common mistakes, what defines high-skill play in current meta.';
   }
 
   if (bungieNewsContext) cipherPrompt += bungieNewsContext;
 
-  // ── NEXUS — X primary, YouTube supplementary ──────────────────
-  var nexusPrompt = xNexusContext || '';
+  // ── NEXUS — YouTube primary ───────────────────────────────────
+  // Previously: X primary, YouTube supplementary.
+  // Now: YouTube primary (creator meta discussion + tier list videos).
+  // Bungie news for patch-driven meta shifts.
+  var nexusPrompt = '';
 
   var youtubeForNexus = formatForEditor(youtubeVideos, 'NEXUS');
   if (youtubeForNexus) {
-    nexusPrompt += '\n\n--- YOUTUBE (supplementary) ---\n' + youtubeForNexus;
+    nexusPrompt += '--- YOUTUBE META DISCUSSION (PRIMARY SOURCE) ---\nCreator analysis of current Marathon meta, weapon tiers, and strategic shifts.\n\n' + youtubeForNexus;
   }
 
   if (!nexusPrompt) {
-    nexusPrompt = 'No Marathon content available. Write a meta analysis article based on current weapon and shell data.';
+    nexusPrompt = 'No meta content available this cycle. Write a meta analysis article based on the weapon, shell, and faction database. Cover current tier placements, recent shifts, and ranked viability.';
   }
 
   if (bungieNewsContext) nexusPrompt += bungieNewsContext;
 
-  // ── DEXTER — X primary, YouTube supplementary ─────────────────
-  var dexterPrompt = xDexterContext || '';
+  // ── DEXTER — YouTube primary ──────────────────────────────────
+  // Previously: X primary, YouTube supplementary.
+  // Now: YouTube primary (build guides, loadout discussions).
+  // Faction database injected via game context handles unlock specifics.
+  var dexterPrompt = '';
 
   var youtubeForDexter = formatForEditor(youtubeVideos, 'DEXTER');
   if (youtubeForDexter) {
-    dexterPrompt += '\n\n--- YOUTUBE (supplementary) ---\n' + youtubeForDexter;
+    dexterPrompt += '--- YOUTUBE BUILD CONTENT (PRIMARY SOURCE) ---\nCreator-published builds, loadouts, and synergy discussions.\n\n' + youtubeForDexter;
   }
 
   if (!dexterPrompt) {
-    dexterPrompt = 'No build content available. Write a build analysis article using the weapon and shell database.';
+    dexterPrompt = 'No build content available this cycle. Design a build using the weapon, shell, mod, implant, core, and faction databases. Pick an underexplored shell and build around its strengths.';
   }
 
   if (bungieNewsContext) dexterPrompt += bungieNewsContext;
 
-  // ── GHOST — already X-primary ─────────────────────────────────
-  var ghostPrompt = formatForGhost(redditPosts, steamReviews, xPulse);
+  // ── GHOST — Reddit + Steam reviews primary ────────────────────
+  // Previously: X + Reddit + Steam reviews. X carried a lot of weight here.
+  // Now: Reddit + Steam reviews + Bungie news. Reddit captures sustained
+  // community sentiment; Steam reviews capture broader player sentiment;
+  // Bungie news captures dev-driven discourse triggers.
+  var ghostPrompt = formatForGhost(redditPosts, steamReviews, null);
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
-  // ── MIRANDA — X data injected via xData on mirandaData object ──
+  if (!ghostPrompt) {
+    ghostPrompt = 'No community content available this cycle. Write a community pulse article based on broader Marathon discourse trends — common frustrations, ranked economy reactions, recent patch impressions.';
+  }
+
+  // ── MIRANDA — YouTube + Bungie news + game databases ──────────
+  // Previously: had xData attached for community event detection.
+  // Now: Bungie dev news + YouTube guide content cover the same territory.
   if (mirandaData) {
     if (bungieNews.length > 0) mirandaData.devNews = bungieNews.slice(0, 6);
-    mirandaData.xData = xPulse;
+    // xData explicitly null — buildMirandaPrompt's xIntelBlock conditional
+    // checks xData?.posts?.length and skips when empty. No prompt corruption.
+    mirandaData.xData = null;
   }
 
   const prompts = {
@@ -125,8 +142,9 @@ export async function gatherAll() {
     steamPlayerCount,
     steamReviews,
     bungieNews,
-    xPulse,
-    xData: xPulse,
+    // xData kept as null in rawData so cron route's conditional checks
+    // (e.g. rawData.xData?.eventPosts) safely return undefined and skip.
+    xData: null,
   };
 
   try {
