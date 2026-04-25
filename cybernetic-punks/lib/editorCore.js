@@ -493,6 +493,10 @@ Return ONLY valid JSON:
 }`;
 }
 
+// ─── SEO KEYWORD TARGETING ───────────────────────────────────
+// Reads the next available keyword for an editor. Does NOT mark it
+// consumed here — that happens in the cron AFTER successful publish,
+// so failed generations don't waste keywords.
 async function getTargetKeyword(editor, supabase) {
   try {
     var cutoff = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
@@ -506,7 +510,6 @@ async function getTargetKeyword(editor, supabase) {
       .limit(1)
       .single();
     if (!data) return null;
-    await supabase.from('seo_keywords').update({ last_targeted_at: new Date().toISOString() }).eq('id', data.id);
     return data;
   } catch (err) {
     return null;
@@ -522,8 +525,10 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
     if (gameContext) systemPrompt += gameContext;
   }
 
+  // Fetch SEO keyword (does NOT mark consumed — cron does that on success)
+  var kwData = null;
   if (supabaseClient) {
-    var kwData = await getTargetKeyword(editor, supabaseClient);
+    kwData = await getTargetKeyword(editor, supabaseClient);
     if (kwData) {
       systemPrompt += '\n\n--- SEO TARGET FOR THIS ARTICLE ---\n';
       systemPrompt += 'TARGET KEYWORD: "' + kwData.keyword + '"\n';
@@ -549,11 +554,35 @@ export async function callEditor(editor, userPrompt, supabaseClient) {
 
   var text = message.content[0].text;
 
+  var parsed;
   try {
     var clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
+    parsed = JSON.parse(clean);
   } catch (e) {
-    return { raw: text };
+    parsed = { raw: text };
+  }
+
+  // Attach SEO keyword id so cron can mark it consumed AFTER successful
+  // publish. Prevents wasted keywords on failed generations.
+  if (kwData && parsed && typeof parsed === 'object') {
+    parsed._seo_keyword_id = kwData.id;
+  }
+
+  return parsed;
+}
+
+// ─── KEYWORD CONSUMPTION ─────────────────────────────────────
+// Called from cron route AFTER feed_items insert succeeds. Marks the
+// keyword as recently used so it cycles out for 72h.
+export async function consumeKeyword(supabase, keywordId) {
+  if (!supabase || !keywordId) return;
+  try {
+    await supabase
+      .from('seo_keywords')
+      .update({ last_targeted_at: new Date().toISOString() })
+      .eq('id', keywordId);
+  } catch (err) {
+    console.log('[editorCore] consumeKeyword error: ' + err.message);
   }
 }
 

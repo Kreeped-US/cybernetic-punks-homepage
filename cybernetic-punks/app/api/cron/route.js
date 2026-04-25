@@ -1,4 +1,4 @@
-import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/editorCore';
+import { callEditor, buildMirandaPrompt, generateArticleComments, consumeKeyword } from '@/lib/editorCore';
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
@@ -205,6 +205,15 @@ async function processEditor(editorName, prompt, rawData) {
 
     if (error) {
       return { editor: editorName, success: false, error: error.message };
+    }
+
+    // Mark SEO keyword as consumed — only after successful article insert.
+    // If we crashed before this point, the keyword stays available for retry.
+    if (result._seo_keyword_id) {
+      consumeKeyword(supabase, result._seo_keyword_id).catch(function(e) {
+        console.log('[CRON] keyword consume failed (non-fatal): ' + e.message);
+      });
+      console.log('[CRON] ' + editorName + ' consumed keyword id=' + result._seo_keyword_id);
     }
 
     // ── TWITTER/X AUTO-POSTING DISABLED ──
