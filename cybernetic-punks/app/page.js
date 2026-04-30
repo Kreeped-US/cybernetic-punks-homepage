@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Footer from '@/components/Footer';
 import HomeIntelFeed from './HomeIntelFeed';
 import HomeEditorReactions from './HomeEditorReactions';
+import FactionAdvisorCallout from './FactionAdvisorCallout';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { isMonetizationEnabled } from '@/lib/monetization';
@@ -855,6 +856,9 @@ export default async function Home() {
               </div>
             </div>
           </div>
+
+          {/* ══ FACTION ADVISOR CALLOUT ══════════════════════════ */}
+          <FactionAdvisorCallout shells={shells} />
 
           <HomeEditorReactions />
           <HomeIntelFeed articles={intelFeed} weeklyCount={weeklyCount} />

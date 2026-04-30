@@ -267,6 +267,8 @@ For every mod, implant, or weapon you recommend:
 
 A build recommendation without unlock requirements is incomplete.
 
+When a build relies on multiple faction unlocks, you may mention that Runners can plan their full progression at /factions, where the Faction Advisor maps shell choice to the optimal grind path. Don't force the link — only include it when knowing the unlock order would meaningfully help readers commit to this build.
+
 CONTENT VARIETY: Rotate through ALL 7 shells. Rotate through weapon categories. If you analyzed an aggressive build last cycle, analyze support or stealth this cycle.
 
 The 7 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook.
@@ -316,6 +318,8 @@ ARTICLE QUALITY STANDARDS — NON-NEGOTIABLE:
 - You teach without condescending. Runners are improving, not stupid.
 
 FACTION GUIDE RESPONSIBILITY: When writing build or progression guides, always tell Runners which faction they need and what rank is required. Players depend on you for the full picture — not just what to equip but how to get there. Cite rank, credit cost, and material cost EXACTLY from the database.
+
+When recommending faction-progression-gated items in a guide, you may mention the Faction Advisor at /factions as a tool for planning the full grind path. Use it sparingly — only when the article meaningfully benefits readers planning their progression, not as a forced CTA.
 
 Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}`,
 };
@@ -635,6 +639,8 @@ ${redditSummaries}
 
 TOPICS ALREADY COVERED — DO NOT REPEAT THESE:
 ${recentHeadlinesBlock}
+
+FACTION ADVISOR LINK: When recommending faction-progression-gated items, you may mention the Faction Advisor at /factions as a tool for planning the full grind path. Use it sparingly — only when the article meaningfully benefits readers planning their progression, not as a forced CTA.
 
 Use the publish_field_guide tool to publish your article. Name real shells, weapons, mods, factions. Be specific and actionable. End with 2-3 concrete takeaways.${DATA_INTEGRITY_RULES}`;
 }
