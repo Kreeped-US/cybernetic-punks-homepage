@@ -813,6 +813,38 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
             </div>
           </div>
 
+          {/* ══ FACTION ADVISOR CROSS-LINK ═════════════════════ */}
+          <div className="result-block" style={{ animationDelay: '0.225s', marginBottom: 12 }}>
+            <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ffd700', borderRadius: '0 3px 3px 0', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <div style={{ flex: 1, minWidth: 240 }}>
+                <div style={{ fontSize: 9, color: '#ffd700', letterSpacing: 3, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>◆ Plan Your Progression</div>
+                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: 0.5, lineHeight: 1.2, marginBottom: 6 }}>
+                  Many of the strongest items in Marathon are gated behind faction rank.
+                </div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                  The Faction Advisor maps your shell choice to the optimal grind path — so you know which faction to invest in first.
+                </div>
+              </div>
+              <Link
+                href={selectedShell ? '/factions?shell=' + selectedShell : '/factions'}
+                style={{
+                  padding:        '11px 20px',
+                  background:     '#ffd700',
+                  color:          '#000',
+                  fontSize:       11,
+                  fontWeight:     800,
+                  letterSpacing:  1.5,
+                  borderRadius:   2,
+                  textDecoration: 'none',
+                  fontFamily:     'monospace',
+                  whiteSpace:     'nowrap',
+                  flexShrink:     0,
+                }}>
+                OPEN FACTION ADVISOR →
+              </Link>
+            </div>
+          </div>
+
           {/* ══ PERSONAL COACH TEASER (locked by flag) ═══════ */}
           {!monetizationOn && (
             <div className="result-block" style={{ animationDelay: '0.25s', marginBottom: 12 }}>

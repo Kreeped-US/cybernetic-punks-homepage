@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 // ── CONFIG ────────────────────────────────────────────────────
@@ -110,12 +110,27 @@ function StatPill({ label, value, color }) {
 }
 
 // ── MAIN ───────────────────────────────────────────────────────
-export default function FactionClient({ data }) {
+export default function FactionClient({ data, urlShell }) {
   var [activeFaction, setActiveFaction] = useState('Arachne');
   var [activeShell, setActiveShell]     = useState('Destroyer');
   var [unlockFilter, setUnlockFilter]   = useState('all');
   var [unlockSearch, setUnlockSearch]   = useState('');
   var [unlockFaction, setUnlockFaction] = useState('all');
+
+  // Deep-link from homepage Faction Advisor callout: pre-select shell + scroll
+  useEffect(function() {
+    if (!urlShell) return;
+    var validShells = ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'];
+    var match = validShells.find(function(s) { return s.toLowerCase() === urlShell.toLowerCase(); });
+    if (match) {
+      setActiveShell(match);
+      // Scroll to advisor section after layout settles
+      setTimeout(function() {
+        var el = document.getElementById('shell-faction-advisor');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+  }, [urlShell]);
 
   var factions    = data?.factions    || [];
   var statBonuses = data?.statBonuses || [];
@@ -190,8 +205,17 @@ export default function FactionClient({ data }) {
         .f-tab-btn:hover { background: #1e2228 !important; }
       `}</style>
 
+      {/* ══ BREADCRUMB ══════════════════════════════════════ */}
+      <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1200, margin: '0 auto' }}>
+        <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
+          <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
+          <li>/</li>
+          <li style={{ color: '#ffd700' }}>FACTIONS</li>
+        </ol>
+      </nav>
+
       {/* ══ HERO ════════════════════════════════════════════ */}
-      <section style={{ padding: '48px 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
+      <section style={{ padding: '24px 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
           <div>
             <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -559,7 +583,7 @@ export default function FactionClient({ data }) {
       )}
 
       {/* ══ SHELL FACTION ADVISOR ═══════════════════════════ */}
-      <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+      <section id="shell-faction-advisor" style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <SectionHeader label="SHELL FACTION ADVISOR" />
 
         <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', padding: '14px 18px', marginBottom: 14 }}>
@@ -778,6 +802,56 @@ export default function FactionClient({ data }) {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ══ FAQ ═════════════════════════════════════════════ */}
+      <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>Frequently Asked</span>
+          <div style={{ flex: 1, height: 1, background: '#22252e' }} />
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>6 QUESTIONS</span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {[
+            {
+              q: 'Which Marathon faction should I join first?',
+              a: 'It depends on your shell and playstyle. Arachne offers melee and combat upgrades that pair well with Destroyer and Vandal. Cyberacme prioritizes loot speed and extraction — ideal for Thief and Recon Runners. Traxus unlocks weapon mods that benefit nearly every build. Use the Shell Faction Advisor on this page to see which factions provide the most relevant stat bonuses for the shell you play most.',
+            },
+            {
+              q: 'What does each Marathon faction unlock?',
+              a: 'Each of the six factions gates specific weapons, mods, implants, and permanent shell stat bonuses. Cyberacme focuses on loot and extraction. Nucaloric handles support and healing. Traxus unlocks weapons and weapon mods. Mida controls equipment and grenades. Arachne offers melee and combat upgrades. Sekiguchi specializes in energy and capacitor systems. Browse the Unlock Browser above for the complete catalog.',
+            },
+            {
+              q: 'How long does it take to max a faction in Marathon?',
+              a: 'Maxing a single faction typically requires sustained play across 30-50 hours of focused mission completion. Each rank requires both faction reputation and material grinding, and the highest-tier unlocks have credit costs measured in tens of thousands. Most Runners focus on one or two factions during early progression rather than spreading investment across all six.',
+            },
+            {
+              q: 'Can I level multiple Marathon factions at the same time?',
+              a: 'Yes, but progression is significantly slower if you split focus. Faction reputation is earned through specific mission types, and most missions advance only one faction at a time. The efficient path is to lock in your primary faction (based on your main shell) and keep a secondary faction at low-rank for utility unlocks.',
+            },
+            {
+              q: 'Which faction is best for my shell?',
+              a: 'The Shell Faction Advisor on this page calculates this for you. Pick any of the seven shells (Assassin, Destroyer, Recon, Rook, Thief, Triage, Vandal) and the tool shows you which factions provide the highest stat bonuses for that shell\'s priority stats. Destroyer and Vandal favor Arachne. Recon and Thief favor Cyberacme. Triage favors Nucaloric. Each shell has a clear primary faction based on stat synergies.',
+            },
+            {
+              q: 'How does the Faction Advisor work?',
+              a: 'The Shell Faction Advisor matches each shell\'s priority stats (the stats that most amplify that shell\'s kit) against the stat bonuses each faction offers. The tool then ranks all six factions by total bonus value for your selected shell. This tells you exactly which faction to invest in first to maximize your shell\'s effectiveness. The data updates as Bungie adds new faction unlocks and rebalances stats.',
+            },
+          ].map(function(item, i) {
+            return (
+              <details key={i} style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ffd700', borderRadius: '0 2px 2px 0' }}>
+                <summary style={{ padding: '14px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.85)', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <span>{item.q}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#ffd700', flexShrink: 0, fontWeight: 700 }}>+</span>
+                </summary>
+                <div style={{ padding: '0 18px 16px', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+                  {item.a}
+                </div>
+              </details>
+            );
+          })}
         </div>
       </section>
     </main>
