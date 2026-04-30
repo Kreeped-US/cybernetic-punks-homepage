@@ -1,11 +1,18 @@
 // app/intel/page.js
+// SEO depth pass — April 30, 2026.
+// Adds: revalidate, expanded keywords, visible breadcrumb,
+// BreadcrumbList + CollectionPage (with dateModified) + ItemList (richer)
+// + FAQPage (5 questions establishing E-E-A-T around AI editors).
+
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+
+export const revalidate = 300;
 
 export var metadata = {
   title: 'Marathon Intel — Latest News, Plays, Builds & Meta Updates',
   description: 'Everything our AI editors are publishing about Marathon — plays graded by CIPHER, meta tracked by NEXUS, builds analyzed by DEXTER, community pulse from GHOST. Updated every 6 hours.',
-  keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community',
+  keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon AI editors, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates',
   openGraph: {
     title: 'Marathon Intel — All Updates | CyberneticPunks',
     description: 'Every article from every AI editor. Plays, meta, builds, community — all in one feed, updated every 6 hours.',
@@ -61,16 +68,144 @@ export default async function IntelHubPage() {
     editorCounts[item.editor]++;
   });
 
+  // ── JSON-LD SCHEMAS ────────────────────────────────────────────
+  // Built from live data so they reflect actual feed state.
+
+  // Latest article timestamp — fresh-content signal for Google
+  var lastArticleDate = items.length > 0
+    ? items[0].created_at
+    : new Date().toISOString();
+
+  var breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',       item: 'https://cyberneticpunks.com' },
+      { '@type': 'ListItem', position: 2, name: 'Intel Feed', item: 'https://cyberneticpunks.com/intel' },
+    ],
+  };
+
+  var collectionPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Marathon Intel — All Updates',
+    description: 'Every article from every AI editor on CyberneticPunks. Plays, meta, builds, and community pulse — updated every 6 hours.',
+    url: 'https://cyberneticpunks.com/intel',
+    dateModified: lastArticleDate,
+    publisher: {
+      '@type': 'Organization',
+      name: 'CyberneticPunks',
+      url:  'https://cyberneticpunks.com',
+    },
+  };
+
+  // Top 30 articles for ItemList — Google handles larger lists fine,
+  // and surfacing more URLs per crawl is valuable
+  var itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Latest Marathon Articles',
+    numberOfItems: items.length,
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    itemListElement: items.slice(0, 30).map(function(item, i) {
+      return {
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Article',
+          name:           item.headline,
+          url:            'https://cyberneticpunks.com/intel/' + item.slug,
+          datePublished:  item.created_at,
+          author: {
+            '@type': 'Person',
+            name: item.editor,
+          },
+        },
+      };
+    }),
+  };
+
+  // FAQPage — establishes E-E-A-T with transparent AI disclosure
+  // Addresses Google's quality rater questions about AI-generated content
+  var faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'How often does CyberneticPunks publish new Marathon content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Every 6 hours. Five specialized AI editors (CIPHER, NEXUS, DEXTER, GHOST, MIRANDA) automatically publish new Marathon articles covering competitive plays, meta shifts, build analysis, community sentiment, and field guides. The cycle runs four times daily, ensuring readers always see fresh intelligence reflecting the current state of Marathon.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Are the articles AI-generated?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. CyberneticPunks is the first fully autonomous Marathon intelligence hub. Five AI editors with distinct specializations and voices publish articles automatically. We are transparent about this — our editor profiles are explicit, and the AI-driven nature of the platform is core to how we deliver continuously updated content. No human editor could publish across five specializations every 6 hours.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How does CyberneticPunks ensure article accuracy?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Editors are constrained by a verified Marathon database covering every weapon, shell, mod, implant, core, and faction unlock. Strict data integrity rules require editors to cite stats and unlock requirements exactly as listed in the database — they cannot invent items, approximate values, or guess at faction rank requirements. When uncertain, editors omit details rather than fabricate them. The system prioritizes verified accuracy over content volume.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Who writes the articles on CyberneticPunks?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Five AI editor personas with distinct lanes. CIPHER analyzes competitive plays and assigns Runner Grades. NEXUS tracks meta shifts and maintains the live tier list. DEXTER engineers builds and grades loadouts. GHOST surfaces community sentiment from Reddit and Steam reviews. MIRANDA writes structured field guides for new and improving Runners. Each editor has a unique voice and focuses on a specific type of Marathon content.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Where does the meta and gameplay data come from?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'CyberneticPunks aggregates intelligence from six primary sources: YouTube gameplay videos, Reddit community discussions on r/Marathon, Bungie official news and patch notes, Twitch streams, the official Marathon game database, and structured tier data maintained by NEXUS. Editors process these sources every 6 hours and publish analysis grounded in current evidence rather than speculation.',
+        },
+      },
+    ],
+  };
+
   return (
-    <main style={{ background: '#121418', minHeight: '100vh', color: '#ffffff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
+    <main style={{ background: '#121418', minHeight: '100vh', color: '#ffffff', paddingTop: 12, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
+
+      {/* JSON-LD Schemas — render inline so Google sees on first crawl */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageSchema) }} />
+      {items.length > 0 && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+      )}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <style>{`
         .intel-row:hover   { background: #1e2228 !important; }
         .intel-editor-pill:hover { background: #1e2228 !important; }
+        .intel-faq         { background: #1a1d24; border: 1px solid #22252e; border-left: 2px solid #00ff41; border-radius: 0 2px 2px 0; }
+        .intel-faq summary { padding: 14px 18px; cursor: pointer; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .intel-faq summary::-webkit-details-marker { display: none; }
+        .intel-faq[open] summary { color: #fff; }
+        .intel-faq-body    { padding: 0 18px 16px; font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; }
       `}</style>
 
+      {/* ══ BREADCRUMB ════════════════════════════════════════ */}
+      <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
+        <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
+          <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
+          <li>/</li>
+          <li style={{ color: '#00ff41' }}>INTEL FEED</li>
+        </ol>
+      </nav>
+
       {/* ══ HERO ═════════════════════════════════════════════ */}
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 28px' }}>
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
           <span style={{ fontSize: 10, color: '#00ff41', letterSpacing: 3, fontWeight: 700 }}>5 EDITORS · PUBLISHING EVERY 6 HOURS</span>
@@ -216,6 +351,52 @@ export default async function IntelHubPage() {
         )}
       </section>
 
+      {/* ══ FAQ ═════════════════════════════════════════════ */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 48px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>About Our Editors</span>
+          <div style={{ flex: 1, height: 1, background: '#22252e' }} />
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>5 QUESTIONS</span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {[
+            {
+              q: 'How often does CyberneticPunks publish new Marathon content?',
+              a: 'Every 6 hours. Five specialized AI editors (CIPHER, NEXUS, DEXTER, GHOST, MIRANDA) automatically publish new Marathon articles covering competitive plays, meta shifts, build analysis, community sentiment, and field guides. The cycle runs four times daily, ensuring readers always see fresh intelligence reflecting the current state of Marathon.',
+            },
+            {
+              q: 'Are the articles AI-generated?',
+              a: 'Yes. CyberneticPunks is the first fully autonomous Marathon intelligence hub. Five AI editors with distinct specializations and voices publish articles automatically. We are transparent about this — our editor profiles are explicit, and the AI-driven nature of the platform is core to how we deliver continuously updated content. No human editor could publish across five specializations every 6 hours.',
+            },
+            {
+              q: 'How does CyberneticPunks ensure article accuracy?',
+              a: 'Editors are constrained by a verified Marathon database covering every weapon, shell, mod, implant, core, and faction unlock. Strict data integrity rules require editors to cite stats and unlock requirements exactly as listed in the database — they cannot invent items, approximate values, or guess at faction rank requirements. When uncertain, editors omit details rather than fabricate them. The system prioritizes verified accuracy over content volume.',
+            },
+            {
+              q: 'Who writes the articles on CyberneticPunks?',
+              a: 'Five AI editor personas with distinct lanes. CIPHER analyzes competitive plays and assigns Runner Grades. NEXUS tracks meta shifts and maintains the live tier list. DEXTER engineers builds and grades loadouts. GHOST surfaces community sentiment from Reddit and Steam reviews. MIRANDA writes structured field guides for new and improving Runners. Each editor has a unique voice and focuses on a specific type of Marathon content.',
+            },
+            {
+              q: 'Where does the meta and gameplay data come from?',
+              a: 'CyberneticPunks aggregates intelligence from six primary sources: YouTube gameplay videos, Reddit community discussions on r/Marathon, Bungie official news and patch notes, Twitch streams, the official Marathon game database, and structured tier data maintained by NEXUS. Editors process these sources every 6 hours and publish analysis grounded in current evidence rather than speculation.',
+            },
+          ].map(function(item, i) {
+            return (
+              <details key={i} className="intel-faq">
+                <summary>
+                  <span>{item.q}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#00ff41', flexShrink: 0, fontWeight: 700 }}>+</span>
+                </summary>
+                <div className="intel-faq-body">
+                  {item.a}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ══ BOTTOM LINKS ═══════════════════════════════════ */}
       <section style={{ maxWidth: 600, margin: '0 auto', padding: '0 24px 40px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -227,23 +408,6 @@ export default async function IntelHubPage() {
           </Link>
         </div>
       </section>
-
-      <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: 'Marathon Intel — All Updates',
-          description: 'Every article from every AI editor on CyberneticPunks.',
-          url: 'https://cyberneticpunks.com/intel',
-          mainEntity: {
-            '@type': 'ItemList',
-            numberOfItems: items.length,
-            itemListElement: items.slice(0, 20).map(function(item, i) {
-              return { '@type': 'ListItem', position: i + 1, name: item.headline, url: 'https://cyberneticpunks.com/intel/' + item.slug };
-            }),
-          },
-        }),
-      }} />
     </main>
   );
 }
