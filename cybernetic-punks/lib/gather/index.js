@@ -6,6 +6,7 @@ import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { gatherBungieNews, formatBungieNewsForEditor } from './bungie.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
+import { gatherCipher } from './cipher.js';
 
 // X API intake removed April 27, 2026 — Free tier doesn't permit search/recent
 // endpoint, and Basic tier ($200/mo) wasn't justified by the data quality lift.
@@ -13,8 +14,13 @@ import { runDexterStatPipeline } from './dexter-stats.js';
 // which collectively cover the same ground (community sentiment, dev news,
 // gameplay analysis) at zero recurring cost.
 //
-// If X is restored later (paid tier OR manual curation tool), wire it back
-// in here and update each editor's prompt builder below.
+// CIPHER pipeline rebuilt May 1, 2026 — moved from YouTube/Twitch consumption
+// to internal site state synthesis. CIPHER now reads NEXUS tier list, recent
+// DEXTER builds, recent GHOST sentiment, Bungie news, and the game database,
+// then produces ranked-intelligence content on a 5-archetype weekly schedule.
+// Background: youtube-transcript package was failing silently from Vercel,
+// meaning CIPHER had been writing competitive analysis from titles alone for
+// weeks. New pipeline eliminates external data dependency entirely.
 
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
@@ -50,31 +56,21 @@ export async function gatherAll() {
 
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
 
-  // ── CIPHER — YouTube + Twitch primary ─────────────────────────
-  // Previously: X primary, YouTube supplementary.
-  // Now: YouTube/Twitch primary (these are CIPHER's natural fit anyway —
-  // gameplay clips with transcripts for play analysis).
-  var cipherPrompt = '';
-
-  var youtubeForCipher = formatForEditor(youtubeVideos, 'CIPHER');
-  if (youtubeForCipher) {
-    cipherPrompt += '--- YOUTUBE GAMEPLAY (PRIMARY SOURCE) ---\nFull-length gameplay videos with transcripts for play-by-play analysis.\n\n' + youtubeForCipher;
-  }
-
-  var twitchSection = formatClipsForCipher(twitchClips);
-  if (twitchSection) {
-    cipherPrompt += '\n\n--- TWITCH CLIPS ---\nShort highlight clips from live Marathon streams.\n\n' + twitchSection;
-  }
+  // ── CIPHER — Internal synthesis (rebuilt May 1, 2026) ─────────
+  // No longer reads YouTube/Twitch. Reads NEXUS/DEXTER/GHOST/Bungie/database
+  // and produces archetype-driven ranked intelligence content. Patch detection
+  // in bungieNews overrides the schedule for that cycle.
+  var cipherPrompt = await gatherCipher(bungieNews);
 
   if (!cipherPrompt) {
-    cipherPrompt = 'No gameplay content available this cycle. Write a competitive analysis article based on general Marathon meta knowledge — patterns you observe in current ranked play, common mistakes, what defines high-skill play in current meta.';
+    cipherPrompt = 'No internal data available for synthesis this cycle. Write a ranked '
+      + 'intelligence article based on general Marathon meta knowledge — what defines '
+      + 'high-skill ranked play, common climber mistakes, mental game discipline. '
+      + 'Set source_video_id null and source_type null.';
   }
 
-  if (bungieNewsContext) cipherPrompt += bungieNewsContext;
-
   // ── NEXUS — YouTube primary ───────────────────────────────────
-  // Previously: X primary, YouTube supplementary.
-  // Now: YouTube primary (creator meta discussion + tier list videos).
+  // YouTube primary (creator meta discussion + tier list videos).
   // Bungie news for patch-driven meta shifts.
   var nexusPrompt = '';
 
@@ -90,8 +86,7 @@ export async function gatherAll() {
   if (bungieNewsContext) nexusPrompt += bungieNewsContext;
 
   // ── DEXTER — YouTube primary ──────────────────────────────────
-  // Previously: X primary, YouTube supplementary.
-  // Now: YouTube primary (build guides, loadout discussions).
+  // YouTube primary (build guides, loadout discussions).
   // Faction database injected via game context handles unlock specifics.
   var dexterPrompt = '';
 
@@ -107,10 +102,8 @@ export async function gatherAll() {
   if (bungieNewsContext) dexterPrompt += bungieNewsContext;
 
   // ── GHOST — Reddit + Steam reviews primary ────────────────────
-  // Previously: X + Reddit + Steam reviews. X carried a lot of weight here.
-  // Now: Reddit + Steam reviews + Bungie news. Reddit captures sustained
-  // community sentiment; Steam reviews capture broader player sentiment;
-  // Bungie news captures dev-driven discourse triggers.
+  // Reddit captures sustained community sentiment; Steam reviews capture
+  // broader player sentiment; Bungie news captures dev-driven discourse.
   var ghostPrompt = formatForGhost(redditPosts, steamReviews, null);
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
@@ -119,8 +112,6 @@ export async function gatherAll() {
   }
 
   // ── MIRANDA — YouTube + Bungie news + game databases ──────────
-  // Previously: had xData attached for community event detection.
-  // Now: Bungie dev news + YouTube guide content cover the same territory.
   if (mirandaData) {
     if (bungieNews.length > 0) mirandaData.devNews = bungieNews.slice(0, 6);
     // xData explicitly null — buildMirandaPrompt's xIntelBlock conditional

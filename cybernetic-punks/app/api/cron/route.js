@@ -54,7 +54,9 @@ function resolveMediaInfo(result, rawData, editorName) {
     };
   }
 
-  if (['CIPHER', 'NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
+  // CIPHER no longer references external videos as of May 1, 2026 rebuild.
+  // Removed from the YouTube-fallback list to prevent random thumbnails.
+  if (['NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
     var topVideo = rawData.youtubeVideos[0];
     return {
       thumbnail: topVideo.thumbnail || 'https://img.youtube.com/vi/' + topVideo.youtube_id + '/hqdefault.jpg',
@@ -147,7 +149,15 @@ async function processEditor(editorName, prompt, rawData) {
       source_url: media.source_url,
     };
 
-    if (editorName === 'CIPHER') insertData.ce_score = result.ce_score || 0;
+    // CIPHER rebuilt May 1, 2026 — internal synthesis, no external video.
+    // Source set to INTEL, no thumbnail or source_url. Article cards still
+    // show editor portrait via IntelFeed.js, so visual treatment remains.
+    if (editorName === 'CIPHER') {
+      insertData.source = 'INTEL';
+      insertData.ce_score = result.ce_score || 0;
+      insertData.thumbnail = null;
+      insertData.source_url = null;
+    }
     if (editorName === 'NEXUS')  insertData.ce_score = result.grid_pulse || 0;
     if (editorName === 'DEXTER') insertData.ce_score = result.ce_score || 0;
     if (editorName === 'GHOST') {
@@ -302,7 +312,9 @@ export async function GET() {
     }
 
     // ── STEP 4: Inject directive + dedup + patch into each editor prompt ──
-    // CIPHER
+    // CIPHER — note: gatherCipher() in lib/gather/cipher.js already handles
+    // patch override internally (pivots to patch_impact archetype). The
+    // dedup block is still useful to prevent repeating recent headlines.
     if (typeof prompts.CIPHER === 'string') {
       if (directiveMap['CIPHER']) prompts.CIPHER += buildDirectiveBlock(directiveMap['CIPHER']);
       else {
@@ -373,10 +385,6 @@ export async function GET() {
     }
 
     // ── STEP 6: Run editors IN PARALLEL ───────────────────────────
-    // Previously: sequential loop with 15s sleep between each (60s dead time
-    // per cycle, ~10min total). Now: all 5 editors fire simultaneously via
-    // Promise.allSettled — cycle drops to ~3min. allSettled prevents one
-    // editor's failure from killing the others.
     var editors = [
       { name: 'CIPHER',  prompt: prompts.CIPHER  },
       { name: 'NEXUS',   prompt: prompts.NEXUS   },
@@ -389,15 +397,12 @@ export async function GET() {
       editors.map(function(e) { return processEditor(e.name, e.prompt, rawData); })
     );
 
-    // Unwrap settled results back to a flat results array
     var results = settledResults.map(function(s, idx) {
       if (s.status === 'fulfilled') return s.value;
       return { editor: editors[idx].name, success: false, error: s.reason?.message || 'Unhandled rejection' };
     });
 
     // ── STEP 7: Mark directives consumed for editors that succeeded ──
-    // Done after parallel execution completes — same logic as before,
-    // just batched into its own pass.
     for (var i = 0; i < results.length; i++) {
       var r = results[i];
       if (r.success && directiveMap[r.editor]) {

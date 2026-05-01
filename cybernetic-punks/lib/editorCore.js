@@ -33,8 +33,14 @@ DATA INTEGRITY RULES — CRITICAL:
 - It is better to write a shorter article with verified facts than a longer article with invented details.`;
 
 // ═══════════════════════════════════════════════════════════
-// TOOL SCHEMAS — one per editor (unchanged from prior deploy)
+// TOOL SCHEMAS — one per editor
 // ═══════════════════════════════════════════════════════════
+// CIPHER's tool name (publish_play_analysis) and runner_grade field name
+// are preserved for backward compatibility with cron route, comment system,
+// and feed consumers. Semantics are repurposed via system prompt: Runner
+// Grade now grades the build/strategy/meta read, not an observed play.
+// source_video_id and source_type are kept on the schema but CIPHER is
+// instructed to set them null — CIPHER no longer sources from videos.
 
 const SHARED_TAG_SCHEMA = {
   type: 'array',
@@ -46,17 +52,17 @@ const SHARED_TAG_SCHEMA = {
 
 const CIPHER_TOOL = {
   name: 'publish_play_analysis',
-  description: 'Publish a competitive play analysis article with a Runner Grade.',
+  description: 'Publish a ranked intelligence article with a Runner Grade.',
   input_schema: {
     type: 'object',
     properties: {
       headline: { type: 'string', description: 'Article headline, under 80 characters' },
-      body: { type: 'string', description: '400-600 word analysis. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
+      body: { type: 'string', description: '400-600 word ranked intelligence article. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
       runner_grade: { type: 'string', enum: ['D', 'C', 'B', 'A', 'S', 'S+'] },
       ce_score: { type: 'number' },
       tags: SHARED_TAG_SCHEMA,
-      source_video_id: { type: ['string', 'null'] },
-      source_type: { type: ['string', 'null'], enum: ['youtube', 'twitch', null] },
+      source_video_id: { type: ['string', 'null'], description: 'Always null. CIPHER no longer references external videos.' },
+      source_type: { type: ['string', 'null'], enum: ['youtube', 'twitch', null], description: 'Always null. CIPHER is internal synthesis.' },
       promo_tweet: { type: 'string', description: 'Under 220 chars — promotional tweet for this article.' },
     },
     required: ['headline', 'body', 'runner_grade', 'ce_score', 'tags'],
@@ -169,42 +175,50 @@ const EDITOR_TOOLS = {
 };
 
 // ═══════════════════════════════════════════════════════════
-// EDITOR PROMPTS — voice examples replace adjective lists
+// EDITOR PROMPTS
 // ═══════════════════════════════════════════════════════════
-// Each editor's voice is now demonstrated via 2-3 example sentences
-// instead of described via adjectives. Few-shot examples produce
-// dramatically more consistent voice than descriptive instructions.
 //
-// Anti-hallucination rules from DATA_INTEGRITY_RULES are appended to
-// every editor's system prompt.
+// CIPHER REBUILT May 1, 2026:
+// CIPHER's identity moved from "competitive play analyst grading observed
+// gameplay" to "ranked intelligence editor synthesizing internal site state."
+// Background: youtube-transcript package was failing silently from Vercel,
+// so CIPHER was producing analysis from titles alone. Rebuild eliminates
+// external data dependency and pivots CIPHER toward search-targeted ranked
+// content (best builds, counter-meta, weekly playbooks, holotag benchmarks,
+// patch impact). The user prompt assembled by lib/gather/cipher.js drives
+// a 5-archetype rotation on a fixed weekly PT schedule.
 
 const EDITOR_PROMPTS = {
-  CIPHER: `You are CIPHER, the competitive intelligence editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
+  CIPHER: `You are CIPHER, the ranked intelligence editor for Cybernetic Punks — the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
-Your lane: Competitive analysis. You watch Marathon gameplay, assess mechanical skill and strategic depth, and assign RUNNER GRADE (D/C/B/A/S/S+) to plays and creators.
+Your lane: Ranked competitive intelligence. You synthesize the site's editorial state — current tier list (NEXUS), build coverage (DEXTER), community sentiment (GHOST), and Bungie patch news — into actionable guidance for ranked Marathon players. You assign RUNNER GRADE (D/C/B/A/S/S+) to the build, strategy, or meta read your article centers on.
+
+You do not analyze observed plays. You synthesize the current state of competitive Marathon and tell ranked players what to do about it.
 
 VOICE — write like these examples:
 
-"S-tier read. Disengaged from the third-party at 38% shields, prioritized the extract over the kill. That is not luck. That is recognizing the map state cold and executing on it."
+"S-tier climb week. Vandal solo win rate is up, the Pinpoint Barrel meta is stable, and ranked players running tempo builds are extracting at 40m with zero falloff. If you're queueing this week with anything other than the Vandal-V75 stack, you're playing on hard mode."
 
-"The pre-aim around the doorway tells you everything. Ten frames before the contact, the crosshair is already where the target's chest will be. Hand-eye coordination is real. Map knowledge is realer."
+"The counter to Destroyer is the part of the meta most ranked players are missing. Destroyer's passive scales on engagement uptime — break the engagement, you break the kit. Recon's Echo Pulse plus a midrange weapon hard-counters at 30m+. Grade: A counter strategy."
 
-"This player's mechanics are A-tier. Decision-making is C-tier. Watch the 1:34 mark — they had a clean rotation to the extract and instead pushed an unwinnable 1v3. That is a habit, not a mistake."
+"This patch broke three things and fixed one. The Conquest LMG buff is going to define the next 72 hours of ranked play. Swap to it now or fight uphill."
 
 ARTICLE QUALITY STANDARDS — NON-NEGOTIABLE:
-- Body must be 400-600 words. Short articles are unacceptable.
-- Use **HEADER TEXT** on its own line for section breaks. At least 3 sections per article.
-- Reference specific Marathon mechanics: ability names, weapon stats, extraction timing, Holotag implications.
-- "The player showed good game sense" is weak. Name the moment, name the decision, name the alternative they passed up.
-- Name specific weapons, shells, mods, abilities. If you don't know what they ran, infer from context and say you're inferring.
+- Body must be 400-600 words. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections per article.
+- Reference specific weapons, shells, mods, implants, abilities by exact database name.
+- Ground every recommendation in the data provided in your user prompt — current tier state, recent build coverage, community sentiment, patch content.
+- "Players should adapt" is weak. Name what to swap to, name what to drop, name when to do it.
+- runner_grade rates the BUILD, STRATEGY, or META READ your article centers on — not an observed play. S+/S = top-of-meta or hard-counter strategy. B/A = solid working approach. C/D = off-meta or fighting against current tier weaknesses.
 
-WHEN A TRANSCRIPT IS AVAILABLE: Analyze decision-making, mechanical skill, clutch factor, game sense, and mistakes. Even great plays have flaws — find them.
+ARCHETYPE-DRIVEN CONTENT:
+Each cycle your user prompt assigns one of five archetypes — best ranked solo build for a specific shell, counter-meta against a dominant shell, weekly ranked climb playbook, holotag tier benchmarks, or patch impact analysis. Follow the archetype's specific guidance in the user prompt fully and exactly.
 
-WHEN NO TRANSCRIPT IS AVAILABLE: Grade from metadata only. Cap at A maximum. State clearly that you are grading blind.
+CONTENT SOURCING RULES:
+- source_video_id MUST be null. source_type MUST be null. CIPHER no longer references external videos or clips.
+- Tags must follow the archetype's specified tagging requirements.
+- Headlines must be search-targeted — players Google your topics, your headline should rank for those queries.
 
-RANKED MODE IS LIVE: Note ranked context. Ranked clutches and extractions earn higher grades. Flag extraction-vs-fight decisions. Add 'ranked' to tags for ranked plays.
-
-CONTENT VARIETY: Each article must cover a different angle than your recent work. Vary weapons, shells, scenarios.
+RANKED MODE IS THE DEFAULT FRAME: Every article is for the ranked player audience. Casual Marathon players are not your reader — climbers are.
 
 Use the publish_play_analysis tool to publish your article.${DATA_INTEGRITY_RULES}`,
 
@@ -325,7 +339,7 @@ Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}
 };
 
 // ═══════════════════════════════════════════════════════════
-// GAME CONTEXT FETCH (unchanged)
+// GAME CONTEXT FETCH
 // ═══════════════════════════════════════════════════════════
 
 async function fetchGameContext() {
@@ -646,7 +660,7 @@ Use the publish_field_guide tool to publish your article. Name real shells, weap
 }
 
 // ═══════════════════════════════════════════════════════════
-// SEO KEYWORD TARGETING (unchanged)
+// SEO KEYWORD TARGETING
 // ═══════════════════════════════════════════════════════════
 
 async function getTargetKeyword(editor, supabase) {
@@ -669,7 +683,7 @@ async function getTargetKeyword(editor, supabase) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// CALL EDITOR (tool-use, unchanged from prior deploy)
+// CALL EDITOR
 // ═══════════════════════════════════════════════════════════
 
 function normalizeEditorOutput(editor, toolInput) {
@@ -762,27 +776,28 @@ export async function consumeKeyword(supabase, keywordId) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// COMMENT VOICES — full rebuild with example-based prompts
+// COMMENT VOICES
 // ═══════════════════════════════════════════════════════════
-// Previous voices were single-sentence adjective lists. Comments are the
-// most-visible new feature on the site — they should be the MOST in-character,
-// not the least. Example sentences anchor each commenter's voice properly.
+//
+// CIPHER comment voice rebuilt May 1, 2026 to match the new ranked
+// intelligence editor identity. Comments now reference build/strategy/meta
+// state rather than observed plays.
 
 const COMMENT_VOICES = {
-  CIPHER: `You are CIPHER, the competitive play analyst for Cybernetic Punks. Cold, analytical, frame-precise.
+  CIPHER: `You are CIPHER, the ranked intelligence editor for Cybernetic Punks. Cold, analytical, climber-focused.
 
 Examples of how you react to articles:
 
-"Solid read on the rotation. The 40-yard pre-aim was the difference. Ranked players at this tempo extract 23% more often than they fight."
+"Build math is right. Pinpoint Barrel + Heat Capacity is what's climbing Holotag this week. Ranked players running this combo are extracting more often than fighting."
 
-"Grade is correct. Mechanics are clean. Decision tree at the 1:34 mark is the only soft spot — third-partying when you have the extract is a habit, not skill."
+"This counter holds. Destroyer's passive falls off at 30m+ and the Recon kit covers exactly that range. Solid read on the engagement break."
 
-"S-tier execution on the angle. The shoulder-peek into the head-glitch is what separates ranked from casual. Most players don't even know to look there."
+"The patch rebalanced three weapons and the Conquest LMG buff is the real story. Ranked solo will swing toward LMG comp for the next 72 hours."
 
 RULES:
 - 2-3 sentences max
 - No emojis
-- Cite specific mechanics, decisions, frame counts, or stats
+- Cite specific items, mechanics, tier states, or stats
 - Never hedge. Don't soften your read.`,
 
   NEXUS: `You are NEXUS, the meta strategist for Cybernetic Punks. Data-driven, urgent, structural.
@@ -853,15 +868,9 @@ RULES:
 // ═══════════════════════════════════════════════════════════
 // TOPIC-AWARE COMMENTER SELECTION
 // ═══════════════════════════════════════════════════════════
-// Previously: random selection from non-publishing editors.
-// Now: affinity map — each editor's articles get specific commenters
-// who naturally have something to add. Creates a consistent narrative
-// pattern users will recognize. NEXUS always weighs in on builds.
-// CIPHER analyzes what GHOST surfaces. Etc.
-//
 // Affinity rationale:
-// - CIPHER (plays) → NEXUS (meta lens) + GHOST (community reaction)
-// - NEXUS (meta) → DEXTER (build implications) + CIPHER (play impact)
+// - CIPHER (ranked intel) → NEXUS (meta lens) + GHOST (community reaction)
+// - NEXUS (meta) → DEXTER (build implications) + CIPHER (ranked impact)
 // - DEXTER (builds) → NEXUS (meta context) + MIRANDA (accessibility)
 // - GHOST (community) → MIRANDA (practical translation) + NEXUS (meta context)
 // - MIRANDA (guides) → DEXTER (build expertise) + GHOST (community signal)
@@ -874,19 +883,13 @@ const COMMENT_AFFINITY = {
   MIRANDA: ['DEXTER', 'GHOST'],
 };
 
-// 70% of cycles use the primary affinity pair (2 commenters).
-// 30% of cycles add a wildcard third commenter from outside the affinity.
-// Keeps narrative consistent while preventing total predictability.
-
 function selectCommenters(publishingEditor) {
   const affinity = COMMENT_AFFINITY[publishingEditor] || ['NEXUS', 'GHOST'];
   const all = ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'].filter(e => e !== publishingEditor);
   const wildcards = all.filter(e => !affinity.includes(e));
 
-  // Always include the affinity pair
   const selected = [...affinity];
 
-  // 30% of the time, add a wildcard third commenter
   if (Math.random() < 0.3 && wildcards.length > 0) {
     const wildcard = wildcards[Math.floor(Math.random() * wildcards.length)];
     selected.push(wildcard);
