@@ -7,6 +7,11 @@
 // 2) Call /api/welcome/complete to mark player_profiles.has_seen_welcome = true
 // 3) Navigate to destination
 // All steps are non-blocking — clicks redirect immediately, side effects fire async.
+//
+// Coach tease section (added May 8, 2026): Personal Coach is the planned
+// monetization product. The tease establishes its presence at first signup
+// without forcing the funnel. Non-interactive for now — when Coach launches,
+// this becomes the conversion entry point and we wire up click-through.
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -243,6 +248,92 @@ export default function WelcomeClient({ displayName, playerId }) {
                 </button>
               );
             })}
+          </div>
+        </section>
+
+        {/* ══ COACH TEASE ════════════════════════════════════ */}
+        {/* Establishes Personal Coach presence at first signup without
+            forcing the funnel. Non-interactive — visual presence only.
+            When Coach launches, replace the [COMING SOON] badge with
+            an active CTA and wire up the click handler. */}
+        <section style={{ marginTop: 28 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 14,
+          }}>
+            <span style={{
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.25)',
+              letterSpacing: 3,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              fontFamily: 'monospace',
+            }}>
+              On the way
+            </span>
+            <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            padding: '16px 20px',
+            background: 'transparent',
+            border: '1px dashed #2a2d36',
+            borderRadius: 3,
+            opacity: 0.7,
+          }}>
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 2,
+              background: '#0e1014',
+              border: '1px dashed #ff2d5560',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              fontSize: 18,
+              color: '#ff2d55',
+            }}>
+              ◈
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{
+                  fontFamily: 'Orbitron, monospace',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: '#ff2d55',
+                  letterSpacing: 1.5,
+                }}>
+                  PERSONAL COACH
+                </span>
+                <span style={{
+                  fontSize: 9,
+                  color: 'rgba(255,45,85,0.7)',
+                  letterSpacing: 2,
+                  fontWeight: 700,
+                  fontFamily: 'monospace',
+                  padding: '2px 6px',
+                  border: '1px solid rgba(255,45,85,0.3)',
+                  borderRadius: 2,
+                }}>
+                  COMING SOON
+                </span>
+              </div>
+              <div style={{
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.45)',
+                lineHeight: 1.5,
+              }}>
+                Tailored ranked progression plans. Climb path tuned to your shell, holotag, and time budget.
+              </div>
+            </div>
           </div>
         </section>
 

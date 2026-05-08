@@ -24,6 +24,34 @@ function platformName(membershipType) {
   return map[membershipType] || 'pc';
 }
 
+// ─── POST-AUTH ROUTING DECISION TREE ──────────────────────────────────────────
+// Decoupled from "completed Coach intake" — sign-in is now a general-purpose
+// action (free site users, future Coach customers, returning browsers). The
+// callback should not assume the user is here for Coach.
+//
+// Priority order:
+//   1. has_seen_welcome === false  → /welcome  (first signup, intent capture)
+//   2. onboarding_complete === true → /me     (returning Coach user)
+//   3. signup_intent === 'coach'    → /join/intake (Coach-bound, mid-intake)
+//   4. default                      → /        (returning browser, no Coach)
+//
+// signup_intent is the column populated by /api/welcome/complete when a user
+// clicks an intent card on /welcome. It's not currently set anywhere to 'coach'
+// (no Coach card exists on /welcome), but the branch is included so when Coach
+// launches and we add a CTA somewhere, this routing already supports it.
+function resolvePostAuthRedirect(profile) {
+  if (profile.has_seen_welcome === false || profile.has_seen_welcome === null) {
+    return '/welcome';
+  }
+  if (profile.onboarding_complete === true) {
+    return '/me';
+  }
+  if (profile.signup_intent === 'coach') {
+    return '/join/intake';
+  }
+  return '/';
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
@@ -106,6 +134,10 @@ export async function GET(request) {
       : 'pc';
 
     // Upsert player profile
+    // Selecting has_seen_welcome and signup_intent for the routing decision tree.
+    // These columns were added May 8, 2026 with the /welcome deploy; the SQL
+    // migration backfills has_seen_welcome=true for existing users so they
+    // skip the welcome screen on their next signin.
     const supabase = getSupabase();
 
     const { data: player, error: upsertError } = await supabase
@@ -123,7 +155,7 @@ export async function GET(request) {
           ignoreDuplicates: false,
         }
       )
-      .select('id, onboarding_complete')
+      .select('id, onboarding_complete, has_seen_welcome, signup_intent')
       .single();
 
     if (upsertError || !player) {
@@ -131,7 +163,7 @@ export async function GET(request) {
       return NextResponse.redirect(new URL('/join?error=db_error', request.url));
     }
 
-    const redirectTo = player.onboarding_complete ? '/me' : '/join/intake';
+    const redirectTo = resolvePostAuthRedirect(player);
     const response = NextResponse.redirect(new URL(redirectTo, request.url));
 
     response.cookies.set('cp_player_id', player.id, {
