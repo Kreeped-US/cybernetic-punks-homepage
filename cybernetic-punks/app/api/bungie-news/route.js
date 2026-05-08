@@ -1,5 +1,4 @@
 // app/api/bungie-news/route.js
-// Powers the DevTicker component with live Bungie news.
 // Pulls from Steam news API (patch notes, announcements).
 // Cached for 30 minutes to avoid hammering APIs on every page load.
 //

@@ -1,6 +1,5 @@
 // app/api/twitch-live/route.js
 // Returns currently live Marathon streamers from Twitch
-// Called by the TwitchLive homepage component
 
 import { getLiveStreamers } from '@/lib/gather/twitch';
 import { NextResponse } from 'next/server';
