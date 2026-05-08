@@ -124,7 +124,6 @@ export async function gatherTwitchClips() {
 
 /**
  * Fetch currently live Marathon streamers
- * Used by the TwitchLive homepage component (client-side via API route)
  */
 export async function getLiveStreamers() {
   try {
