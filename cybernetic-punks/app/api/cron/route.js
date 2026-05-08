@@ -151,7 +151,7 @@ async function processEditor(editorName, prompt, rawData) {
 
     // CIPHER rebuilt May 1, 2026 — internal synthesis, no external video.
     // Source set to INTEL, no thumbnail or source_url. Article cards still
-    // show editor portrait via IntelFeed.js, so visual treatment remains.
+    // show editor portrait via HomeIntelFeed.js, so visual treatment remains.
     if (editorName === 'CIPHER') {
       insertData.source = 'INTEL';
       insertData.ce_score = result.ce_score || 0;
