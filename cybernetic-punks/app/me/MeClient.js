@@ -275,6 +275,14 @@ export default function MeClient({ player }) {
             >
               Edit Profile
             </button>
+            <form action="/api/auth/signout" method="POST" style={{ margin: 0 }}>
+              <button
+                type="submit"
+                style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', background: 'none', border: '1px solid #22252e', borderRadius: 2, padding: '5px 12px', cursor: 'pointer', letterSpacing: 2, fontFamily: 'inherit', textTransform: 'uppercase' }}
+              >
+                Sign Out
+              </button>
+            </form>
           </div>
         </div>
       </div>
