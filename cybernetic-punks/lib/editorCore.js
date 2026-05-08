@@ -59,7 +59,7 @@ const CIPHER_TOOL = {
       headline: { type: 'string', description: 'Article headline, under 80 characters' },
       body: { type: 'string', description: '400-600 word ranked intelligence article. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
       runner_grade: { type: 'string', enum: ['D', 'C', 'B', 'A', 'S', 'S+'] },
-      ce_score: { type: 'number' },
+      ce_score: { type: 'number', description: 'Number from 0 to 10 (decimals allowed, e.g. 7.5). Rates the strength of the build, strategy, or meta read centered in this article. 0 = trap pick. 5 = average. 8+ = top of meta. NEVER use the 0-100 scale.' },
       tags: SHARED_TAG_SCHEMA,
       source_video_id: { type: ['string', 'null'], description: 'Always null. CIPHER no longer references external videos.' },
       source_type: { type: ['string', 'null'], enum: ['youtube', 'twitch', null], description: 'Always null. CIPHER is internal synthesis.' },
@@ -113,7 +113,7 @@ const DEXTER_TOOL = {
       headline: { type: 'string' },
       body: { type: 'string', description: '500-700 word build analysis with **HEADER TEXT** section breaks. At least 4 sections.' },
       loadout_grade: { type: 'string', enum: ['F', 'D', 'C', 'B', 'A', 'S'] },
-      ce_score: { type: 'number' },
+      ce_score: { type: 'number', description: 'Number from 0 to 10 (decimals allowed, e.g. 7.5). Rates the build\'s overall power. 0 = unviable. 5 = niche/situational. 8+ = top-tier loadout. NEVER use the 0-100 scale.' },
       shell_focus: { type: ['string', 'null'], enum: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal', null] },
       ranked_viable: { type: 'boolean' },
       holotag_target: { type: ['string', 'null'] },
@@ -159,7 +159,7 @@ const MIRANDA_TOOL = {
       difficulty_rating: { type: 'string', enum: ['Beginner', 'Intermediate', 'Advanced'] },
       ranked_relevant: { type: 'boolean' },
       tags: SHARED_TAG_SCHEMA,
-      ce_score: { type: 'number' },
+      ce_score: { type: 'number', description: 'Number from 0 to 10 (decimals allowed, e.g. 7.5). Rates the guide\'s utility for its target audience. 0 = unhelpful. 5 = average. 8+ = essential reference. NEVER use the 0-100 scale.' },
       promo_tweet: { type: 'string' },
     },
     required: ['headline', 'body', 'guide_category', 'tags', 'ce_score'],
@@ -219,6 +219,8 @@ CONTENT SOURCING RULES:
 - Headlines must be search-targeted — players Google your topics, your headline should rank for those queries.
 
 RANKED MODE IS THE DEFAULT FRAME: Every article is for the ranked player audience. Casual Marathon players are not your reader — climbers are.
+
+COMPETITIVE LENS, NOT ECONOMIC LENS: Your job is ranked competitive play — shell matchups, weapon trades, counter-strategy, build power, climb tactics. Economy topics (salvage drops, sponsored kits, faction credits) are only relevant insofar as they directly change what shells and weapons climb in ranked solo. If you find yourself writing about resource grinding, prestige economy, or kit acquisition for its own sake, stop — that's GHOST or DEXTER territory. Your headlines should answer "what should I play in ranked right now and why" more often than "what just changed in the economy."
 
 Use the publish_play_analysis tool to publish your article.${DATA_INTEGRITY_RULES}`,
 

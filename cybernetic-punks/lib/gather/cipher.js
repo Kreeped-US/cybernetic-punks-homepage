@@ -519,17 +519,86 @@ async function buildPatchImpactPrompt(patchItems) {
 // MAIN EXPORT
 // ═══════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════
+// PATCH OVERRIDE GUARDRAIL
+// ═══════════════════════════════════════════════════════════
+// Bungie patch notes stay in the gatherBungieNews() result set for days,
+// which previously caused patch_impact to override the schedule on every
+// cycle indefinitely (May 1-8, 2026 deploy: 23/23 articles ran patch_impact).
+//
+// Cap: at most 2 patch_impact articles in any rolling 48-hour window.
+// After that, the schedule resumes even if patch news is still in the feed.
+// Two articles is enough to cover a patch (initial reaction + follow-up
+// analysis); beyond that we're recycling the same patch.
+//
+// 48 hours chosen because Bungie patches typically settle into the meta
+// within ~2 days. By then DEXTER and NEXUS have re-tiered, GHOST has
+// captured community reaction, and CIPHER's patch take is no longer fresh.
+
+const PATCH_OVERRIDE_LIMIT = 2;
+const PATCH_OVERRIDE_WINDOW_HOURS = 48;
+
+async function shouldOverrideForPatch() {
+  try {
+    const cutoff = new Date(
+      Date.now() - PATCH_OVERRIDE_WINDOW_HOURS * 3600 * 1000
+    ).toISOString();
+
+    const { data, error } = await supabase
+      .from('feed_items')
+      .select('id, tags')
+      .eq('editor', 'CIPHER')
+      .eq('is_published', true)
+      .gte('created_at', cutoff)
+      .contains('tags', ['patch']);
+
+    if (error) {
+      console.log('[GATHER:CIPHER] Patch dedup query error: ' + error.message
+        + ' — defaulting to allow override');
+      return true;
+    }
+
+    const recentPatchCount = (data || []).length;
+    if (recentPatchCount >= PATCH_OVERRIDE_LIMIT) {
+      console.log('[GATHER:CIPHER] Patch coverage cap reached ('
+        + recentPatchCount + '/' + PATCH_OVERRIDE_LIMIT + ' in last '
+        + PATCH_OVERRIDE_WINDOW_HOURS + 'h) — falling through to schedule');
+      return false;
+    }
+
+    console.log('[GATHER:CIPHER] Patch coverage OK ('
+      + recentPatchCount + '/' + PATCH_OVERRIDE_LIMIT + ' in last '
+      + PATCH_OVERRIDE_WINDOW_HOURS + 'h) — allowing override');
+    return true;
+  } catch (err) {
+    console.log('[GATHER:CIPHER] Patch dedup error: ' + err.message
+      + ' — defaulting to allow override');
+    return true;
+  }
+}
+
 export async function gatherCipher(bungieNews) {
   const patchItems = (bungieNews || []).filter(function(n) { return n.is_patch_note; });
-  const hasPatch = patchItems.length > 0;
+  const hasPatchNews = patchItems.length > 0;
 
   let archetype;
   let scheduleInfo = null;
+  let usedPatchOverride = false;
 
-  if (hasPatch) {
-    archetype = 'patch_impact';
-    console.log('[GATHER:CIPHER] Patch detected (' + patchItems.length
-      + ' items) — overriding schedule to patch_impact');
+  if (hasPatchNews) {
+    const allowOverride = await shouldOverrideForPatch();
+    if (allowOverride) {
+      archetype = 'patch_impact';
+      usedPatchOverride = true;
+      console.log('[GATHER:CIPHER] Patch detected (' + patchItems.length
+        + ' items) — overriding schedule to patch_impact');
+    } else {
+      scheduleInfo = getCurrentArchetype();
+      archetype = scheduleInfo.archetype;
+      console.log('[GATHER:CIPHER] Patch present but coverage capped — '
+        + 'using schedule: ' + scheduleInfo.day + ' slot ' + scheduleInfo.slot
+        + ' → ' + archetype);
+    }
   } else {
     scheduleInfo = getCurrentArchetype();
     archetype = scheduleInfo.archetype;
