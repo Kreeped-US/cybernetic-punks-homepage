@@ -13,7 +13,7 @@ import { NextResponse } from 'next/server';
 // For now, signing out just removes the local session cookie.
 
 function buildSignoutResponse(request) {
-  const response = NextResponse.redirect(new URL('/', request.url));
+  const response = NextResponse.redirect(new URL('/', request.url), { status: 303 });
 
   // Clear the session cookie. Setting maxAge=0 with the same path the cookie
   // was originally set on is the reliable cross-browser way to delete it —
