@@ -265,23 +265,32 @@ export async function GET() {
     var prompts = await gatherAll();
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null, bungieNews: [] };
 
-    // ── STEP 1: Fetch pending directives ──────────────────────────
+    // ── STEP 1: Fetch pending directives that are due ─────────────
+    // A directive fires if it is pending AND either:
+    //   - scheduled_for is NULL (fires on next cycle, legacy behavior), OR
+    //   - scheduled_for is in the past (the scheduled time has arrived)
+    // Directives with a future scheduled_for are held back until that time.
     var directiveMap = {};
     try {
+      var nowIso = new Date().toISOString();
       var { data: directives } = await supabase
         .from('editor_directives')
-        .select('id, editor, instruction, url')
+        .select('id, editor, instruction, url, scheduled_for')
         .eq('status', 'pending')
+        .or('scheduled_for.is.null,scheduled_for.lte.' + nowIso)
+        .order('scheduled_for', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
 
-      // One directive per editor — take the oldest pending one per editor
+      // One directive per editor — take the earliest-scheduled (or earliest-created)
+      // pending directive per editor. Multiple directives for the same editor that
+      // are also due will wait for subsequent cycles.
       (directives || []).forEach(function(d) {
         if (!directiveMap[d.editor]) directiveMap[d.editor] = d;
       });
 
       var directiveCount = Object.keys(directiveMap).length;
       if (directiveCount > 0) {
-        console.log('[CRON] Directives found: ' + Object.entries(directiveMap).map(function(e) { return e[0]; }).join(', '));
+        console.log('[CRON] Directives due this cycle: ' + Object.entries(directiveMap).map(function(e) { return e[0]; }).join(', '));
       }
     } catch (dirErr) {
       console.log('[CRON] Directive fetch failed (non-fatal): ' + dirErr.message);
