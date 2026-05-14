@@ -127,10 +127,11 @@ const SCHEMAS = {
   ],
 
   editor_directives: [
-    { key: 'editor',      label: 'Editor',      type: 'select',   required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'] },
-    { key: 'instruction', label: 'Instruction', type: 'textarea', required: true, placeholder: 'e.g. Cover the April 14 balance patch — Longshot nerf, Recon Echo Pulse buffs.' },
-    { key: 'url',         label: 'Source URL',  type: 'text',     placeholder: 'e.g. https://x.com/BungieHelp/status/...' },
-    { key: 'status',      label: 'Status',      type: 'select',   options: ['pending', 'consumed'] },
+    { key: 'editor',        label: 'Editor',          type: 'select',         required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'] },
+    { key: 'instruction',   label: 'Instruction',     type: 'textarea',       required: true, placeholder: 'e.g. Cover the April 14 balance patch — Longshot nerf, Recon Echo Pulse buffs.' },
+    { key: 'url',           label: 'Source URL',      type: 'text',           placeholder: 'e.g. https://x.com/BungieHelp/status/...' },
+    { key: 'scheduled_for', label: 'Scheduled For',   type: 'datetime-local', placeholder: 'Leave blank to fire on next cycle' },
+    { key: 'status',        label: 'Status',          type: 'select',         options: ['pending', 'consumed'] },
   ],
 
   // ── FACTION SCHEMAS ──────────────────────────────────────────
@@ -220,6 +221,22 @@ const EDITOR_COLORS = { CIPHER: '#ff0000', NEXUS: '#00f5ff', DEXTER: '#ff8800', 
 const STATUS_COLORS = { pending: '#ff2d55', consumed: '#00ff88' };
 const FACTION_COLORS = { Cyberacme: '#00ff41', Nucaloric: '#ff2d78', Traxus: '#ff6600', Mida: '#cc44ff', Arachne: '#ff1a1a', Sekiguchi: '#c8b400' };
 
+// Convert a timestamptz value from Supabase to the format the datetime-local
+// input expects (YYYY-MM-DDTHH:MM). Returns empty string for null/undefined.
+function toDatetimeLocal(timestampStr) {
+  if (!timestampStr) return '';
+  try {
+    var d = new Date(timestampStr);
+    if (isNaN(d.getTime())) return '';
+    // datetime-local expects local time, not UTC
+    var pad = function(n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+      + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  } catch (e) {
+    return '';
+  }
+}
+
 function rowToFormData(row, schema) {
   const formData = { ...row };
   schema.forEach(field => {
@@ -228,6 +245,10 @@ function rowToFormData(row, schema) {
       if (formData[field.key] === null || formData[field.key] === undefined || formData[field.key] === '') {
         formData[field.key] = nullVal;
       }
+    }
+    // Convert timestamptz strings into the format datetime-local inputs accept
+    if (field.type === 'datetime-local' && formData[field.key]) {
+      formData[field.key] = toDatetimeLocal(formData[field.key]);
     }
   });
   return formData;
@@ -245,6 +266,13 @@ function formDataToRow(formData, schema) {
     }
     if (field.type === 'boolean') {
       row[field.key] = row[field.key] === true || row[field.key] === 'true';
+    }
+    // datetime-local sends "YYYY-MM-DDTHH:MM" without timezone — let Supabase
+    // interpret it as local time. Empty string becomes null.
+    if (field.type === 'datetime-local') {
+      if (row[field.key] === '' || row[field.key] === undefined) {
+        row[field.key] = null;
+      }
     }
     if (row[field.key] === '') row[field.key] = null;
   });
@@ -342,7 +370,7 @@ export default function AdminPage() {
       if (json.error) throw new Error(json.error);
       setRows([json.data, ...rows]);
       cancelForm();
-      showToast(activeTab === 'editor_directives' ? 'Directive queued — fires on next cron cycle' : 'Row added');
+      showToast(activeTab === 'editor_directives' ? (row.scheduled_for ? 'Directive scheduled' : 'Directive queued — fires on next cron cycle') : 'Row added');
     } catch (e) { showToast(e.message, false); }
     setSaving(false);
   }
@@ -417,10 +445,13 @@ export default function AdminPage() {
             {schema.filter(f => f.key === 'editor' || f.key === 'status').map(field => renderField(field))}
           </div>
           {schema.filter(f => f.key === 'instruction' || f.key === 'url').map(field => renderField(field))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
+            {schema.filter(f => f.key === 'scheduled_for').map(field => renderField(field))}
+          </div>
           <div style={{ background: 'rgba(255,45,85,0.05)', border: '1px solid rgba(255,45,85,0.15)', borderLeft: '3px solid #ff2d55', borderRadius: 6, padding: '12px 16px' }}>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff2d55', letterSpacing: 2, marginBottom: 6 }}>HOW THIS WORKS</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Set status to <strong style={{ color: '#ff2d55' }}>pending</strong>. The selected editor picks up your directive on the next cron cycle and writes an article about it. Status auto-updates to <strong style={{ color: '#00ff88' }}>consumed</strong> after use.
+              Set status to <strong style={{ color: '#ff2d55' }}>pending</strong>. If <strong style={{ color: '#00f5ff' }}>Scheduled For</strong> is set, the directive fires on the first cron cycle on or after that time. If blank, fires on the next cron cycle immediately. Status auto-updates to <strong style={{ color: '#00ff88' }}>consumed</strong> after use.
             </div>
           </div>
         </div>
@@ -456,7 +487,13 @@ export default function AdminPage() {
           </select>
         ) : (
           <>
-            <input type={field.type === 'number' ? 'number' : 'text'} value={formData[field.key] ?? ''} onChange={e => updateField(field.key, e.target.value)} placeholder={field.placeholder || ''} style={{ ...S.input }} />
+            <input
+              type={field.type === 'number' ? 'number' : field.type === 'datetime-local' ? 'datetime-local' : 'text'}
+              value={formData[field.key] ?? ''}
+              onChange={e => updateField(field.key, e.target.value)}
+              placeholder={field.placeholder || ''}
+              style={{ ...S.input }}
+            />
             {field.key === 'image_filename' && formData[field.key] && (
               <div style={{ marginTop: 8 }}>
                 <img
@@ -477,10 +514,22 @@ export default function AdminPage() {
     if (activeTab === 'editor_directives') {
       var ec = EDITOR_COLORS[row.editor] || '#888';
       var sc = STATUS_COLORS[row.status] || '#888';
+      var scheduledLabel = null;
+      if (row.scheduled_for) {
+        try {
+          var dt = new Date(row.scheduled_for);
+          if (!isNaN(dt.getTime())) {
+            scheduledLabel = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+          }
+        } catch (e) {}
+      }
       return (
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: ec, flexShrink: 0, minWidth: 60 }}>{row.editor}</span>
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: sc, background: sc + '18', border: '1px solid ' + sc + '44', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>{(row.status || 'pending').toUpperCase()}</span>
+          {scheduledLabel && (
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>📅 {scheduledLabel}</span>
+          )}
           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)', flex: 1, lineHeight: 1.4 }}>{(row.instruction || '').slice(0, 100)}{(row.instruction || '').length > 100 ? '...' : ''}</span>
           {row.url && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(0,245,255,0.5)', flexShrink: 0 }}>URL ↗</span>}
         </div>
@@ -629,7 +678,7 @@ export default function AdminPage() {
           <div style={{ background: 'rgba(255,45,85,0.03)', border: '1px solid rgba(255,45,85,0.12)', borderLeft: '3px solid #ff2d55', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff2d55', letterSpacing: 1, marginBottom: 6 }}>EDITOR DIRECTIVES</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Queue a topic for any editor. On the next cron cycle the selected editor prioritizes your directive. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
+              Queue a topic for any editor. Set <span style={{ color: '#00f5ff' }}>Scheduled For</span> to fire on a future date, or leave blank to fire on the next cron cycle. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
             </div>
           </div>
         )}
