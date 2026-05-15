@@ -1,4 +1,12 @@
 // app/shells/[slug]/page.js
+//
+// FIXED May 15, 2026: Hardcoded shell slugs in generateStaticParams to
+// avoid Supabase call at build time. generateStaticParams runs during
+// Next.js 16 build before env vars are populated, so the lazy-init
+// Proxy in lib/supabase.js throws "supabaseUrl is required". Hardcoding
+// keeps static pre-rendering for SEO. Add new shells here (Sentinel
+// post-May 25) when added to shell_stats.
+
 import { supabase } from '../../../lib/supabase';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
@@ -14,13 +22,22 @@ const SHELL_COLORS = {
 };
 
 const SHELL_SYMBOLS = {
-  assassin: '◈', destroyer: '⬢', recon: '◇',
-  rook: '▣', thief: '⬠', triage: '◎', vandal: '⬡',
+  assassin: '*', destroyer: '#', recon: '+',
+  rook: '=', thief: '%', triage: 'o', vandal: '^',
 };
 
 export async function generateStaticParams() {
-  var { data } = await supabase.from('shell_stats').select('name');
-  return (data || []).map(function(s) { return { slug: s.name.toLowerCase() }; });
+  // Hardcoded to avoid Supabase call at build time.
+  // Add new shells here when adding to shell_stats table.
+  return [
+    { slug: 'assassin' },
+    { slug: 'destroyer' },
+    { slug: 'recon' },
+    { slug: 'rook' },
+    { slug: 'thief' },
+    { slug: 'triage' },
+    { slug: 'vandal' },
+  ];
 }
 
 export async function generateMetadata({ params }) {
@@ -29,13 +46,13 @@ export async function generateMetadata({ params }) {
   var { data: shell } = await supabase.from('shell_stats').select('name, role, lore_tagline, best_for').eq('name', shellName).single();
   if (!shell) return { title: 'Shell Not Found | CyberneticPunks' };
   var desc = shell.lore_tagline
-    ? shell.lore_tagline + ' Complete ' + shell.name + ' guide for Marathon — stats, abilities, cores, implants, and ranked build analysis.'
-    : 'Complete ' + shell.name + ' guide for Marathon. Stats, abilities, best cores, implants, and ranked build guides — updated every 6 hours by CyberneticPunks.';
+    ? shell.lore_tagline + ' Complete ' + shell.name + ' guide for Marathon -- stats, abilities, cores, implants, and ranked build analysis.'
+    : 'Complete ' + shell.name + ' guide for Marathon. Stats, abilities, best cores, implants, and ranked build guides -- updated every 6 hours by CyberneticPunks.';
   return {
-    title: shell.name + ' Guide — Builds, Meta & Tips | CyberneticPunks',
+    title: shell.name + ' Guide -- Builds, Meta & Tips | CyberneticPunks',
     description: desc,
     openGraph: {
-      title: shell.name + ' Guide — Builds, Meta & Tips | CyberneticPunks',
+      title: shell.name + ' Guide -- Builds, Meta & Tips | CyberneticPunks',
       description: desc,
       url: 'https://cyberneticpunks.com/shells/' + slug,
       images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
@@ -55,7 +72,7 @@ export default async function ShellHubPage({ params }) {
     supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').or('required_runner.eq.' + shellName + ',required_runner.is.null').order('rarity', { ascending: false }),
     supabase.from('meta_tiers').select('tier, trend, note, ranked_note').eq('name', shellName).eq('type', 'shell').maybeSingle(),
 
-    // {shellName} Intel — now excludes NEXUS and DEXTER (they have dedicated panels above)
+    // {shellName} Intel -- excludes NEXUS and DEXTER (dedicated panels above)
     supabase
       .from('feed_items')
       .select('id, headline, slug, tags, ce_score, editor, thumbnail, created_at')
@@ -67,7 +84,7 @@ export default async function ShellHubPage({ params }) {
 
     supabase.from('shell_stats').select('name, role, image_filename'),
 
-    // NEXUS's Take — latest 2 NEXUS articles about this shell
+    // NEXUS's Take -- latest 2 NEXUS articles about this shell
     supabase
       .from('feed_items')
       .select('id, headline, slug, body, ce_score, thumbnail, created_at')
@@ -77,7 +94,7 @@ export default async function ShellHubPage({ params }) {
       .order('created_at', { ascending: false })
       .limit(2),
 
-    // DEXTER's Picks — top 3 DEXTER builds for this shell, sorted by ce_score
+    // DEXTER's Picks -- top 3 DEXTER builds for this shell, sorted by ce_score
     supabase
       .from('feed_items')
       .select('id, headline, slug, body, ce_score, thumbnail, created_at')
@@ -91,7 +108,7 @@ export default async function ShellHubPage({ params }) {
   var shell = shellRes.data;
   if (!shell) notFound();
 
-  // Viewer match — check if logged-in user's favorite_shell matches this page
+  // Viewer match -- check if logged-in user's favorite_shell matches this page
   var cookieStore = await cookies();
   var playerId = cookieStore.get('cp_player_id')?.value;
   var viewerMatches = false;
@@ -160,7 +177,7 @@ export default async function ShellHubPage({ params }) {
       shellName={shellName}
       slug={slug}
       color={SHELL_COLORS[slug] || '#00ff41'}
-      symbol={SHELL_SYMBOLS[slug] || '◈'}
+      symbol={SHELL_SYMBOLS[slug] || '*'}
       metaTier={metaTier}
       shellCores={shellCores}
       universalCores={universalCores}
