@@ -123,24 +123,24 @@ export default async function sitemap() {
 
     try {
       const { data, error: feedErr } = await supabase
-        .from('feed_items')
-        .select('slug, updated_at, created_at')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false })
-        .limit(500);
+  .from('feed_items')
+  .select('slug, created_at')
+  .eq('is_published', true)
+  .order('created_at', { ascending: false })
+  .limit(500);
 
-      console.log('[sitemap] feed_items:',
-        data ? data.length + ' rows' : 'null',
-        feedErr ? 'error: ' + feedErr.message : '');
+console.log('[sitemap] feed_items:',
+  data ? data.length + ' rows' : 'null',
+  feedErr ? 'error: ' + feedErr.message : '');
 
-      if (data) {
-        dynamicPages = data.map((item) => ({
-          url: baseUrl + '/intel/' + item.slug,
-          lastModified: item.updated_at ? new Date(item.updated_at) : new Date(item.created_at),
-          changeFrequency: 'monthly',
-          priority: 0.6,
-        }));
-      }
+if (data) {
+  dynamicPages = data.map((item) => ({
+    url: baseUrl + '/intel/' + item.slug,
+    lastModified: new Date(item.created_at),
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }));
+}
     } catch (err) {
       console.error('[sitemap] feed_items fetch threw:', err);
     }
