@@ -222,19 +222,42 @@ const STATUS_COLORS = { pending: '#ff2d55', consumed: '#00ff88' };
 const FACTION_COLORS = { Cyberacme: '#00ff41', Nucaloric: '#ff2d78', Traxus: '#ff6600', Mida: '#cc44ff', Arachne: '#ff1a1a', Sekiguchi: '#c8b400' };
 
 // Convert a timestamptz value from Supabase to the format the datetime-local
-// input expects (YYYY-MM-DDTHH:MM). Returns empty string for null/undefined.
+// input expects (YYYY-MM-DDTHH:MM). The Date object handles UTC -> local
+// conversion automatically when constructed from an ISO string with tz info.
 function toDatetimeLocal(timestampStr) {
   if (!timestampStr) return '';
   try {
     var d = new Date(timestampStr);
     if (isNaN(d.getTime())) return '';
-    // datetime-local expects local time, not UTC
     var pad = function(n) { return String(n).padStart(2, '0'); };
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
       + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   } catch (e) {
     return '';
   }
+}
+
+// Convert a datetime-local string (YYYY-MM-DDTHH:MM, naked, no timezone) into
+// a full ISO-8601 timestamp with the user's local timezone offset baked in.
+// This is necessary because Supabase/Postgres treat naked datetime strings as
+// UTC, which silently shifts a "3:35 PM PT" entry into "3:35 PM UTC" =
+// "8:35 AM PT" — a 7- or 8-hour error depending on DST.
+// Constructing via new Date(year, month, day, hour, minute) interprets the
+// values in the browser's local timezone, then .toISOString() emits the
+// equivalent UTC timestamp. Postgres then stores it correctly as the original
+// local moment in time.
+function datetimeLocalToISO(value) {
+  if (!value || typeof value !== 'string') return null;
+  var match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!match) return null;
+  var year = Number(match[1]);
+  var month = Number(match[2]) - 1; // JS months are 0-indexed
+  var day = Number(match[3]);
+  var hour = Number(match[4]);
+  var minute = Number(match[5]);
+  var d = new Date(year, month, day, hour, minute, 0, 0);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
 }
 
 function rowToFormData(row, schema) {
@@ -246,7 +269,9 @@ function rowToFormData(row, schema) {
         formData[field.key] = nullVal;
       }
     }
-    // Convert timestamptz strings into the format datetime-local inputs accept
+    // Convert timestamptz strings into the format datetime-local inputs accept.
+    // The Date constructor interprets the ISO string as UTC and emits local
+    // time components, so the displayed value matches the user's wall clock.
     if (field.type === 'datetime-local' && formData[field.key]) {
       formData[field.key] = toDatetimeLocal(formData[field.key]);
     }
@@ -267,11 +292,14 @@ function formDataToRow(formData, schema) {
     if (field.type === 'boolean') {
       row[field.key] = row[field.key] === true || row[field.key] === 'true';
     }
-    // datetime-local sends "YYYY-MM-DDTHH:MM" without timezone — let Supabase
-    // interpret it as local time. Empty string becomes null.
+    // datetime-local sends "YYYY-MM-DDTHH:MM" without timezone. We MUST
+    // convert this to a proper ISO timestamp with timezone offset, otherwise
+    // Postgres treats it as UTC and the stored time is off by 7-8 hours.
     if (field.type === 'datetime-local') {
-      if (row[field.key] === '' || row[field.key] === undefined) {
+      if (row[field.key] === '' || row[field.key] === undefined || row[field.key] === null) {
         row[field.key] = null;
+      } else {
+        row[field.key] = datetimeLocalToISO(row[field.key]);
       }
     }
     if (row[field.key] === '') row[field.key] = null;
@@ -451,7 +479,7 @@ export default function AdminPage() {
           <div style={{ background: 'rgba(255,45,85,0.05)', border: '1px solid rgba(255,45,85,0.15)', borderLeft: '3px solid #ff2d55', borderRadius: 6, padding: '12px 16px' }}>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff2d55', letterSpacing: 2, marginBottom: 6 }}>HOW THIS WORKS</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Set status to <strong style={{ color: '#ff2d55' }}>pending</strong>. If <strong style={{ color: '#00f5ff' }}>Scheduled For</strong> is set, the directive fires on the first cron cycle on or after that time. If blank, fires on the next cron cycle immediately. Status auto-updates to <strong style={{ color: '#00ff88' }}>consumed</strong> after use.
+              Set status to <strong style={{ color: '#ff2d55' }}>pending</strong>. If <strong style={{ color: '#00f5ff' }}>Scheduled For</strong> is set, the directive fires on the first cron cycle on or after that local time. If blank, fires on the next cron cycle immediately. Status auto-updates to <strong style={{ color: '#00ff88' }}>consumed</strong> after use.
             </div>
           </div>
         </div>
@@ -678,7 +706,7 @@ export default function AdminPage() {
           <div style={{ background: 'rgba(255,45,85,0.03)', border: '1px solid rgba(255,45,85,0.12)', borderLeft: '3px solid #ff2d55', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff2d55', letterSpacing: 1, marginBottom: 6 }}>EDITOR DIRECTIVES</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Queue a topic for any editor. Set <span style={{ color: '#00f5ff' }}>Scheduled For</span> to fire on a future date, or leave blank to fire on the next cron cycle. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
+              Queue a topic for any editor. Set <span style={{ color: '#00f5ff' }}>Scheduled For</span> to fire on a future date (your local time), or leave blank to fire on the next cron cycle. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
             </div>
           </div>
         )}
