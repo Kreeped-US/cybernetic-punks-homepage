@@ -5,6 +5,18 @@ import UsageStats from '@/components/UsageStats';
 const FACTION_NAMES = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
 const STAT_NAMES = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration', 'DBNO', 'TAD'];
 
+// ── STICKY FIELDS BY TAB (May 15, 2026) ──────────────────────
+// When the user clicks "SAVE & ADD ANOTHER", these fields keep their
+// value while everything else resets to defaults. Designed for batch
+// data entry: 7 stats for one shell, 10 unlocks for one faction, etc.
+const STICKY_FIELDS = {
+  faction_stat_bonuses: ['faction_name'],
+  faction_unlocks:      ['faction_name'],
+  faction_materials:    ['faction_name'],
+  shell_stat_values:    ['shell_name'],
+  editor_directives:    ['editor'],
+};
+
 const SCHEMAS = {
   weapon_stats: [
     { key: 'name',                label: 'Name',                 type: 'text',    required: true,  group: 'Identity' },
@@ -128,13 +140,13 @@ const SCHEMAS = {
 
   editor_directives: [
     { key: 'editor',        label: 'Editor',          type: 'select',         required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'] },
-    { key: 'instruction',   label: 'Instruction',     type: 'textarea',       required: true, placeholder: 'e.g. Cover the April 14 balance patch — Longshot nerf, Recon Echo Pulse buffs.' },
+    { key: 'instruction',   label: 'Instruction',     type: 'textarea',       required: true, placeholder: 'e.g. Cover the April 14 balance patch -- Longshot nerf, Recon Echo Pulse buffs.' },
     { key: 'url',           label: 'Source URL',      type: 'text',           placeholder: 'e.g. https://x.com/BungieHelp/status/...' },
     { key: 'scheduled_for', label: 'Scheduled For',   type: 'datetime-local', placeholder: 'Leave blank to fire on next cycle' },
     { key: 'status',        label: 'Status',          type: 'select',         options: ['pending', 'consumed'] },
   ],
 
-  // ── FACTION SCHEMAS ──────────────────────────────────────────
+  // -- FACTION SCHEMAS --
   factions: [
     { key: 'name',             label: 'Faction Name',    type: 'select',   required: true, options: FACTION_NAMES },
     { key: 'leader',           label: 'Leader',          type: 'text',     placeholder: 'e.g. CHIMERA' },
@@ -241,7 +253,7 @@ function toDatetimeLocal(timestampStr) {
 // a full ISO-8601 timestamp with the user's local timezone offset baked in.
 // This is necessary because Supabase/Postgres treat naked datetime strings as
 // UTC, which silently shifts a "3:35 PM PT" entry into "3:35 PM UTC" =
-// "8:35 AM PT" — a 7- or 8-hour error depending on DST.
+// "8:35 AM PT" -- a 7- or 8-hour error depending on DST.
 // Constructing via new Date(year, month, day, hour, minute) interprets the
 // values in the browser's local timezone, then .toISOString() emits the
 // equivalent UTC timestamp. Postgres then stores it correctly as the original
@@ -307,6 +319,28 @@ function formDataToRow(formData, schema) {
   return row;
 }
 
+// -- BUILD FORM DEFAULTS (May 15, 2026) --
+// Extracted to a helper because we now call it from two places:
+// startAdd() opens a fresh form, saveNew(stayOpen=true) reopens after save.
+// stickyValues param preserves user-selected sticky fields across saves.
+function buildFormDefaults(activeTab, stickyValues) {
+  const schema = SCHEMAS[activeTab] || [];
+  const stickyKeys = STICKY_FIELDS[activeTab] || [];
+  const defaults = {};
+  schema.forEach(f => {
+    // If this field is sticky and we have a remembered value, use it.
+    if (stickyKeys.includes(f.key) && stickyValues && stickyValues[f.key] !== undefined && stickyValues[f.key] !== '') {
+      defaults[f.key] = stickyValues[f.key];
+      return;
+    }
+    if (f.type === 'boolean') defaults[f.key] = true;
+    else if (f.nullableSelect) defaults[f.key] = f.options && f.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
+    else defaults[f.key] = '';
+  });
+  if (activeTab === 'editor_directives' && !defaults.status) defaults.status = 'pending';
+  return defaults;
+}
+
 export default function AdminPage() {
   const [password, setPassword]           = useState('');
   const [authed, setAuthed]               = useState(false);
@@ -322,6 +356,12 @@ export default function AdminPage() {
   const [search, setSearch]               = useState('');
   const [filterFaction, setFilterFaction] = useState('');
   const [filterRunner, setFilterRunner]   = useState('');
+
+  // -- STICKY VALUES (May 15, 2026) --
+  // Stores last-used values for sticky fields (faction_name, shell_name,
+  // editor) so they persist across "SAVE & ADD ANOTHER" cycles. Cleared
+  // on tab switch (set to {}) so context doesn't bleed across data types.
+  const [stickyValues, setStickyValues] = useState({});
 
   function showToast(msg, ok = true) {
     setToast({ msg, ok });
@@ -340,6 +380,7 @@ export default function AdminPage() {
 
   const loadTable = useCallback(async (table) => {
     setLoading(true); setRows([]); setSearch(''); setFilterFaction(''); setFilterRunner('');
+    setStickyValues({}); // Clear sticky state on tab switch -- no cross-contamination.
     try {
       const res = await fetch('/api/admin?table=' + table, { headers: apiHeaders() });
       const json = await res.json();
@@ -359,14 +400,7 @@ export default function AdminPage() {
 
   function startAdd() {
     setShowAddForm(true); setEditingRow(null);
-    const defaults = {};
-    (SCHEMAS[activeTab] || []).forEach(f => {
-      if (f.type === 'boolean') defaults[f.key] = true;
-      else if (f.nullableSelect) defaults[f.key] = f.options && f.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
-      else defaults[f.key] = '';
-    });
-    if (activeTab === 'editor_directives') defaults.status = 'pending';
-    setFormData(defaults);
+    setFormData(buildFormDefaults(activeTab, stickyValues));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -387,7 +421,10 @@ export default function AdminPage() {
     setSaving(false);
   }
 
-  async function saveNew() {
+  // saveNew accepts an optional `stayOpen` param. When true, the form
+  // resets to defaults (with sticky fields preserved) instead of closing.
+  // Called by both "SAVE" (stayOpen=false) and "SAVE & ADD ANOTHER" (true).
+  async function saveNew(stayOpen) {
     setSaving(true);
     try {
       const schema = SCHEMAS[activeTab] || [];
@@ -397,8 +434,27 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setRows([json.data, ...rows]);
-      cancelForm();
-      showToast(activeTab === 'editor_directives' ? (row.scheduled_for ? 'Directive scheduled' : 'Directive queued — fires on next cron cycle') : 'Row added');
+
+      // Capture sticky values from the just-saved form BEFORE resetting,
+      // so "SAVE & ADD ANOTHER" can preserve them in the next form.
+      const stickyKeys = STICKY_FIELDS[activeTab] || [];
+      const newStickyValues = {};
+      stickyKeys.forEach(key => {
+        if (formData[key] !== undefined && formData[key] !== '' && formData[key] !== null) {
+          newStickyValues[key] = formData[key];
+        }
+      });
+      setStickyValues(newStickyValues);
+
+      if (stayOpen) {
+        // Reset form to defaults, but keep the sticky values pre-filled.
+        // The form stays visible; user can immediately enter the next row.
+        setFormData(buildFormDefaults(activeTab, newStickyValues));
+        showToast(activeTab === 'editor_directives' ? 'Directive queued -- enter next' : 'Saved -- enter next');
+      } else {
+        cancelForm();
+        showToast(activeTab === 'editor_directives' ? (row.scheduled_for ? 'Directive scheduled' : 'Directive queued -- fires on next cron cycle') : 'Row added');
+      }
     } catch (e) { showToast(e.message, false); }
     setSaving(false);
   }
@@ -424,6 +480,10 @@ export default function AdminPage() {
   var isCoresOrImplants = activeTab === 'core_stats' || activeTab === 'implant_stats';
   var pendingCount      = activeTab === 'editor_directives' ? rows.filter(r => r.status === 'pending').length : 0;
 
+  // Does this tab support "SAVE & ADD ANOTHER"? Only if it has sticky fields
+  // defined -- otherwise it would behave like regular SAVE.
+  var supportsBatchEntry = (STICKY_FIELDS[activeTab] || []).length > 0;
+
   var filtered = rows.filter(r => {
     var matchSearch  = !search        || Object.values(r).some(v => v && String(v).toLowerCase().includes(search.toLowerCase()));
     var matchFaction = !filterFaction || r.faction_name === filterFaction;
@@ -438,7 +498,7 @@ export default function AdminPage() {
     return (
       <div style={{ minHeight: '100vh', background: S.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 360, padding: 40, border: '1px solid rgba(155,93,229,0.3)', borderRadius: 8, background: S.surface }}>
-          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: '#9b5de5', marginBottom: 8, letterSpacing: 2 }}>◎ ADMIN ACCESS</div>
+          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: '#9b5de5', marginBottom: 8, letterSpacing: 2 }}>ADMIN ACCESS</div>
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, marginBottom: 28 }}>CYBERNETICPUNKS DATA PANEL</div>
           <input type="password" placeholder="Enter admin password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && login()} style={{ ...S.input, marginBottom: 12 }} />
           {authError && <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#ff4444', marginBottom: 12 }}>{authError}</div>}
@@ -494,18 +554,23 @@ export default function AdminPage() {
 
   function renderField(field) {
     var nullVal = field.options && field.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
+    var stickyKeys = STICKY_FIELDS[activeTab] || [];
+    var isSticky = stickyKeys.includes(field.key) && showAddForm; // Only show sticky badge on add form, not edit
     return (
       <div key={field.key}>
-        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted, letterSpacing: 2, marginBottom: 5 }}>
-          {field.label}{field.required ? ' *' : ''}
+        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted, letterSpacing: 2, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>{field.label}{field.required ? ' *' : ''}</span>
+          {isSticky && (
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#00f5ff', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: 2, padding: '1px 5px', letterSpacing: 1 }}>STICKY</span>
+          )}
         </div>
         {field.type === 'textarea' ? (
           <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' || field.key === 'description' || field.key === 'max_cost_summary' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
         ) : field.type === 'select' ? (
           <select value={formData[field.key] ?? (field.nullableSelect ? nullVal : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
-            {!field.nullableSelect && <option value="">— Select —</option>}
+            {!field.nullableSelect && <option value="">-- Select --</option>}
             {(field.options || []).map(o => (
-              <option key={o} value={o}>{o === '' ? '— None —' : o}</option>
+              <option key={o} value={o}>{o === '' ? '-- None --' : o}</option>
             ))}
           </select>
         ) : field.type === 'boolean' ? (
@@ -556,10 +621,10 @@ export default function AdminPage() {
           <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: ec, flexShrink: 0, minWidth: 60 }}>{row.editor}</span>
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: sc, background: sc + '18', border: '1px solid ' + sc + '44', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>{(row.status || 'pending').toUpperCase()}</span>
           {scheduledLabel && (
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>📅 {scheduledLabel}</span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>{scheduledLabel}</span>
           )}
           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)', flex: 1, lineHeight: 1.4 }}>{(row.instruction || '').slice(0, 100)}{(row.instruction || '').length > 100 ? '...' : ''}</span>
-          {row.url && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(0,245,255,0.5)', flexShrink: 0 }}>URL ↗</span>}
+          {row.url && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(0,245,255,0.5)', flexShrink: 0 }}>URL</span>}
         </div>
       );
     }
@@ -618,7 +683,7 @@ export default function AdminPage() {
           {row.ammo_type && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{row.ammo_type}</span>}
           {row.damage && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000' }}>DMG {row.damage}</span>}
           {row.fire_rate && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800' }}>{row.fire_rate} RPM</span>}
-          {row.verified && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88' }}>✓ VERIFIED</span>}
+          {row.verified && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88' }}>VERIFIED</span>}
         </div>
       );
     }
@@ -646,7 +711,7 @@ export default function AdminPage() {
     return (
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>
-          {row.name || (row.shell_name + ' — ' + row.stat_name) || row.material_name || '—'}
+          {row.name || (row.shell_name + ' -- ' + row.stat_name) || row.material_name || '--'}
         </span>
         {schema.slice(1, 4).map(f => row[f.key] !== null && row[f.key] !== undefined && row[f.key] !== '' && (
           <span key={f.key} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted }}>
@@ -667,10 +732,10 @@ export default function AdminPage() {
 
       <div style={{ padding: '20px 32px', borderBottom: '1px solid ' + S.border, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.bg, zIndex: 100 }}>
         <div>
-          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#9b5de5', letterSpacing: 2 }}>◎ DATA ADMIN</div>
+          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#9b5de5', letterSpacing: 2 }}>DATA ADMIN</div>
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted, letterSpacing: 2, marginTop: 2 }}>CYBERNETICPUNKS.COM</div>
         </div>
-        <a href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted, textDecoration: 'none', letterSpacing: 2 }}>← BACK TO SITE</a>
+        <a href="/" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted, textDecoration: 'none', letterSpacing: 2 }}>BACK TO SITE</a>
       </div>
 
       <div style={{ padding: '24px 32px 0', borderBottom: '1px solid ' + S.border }}>
@@ -683,7 +748,7 @@ export default function AdminPage() {
           <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{ padding: '14px 16px', background: activeTab === tab.key && tab.group === 'faction' ? 'rgba(255,215,0,0.04)' : 'transparent', border: 'none', borderBottom: activeTab === tab.key ? '2px solid ' + tab.color : '2px solid transparent', borderTop: tab.group === 'faction' && activeTab !== tab.key ? '2px solid rgba(255,215,0,0.12)' : '2px solid transparent', color: activeTab === tab.key ? tab.color : tab.group === 'faction' ? 'rgba(255,215,0,0.4)' : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative' }}>
             {tab.label}
             {tab.key === 'editor_directives' && pendingCount > 0 && activeTab !== 'editor_directives' && (
-              <span style={{ position: 'absolute', top: 8, right: 4, width: 7, height: 7, borderRadius: '50%', background: '#ff2d55', boxShadow: '0 0 6px #ff2d55' }} />
+              <span style={{ position: 'absolute', top: 8, right: 4, width: 7, height: 7, borderRadius: '50%', background: '#ff2d55' }} />
             )}
           </button>
         ))}
@@ -734,7 +799,7 @@ export default function AdminPage() {
                 {['Assassin','Destroyer','Recon','Rook','Thief','Triage','Vandal'].map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             )}
-            <button onClick={() => loadTable(activeTab)} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer' }}>↺ REFRESH</button>
+            <button onClick={() => loadTable(activeTab)} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer' }}>REFRESH</button>
             <button onClick={startAdd} style={{ padding: '8px 18px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: isDirectives ? '#fff' : '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap' }}>
               {isDirectives ? '+ QUEUE DIRECTIVE' : '+ ADD ROW'}
             </button>
@@ -744,14 +809,31 @@ export default function AdminPage() {
         {(showAddForm || editingRow) && (
           <div style={{ background: S.surface, border: '1px solid ' + (activeTabConfig?.color + '33'), borderRadius: 8, padding: 24, marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: activeTabConfig?.color, letterSpacing: 2, marginBottom: 20 }}>
-              {showAddForm ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + activeTabConfig?.label) : '✎ EDITING — ' + (formData.name || formData.faction_name || formData.shell_name || formData.editor || formData.material_name || '')}
+              {showAddForm ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + activeTabConfig?.label) : 'EDITING -- ' + (formData.name || formData.faction_name || formData.shell_name || formData.editor || formData.material_name || '')}
             </div>
             {renderForm()}
-            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-              <button onClick={showAddForm ? saveNew : saveEdit} disabled={saving} style={{ padding: '10px 28px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: isDirectives ? '#fff' : '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                onClick={() => showAddForm ? saveNew(false) : saveEdit()}
+                disabled={saving}
+                style={{ padding: '10px 28px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: isDirectives ? '#fff' : '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
                 {saving ? 'SAVING...' : (isDirectives && showAddForm ? 'QUEUE DIRECTIVE' : 'SAVE')}
               </button>
+              {/* SAVE & ADD ANOTHER -- only on add form, only if tab supports batch entry */}
+              {showAddForm && supportsBatchEntry && (
+                <button
+                  onClick={() => saveNew(true)}
+                  disabled={saving}
+                  style={{ padding: '10px 22px', background: 'transparent', border: '1px solid ' + activeTabConfig?.color, borderRadius: 4, color: activeTabConfig?.color, fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+                  SAVE & ADD ANOTHER
+                </button>
+              )}
               <button onClick={cancelForm} style={{ padding: '10px 24px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, cursor: 'pointer' }}>CANCEL</button>
+              {showAddForm && supportsBatchEntry && Object.keys(stickyValues).length > 0 && (
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(0,245,255,0.6)', letterSpacing: 1, marginLeft: 'auto' }}>
+                  STICKY: {Object.entries(stickyValues).map(function(e) { return e[0] + '=' + e[1]; }).join(', ')}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -760,7 +842,7 @@ export default function AdminPage() {
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>LOADING...</div>
         ) : filtered.length === 0 ? (
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>
-            {isFactionTab ? 'NO DATA YET — ADD YOUR FIRST ROW ABOVE' : isDirectives ? 'NO DIRECTIVES QUEUED' : 'NO ROWS FOUND'}
+            {isFactionTab ? 'NO DATA YET -- ADD YOUR FIRST ROW ABOVE' : isDirectives ? 'NO DIRECTIVES QUEUED' : 'NO ROWS FOUND'}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
