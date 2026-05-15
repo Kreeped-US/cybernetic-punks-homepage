@@ -29,7 +29,7 @@ export const metadata = {
   alternates: { canonical: 'https://cyberneticpunks.com/factions' },
 };
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 // ── JSON-LD SCHEMAS ────────────────────────────────────────────
 // These render inline in the page response so Google sees them on first crawl.

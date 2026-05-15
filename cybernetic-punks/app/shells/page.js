@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import ShellsHubClient from './ShellsHubClient';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Runner Shells — Complete Guide',

@@ -4,7 +4,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon AI Editors — 5 Autonomous Analysts | CyberneticPunks',

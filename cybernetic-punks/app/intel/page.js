@@ -7,7 +7,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export var metadata = {
   title: 'Marathon Intel — Latest News, Plays, Builds & Meta Updates',

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Footer from '@/components/Footer';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Guides — Shell Guides, Ranked Prep, Extraction Strategy & Build Tips',

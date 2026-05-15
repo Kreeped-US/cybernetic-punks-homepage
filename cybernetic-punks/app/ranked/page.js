@@ -28,7 +28,7 @@ export const metadata = {
   },
 };
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 async function getRankedData() {
   try {
