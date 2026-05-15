@@ -5,11 +5,12 @@
 // fall back to static URLs only so the build succeeds. At runtime,
 // when the sitemap regenerates with env vars present, dynamic pages
 // will be included.
+// May 15 2026 update: added diagnostic console.log calls so Vercel
+// runtime logs reveal what each query returned.
 // -----------------------------------------------------------------
 
 import { createClient } from '@supabase/supabase-js';
 
-// Guide categories (top-level routes that exist regardless of DB state)
 const GUIDE_CATEGORIES = [
   'getting-started',
   'combat',
@@ -25,7 +26,6 @@ const GUIDE_CATEGORIES = [
   'advanced',
 ];
 
-// Hardcoded shell slugs as fallback in case the DB fetch fails at build
 const FALLBACK_SHELL_SLUGS = ['assassin', 'destroyer', 'recon', 'rook', 'thief', 'triage', 'vandal'];
 
 export default async function sitemap() {
@@ -63,7 +63,6 @@ export default async function sitemap() {
     priority: 0.6,
   }));
 
-  // Hardcoded shell pages so they're always in sitemap even if DB fails
   const fallbackShellPages = FALLBACK_SHELL_SLUGS.flatMap((slug) => [
     {
       url: baseUrl + '/shells/' + slug,
@@ -79,12 +78,12 @@ export default async function sitemap() {
     },
   ]);
 
-  // Try to fetch dynamic pages from Supabase. If anything fails -- including
-  // createClient throwing because env vars are missing at build time --
-  // fall back to static URLs only. The sitemap will regenerate later with
-  // full data at runtime when env vars are populated.
   let dbShellPages = [];
   let dynamicPages = [];
+
+  console.log('[sitemap] starting generation, env vars present:',
+    !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   try {
     const supabase = createClient(
@@ -93,10 +92,14 @@ export default async function sitemap() {
     );
 
     try {
-      const { data: shells } = await supabase
+      const { data: shells, error: shellsErr } = await supabase
         .from('shell_stats')
         .select('name, updated_at')
         .order('name');
+
+      console.log('[sitemap] shell_stats:',
+        shells ? shells.length + ' rows' : 'null',
+        shellsErr ? 'error: ' + shellsErr.message : '');
 
       if (shells && shells.length > 0) {
         dbShellPages = shells.flatMap((s) => [
@@ -115,16 +118,20 @@ export default async function sitemap() {
         ]);
       }
     } catch (err) {
-      console.error('Sitemap shell fetch failed:', err);
+      console.error('[sitemap] shell fetch threw:', err);
     }
 
     try {
-      const { data } = await supabase
+      const { data, error: feedErr } = await supabase
         .from('feed_items')
         .select('slug, updated_at, created_at')
         .eq('is_published', true)
         .order('created_at', { ascending: false })
         .limit(500);
+
+      console.log('[sitemap] feed_items:',
+        data ? data.length + ' rows' : 'null',
+        feedErr ? 'error: ' + feedErr.message : '');
 
       if (data) {
         dynamicPages = data.map((item) => ({
@@ -135,14 +142,19 @@ export default async function sitemap() {
         }));
       }
     } catch (err) {
-      console.error('Sitemap feed_items fetch failed:', err);
+      console.error('[sitemap] feed_items fetch threw:', err);
     }
   } catch (err) {
-    console.error('Sitemap Supabase init failed at build time, using static fallback:', err);
+    console.error('[sitemap] Supabase init failed at build time, using static fallback:', err);
   }
 
-  // If DB shell pages succeeded, use them. Otherwise fall back to hardcoded.
   const shellPages = dbShellPages.length > 0 ? dbShellPages : fallbackShellPages;
+
+  console.log('[sitemap] final counts:',
+    'static=' + staticPages.length,
+    'guides=' + guideCategoryPages.length,
+    'shells=' + shellPages.length,
+    'dynamic=' + dynamicPages.length);
 
   return [...staticPages, ...guideCategoryPages, ...shellPages, ...dynamicPages];
 }
