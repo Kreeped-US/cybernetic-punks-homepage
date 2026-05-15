@@ -1,9 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// FIX (May 15, 2026): createClient() moved into getSupabase() helper.
+// Previously at module scope, which caused Vercel build to fail with
+// "supabaseUrl is required" because Next.js 16's stricter pre-rendering
+// evaluates module-scope code at build time before env vars are
+// available. force-dynamic prevents Next.js from attempting static
+// analysis on this route.
+
+export const dynamic = 'force-dynamic';
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+}
 
 const ALLOWED_TABLES = [
   'weapon_stats',
@@ -37,6 +48,7 @@ export async function GET(req) {
   if (table === 'editor_directives') orderCol = 'created_at';
   if (table === 'faction_stat_bonuses' || table === 'faction_unlocks' || table === 'faction_materials') orderCol = 'faction_name';
 
+  var supabase = getSupabase();
   var { data, error } = await supabase.from(table).select('*').order(orderCol, { ascending: true }).limit(500);
   console.log('[ADMIN GET]', table, 'rows:', data?.length, 'error:', error?.message);
   if (error) return Response.json({ error: error.message }, { status: 500 });
@@ -47,6 +59,7 @@ export async function POST(req) {
   if (!checkAuth(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   var { table, row } = await req.json();
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
+  var supabase = getSupabase();
   var { data, error } = await supabase.from(table).insert(row).select().single();
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });
@@ -56,6 +69,7 @@ export async function PATCH(req) {
   if (!checkAuth(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   var { table, id, updates } = await req.json();
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
+  var supabase = getSupabase();
   var { data, error } = await supabase.from(table).update(updates).eq('id', id).select().single();
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });
@@ -67,6 +81,7 @@ export async function DELETE(req) {
   var table = url.searchParams.get('table');
   var id = url.searchParams.get('id');
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
+  var supabase = getSupabase();
   var { error } = await supabase.from(table).delete().eq('id', id);
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ success: true });

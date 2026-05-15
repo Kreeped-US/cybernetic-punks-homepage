@@ -1,14 +1,23 @@
 // app/api/admin/stats/route.js
 // Returns usage counts for the admin panel
+//
+// FIX (May 15, 2026): createClient() moved inside GET handler.
+// Calling createClient at module scope caused Vercel build to fail
+// with "supabaseUrl is required" because Next.js 16's stricter
+// pre-rendering evaluates module-scope code at build time, before
+// runtime env vars are populated. force-dynamic prevents Next.js
+// from even attempting static analysis on this route.
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+
   var password = req.headers.get('x-admin-password');
   if (password !== process.env.ADMIN_PASSWORD) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

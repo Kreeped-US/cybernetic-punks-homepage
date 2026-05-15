@@ -1,31 +1,39 @@
 // app/api/sitrep-data/route.js
 // Aggregated data endpoint for the SITREP page.
 // Pulls meta tiers, latest per editor, movers, ghost pulse, ranked status.
+//
+// FIX (May 15, 2026): createClient() moved inside GET handler.
+// Previously at module scope, which caused Vercel build to fail with
+// "supabaseUrl is required" because Next.js 16's stricter pre-rendering
+// evaluates module-scope code at build time before env vars are
+// available. Note: this route uses `export const revalidate = 300`
+// for ISR caching -- intentionally NOT adding force-dynamic, which
+// would override caching and increase Supabase load.
 
 import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export const revalidate = 300;
 
 export async function GET() {
   try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
     const [
       metaTiersRes,
       latestArticlesRes,
       rankedRes,
     ] = await Promise.all([
 
-      // Full meta tier table — weapons + shells
+      // Full meta tier table -- weapons + shells
       supabase
         .from('meta_tiers')
         .select('name, type, tier, trend, note, ranked_note, ranked_tier_solo, ranked_tier_squad, updated_at')
         .order('tier'),
 
-      // Latest article per editor — last 48h
+      // Latest article per editor -- last 48h
       supabase
         .from('feed_items')
         .select('id, headline, body, slug, editor, tags, ce_score, thumbnail, created_at')
@@ -53,13 +61,13 @@ export async function GET() {
       if (found) latestPerEditor[editor] = found;
     }
 
-    // Meta snapshot — S and A tier
+    // Meta snapshot -- S and A tier
     const sTierWeapons  = allTiers.filter(t => t.type === 'weapon' && t.tier === 'S');
     const aTierWeapons  = allTiers.filter(t => t.type === 'weapon' && t.tier === 'A');
     const sTierShells   = allTiers.filter(t => t.type === 'shell'  && t.tier === 'S');
     const aTierShells   = allTiers.filter(t => t.type === 'shell'  && t.tier === 'A');
 
-    // Meta movers — trending up or down
+    // Meta movers -- trending up or down
     const moversUp   = allTiers.filter(t => t.trend === 'up').slice(0, 5);
     const moversDown = allTiers.filter(t => t.trend === 'down').slice(0, 5);
 
@@ -69,7 +77,7 @@ export async function GET() {
     // Top ranked shells
     const topRanked = (rankedRes.data || []).filter(s => s.ranked_tier_solo === 'S' || s.ranked_tier_solo === 'A').slice(0, 4);
 
-    // Drop-in brief bullets — synthesized from latest editor tags + meta movers
+    // Drop-in brief bullets -- synthesized from latest editor tags + meta movers
     const brief = [];
 
     if (sTierWeapons.length > 0) {

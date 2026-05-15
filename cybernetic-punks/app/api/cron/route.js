@@ -3,10 +3,15 @@ import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel 
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+// FIX (May 15, 2026): createClient() moved inside GET handler.
+// Previously at module scope, which caused Vercel build to fail with
+// "supabaseUrl is required" because Next.js 16's stricter pre-rendering
+// evaluates module-scope code at build time before env vars are
+// available. force-dynamic prevents Next.js from attempting static
+// analysis on this route. processEditor now takes supabase as a
+// parameter so the request-scoped client flows through cleanly.
+
+export const dynamic = 'force-dynamic';
 
 function generateSlug(headline) {
   var base = headline
@@ -68,51 +73,51 @@ function resolveMediaInfo(result, rawData, editorName) {
   return { thumbnail: null, source_url: null, source: 'YOUTUBE' };
 }
 
-// ── BUILD "DO NOT REPEAT" BLOCK ───────────────────────────────
+// -- BUILD "DO NOT REPEAT" BLOCK --
 function buildNoRepeatBlock(headlines) {
   if (!headlines || headlines.length === 0) return '';
   return (
-    '\n\n--- TOPICS YOU ALREADY COVERED — DO NOT REPEAT THESE ANGLES ---\n' +
+    '\n\n--- TOPICS YOU ALREADY COVERED -- DO NOT REPEAT THESE ANGLES ---\n' +
     headlines.map(function(h, i) { return (i + 1) + '. ' + h; }).join('\n') +
     '\nChoose a completely different weapon, shell, strategy, or topic this cycle. ' +
     'If the source material overlaps with a previous topic, find a fresh angle within it.\n---'
   );
 }
 
-// ── BUILD PATCH PRIORITY BLOCK ────────────────────────────────
+// -- BUILD PATCH PRIORITY BLOCK --
 function buildPatchPriorityBlock(patchItems) {
   if (!patchItems || patchItems.length === 0) return '';
   return (
-    '\n\n--- ⚠️ PRIORITY OVERRIDE: NEW OFFICIAL BUNGIE UPDATE DETECTED ---\n' +
+    '\n\n--- PRIORITY OVERRIDE: NEW OFFICIAL BUNGIE UPDATE DETECTED ---\n' +
     'The following Bungie communications were just published:\n' +
     patchItems.map(function(p) {
-      return '• ' + p.title + (p.url ? ' — ' + p.url : '');
+      return '- ' + p.title + (p.url ? ' -- ' + p.url : '');
     }).join('\n') +
     '\nYour article THIS CYCLE must reflect this update. ' +
     'For NEXUS: adjust tier placements to account for any balance changes. ' +
     'For DEXTER: flag any builds that are buffed or nerfed. ' +
-    'For CIPHER: assess ranked impact — what plays are stronger or weaker now. ' +
+    'For CIPHER: assess ranked impact -- what plays are stronger or weaker now. ' +
     'For GHOST: cover community reaction to the patch. ' +
     'This patch context takes priority over all other topics.\n---'
   );
 }
 
-// ── BUILD DIRECTIVE BLOCK ─────────────────────────────────────
+// -- BUILD DIRECTIVE BLOCK --
 // Injected when an editor has a pending directive queued via the admin panel
 function buildDirectiveBlock(directive) {
   if (!directive) return '';
-  var block = '\n\n--- 🎯 EDITOR DIRECTIVE — THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\n';
+  var block = '\n\n--- EDITOR DIRECTIVE -- THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\n';
   block += 'You have been given a specific article assignment. This overrides your normal content selection.\n\n';
   block += 'ASSIGNMENT: ' + directive.instruction + '\n';
   if (directive.url) {
     block += 'SOURCE URL: ' + directive.url + '\n';
     block += 'Visit or reference this URL in your analysis. This is the primary source for your article.\n';
   }
-  block += '\nWrite your article specifically about this topic. Do not default to generic meta analysis or build content — cover this directive directly and thoroughly.\n---';
+  block += '\nWrite your article specifically about this topic. Do not default to generic meta analysis or build content -- cover this directive directly and thoroughly.\n---';
   return block;
 }
 
-async function processEditor(editorName, prompt, rawData) {
+async function processEditor(editorName, prompt, rawData, supabase) {
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
   }
@@ -149,7 +154,7 @@ async function processEditor(editorName, prompt, rawData) {
       source_url: media.source_url,
     };
 
-    // CIPHER rebuilt May 1, 2026 — internal synthesis, no external video.
+    // CIPHER rebuilt May 1, 2026 -- internal synthesis, no external video.
     // Source set to INTEL, no thumbnail or source_url. Article cards still
     // show editor portrait via HomeIntelFeed.js, so visual treatment remains.
     if (editorName === 'CIPHER') {
@@ -173,7 +178,7 @@ async function processEditor(editorName, prompt, rawData) {
       insertData.source_url = result.source_url || null;
     }
 
-    // NEXUS meta_update — upsert into meta_tiers
+    // NEXUS meta_update -- upsert into meta_tiers
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
       try {
         var metaRows = result.meta_update
@@ -202,7 +207,7 @@ async function processEditor(editorName, prompt, rawData) {
             console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
           } else {
             console.log('[CRON] NEXUS upserted meta_tiers with ' + metaRows.length + ' entries');
-            // Only fires if there are actual movers — silent when meta is stable
+            // Only fires if there are actual movers -- silent when meta is stable
             notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
           }
         }
@@ -217,7 +222,7 @@ async function processEditor(editorName, prompt, rawData) {
       return { editor: editorName, success: false, error: error.message };
     }
 
-    // Mark SEO keyword as consumed — only after successful article insert.
+    // Mark SEO keyword as consumed -- only after successful article insert.
     // If we crashed before this point, the keyword stays available for retry.
     if (result._seo_keyword_id) {
       consumeKeyword(supabase, result._seo_keyword_id).catch(function(e) {
@@ -226,7 +231,7 @@ async function processEditor(editorName, prompt, rawData) {
       console.log('[CRON] ' + editorName + ' consumed keyword id=' + result._seo_keyword_id);
     }
 
-    // ── TWITTER/X AUTO-POSTING DISABLED ──
+    // -- TWITTER/X AUTO-POSTING DISABLED --
     // Suspended indefinitely. Post manually via @Cybernetic87250.
 
     // Generate editor comments on this article
@@ -240,7 +245,7 @@ async function processEditor(editorName, prompt, rawData) {
       });
     }
 
-    // Discord notifications — non-blocking
+    // Discord notifications -- non-blocking
     if (feedItem) {
       if (editorName === 'MIRANDA') {
         notifyIntelFeed(feedItem, editorName).catch(function(e) { console.log('[DISCORD] intel notify error: ' + e.message); });
@@ -261,11 +266,19 @@ async function processEditor(editorName, prompt, rawData) {
 }
 
 export async function GET() {
+  // Request-scoped Supabase client. Created here (not at module scope) so
+  // env vars are populated before instantiation. Passed into processEditor
+  // so the same client services all editor processing this cycle.
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   try {
     var prompts = await gatherAll();
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null, bungieNews: [] };
 
-    // ── STEP 1: Fetch pending directives that are due ─────────────
+    // -- STEP 1: Fetch pending directives that are due --
     // A directive fires if it is pending AND either:
     //   - scheduled_for is NULL (fires on next cycle, legacy behavior), OR
     //   - scheduled_for is in the past (the scheduled time has arrived)
@@ -281,7 +294,7 @@ export async function GET() {
         .order('scheduled_for', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
 
-      // One directive per editor — take the earliest-scheduled (or earliest-created)
+      // One directive per editor -- take the earliest-scheduled (or earliest-created)
       // pending directive per editor. Multiple directives for the same editor that
       // are also due will wait for subsequent cycles.
       (directives || []).forEach(function(d) {
@@ -296,7 +309,7 @@ export async function GET() {
       console.log('[CRON] Directive fetch failed (non-fatal): ' + dirErr.message);
     }
 
-    // ── STEP 2: Fetch recent headlines for dedup ──────────────────
+    // -- STEP 2: Fetch recent headlines for dedup --
     var headlineResults = await Promise.all([
       supabase.from('feed_items').select('headline').eq('editor', 'CIPHER').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
       supabase.from('feed_items').select('headline').eq('editor', 'NEXUS').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
@@ -311,7 +324,7 @@ export async function GET() {
       GHOST:  (headlineResults[3].data || []).map(function(r) { return r.headline; }),
     };
 
-    // ── STEP 3: Detect patch notes ────────────────────────────────
+    // -- STEP 3: Detect patch notes --
     var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
     var hasPatch = patchItems.length > 0;
     var patchBlock = hasPatch ? buildPatchPriorityBlock(patchItems) : '';
@@ -320,8 +333,8 @@ export async function GET() {
       console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', '));
     }
 
-    // ── STEP 4: Inject directive + dedup + patch into each editor prompt ──
-    // CIPHER — note: gatherCipher() in lib/gather/cipher.js already handles
+    // -- STEP 4: Inject directive + dedup + patch into each editor prompt --
+    // CIPHER -- note: gatherCipher() in lib/gather/cipher.js already handles
     // patch override internally (pivots to patch_impact archetype). The
     // dedup block is still useful to prevent repeating recent headlines.
     if (typeof prompts.CIPHER === 'string') {
@@ -360,12 +373,12 @@ export async function GET() {
       }
     }
 
-    // MIRANDA — directive injected via mirandaData object
+    // MIRANDA -- directive injected via mirandaData object
     if (directiveMap['MIRANDA'] && prompts.MIRANDA && typeof prompts.MIRANDA === 'object') {
       prompts.MIRANDA._directive = directiveMap['MIRANDA'];
     }
 
-    // ── STEP 5: Patch Discord notification with dedup ─────────────
+    // -- STEP 5: Patch Discord notification with dedup --
     if (hasPatch) {
       try {
         var cutoff23h = new Date(Date.now() - 23 * 3600 * 1000).toISOString();
@@ -381,19 +394,19 @@ export async function GET() {
             console.log('[DISCORD] patch notify error: ' + e.message);
           });
           await supabase.from('site_events').insert({ event_name: 'patch_discord' });
-          console.log('[CRON] Patch Discord notification sent — recorded in site_events');
+          console.log('[CRON] Patch Discord notification sent -- recorded in site_events');
         } else {
-          console.log('[CRON] Patch already notified in last 23h — skipping Discord');
+          console.log('[CRON] Patch already notified in last 23h -- skipping Discord');
         }
       } catch (patchErr) {
-        console.log('[CRON] Patch dedup check failed: ' + patchErr.message + ' — sending anyway');
+        console.log('[CRON] Patch dedup check failed: ' + patchErr.message + ' -- sending anyway');
         notifyPatchNotes(rawData.bungieNews).catch(function(e) {
           console.log('[DISCORD] patch notify error: ' + e.message);
         });
       }
     }
 
-    // ── STEP 6: Run editors IN PARALLEL ───────────────────────────
+    // -- STEP 6: Run editors IN PARALLEL --
     var editors = [
       { name: 'CIPHER',  prompt: prompts.CIPHER  },
       { name: 'NEXUS',   prompt: prompts.NEXUS   },
@@ -403,7 +416,7 @@ export async function GET() {
     ];
 
     var settledResults = await Promise.allSettled(
-      editors.map(function(e) { return processEditor(e.name, e.prompt, rawData); })
+      editors.map(function(e) { return processEditor(e.name, e.prompt, rawData, supabase); })
     );
 
     var results = settledResults.map(function(s, idx) {
@@ -411,7 +424,7 @@ export async function GET() {
       return { editor: editors[idx].name, success: false, error: s.reason?.message || 'Unhandled rejection' };
     });
 
-    // ── STEP 7: Mark directives consumed for editors that succeeded ──
+    // -- STEP 7: Mark directives consumed for editors that succeeded --
     for (var i = 0; i < results.length; i++) {
       var r = results[i];
       if (r.success && directiveMap[r.editor]) {
@@ -437,7 +450,7 @@ export async function GET() {
       directives_consumed: directivesUsed,
       patch_detected: hasPatch,
       results: results,
-      tweet: 'Auto-posting disabled — post manually via @Cybernetic87250',
+      tweet: 'Auto-posting disabled -- post manually via @Cybernetic87250',
     });
 
   } catch (error) {

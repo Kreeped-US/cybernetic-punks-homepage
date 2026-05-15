@@ -1,20 +1,29 @@
 // app/api/cron/stats/route.js
 // Fetches live player counts from Steam and Twitch every 15 minutes.
 // Writes to the `live_stats` table. Reads are instant from DB.
+//
+// FIX (May 15, 2026): createClient() moved inside GET handler.
+// Previously at module scope, which caused Vercel build to fail with
+// "supabaseUrl is required" because Next.js 16's stricter pre-rendering
+// evaluates module-scope code at build time before env vars are
+// available. force-dynamic prevents Next.js from attempting static
+// analysis on this route.
 
 import { createClient } from '@supabase/supabase-js';
 import { fetchSteamPlayerCount } from '@/lib/gather/steam';
 import { getLiveStreamers } from '@/lib/gather/twitch';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   var results = { steam: null, twitch: null, errors: [] };
 
-  // ── STEAM ──────────────────────────────────────────────
+  // -- STEAM --
   try {
     var playerCount = await fetchSteamPlayerCount();
     if (typeof playerCount === 'number' && playerCount > 0) {
@@ -43,7 +52,7 @@ export async function GET() {
     results.errors.push('steam: ' + err.message);
   }
 
-  // ── TWITCH ─────────────────────────────────────────────
+  // -- TWITCH --
   try {
     var streamers = await getLiveStreamers();
     if (Array.isArray(streamers)) {

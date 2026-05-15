@@ -2,18 +2,27 @@
 // Single batched endpoint for all homepage data needs.
 // Components read from here instead of making individual Supabase calls.
 // Revalidates every 5 minutes via Next.js cache.
+//
+// FIX (May 15, 2026): createClient() moved inside GET handler.
+// Previously at module scope, which caused Vercel build to fail with
+// "supabaseUrl is required" because Next.js 16's stricter pre-rendering
+// evaluates module-scope code at build time before env vars are
+// available. Note: this route uses `export const revalidate = 300`
+// for ISR caching -- intentionally NOT adding force-dynamic, which
+// would override caching and increase Supabase load. This endpoint
+// is heavily trafficked (every homepage hit), so caching matters.
 
 import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export const revalidate = 300; // 5 minutes
 
 export async function GET() {
   try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
     const [
       metaTiersRes,
       latestPerEditorRes,
@@ -24,13 +33,13 @@ export async function GET() {
       todayCountsRes,
     ] = await Promise.all([
 
-      // Meta tiers — used by MetaPreview and MetaWeaponShowcase
+      // Meta tiers -- used by MetaPreview and MetaWeaponShowcase
       supabase
         .from('meta_tiers')
         .select('name, type, tier, trend, note, updated_at')
         .order('tier'),
 
-      // Latest article per editor — used by EditorsStrip and FeaturedThisCycle
+      // Latest article per editor -- used by EditorsStrip and FeaturedThisCycle
       supabase
         .from('feed_items')
         .select('headline, slug, editor, tags, thumbnail, ce_score, created_at')
@@ -38,7 +47,7 @@ export async function GET() {
         .order('created_at', { ascending: false })
         .limit(25),
 
-      // Ghost latest — used by CommunityPulse
+      // Ghost latest -- used by CommunityPulse
       supabase
         .from('feed_items')
         .select('headline, body, ce_score, created_at, slug')
@@ -48,7 +57,7 @@ export async function GET() {
         .limit(1)
         .single(),
 
-      // Featured article — highest CE score last 24h
+      // Featured article -- highest CE score last 24h
       supabase
         .from('feed_items')
         .select('headline, slug, body, editor, tags, thumbnail, ce_score, created_at, source_url')
@@ -59,18 +68,18 @@ export async function GET() {
         .limit(1)
         .single(),
 
-      // Shell stats — used by ShellPortraitStrip
+      // Shell stats -- used by ShellPortraitStrip
       supabase
         .from('shell_stats')
         .select('name, role, base_health, base_shield, active_ability_name, ranked_tier_solo, ranked_tier_squad, image_filename')
         .order('name'),
 
-      // Weapon stats — used by MetaWeaponShowcase
+      // Weapon stats -- used by MetaWeaponShowcase
       supabase
         .from('weapon_stats')
         .select('name, weapon_type, damage, fire_rate, range_rating, image_filename'),
 
-      // Article counts today per editor — used by EditorsStrip
+      // Article counts today per editor -- used by EditorsStrip
       supabase
         .from('feed_items')
         .select('editor, created_at')
@@ -78,7 +87,7 @@ export async function GET() {
         .gte('created_at', new Date(Date.now() - 24 * 3600000).toISOString()),
     ]);
 
-    // Deduplicate latest per editor — one per editor in order
+    // Deduplicate latest per editor -- one per editor in order
     const allRecent = latestPerEditorRes.data || [];
     const seenEditors = new Set();
     const latestPerEditor = {};
