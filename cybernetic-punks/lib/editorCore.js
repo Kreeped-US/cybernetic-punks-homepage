@@ -1,7 +1,23 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+// FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
+// instantiation until runtime. Next.js 16 evaluates module-scope code
+// at build time before env vars are populated, and the Anthropic SDK
+// throws on missing apiKey during construction. Proxy-wrapped client
+// keeps every existing `client.messages.create(...)` call working with
+// zero changes elsewhere in this file.
+let _anthropicClient = null;
+function getAnthropicClient() {
+  if (_anthropicClient) return _anthropicClient;
+  _anthropicClient = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+  return _anthropicClient;
+}
+const client = new Proxy({}, {
+  get(_target, prop) {
+    return getAnthropicClient()[prop];
+  }
 });
 
 // ─── MODEL CONSTANTS ─────────────────────────────────────────
