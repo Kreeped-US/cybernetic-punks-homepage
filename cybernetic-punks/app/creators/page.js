@@ -5,6 +5,8 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export var metadata = {
   title: 'Marathon Content Creators — YouTubers, Streamers & Community Voices | CyberneticPunks',
   description: 'Discover the best Marathon content creators — YouTubers, Twitch streamers, and community voices covering builds, gameplay, guides, and competitive play. Curated by CyberneticPunks.',
