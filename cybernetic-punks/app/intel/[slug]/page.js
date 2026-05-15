@@ -5,11 +5,6 @@ import CoachCTA from '@/components/CoachCTA';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-const supabaseService = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 const EDITORS = {
   cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'CIPHER — Marathon Play Analysis & Competitive Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
   nexus:   { name: 'NEXUS',   symbol: '⬡', color: '#00d4ff', role: 'Meta Strategist', desc: 'Tracks what weapons and strategies are actually winning right now.', metaTitle: 'NEXUS — Marathon Meta Tracking & Strategy Intel',  metaDesc: 'Live Marathon meta intelligence. What weapons and loadouts are winning — tracked every 6 hours.' },
@@ -939,6 +934,12 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
 // ═══════════════════════════════════════════════════════════
 
 export default async function IntelPage({ params }) {
+  // FIXED May 15, 2026: supabaseService moved inside handler to defer
+  // createClient until runtime. Module-scope init breaks Next.js 16 build.
+  const supabaseService = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   var { slug } = await params;
   var editorConfig = EDITORS[slug.toLowerCase()];
 

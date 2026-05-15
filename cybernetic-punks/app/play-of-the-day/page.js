@@ -2,19 +2,18 @@ import { createClient } from '@supabase/supabase-js';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// FIXED May 15, 2026: createClient moved inside getData() to defer
+// Supabase init until runtime. Module-scope init breaks Next.js 16 build
+// because env vars aren't populated at build-time module evaluation.
 
 export const metadata = {
-  title: 'Play of the Day — CIPHER Graded Marathon Plays | CyberneticPunks',
+  title: 'Play of the Day -- CIPHER Graded Marathon Plays | CyberneticPunks',
   description: "Today's highest-rated Marathon play, analyzed by CIPHER. Watch the clip, read the breakdown, see the grade.",
 };
 
 export const revalidate = 3600;
 
-// ─── HELPERS ────────────────────────────────────────────────────────────────
+// --- HELPERS --------------------------------------------------------------
 
 const KNOWN_WEAPONS = [
   'V75 Scar','M77 Assault Rifle','Overrun AR','Impact HAR',
@@ -93,9 +92,17 @@ function statBarPct(val, max) {
   return Math.min(100, Math.round((val / max) * 100));
 }
 
-// ─── DATA FETCHING ───────────────────────────────────────────────────────────
+// --- DATA FETCHING --------------------------------------------------------
 
 async function getData() {
+  // Lazy-init Supabase here at runtime, NOT at module scope.
+  // This uses SUPABASE_SERVICE_KEY (admin privileges), so we can't share
+  // with the public lib/supabase.js client.
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+
   const [featuredRes, previousRes, allWeaponsRes, allShellsRes] = await Promise.all([
     supabase.from('feed_items').select('*').eq('editor', 'CIPHER').eq('is_published', true).order('ce_score', { ascending: false }).limit(1).single(),
     supabase.from('feed_items').select('id,headline,slug,thumbnail,ce_score,tags,created_at').eq('editor', 'CIPHER').eq('is_published', true).order('created_at', { ascending: false }).limit(5),
@@ -119,7 +126,7 @@ async function getData() {
   return { featured, previous, weapons, shell };
 }
 
-// ─── COMPONENTS ─────────────────────────────────────────────────────────────
+// --- COMPONENTS ----------------------------------------------------------
 
 function GradeBadge({ grade, size = 64 }) {
   if (!grade) return null;
@@ -143,7 +150,7 @@ function StatBar({ label, value, max, color = '#ff0000' }) {
     <div style={{ marginBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 }}>{label}</span>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.6)' }}>{value ?? '—'}</span>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.6)' }}>{value ?? '--'}</span>
       </div>
       <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
         <div style={{ height: '100%', width: pct + '%', background: `linear-gradient(90deg, ${color}, ${color}88)`, borderRadius: 2, transition: 'width 0.6s ease' }} />
@@ -164,7 +171,7 @@ function WeaponCard({ weapon }) {
     }}>
       <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{weapon.name}</div>
       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000', letterSpacing: 2, marginBottom: 12 }}>
-        {weapon.weapon_type || 'WEAPON'} · {weapon.ammo_type || ''}
+        {weapon.weapon_type || 'WEAPON'} - {weapon.ammo_type || ''}
       </div>
       <StatBar label="DAMAGE" value={weapon.damage} max={200} color="#ff0000" />
       <StatBar label="FIRE RATE" value={weapon.fire_rate} max={1000} color="#ff8800" />
@@ -202,7 +209,7 @@ function ShellCard({ shell }) {
   );
 }
 
-// ─── PAGE ────────────────────────────────────────────────────────────────────
+// --- PAGE -----------------------------------------------------------------
 
 export default async function PlayOfTheDayPage() {
   const { featured, previous, weapons, shell } = await getData();
@@ -216,7 +223,7 @@ export default async function PlayOfTheDayPage() {
       <Nav />
       <div style={{ minHeight: '100vh', background: '#030303', color: '#ffffff' }}>
 
-        {/* ── CINEMATIC VIDEO HERO ── */}
+        {/* -- CINEMATIC VIDEO HERO -- */}
         <div style={{ position: 'relative', width: '100%', height: 620, overflow: 'hidden', background: '#000' }}>
 
           {/* Video embed or placeholder */}
@@ -234,7 +241,7 @@ export default async function PlayOfTheDayPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.2 }}>▶</div>
+                <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.2 }}>{'>'}</div>
                 <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.2)', letterSpacing: 3 }}>NO VIDEO SOURCE</div>
               </div>
             </div>
@@ -246,18 +253,18 @@ export default async function PlayOfTheDayPage() {
           {/* Bottom gradient bar */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, background: 'linear-gradient(to top, #030303, transparent)', pointerEvents: 'none', zIndex: 2 }} />
 
-          {/* CIPHER badge — top left */}
+          {/* CIPHER badge -- top left */}
           <div style={{ position: 'absolute', top: 24, left: 28, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff0000', boxShadow: '0 0 8px #ff0000', animation: 'pulse 2s infinite' }} />
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', letterSpacing: 3 }}>◈ CIPHER — PLAY OF THE DAY</span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', letterSpacing: 3 }}>CIPHER -- PLAY OF THE DAY</span>
           </div>
 
-          {/* Grade overlay — top right */}
+          {/* Grade overlay -- top right */}
           <div style={{ position: 'absolute', top: 16, right: 28, zIndex: 10, textAlign: 'right' }}>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 3, marginBottom: 4 }}>RUNNER GRADE</div>
             <GradeBadge grade={grade} size={72} />
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 4 }}>
-              {gradeConf === 'high' ? '● HIGH CONFIDENCE' : gradeConf === 'medium' ? '◐ MEDIUM CONFIDENCE' : '○ METADATA GRADE'}
+              {gradeConf === 'high' ? 'HIGH CONFIDENCE' : gradeConf === 'medium' ? 'MEDIUM CONFIDENCE' : 'METADATA GRADE'}
             </div>
           </div>
 
@@ -271,19 +278,19 @@ export default async function PlayOfTheDayPage() {
                 {featured.headline}
               </h1>
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', letterSpacing: 2 }}>
-                {(featured.tags || []).slice(0, 4).map(t => t.toUpperCase()).join(' · ')}
+                {(featured.tags || []).slice(0, 4).map(t => t.toUpperCase()).join(' - ')}
               </div>
             </div>
           )}
         </div>
 
-        {/* ── ANALYSIS + SIDEBAR ── */}
+        {/* -- ANALYSIS + SIDEBAR -- */}
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 40 }}>
 
-          {/* Left — Analysis */}
+          {/* Left -- Analysis */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#ff0000', letterSpacing: 2 }}>◈</span>
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#ff0000', letterSpacing: 2 }}>*</span>
               <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: 3 }}>CIPHER ANALYSIS</span>
             </div>
 
@@ -315,7 +322,7 @@ export default async function PlayOfTheDayPage() {
                 color: '#ff8800',
                 letterSpacing: 2,
               }}>
-                ⚠ METADATA GRADE — No transcript available. Grade based on title, description, and view data only.
+                METADATA GRADE -- No transcript available. Grade based on title, description, and view data only.
               </div>
             )}
 
@@ -339,7 +346,7 @@ export default async function PlayOfTheDayPage() {
             )}
           </div>
 
-          {/* Right — Sidebar */}
+          {/* Right -- Sidebar */}
           <div>
             {/* Grade Card */}
             <div style={{
@@ -353,7 +360,7 @@ export default async function PlayOfTheDayPage() {
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 12 }}>RUNNER GRADE</div>
               <GradeBadge grade={grade} size={80} />
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 12 }}>
-                CE SCORE: {featured?.ce_score?.toFixed(1) || '—'} / 10.0
+                CE SCORE: {featured?.ce_score?.toFixed(1) || '--'} / 10.0
               </div>
             </div>
 
@@ -383,17 +390,17 @@ export default async function PlayOfTheDayPage() {
                 letterSpacing: 2,
                 marginTop: 12,
               }}>
-                WATCH SOURCE ↗
+                WATCH SOURCE
               </a>
             )}
           </div>
         </div>
 
-        {/* ── PREVIOUS PLAYS ── */}
+        {/* -- PREVIOUS PLAYS -- */}
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 64px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#ffffff', letterSpacing: 2 }}>PREVIOUS PLAYS</div>
-            <a href="/intel/cipher" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', textDecoration: 'none', letterSpacing: 2 }}>ALL CIPHER GRADES →</a>
+            <a href="/intel/cipher" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', textDecoration: 'none', letterSpacing: 2 }}>ALL CIPHER GRADES</a>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>

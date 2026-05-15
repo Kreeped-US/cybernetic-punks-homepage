@@ -1,106 +1,90 @@
 import { createClient } from '@supabase/supabase-js';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
-import Link from 'next/link';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// FIXED May 15, 2026: createClient moved inside getData() to defer
+// Supabase init until runtime. Module-scope init breaks Next.js 16 build
+// because env vars aren't populated at build-time module evaluation.
 
 export const metadata = {
-  title: "Top Build Today — DEXTER's #1 Marathon Loadout",
-  description: "DEXTER's highest-rated Marathon build with full weapon stats, mod recommendations, and ranked strategy. Updated every 6 hours.",
-  alternates: {
-    canonical: 'https://cyberneticpunks.com/top-build',
-  },
+  title: 'Play of the Day -- CIPHER Graded Marathon Plays | CyberneticPunks',
+  description: "Today's highest-rated Marathon play, analyzed by CIPHER. Watch the clip, read the breakdown, see the grade.",
 };
 
 export const revalidate = 3600;
 
-// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+// --- HELPERS --------------------------------------------------------------
 
 const KNOWN_WEAPONS = [
   'V75 Scar','M77 Assault Rifle','Overrun AR','Impact HAR',
   'Retaliator LMG','Conquest LMG','Demolition HMG',
   'Knife','V11 Punch','Magnum MC','CE Tactical Sidearm','Rook Pistol',
   'Repeater HPR','Hardline PR','BR33 Volley Rifle','Twin Tap HBR','V66 Lookout','Stryder M1T',
-  'V00 Zeus RG','Ares RG','WSTR Combat Shotgun','V85 Circuit Breaker','Misriah 2442',
-  'Longshot','Outland','V99 Channel Rifle','Copperhead RF','V22 Volt Thrower','Bully SMG','BRRT SMG',
+  'V00 Zeus RG','Ares RG',
+  'WSTR Combat Shotgun','V85 Circuit Breaker','Misriah 2442',
+  'Longshot','Outland','V99 Channel Rifle',
+  'Copperhead RF','V22 Volt Thrower','Bully SMG','BRRT SMG',
 ];
 
 const KNOWN_SHELLS = ['Assassin','Destroyer','Recon','Rook','Thief','Triage','Vandal'];
 
-const SHELL_COLORS = {
-  Assassin: '#cc44ff', Destroyer: '#ff3333', Recon: '#00f5ff',
-  Rook: '#aaaaaa', Thief: '#ffd700', Triage: '#00ff88', Vandal: '#ff8800',
-};
-
-const SHELL_SYMBOLS = {
-  Assassin: '◈', Destroyer: '⬢', Recon: '◇',
-  Rook: '▣', Thief: '⬠', Triage: '◎', Vandal: '⬡',
-};
-
 const CATEGORY_FALLBACKS = [
-  { keywords: ['shotgun'],              weapon: 'WSTR Combat Shotgun' },
-  { keywords: ['smg','submachine'],     weapon: 'BRRT SMG' },
-  { keywords: ['assault','ar','rifle'], weapon: 'M77 Assault Rifle' },
-  { keywords: ['sniper','marksman'],    weapon: 'Hardline PR' },
-  { keywords: ['lmg','machine gun'],    weapon: 'Retaliator LMG' },
-  { keywords: ['rail','railgun'],       weapon: 'Ares RG' },
-  { keywords: ['volt','electric'],      weapon: 'V22 Volt Thrower' },
-  { keywords: ['pistol','sidearm'],     weapon: 'CE Tactical Sidearm' },
+  { keywords: ['shotgun'],             weapon: 'WSTR Combat Shotgun' },
+  { keywords: ['smg','submachine'],    weapon: 'BRRT SMG' },
+  { keywords: ['assault','ar','rifle'],weapon: 'M77 Assault Rifle' },
+  { keywords: ['sniper','marksman'],   weapon: 'Hardline PR' },
+  { keywords: ['lmg','machine gun'],   weapon: 'Retaliator LMG' },
+  { keywords: ['rail','railgun'],      weapon: 'Ares RG' },
+  { keywords: ['volt','electric'],     weapon: 'V22 Volt Thrower' },
+  { keywords: ['pistol','sidearm'],    weapon: 'CE Tactical Sidearm' },
+  { keywords: ['scout','longshot'],    weapon: 'Longshot' },
 ];
 
 const SHELL_FALLBACKS = [
-  { keywords: ['aggressive','rush','push','combat'], shell: 'Destroyer' },
-  { keywords: ['stealth','flank','assassin'],        shell: 'Assassin' },
-  { keywords: ['support','heal','triage','medic'],   shell: 'Triage' },
-  { keywords: ['scout','recon','intel','vision'],    shell: 'Recon' },
-  { keywords: ['loot','extract','thief'],            shell: 'Thief' },
-  { keywords: ['tank','rook','anchor','hold'],       shell: 'Rook' },
-  { keywords: ['versati','flex','balanced'],         shell: 'Vandal' },
+  { keywords: ['aggressive','rush','push','combat','fragger'], shell: 'Destroyer' },
+  { keywords: ['stealth','flank','assassin','silent'],         shell: 'Assassin' },
+  { keywords: ['support','heal','triage','medic'],             shell: 'Triage' },
+  { keywords: ['scout','recon','intel','vision'],              shell: 'Recon' },
+  { keywords: ['loot','extract','thief','theft','resources'],  shell: 'Thief' },
+  { keywords: ['tank','rook','anchor','hold'],                 shell: 'Rook' },
+  { keywords: ['versati','flex','all-around','balanced'],      shell: 'Vandal' },
 ];
 
-const TIER_COLORS = { S: '#ff0000', A: '#ff8800', B: '#00f5ff', C: '#aaaaaa', D: '#555' };
-const RARITY_COLORS = {
-  Standard: { color: '#888', border: '#88888830' },
-  Enhanced: { color: '#00ff88', border: '#00ff8828' },
-  Deluxe:   { color: '#00f5ff', border: '#00f5ff28' },
-  Superior: { color: '#9b5de5', border: '#9b5de528' },
-  Prestige: { color: '#ffd700', border: '#ffd70028' },
-};
-
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-
-function extractWeaponNames(tags, body, allWeaponNames) {
-  var text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
-  var fromDB = (allWeaponNames || []).filter(function(w) { return text.includes(w.toLowerCase()); });
-  if (fromDB.length > 0) return fromDB;
-  var exact = KNOWN_WEAPONS.filter(function(w) { return text.includes(w.toLowerCase()); });
+function extractWeaponNames(tags, body) {
+  const text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
+  const exact = KNOWN_WEAPONS.filter(w => text.includes(w.toLowerCase()));
   if (exact.length > 0) return exact;
-  for (var fb of CATEGORY_FALLBACKS) {
-    if (fb.keywords.some(function(k) { return text.includes(k); })) return [fb.weapon];
+  for (const fb of CATEGORY_FALLBACKS) {
+    if (fb.keywords.some(k => text.includes(k))) return [fb.weapon];
   }
   return [];
 }
 
-function extractShellName(tags, body, allShellNames) {
-  var text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
-  var fromDB = (allShellNames || KNOWN_SHELLS).find(function(s) { return text.includes(s.toLowerCase()); });
-  if (fromDB) return fromDB;
-  for (var fb of SHELL_FALLBACKS) {
-    if (fb.keywords.some(function(k) { return text.includes(k); })) return fb.shell;
+function extractShellName(tags, body) {
+  const text = ((tags || []).join(' ') + ' ' + (body || '')).toLowerCase();
+  const exact = KNOWN_SHELLS.find(s => text.includes(s.toLowerCase()));
+  if (exact) return exact;
+  for (const fb of SHELL_FALLBACKS) {
+    if (fb.keywords.some(k => text.includes(k))) return fb.shell;
   }
   return null;
 }
 
 function timeAgo(dateStr) {
-  if (!dateStr) return '';
-  var h = Math.floor((Date.now() - new Date(dateStr).getTime()) / 3600000);
-  if (h < 1) return 'just now';
-  if (h < 24) return h + 'h ago';
-  return Math.floor(h / 24) + 'd ago';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const h = Math.floor(diff / 3600000);
+  if (h < 1) return 'Just now';
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function gradeColor(grade) {
+  if (!grade) return '#ffffff';
+  if (grade.startsWith('S')) return '#ff0000';
+  if (grade === 'A') return '#ff8800';
+  if (grade === 'B') return '#00f5ff';
+  if (grade === 'C') return '#9b5de5';
+  return 'rgba(255,255,255,0.4)';
 }
 
 function statBarPct(val, max) {
@@ -108,361 +92,366 @@ function statBarPct(val, max) {
   return Math.min(100, Math.round((val / max) * 100));
 }
 
-function computeGrade(item) {
-  if (!item) return 'C';
-  if (item.loadout_grade) return item.loadout_grade;
-  var s = item.ce_score || 0;
-  if (s >= 9) return 'S';
-  if (s >= 7) return 'A+';
-  if (s >= 6) return 'A';
-  if (s >= 4) return 'B';
-  return 'C';
-}
-
-function parseBody(body) {
-  if (!body) return [];
-  var elements = [];
-  var parts = body.split(/\*\*([^*]{1,120})\*\*/);
-  parts.forEach(function(part, i) {
-    if (i % 2 === 0) {
-      part.split(/\n{2,}/).forEach(function(block, j) {
-        var t = block.trim();
-        if (!t) return;
-        var lines = t.split(/\n/).map(function(l) { return l.trim(); }).filter(Boolean);
-        if (lines.length > 0) {
-          elements.push({ type: 'para', content: lines.join(' '), key: 'p-' + i + '-' + j });
-        }
-      });
-    } else {
-      var h = part.trim();
-      if (h) elements.push({ type: 'header', content: h, key: 'h-' + i });
-    }
-  });
-  return elements;
-}
-
-// ─── DATA ────────────────────────────────────────────────────────────────────
+// --- DATA FETCHING --------------------------------------------------------
 
 async function getData() {
-  var [featuredRes, nexusRes, moreBuildsRes, allWeaponsRes, allShellsRes, allModsRes] = await Promise.all([
-    supabase.from('feed_items').select('*').eq('editor', 'DEXTER').eq('is_published', true).order('created_at', { ascending: false }).limit(1).single(),
-    supabase.from('feed_items').select('headline,body,created_at').eq('editor', 'NEXUS').eq('is_published', true).order('created_at', { ascending: false }).limit(1).single(),
-    supabase.from('feed_items').select('id,headline,slug,tags,ce_score,created_at').eq('editor', 'DEXTER').eq('is_published', true).order('created_at', { ascending: false }).limit(5),
+  // Lazy-init Supabase here at runtime, NOT at module scope.
+  // This uses SUPABASE_SERVICE_KEY (admin privileges), so we can't share
+  // with the public lib/supabase.js client.
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+
+  const [featuredRes, previousRes, allWeaponsRes, allShellsRes] = await Promise.all([
+    supabase.from('feed_items').select('*').eq('editor', 'CIPHER').eq('is_published', true).order('ce_score', { ascending: false }).limit(1).single(),
+    supabase.from('feed_items').select('id,headline,slug,thumbnail,ce_score,tags,created_at').eq('editor', 'CIPHER').eq('is_published', true).order('created_at', { ascending: false }).limit(5),
     supabase.from('weapon_stats').select('*'),
     supabase.from('shell_stats').select('*'),
-    supabase.from('mod_stats').select('*').order('rarity', { ascending: false }).limit(60),
   ]);
 
-  var featured = featuredRes.data;
-  var moreBuilds = (moreBuildsRes.data || []).filter(function(b) { return b.id !== featured?.id; }).slice(0, 3);
-  var weapons = [], shell = null, mods = [];
+  const featured = featuredRes.data;
+  const previous = (previousRes.data || []).filter(p => p.id !== featured?.id).slice(0, 4);
+
+  let weapons = [];
+  let shell = null;
 
   if (featured) {
-    var allWeaponNames = (allWeaponsRes.data || []).map(function(w) { return w.name; });
-    var weaponNames = extractWeaponNames(featured.tags, featured.body, allWeaponNames);
-    var allShellNames = (allShellsRes.data || []).map(function(s) { return s.name; });
-    var shellName = extractShellName(featured.tags, featured.body, allShellNames);
-    weapons = (allWeaponsRes.data || []).filter(function(w) { return weaponNames.includes(w.name); });
-    shell = (allShellsRes.data || []).find(function(s) { return s.name === shellName; }) || null;
-    var modsData = allModsRes.data || [];
-    var bodyLower = (featured.body || '').toLowerCase();
-    mods = modsData.filter(function(m) { return m.name && bodyLower.includes(m.name.toLowerCase()); }).slice(0, 8);
-    if (mods.length === 0) mods = modsData.slice(0, 4);
+    const weaponNames = extractWeaponNames(featured.tags, featured.body);
+    const shellName = extractShellName(featured.tags, featured.body);
+    weapons = (allWeaponsRes.data || []).filter(w => weaponNames.includes(w.name));
+    shell = (allShellsRes.data || []).find(s => s.name === shellName) || null;
   }
 
-  return { featured, nexus: nexusRes.data, moreBuilds, weapons, shell, mods };
+  return { featured, previous, weapons, shell };
 }
 
-// ─── SUB-COMPONENTS ──────────────────────────────────────────────────────────
+// --- COMPONENTS ----------------------------------------------------------
 
-function Divider({ label }) {
+function GradeBadge({ grade, size = 64 }) {
+  if (!grade) return null;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '32px 0 20px' }}>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: 6 }}>{label}</span>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+    <div style={{
+      fontFamily: 'Orbitron, monospace',
+      fontSize: size,
+      fontWeight: 900,
+      color: gradeColor(grade),
+      textShadow: `0 0 30px ${gradeColor(grade)}88, 0 0 60px ${gradeColor(grade)}44`,
+      lineHeight: 1,
+    }}>
+      {grade}
     </div>
   );
 }
 
-function StatBar({ label, value, max, color }) {
-  var pct = statBarPct(value, max);
-  var c = color || '#ff8800';
+function StatBar({ label, value, max, color = '#ff0000' }) {
+  const pct = statBarPct(value, max);
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>{label}</span>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: c }}>{value ?? '—'}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 }}>{label}</span>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.6)' }}>{value ?? '--'}</span>
       </div>
-      <div style={{ height: 3, background: 'rgba(255,255,255,0.05)', borderRadius: 2 }}>
-        <div style={{ height: '100%', width: pct + '%', background: c, borderRadius: 2, boxShadow: '0 0 6px ' + c + '44' }} />
+      <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
+        <div style={{ height: '100%', width: pct + '%', background: `linear-gradient(90deg, ${color}, ${color}88)`, borderRadius: 2, transition: 'width 0.6s ease' }} />
       </div>
     </div>
   );
 }
 
-// ─── PAGE ────────────────────────────────────────────────────────────────────
+function WeaponCard({ weapon }) {
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.02)',
+      border: '1px solid rgba(255,0,0,0.15)',
+      borderTop: '2px solid #ff0000',
+      borderRadius: 6,
+      padding: 16,
+      marginBottom: 12,
+    }}>
+      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{weapon.name}</div>
+      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000', letterSpacing: 2, marginBottom: 12 }}>
+        {weapon.weapon_type || 'WEAPON'} - {weapon.ammo_type || ''}
+      </div>
+      <StatBar label="DAMAGE" value={weapon.damage} max={200} color="#ff0000" />
+      <StatBar label="FIRE RATE" value={weapon.fire_rate} max={1000} color="#ff8800" />
+      <StatBar label="MAGAZINE" value={weapon.magazine_size} max={60} color="#00f5ff" />
+    </div>
+  );
+}
 
-export default async function TopBuildPage() {
-  var { featured, nexus, moreBuilds, weapons, shell, mods } = await getData();
-  var grade = computeGrade(featured);
-  var gradeColor = TIER_COLORS[grade?.[0]] || '#ff8800';
-  var primaryWeapon = weapons[0] || null;
-  var secondaryWeapon = weapons[1] || null;
-  var shellColor = shell ? (SHELL_COLORS[shell.name] || '#ff8800') : '#ff8800';
-  var shellSymbol = shell ? (SHELL_SYMBOLS[shell.name] || '◈') : '◈';
-  var parsed = parseBody(featured?.body);
+function ShellCard({ shell }) {
+  if (!shell) return null;
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.02)',
+      border: '1px solid rgba(255,0,0,0.15)',
+      borderRadius: 6,
+      padding: 16,
+      marginBottom: 12,
+    }}>
+      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 6 }}>RUNNER SHELL</div>
+      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#ff0000', marginBottom: 4 }}>{shell.name}</div>
+      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, marginBottom: 12 }}>{shell.role || ''}</div>
+      {shell.prime_ability_name && (
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff0000', letterSpacing: 2 }}>PRIME</div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{shell.prime_ability_name}</div>
+        </div>
+      )}
+      {shell.tactical_ability_name && (
+        <div>
+          <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2 }}>TACTICAL</div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{shell.tactical_ability_name}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- PAGE -----------------------------------------------------------------
+
+export default async function PlayOfTheDayPage() {
+  const { featured, previous, weapons, shell } = await getData();
+
+  const grade = featured?.runner_grade || featured?.ce_score >= 8 ? 'S' : featured?.ce_score >= 6 ? 'A' : featured?.ce_score >= 4 ? 'B' : 'C';
+  const videoId = featured?.source_url?.includes('youtube') ? featured.source_url.split('v=')[1]?.split('&')[0] : featured?.source_video_id || null;
+  const gradeConf = featured?.grade_confidence || 'low';
 
   return (
     <>
       <Nav />
-      <div style={{ minHeight: '100vh', background: '#030303', color: '#fff', paddingTop: 64, overflowX: 'hidden' }}>
+      <div style={{ minHeight: '100vh', background: '#030303', color: '#ffffff' }}>
 
-        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.012, backgroundImage: 'linear-gradient(rgba(255,136,0,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,136,0,0.8) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
-        <div style={{ position: 'absolute', top: 64, left: '50%', transform: 'translateX(-50%)', width: 900, height: 400, background: 'radial-gradient(ellipse at 50% 0%, rgba(255,136,0,0.06) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
+        {/* -- CINEMATIC VIDEO HERO -- */}
+        <div style={{ position: 'relative', width: '100%', height: 620, overflow: 'hidden', background: '#000' }}>
 
-        {/* ── HERO ── */}
-        <div style={{ position: 'relative', zIndex: 1, borderBottom: '1px solid rgba(255,136,0,0.12)', padding: '48px 24px 40px' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          {/* Video embed or placeholder */}
+          {videoId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(135deg, #0a0000 0%, #1a0000 50%, #0a0000 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.2 }}>{'>'}</div>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.2)', letterSpacing: 3 }}>NO VIDEO SOURCE</div>
+              </div>
+            </div>
+          )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontFamily: 'Share Tech Mono, monospace', fontSize: 9, letterSpacing: 2 }}>
-              <Link href="/" style={{ color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>HOME</Link>
-              <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
-              <span style={{ color: '#ff8800' }}>TOP BUILD</span>
+          {/* Top gradient bar */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 120, background: 'linear-gradient(to bottom, #030303, transparent)', pointerEvents: 'none', zIndex: 2 }} />
+
+          {/* Bottom gradient bar */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, background: 'linear-gradient(to top, #030303, transparent)', pointerEvents: 'none', zIndex: 2 }} />
+
+          {/* CIPHER badge -- top left */}
+          <div style={{ position: 'absolute', top: 24, left: 28, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff0000', boxShadow: '0 0 8px #ff0000', animation: 'pulse 2s infinite' }} />
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', letterSpacing: 3 }}>CIPHER -- PLAY OF THE DAY</span>
+          </div>
+
+          {/* Grade overlay -- top right */}
+          <div style={{ position: 'absolute', top: 16, right: 28, zIndex: 10, textAlign: 'right' }}>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 3, marginBottom: 4 }}>RUNNER GRADE</div>
+            <GradeBadge grade={grade} size={72} />
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginTop: 4 }}>
+              {gradeConf === 'high' ? 'HIGH CONFIDENCE' : gradeConf === 'medium' ? 'MEDIUM CONFIDENCE' : 'METADATA GRADE'}
+            </div>
+          </div>
+
+          {/* Bottom info overlay */}
+          {featured && (
+            <div style={{ position: 'absolute', bottom: 28, left: 28, zIndex: 10, maxWidth: '60%' }}>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, marginBottom: 8 }}>
+                {timeAgo(featured.created_at)}
+              </div>
+              <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 26, fontWeight: 900, color: '#ffffff', margin: '0 0 8px', lineHeight: 1.2, textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
+                {featured.headline}
+              </h1>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', letterSpacing: 2 }}>
+                {(featured.tags || []).slice(0, 4).map(t => t.toUpperCase()).join(' - ')}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* -- ANALYSIS + SIDEBAR -- */}
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 40 }}>
+
+          {/* Left -- Analysis */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#ff0000', letterSpacing: 2 }}>*</span>
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: 3 }}>CIPHER ANALYSIS</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'flex-start' }}>
+            <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 700, color: '#ffffff', marginBottom: 24, lineHeight: 1.3 }}>
+              WHY THIS PLAY EARNED {grade}-TIER
+            </h2>
 
+            <div style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontSize: 17,
+              lineHeight: 1.75,
+              color: 'rgba(255,255,255,0.7)',
+              borderLeft: '3px solid rgba(255,0,0,0.3)',
+              paddingLeft: 20,
+            }}>
+              {featured?.body || 'No analysis available yet. Check back after the next CIPHER run.'}
+            </div>
+
+            {/* Grade Confidence Banner */}
+            {gradeConf === 'low' && (
+              <div style={{
+                marginTop: 24,
+                padding: '12px 16px',
+                background: 'rgba(255,136,0,0.06)',
+                border: '1px solid rgba(255,136,0,0.2)',
+                borderRadius: 6,
+                fontFamily: 'Share Tech Mono, monospace',
+                fontSize: 10,
+                color: '#ff8800',
+                letterSpacing: 2,
+              }}>
+                METADATA GRADE -- No transcript available. Grade based on title, description, and view data only.
+              </div>
+            )}
+
+            {/* Tags */}
+            {featured?.tags?.length > 0 && (
+              <div style={{ marginTop: 28, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {featured.tags.map(tag => (
+                  <span key={tag} style={{
+                    fontFamily: 'Share Tech Mono, monospace',
+                    fontSize: 9,
+                    color: 'rgba(255,255,255,0.3)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 3,
+                    padding: '4px 8px',
+                    letterSpacing: 2,
+                  }}>
+                    {tag.toUpperCase()}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right -- Sidebar */}
+          <div>
+            {/* Grade Card */}
+            <div style={{
+              background: 'rgba(255,0,0,0.04)',
+              border: '1px solid rgba(255,0,0,0.2)',
+              borderRadius: 8,
+              padding: 24,
+              marginBottom: 20,
+              textAlign: 'center',
+            }}>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 12 }}>RUNNER GRADE</div>
+              <GradeBadge grade={grade} size={80} />
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginTop: 12 }}>
+                CE SCORE: {featured?.ce_score?.toFixed(1) || '--'} / 10.0
+              </div>
+            </div>
+
+            {/* Shell Card */}
+            <ShellCard shell={shell} />
+
+            {/* Weapon Cards */}
+            {weapons.length > 0 && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff8800', boxShadow: '0 0 8px #ff8800' }} />
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff8800', letterSpacing: 3 }}>⬢ DEXTER — BUILD ENGINEER</span>
-                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>{timeAgo(featured?.created_at)}</span>
-                </div>
-
-                <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 900, color: '#fff', margin: '0 0 16px', lineHeight: 1.2, letterSpacing: 1 }}>
-                  {featured?.headline || 'No Build Available'}
-                </h1>
-
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-                  {shell && (
-                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: shellColor, background: shellColor + '15', border: '1px solid ' + shellColor + '35', borderRadius: 4, padding: '4px 12px', letterSpacing: 2 }}>
-                      {shellSymbol} {shell.name.toUpperCase()}
-                    </span>
-                  )}
-                  {featured?.ranked_viable && (
-                    <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.25)', borderRadius: 4, padding: '4px 12px', letterSpacing: 2 }}>
-                      ● RANKED VIABLE
-                    </span>
-                  )}
-                  {featured?.tags && featured.tags.slice(0, 3).map(function(tag) {
-                    return (
-                      <span key={tag} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '4px 10px', letterSpacing: 1 }}>
-                        {tag.toUpperCase()}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                {(primaryWeapon || secondaryWeapon) && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {[primaryWeapon, secondaryWeapon].filter(Boolean).map(function(w, i) {
-                      return (
-                        <div key={i} style={{ background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.18)', borderRadius: 5, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,136,0,0.5)', letterSpacing: 1 }}>{i === 0 ? 'PRIMARY' : 'SECONDARY'}</span>
-                          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#ff8800' }}>{w.name}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ background: gradeColor + '10', border: '1px solid ' + gradeColor + '33', borderRadius: 10, padding: '20px 32px', textAlign: 'center', flexShrink: 0 }}>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginBottom: 6 }}>LOADOUT GRADE</div>
-                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 64, fontWeight: 900, color: gradeColor, lineHeight: 1, textShadow: '0 0 30px ' + gradeColor + '55' }}>{grade}</div>
-                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: 2, marginTop: 6 }}>
-                  CE: {featured?.ce_score?.toFixed(1) || '—'}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #ff8800, transparent)', position: 'relative', zIndex: 1 }} />
-
-        {/* ── LOADOUT ── */}
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-          <Divider label="LOADOUT" />
-
-          <div style={{ display: 'grid', gridTemplateColumns: shell ? '260px 1fr' : '1fr', gap: 20, marginBottom: 12 }}>
-
-            {shell && (
-              <div style={{ background: shellColor + '06', border: '1px solid ' + shellColor + '22', borderTop: '2px solid ' + shellColor, borderRadius: 10, padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ textAlign: 'center', paddingBottom: 14, borderBottom: '1px solid ' + shellColor + '15' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 36, color: shellColor, opacity: 0.3, lineHeight: 1, marginBottom: 6 }}>{shellSymbol}</div>
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: shellColor, letterSpacing: 2 }}>{shell.name.toUpperCase()}</div>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginTop: 4 }}>{(shell.role || '').toUpperCase()}</div>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10 }}>
-                    {shell.ranked_tier_solo && (
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: TIER_COLORS[shell.ranked_tier_solo] || '#888', background: (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '15', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_solo] || '#888') + '28', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>
-                        S {shell.ranked_tier_solo}
-                      </span>
-                    )}
-                    {shell.ranked_tier_squad && (
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: TIER_COLORS[shell.ranked_tier_squad] || '#888', background: (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '15', border: '1px solid ' + (TIER_COLORS[shell.ranked_tier_squad] || '#888') + '28', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>
-                        Q {shell.ranked_tier_squad}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {(shell.base_health || shell.base_shield) && (
-                  <div>
-                    {shell.base_health && <StatBar label="HEALTH" value={shell.base_health} max={175} color="#00ff88" />}
-                    {shell.base_shield && <StatBar label="SHIELD" value={shell.base_shield} max={80} color="#00f5ff" />}
-                  </div>
-                )}
-
-                {[
-                  { label: 'ACTIVE', name: shell.active_ability_name || shell.prime_ability_name, color: shellColor },
-                  { label: 'PASSIVE', name: shell.passive_ability_name || shell.tactical_ability_name, color: 'rgba(255,255,255,0.4)' },
-                ].filter(function(a) { return a.name; }).map(function(a) {
-                  return (
-                    <div key={a.label}>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: a.color, letterSpacing: 2, marginBottom: 3, opacity: 0.7 }}>{a.label}</div>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#fff', opacity: 0.8 }}>{a.name}</div>
-                    </div>
-                  );
-                })}
-
-                <Link href={'/shells/' + shell.name.toLowerCase()} style={{ marginTop: 'auto', fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: shellColor + '88', letterSpacing: 1, textDecoration: 'none', textAlign: 'center' }}>
-                  FULL SHELL GUIDE →
-                </Link>
+                <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 12 }}>LOADOUT DETECTED</div>
+                {weapons.slice(0, 2).map(w => <WeaponCard key={w.id} weapon={w} />)}
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {[
-                { weapon: primaryWeapon, label: 'PRIMARY WEAPON' },
-                { weapon: secondaryWeapon, label: 'SECONDARY WEAPON' },
-              ].map(function(slot, si) {
-                if (!slot.weapon) return (
-                  <div key={si} style={{ background: 'rgba(255,136,0,0.02)', border: '1px solid rgba(255,136,0,0.08)', borderRadius: 8, padding: '20px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.12)', letterSpacing: 2 }}>{slot.label} NOT IDENTIFIED</div>
-                  </div>
-                );
-                var w = slot.weapon;
-                return (
-                  <div key={si} style={{ background: 'rgba(255,136,0,0.03)', border: '1px solid rgba(255,136,0,0.12)', borderTop: '2px solid #ff8800', borderRadius: 8, padding: '20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div>
-                        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,136,0,0.5)', letterSpacing: 2, marginBottom: 4 }}>{slot.label}</div>
-                        <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: 1 }}>{w.name}</div>
-                        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginTop: 3 }}>
-                          {[w.weapon_type, w.ammo_type].filter(Boolean).join(' · ').toUpperCase()}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0 24px' }}>
-                      {w.damage && <StatBar label="DAMAGE" value={w.damage} max={200} color="#ff4444" />}
-                      {w.fire_rate && <StatBar label="FIRE RATE" value={w.fire_rate} max={1000} color="#ff8800" />}
-                      {w.magazine_size && <StatBar label="MAGAZINE" value={w.magazine_size} max={60} color="#00f5ff" />}
-                      {(w.firepower_score || w.accuracy_score) && <StatBar label={w.firepower_score ? 'FIREPOWER' : 'ACCURACY'} value={w.firepower_score || w.accuracy_score} max={200} color="#ffd700" />}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {mods.length > 0 && (
-            <>
-              <Divider label="RECOMMENDED MODS" />
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                {mods.map(function(mod) {
-                  var r = RARITY_COLORS[mod.rarity] || RARITY_COLORS.Standard;
-                  return (
-                    <div key={mod.id || mod.name} style={{ background: r.color + '08', border: '1px solid ' + r.border, borderRadius: 5, padding: '7px 14px' }}>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: r.color, letterSpacing: 1, marginBottom: 2, opacity: 0.7 }}>{(mod.slot_type || '').toUpperCase()}</div>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: r.color }}>{mod.name}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          {/* ── ANALYSIS ── */}
-          <Divider label="DEXTER ANALYSIS" />
-          <div style={{ display: 'grid', gridTemplateColumns: nexus ? '1fr 320px' : '1fr', gap: 28, marginBottom: 12 }}>
-
-            <div style={{ borderLeft: '2px solid rgba(255,136,0,0.2)', paddingLeft: 24 }}>
-              {parsed.length > 0 ? parsed.map(function(el) {
-                if (el.type === 'header') {
-                  return (
-                    <div key={el.key} style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '28px 0 12px' }}>
-                      <div style={{ width: 3, height: 16, background: '#ff8800', borderRadius: 2, flexShrink: 0 }} />
-                      <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 900, color: '#ff8800', margin: 0, letterSpacing: 3 }}>{el.content}</h2>
-                      <div style={{ flex: 1, height: 1, background: 'rgba(255,136,0,0.1)' }} />
-                    </div>
-                  );
-                }
-                return (
-                  <p key={el.key} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 16, color: 'rgba(255,255,255,0.72)', lineHeight: 1.85, margin: '0 0 16px', letterSpacing: 0.2 }}>
-                    {el.content}
-                  </p>
-                );
-              }) : (
-                <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 16, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>
-                  DEXTER is generating build analysis. Check back after the next cycle.
-                </p>
-              )}
-            </div>
-
-            {nexus && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.12)', borderTop: '2px solid rgba(0,245,255,0.4)', borderRadius: 8, padding: '18px 20px' }}>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', letterSpacing: 2, marginBottom: 10 }}>⬡ NEXUS META CONTEXT</div>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginBottom: 10 }}>{timeAgo(nexus.created_at)}</div>
-                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-                    {(nexus.body || '').replace(/\*\*/g, '').slice(0, 320)}{nexus.body?.length > 320 ? '...' : ''}
-                  </div>
-                </div>
-
-                <Link href="/advisor" style={{ display: 'block', background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.25)', borderRadius: 8, padding: '16px 20px', textDecoration: 'none', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff8800', letterSpacing: 2, marginBottom: 4 }}>BUILD ADVISOR →</div>
-                  <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>GET A PERSONALIZED LOADOUT</div>
-                </Link>
-              </div>
+            {/* Source link */}
+            {featured?.source_url && (
+              <a href={featured.source_url} target="_blank" rel="noopener noreferrer" style={{
+                display: 'block',
+                textAlign: 'center',
+                padding: '12px',
+                border: '1px solid rgba(255,0,0,0.2)',
+                borderRadius: 6,
+                fontFamily: 'Share Tech Mono, monospace',
+                fontSize: 10,
+                color: '#ff0000',
+                textDecoration: 'none',
+                letterSpacing: 2,
+                marginTop: 12,
+              }}>
+                WATCH SOURCE
+              </a>
             )}
           </div>
-
-          {moreBuilds.length > 0 && (
-            <>
-              <Divider label="MORE FROM DEXTER" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, marginBottom: 48 }}>
-                {moreBuilds.map(function(build) {
-                  var g = computeGrade(build);
-                  var gc = TIER_COLORS[g?.[0]] || '#888';
-                  var shellTag = (build.tags || []).find(function(t) { return KNOWN_SHELLS.map(function(s) { return s.toLowerCase(); }).includes(t.toLowerCase()); });
-                  return (
-                    <Link key={build.id} href={'/intel/' + build.slug} style={{ textDecoration: 'none', display: 'block', background: '#080808', border: '1px solid rgba(255,136,0,0.1)', borderTop: '2px solid rgba(255,136,0,0.3)', borderRadius: 8, padding: 18, transition: 'border-color 0.2s' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                        {shellTag && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2 }}>{shellTag.toUpperCase()}</span>}
-                        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: gc }}>{g}</span>
-                      </div>
-                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', lineHeight: 1.3, marginBottom: 10 }}>{build.headline}</div>
-                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{timeAgo(build.created_at)}</div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </>
-          )}
         </div>
+
+        {/* -- PREVIOUS PLAYS -- */}
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 64px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: '#ffffff', letterSpacing: 2 }}>PREVIOUS PLAYS</div>
+            <a href="/intel/cipher" style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#ff0000', textDecoration: 'none', letterSpacing: 2 }}>ALL CIPHER GRADES</a>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            {previous.map(play => {
+              const g = play.ce_score >= 8 ? 'S' : play.ce_score >= 6 ? 'A' : play.ce_score >= 4 ? 'B' : 'C';
+              return (
+                <a key={play.id} href={`/intel/${play.slug}`} style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    transition: 'border-color 0.2s',
+                  }}>
+                    <div style={{ position: 'relative', height: 120, background: '#0a0000' }}>
+                      {play.thumbnail && (
+                        <img src={play.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+                      )}
+                      <div style={{
+                        position: 'absolute', top: 8, right: 8,
+                        fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900,
+                        color: gradeColor(g), textShadow: `0 0 12px ${gradeColor(g)}88`,
+                      }}>{g}</div>
+                    </div>
+                    <div style={{ padding: 12 }}>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', lineHeight: 1.3, marginBottom: 8 }}>
+                        {play.headline}
+                      </div>
+                      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 }}>
+                        {timeAgo(play.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
       <Footer />
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        @media (max-width: 768px) {
+          .analysis-grid { grid-template-columns: 1fr !important; }
+          .previous-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
     </>
   );
 }
