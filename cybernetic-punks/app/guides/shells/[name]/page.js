@@ -121,10 +121,17 @@ const CYAN = '#00d4ff';
 
 const TIER_COLORS = { S: '#ff2222', A: '#ff8800', B: '#ffd700', C: '#00d4ff', D: '#555' };
 
-// ─── STATIC PARAMS ──────────────────────────────────────────
+// ──── STATIC PARAMS ─────────────────────────────────────
+// FIXED May 15, 2026: Returns empty at build to prevent pre-rendering
+// (supabase queries in render would throw without env vars).
+// dynamicParams=true allows on-demand rendering at request time.
+// revalidate=300 (above) caches results for 5 minutes per path.
 export function generateStaticParams() {
-  return Object.keys(SHELLS).map(function(name) { return { name: name }; });
+  return [];
 }
+
+export const dynamicParams = true;
+
 
 export async function generateMetadata({ params }) {
   var resolved = await params;

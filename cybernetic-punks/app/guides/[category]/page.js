@@ -181,9 +181,15 @@ const BORDER = '#22252e';
 const PURPLE = '#9b5de5';
 
 // ─── STATIC PARAMS (pre-render all 8 categories at build) ──
+// FIXED May 15, 2026: Returns empty at build to prevent pre-rendering
+// (supabase queries would throw without env vars). dynamicParams=true
+// allows on-demand rendering at request time. revalidate=300 (above)
+// caches results for 5 minutes.
 export function generateStaticParams() {
-  return Object.keys(CATEGORIES).map(function(cat) { return { category: cat }; });
+  return [];
 }
+
+export const dynamicParams = true;
 
 // ─── METADATA ───────────────────────────────────────────────
 export async function generateMetadata({ params }) {
