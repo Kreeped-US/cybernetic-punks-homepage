@@ -1,36 +1,36 @@
 // app/meta/page.js
 // Now includes JSON-LD schemas (BreadcrumbList + WebPage with dateModified + ItemList)
 // for rich Google results, expanded keywords, and a visible breadcrumb.
+//
+// FIXED May 15, 2026: Replaced module-scope createClient with import from
+// lib/supabase, which uses a lazy-init Proxy. Module-scope createClient
+// throws "supabaseUrl is required" during Next.js 16 build because env
+// vars aren't populated when modules are evaluated at build time.
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import MetaClient from './MetaClient';
 import SeasonResetBanner from '@/components/SeasonResetBanner';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'Marathon Meta Tier List — What Weapons & Builds Are Winning Right Now',
+  title: 'Marathon Meta Tier List -- What Weapons & Builds Are Winning Right Now',
   description: 'Live Marathon tier list updated every 6 hours. See which weapons, shells, and loadouts are dominating in Marathon right now. Tracked by AI editors analyzing YouTube, Reddit, and gameplay data.',
   keywords: 'Marathon tier list, Marathon meta, Marathon best weapons, Marathon S-tier, Marathon weapons ranked, Marathon shells tier list, best Marathon weapons, Marathon meta tier list, Marathon ranked tier list, Marathon weapon tier list 2026, Marathon top weapons, Marathon top shells, Marathon dominant builds, Marathon meta snapshot, Marathon weapon ranking, what is the meta in Marathon',
   openGraph: {
-    title: 'Marathon Meta Tier List — CyberneticPunks',
+    title: 'Marathon Meta Tier List -- CyberneticPunks',
     description: 'Live Marathon tier list updated every 6 hours. See what weapons and builds are actually winning.',
     url: 'https://cyberneticpunks.com/meta',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630, alt: 'Marathon Meta Tier List — CyberneticPunks' }],
+    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630, alt: 'Marathon Meta Tier List -- CyberneticPunks' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Meta Tier List — CyberneticPunks',
+    title: 'Marathon Meta Tier List -- CyberneticPunks',
     description: 'Live Marathon tier list. What weapons, strategies, and loadouts are winning right now.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
@@ -75,10 +75,10 @@ export default async function MetaPage() {
     console.error('[MetaPage] fetch error:', err);
   }
 
-  // ── JSON-LD SCHEMAS ────────────────────────────────────────────
+  // -- JSON-LD SCHEMAS --
   // Built from the live data, so they reflect actual tier list state.
 
-  // Latest tier update timestamp — gives Google fresh-content signal
+  // Latest tier update timestamp -- gives Google fresh-content signal
   const lastUpdated = metaTiers.length > 0
     ? metaTiers.reduce(function(a, b) { return a.updated_at > b.updated_at ? a : b; }).updated_at
     : new Date().toISOString();
@@ -106,7 +106,7 @@ export default async function MetaPage() {
     },
   };
 
-  // ItemList schema — the tier list itself, top-tier items first.
+  // ItemList schema -- the tier list itself, top-tier items first.
   // This is the schema that can produce rich list results in Google Search.
   const tierOrder = { S: 0, A: 1, B: 2, C: 3, D: 4, F: 5 };
   const sortedForSchema = [...metaTiers]
@@ -116,12 +116,12 @@ export default async function MetaPage() {
       var tb = tierOrder[(b.tier || '').toUpperCase()] ?? 99;
       return ta - tb;
     })
-    .slice(0, 30); // top 30 items only — schema rewards focused lists
+    .slice(0, 30); // top 30 items only -- schema rewards focused lists
 
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Marathon Meta Tier List — Top Weapons and Shells',
+    name: 'Marathon Meta Tier List -- Top Weapons and Shells',
     description: 'Ranked tier list of Marathon weapons and Runner Shells based on current meta analysis.',
     numberOfItems: sortedForSchema.length,
     itemListOrder: 'https://schema.org/ItemListOrderDescending',
@@ -130,21 +130,21 @@ export default async function MetaPage() {
         '@type': 'ListItem',
         position: i + 1,
         name: item.name,
-        description: (item.tier ? item.tier + '-tier ' : '') + (item.type || 'item') + (item.note ? ' — ' + item.note : ''),
+        description: (item.tier ? item.tier + '-tier ' : '') + (item.type || 'item') + (item.note ? ' -- ' + item.note : ''),
       };
     }),
   };
 
   return (
     <main style={{ minHeight: '100vh', background: '#121418', color: '#fff', paddingTop: 48, paddingBottom: 80 }}>
-      {/* JSON-LD Schemas — render inline so Google sees on first crawl */}
+      {/* JSON-LD Schemas -- render inline so Google sees on first crawl */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
       {sortedForSchema.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
       )}
 
-      {/* Visible breadcrumb — semantic nav for accessibility + E-E-A-T signal */}
+      {/* Visible breadcrumb -- semantic nav for accessibility + E-E-A-T signal */}
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1200, margin: '0 auto' }}>
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
