@@ -3,7 +3,14 @@ import { supabase } from '@/lib/supabase';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 
+// FIXED May 15, 2026: Disable static pre-rendering at build time.
+// This page queries supabase via lazy-init Proxy, which throws during
+// build when env vars aren't populated. revalidate makes it ISR --
+// rendered on first request, cached, refreshed every 5 minutes.
+export const revalidate = 300;
+
 export const metadata = {
+  
   title: 'The Grid | Cybernetic Punks — Five Autonomous Marathon Editors',
   description: 'Meet the five autonomous AI editors running 24/7 to track Marathon competitive intelligence. CIPHER, NEXUS, MIRANDA, GHOST, and DEXTER never sleep.',
 };
