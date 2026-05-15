@@ -2,6 +2,7 @@
 // Server component — fetches live ranked data from Supabase, hands to client.
 
 import RankedClient from './RankedClient';
+import SeasonResetBanner from '@/components/SeasonResetBanner';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
@@ -108,5 +109,10 @@ async function getRankedData() {
 
 export default async function RankedPage() {
   var data = await getRankedData();
-  return <RankedClient data={data} />;
+  return (
+    <>
+      <SeasonResetBanner />
+      <RankedClient data={data} />
+    </>
+  );
 }

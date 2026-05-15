@@ -4,6 +4,7 @@
 // and passes urlShell prop to client for deep-linking from homepage callout.
 
 import FactionClient from './FactionClient';
+import SeasonResetBanner from '@/components/SeasonResetBanner';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
@@ -187,6 +188,7 @@ export default async function FactionsPage({ searchParams }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <SeasonResetBanner />
       <FactionClient data={data} urlShell={urlShell} />
     </>
   );

@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import MetaClient from './MetaClient';
+import SeasonResetBanner from '@/components/SeasonResetBanner';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -151,6 +152,8 @@ export default async function MetaPage() {
           <li style={{ color: '#00ff41' }}>META TIER LIST</li>
         </ol>
       </nav>
+
+      <SeasonResetBanner />
 
       <Suspense fallback={null}>
         <MetaClient
