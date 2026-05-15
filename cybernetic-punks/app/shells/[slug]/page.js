@@ -14,7 +14,7 @@ import { notFound } from 'next/navigation';
 import CoachCTA from '@/components/CoachCTA';
 import ShellDetailClient from './ShellDetailClient';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 const SHELL_COLORS = {
   assassin: '#cc44ff', destroyer: '#ff3333', recon: '#00d4ff',

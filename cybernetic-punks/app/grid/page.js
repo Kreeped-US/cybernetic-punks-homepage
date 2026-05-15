@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 // This page queries supabase via lazy-init Proxy, which throws during
 // build when env vars aren't populated. revalidate makes it ISR --
 // rendered on first request, cached, refreshed every 5 minutes.
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   

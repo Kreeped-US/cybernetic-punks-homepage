@@ -11,7 +11,7 @@ export const metadata = {
   description: "Today's highest-rated Marathon play, analyzed by CIPHER. Watch the clip, read the breakdown, see the grade.",
 };
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 // --- HELPERS --------------------------------------------------------------
 

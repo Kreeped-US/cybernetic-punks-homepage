@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 // ─── SHELL CONFIG ───────────────────────────────────────────
 const SHELLS = {

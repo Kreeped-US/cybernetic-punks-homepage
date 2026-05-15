@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 import MetaClient from './MetaClient';
 import SeasonResetBanner from '@/components/SeasonResetBanner';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Meta Tier List -- What Weapons & Builds Are Winning Right Now',

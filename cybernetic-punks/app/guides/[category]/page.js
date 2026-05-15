@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 // ─── CATEGORY CONFIG ────────────────────────────────────────
 // Single source of truth. Each slug has its DB tag, metadata, keywords, and FAQs.
