@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Server Status — Is Marathon Down? Live Status, Reset & Error Codes',
