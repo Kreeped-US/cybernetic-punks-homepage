@@ -1,8 +1,11 @@
-// ── app/sitemap.js ─────────────────────────────────────────
-// FIXED May 15, 2026: createClient moved inside the sitemap function
-// to defer Supabase client init until request time. Module-scope init
-// breaks Next.js 16 build (supabaseUrl is required at evaluation time).
-// ───────────────────────────────────────────────────────────
+// -- app/sitemap.js -----------------------------------------------
+// FIXED May 15, 2026: Wrapped entire dynamic-data block (including
+// createClient) in try/catch. Sitemap.js is evaluated at build time,
+// before runtime env vars are populated. If Supabase init throws,
+// fall back to static URLs only so the build succeeds. At runtime,
+// when the sitemap regenerates with env vars present, dynamic pages
+// will be included.
+// -----------------------------------------------------------------
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -22,13 +25,10 @@ const GUIDE_CATEGORIES = [
   'advanced',
 ];
 
-export default async function sitemap() {
-  // Lazy-init Supabase inside the sitemap function — runtime, not build time
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+// Hardcoded shell slugs as fallback in case the DB fetch fails at build
+const FALLBACK_SHELL_SLUGS = ['assassin', 'destroyer', 'recon', 'rook', 'thief', 'triage', 'vandal'];
 
+export default async function sitemap() {
   const baseUrl = 'https://cyberneticpunks.com';
 
   const staticPages = [
@@ -63,55 +63,86 @@ export default async function sitemap() {
     priority: 0.6,
   }));
 
-  // Try to fetch dynamic pages; if any query fails, gracefully fall back
-  // to static pages only so the sitemap still builds.
-  let shellPages = [];
-  let shellGuidePages = [];
-  try {
-    const { data: shells } = await supabase
-      .from('shell_stats')
-      .select('name, updated_at')
-      .order('name');
+  // Hardcoded shell pages so they're always in sitemap even if DB fails
+  const fallbackShellPages = FALLBACK_SHELL_SLUGS.flatMap((slug) => [
+    {
+      url: baseUrl + '/shells/' + slug,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.75,
+    },
+    {
+      url: baseUrl + '/guides/shells/' + slug,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+  ]);
 
-    if (shells) {
-      shellPages = shells.map((s) => ({
-        url: baseUrl + '/shells/' + s.name.toLowerCase(),
-        lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.75,
-      }));
-
-      shellGuidePages = shells.map((s) => ({
-        url: baseUrl + '/guides/shells/' + s.name.toLowerCase(),
-        lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      }));
-    }
-  } catch (err) {
-    console.error('Sitemap shell fetch failed:', err);
-  }
-
+  // Try to fetch dynamic pages from Supabase. If anything fails -- including
+  // createClient throwing because env vars are missing at build time --
+  // fall back to static URLs only. The sitemap will regenerate later with
+  // full data at runtime when env vars are populated.
+  let dbShellPages = [];
   let dynamicPages = [];
-  try {
-    const { data } = await supabase
-      .from('feed_items')
-      .select('slug, updated_at, created_at')
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .limit(500);
 
-    if (data) {
-      dynamicPages = data.map((item) => ({
-        url: baseUrl + '/intel/' + item.slug,
-        lastModified: item.updated_at ? new Date(item.updated_at) : new Date(item.created_at),
-        changeFrequency: 'monthly',
-        priority: 0.6,
-      }));
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    try {
+      const { data: shells } = await supabase
+        .from('shell_stats')
+        .select('name, updated_at')
+        .order('name');
+
+      if (shells && shells.length > 0) {
+        dbShellPages = shells.flatMap((s) => [
+          {
+            url: baseUrl + '/shells/' + s.name.toLowerCase(),
+            lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.75,
+          },
+          {
+            url: baseUrl + '/guides/shells/' + s.name.toLowerCase(),
+            lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.7,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error('Sitemap shell fetch failed:', err);
+    }
+
+    try {
+      const { data } = await supabase
+        .from('feed_items')
+        .select('slug, updated_at, created_at')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (data) {
+        dynamicPages = data.map((item) => ({
+          url: baseUrl + '/intel/' + item.slug,
+          lastModified: item.updated_at ? new Date(item.updated_at) : new Date(item.created_at),
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        }));
+      }
+    } catch (err) {
+      console.error('Sitemap feed_items fetch failed:', err);
     }
   } catch (err) {
-    console.error('Sitemap feed_items fetch failed:', err);
+    console.error('Sitemap Supabase init failed at build time, using static fallback:', err);
   }
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...shellGuidePages, ...dynamicPages];
+  // If DB shell pages succeeded, use them. Otherwise fall back to hardcoded.
+  const shellPages = dbShellPages.length > 0 ? dbShellPages : fallbackShellPages;
+
+  return [...staticPages, ...guideCategoryPages, ...shellPages, ...dynamicPages];
 }
