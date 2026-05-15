@@ -5,7 +5,11 @@ import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import Link from 'next/link';
 
-export const revalidate = 300;
+// FIXED May 15, 2026: switched from revalidate to force-dynamic.
+// getLiveStats() call during build-time pre-render triggers Supabase
+// before env vars are populated. force-dynamic disables static
+// pre-render entirely — page renders on-demand at request time.
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides',
