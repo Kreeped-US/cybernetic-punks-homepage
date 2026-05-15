@@ -200,7 +200,11 @@ async function getHomepageData() {
 }
 
 // ── PAGE ───────────────────────────────────────────────────────
-export const revalidate = 300;
+// FIXED May 15, 2026: switched from revalidate to force-dynamic.
+// getLiveStats() and supabase queries during build-time pre-render
+// trigger init before env vars are populated. force-dynamic disables
+// static pre-render entirely -- page renders on-demand at request time.
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   var data = await getHomepageData();
