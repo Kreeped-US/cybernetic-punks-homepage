@@ -9,27 +9,54 @@
 // - Item lists now pulled FROM the database dynamically. Whatever's in
 //   weapon_stats, core_stats, implant_stats becomes the extraction list.
 //   Old hardcoded lists were tiny slices (9/30 weapons, 8/68 cores, 6/82 implants).
-// - Only extracts data for items with NULL fields — no token waste re-extracting
+// - Only extracts data for items with NULL fields -- no token waste re-extracting
 //   data we already have.
 // - Uses Anthropic SDK directly (consistent with editorCore.js).
+//
+// Updated May 15, 2026: Lazy-init Anthropic + Supabase clients via Proxy.
+// Module-scope SDK instantiation throws "supabaseUrl is required" / missing
+// apiKey during Next.js 16 build because env vars aren't populated when
+// modules are evaluated at build time.
 
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// --- LAZY ANTHROPIC CLIENT ---
+let _anthropicClient = null;
+function getAnthropicClient() {
+  if (_anthropicClient) return _anthropicClient;
+  _anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _anthropicClient;
+}
+const client = new Proxy({}, {
+  get(_target, prop) {
+    return getAnthropicClient()[prop];
+  }
+});
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// --- LAZY SUPABASE CLIENT ---
+let _supabaseClient = null;
+function getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient;
+  _supabaseClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+  return _supabaseClient;
+}
+const supabase = new Proxy({}, {
+  get(_target, prop) {
+    return getSupabaseClient()[prop];
+  }
+});
 
 const STATS_MODEL = 'claude-sonnet-4-20250514';
 const REFRESH_HOURS = 24;
 const PIPELINE_KEY = 'dexter_stats_extraction';
 
-// ─── THROTTLE CHECK ──────────────────────────────────────────
+// --- THROTTLE CHECK ---
 // Uses the existing wiki_meta table by inserting a row keyed to this
-// pipeline. Same throttle pattern as wiki.js — 24h between runs.
+// pipeline. Same throttle pattern as wiki.js -- 24h between runs.
 
 async function needsRefresh() {
   try {
@@ -42,7 +69,7 @@ async function needsRefresh() {
     const hrs = (Date.now() - new Date(data.last_fetched).getTime()) / 3600000;
     return hrs >= REFRESH_HOURS;
   } catch {
-    return true; // No row yet → needs first run
+    return true; // No row yet -- needs first run
   }
 }
 
@@ -73,8 +100,8 @@ async function logRefresh(updatedCount) {
   }
 }
 
-// ─── WIKI / FAN SITE SOURCES ─────────────────────────────────
-// Trimmed list — only URLs that have historically returned content.
+// --- WIKI / FAN SITE SOURCES ---
+// Trimmed list -- only URLs that have historically returned content.
 // Each fetch has an 8s timeout to avoid hanging the whole pipeline.
 
 const WIKI_URLS = [
@@ -108,13 +135,13 @@ async function fetchWikiContent() {
         console.log('[dexter-stats] Wiki fetched: ' + url + ' (' + text.length + ' chars)');
       }
     } catch (err) {
-      console.log('[dexter-stats] Wiki fetch failed: ' + url + ' — ' + err.message);
+      console.log('[dexter-stats] Wiki fetch failed: ' + url + ' -- ' + err.message);
     }
   }
   return results;
 }
 
-// ─── DB-DRIVEN ITEM LISTS ────────────────────────────────────
+// --- DB-DRIVEN ITEM LISTS ---
 // Pull current item rosters from Supabase. Identify which rows have NULL
 // in the fields we want to fill. Only those become extraction targets.
 
@@ -122,7 +149,7 @@ async function fetchExtractionTargets() {
   const targets = { shells: [], weapons: [], cores: [], implants: [] };
 
   try {
-    // Shells — find rows missing any of the key fields
+    // Shells -- find rows missing any of the key fields
     const { data: shells } = await supabase
       .from('shell_stats')
       .select('name, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, strengths, weaknesses');
@@ -162,9 +189,9 @@ async function fetchExtractionTargets() {
   return targets;
 }
 
-// ─── EXTRACTION TOOL SCHEMA ──────────────────────────────────
+// --- EXTRACTION TOOL SCHEMA ---
 // Tool-use enforces the output structure. No more JSON.parse failures.
-// Each section is optional — Claude only fills what it found evidence for.
+// Each section is optional -- Claude only fills what it found evidence for.
 
 const EXTRACT_TOOL = {
   name: 'submit_extracted_stats',
@@ -253,7 +280,7 @@ const EXTRACT_TOOL = {
   },
 };
 
-// ─── CLAUDE STAT EXTRACTION ──────────────────────────────────
+// --- CLAUDE STAT EXTRACTION ---
 
 async function extractStats(sourceTexts, targets) {
   // Cap at top items per category to keep prompt manageable
@@ -269,7 +296,7 @@ async function extractStats(sourceTexts, targets) {
     targets.cores.length === 0 &&
     targets.implants.length === 0
   ) {
-    console.log('[dexter-stats] No missing fields anywhere — skipping extraction');
+    console.log('[dexter-stats] No missing fields anywhere -- skipping extraction');
     return null;
   }
 
@@ -321,7 +348,7 @@ Use the submit_extracted_stats tool to return findings. Submit empty arrays for 
   }
 }
 
-// ─── SUPABASE WRITERS ────────────────────────────────────────
+// --- SUPABASE WRITERS ---
 // Each writer accepts a row and only updates fields that have values.
 // Skips entirely if no writeable fields present.
 
@@ -346,7 +373,7 @@ async function updateShell(row) {
   update.updated_at = new Date().toISOString();
   const { error } = await supabase.from('shell_stats').update(update).eq('name', row.name);
   if (error) {
-    console.error('[dexter-stats] Shell update failed: ' + row.name + ' — ' + error.message);
+    console.error('[dexter-stats] Shell update failed: ' + row.name + ' -- ' + error.message);
     return false;
   }
   console.log('[dexter-stats] Shell updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
@@ -359,7 +386,7 @@ async function updateWeapon(row) {
   update.updated_at = new Date().toISOString();
   const { error } = await supabase.from('weapon_stats').update(update).eq('name', row.name);
   if (error) {
-    console.error('[dexter-stats] Weapon update failed: ' + row.name + ' — ' + error.message);
+    console.error('[dexter-stats] Weapon update failed: ' + row.name + ' -- ' + error.message);
     return false;
   }
   console.log('[dexter-stats] Weapon updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
@@ -372,7 +399,7 @@ async function updateCore(row) {
   update.updated_at = new Date().toISOString();
   const { error } = await supabase.from('core_stats').update(update).eq('name', row.name);
   if (error) {
-    console.error('[dexter-stats] Core update failed: ' + row.name + ' — ' + error.message);
+    console.error('[dexter-stats] Core update failed: ' + row.name + ' -- ' + error.message);
     return false;
   }
   console.log('[dexter-stats] Core updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
@@ -391,25 +418,25 @@ async function updateImplant(row) {
   update.updated_at = new Date().toISOString();
   const { error } = await supabase.from('implant_stats').update(update).eq('name', row.name);
   if (error) {
-    console.error('[dexter-stats] Implant update failed: ' + row.name + ' — ' + error.message);
+    console.error('[dexter-stats] Implant update failed: ' + row.name + ' -- ' + error.message);
     return false;
   }
   console.log('[dexter-stats] Implant updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
   return true;
 }
 
-// ─── MAIN EXPORT ─────────────────────────────────────────────
+// --- MAIN EXPORT ---
 
 export async function runDexterStatPipeline(existingData = {}) {
-  // ── THROTTLE CHECK ────────────────────────────────────
+  // -- THROTTLE CHECK --
   if (!(await needsRefresh())) {
-    console.log('[dexter-stats] Skipped — last refresh was within ' + REFRESH_HOURS + 'h');
+    console.log('[dexter-stats] Skipped -- last refresh was within ' + REFRESH_HOURS + 'h');
     return { skipped: true };
   }
 
   console.log('[dexter-stats] Starting extraction pipeline...');
 
-  // ── BUILD TARGETS FROM DB ─────────────────────────────
+  // -- BUILD TARGETS FROM DB --
   const targets = await fetchExtractionTargets();
   if (
     targets.shells.length === 0 &&
@@ -417,12 +444,12 @@ export async function runDexterStatPipeline(existingData = {}) {
     targets.cores.length === 0 &&
     targets.implants.length === 0
   ) {
-    console.log('[dexter-stats] All target fields filled — nothing to extract');
+    console.log('[dexter-stats] All target fields filled -- nothing to extract');
     await logRefresh(0);
     return { shellsUpdated: 0, weaponsUpdated: 0, coresUpdated: 0, implantsUpdated: 0 };
   }
 
-  // ── GATHER SOURCES ────────────────────────────────────
+  // -- GATHER SOURCES --
   const wikiSources = await fetchWikiContent();
   const allSources = [...wikiSources];
 
@@ -458,21 +485,21 @@ export async function runDexterStatPipeline(existingData = {}) {
   }
 
   if (allSources.length === 0) {
-    console.log('[dexter-stats] No sources available — skipping this run');
+    console.log('[dexter-stats] No sources available -- skipping this run');
     return { shellsUpdated: 0, weaponsUpdated: 0, coresUpdated: 0, implantsUpdated: 0 };
   }
 
-  // ── EXTRACT ───────────────────────────────────────────
+  // -- EXTRACT --
   console.log('[dexter-stats] Sending ' + allSources.length + ' sources to Claude (tool-use)...');
   const extracted = await extractStats(allSources, targets);
 
   if (!extracted) {
-    console.log('[dexter-stats] Extraction returned null — skipping DB writes');
+    console.log('[dexter-stats] Extraction returned null -- skipping DB writes');
     await logRefresh(0);
     return { shellsUpdated: 0, weaponsUpdated: 0, coresUpdated: 0, implantsUpdated: 0 };
   }
 
-  // ── WRITE TO DB ───────────────────────────────────────
+  // -- WRITE TO DB --
   let shellsUpdated = 0, weaponsUpdated = 0, coresUpdated = 0, implantsUpdated = 0;
 
   for (const row of (extracted.shells || [])) {
@@ -489,7 +516,7 @@ export async function runDexterStatPipeline(existingData = {}) {
   }
 
   const totalUpdated = shellsUpdated + weaponsUpdated + coresUpdated + implantsUpdated;
-  console.log('[dexter-stats] Pipeline complete — ' + shellsUpdated + ' shells, ' + weaponsUpdated + ' weapons, ' + coresUpdated + ' cores, ' + implantsUpdated + ' implants updated');
+  console.log('[dexter-stats] Pipeline complete -- ' + shellsUpdated + ' shells, ' + weaponsUpdated + ' weapons, ' + coresUpdated + ' cores, ' + implantsUpdated + ' implants updated');
 
   await logRefresh(totalUpdated);
 

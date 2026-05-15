@@ -17,10 +17,24 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// FIXED May 15, 2026: Lazy-init Supabase client via Proxy.
+// Module-scope createClient() throws "supabaseUrl is required" during
+// Next.js 16 build because env vars aren't populated when modules are
+// evaluated. Proxy defers init until first property access at runtime.
+let _client = null;
+function getClient() {
+  if (_client) return _client;
+  _client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+  return _client;
+}
+const supabase = new Proxy({}, {
+  get(_target, prop) {
+    return getClient()[prop];
+  }
+});
 
 // ═══════════════════════════════════════════════════════════
 // WEEKLY SCHEDULE — PT timezone

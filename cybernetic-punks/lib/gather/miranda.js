@@ -4,10 +4,22 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// FIXED May 15, 2026: Lazy-init Supabase via Proxy.
+// Module-scope createClient() throws during Next.js 16 build.
+let _supabaseClient = null;
+function getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient;
+  _supabaseClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+  return _supabaseClient;
+}
+const supabase = new Proxy({}, {
+  get(_target, prop) {
+    return getSupabaseClient()[prop];
+  }
+});
 
 const YT_KEY  = process.env.YOUTUBE_API_KEY;
 const YT_BASE = 'https://www.googleapis.com/youtube/v3';
