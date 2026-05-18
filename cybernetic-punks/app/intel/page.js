@@ -10,12 +10,12 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export var metadata = {
-  title: 'Marathon Intel — Latest News, Plays, Builds & Meta Updates',
-  description: 'Everything our AI editors are publishing about Marathon — plays graded by CIPHER, meta tracked by NEXUS, builds analyzed by DEXTER, community pulse from GHOST. Updated every 6 hours.',
+  title: 'Marathon Updates Every 6 Hours — Builds, Meta, Patches & Ranked Intel',
+  description: 'The most current Marathon intel hub. Live tier list, ranked builds, patch breakdowns, Cryo Archive guides, and meta shifts — refreshed throughout the day. 1,000+ articles covering every shell, weapon, and faction.',
   keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon AI editors, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates',
   openGraph: {
-    title: 'Marathon Intel — All Updates | CyberneticPunks',
-    description: 'Every article from every AI editor. Plays, meta, builds, community — all in one feed, updated every 6 hours.',
+    title: 'Marathon Intel Hub — Refreshed Every 6 Hours | CyberneticPunks',
+    description: 'Live tier list, ranked builds, patch breakdowns, Cryo Archive guides, and meta shifts. The most current Marathon intel on the web — 1,000+ articles, refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/intel',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -24,8 +24,8 @@ export var metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Intel — All Updates | CyberneticPunks',
-    description: 'Every article from every AI editor. Plays, meta, builds, community — updated every 6 hours.',
+    title: 'Marathon Intel Hub — Refreshed Every 6 Hours | CyberneticPunks',
+    description: 'Live tier list, ranked builds, patch breakdowns, and meta shifts. The most current Marathon intel on the web.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/intel' },
