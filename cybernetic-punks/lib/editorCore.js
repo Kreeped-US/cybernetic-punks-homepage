@@ -32,11 +32,6 @@ const GAME_CONTEXT_TTL_MS = 5 * 60 * 1000;
 // ===========================================================
 // SHARED ANTI-HALLUCINATION GUARDS
 // ===========================================================
-// Injected into every editor's system prompt. Stops invented stats,
-// faction unlock requirements, and item names. Editors will hallucinate
-// confident-sounding details ("Pinpoint Barrel requires Arachne Rank 15")
-// that don't match the database. These rules force them to omit rather
-// than guess.
 
 const DATA_INTEGRITY_RULES = `
 
@@ -51,11 +46,6 @@ DATA INTEGRITY RULES - CRITICAL:
 // ===========================================================
 // CANONICAL TAG STANDARD - PERMANENT - APPLIES TO ALL EDITORS
 // ===========================================================
-// Added May 15, 2026. Injected into every editor's system prompt.
-// Enforces the single-source-of-truth tag taxonomy documented in
-// docs/TAG_TAXONOMY.md. Without this, editors drift to inconsistent
-// tag variants (-guide suffixes, uppercase, plurals) and break the
-// /guides/[category] page routing.
 
 const CANONICAL_TAG_STANDARD = `
 
@@ -135,7 +125,7 @@ const CIPHER_TOOL = {
       headline: { type: 'string', description: 'Article headline, under 80 characters' },
       body: { type: 'string', description: '400-600 word ranked intelligence article. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
       runner_grade: { type: 'string', enum: ['D', 'C', 'B', 'A', 'S', 'S+'] },
-      ce_score: { type: 'number', description: 'Number from 0 to 10 (decimals allowed, e.g. 7.5). Rates the strength of the build, strategy, or meta read centered in this article. 0 = trap pick. 5 = average. 8+ = top of meta. NEVER use the 0-100 scale.' },
+      ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 5.0 (average), 7.5 (solid pick), 8.5 (top of meta), 9.2 (S-tier). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the strength of the build, strategy, or meta read centered in this article.' },
       tags: SHARED_TAG_SCHEMA,
       source_video_id: { type: ['string', 'null'], description: 'Always null. CIPHER no longer references external videos.' },
       source_type: { type: ['string', 'null'], enum: ['youtube', 'twitch', null], description: 'Always null. CIPHER is internal synthesis.' },
@@ -189,7 +179,7 @@ const DEXTER_TOOL = {
       headline: { type: 'string' },
       body: { type: 'string', description: '500-700 word build analysis with **HEADER TEXT** section breaks. At least 4 sections.' },
       loadout_grade: { type: 'string', enum: ['F', 'D', 'C', 'B', 'A', 'S'] },
-      ce_score: { type: 'number', description: 'Number from 0 to 10 (decimals allowed, e.g. 7.5). Rates the build\'s overall power. 0 = unviable. 5 = niche/situational. 8+ = top-tier loadout. NEVER use the 0-100 scale.' },
+      ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 4.0 (niche pick), 7.0 (solid build), 8.5 (top-tier loadout), 9.5 (S-tier dominant). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the build\'s overall power.' },
       shell_focus: { type: ['string', 'null'], enum: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal', null] },
       ranked_viable: { type: 'boolean' },
       holotag_target: { type: ['string', 'null'] },
@@ -266,16 +256,6 @@ const EDITOR_TOOLS = {
 // ===========================================================
 // EDITOR PROMPTS
 // ===========================================================
-//
-// CIPHER REBUILT May 1, 2026:
-// CIPHER's identity moved from "competitive play analyst grading observed
-// gameplay" to "ranked intelligence editor synthesizing internal site state."
-// Background: youtube-transcript package was failing silently from Vercel,
-// so CIPHER was producing analysis from titles alone. Rebuild eliminates
-// external data dependency and pivots CIPHER toward search-targeted ranked
-// content (best builds, counter-meta, weekly playbooks, holotag benchmarks,
-// patch impact). The user prompt assembled by lib/gather/cipher.js drives
-// a 5-archetype rotation on a fixed weekly PT schedule.
 
 const EDITOR_PROMPTS = {
   CIPHER: `You are CIPHER, the ranked intelligence editor for Cybernetic Punks - the autonomous Marathon intelligence hub at cyberneticpunks.com.
@@ -298,6 +278,14 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Ground every recommendation in the data provided in your user prompt - current tier state, recent build coverage, community sentiment, patch content.
 - "Players should adapt" is weak. Name what to swap to, name what to drop, name when to do it.
 - runner_grade rates the BUILD, STRATEGY, or META READ your article centers on - not an observed play. S+/S = top-of-meta or hard-counter strategy. B/A = solid working approach. C/D = off-meta or fighting against current tier weaknesses.
+
+CE_SCORE SCALE - STRICT 0.0 TO 10.0:
+ce_score MUST be between 0.0 and 10.0 inclusive. Decimals are required for precision (e.g. 7.5, 8.2, 9.1).
+- 5.0 = average meta read
+- 7.5 = solid working approach
+- 8.5 = top-of-meta strategy
+- 9.5 = S+ tier hard-counter
+A score of 85 is WRONG. A score of 75 is WRONG. If you write a number above 10, divide it by 10 before submitting.
 
 ARCHETYPE-DRIVEN CONTENT:
 Each cycle your user prompt assigns one of five archetypes - best ranked solo build for a specific shell, counter-meta against a dominant shell, weekly ranked climb playbook, holotag tier benchmarks, or patch impact analysis. Follow the archetype's specific guidance in the user prompt fully and exactly.
@@ -361,6 +349,14 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Explain stat interactions explicitly.
 - For every build, explain the win condition.
 - For ranked analysis: state the Holotag tier this build targets.
+
+CE_SCORE SCALE - STRICT 0.0 TO 10.0:
+ce_score MUST be between 0.0 and 10.0 inclusive. Decimals are required for precision (e.g. 7.5, 8.2, 9.1).
+- 4.0 = niche/situational build
+- 7.0 = solid working loadout
+- 8.5 = top-tier build
+- 9.5 = S-tier dominant kit
+A score of 85 is WRONG. A score of 75 is WRONG. If you write a number above 10, divide it by 10 before submitting.
 
 FACTION UNLOCK AWARENESS - CRITICAL:
 For every mod, implant, or weapon you recommend:
@@ -740,9 +736,6 @@ YOUTUBE GUIDE CONTENT:
 ${videoSummaries}
 
 REDDIT COMMUNITY TIPS:
-${redditSummaries}
-
-TOPICS ALREADY COVERED - DO NOT REPEAT THESE:
 ${recentHeadlinesBlock}
 
 FACTION ADVISOR LINK: When recommending faction-progression-gated items, you may mention the Faction Advisor at /factions as a tool for planning the full grind path. Use it sparingly - only when the article meaningfully benefits readers planning their progression, not as a forced CTA.
@@ -776,6 +769,11 @@ async function getTargetKeyword(editor, supabase) {
 // ===========================================================
 // CALL EDITOR
 // ===========================================================
+//
+// UPDATED May 18, 2026: ce_score clamp added to normalizeEditorOutput.
+// CIPHER and DEXTER were returning 0-100 scale values (e.g. 85) despite
+// the prompt saying NEVER use 0-100. This is a defensive safety net:
+// any ce_score above 10 gets divided by 10 and logged for visibility.
 
 function normalizeEditorOutput(editor, toolInput) {
   var result = Object.assign({}, toolInput);
@@ -785,7 +783,16 @@ function normalizeEditorOutput(editor, toolInput) {
     result.ce_score = toolInput.mood_score;
   }
   if (!result.tags) result.tags = [];
-  if (typeof result.ce_score !== 'number') result.ce_score = 0;
+
+  if (typeof result.ce_score !== 'number') {
+    result.ce_score = 0;
+  } else if (result.ce_score > 10) {
+    // Defensive: editor returned 0-100 scale despite prompt instruction.
+    // Normalize to 0-10. Logged so we can identify which editors drift.
+    console.log('[editorCore] ' + editor + ' returned ce_score=' + result.ce_score + ' (>10), normalizing to ' + (result.ce_score / 10));
+    result.ce_score = result.ce_score / 10;
+  }
+
   return result;
 }
 
@@ -869,10 +876,6 @@ export async function consumeKeyword(supabase, keywordId) {
 // ===========================================================
 // COMMENT VOICES
 // ===========================================================
-//
-// CIPHER comment voice rebuilt May 1, 2026 to match the new ranked
-// intelligence editor identity. Comments now reference build/strategy/meta
-// state rather than observed plays.
 
 const COMMENT_VOICES = {
   CIPHER: `You are CIPHER, the ranked intelligence editor for Cybernetic Punks. Cold, analytical, climber-focused.
@@ -959,12 +962,6 @@ RULES:
 // ===========================================================
 // TOPIC-AWARE COMMENTER SELECTION
 // ===========================================================
-// Affinity rationale:
-// - CIPHER (ranked intel) -> NEXUS (meta lens) + GHOST (community reaction)
-// - NEXUS (meta) -> DEXTER (build implications) + CIPHER (ranked impact)
-// - DEXTER (builds) -> NEXUS (meta context) + MIRANDA (accessibility)
-// - GHOST (community) -> MIRANDA (practical translation) + NEXUS (meta context)
-// - MIRANDA (guides) -> DEXTER (build expertise) + GHOST (community signal)
 
 const COMMENT_AFFINITY = {
   CIPHER:  ['NEXUS', 'GHOST'],
