@@ -1,13 +1,15 @@
 // app/guides/[category]/page.js
 // SEO-optimized dynamic category routes for /guides/[category].
-// 15 categories, all with canonical single-word tags matching feed_items.tags.
+// 16 canonical categories, all with single-word tags matching feed_items.tags.
 //
 // CANONICAL TAG CONVENTION (do not deviate):
 // shells, weapons, mods, extraction, ranked, beginner, progression, maps,
 // stealth, squad, solo, holotag, endgame, pvp, support, cryo-archive
 //
-// All lowercase. Single word where possible. Hyphenated only when single word
-// reads poorly (cryo-archive). No -guide suffix. See docs/TAG_TAXONOMY.md.
+// VISUAL UPGRADES (May 18, 2026):
+// - Editor + content-type badge on every card (replaces redundant category tag)
+// - TOP cards get a gold FEATURED accent
+// - Hero copy simplified: "[N] [category] guides. Refreshed throughout the day."
 
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
@@ -353,11 +355,30 @@ const CATEGORIES = {
   },
 };
 
+// ===========================================================
+// EDITOR METADATA - drives card badges
+// ===========================================================
+// Each editor has a symbol, brand color, and content-type label
+// that appears in place of the redundant category tag on cards.
+
+const EDITORS = {
+  CIPHER:  { symbol: '◈', color: '#ff0000', label: 'STRATEGY' },
+  NEXUS:   { symbol: '⬡', color: '#00f5ff', label: 'META' },
+  DEXTER:  { symbol: '⬢', color: '#ff8800', label: 'BUILD' },
+  GHOST:   { symbol: '◇', color: '#00ff88', label: 'COMMUNITY' },
+  MIRANDA: { symbol: '◎', color: '#9b5de5', label: 'FIELD GUIDE' },
+};
+
+function getEditorMeta(editorName) {
+  return EDITORS[editorName] || { symbol: '•', color: 'rgba(255,255,255,0.5)', label: 'INTEL' };
+}
+
 const BG = '#121418';
 const CARD_BG = '#1a1d24';
 const DEEP_BG = '#0e1014';
 const BORDER = '#22252e';
 const PURPLE = '#9b5de5';
+const FEATURED_GOLD = '#ffd700';
 
 // FIXED May 15, 2026: Empty generateStaticParams + dynamicParams=true
 // prevents build-time pre-render. Categories render on-demand at request time.
@@ -407,11 +428,54 @@ function timeAgo(dateStr) {
   return Math.floor(hours / 24) + 'd ago';
 }
 
-function GuideCard({ guide, cat }) {
+// UPDATED May 18, 2026:
+// - Replaces category tag with editor badge (symbol + name + content-type label)
+// - Accepts `featured` prop to apply gold accent and FEATURED pill
+// - Left border stays category color, gold border layers on top when featured
+function GuideCard({ guide, cat, featured }) {
   var rt = readTime(guide.body);
   var bodyPreview = (guide.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, 110);
+  var editorMeta = getEditorMeta(guide.editor);
+
+  var cardStyle = {
+    textDecoration: 'none',
+    background: CARD_BG,
+    border: '1px solid ' + BORDER,
+    borderLeft: '2px solid ' + cat.color,
+    borderRadius: '0 2px 2px 0',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative',
+  };
+
+  if (featured) {
+    cardStyle.boxShadow = '0 0 0 1px ' + FEATURED_GOLD + '55, 0 0 20px ' + FEATURED_GOLD + '15';
+    cardStyle.border = '1px solid ' + FEATURED_GOLD + '55';
+    cardStyle.borderLeft = '2px solid ' + cat.color;
+  }
+
   return (
-    <Link href={'/intel/' + guide.slug} className="gc-card" style={{ textDecoration: 'none', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <Link href={'/intel/' + guide.slug} className="gc-card" style={cardStyle}>
+      {featured && (
+        <div style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          zIndex: 2,
+          fontFamily: 'monospace',
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: 1.5,
+          color: FEATURED_GOLD,
+          background: 'rgba(255,215,0,0.12)',
+          border: '1px solid ' + FEATURED_GOLD + '55',
+          borderRadius: 2,
+          padding: '2px 6px',
+        }}>
+          ★ FEATURED
+        </div>
+      )}
       {guide.thumbnail && (
         <div style={{ position: 'relative', height: 110, overflow: 'hidden' }}>
           <img src={guide.thumbnail} alt={guide.headline} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -419,14 +483,29 @@ function GuideCard({ guide, cat }) {
         </div>
       )}
       <div style={{ padding: '12px 14px', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 8, color: cat.color, letterSpacing: 2, fontWeight: 700 }}>{cat.label}</span>
-          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{timeAgo(guide.created_at)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <span style={{
+            fontFamily: 'monospace',
+            fontSize: 8,
+            color: editorMeta.color,
+            letterSpacing: 1.5,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            <span style={{ fontSize: 10 }}>{editorMeta.symbol}</span>
+            {guide.editor} &middot; {editorMeta.label}
+          </span>
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700, flexShrink: 0 }}>{timeAgo(guide.created_at)}</span>
         </div>
         <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.35 }}>{guide.headline}</h3>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, margin: 0, lineHeight: 1.5, flex: 1 }}>{bodyPreview}...</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid ' + BORDER, paddingTop: 8, marginTop: 4 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 8, color: cat.color, letterSpacing: 1, fontWeight: 700 }}>READ GUIDE &rarr;</span>
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: cat.color, letterSpacing: 1, fontWeight: 700 }}>READ &rarr;</span>
           <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>{rt}</span>
         </div>
       </div>
@@ -473,6 +552,9 @@ export default async function CategoryPage({ params }) {
 
   var lastUpdated = allGuides[0]?.created_at || null;
 
+  // Build category label for the count line: "shell guides" / "weapon guides" / etc.
+  var categoryLabelLower = cat.label.toLowerCase();
+
   var breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -509,8 +591,8 @@ export default async function CategoryPage({ params }) {
       {allGuides.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />}
 
       <style>{`
-        .gc-card       { transition: background 0.12s, border-color 0.12s; }
-        .gc-card:hover { background: #1e2228 !important; }
+        .gc-card       { transition: background 0.12s, border-color 0.12s, transform 0.12s; }
+        .gc-card:hover { background: #1e2228 !important; transform: translateY(-1px); }
         .gc-link:hover { background: #1e2228 !important; }
       `}</style>
 
@@ -526,10 +608,6 @@ export default async function CategoryPage({ params }) {
 
       <section style={{ padding: '24px 24px 32px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: PURPLE, background: 'rgba(155,93,229,0.08)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: PURPLE }} />
-            MIRANDA &middot; FIELD GUIDES
-          </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: cat.color, background: cat.color + '14', border: '1px solid ' + cat.color + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             {cat.label}
           </span>
@@ -546,20 +624,20 @@ export default async function CategoryPage({ params }) {
         <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, maxWidth: 700, marginBottom: 20 }}>
           {cat.subhead}
         </p>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, maxWidth: 700, marginBottom: 0 }}>
-          <strong style={{ color: '#fff' }}>{allGuides.length}</strong> guide{allGuides.length !== 1 ? 's' : ''} in this category, updated every 6 hours by MIRANDA and the autonomous editorial system.
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 700, marginBottom: 0 }}>
+          <strong style={{ color: '#fff' }}>{allGuides.length}</strong> {categoryLabelLower}. Refreshed throughout the day.
         </p>
       </section>
 
       {topGuides.length > 0 && (
         <section style={{ padding: '0 24px 32px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: cat.color }}>TOP {cat.label}</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: FEATURED_GOLD }}>★ TOP {cat.label}</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>BY SCORE</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 6 }}>
-            {topGuides.map(function(g) { return <GuideCard key={g.id} guide={g} cat={cat} />; })}
+            {topGuides.map(function(g) { return <GuideCard key={g.id} guide={g} cat={cat} featured={true} />; })}
           </div>
         </section>
       )}
@@ -575,7 +653,7 @@ export default async function CategoryPage({ params }) {
 
         {recentGuides.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 6 }}>
-            {recentGuides.map(function(g) { return <GuideCard key={g.id} guide={g} cat={cat} />; })}
+            {recentGuides.map(function(g) { return <GuideCard key={g.id} guide={g} cat={cat} featured={false} />; })}
           </div>
         ) : (
           topGuides.length === 0 && (
@@ -585,7 +663,7 @@ export default async function CategoryPage({ params }) {
                 NO {cat.label} YET
               </div>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', maxWidth: 420, margin: '0 auto', lineHeight: 1.5 }}>
-                MIRANDA is working on {cat.label.toLowerCase()}. Check back in a few cycles - new content drops every 6 hours.
+                Editors are working on {cat.label.toLowerCase()}. Check back in a few cycles - new content drops throughout the day.
               </p>
               <Link href="/guides" style={{ display: 'inline-block', marginTop: 16, fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 2, textDecoration: 'none', fontWeight: 700 }}>
                 &larr; ALL GUIDES
