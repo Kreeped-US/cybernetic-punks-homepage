@@ -1,29 +1,21 @@
 // -- app/sitemap.js -----------------------------------------------
-// FIXED May 15, 2026: Wrapped entire dynamic-data block (including
-// createClient) in try/catch. Sitemap.js is evaluated at build time,
-// before runtime env vars are populated. If Supabase init throws,
-// fall back to static URLs only so the build succeeds. At runtime,
-// when the sitemap regenerates with env vars present, dynamic pages
-// will be included.
-// May 15 2026 update: added diagnostic console.log calls so Vercel
-// runtime logs reveal what each query returned.
+// Sitemap with dynamic category filtering. Only includes guide
+// category pages that have at least 1 published article tagged
+// with their canonical tag. Empty categories are excluded so Google
+// doesn't see thin-content pages.
+//
+// CANONICAL TAG CONVENTION (must match CATEGORIES keys in
+// app/guides/[category]/page.js exactly):
+// shells, weapons, mods, extraction, ranked, beginner, progression,
+// maps, stealth, squad, solo, holotag, endgame, pvp, support, cryo-archive
 // -----------------------------------------------------------------
 
 import { createClient } from '@supabase/supabase-js';
 
-const GUIDE_CATEGORIES = [
-  'getting-started',
-  'combat',
-  'extraction',
-  'shells',
-  'weapons',
-  'mods',
-  'implants',
-  'cores',
-  'factions',
-  'meta',
-  'ranked',
-  'advanced',
+const ALL_GUIDE_CATEGORIES = [
+  'shells', 'weapons', 'mods', 'extraction', 'ranked',
+  'beginner', 'progression', 'maps', 'stealth', 'squad',
+  'solo', 'holotag', 'endgame', 'pvp', 'support', 'cryo-archive',
 ];
 
 const FALLBACK_SHELL_SLUGS = ['assassin', 'destroyer', 'recon', 'rook', 'thief', 'triage', 'vandal'];
@@ -56,13 +48,6 @@ export default async function sitemap() {
     { url: baseUrl + '/join',          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
   ];
 
-  const guideCategoryPages = GUIDE_CATEGORIES.map((slug) => ({
-    url: baseUrl + '/guides/' + slug,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.6,
-  }));
-
   const fallbackShellPages = FALLBACK_SHELL_SLUGS.flatMap((slug) => [
     {
       url: baseUrl + '/shells/' + slug,
@@ -80,6 +65,7 @@ export default async function sitemap() {
 
   let dbShellPages = [];
   let dynamicPages = [];
+  let activeGuideCategories = [];
 
   console.log('[sitemap] starting generation, env vars present:',
     !!process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -91,6 +77,7 @@ export default async function sitemap() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
+    // Shell pages from DB
     try {
       const { data: shells, error: shellsErr } = await supabase
         .from('shell_stats')
@@ -121,32 +108,60 @@ export default async function sitemap() {
       console.error('[sitemap] shell fetch threw:', err);
     }
 
+    // Article URLs from feed_items
     try {
       const { data, error: feedErr } = await supabase
-  .from('feed_items')
-  .select('slug, created_at')
-  .eq('is_published', true)
-  .order('created_at', { ascending: false })
-  .limit(500);
+        .from('feed_items')
+        .select('slug, created_at, tags')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(1000);
 
-console.log('[sitemap] feed_items:',
-  data ? data.length + ' rows' : 'null',
-  feedErr ? 'error: ' + feedErr.message : '');
+      console.log('[sitemap] feed_items:',
+        data ? data.length + ' rows' : 'null',
+        feedErr ? 'error: ' + feedErr.message : '');
 
-if (data) {
-  dynamicPages = data.map((item) => ({
-    url: baseUrl + '/intel/' + item.slug,
-    lastModified: new Date(item.created_at),
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }));
-}
+      if (data) {
+        dynamicPages = data.map((item) => ({
+          url: baseUrl + '/intel/' + item.slug,
+          lastModified: new Date(item.created_at),
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        }));
+
+        // Determine which guide categories have at least 1 article
+        const categoriesWithContent = new Set();
+        for (const item of data) {
+          if (!item.tags) continue;
+          for (const tag of item.tags) {
+            if (ALL_GUIDE_CATEGORIES.includes(tag)) {
+              categoriesWithContent.add(tag);
+            }
+          }
+        }
+        activeGuideCategories = ALL_GUIDE_CATEGORIES.filter((slug) =>
+          categoriesWithContent.has(slug)
+        );
+
+        console.log('[sitemap] active guide categories:',
+          activeGuideCategories.length + ' of ' + ALL_GUIDE_CATEGORIES.length,
+          '(' + activeGuideCategories.join(', ') + ')');
+      }
     } catch (err) {
       console.error('[sitemap] feed_items fetch threw:', err);
     }
   } catch (err) {
     console.error('[sitemap] Supabase init failed at build time, using static fallback:', err);
   }
+
+  // Only include guide category pages with confirmed content.
+  // If we couldn't query (build time), include nothing here.
+  const guideCategoryPages = activeGuideCategories.map((slug) => ({
+    url: baseUrl + '/guides/' + slug,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.65,
+  }));
 
   const shellPages = dbShellPages.length > 0 ? dbShellPages : fallbackShellPages;
 

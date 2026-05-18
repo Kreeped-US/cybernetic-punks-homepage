@@ -1,6 +1,13 @@
 // app/guides/[category]/page.js
-// SEO-optimized dynamic category routes — 8 pages pre-rendered at build time.
-// Each page targets distinct Marathon category keywords.
+// SEO-optimized dynamic category routes for /guides/[category].
+// 15 categories, all with canonical single-word tags matching feed_items.tags.
+//
+// CANONICAL TAG CONVENTION (do not deviate):
+// shells, weapons, mods, extraction, ranked, beginner, progression, maps,
+// stealth, squad, solo, holotag, endgame, pvp, support, cryo-archive
+//
+// All lowercase. Single word where possible. Hyphenated only when single word
+// reads poorly (cryo-archive). No -guide suffix. See docs/TAG_TAXONOMY.md.
 
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
@@ -8,18 +15,16 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-// ─── CATEGORY CONFIG ────────────────────────────────────────
-// Single source of truth. Each slug has its DB tag, metadata, keywords, and FAQs.
 const CATEGORIES = {
   shells: {
-    tag: 'shell-guide',
+    tag: 'shells',
     label: 'SHELL GUIDES',
     color: '#9b5de5',
-    title: 'Marathon Shell Guides — Ability Breakdowns & Playstyle Analysis',
-    description: 'Complete Marathon shell guides. Ability breakdowns, stats, playstyle analysis, and synergies for all 7 Runner Shells — Assassin, Destroyer, Recon, Rook, Thief, Triage, and Vandal.',
+    title: 'Marathon Shell Guides - Ability Breakdowns & Playstyle Analysis',
+    description: 'Complete Marathon shell guides. Ability breakdowns, stats, playstyle analysis, and synergies for all 7 Runner Shells - Assassin, Destroyer, Recon, Rook, Thief, Triage, and Vandal.',
     keywords: 'Marathon shell guide, Marathon shell guides, Marathon Assassin guide, Marathon Destroyer guide, Marathon Recon guide, Marathon Rook guide, Marathon Thief guide, Marathon Triage guide, Marathon Vandal guide, Marathon shell abilities, Marathon shell tier list',
     h1: 'MARATHON SHELL GUIDES',
-    subhead: 'Ability breakdowns, stats, and playstyle analysis for all 7 Runner Shells. From Assassin\'s stealth reposition to Triage\'s squad support — pick the shell that fits your game.',
+    subhead: 'Ability breakdowns, stats, and playstyle analysis for all 7 Runner Shells. From Assassin\'s stealth reposition to Triage\'s squad support - pick the shell that fits your game.',
     related: [
       { href: '/shells',  label: 'SHELL DATABASE',      desc: 'Full stats + abilities', color: '#00d4ff' },
       { href: '/builds',  label: 'BUILD LAB',           desc: 'Loadouts per shell',      color: '#ff8800' },
@@ -31,11 +36,12 @@ const CATEGORIES = {
       { q: 'How many shells are in Marathon?', a: 'Marathon has 7 Runner Shells: Assassin, Destroyer, Recon, Rook, Thief, Triage, and Vandal. Each has unique Prime and Tactical abilities, a passive trait, and distinct stat profiles that affect playstyle.' },
     ],
   },
+
   ranked: {
     tag: 'ranked',
     label: 'RANKED GUIDES',
     color: '#ffd700',
-    title: 'Marathon Ranked Guides — Holotag Strategy, Tier Climb & Ranked Meta',
+    title: 'Marathon Ranked Guides - Holotag Strategy, Tier Climb & Ranked Meta',
     description: 'Climb Marathon Ranked. Holotag targeting, gear ante strategy, shell picks, zone rotation intel, and meta analysis. Everything you need to push Platinum and beyond.',
     keywords: 'Marathon ranked guide, Marathon ranked tips, Marathon Holotag guide, Marathon ranked meta, Marathon ranked climb, Marathon Platinum climb, Marathon competitive guide, Marathon ranked strategy, Marathon gear ante, Marathon ranked zones',
     h1: 'MARATHON RANKED GUIDES',
@@ -47,15 +53,16 @@ const CATEGORIES = {
     ],
     faqs: [
       { q: 'When is Marathon Ranked queue open?', a: 'The Ranked queue is open from Sunday 10AM PT through Thursday 10AM PT. Outside that window only Casual queues are available. Zones and Holotag targets rotate with each opening.' },
-      { q: 'How do you climb in Marathon Ranked?', a: 'Prioritize Holotag targets early — they\'re the fastest score contribution and don\'t require risky loot runs. Play with a squad when possible, run ranked-viable weapons (check our meta list), and always exfil with your collected tags before contesting the extraction zone.' },
-      { q: 'What is the best shell for Ranked in Marathon?', a: 'Vandal and Thief are the top solo ranked picks — Vandal for its mobility and Thief for extraction efficiency. Triage and Recon lead squad play. Rook is banned from Ranked. Check our live tier list for current positions.' },
+      { q: 'How do you climb in Marathon Ranked?', a: 'Prioritize Holotag targets early - they\'re the fastest score contribution and don\'t require risky loot runs. Play with a squad when possible, run ranked-viable weapons (check our meta list), and always exfil with your collected tags before contesting the extraction zone.' },
+      { q: 'What is the best shell for Ranked in Marathon?', a: 'Vandal and Thief are the top solo ranked picks - Vandal for its mobility and Thief for extraction efficiency. Triage and Recon lead squad play. Rook is banned from Ranked. Check our live tier list for current positions.' },
     ],
   },
+
   weapons: {
-    tag: 'weapon-guide',
+    tag: 'weapons',
     label: 'WEAPON GUIDES',
     color: '#ff8800',
-    title: 'Marathon Weapon Guides — Per-Weapon Analysis, Stats & Matchups',
+    title: 'Marathon Weapon Guides - Per-Weapon Analysis, Stats & Matchups',
     description: 'Complete Marathon weapon guides. Fire rate analysis, range testing, ammo efficiency, recoil patterns, and matchup tips for every weapon in the game.',
     keywords: 'Marathon weapon guide, Marathon best weapons, Marathon weapon tier list, Marathon weapon stats, Marathon gun guide, Marathon SMG guide, Marathon assault rifle guide, Marathon shotgun guide, Marathon sniper guide, Marathon weapon tips',
     h1: 'MARATHON WEAPON GUIDES',
@@ -67,15 +74,16 @@ const CATEGORIES = {
     ],
     faqs: [
       { q: 'What is the best weapon in Marathon?', a: 'Weapon strength depends on range and shell pairing. The WSTR Combat Shotgun is consistently S-tier at close range, the M77 Assault Rifle is the most forgiving mid-range pick, and the Stryder M1T excels at long range. Our live tier list ranks every weapon by current meta viability.' },
-      { q: 'How many weapons are in Marathon?', a: 'Marathon features dozens of weapons across categories including SMGs, assault rifles, shotguns, snipers, DMRs, and specialty weapons. Weapons come in 6 rarity tiers — Standard, Enhanced, Deluxe, Superior, Prestige, and Contraband.' },
+      { q: 'How many weapons are in Marathon?', a: 'Marathon features 30+ weapons across categories including SMGs, assault rifles, shotguns, snipers, DMRs, LMGs, HMGs, and specialty weapons. Weapons come in 6 rarity tiers - Standard, Enhanced, Deluxe, Superior, Prestige, and Contraband.' },
       { q: 'What weapons are banned from Marathon Ranked?', a: 'Certain weapons are flagged as not ranked-viable due to balance issues. These are marked with warnings across our build pages. Check our weapon arsenal for current ranked viability on every gun.' },
     ],
   },
+
   mods: {
-    tag: 'mod-guide',
+    tag: 'mods',
     label: 'MOD GUIDES',
     color: '#ff2222',
-    title: 'Marathon Mod Guides — Mod Combinations & Slot Analysis',
+    title: 'Marathon Mod Guides - Mod Combinations & Slot Analysis',
     description: 'Marathon mod breakdowns. Learn which mods stack, which slots matter most, and how to build mod combinations that transform your shell and weapon performance.',
     keywords: 'Marathon mod guide, Marathon best mods, Marathon mod combinations, Marathon weapon mods, Marathon shell mods, Marathon mod slots, Marathon Prestige mods, Marathon Superior mods, Marathon mod stacking',
     h1: 'MARATHON MOD GUIDES',
@@ -86,36 +94,38 @@ const CATEGORIES = {
       { href: '/factions', label: 'FACTIONS',     desc: 'Faction-locked mods',    color: '#ffd700' },
     ],
     faqs: [
-      { q: 'What are the best mods in Marathon?', a: 'Top-tier mods are Superior and Prestige rarity — check our Meta Mods showcase for current picks. Stack damage, handling, and stability mods on your primary weapon, and recovery/resistance mods on your shell. Faction-locked mods like those from Traxus and Arachne are often build-defining.' },
+      { q: 'What are the best mods in Marathon?', a: 'Top-tier mods are Superior and Prestige rarity - check our Meta Mods showcase for current picks. Stack damage, handling, and stability mods on your primary weapon, and recovery/resistance mods on your shell. Faction-locked mods like those from Traxus and Arachne are often build-defining.' },
       { q: 'How do mod slots work in Marathon?', a: 'Each shell and weapon has a fixed number of mod slots. Weapons typically have 3-4 mod slots depending on rarity, while shells have separate slots for core, implant, and mod. Higher rarities unlock more slots and stronger mod effects.' },
-      { q: 'Do mods stack in Marathon?', a: 'Most mods stack additively — two 10% damage mods give 20% total. Some mods have diminishing returns or conditional stacking. Our mod guides cover stacking rules for every mod type.' },
+      { q: 'Do mods stack in Marathon?', a: 'Most mods stack additively - two 10% damage mods give 20% total. Some mods have diminishing returns or conditional stacking. Our mod guides cover stacking rules for every mod type.' },
     ],
   },
+
   extraction: {
     tag: 'extraction',
     label: 'EXTRACTION',
     color: '#00d4ff',
-    title: 'Marathon Extraction Guides — Exfil Routes, Timing & Loot Strategy',
+    title: 'Marathon Extraction Guides - Exfil Routes, Timing & Loot Strategy',
     description: 'Marathon extraction strategy. Escape routes, exfil timing windows, loot prioritization, and tactics for surviving the last 60 seconds of every match.',
     keywords: 'Marathon extraction guide, Marathon exfil guide, Marathon extraction strategy, Marathon exfil tips, Marathon extraction points, Marathon loot strategy, Marathon survival guide, Marathon end game, Marathon exfil timing',
     h1: 'MARATHON EXTRACTION STRATEGY',
-    subhead: 'Escape routes, timing windows, loot prioritization, and exfil tactics. Learn to survive the most dangerous part of every Marathon match — the last 60 seconds.',
+    subhead: 'Escape routes, timing windows, loot prioritization, and exfil tactics. Learn to survive the most dangerous part of every Marathon match - the last 60 seconds.',
     related: [
       { href: '/intel/ghost', label: 'GHOST INTEL',      desc: 'Community patterns',     color: '#00ff88' },
       { href: '/ranked',      label: 'RANKED HUB',       desc: 'Queue extraction intel', color: '#ffd700' },
       { href: '/guides/shells/thief', label: 'THIEF GUIDE', desc: 'The exfil specialist', color: '#ffd700' },
     ],
     faqs: [
-      { q: 'How do you extract successfully in Marathon?', a: 'Plan your exfil from match start — know your escape points before committing to fights. Prioritize Tag Chips and high-value loot early. Avoid late-match combat unless you have clear positioning. Always leave with enough health and ammo to contest the extraction zone. Don\'t be greedy.' },
+      { q: 'How do you extract successfully in Marathon?', a: 'Plan your exfil from match start - know your escape points before committing to fights. Prioritize Tag Chips and high-value loot early. Avoid late-match combat unless you have clear positioning. Always leave with enough health and ammo to contest the extraction zone. Don\'t be greedy.' },
       { q: 'When should you extract in Marathon?', a: 'Extract when you\'ve hit your loot target or when match timer drops below 90 seconds. Waiting longer risks losing everything to a contest at the exfil. A safe B-grade run beats a failed S-grade attempt every time.' },
-      { q: 'What is the best shell for extraction in Marathon?', a: 'Thief is built for extraction — Pickpocket Drone loots passively and Grapple Device escapes contested zones. Vandal\'s jump jets make it a strong second pick for repositioning to alternate exits when your primary is compromised.' },
+      { q: 'What is the best shell for extraction in Marathon?', a: 'Thief is built for extraction - Pickpocket Drone loots passively and Grapple Device escapes contested zones. Vandal\'s jump jets make it a strong second pick for repositioning to alternate exits when your primary is compromised.' },
     ],
   },
+
   beginner: {
     tag: 'beginner',
     label: 'BEGINNER',
     color: '#00ff41',
-    title: 'Marathon Beginner Guide — New Runner Tips, Basics & First Builds',
+    title: 'Marathon Beginner Guide - New Runner Tips, Basics & First Builds',
     description: 'New to Marathon? Start here. Core mechanics, first builds, survival basics, and everything a new Runner needs to know before dropping into their first match.',
     keywords: 'Marathon beginner guide, Marathon for beginners, how to play Marathon, Marathon new player, Marathon basics, Marathon tutorial, Marathon first build, Marathon starter tips, Marathon new Runner guide',
     h1: 'MARATHON BEGINNER GUIDES',
@@ -128,14 +138,15 @@ const CATEGORIES = {
     faqs: [
       { q: 'Is Marathon hard for beginners?', a: 'Marathon has a learning curve due to its extraction-shooter mechanics, but new Runners can thrive by focusing on survival over kills. Start with Triage or Rook, learn one map thoroughly, and prioritize exfiltrating with any loot over attempting hero plays.' },
       { q: 'What should you do first in Marathon?', a: 'Complete the tutorial, then spend your first 5-10 matches in Casual mode learning map layouts and extraction points. Don\'t jump into Ranked until you can reliably exfil with some loot. Pick one shell and master it before experimenting.' },
-      { q: 'What should you NOT do as a beginner in Marathon?', a: 'Don\'t engage in every fight you see — extraction shooters reward picking battles, not winning every one. Don\'t ignore the map timer. Don\'t hoard loot you can\'t carry out. And never fight with low ammo or health when extraction is available.' },
+      { q: 'What should you NOT do as a beginner in Marathon?', a: 'Don\'t engage in every fight you see - extraction shooters reward picking battles, not winning every one. Don\'t ignore the map timer. Don\'t hoard loot you can\'t carry out. And never fight with low ammo or health when extraction is available.' },
     ],
   },
+
   progression: {
     tag: 'progression',
     label: 'PROGRESSION',
     color: '#ffffff',
-    title: 'Marathon Progression Guide — Faction Paths & Upgrade Priorities',
+    title: 'Marathon Progression Guide - Faction Paths & Upgrade Priorities',
     description: 'Marathon progression paths. Faction rank priorities, credit farming, material farming, and seasonal upgrade order. Maximize your time and hit your build goals fastest.',
     keywords: 'Marathon progression guide, Marathon faction ranks, Marathon leveling guide, Marathon credit farming, Marathon material farming, Marathon upgrade priority, Marathon seasonal progression, Marathon faction priority, Marathon how to level up',
     h1: 'MARATHON PROGRESSION GUIDES',
@@ -147,17 +158,18 @@ const CATEGORIES = {
     ],
     faqs: [
       { q: 'Which faction should you prioritize first in Marathon?', a: 'Priority depends on your target build. Traxus for weapon mods, Arachne for melee/combat implants, Cyberacme for extraction and loot bonuses. Our Shell Faction Advisor recommends the best faction based on your shell pick.' },
-      { q: 'How do you farm credits fast in Marathon?', a: 'Focus Ranked matches when open — they pay more per run than Casual. Complete weekly faction contracts first (highest payout). Extract consistently with any loot rather than chasing perfect runs. Tag Chips auto-convert to credits on exfil.' },
+      { q: 'How do you farm credits fast in Marathon?', a: 'Focus Ranked matches when open - they pay more per run than Casual. Complete weekly faction contracts first (highest payout). Extract consistently with any loot rather than chasing perfect runs. Tag Chips auto-convert to credits on exfil.' },
       { q: 'What should you upgrade first in Marathon?', a: 'Upgrade your main shell\'s abilities first (Prime + Tactical unlocks). Then focus on weapon mods for your go-to primary. Save materials for Superior and Prestige gear rather than over-investing in Standard or Enhanced items.' },
     ],
   },
+
   maps: {
-    tag: 'map-guide',
+    tag: 'maps',
     label: 'MAP INTEL',
     color: '#888888',
-    title: 'Marathon Map Guides — POIs, Extraction Points & Zone Intel',
-    description: 'Marathon map intel. Zone-by-zone breakdowns, points of interest, extraction points, loot hotspots, and rotation patterns for every Marathon map.',
-    keywords: 'Marathon map guide, Marathon map intel, Marathon POI guide, Marathon extraction points, Marathon loot locations, Marathon zones, Marathon map rotations, Marathon map tips',
+    title: 'Marathon Map Guides - POIs, Extraction Points & Zone Intel',
+    description: 'Marathon map intel. Zone-by-zone breakdowns, points of interest, extraction points, loot hotspots, and rotation patterns for every Marathon map - Perimeter, Dire Marsh, Outpost, and Cryo Archive.',
+    keywords: 'Marathon map guide, Marathon map intel, Marathon POI guide, Marathon extraction points, Marathon loot locations, Marathon zones, Marathon map rotations, Marathon map tips, Marathon Perimeter, Marathon Dire Marsh',
     h1: 'MARATHON MAP GUIDES',
     subhead: 'Zone-by-zone knowledge. POIs, extraction points, loot hotspots, and rotation patterns. The difference between a lost run and a clean exfil is knowing the map better than the enemy.',
     related: [
@@ -166,32 +178,195 @@ const CATEGORIES = {
       { href: '/ranked',            label: 'RANKED HUB',         desc: 'Zone rotations',        color: '#ffd700' },
     ],
     faqs: [
-      { q: 'How many maps are in Marathon?', a: 'Marathon features multiple distinct zones, each with unique POIs, extraction points, and environmental hazards. Zones rotate through Ranked playlists, so knowing all of them increases your competitive ceiling.' },
+      { q: 'How many maps are in Marathon?', a: 'Marathon features multiple distinct zones - planet-based maps like Perimeter, Dire Marsh, and Outpost, plus the endgame Cryo Archive raid map on the UESC Marathon ship. Each has unique POIs, extraction points, and environmental hazards.' },
       { q: 'How do you learn Marathon maps fast?', a: 'Pick one map and run it exclusively for 10+ matches in Casual. Focus on memorizing extraction point locations and the most common rotation paths. Watch high-level streamers play that specific map to see pro-level positioning.' },
-      { q: 'Where are the best loot spots in Marathon?', a: 'High-value loot spawns near major POIs and in contested zones. Risk-reward is real — the best loot is always in the most dangerous areas. Our map intel guides cover loot density and extraction safety per zone.' },
+      { q: 'Where are the best loot spots in Marathon?', a: 'High-value loot spawns near major POIs and in contested zones. Risk-reward is real - the best loot is always in the most dangerous areas. Our map intel guides cover loot density and extraction safety per zone.' },
+    ],
+  },
+
+  stealth: {
+    tag: 'stealth',
+    label: 'STEALTH',
+    color: '#cc44ff',
+    title: 'Marathon Stealth Guide - Silent Plays, Cloaking & Repositioning',
+    description: 'Master stealth in Marathon. Silent looting, Assassin and Thief cloaking, repositioning angles, sound discipline, and avoiding fights when discretion beats firepower.',
+    keywords: 'Marathon stealth guide, Marathon stealth tips, Marathon Assassin guide, Marathon Thief guide, Marathon cloaking, Marathon silent loot, Marathon stealth play, Marathon avoid combat, Marathon ghosting',
+    h1: 'MARATHON STEALTH GUIDES',
+    subhead: 'Plays where being unseen wins the round. Assassin reposition tech, Thief invisibility tools, sound-discipline routes, and how to extract without firing a shot.',
+    related: [
+      { href: '/guides/shells/assassin', label: 'ASSASSIN GUIDE', desc: 'Stealth Prime ability', color: '#cc44ff' },
+      { href: '/guides/shells/thief',    label: 'THIEF GUIDE',    desc: 'Pickpocket + Grapple', color: '#ffd700' },
+      { href: '/guides/extraction',      label: 'EXTRACTION',     desc: 'Silent exfil routes', color: '#00d4ff' },
+    ],
+    faqs: [
+      { q: 'What is the best stealth shell in Marathon?', a: 'Assassin is the dedicated stealth shell with cloaking as its Prime ability and high-mobility reposition tools. Thief is a strong secondary option - Pickpocket Drone loots passively while you stay hidden, and Grapple Device lets you exit contested zones without combat.' },
+      { q: 'How do you avoid PvP in Marathon?', a: 'Stay off main rotation paths, listen for footsteps and gunfire, prioritize map edges and unconventional routes, and use scanner tools to track enemy positions. The best stealth players never engage unless forced - they loot, gather Holotags, and exfil while others fight.' },
+      { q: 'Does stealth work in Marathon Ranked?', a: 'Yes - stealth is one of the strongest solo Ranked strategies. Assassin and Thief routinely top solo leaderboards because they can collect Holotags and extract without contesting fights. Higher-level PvE enemies still hear you, but other players are the bigger threat in Ranked.' },
+    ],
+  },
+
+  squad: {
+    tag: 'squad',
+    label: 'SQUAD PLAY',
+    color: '#00d4ff',
+    title: 'Marathon Squad Play Guide - Trio Tactics, Composition & Comms',
+    description: 'Marathon squad strategy. Best trio compositions, role assignments, callout conventions, push timing, and how to coordinate three Runners into an extraction machine.',
+    keywords: 'Marathon squad guide, Marathon trio guide, Marathon team composition, Marathon squad tactics, Marathon group play, Marathon team comp, Marathon coordination, Marathon callouts',
+    h1: 'MARATHON SQUAD GUIDES',
+    subhead: 'Three Runners, one mission. Best trio compositions, role assignments, communication patterns, and the difference between a coordinated team and three solo players in the same lobby.',
+    related: [
+      { href: '/ranked',                 label: 'RANKED HUB',     desc: 'Squad queue intel',     color: '#ffd700' },
+      { href: '/guides/shells/triage',   label: 'TRIAGE GUIDE',   desc: 'The squad anchor',      color: '#00ff88' },
+      { href: '/guides/shells/recon',    label: 'RECON GUIDE',    desc: 'Information backbone',  color: '#00d4ff' },
+    ],
+    faqs: [
+      { q: 'What is the best squad composition in Marathon?', a: 'A strong baseline is Triage + Recon + DPS shell (Destroyer or Vandal). Triage anchors with self-repair and revives, Recon scouts and pings enemies, the DPS handles fights. Squads can also run double-utility (Triage + Recon + Thief for extraction-focused play) or pure aggression (Destroyer + Vandal + Recon).' },
+      { q: 'How do you coordinate in Marathon squads?', a: 'Voice comms are essential at high ranks. Establish clear callouts for enemy positions, loot calls, and exfil intent before the match. Assign roles - one player leads rotations, one handles loot priority, one watches flanks. Avoid stacking three of the same shell unless intentional.' },
+      { q: 'Is squad play better than solo in Marathon?', a: 'For Ranked climbing, squad play is significantly more efficient - shared map intel, revives, and combined firepower beat solo plays in most scenarios. Solo queue suits players who prefer Vandal or Thief and excel at stealth/speed. Squad queue suits Triage, Recon, and Destroyer mains.' },
+    ],
+  },
+
+  solo: {
+    tag: 'solo',
+    label: 'SOLO PLAY',
+    color: '#ff8800',
+    title: 'Marathon Solo Guide - Solo Queue Strategy & Self-Sufficient Builds',
+    description: 'Marathon solo strategy. Best shells for solo queue, self-sufficient builds, avoiding squad fights, and how to extract consistently when you have no teammates to bail you out.',
+    keywords: 'Marathon solo guide, Marathon solo queue, Marathon solo ranked, Marathon solo tips, Marathon solo shells, Marathon solo strategy, Marathon Vandal solo, Marathon Thief solo',
+    h1: 'MARATHON SOLO GUIDES',
+    subhead: 'One Runner. No revives. Every decision matters. Solo queue strategy, self-sufficient builds, avoiding 3-stacks, and how to outplay squads through positioning and patience.',
+    related: [
+      { href: '/guides/shells/vandal',   label: 'VANDAL GUIDE',   desc: 'Solo mobility king',   color: '#ff8800' },
+      { href: '/guides/shells/thief',    label: 'THIEF GUIDE',    desc: 'Solo extraction',      color: '#ffd700' },
+      { href: '/guides/stealth',         label: 'STEALTH GUIDES', desc: 'Avoid PvP entirely',   color: '#cc44ff' },
+    ],
+    faqs: [
+      { q: 'What is the best shell for solo play in Marathon?', a: 'Vandal and Thief dominate solo - Vandal for its mobility (jump jets, slide-cancel tech) lets you escape bad fights, Thief\'s Pickpocket Drone passively loots while you stay safe and Grapple Device extracts you from contested zones. Assassin is a strong third pick for mechanically skilled solo players.' },
+      { q: 'How do solo players beat squads in Marathon?', a: 'Don\'t engage 1v3 in open ground - ever. Pick off isolated stragglers, use vertical positioning to break sight lines, and time your extractions when squads are distracted by each other. Information advantage matters more than firepower when you\'re outnumbered.' },
+      { q: 'Is solo queue viable in Marathon Ranked?', a: 'Yes. Solo Ranked is its own queue with separate matchmaking - you\'ll only face other solos. Solo viability is balanced separately. Vandal and Thief currently top solo leaderboards. Rook is banned from Ranked entirely, so solo Rook play is Casual-only.' },
+    ],
+  },
+
+  holotag: {
+    tag: 'holotag',
+    label: 'HOLOTAGS',
+    color: '#ffd700',
+    title: 'Marathon Holotag Guide - Targeting, Strategy & Ranked Score',
+    description: 'Master Marathon Holotags. How they work, targeting priorities, gear ante strategy, ranked scoring impact, and how to climb tiers by hunting tags instead of fighting.',
+    keywords: 'Marathon Holotag guide, Marathon Holotags, Marathon ranked Holotag, Marathon tag targets, Marathon gear ante, Marathon ranked scoring, Marathon Holotag strategy, how to get Holotags Marathon',
+    h1: 'MARATHON HOLOTAG GUIDES',
+    subhead: 'The fastest path to Ranked climb. Holotag mechanics, target prioritization, gear ante math, and why hunting tags beats hunting kills for almost every Runner.',
+    related: [
+      { href: '/ranked',     label: 'RANKED HUB',      desc: 'Live Holotag targets',   color: '#ffd700' },
+      { href: '/guides/ranked', label: 'RANKED STRATEGY', desc: 'Full ranked playbook', color: '#ffd700' },
+      { href: '/guides/extraction', label: 'EXTRACTION',   desc: 'Exfil with tags',     color: '#00d4ff' },
+    ],
+    faqs: [
+      { q: 'What are Holotags in Marathon?', a: 'Holotags are score objectives in Marathon Ranked. They\'re tied to specific PvE targets, weapons, or events that rotate each Ranked window. Successfully eliminating or completing a Holotag target awards score that contributes to your Ranked tier climb. Tags must be extracted to count - dying with tags loses them.' },
+      { q: 'How do you get more Holotags in Marathon?', a: 'Check the live Holotag board at the start of every match - know your targets before dropping. Prioritize easier tags (PvE objectives) over harder ones (specific weapon kills) early. Move efficiently between tag locations rather than committing to fights. A safe 4-tag extract beats a failed 8-tag attempt.' },
+      { q: 'Do Holotags reset in Marathon?', a: 'Yes. Holotag targets rotate every Ranked window (Sunday 10AM PT through Thursday 10AM PT). Score persists across the season, but individual tag targets change. Check our Ranked Hub for the current rotation\'s priority list.' },
+    ],
+  },
+
+  endgame: {
+    tag: 'endgame',
+    label: 'ENDGAME',
+    color: '#ff2d55',
+    title: 'Marathon Endgame Guide - High-Rank Tactics & Prestige Progression',
+    description: 'Marathon endgame content. High-rank tactics, Prestige tier progression, Contraband weapon farming, faction max ranks, and content for Runners past the learning phase.',
+    keywords: 'Marathon endgame guide, Marathon Prestige tier, Marathon high rank, Marathon Contraband, Marathon endgame loot, Marathon top tier, Marathon max rank, Marathon late game',
+    h1: 'MARATHON ENDGAME GUIDES',
+    subhead: 'Past the learning curve. Prestige tier strategy, Contraband weapon farming, faction max ranks, and the meta-level decisions that separate top-tier Runners from everyone else.',
+    related: [
+      { href: '/guides/cryo-archive', label: 'CRYO ARCHIVE',   desc: 'Endgame raid',          color: '#00d4ff' },
+      { href: '/guides/holotag',     label: 'HOLOTAG STRATEGY', desc: 'Ranked climb fuel',    color: '#ffd700' },
+      { href: '/meta',               label: 'META TIER LIST',  desc: 'Top picks for endgame', color: '#00d4ff' },
+    ],
+    faqs: [
+      { q: 'What is the endgame in Marathon?', a: 'Marathon endgame includes: Cryo Archive raid runs (high-end PvPvE on the UESC Marathon ship), Prestige rank progression, Contraband weapon farming, faction liaison contract completion, and ranked tier climbs into the top brackets. Endgame Runners typically focus on Cryo Archive and Ranked simultaneously.' },
+      { q: 'What is Contraband in Marathon?', a: 'Contraband is the highest weapon rarity tier - above Standard, Enhanced, Deluxe, Superior, and Prestige. Contraband weapons offer unique mechanics and are typically obtained from Cryo Archive (the first Contraband weapon, Biotoxic Disinjector, drops from the Compiler boss in Vault 7).' },
+      { q: 'How do you reach max rank in Marathon?', a: 'Max rank requires completing all six faction liaison contracts, hitting Runner Level 25+, and pushing Ranked tier through Holotag accumulation. Plan to invest 100+ hours minimum for full progression. Optimize by focusing on one shell, one weapon class, and one faction at a time rather than spreading thin.' },
+    ],
+  },
+
+  pvp: {
+    tag: 'pvp',
+    label: 'PVP',
+    color: '#ff2222',
+    title: 'Marathon PvP Guide - Combat Tactics, Engagements & Win Conditions',
+    description: 'Marathon PvP guides. Engagement decisions, peeking technique, trade-killing, repositioning, and the tactical fundamentals that win Runner-vs-Runner fights.',
+    keywords: 'Marathon PvP guide, Marathon combat tips, Marathon fight guide, Marathon engagements, Marathon gunplay, Marathon PvP tactics, Marathon shooter tips, Marathon dueling',
+    h1: 'MARATHON PVP GUIDES',
+    subhead: 'Runner-vs-Runner combat. When to engage, when to disengage, peek technique, trade-killing, and the difference between winning fights and surviving them.',
+    related: [
+      { href: '/guides/squad',    label: 'SQUAD PLAY', desc: 'Team-fight coordination', color: '#00d4ff' },
+      { href: '/guides/solo',     label: 'SOLO PLAY',  desc: '1v1 and 1v3 tactics',     color: '#ff8800' },
+      { href: '/meta',            label: 'META TIER LIST', desc: 'PvP weapon picks',    color: '#00d4ff' },
+    ],
+    faqs: [
+      { q: 'How do you win PvP in Marathon?', a: 'Win the engagement before it starts. Audio is half the game - listen for footsteps, gear sounds, and gunfire to position yourself before the enemy sees you. Pre-aim common angles. Pick fights you can win in 2 seconds or less. Disengage if a fight goes longer than that - third parties always come.' },
+      { q: 'When should you fight in Marathon?', a: 'Only when you have positional advantage, full health, full ammo, and a clear escape route. Fights in the open with no cover are almost always traps. Fights near loot you don\'t need are almost always greed. Fights when you\'re already loaded for exfil are almost always mistakes.' },
+      { q: 'What are the best PvP weapons in Marathon?', a: 'Engagement range determines weapon choice. Close-range: WSTR Combat Shotgun, BRRT SMG. Mid-range: M77 Assault Rifle, Impact HAR. Long-range: Stryder M1T, Longshot. Bring weapons covering at least two ranges - getting caught at the wrong range loses fights instantly.' },
+    ],
+  },
+
+  support: {
+    tag: 'support',
+    label: 'SUPPORT',
+    color: '#00ff88',
+    title: 'Marathon Support Guide - Squad Anchoring, Revives & Utility',
+    description: 'Marathon support role guide. Triage anchoring, revive timing, utility coordination, healing economy, and how to be the squad backbone that turns lost rounds into clutches.',
+    keywords: 'Marathon support guide, Marathon Triage guide, Marathon squad support, Marathon revives, Marathon healer, Marathon utility, Marathon team anchor',
+    h1: 'MARATHON SUPPORT GUIDES',
+    subhead: 'The role that wins rounds nobody else thought were winnable. Triage anchoring, revive timing, utility plays, and the support fundamentals that turn 1v3 disasters into 3v3 clutches.',
+    related: [
+      { href: '/guides/shells/triage', label: 'TRIAGE GUIDE',  desc: 'The dedicated support', color: '#00ff88' },
+      { href: '/guides/squad',         label: 'SQUAD PLAY',    desc: 'Squad coordination',    color: '#00d4ff' },
+      { href: '/guides/shells/recon',  label: 'RECON GUIDE',   desc: 'Information support',   color: '#00d4ff' },
+    ],
+    faqs: [
+      { q: 'What is the best support shell in Marathon?', a: 'Triage is the dedicated support shell - self-repair, squad revives, and survivability stats make it the squad anchor. Recon is the secondary support choice, providing information advantage through pinging and scanning. Both can carry rounds that go sideways.' },
+      { q: 'When should you revive a teammate in Marathon?', a: 'Revive when the area is genuinely cleared - not when there\'s still gunfire nearby. A failed revive that loses you AND your teammate is worse than letting them respawn. Communicate before reviving so the rezzed player knows what loot to grab and where to reposition. Triage\'s faster revive speed makes risky rezzes more viable.' },
+      { q: 'How do you support a squad without dying yourself in Marathon?', a: 'Position one angle back from the fight - close enough to revive and heal, far enough that you\'re not the first one shot. Stack defensive mods on your shell (resistance, recovery). Keep escape options open. A dead support is useless. A surviving support wins rounds.' },
+    ],
+  },
+
+  'cryo-archive': {
+    tag: 'cryo-archive',
+    label: 'CRYO ARCHIVE',
+    color: '#00d4ff',
+    title: 'Marathon Cryo Archive Guide - Endgame Raid, Vaults & Compiler Boss',
+    description: 'Complete Marathon Cryo Archive guide. Security Clearance progression, Vault 1-7 walkthroughs, Compiler boss strategy, exfil routes, and loadout recommendations for Marathon\'s endgame raid.',
+    keywords: 'Marathon Cryo Archive guide, Marathon Cryo Archive raid, Marathon UESC Marathon, Marathon Compiler boss, Marathon Vault 7, Marathon Security Clearance, Marathon endgame raid, Marathon AI Subroutines, Marathon Biotoxic Disinjector, Marathon Contraband farming',
+    h1: 'CRYO ARCHIVE INTEL',
+    subhead: 'Marathon\'s endgame raid map. Security Clearance progression, Vault 1-7 walkthroughs, Compiler boss mechanics, and the loadouts that survive the UESC Marathon ship. Available Thursdays through Sundays.',
+    related: [
+      { href: '/guides/endgame',  label: 'ENDGAME GUIDES', desc: 'Cryo Archive prep',     color: '#ff2d55' },
+      { href: '/guides/squad',    label: 'SQUAD PLAY',     desc: 'Required for entry',    color: '#00d4ff' },
+      { href: '/factions',        label: 'FACTIONS',       desc: 'Liaison contracts',     color: '#ffd700' },
+    ],
+    faqs: [
+      { q: 'What is Cryo Archive in Marathon?', a: 'Cryo Archive is Marathon\'s endgame zone - a large PvPvE raid map set on the abandoned UESC Marathon colony ship in orbit around Tau Ceti IV. It features Security Clearance progression, 7 vaults with puzzle mechanics, UESC enemy faction (bots, soldiers, commanders, wardens), and the Compiler boss fight. It\'s only available Thursday 10AM PDT through Sunday 10AM PDT.' },
+      { q: 'How do you enter Cryo Archive in Marathon?', a: 'Entry requires Runner Level 25+, all six faction liaison contracts completed, a minimum loadout value of ~5,000 credits, and a squad of 3 (no solo or Rook). First-time runners often receive a sponsored free kit. Spawns are isolated initially, giving teams time to gear up before central conflicts.' },
+      { q: 'What is the Compiler boss in Marathon Cryo Archive?', a: 'The Compiler is the endgame boss fight in Vault 7. After collecting all 6 AI Subroutines and the DNA Access Card, your squad enters the arena via a green orb jumping puzzle. Damage phases require activating 3 terminals showing the same symbol (out of 9 around the room), then shooting the exposed core. Drops Compiler Ganglion salvage and Contraband weapons including the Biotoxic Disinjector.' },
     ],
   },
 };
 
-// ─── CONSTANTS ──────────────────────────────────────────────
 const BG = '#121418';
 const CARD_BG = '#1a1d24';
 const DEEP_BG = '#0e1014';
 const BORDER = '#22252e';
 const PURPLE = '#9b5de5';
 
-// ─── STATIC PARAMS (pre-render all 8 categories at build) ──
-// FIXED May 15, 2026: Returns empty at build to prevent pre-rendering
-// (supabase queries would throw without env vars). dynamicParams=true
-// allows on-demand rendering at request time. revalidate=300 (above)
-// caches results for 5 minutes.
+// FIXED May 15, 2026: Empty generateStaticParams + dynamicParams=true
+// prevents build-time pre-render. Categories render on-demand at request time.
 export function generateStaticParams() {
   return [];
 }
 
 export const dynamicParams = true;
 
-// ─── METADATA ───────────────────────────────────────────────
 export async function generateMetadata({ params }) {
   var resolved = await params;
   var cat = CATEGORIES[resolved.category];
@@ -219,7 +394,6 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// ─── HELPERS ────────────────────────────────────────────────
 function readTime(body) {
   if (!body) return '1 min';
   return Math.max(1, Math.round(body.split(' ').length / 200)) + ' min read';
@@ -252,7 +426,7 @@ function GuideCard({ guide, cat }) {
         <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.35 }}>{guide.headline}</h3>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, margin: 0, lineHeight: 1.5, flex: 1 }}>{bodyPreview}...</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid ' + BORDER, paddingTop: 8, marginTop: 4 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 8, color: cat.color, letterSpacing: 1, fontWeight: 700 }}>READ GUIDE →</span>
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: cat.color, letterSpacing: 1, fontWeight: 700 }}>READ GUIDE &rarr;</span>
           <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>{rt}</span>
         </div>
       </div>
@@ -260,7 +434,6 @@ function GuideCard({ guide, cat }) {
   );
 }
 
-// ─── PAGE ───────────────────────────────────────────────────
 export default async function CategoryPage({ params }) {
   var resolved = await params;
   var cat = CATEGORIES[resolved.category];
@@ -294,14 +467,12 @@ export default async function CategoryPage({ params }) {
   var dexterBuilds = dexterRes.data || [];
   var nexusMeta = nexusRes.data || [];
 
-  // Split into top scored + recent
   var topGuides = [...allGuides].sort(function(a, b) { return (b.ce_score || 0) - (a.ce_score || 0); }).slice(0, 3);
   var topIds = new Set(topGuides.map(function(g) { return g.id; }));
   var recentGuides = allGuides.filter(function(g) { return !topIds.has(g.id); });
 
   var lastUpdated = allGuides[0]?.created_at || null;
 
-  // Structured data
   var breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -343,7 +514,6 @@ export default async function CategoryPage({ params }) {
         .gc-link:hover { background: #1e2228 !important; }
       `}</style>
 
-      {/* ══ BREADCRUMB ══════════════════════════════════════ */}
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1200, margin: '0 auto' }}>
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
@@ -354,12 +524,11 @@ export default async function CategoryPage({ params }) {
         </ol>
       </nav>
 
-      {/* ══ HERO ════════════════════════════════════════════ */}
       <section style={{ padding: '24px 24px 32px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: PURPLE, background: 'rgba(155,93,229,0.08)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: PURPLE }} />
-            ◎ MIRANDA · FIELD GUIDES
+            MIRANDA &middot; FIELD GUIDES
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: cat.color, background: cat.color + '14', border: '1px solid ' + cat.color + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             {cat.label}
@@ -382,7 +551,6 @@ export default async function CategoryPage({ params }) {
         </p>
       </section>
 
-      {/* ══ TOP GUIDES (by CE score) ════════════════════════ */}
       {topGuides.length > 0 && (
         <section style={{ padding: '0 24px 32px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -396,7 +564,6 @@ export default async function CategoryPage({ params }) {
         </section>
       )}
 
-      {/* ══ ALL GUIDES (recent) ═════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>
@@ -413,22 +580,21 @@ export default async function CategoryPage({ params }) {
         ) : (
           topGuides.length === 0 && (
             <div style={{ textAlign: 'center', padding: '48px 24px', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2 }}>
-              <div style={{ fontSize: 28, color: cat.color, marginBottom: 12, opacity: 0.4 }}>◎</div>
+              <div style={{ fontSize: 28, color: cat.color, marginBottom: 12, opacity: 0.4 }}>&#9678;</div>
               <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700, marginBottom: 10 }}>
                 NO {cat.label} YET
               </div>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', maxWidth: 420, margin: '0 auto', lineHeight: 1.5 }}>
-                MIRANDA is working on {cat.label.toLowerCase()}. Check back in a few cycles — new content drops every 6 hours.
+                MIRANDA is working on {cat.label.toLowerCase()}. Check back in a few cycles - new content drops every 6 hours.
               </p>
               <Link href="/guides" style={{ display: 'inline-block', marginTop: 16, fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 2, textDecoration: 'none', fontWeight: 700 }}>
-                ← ALL GUIDES
+                &larr; ALL GUIDES
               </Link>
             </div>
           )
         )}
       </section>
 
-      {/* ══ FAQ (SEO) ═══════════════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>FREQUENTLY ASKED</span>
@@ -448,7 +614,6 @@ export default async function CategoryPage({ params }) {
         </div>
       </section>
 
-      {/* ══ RELATED INTEL ═══════════════════════════════════ */}
       {(dexterBuilds.length > 0 || nexusMeta.length > 0) && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -460,7 +625,7 @@ export default async function CategoryPage({ params }) {
             {dexterBuilds.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>⬢ DEXTER BUILDS</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>DEXTER BUILDS</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {dexterBuilds.map(function(b) {
@@ -478,7 +643,7 @@ export default async function CategoryPage({ params }) {
             {nexusMeta.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700 }}>⬡ NEXUS META</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700 }}>NEXUS META</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {nexusMeta.map(function(m) {
@@ -496,7 +661,6 @@ export default async function CategoryPage({ params }) {
         </section>
       )}
 
-      {/* ══ CTA ═════════════════════════════════════════════ */}
       <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + cat.color, borderRadius: '0 2px 2px 0', padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
           <div>
@@ -516,16 +680,16 @@ export default async function CategoryPage({ params }) {
                     <div style={{ fontFamily: 'monospace', fontSize: 10, color: item.color, letterSpacing: 1, fontWeight: 700 }}>{item.label}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>{item.desc}</div>
                   </div>
-                  <span style={{ color: item.color, opacity: 0.5, fontSize: 13 }}>→</span>
+                  <span style={{ color: item.color, opacity: 0.5, fontSize: 13 }}>&rarr;</span>
                 </Link>
               );
             })}
             <Link href="/guides" className="gc-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
               <div>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 1, fontWeight: 700 }}>◎ ALL GUIDES</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 1, fontWeight: 700 }}>ALL GUIDES</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>Back to the guides hub</div>
               </div>
-              <span style={{ color: PURPLE, opacity: 0.5, fontSize: 13 }}>←</span>
+              <span style={{ color: PURPLE, opacity: 0.5, fontSize: 13 }}>&larr;</span>
             </Link>
           </div>
         </div>
