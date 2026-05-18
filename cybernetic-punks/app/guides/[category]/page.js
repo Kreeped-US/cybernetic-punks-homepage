@@ -446,7 +446,7 @@ export default async function CategoryPage({ params }) {
       .eq('is_published', true)
       .contains('tags', [cat.tag])
       .order('created_at', { ascending: false })
-      .limit(30),
+      .limit(100),
     supabase
       .from('feed_items')
       .select('id, headline, slug, ce_score, created_at')
