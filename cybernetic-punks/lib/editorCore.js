@@ -446,14 +446,14 @@ async function fetchGameContext() {
     );
 
     const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, factionStatsRes, factionUnlocksRes] = await Promise.all([
-      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(40),
-      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(40),
-      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, faction_source').order('rarity', { ascending: false }).limit(40),
-      supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(40),
+      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(25),
+      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(25),
+      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, faction_source').order('rarity', { ascending: false }).limit(25),
+      supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(30),
       supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
-      supabase.from('faction_stat_bonuses').select('faction_name, stat_name, stat_value, rank_required, credit_cost, material_cost').order('faction_name').limit(100),
-      supabase.from('faction_unlocks').select('faction_name, unlock_type, item_name, rank_required, credit_cost, material_cost, notes').order('faction_name').limit(200),
+      supabase.from('faction_stat_bonuses').select('faction_name, stat_name, stat_value, rank_required, credit_cost, material_cost').order('faction_name').limit(50),
+      supabase.from('faction_unlocks').select('faction_name, unlock_type, item_name, rank_required, credit_cost, material_cost, notes').order('faction_name').limit(100),
     ]);
 
     let output = '';
