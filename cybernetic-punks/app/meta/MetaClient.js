@@ -450,31 +450,22 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
 
   useEffect(() => {
     if (!metaTiers?.length) return;
-    try {
-      const latestUpdate = Math.max(...metaTiers.map(t => new Date(t.updated_at).getTime()));
-      const stored = JSON.parse(localStorage.getItem('cp_meta_v1') || 'null');
-      const currentMap = {};
-      metaTiers.forEach(t => { currentMap[t.name] = t.tier; });
-
-      if (!stored) {
-        localStorage.setItem('cp_meta_v1', JSON.stringify({ ts: latestUpdate, map: currentMap }));
-        return;
-      }
-
-      if (stored.ts < latestUpdate) {
-        const mv = {};
-        Object.entries(currentMap).forEach(([name, tier]) => {
-          const prev = stored.map?.[name];
-          if (!prev) { mv[name] = 'new'; }
-          else if (TIER_ORDER_MAP[tier] < TIER_ORDER_MAP[prev]) { mv[name] = 'up'; }
-          else if (TIER_ORDER_MAP[tier] > TIER_ORDER_MAP[prev]) { mv[name] = 'down'; }
-        });
-        setMovements(mv);
-        setToast(Object.keys(mv).length > 0);
-        setTimeout(() => setToast(false), 5000);
-        localStorage.setItem('cp_meta_v1', JSON.stringify({ ts: latestUpdate, map: currentMap }));
-      }
-    } catch (_) {}
+    // UPDATED May 19, 2026: Source movements from the database trend column
+    // (now algorithmically computed in the cron) instead of per-browser
+    // localStorage comparison. Every visitor now sees the same movement
+    // state, reflecting actual editorial changes rather than browser cache
+    // staleness.
+    const mv = {};
+    metaTiers.forEach(t => {
+      if (t.trend === 'up')   mv[t.name] = 'up';
+      if (t.trend === 'down') mv[t.name] = 'down';
+    });
+    setMovements(mv);
+    // Toast appears once when the page loads with active movers.
+    if (Object.keys(mv).length > 0) {
+      setToast(true);
+      setTimeout(() => setToast(false), 5000);
+    }
   }, [metaTiers]);
 
   useEffect(() => {
