@@ -11,7 +11,40 @@ import { gatherAll } from '@/lib/gather/index';
 // analysis on this route. processEditor now takes supabase as a
 // parameter so the request-scoped client flows through cleanly.
 
+// MAY 19, 2026 - TIER SYSTEM OVERHAUL:
+// Three coordinated changes to the NEXUS tier upsert flow:
+//
+// 1. REGRADE GATE: NEXUS only rewrites meta_tiers when either a patch
+//    is detected OR more than 23 hours have passed since the last
+//    regrade. Off-cycle NEXUS articles still publish (prose meta
+//    analysis), they just don't change the tier table. Stops 4x-daily
+//    tier thrash.
+//
+// 2. PRIOR-TIER MEMORY: When NEXUS regrades, the cron pulls existing
+//    meta_tiers rows and injects them into NEXUS's user prompt as
+//    CURRENT TIER STATE. NEXUS now grades with memory of what it said
+//    yesterday.
+//
+// 3. ALGORITHMIC TREND: Trend (up/down/stable) is no longer NEXUS
+//    opinion. The cron computes it by comparing the new tier ordinal
+//    to the existing tier ordinal. NEXUS's trend field is overridden.
+
 export const dynamic = 'force-dynamic';
+
+// Tier ordinal mapping for algorithmic trend computation
+var TIER_ORDINAL = { S: 5, A: 4, B: 3, C: 2, D: 1 };
+
+function tierOrdinal(tier) {
+  return TIER_ORDINAL[tier] || 0;
+}
+
+function computeTrend(newTier, oldTier) {
+  if (!oldTier) return 'stable';
+  var diff = tierOrdinal(newTier) - tierOrdinal(oldTier);
+  if (diff > 0) return 'up';
+  if (diff < 0) return 'down';
+  return 'stable';
+}
 
 function generateSlug(headline) {
   var base = headline
@@ -117,7 +150,50 @@ function buildDirectiveBlock(directive) {
   return block;
 }
 
-async function processEditor(editorName, prompt, rawData, supabase) {
+// -- BUILD CURRENT TIER STATE BLOCK FOR NEXUS --
+// Injected into NEXUS's user prompt every cycle. Gives NEXUS visibility
+// into what it said last regrade so it can make informed decisions
+// rather than grading from scratch.
+function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
+  if (!currentTiers || currentTiers.length === 0) {
+    return '';
+  }
+
+  var weapons = currentTiers.filter(function(t) { return t.type === 'weapon'; });
+  var shells = currentTiers.filter(function(t) { return t.type === 'shell'; });
+
+  var block = '\n\n--- CURRENT TIER STATE (from prior NEXUS regrade) ---\n';
+  block += 'This is the tier list as you last set it. Treat it as your prior reasoning.\n\n';
+
+  if (shells.length > 0) {
+    block += 'SHELLS:\n';
+    shells.forEach(function(s) {
+      block += '  ' + s.name + ' - Tier ' + s.tier + (s.note ? ' (' + s.note + ')' : '') + '\n';
+    });
+  }
+
+  if (weapons.length > 0) {
+    block += '\nWEAPONS:\n';
+    weapons.forEach(function(w) {
+      block += '  ' + w.name + ' - Tier ' + w.tier + (w.note ? ' (' + w.note + ')' : '') + '\n';
+    });
+  }
+
+  if (shouldRegrade) {
+    block += '\nYou are GRADING TODAY. The full meta_update array must be returned. ';
+    block += 'When you change a tier from the current state above, you must be able to justify the move based on patch context, community signal, or stat changes you reference in your article body. ';
+    block += 'Most items should remain at their current tier - move tiers only when the evidence supports it.';
+  } else {
+    block += '\nYou are NOT regrading today (NEXUS regrades the tier list once per 24 hours unless a patch is detected). ';
+    block += 'Write your meta analysis article using this current tier state as context, but DO NOT return a meta_update array - or return an empty array. ';
+    block += 'Your article should reflect movement and patterns visible in current sources, not propose new tier assignments.';
+  }
+
+  block += '\n---';
+  return block;
+}
+
+async function processEditor(editorName, prompt, rawData, supabase, regradeContext) {
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
   }
@@ -154,9 +230,6 @@ async function processEditor(editorName, prompt, rawData, supabase) {
       source_url: media.source_url,
     };
 
-    // CIPHER rebuilt May 1, 2026 -- internal synthesis, no external video.
-    // Source set to INTEL, no thumbnail or source_url. Article cards still
-    // show editor portrait via HomeIntelFeed.js, so visual treatment remains.
     if (editorName === 'CIPHER') {
       insertData.source = 'INTEL';
       insertData.ce_score = result.ce_score || 0;
@@ -178,57 +251,77 @@ async function processEditor(editorName, prompt, rawData, supabase) {
       insertData.source_url = result.source_url || null;
     }
 
-    // NEXUS meta_update -- upsert into meta_tiers
+    // NEXUS meta_update -- upsert into meta_tiers, GATED ON REGRADE WINDOW
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
-      try {
-        // Fetch canonical names from the database to prevent casing drift
-        // and reject any items NEXUS invented that don't exist.
-        var [validWeaponsRes, validShellsRes] = await Promise.all([
-          supabase.from('weapon_stats').select('name'),
-          supabase.from('shell_stats').select('name'),
-        ]);
-        var validWeapons = new Map((validWeaponsRes.data || []).map(function(w) { return [w.name.toLowerCase().trim(), w.name]; }));
-        var validShells = new Map((validShellsRes.data || []).map(function(s) { return [s.name.toLowerCase().trim(), s.name]; }));
+      if (!regradeContext.shouldRegrade) {
+        console.log('[CRON] NEXUS tier regrade SKIPPED (last regrade: ' +
+          (regradeContext.lastRegrade ? regradeContext.lastRegrade.toISOString() : 'never') +
+          ', hasPatch: ' + regradeContext.hasPatch + ')');
+      } else {
+        console.log('[CRON] NEXUS tier regrade RUNNING (reason: ' +
+          (regradeContext.hasPatch ? 'patch detected' : '24h elapsed') + ')');
 
-        var metaRows = result.meta_update
-          .filter(function(item) { return (item.type === 'weapon' || item.type === 'shell') && item.name; })
-          .map(function(item) {
-            var lookup = item.type === 'weapon' ? validWeapons : validShells;
-            var canonicalName = lookup.get((item.name || '').toLowerCase().trim());
-            if (!canonicalName) {
-              console.log('[CRON] NEXUS meta_tiers: rejecting unknown ' + item.type + ' "' + item.name + '"');
-              return null;
+        try {
+          // Fetch canonical names from the database to prevent casing drift
+          // and reject any items NEXUS invented that don't exist.
+          var [validWeaponsRes, validShellsRes] = await Promise.all([
+            supabase.from('weapon_stats').select('name'),
+            supabase.from('shell_stats').select('name'),
+          ]);
+          var validWeapons = new Map((validWeaponsRes.data || []).map(function(w) { return [w.name.toLowerCase().trim(), w.name]; }));
+          var validShells = new Map((validShellsRes.data || []).map(function(s) { return [s.name.toLowerCase().trim(), s.name]; }));
+
+          // Build a lookup of existing tiers for algorithmic trend computation
+          var existingTierMap = new Map();
+          (regradeContext.currentTiers || []).forEach(function(t) {
+            existingTierMap.set(t.name + ':' + t.type, t.tier);
+          });
+
+          var metaRows = result.meta_update
+            .filter(function(item) { return (item.type === 'weapon' || item.type === 'shell') && item.name; })
+            .map(function(item) {
+              var lookup = item.type === 'weapon' ? validWeapons : validShells;
+              var canonicalName = lookup.get((item.name || '').toLowerCase().trim());
+              if (!canonicalName) {
+                console.log('[CRON] NEXUS meta_tiers: rejecting unknown ' + item.type + ' "' + item.name + '"');
+                return null;
+              }
+              var newTier = item.tier || 'B';
+              var oldTier = existingTierMap.get(canonicalName + ':' + item.type);
+              // Algorithmic trend - overrides NEXUS's vibe-based output
+              var computedTrend = computeTrend(newTier, oldTier);
+
+              return {
+                name: canonicalName,
+                type: item.type,
+                tier: newTier,
+                trend: computedTrend,
+                note: item.note || '',
+                ranked_note: item.ranked_note || null,
+                ranked_tier_solo: item.ranked_tier_solo || null,
+                ranked_tier_squad: item.ranked_tier_squad || null,
+                holotag_tier: item.holotag_tier || null,
+                updated_at: new Date().toISOString(),
+              };
+            })
+            .filter(function(row) { return row !== null; });
+
+          if (metaRows.length > 0) {
+            var { error: metaError } = await supabase
+              .from('meta_tiers')
+              .upsert(metaRows, { onConflict: 'name' });
+
+            if (metaError) {
+              console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
+            } else {
+              var movers = metaRows.filter(function(r) { return r.trend !== 'stable'; });
+              console.log('[CRON] NEXUS upserted meta_tiers: ' + metaRows.length + ' entries, ' + movers.length + ' movers');
+              notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
             }
-            return {
-              name: canonicalName,
-              type: item.type,
-              tier: item.tier || 'B',
-              trend: item.trend || 'stable',
-              note: item.note || '',
-              ranked_note: item.ranked_note || null,
-              ranked_tier_solo: item.ranked_tier_solo || null,
-              ranked_tier_squad: item.ranked_tier_squad || null,
-              holotag_tier: item.holotag_tier || null,
-              updated_at: new Date().toISOString(),
-            };
-          })
-          .filter(function(row) { return row !== null; });
-
-        if (metaRows.length > 0) {
-          var { error: metaError } = await supabase
-            .from('meta_tiers')
-            .upsert(metaRows, { onConflict: 'name' });
-
-          if (metaError) {
-            console.log('[CRON] NEXUS meta_tiers upsert failed: ' + metaError.message);
-          } else {
-            console.log('[CRON] NEXUS upserted meta_tiers with ' + metaRows.length + ' entries');
-            // Only fires if there are actual movers -- silent when meta is stable
-            notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
           }
+        } catch (metaErr) {
+          console.log('[CRON] NEXUS meta_tiers error: ' + metaErr.message);
         }
-      } catch (metaErr) {
-        console.log('[CRON] NEXUS meta_tiers error: ' + metaErr.message);
       }
     }
 
@@ -238,8 +331,6 @@ async function processEditor(editorName, prompt, rawData, supabase) {
       return { editor: editorName, success: false, error: error.message };
     }
 
-    // Mark SEO keyword as consumed -- only after successful article insert.
-    // If we crashed before this point, the keyword stays available for retry.
     if (result._seo_keyword_id) {
       consumeKeyword(supabase, result._seo_keyword_id).catch(function(e) {
         console.log('[CRON] keyword consume failed (non-fatal): ' + e.message);
@@ -247,10 +338,6 @@ async function processEditor(editorName, prompt, rawData, supabase) {
       console.log('[CRON] ' + editorName + ' consumed keyword id=' + result._seo_keyword_id);
     }
 
-    // -- TWITTER/X AUTO-POSTING DISABLED --
-    // Suspended indefinitely. Post manually via @Cybernetic87250.
-
-    // Generate editor comments on this article
     if (feedItem) {
       generateArticleComments(
         { id: feedItem.id, headline: feedItem.headline, body: feedItem.body },
@@ -261,7 +348,6 @@ async function processEditor(editorName, prompt, rawData, supabase) {
       });
     }
 
-    // Discord notifications -- non-blocking
     if (feedItem) {
       if (editorName === 'MIRANDA') {
         notifyIntelFeed(feedItem, editorName).catch(function(e) { console.log('[DISCORD] intel notify error: ' + e.message); });
@@ -282,9 +368,6 @@ async function processEditor(editorName, prompt, rawData, supabase) {
 }
 
 export async function GET() {
-  // Request-scoped Supabase client. Created here (not at module scope) so
-  // env vars are populated before instantiation. Passed into processEditor
-  // so the same client services all editor processing this cycle.
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -295,10 +378,6 @@ export async function GET() {
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null, bungieNews: [] };
 
     // -- STEP 1: Fetch pending directives that are due --
-    // A directive fires if it is pending AND either:
-    //   - scheduled_for is NULL (fires on next cycle, legacy behavior), OR
-    //   - scheduled_for is in the past (the scheduled time has arrived)
-    // Directives with a future scheduled_for are held back until that time.
     var directiveMap = {};
     try {
       var nowIso = new Date().toISOString();
@@ -310,9 +389,6 @@ export async function GET() {
         .order('scheduled_for', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
 
-      // One directive per editor -- take the earliest-scheduled (or earliest-created)
-      // pending directive per editor. Multiple directives for the same editor that
-      // are also due will wait for subsequent cycles.
       (directives || []).forEach(function(d) {
         if (!directiveMap[d.editor]) directiveMap[d.editor] = d;
       });
@@ -349,10 +425,51 @@ export async function GET() {
       console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', '));
     }
 
-    // -- STEP 4: Inject directive + dedup + patch into each editor prompt --
-    // CIPHER -- note: gatherCipher() in lib/gather/cipher.js already handles
-    // patch override internally (pivots to patch_impact archetype). The
-    // dedup block is still useful to prevent repeating recent headlines.
+    // -- STEP 4: Determine NEXUS tier regrade gate --
+    // Regrade if: patch detected OR last regrade was > 23 hours ago
+    // 23 not 24, so cron jitter doesn't accidentally skip the daily regrade.
+    var regradeContext = {
+      hasPatch: hasPatch,
+      shouldRegrade: hasPatch, // patch always triggers
+      lastRegrade: null,
+      currentTiers: [],
+    };
+
+    try {
+      var { data: currentTiersData } = await supabase
+        .from('meta_tiers')
+        .select('name, type, tier, note, updated_at')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+
+      regradeContext.currentTiers = currentTiersData || [];
+
+      if (regradeContext.currentTiers.length > 0) {
+        var newestUpdate = regradeContext.currentTiers.reduce(function(max, t) {
+          var ts = new Date(t.updated_at).getTime();
+          return ts > max ? ts : max;
+        }, 0);
+        regradeContext.lastRegrade = new Date(newestUpdate);
+
+        var hoursElapsed = (Date.now() - newestUpdate) / (1000 * 60 * 60);
+        if (hoursElapsed >= 23) {
+          regradeContext.shouldRegrade = true;
+        }
+        console.log('[CRON] NEXUS regrade gate: hoursElapsed=' + hoursElapsed.toFixed(1) +
+          ', hasPatch=' + hasPatch + ', shouldRegrade=' + regradeContext.shouldRegrade);
+      } else {
+        // No existing tiers - first run ever, always regrade
+        regradeContext.shouldRegrade = true;
+        console.log('[CRON] NEXUS regrade gate: no existing tiers, forcing regrade');
+      }
+    } catch (tierErr) {
+      console.log('[CRON] NEXUS regrade gate check failed (defaulting to regrade): ' + tierErr.message);
+      regradeContext.shouldRegrade = true;
+    }
+
+    var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
+
+    // -- STEP 5: Inject directive + dedup + patch into each editor prompt --
     if (typeof prompts.CIPHER === 'string') {
       if (directiveMap['CIPHER']) prompts.CIPHER += buildDirectiveBlock(directiveMap['CIPHER']);
       else {
@@ -361,17 +478,17 @@ export async function GET() {
       }
     }
 
-    // NEXUS
+    // NEXUS - gets current tier state injected EVERY cycle
     if (typeof prompts.NEXUS === 'string') {
       if (directiveMap['NEXUS']) {
         prompts.NEXUS += buildDirectiveBlock(directiveMap['NEXUS']);
       } else {
         if (hasPatch) prompts.NEXUS = patchBlock + '\n\n' + prompts.NEXUS;
+        prompts.NEXUS += currentTierBlock;
         prompts.NEXUS += buildNoRepeatBlock(recentHeadlines.NEXUS);
       }
     }
 
-    // DEXTER
     if (typeof prompts.DEXTER === 'string') {
       if (directiveMap['DEXTER']) prompts.DEXTER += buildDirectiveBlock(directiveMap['DEXTER']);
       else {
@@ -380,7 +497,6 @@ export async function GET() {
       }
     }
 
-    // GHOST
     if (typeof prompts.GHOST === 'string') {
       if (directiveMap['GHOST']) prompts.GHOST += buildDirectiveBlock(directiveMap['GHOST']);
       else {
@@ -389,12 +505,11 @@ export async function GET() {
       }
     }
 
-    // MIRANDA -- directive injected via mirandaData object
     if (directiveMap['MIRANDA'] && prompts.MIRANDA && typeof prompts.MIRANDA === 'object') {
       prompts.MIRANDA._directive = directiveMap['MIRANDA'];
     }
 
-    // -- STEP 5: Patch Discord notification with dedup --
+    // -- STEP 6: Patch Discord notification with dedup --
     if (hasPatch) {
       try {
         var cutoff23h = new Date(Date.now() - 23 * 3600 * 1000).toISOString();
@@ -422,7 +537,7 @@ export async function GET() {
       }
     }
 
-    // -- STEP 6: Run editors IN PARALLEL --
+    // -- STEP 7: Run editors IN PARALLEL --
     var editors = [
       { name: 'CIPHER',  prompt: prompts.CIPHER  },
       { name: 'NEXUS',   prompt: prompts.NEXUS   },
@@ -432,7 +547,7 @@ export async function GET() {
     ];
 
     var settledResults = await Promise.allSettled(
-      editors.map(function(e) { return processEditor(e.name, e.prompt, rawData, supabase); })
+      editors.map(function(e) { return processEditor(e.name, e.prompt, rawData, supabase, regradeContext); })
     );
 
     var results = settledResults.map(function(s, idx) {
@@ -440,7 +555,7 @@ export async function GET() {
       return { editor: editors[idx].name, success: false, error: s.reason?.message || 'Unhandled rejection' };
     });
 
-    // -- STEP 7: Mark directives consumed for editors that succeeded --
+    // -- STEP 8: Mark directives consumed for editors that succeeded --
     for (var i = 0; i < results.length; i++) {
       var r = results[i];
       if (r.success && directiveMap[r.editor]) {
@@ -465,6 +580,7 @@ export async function GET() {
       summary: succeeded + ' published, ' + (results.length - succeeded) + ' skipped',
       directives_consumed: directivesUsed,
       patch_detected: hasPatch,
+      nexus_tier_regrade: regradeContext.shouldRegrade,
       results: results,
       tweet: 'Auto-posting disabled -- post manually via @Cybernetic87250',
     });
