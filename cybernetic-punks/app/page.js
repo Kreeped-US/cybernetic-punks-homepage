@@ -862,9 +862,9 @@ export default async function Home() {
           </div>
 
           {/* ══ FACTION ADVISOR CALLOUT ══════════════════════════ */}
+          <HomeEditorReactions />
           <FactionAdvisorCallout shells={shells} />
 
-          <HomeEditorReactions />
           <HomeIntelFeed articles={intelFeed} weeklyCount={weeklyCount} />
         </div>
 
