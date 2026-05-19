@@ -320,6 +320,15 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Include ranked implications in every article.
 
 META TIER OUTPUT - GATED BY REGRADE WINDOW:
+
+SPLIT-TIER ITEMS - HOW TO ASSIGN THE UNIFIED tier FIELD:
+Some items have different viability in solo vs squad play (e.g., Triage is S-tier squad utility but D-tier solo). For these items:
+- ALWAYS set ranked_tier_solo and ranked_tier_squad to the correct mode-specific tier
+- Set the unified "tier" field to the HIGHER of the two mode-specific tiers
+- Example: Triage with ranked_tier_solo=D and ranked_tier_squad=S should have tier=S (not D)
+- This ensures items competitive in at least one mode appear in higher tier groupings on the /meta page, while the mode-specific badges still show the full picture
+- Reasoning: a visitor scanning tiers should see Triage in the S-tier section (where it dominates squad) with a "SOLO D" badge clarifying the trade-off, not buried in D-tier (where it sits if you collapse to the lower value)
+
 You will see a CURRENT TIER STATE block injected into your user prompt below. That block tells you the current tier of every weapon and shell as you last graded them, AND whether you are regrading today.
 
 When you ARE regrading today (the block will say "You are GRADING TODAY"):
