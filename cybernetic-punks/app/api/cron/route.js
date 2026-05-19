@@ -181,11 +181,26 @@ async function processEditor(editorName, prompt, rawData, supabase) {
     // NEXUS meta_update -- upsert into meta_tiers
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
       try {
+        // Fetch canonical names from the database to prevent casing drift
+        // and reject any items NEXUS invented that don't exist.
+        var [validWeaponsRes, validShellsRes] = await Promise.all([
+          supabase.from('weapon_stats').select('name'),
+          supabase.from('shell_stats').select('name'),
+        ]);
+        var validWeapons = new Map((validWeaponsRes.data || []).map(function(w) { return [w.name.toLowerCase().trim(), w.name]; }));
+        var validShells = new Map((validShellsRes.data || []).map(function(s) { return [s.name.toLowerCase().trim(), s.name]; }));
+
         var metaRows = result.meta_update
           .filter(function(item) { return (item.type === 'weapon' || item.type === 'shell') && item.name; })
           .map(function(item) {
+            var lookup = item.type === 'weapon' ? validWeapons : validShells;
+            var canonicalName = lookup.get((item.name || '').toLowerCase().trim());
+            if (!canonicalName) {
+              console.log('[CRON] NEXUS meta_tiers: rejecting unknown ' + item.type + ' "' + item.name + '"');
+              return null;
+            }
             return {
-              name: item.name,
+              name: canonicalName,
               type: item.type,
               tier: item.tier || 'B',
               trend: item.trend || 'stable',
@@ -196,7 +211,8 @@ async function processEditor(editorName, prompt, rawData, supabase) {
               holotag_tier: item.holotag_tier || null,
               updated_at: new Date().toISOString(),
             };
-          });
+          })
+          .filter(function(row) { return row !== null; });
 
         if (metaRows.length > 0) {
           var { error: metaError } = await supabase
