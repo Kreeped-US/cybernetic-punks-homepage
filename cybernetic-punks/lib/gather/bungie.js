@@ -78,12 +78,23 @@ export async function gatherBungieNews() {
     // Sort by date descending
     all.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Flag patch notes specifically
-    const patchKeywords = ['patch', 'update', 'hotfix', 'fix', 'balance', 'nerf', 'buff', 'change', 'tweak', 'season'];
-    const tagged = all.map(a => ({
-      ...a,
-      is_patch_note: patchKeywords.some(k => a.title.toLowerCase().includes(k) || a.contents.toLowerCase().includes(k)),
-    }));
+    // Flag patch notes specifically.
+    // UPDATED May 20, 2026: Two-part fix for chronic patch false-positives.
+    // (1) FRESHNESS GATE: a patch only counts if the article is recent
+    //     (within 72h). Previously is_patch_note had no date awareness, so a
+    //     stale patch note kept matching keywords every cycle for days,
+    //     defeating the cron's once-daily regrade gate and spamming Discord.
+    // (2) TIGHTER KEYWORDS: removed words that appear in nearly all gaming
+    //     news ('update', 'fix', 'change', 'tweak', 'season'). Kept only
+    //     terms that genuinely signal a balance/patch event.
+    const patchKeywords = ['patch', 'hotfix', 'nerf', 'buff', 'patch notes', 'balance pass', 'weapon tuning'];
+    const PATCH_FRESHNESS_MS = 72 * 60 * 60 * 1000;
+    const tagged = all.map(a => {
+      var matchesKeyword = patchKeywords.some(k => a.title.toLowerCase().includes(k) || (a.contents || '').toLowerCase().includes(k));
+      var articleAgeMs = Date.now() - new Date(a.date).getTime();
+      var isFresh = !isNaN(articleAgeMs) && articleAgeMs >= 0 && articleAgeMs <= PATCH_FRESHNESS_MS;
+      return Object.assign({}, a, { is_patch_note: matchesKeyword && isFresh });
+    });
 
     console.log(`[bungie.js] Gathered ${tagged.length} Bungie news articles (${tagged.filter(a => a.is_patch_note).length} patch-related)`);
     return tagged;

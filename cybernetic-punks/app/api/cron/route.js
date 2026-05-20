@@ -428,7 +428,41 @@ export async function GET() {
     // -- STEP 4: Determine NEXUS tier regrade gate --
     // Regrade if: patch detected OR last regrade was > 23 hours ago
     // 23 not 24, so cron jitter doesn't accidentally skip the daily regrade.
+    // -- PATCH-TRIGGERED REGRADE DEDUP (added May 20, 2026) --
+    // A patch should force a regrade at most ONCE per 23h, not every cycle.
+    // Without this, a fresh patch note (now correctly flagged for up to 72h
+    // by bungie.js) would force a regrade on every 6h cycle for three days.
+    // We record a 'patch_regrade' event when a patch triggers a regrade, and
+    // suppress further patch-triggered regrades within 23h. The normal 23h
+    // timer still applies independently, so the daily regrade is unaffected.
+    var patchAlreadyRegraded = false;
+    if (hasPatch) {
+      try {
+        var patchCutoff23h = new Date(Date.now() - 23 * 3600 * 1000).toISOString();
+        var { data: recentPatchRegrade } = await supabase
+          .from('site_events')
+          .select('id')
+          .eq('event_name', 'patch_regrade')
+          .gte('created_at', patchCutoff23h)
+          .limit(1);
+        patchAlreadyRegraded = !!(recentPatchRegrade && recentPatchRegrade.length > 0);
+      } catch (pdErr) {
+        console.log('[CRON] patch_regrade dedup check failed (treating as not-yet-regraded): ' + pdErr.message);
+      }
+    }
+    var patchShouldTrigger = hasPatch && !patchAlreadyRegraded;
+    if (hasPatch) {
+      console.log('[CRON] Patch present: hasPatch=true, alreadyRegradedInLast23h=' + patchAlreadyRegraded + ', patchShouldTrigger=' + patchShouldTrigger);
+    }
+
     var regradeContext = {
+      hasPatch: hasPatch,
+      patchShouldTrigger: patchShouldTrigger,
+      shouldRegrade: patchShouldTrigger, // only a NEW patch triggers immediately
+      lastRegrade: null,
+      currentTiers: [],
+      didRegradeForPatch: false,
+    };var regradeContext = {
       hasPatch: hasPatch,
       shouldRegrade: hasPatch, // patch always triggers
       lastRegrade: null,
@@ -468,6 +502,21 @@ export async function GET() {
     }
 
     var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
+
+    // -- RECORD PATCH-TRIGGERED REGRADE MARKER (added May 20, 2026) --
+    // If a patch is forcing this cycle's regrade, record a 'patch_regrade'
+    // event so subsequent cycles within 23h won't re-trigger off the same
+    // patch. We record at the decision point (not after NEXUS succeeds) and
+    // fail closed: worst case we skip one patch regrade rather than loop.
+    // The independent 23h timer still guarantees a daily regrade regardless.
+    if (regradeContext.patchShouldTrigger) {
+      try {
+        await supabase.from('site_events').insert({ event_name: 'patch_regrade' });
+        console.log('[CRON] Recorded patch_regrade marker -- patch will not re-trigger regrade for 23h');
+      } catch (prErr) {
+        console.log('[CRON] Failed to record patch_regrade marker (non-fatal): ' + prErr.message);
+      }
+    }var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
 
     // -- STEP 5: Inject directive + dedup + patch into each editor prompt --
     if (typeof prompts.CIPHER === 'string') {
