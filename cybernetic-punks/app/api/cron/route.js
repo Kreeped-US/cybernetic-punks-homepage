@@ -12,22 +12,17 @@ import { gatherAll } from '@/lib/gather/index';
 // parameter so the request-scoped client flows through cleanly.
 
 // MAY 19, 2026 - TIER SYSTEM OVERHAUL:
-// Three coordinated changes to the NEXUS tier upsert flow:
+// 1. REGRADE GATE: NEXUS only rewrites meta_tiers on patch OR >23h elapsed.
+// 2. PRIOR-TIER MEMORY: cron injects CURRENT TIER STATE into NEXUS prompt.
+// 3. ALGORITHMIC TREND: cron computes trend by comparing new vs old tier.
 //
-// 1. REGRADE GATE: NEXUS only rewrites meta_tiers when either a patch
-//    is detected OR more than 23 hours have passed since the last
-//    regrade. Off-cycle NEXUS articles still publish (prose meta
-//    analysis), they just don't change the tier table. Stops 4x-daily
-//    tier thrash.
-//
-// 2. PRIOR-TIER MEMORY: When NEXUS regrades, the cron pulls existing
-//    meta_tiers rows and injects them into NEXUS's user prompt as
-//    CURRENT TIER STATE. NEXUS now grades with memory of what it said
-//    yesterday.
-//
-// 3. ALGORITHMIC TREND: Trend (up/down/stable) is no longer NEXUS
-//    opinion. The cron computes it by comparing the new tier ordinal
-//    to the existing tier ordinal. NEXUS's trend field is overridden.
+// MAY 20, 2026 - PATCH DEDUP + TIER-CHANGE COMMENTARY:
+// 4. PATCH DEDUP: a patch forces a regrade at most once per 23h (recorded
+//    via a 'patch_regrade' site_events marker). Prevents a lingering patch
+//    note from forcing a regrade every cycle.
+// 5. TIER-CHANGE COMMENTARY: when a regrade produces movers, the cron passes
+//    a tierChangeContext to generateArticleComments so the other editors
+//    react to the specific tier moves.
 
 export const dynamic = 'force-dynamic';
 
@@ -93,7 +88,6 @@ function resolveMediaInfo(result, rawData, editorName) {
   }
 
   // CIPHER no longer references external videos as of May 1, 2026 rebuild.
-  // Removed from the YouTube-fallback list to prevent random thumbnails.
   if (['NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
     var topVideo = rawData.youtubeVideos[0];
     return {
@@ -136,7 +130,6 @@ function buildPatchPriorityBlock(patchItems) {
 }
 
 // -- BUILD DIRECTIVE BLOCK --
-// Injected when an editor has a pending directive queued via the admin panel
 function buildDirectiveBlock(directive) {
   if (!directive) return '';
   var block = '\n\n--- EDITOR DIRECTIVE -- THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\n';
@@ -151,9 +144,6 @@ function buildDirectiveBlock(directive) {
 }
 
 // -- BUILD CURRENT TIER STATE BLOCK FOR NEXUS --
-// Injected into NEXUS's user prompt every cycle. Gives NEXUS visibility
-// into what it said last regrade so it can make informed decisions
-// rather than grading from scratch.
 function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
   if (!currentTiers || currentTiers.length === 0) {
     return '';
@@ -194,6 +184,12 @@ function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
 }
 
 async function processEditor(editorName, prompt, rawData, supabase, regradeContext) {
+  // Holds tier-change context for NEXUS regrade cycles with movers.
+  // Populated inside the meta_tiers block, read at the comment-generation
+  // call so commenting editors react to specific tier moves. Stays null
+  // for all other editors and for no-mover cycles.
+  var tierChangeContext = null;
+
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
   }
@@ -317,6 +313,24 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
               var movers = metaRows.filter(function(r) { return r.trend !== 'stable'; });
               console.log('[CRON] NEXUS upserted meta_tiers: ' + metaRows.length + ' entries, ' + movers.length + ' movers');
               notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
+
+              // Build tier-change context for cross-editor commentary.
+              // existingTierMap (declared earlier in this block) still holds the
+              // prior tier per item, so we can express each move as old -> new.
+              if (movers.length > 0) {
+                tierChangeContext = {
+                  isTierRegrade: true,
+                  movers: movers.map(function(m) {
+                    return {
+                      name: m.name,
+                      type: m.type,
+                      oldTier: existingTierMap.get(m.name + ':' + m.type) || null,
+                      newTier: m.tier,
+                      trend: m.trend,
+                    };
+                  }),
+                };
+              }
             }
           }
         } catch (metaErr) {
@@ -338,11 +352,15 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       console.log('[CRON] ' + editorName + ' consumed keyword id=' + result._seo_keyword_id);
     }
 
+    // Generate cross-editor comments. tierChangeContext is null for everything
+    // except a NEXUS regrade cycle that produced movers, in which case the
+    // commenting editors react to the specific tier moves.
     if (feedItem) {
       generateArticleComments(
         { id: feedItem.id, headline: feedItem.headline, body: feedItem.body },
         editorName,
-        supabase
+        supabase,
+        tierChangeContext
       ).catch(function(err) {
         console.log('[CRON] comment generation error for ' + editorName + ': ' + err.message);
       });
@@ -426,15 +444,17 @@ export async function GET() {
     }
 
     // -- STEP 4: Determine NEXUS tier regrade gate --
-    // Regrade if: patch detected OR last regrade was > 23 hours ago
+    // Regrade if: a NEW patch should trigger OR last regrade was > 23h ago.
     // 23 not 24, so cron jitter doesn't accidentally skip the daily regrade.
-    // -- PATCH-TRIGGERED REGRADE DEDUP (added May 20, 2026) --
+    //
+    // PATCH-TRIGGERED REGRADE DEDUP (May 20, 2026):
     // A patch should force a regrade at most ONCE per 23h, not every cycle.
-    // Without this, a fresh patch note (now correctly flagged for up to 72h
-    // by bungie.js) would force a regrade on every 6h cycle for three days.
-    // We record a 'patch_regrade' event when a patch triggers a regrade, and
-    // suppress further patch-triggered regrades within 23h. The normal 23h
-    // timer still applies independently, so the daily regrade is unaffected.
+    // bungie.js now only flags is_patch_note for fresh (<=72h) news, but a
+    // genuinely fresh patch still lingers for up to 72h. Without dedup it
+    // would force a regrade on every 6h cycle during that window. We record
+    // a 'patch_regrade' event when a patch triggers a regrade and suppress
+    // further patch-triggered regrades within 23h. The 23h timer still
+    // applies independently, so the daily regrade is unaffected.
     var patchAlreadyRegraded = false;
     if (hasPatch) {
       try {
@@ -461,12 +481,6 @@ export async function GET() {
       shouldRegrade: patchShouldTrigger, // only a NEW patch triggers immediately
       lastRegrade: null,
       currentTiers: [],
-      didRegradeForPatch: false,
-    };var regradeContext = {
-      hasPatch: hasPatch,
-      shouldRegrade: hasPatch, // patch always triggers
-      lastRegrade: null,
-      currentTiers: [],
     };
 
     try {
@@ -490,7 +504,7 @@ export async function GET() {
           regradeContext.shouldRegrade = true;
         }
         console.log('[CRON] NEXUS regrade gate: hoursElapsed=' + hoursElapsed.toFixed(1) +
-          ', hasPatch=' + hasPatch + ', shouldRegrade=' + regradeContext.shouldRegrade);
+          ', hasPatch=' + hasPatch + ', patchShouldTrigger=' + patchShouldTrigger + ', shouldRegrade=' + regradeContext.shouldRegrade);
       } else {
         // No existing tiers - first run ever, always regrade
         regradeContext.shouldRegrade = true;
@@ -501,14 +515,11 @@ export async function GET() {
       regradeContext.shouldRegrade = true;
     }
 
-    var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
-
-    // -- RECORD PATCH-TRIGGERED REGRADE MARKER (added May 20, 2026) --
+    // -- RECORD PATCH-TRIGGERED REGRADE MARKER --
     // If a patch is forcing this cycle's regrade, record a 'patch_regrade'
     // event so subsequent cycles within 23h won't re-trigger off the same
-    // patch. We record at the decision point (not after NEXUS succeeds) and
-    // fail closed: worst case we skip one patch regrade rather than loop.
-    // The independent 23h timer still guarantees a daily regrade regardless.
+    // patch. Recorded at the decision point (not after NEXUS succeeds) and
+    // fails closed: worst case we skip one patch regrade rather than loop.
     if (regradeContext.patchShouldTrigger) {
       try {
         await supabase.from('site_events').insert({ event_name: 'patch_regrade' });
@@ -516,7 +527,9 @@ export async function GET() {
       } catch (prErr) {
         console.log('[CRON] Failed to record patch_regrade marker (non-fatal): ' + prErr.message);
       }
-    }var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
+    }
+
+    var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
 
     // -- STEP 5: Inject directive + dedup + patch into each editor prompt --
     if (typeof prompts.CIPHER === 'string') {

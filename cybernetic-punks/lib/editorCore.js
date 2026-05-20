@@ -1009,10 +1009,26 @@ function selectCommenters(publishingEditor) {
 // COMMENT GENERATION - Haiku, parallel, topic-aware
 // ===========================================================
 
-export async function generateArticleComments(article, publishingEditor, supabaseClient) {
+export async function generateArticleComments(article, publishingEditor, supabaseClient, tierChangeContext) {
   var selected = selectCommenters(publishingEditor);
 
-  var prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.';
+  // MAY 20, 2026 - Tier-change-aware commentary:
+  // When tierChangeContext is provided (only from cron during a NEXUS regrade
+  // cycle that produced actual movers), use an alternate prompt telling the
+  // commenting editors they are reacting to specific tier changes rather than
+  // a generic article. COMMENT_VOICES (the per-editor personalities) are
+  // unchanged - only the user prompt body differs. Defaults to existing
+  // behavior when tierChangeContext is null/empty.
+  var prompt;
+  if (tierChangeContext && tierChangeContext.isTierRegrade && Array.isArray(tierChangeContext.movers) && tierChangeContext.movers.length > 0) {
+    var moversText = tierChangeContext.movers.map(function(m) {
+      var arrow = m.trend === 'up' ? 'UP' : (m.trend === 'down' ? 'DOWN' : 'CHANGED');
+      return '  - ' + m.name + ' (' + (m.type || '').toUpperCase() + '): ' + (m.oldTier || '?') + ' -> ' + (m.newTier || '?') + ' [' + arrow + ']';
+    }).join('\n');
+    prompt = 'NEXUS just regraded the Marathon meta tier list. These items moved tiers this cycle:\n\n' + moversText + '\n\nReact to these SPECIFIC tier changes in your editorial voice. Pick the 1-2 movers that matter most given your focus. Say whether you agree with the move, what it means for players, or what NEXUS might be missing. Be specific to the items that moved - do NOT write a generic meta take. Keep it to 2-3 sentences max.\n\nARTICLE HEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.';
+  } else {
+    prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.';
+  }
 
   var settled = await Promise.allSettled(
     selected.map(function(editor) {
