@@ -540,13 +540,19 @@ export async function GET() {
       }
     }
 
-    // NEXUS - gets current tier state injected EVERY cycle
+    // NEXUS - gets current tier state injected EVERY cycle, directive or not.
+    // FIX (May 20, 2026): currentTierBlock was previously only added in the
+    // no-directive branch. That meant a NEXUS directive (e.g. the scheduled
+    // Season 2 pieces) stripped NEXUS of its prior-tier memory and its
+    // "grading today / hold stable" instruction, causing a from-scratch
+    // regrade on directive cycles. The tier context is fundamental to how
+    // NEXUS operates and must be present whether or not a directive exists.
     if (typeof prompts.NEXUS === 'string') {
+      if (hasPatch) prompts.NEXUS = patchBlock + '\n\n' + prompts.NEXUS;
+      prompts.NEXUS += currentTierBlock;
       if (directiveMap['NEXUS']) {
         prompts.NEXUS += buildDirectiveBlock(directiveMap['NEXUS']);
       } else {
-        if (hasPatch) prompts.NEXUS = patchBlock + '\n\n' + prompts.NEXUS;
-        prompts.NEXUS += currentTierBlock;
         prompts.NEXUS += buildNoRepeatBlock(recentHeadlines.NEXUS);
       }
     }
