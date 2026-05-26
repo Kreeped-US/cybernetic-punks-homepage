@@ -445,7 +445,12 @@ export async function GET() {
 
     // -- STEP 4: Determine NEXUS tier regrade gate --
     // Regrade if: a NEW patch should trigger OR last regrade was > 23h ago.
-    // 23 not 24, so cron jitter doesn't accidentally skip the daily regrade.
+    // Threshold is 23h. As of the 12h-cadence change (May 26, 2026), cycles
+    // run at 00:00 and 12:00 UTC; a regrade fires at each 00:00 cycle (~24h
+    // elapsed), giving a roughly-once-daily regrade. Kept at 23 (not lowered
+    // to ~11) intentionally: once-daily matches the less-is-more cadence and
+    // avoids regrading every cycle. Worst case on early jitter is an occasional
+    // ~35h gap, which is harmless (tier list just holds steady a bit longer).
     //
     // PATCH-TRIGGERED REGRADE DEDUP (May 20, 2026):
     // A patch should force a regrade at most ONCE per 23h, not every cycle.
