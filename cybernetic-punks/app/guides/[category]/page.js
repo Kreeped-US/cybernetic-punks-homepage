@@ -10,6 +10,13 @@
 // - Editor + content-type badge on every card (replaces redundant category tag)
 // - TOP cards get a gold FEATURED accent
 // - Hero copy simplified: "[N] [category] guides. Refreshed throughout the day."
+//
+// LINKING UPGRADE (May 26, 2026):
+// - Added an ALL-TIME top-by-score query so the best older guides surface in
+//   the featured block permanently (not just the best of the recent 100).
+// - The "More" grid now appends any high-scoring older guides that fell out of
+//   the recent-100 window, giving them a permanent crawlable link from this
+//   indexed hub page (fixes article orphaning / "URL unknown to Google").
 
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
@@ -518,7 +525,7 @@ export default async function CategoryPage({ params }) {
   var cat = CATEGORIES[resolved.category];
   if (!cat) notFound();
 
-  var [guidesRes, dexterRes, nexusRes] = await Promise.all([
+  var [guidesRes, topAllTimeRes, dexterRes, nexusRes] = await Promise.all([
     supabase
       .from('feed_items')
       .select('id, headline, body, slug, tags, thumbnail, created_at, ce_score, editor')
@@ -526,6 +533,17 @@ export default async function CategoryPage({ params }) {
       .contains('tags', [cat.tag])
       .order('created_at', { ascending: false })
       .limit(100),
+    // ALL-TIME TOP BY SCORE (May 26, 2026): surfaces the best articles in this
+    // category regardless of age, so high-quality older guides get a permanent
+    // crawlable home from this indexed hub page rather than being orphaned
+    // once they scroll out of the recent-100 window.
+    supabase
+      .from('feed_items')
+      .select('id, headline, body, slug, tags, thumbnail, created_at, ce_score, editor')
+      .eq('is_published', true)
+      .contains('tags', [cat.tag])
+      .order('ce_score', { ascending: false })
+      .limit(12),
     supabase
       .from('feed_items')
       .select('id, headline, slug, ce_score, created_at')
@@ -543,12 +561,24 @@ export default async function CategoryPage({ params }) {
   ]);
 
   var allGuides = guidesRes.data || [];
+  var topAllTime = topAllTimeRes.data || [];
   var dexterBuilds = dexterRes.data || [];
   var nexusMeta = nexusRes.data || [];
 
-  var topGuides = [...allGuides].sort(function(a, b) { return (b.ce_score || 0) - (a.ce_score || 0); }).slice(0, 3);
+  // Featured "Top" block now draws from the ALL-TIME top-by-score query, so the
+  // best older guides surface here permanently (not just the best of recent-100).
+  var topGuides = topAllTime.slice(0, 3);
   var topIds = new Set(topGuides.map(function(g) { return g.id; }));
-  var recentGuides = allGuides.filter(function(g) { return !topIds.has(g.id); });
+
+  // Recent list = recent-100 minus anything already shown in Top.
+  // Then append any remaining all-time-top guides that aren't in recent-100,
+  // so high-scoring older articles get a permanent crawlable link from this
+  // indexed hub page even when they've scrolled out of the recent window.
+  var recentIds = new Set(allGuides.map(function(g) { return g.id; }));
+  var olderTopGuides = topAllTime.filter(function(g) { return !topIds.has(g.id) && !recentIds.has(g.id); });
+  var recentGuides = allGuides
+    .filter(function(g) { return !topIds.has(g.id); })
+    .concat(olderTopGuides);
 
   var lastUpdated = allGuides[0]?.created_at || null;
 
