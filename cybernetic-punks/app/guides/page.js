@@ -1,5 +1,16 @@
 // app/guides/page.js
 // MIRANDA Field Guides — SEO-optimized hub with cross-references and structured data
+//
+// FIXED June 1, 2026:
+// - CATS keys aligned to canonical single-word tags (`shells`, `weapons`, `mods`, `maps`)
+//   to match what feed_items.tags actually contains. Previously used hyphenated keys
+//   (`shell-guide`, etc.) which never matched, so every category count rendered 0
+//   and every card fell back to the BEGINNER color.
+// - TAG_TO_SLUG keeps both forms so old `/guides?cat=shell-guide` URLs still 301.
+// - Added the other 8 canonical categories (stealth, squad, solo, holotag, endgame,
+//   pvp, support, cryo-archive) so Browse by Category surfaces all 16 pages, not 8.
+// - Per-category counts now query the full corpus via Postgres array overlap
+//   instead of slicing from the 80-article MIRANDA window. Numbers reflect reality.
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -36,27 +47,55 @@ const CARD_BG = '#1a1d24';
 const DEEP_BG = '#0e1014';
 const BORDER = '#22252e';
 
-// DB tag → clean URL slug map (matches [category]/page.js)
+// ─── TAG_TO_SLUG ────────────────────────────────────────────
+// Maps any inbound tag form (canonical OR legacy hyphenated) to the canonical
+// URL slug used in /guides/[category]. Canonical form maps to itself; legacy
+// form preserved so old indexed URLs and bookmarks still 301 cleanly.
 const TAG_TO_SLUG = {
-  'shell-guide':  'shells',
+  // Canonical single-word tags (identity mapping)
+  'shells':       'shells',
+  'weapons':      'weapons',
+  'mods':         'mods',
+  'maps':         'maps',
   'ranked':       'ranked',
-  'weapon-guide': 'weapons',
-  'mod-guide':    'mods',
   'extraction':   'extraction',
   'beginner':     'beginner',
   'progression':  'progression',
+  'stealth':      'stealth',
+  'squad':        'squad',
+  'solo':         'solo',
+  'holotag':      'holotag',
+  'endgame':      'endgame',
+  'pvp':          'pvp',
+  'support':      'support',
+  'cryo-archive': 'cryo-archive',
+  // Legacy hyphenated forms (backward-compatible redirects only)
+  'shell-guide':  'shells',
+  'weapon-guide': 'weapons',
+  'mod-guide':    'mods',
   'map-guide':    'maps',
 };
 
+// ─── CATS ───────────────────────────────────────────────────
+// Full set of 16 canonical categories. Keys match feed_items.tags exactly,
+// so the count loop and card-color lookup both resolve correctly.
 const CATS = {
-  'shell-guide':  { label: 'SHELL GUIDES',     color: '#9b5de5', desc: 'Ability breakdowns, playstyle analysis, and synergies for all 7 Runner Shells.', seoTerm: 'Marathon Shell Guides' },
-  'ranked':       { label: 'RANKED PREP',      color: '#ffd700', desc: 'Holotag strategy, gear ante requirements, shell picks, and tier climb routes.', seoTerm: 'Marathon Ranked Guides' },
-  'weapon-guide': { label: 'WEAPON GUIDES',    color: '#ff8800', desc: 'Per-weapon analysis — fire rate, range, ammo efficiency, and matchups.', seoTerm: 'Marathon Weapon Guides' },
-  'extraction':   { label: 'EXTRACTION',       color: '#00d4ff', desc: 'Escape routes, timing windows, loot prioritization, and exfil tactics.', seoTerm: 'Marathon Extraction Strategy' },
-  'mod-guide':    { label: 'MOD GUIDES',       color: '#ff2222', desc: 'Mod slot breakdowns and the best combinations for each shell and weapon.', seoTerm: 'Marathon Mod Guides' },
-  'beginner':     { label: 'BEGINNER',         color: '#00ff41', desc: 'New Runner essentials — core mechanics, first builds, survival basics.', seoTerm: 'Marathon Beginner Guides' },
-  'progression':  { label: 'PROGRESSION',      color: '#ffffff', desc: 'Faction paths, runner level milestones, and season-long upgrade priorities.', seoTerm: 'Marathon Progression Guides' },
-  'map-guide':    { label: 'MAP INTEL',        color: '#888888', desc: 'Zone-by-zone knowledge — POIs, extraction points, map rotations.', seoTerm: 'Marathon Map Guides' },
+  'shells':       { label: 'SHELL GUIDES',     color: '#9b5de5', desc: 'Ability breakdowns, playstyle analysis, and synergies for all 7 Runner Shells.',          seoTerm: 'Marathon Shell Guides' },
+  'ranked':       { label: 'RANKED PREP',      color: '#ffd700', desc: 'Holotag strategy, gear ante requirements, shell picks, and tier climb routes.',           seoTerm: 'Marathon Ranked Guides' },
+  'weapons':      { label: 'WEAPON GUIDES',    color: '#ff8800', desc: 'Per-weapon analysis — fire rate, range, ammo efficiency, and matchups.',                  seoTerm: 'Marathon Weapon Guides' },
+  'extraction':   { label: 'EXTRACTION',       color: '#00d4ff', desc: 'Escape routes, timing windows, loot prioritization, and exfil tactics.',                  seoTerm: 'Marathon Extraction Strategy' },
+  'mods':         { label: 'MOD GUIDES',       color: '#ff2222', desc: 'Mod slot breakdowns and the best combinations for each shell and weapon.',                seoTerm: 'Marathon Mod Guides' },
+  'beginner':     { label: 'BEGINNER',         color: '#00ff41', desc: 'New Runner essentials — core mechanics, first builds, survival basics.',                  seoTerm: 'Marathon Beginner Guides' },
+  'progression':  { label: 'PROGRESSION',      color: '#ffffff', desc: 'Faction paths, runner level milestones, and season-long upgrade priorities.',             seoTerm: 'Marathon Progression Guides' },
+  'maps':         { label: 'MAP INTEL',        color: '#888888', desc: 'Zone-by-zone knowledge — POIs, extraction points, map rotations.',                       seoTerm: 'Marathon Map Guides' },
+  'stealth':      { label: 'STEALTH',          color: '#cc44ff', desc: 'Silent plays, cloaking, sound discipline, and avoiding fights when stealth wins rounds.', seoTerm: 'Marathon Stealth Guides' },
+  'squad':        { label: 'SQUAD PLAY',       color: '#00d4ff', desc: 'Trio compositions, role assignments, callout conventions, and team coordination.',        seoTerm: 'Marathon Squad Guides' },
+  'solo':         { label: 'SOLO PLAY',        color: '#ff8800', desc: 'Solo queue strategy, self-sufficient builds, and outplaying squads as a solo Runner.',    seoTerm: 'Marathon Solo Guides' },
+  'holotag':      { label: 'HOLOTAGS',         color: '#ffd700', desc: 'Targeting priorities, gear ante math, and the fastest path to Ranked climb.',             seoTerm: 'Marathon Holotag Guides' },
+  'endgame':      { label: 'ENDGAME',          color: '#ff2d55', desc: 'High-rank tactics, Prestige progression, and Contraband weapon farming.',                 seoTerm: 'Marathon Endgame Guides' },
+  'pvp':          { label: 'PVP',              color: '#ff2222', desc: 'Engagement decisions, peek technique, trade-killing, and Runner-vs-Runner fundamentals.', seoTerm: 'Marathon PvP Guides' },
+  'support':      { label: 'SUPPORT',          color: '#00ff88', desc: 'Squad anchoring, revive timing, healing economy, and the role that wins clutches.',       seoTerm: 'Marathon Support Guides' },
+  'cryo-archive': { label: 'CRYO ARCHIVE',     color: '#00d4ff', desc: 'Endgame raid intel — Vaults 1–7, Compiler boss, and the UESC Marathon ship.',             seoTerm: 'Marathon Cryo Archive Guides' },
 };
 
 const SHELLS = [
@@ -173,14 +212,26 @@ function GuideGrid({ guides }) {
 export default async function GuidesPage({ searchParams }) {
   var params = await searchParams;
 
-  // BACKWARD COMPAT: if someone hits /guides?cat=shell-guide, 301 redirect them
-  // to the new canonical URL /guides/shells. Preserves any old bookmarks or
-  // indexed links while consolidating SEO equity on the new URLs.
+  // BACKWARD COMPAT: legacy `/guides?cat=shell-guide` URLs 301 to canonical.
+  // Still works for both new-form (`?cat=shells`) and old-form params since
+  // TAG_TO_SLUG covers both.
   if (params?.cat && TAG_TO_SLUG[params.cat]) {
     redirect('/guides/' + TAG_TO_SLUG[params.cat]);
   }
 
-  var [guidesResult, dexterBuildsResult, nexusMetaResult, shellResult, weaponResult, modResult, shellListResult] = await Promise.all([
+  // Build list of canonical tags for the corpus-wide count query
+  var canonicalTags = Object.keys(CATS);
+
+  var [
+    guidesResult,
+    dexterBuildsResult,
+    nexusMetaResult,
+    shellResult,
+    weaponResult,
+    modResult,
+    shellListResult,
+    corpusTaggedResult,
+  ] = await Promise.all([
     supabase
       .from('feed_items')
       .select('id, headline, body, slug, tags, thumbnail, created_at, ce_score')
@@ -210,6 +261,16 @@ export default async function GuidesPage({ searchParams }) {
     supabase.from('mod_stats').select('id', { count: 'exact', head: true }),
 
     supabase.from('shell_stats').select('name, image_filename, role').order('name'),
+
+    // Corpus-wide tag enumeration for accurate category counts.
+    // `tags && [...canonical]` uses Postgres array overlap — returns any
+    // article tagged with at least one canonical category. Cheap because
+    // we only pull the `tags` column.
+    supabase
+      .from('feed_items')
+      .select('tags')
+      .eq('is_published', true)
+      .overlaps('tags', canonicalTags),
   ]);
 
   var shellCount  = shellResult.count  || 0;
@@ -219,7 +280,7 @@ export default async function GuidesPage({ searchParams }) {
   var nexusMeta    = nexusMetaResult.data || [];
   var shellDB      = shellListResult.data || [];
 
-  // Dedup by headline
+  // Dedup MIRANDA guides by headline for hub display
   var seen = {};
   var allGuides = [];
   for (var guide of (guidesResult.data || [])) {
@@ -241,16 +302,23 @@ export default async function GuidesPage({ searchParams }) {
     .sort(function(a, b) { return (b.ce_score || 0) - (a.ce_score || 0); })
     .slice(0, 3);
 
-  // Category counts
+  // ─── CORPUS-WIDE CATEGORY COUNTS ─────────────────────────
+  // Build catCounts from the full corpus (corpusTaggedResult), not just the
+  // 80-article MIRANDA window. Numbers now reflect the actual content depth
+  // per category across all editors.
   var catCounts = {};
-  for (var g of allGuides) {
-    if (!g.tags) continue;
-    for (var tag of g.tags) {
-      if (CATS[tag]) catCounts[tag] = (catCounts[tag] || 0) + 1;
+  for (var tagKey of canonicalTags) {
+    catCounts[tagKey] = 0;
+  }
+  for (var row of (corpusTaggedResult.data || [])) {
+    if (!row.tags) continue;
+    for (var t of row.tags) {
+      if (CATS[t]) catCounts[t]++;
     }
   }
 
-  // Per-shell guide counts
+  // Per-shell guide counts (kept against the MIRANDA window — these are
+  // surface-level navigation cues, not the SEO authority signal)
   var shellGuideCounts = {};
   SHELLS.forEach(function(s) {
     shellGuideCounts[s.tag] = allGuides.filter(function(g) {
@@ -392,7 +460,7 @@ export default async function GuidesPage({ searchParams }) {
         </div>
       </section>
 
-      {/* ══ EXPLORE BY SHELL (now links to dedicated guide pages) ═══ */}
+      {/* ══ EXPLORE BY SHELL ═══════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <SectionHeader
           label="EXPLORE BY SHELL"
@@ -426,9 +494,9 @@ export default async function GuidesPage({ searchParams }) {
         </div>
       </section>
 
-      {/* ══ BROWSE BY CATEGORY (links to real /guides/[slug] routes) ══ */}
+      {/* ══ BROWSE BY CATEGORY ═══════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
-        <SectionHeader label="BROWSE BY CATEGORY" />
+        <SectionHeader label="BROWSE BY CATEGORY" count={Object.keys(CATS).length + ' CATEGORIES'} />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 5 }}>
           {Object.entries(CATS).map(function(entry) {
