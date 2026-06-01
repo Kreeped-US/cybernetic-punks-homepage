@@ -1,4 +1,14 @@
 // app/shells/page.js
+//
+// SEO PASS June 1, 2026:
+// - Title now leads with "Marathon Shells" (high-volume search term) and
+//   uses concrete numerics ("All 7 Runners") instead of generic "Complete
+//   Guide" framing.
+// - Description front-loads the 7 shell names so they don't get cut by
+//   Google's 160-char snippet limit. Drops near-synonym filler.
+// - Twitter card now has an explicit description + matching title.
+// - CollectionPage schema unchanged.
+
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import ShellsHubClient from './ShellsHubClient';
@@ -6,17 +16,21 @@ import ShellsHubClient from './ShellsHubClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Runner Shells — Complete Guide',
-  description: 'Every Marathon Runner Shell ranked, analyzed, and broken down. Stats, abilities, cores, implants, and build guides for Assassin, Destroyer, Recon, Rook, Thief, Triage, and Vandal.',
+  title: 'Marathon Shells — Tier List, Stats & Build Guides for All 7 Runners',
+  description: 'Marathon shell guides for all 7 Runners — Assassin, Destroyer, Recon, Rook, Thief, Triage, Vandal. Stats, abilities, cores, implants, and tier rankings.',
   openGraph: {
-    title: 'Marathon Runner Shells — Complete Guide | CyberneticPunks',
-    description: 'Stats, abilities, cores, implants, and build guides for every Marathon Runner Shell.',
+    title: 'Marathon Shells — Tier List, Stats & Build Guides for All 7 Runners | CyberneticPunks',
+    description: 'Stats, abilities, cores, implants, and tier rankings for every Marathon Runner Shell.',
     url: 'https://cyberneticpunks.com/shells',
+    siteName: 'CyberneticPunks',
+    type: 'website',
     images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Marathon Runner Shells — CyberneticPunks',
+    site: '@Cybernetic87250',
+    title: 'Marathon Shells — Tier List & Build Guides',
+    description: 'Stats, abilities, and tier rankings for all 7 Marathon Runner Shells.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/shells' },
@@ -75,8 +89,8 @@ export default async function ShellsIndexPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
-        name: 'Marathon Runner Shells — Complete Guide',
-        description: 'Stats, abilities, cores, implants, and build guides for every Marathon Runner Shell.',
+        name: 'Marathon Shells — Tier List, Stats & Build Guides for All 7 Runners',
+        description: 'Stats, abilities, cores, implants, and tier rankings for all 7 Marathon Runner Shells.',
         url: 'https://cyberneticpunks.com/shells',
         mainEntity: {
           '@type': 'ItemList',
