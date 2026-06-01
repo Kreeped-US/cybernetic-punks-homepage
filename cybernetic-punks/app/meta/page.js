@@ -6,6 +6,15 @@
 // lib/supabase, which uses a lazy-init Proxy. Module-scope createClient
 // throws "supabaseUrl is required" during Next.js 16 build because env
 // vars aren't populated when modules are evaluated at build time.
+//
+// SEO PASS June 1, 2026:
+// - Title now leads with searcher intent ("Best Weapons & Shells Ranked")
+//   and stays within Google's ~60-char display window.
+// - Real em-dash (—) in place of double-hyphen (--), which previously
+//   rendered as two literal hyphens in search results.
+// - Description tightened to ~140 chars, drops front-facing "AI editors"
+//   framing (AI-skeptical audience), adds concrete tier letters.
+// - OG and Twitter titles aligned to the same searcher-voice copy.
 
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -16,22 +25,22 @@ import SeasonResetBanner from '@/components/SeasonResetBanner';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Meta Tier List -- What Weapons & Builds Are Winning Right Now',
-  description: 'Live Marathon tier list updated every 6 hours. See which weapons, shells, and loadouts are dominating in Marathon right now. Tracked by AI editors analyzing YouTube, Reddit, and gameplay data.',
+  title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
+  description: 'Live Marathon meta tier list ranking every weapon and Runner Shell. See what\'s S-tier, A-tier, and what\'s falling — updated every 6 hours.',
   keywords: 'Marathon tier list, Marathon meta, Marathon best weapons, Marathon S-tier, Marathon weapons ranked, Marathon shells tier list, best Marathon weapons, Marathon meta tier list, Marathon ranked tier list, Marathon weapon tier list 2026, Marathon top weapons, Marathon top shells, Marathon dominant builds, Marathon meta snapshot, Marathon weapon ranking, what is the meta in Marathon',
   openGraph: {
-    title: 'Marathon Meta Tier List -- CyberneticPunks',
-    description: 'Live Marathon tier list updated every 6 hours. See what weapons and builds are actually winning.',
+    title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
+    description: 'Live Marathon tier list — every weapon and shell ranked. Updated every 6 hours.',
     url: 'https://cyberneticpunks.com/meta',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630, alt: 'Marathon Meta Tier List -- CyberneticPunks' }],
+    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630, alt: 'Marathon Meta Tier List — CyberneticPunks' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Meta Tier List -- CyberneticPunks',
-    description: 'Live Marathon tier list. What weapons, strategies, and loadouts are winning right now.',
+    title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
+    description: 'Live Marathon tier list — every weapon and shell ranked. Updated every 6 hours.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/meta' },
@@ -121,7 +130,7 @@ export default async function MetaPage() {
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Marathon Meta Tier List -- Top Weapons and Shells',
+    name: 'Marathon Meta Tier List — Top Weapons and Shells',
     description: 'Ranked tier list of Marathon weapons and Runner Shells based on current meta analysis.',
     numberOfItems: sortedForSchema.length,
     itemListOrder: 'https://schema.org/ItemListOrderDescending',
@@ -130,7 +139,7 @@ export default async function MetaPage() {
         '@type': 'ListItem',
         position: i + 1,
         name: item.name,
-        description: (item.tier ? item.tier + '-tier ' : '') + (item.type || 'item') + (item.note ? ' -- ' + item.note : ''),
+        description: (item.tier ? item.tier + '-tier ' : '') + (item.type || 'item') + (item.note ? ' — ' + item.note : ''),
       };
     }),
   };
