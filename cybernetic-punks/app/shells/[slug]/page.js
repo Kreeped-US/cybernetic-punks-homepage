@@ -6,6 +6,20 @@
 // Proxy in lib/supabase.js throws "supabaseUrl is required". Hardcoding
 // keeps static pre-rendering for SEO. Add new shells here (Sentinel
 // post-May 25) when added to shell_stats.
+//
+// SEO PASS June 1, 2026:
+// - Title now leads with "Marathon [Shell] Guide" (literal search pattern)
+//   and drops the redundant '| CyberneticPunks' suffix — the layout's
+//   title.template appends it automatically.
+// - Replaced '--' double-hyphen with real em-dash (—) throughout titles
+//   and descriptions. Double-hyphens render as two literal hyphens in
+//   Google search results.
+// - Description tightened, leads with "Marathon [Shell] guide" instead
+//   of "Complete [Shell] guide for Marathon" generic phrasing.
+// - Added three JSON-LD schemas per shell page: BreadcrumbList, FAQPage
+//   (built from the same faqItems we already build for the client), and
+//   WebPage with dateModified. Across 7 shells that's 21 new structured-
+//   data instances.
 
 import { supabase } from '../../../lib/supabase';
 import { cookies } from 'next/headers';
@@ -44,20 +58,37 @@ export async function generateMetadata({ params }) {
   var slug = (await params).slug;
   var shellName = slug.charAt(0).toUpperCase() + slug.slice(1);
   var { data: shell } = await supabase.from('shell_stats').select('name, role, lore_tagline, best_for').eq('name', shellName).single();
-  if (!shell) return { title: 'Shell Not Found | CyberneticPunks' };
+  if (!shell) return { title: 'Shell Not Found' };
+
+  // Title leads with "Marathon [Shell] Guide" — matches literal search pattern.
+  // No '| CyberneticPunks' suffix here; layout's title.template appends it.
+  var title = 'Marathon ' + shell.name + ' Guide — Builds, Tier List & Best Loadouts';
+
+  // Description: lore_tagline if available, otherwise generic. Both use a real
+  // em-dash and lead with "Marathon [Shell] guide" — the actual search term.
   var desc = shell.lore_tagline
-    ? shell.lore_tagline + ' Complete ' + shell.name + ' guide for Marathon -- stats, abilities, cores, implants, and ranked build analysis.'
-    : 'Complete ' + shell.name + ' guide for Marathon. Stats, abilities, best cores, implants, and ranked build guides -- updated every 6 hours by CyberneticPunks.';
+    ? shell.lore_tagline + ' Marathon ' + shell.name + ' guide — stats, abilities, cores, implants, and tier ranking.'
+    : 'Marathon ' + shell.name + ' guide — stats, abilities, best cores, implants, and tier rankings. Updated every 6 hours.';
+
   return {
-    title: shell.name + ' Guide -- Builds, Meta & Tips | CyberneticPunks',
+    title: title,
     description: desc,
     openGraph: {
-      title: shell.name + ' Guide -- Builds, Meta & Tips | CyberneticPunks',
+      // OG title keeps '| CyberneticPunks' for social-share recognizability
+      title: title + ' | CyberneticPunks',
       description: desc,
       url: 'https://cyberneticpunks.com/shells/' + slug,
+      siteName: 'CyberneticPunks',
+      type: 'website',
       images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
     },
-    twitter: { card: 'summary_large_image', title: shell.name + ' Guide | CyberneticPunks', images: ['https://cyberneticpunks.com/og-image.png'] },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@Cybernetic87250',
+      title: 'Marathon ' + shell.name + ' Guide — Builds & Tier List',
+      description: 'Stats, abilities, builds, and tier ranking for the ' + shell.name + ' shell.',
+      images: ['https://cyberneticpunks.com/og-image.png'],
+    },
     alternates: { canonical: 'https://cyberneticpunks.com/shells/' + slug },
   };
 }
@@ -70,9 +101,9 @@ export default async function ShellHubPage({ params }) {
     supabase.from('shell_stats').select('*').eq('name', shellName).single(),
     supabase.from('core_stats').select('name, rarity, effect_desc, ability_type, ranked_viable, required_runner').or('required_runner.eq.' + shellName + ',required_runner.is.null').order('rarity', { ascending: false }),
     supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').or('required_runner.eq.' + shellName + ',required_runner.is.null').order('rarity', { ascending: false }),
-    supabase.from('meta_tiers').select('tier, trend, note, ranked_note').eq('name', shellName).eq('type', 'shell').maybeSingle(),
+    supabase.from('meta_tiers').select('tier, trend, note, ranked_note, updated_at').eq('name', shellName).eq('type', 'shell').maybeSingle(),
 
-    // {shellName} Intel -- excludes NEXUS and DEXTER (dedicated panels above)
+    // {shellName} Intel — excludes NEXUS and DEXTER (dedicated panels above)
     supabase
       .from('feed_items')
       .select('id, headline, slug, tags, ce_score, editor, thumbnail, created_at')
@@ -84,7 +115,7 @@ export default async function ShellHubPage({ params }) {
 
     supabase.from('shell_stats').select('name, role, image_filename'),
 
-    // NEXUS's Take -- latest 2 NEXUS articles about this shell
+    // NEXUS's Take — latest 2 NEXUS articles about this shell
     supabase
       .from('feed_items')
       .select('id, headline, slug, body, ce_score, thumbnail, created_at')
@@ -94,7 +125,7 @@ export default async function ShellHubPage({ params }) {
       .order('created_at', { ascending: false })
       .limit(2),
 
-    // DEXTER's Picks -- top 3 DEXTER builds for this shell, sorted by ce_score
+    // DEXTER's Picks — top 3 DEXTER builds for this shell, sorted by ce_score
     supabase
       .from('feed_items')
       .select('id, headline, slug, body, ce_score, thumbnail, created_at')
@@ -108,7 +139,7 @@ export default async function ShellHubPage({ params }) {
   var shell = shellRes.data;
   if (!shell) notFound();
 
-  // Viewer match -- check if logged-in user's favorite_shell matches this page
+  // Viewer match — check if logged-in user's favorite_shell matches this page
   var cookieStore = await cookies();
   var playerId = cookieStore.get('cp_player_id')?.value;
   var viewerMatches = false;
@@ -171,26 +202,87 @@ export default async function ShellHubPage({ params }) {
   if (metaTier) faqItems.push({ q: 'Is ' + shellName + ' good in Marathon ranked?', a: shellName + ' is currently ' + metaTier.tier + '-Tier in ranked.' + (metaTier.ranked_note ? ' ' + metaTier.ranked_note : '') });
   if (shell.active_ability_name) faqItems.push({ q: 'What is ' + shellName + "'s active ability?", a: shell.active_ability_name + (shell.active_ability_description ? ': ' + shell.active_ability_description : '') });
 
+  // ─── JSON-LD SCHEMAS ────────────────────────────────────────
+  // Three schemas per shell page. The faqSchema is built from the same
+  // faqItems we already construct for the client, so no duplication of
+  // logic — same data, two consumers.
+
+  var breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',     item: 'https://cyberneticpunks.com' },
+      { '@type': 'ListItem', position: 2, name: 'Shells',   item: 'https://cyberneticpunks.com/shells' },
+      { '@type': 'ListItem', position: 3, name: shellName + ' Guide', item: 'https://cyberneticpunks.com/shells/' + slug },
+    ],
+  };
+
+  // dateModified: prefer the meta_tier update timestamp (most recent NEXUS
+  // grading) if available, otherwise fall back to the latest article.
+  var lastModified = (metaTier && metaTier.updated_at)
+    || (nexusTake[0] && nexusTake[0].created_at)
+    || (articles[0] && articles[0].created_at)
+    || new Date().toISOString();
+
+  var webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Marathon ' + shellName + ' Guide',
+    description: 'Complete guide to the ' + shellName + ' Runner Shell in Marathon — stats, abilities, cores, implants, builds, and tier ranking.',
+    url: 'https://cyberneticpunks.com/shells/' + slug,
+    dateModified: lastModified,
+    about: {
+      '@type': 'Thing',
+      name: shellName + ' Runner Shell',
+      description: shell.lore_tagline || (shellName + ' is a Runner Shell in Marathon, Bungie\'s extraction shooter.'),
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'CyberneticPunks',
+      url:  'https://cyberneticpunks.com',
+    },
+  };
+
+  var faqSchema = faqItems.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map(function(item) {
+      return {
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      };
+    }),
+  } : null;
+
   return (
-    <ShellDetailClient
-      shell={shell}
-      shellName={shellName}
-      slug={slug}
-      color={SHELL_COLORS[slug] || '#00ff41'}
-      symbol={SHELL_SYMBOLS[slug] || '*'}
-      metaTier={metaTier}
-      shellCores={shellCores}
-      universalCores={universalCores}
-      articles={articles}
-      strengths={strengths}
-      weaknesses={weaknesses}
-      counteredShells={counteredShells}
-      synergyShells={synergyShells}
-      viewerMatches={viewerMatches}
-      pickPct={pickPct}
-      faqItems={faqItems}
-      nexusTake={nexusTake}
-      dexterPicks={dexterPicks}
-    />
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      {faqSchema && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      )}
+
+      <ShellDetailClient
+        shell={shell}
+        shellName={shellName}
+        slug={slug}
+        color={SHELL_COLORS[slug] || '#00ff41'}
+        symbol={SHELL_SYMBOLS[slug] || '*'}
+        metaTier={metaTier}
+        shellCores={shellCores}
+        universalCores={universalCores}
+        articles={articles}
+        strengths={strengths}
+        weaknesses={weaknesses}
+        counteredShells={counteredShells}
+        synergyShells={synergyShells}
+        viewerMatches={viewerMatches}
+        pickPct={pickPct}
+        faqItems={faqItems}
+        nexusTake={nexusTake}
+        dexterPicks={dexterPicks}
+      />
+    </>
   );
 }
