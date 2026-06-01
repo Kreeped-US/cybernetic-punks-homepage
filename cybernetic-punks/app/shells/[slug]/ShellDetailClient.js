@@ -3,6 +3,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import CoachCTA from '@/components/CoachCTA';
 
+// SEO FIX June 1, 2026:
+// - Removed the duplicate FAQ schema at the bottom of this file. The server
+//   component (page.js) now injects a clean FAQPage schema using the same
+//   faqItems data. Two schemas was confusing Google's Rich Results Test.
+// - Added a visible FAQ section above the "Other Shells" nav. Google
+//   requires FAQ schema content to be visible on the page; previously
+//   faqItems was passed in but never rendered, which violated policy.
+
 var SHELL_COLORS = {
   Assassin: '#cc44ff', Destroyer: '#ff3333', Recon: '#00d4ff',
   Rook: '#888888', Thief: '#ffd700', Triage: '#00ff88', Vandal: '#ff8800',
@@ -69,6 +77,7 @@ export default function ShellDetailClient({
   // Defensive defaults — gracefully handle missing props
   var nexusArticles = nexusTake || [];
   var dexterBuilds = dexterPicks || [];
+  var faqs = faqItems || [];
 
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
@@ -80,6 +89,7 @@ export default function ShellDetailClient({
         .bottom-nav:hover     { background: #1e2228 !important; }
         .nx-take-card:hover   { background: #1e2228 !important; }
         .dx-pick-card:hover   { background: #1e2228 !important; }
+        .faq-card:hover       { background: #1e2228 !important; }
       `}</style>
 
       {/* ══ HERO ══════════════════════════════════════════════ */}
@@ -711,6 +721,54 @@ export default function ShellDetailClient({
           <CoachCTA variant="banner" />
         </section>
 
+        {/* ══ FAQ ════════════════════════════════════════════ */}
+        {/* Visible FAQ section. Renders the same `faqItems` data that the */}
+        {/* server's FAQPage JSON-LD schema references. Google's policy    */}
+        {/* requires schema FAQ content to be visible on the page.         */}
+        {faqs.length > 0 && (
+          <section style={{ paddingTop: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Frequently Asked</span>
+              <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{faqs.length} QUESTION{faqs.length !== 1 ? 'S' : ''}</span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 6 }}>
+              {faqs.map(function(item, i) {
+                return (
+                  <div key={i} className="faq-card" style={{
+                    background: '#1a1d24',
+                    border: '1px solid #22252e',
+                    borderLeft: '3px solid ' + color,
+                    borderRadius: '0 3px 3px 0',
+                    padding: '14px 18px',
+                    transition: 'background 0.1s',
+                  }}>
+                    <h3 style={{
+                      fontFamily: 'Orbitron, monospace',
+                      fontSize: 13,
+                      fontWeight: 800,
+                      color: '#fff',
+                      margin: '0 0 10px',
+                      lineHeight: 1.35,
+                    }}>
+                      {item.q}
+                    </h3>
+                    <p style={{
+                      fontSize: 13,
+                      color: 'rgba(255,255,255,0.55)',
+                      lineHeight: 1.65,
+                      margin: 0,
+                    }}>
+                      {item.a}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* ══ OTHER SHELLS ════════════════════════════════════ */}
         <section style={{ paddingTop: 32, paddingBottom: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -771,16 +829,6 @@ export default function ShellDetailClient({
           </Link>
         </div>
       )}
-
-      {/* FAQ Schema */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': faqItems.length > 0 ? 'FAQPage' : 'WebPage',
-        name: shellName + ' Guide — Marathon Runner Shell | CyberneticPunks',
-        description: 'Complete ' + shellName + ' guide for Marathon. Stats, abilities, cores, implants, and build guides.',
-        url: 'https://cyberneticpunks.com/shells/' + slug,
-        ...(faqItems.length > 0 ? { mainEntity: faqItems.map(function(item) { return { '@type': 'Question', name: item.q, acceptedAnswer: { '@type': 'Answer', text: item.a } }; }) } : {}),
-      })}} />
     </main>
   );
 }
