@@ -2,18 +2,25 @@
 // Server component — fetches faction data + cross-referenced items/articles.
 // Now includes JSON-LD schemas (BreadcrumbList + WebApplication + FAQPage)
 // and passes urlShell prop to client for deep-linking from homepage callout.
+//
+// SEO PASS June 1, 2026:
+// - Title tightened: dropped redundant double-"Guide", leads with the most
+//   common search term ("Marathon Factions"), concrete value in the tail.
+// - Description tightened to ~160 chars so the faction-name list (real
+//   topical signals) doesn't get truncated in Google's snippet display.
+// - OG and Twitter aligned to the new copy.
 
 import FactionClient from './FactionClient';
 import SeasonResetBanner from '@/components/SeasonResetBanner';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
-  title: 'Marathon Faction Guide — Unlock Requirements & Investment Guide',
-  description: 'Complete Marathon faction guide. Every unlock, stat bonus, rank requirement, and credit cost for all 6 factions — Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi. Find the fastest path to the build you want.',
+  title: 'Marathon Factions — Unlock Requirements, Stat Bonuses & Rank Costs',
+  description: 'Complete Marathon faction guide — every unlock, stat bonus, rank requirement, and credit cost for all 6 factions: Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi.',
   keywords: 'Marathon factions, Marathon faction guide, Marathon Arachne unlock, Marathon Traxus mods, Marathon faction rank requirements, Marathon faction upgrades, Marathon faction investment, which Marathon faction to choose, Marathon faction tier list, best Marathon faction for shell, Marathon faction progression, Shell Faction Advisor',
   openGraph: {
-    title: 'Marathon Faction Guide — Unlock Requirements & Investment Guide | CyberneticPunks',
-    description: 'Every faction unlock, stat bonus, and rank requirement for all 6 Marathon factions. Find which faction to prioritize for your shell.',
+    title: 'Marathon Factions — Unlock Requirements, Stat Bonuses & Rank Costs | CyberneticPunks',
+    description: 'Every unlock, stat bonus, and rank requirement for all 6 Marathon factions. Find which faction to prioritize for your shell.',
     url: 'https://cyberneticpunks.com/factions',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -22,7 +29,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Faction Guide | CyberneticPunks',
+    title: 'Marathon Factions — Unlock Requirements & Rank Costs',
     description: 'Every faction unlock, stat bonus, and rank requirement. Find the fastest path to the build you want.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
