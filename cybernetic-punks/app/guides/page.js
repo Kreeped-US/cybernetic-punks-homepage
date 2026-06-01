@@ -11,6 +11,8 @@
 //   pvp, support, cryo-archive) so Browse by Category surfaces all 16 pages, not 8.
 // - Per-category counts now query the full corpus via Postgres array overlap
 //   instead of slicing from the 80-article MIRANDA window. Numbers reflect reality.
+// - Browse by Category card layout: count column enlarged + anchored so triple-digit
+//   counts (235, 431, 592) don't crowd the labels.
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -495,22 +497,24 @@ export default async function GuidesPage({ searchParams }) {
       </section>
 
       {/* ══ BROWSE BY CATEGORY ═══════════════════════════════ */}
+      {/* Count column enlarged + flex-anchored so 3-digit numbers (235, 431, 592) */}
+      {/* don't crowd the label/desc text on the left.                            */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <SectionHeader label="BROWSE BY CATEGORY" count={Object.keys(CATS).length + ' CATEGORIES'} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 5 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 5 }}>
           {Object.entries(CATS).map(function(entry) {
             var tag = entry[0];
             var cat = entry[1];
             var slug = TAG_TO_SLUG[tag];
             var count = catCounts[tag] || 0;
             return (
-              <Link key={tag} href={'/guides/' + slug} className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
-                <div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: cat.color, letterSpacing: 2, marginBottom: 2, fontWeight: 700 }}>{cat.label}</div>
+              <Link key={tag} href={'/guides/' + slug} className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: cat.color, letterSpacing: 2, marginBottom: 3, fontWeight: 700 }}>{cat.label}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.desc.slice(0, 36)}</div>
                 </div>
-                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.5)' }}>{count}</span>
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: cat.color, lineHeight: 1, flexShrink: 0, minWidth: 36, textAlign: 'right' }}>{count}</span>
               </Link>
             );
           })}
