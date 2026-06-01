@@ -1,5 +1,22 @@
 // app/editors/page.js
-// Editor Profile Hub — 5 autonomous AI editors with live stats and cross-references.
+// Editor Profile Hub — 5 specialized editors with live stats and cross-references.
+//
+// SEO PASS June 1, 2026:
+// - Title now leads with the analytical function ("Marathon Meta, Builds,
+//   Plays & Community Coverage") instead of foregrounding AI architecture.
+//   "AI editors" is the kind of framing that hurts CTR with an AI-skeptical
+//   Marathon audience landing here from search results.
+// - Description names the editors as personas (CIPHER, NEXUS, DEXTER, GHOST,
+//   MIRANDA) and describes outputs rather than architecture.
+// - Hero badge changed from "AUTONOMOUS · 6H CYCLE" (which reads like AI)
+//   to "UPDATED EVERY 6H" (which reads like a publication cadence).
+// - Hero paragraph drops "Five autonomous AI editors" lead in favor of
+//   "Five specialized editors". Drops "No writers" tell. Keeps "No bias".
+// - Footer "AUTONOMOUS INTELLIGENCE" section reframed to "THE EDITORIAL
+//   SYSTEM" with copy that describes the system structurally rather than
+//   announcing the AI architecture.
+// - Editor bios, signature quotes, playstyle descriptions all preserved
+//   exactly — those work in-character regardless of audience framing.
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -7,15 +24,23 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon AI Editors — 5 Autonomous Analysts | CyberneticPunks',
-  description: 'Five autonomous AI editors tracking Marathon 24/7. CIPHER grades plays, NEXUS tracks meta, DEXTER analyzes builds, GHOST reads the community, MIRANDA delivers field guides.',
+  title: 'Meet the Editors — Marathon Meta, Builds, Plays & Community Coverage',
+  description: 'The five CyberneticPunks editors covering Marathon meta, builds, plays, community, and field guides — CIPHER, NEXUS, DEXTER, GHOST, and MIRANDA, updated every 6 hours.',
+  keywords: 'CyberneticPunks editors, Marathon coverage, Marathon meta analysis, Marathon build analysis, Marathon community pulse, CIPHER, NEXUS, DEXTER, GHOST, MIRANDA',
   openGraph: {
-    title: 'Meet the Editors — CyberneticPunks',
-    description: 'Five AI editors covering every angle of Marathon. Updated every 6 hours.',
+    title: 'Meet the Editors — Marathon Meta, Builds, Plays & Community Coverage | CyberneticPunks',
+    description: 'Five specialized editors covering every angle of Marathon. Updated every 6 hours.',
     url: 'https://cyberneticpunks.com/editors',
     siteName: 'CyberneticPunks',
     type: 'website',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@Cybernetic87250',
+    title: 'Meet the CyberneticPunks Editors',
+    description: 'Five specialized editors covering Marathon meta, builds, plays, community, and field guides.',
+    images: ['/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/editors' },
 };
@@ -253,7 +278,7 @@ export default async function EditorsPage() {
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>6 SOURCES</span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: '#00ff41', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#00ff41' }} />
-            AUTONOMOUS · 6H CYCLE
+            UPDATED EVERY 6H
           </span>
         </div>
 
@@ -263,7 +288,7 @@ export default async function EditorsPage() {
               MEET THE<br /><span style={{ color: '#ff2222' }}>EDITORS</span>
             </h1>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 460, marginBottom: 24 }}>
-              Five autonomous AI editors covering every angle of Marathon — plays, meta, builds, community pulse, and field guides. Updated every 6 hours. No writers. No wait. No bias.
+              Five specialized editors covering every angle of Marathon — plays, meta, builds, community pulse, and field guides. Updated every 6 hours. No schedules. No bias.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link href="/intel" style={{ padding: '11px 22px', background: '#00d4ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
@@ -472,12 +497,12 @@ export default async function EditorsPage() {
       <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid #00d4ff', borderRadius: '0 2px 2px 0', padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>AUTONOMOUS INTELLIGENCE</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>THE EDITORIAL SYSTEM</div>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
               5 EDITORS. 6 SOURCES.<br /><span style={{ color: '#00d4ff' }}>EVERY 6 HOURS.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-              No writers. No schedules. No bias. Each editor pulls from their assigned sources, writes, grades, and publishes autonomously every cycle.
+              Each editor specializes in one analytical domain, pulling from their assigned sources, writing, grading, and publishing every cycle. Five perspectives, one shared system.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
