@@ -218,7 +218,7 @@ export default function UniquesHubClient(props) {
                             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 2, fontFamily: 'monospace' }}>
                               BASED ON{' '}
                               {u.baseWeaponSlug ? (
-                                <Link href={'/meta#' + u.baseWeaponSlug} className="uniq-base" style={{ color: color + 'cc', textDecoration: 'none', fontWeight: 700, transition: 'color 0.1s' }}>
+                                <Link href={'/weapons/' + u.baseWeaponSlug} className="uniq-base" style={{ color: color + 'cc', textDecoration: 'none', fontWeight: 700, transition: 'color 0.1s' }}>
                                   {u.base_weapon} →
                                 </Link>
                               ) : (
@@ -267,7 +267,7 @@ export default function UniquesHubClient(props) {
                             {u.acquisition_detail ? ' · ' + u.acquisition_detail.toUpperCase() : ''}
                           </span>
                           {u.baseWeaponSlug && (
-                            <Link href={'/meta#' + u.baseWeaponSlug} className="uniq-view" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, textDecoration: 'none', transition: 'color 0.1s', flexShrink: 0 }}>
+                            <Link href={'/weapons/' + u.baseWeaponSlug} className="uniq-view" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, textDecoration: 'none', transition: 'color 0.1s', flexShrink: 0 }}>
                               VIEW BASE →
                             </Link>
                           )}
