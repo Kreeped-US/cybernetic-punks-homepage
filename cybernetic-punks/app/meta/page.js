@@ -15,6 +15,11 @@
 // - Description tightened to ~140 chars, drops front-facing "AI editors"
 //   framing (AI-skeptical audience), adds concrete tier letters.
 // - OG and Twitter titles aligned to the same searcher-voice copy.
+//
+// CADENCE FIX June 2, 2026:
+// - Cron cadence is now 12h (00:00 + 12:00 UTC), not 6h. Replaced all
+//   "every 6 hours" claims with cadence-agnostic "throughout the day"
+//   to match the homepage and avoid stale-interval claims going forward.
 
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -26,11 +31,11 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
-  description: 'Live Marathon meta tier list ranking every weapon and Runner Shell. See what\'s S-tier, A-tier, and what\'s falling — updated every 6 hours.',
+  description: 'Live Marathon meta tier list ranking every weapon and Runner Shell. See what\'s S-tier, A-tier, and what\'s falling — updated throughout the day.',
   keywords: 'Marathon tier list, Marathon meta, Marathon best weapons, Marathon S-tier, Marathon weapons ranked, Marathon shells tier list, best Marathon weapons, Marathon meta tier list, Marathon ranked tier list, Marathon weapon tier list 2026, Marathon top weapons, Marathon top shells, Marathon dominant builds, Marathon meta snapshot, Marathon weapon ranking, what is the meta in Marathon',
   openGraph: {
     title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
-    description: 'Live Marathon tier list — every weapon and shell ranked. Updated every 6 hours.',
+    description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/meta',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -40,7 +45,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
-    description: 'Live Marathon tier list — every weapon and shell ranked. Updated every 6 hours.',
+    description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/meta' },
@@ -105,7 +110,7 @@ export default async function MetaPage() {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'Marathon Meta Tier List',
-    description: 'Live Marathon tier list ranking weapons, shells, and loadouts. Updated every 6 hours by AI editors analyzing gameplay, community sentiment, and patch impacts.',
+    description: 'Live Marathon tier list ranking weapons, shells, and loadouts. Updated throughout the day by AI editors analyzing gameplay, community sentiment, and patch impacts.',
     url: 'https://cyberneticpunks.com/meta',
     dateModified: lastUpdated,
     publisher: {
