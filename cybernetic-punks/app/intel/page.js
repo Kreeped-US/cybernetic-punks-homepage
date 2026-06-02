@@ -2,7 +2,29 @@
 // SEO depth pass — April 30, 2026.
 // Adds: revalidate, expanded keywords, visible breadcrumb,
 // BreadcrumbList + CollectionPage (with dateModified) + ItemList (richer)
-// + FAQPage (5 questions establishing E-E-A-T around AI editors).
+// + FAQPage.
+//
+// MAJOR REWRITE June 2, 2026 — fixed 235 impressions / 0 clicks GSC problem:
+// - Old title led with cadence ("Every 6 Hours") which (a) doesn't match a
+//   real search query and (b) was factually inaccurate after the cadence
+//   change to 12h. New title leads with searcher intent ("Marathon News &
+//   Latest Updates").
+// - Old description led with brand claim ("most current Marathon intel hub").
+//   New description names concrete content types (news, builds, meta, ranked,
+//   patches).
+// - FAQs were about the publication SYSTEM (AI-generated? who writes them?
+//   where does the data come from?). Replaced with FAQs about MARATHON —
+//   what searchers actually ask. Old FAQs leaked AI framing into the public
+//   FAQPage schema, which contradicted our Path 2 editorial-positioning
+//   strategy from June 1.
+// - Hero badge changed from "5 EDITORS · PUBLISHING EVERY 6 HOURS" (system
+//   bragging) to "REFRESHED THROUGHOUT THE DAY" (publication cadence as
+//   reader benefit, not system feature).
+// - H1 changed from "Intel Feed." (internal jargon) to "Marathon News &
+//   Latest Updates." (what the page actually is).
+// - Section header "About Our Editors" → "Frequently Asked About Marathon".
+// - All "every 6 hours" copy replaced with "throughout the day" to match
+//   the meta page and the actual 12h cron.
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -10,12 +32,12 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export var metadata = {
-  title: 'Marathon Updates Every 6 Hours — Builds, Meta, Patches & Ranked Intel',
-  description: 'The most current Marathon intel hub. Live tier list, ranked builds, patch breakdowns, Cryo Archive guides, and meta shifts — refreshed throughout the day. 1,000+ articles covering every shell, weapon, and faction.',
-  keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon AI editors, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates',
+  title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel',
+  description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction — refreshed throughout the day.',
+  keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates, Marathon Season 2, Marathon S2 news',
   openGraph: {
-    title: 'Marathon Intel Hub — Refreshed Every 6 Hours | CyberneticPunks',
-    description: 'Live tier list, ranked builds, patch breakdowns, Cryo Archive guides, and meta shifts. The most current Marathon intel on the web — 1,000+ articles, refreshed throughout the day.',
+    title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel | CyberneticPunks',
+    description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction.',
     url: 'https://cyberneticpunks.com/intel',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -24,8 +46,8 @@ export var metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Intel Hub — Refreshed Every 6 Hours | CyberneticPunks',
-    description: 'Live tier list, ranked builds, patch breakdowns, and meta shifts. The most current Marathon intel on the web.',
+    title: 'Marathon News & Latest Updates — CyberneticPunks',
+    description: 'Latest Marathon news, builds, meta shifts, and ranked intel. Refreshed throughout the day.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/intel' },
@@ -51,6 +73,39 @@ function timeAgo(dateStr) {
   if (diffD < 7) return diffD + 'd ago';
   return Math.floor(diffD / 7) + 'w ago';
 }
+
+// ─── FAQ DATA ──────────────────────────────────────────────
+// Rewritten June 2, 2026. Old FAQs were about the publication system
+// ("Are the articles AI-generated?", "Who writes the articles?"). New
+// FAQs answer questions a Marathon player would actually type into
+// Google. Each answer naturally includes a link to a relevant page,
+// turning the FAQ into a navigation funnel.
+var MARATHON_FAQS = [
+  {
+    q: 'What\'s new in Marathon right now?',
+    a: 'Season 2 (NIGHTFALL) launched June 2, 2026, with major balance changes, a new Sentinel shell, the KKV-9SD SMG, the D54 Battle Pistol, and eight new weapon chips. Open Play Week runs through June 9, with the new Ranked queue opening June 14. Our intel feed covers every shift as it happens — meta tier movements, build viability changes, patch breakdowns, and community reactions.',
+  },
+  {
+    q: 'Where can I find the current Marathon meta tier list?',
+    a: 'The live Marathon tier list at /meta ranks every weapon and Runner Shell by current viability. Rankings shift throughout the day based on play data, community sentiment, and patch impacts. The page also lets you build and share your own tier list.',
+  },
+  {
+    q: 'What\'s the best Marathon shell for ranked play?',
+    a: 'Currently, Vandal and Thief dominate solo ranked, while Recon and Triage excel in squads. Rook is banned from Ranked. The specific S-tier shells shift week-to-week — check the live shell tier list at /shells or the meta page for the current rankings. Each shell has a dedicated guide with stats, abilities, builds, and matchup data.',
+  },
+  {
+    q: 'How often does the Marathon meta change?',
+    a: 'Significantly with every Bungie patch (roughly every 2-4 weeks), and continuously between patches as the community discovers new builds and counters. Our meta tier list refreshes throughout the day to capture both — major shifts after balance updates and incremental movement during patch cycles.',
+  },
+  {
+    q: 'Where do I find Marathon patch notes and update analysis?',
+    a: 'Bungie publishes official patch notes on their site, but the impact on builds and meta takes 24-72 hours to fully shake out. Our intel feed covers each patch with build viability changes, tier list movements, and community sentiment analysis — usually within hours of release.',
+  },
+  {
+    q: 'How do I build a competitive Marathon loadout?',
+    a: 'The Build Advisor at /advisor generates a complete loadout in seconds — pick your shell, playstyle, and rank goal, and get back weapons, mods, cores, and implants tuned to current meta. For step-by-step shell guides covering each Runner\'s strengths, weaknesses, and recommended cores, see /guides.',
+  },
+];
 
 export default async function IntelHubPage() {
   var { data: articles } = await supabase
@@ -88,8 +143,8 @@ export default async function IntelHubPage() {
   var collectionPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Marathon Intel — All Updates',
-    description: 'Every article from every AI editor on CyberneticPunks. Plays, meta, builds, and community pulse — updated every 6 hours.',
+    name: 'Marathon News & Latest Updates',
+    description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/intel',
     dateModified: lastArticleDate,
     publisher: {
@@ -125,53 +180,21 @@ export default async function IntelHubPage() {
     }),
   };
 
-  // FAQPage — establishes E-E-A-T with transparent AI disclosure
-  // Addresses Google's quality rater questions about AI-generated content
+  // FAQPage — now built from MARATHON_FAQS (questions Marathon players ask)
+  // not publication-system FAQs (questions nobody asks).
   var faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: [
-      {
+    mainEntity: MARATHON_FAQS.map(function(item) {
+      return {
         '@type': 'Question',
-        name: 'How often does CyberneticPunks publish new Marathon content?',
+        name: item.q,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Every 6 hours. Five specialized AI editors (CIPHER, NEXUS, DEXTER, GHOST, MIRANDA) automatically publish new Marathon articles covering competitive plays, meta shifts, build analysis, community sentiment, and field guides. The cycle runs four times daily, ensuring readers always see fresh intelligence reflecting the current state of Marathon.',
+          text: item.a,
         },
-      },
-      {
-        '@type': 'Question',
-        name: 'Are the articles AI-generated?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes. CyberneticPunks is the first fully autonomous Marathon intelligence hub. Five AI editors with distinct specializations and voices publish articles automatically. We are transparent about this — our editor profiles are explicit, and the AI-driven nature of the platform is core to how we deliver continuously updated content. No human editor could publish across five specializations every 6 hours.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'How does CyberneticPunks ensure article accuracy?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Editors are constrained by a verified Marathon database covering every weapon, shell, mod, implant, core, and faction unlock. Strict data integrity rules require editors to cite stats and unlock requirements exactly as listed in the database — they cannot invent items, approximate values, or guess at faction rank requirements. When uncertain, editors omit details rather than fabricate them. The system prioritizes verified accuracy over content volume.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Who writes the articles on CyberneticPunks?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Five AI editor personas with distinct lanes. CIPHER analyzes competitive plays and assigns Runner Grades. NEXUS tracks meta shifts and maintains the live tier list. DEXTER engineers builds and grades loadouts. GHOST surfaces community sentiment from Reddit and Steam reviews. MIRANDA writes structured field guides for new and improving Runners. Each editor has a unique voice and focuses on a specific type of Marathon content.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Where does the meta and gameplay data come from?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'CyberneticPunks aggregates intelligence from six primary sources: YouTube gameplay videos, Reddit community discussions on r/Marathon, Bungie official news and patch notes, Twitch streams, the official Marathon game database, and structured tier data maintained by NEXUS. Editors process these sources every 6 hours and publish analysis grounded in current evidence rather than speculation.',
-        },
-      },
-    ],
+      };
+    }),
   };
 
   return (
@@ -200,7 +223,7 @@ export default async function IntelHubPage() {
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
           <li>/</li>
-          <li style={{ color: '#00ff41' }}>INTEL FEED</li>
+          <li style={{ color: '#00ff41' }}>NEWS & UPDATES</li>
         </ol>
       </nav>
 
@@ -208,16 +231,16 @@ export default async function IntelHubPage() {
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
-          <span style={{ fontSize: 10, color: '#00ff41', letterSpacing: 3, fontWeight: 700 }}>5 EDITORS · PUBLISHING EVERY 6 HOURS</span>
+          <span style={{ fontSize: 10, color: '#00ff41', letterSpacing: 3, fontWeight: 700 }}>REFRESHED THROUGHOUT THE DAY</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
           <div style={{ flex: 1, minWidth: 300 }}>
-            <h1 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1, margin: '0 0 12px', color: '#fff' }}>
-              Intel<br /><span style={{ color: '#00ff41' }}>Feed.</span>
+            <h1 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1.05, margin: '0 0 12px', color: '#fff' }}>
+              Marathon News &<br /><span style={{ color: '#00ff41' }}>Latest Updates.</span>
             </h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
-              Everything our editors are publishing about Marathon — plays, meta shifts, builds, and community pulse. All in one feed.
+              Build analysis, meta shifts, ranked intel, patch coverage, and community pulse. All the latest Marathon coverage in one feed.
             </p>
           </div>
 
@@ -354,34 +377,13 @@ export default async function IntelHubPage() {
       {/* ══ FAQ ═════════════════════════════════════════════ */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>About Our Editors</span>
+          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>Frequently Asked About Marathon</span>
           <div style={{ flex: 1, height: 1, background: '#22252e' }} />
-          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>5 QUESTIONS</span>
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{MARATHON_FAQS.length} QUESTIONS</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {[
-            {
-              q: 'How often does CyberneticPunks publish new Marathon content?',
-              a: 'Every 6 hours. Five specialized AI editors (CIPHER, NEXUS, DEXTER, GHOST, MIRANDA) automatically publish new Marathon articles covering competitive plays, meta shifts, build analysis, community sentiment, and field guides. The cycle runs four times daily, ensuring readers always see fresh intelligence reflecting the current state of Marathon.',
-            },
-            {
-              q: 'Are the articles AI-generated?',
-              a: 'Yes. CyberneticPunks is the first fully autonomous Marathon intelligence hub. Five AI editors with distinct specializations and voices publish articles automatically. We are transparent about this — our editor profiles are explicit, and the AI-driven nature of the platform is core to how we deliver continuously updated content. No human editor could publish across five specializations every 6 hours.',
-            },
-            {
-              q: 'How does CyberneticPunks ensure article accuracy?',
-              a: 'Editors are constrained by a verified Marathon database covering every weapon, shell, mod, implant, core, and faction unlock. Strict data integrity rules require editors to cite stats and unlock requirements exactly as listed in the database — they cannot invent items, approximate values, or guess at faction rank requirements. When uncertain, editors omit details rather than fabricate them. The system prioritizes verified accuracy over content volume.',
-            },
-            {
-              q: 'Who writes the articles on CyberneticPunks?',
-              a: 'Five AI editor personas with distinct lanes. CIPHER analyzes competitive plays and assigns Runner Grades. NEXUS tracks meta shifts and maintains the live tier list. DEXTER engineers builds and grades loadouts. GHOST surfaces community sentiment from Reddit and Steam reviews. MIRANDA writes structured field guides for new and improving Runners. Each editor has a unique voice and focuses on a specific type of Marathon content.',
-            },
-            {
-              q: 'Where does the meta and gameplay data come from?',
-              a: 'CyberneticPunks aggregates intelligence from six primary sources: YouTube gameplay videos, Reddit community discussions on r/Marathon, Bungie official news and patch notes, Twitch streams, the official Marathon game database, and structured tier data maintained by NEXUS. Editors process these sources every 6 hours and publish analysis grounded in current evidence rather than speculation.',
-            },
-          ].map(function(item, i) {
+          {MARATHON_FAQS.map(function(item, i) {
             return (
               <details key={i} className="intel-faq">
                 <summary>
@@ -403,8 +405,8 @@ export default async function IntelHubPage() {
           <Link href="/" style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', padding: '8px 18px', border: '1px solid #22252e', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
             ← BACK TO HOME
           </Link>
-          <Link href="/editors" style={{ fontSize: 10, color: '#00ff41', padding: '8px 18px', border: '1px solid rgba(0,255,65,0.3)', background: 'rgba(0,255,65,0.08)', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
-            MEET THE EDITORS →
+          <Link href="/meta" style={{ fontSize: 10, color: '#00ff41', padding: '8px 18px', border: '1px solid rgba(0,255,65,0.3)', background: 'rgba(0,255,65,0.08)', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
+            LIVE TIER LIST →
           </Link>
         </div>
       </section>
