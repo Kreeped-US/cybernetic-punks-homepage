@@ -8,6 +8,15 @@
 // - FAQ section + FAQPage JSON-LD added
 // - BreadcrumbList JSON-LD added
 // - Long-tail keywords expanded
+//
+// LIGHT SEO PASS June 2, 2026 (surgical — this is the #2 traffic page at
+// 13% CTR, so title/description/H1/rank-explainer left UNTOUCHED):
+// - "SEASON 1" filter chip → "SEASON 2" (S2 launched June 2; was a factual
+//   error undercutting the "current" signal).
+// - Ranked-season-reset FAQ rewritten to reflect the S2 reality established
+//   on the /ranked page: ranked RETURNS June 14, 2026, with a single merged
+//   5,000 loadout-value queue. Now funnels to /ranked.
+// - Cross-link label "BUILD LAB →" → "BUILDS & LOADOUTS →" (page renamed).
 
 import Link from 'next/link';
 
@@ -128,8 +137,8 @@ var FAQS = [
     a: "Top ranked Runners typically lean on Vandal for movement-heavy zone rotations, Destroyer for sustained team fights, and Recon for information-driven extraction setups. The CyberneticPunks meta tier list tracks current ranked viability across all seven shells, with Solo and Squad rankings tracked separately. Rook is currently banned from ranked play.",
   },
   {
-    q: 'When does the Marathon ranked season reset?',
-    a: "Marathon's ranked seasons run roughly three months and reset alongside major content drops. Bungie has confirmed seasonal wipes affect gear, progression, and vault contents. Ranked tier resets typically occur within the first week of each new season, requiring placement matches before official rank assignments resume.",
+    q: 'When does Marathon ranked return in Season 2?',
+    a: "Marathon's ranked queue returns June 14, 2026, during Season 2. Season 2 merges the previous Low Stakes and High Stakes queues into a single 5,000 loadout-value ranked queue, with faster progression and Holotag requirements tied to your current rank. Ranked tiers reset with the new season, requiring placement before official rank assignments resume. See the ranked page for the full Season 2 ranked breakdown.",
   },
   {
     q: 'How will the CyberneticPunks leaderboard work when the Bungie API ships?',
@@ -227,7 +236,7 @@ export default function LeaderboardPage() {
             flexWrap: 'wrap',
             opacity: 0.4,
           }}>
-            {['ALL PLATFORMS', 'ALL REGIONS', 'ALL SHELLS', 'SEASON 1'].map(function(filter) {
+            {['ALL PLATFORMS', 'ALL REGIONS', 'ALL SHELLS', 'SEASON 2'].map(function(filter) {
               return (
                 <span key={filter} style={{
                   fontFamily: 'monospace',
@@ -522,7 +531,7 @@ export default function LeaderboardPage() {
             textDecoration: 'none',
             letterSpacing: 1.5,
           }}>
-            BUILD LAB →
+            BUILDS & LOADOUTS →
           </Link>
           <Link href="/meta" style={{
             fontFamily: 'Orbitron, monospace',
