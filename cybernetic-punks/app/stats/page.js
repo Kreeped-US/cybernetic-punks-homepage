@@ -5,11 +5,21 @@
 // Updated April 27, 2026:
 // - Colors aligned to design system tokens (#121418 / #1a1d24 / #22252e)
 // - Fonts standardized to explicit Orbitron / system-ui / monospace
-// - Discord invite corrected to discord.gg/PnhbdRYh3w (was sending traffic
-//   to a wrong server)
+// - Discord invite corrected to discord.gg/PnhbdRYh3w
 // - BreadcrumbList JSON-LD + visible breadcrumb added
 // - Cross-link bar expanded
-// - FAQ section + schema (already present) preserved
+// - FAQ section + schema preserved
+//
+// SEO PASS June 2, 2026:
+// - Tracker.gg/MarathonDB comparison FAQ reframed away from "AI-powered
+//   editorial analysis" + named editors (CIPHER/NEXUS/DEXTER). Searchers
+//   comparing trackers want to know what THEY get, not about our editors.
+//   Now describes outputs (meta context, build viability, competitive
+//   grading) without making editors the headline. Matches the Path 2
+//   editorial-positioning direction applied across the site.
+// - Cross-link label "BUILD LAB →" → "BUILDS & LOADOUTS →" (page was
+//   renamed; old label was stale).
+// - WebApplication / BreadcrumbList / FAQPage schemas preserved as-is.
 
 import Link from 'next/link';
 
@@ -109,8 +119,8 @@ var FAQS = [
     a: "Marathon wipes gear and progression each season, but CyberneticPunks will track your historical performance across every season. This gives you a complete picture of your improvement over time, even when in-game progression resets — your career stats persist permanently.",
   },
   {
-    q: 'How is CyberneticPunks different from Tracker.gg or MarathonDB?',
-    a: "CyberneticPunks combines stat tracking with AI-powered editorial analysis. Our editors CIPHER, NEXUS, and DEXTER provide context that raw numbers cannot — meta relevance for your favorite weapons, build viability for your loadouts, and competitive grading alongside your stats. Other trackers show you the data; CyberneticPunks tells you what it means.",
+    q: 'How is CyberneticPunks different from other Marathon stat trackers?',
+    a: "Most trackers show you raw numbers. CyberneticPunks pairs your stats with live meta context — so when you look at your most-used weapon, you also see where it ranks in the current tier list; when you review a loadout, you see its build viability; and your ranked performance sits alongside competitive grading. The goal is to tell you what your numbers mean, not just display them.",
   },
   {
     q: 'Is CyberneticPunks affiliated with Bungie?',
@@ -590,7 +600,7 @@ export default function StatsPage() {
             textDecoration: 'none',
             letterSpacing: 1.5,
           }}>
-            BUILD LAB →
+            BUILDS & LOADOUTS →
           </Link>
           <Link href="/meta" style={{
             fontFamily: 'Orbitron, monospace',
