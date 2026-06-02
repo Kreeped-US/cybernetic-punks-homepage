@@ -1,5 +1,12 @@
 // app/ranked/page.js
 // Server component — fetches live ranked data from Supabase, hands to client.
+//
+// UPDATED June 2, 2026 (S2 / Update 1.019):
+// - Ranked is reworked for Season 2. Low + High Stakes merged into a single
+//   queue (5,000 loadout minimum); Holotag must match current rank; faster
+//   progression. Ranked RETURNS June 14, 2026 (not live at S2 launch).
+// - Metadata: "Season 1 rewards" -> season-agnostic; stale "every 6 hours"
+//   cadence copy -> "throughout the day".
 
 import RankedClient from './RankedClient';
 import SeasonResetBanner from '@/components/SeasonResetBanner';
@@ -7,10 +14,10 @@ import { supabase } from '@/lib/supabase';
 
 export const metadata = {
   title: 'Marathon Ranked Mode Guide — Tiers, Holotags, Shells & Rewards',
-  description: 'Everything you need to climb Marathon Ranked. Tier breakdowns, Holotag rules, gear ante requirements, live shell tier list, season rewards, and AI-graded ranked intel — updated every 6 hours.',
+  description: 'Everything you need to climb Marathon Ranked in Season 2. Tier breakdowns, Holotag rules, the new single-queue 5,000 loadout minimum, live shell tier list, season rewards, and AI-graded ranked intel — updated throughout the day. Ranked returns June 14.',
   openGraph: {
-    title: 'Marathon Ranked Mode Guide — Tiers, Holotags & Season 1 Rewards | CyberneticPunks',
-    description: 'Ranked mode intel for Marathon. Six tiers, three subdivisions each. Live shell tier list, NEXUS meta tracking, flagged weapons, and recent ranked intelligence.',
+    title: 'Marathon Ranked Mode Guide — Tiers, Holotags & Season 2 Rewards | CyberneticPunks',
+    description: 'Ranked mode intel for Marathon Season 2. Six tiers, three subdivisions each. New single combined queue, live shell tier list, NEXUS meta tracking, flagged weapons, and recent ranked intelligence. Returns June 14.',
     url: 'https://cyberneticpunks.com/ranked',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -20,7 +27,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Ranked Mode Guide — CyberneticPunks',
-    description: 'Tier breakdowns, Holotag rules, shell picks, and season rewards for Marathon Ranked Season 1.',
+    description: 'Tier breakdowns, Holotag rules, shell picks, and season rewards for Marathon Ranked. Season 2 returns June 14.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: {

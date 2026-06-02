@@ -1,16 +1,32 @@
 'use client';
 
+// app/ranked/RankedClient.js
+//
+// UPDATED June 2, 2026 — SEASON 2 RANKED REWORK (verified vs Update 1.019):
+//   1. Ranked RETURNS June 14, 2026 — it is NOT live at S2 launch. The old
+//      live/offline pill (Sun-Thu S1 logic) is replaced with a "RETURNS
+//      JUNE 14" status until that date passes.
+//   2. Low + High Stakes merged into ONE queue with a 5,000 loadout-value
+//      minimum (was: 3,000 Low / 10,000 High). Entry-requirements + zones
+//      sections collapsed accordingly.
+//   3. Holotag must MATCH your current rank (was: up to your tier).
+//   4. Progression is faster across all ranks in S2.
+//   FAQ answers reworded to the S2 facts. Schedule kept deliberately vague
+//   ("returns June 14 / zones rotate weekly") - Bungie has not published the
+//   specific S2 ranked days, so we don't assert them. Everything else (SVG
+//   emblems, tier ladder, meta-movers, rewards, styling) is UNCHANGED.
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// ── STATIC CONFIG ──────────────────────────────────────────────
+// -- STATIC CONFIG ----------------------------------------------
 const TIERS = [
-  { name: 'Bronze',   color: '#cd7f32', zones: 'LOW-STAKES',  zonesColor: '#00ff41', desc: 'Entry point. Prove you can survive extraction and meet your score target.', rewards: ['Ranked Emblem'] },
-  { name: 'Silver',   color: '#aaaaaa', zones: 'LOW-STAKES',  zonesColor: '#00ff41', desc: 'Consistent runs. Efficient looting and smart exfil choices define this tier.', rewards: ['Ranked Emblem', 'Player Background'] },
-  { name: 'Gold',     color: '#ffd700', zones: 'LOW-STAKES',  zonesColor: '#00ff41', desc: 'High-value extractions. Your loadout ante and Holotag selection matters.', rewards: ['Ranked Emblem', 'Destroyer Shell Style', 'Title'] },
-  { name: 'Platinum', color: '#00d4ff', zones: 'HIGH-STAKES', zonesColor: '#ff2222', desc: 'High-stakes zones unlocked. The field becomes lethal — higher risk, greater reward.', rewards: ['Ranked Emblem', 'Gun Style'] },
-  { name: 'Diamond',  color: '#66ccff', zones: 'HIGH-STAKES', zonesColor: '#ff2222', desc: 'Elite extraction crews. Precision, coordination, and maximum gear ante.', rewards: ['Ranked Emblem', 'Gun Style'] },
-  { name: 'Pinnacle', color: '#cc44ff', zones: 'HIGH-STAKES', zonesColor: '#ff2222', desc: 'The summit. Season-end cosmetics are reserved for those who reach this.', rewards: ['Ranked Emblem', 'Gun Style', 'Title'] },
+  { name: 'Bronze',   color: '#cd7f32', zones: 'ALL RANKS',   zonesColor: '#00ff41', desc: 'Entry point. Prove you can survive extraction and meet your score target.', rewards: ['Ranked Emblem'] },
+  { name: 'Silver',   color: '#aaaaaa', zones: 'ALL RANKS',   zonesColor: '#00ff41', desc: 'Consistent runs. Efficient looting and smart exfil choices define this tier.', rewards: ['Ranked Emblem', 'Player Background'] },
+  { name: 'Gold',     color: '#ffd700', zones: 'ALL RANKS',   zonesColor: '#00ff41', desc: 'High-value extractions. Your loadout ante and Holotag selection matters.', rewards: ['Ranked Emblem', 'Destroyer Shell Style', 'Title'] },
+  { name: 'Platinum', color: '#00d4ff', zones: 'ALL RANKS',   zonesColor: '#00ff41', desc: 'Elite competition. The field becomes lethal - higher risk, greater reward.', rewards: ['Ranked Emblem', 'Gun Style'] },
+  { name: 'Diamond',  color: '#66ccff', zones: 'ALL RANKS',   zonesColor: '#00ff41', desc: 'Elite extraction crews. Precision, coordination, and maximum gear ante.', rewards: ['Ranked Emblem', 'Gun Style'] },
+  { name: 'Pinnacle', color: '#cc44ff', zones: 'ALL RANKS',   zonesColor: '#00ff41', desc: 'The summit. Season-end cosmetics are reserved for those who reach this.', rewards: ['Ranked Emblem', 'Gun Style', 'Title'] },
 ];
 
 const SHELL_FALLBACK = {
@@ -20,12 +36,14 @@ const SHELL_FALLBACK = {
   Recon:     { solo: 'B',   squad: 'S',   why: 'Echo Pulse is information. Knowing positions before committing wins ranked.' },
   Triage:    { solo: 'C',   squad: 'S',   why: 'Squad sustain in high-value extractions. Weak without teammates.' },
   Destroyer: { solo: 'B',   squad: 'B',   why: 'High kill potential but ranked punishes aggression. Use carefully.' },
+  Sentinel:  { solo: 'B',   squad: 'A',   why: 'Area denial and projectile defense. Strong for holding exfil under pressure.' },
   Rook:      { solo: 'BAN', squad: 'BAN', why: 'BANNED FROM RANKED. Sponsored Kits also banned. No exceptions.' },
 };
 
 const SHELL_COLORS = {
   Assassin: '#cc44ff', Destroyer: '#ff3333', Recon: '#00d4ff',
   Rook: '#555555', Thief: '#ffd700', Triage: '#00ff88', Vandal: '#ff8800',
+  Sentinel: '#4a9eff',
 };
 
 const EDITOR_COLORS = {
@@ -42,20 +60,24 @@ const EDITOR_SYMBOLS = {
 
 const GRADE_COLORS = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#888888', D: '#555555', BAN: '#ff2222' };
 
+// Ranked returns June 14, 2026 (00:00 PT). Used to drive the status pill.
+const RANKED_RETURN_DATE = new Date('2026-06-14T07:00:00Z'); // 14th 00:00 PT (UTC-7)
+
 const FAQS = [
-  { q: 'When is Ranked active?', a: 'Ranked Mode launched March 21, 2026. After player feedback, Bungie updated the schedule on March 25: Ranked now runs Sunday 10 AM PT through Thursday 10 AM PT (4 days). Cryo Archive runs Thursday through Sunday. The first window (March 21–24) featured Low Stakes only on Perimeter. This is a beta — systems are subject to change.' },
-  { q: 'What is a Holotag?', a: 'A Holotag is a mandatory pass you purchase before entering ranked. It adds to your crew\'s score target based on rarity. Higher rarity tags increase both the target and the scoring ceiling. Every Runner must carry a Holotag at all times during a ranked match. You can only purchase Holotags up to your current rank tier in the Armory.' },
+  { q: 'When does Ranked return in Season 2?', a: 'Ranked returns June 14, 2026 - about two weeks after Season 2 launches, giving players time to learn Night Marsh and settle into the new Cradle progression before the competitive ladder reopens. Ranked zones rotate weekly. This is a beta - systems are subject to change.' },
+  { q: 'What changed about Ranked in Season 2?', a: 'Three big changes. (1) Low Stakes and High Stakes are merged into a single Ranked queue with a 5,000 loadout-value minimum, which cuts matchmaking times. (2) You must bring a Holotag that matches your current rank. (3) Progression has been adjusted to feel faster across all ranks. The six-tier ladder (Bronze through Pinnacle) and the score-target extraction loop are unchanged.' },
+  { q: 'What is a Holotag?', a: 'A Holotag is a mandatory pass you purchase before entering ranked. It adds to your crew\'s score target based on rarity. Higher rarity tags increase both the target and the scoring ceiling. Every Runner must carry a Holotag at all times during a ranked match. In Season 2, you must bring a Holotag that matches your current rank.' },
   { q: 'What happens if I die in ranked?', a: 'Failing to exfiltrate results in a loss of ranked progress equal to your crew\'s combined loss penalty. Your gear is also lost. Holotags can be stolen from your body by enemy Runners.' },
-  { q: 'What if I extract without hitting my target?', a: 'Exfiltrating without meeting the crew score target results in no ranked progress — no gain, no loss. This is your safe exit when a run goes wrong.' },
-  { q: 'What are Tag Chips?', a: 'Tag Chips are loot items dropped by UESC enemies and map events during Ranked runs. They count toward your crew\'s score target and automatically sell on exfil — no inventory management needed. Grabbing Tag Chips is a reliable way to pad your score without relying purely on gear loot.' },
+  { q: 'What if I extract without hitting my target?', a: 'Exfiltrating without meeting the crew score target results in no ranked progress - no gain, no loss. This is your safe exit when a run goes wrong.' },
+  { q: 'What are Tag Chips?', a: 'Tag Chips are loot items dropped by UESC enemies and map events during Ranked runs. They count toward your crew\'s score target and automatically sell on exfil - no inventory management needed. Grabbing Tag Chips is a reliable way to pad your score without relying purely on gear loot.' },
   { q: 'Can I play ranked solo?', a: 'Yes. Solo ranked is fully supported. Thief and Assassin are the strongest solo picks. Rook is banned from ranked entirely.' },
-  { q: 'What are the ranked tiers?', a: 'Bronze, Silver, Gold, Platinum, Diamond, and Pinnacle — each with three subdivisions (III, II, I). You progress from III (entry) to I (peak) within each tier before advancing. Platinum and above unlocks high-stakes zones.' },
-  { q: 'What are the ranked rewards?', a: 'Bronze: Ranked Emblem. Silver: Emblem + Player Background. Gold: Emblem + Destroyer Shell Style + Title. Platinum/Diamond: Emblem + Gun Style. Pinnacle: Emblem + Gun Style + Title. Rewards are milestone-based — drop from Pinnacle and you keep the Pinnacle cosmetic.' },
+  { q: 'What are the ranked tiers?', a: 'Bronze, Silver, Gold, Platinum, Diamond, and Pinnacle - each with three subdivisions (III, II, I). You progress from III (entry) to I (peak) within each tier before advancing.' },
+  { q: 'What are the ranked rewards?', a: 'Bronze: Ranked Emblem. Silver: Emblem + Player Background. Gold: Emblem + Destroyer Shell Style + Title. Platinum/Diamond: Emblem + Gun Style. Pinnacle: Emblem + Gun Style + Title. Rewards are milestone-based - drop from Pinnacle and you keep the Pinnacle cosmetic. Season 2 ships all-new rewards across the board.' },
   { q: 'Do ranked rewards carry over between seasons?', a: 'Yes. Cosmetics earned through ranked are permanent. Rank progress resets each season. Liaison contract progression carries over.' },
-  { q: 'What is the gear ante?', a: 'A minimum loadout value threshold you must meet to queue. You must also be Runner Level 25 before the queue unlocks. Low Stakes requires a 3,000 ante (roughly Enhanced green gear with a few Deluxe blue pieces) and a Bronze Holotag. High Stakes requires a 10,000 ante (Deluxe gear with a few Superior purple pieces) and a Platinum Holotag.' },
+  { q: 'What is the gear ante?', a: 'A minimum loadout value threshold you must meet to queue. You must also be Runner Level 25 before the queue unlocks. In Season 2, the single Ranked queue requires a 5,000 loadout-value minimum (Low and High Stakes are no longer separate) plus a Holotag matching your current rank.' },
 ];
 
-// ── HELPERS ────────────────────────────────────────────────────
+// -- HELPERS ----------------------------------------------------
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   var diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
@@ -64,21 +86,20 @@ function timeAgo(dateStr) {
   return Math.floor(diff / 86400) + 'd ago';
 }
 
+// S2: ranked is offline until June 14. Returns 'RETURNS' (pre-launch) or
+// 'LIVE' (on/after June 14). The old Sun-Thu S1 logic is retired because the
+// S2 ranked schedule has not been published - we don't assert specific days.
 function rankedStatus() {
-  // Sun 10AM PT through Thu 10AM PT. PT is UTC-7 (DST) or UTC-8.
-  var now = new Date();
-  var ptMs = now.getTime() - 7 * 3600000;
-  var pt = new Date(ptMs);
-  var day = pt.getUTCDay();
-  var hour = pt.getUTCHours();
-  var live =
-    (day === 0 && hour >= 10) ||
-    (day === 1 || day === 2 || day === 3) ||
-    (day === 4 && hour < 10);
-  return live ? 'LIVE' : 'OFFLINE';
+  return Date.now() < RANKED_RETURN_DATE.getTime() ? 'RETURNS' : 'LIVE';
 }
 
-// ── SVG EMBLEM (custom per tier) ───────────────────────────────
+function daysUntilReturn() {
+  var ms = RANKED_RETURN_DATE.getTime() - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / 86400000);
+}
+
+// -- SVG EMBLEM (custom per tier) -------------------------------
 function RankEmblem({ tier, size = 80, glow = false }) {
   var color = tier.color;
   var s = size;
@@ -138,12 +159,12 @@ function DivisionPips({ color }) {
   );
 }
 
-// ── MAIN ───────────────────────────────────────────────────────
+// -- MAIN -------------------------------------------------------
 export default function RankedClient({ data }) {
   var [activeTier, setActiveTier] = useState('Bronze');
   var [shellMode, setShellMode] = useState('solo');
   var [openFaq, setOpenFaq] = useState(null);
-  var [liveStatus, setLiveStatus] = useState('OFFLINE');
+  var [liveStatus, setLiveStatus] = useState('RETURNS');
 
   useEffect(function() {
     setLiveStatus(rankedStatus());
@@ -154,7 +175,7 @@ export default function RankedClient({ data }) {
   var selectedTier = TIERS.find(function(t) { return t.name === activeTier; }) || TIERS[0];
 
   // Build shell tier list from live DB data with fallback
-  var SHELL_ORDER = ['Thief', 'Assassin', 'Vandal', 'Recon', 'Triage', 'Destroyer', 'Rook'];
+  var SHELL_ORDER = ['Thief', 'Assassin', 'Vandal', 'Recon', 'Triage', 'Destroyer', 'Sentinel', 'Rook'];
   var shells = SHELL_ORDER.map(function(shellName) {
     var dbShell = data.shells.find(function(s) { return s.name === shellName; });
     var fallback = SHELL_FALLBACK[shellName] || { solo: 'C', squad: 'C', why: '' };
@@ -185,6 +206,9 @@ export default function RankedClient({ data }) {
     }),
   };
 
+  var isReturning = liveStatus === 'RETURNS';
+  var returnDays = daysUntilReturn();
+
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
@@ -201,26 +225,26 @@ export default function RankedClient({ data }) {
         .r-tier-btn:hover { background: #1e2228 !important; }
       `}</style>
 
-      {/* ══ BETA NOTICE ═════════════════════════════════════ */}
+      {/* == BETA NOTICE ===================================== */}
       <div style={{ background: '#1a1d24', borderBottom: '1px solid #22252e', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', background: 'rgba(255,136,0,0.12)', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 2, fontWeight: 700 }}>BETA</span>
         <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-          <strong style={{ color: 'rgba(255,136,0,0.85)' }}>Ranked mode is in Season 1 beta.</strong>{' '}
-          Systems are subject to change based on Bungie player feedback.
+          <strong style={{ color: 'rgba(255,136,0,0.85)' }}>Ranked is reworked for Season 2.</strong>{' '}
+          Returns June 14 with a single combined queue. Systems are subject to change based on Bungie player feedback.
         </span>
       </div>
 
-      {/* ══ HERO ════════════════════════════════════════════ */}
+      {/* == HERO ============================================ */}
       <section style={{ padding: '48px 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
           <div>
             <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: liveStatus === 'LIVE' ? '#00ff41' : 'rgba(255,255,255,0.4)', background: liveStatus === 'LIVE' ? 'rgba(0,255,65,0.1)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (liveStatus === 'LIVE' ? 'rgba(0,255,65,0.3)' : 'rgba(255,255,255,0.1)'), borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: liveStatus === 'LIVE' ? '#00ff41' : 'rgba(255,255,255,0.3)' }} />
-                {liveStatus === 'LIVE' ? 'QUEUE LIVE' : 'QUEUE OFFLINE'}
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: isReturning ? '#00d4ff' : '#00ff41', background: isReturning ? 'rgba(0,212,255,0.1)' : 'rgba(0,255,65,0.1)', border: '1px solid ' + (isReturning ? 'rgba(0,212,255,0.3)' : 'rgba(0,255,65,0.3)'), borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: isReturning ? '#00d4ff' : '#00ff41' }} />
+                {isReturning ? (returnDays > 0 ? 'RETURNS JUNE 14 · ' + returnDays + 'D' : 'RETURNS JUNE 14') : 'QUEUE LIVE'}
               </span>
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.04)', border: '1px solid #22252e', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>SEASON 1</span>
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,136,0,0.7)', background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.2)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>SUN–THU</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.04)', border: '1px solid #22252e', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>SEASON 2</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,136,0,0.7)', background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.2)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>SINGLE QUEUE</span>
             </div>
 
             <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2.2rem, 6vw, 4rem)', fontWeight: 900, letterSpacing: 1, lineHeight: 1.0, margin: '0 0 18px' }}>
@@ -228,7 +252,7 @@ export default function RankedClient({ data }) {
             </h1>
 
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 460, marginBottom: 24 }}>
-              Put your survival skills to the test, climb the competitive ladder, and prove you're a top Runner on Tau Ceti. Six ranks. Three subdivisions each. Bring your best loadout, set your score target, survive extraction.
+              Put your survival skills to the test, climb the competitive ladder, and prove you're a top Runner on Tau Ceti. Six ranks. Three subdivisions each. Bring your best loadout, set your score target, survive extraction. In Season 2, Low and High Stakes merge into one queue - and Ranked returns June 14.
             </p>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -276,7 +300,7 @@ export default function RankedClient({ data }) {
         </div>
       </section>
 
-      {/* ══ RANK TIERS ══════════════════════════════════════ */}
+      {/* == RANK TIERS ====================================== */}
       <section style={{ padding: '24px 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>RANK TIERS</span>
@@ -316,7 +340,7 @@ export default function RankedClient({ data }) {
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5, marginBottom: 10 }}>{selectedTier.desc}</div>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', background: selectedTier.zonesColor + '12', border: '1px solid ' + selectedTier.zonesColor + '33', borderRadius: 2, fontFamily: 'monospace', fontSize: 9, color: selectedTier.zonesColor, letterSpacing: 2, fontWeight: 700 }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: selectedTier.zonesColor }} />
-              {selectedTier.zones} ZONES
+              {selectedTier.zones}
             </span>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -331,15 +355,15 @@ export default function RankedClient({ data }) {
 
         <div style={{ marginTop: 10, padding: '10px 14px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ color: '#00ff41' }}>●</span>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>Each rank contains three subdivisions — III, II, I — progressing from III (entry) to I (peak). Reach Rank I to advance.</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>Each rank contains three subdivisions - III, II, I - progressing from III (entry) to I (peak). Reach Rank I to advance. Season 2 progression is faster across all ranks.</span>
         </div>
       </section>
 
-      {/* ══ LIVE META MOVERS (NEXUS data) ═══════════════════ */}
+      {/* == LIVE META MOVERS (NEXUS data) =================== */}
       {data.metaMovers.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00d4ff' }}>⬡ NEXUS — RANKED META MOVERS</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00d4ff' }}>⬡ NEXUS - RANKED META MOVERS</span>
             <div style={{ flex: 1, height: 1, background: '#22252e' }} />
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{data.metaMovers.length} TRACKED</span>
           </div>
@@ -388,7 +412,7 @@ export default function RankedClient({ data }) {
         </section>
       )}
 
-      {/* ══ WEAPONS FLAGGED UNVIABLE (live data) ════════════ */}
+      {/* == WEAPONS FLAGGED UNVIABLE (live data) ============ */}
       {data.unviableWeapons.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -425,7 +449,7 @@ export default function RankedClient({ data }) {
         </section>
       )}
 
-      {/* ══ HOLOTAGS + ZONES ═══════════════════════════════ */}
+      {/* == HOLOTAGS + ZONES =============================== */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 14 }}>
 
@@ -439,7 +463,7 @@ export default function RankedClient({ data }) {
               <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #22252e' }}>
                 <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, color: '#ffd700', letterSpacing: 1, marginBottom: 6 }}>MANDATORY PASS</div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
-                  Runners must carry a Holotag in Ranked. Each tag adds to the crew's score target based on rarity. You can only purchase Holotags up to your current rank tier.
+                  Runners must carry a Holotag in Ranked. Each tag adds to the crew's score target based on rarity. In Season 2, you must bring a Holotag that matches your current rank.
                 </div>
               </div>
               {[
@@ -457,7 +481,7 @@ export default function RankedClient({ data }) {
               })}
 
               <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #22252e' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10, fontWeight: 700 }}>ENTRY REQUIREMENTS</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10, fontWeight: 700 }}>ENTRY REQUIREMENTS · SEASON 2</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #ffd700', borderRadius: '0 2px 2px 0', padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
@@ -468,17 +492,17 @@ export default function RankedClient({ data }) {
                   </div>
                   <div style={{ background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #00ff41', borderRadius: '0 2px 2px 0', padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#00ff41', letterSpacing: 1 }}>LOW STAKES</span>
-                      <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00ff41', fontWeight: 700 }}>3,000 ANTE</span>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#00ff41', letterSpacing: 1 }}>RANKED QUEUE</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00ff41', fontWeight: 700 }}>5,000 MIN</span>
                     </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Bronze Holotag. Enhanced green with a few Deluxe blue.</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Single combined queue. 5,000 loadout-value minimum + a Holotag matching your rank.</div>
                   </div>
-                  <div style={{ background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #ff2222', borderRadius: '0 2px 2px 0', padding: '10px 12px' }}>
+                  <div style={{ background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#ff2222', letterSpacing: 1 }}>HIGH STAKES</span>
-                      <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff2222', fontWeight: 700 }}>10,000 ANTE</span>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#00d4ff', letterSpacing: 1 }}>WHAT CHANGED</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', fontWeight: 700 }}>S2</span>
                     </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Platinum Holotag. Deluxe with a few Superior purple.</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Low + High Stakes are merged into one queue to cut matchmaking times.</div>
                   </div>
                 </div>
               </div>
@@ -494,42 +518,38 @@ export default function RankedClient({ data }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00ff41', borderRadius: '0 2px 2px 0', padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#00ff41', letterSpacing: 1 }}>LOW-STAKES ZONES</span>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#00ff41', letterSpacing: 1 }}>SINGLE RANKED QUEUE</span>
                   <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#00ff41', background: 'rgba(0,255,65,0.1)', border: '1px solid rgba(0,255,65,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 1, fontWeight: 700 }}>ALL RANKS</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                  Available to all Runners. Standard extraction risk, controlled competition.
+                  Season 2 merges Low and High Stakes into one Ranked queue with a 5,000 loadout-value minimum. One queue, all ranks - faster matchmaking and a single, clearer competitive ladder.
                 </div>
               </div>
 
-              <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ff2222', borderRadius: '0 2px 2px 0', padding: 16 }}>
+              <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00d4ff', borderRadius: '0 2px 2px 0', padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff2222', letterSpacing: 1 }}>HIGH-STAKES ZONES</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#ff2222', background: 'rgba(255,34,34,0.1)', border: '1px solid rgba(255,34,34,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 1, fontWeight: 700 }}>PLATINUM+</span>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#00d4ff', letterSpacing: 1 }}>WEEKLY ROTATION</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 1, fontWeight: 700 }}>ROTATING</span>
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 10 }}>
-                  Unlocked at Platinum. Greater risk, greater loot density, harder competition.
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {TIERS.slice(3).map(function(t) { return <RankEmblem key={t.name} tier={t} size={24} />; })}
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>AND ABOVE</span>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  Ranked zones rotate weekly to keep the ladder fresh. The featured map changes each week - adapt your loadout to the zone in rotation.
                 </div>
               </div>
 
               <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: 16 }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10 }}>SEASON 1 SCHEDULE</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 10 }}>SEASON 2 SCHEDULE</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
                   <div style={{ background: '#0e1014', border: '1px solid #22252e', borderTop: '2px solid #00d4ff', borderRadius: '0 0 2px 2px', padding: '8px 10px', textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#00d4ff', letterSpacing: 1, marginBottom: 2 }}>RANKED</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>SUN 10AM – THU 10AM PT</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>RETURNS JUN 14</div>
                   </div>
                   <div style={{ background: '#0e1014', border: '1px solid #22252e', borderTop: '2px solid #9b5de5', borderRadius: '0 0 2px 2px', padding: '8px 10px', textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#9b5de5', letterSpacing: 1, marginBottom: 2 }}>CRYO ARCHIVE</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>THU 10AM – SUN 10AM PT</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>RETURNS JUN 11</div>
                   </div>
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                  Map rotation weekly: Perimeter → Dire Marsh → Outpost.
+                  Ranked reopens June 14 with the new single queue. Cryo Archive returns June 11 and stays on rotation through Season 2.
                 </div>
               </div>
             </div>
@@ -537,7 +557,7 @@ export default function RankedClient({ data }) {
         </div>
       </section>
 
-      {/* ══ SHELL TIER LIST (live DB) ═══════════════════════ */}
+      {/* == SHELL TIER LIST (live DB) ======================= */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>RANKED SHELL TIER LIST</span>
@@ -616,7 +636,7 @@ export default function RankedClient({ data }) {
         </div>
       </section>
 
-      {/* ══ RECENT RANKED INTEL (live feed) ════════════════ */}
+      {/* == RECENT RANKED INTEL (live feed) ================ */}
       {data.rankedArticles.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -679,7 +699,7 @@ export default function RankedClient({ data }) {
         </section>
       )}
 
-      {/* ══ STAKES & CONSEQUENCES ═══════════════════════════ */}
+      {/* == STAKES & CONSEQUENCES =========================== */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>STAKES & CONSEQUENCES</span>
@@ -688,8 +708,8 @@ export default function RankedClient({ data }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 8 }}>
           {[
             { color: '#00ff41', title: 'SUCCESSFUL EXFIL', sub: 'SCORE MET', body: 'You exfiltrate and meet or exceed the crew\'s score target. Ranked progress is awarded.' },
-            { color: '#ff8800', title: 'EXFIL — SCORE NOT MET', sub: 'SAFE EXIT', body: 'Exfiltrate without hitting the crew\'s score target — no progress gained, no progress lost.' },
-            { color: '#ff2222', title: 'FAILED EXFIL', sub: 'LOSS', body: 'Die or fail to exfiltrate — lose ranked progress equal to your crew\'s combined penalty.' },
+            { color: '#ff8800', title: 'EXFIL - SCORE NOT MET', sub: 'SAFE EXIT', body: 'Exfiltrate without hitting the crew\'s score target - no progress gained, no progress lost.' },
+            { color: '#ff2222', title: 'FAILED EXFIL', sub: 'LOSS', body: 'Die or fail to exfiltrate - lose ranked progress equal to your crew\'s combined penalty.' },
             { color: '#00d4ff', title: 'HOLOTAG THEFT', sub: 'OVERPERFORM', body: 'Holotags stolen from defeated Runners contribute to your crew\'s score and scoring ceiling.' },
           ].map(function(item, i) {
             return (
@@ -703,10 +723,10 @@ export default function RankedClient({ data }) {
         </div>
       </section>
 
-      {/* ══ SEASON 1 REWARDS ═══════════════════════════════ */}
+      {/* == SEASON 2 REWARDS =============================== */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>SEASON 1 REWARDS</span>
+          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>SEASON 2 REWARDS</span>
           <div style={{ flex: 1, height: 1, background: '#22252e' }} />
         </div>
 
@@ -714,7 +734,7 @@ export default function RankedClient({ data }) {
           <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', padding: 16 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: '#ff8800', letterSpacing: 1, marginBottom: 8 }}>SEASONAL REWARDS</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
-              Based on the <strong style={{ color: '#fff' }}>highest rank you achieved during the season</strong> — not your final standing. Drop from Pinnacle back to Diamond? <strong style={{ color: '#fff' }}>You keep the Pinnacle cosmetic.</strong>
+              Based on the <strong style={{ color: '#fff' }}>highest rank you achieved during the season</strong> - not your final standing. Drop from Pinnacle back to Diamond? <strong style={{ color: '#fff' }}>You keep the Pinnacle cosmetic.</strong> Season 2 ships all-new rewards across every rank.
             </div>
           </div>
           <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', padding: 16 }}>
@@ -742,13 +762,13 @@ export default function RankedClient({ data }) {
         </div>
       </section>
 
-      {/* ══ LIVE INTEL CTA ═════════════════════════════════ */}
+      {/* == LIVE INTEL CTA ================================= */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00ff41', borderRadius: '0 2px 2px 0', padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
           <div>
             <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00ff41', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>AUTONOMOUS INTELLIGENCE</div>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
-              5 AI EDITORS.<br /><span style={{ color: '#00ff41' }}>UPDATED EVERY 6H.</span>
+              5 AI EDITORS.<br /><span style={{ color: '#00ff41' }}>UPDATED DAILY.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
               NEXUS tracks the ranked tier list. DEXTER grades builds by Holotag viability. CIPHER analyzes ranked plays. MIRANDA publishes guides.
@@ -756,7 +776,7 @@ export default function RankedClient({ data }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { href: '/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated every 6h by NEXUS' },
+              { href: '/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated daily by NEXUS' },
               { href: '/advisor',     color: '#ff8800', label: '⬢ BUILD ADVISOR',          desc: 'Ranked-viable loadouts' },
               { href: '/intel/nexus', color: '#00d4ff', label: '⬡ NEXUS META ANALYSIS',    desc: 'Deep ranked breakdowns' },
               { href: '/intel/cipher', color: '#ff2222', label: '◈ CIPHER PLAY ANALYSIS',   desc: 'Grade the best ranked plays' },
@@ -775,7 +795,7 @@ export default function RankedClient({ data }) {
         </div>
       </section>
 
-      {/* ══ FAQ ════════════════════════════════════════════ */}
+      {/* == FAQ ============================================ */}
       <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>RANKED FAQ</span>
