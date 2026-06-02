@@ -621,6 +621,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         .meta-pill:hover     { background: #22252e !important; }
         .meta-btn:hover      { background: #1e2228 !important; }
         .meta-share-btn:hover { background: rgba(255,255,255,0.05) !important; }
+        .meta-name-link:hover { color: #00ff41 !important; }
       `}</style>
 
       {toast && (
@@ -872,7 +873,19 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                               {/* Info */}
                               <div style={{ flex: 1, minWidth: 200 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5 }}>{item.name}</span>
+                                  {(typeKey === 'weapon' || typeKey === 'shell') ? (
+                                    <Link
+                                      href={typeKey === 'weapon'
+                                        ? '/weapons/' + item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                                        : '/shells/' + item.name.toLowerCase()}
+                                      className="meta-name-link"
+                                      style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5, textDecoration: 'none', transition: 'color 0.1s' }}
+                                    >
+                                      {item.name}
+                                    </Link>
+                                  ) : (
+                                    <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5 }}>{item.name}</span>
+                                  )}
                                   <span style={{ fontSize: 8, letterSpacing: 2, color: typeColor, background: typeColor + '18', border: '1px solid ' + typeColor + '30', borderRadius: 2, padding: '2px 7px', fontWeight: 700, textTransform: 'uppercase' }}>
                                     {(item.type || '').toUpperCase()}
                                   </span>
