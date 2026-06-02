@@ -191,9 +191,17 @@ function loadImage(src) {
   });
 }
 
+// ─── CANVAS IMAGE GENERATOR (REDESIGNED June 2, 2026) ───────
+// Matches the site theme (#0e1014 bg, #1a1d24 cards, #00ff41 accent,
+// Orbitron + Share Tech Mono). "Less is more": dropped scanlines and the
+// multi-line footer. Featured byline (option A): the user's RUNNER TAG is
+// the hero of the header; CyberneticPunks rides along as a quiet watermark
+// (top-left mark + single footer line) so the image still markets the site.
+
 async function generateTierImage(tierItems, runnerTag) {
   try { await document.fonts.ready; } catch (_) {}
 
+  // Preload weapon/shell images into a cache before drawing.
   const imageCache = {};
   for (const items of Object.values(tierItems)) {
     for (const item of items) {
@@ -209,165 +217,185 @@ async function generateTierImage(tierItems, runnerTag) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#030303';
+  // ── Site theme tokens ──
+  const COL = {
+    bg:     '#0e1014',
+    card:   '#1a1d24',
+    border: '#22252e',
+    green:  '#00ff41',
+    white:  '#ffffff',
+    dim:    'rgba(255,255,255,0.45)',
+    faint:  'rgba(255,255,255,0.22)',
+  };
+  // Tier accent colors (match the site's TIER_STYLES, tuned to read on canvas)
+  const tierCol = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#7a8089', D: '#4a4f59', F: '#8a3a44' };
+
+  // ── Background ──
+  ctx.fillStyle = COL.bg;
   ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = 'rgba(0,245,255,0.022)';
+  // very faint grid for texture (subtle — matches site, not clutter)
+  ctx.strokeStyle = 'rgba(255,255,255,0.014)';
   ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-  ctx.fillStyle = 'rgba(0,245,255,0.008)';
-  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+  // top accent bar (brand pop)
+  ctx.fillStyle = COL.green;
+  ctx.fillRect(0, 0, W, 3);
 
-  ctx.fillStyle = '#ff0000';
-  ctx.shadowColor = '#ff0000';
+  const PAD = 44;
+
+  // ── Header: brand mark top-left (quiet watermark) ──
+  ctx.fillStyle = '#ff2222';
+  ctx.shadowColor = '#ff2222';
   ctx.shadowBlur = 8;
-  ctx.beginPath(); ctx.arc(36, 36, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(PAD + 5, 42, 5, 0, Math.PI * 2); ctx.fill();
   ctx.shadowBlur = 0;
-
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.font = '700 14px Orbitron, Arial, sans-serif';
+  ctx.fillStyle = COL.white;
+  ctx.font = '700 15px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('CYBERNETICPUNKS', 52, 42);
+  ctx.fillText('CYBERNETIC', PAD + 18, 47);
+  const cwW = ctx.measureText('CYBERNETIC').width;
+  ctx.fillStyle = '#ff2222';
+  ctx.fillText('PUNKS', PAD + 18 + cwW, 47);
 
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '900 24px Orbitron, Arial, sans-serif';
+  // season, top-right (quiet)
+  ctx.fillStyle = COL.faint;
+  ctx.font = '400 12px "Share Tech Mono", monospace, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('MARATHON TIER LIST', W - 32, 34);
-
   const now = new Date();
   const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  const dateStamp = CURRENT_SEASON + ' — ' + monthNames[now.getMonth()] + ' ' + now.getFullYear();
-  ctx.fillStyle = 'rgba(0,245,255,0.7)';
-  ctx.font = '400 11px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText(dateStamp, W - 32, 52);
+  ctx.fillText(CURRENT_SEASON + ' · ' + monthNames[now.getMonth()] + ' ' + now.getFullYear(), W - PAD, 46);
 
-  const tag = runnerTag?.trim() || 'ANONYMOUS RUNNER';
-  ctx.fillStyle = '#ff8800';
+  // ── Featured title (option A: the user's tag is the hero) ──
+  const rawTag = (runnerTag || '').trim();
+  const hasTag = rawTag && rawTag.toUpperCase() !== 'ANONYMOUS RUNNER';
+  const titleText = hasTag ? (rawTag.toUpperCase() + "'S TIER LIST") : 'MARATHON TIER LIST';
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = COL.white;
+  let titleSize = 40;
+  ctx.font = '900 ' + titleSize + 'px Orbitron, Arial, sans-serif';
+  const maxTitleW = W - PAD * 2 - 40;
+  while (ctx.measureText(titleText).width > maxTitleW && titleSize > 22) {
+    titleSize -= 2;
+    ctx.font = '900 ' + titleSize + 'px Orbitron, Arial, sans-serif';
+  }
+  ctx.fillText(titleText, PAD, 92);
+
+  // subtitle keeps the "marathon tier list" identity when a tag is featured
+  ctx.fillStyle = COL.green;
   ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText('by ' + tag.toUpperCase(), W - 32, 68);
+  ctx.fillText(
+    hasTag ? ('MARATHON META TIER LIST · ' + CURRENT_SEASON) : ('CURATED LIVE BY NEXUS · ' + CURRENT_SEASON),
+    PAD, 112
+  );
 
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.fillRect(24, 78, W - 48, 1);
+  // header divider
+  ctx.fillStyle = COL.border;
+  ctx.fillRect(PAD, 124, W - PAD * 2, 1);
 
-  const rowStart = 86;
-  const rowH = 71;
+  // ── Tier rows ──
+  const bodyTop = 138;
+  const footerTop = H - 70;
+  const bodyH = footerTop - bodyTop - 8;
+  const rowGap = 6;
+  const rowH = (bodyH - rowGap * (TIERS.length - 1)) / TIERS.length;
 
-  const tierColors = {
-    S: '#ff0000', A: '#ff8800', B: '#00f5ff',
-    C: 'rgba(200,200,200,0.4)', D: 'rgba(150,150,150,0.25)', F: 'rgba(255,0,0,0.25)',
-  };
-  const tierBgs = {
-    S: 'rgba(255,0,0,0.12)',
-    A: 'rgba(255,136,0,0.07)',
-    B: 'rgba(0,245,255,0.05)',
-    C: 'rgba(255,255,255,0.02)',
-    D: 'rgba(255,255,255,0.008)',
-    F: 'rgba(255,0,0,0.02)',
-  };
-
-  const pillH = 44;
-  const pillGap = 6;
-  const imgW = 40, imgH = 28;
-  const textPadL = 10, textPadR = 14;
+  const letterW = 60;
+  const itemsX = PAD + letterW + 12;
+  const itemsMaxX = W - PAD;
 
   TIERS.forEach((tier, i) => {
-    const y = rowStart + i * rowH;
+    const y = bodyTop + i * (rowH + rowGap);
     const items = tierItems[tier] || [];
-    const isSTop = tier === 'S';
+    const tc = tierCol[tier] || '#666';
 
-    ctx.fillStyle = tierBgs[tier];
-    ctx.fillRect(24, y, W - 48, rowH - 2);
+    // row card background
+    ctx.fillStyle = COL.card;
+    roundRect(ctx, PAD, y, W - PAD * 2, rowH, 4);
+    ctx.fill();
 
-    ctx.fillStyle = tierColors[tier];
-    ctx.fillRect(24, y, isSTop ? 5 : 3, rowH - 2);
+    // tier letter block (left); square its right edge so only left corners round
+    ctx.fillStyle = tc;
+    roundRect(ctx, PAD, y, letterW, rowH, 4);
+    ctx.fill();
+    ctx.fillRect(PAD + letterW - 6, y, 6, rowH);
 
-    if (isSTop) {
-      ctx.shadowColor = '#ff0000';
-      ctx.shadowBlur = 18;
-    }
-    ctx.fillStyle = tierColors[tier];
-    ctx.font = '900 56px Orbitron, Arial, sans-serif';
+    ctx.fillStyle = (tier === 'A') ? '#000' : '#fff';
+    ctx.font = '900 30px Orbitron, Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(tier, 72, y + rowH - 12);
-    ctx.shadowBlur = 0;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tier, PAD + letterW / 2, y + rowH / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
 
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fillRect(108, y + 8, 1, rowH - 18);
-
+    // items
     ctx.textAlign = 'left';
-    let x = 120;
-    const maxX = W - 48;
+    const pillH = Math.min(46, rowH - 14);
     const pillY = y + (rowH - pillH) / 2;
+    const imgW = 42, imgH = 28;
+    let x = itemsX;
 
-    items.forEach(item => {
+    for (let k = 0; k < items.length; k++) {
+      const item = items[k];
       const src = getImageSrc(item);
       const imgEl = src ? imageCache[src] : null;
       const label = item.name.toUpperCase();
-
-      ctx.font = '700 10px Orbitron, Arial, sans-serif';
-      const textW = ctx.measureText(label).width;
-
       const hasImg = !!imgEl;
-      const pillW = (hasImg ? imgW + 6 : 0) + textW + textPadL + textPadR;
 
-      if (x + pillW > maxX) return;
+      ctx.font = '700 11px Orbitron, Arial, sans-serif';
+      const textW = ctx.measureText(label).width;
+      const padL = 10, padR = 14, gap = 8;
+      const pillW = padL + (hasImg ? imgW + gap : 0) + textW + padR;
 
-      ctx.fillStyle = isSTop ? 'rgba(255,0,0,0.1)' : 'rgba(255,255,255,0.07)';
-      roundRect(ctx, x, pillY, pillW, pillH, 5);
+      // overflow -> "+N" and stop
+      if (x + pillW > itemsMaxX) {
+        const remaining = items.length - k;
+        ctx.fillStyle = COL.faint;
+        ctx.font = '700 11px "Share Tech Mono", monospace, sans-serif';
+        ctx.fillText('+' + remaining, x + 4, pillY + pillH / 2 + 4);
+        break;
+      }
+
+      // pill bg + tier-tinted left edge
+      ctx.fillStyle = '#0e1014';
+      roundRect(ctx, x, pillY, pillW, pillH, 4);
       ctx.fill();
-
-      ctx.strokeStyle = isSTop ? 'rgba(255,0,0,0.25)' : 'rgba(255,255,255,0.1)';
-      ctx.lineWidth = 1;
-      roundRect(ctx, x, pillY, pillW, pillH, 5);
-      ctx.stroke();
+      ctx.fillStyle = tc;
+      ctx.fillRect(x, pillY, 3, pillH);
 
       if (hasImg) {
-        const imgX = x + 8;
+        const imgX = x + padL;
         const imgDrawY = pillY + (pillH - imgH) / 2;
         ctx.save();
-        ctx.filter = 'brightness(1.25) contrast(1.1)';
-        ctx.globalAlpha = 0.95;
+        ctx.filter = 'brightness(1.2) contrast(1.05)';
         ctx.drawImage(imgEl, imgX, imgDrawY, imgW, imgH);
         ctx.restore();
       }
 
-      const labelX = x + (hasImg ? imgW + 14 : textPadL);
-      ctx.fillStyle = isSTop ? '#ffffff' : 'rgba(255,255,255,0.88)';
-      ctx.font = '700 10px Orbitron, Arial, sans-serif';
+      const labelX = x + padL + (hasImg ? imgW + gap : 0);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '700 11px Orbitron, Arial, sans-serif';
       ctx.fillText(label, labelX, pillY + pillH / 2 + 4);
 
-      x += pillW + pillGap;
-    });
-
-    if (items.length === 0) {
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      ctx.font = '400 10px "Share Tech Mono", monospace, sans-serif';
-      ctx.fillText('EMPTY', 120, y + rowH / 2 + 4);
+      x += pillW + 7;
     }
   });
 
-  const bottomY = rowStart + TIERS.length * rowH + 4;
+  // ── Footer (one clean line) ──
+  ctx.fillStyle = COL.border;
+  ctx.fillRect(PAD, footerTop, W - PAD * 2, 1);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.07)';
-  ctx.fillRect(24, bottomY, W - 48, 1);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = COL.white;
+  ctx.font = '700 17px Orbitron, Arial, sans-serif';
+  ctx.fillText('CYBERNETICPUNKS.COM', PAD, footerTop + 34);
 
-  ctx.fillStyle = 'rgba(0,245,255,0.06)';
-  ctx.fillRect(24, bottomY + 1, W - 48, H - bottomY - 24);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '700 20px Orbitron, Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('CYBERNETICPUNKS.COM', W / 2, bottomY + 36);
-
-  ctx.fillStyle = '#ff8800';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = COL.green;
   ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText('CREATE YOUR OWN MARATHON TIER LIST → /meta', W / 2, bottomY + 56);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.font = '400 10px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText('5 EDITORS. 6 SOURCES. UPDATED DAILY.', W / 2, bottomY + 72);
+  ctx.fillText('BUILD YOUR OWN → /META', W - PAD, footerTop + 33);
 
   return canvas.toDataURL('image/png');
 }
