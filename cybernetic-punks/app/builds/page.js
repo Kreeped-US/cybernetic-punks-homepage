@@ -1,25 +1,47 @@
 // app/builds/page.js
-// DEXTER BUILD LAB — Live weapon/shell/implant/mod/core data, cross-referenced with meta + editors
+// Marathon Builds & Loadouts — Live weapon/shell/implant/mod/core data.
+//
+// FIXED May 15, 2026: switched from revalidate to force-dynamic.
+// getLiveStats() during build-time pre-render triggers Supabase before env
+// vars are populated. force-dynamic disables static pre-render entirely.
+//
+// MAJOR AUDIT June 2, 2026 — fix /builds for searchers from Google:
+// - Description dropped "DEXTER grades the builds" lead + "every 6 hours".
+// - H1 "BUILD LAB" → "BUILDS & LOADOUTS" (terms players actually search).
+// - Hero badge "⬢ DEXTER · BUILD ENGINEER" → "MARATHON BUILDS & LOADOUTS".
+// - Hero paragraph drops DEXTER + cadence.
+// - Section header "⬢ DEXTER'S TOP BUILDS" → "TOP RATED BUILDS".
+// - Per-shell link "DEXTER BUILD GUIDES" → "BUILD GUIDES".
+// - Added visible breadcrumb.
+// - Added 3 JSON-LD schemas (BreadcrumbList, CollectionPage w/ dateModified,
+//   FAQPage) replacing the single thin schema buried at the bottom.
+// - Added visible FAQ section (Google requires schema content be visible).
+// - Bottom CTA keeps DEXTER framing — it's the Build Advisor product itself.
 
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import Link from 'next/link';
 
-// FIXED May 15, 2026: switched from revalidate to force-dynamic.
-// getLiveStats() call during build-time pre-render triggers Supabase
-// before env vars are populated. force-dynamic disables static
-// pre-render entirely — page renders on-demand at request time.
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides',
-  description: 'DEXTER grades the builds. Live weapon stats, shell rankings, implant meta, mod analysis, and loadout guides for every Runner Shell — updated every 6 hours.',
-  keywords: 'Marathon builds, Marathon loadouts, Marathon best weapons, Marathon weapon stats, Marathon shell tier list, Marathon cores, Marathon implants, Marathon mods, Marathon meta',
+  description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides — refreshed throughout the day.',
+  keywords: 'Marathon builds, Marathon loadouts, Marathon best weapons, Marathon weapon stats, Marathon shell tier list, Marathon cores, Marathon implants, Marathon mods, Marathon meta, best Marathon loadout, Marathon ranked builds, Marathon shell builds, Marathon weapon guide, Marathon loadout guide',
   openGraph: {
-    title: "Marathon Builds — DEXTER's Build Lab | CyberneticPunks",
-    description: 'Live weapon stats, shell rankings, implants, mods, and loadout analysis. Updated every 6 hours by DEXTER.',
+    title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides | CyberneticPunks',
+    description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides.',
     url: 'https://cyberneticpunks.com/builds',
+    siteName: 'CyberneticPunks',
     type: 'website',
+    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@Cybernetic87250',
+    title: 'Marathon Builds & Loadouts — CyberneticPunks',
+    description: 'Best Marathon builds, weapon stats, shell rankings, and loadout guides. Refreshed throughout the day.',
+    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: {
     canonical: 'https://cyberneticpunks.com/builds',
@@ -84,6 +106,35 @@ const STAT_COLORS = {
 const STAT_ORDER = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Hardware', 'Finisher Siphon', 'Revive Speed', 'Firewall', 'Fall Resistance', 'Ping Duration'];
 
 const SHELL_NAMES_LOWER = ['assassin','destroyer','recon','rook','thief','triage','vandal'];
+
+// ─── FAQ DATA ──────────────────────────────────────────────
+// Real Marathon search questions, answered with funnels to other pages.
+const BUILD_FAQS = [
+  {
+    q: 'What\'s the best Marathon build right now?',
+    a: 'The strongest Marathon builds shift with each patch and meta cycle. Currently, Vandal with high-mobility mid-range loadouts dominates solo ranked, while Triage support builds anchor squads. The Build Advisor at /advisor generates a complete loadout in seconds based on your shell, playstyle, and rank goal — weapons, mods, cores, and implants tuned to the current meta.',
+  },
+  {
+    q: 'Which Marathon shell should I main?',
+    a: 'The right shell depends on your playstyle. For beginners, Triage and Rook are forgiving picks — Triage has self-repair and revive abilities, Rook has a high shield pool. For movement-based play, choose Vandal. For extraction-focused runs, choose Thief. The /shells page has dedicated guides for all seven shells with stats, abilities, builds, and matchup data.',
+  },
+  {
+    q: 'What\'s the best weapon in Marathon?',
+    a: 'There\'s no single best weapon — it depends on your shell, range preference, and ammo type. The WSTR Combat Shotgun is strong for close range, the M77 Assault Rifle offers forgiving mid-range gunplay, and the KKV-9SD SMG added in Season 2 is rising fast. Our live tier list at /meta ranks every weapon by current meta viability and shows trend movement.',
+  },
+  {
+    q: 'How do Marathon cores work?',
+    a: 'Cores are powerful shell-specific upgrades that modify or enhance abilities. Each shell has a pool of cores it can equip, plus universal cores that work on any shell. Rarity ranges from Standard up to Contraband, with higher-rarity cores providing stronger effects. The best cores per shell are shown in the Runner Shells section on this page.',
+  },
+  {
+    q: 'What are Marathon implants and how do they affect builds?',
+    a: 'Implants are passive upgrades slotted into your Runner — each provides a unique passive ability plus two stat bonuses. Some implants are shell-exclusive, while others are universal. Superior and Prestige implants represent the meta picks — see the Elite Implants section above for the current top-tier options across all shells.',
+  },
+  {
+    q: 'How often does the Marathon build meta change?',
+    a: 'Significantly with every Bungie patch (roughly every 2-4 weeks), and continuously between patches as the community discovers new builds and counters. Our build data, weapon stats, and tier list refresh throughout the day to capture both major shifts after balance updates and incremental movement during patch cycles.',
+  },
+];
 
 function statBar(val, max, color) {
   var pct = Math.min(100, Math.round(((val || 0) / (max || 1)) * 100));
@@ -270,22 +321,84 @@ export default async function BuildsPage() {
   var maxRpm = Math.max.apply(null, weapons.map(function(w) { return w.fire_rate || 0; }).concat([1]));
   var maxHp  = Math.max.apply(null, shells.map(function(s) { return s.base_health || 0; }).concat([1]));
 
+  // ─── JSON-LD SCHEMAS ────────────────────────────────────
+  var lastModified = lastMetaUpdate
+    || (dexterArticles[0] && dexterArticles[0].created_at)
+    || new Date().toISOString();
+
+  var breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',              item: 'https://cyberneticpunks.com' },
+      { '@type': 'ListItem', position: 2, name: 'Builds & Loadouts', item: 'https://cyberneticpunks.com/builds' },
+    ],
+  };
+
+  var collectionPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Marathon Builds & Loadouts',
+    description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides.',
+    url: 'https://cyberneticpunks.com/builds',
+    dateModified: lastModified,
+    publisher: {
+      '@type': 'Organization',
+      name: 'CyberneticPunks',
+      url:  'https://cyberneticpunks.com',
+    },
+  };
+
+  var faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: BUILD_FAQS.map(function(item) {
+      return {
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      };
+    }),
+  };
+
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
+      {/* JSON-LD Schemas — render inline so Google sees on first crawl */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+
       <style>{`
         .b-card { transition: background 0.12s, border-color 0.12s; }
         .b-card:hover { background: #1e2228 !important; }
         .b-row:hover { background: #1e2228 !important; }
         .b-btn { transition: background 0.12s, border-color 0.12s, color 0.12s; cursor: pointer; }
         .b-btn:hover { background: #1e2228 !important; }
+        .b-faq         { background: #1a1d24; border: 1px solid #22252e; border-left: 2px solid ${ORANGE}; border-radius: 0 2px 2px 0; }
+        .b-faq summary { padding: 14px 18px; cursor: pointer; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .b-faq summary::-webkit-details-marker { display: none; }
+        .b-faq[open] summary { color: #fff; }
+        .b-faq-body    { padding: 0 18px 16px; font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; }
       `}</style>
 
+      {/* ══ BREADCRUMB ════════════════════════════════════════ */}
+      <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1200, margin: '0 auto' }}>
+        <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
+          <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
+          <li>/</li>
+          <li style={{ color: ORANGE }}>BUILDS & LOADOUTS</li>
+        </ol>
+      </nav>
+
       {/* ══ HERO ════════════════════════════════════════════ */}
-      <section style={{ padding: '48px 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
+      <section style={{ padding: '24px 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: ORANGE, background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: ORANGE }} />
-            ⬢ DEXTER · BUILD ENGINEER
+            MARATHON BUILDS & LOADOUTS
+          </span>
+          <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
+            REFRESHED THROUGHOUT THE DAY
           </span>
           {liveStats.steam && (
             <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
@@ -295,11 +408,11 @@ export default async function BuildsPage() {
         </div>
 
         <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2.2rem, 6vw, 4rem)', fontWeight: 900, letterSpacing: 1, lineHeight: 1.0, margin: '0 0 18px' }}>
-          BUILD<br /><span style={{ color: ORANGE }}>LAB</span>
+          BUILDS<br /><span style={{ color: ORANGE }}>& LOADOUTS</span>
         </h1>
 
-        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 520, marginBottom: 24 }}>
-          Live weapon stats, shell rankings, implants, mods, and meta analysis — sourced from the database and updated every 6 hours by DEXTER.
+        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 540, marginBottom: 24 }}>
+          Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides — refreshed throughout the day.
         </p>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
@@ -335,7 +448,7 @@ export default async function BuildsPage() {
       {metaTiers.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: CYAN }}>⬡ NEXUS META PULSE</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: CYAN }}>LIVE META PULSE</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>
               {lastMetaUpdate ? 'UPDATED ' + timeAgo(lastMetaUpdate).toUpperCase() : 'LIVE'}
@@ -382,11 +495,11 @@ export default async function BuildsPage() {
         </section>
       )}
 
-      {/* ══ TOP DEXTER PICKS ═══════════════════════════════ */}
+      {/* ══ TOP RATED BUILDS ═══════════════════════════════ */}
       {topBuilds.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>⬢ DEXTER'S TOP BUILDS</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>TOP RATED BUILDS</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <Link href="/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL BUILDS →</Link>
           </div>
@@ -428,11 +541,11 @@ export default async function BuildsPage() {
         </section>
       )}
 
-      {/* ══ ELITE IMPLANTS (new) ═══════════════════════════ */}
+      {/* ══ ELITE IMPLANTS ═════════════════════════════════ */}
       {topImplants.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: PURPLE }}>◇ ELITE IMPLANTS</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: PURPLE }}>ELITE IMPLANTS</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{topImplants.length} SUPERIOR+</span>
           </div>
@@ -477,11 +590,11 @@ export default async function BuildsPage() {
         </section>
       )}
 
-      {/* ══ META MODS (new) ════════════════════════════════ */}
+      {/* ══ META MODS ══════════════════════════════════════ */}
       {topMods.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>◆ META MODS</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>META MODS</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{topMods.length} SUPERIOR+</span>
           </div>
@@ -679,7 +792,7 @@ export default async function BuildsPage() {
 
                       {articleCount > 0 && (
                         <Link href={'#builds-' + shell.name.toLowerCase()} style={{ display: 'inline-block', marginTop: 10, paddingTop: 8, borderTop: '1px solid ' + BORDER, fontFamily: 'monospace', fontSize: 8, color: ORANGE, letterSpacing: 1, textDecoration: 'none', fontWeight: 700, width: '100%' }}>
-                          {articleCount} DEXTER BUILD GUIDE{articleCount !== 1 ? 'S' : ''} →
+                          {articleCount} BUILD GUIDE{articleCount !== 1 ? 'S' : ''} →
                         </Link>
                       )}
                     </div>
@@ -843,8 +956,33 @@ export default async function BuildsPage() {
         );
       })}
 
+      {/* ══ FAQ ════════════════════════════════════════════ */}
+      <section style={{ padding: '16px 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>Frequently Asked About Marathon Builds</span>
+          <div style={{ flex: 1, height: 1, background: BORDER }} />
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{BUILD_FAQS.length} QUESTIONS</span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {BUILD_FAQS.map(function(item, i) {
+            return (
+              <details key={i} className="b-faq">
+                <summary>
+                  <span>{item.q}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: ORANGE, flexShrink: 0, fontWeight: 700 }}>+</span>
+                </summary>
+                <div className="b-faq-body">
+                  {item.a}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ══ BOTTOM CTA ═════════════════════════════════════ */}
-      <section style={{ padding: '32px 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
+      <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ORANGE, borderRadius: '0 2px 2px 0', padding: 28, textAlign: 'center' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: ORANGE, letterSpacing: 3, marginBottom: 10, fontWeight: 700 }}>⬢ DEXTER · BUILD ENGINEER</div>
           <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: 1, marginBottom: 10, lineHeight: 1.2 }}>
@@ -858,8 +996,6 @@ export default async function BuildsPage() {
           </Link>
         </div>
       </section>
-
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Marathon Builds and Loadouts — DEXTER Build Lab', description: 'Live weapon stats, shell rankings, implants, mods, and build guides for Marathon.', url: 'https://cyberneticpunks.com/builds' }) }} />
     </main>
   );
 }
