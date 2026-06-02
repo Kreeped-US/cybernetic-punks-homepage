@@ -12,12 +12,14 @@ import { isMonetizationEnabled } from '@/lib/monetization';
 // default ("CyberneticPunks — Marathon Intelligence Hub"), which led with
 // brand instead of searcher intent. Title template in layout will append
 // " | CyberneticPunks" automatically.
+// June 2, 2026: cadence-agnostic copy (was "Updated Every 6 Hours"); cron
+// is now 12h (00:00 + 12:00 UTC), so specific-interval claims were stale.
 export const metadata = {
-  title: 'Marathon Meta, Builds & Tier List — Updated Every 6 Hours',
+  title: 'Marathon Meta, Builds & Tier List — Updated Daily',
   description: 'Live Marathon tier list, build advisor, and patch coverage. Tier rankings, weapon and shell guides, and ranked loadouts — refreshed throughout the day.',
   keywords: 'Marathon, Marathon meta, Marathon tier list, Marathon builds, Marathon loadouts, Marathon ranked, Marathon weapons, Marathon shells, Marathon guides, Marathon build advisor, Marathon tier list maker, best Marathon builds, what to run in Marathon, Bungie Marathon, Marathon intelligence',
   openGraph: {
-    title: 'Marathon Meta, Builds & Tier List — Updated Every 6 Hours',
+    title: 'Marathon Meta, Builds & Tier List — Updated Daily',
     description: 'Live Marathon tier list, build advisor, and patch coverage. Refreshed throughout the day.',
     url: 'https://cyberneticpunks.com',
     siteName: 'CyberneticPunks',
@@ -27,7 +29,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Meta, Builds & Tier List — Updated Every 6 Hours',
+    title: 'Marathon Meta, Builds & Tier List — Updated Daily',
     description: 'Live Marathon tier list, build advisor, and patch coverage. Refreshed throughout the day.',
     images: ['/og-image.png'],
   },
@@ -85,10 +87,14 @@ function imagePath(type, filename) {
   return '/images/' + folder + '/' + filename;
 }
 
+// Cron cadence: 12h cycles at 00:00 + 12:00 UTC (`0 0,12 * * *`).
+// cycleMins MUST match the cron interval. Was 360 (6h) until June 2, 2026 —
+// stale after the cadence was halved; the countdown was rolling over twice
+// as often as anything actually published.
 function cronCycleInfo() {
   var now        = new Date();
   var totalMins  = now.getUTCHours() * 60 + now.getUTCMinutes();
-  var cycleMins  = 360;
+  var cycleMins  = 720;
   var minsIn     = totalMins % cycleMins;
   var minsLeft   = cycleMins - minsIn;
   var progress   = Math.round((minsIn / cycleMins) * 100);
@@ -554,7 +560,7 @@ export default async function Home() {
             </h1>
 
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.32)', lineHeight: 1.7, maxWidth: 520, margin: '0 0 24px' }}>
-              Live Marathon tier list, build advisor, and patch coverage. Tier rankings, weapon and shell guides, and ranked loadouts — refreshed every 6 hours.
+              Live Marathon tier list, build advisor, and patch coverage. Tier rankings, weapon and shell guides, and ranked loadouts — refreshed throughout the day.
             </p>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -577,7 +583,7 @@ export default async function Home() {
 
             <div className="hp-product-grid" style={{ display: 'grid', gap: 10 }}>
 
-              {/* CARD 1: TIER LIST (was META GRID) */}
+              {/* CARD 1: TIER LIST */}
               <Link href="/meta" className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -593,6 +599,9 @@ export default async function Home() {
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#00ff41', letterSpacing: 1, lineHeight: 1 }}>
                       TIER LIST
+                    </div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: 0.3, lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>
+                      Every weapon &amp; shell, ranked S–C
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
@@ -633,12 +642,12 @@ export default async function Home() {
                     {weaponCount} weapons · {shellCount} shells
                   </span>
                   <span style={{ fontSize: 8, color: '#00d4ff' + 'aa', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
-                    ⬡ GRADED BY NEXUS EVERY 6H
+                    UPDATED DAILY
                   </span>
                 </div>
               </Link>
 
-              {/* CARD 2: BUILD ADVISOR (was THE FORGE) */}
+              {/* CARD 2: BUILD ADVISOR */}
               <Link href="/advisor" className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -653,6 +662,9 @@ export default async function Home() {
                 <div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#ff8800', letterSpacing: 1, lineHeight: 1 }}>
                     BUILD ADVISOR
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: 0.3, lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>
+                    Tell us your shell, we build the loadout
                   </div>
                 </div>
 
@@ -672,7 +684,7 @@ export default async function Home() {
                 </div>
 
                 <div style={{ marginTop: 10, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                  Pick your shell. Get a full loadout in seconds.
+                  Mods, weapon, and stats — tuned to the live meta.
                 </div>
 
                 <div style={{ marginTop: 14, padding: '10px 12px', background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #ffd700', borderRadius: '0 2px 2px 0', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -698,15 +710,15 @@ export default async function Home() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e' }}>
                   <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
-                    {weeklyBuilds > 0 ? weeklyBuilds + ' forged this week' : 'Engineered from live data'}
+                    {weeklyBuilds > 0 ? weeklyBuilds + ' forged this week' : 'Built from live data'}
                   </span>
                   <span style={{ fontSize: 8, color: '#ff8800' + 'aa', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
-                    ⬢ ENGINEERED BY DEXTER
+                    FROM LIVE DATA
                   </span>
                 </div>
               </Link>
 
-              {/* CARD 3: TIER LIST CREATOR (was RANKING BOARD) */}
+              {/* CARD 3: TIER LIST MAKER */}
               <Link href="/meta#builder" className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -720,7 +732,10 @@ export default async function Home() {
               }}>
                 <div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, lineHeight: 1 }}>
-                    TIER LIST CREATOR
+                    TIER LIST MAKER
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: 0.3, lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>
+                    Rank them yourself — share it anywhere
                   </div>
                 </div>
 
@@ -781,7 +796,7 @@ export default async function Home() {
                 </div>
               </Link>
 
-              {/* CARD 4: BUILD COACH (was THE AUDIT) */}
+              {/* CARD 4: BUILD COACH */}
               <Link href={monetizationOn ? '/join' : '#'} className="product-panel" style={{
                 display: 'flex', flexDirection: 'column',
                 background: '#1a1d24',
@@ -802,6 +817,9 @@ export default async function Home() {
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#9b5de5', letterSpacing: 1, lineHeight: 1 }}>
                       BUILD COACH
+                    </div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', letterSpacing: 0.3, lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>
+                      Already built? Get yours graded
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
