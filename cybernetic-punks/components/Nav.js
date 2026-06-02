@@ -7,6 +7,7 @@ var NAV_ITEMS = [
   { label: 'HOME',     href: '/' },
   { label: 'META',     href: '/meta' },
   { label: 'SHELLS',   href: '/shells' },
+  { label: 'UNIQUES',  href: '/uniques' },
   { label: 'FACTIONS', href: '/factions' },
   {
     label: 'INTEL',
