@@ -8,6 +8,13 @@
 // app/guides/[category]/page.js exactly):
 // shells, weapons, mods, extraction, ranked, beginner, progression,
 // maps, stealth, squad, solo, holotag, endgame, pvp, support, cryo-archive
+//
+// JUNE 2, 2026: Added /uniques (static) + dynamic /weapons/[slug] pages.
+// Weapon slugs use the full lowercase+hyphenate rule (NOT the simple
+// shell .toLowerCase()) because weapon names contain spaces/symbols
+// (e.g. "KKV-9SD", "Misriah 2442"); the rule must match how
+// app/weapons/[slug]/page.js resolves incoming URLs or the sitemap
+// would list URLs the pages can't match.
 // -----------------------------------------------------------------
 
 import { createClient } from '@supabase/supabase-js';
@@ -19,6 +26,14 @@ const ALL_GUIDE_CATEGORIES = [
 ];
 
 const FALLBACK_SHELL_SLUGS = ['assassin', 'destroyer', 'recon', 'rook', 'thief', 'triage', 'vandal'];
+
+// Weapon name -> URL slug. MUST match app/weapons/[slug]/page.js.
+function weaponSlug(name) {
+  return (name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 export default async function sitemap() {
   const baseUrl = 'https://cyberneticpunks.com';
@@ -32,6 +47,7 @@ export default async function sitemap() {
     { url: baseUrl + '/advisor',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/intel',       lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/shells',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
+    { url: baseUrl + '/uniques',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/rising',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/stats',       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.75 },
     { url: baseUrl + '/leaderboard', lastModified: new Date(), changeFrequency: 'daily',   priority: 0.75 },
@@ -64,6 +80,7 @@ export default async function sitemap() {
   ]);
 
   let dbShellPages = [];
+  let weaponPages = [];
   let dynamicPages = [];
   let activeGuideCategories = [];
 
@@ -106,6 +123,30 @@ export default async function sitemap() {
       }
     } catch (err) {
       console.error('[sitemap] shell fetch threw:', err);
+    }
+
+    // Weapon detail pages from DB. Slug uses the full hyphenate rule to
+    // match app/weapons/[slug]/page.js (weapon names have spaces/symbols).
+    try {
+      const { data: weapons, error: weaponsErr } = await supabase
+        .from('weapon_stats')
+        .select('name, updated_at')
+        .order('name');
+
+      console.log('[sitemap] weapon_stats:',
+        weapons ? weapons.length + ' rows' : 'null',
+        weaponsErr ? 'error: ' + weaponsErr.message : '');
+
+      if (weapons && weapons.length > 0) {
+        weaponPages = weapons.map((w) => ({
+          url: baseUrl + '/weapons/' + weaponSlug(w.name),
+          lastModified: w.updated_at ? new Date(w.updated_at) : new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.75,
+        }));
+      }
+    } catch (err) {
+      console.error('[sitemap] weapon fetch threw:', err);
     }
 
     // Article URLs from feed_items
@@ -169,7 +210,8 @@ export default async function sitemap() {
     'static=' + staticPages.length,
     'guides=' + guideCategoryPages.length,
     'shells=' + shellPages.length,
+    'weapons=' + weaponPages.length,
     'dynamic=' + dynamicPages.length);
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...dynamicPages];
+  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...dynamicPages];
 }
