@@ -13,6 +13,13 @@
 //   instead of slicing from the 80-article MIRANDA window. Numbers reflect reality.
 // - Browse by Category card layout: count column enlarged + anchored so triple-digit
 //   counts (235, 431, 592) don't crowd the labels.
+//
+// FIXED June 2, 2026:
+// - Cron cadence is 12h (00:00 + 12:00 UTC), not 6h. Replaced all "every 6 hours"
+//   / "EVERY 6H" copy (including two strings inside the FAQPage JSON-LD) with
+//   cadence-agnostic phrasing.
+// - "RANKED SEASON 1" CTA label was stale after S2 launch; changed to season-
+//   agnostic "RANKED MODE" so it doesn't need a manual bump each season.
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -23,11 +30,11 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Guides — Shell Guides, Ranked Prep, Extraction Strategy & Build Tips',
-  description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips — updated every 6 hours by MIRANDA. Covers all 7 shells, weapons, mods, and map intel.',
+  description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips — updated throughout the day by MIRANDA. Covers all 7 shells, weapons, mods, and map intel.',
   keywords: 'Marathon guides, Marathon guide, Marathon tips, Marathon beginner guide, Marathon shell guide, Marathon ranked guide, Marathon weapon guide, Marathon mod guide, Marathon extraction guide, Marathon strategy, how to play Marathon, Marathon Bungie guide, Marathon Thief guide, Marathon Destroyer guide, Marathon Assassin guide, Marathon Recon guide, Marathon Vandal guide, Marathon Triage guide, Marathon Rook guide',
   openGraph: {
     title: 'Marathon Guides — Shell Breakdowns, Ranked Prep & Extraction Strategy',
-    description: 'Every Marathon guide you need. Shells, ranked, weapons, mods, extraction, and beginner tips. Auto-updated every 6 hours.',
+    description: 'Every Marathon guide you need. Shells, ranked, weapons, mods, extraction, and beginner tips. Auto-updated throughout the day.',
     url: 'https://cyberneticpunks.com/guides',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -37,7 +44,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Guides | CyberneticPunks',
-    description: 'Shell breakdowns, ranked prep, extraction strategy, and more. Updated every 6 hours.',
+    description: 'Shell breakdowns, ranked prep, extraction strategy, and more. Updated throughout the day.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/guides' },
@@ -125,7 +132,7 @@ const FAQS = [
   },
   {
     q: 'What is the meta in Marathon right now?',
-    a: 'The meta shifts every 6 hours as NEXUS tracks live play data. Generally, Vandal and Thief dominate solo ranked, while Recon and Triage excel in squad play. Weapon meta rotates more often — check the live tier list for current picks. Rook is banned from Ranked.',
+    a: 'The meta shifts throughout the day as NEXUS tracks live play data. Generally, Vandal and Thief dominate solo ranked, while Recon and Triage excel in squad play. Weapon meta rotates more often — check the live tier list for current picks. Rook is banned from Ranked.',
   },
   {
     q: 'How do I unlock faction items in Marathon?',
@@ -137,7 +144,7 @@ const FAQS = [
   },
   {
     q: 'How often are Marathon guides updated?',
-    a: 'MIRANDA publishes new field guides every 6 hours, pulled from verified game data and community trends. Shell stats, weapon balancing, and meta positioning are tracked continuously — so the guides you read here always reflect the current game state.',
+    a: 'MIRANDA publishes new field guides throughout the day, pulled from verified game data and community trends. Shell stats, weapon balancing, and meta positioning are tracked continuously — so the guides you read here always reflect the current game state.',
   },
   {
     q: 'What platforms is Marathon available on?',
@@ -414,7 +421,7 @@ export default async function GuidesPage({ searchParams }) {
             ◎ MIRANDA · FIELD GUIDE EDITOR
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: '#00ff41', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
-            UPDATED EVERY 6H
+            UPDATED DAILY
           </span>
           {lastUpdated && (
             <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
@@ -432,7 +439,7 @@ export default async function GuidesPage({ searchParams }) {
               Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips.
             </p>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, maxWidth: 540, marginBottom: 24 }}>
-              Built from verified game data across <strong style={{ color: '#fff' }}>{shellCount} shells</strong>, <strong style={{ color: '#fff' }}>{weaponCount} weapons</strong>, and <strong style={{ color: '#fff' }}>{modCount} mods</strong>. Auto-updated by MIRANDA every 6 hours.
+              Built from verified game data across <strong style={{ color: '#fff' }}>{shellCount} shells</strong>, <strong style={{ color: '#fff' }}>{weaponCount} weapons</strong>, and <strong style={{ color: '#fff' }}>{modCount} mods</strong>. Auto-updated by MIRANDA throughout the day.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link href="/advisor" style={{ padding: '11px 22px', background: '#ff8800', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
@@ -658,7 +665,7 @@ export default async function GuidesPage({ searchParams }) {
           <div>
             <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#9b5de5', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>◎ MIRANDA · FIELD GUIDE EDITOR</div>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
-              GUIDES PUBLISHED<br /><span style={{ color: '#9b5de5' }}>EVERY 6 HOURS.</span>
+              GUIDES PUBLISHED<br /><span style={{ color: '#9b5de5' }}>DAILY.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
               MIRANDA publishes structured shell guides, ranked prep, and extraction strategy — built from live database stats, not opinions.
@@ -669,7 +676,7 @@ export default async function GuidesPage({ searchParams }) {
               { href: '/intel/miranda', label: '◎ ALL MIRANDA INTEL',  sub: 'Full guide archive',       color: '#9b5de5' },
               { href: '/advisor',       label: '⬢ BUILD ADVISOR',       sub: 'Get your ranked loadout',  color: '#ff8800' },
               { href: '/shells',        label: 'SHELL DATABASE',        sub: 'Full ability breakdowns',  color: '#00d4ff' },
-              { href: '/ranked',        label: 'RANKED SEASON 1',       sub: 'Tiers, Holotags, rewards', color: '#ffd700' },
+              { href: '/ranked',        label: 'RANKED MODE',           sub: 'Tiers, Holotags, rewards', color: '#ffd700' },
             ].map(function(item) {
               return (
                 <Link key={item.href} href={item.href} className="g-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + item.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
