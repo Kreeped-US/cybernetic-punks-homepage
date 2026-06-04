@@ -11,14 +11,17 @@
 // we can't reverse a slug back to a name by a simple rule. So on the way
 // IN we fetch all weapons, derive each one's slug, and find the match.
 //
-// SEO: per-weapon title/description/canonical + BreadcrumbList, WebPage,
-// Product (with stat properties), and FAQPage JSON-LD - mirrors the shell
-// detail page so weapons rank for "[weapon name] Marathon stats" searches.
+// SEO: per-weapon title/description/canonical + BreadcrumbList, WebPage
+// (with weapon stats on mainEntity), and FAQPage JSON-LD - mirrors the
+// shell detail page so weapons rank for "[weapon name] Marathon stats".
 //
 // UPDATED June 4, 2026 - on-page SEO audit pass:
-//   1. Product JSON-LD with additionalProperty stat block (damage, fire
-//      rate, magazine, precision, range, aim assist) - the main win for
-//      "marathon [weapon] stats" spec-intent queries.
+//   1. Weapon stat block (damage, fire rate, magazine, precision, range,
+//      aim assist, ammo, firing mode, rarity) exposed as schema.org
+//      PropertyValue pairs on the WebPage's mainEntity Thing - structured
+//      signal for "marathon [weapon] stats" spec-intent queries.
+//      (First attempt used a Product schema; Google rejects Product without
+//      commerce fields, so the stats moved to mainEntity, which validates.)
 //   2. Description now leads with a real concrete spec (e.g. fire rate)
 //      when available, instead of generic "stats, fire rate, magazine".
 //   3. dateModified is OMITTED when there is no real date (was falling
@@ -218,31 +221,15 @@ export default async function WeaponDetailPage({ params }) {
     || (articles[0] && articles[0].created_at)
     || null;
 
-  var webPageSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Marathon ' + weaponName + ' - Stats, Tier & Builds',
-    description: 'Stats, meta tier, recommended builds, and unique variants for the ' + weaponName + ' in Marathon.',
-    url: 'https://cyberneticpunks.com/weapons/' + slug,
-    about: {
-      '@type': 'Thing',
-      name: weaponName,
-      description: (weapon.weapon_type || 'Weapon') + ' in Marathon, Bungie\'s extraction shooter.',
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'CyberneticPunks',
-      url: 'https://cyberneticpunks.com',
-    },
-  };
-  if (lastModified) {
-    webPageSchema.dateModified = lastModified;
-  }
-
-  // Product schema with a stat block. Each stat is emitted only when present
-  // (same != null guards the client uses), so a weapon missing a stat simply
-  // omits that property rather than publishing a null. This is the richest
-  // signal for spec-style "[weapon] stats" queries.
+  // Weapon stat block as schema.org PropertyValue pairs. Each stat is emitted
+  // only when present (same != null guards the client uses), so a weapon
+  // missing a stat omits that property rather than publishing a null.
+  //
+  // NOTE (June 4): these were previously wrapped in a Product schema, but
+  // Google rejects Product without commerce fields (offers/review/rating) -
+  // a game weapon has none, so it was flagged "invalid". The stats now live
+  // on the WebPage's mainEntity Thing instead, which validates cleanly and
+  // still exposes every stat as structured data for "[weapon] stats" queries.
   var weaponProps = [];
   if (weapon.damage != null)               weaponProps.push({ '@type': 'PropertyValue', name: 'Damage', value: weapon.damage });
   if (weapon.fire_rate != null)            weaponProps.push({ '@type': 'PropertyValue', name: 'Fire Rate', value: weapon.fire_rate, unitText: 'RPM' });
@@ -252,27 +239,39 @@ export default async function WeaponDetailPage({ params }) {
   if (weapon.aim_assist != null)           weaponProps.push({ '@type': 'PropertyValue', name: 'Aim Assist', value: weapon.aim_assist });
   if (weapon.ammo_type)                    weaponProps.push({ '@type': 'PropertyValue', name: 'Ammo Type', value: weapon.ammo_type });
   if (weapon.firing_mode)                  weaponProps.push({ '@type': 'PropertyValue', name: 'Firing Mode', value: weapon.firing_mode });
+  if (weapon.rarity)                       weaponProps.push({ '@type': 'PropertyValue', name: 'Rarity', value: weapon.rarity });
 
-  var productSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: 'Marathon ' + weaponName,
-    category: (weapon.weapon_type || 'Weapon') + ' - Marathon',
+  // The weapon itself, as the page's main entity. Carries the stat block.
+  var weaponEntity = {
+    '@type': 'Thing',
+    name: weaponName,
     description: 'The ' + weaponName + ' is a ' + (weapon.weapon_type || 'weapon')
       + (weapon.ammo_type ? ' using ' + weapon.ammo_type : '')
       + ' in Marathon, Bungie\'s extraction shooter.'
       + (metaTier ? ' Currently ' + metaTier.tier + '-Tier in the meta.' : ''),
-    url: 'https://cyberneticpunks.com/weapons/' + slug,
-    brand: { '@type': 'Brand', name: 'Marathon' },
   };
   if (weapon.image_filename) {
-    productSchema.image = 'https://cyberneticpunks.com/images/weapons/' + weapon.image_filename;
-  }
-  if (weapon.rarity) {
-    weaponProps.push({ '@type': 'PropertyValue', name: 'Rarity', value: weapon.rarity });
+    weaponEntity.image = 'https://cyberneticpunks.com/images/weapons/' + weapon.image_filename;
   }
   if (weaponProps.length > 0) {
-    productSchema.additionalProperty = weaponProps;
+    weaponEntity.additionalProperty = weaponProps;
+  }
+
+  var webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Marathon ' + weaponName + ' - Stats, Tier & Builds',
+    description: 'Stats, meta tier, recommended builds, and unique variants for the ' + weaponName + ' in Marathon.',
+    url: 'https://cyberneticpunks.com/weapons/' + slug,
+    mainEntity: weaponEntity,
+    publisher: {
+      '@type': 'Organization',
+      name: 'CyberneticPunks',
+      url: 'https://cyberneticpunks.com',
+    },
+  };
+  if (lastModified) {
+    webPageSchema.dateModified = lastModified;
   }
 
   var faqSchema = faqItems.length > 0 ? {
@@ -287,7 +286,6 @@ export default async function WeaponDetailPage({ params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       {faqSchema && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       )}
