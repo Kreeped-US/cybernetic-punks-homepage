@@ -269,13 +269,13 @@ export default function RankedClient({ data }) {
               <div style={{ marginTop: 28, padding: '14px 18px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #00ff41', borderRadius: '0 2px 2px 0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                   <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: '#00ff41' }}>AUTONOMOUS INTEL</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: '#00ff41' }}>RANKED INTEL</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
                   <strong style={{ color: '#fff' }}>{articleCount}</strong> ranked articles tracked ·{' '}
                   <strong style={{ color: '#fff' }}>{moverCount}</strong> meta movers ·{' '}
                   <strong style={{ color: '#fff' }}>{unviableCount}</strong> weapons flagged ·{' '}
-                  <strong style={{ color: '#fff' }}>{editorsActive.length}/5</strong> editors active
+                  refreshed <strong style={{ color: '#fff' }}>daily</strong>
                 </div>
               </div>
             )}
@@ -766,9 +766,9 @@ export default function RankedClient({ data }) {
       <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00ff41', borderRadius: '0 2px 2px 0', padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00ff41', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>AUTONOMOUS INTELLIGENCE</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00ff41', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>RANKED INTELLIGENCE</div>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
-              5 AI EDITORS.<br /><span style={{ color: '#00ff41' }}>UPDATED DAILY.</span>
+              RANKED INTEL.<br /><span style={{ color: '#00ff41' }}>UPDATED DAILY.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
               NEXUS tracks the ranked tier list. DEXTER grades builds by Holotag viability. CIPHER analyzes ranked plays. MIRANDA publishes guides.
