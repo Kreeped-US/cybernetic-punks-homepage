@@ -212,13 +212,7 @@ export default async function BuildsPage() {
       .eq('is_published', true)
       .order('created_at', { ascending: false })
       .limit(48),
-    supabase
-      .from('feed_items')
-      .select('id, headline, slug, tags, ce_score, thumbnail, created_at')
-      .eq('editor', 'DEXTER')
-      .eq('is_published', true)
-      .order('ce_score', { ascending: false })
-      .limit(6),
+    Promise.resolve({ data: null }),
     supabase
       .from('shell_stat_values')
       .select('shell_name, stat_name, stat_value')
@@ -246,7 +240,20 @@ export default async function BuildsPage() {
   var shells          = shellsRes.data || [];
   var metaTiers       = metaTiersRes.data || [];
   var dexterArticles  = dexterArticlesRes.data || [];
-  var topBuilds       = topDexterRes.data || [];
+  // Top builds: blend quality (ce_score) with recency via age-decay, so fresh
+  // S2 content outranks stale high-graded S1 articles. DECAY_RATE 0.1/day means
+  // a 30-day-old build loses 3 points; ~50+ day old content fades out of top.
+  var DECAY_RATE = 0.1;
+  var nowMs = Date.now();
+  var topBuilds = dexterArticles
+    .map(function(a) {
+      var ageDays = a.created_at ? (nowMs - new Date(a.created_at).getTime()) / 86400000 : 999;
+      var decayed = (a.ce_score || 0) - (ageDays * DECAY_RATE);
+      return { article: a, decayed: decayed };
+    })
+    .sort(function(x, y) { return y.decayed - x.decayed; })
+    .slice(0, 6)
+    .map(function(x) { return x.article; });
   var shellStatValues = shellStatValuesRes.data || [];
   var allCores        = coresRes.data || [];
   var topImplants     = implantsRes.data || [];
