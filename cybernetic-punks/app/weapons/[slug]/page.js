@@ -1,9 +1,9 @@
 // app/weapons/[slug]/page.js
 //
-// Weapon detail page — one template that serves every weapon in
+// Weapon detail page - one template that serves every weapon in
 // weapon_stats. No generateStaticParams (and dynamic = 'force-dynamic'),
 // so every weapon in the DB automatically gets a page with zero
-// maintenance — new weapons "just work" the day they're added.
+// maintenance - new weapons "just work" the day they're added.
 //
 // SLUG HANDLING: weapon_stats has no slug column, so we derive the slug
 // from the name (lowercase, non-alphanumeric runs -> single hyphen).
@@ -12,8 +12,20 @@
 // IN we fetch all weapons, derive each one's slug, and find the match.
 //
 // SEO: per-weapon title/description/canonical + BreadcrumbList, WebPage,
-// and FAQPage JSON-LD — mirrors the shell detail page so weapons rank for
-// "[weapon name] Marathon stats" style searches.
+// Product (with stat properties), and FAQPage JSON-LD - mirrors the shell
+// detail page so weapons rank for "[weapon name] Marathon stats" searches.
+//
+// UPDATED June 4, 2026 - on-page SEO audit pass:
+//   1. Product JSON-LD with additionalProperty stat block (damage, fire
+//      rate, magazine, precision, range, aim assist) - the main win for
+//      "marathon [weapon] stats" spec-intent queries.
+//   2. Description now leads with a real concrete spec (e.g. fire rate)
+//      when available, instead of generic "stats, fire rate, magazine".
+//   3. dateModified is OMITTED when there is no real date (was falling
+//      back to new Date() on every crawl - a false freshness signal).
+//   4. OG/Twitter image is the weapon's own art when it has one, falling
+//      back to og-image.png - better Reddit/Discord/X link shares.
+// Page structure + WeaponDetailClient are unchanged.
 
 import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
@@ -40,6 +52,17 @@ async function resolveWeaponName(slug) {
   return match ? match.name : null;
 }
 
+// Build a short, concrete spec phrase for the meta description, leading with
+// the stat that best matches search intent for the weapon type. Returns ''
+// when no usable stat exists, so the description degrades gracefully.
+function specPhrase(weapon) {
+  var bits = [];
+  if (weapon.fire_rate != null) bits.push(weapon.fire_rate + ' RPM');
+  if (weapon.weapon_type) bits.push(weapon.weapon_type);
+  if (weapon.ammo_type) bits.push('(' + weapon.ammo_type + ')');
+  return bits.join(' ');
+}
+
 export async function generateMetadata({ params }) {
   var slug = (await params).slug;
   var weaponName = await resolveWeaponName(slug);
@@ -47,21 +70,36 @@ export async function generateMetadata({ params }) {
 
   var { data: weapon } = await supabase
     .from('weapon_stats')
-    .select('name, weapon_type, rarity, ammo_type, notes')
+    .select('name, weapon_type, rarity, ammo_type, notes, fire_rate, image_filename')
     .eq('name', weaponName)
     .single();
   if (!weapon) return { title: 'Weapon Not Found' };
 
   var typeLabel = weapon.weapon_type ? weapon.weapon_type : 'Weapon';
 
-  // Title leads with "Marathon [Weapon]" — the literal search pattern.
+  // Title leads with "Marathon [Weapon]" - the literal search pattern.
   // No '| CyberneticPunks' suffix; the layout title.template appends it.
-  var title = 'Marathon ' + weapon.name + ' — ' + typeLabel + ' Stats, Tier & Builds';
+  var title = 'Marathon ' + weapon.name + ' - ' + typeLabel + ' Stats, Tier & Builds';
 
-  var desc = 'Marathon ' + weapon.name + ' guide — '
-    + (weapon.weapon_type ? weapon.weapon_type + ' ' : '')
-    + (weapon.ammo_type ? '(' + weapon.ammo_type + ') ' : '')
-    + 'stats, meta tier, recommended builds, and unique variants. Damage, fire rate, magazine, and range for the ' + weapon.name + '.';
+  // Description leads with a real spec ("1200 RPM SMG (Aggressive Ammo)")
+  // when we have one, then the value proposition. Falls back to the generic
+  // line for weapons with no stats populated yet.
+  var spec = specPhrase(weapon);
+  var desc;
+  if (spec) {
+    desc = 'Marathon ' + weapon.name + ' - ' + spec
+      + '. Meta tier, recommended builds, damage, magazine, range, and unique variants for the ' + weapon.name + '.';
+  } else {
+    desc = 'Marathon ' + weapon.name + ' guide - '
+      + (weapon.weapon_type ? weapon.weapon_type + ' ' : '')
+      + (weapon.ammo_type ? '(' + weapon.ammo_type + ') ' : '')
+      + 'stats, meta tier, recommended builds, and unique variants. Damage, fire rate, magazine, and range for the ' + weapon.name + '.';
+  }
+
+  // Per-weapon OG image when the weapon has art; generic fallback otherwise.
+  var ogImage = weapon.image_filename
+    ? 'https://cyberneticpunks.com/images/weapons/' + weapon.image_filename
+    : 'https://cyberneticpunks.com/og-image.png';
 
   return {
     title: title,
@@ -72,14 +110,14 @@ export async function generateMetadata({ params }) {
       url: 'https://cyberneticpunks.com/weapons/' + slug,
       siteName: 'CyberneticPunks',
       type: 'website',
-      images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
-      title: 'Marathon ' + weapon.name + ' — Stats & Tier',
+      title: 'Marathon ' + weapon.name + ' - Stats & Tier',
       description: 'Stats, meta tier, builds, and unique variants for the ' + weapon.name + '.',
-      images: ['https://cyberneticpunks.com/og-image.png'],
+      images: [ogImage],
     },
     alternates: { canonical: 'https://cyberneticpunks.com/weapons/' + slug },
   };
@@ -92,7 +130,7 @@ export default async function WeaponDetailPage({ params }) {
 
   // Fetch the weapon, its meta tier, unique variants based on it, DEXTER
   // builds + articles mentioning it, and the full weapon list for the
-  // "other weapons" nav — all in parallel.
+  // "other weapons" nav - all in parallel.
   var [weaponRes, metaTierRes, uniquesRes, dexterPicksRes, articlesRes, allWeaponsRes] = await Promise.all([
     supabase.from('weapon_stats').select('*').eq('name', weaponName).single(),
 
@@ -141,7 +179,7 @@ export default async function WeaponDetailPage({ params }) {
     .slice(0, 6)
     .map(function(w) { return { name: w.name, slug: nameToSlug(w.name), weapon_type: w.weapon_type }; });
 
-  // ─── FAQ ITEMS (also feed the FAQPage JSON-LD) ──────────────
+  // --- FAQ ITEMS (also feed the FAQPage JSON-LD) ----------------
   var faqItems = [];
   if (metaTier) {
     faqItems.push({
@@ -158,11 +196,11 @@ export default async function WeaponDetailPage({ params }) {
   if (uniques.length > 0) {
     faqItems.push({
       q: 'Are there unique versions of the ' + weaponName + '?',
-      a: 'Yes — the ' + weaponName + ' has ' + uniques.length + ' unique variant' + (uniques.length !== 1 ? 's' : '') + ': ' + uniques.map(function(u) { return u.name; }).join(', ') + '.',
+      a: 'Yes - the ' + weaponName + ' has ' + uniques.length + ' unique variant' + (uniques.length !== 1 ? 's' : '') + ': ' + uniques.map(function(u) { return u.name; }).join(', ') + '.',
     });
   }
 
-  // ─── JSON-LD SCHEMAS (mirror the shell page) ────────────────
+  // --- JSON-LD SCHEMAS (mirror the shell page) ------------------
   var breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -173,17 +211,19 @@ export default async function WeaponDetailPage({ params }) {
     ],
   };
 
+  // Honest freshness: use the meta-tier date, else the newest article date,
+  // else nothing. We do NOT fall back to "now" - that would falsely report
+  // the page as freshly modified on every crawl.
   var lastModified = (metaTier && metaTier.updated_at)
     || (articles[0] && articles[0].created_at)
-    || new Date().toISOString();
+    || null;
 
   var webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Marathon ' + weaponName + ' — Stats, Tier & Builds',
+    name: 'Marathon ' + weaponName + ' - Stats, Tier & Builds',
     description: 'Stats, meta tier, recommended builds, and unique variants for the ' + weaponName + ' in Marathon.',
     url: 'https://cyberneticpunks.com/weapons/' + slug,
-    dateModified: lastModified,
     about: {
       '@type': 'Thing',
       name: weaponName,
@@ -195,6 +235,45 @@ export default async function WeaponDetailPage({ params }) {
       url: 'https://cyberneticpunks.com',
     },
   };
+  if (lastModified) {
+    webPageSchema.dateModified = lastModified;
+  }
+
+  // Product schema with a stat block. Each stat is emitted only when present
+  // (same != null guards the client uses), so a weapon missing a stat simply
+  // omits that property rather than publishing a null. This is the richest
+  // signal for spec-style "[weapon] stats" queries.
+  var weaponProps = [];
+  if (weapon.damage != null)               weaponProps.push({ '@type': 'PropertyValue', name: 'Damage', value: weapon.damage });
+  if (weapon.fire_rate != null)            weaponProps.push({ '@type': 'PropertyValue', name: 'Fire Rate', value: weapon.fire_rate, unitText: 'RPM' });
+  if (weapon.magazine_size != null)        weaponProps.push({ '@type': 'PropertyValue', name: 'Magazine', value: weapon.magazine_size });
+  if (weapon.precision_multiplier != null) weaponProps.push({ '@type': 'PropertyValue', name: 'Precision Multiplier', value: weapon.precision_multiplier });
+  if (weapon.range_rating != null)         weaponProps.push({ '@type': 'PropertyValue', name: 'Range', value: weapon.range_rating });
+  if (weapon.aim_assist != null)           weaponProps.push({ '@type': 'PropertyValue', name: 'Aim Assist', value: weapon.aim_assist });
+  if (weapon.ammo_type)                    weaponProps.push({ '@type': 'PropertyValue', name: 'Ammo Type', value: weapon.ammo_type });
+  if (weapon.firing_mode)                  weaponProps.push({ '@type': 'PropertyValue', name: 'Firing Mode', value: weapon.firing_mode });
+
+  var productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: 'Marathon ' + weaponName,
+    category: (weapon.weapon_type || 'Weapon') + ' - Marathon',
+    description: 'The ' + weaponName + ' is a ' + (weapon.weapon_type || 'weapon')
+      + (weapon.ammo_type ? ' using ' + weapon.ammo_type : '')
+      + ' in Marathon, Bungie\'s extraction shooter.'
+      + (metaTier ? ' Currently ' + metaTier.tier + '-Tier in the meta.' : ''),
+    url: 'https://cyberneticpunks.com/weapons/' + slug,
+    brand: { '@type': 'Brand', name: 'Marathon' },
+  };
+  if (weapon.image_filename) {
+    productSchema.image = 'https://cyberneticpunks.com/images/weapons/' + weapon.image_filename;
+  }
+  if (weapon.rarity) {
+    weaponProps.push({ '@type': 'PropertyValue', name: 'Rarity', value: weapon.rarity });
+  }
+  if (weaponProps.length > 0) {
+    productSchema.additionalProperty = weaponProps;
+  }
 
   var faqSchema = faqItems.length > 0 ? {
     '@context': 'https://schema.org',
@@ -208,6 +287,7 @@ export default async function WeaponDetailPage({ params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       {faqSchema && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       )}
