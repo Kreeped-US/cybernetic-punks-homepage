@@ -1,26 +1,31 @@
 // app/factions/page.js
-// Server component — fetches faction data + cross-referenced items/articles.
-// Now includes JSON-LD schemas (BreadcrumbList + WebApplication + FAQPage)
-// and passes urlShell prop to client for deep-linking from homepage callout.
+// Server component - lean Season 2 faction guide.
 //
-// SEO PASS June 1, 2026:
-// - Title tightened: dropped redundant double-"Guide", leads with the most
-//   common search term ("Marathon Factions"), concrete value in the tail.
-// - Description tightened to ~160 chars so the faction-name list (real
-//   topical signals) doesn't get truncated in Google's snippet display.
-// - OG and Twitter aligned to the new copy.
+// SEASON 2 REWRITE (June 4, 2026):
+// The Season 1 faction stat-grind was replaced by the Cradle. This page no
+// longer advises which faction to grind for stats. It now describes the six
+// factions/organizations, their verified S2 role (contracts, reputation,
+// unique gear access, Cryo Archive gating, faster S2 rep), and links to the
+// Cradle planner for core stat builds.
+//
+// REMOVED: Shell Faction Advisor (stat engine), .EXE unlock catalog + Unlock
+// Browser (S1 upgrades that moved to the Cradle), faction stat-bonuses, the
+// Arsenal section (queried weapon_stats.faction_source - a column that does
+// not exist, which was throwing and emptying the whole fetch).
+// SOURCE OF TRUTH: the factions + faction_materials tables (DB), not hardcoded
+// leader/focus constants (which were stale).
 
 import FactionClient from './FactionClient';
 import SeasonResetBanner from '@/components/SeasonResetBanner';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
-  title: 'Marathon Factions — Unlock Requirements, Stat Bonuses & Rank Costs',
-  description: 'Complete Marathon faction guide — every unlock, stat bonus, rank requirement, and credit cost for all 6 factions: Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi.',
-  keywords: 'Marathon factions, Marathon faction guide, Marathon Arachne unlock, Marathon Traxus mods, Marathon faction rank requirements, Marathon faction upgrades, Marathon faction investment, which Marathon faction to choose, Marathon faction tier list, best Marathon faction for shell, Marathon faction progression, Shell Faction Advisor',
+  title: 'Marathon Factions - Roles, Reputation & Cryo Archive Access (Season 2)',
+  description: 'Marathon Season 2 faction guide. What each of the six factions - Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi - offers: contracts, reputation, unique gear, and Cryo Archive access. Core stat upgrades now come from the Cradle.',
+  keywords: 'Marathon factions, Marathon faction guide, Marathon Season 2 factions, Marathon Cyberacme, Marathon Traxus, Marathon Arachne, Marathon faction reputation, Marathon Cryo Archive factions, which Marathon faction first, Marathon faction contracts',
   openGraph: {
-    title: 'Marathon Factions — Unlock Requirements, Stat Bonuses & Rank Costs | CyberneticPunks',
-    description: 'Every unlock, stat bonus, and rank requirement for all 6 Marathon factions. Find which faction to prioritize for your shell.',
+    title: 'Marathon Factions - Roles, Reputation & Cryo Archive Access | CyberneticPunks',
+    description: 'What each of the six Marathon factions offers in Season 2: contracts, reputation, unique gear, and Cryo Archive access. Core stats now come from the Cradle.',
     url: 'https://cyberneticpunks.com/factions',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -29,17 +34,14 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Factions — Unlock Requirements & Rank Costs',
-    description: 'Every faction unlock, stat bonus, and rank requirement. Find the fastest path to the build you want.',
+    title: 'Marathon Factions - Season 2 Roles & Cryo Archive Access',
+    description: 'What each faction offers in Season 2: contracts, reputation, unique gear, Cryo Archive access.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/factions' },
 };
 
 export const dynamic = 'force-dynamic';
-
-// ── JSON-LD SCHEMAS ────────────────────────────────────────────
-// These render inline in the page response so Google sees them on first crawl.
 
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
@@ -50,153 +52,70 @@ const breadcrumbSchema = {
   ],
 };
 
-const webApplicationSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'Shell Faction Advisor',
-  description: 'Interactive Marathon tool that maps your shell choice to the optimal faction grind path. Pick your shell, see which factions provide the most relevant stat bonuses and unlocks for your playstyle.',
-  url: 'https://cyberneticpunks.com/factions',
-  applicationCategory: 'GameApplication',
-  operatingSystem: 'Web',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
-  publisher: {
-    '@type': 'Organization',
-    name: 'CyberneticPunks',
-    url:  'https://cyberneticpunks.com',
-  },
-};
-
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
   mainEntity: [
     {
       '@type': 'Question',
-      name: 'Which Marathon faction should I join first?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'It depends on your shell and playstyle. Arachne offers melee and combat upgrades that pair well with Destroyer and Vandal. Cyberacme prioritizes loot speed and extraction — ideal for Thief and Recon Runners. Traxus unlocks weapon mods that benefit nearly every build. Use the Shell Faction Advisor on this page to see which factions provide the most relevant stat bonuses for the shell you play most.',
-      },
+      name: 'What do factions do in Marathon Season 2?',
+      acceptedAnswer: { '@type': 'Answer', text: 'In Season 2, factions provide contracts and reputation, unique faction gear and implants, Sponsored Kits, and Armory and vendor access. Importantly, they also gate Cryo Archive - you must unlock all six factions to access it. What factions no longer do is gate your core Runner Shell stat upgrades; those moved to the Cradle in Season 2.' },
     },
     {
       '@type': 'Question',
-      name: 'What does each Marathon faction unlock?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Each of the six factions (Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi) gates specific weapons, mods, implants, and permanent shell stat bonuses behind rank progression. Cyberacme focuses on loot and extraction. Nucaloric handles support and healing. Traxus unlocks weapons and weapon mods. Mida controls equipment and grenades. Arachne offers melee and combat upgrades. Sekiguchi specializes in energy and capacitor systems. Browse the Unlock Browser on this page for the complete catalog.',
-      },
+      name: 'Do factions still give stat upgrades in Season 2?',
+      acceptedAnswer: { '@type': 'Answer', text: 'No. In Season 1, Runner Shell stat upgrades came from grinding faction reputation. In Season 2 those core stat upgrades moved to the Cradle, a unified progression system where you allocate Energy across six stat tracks. Factions now focus on contracts, unique gear, and access rather than core stats.' },
     },
     {
       '@type': 'Question',
-      name: 'How long does it take to max a faction in Marathon?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Maxing a single faction typically requires sustained play across 30-50 hours of focused mission completion. Each rank requires both faction reputation and material grinding, and the highest-tier unlocks have credit costs measured in tens of thousands. Most Runners focus on one or two factions during early progression rather than spreading investment across all six.',
-      },
+      name: 'Why should I unlock all six factions in Marathon?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Unlocking all six factions is required to access Cryo Archive, the endgame zone. Beyond that, each faction offers its own contracts, reputation rewards, unique gear and implants, and Armory access, so unlocking more factions widens the gear and rewards available to you.' },
     },
     {
       '@type': 'Question',
-      name: 'Can I level multiple Marathon factions at the same time?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes, but progression is significantly slower if you split focus. Faction reputation is earned through specific mission types, and most missions advance only one faction at a time. The efficient path is to lock in your primary faction (based on your main shell) and keep a secondary faction at low-rank for utility unlocks.',
-      },
+      name: 'How is faction progression different in Season 2?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Faction progression is faster in Season 2. Standard Contracts grant significantly more reputation, new reputation sources were added (including Enhanced valuables and defeating UESC), material costs to unlock faction upgrades were reduced, and Priority Contracts no longer require a faction rank. Faction level and upgrades reset at the start of the season, but factions you previously unlocked stay unlocked.' },
     },
     {
       '@type': 'Question',
-      name: 'Which faction is best for my shell?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'The Shell Faction Advisor on this page calculates this for you. Pick any of the seven shells (Assassin, Destroyer, Recon, Rook, Thief, Triage, Vandal) and the tool shows you which factions provide the highest stat bonuses for that shell\'s priority stats. Destroyer and Vandal favor Arachne. Recon and Thief favor Cyberacme. Triage favors Nucaloric. Each shell has a clear primary faction based on stat synergies.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'How does the Faction Advisor work?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'The Shell Faction Advisor matches each shell\'s priority stats (the stats that most amplify that shell\'s kit) against the stat bonuses each faction offers. The tool then ranks all six factions by total bonus value for your selected shell. This tells you exactly which faction to invest in first to maximize your shell\'s effectiveness. The data updates as Bungie adds new faction unlocks and rebalances stats.',
-      },
+      name: 'Who are the six Marathon factions?',
+      acceptedAnswer: { '@type': 'Answer', text: 'The six factions are Cyberacme, Nucaloric, Traxus, Mida, Arachne, and Sekiguchi. Each is a distinct organization with its own representative, identity, and rewards. Cyberacme is the typical starting faction, and Sekiguchi are the creators of the Runner Shells.' },
     },
   ],
 };
 
 async function getFactionData() {
   try {
-    var [factionsRes, statBonusesRes, unlocksRes, materialsRes,
-         weaponsRes, implantsRes, modsRes, coresRes, articlesRes] = await Promise.all([
+    var [factionsRes, materialsRes, articlesRes] = await Promise.all([
       supabase.from('factions').select('*').order('name'),
-      supabase.from('faction_stat_bonuses').select('*').order('faction_name'),
-      supabase.from('faction_unlocks').select('*').order('faction_name'),
       supabase.from('faction_materials').select('*').order('faction_name'),
-
-      // Cross-reference: all weapons gated by a faction
-      supabase
-        .from('weapon_stats')
-        .select('name, weapon_type, rarity, image_filename, faction_source, ranked_viable')
-        .not('faction_source', 'is', null),
-
-      // Cross-reference: all implants gated by a faction
-      supabase
-        .from('implant_stats')
-        .select('name, slot_type, rarity, image_filename, faction_source, required_runner')
-        .not('faction_source', 'is', null),
-
-      // Cross-reference: all mods gated by a faction
-      supabase
-        .from('mod_stats')
-        .select('name, slot_type, rarity, image_filename, faction_source')
-        .not('faction_source', 'is', null),
-
-      // Cross-reference: cores (no faction_source column historically, but may exist)
-      supabase
-        .from('core_stats')
-        .select('name, ability_type, rarity, image_filename, required_runner, meta_rating'),
-
-      // Faction-tagged articles from feed
       supabase
         .from('feed_items')
         .select('id, headline, slug, editor, tags, thumbnail, ce_score, created_at')
         .eq('is_published', true)
         .or('tags.cs.{factions},tags.cs.{cyberacme},tags.cs.{nucaloric},tags.cs.{traxus},tags.cs.{mida},tags.cs.{arachne},tags.cs.{sekiguchi}')
         .order('created_at', { ascending: false })
-        .limit(16),
+        .limit(12),
     ]);
 
     return {
-      factions:     factionsRes.data     || [],
-      statBonuses:  statBonusesRes.data  || [],
-      unlocks:      unlocksRes.data      || [],
-      materials:    materialsRes.data    || [],
-      weapons:      weaponsRes.data      || [],
-      implants:     implantsRes.data     || [],
-      mods:         modsRes.data         || [],
-      cores:        coresRes.data        || [],
-      articles:     articlesRes.data     || [],
+      factions:  factionsRes.data  || [],
+      materials: materialsRes.data || [],
+      articles:  articlesRes.data  || [],
     };
   } catch (e) {
-    return {
-      factions: [], statBonuses: [], unlocks: [], materials: [],
-      weapons: [], implants: [], mods: [], cores: [], articles: [],
-    };
+    return { factions: [], materials: [], articles: [] };
   }
 }
 
-export default async function FactionsPage({ searchParams }) {
-  var sp = await searchParams;
-  var urlShell = sp?.shell || null;
+export default async function FactionsPage() {
   var data = await getFactionData();
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <SeasonResetBanner />
-      <FactionClient data={data} urlShell={urlShell} />
+      <FactionClient data={data} />
     </>
   );
 }
