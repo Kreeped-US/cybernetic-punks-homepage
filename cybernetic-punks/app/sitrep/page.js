@@ -1,24 +1,38 @@
 // app/sitrep/page.js
 // SITREP — Aggregated Marathon intelligence snapshot
 // The "2-minute drop-in brief" — pulls from all editors + live meta + player data
+//
+// FIXED May 15, 2026: switched from revalidate to force-dynamic.
+//
+// SEO + CORRECTNESS PASS June 4, 2026:
+// - CRITICAL: ranked queue status was rendering OPEN/CLOSED for a queue that
+//   doesn't return until June 14, 2026 (per the /ranked S2 rework). Added
+//   RANKED_RETURN gate — before June 14 the card shows "RETURNS JUN 14";
+//   on/after June 14 the existing Sun→Thu rotation takes over automatically.
+//   Self-correcting, no manual flip needed.
+// - Cadence: removed all "every 6 hours" claims (cron is 12h). Description,
+//   OG description, and the cross-links footer now say "throughout the day".
+// - Path 2 (editors as bylines, not products): "AUTONOMOUS INTELLIGENCE"
+//   footer label → "LIVE INTELLIGENCE"; "NEXUS RANKED" stat sublabel →
+//   "TOP RANKED"; cross-link descriptions "Full NEXUS rankings" → "Full tier
+//   rankings". Editor coverage section keeps editor identity — that's a
+//   legitimate byline context, not product framing.
+// - Season: "RANKED GUIDE · Season 1 intel" cross-link → "Season 2 intel".
+// - Added missing Twitter card image.
 
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import Link from 'next/link';
 
-// FIXED May 15, 2026: switched from revalidate to force-dynamic.
-// getLiveStats() and supabase queries during build-time pre-render
-// trigger init before env vars are populated. force-dynamic disables
-// static pre-render entirely -- page renders on-demand at request time.
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Sitrep — Live Meta Snapshot & Drop-In Brief | CyberneticPunks',
-  description: 'The 2-minute drop-in brief. Live Marathon meta snapshot — S-tier weapons, top shells, meta movers, community pulse, ranked queue status, and what every editor covered this cycle. Updated every 6 hours.',
+  description: 'The 2-minute drop-in brief. Live Marathon meta snapshot — S-tier weapons, top shells, meta movers, community pulse, ranked queue status, and what every editor covered this cycle. Refreshed throughout the day.',
   keywords: 'Marathon meta today, Marathon current meta, Marathon meta snapshot, Marathon sitrep, Marathon what to run, Marathon ranked meta, Marathon meta tier list, Marathon daily briefing, Marathon live meta, Marathon top weapons, Marathon top shells',
   openGraph: {
     title: 'Marathon Sitrep — Live Meta Snapshot | CyberneticPunks',
-    description: 'Everything you need to know before you drop in. Live meta, top shells, rising weapons, community pulse. Updated every 6 hours.',
+    description: 'Everything you need to know before you drop in. Live meta, top shells, rising weapons, community pulse. Refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/sitrep',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -29,6 +43,7 @@ export const metadata = {
     site: '@Cybernetic87250',
     title: 'Marathon Sitrep — Live Meta Snapshot',
     description: 'Everything you need to know before you drop in.',
+    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/sitrep' },
 };
@@ -55,6 +70,11 @@ const FACTION_COLORS = {
 
 const FACTION_NAMES_LOWER = ['cyberacme', 'nucaloric', 'traxus', 'mida', 'arachne', 'sekiguchi'];
 
+// Season 2 ranked queue returns June 14, 2026, 10AM PT. Until then the queue
+// is not live and the status card must say so rather than computing a
+// rotation. After this datetime, the normal Sun→Thu rotation logic applies.
+const RANKED_RETURN = new Date('2026-06-14T17:00:00Z'); // 10AM PT = 17:00 UTC
+
 // ─── HELPERS ────────────────────────────────────────────────
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -69,9 +89,16 @@ function parseBrief(body) {
   return body.replace(/\*\*/g, '').replace(/#+\s/g, '').replace(/\n/g, ' ').trim().slice(0, 160);
 }
 
-// Ranked queue rotation — Sun 10AM PT to Thu 10AM PT open
+// Ranked queue rotation — Sun 10AM PT to Thu 10AM PT open.
+// Pre-June-14, the queue has not returned for Season 2, so we report a
+// dedicated "returns" state instead of a misleading OPEN/CLOSED.
 function getRankedStatus() {
   var now = new Date();
+
+  if (now < RANKED_RETURN) {
+    return { phase: 'returns', isOpen: false };
+  }
+
   var pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
   var day = pt.getDay(); // 0=Sun, 1=Mon, ... 6=Sat
   var hour = pt.getHours();
@@ -82,7 +109,7 @@ function getRankedStatus() {
   else if (day >= 1 && day <= 3) isOpen = true;
   else if (day === 4 && hour < 10) isOpen = true;
 
-  return { isOpen: isOpen, day: day, hour: hour };
+  return { phase: 'rotating', isOpen: isOpen, day: day, hour: hour };
 }
 
 function SectionHeader({ label, count, color, rightLink }) {
@@ -185,6 +212,13 @@ export default async function SitrepPage() {
 
   var queueStatus = getRankedStatus();
 
+  // Queue card display values, derived from phase
+  var queueColor = queueStatus.phase === 'returns' ? '#ffd700' : (queueStatus.isOpen ? '#00ff41' : '#ff4444');
+  var queueLabel = queueStatus.phase === 'returns' ? 'RETURNS JUN 14' : (queueStatus.isOpen ? 'OPEN' : 'CLOSED');
+  var queueSub   = queueStatus.phase === 'returns'
+    ? 'SEASON 2 RANKED · JUN 14'
+    : (queueStatus.isOpen ? 'CLOSES THU 10AM PT' : 'REOPENS SUN 10AM PT');
+
   // Structured data
   var breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -199,7 +233,7 @@ export default async function SitrepPage() {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'Marathon Sitrep — Live Meta Snapshot',
-    description: 'Everything you need to know before you drop in. Live Marathon meta snapshot updated every 6 hours.',
+    description: 'Everything you need to know before you drop in. Live Marathon meta snapshot refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/sitrep',
     dateModified: lastUpdated,
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
@@ -266,16 +300,16 @@ export default async function SitrepPage() {
           {/* Quick-glance stat cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 }}>
             {/* Ranked queue status */}
-            <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + (queueStatus.isOpen ? '#00ff41' : '#ff4444'), borderRadius: '0 0 2px 2px', padding: '12px 14px' }}>
+            <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + queueColor, borderRadius: '0 0 2px 2px', padding: '12px 14px' }}>
               <div style={{ fontFamily: 'monospace', fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, fontWeight: 700, marginBottom: 6 }}>RANKED QUEUE</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: queueStatus.isOpen ? '#00ff41' : '#ff4444' }} />
-                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: queueStatus.isOpen ? '#00ff41' : '#ff4444', lineHeight: 1 }}>
-                  {queueStatus.isOpen ? 'OPEN' : 'CLOSED'}
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: queueColor }} />
+                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: queueColor, lineHeight: 1 }}>
+                  {queueLabel}
                 </div>
               </div>
               <div style={{ fontFamily: 'monospace', fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginTop: 4, fontWeight: 700 }}>
-                {queueStatus.isOpen ? 'CLOSES THU 10AM PT' : 'REOPENS SUN 10AM PT'}
+                {queueSub}
               </div>
             </div>
 
@@ -286,7 +320,7 @@ export default async function SitrepPage() {
                 {sTierWeapons[0]?.name.toUpperCase() || '—'}
               </div>
               <div style={{ fontFamily: 'monospace', fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginTop: 4, fontWeight: 700 }}>
-                NEXUS RANKED
+                TOP RANKED
               </div>
             </div>
 
@@ -341,7 +375,7 @@ export default async function SitrepPage() {
         </section>
       )}
 
-      {/* ══ RISING INTEL (new) ═════════════════════════════ */}
+      {/* ══ RISING INTEL ════════════════════════════════════ */}
       {risingIntel.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <SectionHeader label="RISING INTEL" color="#00ff41" count={risingIntel.length + ' STORIES'} />
@@ -410,7 +444,7 @@ export default async function SitrepPage() {
                 );
               })}
               {sTierWeapons.length === 0 && aTierWeapons.length === 0 && (
-                <div style={{ padding: '14px', fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>NEXUS UPDATING...</div>
+                <div style={{ padding: '14px', fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>META UPDATING...</div>
               )}
             </div>
 
@@ -437,7 +471,7 @@ export default async function SitrepPage() {
                 );
               })}
               {sTierShells.length === 0 && aTierShells.length === 0 && (
-                <div style={{ padding: '14px', fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>NEXUS UPDATING...</div>
+                <div style={{ padding: '14px', fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontWeight: 700 }}>META UPDATING...</div>
               )}
             </div>
           </div>
@@ -489,7 +523,7 @@ export default async function SitrepPage() {
         </section>
       )}
 
-      {/* ══ FACTION ACTIVITY (new) ══════════════════════════ */}
+      {/* ══ FACTION ACTIVITY ════════════════════════════════ */}
       {activeFactions.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <SectionHeader
@@ -610,19 +644,19 @@ export default async function SitrepPage() {
       <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid #00d4ff', borderRadius: '0 2px 2px 0', padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>AUTONOMOUS INTELLIGENCE</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>LIVE INTELLIGENCE</div>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
               DROP IN<br /><span style={{ color: '#00d4ff' }}>INFORMED.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-              This sitrep refreshes every 6 hours. Bookmark it, check before each session, and you'll always know what's shifted since you last played.
+              This sitrep refreshes throughout the day. Bookmark it, check before each session, and you'll always know what's shifted since you last played.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { label: '⬡ META TIER LIST',  href: '/meta',     color: '#00d4ff', desc: 'Full NEXUS rankings' },
+              { label: '⬡ META TIER LIST',  href: '/meta',     color: '#00d4ff', desc: 'Full tier rankings' },
               { label: '⬢ BUILD ADVISOR',   href: '/advisor',  color: '#ff8800', desc: 'Get your ranked loadout' },
-              { label: 'RANKED GUIDE',       href: '/ranked',   color: '#ffd700', desc: 'Season 1 intel' },
+              { label: 'RANKED GUIDE',       href: '/ranked',   color: '#ffd700', desc: 'Season 2 intel' },
               { label: 'FACTION INTEL',      href: '/factions', color: '#ffd700', desc: 'All 6 factions' },
               { label: 'ALL INTEL',          href: '/intel',    color: '#9b5de5', desc: 'Every article archived' },
             ].map(function(link) {
