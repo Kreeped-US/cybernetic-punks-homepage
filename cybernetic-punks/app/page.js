@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Footer from '@/components/Footer';
 import HomeEditorReactions from './HomeEditorReactions';
 import { supabase } from '@/lib/supabase';
+import { getLiveStats } from '@/lib/liveStats';
 
 // ── METADATA ────────────────────────────────────────────────
 export const metadata = {
@@ -33,6 +34,12 @@ function timeAgo(dateStr) {
   if (diff < 3600)  return Math.floor(diff / 60)   + 'm ago';
   if (diff < 86400) return Math.floor(diff / 3600)  + 'h ago';
   return Math.floor(diff / 86400) + 'd ago';
+}
+
+function formatNum(n) {
+  if (!n || n < 1000) return n ? n.toString() : '0';
+  if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0) + 'K';
+  return (n / 1000000).toFixed(1) + 'M';
 }
 
 function tierBg(tier) {
@@ -139,6 +146,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   var data = await getHomepageData();
+  var liveStats = await getLiveStats();
   var tiers        = data.tiers;
   var weaponCount  = data.weaponCount;
   var shellCount   = data.shellCount;
@@ -184,33 +192,36 @@ export default async function Home() {
         </div>
 
         {/* ══ HERO ══ */}
-        <section style={{ position: 'relative', zIndex: 1, borderBottom: '1px solid #1e2028' }}>
-          <div className="hp-wrap" style={{ padding: '40px 24px 30px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'rgba(0,255,65,0.07)', border: '1px solid rgba(0,255,65,0.18)', borderRadius: 2, fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#00ff41', marginBottom: 20 }}>
-              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#00ff41' }} />
-              MARATHON - BUNGIE
-            </div>
-            <h1 style={{ fontSize: 'clamp(30px, 4.5vw, 50px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-1px', margin: '0 0 14px', color: '#fff' }}>
-              Marathon Meta, Builds &amp; Tier List.<br />
-              <span style={{ color: '#00ff41' }}>Know the meta. Own the extraction.</span>
-            </h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 560, margin: '0 0 24px' }}>
-              Live Marathon tier list, build advisor, and the Season 2 Cradle planner. Tier rankings, weapon and shell guides, and progression tools - refreshed throughout the day.
-            </p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Link href="/meta" style={{ padding: '11px 24px', background: '#00ff41', color: '#000', fontSize: 12, fontWeight: 800, letterSpacing: '1px', borderRadius: 2, textDecoration: 'none' }}>
-                CHECK THE META
-              </Link>
-              <Link href="/cradle" style={{ padding: '11px 22px', background: '#1e2028', border: '1px solid #2a2d36', color: '#00f5ff', fontSize: 12, fontWeight: 700, letterSpacing: '1px', borderRadius: 2, textDecoration: 'none' }}>
-                PLAN YOUR CRADLE
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ SLIM CONTENT-PULSE STRIP (DB counts + next cycle; player counts live in the global strip) ══ */}
         <section style={{ position: 'relative', zIndex: 1, borderBottom: '1px solid #1e2028', background: '#0e1014' }}>
-          <div className="hp-wrap" style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 22, flexWrap: 'wrap' }}>
+          <div className="hp-wrap" style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.6)' }} />
+              <span style={{ fontSize: 9, color: '#00ff41', letterSpacing: 2, fontWeight: 800, fontFamily: 'monospace' }}>LIVE</span>
+            </div>
+
+            {liveStats.steam && (
+              <>
+                <div style={{ width: 1, height: 14, background: '#22252e' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace' }}>STEAM</span>
+                  <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>{formatNum(liveStats.steam.value)}</span>
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>RUNNERS ONLINE</span>
+                </div>
+              </>
+            )}
+
+            {liveStats.twitch && (
+              <>
+                <div style={{ width: 1, height: 14, background: '#22252e' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(145,70,255,0.65)', letterSpacing: 1.5, fontFamily: 'monospace' }}>TWITCH</span>
+                  <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>{formatNum(liveStats.twitch.value)}</span>
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>WATCHING · {liveStats.twitch.stream_count} LIVE</span>
+                </div>
+              </>
+            )}
+
+            <div style={{ width: 1, height: 14, background: '#22252e' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <span style={{ fontSize: 12, fontWeight: 900, color: '#00ff41', fontFamily: 'Orbitron, monospace' }}>{weaponCount}</span>
               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>WEAPONS</span>
