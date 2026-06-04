@@ -1,4 +1,5 @@
 import { Orbitron, Share_Tech_Mono, Rajdhani } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import Nav from '@/components/Nav';
 import LivePulseStrip from '@/components/LivePulseStrip';
 import './globals.css';
@@ -13,13 +14,13 @@ export const metadata = {
     default: 'CyberneticPunks — Marathon Intelligence Hub',
     template: '%s | CyberneticPunks',
   },
-  description: 'Know what works before you drop in. AI-powered Marathon meta tracking, build analysis, and competitive play grades — updated every 6 hours.',
+  description: 'Marathon meta tier lists, build guides, weapon stats, shell rankings, and ranked intel for Bungie\'s extraction shooter — refreshed throughout the day.',
   keywords: ['Marathon', 'Marathon game', 'Marathon builds', 'Marathon meta', 'Marathon loadouts', 'Marathon tier list', 'Bungie Marathon', 'extraction shooter', 'Marathon guide', 'Marathon tips'],
   authors: [{ name: 'CyberneticPunks' }],
   creator: 'CyberneticPunks',
   openGraph: {
     title: 'CyberneticPunks — Marathon Intelligence Hub',
-    description: 'Know what works before you drop in. AI-powered meta tracking, build analysis, and competitive play grades.',
+    description: 'Marathon meta tier lists, build guides, weapon stats, and ranked intel for Bungie\'s extraction shooter. Refreshed throughout the day.',
     url: 'https://cyberneticpunks.com',
     siteName: 'CyberneticPunks',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'CyberneticPunks — Marathon Intelligence Hub' }],
@@ -30,7 +31,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'CyberneticPunks — Marathon Intelligence Hub',
-    description: 'Know what works before you drop in. AI-powered meta tracking, build analysis, and play grades.',
+    description: 'Marathon tier lists, builds, weapon stats, and ranked intel — refreshed throughout the day.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -58,6 +59,7 @@ export default function RootLayout({ children }) {
         <Nav />
         {children}
         <LivePulseStrip />
+        <Analytics />
       </body>
     </html>
   );
