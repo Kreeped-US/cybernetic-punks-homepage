@@ -195,7 +195,7 @@ export default async function BuildsPage() {
   ] = await Promise.all([
     supabase
       .from('weapon_stats')
-      .select('id, name, weapon_type, ammo_type, rarity, damage, fire_rate, firepower_score, accuracy_score, handling_score, range_rating, magazine_size, ranked_viable, image_filename, faction_source')
+      .select('id, name, weapon_type, ammo_type, rarity, damage, fire_rate, firepower_score, accuracy_score, handling_score, range_rating, magazine_size, ranked_viable, image_filename')
       .order('firepower_score', { ascending: false, nullsFirst: false }),
     supabase
       .from('shell_stats')
@@ -851,9 +851,9 @@ export default async function BuildsPage() {
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: weapon.ranked_viable === false ? 'rgba(255,255,255,0.4)' : '#fff', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{weapon.name}</div>
                           <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
-                            {weapon.rarity && <RarityBadge rarity={weapon.rarity} />}
-                            {weapon.faction_source && weapon.faction_source !== 'None' && <FactionBadge faction={weapon.faction_source} />}
-                            {weapon.ranked_viable === false && <span style={{ fontFamily: 'monospace', fontSize: 7, color: RED, letterSpacing: 1, fontWeight: 700 }}>⚠ NOT RANKED</span>}
+                          {weapon.rarity && <RarityBadge rarity={weapon.rarity} />}
+                            {weapon.ranked_viable === false && <span style={{ fontFamily: 'monospace', fontSize: 7, color: RED, letterSpacing: 1, fontWeight: 700 }}>⚠ NOT RANKED</span>} 
+                            
                           </div>
                         </div>
 
