@@ -513,7 +513,7 @@ async function fetchGameContext() {
     // once that table is reseeded with actual S2 gear data. The `factions`
     // query (names/leaders/focus) is kept - that info is still valid.
     const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes] = await Promise.all([
-      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(20),
+      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(20),
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(20),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source').order('rarity', { ascending: false }).limit(18),
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(30),
@@ -528,11 +528,16 @@ async function fetchGameContext() {
 
     if (modsRes.data?.length) {
       const bySlot = {};
-      for (const mod of modsRes.data) {
+     for (const mod of modsRes.data) {
         const slot = mod.slot_type || 'Other';
         if (!bySlot[slot]) bySlot[slot] = [];
         var factionTag = mod.faction_source ? ' [' + mod.faction_source + ' Armory unlock]' : '';
-        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}`);
+        var statTag = '';
+        if (mod.stat_changes && typeof mod.stat_changes === 'object') {
+          var statPairs = Object.entries(mod.stat_changes).map(function(e) { return e[0] + ' ' + e[1]; });
+          if (statPairs.length > 0) statTag = ' [' + statPairs.join(', ') + ']';
+        }
+        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
