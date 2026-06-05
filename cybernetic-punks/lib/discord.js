@@ -191,7 +191,7 @@ export async function notifyRankedIntel(feedItem, editorName) {
       ],
       thumbnail: feedItem.thumbnail ? { url: feedItem.thumbnail } : undefined,
       footer: {
-        text: 'cyberneticpunks.com · Marathon Season 1 Ranked',
+        text: 'cyberneticpunks.com · Marathon Ranked Intel',
       },
       timestamp: feedItem.created_at || new Date().toISOString(),
     }],

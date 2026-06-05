@@ -54,7 +54,7 @@ const CATEGORIES = {
     description: 'Climb Marathon Ranked. Holotag targeting, gear ante strategy, shell picks, zone rotation intel, and meta analysis. Everything you need to push Platinum and beyond.',
     keywords: 'Marathon ranked guide, Marathon ranked tips, Marathon Holotag guide, Marathon ranked meta, Marathon ranked climb, Marathon Platinum climb, Marathon competitive guide, Marathon ranked strategy, Marathon gear ante, Marathon ranked zones',
     h1: 'MARATHON RANKED GUIDES',
-    subhead: 'Holotag strategy, gear ante optimization, shell picks, and zone rotation intel. Season 1 tier climb guides updated with every meta shift.',
+    subhead: 'Holotag strategy, gear ante optimization, shell picks, and zone rotation intel. Tier climb guides updated with every meta shift.',
     related: [
       { href: '/ranked',  label: 'RANKED HUB',     desc: 'Queue + tier list',       color: '#ffd700' },
       { href: '/meta',    label: 'META TIER LIST', desc: 'Live weapon/shell tiers', color: '#00d4ff' },
