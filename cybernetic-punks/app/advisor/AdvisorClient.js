@@ -11,17 +11,18 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const SHELLS = [
-  { name: 'Destroyer', color: '#ff3333', role: 'Frontline Combat',    desc: 'Thrusters. Aggression. Close-range dominance.' },
-  { name: 'Vandal',    color: '#ff8800', role: 'Mobility Specialist', desc: 'Jump jets. Movement chaining. Chaos in motion.' },
-  { name: 'Recon',     color: '#00d4ff', role: 'Intel Gatherer',      desc: 'Echo Pulse. Scanning. Information warfare.' },
-  { name: 'Assassin',  color: '#cc44ff', role: 'Stealth Operator',    desc: 'Active Camo. Shadow Dive. Invisible kills.' },
-  { name: 'Triage',    color: '#00ff88', role: 'Combat Support',      desc: 'Healing. Team sustain. Frontline medic.' },
-  { name: 'Thief',     color: '#ffd700', role: 'Loot Specialist',     desc: 'X-Ray Visor. Pickpocket Drone. Extraction expert.' },
-  { name: 'Rook',      color: '#888888', role: 'Anchor Tank',         desc: 'Fortify. Hold ground. Absorb punishment.' },
+// Shells now arrive as a prop from the server (DB-driven). This fallback is
+// only used if the prop is somehow empty, so the component never renders blank.
+const FALLBACK_SHELLS = [
+  { name: 'Destroyer', color: '#ff3333', symbol: '⬢', role: 'Frontline Combat',    desc: 'Thrusters. Aggression. Close-range dominance.' },
+  { name: 'Vandal',    color: '#ff8800', symbol: '⬡', role: 'Mobility Specialist', desc: 'Jump jets. Movement chaining. Chaos in motion.' },
+  { name: 'Recon',     color: '#00d4ff', symbol: '◇', role: 'Intel Gatherer',      desc: 'Echo Pulse. Scanning. Information warfare.' },
+  { name: 'Assassin',  color: '#cc44ff', symbol: '◈', role: 'Stealth Operator',    desc: 'Active Camo. Shadow Dive. Invisible kills.' },
+  { name: 'Triage',    color: '#00ff88', symbol: '◎', role: 'Combat Support',      desc: 'Healing. Team sustain. Frontline medic.' },
+  { name: 'Thief',     color: '#ffd700', symbol: '⬠', role: 'Loot Specialist',     desc: 'X-Ray Visor. Pickpocket Drone. Extraction expert.' },
+  { name: 'Rook',      color: '#888888', symbol: '▣', role: 'Anchor Tank',         desc: 'Fortify. Hold ground. Absorb punishment.' },
+  { name: 'Sentinel',  color: '#4d9fff', symbol: '⬣', role: 'Defensive Anchor',    desc: 'Shielding. Zone control. Protect the crew.' },
 ];
-
-const SHELL_SYMBOLS = { Destroyer:'⬢', Vandal:'⬡', Recon:'◇', Assassin:'◈', Triage:'◎', Thief:'⬠', Rook:'▣' };
 
 const PLAYSTYLES = [
   { id: 'aggressive', label: 'AGGRESSIVE', desc: 'Push fights, create chaos, high TTK' },
@@ -66,11 +67,22 @@ const WEAPON_PREFS = [
 
 const GRADE_COLORS = { S: '#ff2222', A: '#ff8800', B: '#ffd700', C: '#00d4ff', D: '#666' };
 
+// Cradle track accent colors for the result section (matches the six tracks).
+const CRADLE_TRACK_COLORS = {
+  Strength:   '#ff4444',
+  Recharge:   '#00d4ff',
+  Dexterity:  '#ffd700',
+  Endurance:  '#ff8800',
+  Resistance: '#00ff88',
+  Support:    '#9b5de5',
+};
+
 const SCAN_STEPS = [
   'INITIALIZING DEXTER BUILD ENGINE',
   'ACCESSING MOD DATABASE',
   'SCANNING CORE REGISTRY',
   'ANALYZING IMPLANT SYNERGIES',
+  'MAPPING CRADLE STAT TRACKS',
   'CROSS-REFERENCING META TIER DATA',
   'CALCULATING WEAPON PAIRING EFFICIENCY',
   'OPTIMIZING FOR TARGET RANK',
@@ -127,6 +139,15 @@ function generateShareCard(build, shellConfig) {
   ry+=12; ctx.font='bold 8px monospace'; ctx.fillStyle=color+'88'; ctx.fillText('IMPLANTS',700,ry); ry+=17;
   ctx.font='12px monospace'; ctx.fillStyle='rgba(255,255,255,0.52)';
   (build.implants||[]).slice(0,3).forEach(function(n){ ctx.fillText('['+n.slot+'] '+n.name,700,ry); ry+=18; });
+  // Cradle line on the card if present
+  if (build.cradle?.tracks?.length) {
+    ry+=12; ctx.font='bold 8px monospace'; ctx.fillStyle=color+'88'; ctx.fillText('CRADLE',700,ry); ry+=17;
+    ctx.font='12px monospace'; ctx.fillStyle='rgba(255,255,255,0.52)';
+    build.cradle.tracks.slice(0,3).forEach(function(t){
+      var label = t.perk ? t.track + ': ' + t.perk : t.track;
+      ctx.fillText('- '+label,700,ry); ry+=18;
+    });
+  }
   if (build.ranked_viable) { ry+=12; ctx.font='bold 9px monospace'; ctx.fillStyle='#00ff88'; ctx.fillText('RANKED VIABLE',700,ry); }
   ctx.fillStyle=color+'18'; ctx.fillRect(0,590,1200,40);
   ctx.strokeStyle=color+'33'; ctx.beginPath(); ctx.moveTo(0,590); ctx.lineTo(1200,590); ctx.stroke();
@@ -152,7 +173,10 @@ function SectionHeader({ num, label, sub }) {
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
-export default function AdvisorClient({ urlShell, profilePrefill }) {
+export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
+  // Shells are DB-driven via prop; fall back to the static list if empty.
+  var SHELLS = (shells && shells.length) ? shells : FALLBACK_SHELLS;
+
   // Initial state reflects URL param > profile > nothing
   var initialShell = null;
   if (urlShell) {
@@ -230,14 +254,25 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
     return function() { window.removeEventListener('scroll', onScroll); };
   }, [phase, selectedShell]);
 
-  async function generateBuild() {
-    if (!selectedShell) return;
+  async function generateBuild(overrides) {
+    var cfg = overrides || {};
+    var shellToUse = cfg.shell || selectedShell;
+    if (!shellToUse) return;
+    var body = {
+      shell:            shellToUse,
+      playstyle:        cfg.playstyle || playstyle,
+      rankTarget:       cfg.rankTarget || rankTarget,
+      weaponPreference: cfg.weaponPref !== undefined ? cfg.weaponPref : weaponPref,
+      teamSize:         cfg.teamSize || teamSize,
+      priority:         cfg.priority || priority,
+      experienceLevel:  cfg.experienceLevel || experienceLevel,
+    };
     setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null);
     try {
       var res = await fetch('/api/advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shell: selectedShell, playstyle, rankTarget, weaponPreference: weaponPref, teamSize, priority, experienceLevel }),
+        body: JSON.stringify(body),
       });
       var json = await res.json();
       if (json.error) throw new Error(json.error);
@@ -246,12 +281,43 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
       await new Promise(function(r) { setTimeout(r, 400); });
       setBuild(json.build);
       setPhase('result');
-      track('advisor_generate', { shell: selectedShell, playstyle, rankTarget, teamSize });
+      track('advisor_generate', { shell: body.shell, playstyle: body.playstyle, rankTarget: body.rankTarget, teamSize: body.teamSize, surprise: !!cfg._surprise });
     } catch (err) {
       clearInterval(scanRef.current);
       setError(err.message);
       setPhase('input');
     }
+  }
+
+  // "Surprise me" — pick a random shell + smart-but-coherent defaults, then
+  // generate immediately. Sets state too so the result header reads correctly.
+  function surpriseMe() {
+    var randShell = SHELLS[Math.floor(Math.random() * SHELLS.length)];
+    // Coherent pairings rather than fully random noise.
+    var combos = [
+      { playstyle: 'aggressive', priority: 'combat' },
+      { playstyle: 'extraction', priority: 'speed' },
+      { playstyle: 'balanced',   priority: 'extraction' },
+      { playstyle: 'support',    priority: 'survival' },
+    ];
+    var combo = combos[Math.floor(Math.random() * combos.length)];
+    var ranks = ['gold', 'platinum', 'silver'];
+    var randRank = ranks[Math.floor(Math.random() * ranks.length)];
+
+    setSelectedShell(randShell.name);
+    setPlaystyle(combo.playstyle);
+    setPriority(combo.priority);
+    setRankTarget(randRank);
+    setWeaponPref('');
+    track('advisor_surprise', { shell: randShell.name });
+    generateBuild({
+      shell: randShell.name,
+      playstyle: combo.playstyle,
+      priority: combo.priority,
+      rankTarget: randRank,
+      weaponPref: '',
+      _surprise: true,
+    });
   }
 
   function downloadShareCard() {
@@ -275,34 +341,35 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
 
   if (phase === 'input') {
     return (
-      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 100, fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 32, paddingBottom: 100, fontFamily: 'system-ui, sans-serif' }}>
 
         <style>{`
           .advisor-shell:hover       { background: #1e2228 !important; border-color: #2a2e38 !important; }
           .advisor-option:hover      { background: #1e2228 !important; }
           .advisor-weapon-pref:hover { background: #1e2228 !important; }
+          .advisor-surprise:hover    { background: rgba(255,136,0,0.16) !important; border-color: rgba(255,136,0,0.5) !important; }
         `}</style>
 
         {/* ══ HERO ═══════════════════════════════════════════ */}
-        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 24px 32px' }}>
+        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ff8800', boxShadow: '0 0 6px rgba(255,136,0,0.5)' }} />
             <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700 }}>DEXTER · BUILD ENGINE</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 20 }}>
             <div style={{ flex: 1, minWidth: 300 }}>
-              <h1 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1, margin: '0 0 12px', color: '#fff' }}>
+              <h2 style={{ fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1, margin: '0 0 12px', color: '#fff' }}>
                 {isPrefilled && profilePrefill.name ? (
                   <>Welcome back,<br /><span style={{ color: '#ff8800' }}>{profilePrefill.name}.</span></>
                 ) : (
                   <>Engineer your<br /><span style={{ color: '#ff8800' }}>build.</span></>
                 )}
-              </h1>
+              </h2>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
                 {isPrefilled
-                  ? 'We\'ve pre-filled your profile preferences. Tweak anything, then let DEXTER engineer the full loadout from live meta data.'
-                  : 'Tell DEXTER your shell and playstyle. Get a complete loadout — weapons, mods, cores, implants — engineered from live meta data.'}
+                  ? 'We\'ve pre-filled your profile preferences. Tweak anything, then let DEXTER engineer the full loadout — including a Cradle stat plan.'
+                  : 'Tell DEXTER your shell and playstyle. Get a complete loadout — weapons, mods, cores, implants, and a Cradle stat plan — engineered from live meta data.'}
               </p>
             </div>
 
@@ -318,8 +385,30 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
             )}
           </div>
 
+          {/* ══ SURPRISE ME — one-tap quick build ════════════ */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+            <button className="advisor-surprise" onClick={surpriseMe}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 9,
+                padding: '11px 18px',
+                background: 'rgba(255,136,0,0.1)',
+                border: '1px solid rgba(255,136,0,0.32)',
+                borderRadius: 2,
+                color: '#ff8800',
+                fontSize: 11, fontWeight: 800, letterSpacing: 1.5,
+                cursor: 'pointer', fontFamily: 'monospace',
+                transition: 'background 0.12s, border-color 0.12s',
+              }}>
+              <span style={{ fontSize: 14, lineHeight: 1 }}>⚡</span>
+              SURPRISE ME
+            </button>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+              Not sure where to start? Let DEXTER pick a shell and engineer a build instantly.
+            </span>
+          </div>
+
           {error && (
-            <div style={{ padding: '12px 16px', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.3)', borderLeft: '3px solid #ff2222', borderRadius: '0 3px 3px 0', fontSize: 11, color: '#ff4444', letterSpacing: 1, fontWeight: 700, marginBottom: 20 }}>
+            <div style={{ padding: '12px 16px', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.3)', borderLeft: '3px solid #ff2222', borderRadius: '0 3px 3px 0', fontSize: 11, color: '#ff4444', letterSpacing: 1, fontWeight: 700, marginTop: 16 }}>
               ERROR · {error}
             </div>
           )}
@@ -328,7 +417,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
 
           {/* ══ SHELL SELECTION ═══════════════════════════════ */}
-          <section style={{ marginBottom: 32 }}>
+          <section style={{ marginBottom: 28 }}>
             <SectionHeader num="01" label="Select Your Runner" />
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
               {SHELLS.map(function(shell) {
@@ -346,16 +435,66 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
                       transition:   'background 0.1s, border-color 0.1s',
                     }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-                      <span style={{ fontSize: 16, color: isSel ? shell.color : 'rgba(255,255,255,0.3)' }}>{SHELL_SYMBOLS[shell.name] || '◈'}</span>
+                      <span style={{ fontSize: 16, color: isSel ? shell.color : 'rgba(255,255,255,0.3)' }}>{shell.symbol || '◈'}</span>
                       <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 900, color: isSel ? shell.color : 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>{shell.name.toUpperCase()}</span>
                     </div>
-                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1.5, marginBottom: isMobile ? 0 : 5, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>{shell.role}</div>
-                    {!isMobile && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 1.4 }}>{shell.desc}</div>}
+                    {shell.role && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1.5, marginBottom: isMobile ? 0 : 5, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>{shell.role}</div>}
+                    {!isMobile && shell.desc && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 1.4 }}>{shell.desc}</div>}
                     {isSel && <div style={{ position: 'absolute', top: 8, right: 8, width: 5, height: 5, borderRadius: '50%', background: shell.color, boxShadow: '0 0 5px ' + shell.color }} />}
                   </div>
                 );
               })}
             </div>
+
+            {/* ══ LIVE SHELL PREVIEW — real stats/abilities on select ═══ */}
+            {shellConfig && (shellConfig.primeName || shellConfig.baseHealth || shellConfig.tacticalName) && (
+              <div style={{
+                marginTop: 10,
+                background: '#1a1d24',
+                border: '1px solid #22252e',
+                borderLeft: '3px solid ' + accentColor,
+                borderRadius: '0 3px 3px 0',
+                padding: isMobile ? '14px 16px' : '16px 20px',
+                animation: 'previewFade 0.25s ease',
+              }}>
+                <style>{`@keyframes previewFade { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 18, color: accentColor, lineHeight: 1 }}>{shellConfig.symbol}</span>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: accentColor, letterSpacing: 1 }}>{shellConfig.name.toUpperCase()}</span>
+                  {shellConfig.role && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, textTransform: 'uppercase' }}>{shellConfig.role}</span>}
+                  {(shellConfig.rankedSolo || shellConfig.rankedSquad) && (
+                    <span style={{ marginLeft: 'auto', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>
+                      RANKED · SOLO {shellConfig.rankedSolo || '?'} / SQUAD {shellConfig.rankedSquad || '?'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Base stats */}
+                {(shellConfig.baseHealth || shellConfig.baseShield || shellConfig.baseSpeed) && (
+                  <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 12 }}>
+                    {shellConfig.baseHealth != null && <PreviewStat label="HEALTH" value={shellConfig.baseHealth} color={accentColor} />}
+                    {shellConfig.baseShield != null && <PreviewStat label="SHIELD" value={shellConfig.baseShield} color={accentColor} />}
+                    {shellConfig.baseSpeed != null && <PreviewStat label="SPEED" value={shellConfig.baseSpeed} color={accentColor} />}
+                  </div>
+                )}
+
+                {/* Abilities */}
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
+                  {shellConfig.primeName && (
+                    <div>
+                      <div style={{ fontSize: 8, color: accentColor, letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace', marginBottom: 3 }}>PRIME · {shellConfig.primeName}</div>
+                      {shellConfig.primeDesc && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{shellConfig.primeDesc}</div>}
+                    </div>
+                  )}
+                  {shellConfig.tacticalName && (
+                    <div>
+                      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace', marginBottom: 3 }}>TACTICAL · {shellConfig.tacticalName}</div>
+                      {shellConfig.tacticalDesc && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{shellConfig.tacticalDesc}</div>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* ══ OPTIONS GRID ════════════════════════════════ */}
@@ -532,7 +671,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
                 {selectedShell.toUpperCase()} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(PRIORITIES.find(function(p) { return p.id === priority; }) || {}).label} · {(RANK_TARGETS.find(function(r) { return r.id === rankTarget; }) || {}).label}
               </div>
             )}
-            <button onClick={generateBuild} disabled={!selectedShell}
+            <button onClick={function() { generateBuild(); }} disabled={!selectedShell}
               style={{
                 padding:      isMobile ? '16px 40px' : '15px 52px',
                 background:   selectedShell ? accentColor : '#1a1d24',
@@ -561,7 +700,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
             zIndex:    100,
             maxWidth:  'calc(100vw - 32px)',
           }}>
-            <button onClick={generateBuild}
+            <button onClick={function() { generateBuild(); }}
               style={{
                 display:      'flex',
                 alignItems:   'center',
@@ -576,7 +715,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
                 whiteSpace:   'nowrap',
                 fontFamily:   'inherit',
               }}>
-              <span style={{ fontSize: 18, color: accentColor, lineHeight: 1 }}>{shellConfig ? SHELL_SYMBOLS[shellConfig.name] : '⬢'}</span>
+              <span style={{ fontSize: 18, color: accentColor, lineHeight: 1 }}>{shellConfig ? shellConfig.symbol : '⬢'}</span>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: accentColor, letterSpacing: 2, marginBottom: 2, textTransform: 'uppercase' }}>Ready</div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Engineer {selectedShell}</div>
@@ -612,7 +751,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
             animation: 'advisorPulse 1.5s ease-in-out infinite',
             letterSpacing: 2,
           }}>
-            {selectedShell ? SHELL_SYMBOLS[selectedShell] : '⬢'}
+            {shellConfig ? shellConfig.symbol : '⬢'}
           </div>
 
           <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, letterSpacing: 3, color: accentColor, marginBottom: 5 }}>DEXTER ANALYZING</div>
@@ -653,7 +792,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
     var gradeColor = GRADE_COLORS[grade] || '#ff8800';
 
     return (
-      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 32, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
 
         <style>{`
           @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -661,7 +800,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
           .share-btn:hover { background: #1e2228 !important; }
         `}</style>
 
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 40px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 40px' }}>
 
           {/* ══ HEADER ═══════════════════════════════════════ */}
           <div className="result-block" style={{ marginBottom: 18, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -671,10 +810,16 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
                 {build.shell ? build.shell.toUpperCase() : ''} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(RANK_TARGETS.find(function(r) { return r.id === rankTarget; }) || {}).label}
               </div>
             </div>
-            <button onClick={function() { setPhase('input'); setBuild(null); }}
-              style={{ padding: '8px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.4)', fontSize: 10, letterSpacing: 2, cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}>
-              REBUILD
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={surpriseMe}
+                style={{ padding: '8px 14px', background: 'transparent', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, color: '#ff8800', fontSize: 10, letterSpacing: 2, cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}>
+                ⚡ SURPRISE
+              </button>
+              <button onClick={function() { setPhase('input'); setBuild(null); }}
+                style={{ padding: '8px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.4)', fontSize: 10, letterSpacing: 2, cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}>
+                REBUILD
+              </button>
+            </div>
           </div>
 
           {/* ══ MAIN BUILD CARD ═══════════════════════════════ */}
@@ -682,7 +827,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
             <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '3px solid ' + accentColor, borderRadius: '0 0 3px 3px', overflow: 'hidden', marginBottom: 12 }}>
 
               {/* Top — grade + name */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: isMobile ? '20px' : '24px 28px', gap: 16, flexWrap: 'wrap', borderBottom: '1px solid #22252e' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: isMobile ? '20px' : '24px 28px', gap: 16, flexWrap: 'wrap', borderBottom: '1px solid #22252e', background: 'linear-gradient(135deg, ' + accentColor + '0a 0%, transparent 60%)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 8, color: accentColor + 'aa', letterSpacing: 3, marginBottom: 8, fontWeight: 700, fontFamily: 'monospace' }}>DEXTER BUILD REPORT</div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: isMobile ? 18 : 24, fontWeight: 900, color: '#fff', letterSpacing: 1, marginBottom: 8, wordBreak: 'break-word', lineHeight: 1.2 }}>
@@ -781,6 +926,43 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
                 </div>
               </div>
 
+              {/* ══ CRADLE ALLOCATION ══════════════════════════ */}
+              {build.cradle && (build.cradle.summary || (build.cradle.tracks && build.cradle.tracks.length > 0)) && (
+                <div style={{ borderTop: '1px solid #22252e', padding: '18px 20px', background: '#16181e' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>◇ Cradle Stat Plan</div>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>SEASON 2 · FREE RESPEC</div>
+                  </div>
+                  {build.cradle.summary && (
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: 14 }}>{build.cradle.summary}</div>
+                  )}
+                  {build.cradle.tracks && build.cradle.tracks.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
+                      {build.cradle.tracks.map(function(t, i) {
+                        var tc = CRADLE_TRACK_COLORS[t.track] || '#00d4ff';
+                        return (
+                          <div key={i} style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + tc, borderRadius: '0 3px 3px 0', padding: '12px 14px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
+                              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: tc, letterSpacing: 1 }}>{(t.track || '').toUpperCase()}</div>
+                              {t.energy != null && t.energy !== '' && (
+                                <div style={{ fontSize: 8, color: tc + 'cc', background: tc + '15', border: '1px solid ' + tc + '33', borderRadius: 2, padding: '2px 6px', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700, flexShrink: 0 }}>{t.energy} ENERGY</div>
+                              )}
+                            </div>
+                            {t.perk && <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)', marginBottom: 3, fontFamily: 'monospace', letterSpacing: 0.5 }}>PERK · {t.perk}</div>}
+                            {t.reason && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{t.reason}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div style={{ marginTop: 12 }}>
+                    <Link href="/cradle" style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>
+                      OPEN THE CRADLE PLANNER →
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               {/* Strengths/weaknesses/ranked strip */}
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))', gap: 1, background: '#22252e', borderTop: '1px solid #22252e' }}>
                 <div style={{ padding: '14px 20px', background: '#1a1d24' }}>
@@ -813,23 +995,23 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
             </div>
           </div>
 
-          {/* ══ FACTION ADVISOR CROSS-LINK ═════════════════════ */}
+          {/* ══ CRADLE CROSS-LINK (reframed from dead faction-grind) ══ */}
           <div className="result-block" style={{ animationDelay: '0.225s', marginBottom: 12 }}>
-            <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ffd700', borderRadius: '0 3px 3px 0', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00d4ff', borderRadius: '0 3px 3px 0', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
               <div style={{ flex: 1, minWidth: 240 }}>
-                <div style={{ fontSize: 9, color: '#ffd700', letterSpacing: 3, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>◆ Plan Your Progression</div>
+                <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 3, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>◇ Plan Your Cradle</div>
                 <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: 0.5, lineHeight: 1.2, marginBottom: 6 }}>
-                  Many of the strongest items in Marathon are gated behind faction rank.
+                  In Season 2, your shell's stats come from the Cradle.
                 </div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-                  The Faction Advisor maps your shell choice to the optimal grind path — so you know which faction to invest in first.
+                  Map the exact Energy path for this build — and watch perks light up at each breakpoint. Respec is free, so experiment without penalty.
                 </div>
               </div>
               <Link
-                href={selectedShell ? '/factions?shell=' + selectedShell : '/factions'}
+                href="/cradle"
                 style={{
                   padding:        '11px 20px',
-                  background:     '#ffd700',
+                  background:     '#00d4ff',
                   color:          '#000',
                   fontSize:       11,
                   fontWeight:     800,
@@ -840,7 +1022,7 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
                   whiteSpace:     'nowrap',
                   flexShrink:     0,
                 }}>
-                OPEN FACTION ADVISOR →
+                OPEN CRADLE PLANNER →
               </Link>
             </div>
           </div>
@@ -914,4 +1096,14 @@ export default function AdvisorClient({ urlShell, profilePrefill }) {
   }
 
   return null;
+}
+
+// ─── PREVIEW STAT (small helper for the live shell preview) ──
+function PreviewStat({ label, value, color }) {
+  return (
+    <div>
+      <div style={{ fontSize: 18, fontWeight: 900, color: color, lineHeight: 1, fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>{value}</div>
+      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace', marginTop: 3 }}>{label}</div>
+    </div>
+  );
 }

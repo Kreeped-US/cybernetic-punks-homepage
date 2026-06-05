@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SHELLS = ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'];
+const SHELLS = ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Sentinel', 'Thief', 'Triage', 'Vandal'];
 
 async function fetchAdvisorContext(shell) {
   const supabase = createClient(
@@ -14,10 +14,10 @@ async function fetchAdvisorContext(shell) {
     process.env.SUPABASE_SERVICE_KEY
   );
 
-  const [modsRes, coresRes, implantsRes, shellRes, weaponsRes] = await Promise.all([
+  const [modsRes, coresRes, implantsRes, shellRes, weaponsRes, cradleRes] = await Promise.all([
     supabase
       .from('mod_stats')
-      .select('name, slot_type, rarity, effect_desc, effect_summary, ranked_notes')
+      .select('name, slot_type, rarity, effect_desc, effect_summary, ranked_notes, stat_changes')
       .not('effect_desc', 'is', null)
       .order('rarity', { ascending: false })
       .limit(100),
@@ -42,6 +42,12 @@ async function fetchAdvisorContext(shell) {
       .select('name, category, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable')
       .order('name')
       .limit(60),
+    supabase
+      .from('cradle_nodes')
+      .select('stat_track, node_order, node_name, is_perk, cumulative_energy, effect, stat_improved')
+      .eq('game_slug', 'marathon')
+      .order('stat_track', { ascending: true })
+      .order('node_order', { ascending: true }),
   ]);
 
   let context = '';
@@ -78,6 +84,10 @@ async function fetchAdvisorContext(shell) {
       const slot = mod.slot_type || 'Other';
       if (!bySlot[slot]) bySlot[slot] = [];
       let modLine = `${mod.name} (${mod.rarity}): ${mod.effect_desc || mod.effect_summary || 'No description'}`;
+      if (mod.stat_changes && typeof mod.stat_changes === 'object') {
+        const pairs = Object.entries(mod.stat_changes).map(e => `${e[0]} ${e[1]}`);
+        if (pairs.length) modLine += ` [${pairs.join(', ')}]`;
+      }
       if (mod.ranked_notes) modLine += ` [Ranked: ${mod.ranked_notes}]`;
       bySlot[slot].push(modLine);
     }
@@ -135,6 +145,27 @@ async function fetchAdvisorContext(shell) {
     context += `\n--- END IMPLANTS ---`;
   }
 
+  // Cradle progression (S2 stat system) — perks only, with no-invent guard
+  if (cradleRes.data?.length) {
+    context += `\n\n--- CRADLE PROGRESSION DATABASE (Season 2 shell stat system) ---`;
+    context += `\nIn Season 2 shell STATS come from the Cradle: players spend Energy across six tracks (free respec, resets each season), unlocking named PERKS at Energy breakpoints. Recommend ONLY the tracks, perks, and breakpoints below. NEVER invent a perk name or Energy cost.\n`;
+    const byTrack = {};
+    for (const n of cradleRes.data) {
+      const t = n.stat_track || 'Other';
+      if (!byTrack[t]) byTrack[t] = [];
+      byTrack[t].push(n);
+    }
+    for (const [track, nodes] of Object.entries(byTrack)) {
+      context += `\n${track.toUpperCase()} TRACK (improves: ${nodes[0].stat_improved || '?'}):\n`;
+      for (const n of nodes) {
+        if (n.is_perk) {
+          context += `  PERK "${n.node_name}" @ ${n.cumulative_energy != null ? n.cumulative_energy + ' Energy' : 'breakpoint'}${n.effect ? ' - ' + n.effect : ''}\n`;
+        }
+      }
+    }
+    context += `--- END CRADLE ---`;
+  }
+
   return context;
 }
 
@@ -182,7 +213,8 @@ CRITICAL INSTRUCTIONS:
 2. MODS: Choose mods whose effects directly amplify the chosen weapon and playstyle. Don't just pick high-rarity — pick the right ones.
 3. CORES: Prioritize ${shell}-specific cores first. Then pick universal cores that reinforce the priority. A Prime Recovery core makes sense for ability-heavy playstyles. A passive healing core makes sense for survival priority.
 4. WEAPONS: From the WEAPONS DATABASE, pick weapons whose stats (damage, fire rate, range rating) suit the playstyle and priority. Don't just name weapons — reference why their stats fit.
-5. EXPERIENCE: ${experienceGuidance[experienceLevel]}
+5. CRADLE: Recommend a Cradle stat allocation that serves the priority. Name 1-2 tracks to invest in and the specific PERKS to chase at their Energy breakpoints — using ONLY perks from the CRADLE PROGRESSION DATABASE below. Tie the choice to the priority (e.g. combat leans Strength/Resistance, loot speed leans Dexterity, support leans Support). Because respec is free, you can prescribe an exact optimal path. NEVER invent a perk name or Energy number — if unsure, name the track only.
+6. EXPERIENCE: ${experienceGuidance[experienceLevel]}
 
 ${context}
 
@@ -203,6 +235,12 @@ Return ONLY valid JSON — no markdown, no explanation:
   "implants": [
     { "slot": "Head|Torso|Legs", "name": "exact implant name from IMPLANTS DATABASE", "stat_change": "cite actual stat values e.g. Agility: +8, Hardware: -3", "reason": "why these specific stats serve the priority" }
   ],
+  "cradle": {
+    "summary": "1 sentence on the overall Cradle direction for this build",
+    "tracks": [
+      { "track": "track name from CRADLE PROGRESSION DATABASE", "perk": "exact perk name (or null if recommending the track generally)", "energy": "cumulative Energy breakpoint as a number, or null", "reason": "why this track/perk serves the priority" }
+    ]
+  },
   "ranked_viable": true,
   "holotag_tier": "Bronze|Silver|Gold|Platinum|Diamond|Pinnacle|null",
   "ranked_note": "1 sentence specific to the rank target — mention the score target and whether this build can hit it",
