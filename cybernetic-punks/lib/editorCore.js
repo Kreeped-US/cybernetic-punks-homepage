@@ -528,7 +528,7 @@ async function fetchGameContext() {
 
     if (modsRes.data?.length) {
       const bySlot = {};
-     for (const mod of modsRes.data) {
+      for (const mod of modsRes.data) {
         const slot = mod.slot_type || 'Other';
         if (!bySlot[slot]) bySlot[slot] = [];
         var factionTag = mod.faction_source ? ' [' + mod.faction_source + ' Armory unlock]' : '';
