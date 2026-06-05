@@ -25,7 +25,6 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import MetaClient from './MetaClient';
-import SeasonResetBanner from '@/components/SeasonResetBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -166,8 +165,6 @@ export default async function MetaPage() {
           <li style={{ color: '#00ff41' }}>META TIER LIST</li>
         </ol>
       </nav>
-
-      <SeasonResetBanner />
 
       <Suspense fallback={null}>
         <MetaClient

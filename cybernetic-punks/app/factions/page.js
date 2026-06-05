@@ -16,7 +16,6 @@
 // leader/focus constants (which were stale).
 
 import FactionClient from './FactionClient';
-import SeasonResetBanner from '@/components/SeasonResetBanner';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
@@ -114,7 +113,6 @@ export default async function FactionsPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <SeasonResetBanner />
       <FactionClient data={data} />
     </>
   );
