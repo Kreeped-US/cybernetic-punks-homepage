@@ -81,14 +81,17 @@ export async function gatherBungieNews() {
     // Flag patch notes specifically.
     // UPDATED May 20, 2026: Two-part fix for chronic patch false-positives.
     // (1) FRESHNESS GATE: a patch only counts if the article is recent
-    //     (within 72h). Previously is_patch_note had no date awareness, so a
-    //     stale patch note kept matching keywords every cycle for days,
-    //     defeating the cron's once-daily regrade gate and spamming Discord.
+    //     (within 24h - tightened from 72h on June 5, 2026). A launch
+    //     megapatch stayed "fresh" for 3 daily cycles, re-firing each time
+    //     because each detection cleared the 23h dedup. 24h means a patch
+    //     ages out before the next daily cycle. The cron also now dedups on
+    //     patch identity (event_data.patch_key) so the same article can never
+    //     re-notify even within its freshness window - belt and suspenders.
     // (2) TIGHTER KEYWORDS: removed words that appear in nearly all gaming
     //     news ('update', 'fix', 'change', 'tweak', 'season'). Kept only
     //     terms that genuinely signal a balance/patch event.
     const patchKeywords = ['patch', 'hotfix', 'nerf', 'buff', 'patch notes', 'balance pass', 'weapon tuning'];
-    const PATCH_FRESHNESS_MS = 72 * 60 * 60 * 1000;
+    const PATCH_FRESHNESS_MS = 24 * 60 * 60 * 1000;
     const tagged = all.map(a => {
       var matchesKeyword = patchKeywords.some(k => a.title.toLowerCase().includes(k) || (a.contents || '').toLowerCase().includes(k));
       var articleAgeMs = Date.now() - new Date(a.date).getTime();

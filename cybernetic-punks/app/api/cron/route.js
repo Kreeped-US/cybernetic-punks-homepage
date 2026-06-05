@@ -23,6 +23,16 @@ import { gatherAll } from '@/lib/gather/index';
 // 5. TIER-CHANGE COMMENTARY: when a regrade produces movers, the cron passes
 //    a tierChangeContext to generateArticleComments so the other editors
 //    react to the specific tier moves.
+//
+// JUNE 5, 2026 - PATCH-IDENTITY DEDUP (replaces the time-window dedup):
+// The May 20 time-window dedup (23h) failed for the Season 2 launch patch:
+// the article stayed within bungie.js's freshness window for 3 days, and
+// each daily cycle was >23h after the last, so it cleared the window and
+// re-fired the Discord notification AND a NEXUS regrade every single day.
+// Fix: dedup on patch IDENTITY (a stable key derived from the patch title,
+// stored in site_events.event_data.patch_key) instead of elapsed time. The
+// same patch now notifies / forces a regrade exactly once, ever - regardless
+// of how long it stays fresh. Paired with bungie.js freshness 72h->24h.
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +61,17 @@ function generateSlug(headline) {
     .substring(0, 70);
   var hash = Date.now().toString(36).slice(-4);
   return base + '-' + hash;
+}
+
+// JUNE 5, 2026: Stable identity key for a patch article. Matches bungie.js's
+// dedup pattern (title.toLowerCase().slice(0,60)) so the cron and the gatherer
+// agree on what "the same patch" means. Used to dedup the Discord notify and
+// the NEXUS regrade on patch IDENTITY, not elapsed time - so a still-fresh
+// patch can't re-fire on consecutive daily cycles.
+function patchKey(patchItems) {
+  if (!patchItems || patchItems.length === 0) return null;
+  var title = (patchItems[0].title || '').toLowerCase().slice(0, 60);
+  return title || null;
 }
 
 function isTwitchContent(result) {
@@ -437,10 +458,11 @@ export async function GET() {
     // -- STEP 3: Detect patch notes --
     var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
     var hasPatch = patchItems.length > 0;
+    var currentPatchKey = patchKey(patchItems);
     var patchBlock = hasPatch ? buildPatchPriorityBlock(patchItems) : '';
 
     if (hasPatch) {
-      console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', '));
+      console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', ') + ' (patch_key="' + currentPatchKey + '")');
     }
 
     // -- STEP 4: Determine NEXUS tier regrade gate --
@@ -452,32 +474,31 @@ export async function GET() {
     // avoids regrading every cycle. Worst case on early jitter is an occasional
     // ~35h gap, which is harmless (tier list just holds steady a bit longer).
     //
-    // PATCH-TRIGGERED REGRADE DEDUP (May 20, 2026):
-    // A patch should force a regrade at most ONCE per 23h, not every cycle.
-    // bungie.js now only flags is_patch_note for fresh (<=72h) news, but a
-    // genuinely fresh patch still lingers for up to 72h. Without dedup it
-    // would force a regrade on every 6h cycle during that window. We record
-    // a 'patch_regrade' event when a patch triggers a regrade and suppress
-    // further patch-triggered regrades within 23h. The 23h timer still
-    // applies independently, so the daily regrade is unaffected.
+    // PATCH-TRIGGERED REGRADE DEDUP:
+    // UPDATED June 5, 2026 - now dedups on patch IDENTITY, not a time window.
+    // The prior 23h-window check failed for the S2 launch patch: each daily
+    // cycle was >23h after the last, so the window cleared and the patch forced
+    // a fresh regrade every day for as long as it stayed fresh. We now check
+    // whether a 'patch_regrade' marker already exists for THIS patch_key; if so,
+    // the patch has already had its one regrade and won't force another. The
+    // independent 23h-elapsed daily regrade is unaffected.
     var patchAlreadyRegraded = false;
     if (hasPatch) {
       try {
-        var patchCutoff23h = new Date(Date.now() - 23 * 3600 * 1000).toISOString();
-        var { data: recentPatchRegrade } = await supabase
+        var { data: priorPatchRegrade } = await supabase
           .from('site_events')
           .select('id')
           .eq('event_name', 'patch_regrade')
-          .gte('created_at', patchCutoff23h)
+          .eq('event_data->>patch_key', currentPatchKey)
           .limit(1);
-        patchAlreadyRegraded = !!(recentPatchRegrade && recentPatchRegrade.length > 0);
+        patchAlreadyRegraded = !!(priorPatchRegrade && priorPatchRegrade.length > 0);
       } catch (pdErr) {
         console.log('[CRON] patch_regrade dedup check failed (treating as not-yet-regraded): ' + pdErr.message);
       }
     }
     var patchShouldTrigger = hasPatch && !patchAlreadyRegraded;
     if (hasPatch) {
-      console.log('[CRON] Patch present: hasPatch=true, alreadyRegradedInLast23h=' + patchAlreadyRegraded + ', patchShouldTrigger=' + patchShouldTrigger);
+      console.log('[CRON] Patch present: hasPatch=true, alreadyRegradedThisPatch=' + patchAlreadyRegraded + ', patchShouldTrigger=' + patchShouldTrigger);
     }
 
     var regradeContext = {
@@ -522,13 +543,14 @@ export async function GET() {
 
     // -- RECORD PATCH-TRIGGERED REGRADE MARKER --
     // If a patch is forcing this cycle's regrade, record a 'patch_regrade'
-    // event so subsequent cycles within 23h won't re-trigger off the same
-    // patch. Recorded at the decision point (not after NEXUS succeeds) and
-    // fails closed: worst case we skip one patch regrade rather than loop.
+    // event keyed to this patch's identity so subsequent cycles won't
+    // re-trigger off the same patch. Recorded at the decision point (not after
+    // NEXUS succeeds) and fails closed: worst case we skip one patch regrade
+    // rather than loop.
     if (regradeContext.patchShouldTrigger) {
       try {
-        await supabase.from('site_events').insert({ event_name: 'patch_regrade' });
-        console.log('[CRON] Recorded patch_regrade marker -- patch will not re-trigger regrade for 23h');
+        await supabase.from('site_events').insert({ event_name: 'patch_regrade', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
+        console.log('[CRON] Recorded patch_regrade marker for patch_key="' + currentPatchKey + '" -- this patch will not re-trigger regrade again');
       } catch (prErr) {
         console.log('[CRON] Failed to record patch_regrade marker (non-fatal): ' + prErr.message);
       }
@@ -582,25 +604,29 @@ export async function GET() {
       prompts.MIRANDA._directive = directiveMap['MIRANDA'];
     }
 
-    // -- STEP 6: Patch Discord notification with dedup --
+    // -- STEP 6: Patch Discord notification with patch-identity dedup --
+    // UPDATED June 5, 2026: dedup on patch IDENTITY (event_data.patch_key), not
+    // a 23h time window. The old window let the S2 launch patch re-notify daily
+    // because each cycle was >23h after the last. Now: if a 'patch_discord'
+    // marker already exists for THIS patch_key, skip - the patch has had its one
+    // notification. A genuinely new patch has a new key and notifies once.
     if (hasPatch) {
       try {
-        var cutoff23h = new Date(Date.now() - 23 * 3600 * 1000).toISOString();
-        var { data: recentPatchNotif } = await supabase
+        var { data: priorPatchNotif } = await supabase
           .from('site_events')
           .select('id')
           .eq('event_name', 'patch_discord')
-          .gte('created_at', cutoff23h)
+          .eq('event_data->>patch_key', currentPatchKey)
           .limit(1);
 
-        if (!recentPatchNotif || recentPatchNotif.length === 0) {
+        if (!priorPatchNotif || priorPatchNotif.length === 0) {
           notifyPatchNotes(rawData.bungieNews).catch(function(e) {
             console.log('[DISCORD] patch notify error: ' + e.message);
           });
-          await supabase.from('site_events').insert({ event_name: 'patch_discord' });
-          console.log('[CRON] Patch Discord notification sent -- recorded in site_events');
+          await supabase.from('site_events').insert({ event_name: 'patch_discord', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
+          console.log('[CRON] Patch Discord notification sent for patch_key="' + currentPatchKey + '" -- recorded');
         } else {
-          console.log('[CRON] Patch already notified in last 23h -- skipping Discord');
+          console.log('[CRON] This patch already notified (patch_key="' + currentPatchKey + '") -- skipping Discord');
         }
       } catch (patchErr) {
         console.log('[CRON] Patch dedup check failed: ' + patchErr.message + ' -- sending anyway');
