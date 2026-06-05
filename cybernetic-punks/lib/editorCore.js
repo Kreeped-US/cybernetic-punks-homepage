@@ -51,7 +51,7 @@ const DATA_INTEGRITY_RULES = `
 
 DATA INTEGRITY RULES - CRITICAL:
 - Every weapon, mod, implant, core, shell, ammo type, and Cradle node you reference MUST appear in the database injected below. Do not invent items.
-- Faction unlock specifics (which item, rank required, Credit cost, material/Salvage cost) are NOT in the database currently and MUST NOT be cited. Do not state a rank number or cost for any faction unlock - inventing it is a hallucination. You may name a gear item's source faction in general terms only.
+- Faction Armory specifics (item, rank required, Credit cost, material cost) may be cited ONLY when they appear in the VERIFIED ARMORY STOCK or VERIFIED FACTION RANK-GATING blocks injected below. For any faction or item NOT in those verified blocks, do not state a rank number, price, or cost - inventing it is a hallucination. When uncertain, name a gear item's source faction in general terms only.
 - Cradle perks, their stat tracks, and their Energy breakpoints MUST match the database EXACTLY. Do not invent perks or guess Energy costs.
 - Stat values (damage, fire rate, magazine size, health, shield, speed) MUST come from the database. Never estimate.
 - If you are not certain of a stat, unlock requirement, or Cradle breakpoint, OMIT it from the article rather than guess.
@@ -402,7 +402,7 @@ In Season 2, a shell's STATS are tuned through THE CRADLE, not faction ranks. Th
 
 FACTION GEAR AWARENESS (S2 model):
 Factions in Season 2 are about GEAR ACCESS and reputation, not stat power. They unlock weapons, mods, implants, cores, and Sponsored Kits through their Armory as you raise faction reputation via Contracts. Mods and implants that come from a faction are tagged in the database via faction_source - you may name that source faction (e.g. "this mod comes from the Arachne Armory").
-IMPORTANT - DO NOT CITE FACTION UNLOCK SPECIFICS: The database does NOT currently contain verified S2 faction unlock requirements. You must NOT state a specific rank number, Credit cost, or material/Salvage cost for any faction unlock - that data is unverified and inventing it is a hallucination. It is fine to say a piece of gear "is unlocked through the [Faction] Armory as you build reputation" without numbers. If a build leans on faction-gated gear, point readers to /factions for the progression path rather than fabricating costs. Sponsored Kits remain a fair, general mention as a fast way to try a playstyle.
+CITING FACTION SPECIFICS - VERIFIED ONLY: A partial set of verified S2 faction Armory data is injected below (VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks). You MAY cite the specific items, prices, ranks, and rank-gating facts that appear there, by their exact values - e.g. naming a verified item and the rank that unlocks it. For any faction or item NOT in those verified blocks (factions with no rows, or items shown as "unnamed"), you must NOT state a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination. Speak about those in general terms and point readers to /factions. Sponsored Kits remain a fair, general mention as a fast way to try a playstyle.
 
 PLANNING TOOLS YOU CAN POINT READERS TO:
 - For STAT builds (Cradle allocation, which perks to chase): the Cradle planner at /cradle lets readers map their exact Energy path and see perks light up at breakpoints. Mention it when a build hinges on a specific Cradle profile.
@@ -470,7 +470,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 SEASON 2 STAT MODEL - THE CRADLE (teach this correctly):
 In Season 2, Runner shell stats are improved through THE CRADLE, not faction ranks. Runners spend Energy (about one per level) across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passives and named perks at Energy breakpoints. It is shared across all shells, fully re-spec-able at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below has the real tracks, perks, and breakpoints - teach only those. A great beginner lesson: because respec is free, encourage new Runners to experiment without fear. When teaching a stat-focused build, tell Runners which track to invest in and which perk breakpoint to aim for.
 
-FACTION GUIDE RESPONSIBILITY (S2 model): In Season 2, factions are about GEAR and reputation, not stats. You may tell Runners which faction's Armory a piece of gear comes from (mods/implants are tagged via faction_source) and explain that factions gate gear behind reputation built through Contracts. DO NOT cite specific rank numbers, Credit costs, or material/Salvage costs for faction unlocks - that data is not currently verified in the database, and inventing it is a hallucination. For the actual progression path, point Runners to /factions rather than naming costs. Do not tell Runners to grind factions for stat bonuses - that S1 system is gone; stats come from the Cradle now. You can point new Runners to Sponsored Kits as a low-risk way to try a faction's playstyle before committing.
+FACTION GUIDE RESPONSIBILITY (S2 model): In Season 2, factions are about GEAR and reputation, not stats. You may tell Runners which faction's Armory a piece of gear comes from and explain that factions gate gear behind reputation built through Contracts. A partial set of VERIFIED faction Armory data is injected below - you MAY cite the specific items, prices, and rank-gates that appear in the VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks, by their exact values. For any faction or item NOT in those verified blocks, do NOT cite a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination; speak generally and point Runners to /factions. Do not tell Runners to grind factions for stat bonuses - that S1 system is gone; stats come from the Cradle now. You can point new Runners to Sponsored Kits as a low-risk way to try a faction's playstyle before committing.
 
 PLANNING TOOLS YOU CAN POINT READERS TO:
 - For STAT builds and Cradle planning: the Cradle planner at /cradle lets Runners map their Energy path and preview perks at each breakpoint. Point stat-focused guides there.
@@ -512,7 +512,7 @@ async function fetchGameContext() {
     // longer fed to editors. Re-add a real S2 faction-Armory-gear query here
     // once that table is reseeded with actual S2 gear data. The `factions`
     // query (names/leaders/focus) is kept - that info is still valid.
-    const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes] = await Promise.all([
+    const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes] = await Promise.all([
       supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(20),
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(20),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, faction_source').order('rarity', { ascending: false }).limit(18),
@@ -520,6 +520,8 @@ async function fetchGameContext() {
       supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
       supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved').eq('game_slug', 'marathon').order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
+      supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', 'marathon').eq('verified', true),
+      supabase.from('faction_upgrades').select('faction_slug, node_name, node_kind, rank_required, effect_desc, unlocks_in_armory').eq('game_slug', 'marathon').eq('verified', true),
     ]);
 
     let output = '';
@@ -635,25 +637,70 @@ async function fetchGameContext() {
 
     // FACTION SYSTEM (S2 model: gear access + reputation + Sponsored Kits,
     // NOT stat bonuses - those moved to the Cradle above).
-    // JUNE 5, 2026: the FACTION ARMORY UNLOCKS block was removed - it rendered
-    // the dead S1 .EXE stat-upgrade catalog. Until the faction-gear table is
-    // reseeded with real S2 Armory data, editors get faction NAMES/focus only
-    // and are told NOT to cite specific items, ranks, or costs (see the prompt
-    // rule). This guarantees no fabricated faction specifics.
+    // JUNE 5, 2026: wired to the reseeded faction_armory + faction_upgrades
+    // tables (verified=true rows only). Editors may now cite the SPECIFIC
+    // verified items/prices/rank-gates rendered below, but the fence holds:
+    // anything NOT rendered here (factions with no verified rows, obscured
+    // item names) must still be spoken about in general terms only - never
+    // invented. The dataset is partial (NuCaloric + CyberAcme have depth;
+    // others are sparse or absent) and grows as more in-game data is captured.
     var hasFactionData = (factionsRes.data?.length > 0);
 
     if (hasFactionData) {
       output += '\n\n--- FACTION SYSTEM DATABASE ---';
       output += '\nMarathon has 6 factions. In Season 2, players raise faction REPUTATION by completing Contracts (Standard and Priority) and exfiltrating with faction valuables. Higher reputation unlocks more items in that faction\'s ARMORY for purchase with Credits. Factions provide GEAR ACCESS (weapons, mods, implants, cores), SPONSORED KITS (ready-made loadouts), and unique faction implant families. Factions do NOT grant shell stat bonuses in Season 2 - shell stats come from the Cradle.\n';
-      output += '\nIMPORTANT - NO VERIFIED FACTION GEAR DATA YET: The specific items each faction unlocks, their rank requirements, and their costs are NOT in this database (the old data was Season 1 and has been removed). You may state that a faction exists, what it focuses on, and that it gates gear/reputation in general terms. You MUST NOT cite any specific faction unlock item name, rank number, Credit cost, or material cost - that data is unverified and inventing it is a hallucination. Point readers to /factions for gear progression rather than naming specific unlocks.\n';
 
       if (factionsRes.data?.length > 0) {
-        output += '\nFACTIONS (names and focus only - do not invent their unlock catalogs):\n';
+        output += '\nFACTIONS (names and focus):\n';
         factionsRes.data.forEach(function(f) {
           output += '  ' + f.name + (f.leader ? ' (Leader: ' + f.leader + ')' : '') + (f.focus ? ' - ' + f.focus : '') + '\n';
           if (f.description) output += '    ' + f.description + '\n';
         });
       }
+
+      // VERIFIED ARMORY ITEMS (read directly off in-game captures).
+      // Grouped by faction. Rows with a null item_name are price/slot facts
+      // only (the in-game icon was obscured) - cite the price/section, never
+      // a guessed name.
+      var armory = factionArmoryRes.data || [];
+      if (armory.length > 0) {
+        output += '\nVERIFIED ARMORY STOCK (cite ONLY what appears here; null-name rows = price known, name not yet captured):\n';
+        var armoryByFaction = {};
+        armory.forEach(function(a) {
+          var fk = a.faction_slug || 'unknown';
+          if (!armoryByFaction[fk]) armoryByFaction[fk] = [];
+          armoryByFaction[fk].push(a);
+        });
+        Object.keys(armoryByFaction).sort().forEach(function(fk) {
+          output += '  ' + fk.toUpperCase() + ':\n';
+          armoryByFaction[fk].forEach(function(a) {
+            var name = a.item_name ? a.item_name : '(unnamed ' + (a.item_type || 'item') + ' - name not captured)';
+            var bits = [
+              a.section ? a.section : null,
+              a.rarity ? a.rarity : null,
+              (a.credit_cost != null) ? a.credit_cost + ' Credits' : null,
+              a.material_cost ? a.material_cost : null,
+              (a.rank_required != null) ? 'Rank ' + a.rank_required : null,
+              a.shell_slug ? 'for ' + a.shell_slug : null,
+              a.is_free ? 'FREE daily' : null,
+            ].filter(Boolean).join(', ');
+            output += '    - ' + name + (bits ? ' [' + bits + ']' : '') + (a.notes ? ' - ' + a.notes : '') + '\n';
+          });
+        });
+      }
+
+      // VERIFIED RANK-GATING UPGRADE NODES (which faction rank unlocks what
+      // in the Armory). These are facts read off the upgrade-tree tooltips.
+      var upgrades = factionUpgradesRes.data || [];
+      if (upgrades.length > 0) {
+        output += '\nVERIFIED FACTION RANK-GATING (upgrade nodes that unlock Armory stock or grant a stat):\n';
+        upgrades.forEach(function(u) {
+          var head = (u.faction_slug || '').toUpperCase() + ' Rank ' + (u.rank_required != null ? u.rank_required : '?') + ' - "' + u.node_name + '"';
+          output += '  - ' + head + (u.effect_desc ? ': ' + u.effect_desc : '') + (u.unlocks_in_armory ? ' (unlocks: ' + u.unlocks_in_armory + ')' : '') + '\n';
+        });
+      }
+
+      output += '\nFENCE - READ CAREFULLY: The verified data above is PARTIAL. You may cite the specific items, prices, ranks, and rank-gating facts shown above by their exact values. For any faction or item NOT listed above (e.g. factions with no rows, or items shown only as "unnamed"), you MUST speak in general terms only - do NOT invent an item name, price, rank, or cost. Point readers to /factions for fuller progression. Inventing a faction specific not shown above is a hallucination.\n';
 
       output += '--- END FACTION SYSTEM ---';
     }
