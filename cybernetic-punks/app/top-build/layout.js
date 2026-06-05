@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Marathon Top Build — Best Loadout This Cycle',
-  description: "DEXTER's highest-rated Marathon build this cycle. Best shell, weapons, mods, cores, and implants for current meta — updated every 6 hours.",
+  description: "DEXTER's highest-rated Marathon build this cycle. Best shell, weapons, mods, cores, and implants for current meta — updated throughout the day.",
   openGraph: {
     title: "Marathon Top Build — CyberneticPunks",
     description: "DEXTER's highest-rated Marathon build this cycle.",

@@ -3,7 +3,7 @@
 
 export const metadata = {
   title: 'Marathon Builds — Best Loadouts & Build Lab',
-  description: 'Best Marathon builds analyzed by DEXTER. Shell loadouts, weapon pairings, mod setups, and ranked-viable configurations — updated every 6 hours.',
+  description: 'Best Marathon builds analyzed by DEXTER. Shell loadouts, weapon pairings, mod setups, and ranked-viable configurations — updated throughout the day.',
   openGraph: {
     title: 'Marathon Builds — CyberneticPunks',
     description: 'Best Marathon builds analyzed by DEXTER. Shell loadouts, weapon pairings, and mod setups.',

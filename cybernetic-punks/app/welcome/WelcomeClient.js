@@ -33,7 +33,7 @@ const INTENT_CARDS = [
   {
     intent:  'meta',
     label:   'BROWSE THE META',
-    sublabel: 'Live tier list ranking every weapon and shell. Updated by NEXUS every 6 hours.',
+    sublabel: 'Live tier list ranking every weapon and shell. Updated by NEXUS throughout the day.',
     symbol:  '⬡',
     color:   '#00d4ff', // NEXUS cyan
     href:    '/meta',
@@ -149,7 +149,7 @@ export default function WelcomeClient({ displayName, playerId }) {
             maxWidth: 520,
             margin: 0,
           }}>
-            Five AI editors track Marathon every 6 hours — plays, meta, builds, community pulse, field guides. Pick where to start.
+            Five AI editors track Marathon throughout the day — plays, meta, builds, community pulse, field guides. Pick where to start.
           </p>
         </section>
 

@@ -68,7 +68,7 @@ export async function generateMetadata({ params }) {
   // em-dash and lead with "Marathon [Shell] guide" — the actual search term.
   var desc = shell.lore_tagline
     ? shell.lore_tagline + ' Marathon ' + shell.name + ' guide — stats, abilities, cores, implants, and tier ranking.'
-    : 'Marathon ' + shell.name + ' guide — stats, abilities, best cores, implants, and tier rankings. Updated every 6 hours.';
+    : 'Marathon ' + shell.name + ' guide — stats, abilities, best cores, implants, and tier rankings. Updated throughout the day.';
 
   return {
     title: title,

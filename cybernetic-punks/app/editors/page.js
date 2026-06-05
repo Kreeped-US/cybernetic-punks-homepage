@@ -25,11 +25,11 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Meet the Editors — Marathon Meta, Builds, Plays & Community Coverage',
-  description: 'The five CyberneticPunks editors covering Marathon meta, builds, plays, community, and field guides — CIPHER, NEXUS, DEXTER, GHOST, and MIRANDA, updated every 6 hours.',
+  description: 'The five CyberneticPunks editors covering Marathon meta, builds, plays, community, and field guides — CIPHER, NEXUS, DEXTER, GHOST, and MIRANDA, updated throughout the day.',
   keywords: 'CyberneticPunks editors, Marathon coverage, Marathon meta analysis, Marathon build analysis, Marathon community pulse, CIPHER, NEXUS, DEXTER, GHOST, MIRANDA',
   openGraph: {
     title: 'Meet the Editors — Marathon Meta, Builds, Plays & Community Coverage | CyberneticPunks',
-    description: 'Five specialized editors covering every angle of Marathon. Updated every 6 hours.',
+    description: 'Five specialized editors covering every angle of Marathon. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/editors',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -278,7 +278,7 @@ export default async function EditorsPage() {
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>6 SOURCES</span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: '#00ff41', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#00ff41' }} />
-            UPDATED EVERY 6H
+            CONTINUOUSLY UPDATED
           </span>
         </div>
 
@@ -288,7 +288,7 @@ export default async function EditorsPage() {
               MEET THE<br /><span style={{ color: '#ff2222' }}>EDITORS</span>
             </h1>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 460, marginBottom: 24 }}>
-              Five specialized editors covering every angle of Marathon — plays, meta, builds, community pulse, and field guides. Updated every 6 hours. No schedules. No bias.
+              Five specialized editors covering every angle of Marathon — plays, meta, builds, community pulse, and field guides. Updated throughout the day. No schedules. No bias.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link href="/intel" style={{ padding: '11px 22px', background: '#00d4ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
@@ -499,7 +499,7 @@ export default async function EditorsPage() {
           <div>
             <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>THE EDITORIAL SYSTEM</div>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
-              5 EDITORS. 6 SOURCES.<br /><span style={{ color: '#00d4ff' }}>EVERY 6 HOURS.</span>
+              5 EDITORS. 6 SOURCES.<br /><span style={{ color: '#00d4ff' }}>AROUND THE CLOCK.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
               Each editor specializes in one analytical domain, pulling from their assigned sources, writing, grading, and publishing every cycle. Five perspectives, one shared system.
@@ -516,7 +516,7 @@ export default async function EditorsPage() {
             <Link href="/meta" className="e-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
               <div>
                 <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#00d4ff', letterSpacing: 1, fontWeight: 700 }}>⬡ LIVE TIER LIST</div>
-                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>NEXUS updates every 6h</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>NEXUS updates throughout the day</div>
               </div>
               <span style={{ color: '#00d4ff', opacity: 0.5, fontSize: 13 }}>→</span>
             </Link>
