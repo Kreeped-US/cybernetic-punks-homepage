@@ -515,7 +515,7 @@ async function fetchGameContext() {
     const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes] = await Promise.all([
       supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(20),
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(20),
-      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, faction_source').order('rarity', { ascending: false }).limit(18),
+      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source').order('rarity', { ascending: false }).limit(18),
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(30),
       supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
@@ -563,6 +563,7 @@ async function fetchGameContext() {
           imp.stat_2_label && imp.stat_2_value ? `${imp.stat_2_label}: ${imp.stat_2_value}` : null,
           imp.stat_3_label && imp.stat_3_value ? `${imp.stat_3_label}: ${imp.stat_3_value}` : null,
           imp.stat_4_label && imp.stat_4_value ? `${imp.stat_4_label}: ${imp.stat_4_value}` : null,
+          imp.stat_5_label && imp.stat_5_value ? `${imp.stat_5_label}: ${imp.stat_5_value}` : null,
         ].filter(Boolean).join(', ');
         var factionTag = imp.faction_source ? ' [' + imp.faction_source + ' Armory unlock]' : '';
         bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}`);
