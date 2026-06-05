@@ -9,7 +9,6 @@
 //   cadence copy -> "throughout the day".
 
 import RankedClient from './RankedClient';
-import SeasonResetBanner from '@/components/SeasonResetBanner';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
@@ -118,7 +117,6 @@ export default async function RankedPage() {
   var data = await getRankedData();
   return (
     <>
-      <SeasonResetBanner />
       <RankedClient data={data} />
     </>
   );
