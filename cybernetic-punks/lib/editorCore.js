@@ -535,7 +535,7 @@ async function fetchGameContext() {
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(20),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source').order('rarity', { ascending: false }).limit(18),
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(30),
-      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes').limit(10),
+      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
       supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved').eq('game_slug', 'marathon').order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
       supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', 'marathon').eq('verified', true),
@@ -614,16 +614,31 @@ async function fetchGameContext() {
     }
 
     if (shellsRes.data && shellsRes.data.length > 0) {
+      // JUNE 8, 2026: repointed from the stale active_/passive_ ability columns
+      // (S1-era, scrambled - e.g. Vandal "arm cannon", Sentinel null) to the
+      // canonical S2 four-part kit columns (prime/tactical/trait_1/trait_2) WITH
+      // descriptions. editorCore had been reading the wrong column set, feeding
+      // editors ability NAMES with no descriptions (or wrong names), which they
+      // filled with invention (e.g. Castle Doctrine described as a "stationary
+      // damage boost"). These columns carry the real, verified ability effects.
+      // The null-guard prints "not yet revealed" for empty slots so a genuine
+      // data gap (e.g. Rook's traits) is reported honestly, never invented.
+      const fmtAbility = function(label, name, desc) {
+        if (!name) return '';
+        return '    ' + label + ': ' + name + (desc ? ' - ' + desc : ' - (effect not yet revealed; do not invent it)');
+      };
       const shellLines = shellsRes.data.map(function(s) {
         return [
           '  ' + s.name + (s.role ? ' [' + s.role + ']' : ''),
           s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : '',
-          s.active_ability_name ? '    Active: ' + s.active_ability_name : '',
-          s.passive_ability_name ? '    Passive: ' + s.passive_ability_name : '',
+          fmtAbility('Prime', s.prime_ability_name, s.prime_ability_description),
+          fmtAbility('Tactical', s.tactical_ability_name, s.tactical_ability_description),
+          fmtAbility('Trait', s.trait_1_name, s.trait_1_description),
+          fmtAbility('Trait', s.trait_2_name, s.trait_2_description),
           (s.ranked_tier_solo || s.ranked_tier_squad) ? '    Ranked: Solo=' + (s.ranked_tier_solo || '?') + ' Squad=' + (s.ranked_tier_squad || '?') + (s.ranked_notes ? ' - ' + s.ranked_notes : '') : '',
         ].filter(Boolean).join('\n');
       }).join('\n\n');
-      output += '\n\n--- SHELL STATS DATABASE ---\n' + shellLines + '\n--- END SHELLS ---';
+      output += '\n\n--- SHELL ABILITIES DATABASE (S2 four-part kit: Prime / Tactical / two Traits. Use ONLY these ability names and effects. If a slot says "not yet revealed," say so - do not invent the ability.) ---\n' + shellLines + '\n--- END SHELLS ---';
     }
 
     // CRADLE PROGRESSION (S2 stat system - replaced the faction stat grind)
