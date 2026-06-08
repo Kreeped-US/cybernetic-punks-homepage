@@ -530,7 +530,7 @@ async function fetchGameContext() {
     // longer fed to editors. Re-add a real S2 faction-Armory-gear query here
     // once that table is reseeded with actual S2 gear data. The `factions`
     // query (names/leaders/focus) is kept - that info is still valid.
-    const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes] = await Promise.all([
+    const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes, gameMapsRes, gameZonesRes, gameBossesRes, gameEventsRes, gameModesRes] = await Promise.all([
       supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(100),
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(20),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source').order('rarity', { ascending: false }).limit(18),
@@ -540,6 +540,17 @@ async function fetchGameContext() {
       supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved').eq('game_slug', 'marathon').order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
       supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', 'marathon').eq('verified', true),
       supabase.from('faction_upgrades').select('faction_slug, node_name, node_kind, rank_required, effect_desc, unlocks_in_armory').eq('game_slug', 'marathon').eq('verified', true),
+      // GAME-WORLD GROUND TRUTH (added June 8, 2026): verified-only map/zone/boss/event/mode
+      // facts so editors stop inventing world content (Eerie Marsh, Upper Complex Warden,
+      // Sponsored Survival mechanics were all fabrications from this gap being empty).
+      // Summary fields only - the rich jsonb `details` stays in the DB for future map pages
+      // / coach, unread here to keep prompt cost moderate. verified=true filter is the
+      // no-fabrication gate (unconfirmed rows like Ranked stay invisible).
+      supabase.from('game_maps').select('slug, name, difficulty, player_structure, summary, variant_of').eq('game_slug', 'marathon').eq('verified', true).order('difficulty'),
+      supabase.from('game_zones').select('map_slug, zone_name, zone_type, summary').eq('game_slug', 'marathon').eq('verified', true).order('map_slug'),
+      supabase.from('game_bosses').select('boss_name, map_slug, summary').eq('game_slug', 'marathon').eq('verified', true).order('map_slug'),
+      supabase.from('game_events').select('event_name, event_type, available_on, summary').eq('game_slug', 'marathon').eq('verified', true).order('event_name'),
+      supabase.from('game_modes').select('mode_name, mode_type, available_on, summary').eq('game_slug', 'marathon').eq('verified', true).order('mode_name'),
     ]);
 
     let output = '';
@@ -742,6 +753,49 @@ async function fetchGameContext() {
       output += '\nFENCE - READ CAREFULLY: The verified data above is PARTIAL. You may cite the specific items, prices, ranks, and rank-gating facts shown above by their exact values. For any faction or item NOT listed above (e.g. factions with no rows, or items shown only as "unnamed"), you MUST speak in general terms only - do NOT invent an item name, price, rank, or cost. Point readers to /factions for fuller progression. Inventing a faction specific not shown above is a hallucination.\n';
 
       output += '--- END FACTION SYSTEM ---';
+    }
+
+    // --- GAME WORLD (maps / zones / bosses / events / modes) ---
+    // Added June 8, 2026. Verified ground truth so editors cite real world facts
+    // instead of inventing them. Zones/bosses/events are grouped under their parent
+    // map; modes listed separately. Summary fields only (rich detail stays in DB).
+    if (gameMapsRes.data && gameMapsRes.data.length > 0) {
+      var worldLines = gameMapsRes.data.map(function(m) {
+        var zones = (gameZonesRes.data || []).filter(function(z) { return z.map_slug === m.slug; });
+        var bosses = (gameBossesRes.data || []).filter(function(b) { return b.map_slug === m.slug; });
+        var events = (gameEventsRes.data || []).filter(function(e) {
+          return e.available_on && (e.available_on === 'all' || e.available_on.indexOf(m.slug) !== -1);
+        });
+        var lines = [];
+        lines.push('  ' + m.name + (m.difficulty ? ' [' + m.difficulty + ']' : '') + (m.variant_of ? ' (variant of ' + m.variant_of + ')' : ''));
+        if (m.player_structure) lines.push('    Players: ' + m.player_structure);
+        if (m.summary) lines.push('    ' + m.summary);
+        zones.forEach(function(z) {
+          lines.push('    Zone - ' + z.zone_name + (z.zone_type ? ' [' + z.zone_type + ']' : '') + (z.summary ? ': ' + z.summary : ''));
+        });
+        bosses.forEach(function(b) {
+          lines.push('    Boss - ' + b.boss_name + (b.summary ? ': ' + b.summary : ''));
+        });
+        events.forEach(function(e) {
+          lines.push('    Event - ' + e.event_name + (e.event_type ? ' [' + e.event_type + ']' : '') + (e.summary ? ': ' + e.summary : ''));
+        });
+        if (m.variant_of) {
+          lines.push('    (NOTE: as a variant of ' + m.variant_of + ', this map also shares that map\'s zones; only night/variant-specific additions are listed here.)');
+        }
+        return lines.join('\n');
+      }).join('\n\n');
+
+      output += '\n\n--- GAME WORLD: MAPS, ZONES, BOSSES, EVENTS ---\n' + worldLines;
+
+      if (gameModesRes.data && gameModesRes.data.length > 0) {
+        var modeLines = gameModesRes.data.map(function(md) {
+          return '  ' + md.mode_name + (md.mode_type ? ' [' + md.mode_type + ']' : '') + (md.available_on ? ' (on: ' + md.available_on + ')' : '') + (md.summary ? '\n    ' + md.summary : '');
+        }).join('\n\n');
+        output += '\n\n--- GAME MODES ---\n' + modeLines;
+      }
+
+      output += '\nFENCE - READ CAREFULLY: The maps, zones, bosses, events, and modes above are the COMPLETE set of verified game-world facts. Cite ONLY these by their exact names and descriptions. Do NOT invent map names, zone names, boss names (e.g. there is no "Upper Complex Warden" - the Night Marsh boss is the Frost Warden), event names, or mode mechanics not listed here. If a map is marked a variant, it shares its parent map\'s zones. If something is not listed, say it is not yet confirmed rather than inventing it.\n';
+      output += '--- END GAME WORLD ---';
     }
 
     _gameContextCache = output;
