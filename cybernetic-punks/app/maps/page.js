@@ -1,16 +1,22 @@
 // app/maps/page.js
 // ============================================================
-// MAPS INDEX — lists all PUBLISHED maps. Generalized; new maps
-// appear here automatically once is_published = true.
+// MAPS INDEX — lists every map that has a page (merged June 8, 2026)
 // ============================================================
-// Uses the anon client via the shared lib (public read of published
-// maps only, which is exactly what this index should show). Unpublished
-// maps never appear here — preview them directly via the slug page with
-// the preview key.
+// A map has a public page if it exists in EITHER system:
+//   - game_maps (verified): the SEO reference layer (zones/boss/events) -
+//     ALL such maps have public crawlable detail pages.
+//   - maps (is_published): the interactive/vault layer.
+// We read both, merge, and dedupe by slug so the index lists the full set
+// and links to each /maps/[slug]. This is the internal-linking hub for the
+// maps cluster - it must surface every detail page, not just vault ones.
 //
-// Created: May 26, 2026 (Step 2 of the maps build)
+// Card fields come from game_maps when available (summary + difficulty),
+// falling back to the vault map's description/season for vault-only maps.
+//
+// Original index created May 26, 2026 (vault-only). Merged with the
+// game_maps SEO layer June 8, 2026.
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -19,22 +25,76 @@ const BG = '#121418';
 const CARD_BG = '#1a1d24';
 const BORDER = '#22252e';
 const CYAN = '#00d4ff';
-const PURPLE = '#9b5de5';
 
 export const metadata = {
-  title: 'Marathon Maps - Interactive Map Guides & Vault Intel | CyberneticPunks',
-  description: 'Interactive Marathon map guides. Vault breakdowns, mechanics, credential routes, and zone intel for every Marathon map.',
+  title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel | CyberneticPunks',
+  description: 'Marathon map guides for every location. Zones, bosses, events, and game modes for each map, with interactive vault breakdowns and credential routes where available.',
   alternates: { canonical: 'https://cyberneticpunks.com/maps' },
 };
 
-export default async function MapsIndex() {
-  var { data: maps } = await supabase
-    .from('maps')
-    .select('slug, name, description, season')
-    .eq('is_published', true)
-    .order('updated_at', { ascending: false });
+function getServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
 
-  var published = maps || [];
+export default async function MapsIndex() {
+  var supabase = getServiceClient();
+
+  var [gameMapsRes, vaultMapsRes] = await Promise.all([
+    supabase.from('game_maps')
+      .select('slug, name, summary, difficulty, style, variant_of, updated_at')
+      .eq('game_slug', 'marathon')
+      .eq('verified', true)
+      .order('name', { ascending: true }),
+    supabase.from('maps')
+      .select('slug, name, description, season, updated_at')
+      .eq('is_published', true),
+  ]);
+
+  var gameMaps = gameMapsRes.data || [];
+  var vaultMaps = vaultMapsRes.data || [];
+
+  // Merge + dedupe by slug. game_maps is the backbone (drives the card);
+  // a vault-only map (in maps but not game_maps) is added with its own fields.
+  var bySlug = {};
+  gameMaps.forEach(function(g) {
+    bySlug[g.slug] = {
+      slug: g.slug,
+      name: g.name,
+      blurb: g.summary || null,
+      difficulty: g.difficulty || null,
+      style: g.style || null,
+      variant_of: g.variant_of || null,
+      hasVault: false,
+    };
+  });
+  vaultMaps.forEach(function(v) {
+    if (bySlug[v.slug]) {
+      // Map exists in both - mark that it has an interactive layer.
+      bySlug[v.slug].hasVault = true;
+    } else {
+      // Vault-only map (no game_maps row yet) - list it from vault fields.
+      bySlug[v.slug] = {
+        slug: v.slug,
+        name: v.name,
+        blurb: v.description || null,
+        difficulty: null,
+        style: null,
+        variant_of: null,
+        hasVault: true,
+      };
+    }
+  });
+
+  // Sort: non-variant maps first (alpha), then variants (alpha), so a base
+  // map lists above its night/variant counterpart.
+  var maps = Object.keys(bySlug).map(function(k) { return bySlug[k]; });
+  maps.sort(function(a, b) {
+    if (!!a.variant_of !== !!b.variant_of) return a.variant_of ? 1 : -1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
 
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
@@ -59,19 +119,32 @@ export default async function MapsIndex() {
           MARATHON MAPS
         </h1>
         <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, maxWidth: 720, margin: 0 }}>
-          Interactive map guides with full vault breakdowns, mechanics, and credential routes. Know the map better than the enemy.
+          Map-by-map guides to every location in Marathon - zones, bosses, events, and game modes for each, with interactive vault breakdowns and credential routes where available.
         </p>
       </section>
 
       <section style={{ padding: '0 24px 64px', maxWidth: 1100, margin: '0 auto' }}>
-        {published.length > 0 ? (
+        {maps.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
-            {published.map(function(m) {
+            {maps.map(function(m) {
               return (
                 <Link key={m.slug} href={'/maps/' + m.slug} className="mi-card" style={{ display: 'block', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + CYAN, borderRadius: '0 2px 2px 0', padding: '18px 20px', textDecoration: 'none' }}>
                   <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>{m.name}</h2>
-                  {m.season && <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700 }}>{m.season.toUpperCase()}</span>}
-                  {m.description && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.55, margin: '8px 0 0' }}>{m.description.slice(0, 140)}...</p>}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: m.blurb ? 8 : 0 }}>
+                    {m.difficulty && (
+                      <span style={{ fontFamily: 'monospace', fontSize: 8, color: CYAN, border: '1px solid ' + CYAN + '40', background: CYAN + '12', borderRadius: 2, padding: '2px 7px', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{m.difficulty}</span>
+                    )}
+                    {m.style && (
+                      <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '2px 7px', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{m.style}</span>
+                    )}
+                    {m.variant_of && (
+                      <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '2px 7px', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>VARIANT</span>
+                    )}
+                    {m.hasVault && (
+                      <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#ffd700', border: '1px solid #ffd70040', background: '#ffd70012', borderRadius: 2, padding: '2px 7px', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>VAULT INTEL</span>
+                    )}
+                  </div>
+                  {m.blurb && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.55, margin: 0 }}>{m.blurb.slice(0, 140)}{m.blurb.length > 140 ? '...' : ''}</p>}
                   <div style={{ fontFamily: 'monospace', fontSize: 9, color: CYAN, letterSpacing: 1, fontWeight: 700, marginTop: 12 }}>VIEW MAP →</div>
                 </Link>
               );
