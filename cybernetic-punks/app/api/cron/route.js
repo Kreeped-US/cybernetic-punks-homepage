@@ -392,7 +392,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
 
     if (feedItem) {
       generateArticleComments(
-        { id: feedItem.id, headline: feedItem.headline, body: feedItem.body },
+        { id: feedItem.id, headline: feedItem.headline, body: feedItem.body, directive_type: insertData.directive_type || 'standard' },
         editorName,
         supabase,
         tierChangeContext

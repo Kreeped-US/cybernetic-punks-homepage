@@ -1237,8 +1237,23 @@ var COMMENT_INTEGRITY_RULE = '\n\nCOMMENT INTEGRITY - CRITICAL:\n'
   + '- If you have nothing specific and verifiable to add, keep the comment short and qualitative rather than inventing detail. A brief honest reaction beats a fabricated one.\n'
   + '- If a claim in the article sounds dubious or unsupported, it is acceptable and good to express measured skepticism rather than amplify it.';
 
+// Extra clause appended ONLY when commenting on a creator_spotlight article.
+// The article subject is a real, named person, so the bar is higher than the
+// general integrity rule: commenting editors must not invent ANY characterization,
+// backstory, behavior, or claim about the creator beyond what the article states.
+var COMMENT_CREATOR_SPOTLIGHT_RULE = '\n\nThis article is about a REAL, NAMED content creator. Additional hard rules:\n'
+  + '- React only to what the article actually reports about this person. Do NOT invent or imply anything about their personality, habits, history, skill level, hours played, drama, reputation, or motivations that the article did not state.\n'
+  + '- Do NOT speculate about the creator ("they probably...", "known for...", "this is the kind of streamer who..."). If the article did not say it, do not imply it.\n'
+  + '- It is fine to react to the creator\'s work or the article\'s framing in your editorial voice, but every statement about the person must trace to the article. When in doubt, keep your reaction about the content, not the individual.';
+
 export async function generateArticleComments(article, publishingEditor, supabaseClient, tierChangeContext) {
   var selected = selectCommenters(publishingEditor);
+
+  // A creator spotlight raises the bar for comments (real-person safety). The
+  // cron passes article.directive_type so we can detect it here; default to the
+  // standard integrity rule for every normal article.
+  var isCreatorSpotlight = article && article.directive_type === 'creator_spotlight';
+  var integrityRule = COMMENT_INTEGRITY_RULE + (isCreatorSpotlight ? COMMENT_CREATOR_SPOTLIGHT_RULE : '');
 
   // MAY 20, 2026 - Tier-change-aware commentary:
   // When tierChangeContext is provided (only from cron during a NEXUS regrade
@@ -1253,9 +1268,9 @@ export async function generateArticleComments(article, publishingEditor, supabas
       var arrow = m.trend === 'up' ? 'UP' : (m.trend === 'down' ? 'DOWN' : 'CHANGED');
       return '  - ' + m.name + ' (' + (m.type || '').toUpperCase() + '): ' + (m.oldTier || '?') + ' -> ' + (m.newTier || '?') + ' [' + arrow + ']';
     }).join('\n');
-    prompt = 'NEXUS just regraded the Marathon meta tier list. These items moved tiers this cycle:\n\n' + moversText + '\n\nReact to these SPECIFIC tier changes in your editorial voice. Pick the 1-2 movers that matter most given your focus. Say whether you agree with the move, what it means for players, or what NEXUS might be missing. Be specific to the items that moved - do NOT write a generic meta take. Keep it to 2-3 sentences max.\n\nARTICLE HEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + COMMENT_INTEGRITY_RULE;
+    prompt = 'NEXUS just regraded the Marathon meta tier list. These items moved tiers this cycle:\n\n' + moversText + '\n\nReact to these SPECIFIC tier changes in your editorial voice. Pick the 1-2 movers that matter most given your focus. Say whether you agree with the move, what it means for players, or what NEXUS might be missing. Be specific to the items that moved - do NOT write a generic meta take. Keep it to 2-3 sentences max.\n\nARTICLE HEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + integrityRule;
   } else {
-    prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + COMMENT_INTEGRITY_RULE;
+    prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + integrityRule;
   }
 
   var settled = await Promise.allSettled(
