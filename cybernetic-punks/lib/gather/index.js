@@ -22,6 +22,80 @@ import { gatherCipher } from './cipher.js';
 // meaning CIPHER had been writing competitive analysis from titles alone for
 // weeks. New pipeline eliminates external data dependency entirely.
 
+// ── YOUTUBE RELEVANCE FILTER (added June 8, 2026) ─────────────────────────
+// Root-cause fix for off-topic YouTube intake. "Marathon" the Bungie game
+// shares its name with the running race, so the YouTube fetch was returning
+// foot-race / running content that editors then wrote articles around
+// (e.g. "runners hitting the pavement for real marathons"). This filter
+// drops any video that is not clearly about the GAME before it reaches any
+// editor.
+//
+// STRICT by design: a video is KEPT only if it contains a strong game-specific
+// token (one a running video would never contain), OR the word "marathon"
+// PAIRED WITH a gaming-context word. Bare "marathon" alone does NOT qualify -
+// that is precisely the collision that let race content through. A thinner,
+// clean feed is the intended trade-off; editors degrade gracefully on thin
+// input (they report sparsely rather than fabricate).
+var MARATHON_GAME_TOKENS = [
+  // Publisher / genre
+  'bungie', 'extraction shooter', 'extraction', 'exfil', 'tau ceti',
+  // Core S2 systems / places
+  'holotag', 'holo tag', 'night marsh', 'the cradle', 'cradle', 'runner shell',
+  'sponsored kit', 'contraband', 'cryo archive',
+  // Factions (highly game-specific)
+  'cyberacme', 'nucaloric', 'traxus', 'mida', 'arachne', 'sekiguchi',
+  // Weapons / ammo codes
+  'kkv-9sd', 'kkv9sd', 'wstr', 'm77', 'stryder', 'biotoxic', 'hyphatic',
+  // The 8 Runner Shells
+  'destroyer', 'vandal', 'recon', 'assassin', 'triage', 'thief', 'rook', 'sentinel',
+];
+
+// "marathon" only counts when accompanied by one of these (separates the game
+// from the race: a race video says "marathon training/route/pace"; a game
+// video says "marathon season/build/loadout/gameplay").
+var GAME_CONTEXT_TOKENS = [
+  'season', 'update', 'patch', 'build', 'loadout', 'shell', 'weapon', 'meta',
+  'gameplay', 'tier', 'ranked', 'pvp', 'pve', 'fps', 'shooter', 'gaming',
+  'video game', 'dlc', 'beta', 'playtest', 'steam', 'playstation', 'xbox',
+  'crossplay', 'solo queue', 'squad', 'nightfall',
+];
+
+// Build a lowercase haystack from every string field on the video object,
+// regardless of exact field names (title, description, channelTitle, snippet,
+// etc.) - robust to differing shapes across the youtube/miranda gatherers.
+function videoHaystack(v) {
+  if (!v || typeof v !== 'object') return '';
+  var parts = [];
+  for (var k in v) {
+    if (Object.prototype.hasOwnProperty.call(v, k) && typeof v[k] === 'string') {
+      parts.push(v[k]);
+    }
+  }
+  return parts.join(' ').toLowerCase();
+}
+
+function isMarathonGameContent(v) {
+  var hay = videoHaystack(v);
+  if (!hay) return false; // strict: cannot verify relevance -> drop
+  for (var i = 0; i < MARATHON_GAME_TOKENS.length; i++) {
+    if (hay.indexOf(MARATHON_GAME_TOKENS[i]) !== -1) return true;
+  }
+  if (hay.indexOf('marathon') !== -1) {
+    for (var j = 0; j < GAME_CONTEXT_TOKENS.length; j++) {
+      if (hay.indexOf(GAME_CONTEXT_TOKENS[j]) !== -1) return true;
+    }
+  }
+  return false;
+}
+
+function filterGameVideos(videos, label) {
+  var input = Array.isArray(videos) ? videos : [];
+  var kept = input.filter(isMarathonGameContent);
+  var dropped = input.length - kept.length;
+  console.log('[GATHER] ' + label + ' relevance filter: ' + input.length + ' -> ' + kept.length + ' kept (' + dropped + ' off-topic dropped)');
+  return kept;
+}
+
 export async function gatherAll() {
   console.log('[GATHER] Starting data collection...');
 
@@ -54,6 +128,14 @@ export async function gatherAll() {
   console.log('[GATHER] Steam reviews: ' + (steamReviews?.reviews?.length || 0) + ' recent reviews');
   console.log('[GATHER] Bungie news: ' + bungieNews.length + ' articles (' + bungieNews.filter(a => a.is_patch_note).length + ' patch-related)');
 
+  // STRICT relevance filter: drop off-topic (non-game) YouTube content before
+  // it reaches any editor. Applied to BOTH the shared youtubeVideos feed
+  // (NEXUS/DEXTER + thumbnails + dexter-stats) and MIRANDA's own video set.
+  const youtubeFiltered = filterGameVideos(youtubeVideos, 'YouTube (NEXUS/DEXTER)');
+  if (mirandaData && Array.isArray(mirandaData.videos)) {
+    mirandaData.videos = filterGameVideos(mirandaData.videos, 'YouTube (MIRANDA)');
+  }
+
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
 
   // ── CIPHER — Internal synthesis (rebuilt May 1, 2026) ─────────
@@ -64,8 +146,11 @@ export async function gatherAll() {
 
   if (!cipherPrompt) {
     cipherPrompt = 'No internal data available for synthesis this cycle. Write a ranked '
-      + 'intelligence article based on general Marathon meta knowledge — what defines '
-      + 'high-skill ranked play, common climber mistakes, mental game discipline. '
+      + 'intelligence article on general, evergreen high-skill ranked principles - '
+      + 'climber discipline, common mistakes, engagement decision-making - grounded ONLY '
+      + 'in the verified game database provided in your context. Do NOT invent specific '
+      + 'patch changes, events, tier movements, community claims, or stats that are not in '
+      + 'your verified data. Keep it general and honest rather than fabricating specifics. '
       + 'Set source_video_id null and source_type null.';
   }
 
@@ -74,13 +159,13 @@ export async function gatherAll() {
   // Bungie news for patch-driven meta shifts.
   var nexusPrompt = '';
 
-  var youtubeForNexus = formatForEditor(youtubeVideos, 'NEXUS');
+  var youtubeForNexus = formatForEditor(youtubeFiltered, 'NEXUS');
   if (youtubeForNexus) {
     nexusPrompt += '--- YOUTUBE META DISCUSSION (PRIMARY SOURCE) ---\nCreator analysis of current Marathon meta, weapon tiers, and strategic shifts.\n\n' + youtubeForNexus;
   }
 
   if (!nexusPrompt) {
-    nexusPrompt = 'No meta content available this cycle. Write a meta analysis article based on the weapon, shell, and faction database. Cover current tier placements, recent shifts, and ranked viability.';
+    nexusPrompt = 'No external meta content available this cycle. Write a meta analysis article based STRICTLY on the weapon, shell, and faction database and the CURRENT TIER STATE in your context. Describe the current tier placements and ranked viability as they stand. Do NOT invent "recent shifts," patch changes, or movement that is not supported by your verified sources - if nothing has changed, say the meta is holding steady. An accurate "no major movement this cycle" read is correct; a fabricated shift is not.';
   }
 
   if (bungieNewsContext) nexusPrompt += bungieNewsContext;
@@ -90,13 +175,13 @@ export async function gatherAll() {
   // Faction database injected via game context handles unlock specifics.
   var dexterPrompt = '';
 
-  var youtubeForDexter = formatForEditor(youtubeVideos, 'DEXTER');
+  var youtubeForDexter = formatForEditor(youtubeFiltered, 'DEXTER');
   if (youtubeForDexter) {
     dexterPrompt += '--- YOUTUBE BUILD CONTENT (PRIMARY SOURCE) ---\nCreator-published builds, loadouts, and synergy discussions.\n\n' + youtubeForDexter;
   }
 
   if (!dexterPrompt) {
-    dexterPrompt = 'No build content available this cycle. Design a build using the weapon, shell, mod, implant, core, and faction databases. Pick an underexplored shell and build around its strengths.';
+    dexterPrompt = 'No external build content available this cycle. Design a build using ONLY the weapon, shell, mod, implant, core, Cradle, and faction databases in your context. Pick an underexplored shell and build around its strengths. Every item, stat, and Cradle perk you name must appear in your verified data - do NOT invent gear, stats, or synergies to fill the build.';
   }
 
   if (bungieNewsContext) dexterPrompt += bungieNewsContext;
@@ -108,7 +193,7 @@ export async function gatherAll() {
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
   if (!ghostPrompt) {
-    ghostPrompt = 'No community content available this cycle. Write a community pulse article based on broader Marathon discourse trends — common frustrations, ranked economy reactions, recent patch impressions.';
+    ghostPrompt = 'No community sources (Reddit posts or Steam reviews) were available to you this cycle. Do NOT write a sentiment piece from imagination. Instead, write a short, honest community-pulse note that states plainly the community discussion was quiet/limited this cycle. You MAY factually summarize what is objectively happening in Season 2 using the verified game database and any official Bungie news in your context (e.g. what systems or content are current), framed as context - NOT as community reaction. You must NOT invent Reddit users, quotes, upvote counts, Steam reviews, hours-played figures, or any sentiment you cannot source. A brief, accurate "quiet cycle" pulse is the correct output here; fabricating community voices is not.';
   }
 
   // ── MIRANDA — YouTube + Bungie news + game databases ──────────
@@ -128,7 +213,7 @@ export async function gatherAll() {
   };
 
   prompts._rawData = {
-    youtubeVideos,
+    youtubeVideos: youtubeFiltered,
     twitchClips,
     steamPlayerCount,
     steamReviews,
@@ -140,7 +225,7 @@ export async function gatherAll() {
 
   try {
     await runDexterStatPipeline({
-      videos: youtubeVideos || [],
+      videos: youtubeFiltered,
       redditPosts: redditPosts || [],
       steamReviews: steamReviews?.reviews || [],
     });
