@@ -10,9 +10,19 @@
 // - FAQ section + FAQPage schema added
 // - WebPage + BreadcrumbList JSON-LD added
 // - Long-tail keywords expanded
+//
+// Updated June 8, 2026:
+// - Added Creator Spotlights section: lists creator_spotlight articles the
+//   editors have published (feed_items.directive_type = 'creator_spotlight').
+//   Page is now an async server component that fetches those articles. The
+//   live <RisingRunners /> Twitch widget is unchanged. Gives the page durable,
+//   indexable editorial content alongside the live feed.
 
 import Link from 'next/link';
 import RisingRunners from '@/components/RisingRunners';
+import { createClient } from '@supabase/supabase-js';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Rising Runners — Small Marathon Twitch Streamers to Watch Right Now',
@@ -63,6 +73,15 @@ const NEXUS   = '#00d4ff';
 const DEXTER  = '#ff8800';
 const MIRANDA = '#9b5de5';
 
+// Editor accent colors for spotlight cards (which editor wrote the piece)
+const EDITOR_COLORS = {
+  CIPHER:  '#ff2222',
+  NEXUS:   '#00d4ff',
+  DEXTER:  '#ff8800',
+  GHOST:   '#00ff88',
+  MIRANDA: '#9b5de5',
+};
+
 // ─── FAQ DATA — drives both visible section AND schema ───────
 const FAQS = [
   {
@@ -91,7 +110,44 @@ const FAQS = [
   },
 ];
 
-export default function RisingPage() {
+// Fetch published creator-spotlight articles. Runs inside the component (never
+// at module scope) so createClient is deferred to runtime per the build rule.
+async function fetchCreatorSpotlights() {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    const { data, error } = await supabase
+      .from('feed_items')
+      .select('headline, slug, editor, creator_info, created_at, tags')
+      .eq('directive_type', 'creator_spotlight')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(12);
+    if (error) {
+      console.error('[rising] spotlight fetch error:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.error('[rising] spotlight fetch threw:', err.message);
+    return [];
+  }
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var hours = Math.floor(diff / 3600000);
+  if (hours < 1) return 'just now';
+  if (hours < 24) return hours + 'h ago';
+  return Math.floor(hours / 24) + 'd ago';
+}
+
+export default async function RisingPage() {
+  const spotlights = await fetchCreatorSpotlights();
+
   return (
     <main style={{
       background: BG_PAGE,
@@ -175,6 +231,120 @@ export default function RisingPage() {
 
       {/* ─── LIVE RISING RUNNERS WIDGET ──────────────── */}
       <RisingRunners />
+
+      {/* ─── CREATOR SPOTLIGHTS ──────────────────────── */}
+      <section style={{ maxWidth: 1200, margin: '48px auto 0', padding: '0 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <h2 style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 20,
+            fontWeight: 800,
+            color: GHOST,
+            letterSpacing: '-0.3px',
+            margin: 0,
+          }}>
+            CREATOR SPOTLIGHTS
+          </h2>
+          <div style={{ flex: 1, height: 1, background: BORDER_SUBTLE }} />
+        </div>
+        <p style={{
+          fontSize: 14,
+          color: 'rgba(255,255,255,0.5)',
+          lineHeight: 1.6,
+          maxWidth: 720,
+          margin: '0 0 24px',
+        }}>
+          Our editors spotlight Marathon creators worth knowing — their stories, their plays, and what they bring to the community. Written coverage of the people shaping the Marathon scene.
+        </p>
+
+        {spotlights.length === 0 ? (
+          <div style={{
+            background: BG_CARD,
+            border: '1px solid ' + BORDER,
+            borderRadius: 3,
+            padding: '40px 28px',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 28, color: GHOST, opacity: 0.25, marginBottom: 12 }}>◇</div>
+            <div style={{
+              fontSize: 12,
+              color: 'rgba(255,255,255,0.4)',
+              letterSpacing: 2,
+              fontWeight: 700,
+              fontFamily: 'monospace',
+            }}>
+              SPOTLIGHTS INCOMING — CHECK BACK SOON
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: 8,
+          }}>
+            {spotlights.map(function(item, i) {
+              var ec = EDITOR_COLORS[item.editor] || GHOST;
+              var creatorName = item.creator_info && item.creator_info.name ? item.creator_info.name : null;
+              return (
+                <Link key={i} href={'/intel/' + item.slug} style={{
+                  textDecoration: 'none',
+                  display: 'block',
+                  background: BG_CARD,
+                  border: '1px solid ' + BORDER,
+                  borderTop: '2px solid ' + ec,
+                  borderRadius: '0 0 3px 3px',
+                  padding: '16px 18px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span style={{
+                      fontSize: 8,
+                      color: ec,
+                      background: ec + '18',
+                      border: '1px solid ' + ec + '35',
+                      borderRadius: 2,
+                      padding: '2px 7px',
+                      letterSpacing: 1.5,
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                    }}>
+                      {item.editor || 'EDITOR'}
+                    </span>
+                    {creatorName && (
+                      <span style={{
+                        fontSize: 9,
+                        color: 'rgba(255,255,255,0.55)',
+                        letterSpacing: 1,
+                        fontWeight: 700,
+                        fontFamily: 'monospace',
+                      }}>
+                        {creatorName}
+                      </span>
+                    )}
+                    <span style={{
+                      fontSize: 8,
+                      color: 'rgba(255,255,255,0.25)',
+                      marginLeft: 'auto',
+                      fontFamily: 'monospace',
+                      letterSpacing: 1,
+                    }}>
+                      {timeAgo(item.created_at)}
+                    </span>
+                  </div>
+                  <h3 style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: 'rgba(255,255,255,0.88)',
+                    lineHeight: 1.4,
+                    margin: 0,
+                  }}>
+                    {item.headline}
+                  </h3>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {/* ─── HOW WE FIND THEM ────────────────────────── */}
       <section style={{ maxWidth: 1200, margin: '40px auto 64px', padding: '0 24px' }}>
