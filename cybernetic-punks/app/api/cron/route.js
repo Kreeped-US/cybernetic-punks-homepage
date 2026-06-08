@@ -145,7 +145,9 @@ function buildPatchPriorityBlock(patchItems) {
     'For NEXUS: adjust tier placements to account for any balance changes. ' +
     'For DEXTER: flag any builds that are buffed or nerfed. ' +
     'For CIPHER: assess ranked impact -- what plays are stronger or weaker now. ' +
-    'For GHOST: cover community reaction to the patch. ' +
+    'For GHOST: report the patch\'s actual contents factually from the official notes above. ' +
+    'Characterize community reaction ONLY if real reactions are present in the community sources provided to you this cycle (a provided Reddit thread, a provided Steam review). ' +
+    'If no community reactions to this patch are in your sources yet, say so plainly -- e.g. that the patch just landed and player reaction is not yet available -- and do NOT invent reactions, quotes, usernames, or sentiment. A short, accurate "patch just dropped, reaction pending" piece is correct; a fabricated reaction is not. ' +
     'This patch context takes priority over all other topics.\n---'
   );
 }
