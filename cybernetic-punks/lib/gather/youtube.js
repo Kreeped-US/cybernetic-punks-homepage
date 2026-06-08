@@ -27,7 +27,7 @@ const SEARCH_QUERIES = [
   'Marathon game best build',
   'Marathon Bungie extraction strategy',
   'Marathon thief assassin vandal gameplay',
-  'Marathon game ranked climb season 1',
+  'Marathon Nightfall season 2 gameplay',
 ];
 
 // Known Marathon content creators — search their channels directly when general queries come back thin
@@ -80,6 +80,23 @@ export async function gatherYouTube() {
       } else {
         console.log(`[GATHER:YOUTUBE] No results for "${query}"`);
       }
+    }
+
+    // CREATOR-CHANNEL FETCH (added June 8, 2026)
+    // Pull recent uploads directly from known Marathon creators. This is a
+    // higher-PRECISION source than keyword search: every video from these
+    // channels is Marathon content by definition, so it sidesteps the
+    // game/race name collision entirely. Previously CREATOR_CHANNELS was
+    // defined but never used. We resolve each handle to a channel, take its
+    // uploads playlist, and merge recent videos into the same pipeline.
+    try {
+      const creatorResults = await gatherCreatorUploads(apiKey);
+      if (creatorResults.length > 0) {
+        allResults.push(...creatorResults);
+        console.log(`[GATHER:YOUTUBE] Added ${creatorResults.length} videos from known creators`);
+      }
+    } catch (creatorErr) {
+      console.log('[GATHER:YOUTUBE] Creator-channel fetch failed (non-fatal):', creatorErr.message);
     }
 
     if (allResults.length === 0) {
@@ -163,7 +180,62 @@ export async function gatherYouTube() {
   }
 }
 
-// ─── EDITOR FORMATTERS ───────────────────────────────────────
+// ─── CREATOR-CHANNEL UPLOADS ─────────────────────────────────
+// Resolve each handle in CREATOR_CHANNELS to a channel ID, then pull that
+// channel's recent uploads. Returns results shaped like the keyword-search
+// results ({ item, query }) so they flow through the same stats/dedup/
+// transcript pipeline. Recency-bounded to the same 96h window. Best-effort
+// per channel: a failed lookup is skipped, not fatal.
+async function gatherCreatorUploads(apiKey) {
+  const out = [];
+  const publishedAfter = getTimeAgo(96);
+
+  for (const handle of CREATOR_CHANNELS) {
+    try {
+      // Resolve the handle to a channel ID. The search endpoint with
+      // type=channel is the most tolerant of handle/display-name variation.
+      const chUrl = `${YOUTUBE_API_BASE}/search?` + new URLSearchParams({
+        part: 'snippet',
+        q: handle,
+        type: 'channel',
+        maxResults: '1',
+        key: apiKey,
+      });
+      const chRes = await fetch(chUrl);
+      if (!chRes.ok) continue;
+      const chData = await chRes.json();
+      const channelId = chData.items?.[0]?.id?.channelId;
+      if (!channelId) continue;
+
+      // Pull this channel's recent uploads within the recency window.
+      const upUrl = `${YOUTUBE_API_BASE}/search?` + new URLSearchParams({
+        part: 'snippet',
+        channelId: channelId,
+        type: 'video',
+        order: 'date',
+        maxResults: '3',
+        publishedAfter: publishedAfter,
+        key: apiKey,
+      });
+      const upRes = await fetch(upUrl);
+      if (!upRes.ok) continue;
+      const upData = await upRes.json();
+      for (const item of upData.items || []) {
+        // Only keep entries with a usable videoId.
+        if (item.id?.videoId) {
+          out.push({ item, query: 'creator:' + handle });
+        }
+      }
+    } catch (err) {
+      // Skip this creator, keep going.
+      continue;
+    }
+  }
+
+  return out;
+}
+
+
 // Each editor gets the same video data with editor-specific guidance.
 // Output structure is enforced by tool schemas in editorCore.js — no
 // JSON output specs here.

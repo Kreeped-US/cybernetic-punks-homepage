@@ -531,7 +531,7 @@ async function fetchGameContext() {
     // once that table is reseeded with actual S2 gear data. The `factions`
     // query (names/leaders/focus) is kept - that info is still valid.
     const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes] = await Promise.all([
-      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(20),
+      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(100),
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(20),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source').order('rarity', { ascending: false }).limit(18),
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(30),
