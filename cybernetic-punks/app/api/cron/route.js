@@ -222,7 +222,7 @@ function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
   return block;
 }
 
-async function processEditor(editorName, prompt, rawData, supabase, regradeContext) {
+async function processEditor(editorName, prompt, rawData, supabase, regradeContext, directive) {
   var tierChangeContext = null;
 
   if (!prompt) {
@@ -280,6 +280,17 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       insertData.ce_score = result.ce_score || 0;
       insertData.thumbnail = result.thumbnail || null;
       insertData.source_url = result.source_url || null;
+    }
+
+    // CREATOR SPOTLIGHT (June 8, 2026): if this article was produced from a
+    // creator_spotlight directive, persist the VETTED creator_info + type onto
+    // the article so the page can render Person/sameAs JSON-LD. We attach the
+    // directive's own creator_info (human-vetted) rather than anything the LLM
+    // returned, so the structured data can't be fabricated. Standard articles
+    // leave these at their column defaults.
+    if (directive && directive.directive_type === 'creator_spotlight') {
+      insertData.directive_type = 'creator_spotlight';
+      insertData.creator_info = directive.creator_info || {};
     }
 
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
@@ -607,7 +618,7 @@ export async function GET() {
     ];
 
     var settledResults = await Promise.allSettled(
-      editors.map(function(e) { return processEditor(e.name, e.prompt, rawData, supabase, regradeContext); })
+      editors.map(function(e) { return processEditor(e.name, e.prompt, rawData, supabase, regradeContext, directiveMap[e.name]); })
     );
 
     var results = settledResults.map(function(s, idx) {
