@@ -153,6 +153,29 @@ async function upsert(table, records) {
 }
 
 export async function refreshWikiData() {
+  // ============================================================
+  // DISABLED June 8, 2026 - DO NOT RE-ENABLE WITHOUT A REWRITE.
+  // This scraper is a dormant data-corruption risk to the canonical
+  // ground truth, for three reasons:
+  //   1. parseShells() knows only 7 shells (NO Sentinel) and would
+  //      drop/ignore the 8th shell on any successful fetch.
+  //   2. It writes to the STALE active_/passive_ ability columns, which
+  //      editorCore no longer reads. As of June 8 the canonical source of
+  //      truth is prime_/tactical_/trait_1_/trait_2_ (+descriptions),
+  //      populated by hand from verified in-game captures.
+  //   3. It upserts on `name`, so a successful fetch would OVERWRITE the
+  //      verified shell_stats / weapon_stats rows with scraped guesses.
+  // It only appears harmless today because Fandom 403s server-side
+  // requests (so fetchWikiPage returns null and it no-ops). If Fandom ever
+  // stops blocking, this would silently re-pollute the cleaned tables.
+  // The game data is now maintained manually from in-game screenshots, not
+  // scraped. If a real auto-refresh is ever wanted, rewrite it to target
+  // the canonical columns, include all 8 shells, and write to a STAGING
+  // table for review - never upsert directly onto the live rows.
+  // ============================================================
+  return { weapons: 0, shells: 0, skipped: ['weapon_stats', 'shell_stats'], disabled: true };
+
+  /* eslint-disable no-unreachable */
   const results = { weapons: 0, shells: 0, skipped: [] };
 
   // Weapons
@@ -190,4 +213,5 @@ export async function refreshWikiData() {
 
   console.log('[wiki.js] Skipped (fresh):', results.skipped);
   return results;
+  /* eslint-enable no-unreachable */
 }
