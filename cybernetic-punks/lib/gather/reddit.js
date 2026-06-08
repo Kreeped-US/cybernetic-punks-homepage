@@ -126,14 +126,24 @@ export async function gatherReddit() {
  * - Body length aligned to tool schema (400-550 words with section headers)
  * - Third arg `xData` retained for backward compat but ignored — pass null
  *
+ * Updated June 8, 2026:
+ * - Added fourth arg `clipSignal`: a pre-formatted Twitch clip ATTENTION signal
+ *   (titles + broadcaster + view counts only, never clip content) from
+ *   formatClipsForGhost. Surfaced as a secondary signal alongside Reddit/Steam,
+ *   with an explicit guard: GHOST may report WHAT is being clipped and any
+ *   pattern in the titles, but must NEVER describe what happens in a clip or
+ *   invent an outcome - it has not watched them.
+ *
  * Sources covered: Reddit (vocal community), Steam reviews (broader paying
- * playerbase). Bungie news is appended separately by gather/index.js.
+ * playerbase), Twitch clip activity (what's drawing attention). Bungie news is
+ * appended separately by gather/index.js.
  */
-export function formatForGhost(posts, steamData, _legacyXData) {
+export function formatForGhost(posts, steamData, _legacyXData, clipSignal) {
   const hasReddit = posts && posts.length > 0;
   const hasSteam = steamData && steamData.reviews && steamData.reviews.length > 0;
+  const hasClips = typeof clipSignal === 'string' && clipSignal.length > 0;
 
-  if (!hasReddit && !hasSteam) return null;
+  if (!hasReddit && !hasSteam && !hasClips) return null;
 
   // ── REDDIT SECTION ─────────────────────────────────
   let redditSection = '';
@@ -159,15 +169,34 @@ export function formatForGhost(posts, steamData, _legacyXData) {
     steamSection = `\n\n--- STEAM REVIEWS (${steamData.positivePercent || 'mixed'} overall) ---\n${reviewSummaries}\n\nNote: Steam reviews represent the broader paying playerbase. Reddit represents the vocal community. They often diverge — when they do, say so and explain why.\n--- END STEAM ---`;
   }
 
+  // ── TWITCH CLIP ACTIVITY SECTION (community attention signal) ──
+  // clipSignal is pre-formatted by formatClipsForGhost (titles + broadcaster +
+  // view counts only). Appended as a secondary signal; the guard below governs
+  // how GHOST may use it.
+  let clipSection = '';
+  if (hasClips) {
+    clipSection = '\n\n' + clipSignal;
+  }
+
   // ── PROMPT ─────────────────────────────────────────
   // No JSON output spec — tool-use structured output enforces format via
   // the publish_community_pulse tool schema (mood_score 0-10, sentiment enum,
   // 400-550 word body with **HEADER** section breaks, etc.)
-  const sourceList = [hasReddit && 'Reddit', hasSteam && 'Steam reviews'].filter(Boolean).join(' + ');
+  const sourceList = [hasReddit && 'Reddit', hasSteam && 'Steam reviews', hasClips && 'Twitch clip activity'].filter(Boolean).join(' + ');
+
+  // Clip-specific anti-fabrication guard, included only when clips are present.
+  const clipGuard = hasClips
+    ? `\n\nTWITCH CLIP RULES (CRITICAL):
+- The Twitch clip activity is an ATTENTION signal only. You have the clip TITLES, the broadcaster, and VIEW COUNTS — nothing more.
+- You did NOT watch these clips. NEVER describe what happens in a clip, narrate the gameplay, or state an outcome ("they pull off an insane extraction", "the play shows..."). You cannot see them.
+- What you MAY do: report WHAT is being clipped and rewatched (by title), and surface patterns across the titles — e.g. "boss-kill clips are dominating attention this week" or "several of the most-clipped moments mention [weapon/shell/zone named in the titles]". That is a legitimate read of community attention.
+- Treat clip view counts and titles as facts; treat everything beyond them as unknown. If the titles don't support a claim, don't make it.
+- Clips are a SECONDARY signal. Reddit and Steam remain your primary sentiment sources — use clips as supporting texture, not the spine of the article.`
+    : '';
 
   return `Your job: synthesize Marathon community sentiment from ${sourceList}. Surface what real players are actually saying — not what creators or press say.
 
-${redditSection}${steamSection}
+${redditSection}${steamSection}${clipSection}
 
 ANALYSIS GUIDANCE:
 - Reddit captures the vocal community — sustained discussion, frustrations, hot takes.
@@ -175,7 +204,7 @@ ANALYSIS GUIDANCE:
 - When the two sources diverge, that divergence IS the story. Lead with it.
 - Quote specific Redditors or reviewers when their phrasing captures the moment.
 - Call out the most discussed topic, the loudest frustration, and any surprising consensus.
-- Include at least one contrarian voice — the community is rarely unanimous.
+- Include at least one contrarian voice — the community is rarely unanimous.${clipGuard}
 
 If a patch or balance update is the dominant topic, lead with that. Otherwise lead with the loudest sentiment — whether positive or critical.
 

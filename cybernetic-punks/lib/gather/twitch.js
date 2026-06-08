@@ -172,3 +172,40 @@ export function formatClipsForCipher(clips) {
 
   return clipSummaries;
 }
+
+/**
+ * Format Twitch clips as a COMMUNITY-ATTENTION SIGNAL for GHOST (added June 8,
+ * 2026). This is NOT clip analysis: GHOST receives only clip TITLES, the
+ * broadcaster name, and VIEW COUNTS - never the clip contents (no editor can
+ * watch a video). The titles + view counts tell GHOST what players found
+ * notable enough to clip and rewatch, which is a legitimate attention signal.
+ * The prompt that consumes this (in gather/index.js) carries an explicit guard
+ * forbidding GHOST from describing what happens in a clip or inventing outcomes.
+ *
+ * Returns null when there are no clips, so the section is simply omitted (no
+ * filler that could invite fabrication).
+ */
+export function formatClipsForGhost(clips) {
+  if (!Array.isArray(clips) || clips.length === 0) return null;
+
+  // Sort by view_count desc so the strongest attention signal is first.
+  const ranked = clips
+    .slice()
+    .sort(function(a, b) { return (b.view_count || 0) - (a.view_count || 0); })
+    .slice(0, 8);
+
+  const lines = ranked.map(function(c, i) {
+    var views = typeof c.view_count === 'number' ? c.view_count.toLocaleString() : 'unknown';
+    var who = c.broadcaster ? c.broadcaster : 'unknown streamer';
+    var title = (c.title || '').trim() || '(untitled clip)';
+    return (i + 1) + '. "' + title + '" — clipped from ' + who + '\'s stream — ' + views + ' views';
+  }).join('\n');
+
+  return '--- TWITCH CLIP ACTIVITY (community ATTENTION signal, last 48h) ---\n'
+    + 'These are the most-viewed Marathon clips on Twitch right now, ranked by views.\n'
+    + 'This is an ATTENTION signal: it tells you WHAT players found notable enough to clip\n'
+    + 'and rewatch. You have ONLY the clip titles, the broadcaster, and the view counts below.\n'
+    + 'You have NOT watched these clips and do not know what happens in them.\n\n'
+    + lines + '\n'
+    + '--- END TWITCH CLIP ACTIVITY ---';
+}

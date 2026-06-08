@@ -1,6 +1,6 @@
 import { gatherYouTube, formatForEditor } from './youtube';
 import { gatherReddit, formatForGhost } from './reddit';
-import { gatherTwitchClips, formatClipsForCipher } from './twitch';
+import { gatherTwitchClips, formatClipsForCipher, formatClipsForGhost } from './twitch';
 import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
@@ -21,6 +21,12 @@ import { gatherCipher } from './cipher.js';
 // Background: youtube-transcript package was failing silently from Vercel,
 // meaning CIPHER had been writing competitive analysis from titles alone for
 // weeks. New pipeline eliminates external data dependency entirely.
+//
+// Twitch clips wired to GHOST June 8, 2026 — as a COMMUNITY-ATTENTION signal
+// (titles + broadcaster + view counts only, never clip content). formatClipsForGhost
+// renders the signal; GHOST's prompt (in reddit.js) carries a hard guard against
+// describing clip contents. formatClipsForCipher remains exported but unused
+// (CIPHER does internal synthesis; clips would reintroduce title-fabrication).
 
 // ── YOUTUBE RELEVANCE FILTER (added June 8, 2026) ─────────────────────────
 // Root-cause fix for off-topic YouTube intake. "Marathon" the Bungie game
@@ -186,10 +192,13 @@ export async function gatherAll() {
 
   if (bungieNewsContext) dexterPrompt += bungieNewsContext;
 
-  // ── GHOST — Reddit + Steam reviews primary ────────────────────
+  // ── GHOST — Reddit + Steam reviews + Twitch clip activity ─────
   // Reddit captures sustained community sentiment; Steam reviews capture
-  // broader player sentiment; Bungie news captures dev-driven discourse.
-  var ghostPrompt = formatForGhost(redditPosts, steamReviews, null);
+  // broader player sentiment; Twitch clip activity is a community-ATTENTION
+  // signal (what's being clipped/rewatched - titles + view counts only, never
+  // clip content). Bungie news captures dev-driven discourse.
+  var clipSignalForGhost = formatClipsForGhost(twitchClips);
+  var ghostPrompt = formatForGhost(redditPosts, steamReviews, null, clipSignalForGhost);
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
   if (!ghostPrompt) {
