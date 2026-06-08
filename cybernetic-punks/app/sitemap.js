@@ -15,6 +15,14 @@
 // (e.g. "KKV-9SD", "Misriah 2442"); the rule must match how
 // app/weapons/[slug]/page.js resolves incoming URLs or the sitemap
 // would list URLs the pages can't match.
+//
+// JUNE 8, 2026: Added /maps (index, static) + dynamic /maps/[slug] pages
+// from game_maps (verified, marathon). These are the SEO map reference
+// pages built today. game_maps has a real `slug` column, so no
+// name-deriving is needed (unlike weapons). New maps self-add to the
+// sitemap once their game_maps row is verified=true.
+//   NOTE: /maps/[slug] (the map pages) is DISTINCT from /guides/maps
+//   (the "maps" guide category) - both can coexist; do not conflate.
 // -----------------------------------------------------------------
 
 import { createClient } from '@supabase/supabase-js';
@@ -49,6 +57,7 @@ export default async function sitemap() {
     { url: baseUrl + '/intel',       lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/shells',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
     { url: baseUrl + '/uniques',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
+    { url: baseUrl + '/maps',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/rising',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/stats',       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.75 },
     { url: baseUrl + '/leaderboard', lastModified: new Date(), changeFrequency: 'daily',   priority: 0.75 },
@@ -82,6 +91,7 @@ export default async function sitemap() {
 
   let dbShellPages = [];
   let weaponPages = [];
+  let mapPages = [];
   let dynamicPages = [];
   let activeGuideCategories = [];
 
@@ -150,6 +160,33 @@ export default async function sitemap() {
       console.error('[sitemap] weapon fetch threw:', err);
     }
 
+    // Map detail pages from DB (game_maps SEO layer, added June 8, 2026).
+    // game_maps has a real `slug` column - direct, no name-deriving. Only
+    // verified marathon maps get a public page, so the sitemap mirrors that.
+    try {
+      const { data: maps, error: mapsErr } = await supabase
+        .from('game_maps')
+        .select('slug, updated_at')
+        .eq('game_slug', 'marathon')
+        .eq('verified', true)
+        .order('slug');
+
+      console.log('[sitemap] game_maps:',
+        maps ? maps.length + ' rows' : 'null',
+        mapsErr ? 'error: ' + mapsErr.message : '');
+
+      if (maps && maps.length > 0) {
+        mapPages = maps.map((m) => ({
+          url: baseUrl + '/maps/' + m.slug,
+          lastModified: m.updated_at ? new Date(m.updated_at) : new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        }));
+      }
+    } catch (err) {
+      console.error('[sitemap] map fetch threw:', err);
+    }
+
     // Article URLs from feed_items
     try {
       const { data, error: feedErr } = await supabase
@@ -212,7 +249,8 @@ export default async function sitemap() {
     'guides=' + guideCategoryPages.length,
     'shells=' + shellPages.length,
     'weapons=' + weaponPages.length,
+    'maps=' + mapPages.length,
     'dynamic=' + dynamicPages.length);
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...dynamicPages];
+  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...mapPages, ...dynamicPages];
 }
