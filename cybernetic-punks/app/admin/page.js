@@ -4,17 +4,15 @@ import UsageStats from '@/components/UsageStats';
 
 const FACTION_NAMES = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
 const STAT_NAMES = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration', 'DBNO', 'TAD'];
+const SHELL_NAMES = ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Sentinel', 'Thief', 'Triage', 'Vandal'];
 
-// ── STICKY FIELDS BY TAB (May 15, 2026) ──────────────────────
-// When the user clicks "SAVE & ADD ANOTHER", these fields keep their
-// value while everything else resets to defaults. Designed for batch
-// data entry: 7 stats for one shell, 10 unlocks for one faction, etc.
 const STICKY_FIELDS = {
   faction_stat_bonuses: ['faction_name'],
   faction_unlocks:      ['faction_name'],
   faction_materials:    ['faction_name'],
   shell_stat_values:    ['shell_name'],
   editor_directives:    ['editor'],
+  game_zones:           ['map_slug'],
 };
 
 const SCHEMAS = {
@@ -73,7 +71,7 @@ const SCHEMAS = {
   ],
 
   shell_stat_values: [
-    { key: 'shell_name',  label: 'Shell Name',  type: 'select', required: true, options: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'shell_name',  label: 'Shell Name',  type: 'select', required: true, options: SHELL_NAMES },
     { key: 'stat_name',   label: 'Stat Name',   type: 'select', required: true, options: STAT_NAMES },
     { key: 'stat_value',  label: 'Stat Value',  type: 'number', required: true },
   ],
@@ -81,7 +79,7 @@ const SCHEMAS = {
   mod_stats: [
     { key: 'name',           label: 'Name',               type: 'text',    required: true },
     { key: 'slot_type',      label: 'Slot Type',          type: 'select',  options: ['Barrel', 'Chip', 'Optic', 'Magazine', 'Grip', 'Generator', 'Shield'] },
-    { key: 'rarity',         label: 'Rarity',             type: 'select',  options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
+    { key: 'rarity',         label: 'Rarity',             type: 'select',  options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige', 'Contraband'] },
     { key: 'effect_desc',    label: 'Effect Description', type: 'textarea' },
     { key: 'faction_source', label: 'Faction Source',     type: 'select',  nullableSelect: true, options: ['None', ...FACTION_NAMES] },
     { key: 'credit_value',   label: 'Credit Value',       type: 'number' },
@@ -94,7 +92,7 @@ const SCHEMAS = {
     { key: 'slug',               label: 'Slug',           type: 'text' },
     { key: 'slot_type',          label: 'Slot Type',      type: 'select',  required: true, options: ['Head', 'Torso', 'Legs', 'Shield'] },
     { key: 'rarity',             label: 'Rarity',         type: 'select',  required: true, options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
-    { key: 'required_runner',    label: 'Required Runner',type: 'select',  nullableSelect: true, options: ['Universal', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'required_runner',    label: 'Required Runner',type: 'select',  nullableSelect: true, options: ['Universal', ...SHELL_NAMES] },
     { key: 'faction_source',     label: 'Faction Source', type: 'select',  nullableSelect: true, options: ['None', ...FACTION_NAMES] },
     { key: 'description',        label: 'Description',    type: 'textarea' },
     { key: 'passive_name',       label: 'Passive Name',   type: 'text' },
@@ -126,7 +124,7 @@ const SCHEMAS = {
     { key: 'name',               label: 'Name',               type: 'text',    required: true },
     { key: 'slug',               label: 'Slug',               type: 'text' },
     { key: 'rarity',             label: 'Rarity',             type: 'select',  required: true, options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
-    { key: 'required_runner',    label: 'Required Runner',    type: 'select',  nullableSelect: true, options: ['Universal', 'Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'] },
+    { key: 'required_runner',    label: 'Required Runner',    type: 'select',  nullableSelect: true, options: ['Universal', ...SHELL_NAMES] },
     { key: 'effect_desc',        label: 'Effect Description', type: 'textarea' },
     { key: 'ability_type',       label: 'Ability Type',       type: 'select',  options: ['', 'Prime', 'Tactical', 'Passive', 'Grapple', 'Universal'] },
     { key: 'is_shell_exclusive', label: 'Shell Exclusive',    type: 'boolean' },
@@ -140,13 +138,19 @@ const SCHEMAS = {
 
   editor_directives: [
     { key: 'editor',        label: 'Editor',          type: 'select',         required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'] },
+    { key: 'directive_type',label: 'Directive Type',  type: 'select',         required: true, options: ['standard', 'creator_spotlight'] },
     { key: 'instruction',   label: 'Instruction',     type: 'textarea',       required: true, placeholder: 'e.g. Cover the April 14 balance patch -- Longshot nerf, Recon Echo Pulse buffs.' },
     { key: 'url',           label: 'Source URL',      type: 'text',           placeholder: 'e.g. https://x.com/BungieHelp/status/...' },
+    { key: 'source_text',     label: 'Vetted Source Text', type: 'textarea',  creatorOnly: true, placeholder: 'Paste the VETTED facts the article must be built from. The editor writes ONLY from this -- it will not add or invent anything beyond what you put here.' },
+    { key: 'creator_name',    label: 'Creator Name',       type: 'text',      creatorOnly: true, placeholder: 'e.g. Marshyy' },
+    { key: 'creator_youtube', label: 'Creator YouTube URL',type: 'text',      creatorOnly: true, placeholder: 'https://youtube.com/@...' },
+    { key: 'creator_x',       label: 'Creator X/Twitter URL', type: 'text',   creatorOnly: true, placeholder: 'https://x.com/...' },
+    { key: 'creator_twitch',  label: 'Creator Twitch URL', type: 'text',      creatorOnly: true, placeholder: 'https://twitch.tv/...' },
+    { key: 'creator_other',   label: 'Creator Other URL',  type: 'text',      creatorOnly: true, placeholder: 'Any other canonical profile (optional)' },
     { key: 'scheduled_for', label: 'Scheduled For',   type: 'datetime-local', placeholder: 'Leave blank to fire on next cycle' },
     { key: 'status',        label: 'Status',          type: 'select',         options: ['pending', 'consumed'] },
   ],
 
-  // -- FACTION SCHEMAS --
   factions: [
     { key: 'name',             label: 'Faction Name',    type: 'select',   required: true, options: FACTION_NAMES },
     { key: 'leader',           label: 'Leader',          type: 'text',     placeholder: 'e.g. CHIMERA' },
@@ -168,15 +172,15 @@ const SCHEMAS = {
   ],
 
   faction_unlocks: [
-  { key: 'faction_name',  label: 'Faction',        type: 'select',   required: true, options: FACTION_NAMES },
-  { key: 'unlock_type',   label: 'Unlock Type',     type: 'select',   required: true, options: ['weapon', 'implant', 'mod', 'consumable', 'upgrade', 'function'] },
-  { key: 'item_name',     label: 'Item Name',       type: 'text',     required: true, placeholder: 'e.g. TAC_AMP.EXE' },
-  { key: 'tier',          label: 'Tier',            type: 'number',   placeholder: '1 or 2' },
-  { key: 'rank_required', label: 'Rank Required',   type: 'number',   placeholder: 'e.g. 12' },
-  { key: 'credit_cost',   label: 'Credit Cost',     type: 'number',   placeholder: 'e.g. 1500' },
-  { key: 'material_cost', label: 'Material Cost',   type: 'text',     placeholder: 'e.g. Storage Drive x10, Unstable Diode x10' },
-  { key: 'notes',         label: 'Notes/Effect',    type: 'textarea', placeholder: 'e.g. Partially fills tactical ability charge at start of run' },
-],
+    { key: 'faction_name',  label: 'Faction',        type: 'select',   required: true, options: FACTION_NAMES },
+    { key: 'unlock_type',   label: 'Unlock Type',     type: 'select',   required: true, options: ['weapon', 'implant', 'mod', 'consumable', 'upgrade', 'function'] },
+    { key: 'item_name',     label: 'Item Name',       type: 'text',     required: true, placeholder: 'e.g. TAC_AMP.EXE' },
+    { key: 'tier',          label: 'Tier',            type: 'number',   placeholder: '1 or 2' },
+    { key: 'rank_required', label: 'Rank Required',   type: 'number',   placeholder: 'e.g. 12' },
+    { key: 'credit_cost',   label: 'Credit Cost',     type: 'number',   placeholder: 'e.g. 1500' },
+    { key: 'material_cost', label: 'Material Cost',   type: 'text',     placeholder: 'e.g. Storage Drive x10, Unstable Diode x10' },
+    { key: 'notes',         label: 'Notes/Effect',    type: 'textarea', placeholder: 'e.g. Partially fills tactical ability charge at start of run' },
+  ],
 
   faction_materials: [
     { key: 'faction_name',   label: 'Faction',         type: 'select',  required: true, options: FACTION_NAMES },
@@ -184,10 +188,63 @@ const SCHEMAS = {
     { key: 'rarity',         label: 'Rarity',          type: 'select',  options: ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] },
     { key: 'image_filename', label: 'Image Filename',  type: 'text',    placeholder: 'e.g. unstable-gel.webp' },
   ],
+
+  game_maps: [
+    { key: 'slug',             label: 'Slug',             type: 'text',     required: true, placeholder: 'e.g. perimeter' },
+    { key: 'name',             label: 'Name',             type: 'text',     required: true, placeholder: 'e.g. Perimeter' },
+    { key: 'difficulty',       label: 'Difficulty',       type: 'select',   options: ['', 'Beginner', 'Intermediate', 'Advanced', 'Endgame'] },
+    { key: 'player_structure', label: 'Player Structure', type: 'text',     placeholder: 'e.g. ~5 teams of 3 + Rooks' },
+    { key: 'style',            label: 'Style',            type: 'textarea', placeholder: 'Terrain / vibe' },
+    { key: 'summary',          label: 'Summary (editor-facing)', type: 'textarea', placeholder: 'The 1-2 sentence verified description editors cite.' },
+    { key: 'best_for',         label: 'Best For',         type: 'text' },
+    { key: 'variant_of',       label: 'Variant Of (slug)',type: 'text',     placeholder: 'e.g. dire-marsh (leave blank if not a variant)' },
+    { key: 'verified',         label: 'Verified',         type: 'boolean' },
+  ],
+
+  game_zones: [
+    { key: 'map_slug',  label: 'Map Slug',  type: 'text',     required: true, placeholder: 'e.g. perimeter' },
+    { key: 'zone_name', label: 'Zone Name', type: 'text',     required: true, placeholder: 'e.g. North Relay' },
+    { key: 'zone_type', label: 'Zone Type', type: 'text',     placeholder: 'e.g. relay hub / boss arena / connector' },
+    { key: 'summary',   label: 'Summary (editor-facing)', type: 'textarea', placeholder: 'The verified 1-2 sentence zone description editors cite.' },
+    { key: 'verified',  label: 'Verified',  type: 'boolean' },
+  ],
+
+  game_bosses: [
+    { key: 'boss_name', label: 'Boss Name', type: 'text',     required: true, placeholder: 'e.g. Wraith Warden' },
+    { key: 'map_slug',  label: 'Map Slug',  type: 'text',     placeholder: 'e.g. perimeter' },
+    { key: 'summary',   label: 'Summary (editor-facing)', type: 'textarea', placeholder: 'The verified boss description editors cite.' },
+    { key: 'verified',  label: 'Verified',  type: 'boolean' },
+  ],
+
+  game_events: [
+    { key: 'event_name',  label: 'Event Name',  type: 'text',     required: true, placeholder: 'e.g. Intercept' },
+    { key: 'event_type',  label: 'Event Type',  type: 'text',     placeholder: 'e.g. profit / lockdown / convoy' },
+    { key: 'available_on',label: 'Available On',type: 'text',     placeholder: 'map slug(s) or "all"' },
+    { key: 'summary',     label: 'Summary (editor-facing)', type: 'textarea', placeholder: 'The verified event description editors cite.' },
+    { key: 'verified',    label: 'Verified',    type: 'boolean' },
+  ],
+
+  game_modes: [
+    { key: 'mode_name',      label: 'Mode Name',    type: 'text',     required: true, placeholder: 'e.g. Sponsored Survival' },
+    { key: 'mode_type',      label: 'Mode Type',    type: 'select',   options: ['', 'core', 'experimental', 'ranked', 'endgame'] },
+    { key: 'available_on',   label: 'Available On', type: 'text',     placeholder: 'map slug(s) or "all"' },
+    { key: 'summary',        label: 'Summary (editor-facing)', type: 'textarea', placeholder: 'The verified mode description editors cite.' },
+    { key: 'is_limited_time',label: 'Limited Time', type: 'boolean' },
+    { key: 'verified',       label: 'Verified',     type: 'boolean' },
+  ],
 };
 
 const NULLABLE_SELECT_NULL_VALUE = 'Universal';
 const NULLABLE_SELECT_FACTION_NULL = 'None';
+
+// Maps the flat creator_* form fields to/from the creator_info jsonb column.
+const CREATOR_FIELD_MAP = {
+  creator_name:    'name',
+  creator_youtube: 'youtube',
+  creator_x:       'x',
+  creator_twitch:  'twitch',
+  creator_other:   'other',
+};
 
 const TABS = [
   { key: 'editor_directives',    label: 'DIRECTIVES',   color: '#ff2d55' },
@@ -202,6 +259,11 @@ const TABS = [
   { key: 'core_stats',           label: 'CORES',        color: '#ffd700' },
   { key: 'implant_stats',        label: 'IMPLANTS',     color: '#9b5de5' },
   { key: 'ammo_stats',           label: 'AMMO',         color: '#00ff88' },
+  { key: 'game_maps',            label: 'MAPS',         color: '#00f5ff', group: 'world' },
+  { key: 'game_zones',           label: 'ZONES',        color: '#00f5ff', group: 'world' },
+  { key: 'game_bosses',          label: 'BOSSES',       color: '#00f5ff', group: 'world' },
+  { key: 'game_events',          label: 'EVENTS',       color: '#00f5ff', group: 'world' },
+  { key: 'game_modes',           label: 'MODES',        color: '#00f5ff', group: 'world' },
 ];
 
 const S = {
@@ -233,9 +295,6 @@ const EDITOR_COLORS = { CIPHER: '#ff0000', NEXUS: '#00f5ff', DEXTER: '#ff8800', 
 const STATUS_COLORS = { pending: '#ff2d55', consumed: '#00ff88' };
 const FACTION_COLORS = { Cyberacme: '#00ff41', Nucaloric: '#ff2d78', Traxus: '#ff6600', Mida: '#cc44ff', Arachne: '#ff1a1a', Sekiguchi: '#c8b400' };
 
-// Convert a timestamptz value from Supabase to the format the datetime-local
-// input expects (YYYY-MM-DDTHH:MM). The Date object handles UTC -> local
-// conversion automatically when constructed from an ISO string with tz info.
 function toDatetimeLocal(timestampStr) {
   if (!timestampStr) return '';
   try {
@@ -249,21 +308,12 @@ function toDatetimeLocal(timestampStr) {
   }
 }
 
-// Convert a datetime-local string (YYYY-MM-DDTHH:MM, naked, no timezone) into
-// a full ISO-8601 timestamp with the user's local timezone offset baked in.
-// This is necessary because Supabase/Postgres treat naked datetime strings as
-// UTC, which silently shifts a "3:35 PM PT" entry into "3:35 PM UTC" =
-// "8:35 AM PT" -- a 7- or 8-hour error depending on DST.
-// Constructing via new Date(year, month, day, hour, minute) interprets the
-// values in the browser's local timezone, then .toISOString() emits the
-// equivalent UTC timestamp. Postgres then stores it correctly as the original
-// local moment in time.
 function datetimeLocalToISO(value) {
   if (!value || typeof value !== 'string') return null;
   var match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
   if (!match) return null;
   var year = Number(match[1]);
-  var month = Number(match[2]) - 1; // JS months are 0-indexed
+  var month = Number(match[2]) - 1;
   var day = Number(match[3]);
   var hour = Number(match[4]);
   var minute = Number(match[5]);
@@ -281,13 +331,17 @@ function rowToFormData(row, schema) {
         formData[field.key] = nullVal;
       }
     }
-    // Convert timestamptz strings into the format datetime-local inputs accept.
-    // The Date constructor interprets the ISO string as UTC and emits local
-    // time components, so the displayed value matches the user's wall clock.
     if (field.type === 'datetime-local' && formData[field.key]) {
       formData[field.key] = toDatetimeLocal(formData[field.key]);
     }
   });
+  // Unpack creator_info jsonb into flat creator_* fields for the form.
+  if (row && row.creator_info && typeof row.creator_info === 'object') {
+    Object.keys(CREATOR_FIELD_MAP).forEach(function(formKey) {
+      var jsonKey = CREATOR_FIELD_MAP[formKey];
+      if (row.creator_info[jsonKey]) formData[formKey] = row.creator_info[jsonKey];
+    });
+  }
   return formData;
 }
 
@@ -304,9 +358,6 @@ function formDataToRow(formData, schema) {
     if (field.type === 'boolean') {
       row[field.key] = row[field.key] === true || row[field.key] === 'true';
     }
-    // datetime-local sends "YYYY-MM-DDTHH:MM" without timezone. We MUST
-    // convert this to a proper ISO timestamp with timezone offset, otherwise
-    // Postgres treats it as UTC and the stored time is off by 7-8 hours.
     if (field.type === 'datetime-local') {
       if (row[field.key] === '' || row[field.key] === undefined || row[field.key] === null) {
         row[field.key] = null;
@@ -316,28 +367,42 @@ function formDataToRow(formData, schema) {
     }
     if (row[field.key] === '') row[field.key] = null;
   });
+  // Pack flat creator_* fields back into the creator_info jsonb column, then
+  // strip the flat keys (they are form-only, not real columns).
+  var creatorInfo = {};
+  var hasCreator = false;
+  Object.keys(CREATOR_FIELD_MAP).forEach(function(formKey) {
+    var jsonKey = CREATOR_FIELD_MAP[formKey];
+    if (row[formKey]) { creatorInfo[jsonKey] = row[formKey]; hasCreator = true; }
+    delete row[formKey];
+  });
+  // Only attach creator_info on creator_spotlight directives; otherwise leave it empty.
+  if (row.directive_type === 'creator_spotlight' && hasCreator) {
+    row.creator_info = creatorInfo;
+  } else if ('directive_type' in row && row.directive_type !== 'creator_spotlight') {
+    row.creator_info = {};
+    row.source_text = row.source_text || null;
+  }
   return row;
 }
 
-// -- BUILD FORM DEFAULTS (May 15, 2026) --
-// Extracted to a helper because we now call it from two places:
-// startAdd() opens a fresh form, saveNew(stayOpen=true) reopens after save.
-// stickyValues param preserves user-selected sticky fields across saves.
 function buildFormDefaults(activeTab, stickyValues) {
   const schema = SCHEMAS[activeTab] || [];
   const stickyKeys = STICKY_FIELDS[activeTab] || [];
   const defaults = {};
   schema.forEach(f => {
-    // If this field is sticky and we have a remembered value, use it.
     if (stickyKeys.includes(f.key) && stickyValues && stickyValues[f.key] !== undefined && stickyValues[f.key] !== '') {
       defaults[f.key] = stickyValues[f.key];
       return;
     }
-    if (f.type === 'boolean') defaults[f.key] = true;
+    if (f.type === 'boolean') defaults[f.key] = (activeTab && activeTab.indexOf('game_') === 0 && f.key === 'verified') ? false : true;
     else if (f.nullableSelect) defaults[f.key] = f.options && f.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
     else defaults[f.key] = '';
   });
-  if (activeTab === 'editor_directives' && !defaults.status) defaults.status = 'pending';
+  if (activeTab === 'editor_directives') {
+    if (!defaults.status) defaults.status = 'pending';
+    if (!defaults.directive_type) defaults.directive_type = 'standard';
+  }
   return defaults;
 }
 
@@ -356,12 +421,7 @@ export default function AdminPage() {
   const [search, setSearch]               = useState('');
   const [filterFaction, setFilterFaction] = useState('');
   const [filterRunner, setFilterRunner]   = useState('');
-
-  // -- STICKY VALUES (May 15, 2026) --
-  // Stores last-used values for sticky fields (faction_name, shell_name,
-  // editor) so they persist across "SAVE & ADD ANOTHER" cycles. Cleared
-  // on tab switch (set to {}) so context doesn't bleed across data types.
-  const [stickyValues, setStickyValues] = useState({});
+  const [stickyValues, setStickyValues]   = useState({});
 
   function showToast(msg, ok = true) {
     setToast({ msg, ok });
@@ -380,7 +440,7 @@ export default function AdminPage() {
 
   const loadTable = useCallback(async (table) => {
     setLoading(true); setRows([]); setSearch(''); setFilterFaction(''); setFilterRunner('');
-    setStickyValues({}); // Clear sticky state on tab switch -- no cross-contamination.
+    setStickyValues({});
     try {
       const res = await fetch('/api/admin?table=' + table, { headers: apiHeaders() });
       const json = await res.json();
@@ -421,9 +481,6 @@ export default function AdminPage() {
     setSaving(false);
   }
 
-  // saveNew accepts an optional `stayOpen` param. When true, the form
-  // resets to defaults (with sticky fields preserved) instead of closing.
-  // Called by both "SAVE" (stayOpen=false) and "SAVE & ADD ANOTHER" (true).
   async function saveNew(stayOpen) {
     setSaving(true);
     try {
@@ -435,8 +492,6 @@ export default function AdminPage() {
       if (json.error) throw new Error(json.error);
       setRows([json.data, ...rows]);
 
-      // Capture sticky values from the just-saved form BEFORE resetting,
-      // so "SAVE & ADD ANOTHER" can preserve them in the next form.
       const stickyKeys = STICKY_FIELDS[activeTab] || [];
       const newStickyValues = {};
       stickyKeys.forEach(key => {
@@ -447,8 +502,6 @@ export default function AdminPage() {
       setStickyValues(newStickyValues);
 
       if (stayOpen) {
-        // Reset form to defaults, but keep the sticky values pre-filled.
-        // The form stays visible; user can immediately enter the next row.
         setFormData(buildFormDefaults(activeTab, newStickyValues));
         showToast(activeTab === 'editor_directives' ? 'Directive queued -- enter next' : 'Saved -- enter next');
       } else {
@@ -477,11 +530,11 @@ export default function AdminPage() {
   var isWeapons         = activeTab === 'weapon_stats';
   var isDirectives      = activeTab === 'editor_directives';
   var isFactionTab      = ['factions', 'faction_stat_bonuses', 'faction_unlocks', 'faction_materials'].includes(activeTab);
+  var isWorldTab        = activeTab.indexOf('game_') === 0;
   var isCoresOrImplants = activeTab === 'core_stats' || activeTab === 'implant_stats';
   var pendingCount      = activeTab === 'editor_directives' ? rows.filter(r => r.status === 'pending').length : 0;
+  var isCreatorDirective = isDirectives && formData.directive_type === 'creator_spotlight';
 
-  // Does this tab support "SAVE & ADD ANOTHER"? Only if it has sticky fields
-  // defined -- otherwise it would behave like regular SAVE.
   var supportsBatchEntry = (STICKY_FIELDS[activeTab] || []).length > 0;
 
   var filtered = rows.filter(r => {
@@ -527,12 +580,22 @@ export default function AdminPage() {
       );
     }
     if (isDirectives) {
+      var isCreator = formData.directive_type === 'creator_spotlight';
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            {schema.filter(f => f.key === 'editor' || f.key === 'status').map(field => renderField(field))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+            {schema.filter(f => f.key === 'editor' || f.key === 'directive_type' || f.key === 'status').map(field => renderField(field))}
           </div>
           {schema.filter(f => f.key === 'instruction' || f.key === 'url').map(field => renderField(field))}
+          {isCreator && (
+            <div style={{ background: 'rgba(0,245,255,0.04)', border: '1px solid rgba(0,245,255,0.18)', borderLeft: '3px solid #00f5ff', borderRadius: 6, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', letterSpacing: 2 }}>CREATOR SPOTLIGHT -- VETTED SOURCE + CREATOR IDENTITY</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+                The editor writes the article STRICTLY from the vetted source text below -- it will not add, infer, or invent anything beyond it. The creator URLs power the article's tagging and Person/sameAs SEO schema.
+              </div>
+              {schema.filter(f => f.creatorOnly).map(field => renderField(field))}
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
             {schema.filter(f => f.key === 'scheduled_for').map(field => renderField(field))}
           </div>
@@ -555,7 +618,7 @@ export default function AdminPage() {
   function renderField(field) {
     var nullVal = field.options && field.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
     var stickyKeys = STICKY_FIELDS[activeTab] || [];
-    var isSticky = stickyKeys.includes(field.key) && showAddForm; // Only show sticky badge on add form, not edit
+    var isSticky = stickyKeys.includes(field.key) && showAddForm;
     return (
       <div key={field.key}>
         <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted, letterSpacing: 2, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -565,7 +628,7 @@ export default function AdminPage() {
           )}
         </div>
         {field.type === 'textarea' ? (
-          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' || field.key === 'description' || field.key === 'max_cost_summary' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
+          <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' || field.key === 'description' || field.key === 'max_cost_summary' || field.key === 'source_text' || field.key === 'summary' || field.key === 'style' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
         ) : field.type === 'select' ? (
           <select value={formData[field.key] ?? (field.nullableSelect ? nullVal : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
             {!field.nullableSelect && <option value="">-- Select --</option>}
@@ -607,6 +670,7 @@ export default function AdminPage() {
     if (activeTab === 'editor_directives') {
       var ec = EDITOR_COLORS[row.editor] || '#888';
       var sc = STATUS_COLORS[row.status] || '#888';
+      var isCreatorRow = row.directive_type === 'creator_spotlight';
       var scheduledLabel = null;
       if (row.scheduled_for) {
         try {
@@ -620,11 +684,28 @@ export default function AdminPage() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: ec, flexShrink: 0, minWidth: 60 }}>{row.editor}</span>
           <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: sc, background: sc + '18', border: '1px solid ' + sc + '44', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>{(row.status || 'pending').toUpperCase()}</span>
+          {isCreatorRow && (
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.12)', border: '1px solid rgba(0,245,255,0.35)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>CREATOR{row.creator_info && row.creator_info.name ? ': ' + row.creator_info.name : ''}</span>
+          )}
           {scheduledLabel && (
             <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1, flexShrink: 0 }}>{scheduledLabel}</span>
           )}
           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)', flex: 1, lineHeight: 1.4 }}>{(row.instruction || '').slice(0, 100)}{(row.instruction || '').length > 100 ? '...' : ''}</span>
           {row.url && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: 'rgba(0,245,255,0.5)', flexShrink: 0 }}>URL</span>}
+        </div>
+      );
+    }
+    if (isWorldTab) {
+      var wc = '#00f5ff';
+      var title = row.name || row.zone_name || row.boss_name || row.event_name || row.mode_name || '--';
+      var sub = row.map_slug || row.slug || row.available_on || row.mode_type || row.zone_type || '';
+      return (
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>{title}</span>
+          {sub && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: wc }}>{sub}</span>}
+          {row.variant_of && <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#9b5de5', background: 'rgba(155,93,229,0.12)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 3, padding: '2px 7px' }}>VARIANT OF {row.variant_of}</span>}
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: row.verified ? '#00ff88' : '#ff8800' }}>{row.verified ? 'VERIFIED' : 'UNVERIFIED'}</span>
+          {row.summary && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)', flex: 1, minWidth: 200 }}>{row.summary.slice(0, 80)}{row.summary.length > 80 ? '...' : ''}</span>}
         </div>
       );
     }
@@ -742,21 +823,23 @@ export default function AdminPage() {
         <UsageStats password={password} />
       </div>
 
-      {/* Tab bar */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>
-        {TABS.map(tab => (
-          <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{ padding: '14px 16px', background: activeTab === tab.key && tab.group === 'faction' ? 'rgba(255,215,0,0.04)' : 'transparent', border: 'none', borderBottom: activeTab === tab.key ? '2px solid ' + tab.color : '2px solid transparent', borderTop: tab.group === 'faction' && activeTab !== tab.key ? '2px solid rgba(255,215,0,0.12)' : '2px solid transparent', color: activeTab === tab.key ? tab.color : tab.group === 'faction' ? 'rgba(255,215,0,0.4)' : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative' }}>
-            {tab.label}
-            {tab.key === 'editor_directives' && pendingCount > 0 && activeTab !== 'editor_directives' && (
-              <span style={{ position: 'absolute', top: 8, right: 4, width: 7, height: 7, borderRadius: '50%', background: '#ff2d55' }} />
-            )}
-          </button>
-        ))}
+        {TABS.map(tab => {
+          var isActive = activeTab === tab.key;
+          var groupTint = tab.group === 'faction' ? 'rgba(255,215,0,' : tab.group === 'world' ? 'rgba(0,245,255,' : null;
+          return (
+            <button key={tab.key} onClick={() => { setActiveTab(tab.key); cancelForm(); }} style={{ padding: '14px 16px', background: isActive && groupTint ? groupTint + '0.04)' : 'transparent', border: 'none', borderBottom: isActive ? '2px solid ' + tab.color : '2px solid transparent', borderTop: groupTint && !isActive ? '2px solid ' + groupTint + '0.12)' : '2px solid transparent', color: isActive ? tab.color : groupTint ? groupTint + '0.4)' : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative' }}>
+              {tab.label}
+              {tab.key === 'editor_directives' && pendingCount > 0 && activeTab !== 'editor_directives' && (
+                <span style={{ position: 'absolute', top: 8, right: 4, width: 7, height: 7, borderRadius: '50%', background: '#ff2d55' }} />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ padding: '28px 32px' }}>
 
-        {/* Faction tab header */}
         {isFactionTab && (
           <div style={{ background: 'rgba(255,215,0,0.03)', border: '1px solid rgba(255,215,0,0.12)', borderLeft: '3px solid #ffd700', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ffd700', letterSpacing: 1, marginBottom: 6 }}>FACTION SYSTEM</div>
@@ -766,12 +849,20 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Directives header */}
+        {isWorldTab && (
+          <div style={{ background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.12)', borderLeft: '3px solid #00f5ff', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
+            <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#00f5ff', letterSpacing: 1, marginBottom: 6 }}>GAME WORLD GROUND TRUTH</div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+              Maps, zones, bosses, events, and modes the editors cite. Zones/bosses/events reference a map by its <strong style={{ color: '#00f5ff' }}>slug</strong>. Only rows marked <strong style={{ color: '#00ff88' }}>Verified</strong> reach the editors -- new rows default to unverified so nothing unconfirmed is published. Variants (e.g. Night Marsh) inherit their parent map's zones; only add variant-specific zones.
+            </div>
+          </div>
+        )}
+
         {isDirectives && (
           <div style={{ background: 'rgba(255,45,85,0.03)', border: '1px solid rgba(255,45,85,0.12)', borderLeft: '3px solid #ff2d55', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff2d55', letterSpacing: 1, marginBottom: 6 }}>EDITOR DIRECTIVES</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Queue a topic for any editor. Set <span style={{ color: '#00f5ff' }}>Scheduled For</span> to fire on a future date (your local time), or leave blank to fire on the next cron cycle. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
+              Queue a topic for any editor. Use <span style={{ color: '#00f5ff' }}>creator_spotlight</span> type to feed vetted creator/community news the editor writes up and tags. Set <span style={{ color: '#00f5ff' }}>Scheduled For</span> to fire on a future date (your local time), or leave blank for the next cron cycle. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
             </div>
           </div>
         )}
@@ -796,7 +887,7 @@ export default function AdminPage() {
               <select value={filterRunner} onChange={e => setFilterRunner(e.target.value)} style={{ ...S.input, width: 140 }}>
                 <option value="">All Runners</option>
                 <option value="Universal">Universal</option>
-                {['Assassin','Destroyer','Recon','Rook','Thief','Triage','Vandal'].map(r => <option key={r} value={r}>{r}</option>)}
+                {SHELL_NAMES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             )}
             <button onClick={() => loadTable(activeTab)} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer' }}>REFRESH</button>
@@ -809,7 +900,7 @@ export default function AdminPage() {
         {(showAddForm || editingRow) && (
           <div style={{ background: S.surface, border: '1px solid ' + (activeTabConfig?.color + '33'), borderRadius: 8, padding: 24, marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: activeTabConfig?.color, letterSpacing: 2, marginBottom: 20 }}>
-              {showAddForm ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + activeTabConfig?.label) : 'EDITING -- ' + (formData.name || formData.faction_name || formData.shell_name || formData.editor || formData.material_name || '')}
+              {showAddForm ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + activeTabConfig?.label) : 'EDITING -- ' + (formData.name || formData.faction_name || formData.shell_name || formData.editor || formData.material_name || formData.zone_name || formData.boss_name || formData.event_name || formData.mode_name || formData.slug || '')}
             </div>
             {renderForm()}
             <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -819,7 +910,6 @@ export default function AdminPage() {
                 style={{ padding: '10px 28px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: isDirectives ? '#fff' : '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>
                 {saving ? 'SAVING...' : (isDirectives && showAddForm ? 'QUEUE DIRECTIVE' : 'SAVE')}
               </button>
-              {/* SAVE & ADD ANOTHER -- only on add form, only if tab supports batch entry */}
               {showAddForm && supportsBatchEntry && (
                 <button
                   onClick={() => saveNew(true)}
@@ -842,7 +932,7 @@ export default function AdminPage() {
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>LOADING...</div>
         ) : filtered.length === 0 ? (
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>
-            {isFactionTab ? 'NO DATA YET -- ADD YOUR FIRST ROW ABOVE' : isDirectives ? 'NO DIRECTIVES QUEUED' : 'NO ROWS FOUND'}
+            {isFactionTab ? 'NO DATA YET -- ADD YOUR FIRST ROW ABOVE' : isDirectives ? 'NO DIRECTIVES QUEUED' : isWorldTab ? 'NO ROWS YET -- ADD ABOVE' : 'NO ROWS FOUND'}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -857,7 +947,7 @@ export default function AdminPage() {
                   <div style={{ flex: 1, minWidth: 200 }}>{rowPreview(row)}</div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     <button onClick={() => startEdit(row)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid ' + rowAccent + '44', borderRadius: 4, color: rowAccent, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>EDIT</button>
-                    <button onClick={() => deleteRow(row.id, row.name || row.item_name || row.material_name || (row.instruction || '').slice(0, 30) || row.shell_name)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 4, color: '#ff4444', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>DEL</button>
+                    <button onClick={() => deleteRow(row.id, row.name || row.item_name || row.material_name || row.zone_name || row.boss_name || row.event_name || row.mode_name || (row.instruction || '').slice(0, 30) || row.shell_name)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 4, color: '#ff4444', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>DEL</button>
                   </div>
                 </div>
               );

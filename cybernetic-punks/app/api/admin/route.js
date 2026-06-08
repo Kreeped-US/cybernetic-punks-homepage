@@ -29,6 +29,11 @@ const ALLOWED_TABLES = [
   'faction_stat_bonuses',
   'faction_unlocks',
   'faction_materials',
+  'game_maps',
+  'game_zones',
+  'game_bosses',
+  'game_events',
+  'game_modes',
 ];
 
 function checkAuth(req) {
@@ -47,6 +52,10 @@ export async function GET(req) {
   if (table === 'core_stats' || table === 'implant_stats') orderCol = 'created_at';
   if (table === 'editor_directives') orderCol = 'created_at';
   if (table === 'faction_stat_bonuses' || table === 'faction_unlocks' || table === 'faction_materials') orderCol = 'faction_name';
+  if (table === 'game_maps') orderCol = 'name';
+  if (table === 'game_zones' || table === 'game_bosses') orderCol = 'map_slug';
+  if (table === 'game_events') orderCol = 'event_name';
+  if (table === 'game_modes') orderCol = 'mode_name';
 
   var supabase = getSupabase();
   var { data, error } = await supabase.from(table).select('*').order(orderCol, { ascending: true }).limit(500);
