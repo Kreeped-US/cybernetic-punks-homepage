@@ -71,7 +71,42 @@ async function resolveMarathonCategory() {
   return null;
 }
 
-export async function GET() {
+export async function GET(request) {
+  // Diagnostic mode: /api/rising-runners?debug=1 reports exactly which step
+  // fails (env vars present? token acquired? search returned what?) without
+  // leaking secret values. Lets us see the real cause instead of a generic
+  // no_game_id. Safe: reports only booleans, counts, and category names.
+  try {
+    const url = new URL(request.url);
+    if (url.searchParams.get('debug') === '1') {
+      const diag = {
+        has_client_id: !!process.env.TWITCH_CLIENT_ID,
+        has_client_secret: !!process.env.TWITCH_CLIENT_SECRET,
+        token_acquired: false,
+        search_status: null,
+        search_candidates: [],
+        games_status: null,
+      };
+      const token = await getToken();
+      diag.token_acquired = !!token;
+      if (token) {
+        const search = await twitchFetch('search/categories?query=' + encodeURIComponent('Marathon') + '&first=20');
+        diag.search_status = search ? 'ok' : 'null';
+        if (search && Array.isArray(search.data)) {
+          diag.search_candidates = search.data.map(function(c) { return { id: c.id, name: c.name }; });
+        }
+        const gameData = await twitchFetch('games?name=Marathon');
+        diag.games_status = gameData ? 'ok' : 'null';
+        if (gameData && Array.isArray(gameData.data)) {
+          diag.games_candidates = gameData.data.map(function(c) { return { id: c.id, name: c.name }; });
+        }
+      }
+      return NextResponse.json({ debug: diag });
+    }
+  } catch (dErr) {
+    return NextResponse.json({ debug_error: dErr.message });
+  }
+
   try {
     const category = await resolveMarathonCategory();
     if (!category || !category.id) {
