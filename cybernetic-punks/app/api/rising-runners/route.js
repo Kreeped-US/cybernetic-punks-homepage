@@ -45,68 +45,37 @@ async function twitchFetch(endpoint) {
   return res.json();
 }
 
-// Resolve the Marathon category id. Returns { id, name } or null.
-// Strategy: fuzzy search first (survives casing/suffix differences), then exact
-// name as a fallback. We prefer an exact case-insensitive "marathon" match among
-// the search results, otherwise the first result.
+// Resolve the Marathon category id. Returns { id, name, via } or null.
+// Strategy: exact games?name FIRST - the diagnostic confirmed games?name=Marathon
+// returns exactly one result, the correct 2026 game (id 407314011). Fuzzy
+// search/categories is the fallback only, because it returns ~20 "Marathon"-
+// containing categories with the real game buried mid-list and a wrong one
+// ("Marathon 2: Durandal") at position 0 - so we only use it if exact fails,
+// and even then we require an exact case-insensitive name match rather than
+// trusting the top result.
 async function resolveMarathonCategory() {
-  // 1. Fuzzy search
-  const search = await twitchFetch('search/categories?query=' + encodeURIComponent('Marathon') + '&first=20');
+  // 1. Exact name match - returns the single correct category.
+  const gameData = await twitchFetch('games?name=Marathon');
+  if (gameData && Array.isArray(gameData.data) && gameData.data.length > 0) {
+    return { id: gameData.data[0].id, name: gameData.data[0].name, via: 'games_exact' };
+  }
+
+  // 2. Fallback: fuzzy search, but ONLY accept an exact case-insensitive
+  // "marathon" match - never the top result, which is a different game.
+  const search = await twitchFetch('search/categories?query=' + encodeURIComponent('Marathon') + '&first=40');
   if (search && Array.isArray(search.data) && search.data.length > 0) {
-    // Prefer an exact (case-insensitive) name match to avoid grabbing the wrong
-    // "Marathon"-containing category; fall back to the top result.
     const exact = search.data.find(function(c) {
       return (c.name || '').trim().toLowerCase() === 'marathon';
     });
-    const chosen = exact || search.data[0];
-    return { id: chosen.id, name: chosen.name, via: exact ? 'search_exact' : 'search_top', candidates: search.data.map(function(c){ return c.name; }) };
-  }
-
-  // 2. Fallback: exact games?name
-  const gameData = await twitchFetch('games?name=Marathon');
-  if (gameData && Array.isArray(gameData.data) && gameData.data.length > 0) {
-    return { id: gameData.data[0].id, name: gameData.data[0].name, via: 'games_exact', candidates: [] };
+    if (exact) {
+      return { id: exact.id, name: exact.name, via: 'search_exact' };
+    }
   }
 
   return null;
 }
 
-export async function GET(request) {
-  // Diagnostic mode: /api/rising-runners?debug=1 reports exactly which step
-  // fails (env vars present? token acquired? search returned what?) without
-  // leaking secret values. Lets us see the real cause instead of a generic
-  // no_game_id. Safe: reports only booleans, counts, and category names.
-  try {
-    const url = new URL(request.url);
-    if (url.searchParams.get('debug') === '1') {
-      const diag = {
-        has_client_id: !!process.env.TWITCH_CLIENT_ID,
-        has_client_secret: !!process.env.TWITCH_CLIENT_SECRET,
-        token_acquired: false,
-        search_status: null,
-        search_candidates: [],
-        games_status: null,
-      };
-      const token = await getToken();
-      diag.token_acquired = !!token;
-      if (token) {
-        const search = await twitchFetch('search/categories?query=' + encodeURIComponent('Marathon') + '&first=20');
-        diag.search_status = search ? 'ok' : 'null';
-        if (search && Array.isArray(search.data)) {
-          diag.search_candidates = search.data.map(function(c) { return { id: c.id, name: c.name }; });
-        }
-        const gameData = await twitchFetch('games?name=Marathon');
-        diag.games_status = gameData ? 'ok' : 'null';
-        if (gameData && Array.isArray(gameData.data)) {
-          diag.games_candidates = gameData.data.map(function(c) { return { id: c.id, name: c.name }; });
-        }
-      }
-      return NextResponse.json({ debug: diag });
-    }
-  } catch (dErr) {
-    return NextResponse.json({ debug_error: dErr.message });
-  }
-
+export async function GET() {
   try {
     const category = await resolveMarathonCategory();
     if (!category || !category.id) {
