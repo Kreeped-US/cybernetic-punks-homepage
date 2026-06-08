@@ -874,7 +874,34 @@ export function buildMirandaPrompt(data) {
     : 'None yet - all topics are fair game.';
 
   var directiveBlock = '';
-  if (_directive) {
+  if (_directive && _directive.directive_type === 'creator_spotlight') {
+    // SAFETY-CRITICAL: creator spotlights are about real, named people. MIRANDA
+    // must write STRICTLY from the vetted source_text and tag from creator_info,
+    // never inventing anything about the creator. Mirrors buildCreatorSpotlightBlock
+    // in the cron route so all five editors enforce the same guard.
+    var mci = _directive.creator_info || {};
+    var mLinks = [];
+    if (mci.youtube) mLinks.push('YouTube: ' + mci.youtube);
+    if (mci.x) mLinks.push('X/Twitter: ' + mci.x);
+    if (mci.twitch) mLinks.push('Twitch: ' + mci.twitch);
+    if (mci.other) mLinks.push('Other: ' + mci.other);
+    directiveBlock =
+      '\n\n--- CREATOR SPOTLIGHT DIRECTIVE - WRITE STRICTLY FROM VETTED SOURCE ---\n' +
+      'This is an assigned article about a REAL, NAMED content creator. It overrides your normal content selection.\n\n' +
+      (_directive.instruction ? 'ANGLE / ASSIGNMENT: ' + _directive.instruction + '\n\n' : '') +
+      'VETTED SOURCE TEXT (the ONLY permitted source of facts for this article):\n"""\n' +
+      (_directive.source_text || '(none provided)') + '\n"""\n\n' +
+      (mci.name ? 'CREATOR: ' + mci.name + '\n' : '') +
+      (mLinks.length > 0 ? 'CANONICAL PROFILES (use for accurate attribution; do not alter or invent handles):\n  ' + mLinks.join('\n  ') + '\n' : '') +
+      (_directive.url ? 'REFERENCE URL: ' + _directive.url + '\n' : '') +
+      '\nABSOLUTE RULES FOR THIS ARTICLE:\n' +
+      '1. Write ONLY from the vetted source text above. It is the single source of truth.\n' +
+      '2. Do NOT add, infer, embellish, or invent ANY fact, quote, event, date, number, claim, or piece of "drama" not explicitly present in the vetted source text. This is a real person; inventing or distorting what they said or did is strictly prohibited.\n' +
+      '3. If a detail is not in the source text, do not include it. A shorter, fully-accurate article is correct; a padded one with invented specifics is not.\n' +
+      '4. Refer to the creator by the exact name provided. Do not invent alternate handles, real names, or affiliations.\n' +
+      '5. You may add neutral framing/context about Marathon itself using your verified game knowledge, but every claim ABOUT THE CREATOR or the events described must trace directly to the vetted source text.\n' +
+      '---';
+  } else if (_directive) {
     directiveBlock = `\n\n--- EDITOR DIRECTIVE - THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\nASSIGNMENT: ${_directive.instruction}\n${_directive.url ? 'SOURCE URL: ' + _directive.url + '\n' : ''}Write your article specifically about this topic. This overrides your normal content selection.\n---`;
   }
 
