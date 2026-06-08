@@ -735,9 +735,30 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
   };
   if (item.thumbnail) jsonLd.image = item.thumbnail;
 
+  // CREATOR SPOTLIGHT SEO (June 8, 2026): when this article was produced from a
+  // creator_spotlight directive, build a Person schema from the vetted creator_info
+  // and set it as the article's `about` (the subject of the piece). sameAs links the
+  // creator's canonical profiles so Google associates the article with the real person.
+  var creatorPersonSchema = null;
+  var ci = item.creator_info || {};
+  if (item.directive_type === 'creator_spotlight' && ci.name) {
+    var sameAs = [ci.youtube, ci.x, ci.twitch, ci.other].filter(Boolean);
+    creatorPersonSchema = {
+      '@context': 'https://schema.org', '@type': 'Person',
+      name: ci.name,
+    };
+    if (sameAs.length > 0) creatorPersonSchema.sameAs = sameAs;
+    // Tie the article to the person as its subject.
+    jsonLd.about = { '@type': 'Person', name: ci.name };
+    if (sameAs.length > 0) jsonLd.about.sameAs = sameAs;
+  }
+
   return (
     <main style={{ backgroundColor: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {creatorPersonSchema && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(creatorPersonSchema) }} />
+      )}
 
       <style>{`
         .article-related:hover { background: #1e2228 !important; }
