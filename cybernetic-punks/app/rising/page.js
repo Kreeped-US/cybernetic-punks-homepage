@@ -558,6 +558,29 @@ export default async function RisingPage() {
           }),
         }),
       }} />
+
+      {/* ItemList of creator spotlights — only when there are spotlights to list.
+          Mirrors the /meta and /guides ItemList markup so Google reads the page
+          as carrying a collection of editorial content, not just a live widget. */}
+      {spotlights.length > 0 && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            name: 'Marathon Creator Spotlights',
+            description: 'Editorial spotlights on Marathon content creators published by the CyberneticPunks editors.',
+            numberOfItems: spotlights.length,
+            itemListElement: spotlights.map(function(item, i) {
+              return {
+                '@type': 'ListItem',
+                position: i + 1,
+                url: 'https://cyberneticpunks.com/intel/' + item.slug,
+                name: item.headline,
+              };
+            }),
+          }),
+        }} />
+      )}
     </main>
   );
 }
