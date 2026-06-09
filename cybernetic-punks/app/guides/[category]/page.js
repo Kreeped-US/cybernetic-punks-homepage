@@ -119,7 +119,7 @@ const CATEGORIES = {
     h1: 'MARATHON EXTRACTION STRATEGY',
     subhead: 'Escape routes, timing windows, loot prioritization, and exfil tactics. Learn to survive the most dangerous part of every Marathon match - the last 60 seconds.',
     related: [
-      { href: '/intel/ghost', label: 'GHOST INTEL',      desc: 'Community patterns',     color: '#00ff88' },
+      { href: '/intel/ghost', label: 'COMMUNITY INTEL',      desc: 'Community patterns',     color: '#00ff88' },
       { href: '/ranked',      label: 'RANKED HUB',       desc: 'Queue extraction intel', color: '#ffd700' },
       { href: '/guides/shells/thief', label: 'THIEF GUIDE', desc: 'The exfil specialist', color: '#ffd700' },
     ],
@@ -183,7 +183,7 @@ const CATEGORIES = {
     subhead: 'Zone-by-zone knowledge. POIs, extraction points, loot hotspots, and rotation patterns. The difference between a lost run and a clean exfil is knowing the map better than the enemy.',
     related: [
       { href: '/guides/extraction', label: 'EXTRACTION STRATEGY', desc: 'Exfil-specific tactics', color: '#00d4ff' },
-      { href: '/intel/ghost',       label: 'GHOST INTEL',        desc: 'Community map tips',    color: '#00ff88' },
+      { href: '/intel/ghost',       label: 'COMMUNITY INTEL',        desc: 'Community map tips',    color: '#00ff88' },
       { href: '/ranked',            label: 'RANKED HUB',         desc: 'Zone rotations',        color: '#ffd700' },
     ],
     faqs: [
@@ -733,7 +733,7 @@ export default async function CategoryPage({ params }) {
             {dexterBuilds.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>DEXTER BUILDS</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>BUILD AI</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {dexterBuilds.map(function(b) {
@@ -751,7 +751,7 @@ export default async function CategoryPage({ params }) {
             {nexusMeta.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700 }}>NEXUS META</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700 }}>META AI</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {nexusMeta.map(function(m) {

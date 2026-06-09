@@ -30,7 +30,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Marathon Guides — Shell Guides, Ranked Prep, Extraction Strategy & Build Tips',
-  description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips — updated throughout the day by MIRANDA. Covers all 7 shells, weapons, mods, and map intel.',
+  description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips — updated throughout the day by our field-guide AI. Covers all 7 shells, weapons, mods, and map intel.',
   keywords: 'Marathon guides, Marathon guide, Marathon tips, Marathon beginner guide, Marathon shell guide, Marathon ranked guide, Marathon weapon guide, Marathon mod guide, Marathon extraction guide, Marathon strategy, how to play Marathon, Marathon Bungie guide, Marathon Thief guide, Marathon Destroyer guide, Marathon Assassin guide, Marathon Recon guide, Marathon Vandal guide, Marathon Triage guide, Marathon Rook guide',
   openGraph: {
     title: 'Marathon Guides — Shell Breakdowns, Ranked Prep & Extraction Strategy',
@@ -132,7 +132,7 @@ const FAQS = [
   },
   {
     q: 'What is the meta in Marathon right now?',
-    a: 'The meta shifts throughout the day as NEXUS tracks live play data. Generally, Vandal and Thief dominate solo ranked, while Recon and Triage excel in squad play. Weapon meta rotates more often — check the live tier list for current picks. Rook is banned from Ranked.',
+    a: 'The meta shifts throughout the day as our meta AI tracks live play data. Generally, Vandal and Thief dominate solo ranked, while Recon and Triage excel in squad play. Weapon meta rotates more often — check the live tier list for current picks. Rook is banned from Ranked.',
   },
   {
     q: 'How do I unlock faction items in Marathon?',
@@ -144,7 +144,7 @@ const FAQS = [
   },
   {
     q: 'How often are Marathon guides updated?',
-    a: 'MIRANDA publishes new field guides throughout the day, pulled from verified game data and community trends. Shell stats, weapon balancing, and meta positioning are tracked continuously — so the guides you read here always reflect the current game state.',
+    a: 'Our field-guide AI publishes new guides throughout the day, pulled from verified game data and community trends. Shell stats, weapon balancing, and meta positioning are tracked continuously — so the guides you read here always reflect the current game state.',
   },
   {
     q: 'What platforms is Marathon available on?',
@@ -418,7 +418,7 @@ export default async function GuidesPage({ searchParams }) {
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: '#9b5de5', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#9b5de5' }} />
-            ◎ MIRANDA · FIELD GUIDE EDITOR
+            ◎ FIELD-GUIDE AI
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: '#00ff41', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             UPDATED DAILY
@@ -439,7 +439,7 @@ export default async function GuidesPage({ searchParams }) {
               Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips.
             </p>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, maxWidth: 540, marginBottom: 24 }}>
-              Built from verified game data across <strong style={{ color: '#fff' }}>{shellCount} shells</strong>, <strong style={{ color: '#fff' }}>{weaponCount} weapons</strong>, and <strong style={{ color: '#fff' }}>{modCount} mods</strong>. Auto-updated by MIRANDA throughout the day.
+              Built from verified game data across <strong style={{ color: '#fff' }}>{shellCount} shells</strong>, <strong style={{ color: '#fff' }}>{weaponCount} weapons</strong>, and <strong style={{ color: '#fff' }}>{modCount} mods</strong>. Auto-updated by our field-guide AI throughout the day.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link href="/advisor" style={{ padding: '11px 22px', background: '#ff8800', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
@@ -478,7 +478,7 @@ export default async function GuidesPage({ searchParams }) {
         />
 
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 14, maxWidth: 720 }}>
-          Jump to the dedicated guide page for each Runner Shell. Every shell has its own page with playstyle analysis, strengths and weaknesses, recommended builds, and MIRANDA strategy articles.
+          Jump to the dedicated guide page for each Runner Shell. Every shell has its own page with playstyle analysis, strengths and weaknesses, recommended builds, and strategy articles from our field-guide AI.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 5 }}>
@@ -582,7 +582,7 @@ export default async function GuidesPage({ searchParams }) {
         {allGuides.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2 }}>
             <div style={{ fontSize: 32, color: '#9b5de5', marginBottom: 16, opacity: 0.4 }}>◎</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700 }}>MIRANDA INITIALIZING</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700 }}>FIELD-GUIDE AI INITIALIZING</div>
           </div>
         ) : (
           <>
@@ -601,7 +601,7 @@ export default async function GuidesPage({ searchParams }) {
             {dexterBuilds.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>⬢ DEXTER BUILDS</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>⬢ BUILD AI</span>
                   <Link href="/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 8, color: '#ff8800', textDecoration: 'none', letterSpacing: 1, marginLeft: 'auto', fontWeight: 700 }}>ALL BUILDS →</Link>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -620,7 +620,7 @@ export default async function GuidesPage({ searchParams }) {
             {nexusMeta.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700 }}>⬡ NEXUS META</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700 }}>⬡ META AI</span>
                   <Link href="/intel/nexus" style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', textDecoration: 'none', letterSpacing: 1, marginLeft: 'auto', fontWeight: 700 }}>ALL META →</Link>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -663,17 +663,17 @@ export default async function GuidesPage({ searchParams }) {
       <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid #9b5de5', borderRadius: '0 2px 2px 0', padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#9b5de5', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>◎ MIRANDA · FIELD GUIDE EDITOR</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#9b5de5', letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>◎ FIELD-GUIDE AI</div>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.1, marginBottom: 10 }}>
               GUIDES PUBLISHED<br /><span style={{ color: '#9b5de5' }}>DAILY.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-              MIRANDA publishes structured shell guides, ranked prep, and extraction strategy — built from live database stats, not opinions.
+              Our field-guide AI publishes structured shell guides, ranked prep, and extraction strategy — built from live database stats, not opinions.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { href: '/intel/miranda', label: '◎ ALL MIRANDA INTEL',  sub: 'Full guide archive',       color: '#9b5de5' },
+              { href: '/intel/miranda', label: '◎ ALL FIELD GUIDES',  sub: 'Full guide archive',       color: '#9b5de5' },
               { href: '/advisor',       label: '⬢ BUILD ADVISOR',       sub: 'Get your ranked loadout',  color: '#ff8800' },
               { href: '/shells',        label: 'SHELL DATABASE',        sub: 'Full ability breakdowns',  color: '#00d4ff' },
               { href: '/ranked',        label: 'RANKED MODE',           sub: 'Tiers, Holotags, rewards', color: '#ffd700' },
