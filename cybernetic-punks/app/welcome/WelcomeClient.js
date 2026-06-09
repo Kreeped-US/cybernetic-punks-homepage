@@ -25,7 +25,7 @@ const INTENT_CARDS = [
   {
     intent:  'build',
     label:   'BUILD A LOADOUT',
-    sublabel: 'DEXTER engineers a complete build tuned to your shell, playstyle, and rank target.',
+    sublabel: 'Our build AI engineers a complete build tuned to your shell, playstyle, and rank target.',
     symbol:  '⬢',
     color:   '#ff8800', // DEXTER orange
     href:    '/advisor',
@@ -33,7 +33,7 @@ const INTENT_CARDS = [
   {
     intent:  'meta',
     label:   'BROWSE THE META',
-    sublabel: 'Live tier list ranking every weapon and shell. Updated by NEXUS throughout the day.',
+    sublabel: 'Live tier list ranking every weapon and shell. Updated by our meta AI throughout the day.',
     symbol:  '⬡',
     color:   '#00d4ff', // NEXUS cyan
     href:    '/meta',

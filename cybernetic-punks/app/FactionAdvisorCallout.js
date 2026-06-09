@@ -218,7 +218,7 @@ export default function FactionAdvisorCallout({ shells }) {
           Faction unlocks · Stat bonuses · Investment math
         </span>
         <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#ffd700' + 'aa', letterSpacing: 1, fontWeight: 700 }}>
-          ◎ MAPPED BY MIRANDA
+          ◎ MAPPED BY FIELD-GUIDE AI
         </span>
       </div>
     </section>

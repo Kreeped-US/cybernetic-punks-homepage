@@ -563,16 +563,18 @@ export default function MeClient({ player }) {
                 Three AI editors will analyze your build, assess your meta position, and deliver a fully personalized coaching report with actionable recommendations and stat-level analysis.
               </p>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                {['DEXTER · Build Analysis', 'NEXUS · Meta Position', 'MIRANDA · Runner Profile'].map(function(item) {
-                  var parts = item.split(' · ');
-                  var edColors = { DEXTER: '#ff8800', NEXUS: '#00d4ff', MIRANDA: '#9b5de5' };
-                  var c = edColors[parts[0]] || '#888';
+                {[
+                  { label: 'BUILD AI',       role: 'Build Analysis', color: '#ff8800' },
+                  { label: 'META AI',        role: 'Meta Position',  color: '#00d4ff' },
+                  { label: 'FIELD-GUIDE AI', role: 'Runner Profile', color: '#9b5de5' },
+                ].map(function(item) {
+                  var c = item.color;
                   return (
-                    <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <div style={{ width: 5, height: 5, borderRadius: 1, background: c, opacity: 0.5 }} />
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{parts[0]}</span>
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>{item.label}</span>
                       <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.12)' }}>·</span>
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)' }}>{parts[1]}</span>
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)' }}>{item.role}</span>
                     </div>
                   );
                 })}

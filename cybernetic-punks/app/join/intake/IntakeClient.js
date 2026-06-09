@@ -19,12 +19,12 @@ const IMPLANT_SLOT_COLORS = { Head: '#00f5ff', Torso: '#ff8800', Legs: '#9b5de5'
 
 const SHELL_NOTE = {
   Assassin: 'Most players run Assassin wrong — without AP Round in mod slot 1 the damage profile falls short. Your audit will address this.',
-  Destroyer: 'Destroyer underperforms when played as a brawler. Its real value is sustained pressure and point-holding. DEXTER has strong opinions.',
-  Recon: 'S-tier for good reason. Ability timing creates information advantages most players never fully exploit. DEXTER will push your ceiling.',
+  Destroyer: 'Destroyer underperforms when played as a brawler. Its real value is sustained pressure and point-holding. Our build AI has strong opinions.',
+  Recon: 'S-tier for good reason. Ability timing creates information advantages most players never fully exploit. Our build AI will push your ceiling.',
   Rook: 'Rook is banned from Ranked. In casual play it\'s a legitimate B-tier support shell. Your audit will flag ranked implications.',
-  Thief: 'Thief rewards patience and precise target selection. It underperforms badly for aggressive players. DEXTER will cross-reference your playstyle.',
-  Triage: 'Triage is crew-dependent to reach its ceiling. Solo players get roughly 70% of its value. DEXTER will account for your squad context.',
-  Vandal: 'Most players read Vandal as slow. With the right core + implant stack it produces the highest effective mobility in the game. DEXTER will address this.',
+  Thief: 'Thief rewards patience and precise target selection. It underperforms badly for aggressive players. Our build AI will cross-reference your playstyle.',
+  Triage: 'Triage is crew-dependent to reach its ceiling. Solo players get roughly 70% of its value. Our build AI will account for your squad context.',
+  Vandal: 'Most players read Vandal as slow. With the right core + implant stack it produces the highest effective mobility in the game. Our build AI will address this.',
 };
 
 function Divider({ label }) {
@@ -445,7 +445,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
         <>
           <div style={S.label}>SECTION A · RUNNER IDENTITY · 02 / 08</div>
           <H2>YOUR INSTINCT<br/>IN A FIREFIGHT?</H2>
-          <WHY text="CIPHER uses this to flag patterns where your shell and weapon choices contradict your engagement style. Mismatch here is the most common source of underperformance." />
+          <WHY text="Our play-analysis AI uses this to flag patterns where your shell and weapon choices contradict your engagement style. Mismatch here is the most common source of underperformance." />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {PLAYSTYLES.map(p => (
               <div key={p.key} style={gridCard(answers.playstyle === p.key, p.color)} onClick={() => set('playstyle', p.key)}>
@@ -465,7 +465,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
         <>
           <div style={S.label}>SECTION A · RUNNER IDENTITY · 03 / 08</div>
           <H2>BUILD ENGAGEMENT<br/>&amp; ZONE PREFERENCE</H2>
-          <WHY text="Sets the vocabulary level of your audit — plain language vs full stat analysis. Zone preference lets NEXUS weight meta recommendations to where you actually play." />
+          <WHY text="Sets the vocabulary level of your audit — plain language vs full stat analysis. Zone preference lets our meta AI weight meta recommendations to where you actually play." />
 
           <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '20px', marginBottom: 28 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -498,7 +498,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
         <>
           <div style={S.label}>SECTION A · RUNNER IDENTITY · 04 / 08</div>
           <H2>HOW DO YOU<br/>USUALLY DEPLOY?</H2>
-          <WHY text="Solo builds differ fundamentally from crew builds. Some shells lose most of their value without teammates. NEXUS and DEXTER both factor this heavily." />
+          <WHY text="Solo builds differ fundamentally from crew builds. Some shells lose most of their value without teammates. Our meta AI and build AI both factor this heavily." />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {SQUADS.map(s => (
               <div key={s.key} style={gridCard(answers.squad_context === s.key)} onClick={() => set('squad_context', s.key)}>
@@ -518,7 +518,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
         <>
           <div style={S.label}>SECTION B · YOUR LOADOUT · 05 / 08</div>
           <H2>SELECT YOUR<br/>RUNNER SHELL</H2>
-          <WHY text="Every recommendation DEXTER makes is anchored to your shell's specific mechanics and ability timings. Live meta tier shown — updated each cycle by NEXUS." />
+          <WHY text="Every recommendation our build AI makes is anchored to your shell's specific mechanics and ability timings. Live meta tier shown — updated each cycle by our meta AI." />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
             {SHELLS.map(sh => {
               const tier = getShellTier(sh.name);
@@ -542,7 +542,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
           </div>
           {answers.shell && (
             <div style={{ background: '#0a0a0a', border: '1px solid rgba(255,136,0,0.15)', borderLeft: '3px solid rgba(255,136,0,0.5)', borderRadius: 5, padding: '14px 18px', marginBottom: 10 }}>
-              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff8800', letterSpacing: 2, marginBottom: 6 }}>⬢ DEXTER NOTE</div>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff8800', letterSpacing: 2, marginBottom: 6 }}>⬢ BUILD AI NOTE</div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>{SHELL_NOTE[answers.shell]}</div>
             </div>
           )}
@@ -557,7 +557,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
         <>
           <div style={S.label}>SECTION B · YOUR LOADOUT · 06 / 08</div>
           <H2>YOUR WEAPONS</H2>
-          <WHY text="Select your primary and secondary weapons. DEXTER analyzes both against your shell's mechanics and your playstyle simultaneously." />
+          <WHY text="Select your primary and secondary weapons. Our build AI analyzes both against your shell's mechanics and your playstyle simultaneously." />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             {['primary', 'secondary'].map(slot => (
               <div key={slot}>
@@ -581,7 +581,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
           </div>
           {answers.primary_weapon && answers.secondary_weapon && (
             <div style={{ background: '#0a0a0a', border: '1px solid rgba(0,245,255,0.12)', borderLeft: '3px solid rgba(0,245,255,0.4)', borderRadius: 5, padding: '14px 18px' }}>
-              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff8800', letterSpacing: 2, marginBottom: 6 }}>⬢ DEXTER WILL ANALYZE THIS COMBO</div>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#ff8800', letterSpacing: 2, marginBottom: 6 }}>⬢ BUILD AI WILL ANALYZE THIS COMBO</div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>{answers.primary_weapon} + {answers.secondary_weapon} — synergy and conflict analysis included in your full audit.</div>
             </div>
           )}
@@ -596,7 +596,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
         <>
           <div style={S.label}>SECTION B · YOUR LOADOUT · 07 / 08</div>
           <H2>MODS, CORES<br/>&amp; IMPLANTS</H2>
-          <WHY text='Mod slots are filtered by weapon type and slot position — no more invalid combinations. Implants are slotted by body region. Cores are filtered to your shell. Leave anything empty and DEXTER flags it directly.' />
+          <WHY text='Mod slots are filtered by weapon type and slot position — no more invalid combinations. Implants are slotted by body region. Cores are filtered to your shell. Leave anything empty and our build AI flags it directly.' />
 
           {primaryWeaponData && (
             <WeaponModSlots

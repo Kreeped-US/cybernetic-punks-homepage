@@ -71,7 +71,7 @@ export default function CoachCTA({ variant = 'banner' }) {
             PERSONAL COACH — COMING SOON
           </div>
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8, maxWidth: 500 }}>
-            Our editors are getting a new capability — analyzing your actual Marathon loadout. DEXTER audits your build, NEXUS checks your meta positioning, MIRANDA profiles your playstyle. Personalized coaching, not generic advice. Currently in closed development.
+            Our editors are getting a new capability — analyzing your actual Marathon loadout. Our build AI audits your build, our meta AI checks your meta positioning, and our field-guide AI profiles your playstyle. Personalized coaching, not generic advice. Currently in closed development.
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start', flexShrink: 0 }}>
