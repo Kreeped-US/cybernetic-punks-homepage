@@ -1,6 +1,21 @@
 // app/status/page.js
 // SERVER STATUS + WEEKLY RESET TRACKER + ERROR CODES
 // Live Steam player count, Steam review sentiment, Supabase-backed platform status
+//
+// SEO + CORRECTNESS PASS (June 8, 2026) — this is the site's strongest
+// search-traction page (ranks for "marathon server status", "bungie
+// maintenance", "broccoli error" cluster), so changes are deliberate:
+// - CRITICAL: ranked queue used the dead S1 Sun-Thu rotation, rendering a
+//   misleading OPEN/CLOSED for a queue that doesn't return until June 14, 2026
+//   (per /ranked + /sitrep). Same fix applied here: RANKED_RETURN gate shows
+//   "RETURNS JUN 14" until the 14th, then auto-flips to the live rotation.
+//   The FAQ schema answer (indexed, served by Google) was also wrong and is
+//   rewritten to the S2 reality (returns June 14, merged 5,000-value queue).
+// - SEO: expanded the FAQPage schema from 3 error codes to 6 (added BASIL,
+//   CURRANT, ANTEATER) — each is a real "marathon [code] error" search target
+//   and the visible content already exists, so this widens troubleshooting-query
+//   coverage on the page that already ranks for it. Error-code definitions are
+//   verified from Bungie/in-game. Weekly reset (Tuesday 10AM PT) is confirmed.
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -74,6 +89,11 @@ const RESET_DEFAULTS = [
   { title: 'EVENTS & MODIFIERS', desc: 'Rotating map events, enemy spawns, and environmental conditions change with each reset.', icon: '◈', color: RED },
 ];
 
+// Season 2 ranked queue returns June 14, 2026, 10AM PT. Until then the queue
+// has not returned, so the status card must say so rather than computing the
+// Sun-Thu rotation. After this datetime the rotation logic applies.
+const RANKED_RETURN = new Date('2026-06-14T17:00:00Z'); // 10AM PT = 17:00 UTC
+
 // ─── HELPERS ────────────────────────────────────────────────
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -88,9 +108,16 @@ function timeAgo(dateStr) {
   return Math.floor(diffH / 24) + 'd ago';
 }
 
-// Ranked queue rotation — Sun 10AM PT to Thu 10AM PT open
+// Ranked queue rotation — Sun 10AM PT to Thu 10AM PT open.
+// Pre-June-14, the S2 queue has not returned, so report a dedicated "returns"
+// phase instead of a misleading OPEN/CLOSED.
 function getRankedStatus() {
   var now = new Date();
+
+  if (now < RANKED_RETURN) {
+    return { phase: 'returns', isOpen: false };
+  }
+
   var pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
   var day = pt.getDay();
   var hour = pt.getHours();
@@ -98,7 +125,7 @@ function getRankedStatus() {
   if (day === 0 && hour >= 10) isOpen = true;
   else if (day >= 1 && day <= 3) isOpen = true;
   else if (day === 4 && hour < 10) isOpen = true;
-  return { isOpen: isOpen };
+  return { phase: 'rotating', isOpen: isOpen };
 }
 
 async function getLiveSteamPlayers() {
@@ -176,6 +203,13 @@ export default async function StatusPage() {
   var resetItems = (weeklyReset && weeklyReset.length > 0) ? weeklyReset : null;
   var queueStatus = getRankedStatus();
 
+  // Queue card display values, derived from phase
+  var queueColor = queueStatus.phase === 'returns' ? YELLOW : (queueStatus.isOpen ? GREEN : ORANGE);
+  var queueLabel = queueStatus.phase === 'returns' ? 'RETURNS JUN 14' : (queueStatus.isOpen ? 'OPEN' : 'CLOSED');
+  var queueSub   = queueStatus.phase === 'returns'
+    ? 'Season 2 ranked returns June 14'
+    : (queueStatus.isOpen ? 'Closes Thursday 10AM PT' : 'Reopens Sunday 10AM PT');
+
   // Aggregate status for banner
   var allOnline = platforms.every(function(p) {
     var data = statusMap[p];
@@ -217,8 +251,11 @@ export default async function StatusPage() {
       { '@type': 'Question', name: 'What does WEASEL error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'WEASEL means you lost connection to Bungie servers. This is often a server-side issue during high traffic or maintenance windows. Check server status before assuming it\'s a local issue.' } },
       { '@type': 'Question', name: 'What does BROCCOLI error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'BROCCOLI means your GPU cannot be detected, usually caused by a driver crash. Update your OS and GPU drivers and ensure your graphics card is properly installed and recognized by your system.' } },
       { '@type': 'Question', name: 'What does CENTIPEDE error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'CENTIPEDE indicates general connection instability — often packet loss or unstable routing. Try a wired ethernet connection, restart your router, and close bandwidth-heavy background applications.' } },
+      { '@type': 'Question', name: 'What does BASIL error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'BASIL is a basic disconnect. Try logging back in first. If it persists, check the live server status, as it may indicate a wider connectivity issue rather than a problem on your end.' } },
+      { '@type': 'Question', name: 'What does CURRANT error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'CURRANT is a network connectivity issue. Check your ISP status, restart your router, and try a wired ethernet connection rather than Wi-Fi for a more stable route to the servers.' } },
+      { '@type': 'Question', name: 'What does ANTEATER error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'ANTEATER means Marathon is unable to connect to Bungie. Check your NAT type, review your firewall settings, and ensure BattlEye and Marathon are not being blocked by your security software.' } },
       { '@type': 'Question', name: 'How do I fix Marathon connection issues?', acceptedAnswer: { '@type': 'Answer', text: 'Restart Marathon, check server status, restart your router, try a wired ethernet connection, ensure BattlEye is not blocked by your firewall, and update your platform software.' } },
-      { '@type': 'Question', name: 'When is Marathon ranked queue open?', acceptedAnswer: { '@type': 'Answer', text: 'The Ranked queue opens Sunday at 10 AM PT and closes Thursday at 10 AM PT. Outside that window, only Casual queues are available. Holotag targets and zone selection rotate with each opening.' } },
+      { '@type': 'Question', name: 'When does Marathon ranked return in Season 2?', acceptedAnswer: { '@type': 'Answer', text: 'Marathon ranked returns June 14, 2026, in Season 2. Season 2 merges the previous Low Stakes and High Stakes queues into a single 5,000 loadout-value ranked queue, with faster progression and Holotag requirements tied to your current rank. Ranked tiers reset with the new season, requiring placement before official rank assignments resume.' } },
     ],
   };
 
@@ -322,19 +359,19 @@ export default async function StatusPage() {
           })}
 
           {/* Ranked Queue Status Card */}
-          <div className="st-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + (queueStatus.isOpen ? GREEN : ORANGE), borderRadius: '0 0 2px 2px', padding: '18px 20px' }}>
+          <div className="st-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + queueColor, borderRadius: '0 0 2px 2px', padding: '18px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <div style={{ fontSize: 24, flexShrink: 0 }}>◎</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: 1, marginBottom: 2 }}>RANKED QUEUE</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: queueStatus.isOpen ? GREEN : ORANGE }} />
-                  <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: queueStatus.isOpen ? GREEN : ORANGE, letterSpacing: 1 }}>{queueStatus.isOpen ? 'OPEN' : 'CLOSED'}</span>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: queueColor }} />
+                  <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: queueColor, letterSpacing: 1 }}>{queueLabel}</span>
                 </div>
               </div>
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4, marginTop: 8, paddingTop: 8, borderTop: '1px solid ' + BORDER }}>
-              {queueStatus.isOpen ? 'Closes Thursday 10AM PT' : 'Reopens Sunday 10AM PT'}
+              {queueSub}
             </div>
             <Link href="/ranked" style={{ fontFamily: 'monospace', fontSize: 9, color: YELLOW, marginTop: 8, display: 'inline-block', letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
               RANKED GUIDE →
