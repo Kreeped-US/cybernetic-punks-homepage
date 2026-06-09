@@ -92,7 +92,7 @@ Another paragraph in the same section, separated by a blank line.
 
 Body text for the next section.
 
-- WRONG shape (do not do this): "...end of a sentence. **THE NEXT SECTION** Body text continuing on the same line..." - the header is fused and will not render as a section break.
+- WRONG shape (do not do this): "...end of a sentence. **THE NEXT SECTION** Body text continuing on the same line..." - the header is fused and will not render as a section break.`;
 
 // ===========================================================
 // CANONICAL TAG STANDARD - PERMANENT - APPLIES TO ALL EDITORS
