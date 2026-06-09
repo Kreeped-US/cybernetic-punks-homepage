@@ -378,14 +378,14 @@ export default async function Home() {
                 </div>
                 <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-around', gap: 8, position: 'relative', zIndex: 1 }}>
                   {[
-                    { name: 'DEXTER', color: '#ff8800', label: 'Build Score' },
-                    { name: 'NEXUS', color: '#00d4ff', label: 'Meta Score' },
-                    { name: 'MIRANDA', color: '#9b5de5', label: 'Runner Type' },
+                    { name: 'Build AI', img: 'dexter', color: '#ff8800', label: 'Build Score' },
+                    { name: 'Meta AI', img: 'nexus', color: '#00d4ff', label: 'Meta Score' },
+                    { name: 'Field-Guide AI', img: 'miranda', color: '#9b5de5', label: 'Runner Type' },
                   ].map(function(ed) {
                     return (
                       <div key={ed.name} style={{ textAlign: 'center', flex: 1 }}>
                         <div style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid ' + ed.color + '50', background: '#0e1014', overflow: 'hidden', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img src={'/images/editors/' + ed.name.toLowerCase() + '.jpg'} alt={ed.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                          <img src={'/images/editors/' + ed.img + '.jpg'} alt={ed.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                         </div>
                         <div style={{ fontSize: 8, color: ed.color, letterSpacing: 1, fontWeight: 700, marginTop: 5, fontFamily: 'monospace' }}>{ed.name}</div>
                         <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 0.5, fontWeight: 700, marginTop: 2, fontFamily: 'monospace' }}>{ed.label}</div>

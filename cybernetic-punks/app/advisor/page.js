@@ -100,7 +100,7 @@ const breadcrumbSchema = {
 const webApplicationSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'DEXTER Build Advisor',
+  name: 'Marathon Build Advisor',
   description: 'Marathon loadout generator. Pick your Runner shell, playstyle, and rank target, and get a complete build — primary weapon, secondary, mods, cores, implants, and a Cradle stat-track plan — drawn from live meta data.',
   url: 'https://cyberneticpunks.com/advisor',
   applicationCategory: 'GameApplication',
