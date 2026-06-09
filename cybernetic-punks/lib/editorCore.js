@@ -73,7 +73,26 @@ VIDEO & STREAM CONTENT - CRITICAL:
 WORLD FACTS & GAME SYSTEMS - CRITICAL:
 - Game-world facts not held in the database below - map zones, named bosses, game modes, in-game events, currencies, seasonal mechanics, ability names, patch specifics - may ONLY be stated when they appear in the OFFICIAL BUNGIE NEWS provided in this prompt or in the database blocks below.
 - NEVER invent a boss name, zone name, mode name, event name, currency amount, date, percentage, or ability name. If it is not in your verified sources, omit it.
-- Shell ability names must match the SHELL STATS DATABASE exactly. If an ability is not listed there, do not name it.`;
+- Shell ability names must match the SHELL STATS DATABASE exactly. If an ability is not listed there, do not name it.
+
+ARTICLE STRUCTURE & FORMATTING - CRITICAL:
+- Break the article into at least 3 sections. Each section begins with a short header.
+- Write each header on ITS OWN LINE as **HEADER TEXT**, with a BLANK LINE before it and a BLANK LINE after it. The header line must contain ONLY the header.
+- NEVER place a header on the same line as sentence text. NEVER glue a header to the paragraph that follows it. A header fused into body text breaks the page rendering.
+- Separate every paragraph from the next with a blank line (a fully empty line), not just a single line break.
+- CORRECT shape (note the blank lines):
+
+**THE OPENING SECTION**
+
+Body text for this section begins here as its own paragraph.
+
+Another paragraph in the same section, separated by a blank line.
+
+**THE NEXT SECTION**
+
+Body text for the next section.
+
+- WRONG shape (do not do this): "...end of a sentence. **THE NEXT SECTION** Body text continuing on the same line..." - the header is fused and will not render as a section break.
 
 // ===========================================================
 // CANONICAL TAG STANDARD - PERMANENT - APPLIES TO ALL EDITORS
@@ -900,6 +919,8 @@ export function buildMirandaPrompt(data) {
       '3. If a detail is not in the source text, do not include it. A shorter, fully-accurate article is correct; a padded one with invented specifics is not.\n' +
       '4. Refer to the creator by the exact name provided. Do not invent alternate handles, real names, or affiliations.\n' +
       '5. You may add neutral framing/context about Marathon itself using your verified game knowledge, but every claim ABOUT THE CREATOR or the events described must trace directly to the vetted source text.\n' +
+      '6. Do NOT inflate the creator\'s achievement beyond the source. If the source states a level or number, do not call it a "cap," "max," or "the highest" unless the source explicitly says so. Do not state or imply the creator plays a particular mode (e.g. ranked), holds a status, or has a reputation that the source did not establish. Stick to exactly what the source claims, no more.\n' +
+      '7. STRUCTURE: break the article into sections. Write each section header on its OWN LINE as **HEADER TEXT** with a blank line before and after it. Never put a header on the same line as body text, and never glue a header to the paragraph that follows. Separate paragraphs with a blank line.\n' +
       '---';
   } else if (_directive) {
     directiveBlock = `\n\n--- EDITOR DIRECTIVE - THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\nASSIGNMENT: ${_directive.instruction}\n${_directive.url ? 'SOURCE URL: ' + _directive.url + '\n' : ''}Write your article specifically about this topic. This overrides your normal content selection.\n---`;
