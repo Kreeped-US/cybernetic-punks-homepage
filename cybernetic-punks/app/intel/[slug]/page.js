@@ -118,24 +118,68 @@ function creatorSocialLinks(info) {
   return out;
 }
 
-// ─── BODY PARSER (FIXED) ─────────────────────────────────────
+// ─── BODY PARSER ─────────────────────────────────────────────
+// Turns a raw markdown-ish body into typed elements: header | quote | para.
+//
+// Rules, in order:
+//  1. A paragraph that is ENTIRELY **bold** -> header (e.g. GHOST sometimes
+//     puts the section title on its own line — the clean case).
+//  2. A paragraph that is ENTIRELY a quoted line ("...") -> pull-quote, so a
+//     standalone creator quote breaks the wall as a styled block. Attributed
+//     quotes ("...," she said) correctly stay paragraphs (they don't end on ").
+//  3. A paragraph that STARTS with **Header** fused to following text ->
+//     split into a header element + the remaining paragraph. This is the
+//     common GHOST inconsistency that produced the "blob": header and first
+//     sentence glued together. The leading bold only counts as a header when
+//     it's short (<=60 chars) and contains no sentence punctuation — so
+//     mid-sentence emphasis like "**Arachne Rank 25**" is NOT mistaken for one.
+//  4. Otherwise -> paragraph (inline **bold** preserved downstream).
+function isWholeQuote(s) {
+  // starts and ends with a double-quote and contains exactly one pair
+  return s.length > 2 && s.charAt(0) === '"' && s.charAt(s.length - 1) === '"'
+    && (s.match(/"/g) || []).length === 2;
+}
+
 function parseBody(body) {
   if (!body) return [];
   var elements = [];
   var paragraphs = body.split(/\n{2,}/);
 
   paragraphs.forEach(function(rawPara, paraIdx) {
-    var para = rawPara.trim();
+    var para = rawPara.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
     if (!para) return;
 
-    var headerMatch = para.match(/^\*\*\s*([^*]+?)\s*\*\*$/);
-    if (headerMatch && headerMatch[1].length <= 120) {
-      elements.push({ type: 'header', content: headerMatch[1].trim(), key: 'h-' + paraIdx });
+    // Rule 1: whole-paragraph bold header
+    var fullHeader = para.match(/^\*\*\s*([^*]+?)\s*\*\*$/);
+    if (fullHeader && fullHeader[1].length <= 120) {
+      elements.push({ type: 'header', content: fullHeader[1].trim(), key: 'h-' + paraIdx });
       return;
     }
 
-    var content = para.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-    elements.push({ type: 'para', content: content, key: 'p-' + paraIdx });
+    // Rule 2: standalone pull-quote
+    if (isWholeQuote(para)) {
+      elements.push({ type: 'quote', content: para.slice(1, -1).trim(), key: 'q-' + paraIdx });
+      return;
+    }
+
+    // Rule 3: leading **Header** fused to body text
+    var lead = para.match(/^\*\*\s*([^*]+?)\s*\*\*\s+(.+)$/);
+    if (lead) {
+      var head = lead[1].trim();
+      var rest = lead[2].trim();
+      if (head.length <= 60 && !/[.!?]/.test(head)) {
+        elements.push({ type: 'header', content: head, key: 'h-' + paraIdx });
+        if (isWholeQuote(rest)) {
+          elements.push({ type: 'quote', content: rest.slice(1, -1).trim(), key: 'q-' + paraIdx + 'b' });
+        } else {
+          elements.push({ type: 'para', content: rest, key: 'p-' + paraIdx + 'b' });
+        }
+        return;
+      }
+    }
+
+    // Rule 4: default paragraph
+    elements.push({ type: 'para', content: para, key: 'p-' + paraIdx });
   });
 
   return elements;
@@ -689,8 +733,27 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
             </div>
           );
         }
+        if (el.type === 'quote') {
+          return (
+            <blockquote key={el.key} style={{
+              margin: '28px 0',
+              padding: '4px 0 4px 24px',
+              borderLeft: '3px solid ' + editorColor,
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 22,
+              fontWeight: 700,
+              lineHeight: 1.4,
+              color: 'rgba(255,255,255,0.92)',
+              letterSpacing: '-0.2px',
+            }}>
+              <span style={{ color: editorColor, marginRight: 4 }}>&ldquo;</span>
+              {el.content}
+              <span style={{ color: editorColor, marginLeft: 2 }}>&rdquo;</span>
+            </blockquote>
+          );
+        }
         return (
-          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.85, margin: '0 0 18px', letterSpacing: 0.1 }}>
+          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.85, margin: '0 0 18px', letterSpacing: 0.1, maxWidth: 680 }}>
             <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
           </p>
         );
