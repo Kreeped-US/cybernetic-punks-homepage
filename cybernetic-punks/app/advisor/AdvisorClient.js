@@ -78,7 +78,7 @@ const CRADLE_TRACK_COLORS = {
 };
 
 const SCAN_STEPS = [
-  'INITIALIZING DEXTER BUILD ENGINE',
+  'INITIALIZING BUILD ENGINE',
   'ACCESSING MOD DATABASE',
   'SCANNING CORE REGISTRY',
   'ANALYZING IMPLANT SYNERGIES',
@@ -86,7 +86,7 @@ const SCAN_STEPS = [
   'CROSS-REFERENCING META TIER DATA',
   'CALCULATING WEAPON PAIRING EFFICIENCY',
   'OPTIMIZING FOR TARGET RANK',
-  'DEXTER ENGINEERING LOADOUT',
+  'ENGINEERING LOADOUT',
   'FINALIZING BUILD PARAMETERS',
 ];
 
@@ -354,7 +354,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
         <section style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ff8800', boxShadow: '0 0 6px rgba(255,136,0,0.5)' }} />
-            <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700 }}>DEXTER · BUILD ENGINE</span>
+            <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700 }}>BUILD ENGINE</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 20 }}>
@@ -368,8 +368,8 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
               </h2>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
                 {isPrefilled
-                  ? 'We\'ve pre-filled your profile preferences. Tweak anything, then let DEXTER engineer the full loadout — including a Cradle stat plan.'
-                  : 'Tell DEXTER your shell and playstyle. Get a complete loadout — weapons, mods, cores, implants, and a Cradle stat plan — engineered from live meta data.'}
+                  ? 'We\'ve pre-filled your profile preferences. Tweak anything, then let the build engine assemble the full loadout — including a Cradle stat plan.'
+                  : 'Tell us your shell and playstyle. Get a complete loadout — weapons, mods, cores, implants, and a Cradle stat plan — engineered from live meta data.'}
               </p>
             </div>
 
@@ -403,7 +403,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
               SURPRISE ME
             </button>
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
-              Not sure where to start? Let DEXTER pick a shell and engineer a build instantly.
+              Not sure where to start? Let the build engine pick a shell and engineer a build instantly.
             </span>
           </div>
 
@@ -754,7 +754,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
             {shellConfig ? shellConfig.symbol : '⬢'}
           </div>
 
-          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, letterSpacing: 3, color: accentColor, marginBottom: 5 }}>DEXTER ANALYZING</div>
+          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, letterSpacing: 3, color: accentColor, marginBottom: 5 }}>ANALYZING BUILD</div>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 24, fontFamily: 'monospace', fontWeight: 700 }}>
             {selectedShell ? selectedShell.toUpperCase() : ''} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(PRIORITIES.find(function(p) { return p.id === priority; }) || {}).label}
           </div>
@@ -805,7 +805,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
           {/* ══ HEADER ═══════════════════════════════════════ */}
           <div className="result-block" style={{ marginBottom: 18, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 4, fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase' }}>DEXTER Build Advisor</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 4, fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase' }}>Build Advisor</div>
               <div style={{ fontSize: 12, fontWeight: 700, color: accentColor, letterSpacing: 2, fontFamily: 'monospace' }}>
                 {build.shell ? build.shell.toUpperCase() : ''} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(RANK_TARGETS.find(function(r) { return r.id === rankTarget; }) || {}).label}
               </div>
@@ -829,7 +829,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
               {/* Top — grade + name */}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: isMobile ? '20px' : '24px 28px', gap: 16, flexWrap: 'wrap', borderBottom: '1px solid #22252e', background: 'linear-gradient(135deg, ' + accentColor + '0a 0%, transparent 60%)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 8, color: accentColor + 'aa', letterSpacing: 3, marginBottom: 8, fontWeight: 700, fontFamily: 'monospace' }}>DEXTER BUILD REPORT</div>
+                  <div style={{ fontSize: 8, color: accentColor + 'aa', letterSpacing: 3, marginBottom: 8, fontWeight: 700, fontFamily: 'monospace' }}>BUILD REPORT</div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: isMobile ? 18 : 24, fontWeight: 900, color: '#fff', letterSpacing: 1, marginBottom: 8, wordBreak: 'break-word', lineHeight: 1.2 }}>
                     "{build.build_name || 'CUSTOM BUILD'}"
                   </div>
@@ -987,10 +987,10 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
             </div>
           </div>
 
-          {/* ══ DEXTER ANALYSIS ════════════════════════════════ */}
+          {/* ══ BUILD ANALYSIS ════════════════════════════════ */}
           <div className="result-block" style={{ animationDelay: '0.2s', marginBottom: 12 }}>
             <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + accentColor, borderRadius: '0 3px 3px 0', padding: '18px 22px' }}>
-              <div style={{ fontSize: 9, color: '#ff8800', letterSpacing: 3, marginBottom: 10, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>⬢ DEXTER Analysis</div>
+              <div style={{ fontSize: 9, color: '#ff8800', letterSpacing: 3, marginBottom: 10, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>⬢ Build Analysis</div>
               <div style={{ fontSize: isMobile ? 14 : 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8 }}>{build.dexter_analysis}</div>
             </div>
           </div>
@@ -1064,7 +1064,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
             <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + accentColor, borderRadius: '0 0 3px 3px', padding: '18px 22px' }}>
               <div style={{ marginBottom: 14, padding: '12px 14px', background: accentColor + '08', border: '1px solid ' + accentColor + '22', borderLeft: '3px solid ' + accentColor, borderRadius: '0 3px 3px 0' }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: accentColor, letterSpacing: 1.5, marginBottom: 4, fontFamily: 'Orbitron, monospace' }}>
-                  ⬢ SHARE YOUR DEXTER BUILD
+                  ⬢ SHARE YOUR BUILD
                 </div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
                   Post your loadout card to X or Discord. 1200×630 — built to post.
