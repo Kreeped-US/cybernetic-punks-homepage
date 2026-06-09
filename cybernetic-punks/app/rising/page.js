@@ -669,7 +669,7 @@ export default async function RisingPage() {
             textDecoration: 'none',
             letterSpacing: 1.5,
           }}>
-            ◇ GHOST INTEL
+            ◇ COMMUNITY INTEL
           </Link>
           <Link href="/editors" style={{
             fontFamily: 'Orbitron, monospace',
@@ -726,7 +726,7 @@ export default async function RisingPage() {
             fontWeight: 700,
           }}
         >
-          ← BACK TO THE GRID
+          ← BACK TO HOME
         </Link>
       </section>
 
