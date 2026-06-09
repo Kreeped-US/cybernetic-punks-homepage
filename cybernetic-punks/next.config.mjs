@@ -5,6 +5,20 @@ const nextConfig = {
       allowedOrigins: ['cyberneticpunks.com', 'www.cyberneticpunks.com'],
     },
   },
+  async redirects() {
+    return [
+      {
+        source: '/grid',
+        destination: '/editors',
+        permanent: true,
+      },
+      {
+        source: '/grid/:slug*',
+        destination: '/editors',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
