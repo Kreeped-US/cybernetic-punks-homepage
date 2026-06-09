@@ -304,32 +304,30 @@ export default async function RisingPage() {
         </div>
       </section>
 
-      {/* ─── LIVE RISING RUNNERS WIDGET ──────────────── */}
-      <RisingRunners />
-
-      {/* ─── CREATOR SPOTLIGHTS ──────────────────────── */}
-      <section style={{ maxWidth: 1200, margin: '48px auto 0', padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+      {/* ─── CREATOR SPOTLIGHTS (lead section) ───────── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <span style={{ fontSize: 22, color: GHOST }}>◇</span>
           <h2 style={{
             fontFamily: 'Orbitron, monospace',
-            fontSize: 20,
-            fontWeight: 800,
-            color: GHOST,
-            letterSpacing: '-0.3px',
+            fontSize: 26,
+            fontWeight: 900,
+            color: '#ffffff',
+            letterSpacing: '-0.5px',
             margin: 0,
           }}>
-            CREATOR SPOTLIGHTS
+            CREATOR <span style={{ color: GHOST }}>SPOTLIGHTS</span>
           </h2>
           <div style={{ flex: 1, height: 1, background: BORDER_SUBTLE }} />
         </div>
         <p style={{
-          fontSize: 14,
-          color: 'rgba(255,255,255,0.5)',
+          fontSize: 15,
+          color: 'rgba(255,255,255,0.55)',
           lineHeight: 1.6,
           maxWidth: 720,
           margin: '0 0 24px',
         }}>
-          Our editors spotlight Marathon creators worth knowing — their stories, their plays, and what they bring to the community. Written coverage of the people shaping the Marathon scene.
+          Marathon creators worth knowing — their stories, their plays, and what they bring to the community. The people shaping the scene, covered in depth.
         </p>
 
         {spotlights.length === 0 ? (
@@ -563,6 +561,11 @@ export default async function RisingPage() {
           </div>
         )}
       </section>
+
+      {/* ─── LIVE RISING RUNNERS WIDGET ──────────────── */}
+      <div style={{ marginTop: 56 }}>
+        <RisingRunners />
+      </div>
 
       {/* ─── HOW WE FIND THEM ────────────────────────── */}
       <section style={{ maxWidth: 1200, margin: '40px auto 64px', padding: '0 24px' }}>

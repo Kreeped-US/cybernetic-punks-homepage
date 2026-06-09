@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
+import { getUserAvatars } from '@/lib/gather/twitch';
 import Footer from '@/components/Footer';
 import CoachCTA from '@/components/CoachCTA';
 import Link from 'next/link';
@@ -47,6 +48,18 @@ const RARITY_COLORS = {
   Contraband: '#ff2d55',
 };
 
+// Platform accent colors + labels for the creator-spotlight follow links
+const PLATFORM_COLORS = {
+  x:       '#ffffff',
+  twitch:  '#a970ff',
+  youtube: '#ff4444',
+};
+const PLATFORM_LABELS = {
+  x:       'X',
+  twitch:  'TWITCH',
+  youtube: 'YOUTUBE',
+};
+
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   var diff = Date.now() - new Date(dateStr).getTime();
@@ -78,36 +91,49 @@ function extractTwitchClipSlug(url) {
   return m ? m[1] : null;
 }
 
+// Extract a twitch login from a creator_info.twitch URL.
+function twitchLoginFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    var clean = url.split('?')[0].replace(/\/+$/, '');
+    var parts = clean.split('/');
+    var last = parts[parts.length - 1];
+    return last ? last.toLowerCase() : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Build ordered {key, url} social links from a creator_info object.
+function creatorSocialLinks(info) {
+  if (!info) return [];
+  var order = ['x', 'twitch', 'youtube'];
+  var out = [];
+  for (var i = 0; i < order.length; i++) {
+    var key = order[i];
+    if (info[key] && typeof info[key] === 'string' && info[key].trim().length > 0) {
+      out.push({ key: key, url: info[key] });
+    }
+  }
+  return out;
+}
+
 // ─── BODY PARSER (FIXED) ─────────────────────────────────────
-// OLD parser turned every **bold** chunk into a giant section header,
-// even when the bold was inline in a sentence. This shredded paragraphs
-// like "Total investment: **Arachne Rank 25** (3 unlocks)..." into
-// fragmented headers and orphan sentence pieces.
-//
-// NEW parser: A header is ONLY a paragraph that consists ENTIRELY of
-// **bold text** — meaning the whole line/paragraph is wrapped. Inline
-// bold within a sentence stays as inline emphasis.
 function parseBody(body) {
   if (!body) return [];
   var elements = [];
-
-  // Split into paragraphs first (one or more blank lines)
   var paragraphs = body.split(/\n{2,}/);
 
   paragraphs.forEach(function(rawPara, paraIdx) {
     var para = rawPara.trim();
     if (!para) return;
 
-    // Check if entire paragraph is wrapped in **...** (a real header)
-    // Allow optional leading/trailing whitespace inside the wrapping
     var headerMatch = para.match(/^\*\*\s*([^*]+?)\s*\*\*$/);
     if (headerMatch && headerMatch[1].length <= 120) {
       elements.push({ type: 'header', content: headerMatch[1].trim(), key: 'h-' + paraIdx });
       return;
     }
 
-    // Otherwise treat as a paragraph with possible inline bold
-    // Collapse single newlines into spaces so multi-line paragraphs flow
     var content = para.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
     elements.push({ type: 'para', content: content, key: 'p-' + paraIdx });
   });
@@ -117,7 +143,6 @@ function parseBody(body) {
 
 // Renders a paragraph with **inline bold** support
 function ParagraphContent({ text }) {
-  // Split on **bold** segments while preserving the segments
   var parts = text.split(/(\*\*[^*]+\*\*)/);
   return (
     <>
@@ -171,10 +196,125 @@ function StatBar({ label, value, max, color }) {
   );
 }
 
+// ─── CREATOR SPOTLIGHT HEADER ────────────────────────────────
+// Rendered at the top of the article body ONLY when the piece was produced
+// from a creator_spotlight directive and creator_info.name exists. Surfaces
+// the creator's avatar (Twitch, fetched in the router), name, and follow
+// links so the article reads as coverage OF a person, not a wall of text.
+// The avatar <img> renders only when a URL resolved server-side (no onError
+// handler — build rule digest 255968484); an editor-glyph placeholder is used
+// otherwise.
+function CreatorHeader({ info, avatarUrl, editorColor, editorGlyph }) {
+  var links = creatorSocialLinks(info);
+  var name = info && info.name ? info.name : 'Marathon Creator';
+
+  return (
+    <div style={{
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 18,
+      background: 'linear-gradient(135deg, #1a1d24 0%, #0e1014 100%)',
+      border: '1px solid #22252e',
+      borderLeft: '3px solid ' + editorColor,
+      borderRadius: 6,
+      padding: '18px 20px',
+      marginBottom: 28,
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', top: -50, right: -50, width: 140, height: 140,
+        background: editorColor, opacity: 0.06, borderRadius: '50%', pointerEvents: 'none',
+      }} />
+
+      {/* Avatar */}
+      <div style={{
+        flexShrink: 0,
+        width: 76,
+        height: 76,
+        borderRadius: '50%',
+        padding: 3,
+        background: 'linear-gradient(135deg, ' + editorColor + ' 0%, ' + editorColor + '44 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 0 18px ' + editorColor + '33',
+      }}>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={name}
+            width={70}
+            height={70}
+            style={{ width: 70, height: 70, borderRadius: '50%', objectFit: 'cover', display: 'block', background: '#0e1014' }}
+          />
+        ) : (
+          <div style={{
+            width: 70, height: 70, borderRadius: '50%', background: '#0e1014',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 28, color: editorColor,
+          }}>
+            {editorGlyph}
+          </div>
+        )}
+      </div>
+
+      {/* Name + meta + links */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 8, color: editorColor, letterSpacing: 2, fontWeight: 700,
+          fontFamily: 'monospace', marginBottom: 5, textTransform: 'uppercase',
+        }}>
+          Creator Spotlight
+        </div>
+        <div style={{
+          fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 800,
+          color: '#ffffff', letterSpacing: '0.2px', lineHeight: 1.1, marginBottom: 10,
+        }}>
+          {name}
+        </div>
+        {links.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: 8, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace',
+              letterSpacing: 1.5, fontWeight: 700, marginRight: 2,
+            }}>
+              FOLLOW
+            </span>
+            {links.map(function(link, li) {
+              var pc = PLATFORM_COLORS[link.key] || '#ffffff';
+              var isWhite = pc === '#ffffff';
+              return (
+                <a
+                  key={li}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 9,
+                    color: pc,
+                    background: isWhite ? 'rgba(255,255,255,0.06)' : pc + '14',
+                    border: '1px solid ' + (isWhite ? 'rgba(255,255,255,0.2)' : pc + '40'),
+                    borderRadius: 3,
+                    padding: '4px 11px',
+                    letterSpacing: 1.5,
+                    fontWeight: 700,
+                    fontFamily: 'monospace',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {PLATFORM_LABELS[link.key] || link.key.toUpperCase()}
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── INLINE STAT CARD ────────────────────────────────────────
-// Compact card rendered inline within the article body when an item
-// is mentioned for the first time. Image if available, themed icon
-// fallback otherwise. Click → scrolls to full sidebar entry.
 function InlineStatCard({ item, type, color }) {
   var imgSrc = null;
   if (type === 'shell' && item.image_filename) imgSrc = '/images/shells/' + item.image_filename;
@@ -201,7 +341,6 @@ function InlineStatCard({ item, type, color }) {
         maxWidth: '100%',
       }}
     >
-      {/* Image or icon */}
       <span
         style={{
           display: 'inline-flex',
@@ -223,7 +362,6 @@ function InlineStatCard({ item, type, color }) {
         )}
       </span>
 
-      {/* Name + meta */}
       <span style={{ display: 'inline-flex', flexDirection: 'column', minWidth: 0 }}>
         <span
           style={{
@@ -266,18 +404,11 @@ function InlineStatCard({ item, type, color }) {
 }
 
 // ─── INLINE-AWARE PARAGRAPH ──────────────────────────────────
-// Renders paragraph text with both inline **bold** AND inline stat
-// cards on the FIRST mention of each tracked item.
-// Once an item is rendered inline, it's marked in `mentionedSet` so
-// later mentions in the same article appear as plain bold text.
 function ParagraphWithCards({ text, allItems, mentionedSet }) {
-  // Build search list: longest names first to prevent partial matches
-  // (e.g. "Pinpoint Barrel Mk II" matches before "Pinpoint Barrel")
   var sorted = allItems.slice().sort(function(a, b) {
     return b.name.length - a.name.length;
   });
 
-  // Tokenize into segments: { type: 'text' | 'card', value }
   var segments = [{ type: 'text', value: text }];
 
   sorted.forEach(function(item) {
@@ -297,7 +428,6 @@ function ParagraphWithCards({ text, allItems, mentionedSet }) {
         newSegments.push(seg);
         return;
       }
-      // Found a mention. Split into [before, card, after]
       var before = seg.value.slice(0, idx);
       var match = seg.value.slice(idx, idx + item.name.length);
       var after = seg.value.slice(idx + item.name.length);
@@ -317,7 +447,6 @@ function ParagraphWithCards({ text, allItems, mentionedSet }) {
         if (seg.type === 'card') {
           return <InlineStatCard key={i} item={seg.item} type={seg.item._type} color={ITEM_COLORS[seg.item._type]} />;
         }
-        // text segment — handle inline **bold**
         return <ParagraphContent key={i} text={seg.value} />;
       })}
     </>
@@ -546,7 +675,6 @@ function EditorLanePage({ config, items }) {
 // ═══════════════════════════════════════════════════════════
 
 function BodyRenderer({ parsed, editorColor, allItems }) {
-  // Track items that have been rendered as inline cards (first mention only)
   var mentionedSet = new Set();
 
   return (
@@ -595,7 +723,6 @@ function SidebarItemCard({ item, type, editorColor }) {
   return (
     <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
-        {/* Thumbnail */}
         <div style={{
           width: 44, height: 44, flexShrink: 0,
           background: '#0e1014', border: '1px solid ' + typeColor + '40',
@@ -616,7 +743,6 @@ function SidebarItemCard({ item, type, editorColor }) {
           <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: typeColor, lineHeight: 1.3, marginBottom: 4 }}>
             {item.name}
           </div>
-          {/* Type info row */}
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
             {type === 'weapon' && item.weapon_type && (
               <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>
@@ -642,7 +768,6 @@ function SidebarItemCard({ item, type, editorColor }) {
         </div>
       </div>
 
-      {/* Type-specific body */}
       {type === 'shell' && (
         <>
           {item.base_health && <StatBar label="HP" value={item.base_health} max={200} color="#00ff41" />}
@@ -686,7 +811,7 @@ function SidebarItemCard({ item, type, editorColor }) {
 // ARTICLE PAGE
 // ═══════════════════════════════════════════════════════════
 
-function ArticlePage({ item, shells, weapons, mods, implants, comments, related }) {
+function ArticlePage({ item, shells, weapons, mods, implants, comments, related, creatorAvatar }) {
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
   var publishedAt = new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   var videoId = extractYouTubeId(item.source_url);
@@ -695,7 +820,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
   var articleUrl = 'https://cyberneticpunks.com/intel/' + item.slug;
   var rt = readTime(item.body);
 
-  // Detect mentions and tag with item type for downstream rendering
   var bodyLower = (item.body || '').toLowerCase();
   var mentionedShells = (shells || [])
     .filter(function(s) { return s.name && bodyLower.includes(s.name.toLowerCase()); })
@@ -712,13 +836,16 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
     .slice(0, 8)
     .map(function(imp) { return Object.assign({}, imp, { _type: 'implant' }); });
 
-  // Combined list for inline card rendering
   var allMentionedItems = [].concat(mentionedShells, mentionedWeapons, mentionedMods, mentionedImplants);
 
   var hasDataRef = allMentionedItems.length > 0;
 
   var parsed = parseBody(item.body);
   var hasThumbnail = !!(item.thumbnail || videoId);
+
+  // Creator spotlight detection — drives the CreatorHeader at the top of the body.
+  var ci = item.creator_info || {};
+  var isCreatorSpotlight = item.directive_type === 'creator_spotlight' && !!ci.name;
 
   var shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — via @Cybernetic87250') + '&url=' + encodeURIComponent(articleUrl);
   var shareReddit = 'https://www.reddit.com/submit?url=' + encodeURIComponent(articleUrl) + '&title=' + encodeURIComponent(item.headline);
@@ -735,20 +862,14 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
   };
   if (item.thumbnail) jsonLd.image = item.thumbnail;
 
-  // CREATOR SPOTLIGHT SEO (June 8, 2026): when this article was produced from a
-  // creator_spotlight directive, build a Person schema from the vetted creator_info
-  // and set it as the article's `about` (the subject of the piece). sameAs links the
-  // creator's canonical profiles so Google associates the article with the real person.
   var creatorPersonSchema = null;
-  var ci = item.creator_info || {};
-  if (item.directive_type === 'creator_spotlight' && ci.name) {
+  if (isCreatorSpotlight) {
     var sameAs = [ci.youtube, ci.x, ci.twitch, ci.other].filter(Boolean);
     creatorPersonSchema = {
       '@context': 'https://schema.org', '@type': 'Person',
       name: ci.name,
     };
     if (sameAs.length > 0) creatorPersonSchema.sameAs = sameAs;
-    // Tie the article to the person as its subject.
     jsonLd.about = { '@type': 'Person', name: ci.name };
     if (sameAs.length > 0) jsonLd.about.sameAs = sameAs;
   }
@@ -827,6 +948,10 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
               </div>
             )}
 
+            {isCreatorSpotlight && (
+              <CreatorHeader info={ci} avatarUrl={creatorAvatar} editorColor={editor.color} editorGlyph={editor.symbol} />
+            )}
+
             <div style={{ borderLeft: '1px solid ' + editor.color + '22', paddingLeft: 24 }}>
               <BodyRenderer parsed={parsed} editorColor={editor.color} allItems={allMentionedItems} />
             </div>
@@ -844,7 +969,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
 
             <div style={{ marginTop: 20, padding: '12px 16px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0' }}>
               <Link href="/advisor" style={{ fontSize: 11, color: '#ff8800', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>
-                ⬢ Want a build based on this intel? Ask DEXTER →
+                ⬢ Want a build based on this intel? Open the Build Advisor →
               </Link>
             </div>
 
@@ -852,7 +977,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
 
           </article>
 
-          {/* ══ DATA REFERENCE SIDEBAR ══════════════════════ */}
           {hasDataRef && (
             <aside style={{ position: 'sticky', top: 64, paddingTop: 32 }}>
               <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + editor.color, borderRadius: '0 0 3px 3px', padding: 18 }}>
@@ -880,7 +1004,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
           )}
         </div>
 
-        {/* ══ COMMENTS ═════════════════════════════════════ */}
         {comments && comments.length > 0 && (
           <div id="editor-reactions" style={{ marginTop: 14 }}>
             <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, overflow: 'hidden' }}>
@@ -912,7 +1035,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
           </div>
         )}
 
-        {/* ══ RELATED INTEL ═════════════════════════════════ */}
         {related && related.length > 0 && (
           <div style={{ marginTop: 40, paddingTop: 32, borderTop: '1px solid #1e2028' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -955,8 +1077,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related 
 // ═══════════════════════════════════════════════════════════
 
 export default async function IntelPage({ params }) {
-  // FIXED May 15, 2026: supabaseService moved inside handler to defer
-  // createClient until runtime. Module-scope init breaks Next.js 16 build.
   const supabaseService = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -973,9 +1093,6 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  // Note: Added image_filename to shells, weapons, implants queries so cards
-  // can render the visual representation of items mentioned in the body.
-  // Mods + cores have no images yet — they fall back to themed icon cards.
   var [itemResult, shellResult, weaponResult, modResult, implantResult] = await Promise.all([
     supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle(),
     supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name, image_filename').limit(20),
@@ -995,6 +1112,22 @@ export default async function IntelPage({ params }) {
   }
 
   if (!itemResult.data) notFound();
+
+  // Creator-spotlight avatar: only fetch when this article is a spotlight with a
+  // twitch handle. Normal articles skip this entirely (zero added cost). Never throws.
+  var creatorAvatar = null;
+  try {
+    var ciData = itemResult.data.creator_info || {};
+    if (itemResult.data.directive_type === 'creator_spotlight' && ciData.twitch) {
+      var loginClean = ciData.twitch.split('?')[0].replace(/\/+$/, '').split('/').pop();
+      if (loginClean) {
+        var avatarMap = await getUserAvatars([loginClean]);
+        creatorAvatar = avatarMap[loginClean.toLowerCase()] || null;
+      }
+    }
+  } catch (e) {
+    creatorAvatar = null;
+  }
 
   var related = [];
   try {
@@ -1018,6 +1151,7 @@ export default async function IntelPage({ params }) {
       implants={implantResult.data || []}
       comments={comments}
       related={related}
+      creatorAvatar={creatorAvatar}
     />
   );
 }
