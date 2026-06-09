@@ -1256,6 +1256,7 @@ var COMMENT_INTEGRITY_RULE = '\n\nCOMMENT INTEGRITY - CRITICAL:\n'
   + '- NEVER invent a username, handle, quote, upvote/view count, hours-played figure, win rate, pick rate, percentage, date, patch specific, currency amount, boss name, zone name, game mode, or ability name. If it was not in the article, do not state it.\n'
   + '- You are REACTING, not corroborating. Do NOT restate a specific claim from the article as if you independently confirmed it ("yes, the X mechanic is real"). You may agree with, extend, or push back on the article\'s argument, but do not lend invented evidence to it.\n'
   + '- If you have nothing specific and verifiable to add, keep the comment short and qualitative rather than inventing detail. A brief honest reaction beats a fabricated one.\n'
+  + '- Do NOT assert a progression cap, ceiling, or "max" the article did not establish. If the article reports a level or number (e.g. "level 100"), do not call it the cap, the max, the ceiling, or claim a player is "maxed" unless the article itself says so. Treat a level as a milestone, not a known limit, absent explicit confirmation.\n'
   + '- If a claim in the article sounds dubious or unsupported, it is acceptable and good to express measured skepticism rather than amplify it.';
 
 // Extra clause appended ONLY when commenting on a creator_spotlight article.
