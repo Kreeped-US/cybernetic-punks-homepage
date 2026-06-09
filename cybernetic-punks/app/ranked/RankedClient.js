@@ -363,7 +363,7 @@ export default function RankedClient({ data }) {
       {data.metaMovers.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00d4ff' }}>⬡ NEXUS - RANKED META MOVERS</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00d4ff' }}>⬡ RANKED META MOVERS</span>
             <div style={{ flex: 1, height: 1, background: '#22252e' }} />
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{data.metaMovers.length} TRACKED</span>
           </div>
@@ -423,7 +423,7 @@ export default function RankedClient({ data }) {
 
           <div style={{ background: '#1a1d24', border: '1px solid rgba(255,34,34,0.2)', borderLeft: '3px solid #ff2222', borderRadius: '0 2px 2px 0', padding: '14px 18px', marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
-              NEXUS has flagged these weapons as <strong style={{ color: '#ff2222' }}>not viable for ranked</strong> this cycle. Consider alternatives before queuing.
+              Our meta AI has flagged these weapons as <strong style={{ color: '#ff2222' }}>not viable for ranked</strong> this cycle. Consider alternatives before queuing.
             </div>
           </div>
 
@@ -617,7 +617,7 @@ export default function RankedClient({ data }) {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 12, color: isBanned ? 'rgba(255,50,50,0.5)' : 'rgba(255,255,255,0.55)', lineHeight: 1.4, marginBottom: 2 }}>{shell.why}</div>
                   {shell.isDBDriven && !isBanned && (
-                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', letterSpacing: 1, fontWeight: 700 }}>⬡ NEXUS-GRADED</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', letterSpacing: 1, fontWeight: 700 }}>⬡ AI-GRADED</div>
                   )}
                 </div>
                 <span style={{ fontFamily: 'monospace', fontSize: 9, color: isBanned ? 'rgba(255,50,50,0.4)' : 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>DETAILS →</span>
@@ -771,15 +771,15 @@ export default function RankedClient({ data }) {
               RANKED INTEL.<br /><span style={{ color: '#00ff41' }}>UPDATED DAILY.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-              NEXUS tracks the ranked tier list. DEXTER grades builds by Holotag viability. CIPHER analyzes ranked plays. MIRANDA publishes guides.
+              Our meta AI tracks the ranked tier list. Our build AI grades loadouts by Holotag viability. Our play-analysis AI breaks down ranked plays. Our field-guide AI writes the guides.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { href: '/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated daily by NEXUS' },
+              { href: '/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated daily by our meta AI' },
               { href: '/advisor',     color: '#ff8800', label: '⬢ BUILD ADVISOR',          desc: 'Ranked-viable loadouts' },
-              { href: '/intel/nexus', color: '#00d4ff', label: '⬡ NEXUS META ANALYSIS',    desc: 'Deep ranked breakdowns' },
-              { href: '/intel/cipher', color: '#ff2222', label: '◈ CIPHER PLAY ANALYSIS',   desc: 'Grade the best ranked plays' },
+              { href: '/intel/nexus', color: '#00d4ff', label: '⬡ META ANALYSIS',    desc: 'Deep ranked breakdowns' },
+              { href: '/intel/cipher', color: '#ff2222', label: '◈ PLAY ANALYSIS',   desc: 'Grade the best ranked plays' },
             ].map(function(l) {
               return (
                 <Link key={l.href} href={l.href} className="r-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + l.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>

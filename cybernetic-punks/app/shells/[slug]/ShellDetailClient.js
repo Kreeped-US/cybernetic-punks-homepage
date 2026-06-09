@@ -304,7 +304,7 @@ export default function ShellDetailClient({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 6 }}>
               {(metaTier?.note || metaTier?.ranked_note) && (
                 <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00d4ff', borderRadius: '0 3px 3px 0', padding: '14px 18px' }}>
-                  <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 2, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase' }}>⬡ NEXUS Analysis</div>
+                  <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 2, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase' }}>⬡ Meta AI Analysis</div>
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>{metaTier.note || metaTier.ranked_note}</div>
                 </div>
               )}
@@ -322,9 +322,9 @@ export default function ShellDetailClient({
         {nexusArticles.length > 0 && (
           <section style={{ paddingTop: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <span style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬡ NEXUS's Take</span>
+              <span style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬡ Meta AI's Take</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <Link href="/intel/nexus" style={{ fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL NEXUS →</Link>
+              <Link href="/intel/nexus" style={{ fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL META INTEL →</Link>
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 600 }}>
               Latest meta intel for {shellName}, updated as the meta shifts.
@@ -641,12 +641,12 @@ export default function ShellDetailClient({
         {dexterBuilds.length > 0 && (
           <section style={{ paddingTop: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ DEXTER's Picks</span>
+              <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ Build AI's Picks</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
               <Link href={'/advisor?shell=' + slug} style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 600 }}>
-              Top {shellName} builds engineered by DEXTER, sorted by Combat Effectiveness score.
+              Top {shellName} builds engineered by our build AI, sorted by Combat Effectiveness score.
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 6 }}>
@@ -823,7 +823,7 @@ export default function ShellDetailClient({
             <span style={{ fontSize: 18, color: color, lineHeight: 1 }}>{symbol}</span>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, color: color, letterSpacing: 2, marginBottom: 2, textTransform: 'uppercase' }}>Build This Shell</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>DEXTER engineers a full loadout</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Our build AI engineers a full loadout</div>
             </div>
             <span style={{ fontSize: 14, fontWeight: 800, color: color, marginLeft: 8 }}>→</span>
           </Link>

@@ -227,7 +227,7 @@ export default function WeaponDetailClient({
         {(metaTier?.note || metaTier?.ranked_note) && (
           <section style={{ paddingTop: 20 }}>
             <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00d4ff', borderRadius: '0 3px 3px 0', padding: '14px 18px' }}>
-              <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 2, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase' }}>⬡ NEXUS Analysis</div>
+              <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 2, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase' }}>⬡ Meta AI Analysis</div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>{metaTier.note || metaTier.ranked_note}</div>
             </div>
           </section>
@@ -274,7 +274,7 @@ export default function WeaponDetailClient({
         {dexterBuilds.length > 0 && (
           <section style={{ paddingTop: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ DEXTER's Picks</span>
+              <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ Build AI's Picks</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
               <Link href="/advisor" style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
             </div>
