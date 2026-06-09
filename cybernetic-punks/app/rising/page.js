@@ -17,6 +17,14 @@
 //   Page is now an async server component that fetches those articles. The
 //   live <RisingRunners /> Twitch widget is unchanged. Gives the page durable,
 //   indexable editorial content alongside the live feed.
+//
+// Updated June 9, 2026:
+// - Redesigned Creator Spotlight cards. Cards now surface the creator's social
+//   platforms (X / Twitch / YouTube) as clickable links pulled from
+//   creator_info, reinforcing the same Person/sameAs entity signals the article
+//   schema sends. Restructured so the card is a <div> (not a nested <Link>):
+//   the headline links to the article, the platform badges are sibling <a>
+//   tags opening in a new tab — no invalid <a>-inside-<a> nesting.
 
 import Link from 'next/link';
 import RisingRunners from '@/components/RisingRunners';
@@ -82,6 +90,19 @@ const EDITOR_COLORS = {
   MIRANDA: '#9b5de5',
 };
 
+// Platform accent colors for the social link badges on spotlight cards.
+const PLATFORM_COLORS = {
+  x:       '#ffffff',
+  twitch:  '#a970ff',
+  youtube: '#ff4444',
+};
+
+const PLATFORM_LABELS = {
+  x:       'X',
+  twitch:  'TWITCH',
+  youtube: 'YOUTUBE',
+};
+
 // ─── FAQ DATA — drives both visible section AND schema ───────
 const FAQS = [
   {
@@ -143,6 +164,22 @@ function timeAgo(dateStr) {
   if (hours < 1) return 'just now';
   if (hours < 24) return hours + 'h ago';
   return Math.floor(hours / 24) + 'd ago';
+}
+
+// Build an ordered list of {key, url} social links from a creator_info object.
+// Order is fixed (x, twitch, youtube) so cards read consistently. Only keys
+// that are present and non-empty produce a badge.
+function socialLinks(info) {
+  if (!info) return [];
+  var order = ['x', 'twitch', 'youtube'];
+  var out = [];
+  for (var i = 0; i < order.length; i++) {
+    var key = order[i];
+    if (info[key] && typeof info[key] === 'string' && info[key].trim().length > 0) {
+      out.push({ key: key, url: info[key] });
+    }
+  }
+  return out;
 }
 
 export default async function RisingPage() {
@@ -279,67 +316,127 @@ export default async function RisingPage() {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: 8,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: 12,
           }}>
             {spotlights.map(function(item, i) {
               var ec = EDITOR_COLORS[item.editor] || GHOST;
               var creatorName = item.creator_info && item.creator_info.name ? item.creator_info.name : null;
+              var links = socialLinks(item.creator_info);
               return (
-                <Link key={i} href={'/intel/' + item.slug} style={{
-                  textDecoration: 'none',
-                  display: 'block',
+                <div key={i} style={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   background: BG_CARD,
                   border: '1px solid ' + BORDER,
                   borderTop: '2px solid ' + ec,
                   borderRadius: '0 0 3px 3px',
-                  padding: '16px 18px',
+                  overflow: 'hidden',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <span style={{
-                      fontSize: 8,
-                      color: ec,
-                      background: ec + '18',
-                      border: '1px solid ' + ec + '35',
-                      borderRadius: 2,
-                      padding: '2px 7px',
-                      letterSpacing: 1.5,
-                      fontWeight: 700,
-                      fontFamily: 'monospace',
-                    }}>
-                      {item.editor || 'EDITOR'}
-                    </span>
-                    {creatorName && (
+                  {/* Card head + headline link to the article */}
+                  <Link href={'/intel/' + item.slug} style={{
+                    textDecoration: 'none',
+                    display: 'block',
+                    padding: '16px 18px 14px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                       <span style={{
-                        fontSize: 9,
-                        color: 'rgba(255,255,255,0.55)',
-                        letterSpacing: 1,
+                        fontSize: 8,
+                        color: ec,
+                        background: ec + '18',
+                        border: '1px solid ' + ec + '35',
+                        borderRadius: 2,
+                        padding: '2px 7px',
+                        letterSpacing: 1.5,
                         fontWeight: 700,
                         fontFamily: 'monospace',
                       }}>
-                        {creatorName}
+                        {item.editor || 'EDITOR'}
                       </span>
+                      <span style={{
+                        fontSize: 8,
+                        color: 'rgba(255,255,255,0.25)',
+                        marginLeft: 'auto',
+                        fontFamily: 'monospace',
+                        letterSpacing: 1,
+                      }}>
+                        {timeAgo(item.created_at)}
+                      </span>
+                    </div>
+
+                    {creatorName && (
+                      <div style={{
+                        fontFamily: 'Orbitron, monospace',
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        letterSpacing: '0.2px',
+                        marginBottom: 8,
+                        lineHeight: 1.2,
+                      }}>
+                        {creatorName}
+                      </div>
                     )}
-                    <span style={{
-                      fontSize: 8,
-                      color: 'rgba(255,255,255,0.25)',
-                      marginLeft: 'auto',
-                      fontFamily: 'monospace',
-                      letterSpacing: 1,
+
+                    <h3 style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: 'rgba(255,255,255,0.62)',
+                      lineHeight: 1.45,
+                      margin: 0,
                     }}>
-                      {timeAgo(item.created_at)}
-                    </span>
-                  </div>
-                  <h3 style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: 'rgba(255,255,255,0.88)',
-                    lineHeight: 1.4,
-                    margin: 0,
-                  }}>
-                    {item.headline}
-                  </h3>
-                </Link>
+                      {item.headline}
+                    </h3>
+                  </Link>
+
+                  {/* Social platform links — siblings of the article link, not
+                      nested inside it (avoids invalid <a>-in-<a>). */}
+                  {links.length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '0 18px 16px',
+                      flexWrap: 'wrap',
+                    }}>
+                      <span style={{
+                        fontSize: 8,
+                        color: 'rgba(255,255,255,0.3)',
+                        fontFamily: 'monospace',
+                        letterSpacing: 1.5,
+                        fontWeight: 700,
+                        marginRight: 2,
+                      }}>
+                        FOLLOW
+                      </span>
+                      {links.map(function(link, li) {
+                        var pc = PLATFORM_COLORS[link.key] || '#ffffff';
+                        return (
+                          <a
+                            key={li}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              fontSize: 9,
+                              color: pc,
+                              background: pc === '#ffffff' ? 'rgba(255,255,255,0.06)' : pc + '14',
+                              border: '1px solid ' + (pc === '#ffffff' ? 'rgba(255,255,255,0.2)' : pc + '40'),
+                              borderRadius: 3,
+                              padding: '4px 10px',
+                              letterSpacing: 1.5,
+                              fontWeight: 700,
+                              fontFamily: 'monospace',
+                              textDecoration: 'none',
+                            }}
+                          >
+                            {PLATFORM_LABELS[link.key] || link.key.toUpperCase()}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
