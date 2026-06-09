@@ -880,6 +880,17 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
   var videoId = extractYouTubeId(item.source_url);
   var isTwitch = isTwitchClipUrl(item.source_url);
   var twitchSlug = extractTwitchClipSlug(item.source_url);
+  // Label for the bottom "source" link — reflects the actual URL type so an X
+  // or other link isn't mislabeled as YOUTUBE. Embed still only fires for
+  // Twitch clips / YouTube (handled separately below).
+  var sourceLinkLabel = 'SOURCE';
+  if (item.source_url) {
+    var surl = item.source_url.toLowerCase();
+    if (surl.includes('twitch.tv')) sourceLinkLabel = 'TWITCH';
+    else if (surl.includes('youtube.com') || surl.includes('youtu.be')) sourceLinkLabel = 'YOUTUBE';
+    else if (surl.includes('x.com') || surl.includes('twitter.com')) sourceLinkLabel = 'X';
+    else if (surl.includes('reddit.com')) sourceLinkLabel = 'REDDIT';
+  }
   var articleUrl = 'https://cyberneticpunks.com/intel/' + item.slug;
   var rt = readTime(item.body);
 
@@ -1023,7 +1034,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginRight: 4, fontWeight: 700, fontFamily: 'monospace' }}>SHARE</div>
               <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '7px 13px', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>POST TO X</a>
               <a href={shareReddit} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '7px 13px', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>REDDIT</a>
-              {item.source_url && <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>▶ {isTwitch ? 'TWITCH' : 'YOUTUBE'} ↗</a>}
+              {item.source_url && <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>▶ {sourceLinkLabel} ↗</a>}
             </div>
 
             <div style={{ marginTop: 18 }}>

@@ -288,9 +288,32 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // directive's own creator_info (human-vetted) rather than anything the LLM
     // returned, so the structured data can't be fabricated. Standard articles
     // leave these at their column defaults.
+    //
+    // SOURCE URL (June 9, 2026): carry the directive's reference URL onto the
+    // article so the page can embed it (Twitch clip / YouTube) or link it
+    // (anything else). This runs AFTER the per-editor branches above (which
+    // null out source_url for GHOST/CIPHER), so for spotlights the directive
+    // URL wins. The `source` label is set by URL type so the article page's
+    // bottom source link isn't mislabeled (e.g. an X link wouldn't say
+    // "YOUTUBE"). Embedding only shows the real video; it never lets the editor
+    // describe clip contents, so the anti-fabrication guard is unaffected.
     if (directive && directive.directive_type === 'creator_spotlight') {
       insertData.directive_type = 'creator_spotlight';
       insertData.creator_info = directive.creator_info || {};
+      if (directive.url) {
+        insertData.source_url = directive.url;
+        var durl = directive.url.toLowerCase();
+        if (durl.includes('twitch.tv') || durl.includes('clips.twitch.tv')) {
+          insertData.source = 'TWITCH';
+        } else if (durl.includes('youtube.com') || durl.includes('youtu.be')) {
+          insertData.source = 'YOUTUBE';
+        } else if (durl.includes('x.com') || durl.includes('twitter.com')) {
+          insertData.source = 'X';
+        } else if (durl.includes('reddit.com')) {
+          insertData.source = 'REDDIT';
+        }
+        // else: leave whatever the per-editor branch set (e.g. REDDIT for GHOST)
+      }
     }
 
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
