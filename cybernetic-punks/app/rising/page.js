@@ -14,21 +14,22 @@
 // Updated June 8, 2026:
 // - Added Creator Spotlights section: lists creator_spotlight articles the
 //   editors have published (feed_items.directive_type = 'creator_spotlight').
-//   Page is now an async server component that fetches those articles. The
-//   live <RisingRunners /> Twitch widget is unchanged. Gives the page durable,
-//   indexable editorial content alongside the live feed.
 //
 // Updated June 9, 2026:
-// - Redesigned Creator Spotlight cards. Cards now surface the creator's social
-//   platforms (X / Twitch / YouTube) as clickable links pulled from
-//   creator_info, reinforcing the same Person/sameAs entity signals the article
-//   schema sends. Restructured so the card is a <div> (not a nested <Link>):
-//   the headline links to the article, the platform badges are sibling <a>
-//   tags opening in a new tab — no invalid <a>-inside-<a> nesting.
+// - Redesigned Creator Spotlight cards into horizontal "creator cards":
+//   real Twitch avatar on the left (fetched in one batched Helix call via
+//   getUserAvatars), ringed in the editor's accent color; creator name as the
+//   headline; clickable X / Twitch / YouTube follow links directly under the
+//   name; the article headline as the hook; editor byline as a corner tag.
+//   Card is a <div> wrapper so the social <a> tags and the article <Link> are
+//   siblings (no invalid <a>-in-<a>). Avatar <img> is only rendered when a URL
+//   resolved server-side (no onError handler — build rule digest 255968484);
+//   a glyph-in-accent-color placeholder is used otherwise.
 
 import Link from 'next/link';
 import RisingRunners from '@/components/RisingRunners';
 import { createClient } from '@supabase/supabase-js';
+import { getUserAvatars } from '@/lib/gather/twitch';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,13 +91,21 @@ const EDITOR_COLORS = {
   MIRANDA: '#9b5de5',
 };
 
-// Platform accent colors for the social link badges on spotlight cards.
+// Editor glyphs (used as the avatar placeholder when no Twitch image resolves)
+const EDITOR_GLYPHS = {
+  CIPHER:  '\u25C8', // ◈
+  NEXUS:   '\u2B21', // ⬡
+  DEXTER:  '\u2B22', // ⬢
+  GHOST:   '\u25C7', // ◇
+  MIRANDA: '\u25CE', // ◎
+};
+
+// Platform accent colors + labels for the social follow badges
 const PLATFORM_COLORS = {
   x:       '#ffffff',
   twitch:  '#a970ff',
   youtube: '#ff4444',
 };
-
 const PLATFORM_LABELS = {
   x:       'X',
   twitch:  'TWITCH',
@@ -131,8 +140,8 @@ const FAQS = [
   },
 ];
 
-// Fetch published creator-spotlight articles. Runs inside the component (never
-// at module scope) so createClient is deferred to runtime per the build rule.
+// Fetch published creator-spotlight articles. createClient is called inside the
+// function (never at module scope) per the Next.js 16 build rule.
 async function fetchCreatorSpotlights() {
   try {
     const supabase = createClient(
@@ -166,9 +175,21 @@ function timeAgo(dateStr) {
   return Math.floor(hours / 24) + 'd ago';
 }
 
-// Build an ordered list of {key, url} social links from a creator_info object.
-// Order is fixed (x, twitch, youtube) so cards read consistently. Only keys
-// that are present and non-empty produce a badge.
+// Extract a twitch login from a creator_info.twitch URL.
+// "https://www.twitch.tv/aiiygatorz" -> "aiiygatorz"
+function twitchLoginFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    var clean = url.split('?')[0].replace(/\/+$/, '');
+    var parts = clean.split('/');
+    var last = parts[parts.length - 1];
+    return last ? last.toLowerCase() : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Build ordered {key, url} social links from a creator_info object.
 function socialLinks(info) {
   if (!info) return [];
   var order = ['x', 'twitch', 'youtube'];
@@ -184,6 +205,23 @@ function socialLinks(info) {
 
 export default async function RisingPage() {
   const spotlights = await fetchCreatorSpotlights();
+
+  // Collect twitch logins from spotlights, fetch all avatars in ONE Helix call.
+  const logins = [];
+  for (let i = 0; i < spotlights.length; i++) {
+    const login = twitchLoginFromUrl(
+      spotlights[i].creator_info && spotlights[i].creator_info.twitch
+    );
+    if (login) logins.push(login);
+  }
+  let avatars = {};
+  if (logins.length > 0) {
+    try {
+      avatars = await getUserAvatars(logins);
+    } catch (e) {
+      avatars = {};
+    }
+  }
 
   return (
     <main style={{
@@ -316,30 +354,105 @@ export default async function RisingPage() {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: 12,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
+            gap: 16,
           }}>
             {spotlights.map(function(item, i) {
               var ec = EDITOR_COLORS[item.editor] || GHOST;
-              var creatorName = item.creator_info && item.creator_info.name ? item.creator_info.name : null;
-              var links = socialLinks(item.creator_info);
+              var glyph = EDITOR_GLYPHS[item.editor] || '\u25C7';
+              var info = item.creator_info || {};
+              var creatorName = info.name ? info.name : 'Marathon Creator';
+              var links = socialLinks(info);
+              var login = twitchLoginFromUrl(info.twitch);
+              var avatarUrl = login && avatars[login] ? avatars[login] : null;
+
               return (
                 <div key={i} style={{
+                  position: 'relative',
                   display: 'flex',
-                  flexDirection: 'column',
-                  background: BG_CARD,
+                  background: 'linear-gradient(135deg, ' + BG_CARD + ' 0%, ' + BG_DEEP + ' 100%)',
                   border: '1px solid ' + BORDER,
-                  borderTop: '2px solid ' + ec,
-                  borderRadius: '0 0 3px 3px',
+                  borderLeft: '3px solid ' + ec,
+                  borderRadius: 6,
                   overflow: 'hidden',
+                  minHeight: 132,
                 }}>
-                  {/* Card head + headline link to the article */}
-                  <Link href={'/intel/' + item.slug} style={{
-                    textDecoration: 'none',
-                    display: 'block',
-                    padding: '16px 18px 14px',
+                  {/* subtle accent glow in the corner */}
+                  <div style={{
+                    position: 'absolute',
+                    top: -40,
+                    right: -40,
+                    width: 120,
+                    height: 120,
+                    background: ec,
+                    opacity: 0.06,
+                    borderRadius: '50%',
+                    pointerEvents: 'none',
+                  }} />
+
+                  {/* ── AVATAR (left) ── */}
+                  <div style={{
+                    flexShrink: 0,
+                    width: 132,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 4px',
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <div style={{
+                      width: 84,
+                      height: 84,
+                      borderRadius: '50%',
+                      padding: 3,
+                      background: 'linear-gradient(135deg, ' + ec + ' 0%, ' + ec + '44 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 0 18px ' + ec + '33',
+                    }}>
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={creatorName}
+                          width={78}
+                          height={78}
+                          style={{
+                            width: 78,
+                            height: 78,
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            display: 'block',
+                            background: BG_DEEP,
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: 78,
+                          height: 78,
+                          borderRadius: '50%',
+                          background: BG_DEEP,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 30,
+                          color: ec,
+                        }}>
+                          {glyph}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── BODY (right) ── */}
+                  <div style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '14px 18px 14px 0',
+                    minWidth: 0,
+                  }}>
+                    {/* editor byline + timeago */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <span style={{
                         fontSize: 8,
                         color: ec,
@@ -351,7 +464,7 @@ export default async function RisingPage() {
                         fontWeight: 700,
                         fontFamily: 'monospace',
                       }}>
-                        {item.editor || 'EDITOR'}
+                        {(item.editor || 'EDITOR') + ' SPOTLIGHT'}
                       </span>
                       <span style={{
                         fontSize: 8,
@@ -364,78 +477,86 @@ export default async function RisingPage() {
                       </span>
                     </div>
 
-                    {creatorName && (
+                    {/* creator name (links to article) */}
+                    <Link href={'/intel/' + item.slug} style={{
+                      textDecoration: 'none',
+                      display: 'block',
+                    }}>
                       <div style={{
                         fontFamily: 'Orbitron, monospace',
-                        fontSize: 15,
+                        fontSize: 19,
                         fontWeight: 800,
                         color: '#ffffff',
                         letterSpacing: '0.2px',
-                        marginBottom: 8,
-                        lineHeight: 1.2,
+                        lineHeight: 1.15,
+                        marginBottom: 6,
                       }}>
                         {creatorName}
                       </div>
-                    )}
-
-                    <h3 style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: 'rgba(255,255,255,0.62)',
-                      lineHeight: 1.45,
-                      margin: 0,
-                    }}>
-                      {item.headline}
-                    </h3>
-                  </Link>
-
-                  {/* Social platform links — siblings of the article link, not
-                      nested inside it (avoids invalid <a>-in-<a>). */}
-                  {links.length > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '0 18px 16px',
-                      flexWrap: 'wrap',
-                    }}>
-                      <span style={{
-                        fontSize: 8,
-                        color: 'rgba(255,255,255,0.3)',
-                        fontFamily: 'monospace',
-                        letterSpacing: 1.5,
-                        fontWeight: 700,
-                        marginRight: 2,
+                      <div style={{
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: 'rgba(255,255,255,0.5)',
+                        lineHeight: 1.4,
+                        marginBottom: 10,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
                       }}>
-                        FOLLOW
-                      </span>
-                      {links.map(function(link, li) {
-                        var pc = PLATFORM_COLORS[link.key] || '#ffffff';
-                        return (
-                          <a
-                            key={li}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              fontSize: 9,
-                              color: pc,
-                              background: pc === '#ffffff' ? 'rgba(255,255,255,0.06)' : pc + '14',
-                              border: '1px solid ' + (pc === '#ffffff' ? 'rgba(255,255,255,0.2)' : pc + '40'),
-                              borderRadius: 3,
-                              padding: '4px 10px',
-                              letterSpacing: 1.5,
-                              fontWeight: 700,
-                              fontFamily: 'monospace',
-                              textDecoration: 'none',
-                            }}
-                          >
-                            {PLATFORM_LABELS[link.key] || link.key.toUpperCase()}
-                          </a>
-                        );
-                      })}
-                    </div>
-                  )}
+                        {item.headline}
+                      </div>
+                    </Link>
+
+                    {/* follow links (siblings of the article Link) */}
+                    {links.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        marginTop: 'auto',
+                        flexWrap: 'wrap',
+                      }}>
+                        {links.map(function(link, li) {
+                          var pc = PLATFORM_COLORS[link.key] || '#ffffff';
+                          var isWhite = pc === '#ffffff';
+                          return (
+                            <a
+                              key={li}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                fontSize: 9,
+                                color: pc,
+                                background: isWhite ? 'rgba(255,255,255,0.06)' : pc + '14',
+                                border: '1px solid ' + (isWhite ? 'rgba(255,255,255,0.2)' : pc + '40'),
+                                borderRadius: 3,
+                                padding: '4px 11px',
+                                letterSpacing: 1.5,
+                                fontWeight: 700,
+                                fontFamily: 'monospace',
+                                textDecoration: 'none',
+                              }}
+                            >
+                              {PLATFORM_LABELS[link.key] || link.key.toUpperCase()}
+                            </a>
+                          );
+                        })}
+                        <Link href={'/intel/' + item.slug} style={{
+                          fontSize: 9,
+                          color: 'rgba(255,255,255,0.4)',
+                          marginLeft: 'auto',
+                          fontFamily: 'monospace',
+                          letterSpacing: 1.5,
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}>
+                          READ →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -656,9 +777,7 @@ export default async function RisingPage() {
         }),
       }} />
 
-      {/* ItemList of creator spotlights — only when there are spotlights to list.
-          Mirrors the /meta and /guides ItemList markup so Google reads the page
-          as carrying a collection of editorial content, not just a live widget. */}
+      {/* ItemList of creator spotlights — only when there are spotlights to list. */}
       {spotlights.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{
           __html: JSON.stringify({
