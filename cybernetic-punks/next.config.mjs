@@ -17,6 +17,16 @@ const nextConfig = {
         destination: '/editors',
         permanent: true,
       },
+      {
+        source: '/play-of-the-day',
+        destination: '/builds',
+        permanent: true,
+      },
+      {
+        source: '/top-build',
+        destination: '/builds',
+        permanent: true,
+      },
     ];
   },
 };

@@ -68,8 +68,6 @@ export default async function sitemap() {
     { url: baseUrl + '/intel/dexter',  lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: baseUrl + '/intel/ghost',   lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: baseUrl + '/intel/miranda', lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: baseUrl + '/play-of-the-day', lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: baseUrl + '/top-build',     lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: baseUrl + '/guides',        lastModified: new Date(), changeFrequency: 'weekly', priority: 0.65 },
     { url: baseUrl + '/join',          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
   ];
