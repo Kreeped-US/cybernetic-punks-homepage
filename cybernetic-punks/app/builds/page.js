@@ -16,7 +16,6 @@
 // - Added 3 JSON-LD schemas (BreadcrumbList, CollectionPage w/ dateModified,
 //   FAQPage) replacing the single thin schema buried at the bottom.
 // - Added visible FAQ section (Google requires schema content be visible).
-// - Bottom CTA keeps DEXTER framing — it's the Build Advisor product itself.
 
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
@@ -991,12 +990,12 @@ export default async function BuildsPage() {
       {/* ══ BOTTOM CTA ═════════════════════════════════════ */}
       <section style={{ padding: '0 24px 64px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ORANGE, borderRadius: '0 2px 2px 0', padding: 28, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, color: ORANGE, letterSpacing: 3, marginBottom: 10, fontWeight: 700 }}>⬢ DEXTER · BUILD ENGINEER</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: ORANGE, letterSpacing: 3, marginBottom: 10, fontWeight: 700 }}>⬢ BUILD AI</div>
           <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: 1, marginBottom: 10, lineHeight: 1.2 }}>
             Want a <span style={{ color: ORANGE }}>personalized build</span>?
           </h2>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 540, margin: '0 auto 20px' }}>
-            Tell DEXTER your shell and playstyle — get a complete loadout with weapons, mods, cores, and implants in seconds. Faction-aware. Ranked-viability flagged.
+            Tell our build AI your shell and playstyle — get a complete loadout with weapons, mods, cores, and implants in seconds. Faction-aware. Ranked-viability flagged.
           </p>
           <Link href="/advisor" style={{ display: 'inline-block', padding: '12px 28px', background: ORANGE, color: '#000', fontFamily: 'monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
             LAUNCH BUILD ADVISOR →
