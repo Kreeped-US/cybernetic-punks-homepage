@@ -158,6 +158,57 @@ export async function getLiveStreamers() {
 }
 
 /**
+ * Fetch Twitch profile avatars for a list of logins (added June 9, 2026).
+ * Used by /rising to put real creator faces on the spotlight cards.
+ *
+ * Helix GET /users accepts up to 100 login params in a single request, so this
+ * is ONE API call regardless of how many creators are passed. Returns a plain
+ * object mapping lowercased login -> profile_image_url. On any failure (no
+ * credentials, API error, empty input) it returns an empty object, so callers
+ * can always safely do `avatars[login]` and fall back to a placeholder when
+ * undefined. Never throws.
+ *
+ * @param {string[]} logins - Twitch login names (case-insensitive)
+ * @returns {Promise<Object>} login(lowercase) -> avatar URL
+ */
+export async function getUserAvatars(logins) {
+  try {
+    if (!Array.isArray(logins) || logins.length === 0) return {};
+
+    // Normalize, dedupe, drop empties, cap at 100 (Helix limit).
+    const seen = {};
+    const clean = [];
+    for (let i = 0; i < logins.length; i++) {
+      const raw = logins[i];
+      if (typeof raw !== 'string') continue;
+      const login = raw.trim().toLowerCase();
+      if (!login || seen[login]) continue;
+      seen[login] = true;
+      clean.push(login);
+      if (clean.length >= 100) break;
+    }
+    if (clean.length === 0) return {};
+
+    const query = clean.map(function (l) { return 'login=' + encodeURIComponent(l); }).join('&');
+    const data = await twitchFetch('users?' + query);
+    if (!data || !data.data) return {};
+
+    const map = {};
+    for (let i = 0; i < data.data.length; i++) {
+      const u = data.data[i];
+      if (u && u.login && u.profile_image_url) {
+        map[u.login.toLowerCase()] = u.profile_image_url;
+      }
+    }
+    console.log('[GATHER:TWITCH] Resolved ' + Object.keys(map).length + ' creator avatars');
+    return map;
+  } catch (err) {
+    console.error('[GATHER:TWITCH] Avatar fetch error:', err.message);
+    return {};
+  }
+}
+
+/**
  * Format Twitch clips for CIPHER to analyze alongside YouTube videos
  */
 export function formatClipsForCipher(clips) {
