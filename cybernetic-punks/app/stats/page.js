@@ -626,7 +626,7 @@ export default function StatsPage() {
             textDecoration: 'none',
             letterSpacing: 1.5,
           }}>
-            DEXTER INTEL →
+            BUILD AI →
           </Link>
         </div>
       </section>

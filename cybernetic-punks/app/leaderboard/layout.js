@@ -1,9 +1,9 @@
 export const metadata = {
   title: 'Marathon Leaderboard — Top Runners & Creators',
-  description: 'Top Marathon runners and content creators ranked by CIPHER. Play grades, CE scores, and competitive standings tracked by CyberneticPunks.',
+  description: 'Top Marathon runners and content creators ranked by our play-analysis AI. Play grades, CE scores, and competitive standings tracked by CyberneticPunks.',
   openGraph: {
     title: 'Marathon Leaderboard — CyberneticPunks',
-    description: 'Top Marathon runners and content creators ranked by CIPHER.',
+    description: 'Top Marathon runners and content creators ranked by our play-analysis AI.',
     url: 'https://cyberneticpunks.com/leaderboard',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -13,7 +13,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Leaderboard — CyberneticPunks',
-    description: 'Top Marathon runners and content creators ranked by CIPHER.',
+    description: 'Top Marathon runners and content creators ranked by our play-analysis AI.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/leaderboard' },
