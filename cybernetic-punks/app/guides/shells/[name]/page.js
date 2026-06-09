@@ -414,11 +414,11 @@ export default async function ShellGuidePage({ params }) {
         </div>
       </section>
 
-      {/* ══ DEXTER BUILDS ═══════════════════════════════════ */}
+      {/* ══ BUILD AI ════════════════════════════════════════ */}
       {dexterBuilds.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>⬢ DEXTER BUILDS</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>⬢ BUILD AI</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <Link href="/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL BUILDS →</Link>
           </div>
@@ -443,11 +443,11 @@ export default async function ShellGuidePage({ params }) {
         </section>
       )}
 
-      {/* ══ MIRANDA STRATEGY GUIDES ═════════════════════════ */}
+      {/* ══ FIELD-GUIDE AI ══════════════════════════════════ */}
       {mirandaArticles.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: PURPLE }}>◎ MIRANDA STRATEGY</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: PURPLE }}>◎ FIELD-GUIDE AI</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <Link href="/intel/miranda" style={{ fontFamily: 'monospace', fontSize: 9, color: PURPLE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL GUIDES →</Link>
           </div>
@@ -483,7 +483,7 @@ export default async function ShellGuidePage({ params }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>RANKED-VIABLE WEAPONS</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
-            <Link href="/builds" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>BUILD LAB →</Link>
+            <Link href="/builds" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>BUILDS & LOADOUTS →</Link>
           </div>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 12, maxWidth: 680 }}>
             Top ranked-viable weapons by Firepower Score. Pair with {shell.name}\'s playstyle for optimal results. For full weapon analysis, visit the Build Lab.
@@ -549,7 +549,7 @@ export default async function ShellGuidePage({ params }) {
               GET A<br /><span style={{ color: shell.color }}>{shell.name.toUpperCase()} BUILD.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-              DEXTER will engineer a complete {shell.name} loadout — weapons, mods, implants, cores — tuned to your playstyle in seconds.
+              Our build AI will engineer a complete {shell.name} loadout — weapons, mods, implants, cores — tuned to your playstyle in seconds.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

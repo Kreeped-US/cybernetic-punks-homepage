@@ -27,7 +27,7 @@ var NAV_ITEMS = [
     label: 'TOOLS',
     activeOn: ['/advisor', '/cradle', '/builds', '/guides', '/status', '/join', '/me'],
     children: [
-      { label: 'BUILD ADVISOR',    href: '/advisor', desc: 'AI-engineered loadouts by DEXTER',      color: '#ff8800' },
+      { label: 'BUILD ADVISOR',    href: '/advisor', desc: 'AI-engineered loadouts',               color: '#ff8800' },
       { label: 'CRADLE PLANNER',   href: '/cradle',  desc: 'Plan your Season 2 Cradle build',       color: '#00f5ff' },
       { label: 'BUILD LAB',        href: '/builds',  desc: 'Shell builds & weapon browser' },
       { label: 'FIELD GUIDES',     href: '/guides',  desc: 'Shell breakdowns & strategy',           color: '#9b5de5' },

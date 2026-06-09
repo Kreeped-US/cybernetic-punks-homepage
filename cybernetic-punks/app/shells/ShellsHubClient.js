@@ -366,7 +366,7 @@ export default function ShellsHubClient(props) {
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#ff8800', letterSpacing: 2, marginBottom: 6, textTransform: 'uppercase' }}>Not sure which Shell to run?</div>
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 500 }}>
-              DEXTER will engineer a complete loadout based on your playstyle, rank target, and experience level.
+              Our build AI will engineer a complete loadout based on your playstyle, rank target, and experience level.
             </div>
           </div>
           <Link href="/advisor" style={{
