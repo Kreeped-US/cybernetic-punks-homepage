@@ -41,16 +41,19 @@ const GOLD = '#ffd700';
 const GHOST = '#00ff88';
 const CONTRABAND = '#ff2d55';
 
-// Maps that have a hero PNG at /public/images/maps/<slug>.png. Only slugs
-// listed here render a banner -- this prevents broken-image icons, since a
-// server component cannot use <img onError>. Add a slug when its PNG lands.
-const MAP_HERO_SLUGS = new Set([
-  'cryo-archive',
-  'dire-marsh',
-  'night-marsh',
-  'outpost',
-  'perimeter',
-]);
+// Maps that have a hero PNG at /public/images/maps/<slug>.png, keyed to the
+// real pixel dimensions of each PNG (used by the ImageObject JSON-LD). Only
+// slugs listed here render a banner AND advertise an image -- this prevents
+// broken-image icons, since a server component cannot use <img onError>.
+// Add an entry when a new map PNG lands (record its width/height).
+const MAP_HERO_IMAGES = {
+  'cryo-archive': { width: 1174, height: 890 },
+  'dire-marsh':   { width: 1114, height: 867 },
+  'night-marsh':  { width: 1114, height: 867 },
+  'outpost':      { width: 890,  height: 859 },
+  'perimeter':    { width: 944,  height: 900 },
+};
+const MAP_HERO_SLUGS = new Set(Object.keys(MAP_HERO_IMAGES));
 
 // key-tier -> color (rarity ladder)
 function keyTierColor(tier) {
@@ -302,6 +305,20 @@ export default async function MapPage({ params, searchParams }) {
     description: displaySummary || ('A map in Marathon, Bungie\'s extraction shooter.'),
   };
   if (mapProps.length > 0) mapEntity.additionalProperty = mapProps;
+
+  // Hero image -> ImageObject on the Place. Gated on the same allowlist as the
+  // banner, so a map without a PNG emits no image property at all.
+  if (MAP_HERO_SLUGS.has(slug)) {
+    var heroDims = MAP_HERO_IMAGES[slug];
+    mapEntity.image = {
+      '@type': 'ImageObject',
+      url: 'https://cyberneticpunks.com/images/maps/' + slug + '.png',
+      contentUrl: 'https://cyberneticpunks.com/images/maps/' + slug + '.png',
+      width: heroDims.width,
+      height: heroDims.height,
+      caption: 'Marathon ' + displayName + ' map',
+    };
+  }
 
   var webPageSchema = {
     '@context': 'https://schema.org',
