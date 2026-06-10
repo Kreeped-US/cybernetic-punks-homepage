@@ -29,7 +29,7 @@ var NAV_ITEMS = [
     children: [
       { label: 'BUILD ADVISOR',    href: '/advisor', desc: 'AI-engineered loadouts',               color: '#ff8800' },
       { label: 'CRADLE PLANNER',   href: '/cradle',  desc: 'Plan your Season 2 Cradle build',       color: '#00f5ff' },
-      { label: 'BUILD LAB',        href: '/builds',  desc: 'Shell builds & weapon browser' },
+      { label: 'BUILDS',           href: '/builds',  desc: 'Shell builds & weapon browser' },
       { label: 'FIELD GUIDES',     href: '/guides',  desc: 'Shell breakdowns & strategy',           color: '#9b5de5' },
       { label: 'SERVER STATUS',    href: '/status',  desc: 'Is Marathon down?' },
       { label: 'PERSONAL COACH ✦', href: '/join',    desc: 'AI loadout audit — closed beta',        color: '#00d4ff', beta: true },
