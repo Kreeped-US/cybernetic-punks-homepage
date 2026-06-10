@@ -3,6 +3,7 @@ import Footer from '@/components/Footer';
 import HomeEditorReactions from './HomeEditorReactions';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
+import { getUserAvatars } from '@/lib/gather/twitch';
 
 // ── METADATA ────────────────────────────────────────────────
 export const metadata = {
@@ -34,6 +35,19 @@ function timeAgo(dateStr) {
   if (diff < 3600)  return Math.floor(diff / 60)   + 'm ago';
   if (diff < 86400) return Math.floor(diff / 3600)  + 'h ago';
   return Math.floor(diff / 86400) + 'd ago';
+}
+
+// Extract a lowercased twitch login from a creator_info.twitch URL (mirrors /rising).
+function twitchLoginFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    var clean = url.split('?')[0].replace(/\/+$/, '');
+    var parts = clean.split('/');
+    var last = parts[parts.length - 1];
+    return last ? last.toLowerCase() : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 function formatNum(n) {
@@ -81,12 +95,20 @@ var SHELL_COLORS = {
   Rook: '#888888', Thief: '#ffd700', Triage: '#00ff88', Vandal: '#ff8800',
 };
 
+// Editor accent colors + glyphs for creator-spotlight cards (mirrors /rising).
+var EDITOR_ACCENT = {
+  CIPHER: '#ff2222', NEXUS: '#00d4ff', DEXTER: '#ff8800', GHOST: '#00ff88', MIRANDA: '#9b5de5',
+};
+var EDITOR_GLYPH = {
+  CIPHER: '◈', NEXUS: '⬡', DEXTER: '⬢', GHOST: '◇', MIRANDA: '◎',
+};
+
 // ── DATA FETCH ─────────────────────────────────────────────────
 async function getHomepageData() {
   try {
     var [
       tiersRes, weaponRes, shellRes, weaponImgRes, shellImgRes,
-      weeklyBuildsRes, shellListRes, lastUpdatedRes,
+      weeklyBuildsRes, shellListRes, lastUpdatedRes, spotlightRes,
     ] = await Promise.all([
       supabase
         .from('meta_tiers')
@@ -115,6 +137,14 @@ async function getHomepageData() {
         .eq('is_published', true)
         .order('created_at', { ascending: false })
         .limit(1),
+
+      supabase
+        .from('feed_items')
+        .select('headline, slug, editor, creator_info, created_at')
+        .eq('directive_type', 'creator_spotlight')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(3),
     ]);
 
     var weaponMap = {};
@@ -136,9 +166,10 @@ async function getHomepageData() {
       weeklyBuilds: weeklyBuildsRes.count || 0,
       shells:       shellListRes.data || [],
       lastUpdated:  (lastUpdatedRes.data || [])[0]?.created_at || null,
+      spotlights:   spotlightRes.data || [],
     };
   } catch (e) {
-    return { tiers: [], weaponCount: 0, shellCount: 0, weeklyBuilds: 0, shells: [], lastUpdated: null };
+    return { tiers: [], weaponCount: 0, shellCount: 0, weeklyBuilds: 0, shells: [], lastUpdated: null, spotlights: [] };
   }
 }
 
@@ -153,6 +184,18 @@ export default async function Home() {
   var weeklyBuilds = data.weeklyBuilds;
   var shells       = data.shells;
   var lastUpdated  = data.lastUpdated;
+  var spotlights   = data.spotlights;
+
+  // Resolve creator Twitch avatars in one batched call (same as /rising).
+  var spotlightAvatars = {};
+  var spotlightLogins = [];
+  spotlights.forEach(function(item) {
+    var l = twitchLoginFromUrl(item.creator_info && item.creator_info.twitch);
+    if (l) spotlightLogins.push(l);
+  });
+  if (spotlightLogins.length > 0) {
+    try { spotlightAvatars = await getUserAvatars(spotlightLogins); } catch (e) { spotlightAvatars = {}; }
+  }
 
   var cron = cronCycleInfo();
 
@@ -412,6 +455,48 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        {/* ══ CREATOR SPOTLIGHTS → RISING ══ */}
+        {spotlights.length > 0 && (
+          <section style={{ position: 'relative', zIndex: 1 }}>
+            <div className="hp-wrap" style={{ padding: '0 24px 32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00ff88', textTransform: 'uppercase', fontFamily: 'monospace' }}>Creator Spotlights</span>
+                <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+                <Link href="/rising" style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#00ff88', textDecoration: 'none', fontFamily: 'monospace' }}>RISING RUNNERS -&gt;</Link>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+                {spotlights.map(function(item) {
+                  var ec = EDITOR_ACCENT[item.editor] || '#00ff88';
+                  var glyph = EDITOR_GLYPH[item.editor] || '◇';
+                  var info = item.creator_info || {};
+                  var creatorName = info.name ? info.name : 'Marathon Creator';
+                  var login = twitchLoginFromUrl(info.twitch);
+                  var avatarUrl = login && spotlightAvatars[login] ? spotlightAvatars[login] : null;
+                  return (
+                    <Link key={item.slug} href={'/intel/' + item.slug} className="product-panel" style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + ec, borderRadius: '0 3px 3px 0', padding: '12px 14px', textDecoration: 'none' }}>
+                      <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: '50%', background: '#0e1014', border: '1px solid ' + ec + '50', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: ec }}>
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt={creatorName} width={40} height={40} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
+                        ) : (
+                          glyph
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                          <span style={{ fontSize: 8, color: ec, letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{(item.editor || 'EDITOR') + ' SPOTLIGHT'}</span>
+                          <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(item.created_at)}</span>
+                        </div>
+                        <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{creatorName}</div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.headline}</div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ══ WHERE THE EDITORS DISAGREE ══ */}
         <section style={{ position: 'relative', zIndex: 1 }}>

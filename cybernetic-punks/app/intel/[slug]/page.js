@@ -682,6 +682,26 @@ function EditorLanePage({ config, items }) {
           </>
         )}
 
+        {config.name === 'GHOST' && (
+          <Link href="/rising" className="lane-row" style={{
+            display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none',
+            background: 'linear-gradient(135deg, #1a1d24 0%, #0e1014 100%)',
+            border: '1px solid #22252e', borderLeft: '3px solid #00ff88',
+            borderRadius: '0 3px 3px 0', padding: '16px 18px', margin: '32px 0 0',
+            transition: 'background 0.1s',
+          }}>
+            <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: '50%', background: '#0e1014', border: '1px solid #00ff8850', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#00ff88' }}>
+              ◇
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 8, color: '#00ff88', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace', marginBottom: 4 }}>GHOST · RISING RUNNERS</div>
+              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 3 }}>Small Marathon streamers, live right now</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>Discover up-and-coming creators and published spotlights before they blow up.</div>
+            </div>
+            <span style={{ fontSize: 10, color: '#00ff88', fontFamily: 'monospace', letterSpacing: 1.5, fontWeight: 700, flexShrink: 0 }}>RISING -&gt;</span>
+          </Link>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '32px 0 12px' }}>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Other Editors</span>
           <div style={{ flex: 1, height: 1, background: '#1e2028' }} />

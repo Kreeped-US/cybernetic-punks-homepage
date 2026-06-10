@@ -41,6 +41,17 @@ const GOLD = '#ffd700';
 const GHOST = '#00ff88';
 const CONTRABAND = '#ff2d55';
 
+// Maps that have a hero PNG at /public/images/maps/<slug>.png. Only slugs
+// listed here render a banner -- this prevents broken-image icons, since a
+// server component cannot use <img onError>. Add a slug when its PNG lands.
+const MAP_HERO_SLUGS = new Set([
+  'cryo-archive',
+  'dire-marsh',
+  'night-marsh',
+  'outpost',
+  'perimeter',
+]);
+
 // key-tier -> color (rarity ladder)
 function keyTierColor(tier) {
   switch ((tier || '').toLowerCase()) {
@@ -344,6 +355,15 @@ export default async function MapPage({ params, searchParams }) {
 
       {/* hero (SEO backbone) */}
       <section style={{ padding: '24px 24px 32px', maxWidth: 1100, margin: '0 auto' }}>
+        {MAP_HERO_SLUGS.has(slug) && (
+          <div style={{ marginBottom: 20, borderRadius: 4, overflow: 'hidden', border: '1px solid ' + BORDER }}>
+            <img
+              src={'/images/maps/' + slug + '.png'}
+              alt={displayName + ' map'}
+              style={{ display: 'block', width: '100%', height: 'auto', maxHeight: 360, objectFit: 'cover' }}
+            />
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: CYAN, background: CYAN + '14', border: '1px solid ' + CYAN + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             MAP INTEL
