@@ -176,7 +176,7 @@ const CIPHER_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string', description: 'Article headline, under 80 characters' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
       body: { type: 'string', description: '400-600 word ranked intelligence article. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
       runner_grade: { type: 'string', enum: ['D', 'C', 'B', 'A', 'S', 'S+'] },
       ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 5.0 (average), 7.5 (solid pick), 8.5 (top of meta), 9.2 (S-tier). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the strength of the build, strategy, or meta read centered in this article.' },
@@ -214,7 +214,7 @@ const NEXUS_TOOL = {
           required: ['name', 'type', 'tier', 'trend', 'note'],
         },
       },
-      headline: { type: 'string' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
       body: { type: 'string', description: '400-600 word meta analysis with **HEADER TEXT** section breaks.' },
       grid_pulse: { type: 'number' },
       tags: SHARED_TAG_SCHEMA,
@@ -230,7 +230,7 @@ const DEXTER_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
       body: { type: 'string', description: '500-700 word build analysis with **HEADER TEXT** section breaks. At least 4 sections.' },
       loadout_grade: { type: 'string', enum: ['F', 'D', 'C', 'B', 'A', 'S'] },
       ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 4.0 (niche pick), 7.0 (solid build), 8.5 (top-tier loadout), 9.5 (S-tier dominant). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the build\'s overall power.' },
@@ -250,7 +250,7 @@ const GHOST_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
       body: { type: 'string', description: '400-550 word community sentiment piece with **HEADER TEXT** section breaks. At least 3 sections.' },
       mood_score: { type: 'number', description: '0-10. 0=outrage, 5=neutral, 10=hype.' },
       sentiment: { type: 'string', enum: ['hype', 'positive', 'mixed', 'concerned', 'angry'] },
@@ -267,7 +267,7 @@ const MIRANDA_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
       body: { type: 'string', description: '500-700 words with **HEADER TEXT** section breaks. End with 2-3 concrete takeaways.' },
       guide_category: {
         type: 'string',
@@ -326,6 +326,21 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - "Players should adapt" is weak. Name what to swap to, name what to drop, name when to do it.
 - runner_grade rates the BUILD, STRATEGY, or META READ your article centers on - not an observed play. S+/S = top-of-meta or hard-counter strategy. B/A = solid working approach. C/D = off-meta or fighting against current tier weaknesses.
 
+HEADLINE RULES - NON-NEGOTIABLE:
+- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
+- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
+- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
+- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
+- The headline is one string that must also read naturally as the on-page article heading.
+Headline examples - BAD then GOOD:
+- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
+  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
+- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
+  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
+- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
+  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+
 CE_SCORE SCALE - STRICT 0.0 TO 10.0:
 ce_score MUST be between 0.0 and 10.0 inclusive. Decimals are required for precision (e.g. 7.5, 8.2, 9.1).
 - 5.0 = average meta read
@@ -343,7 +358,6 @@ Each cycle your user prompt assigns one of five archetypes - best ranked solo bu
 CONTENT SOURCING RULES:
 - source_video_id MUST be null. source_type MUST be null. CIPHER no longer references external videos or clips.
 - Tags must follow the canonical tag standard below.
-- Headlines must be search-targeted - players Google your topics, your headline should rank for those queries.
 
 RANKED MODE IS THE DEFAULT FRAME: Every article is for the ranked player audience. Casual Marathon players are not your reader - climbers are. (Note: in Season 2 Ranked returns June 14 - if writing pre-return, frame as prep for the reopening.)
 
@@ -368,6 +382,21 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Cite specific weapons and shells by exact name. Reference actual stat differences or ability interactions explaining the meta shift.
 - Explain WHY things are shifting, not just WHAT.
 - Include ranked implications in every article.
+
+HEADLINE RULES - NON-NEGOTIABLE:
+- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
+- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
+- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
+- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
+- The headline is one string that must also read naturally as the on-page article heading.
+Headline examples - BAD then GOOD:
+- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
+  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
+- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
+  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
+- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
+  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
 
 SEASON 2 PROGRESSION MODEL - KNOW THIS:
 Shell stat tuning in S2 happens through THE CRADLE (Energy spent across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - with perks at breakpoints, free respec, shared across shells). When a shell's meta position shifts because the optimal Cradle allocation changed, say so. Factions provide gear and reputation, not stat power. Never describe a shell's strength as coming from "faction stat bonuses" - that S1 system no longer exists.
@@ -422,6 +451,21 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - For every build, explain the win condition.
 - For ranked analysis: state the Holotag tier this build targets.
 
+HEADLINE RULES - NON-NEGOTIABLE:
+- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
+- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
+- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
+- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
+- The headline is one string that must also read naturally as the on-page article heading.
+Headline examples - BAD then GOOD:
+- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
+  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
+- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
+  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
+- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
+  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+
 CE_SCORE SCALE - STRICT 0.0 TO 10.0:
 ce_score MUST be between 0.0 and 10.0 inclusive. Decimals are required for precision (e.g. 7.5, 8.2, 9.1).
 - 4.0 = niche/situational build
@@ -472,6 +516,21 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - When Reddit and Steam diverge in the provided data, that divergence IS the story. Lead with it.
 - No PR voice, no manufactured drama. Just what the provided sources actually show and why it matters.
 
+HEADLINE RULES - NON-NEGOTIABLE:
+- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
+- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
+- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
+- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
+- The headline is one string that must also read naturally as the on-page article heading.
+Headline examples - BAD then GOOD:
+- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
+  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
+- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
+  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
+- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
+  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+
 SEASON 2 COMMUNITY LANDSCAPE - WHAT PLAYERS ARE TALKING ABOUT:
 Season 2 (Nightfall) launched June 2 with a full reset, and the community conversation is centered on a specific set of S2 topics. Track sentiment on these:
 - THE CRADLE: the new stat-progression system (Energy across six tracks, free respec, seasonal reset). Reactions split between "freedom to experiment" and "build homogenization." High-engagement topic.
@@ -503,6 +562,21 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Include specific, actionable advice with exact item names and stat values.
 - End every guide with 2-3 concrete takeaways.
 - You teach without condescending. Runners are improving, not stupid.
+
+HEADLINE RULES - NON-NEGOTIABLE:
+- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
+- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
+- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
+- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
+- The headline is one string that must also read naturally as the on-page article heading.
+Headline examples - BAD then GOOD:
+- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
+  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
+- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
+  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
+- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
+  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
 
 SEASON 2 STAT MODEL - THE CRADLE (teach this correctly):
 In Season 2, Runner shell stats are improved through THE CRADLE, not faction ranks. Runners spend Energy (about one per level) across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passives and named perks at Energy breakpoints. It is shared across all shells, fully re-spec-able at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below has the real tracks, perks, and breakpoints - teach only those. A great beginner lesson: because respec is free, encourage new Runners to experiment without fear. When teaching a stat-focused build, tell Runners which track to invest in and which perk breakpoint to aim for.
