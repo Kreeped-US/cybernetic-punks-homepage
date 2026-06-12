@@ -34,8 +34,8 @@ import { getUserAvatars } from '@/lib/gather/twitch';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Rising Runners — Small Marathon Twitch Streamers to Watch Right Now',
-  description: 'Discover up-and-coming Marathon streamers on Twitch. CyberneticPunks scans for live streamers under 100 viewers — real players grinding right now. Support new Marathon content creators before they blow up.',
+  title: 'Rising Marathon Game Streamers - Twitch Spotlights',
+  description: 'Discover rising Twitch streamers playing Marathon, Bungie\'s extraction shooter. Creator spotlights for small streamers grinding the game right now.',
   keywords: [
     'Marathon streamers',
     'Marathon Twitch streamers',
@@ -51,8 +51,8 @@ export const metadata = {
     'discover Marathon Twitch',
   ],
   openGraph: {
-    title: 'Rising Runners — Small Marathon Twitch Streamers to Watch',
-    description: 'Live small streamers playing Marathon right now. Discover the next wave before they blow up.',
+    title: 'Rising Marathon Game Streamers - Twitch Spotlights',
+    description: 'Live small streamers playing Marathon, Bungie\'s extraction shooter. Discover the next wave before they blow up.',
     url: 'https://cyberneticpunks.com/rising',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -61,7 +61,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Rising Runners — Marathon Streamers to Watch',
+    title: 'Rising Marathon Game Streamers',
     description: 'Live small streamers playing Marathon right now. Discover the next wave.',
     images: ['/og-image.png'],
   },
