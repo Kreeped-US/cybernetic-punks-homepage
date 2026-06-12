@@ -624,11 +624,11 @@ async function fetchGameContext() {
     // once that table is reseeded with actual S2 gear data. The `factions`
     // query (names/leaders/focus) is kept - that info is still valid.
     const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes, gameMapsRes, gameZonesRes, gameBossesRes, gameEventsRes, gameModesRes] = await Promise.all([
-      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(100),
-      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type').order('rarity', { ascending: false }).limit(100),
-      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source').order('rarity', { ascending: false }).limit(60),
-      supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable').order('name').limit(30),
-      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes').limit(10),
+      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source, verified, patch_verified').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(100),
+      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type, verified').order('rarity', { ascending: false }).limit(100),
+      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source, verified').order('rarity', { ascending: false }).limit(60),
+      supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, patch_verified').order('name').limit(30),
+      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, verified, patch_verified').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
       supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved').eq('game_slug', 'marathon').order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
       supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', 'marathon').eq('verified', true),
@@ -646,7 +646,28 @@ async function fetchGameContext() {
       supabase.from('game_modes').select('mode_name, mode_type, available_on, summary').eq('game_slug', 'marathon').eq('verified', true).order('mode_name'),
     ]);
 
+    // Tag a row that is not confirmed against current Season 2 in-game data.
+    // `verified === false` applies to every stat table. patch_verified (null or
+    // a pre-S2 value) refines only the tables that carry that column (weapons,
+    // shells, mods); core_stats / implant_stats do not have it, so they are
+    // judged on `verified` alone (pass usePatch=false).
+    function unverifiedTag(row, usePatch) {
+      var bad = row.verified === false;
+      if (usePatch) {
+        var pv = row.patch_verified;
+        if (!pv || /^s1\b/i.test(pv)) bad = true;
+      }
+      return bad ? ' [UNVERIFIED]' : '';
+    }
+
     let output = '';
+
+    // Shared verification note (once, ahead of all data sections - not per persona).
+    output += '--- VERIFIED DATA NOTE ---\n' +
+      'Rows tagged [UNVERIFIED] below are not confirmed against current Season 2 in-game data. ' +
+      'You may mention such an item, but do NOT state its exact numeric stats as fact - omit the specific numbers, or hedge them explicitly as unconfirmed. ' +
+      'Cite precise stats as fact only for rows without the [UNVERIFIED] tag.\n' +
+      '--- END NOTE ---';
 
     if (modsRes.data?.length) {
       const bySlot = {};
@@ -659,7 +680,7 @@ async function fetchGameContext() {
           var statPairs = Object.entries(mod.stat_changes).map(function(e) { return e[0] + ' ' + e[1]; });
           if (statPairs.length > 0) statTag = ' [' + statPairs.join(', ') + ']';
         }
-        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}`);
+        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${unverifiedTag(mod, true)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
@@ -672,7 +693,7 @@ async function fetchGameContext() {
       for (const core of coresRes.data) {
         const runner = core.required_runner || 'Unknown';
         if (!byRunner[runner]) byRunner[runner] = [];
-        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}`);
+        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${unverifiedTag(core, false)}`);
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
@@ -693,7 +714,7 @@ async function fetchGameContext() {
           imp.stat_5_label && imp.stat_5_value ? `${imp.stat_5_label}: ${imp.stat_5_value}` : null,
         ].filter(Boolean).join(', ');
         var factionTag = imp.faction_source ? ' [' + imp.faction_source + ' Armory unlock]' : '';
-        bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}`);
+        bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${unverifiedTag(imp, false)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
@@ -712,7 +733,7 @@ async function fetchGameContext() {
           w.range_rating ? 'RANGE:' + w.range_rating : '',
           w.ranked_viable === false ? '[RANKED-AVOID]' : '',
         ].filter(Boolean).join(' | ');
-        return '  ' + w.name + (parts ? ' - ' + parts : '');
+        return '  ' + w.name + (parts ? ' - ' + parts : '') + unverifiedTag(w, true);
       }).join('\n');
       output += '\n\n--- WEAPON STATS DATABASE ---\n' + weaponLines + '\n--- END WEAPONS ---';
     }
@@ -733,7 +754,7 @@ async function fetchGameContext() {
       };
       const shellLines = shellsRes.data.map(function(s) {
         return [
-          '  ' + s.name + (s.role ? ' [' + s.role + ']' : ''),
+          '  ' + s.name + (s.role ? ' [' + s.role + ']' : '') + unverifiedTag(s, true),
           s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : '',
           fmtAbility('Prime', s.prime_ability_name, s.prime_ability_description),
           fmtAbility('Tactical', s.tactical_ability_name, s.tactical_ability_description),
