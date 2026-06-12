@@ -385,6 +385,18 @@ function CreatorHeader({ info, avatarUrl, editorColor, editorGlyph }) {
 }
 
 // ─── INLINE STAT CARD ────────────────────────────────────────
+// Visually-hidden separator. The card lays its parts out as adjacent flex
+// spans (icon / name / type / rarity) with only CSS gap between them, so when
+// the DOM is flattened to plain text (search crawlers, copy-paste, screen
+// readers) the parts glue together ("M77 Assault RifleAR"). These zero-footprint
+// separators sit between the parts so the flattened text reads "Name - Type -
+// Rarity". Absolutely-positioned + clipped, so they take no layout space and
+// are never painted — visual output is unchanged.
+var SR_ONLY = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 };
+function Sep({ text }) {
+  return <span style={SR_ONLY}>{text}</span>;
+}
+
 function InlineStatCard({ item, type, color }) {
   var imgSrc = null;
   if (type === 'shell' && item.image_filename) imgSrc = '/images/shells/' + item.image_filename;
@@ -426,11 +438,13 @@ function InlineStatCard({ item, type, color }) {
         }}
       >
         {imgSrc ? (
-          <img src={imgSrc} alt={item.name} style={{ width: 20, height: 20, objectFit: 'contain' }} />
+          <img src={imgSrc} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
         ) : (
-          <span style={{ fontSize: 11, color: typeColor, lineHeight: 1 }}>{symbol}</span>
+          <span aria-hidden="true" style={{ fontSize: 11, color: typeColor, lineHeight: 1 }}>{symbol}</span>
         )}
       </span>
+
+      <Sep text=" " />
 
       <span style={{ display: 'inline-flex', flexDirection: 'column', minWidth: 0 }}>
         <span
@@ -446,6 +460,7 @@ function InlineStatCard({ item, type, color }) {
         >
           {item.name}
         </span>
+        <Sep text=" - " />
         <span
           style={{
             fontSize: 7,
@@ -465,7 +480,10 @@ function InlineStatCard({ item, type, color }) {
           {type === 'mod' && item.slot_type && <span>{item.slot_type} MOD</span>}
           {type === 'implant' && item.slot_type && <span>{item.slot_type}</span>}
           {item.rarity && rarityColor && (
-            <span style={{ color: rarityColor }}>{item.rarity}</span>
+            <>
+              <Sep text=" - " />
+              <span style={{ color: rarityColor }}>{item.rarity}</span>
+            </>
           )}
         </span>
       </span>
