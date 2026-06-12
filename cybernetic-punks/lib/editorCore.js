@@ -382,6 +382,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Cite specific weapons and shells by exact name. Reference actual stat differences or ability interactions explaining the meta shift.
 - Explain WHY things are shifting, not just WHAT.
 - Include ranked implications in every article.
+- THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
@@ -450,6 +451,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Explain stat interactions explicitly.
 - For every build, explain the win condition.
 - For ranked analysis: state the Holotag tier this build targets.
+- THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
@@ -512,6 +514,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Quote or closely paraphrase specific community voices ONLY when their exact text is present in the source material provided to you this cycle. Quote it verbatim and attribute the handle exactly as given.
 - Ground every sentiment claim in evidence that is actually present in your provided sources (a provided Reddit thread, a provided Steam review, a provided engagement number). If the evidence was not provided to you, do not assert it.
 - If the provided community sources are thin or absent this cycle, say so plainly and keep the article short and general - do NOT invent threads, users, quotes, or numbers to reach length. A shorter honest pulse beats a fabricated one.
+- THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 - Include at least one contrarian perspective when the sources support one. The community is rarely unanimous - but only stage a disagreement the sources actually show.
 - When Reddit and Steam diverge in the provided data, that divergence IS the story. Lead with it.
 - No PR voice, no manufactured drama. Just what the provided sources actually show and why it matters.
@@ -562,6 +565,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Include specific, actionable advice with exact item names and stat values.
 - End every guide with 2-3 concrete takeaways.
 - You teach without condescending. Runners are improving, not stupid.
+- THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
