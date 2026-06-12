@@ -201,6 +201,32 @@ function ParagraphContent({ text }) {
   );
 }
 
+// Build a clean meta description from an article body. The editors only emit
+// **bold/header** markers and standalone "quoted" pull-quote lines, so the **
+// markers are stripped while their inner text is kept, and quotation marks are
+// left intact (valid in a description). Markdown the editors don't currently
+// emit (# headings, [text](url), `code`, > blockquote) is stripped defensively.
+// Result: newlines flattened, whitespace collapsed, truncated to <= 155 chars at
+// a word boundary with a single ellipsis appended only when truncation occurred.
+// Falls back to the provided headline when the body is empty or strips to empty.
+function buildMetaDescription(body, fallback) {
+  if (!body) return fallback;
+  var text = body
+    .replace(/`([^`]*)`/g, '$1')              // inline `code` -> text
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')  // [text](url) -> text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')        // **bold/header** -> text
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')       // # heading marker -> removed
+    .replace(/^\s{0,3}>\s?/gm, '')            // > blockquote marker -> removed
+    .replace(/\s+/g, ' ')                     // flatten newlines + collapse whitespace
+    .trim();
+  if (!text) return fallback;
+  if (text.length <= 155) return text;
+  var truncated = text.slice(0, 155);
+  var lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > 0) truncated = truncated.slice(0, lastSpace);
+  return truncated.replace(/\s+$/, '') + '\u2026';
+}
+
 export async function generateMetadata({ params }) {
   var { slug } = await params;
   var editorConfig = EDITORS[slug.toLowerCase()];
@@ -215,7 +241,7 @@ export async function generateMetadata({ params }) {
   }
   var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle();
   if (!item) return { title: 'Intel Not Found' };
-  var desc = item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline;
+  var desc = buildMetaDescription(item.body, item.headline);
   return {
     title: item.headline,
     description: desc,
