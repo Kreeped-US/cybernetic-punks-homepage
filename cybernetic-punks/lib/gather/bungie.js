@@ -79,24 +79,28 @@ export async function gatherBungieNews() {
     all.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Flag patch notes specifically.
-    // UPDATED May 20, 2026: Two-part fix for chronic patch false-positives.
-    // (1) FRESHNESS GATE: a patch only counts if the article is recent
-    //     (within 24h - tightened from 72h on June 5, 2026). A launch
-    //     megapatch stayed "fresh" for 3 daily cycles, re-firing each time
-    //     because each detection cleared the 23h dedup. 24h means a patch
-    //     ages out before the next daily cycle. The cron also now dedups on
-    //     patch identity (event_data.patch_key) so the same article can never
-    //     re-notify even within its freshness window - belt and suspenders.
-    // (2) TIGHTER KEYWORDS: removed words that appear in nearly all gaming
-    //     news ('update', 'fix', 'change', 'tweak', 'season'). Kept only
-    //     terms that genuinely signal a balance/patch event.
-    const patchKeywords = ['patch', 'hotfix', 'nerf', 'buff', 'patch notes', 'balance pass', 'weapon tuning'];
-    const PATCH_FRESHNESS_MS = 24 * 60 * 60 * 1000;
+    // UPDATED June 13, 2026: Bungie names patches "Marathon Update X.X.X", but the
+    // June 5 keyword tightening removed the bare 'update' substring (it matched
+    // "progression update", editorials, etc.), so versioned patch posts stopped
+    // matching ANY keyword and detection went dark. Fix: detect by VERSION PATTERN
+    // (/update\s+\d+(\.\d+)+/i on the title) OR a genuine patch keyword. The
+    // version pattern is the targeted signal - it catches real patches without
+    // re-admitting the noisy bare 'update' substring.
+    // FRESHNESS GATE: widened 24h -> 48h. With a 12h cron this gives margin so a
+    // post is caught even if it surfaces in the feed >24h after its timestamp,
+    // without relying on a single cycle. Re-fire across cycles is prevented by the
+    // patch_key dedup in the cron route (now fail-CLOSED), not by this gate.
+    const patchVersionRe = /update\s+\d+(\.\d+)+/i;
+    const patchKeywords = ['hotfix', 'patch notes', 'nerf', 'buff', 'balance pass', 'weapon tuning', 'patch'];
+    const PATCH_FRESHNESS_MS = 48 * 60 * 60 * 1000;
     const tagged = all.map(a => {
-      var matchesKeyword = patchKeywords.some(k => a.title.toLowerCase().includes(k) || (a.contents || '').toLowerCase().includes(k));
+      var title = a.title || '';
+      var hay = (title + ' ' + (a.contents || '')).toLowerCase();
+      var matchesVersion = patchVersionRe.test(title);
+      var matchesKeyword = patchKeywords.some(k => hay.includes(k));
       var articleAgeMs = Date.now() - new Date(a.date).getTime();
       var isFresh = !isNaN(articleAgeMs) && articleAgeMs >= 0 && articleAgeMs <= PATCH_FRESHNESS_MS;
-      return Object.assign({}, a, { is_patch_note: matchesKeyword && isFresh });
+      return Object.assign({}, a, { is_patch_note: (matchesVersion || matchesKeyword) && isFresh });
     });
 
     console.log(`[bungie.js] Gathered ${tagged.length} Bungie news articles (${tagged.filter(a => a.is_patch_note).length} patch-related)`);

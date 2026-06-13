@@ -514,7 +514,11 @@ export async function GET() {
           .limit(1);
         patchAlreadyRegraded = !!(priorPatchRegrade && priorPatchRegrade.length > 0);
       } catch (pdErr) {
-        console.log('[CRON] patch_regrade dedup check failed (treating as not-yet-regraded): ' + pdErr.message);
+        // FAIL-CLOSED: on a read error, treat as ALREADY regraded so a transient
+        // DB hiccup does not re-run the patch-triggered regrade. The 24h-timer
+        // regrade path is unaffected.
+        patchAlreadyRegraded = true;
+        console.log('[CRON] patch_regrade dedup check failed -- failing CLOSED (treating as already regraded): ' + pdErr.message);
       }
     }
     var patchShouldTrigger = hasPatch && !patchAlreadyRegraded;
@@ -611,6 +615,12 @@ export async function GET() {
     }
 
     if (hasPatch) {
+      // FAIL-CLOSED dedup with marker-FIRST ordering: record the patch_discord
+      // marker BEFORE notifying, and only notify once the marker write has
+      // succeeded. This guarantees at most one alert per patch_key even if the
+      // marker insert fails, and a transient read/write error skips the alert
+      // rather than re-sending. Missing one alert beats spamming every 12h.
+      var patchNotifyClaimed = false;
       try {
         var { data: priorPatchNotif } = await supabase
           .from('site_events')
@@ -619,20 +629,22 @@ export async function GET() {
           .eq('event_data->>patch_key', currentPatchKey)
           .limit(1);
 
-        if (!priorPatchNotif || priorPatchNotif.length === 0) {
-          notifyPatchNotes(rawData.bungieNews).catch(function(e) {
-            console.log('[DISCORD] patch notify error: ' + e.message);
-          });
-          await supabase.from('site_events').insert({ event_name: 'patch_discord', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
-          console.log('[CRON] Patch Discord notification sent for patch_key="' + currentPatchKey + '" -- recorded');
-        } else {
+        if (priorPatchNotif && priorPatchNotif.length > 0) {
           console.log('[CRON] This patch already notified (patch_key="' + currentPatchKey + '") -- skipping Discord');
+        } else {
+          await supabase.from('site_events').insert({ event_name: 'patch_discord', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
+          patchNotifyClaimed = true;
+          console.log('[CRON] Patch Discord marker recorded for patch_key="' + currentPatchKey + '"');
         }
       } catch (patchErr) {
-        console.log('[CRON] Patch dedup check failed: ' + patchErr.message + ' -- sending anyway');
+        console.log('[CRON] Patch dedup/marker step failed -- failing CLOSED (NOT sending, to avoid duplicates): ' + patchErr.message);
+      }
+
+      if (patchNotifyClaimed) {
         notifyPatchNotes(rawData.bungieNews).catch(function(e) {
           console.log('[DISCORD] patch notify error: ' + e.message);
         });
+        console.log('[CRON] Patch Discord notification sent for patch_key="' + currentPatchKey + '"');
       }
     }
 
