@@ -5,6 +5,35 @@ Newest entries on top.
 
 ---
 
+## 2026-06-13 — Catch-up recap PUBLISHED; S2 patch coverage complete
+
+Consolidated **NEXUS** article covering **Update 1.1.0 + 1.1.0.1**, written from the
+**real patch notes** (not DB stats, not summaries), framed as a deliberate two-week
+catch-up.
+- **id** `781db503-8771-4a3f-b734-72a6e8c184a0`
+- **slug** `marathon-update-110-recap-the-s2-changes-you-missed-u8mo`
+- **Revert:** `DELETE FROM feed_items WHERE id='781db503-8771-4a3f-b734-72a6e8c184a0'`
+
+Content guardrails honored: numbers cited **only** from the patch notes; mag/optic
+changes kept **theme-level** (DB unreconciled); 1.1.0.1 Prestige drop-rate cuts kept
+**qualitative** (Bungie published no figures). **Discord + comments OFF** (no backfill
+for stale patches — a bare `feed_items` insert fires neither). Source set to `NEXUS`
+(no video), thumbnail = NEXUS portrait, ce_score 0.
+
+**Taxonomy updated** (commit `21fcc64`): added `sentinel` shell sub-tag (doc predated
+the 8th shell) + `implants` topic-context tag — so all 6 article tags are now valid.
+
+**Catch-up coverage is now COMPLETE.** Confirmed **no third patch exists** (no 1.1.0.2
+as of June 13). The earlier "still need Progression Update notes" item is closed — the
+Progression Update was folded into the 1.1.0 recap at theme level (economy/progression
+section); no separate article needed.
+
+**Near-term:** Ranked returns **June 14** with eased progression — a real content
+moment, and patch detection is now fixed (version-pattern + 48h) to catch the
+reopening patch automatically.
+
+---
+
 ## 2026-06-13 — Reconciliation Batch 2a (chip text) DONE; mags/optics blocked on numbers
 
 ### Batch 2a — chip text reconciliation DONE
