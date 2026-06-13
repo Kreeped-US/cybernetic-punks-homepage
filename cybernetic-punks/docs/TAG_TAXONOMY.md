@@ -58,7 +58,7 @@ don't drive category pages.
 
 ### Shell sub-tags
 
-`assassin`, `destroyer`, `recon`, `rook`, `thief`, `triage`, `vandal`
+`assassin`, `destroyer`, `recon`, `rook`, `thief`, `triage`, `vandal`, `sentinel`
 
 ### Weapon sub-tags
 
@@ -78,7 +78,7 @@ new ones as long as they follow the lowercase-hyphen convention.
 `season-1`, `season-2`, `launch`, `community`, `community-event`, `lfg`,
 `performance`, `crashes`, `technical-issues`, `steam-reviews`, `economy`,
 `retention`, `matchmaking`, `intel`, `guide`, `builds`, `positioning`,
-`extraction-tactics`
+`extraction-tactics`, `implants`
 
 ---
 
