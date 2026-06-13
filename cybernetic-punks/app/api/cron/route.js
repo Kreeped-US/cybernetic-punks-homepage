@@ -438,6 +438,8 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       success: true,
       headline: result.headline,
       has_thumbnail: !!media.thumbnail,
+      thumbnail: media.thumbnail,
+      id: feedItem ? feedItem.id : null,
     };
 
   } catch (err) {
@@ -663,6 +665,32 @@ export async function GET() {
         } catch (consumeErr) {
           console.log('[CRON] Failed to mark directive consumed: ' + consumeErr.message);
         }
+      }
+    }
+
+    // ── DUPLICATE-THUMBNAIL DEDUP (post-settle) ──────────────────
+    // Two articles may legitimately share one source video on a thin cycle,
+    // but they must not display the IDENTICAL thumbnail. resolveMediaInfo can
+    // yield the same image via either the claimed-id path or the [0] fallback,
+    // so we compare the FINAL resolved thumbnail string here. `results` is in
+    // the declared editors order (CIPHER, NEXUS, DEXTER, GHOST, MIRANDA) -
+    // Promise.allSettled preserves input order, not completion order - so the
+    // FIRST editor in that order keeps the image and each later editor sharing
+    // it is repointed to its own portrait. Distinct thumbnails => no UPDATEs.
+    var seenThumbnails = {};
+    for (var d = 0; d < results.length; d++) {
+      var dr = results[d];
+      if (!dr.success || !dr.thumbnail || !dr.id) continue;
+      if (!seenThumbnails[dr.thumbnail]) {
+        seenThumbnails[dr.thumbnail] = true;
+        continue;
+      }
+      var portrait = '/images/editors/' + dr.editor.toLowerCase() + '.jpg';
+      try {
+        await supabase.from('feed_items').update({ thumbnail: portrait }).eq('id', dr.id);
+        console.log('[CRON] Duplicate thumbnail for ' + dr.editor + ' -> repointed to portrait ' + portrait);
+      } catch (dupErr) {
+        console.log('[CRON] Duplicate-thumbnail update failed for ' + dr.editor + ': ' + dupErr.message);
       }
     }
 
