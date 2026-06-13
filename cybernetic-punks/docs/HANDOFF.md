@@ -5,6 +5,62 @@ Newest entries on top.
 
 ---
 
+## 2026-06-13 — Reconciliation Batch 2a (chip text) DONE; mags/optics blocked on numbers
+
+### Batch 2a — chip text reconciliation DONE
+
+Fixed effect text on **8 `mod_stats` rows** (6 text writes + 2 flag-only). Backup:
+`C:/Users/justi/mod_stats_backup_b2a_20260613.json` (202 rows, count-verified before
+write). Rows:
+- **Patch redesigns:** Cloudborn Enhanced + Standard, Rorschach Test Superior.
+- **Pre-existing corruptions fixed:** Background Process Enhanced (was "N/A"), Eyes on
+  Fire Enhanced (held wrong chip's text), Chaos Theory Enhanced ("item" -> "ammo").
+- **Confirmed-correct, flagged only (text untouched):** Background Process Standard,
+  Eyes on Fire Standard.
+
+All 8 set `verified=true`, `verified_source='in-game (Justin), S2'`,
+`patch_verified='1.1.0'`. **CAVEAT:** `patch_verified` here = **TEXT-reconciled only**;
+numeric magnitudes (reload / equip-speed / duration / credits) still await July
+structured chip-stat fields.
+
+### Key structural finding
+
+Chip rows store **PROSE ONLY** (`effect_summary` + `effect_desc`) — no numeric fields.
+The original 2a value-update plan was impossible; numeric chip values join **Bucket B**
+as a July schema item. Both prose fields render (`effect_desc` -> builds / articles /
+most editors; `effect_summary` -> MIRANDA context + advisor fallback), so writes use
+**full-text in `effect_desc` + faithful condensation in `effect_summary`**.
+
+### Still open in Batch 2
+
+Mags (~29 existing rows) and optics (~18) — **names resolved** but **VALUES blocked**
+pending the detailed per-rarity numeric tables from the patch (Justin to paste next
+session). The 8 renames to apply at write time: Maga Drive/Mega Drive, Drum Mag/Drum
+Magazine, Slick Mag/Slick Mag 1, Tapered Heat Sink/Tapered Heatsink, Neuro-Optic
+Lens/Neuro Optic Lens, Optic 1.4x/Optic 1.4XI, MidSight/Midsight (+ SP Scope handled).
+**Optic ambiguities resolved:** "Long Scope" is the real name (no "Long Eye Scope");
+"Rangefinder Optic 1.3x" is a **distinct** item from "Rangefinder Optic" (-> insert).
+
+### Bucket C insert task (separate; needs full row data)
+
+Mini Jammer x3 rarities, Bounty Hunter Superior, Chaos Theory Deluxe+Superior,
+Insurance Plan Enhanced+Superior, 12 NOT-FOUND mags, 4 NOT-FOUND optics + Rangefinder
+Optic 1.3x.
+
+### July schema items (growing list)
+
+Structured chip-stat fields (duration / magnitude / credits-per-kill); Bucket B curve
+data; equipment table (Frost Mine / Vector Grenade / Signal Flares); status/removed
+flag for rotations (Stack Overflow, Optimal Prime).
+
+### Data-quality note
+
+The chip corruptions fixed in 2a were **pre-existing, unrelated to 1.1.0** — worth a
+broader effect-text audit against the game client at some point (same pile as the
+spelling anomalies: Botique, Pinata, Maga Drive, etc.).
+
+---
+
 ## 2026-06-13 — Patch detection fix, Discord diagnosis, stat-reconciliation scoping, reconciliation Batch 1
 
 ### 1. Shipped (commits)
