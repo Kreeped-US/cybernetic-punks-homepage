@@ -5,6 +5,80 @@ Newest entries on top.
 
 ---
 
+## 2026-06-13 — Patch detection fix, Discord diagnosis, stat-reconciliation scoping, reconciliation Batch 1
+
+### 1. Shipped (commits)
+
+| Change | Commit | Summary |
+|---|---|---|
+| Duplicate-thumbnail dedup | `e01be4a` | Post-settle dedup of identical article thumbnails; first editor (declared order) keeps the image, later duplicates fall back to persona portrait. |
+| Patch-detection fix | `e7575c9` | Version-pattern detection (`/update\s+\d+(\.\d+)+/i`) + keywords, 48h freshness, fail-closed dedup. |
+
+### 2. Patch detection — root cause & fix
+
+The June 5 keyword tightening removed the bare `'update'` keyword, but Bungie
+titles patches **"Marathon Update X.X.X"** — so versioned patch posts matched NO
+keyword and detection **silently failed for 8 days** (no PATCH alerts, no article
+coverage, no patch-triggered NEXUS regrade). Fixed **forward** via version-pattern
+detection + 48h freshness + fail-closed dedup (`e7575c9`). Already-missed June
+patches are NOT auto-covered (forward-only) — see catch-up task below.
+
+**Latent issues logged for refactor (not fixed):**
+- The `'patch'` keyword can still match editorial article *bodies* (e.g. a PCGamesN
+  piece), a minor false-positive surface; bounded by freshness + dedup.
+- `patch_key` is **title-based, not build-id-based** (the unique `Build NNNNNNN`
+  exists in notes but isn't a structured feed field) — weaker key than ideal.
+
+### 3. Discord webhooks — diagnosed, NOT a bug
+
+Delivery works (RANKED + INTEL fired at 5 AM). META is **quiet by design** (no tier
+movers since June 10 → `notifyMetaUpdate` intentionally silent). PATCH was silent
+**because detection was broken** (now fixed). **No webhook action needed.**
+
+### 4. Stat reconciliation vs Update 1.1.0 — scoped (read-only)
+
+Schema map done: `weapon_stats` 47 cols; mags/optics/chips all live in `mod_stats`
+keyed by `slot_type` (no separate tables). Buckets:
+- **A** (~165 (name,rarity) updates) — dominated by ~90 mags + ~50 optics.
+- **B** (~30) — curve/scaling changes with no schema home (recoil H/V, falloff
+  distances, per-stat scaling, charge times, grenade/combatant tuning) → July.
+- **C** (~19 inserts) — 7 new implants + ~12 mags + ~6 optics; implant inserts
+  **blocked** (detailed per-implant stat packages not in the provided notes).
+
+Weapons + Sentinel were **already reconciled** (`verified=true`, `patch_verified=1.1.0`)
+→ 0 writes needed. **Zero stale-trusted rows.** **8 name-match conflicts** to resolve
+before mag/optic writes: Maga Drive/Mega Drive, Drum Mag/Drum Magazine, Slick
+Mag/Slick Mag 1, Tapered Heat Sink/Tapered Heatsink, Neuro-Optic Lens/Neuro Optic
+Lens, Optic 1.4x/Optic 1.4XI, SP Scope, MidSight/Midsight. Estimate: **4–6 gated
+write-sessions, batched by table**.
+
+### 5. Reconciliation Batch 1 — DONE
+
+Deleted core **"Close and Personal"** (migrated to the Cradle in S2). Backup:
+`C:/Users/justi/core_stats_backup_b1_20260613.json` (full 86-row snapshot, verified
+before delete; count 86 → 85). Pattern proven: read-before-write → backup-first →
+delete-by-id → re-verify.
+
+**S2 removal tally corrected:** 1 true deletion (done); **2 deferred chip rotations**
+(Stack Overflow, Optimal Prime → July status-flag work, NOT deleted); **1 phantom**
+(sniper thermal optic — never existed in DB; `SP Scope II` is a valid zoom optic, not
+the removed one, left untouched). **V75 reload deferred** (% delta, no absolute; row
+already verified 1.1.0).
+
+### 6. Still open / parked
+
+- **Catch-up coverage of missed patches:** have 1.1.0 + 1.1.0.1 notes; still need the
+  Progression Update notes + coverage-shape + write-mechanism decisions. Must write
+  from real notes only — no inference.
+- **"One story" companion-coverage feature** → July refactor (build it game-aware).
+- **July schema items:** a status/removed flag for all rotations; Bucket B curve
+  columns; an equipment table (Frost Mine / Vector Grenade / Signal Flares).
+- **Mag/optic name-anomaly cleanup** (the 8 conflicts above, plus the older
+  `"Balanced Shield "`/Botique/Pinata/Hypocritic Oath set).
+- **Reconciliation batches 2–5** (chips, mags, optics; implants blocked on detail).
+
+---
+
 ## 2026-06-12 — Data-quality fixes (entity names, stat verification surfacing, thin-source honesty)
 
 ### 0. Key finding — prior audit inference OVERTURNED
