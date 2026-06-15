@@ -939,9 +939,11 @@ export function buildMirandaPrompt(data) {
     `TITLE: ${v.title}\nCHANNEL: ${v.channelTitle}\nDESC: ${v.description?.slice(0, 200)}\nVIDEO_ID: ${v.videoId}`
   ).join('\n---\n');
 
-  const redditSummaries = redditPosts.slice(0, 5).map(p =>
-    `TITLE: ${p.title}\nFLAIR: ${p.flair}\nCONTENT: ${p.selftext}\nSCORE: ${p.score}`
-  ).join('\n---\n');
+  const redditSummaries = redditPosts?.length > 0
+    ? redditPosts.slice(0, 5).map(p =>
+        `TITLE: ${p.title}\nFLAIR: ${p.flair}\nCONTENT: ${p.selftext}\nSCORE: ${p.score}`
+      ).join('\n---\n')
+    : 'Limited community posts this cycle.';
 
   const shellData = shellContext.length > 0
     ? shellContext.map(s => [
@@ -1085,6 +1087,9 @@ ${bungieNewsData}
 
 OFFICIAL DEV REDDIT POSTS:
 ${devRedditData}
+
+COMMUNITY REDDIT POSTS (what players are discussing - use as topic signals and sentiment; cite only what a post actually states, never restate as fact):
+${redditSummaries}
 
 YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about Marathon the Bungie extraction shooter):
 ${videoSummaries}
