@@ -5,6 +5,57 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 (Mon AM) — [UNVERIFIED] system completed, verification debt quantified, KKV-9SD filled
+
+### [UNVERIFIED] system completed (commit `d15a06a`)
+
+The stat-hedging diagnostic found Fix-2 was live and tagging correctly, but editors
+cited precise numbers from tagged rows anyway — AND the tag was **over-applied**
+(`usePatch=true` tagged `verified=false` OR `patch_verified=null` → **92% of mods
+tagged** → desensitized). Fixed both, **in order**:
+1. **Recalibrated** `unverifiedTag` to tag on `verified=false` OR an explicit pre-S2
+   stamp only — dropped the `pv=null` condition, removed the `usePatch` param, uniform
+   across all 5 call sites.
+2. **Hardened** the preamble to "MUST NOT state precise numbers for [UNVERIFIED] items"
+   + a reinforcing line in CIPHER/NEXUS/DEXTER/MIRANDA (GHOST excluded — doesn't cite
+   stats). HEADLINE RULES + thin-source blocks untouched.
+
+Tag rate verified live: **weapons 16/32 unchanged; mods 92% -> 51% (104/202)**. The 81
+dropped were `verified=true & pv=null` hand-verified mods (Thermal Surge Battery, Sonar
+Shot, Hi-Cap Mag Superior, Steady Barrel Deluxe).
+
+Diagnostic detail: **4 UNVERIFIED-CITED** (M77, Bully SMG, Thermal Surge Battery, Sonar
+Shot), **3 VERIFIED-MATCH** (CE Tactical Sidearm, V66 Lookout, Impact HAR), **0
+fabrication** (every cited number matched the DB — editors quoted unverified rows, did
+not invent).
+
+**WATCH the next cron cycle:** editors should now hedge on tagged rows and cite
+confidently on verified ones. Weekend articles citing unverified numbers are left as-is
+(accurate quotes; they age out naturally — fix the rows, not the articles).
+
+### Verification debt quantified
+
+**16 weapons + 104 mods are genuinely `verified=false`** — the concrete reconciliation
+backlog target. The 16 unverified weapons (incl. **M77, Bully SMG**, tauceti.gg-sourced)
+are highest-value since weapons anchor build articles.
+
+### KKV-9SD row filled (verified write)
+
+Was a stub (only `fire_rate`). Wrote **17 columns** from in-game-verified S2 values;
+backup at `C:/Users/justi/weapon_stats_backup_kkv_20260615.json`. Conventions mirrored
+from Bully/BRRT: `range_meters` (not `effective_range_m`), `reload_speed` as a string,
+`recoil` as a scalar. Flagged `verified=true`, `verified_source='in-game, S2'`,
+`patch_verified='1.1.0'`. `range_rating` left null (no confirmed bucket). Also fixed a
+pre-existing flag inconsistency (the row was `verified=true` while empty). Revert:
+restore from the JSON snapshot or null the fields.
+
+### July schema — `ads_spread` gap
+
+`ads_spread` (KKV had 0.67) is the **2nd** confirmed weapon attribute with no column
+(alongside the Bucket B curve fields). Bundle into the schema pass.
+
+---
+
 ## 2026-06-13 — Catch-up recap PUBLISHED; S2 patch coverage complete
 
 Consolidated **NEXUS** article covering **Update 1.1.0 + 1.1.0.1**, written from the
