@@ -31,6 +31,33 @@
   --text-disabled:  rgba(255,255,255,0.1);
 }
 
+/* ── DMZ THEME (per-game token swap) ─────────────────────────── */
+/* Network game-section template, theming mechanism (GAME_TEMPLATE.md D3).
+   The /dmz route group wraps its subtree in .dmz-theme, which REDEFINES the
+   same design tokens with DMZ values — so any token-driven component renders
+   in DMZ colors under /dmz while Marathon (:root) is untouched.
+   ROUGH tokens, approximating the locked DMZ direction (amber / cold grey-blue
+   / irradiated red-orange). NOT final — tuned at the launch-polish pass.
+   Keep in sync with the `theme` block in lib/games/dmz.js. */
+.dmz-theme {
+  --bg-page:       #0b0e11; /* cold grey-blue base */
+  --bg-card:       #11151a;
+  --bg-card-hover: #161b22;
+  --bg-input:      #11151a;
+  --bg-nav:        #0c1014;
+
+  --border:        #2b3640;
+  --border-subtle: #1c242b;
+
+  --green:         #e89a2c; /* amber primary (rough) */
+  --red:           #e0563a; /* irradiated red-orange hazard (rough) */
+
+  --text-primary:   rgba(255,255,255,0.88);
+  --text-secondary: rgba(255,255,255,0.45);
+  --text-tertiary:  rgba(255,255,255,0.25);
+  --text-disabled:  rgba(255,255,255,0.12);
+}
+
 /* ── BASE ───────────────────────────────────────────────────── */
 html {
   scroll-behavior: smooth;

@@ -186,6 +186,12 @@ export default function Nav() {
     setMobileExpanded(mobileExpanded === label ? null : label);
   }
 
+  // DMZ (and future game route groups) render their own per-game header
+  // (GAME_TEMPLATE.md D4). Suppress Marathon's global nav there. Declared after
+  // all hooks so hook order stays stable. Marathon's unprefixed routes are
+  // unaffected.
+  if (pathname && pathname.startsWith('/dmz')) return null;
+
   return (
     <nav style={{
       position:     'fixed',
