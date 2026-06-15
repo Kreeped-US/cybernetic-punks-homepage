@@ -5,6 +5,29 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ Step 3 Batch A COMPLETE: all Group A reads game-scoped
+
+Site-content `feed_items` reads now filter `game_slug='marathon'`. Done in two sub-batches:
+A1 (commit `0e33322`) + A2 (commit `6ecc113`), both direct to main, pushed.
+
+- **All 42 Group A `feed_items` reads game-scoped** — 8 (A1) + 34 (A2) across ~18 files.
+  Filter added **after `is_published`** (or after `.eq('slug', …)` for by-slug reads),
+  **alongside** existing tag/`or`/`contains`/`in`/editor logic — never replacing.
+- **Output verified identical** (filtered vs unfiltered, real params, every query shape:
+  ranked/factions/guides/editors/weapons/shells/meta/sitrep/HomeEditorReactions/intel
+  by-slug — all counts matched). **Build green.** Filters inert until a `dmz` row exists.
+- **Group B (editorial-input) and Group C (sitemap) still remain in Step 3** — NOT touched.
+  B = cron no-repeat lines + `lib/gather/cipher.js` (×5) + `lib/gather/miranda.js` (×1),
+  plus the cron WRITER (insert must write `game_slug='marathon'`), honoring the no-bleed
+  note (DMZ editors read DMZ's prior articles). C = sitemap (filter marathon for unprefixed
+  `/intel/<slug>`; emit `/dmz/...` later).
+- **RPC flag (recorded for a later pass):** `app/intel/[slug]/page.js` calls the
+  `get_related_articles` **RPC** (server-side SQL, not a table read) — out of Batch-A scope.
+  Its feed_items **fallback** read IS filtered, but the RPC itself can mix games once DMZ
+  rows exist; needs game-awareness in Batch B/C or a dedicated RPC pass.
+
+---
+
 ## 2026-06-15 — DMZ Step 2 DONE: feed_items.game_slug added + backfilled
 
 First production write of the migration. Applied directly in the Supabase SQL editor (no
