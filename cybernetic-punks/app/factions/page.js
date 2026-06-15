@@ -92,6 +92,7 @@ async function getFactionData() {
         .from('feed_items')
         .select('id, headline, slug, editor, tags, thumbnail, ce_score, created_at')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .or('tags.cs.{factions},tags.cs.{cyberacme},tags.cs.{nucaloric},tags.cs.{traxus},tags.cs.{mida},tags.cs.{arachne},tags.cs.{sekiguchi}')
         .order('created_at', { ascending: false })
         .limit(12),

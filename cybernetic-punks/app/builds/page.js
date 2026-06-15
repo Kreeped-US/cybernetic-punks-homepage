@@ -209,6 +209,7 @@ export default async function BuildsPage() {
       .select('id, headline, slug, tags, ce_score, thumbnail, created_at')
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .order('created_at', { ascending: false })
       .limit(48),
     Promise.resolve({ data: null }),

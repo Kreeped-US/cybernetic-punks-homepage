@@ -246,6 +246,7 @@ export default async function GuidesPage({ searchParams }) {
       .select('id, headline, body, slug, tags, thumbnail, created_at, ce_score')
       .eq('editor', 'MIRANDA')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .order('created_at', { ascending: false })
       .limit(80),
 
@@ -254,6 +255,7 @@ export default async function GuidesPage({ searchParams }) {
       .select('id, headline, slug, tags, thumbnail, ce_score, created_at')
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .order('ce_score', { ascending: false })
       .limit(4),
 
@@ -262,6 +264,7 @@ export default async function GuidesPage({ searchParams }) {
       .select('id, headline, slug, tags, thumbnail, ce_score, created_at')
       .eq('editor', 'NEXUS')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .order('created_at', { ascending: false })
       .limit(4),
 
@@ -279,6 +282,7 @@ export default async function GuidesPage({ searchParams }) {
       .from('feed_items')
       .select('tags')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .overlaps('tags', canonicalTags),
   ]);
 

@@ -61,7 +61,8 @@ export default async function HomeEditorReactions() {
     .from('feed_items')
     .select('id, headline, slug, editor, created_at')
     .in('id', articleIds)
-    .eq('is_published', true);
+    .eq('is_published', true)
+    .eq('game_slug', 'marathon');
 
   var articleMap = {};
   (articles || []).forEach(function(a) { articleMap[a.id] = a; });

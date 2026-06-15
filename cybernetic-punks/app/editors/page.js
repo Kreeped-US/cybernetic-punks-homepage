@@ -178,13 +178,15 @@ export default async function EditorsPage() {
           .from('feed_items')
           .select('*', { count: 'exact', head: true })
           .eq('editor', ed.name)
-          .eq('is_published', true),
+          .eq('is_published', true)
+          .eq('game_slug', 'marathon'),
 
         supabase
           .from('feed_items')
           .select('headline, slug, ce_score, created_at, tags')
           .eq('editor', ed.name)
           .eq('is_published', true)
+          .eq('game_slug', 'marathon')
           .order('ce_score', { ascending: false })
           .limit(3),
 
@@ -193,6 +195,7 @@ export default async function EditorsPage() {
           .select('headline, slug, created_at, tags')
           .eq('editor', ed.name)
           .eq('is_published', true)
+          .eq('game_slug', 'marathon')
           .order('created_at', { ascending: false })
           .limit(3),
 
@@ -201,6 +204,7 @@ export default async function EditorsPage() {
           .select('ce_score')
           .eq('editor', ed.name)
           .eq('is_published', true)
+          .eq('game_slug', 'marathon')
           .gt('ce_score', 0),
 
         // Pull recent articles' tags for top-topics aggregation
@@ -209,6 +213,7 @@ export default async function EditorsPage() {
           .select('tags')
           .eq('editor', ed.name)
           .eq('is_published', true)
+          .eq('game_slug', 'marathon')
           .order('created_at', { ascending: false })
           .limit(30),
 
@@ -218,6 +223,7 @@ export default async function EditorsPage() {
           .select('created_at')
           .eq('editor', ed.name)
           .eq('is_published', true)
+          .eq('game_slug', 'marathon')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),

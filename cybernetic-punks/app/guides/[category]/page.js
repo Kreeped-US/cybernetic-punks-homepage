@@ -530,6 +530,7 @@ export default async function CategoryPage({ params }) {
       .from('feed_items')
       .select('id, headline, body, slug, tags, thumbnail, created_at, ce_score, editor')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .contains('tags', [cat.tag])
       .order('created_at', { ascending: false })
       .limit(100),
@@ -541,6 +542,7 @@ export default async function CategoryPage({ params }) {
       .from('feed_items')
       .select('id, headline, body, slug, tags, thumbnail, created_at, ce_score, editor')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .contains('tags', [cat.tag])
       .order('ce_score', { ascending: false })
       .limit(12),
@@ -549,6 +551,7 @@ export default async function CategoryPage({ params }) {
       .select('id, headline, slug, ce_score, created_at')
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .order('ce_score', { ascending: false })
       .limit(3),
     supabase
@@ -556,6 +559,7 @@ export default async function CategoryPage({ params }) {
       .select('id, headline, slug, ce_score, created_at')
       .eq('editor', 'NEXUS')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .order('created_at', { ascending: false })
       .limit(3),
   ]);

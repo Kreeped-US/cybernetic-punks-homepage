@@ -50,6 +50,7 @@ async function getRankedData() {
         .from('feed_items')
         .select('id, headline, slug, editor, tags, thumbnail, ce_score, created_at')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .contains('tags', ['ranked'])
         .order('created_at', { ascending: false })
         .limit(12),

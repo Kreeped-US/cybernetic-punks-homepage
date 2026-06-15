@@ -75,6 +75,7 @@ export default async function MetaPage() {
         .select('headline, slug, editor, tags, created_at')
         .in('editor', ['NEXUS', 'CIPHER'])
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .order('created_at', { ascending: false })
         .limit(6),
     ]);

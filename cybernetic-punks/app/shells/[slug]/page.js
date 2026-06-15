@@ -108,6 +108,7 @@ export default async function ShellHubPage({ params }) {
       .from('feed_items')
       .select('id, headline, slug, tags, ce_score, editor, thumbnail, created_at')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .contains('tags', [shellName.toLowerCase()])
       .in('editor', ['CIPHER', 'GHOST', 'MIRANDA'])
       .order('created_at', { ascending: false })
@@ -121,6 +122,7 @@ export default async function ShellHubPage({ params }) {
       .select('id, headline, slug, body, ce_score, thumbnail, created_at')
       .eq('editor', 'NEXUS')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .contains('tags', [shellName.toLowerCase()])
       .order('created_at', { ascending: false })
       .limit(2),
@@ -131,6 +133,7 @@ export default async function ShellHubPage({ params }) {
       .select('id, headline, slug, body, ce_score, thumbnail, created_at')
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .contains('tags', [shellName.toLowerCase()])
       .order('ce_score', { ascending: false })
       .limit(3),

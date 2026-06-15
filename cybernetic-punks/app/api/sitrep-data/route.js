@@ -38,6 +38,7 @@ export async function GET() {
         .from('feed_items')
         .select('id, headline, body, slug, editor, tags, ce_score, thumbnail, created_at')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .gte('created_at', new Date(Date.now() - 48 * 3600000).toISOString())
         .order('created_at', { ascending: false })
         .limit(30),

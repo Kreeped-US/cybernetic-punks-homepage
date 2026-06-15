@@ -148,6 +148,7 @@ export default async function WeaponDetailPage({ params }) {
       .select('id, headline, slug, ce_score, thumbnail, created_at')
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .contains('tags', [nameToSlug(weaponName)])
       .order('ce_score', { ascending: false })
       .limit(3),
@@ -157,6 +158,7 @@ export default async function WeaponDetailPage({ params }) {
       .from('feed_items')
       .select('id, headline, slug, editor, thumbnail, created_at')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .contains('tags', [nameToSlug(weaponName)])
       .in('editor', ['CIPHER', 'NEXUS', 'GHOST', 'MIRANDA'])
       .order('created_at', { ascending: false })

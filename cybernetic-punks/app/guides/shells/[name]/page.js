@@ -200,6 +200,7 @@ export default async function ShellGuidePage({ params }) {
       .select('id, headline, slug, body, tags, ce_score, thumbnail, created_at')
       .eq('editor', 'MIRANDA')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .or('tags.cs.{' + resolved.name + '},headline.ilike.%' + shell.name + '%')
       .order('created_at', { ascending: false })
       .limit(10),
@@ -210,6 +211,7 @@ export default async function ShellGuidePage({ params }) {
       .select('id, headline, slug, tags, ce_score, thumbnail, created_at')
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .or('tags.cs.{' + resolved.name + '},headline.ilike.%' + shell.name + '%')
       .order('ce_score', { ascending: false })
       .limit(6),

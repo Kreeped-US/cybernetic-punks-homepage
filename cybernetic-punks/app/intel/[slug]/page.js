@@ -239,7 +239,7 @@ export async function generateMetadata({ params }) {
       alternates: { canonical: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase() },
     };
   }
-  var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle();
+  var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).eq('game_slug', 'marathon').maybeSingle();
   if (!item) return { title: 'Intel Not Found' };
   var desc = buildMetaDescription(item.body, item.headline);
   return {
@@ -1255,14 +1255,14 @@ export default async function IntelPage({ params }) {
   if (editorConfig) {
     var items = [];
     try {
-      var { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).order('created_at', { ascending: false }).limit(50);
+      var { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).eq('game_slug', 'marathon').order('created_at', { ascending: false }).limit(50);
       if (data) items = data;
     } catch (err) { console.error('EditorLanePage fetch error:', err); }
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
   var [itemResult, shellResult, weaponResult, modResult, implantResult] = await Promise.all([
-    supabase.from('feed_items').select('*').eq('slug', slug).maybeSingle(),
+    supabase.from('feed_items').select('*').eq('slug', slug).eq('game_slug', 'marathon').maybeSingle(),
     supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name, image_filename').limit(20),
     supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type, image_filename').limit(40),
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(120),
@@ -1305,7 +1305,7 @@ export default async function IntelPage({ params }) {
       if (!rpcResult.error && rpcResult.data) related = rpcResult.data;
     }
     if (related.length === 0) {
-      var fallback = await supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).neq('slug', slug).order('created_at', { ascending: false }).limit(6);
+      var fallback = await supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).eq('game_slug', 'marathon').neq('slug', slug).order('created_at', { ascending: false }).limit(6);
       if (!fallback.error && fallback.data) related = fallback.data;
     }
   } catch (err) { /* non-fatal */ }
