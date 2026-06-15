@@ -491,6 +491,36 @@ function InlineStatCard({ item, type, color }) {
   );
 }
 
+// ─── WHOLE-NAME MATCHER ──────────────────────────────────────
+// Item names are matched against body text by WHOLE name only: the characters
+// immediately before and after the matched span must be non-alphanumeric (a
+// string edge counts as a boundary). This stops substring false positives where
+// an item name is embedded in a longer word, e.g. "Second Wind" inside "second
+// window", "Combat Mag" inside "combat magazine", or "Impact HAR" inside
+// "impact harm". Used by BOTH the candidate filter and the inline injection so
+// the sidebar reference list and the inline cards agree. Case-insensitive;
+// callers pass already-lowercased strings. (Watch item: single common-word
+// names like "Knife" still card on a whole-word match - acceptable for now.)
+function isAlnumChar(ch) {
+  return ch !== undefined && ch !== '' && /[a-z0-9]/i.test(ch);
+}
+function wholeNameIndex(haystackLower, nameLower) {
+  if (!nameLower) return -1;
+  var from = 0;
+  while (from <= haystackLower.length) {
+    var idx = haystackLower.indexOf(nameLower, from);
+    if (idx === -1) return -1;
+    var before = idx > 0 ? haystackLower.charAt(idx - 1) : undefined;
+    var after = haystackLower.charAt(idx + nameLower.length); // '' past end -> boundary
+    if (!isAlnumChar(before) && !isAlnumChar(after)) return idx;
+    from = idx + 1;
+  }
+  return -1;
+}
+function bodyHasWholeName(haystackLower, name) {
+  return !!name && wholeNameIndex(haystackLower, name.toLowerCase()) !== -1;
+}
+
 // ─── INLINE-AWARE PARAGRAPH ──────────────────────────────────
 function ParagraphWithCards({ text, allItems, mentionedSet }) {
   var sorted = allItems.slice().sort(function(a, b) {
@@ -511,7 +541,7 @@ function ParagraphWithCards({ text, allItems, mentionedSet }) {
         return;
       }
       var lower = seg.value.toLowerCase();
-      var idx = lower.indexOf(nameLower);
+      var idx = wholeNameIndex(lower, nameLower);
       if (idx === -1) {
         newSegments.push(seg);
         return;
@@ -960,17 +990,17 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
 
   var bodyLower = (item.body || '').toLowerCase();
   var mentionedShells = (shells || [])
-    .filter(function(s) { return s.name && bodyLower.includes(s.name.toLowerCase()); })
+    .filter(function(s) { return bodyHasWholeName(bodyLower, s.name); })
     .map(function(s) { return Object.assign({}, s, { _type: 'shell' }); });
   var mentionedWeapons = (weapons || [])
-    .filter(function(w) { return w.name && bodyLower.includes(w.name.toLowerCase()); })
+    .filter(function(w) { return bodyHasWholeName(bodyLower, w.name); })
     .map(function(w) { return Object.assign({}, w, { _type: 'weapon' }); });
   var mentionedMods = (mods || [])
-    .filter(function(m) { return m.name && bodyLower.includes(m.name.toLowerCase()); })
+    .filter(function(m) { return bodyHasWholeName(bodyLower, m.name); })
     .slice(0, 8)
     .map(function(m) { return Object.assign({}, m, { _type: 'mod' }); });
   var mentionedImplants = (implants || [])
-    .filter(function(imp) { return imp.name && bodyLower.includes(imp.name.toLowerCase()); })
+    .filter(function(imp) { return bodyHasWholeName(bodyLower, imp.name); })
     .slice(0, 8)
     .map(function(imp) { return Object.assign({}, imp, { _type: 'implant' }); });
 
