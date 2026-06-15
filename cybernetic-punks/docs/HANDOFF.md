@@ -5,6 +5,54 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ Step 4 DONE: /dmz live (empty) — content-home slice COMPLETE through Step 4
+
+Built `/dmz` as the EMPTY first instance of the network game-section template
+([GAME_TEMPLATE.md](dmz/GAME_TEMPLATE.md), decisions D1-D4). Commit `7f6f6a3`, direct to
+main, pushed. **The content-home slice (Steps 2-4) is COMPLETE.** `/dmz` renders but holds
+zero content — no `game_slug='dmz'` row was inserted (that's the separate gated go-live).
+
+- **Template first instance built (config-driven):**
+  - **D1** — `lib/games/dmz.js` (config module: slug + thin section descriptors
+    `{ slug, label, source, contentFilter }` + rough theme tokens) and
+    `lib/games/registry.js` (network registry `game_slug -> config`). A future game = a
+    config module + a registry entry.
+  - **D2** — DMZ fuller skeleton, two source kinds: EDITOR-FED (Field Intel / Meta /
+    Loadouts → read `feed_items WHERE game_slug='dmz'`, empty now → empty-state) +
+    DATA-FED (3D Printer / FOB / Hajin Regions → "coming soon" shells, own entity tables
+    later). DMZ vocabulary throughout.
+  - **D3** — theme-swap wired: `.dmz-theme` token block in `globals.css` redefines the
+    design tokens; the `/dmz` layout wraps its subtree in it. Confirmed: amber `#e89a2c` /
+    base `#0b0e11` ship in the compiled CSS bundle; Marathon (`:root`) untouched. **Tokens
+    are ROUGH — need final tuning at the launch-polish pass.**
+  - **D4** — shell built FOR DMZ (`app/dmz/`: `layout`, `DmzNav` renders nav from config,
+    `page` landing renders grid from config, `[section]/page` one config-driven route for
+    all sections + force-dynamic + lazy `supabase`, `DmzEmptyState`, `DmzComingSoon`). NOT
+    extracted to a shared layer yet (extract when Marathon migrates).
+  - Marathon's global `Nav` + `LivePulseStrip` suppressed on `/dmz` (additive guards in
+    `components/Nav.js` + `components/LivePulseGate.js`, placed after all hooks); Marathon
+    routes unaffected.
+- **Verified:** `/dmz` + all 6 sections render 200 (editor-fed = empty-state, data-fed =
+  coming-soon); unknown section → 404 (config-validated); nav + landing render from config;
+  theme-swap ships; **Marathon unchanged** (`/intel` + `/` still 200, no `dmz-theme` leak,
+  Marathon nav intact). Build green.
+- **NEXT — gated go-live (separate step):** insert the first `game_slug='dmz'` row(s), then
+  verify all the inert filters from Steps 2-3 now hold (Marathon reads still exclude DMZ;
+  DMZ section now shows content; sitemap still emits only Marathon at `/intel`; related-
+  articles stay within-game). This is the action that makes every filter load-bearing. Pair
+  with the pre-launch DMZ content campaign.
+- **Still pending (carried):**
+  - **Rough DMZ tokens need final tuning** at launch-polish (kept in sync between
+    `globals.css` `.dmz-theme` and the `theme` block in `lib/games/dmz.js`).
+  - **5 parameterization-pending `'marathon'` sites** still hardcoded (flip to per-game
+    target when DMZ editorial starts): `PRODUCING_GAME_SLUG` in cron / cipher / miranda, the
+    B1 cron writer literal, the C2 caller `p_game_slug`. (DMZ's own section page uses a
+    separate `DMZ_GAME_SLUG='dmz'` constant — correct as-is.)
+  - **Sitemap `/dmz`-emit** — build `/dmz/...` URL emission at/after go-live (route group +
+    content now exist; emit once there are real DMZ pages to point at).
+
+---
+
 ## 2026-06-15 — Network game-section template DESIGNED + Step 4 fully specified
 
 Design doc: [docs/dmz/GAME_TEMPLATE.md](dmz/GAME_TEMPLATE.md). The reusable pattern for how
