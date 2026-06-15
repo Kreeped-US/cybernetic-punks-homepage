@@ -5,6 +5,50 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — Network game-section template DESIGNED + Step 4 fully specified
+
+Design doc: [docs/dmz/GAME_TEMPLATE.md](dmz/GAME_TEMPLATE.md). The reusable pattern for how
+ANY game attaches to the network: **universal in STRUCTURE, agnostic about CONTENT.**
+Generalize the plug-in *mechanism* (game_slug + per-game sections-config + shared shell), NOT
+the section *taxonomy* (a universal section set generalizes from one example and breaks at
+game #3). **DMZ is the FIRST INSTANCE of this template, not a bespoke build; Marathon migrates
+onto it later (deliberately, not now).**
+
+- **The template = 3 parts:** (1) `game_slug` as the organizing dimension (already proven by
+  the feed_items migration, Steps 2-3); (2) per-game **sections-config** — each game declares
+  its sections as thin descriptors and the routes/nav/landing render FROM the config, not
+  hardcoded pages; (3) the **shared shell** (header/nav/route-group wrapper/empty-state/theme
+  token-swap/landing), theme-swapped per game.
+- **Anti-premature-abstraction line:** no universal section set, no universal content
+  taxonomy, no runtime "engine"/dynamic-route-generator meta-system now (config-driven copy
+  is enough; build the generator only if game #3/#4 proves it needed), no Marathon migration
+  now.
+- **4 decisions LOCKED:**
+  - **D1 — config location + descriptor shape:** per-game config MODULE (folder + exported
+    sections) + a lightweight network-level REGISTRY (`game_slug -> config`); THIN descriptor
+    = `{ slug, label, contentFilter }`, add fields only when a real section needs one.
+  - **D2 — DMZ initial sections = FULLER SKELETON**, in two descriptor-flagged kinds (they
+    read different sources): EDITOR-FED (`feed_items WHERE game_slug='dmz'`) = **Field Intel,
+    Meta, Loadouts**; DATA-FED (own entity tables later; "coming soon" shells now) = **3D
+    Printer, FOB, Hajin Regions**. DMZ vocabulary throughout (Field Intel / Loadouts / OPS,
+    not Intel Feed / Builds).
+  - **D3 — theme-swap wired in Step 4** at the route-group level with ROUGH DMZ tokens (amber
+    primary / cold grey-blue base / irradiated-red hazard) — proves the mechanism + gives DMZ
+    visual distinction. Tokens explicitly rough; final palette at launch-polish.
+  - **D4 — build the shell for DMZ CLEANLY but do NOT extract to a shared-component layer
+    yet** — extract when Marathon migrates onto the template (DMZ-first-then-template, one
+    level down).
+- **NEXT — Step 4 (fully specified, build the EMPTY first instance):** `/dmz` route group +
+  shared shell + DMZ sections-config (full skeleton: editor-fed reading `game_slug='dmz'`
+  empty, data-fed "coming soon" shells) + rough DMZ theme tokens (swap wired). Marathon
+  untouched. Verify renders-empty + Marathon-unchanged + build green.
+- **The first `game_slug='dmz'` INSERT remains a SEPARATE gated go-live step** (after Step 4
+  builds the empty instance; this is when the inert filters from Steps 2-3 become
+  load-bearing and the 5 parameterization-pending `'marathon'` sites get wired to the target
+  game).
+
+---
+
 ## 2026-06-15 — DMZ Step 3 COMPLETE: all feed_items consumers + writer game-aware
 
 Batch C done (commits `2d6347d` C1, `46f5249` C2), closing Step 3. **Every `feed_items`
