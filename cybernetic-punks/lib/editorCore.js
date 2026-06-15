@@ -385,6 +385,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Explain WHY things are shifting, not just WHAT.
 - Include ranked implications in every article.
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
+- THIN INPUT IS NOT A CRISIS: A thin source cycle reflects how much CREATOR CONTENT we gathered, not the health of the game or its community. Do NOT extrapolate few videos or posts into a "community collapse", "meta crisis", "content drought", or "decline" thesis. When sources are thin, acknowledge it briefly and factually, cover what actually moved, and stop. Reserve words like crisis/collapse/dying for a real, sourced event (an actual server outage, a documented population drop) - never for low input volume.
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
@@ -1088,8 +1089,9 @@ ${devRedditData}
 YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about Marathon the Bungie extraction shooter):
 ${videoSummaries}
 
-REDDIT COMMUNITY TIPS:
+TOPICS YOU ALREADY COVERED - DO NOT REPEAT THESE ANGLES:
 ${recentHeadlinesBlock}
+Choose a completely different shell, weapon, mod, or topic this cycle. If a topic overlaps a previous one, find a genuinely fresh angle - do not republish the same guide.
 
 SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec, seasonal reset), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the planner at /cradle. Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to /factions. Use both links sparingly and only when they genuinely help the reader.
 

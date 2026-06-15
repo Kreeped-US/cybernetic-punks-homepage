@@ -292,7 +292,7 @@ ANALYSIS GUIDANCE:
 Use the publish_build_analysis tool to publish your analysis.`;
 
     case 'NEXUS':
-      return `Here are the latest Marathon videos trending on YouTube. Analyze what these videos collectively reveal about the current state of the Marathon meta and community interest.
+      return `Here are the latest Marathon videos trending on YouTube. Summarize what these videos COVER about the current Marathon meta - the weapons, shells, and strategies they discuss. Do not infer community size, interest, or health from how many videos exist; few videos means limited creator coverage this cycle, not a declining game.
 
 ${videoSummaries}
 
