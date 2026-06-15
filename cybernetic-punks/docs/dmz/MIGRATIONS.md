@@ -40,3 +40,30 @@ write).
 **Step-3 open item (do NOT do yet):** once the cron writes `game_slug` explicitly,
 **drop the `DEFAULT 'marathon'`** (keep NOT NULL) so a future DMZ insert that omits
 `game_slug` **errors** instead of being silently mis-tagged `'marathon'`.
+→ **CLOSED** by Step 3 / Batch B2 below.
+
+---
+
+## Step 3 / Batch B2 — drop `feed_items.game_slug` DEFAULT (applied 2026-06-15, Supabase SQL editor)
+
+Removes the column default so a forgotten `game_slug` on insert **fails loud** instead of
+silently defaulting to `'marathon'` — protects future DMZ content from being mis-tagged as
+Marathon. **NOT NULL is retained.** Safe to apply only because Batch B1 (commit `cfedc66`)
+made the sole code insert path (`app/api/cron/route.js:411`) set `game_slug='marathon'`
+explicitly; the manual/catch-up insert procedure also sets it. This **closes the Step-2
+open item** above.
+
+```sql
+-- drop the default; KEEP NOT NULL (do not drop the constraint)
+ALTER TABLE feed_items ALTER COLUMN game_slug DROP DEFAULT;
+```
+
+**Verification (post-apply):**
+- **Deliberate insert omitting `game_slug` → REJECTED** with Postgres `23502`
+  *(null value in column "game_slug" ... violates not-null constraint)*. This proves both:
+  the **DEFAULT is gone** (no fallback fired) **and NOT NULL is intact** (the null was
+  rejected). No row was created (error pre-write); cleanup deleted 0 rows.
+- Data integrity unchanged: total = **1756**; `game_slug='marathon'` = **1756**; `IS NULL`
+  = **0**; `!= 'marathon'` = **0**. (Dropping a default does not alter stored rows.)
+- **B1+B2 consistency proof (pending):** the next real cron insert succeeding — with no
+  default present — confirms B1 correctly sets `game_slug` on every produced article.
