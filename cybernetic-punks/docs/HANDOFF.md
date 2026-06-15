@@ -5,6 +5,47 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ Step 3 COMPLETE: all feed_items consumers + writer game-aware
+
+Batch C done (commits `2d6347d` C1, `46f5249` C2), closing Step 3. **Every `feed_items`
+reader, the writer, and the related-articles DB function are now game-aware.** Marathon
+behavior is unchanged at every step (all rows are `'marathon'`; filters inert until DMZ rows
+exist). Step 3 = Batch A (42 site reads) + Batch B (writer + default-dropped + 11 no-bleed
+editorial reads) + Batch C (sitemap + RPC).
+
+- **C1 — sitemap marathon filter** (`app/sitemap.js`, commit `2d6347d`): the feed_items read
+  that emits `/intel/<slug>` URLs now filters `game_slug='marathon'`, so the sitemap won't
+  advertise DMZ slugs at unprefixed Marathon paths. Output identical today. (The pre-existing
+  `game_slug` filter at ~168 is on `game_maps`, untouched.)
+- **C2 — game-aware `get_related_articles` RPC** (commit `46f5249`): the only DB-function
+  change in the migration. Added `p_game_slug text DEFAULT 'marathon'` (last param, Option A)
+  + an `AND f.game_slug = p_game_slug` predicate; body otherwise verbatim. Caller
+  (`app/intel/[slug]/page.js:1304`) now passes `p_game_slug: 'marathon'` explicitly. Full
+  verbatim function body + both DDLs recorded in [MIGRATIONS.md](dmz/MIGRATIONS.md).
+  - **Gotcha (resolved):** `CREATE OR REPLACE` with a new param created a *second* overload
+    rather than replacing — the stale 3-arg function caused a PostgREST "could not choose the
+    best candidate" ambiguity that briefly degraded prod related-articles. Fixed with
+    `DROP FUNCTION IF EXISTS public.get_related_articles(uuid, text[], integer);`. Verified:
+    exactly one definition, 3-arg + 4-arg both work + identical, baseline reproduced, prod
+    restored. **Lesson for future RPC param adds: a CREATE OR REPLACE that changes arity
+    needs a DROP of the old signature.**
+
+### Deferred / pending after Step 3
+- **⚠ PARAMETERIZATION-PENDING — now 5 sites** hardcode `'marathon'` and must all flip
+  together to the cron's per-game target when DMZ editorial starts: (1) `PRODUCING_GAME_SLUG`
+  in `app/api/cron/route.js`, (2) `PRODUCING_GAME_SLUG` in `lib/gather/cipher.js`,
+  (3) `PRODUCING_GAME_SLUG` in `lib/gather/miranda.js`, (4) the B1 cron **writer literal**
+  `game_slug: 'marathon'`, and (5) the **C2 caller** `p_game_slug: 'marathon'` in
+  `app/intel/[slug]/page.js:1304`. All inert today.
+- **Sitemap `/dmz`-emit (Step-4-adjacent):** build `/dmz/...` URL emission once the `/dmz`
+  route group + real DMZ content exist (emitting them now would 404 to Google). The C1 filter
+  only prevents leakage; it does not yet emit DMZ URLs.
+- **NEXT — Step 4: the `/dmz` route group** rendering `feed_items WHERE game_slug='dmz'`
+  (publishes the first non-marathon rows; at that point the inert filters become load-bearing
+  and the 5 parameterization sites get wired to the target game).
+
+---
+
 ## 2026-06-15 — DMZ Step 3 Batch B COMPLETE: writer + default-dropped + no-bleed reads
 
 The delicate batch (write-path change + gated DDL with an ordering hazard + no-bleed reads).
