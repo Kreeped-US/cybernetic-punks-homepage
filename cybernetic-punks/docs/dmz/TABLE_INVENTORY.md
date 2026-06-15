@@ -187,8 +187,12 @@ inconsistency.
 ## NOT DECIDED / OUT OF SCOPE TODAY
 - This is **inventory + categorization only.** No schema changes, no `game_slug`
   additions, no table splits, no migration SQL — that is the **July migration**.
-- **Only two architectural decisions remain open**, both deliberately deferred:
-  **URL map** (game-scoped routes vs network routes) and **theming / DMZ branding**.
+- **URL map and theming are now DECIDED** — see the companion doc
+  [URL_AND_THEMING.md](URL_AND_THEMING.md) (Marathon unprefixed / DMZ `/dmz`-prefixed,
+  per-game hubs, `dmzpunks.com` -> 308 -> `/dmz`; per-game CSS design-token themes on a
+  shared design system). With that, the **June-17 architecture lock is COMPLETE** except
+  two minor flagged sub-items: **root-homepage content** (bare domain) and the **exact
+  DMZ visual spec** (creative pass near build). Neither blocks the July refactor.
 - DMZ shapes recorded here are **reliable for architecture** (per-game-vs-shared is
   decided); **field-level schema specifics are confirmed closer to the Oct 23 2026
   launch.**
