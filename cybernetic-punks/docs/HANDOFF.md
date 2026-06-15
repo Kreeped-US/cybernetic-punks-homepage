@@ -5,6 +5,57 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 (Mon AM, cont'd) — render + prompt fixes (entity injection, NEXUS doom-loop, MIRANDA no-repeat)
+
+### Entity-injection false positives fixed (commit `3d0594e`)
+
+The InlineStatCard matcher used case-insensitive **substring** matching with **no
+word boundaries** (`app/intel/[slug]/page.js`, in BOTH the candidate filter and the
+inline injection). "Second Wind" matched inside "second **window**" -> mangled cards
+mid-sentence. **Whole-name boundary fix** (adjacent chars must be non-alphanumeric;
+string edges count; internal punctuation like `KKV-9SD` handled) in both layers via a
+shared helper. Kills the entire substring-glue class (every `* Mag` in "magazine",
+`Impact HAR` in "impact harm", `Blue Blood` in "blue blooded", plurals, etc.), not
+just the reported case. **12/12** before/after tests pass. Render-path fix -> applies
+to **ALL existing + future articles on next render, no backfill**.
+**WATCH:** single-common-word names (`Knife`, `Rook`, `Recon`) still card on whole-word
+matches by design - `Knife` flagged in a code comment; if "knife" proves spammy, the
+follow-up is a single-common-word policy (multi-token / exact-case requirement).
+
+### NEXUS doom-loop + MIRANDA no-repeat fixed (commit `dfe2c4e`)
+
+Diagnosis found editor repetition was mostly **SOURCE-DRIVEN** (NEXUS+DEXTER share a
+YouTube pool; on thin cycles they co-cover the same video - 4 articles traced to one
+video id), **NOT a topic groove** - entity spread across 20 articles is actually broad.
+So **NO generic "be diverse" instruction** (would fight correct behavior). Two genuine
+defects fixed instead:
+1. **NEXUS doom extrapolation** - turned thin source cycles into "community
+   collapse / meta crisis / drought" theses (5 of 8 articles). Added a NEXUS-only
+   "THIN INPUT IS NOT A CRISIS" guard right after the thin-source-honesty line (both
+   coexist) + softened `youtube.js:295` so video volume isn't read as community health.
+2. **MIRANDA mis-wired** - its own past headlines were fed under a "REDDIT COMMUNITY
+   TIPS" header (i.e. as topics TO cover) with no dedup -> caused 4x near-identical
+   "Weapon Mods Guide". Replaced with a proper "DO NOT REPEAT THESE ANGLES" block,
+   window 12.
+Both prompt-side -> next cron cycle onward, no backfill. **WATCH next cycles:** NEXUS
+calm on thin weeks (no crisis framing), MIRANDA diversifies.
+
+### NEW follow-up flagged: `redditSummaries` dead-code
+
+`buildMirandaPrompt` computes real Reddit community posts (`editorCore.js:942`) but
+**never renders them** - they were what the old mislabeled header should have shown. So
+MIRANDA currently gets **NO real Reddit input**. Small separable task: wire
+`redditSummaries` into the prompt (recommended - MIRANDA is the field-guide editor,
+community tips are useful to it) OR delete the dead variable.
+
+### Topic/source-dedup -> July source-assignment refactor
+
+One-video-to-one-persona assignment + topic-level dedup. Can't do topic-dedup
+standalone - it would starve an editor on thin cycles, so it must ship with the
+source-dedup work.
+
+---
+
 ## 2026-06-15 (Mon AM) — [UNVERIFIED] system completed, verification debt quantified, KKV-9SD filled
 
 ### [UNVERIFIED] system completed (commit `d15a06a`)
