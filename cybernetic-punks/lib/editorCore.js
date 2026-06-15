@@ -322,6 +322,7 @@ VOICE - write like these examples:
 ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 400-600 words. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections per article.
 - Reference specific weapons, shells, mods, implants, abilities, and Cradle perks by exact database name.
+- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
 - Ground every recommendation in the data provided in your user prompt - current tier state, recent build coverage, community sentiment, patch content.
 - "Players should adapt" is weak. Name what to swap to, name what to drop, name when to do it.
 - runner_grade rates the BUILD, STRATEGY, or META READ your article centers on - not an observed play. S+/S = top-of-meta or hard-counter strategy. B/A = solid working approach. C/D = off-meta or fighting against current tier weaknesses.
@@ -380,6 +381,7 @@ VOICE - write like these examples:
 ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 400-600 words. Use **HEADER TEXT** section breaks. At least 3 sections.
 - Cite specific weapons and shells by exact name. Reference actual stat differences or ability interactions explaining the meta shift.
+- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
 - Explain WHY things are shifting, not just WHAT.
 - Include ranked implications in every article.
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
@@ -448,6 +450,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 500-700 words. Build analysis requires depth.
 - Use **HEADER TEXT** section breaks. At least 4 sections.
 - Name specific items by exact database name - exact weapon names, mod names, core names, implant names with stat values.
+- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
 - Explain stat interactions explicitly.
 - For every build, explain the win condition.
 - For ranked analysis: state the Holotag tier this build targets.
@@ -563,6 +566,7 @@ VOICE - write like these examples:
 ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 500-700 words. Use **HEADER TEXT** section breaks. At least 4 sections.
 - Include specific, actionable advice with exact item names and stat values.
+- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
 - End every guide with 2-3 concrete takeaways.
 - You teach without condescending. Runners are improving, not stupid.
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
@@ -650,27 +654,25 @@ async function fetchGameContext() {
       supabase.from('game_modes').select('mode_name, mode_type, available_on, summary').eq('game_slug', 'marathon').eq('verified', true).order('mode_name'),
     ]);
 
-    // Tag a row that is not confirmed against current Season 2 in-game data.
-    // `verified === false` applies to every stat table. patch_verified (null or
-    // a pre-S2 value) refines only the tables that carry that column (weapons,
-    // shells, mods); core_stats / implant_stats do not have it, so they are
-    // judged on `verified` alone (pass usePatch=false).
-    function unverifiedTag(row, usePatch) {
-      var bad = row.verified === false;
-      if (usePatch) {
-        var pv = row.patch_verified;
-        if (!pv || /^s1\b/i.test(pv)) bad = true;
-      }
-      return bad ? ' [UNVERIFIED]' : '';
+    // Tag only genuinely-unconfirmed data: a row with verified=false, OR a row
+    // carrying an explicit pre-S2 patch stamp (e.g. "S1" = verified but stale).
+    // A null patch_verified on a verified=true row is NOT tagged - that row is
+    // confirmed, it simply lacks a 1.1.0 stamp; tagging it desensitized editors
+    // to the marker. Uniform across all stat tables (no patch_verified column =
+    // pv treated as empty, so only verified=false tags).
+    function unverifiedTag(row) {
+      var pv = row.patch_verified || '';
+      return (row.verified === false || /^s1\b/i.test(pv)) ? ' [UNVERIFIED]' : '';
     }
 
     let output = '';
 
     // Shared verification note (once, ahead of all data sections - not per persona).
     output += '--- VERIFIED DATA NOTE ---\n' +
-      'Rows tagged [UNVERIFIED] below are not confirmed against current Season 2 in-game data. ' +
-      'You may mention such an item, but do NOT state its exact numeric stats as fact - omit the specific numbers, or hedge them explicitly as unconfirmed. ' +
-      'Cite precise stats as fact only for rows without the [UNVERIFIED] tag.\n' +
+      'Any item marked [UNVERIFIED] below is NOT confirmed against current Season 2 in-game data. ' +
+      'For an [UNVERIFIED] item you MUST NOT state its precise numeric stats (damage, RPM, magazine size, percentages, durations, credits). ' +
+      'Describe its role or effect qualitatively and note that the exact values are unconfirmed. Stating precise numbers for an [UNVERIFIED] item is an error. ' +
+      'Cite precise numeric stats as fact ONLY for items without the [UNVERIFIED] tag.\n' +
       '--- END NOTE ---';
 
     if (modsRes.data?.length) {
@@ -684,7 +686,7 @@ async function fetchGameContext() {
           var statPairs = Object.entries(mod.stat_changes).map(function(e) { return e[0] + ' ' + e[1]; });
           if (statPairs.length > 0) statTag = ' [' + statPairs.join(', ') + ']';
         }
-        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${unverifiedTag(mod, true)}`);
+        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${unverifiedTag(mod)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
@@ -697,7 +699,7 @@ async function fetchGameContext() {
       for (const core of coresRes.data) {
         const runner = core.required_runner || 'Unknown';
         if (!byRunner[runner]) byRunner[runner] = [];
-        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${unverifiedTag(core, false)}`);
+        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${unverifiedTag(core)}`);
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
@@ -718,7 +720,7 @@ async function fetchGameContext() {
           imp.stat_5_label && imp.stat_5_value ? `${imp.stat_5_label}: ${imp.stat_5_value}` : null,
         ].filter(Boolean).join(', ');
         var factionTag = imp.faction_source ? ' [' + imp.faction_source + ' Armory unlock]' : '';
-        bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${unverifiedTag(imp, false)}`);
+        bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${unverifiedTag(imp)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
@@ -737,7 +739,7 @@ async function fetchGameContext() {
           w.range_rating ? 'RANGE:' + w.range_rating : '',
           w.ranked_viable === false ? '[RANKED-AVOID]' : '',
         ].filter(Boolean).join(' | ');
-        return '  ' + w.name + (parts ? ' - ' + parts : '') + unverifiedTag(w, true);
+        return '  ' + w.name + (parts ? ' - ' + parts : '') + unverifiedTag(w);
       }).join('\n');
       output += '\n\n--- WEAPON STATS DATABASE ---\n' + weaponLines + '\n--- END WEAPONS ---';
     }
@@ -758,7 +760,7 @@ async function fetchGameContext() {
       };
       const shellLines = shellsRes.data.map(function(s) {
         return [
-          '  ' + s.name + (s.role ? ' [' + s.role + ']' : '') + unverifiedTag(s, true),
+          '  ' + s.name + (s.role ? ' [' + s.role + ']' : '') + unverifiedTag(s),
           s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : '',
           fmtAbility('Prime', s.prime_ability_name, s.prime_ability_description),
           fmtAbility('Tactical', s.tactical_ability_name, s.tactical_ability_description),
