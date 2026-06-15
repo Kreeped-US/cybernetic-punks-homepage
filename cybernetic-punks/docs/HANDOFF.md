@@ -5,6 +5,50 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — MIRANDA wire-in + DMZ groundwork
+
+### `redditSummaries` wired in (commit `24f599b`)
+
+Closed the dead-code follow-up: MIRANDA now renders real Reddit community posts under a
+correctly-labeled `COMMUNITY REDDIT POSTS` section (topic-signal caveat, const-pattern
+thin-cycle fallback), distinct from the no-repeat block. MIRANDA prompt-quality thread
+fully resolved: working no-repeat guard + live community input.
+
+### DMZ refactor groundwork — table inventory + first architecture decisions DONE
+
+Decision doc at [docs/dmz/TABLE_INVENTORY.md](dmz/TABLE_INVENTORY.md). The "lock
+architectural decisions by June 17" deliverable, landed early. Read-only audit of all
+**58** API-exposed tables (14 already carry `game_slug`). Categorized GAME-SCOPED (45,
+incl. the 9 per-game player tables) / NETWORK-LEVEL (5) / DEFAULTED (8); UNCERTAIN
+down to **0 blocking** (~5 real decisions, resolved below).
+
+- **LOCKED — `feed_items` -> network-level + `game_slug`, single shared pipeline.** Fits
+  the one-hub thesis; escape hatch if DMZ's content model can't share schema.
+  `article_comments` / `meta_tiers` follow it. The `feed_items` `game_slug` migration
+  (1756 rows + 5 consumers: cron, /intel, /rising, homepage, comments) = single biggest
+  July line item.
+- **LOCKED — `player_profiles` identity REQUIRES REWORK before DMZ.** Identity is
+  `bungie_*`, but DMZ is Call of Duty (Battle.net/Steam/Xbox/Switch2/Activision auth -
+  confirmed not Bungie). Auth/identity generalization = pre-DMZ-launch requirement, not
+  optional.
+- **LOCKED — `player_*` cluster -> PER-GAME build tables + network-level identity /
+  Runner Shell spine** (two-tier). DMZ context confirmed its player/progression model is
+  fundamentally different from Marathon's (CoD Gunsmith + insured weapons + stash +
+  separate DMZ XP/Active-Duty progression vs Marathon's shell/mod/ranked shape). A shared
+  `player_loadouts + game_slug` table would be half-null per row, so build data goes
+  per-game; identity + Runner Shell progression stay network-level, with per-game data
+  FK-linked to the one profile. **Principle established: SHARE what's structurally
+  universal (articles), SPLIT what's structurally game-specific (build data).** DMZ shape
+  reliable for architecture; field-level schema confirmed closer to the Oct 23 launch.
+- **DEFAULTED — remaining uncertain** (`server_status`, infra/logs cluster) -> network +
+  game tag unless a reason to fork.
+- **Dead / retire candidates:** `faction_stat_bonuses`, `faction_unlocks`, `map_zones`
+  (confirm-then-retire, separate cleanup).
+- **STILL OPEN (only remaining architecture decisions):** URL map, theming approach.
+  Migration SQL = July.
+
+---
+
 ## 2026-06-15 (Mon AM, cont'd) — render + prompt fixes (entity injection, NEXUS doom-loop, MIRANDA no-repeat)
 
 ### Entity-injection false positives fixed (commit `3d0594e`)
