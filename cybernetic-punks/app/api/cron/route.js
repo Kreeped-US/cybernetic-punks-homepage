@@ -261,6 +261,12 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       slug: generateSlug(result.headline),
       thumbnail: media.thumbnail,
       source_url: media.source_url,
+      // DMZ migration (step 3, batch B1): every insert path must set game_slug
+      // explicitly. Hardcoded 'marathon' for now; becomes the cron's per-game
+      // target when DMZ editorial starts. Required before the column DEFAULT is
+      // dropped (batch B2) -- a forgotten game_slug then errors instead of
+      // silently defaulting.
+      game_slug: 'marathon',
     };
 
     if (editorName === 'CIPHER') {
