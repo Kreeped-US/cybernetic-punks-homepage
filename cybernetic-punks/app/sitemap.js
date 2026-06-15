@@ -191,6 +191,12 @@ export default async function sitemap() {
         .from('feed_items')
         .select('slug, created_at, tags')
         .eq('is_published', true)
+        // DMZ migration (step 3, batch C1): emit ONLY Marathon slugs at the
+        // unprefixed /intel/<slug> paths. Without this, once DMZ rows exist the
+        // sitemap would advertise DMZ slugs at Marathon URLs -- wrong hierarchy
+        // for the single-domain SEO strategy. DMZ URL emission (/dmz/...) is a
+        // Step-4 item: build it when the /dmz route group + DMZ content exist.
+        .eq('game_slug', 'marathon')
         .order('created_at', { ascending: false })
         .limit(1000);
 
