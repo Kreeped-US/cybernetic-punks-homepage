@@ -150,7 +150,10 @@ Stays NETWORK-LEVEL (one hub-wide account), **but** the identity columns
 (`bungie_membership_id` / `bungie_display_name` / `bungie_avatar_url`) must be
 generalized to a provider-agnostic account + per-provider identity. Marathon/Destiny are
 Bungie; DMZ is Battle.net/Steam/Xbox/Switch2/Activision — confirmed non-Bungie. Rework
-before DMZ launch; not a today-change.
+before DMZ launch; not a today-change. **Priority bump:** per
+[NETWORK_PRINCIPLES.md](NETWORK_PRINCIPLES.md) Principle 1, this is also the foundation for
+monetization (network identity + billing readiness), so it is now monetization-critical,
+not just DMZ-auth-critical.
 
 ### C. Server status/incidents — **DEFAULTED → per-game**
 `server_status`, `server_incidents`: defaulted to per-game (each game's servers differ).
@@ -187,12 +190,19 @@ inconsistency.
 ## NOT DECIDED / OUT OF SCOPE TODAY
 - This is **inventory + categorization only.** No schema changes, no `game_slug`
   additions, no table splits, no migration SQL — that is the **July migration**.
-- **URL map and theming are now DECIDED** — see the companion doc
+- **URL map and theming are DECIDED** — see the companion doc
   [URL_AND_THEMING.md](URL_AND_THEMING.md) (Marathon unprefixed / DMZ `/dmz`-prefixed,
   per-game hubs, `dmzpunks.com` -> 308 -> `/dmz`; per-game CSS design-token themes on a
-  shared design system). With that, the **June-17 architecture lock is COMPLETE** except
-  two minor flagged sub-items: **root-homepage content** (bare domain) and the **exact
-  DMZ visual spec** (creative pass near build). Neither blocks the July refactor.
+  shared design system; **root homepage = neutral network hub from day one** (revised from
+  the earlier flagship-default); DMZ visual direction = cyberpunk house style with an amber
+  / cold-grey Hajin palette). The **June-17 architecture lock is FULLY COMPLETE — no
+  remaining open architectural decisions.** Only build-time hex tuning and the July
+  refactor execution remain.
+- **Network-level principles & roadmap** — see [NETWORK_PRINCIPLES.md](NETWORK_PRINCIPLES.md)
+  (monetization-readiness seams, template-after-DMZ, AI Q&A/advisor surface): non-blocking
+  constraints the July refactor must honor. The monetization-readiness principle **raises
+  the priority** of the `player_profiles` identity generalization (Decision B) and builds
+  on the existing `subscription_tiers` / `feature_gates` / `cred_ledger` network tables.
 - DMZ shapes recorded here are **reliable for architecture** (per-game-vs-shared is
   decided); **field-level schema specifics are confirmed closer to the Oct 23 2026
   launch.**

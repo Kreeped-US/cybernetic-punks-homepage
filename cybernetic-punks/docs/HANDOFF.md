@@ -5,6 +5,35 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ network-vision refinements; architecture lock COMPLETE
+
+Docs: [TABLE_INVENTORY.md](dmz/TABLE_INVENTORY.md), [URL_AND_THEMING.md](dmz/URL_AND_THEMING.md),
+new [NETWORK_PRINCIPLES.md](dmz/NETWORK_PRINCIPLES.md) (all cross-linked).
+
+- **Root homepage REVISED:** flagship-default -> **neutral network hub from day one**
+  (cross-game pulse + routing, not a bare picker; revision trail preserved). SEO
+  rationale: authority lives in deep `/intel` pages, not the bare root, so a neutral hub
+  costs ~nothing.
+- **DMZ visual direction LOCKED as direction** (not pixel-final): cyberpunk house style,
+  amber primary (~`#e89a2c`, matches the game's own accent), cold grey-blue base (Hajin
+  atmosphere ~`#0b0e11`/`#11151a`/`#2b3640`), irradiated red-orange hazard accent
+  (~`#e0563a`), exclusion-zone/FOB motif + DMZ vocabulary (FIELD INTEL / OPS RATING /
+  LOADOUT PLANNER); exact hex = build-time; theme **informed-by, not copied-from** CoD
+  assets.
+- **New `docs/dmz/NETWORK_PRINCIPLES.md`:** (1) **Monetization-readiness** — leave seams
+  for subscription/feature-gating/ads/affiliate, build none; subscriptions = lead model;
+  network identity + billing-readiness = foundation; build ON existing
+  `subscription_tiers`/`feature_gates`/`cred_ledger`. (2) **DMZ-first then template** —
+  breadcrumb hardcoded-vs-parameterized during the DMZ build, template game-onboarding
+  after. (3) **Roadmap:** AI Q&A/advisor surface flagged (premium-tier candidate, not
+  built, distinct from the content editors).
+- **Identity generalization is now monetization-critical**, not just DMZ-auth-critical.
+- **ARCHITECTURE LOCK FULLY COMPLETE** — remaining DMZ work is build-time hex tuning +
+  the July refactor execution (now building toward monetization-readiness + templating,
+  not just a Marathon -> DMZ port).
+
+---
+
 ## 2026-06-15 — DMZ URL map + theming LOCKED; architecture lock COMPLETE
 
 Decisions in [docs/dmz/URL_AND_THEMING.md](dmz/URL_AND_THEMING.md), cross-linked from
