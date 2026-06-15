@@ -5,6 +5,33 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ content-home slice: feed_items audit (Step 1) DONE, plan APPROVED
+
+Full audit + approved plan in [docs/dmz/FEED_ITEMS_AUDIT.md](dmz/FEED_ITEMS_AUDIT.md).
+
+- **Step 1 (read-only consumer/writer audit) DONE.** Key finding: `feed_items` is touched
+  in **~21 files / ~50+ call-sites — NOT the 5 originally assumed.** 3 writers (cron
+  insert must write `game_slug`; cron thumbnail-update is id-scoped; manual inserts set it),
+  readers in Group A (18 site-page files), B (editorial input: cron no-repeat + CIPHER +
+  MIRANDA), C (sitemap).
+- **Plan APPROVED** with the governing invariant (Marathon-unchanged; every read filter
+  defaults to `'marathon'`). **Step 3 BATCHED** into A (site pages) / B (editorial input) /
+  C (sitemap), each independently tested + Marathon-verified — not one big-bang change.
+- **Safety-timing:** filters become load-bearing only once a `game_slug='dmz'` row exists,
+  so ALL consumer filtering must land BEFORE any `dmz` insert. (Step 4 publishes zero dmz
+  rows.)
+- **Group B correctness:** DMZ editors must read DMZ's prior articles, not Marathon's, or
+  cross-game no-repeat/synthesis bleeds.
+- **Sitemap:** filter marathon for unprefixed `/intel/<slug>`; emit `/dmz/...` separately
+  (SEO-critical).
+- **Confirmed deferrals:** `article_comments` game-scoping (inherits via `article_id`);
+  `title.template` + `buildMetaDescription` unchanged; `/dmz` launches on Marathon theme.
+- **NEXT (fresh next session):** Step 2 — add `game_slug` + backfill 1756 rows to
+  'marathon'. This is the first production write; NOT started this session. Gated:
+  backup-first, verify all rows 'marathon' / 0 null, Marathon unchanged.
+
+---
+
 ## 2026-06-15 — DMZ network-vision refinements; architecture lock COMPLETE
 
 Docs: [TABLE_INVENTORY.md](dmz/TABLE_INVENTORY.md), [URL_AND_THEMING.md](dmz/URL_AND_THEMING.md),
