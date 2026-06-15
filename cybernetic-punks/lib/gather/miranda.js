@@ -15,6 +15,12 @@ function getSupabaseClient() {
   );
   return _supabaseClient;
 }
+// DMZ migration (step 3, batch B3): the game MIRANDA is producing for. The
+// recent-headline no-repeat read MUST scope to this so a DMZ run dedups against
+// DMZ's prior headlines, not Marathon's. Constant 'marathon' for now; becomes a
+// per-game parameter (fed from the cron's target game) when DMZ editorial starts.
+const PRODUCING_GAME_SLUG = 'marathon';
+
 const supabase = new Proxy({}, {
   get(_target, prop) {
     return getSupabaseClient()[prop];
@@ -236,6 +242,7 @@ async function fetchRecentMirandaHeadlines() {
       .from('feed_items')
       .select('headline, created_at')
       .eq('editor', 'MIRANDA')
+      .eq('game_slug', PRODUCING_GAME_SLUG)
       .order('created_at', { ascending: false })
       .limit(12);
     return (data || []).map(r => r.headline);

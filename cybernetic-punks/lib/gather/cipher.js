@@ -36,6 +36,13 @@ const supabase = new Proxy({}, {
   }
 });
 
+// DMZ migration (step 3, batch B3): the game CIPHER is producing for. CIPHER's
+// synthesis + no-repeat reads MUST scope to this so a DMZ run reads DMZ's prior
+// articles, not Marathon's -- otherwise synthesis/dedup bleeds across games.
+// Constant 'marathon' for now; becomes a per-game parameter (function arg fed
+// from the cron's target game) when DMZ editorial starts.
+const PRODUCING_GAME_SLUG = 'marathon';
+
 // ═══════════════════════════════════════════════════════════
 // WEEKLY SCHEDULE — PT timezone
 // ═══════════════════════════════════════════════════════════
@@ -109,6 +116,7 @@ async function getRecentlyCoveredShells(lookbackArticles) {
       .select('headline, tags')
       .eq('editor', 'CIPHER')
       .eq('is_published', true)
+      .eq('game_slug', PRODUCING_GAME_SLUG)
       .order('created_at', { ascending: false })
       .limit(lookbackArticles);
 
@@ -238,6 +246,7 @@ async function buildCounterMetaPrompt() {
     .select('headline, tags')
     .eq('editor', 'CIPHER')
     .eq('is_published', true)
+    .eq('game_slug', PRODUCING_GAME_SLUG)
     .contains('tags', ['counter-meta'])
     .order('created_at', { ascending: false })
     .limit(2);
@@ -346,12 +355,12 @@ async function buildWeeklyClimbPrompt() {
       .order('ranked_tier_solo').limit(8),
     supabase.from('feed_items')
       .select('headline, body, ce_score')
-      .eq('editor', 'GHOST').eq('is_published', true)
+      .eq('editor', 'GHOST').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG)
       .gte('created_at', sevenDaysAgo)
       .order('created_at', { ascending: false }).limit(3),
     supabase.from('feed_items')
       .select('headline, tags')
-      .eq('editor', 'DEXTER').eq('is_published', true)
+      .eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG)
       .gte('created_at', sevenDaysAgo)
       .order('created_at', { ascending: false }).limit(5),
   ]);
@@ -429,7 +438,7 @@ async function buildHolotagPrompt() {
       .order('holotag_tier'),
     supabase.from('feed_items')
       .select('headline, tags, ce_score')
-      .eq('editor', 'DEXTER').eq('is_published', true)
+      .eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG)
       .gte('created_at', fourteenDaysAgo)
       .order('ce_score', { ascending: false }).limit(8),
   ]);
@@ -563,6 +572,7 @@ async function shouldOverrideForPatch() {
       .select('id, tags')
       .eq('editor', 'CIPHER')
       .eq('is_published', true)
+      .eq('game_slug', PRODUCING_GAME_SLUG)
       .gte('created_at', cutoff)
       .contains('tags', ['patch']);
 

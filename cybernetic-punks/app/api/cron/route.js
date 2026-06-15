@@ -5,6 +5,14 @@ import { gatherAll } from '@/lib/gather/index';
 
 export const dynamic = 'force-dynamic';
 
+// DMZ migration (step 3, batch B3): the game this cron cycle is producing for.
+// Editorial-input reads (no-repeat dedup, cross-editor synthesis) MUST scope to
+// this so a DMZ editor reads DMZ's prior articles, not Marathon's -- otherwise
+// no-repeat/synthesis bleeds across games. Constant 'marathon' for now; this is
+// the single knob that becomes the cron's per-game target parameter when DMZ
+// editorial starts. (The B1 writer at the insert also tags 'marathon'.)
+var PRODUCING_GAME_SLUG = 'marathon';
+
 var TIER_ORDINAL = { S: 5, A: 4, B: 3, C: 2, D: 1 };
 
 function tierOrdinal(tier) {
@@ -487,10 +495,10 @@ export async function GET() {
     }
 
     var headlineResults = await Promise.all([
-      supabase.from('feed_items').select('headline').eq('editor', 'CIPHER').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline').eq('editor', 'NEXUS').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline').eq('editor', 'DEXTER').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline').eq('editor', 'GHOST').eq('is_published', true).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'CIPHER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'NEXUS').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'GHOST').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
     ]);
 
     var recentHeadlines = {
