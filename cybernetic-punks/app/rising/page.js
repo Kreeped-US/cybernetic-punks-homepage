@@ -153,6 +153,7 @@ async function fetchCreatorSpotlights() {
       .select('headline, slug, editor, creator_info, created_at, tags')
       .eq('directive_type', 'creator_spotlight')
       .eq('is_published', true)
+      .eq('game_slug', 'marathon')
       .order('created_at', { ascending: false })
       .limit(12);
     if (error) {

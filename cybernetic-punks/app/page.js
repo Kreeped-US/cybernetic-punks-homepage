@@ -135,6 +135,7 @@ async function getHomepageData() {
         .from('feed_items')
         .select('created_at')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .order('created_at', { ascending: false })
         .limit(1),
 
@@ -143,6 +144,7 @@ async function getHomepageData() {
         .select('headline, slug, editor, creator_info, created_at')
         .eq('directive_type', 'creator_spotlight')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .order('created_at', { ascending: false })
         .limit(3),
     ]);

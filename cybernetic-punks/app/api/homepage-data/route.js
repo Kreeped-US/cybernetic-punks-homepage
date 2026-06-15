@@ -44,6 +44,7 @@ export async function GET() {
         .from('feed_items')
         .select('headline, slug, editor, tags, thumbnail, ce_score, created_at')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .order('created_at', { ascending: false })
         .limit(25),
 
@@ -53,6 +54,7 @@ export async function GET() {
         .select('headline, body, ce_score, created_at, slug')
         .eq('editor', 'GHOST')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .order('created_at', { ascending: false })
         .limit(1)
         .single(),
@@ -62,6 +64,7 @@ export async function GET() {
         .from('feed_items')
         .select('headline, slug, body, editor, tags, thumbnail, ce_score, created_at, source_url')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .gte('created_at', new Date(Date.now() - 24 * 3600000).toISOString())
         .gt('ce_score', 0)
         .order('ce_score', { ascending: false })
@@ -84,6 +87,7 @@ export async function GET() {
         .from('feed_items')
         .select('editor, created_at')
         .eq('is_published', true)
+        .eq('game_slug', 'marathon')
         .gte('created_at', new Date(Date.now() - 24 * 3600000).toISOString()),
     ]);
 
