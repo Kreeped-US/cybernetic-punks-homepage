@@ -5,6 +5,29 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ Step 2 DONE: feed_items.game_slug added + backfilled
+
+First production write of the migration. Applied directly in the Supabase SQL editor (no
+migrations framework in-repo); recorded in [docs/dmz/MIGRATIONS.md](dmz/MIGRATIONS.md).
+
+- **`game_slug` added** to `feed_items`: type `text`, **DEFAULT `'marathon'`**, **NOT
+  NULL**, index **`idx_feed_items_game_slug`** confirmed present.
+- **Backfill: 1756/1756 rows = `'marathon'`, 0 null** (verified), 0 non-marathon.
+- **Marathon unchanged** (verified): `/intel` latest 100 + homepage latest 25 return the
+  same rows, all `'marathon'`; total `is_published` = 1349. Column is **inert** — nothing
+  reads `game_slug` yet, no DMZ rows exist.
+- **Pre-write backup:** `C:/Users/justi/feed_items_backup_step2_20260615.json` (1756 rows,
+  count-verified).
+- **Step-3 open item (recorded, do NOT do yet):** once the cron writes `game_slug`
+  explicitly, **drop the `DEFAULT 'marathon'`** (keep NOT NULL) so a future DMZ insert that
+  omits `game_slug` errors instead of being silently mis-tagged.
+- **NEXT — Step 3 (batched A/B/C game-aware consumers):** A = site content pages (18
+  files), B = editorial-input reads (cron no-repeat + CIPHER synthesis + MIRANDA, honoring
+  the Group-B no-bleed note), C = sitemap. Each batch independently tested + Marathon-
+  verified; all filtering must land before any `game_slug='dmz'` insert.
+
+---
+
 ## 2026-06-15 — DMZ content-home slice: feed_items audit (Step 1) DONE, plan APPROVED
 
 Full audit + approved plan in [docs/dmz/FEED_ITEMS_AUDIT.md](dmz/FEED_ITEMS_AUDIT.md).
