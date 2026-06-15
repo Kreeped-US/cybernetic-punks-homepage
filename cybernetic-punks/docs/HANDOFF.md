@@ -5,6 +5,30 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ URL map + theming LOCKED; architecture lock COMPLETE
+
+Decisions in [docs/dmz/URL_AND_THEMING.md](dmz/URL_AND_THEMING.md), cross-linked from
+[TABLE_INVENTORY.md](dmz/TABLE_INVENTORY.md).
+
+- **URL:** Marathon stays **UNPREFIXED** (existing URLs unchanged, no 301s — protects the
+  thin ~28-clicks/qtr SEO authority); DMZ prefixed `/dmz/...`. Asymmetry accepted as a
+  cheap, invisible wart, framed correct-for-now (revisit symmetric + 301 when the network
+  grows and there's authority to absorb a redirect migration).
+- **Per-game hubs:** `/dmz` is DMZ-only — a DMZ visitor never sees Marathon content (route
+  groups enforce; Justin's core requirement).
+- **Vanity:** `dmzpunks.com` -> 308 -> `/dmz`.
+- **Theming:** per-game CSS design-token swap at the route-group level on the shared
+  cyberpunk identity; DMZ gets a colder/militarized Hajin palette; Marathon tokens
+  unchanged.
+- **OPEN (flagged, non-blocking):** root-homepage content (game-picker vs
+  flagship-default), and the exact DMZ visual spec (creative pass near build).
+
+**The June-17 "lock architecture" deliverable is COMPLETE** — table architecture,
+identity-rework requirement, URL structure, per-game hubs, and theming mechanism are all
+decided. **July refactor = mechanical execution of locked decisions.**
+
+---
+
 ## 2026-06-15 — MIRANDA wire-in + DMZ groundwork
 
 ### `redditSummaries` wired in (commit `24f599b`)
