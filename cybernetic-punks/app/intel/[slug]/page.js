@@ -1301,7 +1301,14 @@ export default async function IntelPage({ params }) {
   try {
     var articleTags = itemResult.data.tags || [];
     if (articleTags.length > 0) {
-      var rpcResult = await supabase.rpc('get_related_articles', { p_article_id: itemResult.data.id, p_tags: articleTags, p_limit: 6 });
+      // DMZ migration (step 3, batch C2): pass the producing game's slug so
+      // related articles are scoped to the same game (the get_related_articles
+      // RPC now filters on game_slug). Constant 'marathon' for now; becomes the
+      // per-game target when DMZ content is served -- same parameterization-
+      // pending pattern as the Batch B PRODUCING_GAME_SLUG constants + the cron
+      // writer literal. Passed explicitly; the function's DEFAULT 'marathon' is
+      // only a rollout/safety net, not relied on in normal operation.
+      var rpcResult = await supabase.rpc('get_related_articles', { p_article_id: itemResult.data.id, p_tags: articleTags, p_limit: 6, p_game_slug: 'marathon' });
       if (!rpcResult.error && rpcResult.data) related = rpcResult.data;
     }
     if (related.length === 0) {
