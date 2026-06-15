@@ -5,6 +5,44 @@ Newest entries on top.
 
 ---
 
+## 2026-06-15 — DMZ Step 3 Batch B COMPLETE: writer + default-dropped + no-bleed reads
+
+The delicate batch (write-path change + gated DDL with an ordering hazard + no-bleed reads).
+Done in strict order B1 → B2 → B3. Commits `cfedc66` (B1), `62ae5ea` (B2 / MIGRATIONS.md),
+`b5e8bee` (B3), all direct to main, pushed.
+
+- **B1 — cron writer sets `game_slug`** (`app/api/cron/route.js:411`): the sole code insert
+  path into `feed_items` now writes `game_slug: 'marathon'` explicitly. Re-grepped the whole
+  tree to be sure: the only feed_items insert is cron; the thumbnail UPDATE (≈708) is
+  id-scoped (no change); the admin generic insert can't touch feed_items (`feed_items` not in
+  `ALLOWED_TABLES`); manual/catch-up is a procedure (set game_slug on any one-off insert).
+- **B2 — dropped the column DEFAULT, kept NOT NULL** (DDL applied in Supabase SQL editor,
+  recorded in [MIGRATIONS.md](dmz/MIGRATIONS.md)): `ALTER TABLE feed_items ALTER COLUMN
+  game_slug DROP DEFAULT;`. **Verified fail-loud:** a deliberate insert omitting game_slug
+  is now REJECTED with Postgres `23502` (not-null violation) — proves default gone AND NOT
+  NULL intact; no row created. Data unchanged (1756/1756 marathon, 0 null). **The Step-2
+  open item ("drop default once cron writes game_slug") is now CLOSED.** Empirical B1+B2
+  consistency proof is the next real cron insert succeeding with no default present.
+- **B3 — 11 editorial-input reads no-bleed-filtered**: cron no-repeat ×4, `lib/gather/
+  cipher.js` ×6 (audit said 5 — re-grep found a 6th: the patch-dedup read), `lib/gather/
+  miranda.js` ×1. Each module gets ONE named constant `PRODUCING_GAME_SLUG = 'marathon'`
+  (the single per-game knob), and every editorial-input read filters by it — so a future DMZ
+  run dedups/synthesizes against DMZ's own prior articles, not Marathon's. Verified identical
+  output today (11/11 filtered==unfiltered counts). Build green.
+- **⚠ PARAMETERIZATION-PENDING (do when DMZ editorial starts):** there are **4 sites** that
+  currently hardcode `'marathon'` and must become the cron's **per-game target parameter**:
+  (1) `PRODUCING_GAME_SLUG` in `app/api/cron/route.js`, (2) `PRODUCING_GAME_SLUG` in
+  `lib/gather/cipher.js`, (3) `PRODUCING_GAME_SLUG` in `lib/gather/miranda.js`, and (4) the
+  B1 **writer literal** `game_slug: 'marathon'` in the cron `insertData`. All inert today
+  (everything is marathon); all 4 flip together to the target game when DMZ content is
+  produced.
+- **NEXT — Step 3 Batch C (the last Step-3 batch):** sitemap (filter marathon for unprefixed
+  `/intel/<slug>`; emit `/dmz/...` later) + the `get_related_articles` **RPC** (server-side
+  SQL, not a table read — flagged in Batch A; needs game-awareness so related articles don't
+  mix games once DMZ rows exist).
+
+---
+
 ## 2026-06-15 — DMZ Step 3 Batch A COMPLETE: all Group A reads game-scoped
 
 Site-content `feed_items` reads now filter `game_slug='marathon'`. Done in two sub-batches:
