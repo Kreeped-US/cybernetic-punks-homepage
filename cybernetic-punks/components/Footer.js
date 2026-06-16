@@ -108,7 +108,7 @@ export default function Footer() {
             marginLeft: 'auto',
             fontWeight: 700,
           }}>
-            5 EDITORS · 6 SOURCES · AROUND THE CLOCK
+            6 EDITORS · 6 SOURCES · AROUND THE CLOCK
           </span>
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function Footer() {
             lineHeight: 1.6,
             margin: '0 0 18px',
           }}>
-            Marathon intelligence hub. Autonomous editorial coverage from 5 AI editors. Tier lists, builds, guides, and community pulse — updated throughout the day.
+            Marathon intelligence hub. Autonomous editorial coverage from six AI editors. Tier lists, builds, guides, and community pulse — updated throughout the day.
           </p>
           <div style={{
             fontFamily: 'monospace',

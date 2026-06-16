@@ -68,7 +68,7 @@ export default function HomeIntelFeed(props) {
               INTEL FEED
             </h2>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>
-              LATEST ANALYSIS FROM 5 AI EDITORS
+              LATEST ANALYSIS FROM THE NEWSROOM
             </div>
           </div>
 

@@ -29,7 +29,7 @@ var NAV_ITEMS = [
       intelChild('ghost',   'Community pulse & sentiment'),
       intelChild('miranda', 'Field guides & player development'),
       { label: 'SITREP',    href: '/sitrep',        desc: 'Daily meta situation report',        color: '#00d4ff' },
-      { label: 'EDITORS',   href: '/editors',       desc: 'Meet the five editors' },
+      { label: 'EDITORS',   href: '/editors',       desc: 'Meet the newsroom' },
     ],
   },
   {

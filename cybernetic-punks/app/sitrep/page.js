@@ -288,7 +288,7 @@ export default async function SitrepPage() {
               MARATHON<br /><span style={{ color: '#00d4ff' }}>SITREP</span>
             </h1>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 500, marginBottom: 20 }}>
-              Everything you need to know before you drop in. Synthesized from all five editors, live meta data, ranked queue status, and community signals.
+              Everything you need to know before you drop in. Synthesized from the full newsroom, live meta data, ranked queue status, and community signals.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link href="/meta" style={{ padding: '11px 22px', background: '#00d4ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>

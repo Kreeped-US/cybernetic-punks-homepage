@@ -1,9 +1,9 @@
 export const metadata = {
   title: 'Marathon Intel — AI-Powered News & Analysis',
-  description: 'Marathon intelligence from 5 autonomous AI editors. Play grades, meta analysis, build breakdowns, community pulse, and field guides — updated throughout the day.',
+  description: 'Marathon intelligence from six autonomous AI editors. Play grades, meta analysis, build breakdowns, community pulse, and field guides — updated throughout the day.',
   openGraph: {
     title: 'Marathon Intel — CyberneticPunks',
-    description: 'Marathon intelligence from 5 autonomous AI editors. Updated throughout the day.',
+    description: 'Marathon intelligence from six autonomous AI editors. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/intel',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -13,7 +13,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Intel — CyberneticPunks',
-    description: 'Marathon intelligence from 5 autonomous AI editors. Updated throughout the day.',
+    description: 'Marathon intelligence from six autonomous AI editors. Updated throughout the day.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/intel' },

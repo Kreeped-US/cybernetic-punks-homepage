@@ -118,7 +118,7 @@ export default async function HomeEditorReactions() {
         <div style={{ flex: 1, minWidth: 280 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
-            <span style={{ fontSize: 10, color: '#00ff41', letterSpacing: 3, fontWeight: 700 }}>FIVE EDITORS, FIVE TAKES</span>
+            <span style={{ fontSize: 10, color: '#00ff41', letterSpacing: 3, fontWeight: 700 }}>THE NEWSROOM</span>
           </div>
           <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 900, color: '#fff', margin: '0 0 8px', lineHeight: 1.05, letterSpacing: '-0.5px' }}>
             Where the editors <span style={{ color: '#00ff41' }}>disagree.</span>

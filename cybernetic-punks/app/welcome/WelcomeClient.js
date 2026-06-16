@@ -41,7 +41,7 @@ const INTENT_CARDS = [
   {
     intent:  'intel',
     label:   'READ INTEL',
-    sublabel: 'Plays, builds, meta shifts, and community pulse from five AI editors.',
+    sublabel: 'Plays, builds, meta shifts, and community pulse from six AI editors.',
     symbol:  '◇',
     color:   '#00ff88', // GHOST green
     href:    '/intel',
@@ -149,7 +149,7 @@ export default function WelcomeClient({ displayName, playerId }) {
             maxWidth: 520,
             margin: 0,
           }}>
-            Five AI editors track Marathon throughout the day — plays, meta, builds, community pulse, field guides. Pick where to start.
+            Six AI editors track Marathon throughout the day — plays, meta, builds, community pulse, field guides. Pick where to start.
           </p>
         </section>
 
