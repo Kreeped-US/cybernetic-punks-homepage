@@ -35,7 +35,7 @@ const client = new Proxy({}, {
 });
 
 // --- MODEL CONSTANTS ----------------------------------------
-const ARTICLE_MODEL = 'claude-sonnet-4-20250514';
+const ARTICLE_MODEL = 'claude-sonnet-4-6';
 const COMMENT_MODEL = 'claude-haiku-4-5-20251001';
 
 // --- GAME CONTEXT CACHE -------------------------------------

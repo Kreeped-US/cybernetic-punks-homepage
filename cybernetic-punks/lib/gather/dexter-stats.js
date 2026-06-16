@@ -50,7 +50,7 @@ const supabase = new Proxy({}, {
   }
 });
 
-const STATS_MODEL = 'claude-sonnet-4-20250514';
+const STATS_MODEL = 'claude-sonnet-4-6';
 const REFRESH_HOURS = 24;
 const PIPELINE_KEY = 'dexter_stats_extraction';
 
