@@ -5,6 +5,44 @@ Newest entries on top.
 
 ---
 
+## 2026-06-16 — DMZ gated go-live VERIFIED end-to-end (probe inserted, all filters held, probe removed)
+
+The load-bearing test. Inserted the **first `game_slug='dmz'` row** as a single controlled
+containment probe, verified every filter from Steps 2-3 is now load-bearing and holding,
+then removed it. **The DMZ content-home slice is COMPLETE and VERIFIED end-to-end** — the
+filters are proven to contain DMZ. No code change (pure DB + verification).
+
+- **Probe:** one `feed_items` row, `game_slug='dmz'`, editor `NEXUS`, tags
+  `['season-2','meta']` (deliberately overlapping Marathon so any leak would surface),
+  greppable title marker. Insert shape matched the cron writer (explicit `game_slug` — B2
+  dropped the default, so a missing one would fail-loud `23502`).
+- **Backup first:** full `feed_items` snapshot (1756 rows) →
+  `C:/Users/justi/feed_items_backup_golive_20260616.json` (retained). Baselines recorded
+  before insert (marathon 1756 / published 1349 / dmz 0).
+- **NEGATIVE space (containment) — all held:** probe absent from every Marathon surface —
+  homepage `/`, `/intel`, `/sitrep`, `/meta`, `/ranked`, `/factions`, `/builds`, `/guides`,
+  `/editors` (rendered title count 0 on each); sitemap **Marathon-only** (probe slug absent;
+  1092 `<url>` entries); cron **no-repeat NEXUS** read clean (no-bleed held even though the
+  probe was itself a NEXUS article); `get_related_articles` within-game **both directions**
+  (Marathon article's relateds excluded the probe; the probe's relateds returned 0 Marathon
+  rows). Count invariants: marathon total/published unchanged (1756/1349).
+- **POSITIVE space:** probe visible on its DMZ editor-fed sections (`/dmz/field-intel`,
+  `/dmz/meta`, `/dmz/loadouts` — appears on all three because the section page currently
+  filters only `game_slug='dmz'`; per-section tag/editor refinement is future, by design).
+- **Measurement caveat:** the one script "FAIL" was a PostgREST 1000-row-cap artifact on a
+  `.limit(2000)` fetch (measured 1000 vs 1349), NOT a leak — re-proven clean via a direct
+  membership query (probe in 0 marathon rows, 1 dmz row).
+- **Rollback executed:** `DELETE FROM feed_items WHERE id='f72a83d7-...'` → back to **1756
+  marathon / 0 dmz / total 1756**, all filters inert again; `/dmz` sections confirmed
+  rendering empty (empty-state restored, probe title gone).
+- **NEXT:** pre-launch DMZ content campaign (Track 2); flip the **5 parameterization-pending
+  `'marathon'` sites** to the per-game target when DMZ editorial starts (`PRODUCING_GAME_SLUG`
+  in cron / cipher / miranda, the B1 cron writer literal, the C2 caller `p_game_slug`);
+  sitemap `/dmz`-emit once real DMZ pages exist; rough DMZ tokens → final tuning at
+  launch-polish.
+
+---
+
 ## 2026-06-15 — DMZ Step 4 DONE: /dmz live (empty) — content-home slice COMPLETE through Step 4
 
 Built `/dmz` as the EMPTY first instance of the network game-section template
