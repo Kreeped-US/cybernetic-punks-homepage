@@ -123,8 +123,7 @@ formalize as a VIEW later; design intent noted now.)
 - Every table is NEW. Nothing alters bungie_* or any existing table.
 - Nothing in the live auth flow reads these. They're written/read only by
   NEW profile features (which themselves start against mock data).
-- bungie_ref is nullable — the future-cutover seam exists but bears no
-  load now.
+- linked_identity is a separate table (one account -> many providers), additive and inert — there is no bungie_ref column on network_account; mapping existing Bungie users into a linked_identity row is deferred cutover work.
 - jsonb for game-shaped data (progression, build payload) keeps the schema
   game-agnostic — adding a game needs no schema change, same discipline as
   the game template.
