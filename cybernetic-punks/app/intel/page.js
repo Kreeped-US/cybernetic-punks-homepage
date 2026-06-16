@@ -28,6 +28,11 @@
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { getEditorDisplay } from '@/lib/editors/roster';
+
+// Display rename (editor rework Step 3): pills + bylines show the editor's tag
+// (proper case), not the raw uppercase codename. Null-safe -> raw key fallback.
+function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
 
 export const dynamic = 'force-dynamic';
 
@@ -284,7 +289,7 @@ export default async function IntelHubPage() {
                   <img src={'/images/editors/' + editorName.toLowerCase() + '.jpg'} alt={editorName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: info.color, letterSpacing: 2, fontWeight: 700 }}>{editorName}</div>
+                  <div style={{ fontSize: 11, color: info.color, letterSpacing: 2, fontWeight: 700 }}>{edTag(editorName)}</div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{info.role}</div>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 800, color: info.color, fontFamily: 'monospace' }}>{count}</span>
@@ -333,7 +338,7 @@ export default async function IntelHubPage() {
                         <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '40', background: '#0e1014' }}>
                           <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                         </div>
-                        <span style={{ fontSize: 9, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{item.editor}</span>
+                        <span style={{ fontSize: 9, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{edTag(item.editor)}</span>
                       </div>
                       {item.source && (
                         <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', padding: '2px 7px', border: '1px solid #22252e', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>

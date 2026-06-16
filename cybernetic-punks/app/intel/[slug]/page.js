@@ -5,6 +5,14 @@ import Footer from '@/components/Footer';
 import CoachCTA from '@/components/CoachCTA';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getEditorDisplay, editorByline } from '@/lib/editors/roster';
+
+// Display rename (editor rework Step 3). Visible editor identity routes through
+// the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
+// Miranda -> "Miranda Malini"); edTag() for compact labels. Null-safe -> raw
+// key, never a silent Cipher. KEYS (item.editor, EDITORS/EDITOR_STYLES routing,
+// JSON-LD author) are untouched.
+function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
 
 const EDITORS = {
   cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'CIPHER — Marathon Play Analysis & Competitive Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
@@ -630,12 +638,12 @@ function EditorLanePage({ config, items }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
             <Link href="/intel" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>INTEL</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
-            <span style={{ color: config.color }}>{config.name}</span>
+            <span style={{ color: config.color }}>{edTag(config.name)}</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
             <div style={{ width: 92, height: 92, borderRadius: '50%', overflow: 'hidden', border: '2px solid ' + config.color + '60', background: '#1a1d24', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={config.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={edTag(config.name)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
             </div>
 
             <div style={{ flex: 1, minWidth: 260 }}>
@@ -643,7 +651,7 @@ function EditorLanePage({ config, items }) {
                 AI EDITOR · CYBERNETICPUNKS
               </div>
               <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, color: config.color, letterSpacing: '3px', margin: '0 0 6px', lineHeight: 1 }}>
-                {config.name}
+                {editorByline(config.name)}
               </h1>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: 2, marginBottom: 14, fontWeight: 700, textTransform: 'uppercase' }}>
                 {config.role}
@@ -682,7 +690,7 @@ function EditorLanePage({ config, items }) {
           <div style={{ margin: '40px 0', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, padding: '60px 28px', textAlign: 'center' }}>
             <div style={{ fontSize: 36, color: config.color, opacity: 0.2, marginBottom: 14 }}>{config.symbol}</div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700 }}>
-              {config.name} IS STANDING BY — NEXT CYCLE SOON
+              {edTag(config.name)} IS STANDING BY — NEXT CYCLE SOON
             </div>
           </div>
         ) : (
@@ -791,10 +799,10 @@ function EditorLanePage({ config, items }) {
                 transition: 'background 0.1s',
               }}>
                 <div style={{ width: 30, height: 30, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + e.color + '40', flexShrink: 0, background: '#0e1014' }}>
-                  <img src={'/images/editors/' + slug + '.jpg'} alt={slug} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                  <img src={'/images/editors/' + slug + '.jpg'} alt={edTag(slug)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: e.color, letterSpacing: 2 }}>{slug.toUpperCase()}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: e.color, letterSpacing: 2 }}>{edTag(slug)}</div>
                   <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700, marginTop: 1 }}>{e.role.toUpperCase()}</div>
                 </div>
               </Link>
@@ -1073,9 +1081,9 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
             <Link href={'/intel/' + item.editor.toLowerCase()} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '4px 10px', textDecoration: 'none' }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '50', background: '#0e1014' }}>
-                <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={edTag(item.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
               </div>
-              <span style={{ fontSize: 10, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{editor.label}</span>
+              <span style={{ fontSize: 10, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{editorByline(item.editor)}</span>
             </Link>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace' }}>{publishedAt} · {rt}</span>
             {item.source && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', border: '1px solid #22252e', padding: '3px 7px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{item.source}</span>}
@@ -1132,7 +1140,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
             </div>
 
             <div style={{ marginTop: 18 }}>
-              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700, fontFamily: 'monospace' }}>← MORE FROM {item.editor}</Link>
+              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700, fontFamily: 'monospace' }}>← MORE FROM {edTag(item.editor)}</Link>
             </div>
 
             <div style={{ marginTop: 20, padding: '12px 16px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0' }}>
@@ -1186,11 +1194,11 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
                 return (
                   <div key={i} style={{ padding: '14px 18px', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 12, borderLeft: '3px solid ' + commentEditor.color + '66' }}>
                     <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', border: '1px solid ' + commentEditor.color + '50', overflow: 'hidden', background: '#0e1014' }}>
-                      <img src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'} alt={comment.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                      <img src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'} alt={edTag(comment.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: commentEditor.color, letterSpacing: 2 }}>{comment.editor}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: commentEditor.color, letterSpacing: 2 }}>{editorByline(comment.editor)}</span>
                         <span style={{ fontSize: 7, color: commentEditor.color, background: commentEditor.color + '15', border: '1px solid ' + commentEditor.color + '30', borderRadius: 2, padding: '1px 6px', letterSpacing: 1, fontWeight: 700 }}>EDITOR</span>
                         <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(comment.created_at)}</span>
                       </div>
@@ -1222,9 +1230,9 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
                       <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + relEditor.color + '40', background: '#0e1014' }}>
-                        <img src={'/images/editors/' + rel.editor.toLowerCase() + '.jpg'} alt={rel.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                        <img src={'/images/editors/' + rel.editor.toLowerCase() + '.jpg'} alt={edTag(rel.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                       </div>
-                      <span style={{ fontSize: 8, color: relEditor.color, letterSpacing: 2, fontWeight: 700 }}>{relEditor.label}</span>
+                      <span style={{ fontSize: 8, color: relEditor.color, letterSpacing: 2, fontWeight: 700 }}>{edTag(rel.editor)}</span>
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.8)', lineHeight: 1.4, marginBottom: 6 }}>{rel.headline}</div>
                     <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{timeAgo(rel.created_at)}</div>

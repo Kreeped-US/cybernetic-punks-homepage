@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { getAllEditors } from '@/lib/editors/roster';
 
 // Updated April 27, 2026:
 // - Colors aligned to design system (#0e1014 footer / #ff2222 / #00d4ff)
@@ -11,13 +12,14 @@ import { useState } from 'react';
 // - Discovery column added: Rising Runners, Leaderboard, Stats, Factions, Sitrep, Status
 // - Tagline standardized to one canonical form
 
-const EDITORS = [
-  { symbol: '◈', color: '#ff2222', name: 'CIPHER',  href: '/intel/cipher'  },
-  { symbol: '⬡', color: '#00d4ff', name: 'NEXUS',   href: '/intel/nexus'   },
-  { symbol: '⬢', color: '#ff8800', name: 'DEXTER',  href: '/intel/dexter'  },
-  { symbol: '◇', color: '#00ff88', name: 'GHOST',   href: '/intel/ghost'   },
-  { symbol: '◎', color: '#9b5de5', name: 'MIRANDA', href: '/intel/miranda' },
-];
+// Sourced from the canonical display map (lib/editors/roster.js). Only LIVE
+// editors get a footer chip + lane link (Broker is 'incoming' -- no lane yet).
+// Compact chip shows the tag (proper case), not the raw uppercase codename.
+const EDITORS = getAllEditors()
+  .filter(function(e) { return e.status === 'live'; })
+  .map(function(e) {
+    return { symbol: e.symbol, color: e.color, name: e.tag || e.fullName, href: '/intel/' + e.key };
+  });
 
 // Primary site navigation — the editorial + tools surface
 const EXPLORE_LINKS = [

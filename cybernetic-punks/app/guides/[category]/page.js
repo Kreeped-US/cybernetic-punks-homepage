@@ -21,6 +21,11 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getEditorDisplay } from '@/lib/editors/roster';
+
+// Display rename (editor rework Step 3): show the editor's tag (proper case),
+// not the raw uppercase codename. Null-safe -> degrade to the raw key.
+function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
 
 export const dynamic = 'force-dynamic';
 
@@ -505,7 +510,7 @@ function GuideCard({ guide, cat, featured }) {
             textOverflow: 'ellipsis',
           }}>
             <span style={{ fontSize: 10 }}>{editorMeta.symbol}</span>
-            {guide.editor} &middot; {editorMeta.label}
+            {edTag(guide.editor)} &middot; {editorMeta.label}
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700, flexShrink: 0 }}>{timeAgo(guide.created_at)}</span>
         </div>

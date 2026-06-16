@@ -30,6 +30,11 @@ import Link from 'next/link';
 import RisingRunners from '@/components/RisingRunners';
 import { createClient } from '@supabase/supabase-js';
 import { getUserAvatars } from '@/lib/gather/twitch';
+import { getEditorDisplay } from '@/lib/editors/roster';
+
+// Display rename (editor rework Step 3): editor spotlight byline shows the
+// editor's tag (proper case), not the raw uppercase codename. Null-safe.
+function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
 
 export const dynamic = 'force-dynamic';
 
@@ -463,7 +468,7 @@ export default async function RisingPage() {
                         fontWeight: 700,
                         fontFamily: 'monospace',
                       }}>
-                        {(item.editor || 'EDITOR') + ' SPOTLIGHT'}
+                        {(edTag(item.editor) || 'EDITOR') + ' SPOTLIGHT'}
                       </span>
                       <span style={{
                         fontSize: 8,

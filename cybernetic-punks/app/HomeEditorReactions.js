@@ -11,30 +11,16 @@
 
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { getEditorDisplay } from '@/lib/editors/roster';
 
-const EDITOR_COLORS = {
-  CIPHER:  '#ff2222',
-  NEXUS:   '#00d4ff',
-  DEXTER:  '#ff8800',
-  GHOST:   '#00ff88',
-  MIRANDA: '#9b5de5',
-};
+// Editor display sourced from the canonical map (lib/editors/roster.js).
+// Null-safe -> degrade to the raw key, never a silent Cipher fallback.
+function edColor(key)  { var d = getEditorDisplay(key); return d ? d.color : '#888'; }
+function edSymbol(key) { var d = getEditorDisplay(key); return d ? d.symbol : '·'; }
+function edRole(key)   { var d = getEditorDisplay(key); return d ? d.role : ''; }
+function edTag(key)    { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
 
-const EDITOR_SYMBOLS = {
-  CIPHER:  '\u25C8',  // ◈
-  NEXUS:   '\u2B21',  // ⬡
-  DEXTER:  '\u2B22',  // ⬢
-  GHOST:   '\u25C7',  // ◇
-  MIRANDA: '\u25CE',  // ◎
-};
 
-const EDITOR_ROLES = {
-  CIPHER:  'Ranked Intel',
-  NEXUS:   'Meta Strategist',
-  DEXTER:  'Build Engineer',
-  GHOST:   'Community Pulse',
-  MIRANDA: 'Field Guide',
-};
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -169,7 +155,7 @@ export default async function HomeEditorReactions() {
               FEATURED PANEL
             </span>
             <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>
-              {featured.uniqueEditorCount} EDITORS · BY {featured.article.editor}
+              {featured.uniqueEditorCount} EDITORS · BY {edTag(featured.article.editor)}
             </span>
             <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginLeft: 'auto' }}>
               {timeAgo(featured.newestReactionAt).toUpperCase()}
@@ -184,20 +170,20 @@ export default async function HomeEditorReactions() {
           {/* Editor reactions stacked vertically */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {featured.comments.slice(0, 3).map(function(comment, idx) {
-              var commenterColor  = EDITOR_COLORS[comment.editor]  || '#888';
-              var commenterSymbol = EDITOR_SYMBOLS[comment.editor] || '\u00B7';
+              var commenterColor  = edColor(comment.editor);
+              var commenterSymbol = edSymbol(comment.editor);
               var portrait        = '/images/editors/' + (comment.editor || '').toLowerCase() + '.jpg';
-              var role            = EDITOR_ROLES[comment.editor] || '';
+              var role            = edRole(comment.editor);
 
               return (
                 <div key={comment.id} className="her-reaction-row" style={{ display: 'flex', gap: 14, padding: '10px 12px', borderLeft: '2px solid ' + commenterColor + '40', background: 'rgba(0,0,0,0.15)', borderRadius: '0 2px 2px 0' }}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + commenterColor + '60' }}>
-                    <img src={portrait} alt={comment.editor} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={portrait} alt={edTag(comment.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: commenterColor, letterSpacing: 1.5 }}>
-                        {commenterSymbol} {comment.editor}
+                        {commenterSymbol} {edTag(comment.editor)}
                       </span>
                       <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>
                         {role.toUpperCase()}
@@ -236,9 +222,9 @@ export default async function HomeEditorReactions() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
             {gridComments.map(function(comment) {
-              var commenterColor  = EDITOR_COLORS[comment.editor]  || '#888';
-              var commenterSymbol = EDITOR_SYMBOLS[comment.editor] || '\u00B7';
-              var authorColor     = EDITOR_COLORS[comment.article.editor]  || '#888';
+              var commenterColor  = edColor(comment.editor);
+              var commenterSymbol = edSymbol(comment.editor);
+              var authorColor     = edColor(comment.article.editor);
               var portrait        = '/images/editors/' + (comment.editor || '').toLowerCase() + '.jpg';
 
               return (
@@ -258,11 +244,11 @@ export default async function HomeEditorReactions() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + commenterColor + '40', flexShrink: 0 }}>
-                      <img src={portrait} alt={comment.editor} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={portrait} alt={edTag(comment.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: commenterColor, letterSpacing: 1.5 }}>
-                        {commenterSymbol} {comment.editor}
+                        {commenterSymbol} {edTag(comment.editor)}
                       </div>
                     </div>
                     <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>
@@ -289,7 +275,7 @@ export default async function HomeEditorReactions() {
                       ON
                     </span>
                     <span style={{ fontFamily: 'monospace', fontSize: 8, color: authorColor, letterSpacing: 1, fontWeight: 700, flexShrink: 0 }}>
-                      {comment.article.editor}
+                      {edTag(comment.article.editor)}
                     </span>
                     <span style={{
                       fontSize: 10,

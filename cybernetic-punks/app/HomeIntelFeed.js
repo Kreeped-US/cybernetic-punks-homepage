@@ -1,16 +1,18 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { getAllEditors, getEditorDisplay } from '@/lib/editors/roster';
 
-var EDITOR_COLORS = {
-  CIPHER: '#ff2222', NEXUS: '#00d4ff', DEXTER: '#ff8800', GHOST: '#00ff88', MIRANDA: '#9b5de5',
-};
+// Filter/dedup KEYS stay the uppercase codenames (match feed_items.editor).
+// Only live editors appear. Display labels come from the map (tag, proper case).
+var EDITORS = getAllEditors()
+  .filter(function(e) { return e.status === 'live'; })
+  .map(function(e) { return e.key.toUpperCase(); });
 
-var EDITOR_SYMBOLS = {
-  CIPHER: '◈', NEXUS: '⬡', DEXTER: '⬢', GHOST: '◇', MIRANDA: '◎',
-};
-
-var EDITORS = ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'];
+// Display helpers (map-sourced; null-safe -> degrade to the raw key, never Cipher).
+function edColor(key) { var d = getEditorDisplay(key); return d ? d.color : '#888'; }
+function edSymbol(key) { var d = getEditorDisplay(key); return d ? d.symbol : '·'; }
+function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -74,8 +76,9 @@ export default function HomeIntelFeed(props) {
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {['ALL'].concat(EDITORS).map(function(ed) {
               var isActive = activeEditor === ed;
-              var color = ed === 'ALL' ? '#00ff41' : EDITOR_COLORS[ed];
-              var symbol = ed === 'ALL' ? null : EDITOR_SYMBOLS[ed];
+              var color = ed === 'ALL' ? '#00ff41' : edColor(ed);
+              var symbol = ed === 'ALL' ? null : edSymbol(ed);
+              var pillLabel = ed === 'ALL' ? 'ALL' : edTag(ed);
               return (
                 <button
                   key={ed}
@@ -92,7 +95,7 @@ export default function HomeIntelFeed(props) {
                     fontFamily: 'inherit',
                   }}>
                   {symbol && <span style={{ fontSize: 11 }}>{symbol}</span>}
-                  {ed}
+                  {pillLabel}
                 </button>
               );
             })}
@@ -102,13 +105,13 @@ export default function HomeIntelFeed(props) {
         {/* Card grid */}
         {curated.length === 0 ? (
           <div style={{ padding: 40, background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, fontWeight: 700 }}>
-            {activeEditor === 'ALL' ? 'NO RECENT INTEL' : 'NO RECENT INTEL FROM ' + activeEditor}
+            {activeEditor === 'ALL' ? 'NO RECENT INTEL' : 'NO RECENT INTEL FROM ' + edTag(activeEditor).toUpperCase()}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
             {curated.map(function(article) {
-              var color = EDITOR_COLORS[article.editor] || '#888';
-              var symbol = EDITOR_SYMBOLS[article.editor] || '·';
+              var color = edColor(article.editor);
+              var symbol = edSymbol(article.editor);
               var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               var thumb = article.thumbnail || null;
 
@@ -149,7 +152,7 @@ export default function HomeIntelFeed(props) {
                   <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
                       <span style={{ fontSize: 9, color: color, letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>
-                        {symbol} {article.editor}
+                        {symbol} {edTag(article.editor)}
                       </span>
                       <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', letterSpacing: 0.5, fontWeight: 700 }}>
                         {timeAgo(article.created_at)}

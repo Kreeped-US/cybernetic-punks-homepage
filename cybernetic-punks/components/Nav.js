@@ -2,6 +2,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useRef } from 'react';
+import { getEditorDisplay } from '@/lib/editors/roster';
+
+// INTEL-dropdown editor item, sourced from the display map: label = tag (proper
+// case, not raw uppercase), color from the map. Desc stays (editor flavor copy
+// not in the map). Null-safe -> degrade to the raw key.
+function intelChild(key, desc) {
+  var d = getEditorDisplay(key);
+  return { label: d ? (d.tag || d.fullName) : key, href: '/intel/' + key, desc: desc, color: d ? d.color : undefined };
+}
 
 var NAV_ITEMS = [
   { label: 'HOME',     href: '/' },
@@ -14,11 +23,11 @@ var NAV_ITEMS = [
     activeOn: ['/intel', '/sitrep', '/editors'],
     children: [
       { label: 'ALL INTEL', href: '/intel',         desc: 'Every article, every editor' },
-      { label: 'CIPHER',    href: '/intel/cipher',  desc: 'Play analysis & grades',             color: '#ff2222' },
-      { label: 'NEXUS',     href: '/intel/nexus',   desc: 'Meta tracking & strategy',           color: '#00d4ff' },
-      { label: 'DEXTER',    href: '/intel/dexter',  desc: 'Build analysis & loadouts',          color: '#ff8800' },
-      { label: 'GHOST',     href: '/intel/ghost',   desc: 'Community pulse & sentiment',        color: '#00ff88' },
-      { label: 'MIRANDA',   href: '/intel/miranda', desc: 'Field guides & player development',  color: '#9b5de5' },
+      intelChild('cipher',  'Play analysis & grades'),
+      intelChild('nexus',   'Meta tracking & strategy'),
+      intelChild('dexter',  'Build analysis & loadouts'),
+      intelChild('ghost',   'Community pulse & sentiment'),
+      intelChild('miranda', 'Field guides & player development'),
       { label: 'SITREP',    href: '/sitrep',        desc: 'Daily meta situation report',        color: '#00d4ff' },
       { label: 'EDITORS',   href: '/editors',       desc: 'Meet the five editors' },
     ],
