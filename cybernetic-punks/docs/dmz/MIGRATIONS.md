@@ -130,3 +130,105 @@ later (see HANDOFF parameterization-pending list).
   ce_score, created_at, thumbnail, relevance_score`).
 - **Production restored** — the deployed 3-arg caller returns 6 tag-relevant rows (top
   relevance 4) instead of falling through to the generic fallback.
+
+---
+
+## Network-identity additive tables (applied 2026-06-16, Supabase SQL editor)
+
+Groundwork for the profile/premium vision. Design:
+[network-identity-schema-design.md](../network/network-identity-schema-design.md);
+vision: [profile-premium-vision.md](../network/profile-premium-vision.md). **Pure additive +
+INERT** — 6 NEW tables alongside the existing `bungie_*` auth; **zero `ALTER`** to any
+existing table; nothing in the live site reads or writes them yet (same discipline as the
+inert `game_slug` column). Identity is **multi-provider** via `linked_identity` (no
+`bungie_ref` column — superseded the earlier 5-table brief). The live-auth cutover, the
+per-provider OAuth sign-in flows, and billing wiring are all **DEFERRED** (not in this work).
+
+**Step 0 (read-first):** confirmed the Bungie identity PK from the live OpenAPI spec —
+`player_profiles.id` is `uuid` (`gen_random_uuid()`), `bungie_membership_id` is `text`.
+Because identity moved to `linked_identity.external_id` (`text`, provider-agnostic), no
+type-matching column was needed; the uuid/text facts are noted only for the DEFERRED mapping
+of existing Bungie users into a `linked_identity` row.
+
+```sql
+-- 1) network_account  (the cross-game identity spine)
+CREATE TABLE network_account (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  handle      text NOT NULL UNIQUE,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- 1b) linked_identity  (one account -> many sign-in providers)
+CREATE TABLE linked_identity (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id  uuid NOT NULL REFERENCES network_account(id),
+  provider    text NOT NULL,               -- 'bungie' | 'activision' | 'xbox' | 'psn' | 'steam' | future
+  external_id text NOT NULL,               -- provider-agnostic id (text holds any format)
+  linked_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (provider, external_id)
+);
+CREATE INDEX idx_linked_identity_account ON linked_identity(account_id);
+
+-- 2) game_profile  (a network_account's slice within one game)
+CREATE TABLE game_profile (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id  uuid NOT NULL REFERENCES network_account(id),
+  game_slug   text NOT NULL,
+  progression jsonb,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (account_id, game_slug)
+);
+
+-- 3) build  (saved build/loadout, per-account per-game)
+CREATE TABLE build (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_profile_id uuid NOT NULL REFERENCES game_profile(id),
+  game_slug       text NOT NULL,
+  name            text NOT NULL,
+  payload         jsonb NOT NULL,
+  is_public       boolean NOT NULL DEFAULT false,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- 4) build_grade  (AI Coach grade history; one build -> many grades)
+CREATE TABLE build_grade (
+  id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  build_id  uuid NOT NULL REFERENCES build(id),
+  grade     text,
+  analysis  jsonb,
+  graded_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- 5) subscription  (one row per account = CURRENT tier; billing-ready, inert)
+CREATE TABLE subscription (
+  id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id         uuid NOT NULL UNIQUE REFERENCES network_account(id),
+  tier               text NOT NULL DEFAULT 'free',
+  status             text,
+  current_period_end timestamptz
+);
+
+-- Indexes (minimal; uniques on (account_id, game_slug), (provider, external_id),
+-- and subscription.account_id are auto-indexed by their constraints)
+CREATE INDEX idx_game_profile_account ON game_profile(account_id);
+CREATE INDEX idx_game_profile_game    ON game_profile(game_slug);
+CREATE INDEX idx_build_game_profile   ON build(game_profile_id);
+CREATE INDEX idx_build_game           ON build(game_slug);
+CREATE INDEX idx_build_grade_build    ON build_grade(build_id);
+```
+
+**Verification (post-apply):**
+- **All 6 tables exist** with the expected columns (confirmed via PostgREST OpenAPI spec).
+- **5 FKs present:** `linked_identity.account_id`, `game_profile.account_id`,
+  `subscription.account_id` → `network_account.id`; `build.game_profile_id` →
+  `game_profile.id`; `build_grade.build_id` → `build.id`. FKs default `ON DELETE RESTRICT`.
+- **3 uniques enforced** (empirical — duplicate insert returned Postgres `23505`):
+  `game_profile(account_id, game_slug)`, `linked_identity(provider, external_id)`,
+  `subscription.account_id`. `subscription.tier` defaults to `'free'`.
+- **Zero existing tables altered:** `player_profiles` unchanged vs the Step-0 snapshot
+  (`id` still `uuid`; required-column list identical). DDL was `CREATE` only — cannot alter
+  existing tables by construction.
+- **Live site unchanged:** no app code changed (pure DDL); `npm run build` green; the new
+  tables are inert (nothing reads/writes them). Probe rows used for the unique tests were
+  deleted — all 6 tables back to 0 rows.
