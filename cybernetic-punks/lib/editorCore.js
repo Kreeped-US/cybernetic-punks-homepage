@@ -1442,3 +1442,21 @@ export async function generateArticleComments(article, publishingEditor, supabas
 
   return comments;
 }
+
+// SAMPLING-ONLY (editor rework Step 5a). Generates ONE editor's reaction-comment
+// in their COMMENT_VOICES voice for the dev voice-sampling harness. Write-free
+// BY CONSTRUCTION: no DB client, no insert -- it cannot persist. Mirrors the
+// per-editor comment call inside generateArticleComments (same prompt + voice +
+// model); changes NO prompt/voice content. Deterministic for a given editor.
+export async function sampleEditorComment(editor, article) {
+  var voice = COMMENT_VOICES[editor];
+  if (!voice) throw new Error('Unknown editor (no comment voice): ' + editor);
+  var prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + (article.headline || '') + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + COMMENT_INTEGRITY_RULE;
+  var message = await client.messages.create({
+    model: COMMENT_MODEL,
+    max_tokens: 200,
+    system: voice,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  return ((message.content && message.content[0] && message.content[0].text) || '').trim();
+}
