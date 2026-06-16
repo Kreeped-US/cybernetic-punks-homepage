@@ -15,9 +15,10 @@ function formatNum(n) {
 export default function LivePulseGate({ stats }) {
   var pathname = usePathname();
   if (pathname === '/') return null;
-  // DMZ route group has its own shell (GAME_TEMPLATE.md D4) and Marathon-
-  // specific live stats don't apply there. Marathon routes are unaffected.
-  if (pathname && pathname.startsWith('/dmz')) return null;
+  // DMZ route group has its own shell (GAME_TEMPLATE.md D4) and network-level
+  // pages (e.g. /profile-preview) aren't Marathon pages -- Marathon-specific
+  // live stats don't apply on either. Marathon routes are unaffected.
+  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview'))) return null;
 
   var hasSteam = !!(stats && stats.steam);
   var hasTwitch = !!(stats && stats.twitch);

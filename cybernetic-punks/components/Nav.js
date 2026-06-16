@@ -187,10 +187,11 @@ export default function Nav() {
   }
 
   // DMZ (and future game route groups) render their own per-game header
-  // (GAME_TEMPLATE.md D4). Suppress Marathon's global nav there. Declared after
-  // all hooks so hook order stays stable. Marathon's unprefixed routes are
-  // unaffected.
-  if (pathname && pathname.startsWith('/dmz')) return null;
+  // (GAME_TEMPLATE.md D4); network-level pages (e.g. /profile-preview) aren't
+  // Marathon pages either. Suppress Marathon's global nav on these. Declared
+  // after all hooks so hook order stays stable. Marathon's unprefixed routes
+  // are unaffected.
+  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview'))) return null;
 
   return (
     <nav style={{
