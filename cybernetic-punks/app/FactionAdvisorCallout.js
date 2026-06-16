@@ -3,6 +3,7 @@
 // Server component. Renders between Products and HomeEditorReactions.
 
 import Link from 'next/link';
+import { editorByline } from '@/lib/editors/roster';
 
 var SHELL_COLORS = {
   Assassin:  '#cc44ff',
@@ -218,7 +219,7 @@ export default function FactionAdvisorCallout({ shells }) {
           Faction unlocks · Stat bonuses · Investment math
         </span>
         <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#ffd700' + 'aa', letterSpacing: 1, fontWeight: 700 }}>
-          ◎ MAPPED BY FIELD-GUIDE AI
+          ◎ MAPPED BY {editorByline('miranda')}
         </span>
       </div>
     </section>
