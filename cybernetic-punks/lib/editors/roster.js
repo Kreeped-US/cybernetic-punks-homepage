@@ -30,6 +30,7 @@
 export const EDITORS = {
   cipher: {
     key:      'cipher',
+    status:   'live',      // producing now; has an /intel/cipher lane
     fullName: 'Marcus Vane',
     tag:      'Cipher',
     role:     'Analysis',
@@ -40,6 +41,7 @@ export const EDITORS = {
   },
   nexus: {
     key:      'nexus',
+    status:   'live',
     fullName: 'Remi Okafor',
     tag:      'Nexus',
     role:     'Meta & News',
@@ -50,6 +52,7 @@ export const EDITORS = {
   },
   dexter: {
     key:      'dexter',
+    status:   'live',
     fullName: 'Felix Andersen',
     tag:      'Dexter',
     role:     'Builds',
@@ -60,6 +63,7 @@ export const EDITORS = {
   },
   ghost: {
     key:      'ghost',
+    status:   'live',
     fullName: 'Tariq Webb',
     tag:      'Ghost',
     role:     'Community',
@@ -70,6 +74,7 @@ export const EDITORS = {
   },
   miranda: {
     key:      'miranda',
+    status:   'live',
     fullName: 'Miranda Malini',
     // Miranda has NO tag: her name IS her tag (senior enough to need no handle).
     // Consumers must handle tag === null (render the name alone, no "/ tag").
@@ -82,6 +87,7 @@ export const EDITORS = {
   },
   broker: {
     key:      'broker',
+    status:   'incoming',  // NOT producing yet; no /intel/broker lane (wired in Step 6)
     fullName: 'Vera Sloan',
     tag:      'Broker',
     role:     'Economy & Market',
