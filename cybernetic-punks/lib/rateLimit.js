@@ -56,3 +56,49 @@ export function checkRateLimit(key, limit, windowMs, now) {
 
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Failed-attempt lockout (for admin password auth -- security audit #4).
+//
+// Different semantics from checkRateLimit: this counts ONLY failures, is
+// cleared on success, and is WINDOWED + self-expiring -- so it throttles a
+// brute-forcer without ever permanently locking anyone out. Lockout auto-clears
+// once the oldest failure ages out of the window; during an active lockout no
+// new failures are recorded (the caller returns early), so a brute-forcer
+// cannot extend their own lockout indefinitely.
+//
+// KEY PER-IP: the admin route keys this on the client IP. That is what makes it
+// impossible to lock out the legit admin -- a brute-forcer only locks THEIR OWN
+// ip's bucket; the admin's own connection has a separate counter. Even a
+// self-inflicted lockout (admin mistypes M times) auto-clears after the window.
+const failures = new Map(); // key -> number[] (failure timestamps, ms)
+
+/**
+ * Is this key currently locked out? Does NOT record anything.
+ * @returns {{ locked: false } | { locked: true, retryAfter: number }} retryAfter in seconds.
+ */
+export function checkLockout(key, maxFailures, windowMs, now) {
+  const ts = typeof now === 'number' ? now : Date.now();
+  const cutoff = ts - windowMs;
+  const fails = (failures.get(key) || []).filter((t) => t > cutoff);
+  failures.set(key, fails);
+  if (fails.length >= maxFailures) {
+    const retryAfter = Math.ceil((fails[0] + windowMs - ts) / 1000);
+    return { locked: true, retryAfter: Math.max(retryAfter, 1) };
+  }
+  return { locked: false };
+}
+
+/** Record one failed attempt against the key (call only when NOT already locked). */
+export function recordFailure(key, windowMs, now) {
+  const ts = typeof now === 'number' ? now : Date.now();
+  const cutoff = ts - windowMs;
+  const fails = (failures.get(key) || []).filter((t) => t > cutoff);
+  fails.push(ts);
+  failures.set(key, fails);
+}
+
+/** Clear all recorded failures for the key (call on a successful auth). */
+export function clearFailures(key) {
+  failures.delete(key);
+}

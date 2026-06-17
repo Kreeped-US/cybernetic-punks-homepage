@@ -5,6 +5,49 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — Security batch #4/#6/#8 shipped (code)
+
+`fix(security): admin lockout + constant-time compare, rate limits on
+audit/ask-editor, generic error responses (#4/#6/#8)`. Lower-priority code-side
+hardening from the audit. No secrets/env/RLS touched; no regressions to existing
+auth/injection/cron guards.
+
+- **#4 `/api/admin` hardening** (password kept; OAuth migration is a separate
+  future task). Constant-time compare (`safeEqual`: both sides SHA-256'd to a
+  fixed 32-byte digest then `crypto.timingSafeEqual` -- kills the per-char AND
+  length timing leaks; fail-closed if `ADMIN_PASSWORD` unset). Plus a
+  **windowed, self-clearing, PER-IP lockout** (5 fails / 15 min) via new helpers
+  in `lib/rateLimit.js` (`checkLockout`/`recordFailure`/`clearFailures`). All 4
+  handlers go through one `authorize()` gate. **Cannot permanently lock out the
+  admin:** keyed per-IP (a brute-forcer locks only their own IP; admin's own
+  connection has a separate counter), auto-clears after the window, and a
+  correct password in the normal state resets the counter. Self-lockout (admin
+  mistypes 5x from own IP) lifts in <=15 min or via a different connection.
+  (Foundation: `ADMIN_PASSWORD` already upgraded to a long random value.)
+- **#6 rate limits** on the two cookie-gated paid routes, reusing
+  `checkRateLimit`: `/api/audit` **5 / 5 min** (tighter -- ~3 Sonnet calls/req),
+  `/api/ask-editor` **30 / 5 min** (chatty, 1 call/req). 429 + `Retry-After`,
+  mirroring advisor. Cookie auth + injection hardening intact.
+- **#8 generic error responses** in `advisor` (catch), `audit` (catch + the
+  `auditError` save path), `ask-editor` (catch): real error `console.error`'d
+  server-side, client gets `{ error: 'Something went wrong' }` -- no more
+  `err.message`/`detail` leakage. (ask-editor's `'Editor unavailable'` was
+  already generic.)
+
+### Security audit status (running)
+- **CLOSED:** #1 cron guard (armed: `CRON_SECRET` set, 401 confirmed); #2
+  advisor auth/rate-limit; #3 RLS; #4 admin lockout + constant-time; #5 welcome
+  IDOR; #6 audit/ask-editor rate limits; #8 generic errors.
+- **OPEN:** **#7 `/api/track`** -- unauthenticated service-key insert to
+  `site_events` (spam/bloat; low). Only remaining audit item.
+- **Separate future task (not an audit finding):** admin OAuth migration (fold
+  admin behind the Bungie-OAuth allowlist instead of a shared password).
+- **CONFIRMED FINE (no action):** Anthropic key + Supabase service key
+  server-only; no hardcoded secrets; dev-sample route gated; Bungie OAuth CSRF +
+  allowlist; `cp_player_id` cookie solid.
+
+---
+
 ## 2026-06-17 — RLS hardening applied (Supabase SQL editor — verified) + audit state
 
 SQL-only work, run in Supabase by Justin and verified successful. **No repo code

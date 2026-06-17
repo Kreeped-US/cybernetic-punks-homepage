@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '@/lib/models';
+import { checkRateLimit } from '@/lib/rateLimit';
+
+// SECURITY (audit #6): one Claude call per request and a conversational Q&A
+// flow, so this is more permissive than the heavier audit route: 30 questions
+// / 5 min allows a real back-and-forth while still stopping an abuse loop.
+const ASK_RATE_LIMIT = 30;
+const ASK_RATE_WINDOW_MS = 5 * 60 * 1000;
 
 function getSupabase() {
   return createClient(
@@ -46,6 +53,15 @@ export async function POST(request) {
 
     if (!playerId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    // Per-player rate limit (audit #6): fail fast before the paid Claude call.
+    const rl = checkRateLimit('ask-editor:' + playerId, ASK_RATE_LIMIT, ASK_RATE_WINDOW_MS);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded — try again shortly.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
     }
 
     const { editor, question } = await request.json();
@@ -142,7 +158,8 @@ ${context}${INJECTION_BOUNDARY}`;
     return NextResponse.json({ success: true, answer });
 
   } catch (err) {
+    // #8: log the real error server-side, return a generic message to the client.
     console.error('Ask editor error:', err);
-    return NextResponse.json({ error: 'Server error', detail: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

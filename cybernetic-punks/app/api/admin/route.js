@@ -1,4 +1,6 @@
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { checkLockout, recordFailure, clearFailures } from '@/lib/rateLimit';
 
 // FIX (May 15, 2026): createClient() moved into getSupabase() helper.
 // Previously at module scope, which caused Vercel build to fail with
@@ -36,13 +38,59 @@ const ALLOWED_TABLES = [
   'game_modes',
 ];
 
+// SECURITY (audit #4): admin hardening. Keeps the password mechanism (OAuth
+// migration is a separate future task) but removes the timing side-channel and
+// adds a windowed, self-clearing, per-IP lockout.
+const ADMIN_MAX_FAILS = 5;                       // failures allowed per window
+const ADMIN_LOCK_WINDOW_MS = 15 * 60 * 1000;     // 15 min, then auto-clears
+
+// Constant-time compare. Both sides are SHA-256'd to a fixed 32-byte digest
+// first, so timingSafeEqual never sees unequal lengths -- this removes BOTH the
+// per-character timing leak AND the password-length leak.
+function safeEqual(provided, expected) {
+  if (!expected) return false; // no password configured -> fail closed
+  const a = crypto.createHash('sha256').update(String(provided)).digest();
+  const b = crypto.createHash('sha256').update(String(expected)).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
+// Client IP for keying the lockout. Vercel always sets x-forwarded-for; the
+// fallbacks keep local dev working. Per-IP keying is what guarantees a
+// brute-forcer cannot lock out the admin (different connection, own counter).
+function clientIp(req) {
+  const xff = req.headers.get('x-forwarded-for') || '';
+  return xff.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
+}
+
 function checkAuth(req) {
-  var auth = req.headers.get('x-admin-password');
-  return auth === process.env.ADMIN_PASSWORD;
+  return safeEqual(req.headers.get('x-admin-password'), process.env.ADMIN_PASSWORD);
+}
+
+// Combined gate: lockout check -> password check -> (record failure | clear).
+// Returns { ok: true } or { ok: false, response } so each handler can early-return.
+function authorize(req) {
+  const key = 'admin-fail:' + clientIp(req);
+  const lock = checkLockout(key, ADMIN_MAX_FAILS, ADMIN_LOCK_WINDOW_MS);
+  if (lock.locked) {
+    return {
+      ok: false,
+      response: Response.json(
+        { error: 'Too many attempts. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(lock.retryAfter) } }
+      ),
+    };
+  }
+  if (!checkAuth(req)) {
+    recordFailure(key, ADMIN_LOCK_WINDOW_MS);
+    return { ok: false, response: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
+  }
+  clearFailures(key); // success resets this IP's failure counter
+  return { ok: true };
 }
 
 export async function GET(req) {
-  if (!checkAuth(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  var auth = authorize(req);
+  if (!auth.ok) return auth.response;
   var url = new URL(req.url);
   var table = url.searchParams.get('table');
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
@@ -65,7 +113,8 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  if (!checkAuth(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  var auth = authorize(req);
+  if (!auth.ok) return auth.response;
   var { table, row } = await req.json();
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
   var supabase = getSupabase();
@@ -75,7 +124,8 @@ export async function POST(req) {
 }
 
 export async function PATCH(req) {
-  if (!checkAuth(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  var auth = authorize(req);
+  if (!auth.ok) return auth.response;
   var { table, id, updates } = await req.json();
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
   var supabase = getSupabase();
@@ -85,7 +135,8 @@ export async function PATCH(req) {
 }
 
 export async function DELETE(req) {
-  if (!checkAuth(req)) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  var auth = authorize(req);
+  if (!auth.ok) return auth.response;
   var url = new URL(req.url);
   var table = url.searchParams.get('table');
   var id = url.searchParams.get('id');

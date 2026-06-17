@@ -353,7 +353,8 @@ export async function POST(req) {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (err) {
-    console.error('[advisor] error:', err.message);
-    return Response.json({ error: err.message }, { status: 500 });
+    // #8: log the real error server-side, return a generic message to the client.
+    console.error('[advisor] error:', err);
+    return Response.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }
