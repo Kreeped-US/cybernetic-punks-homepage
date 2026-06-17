@@ -5,6 +5,30 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — Gather/ingest pipeline AUDIT done (read-only) — 2 gaps flagged
+
+Full map + assessment: [docs/network/GATHER_PIPELINE_AUDIT.md](network/GATHER_PIPELINE_AUDIT.md).
+No code changed. Headline findings:
+
+- **Gap 1 (HIGH, fix next):** patch notes are **truncated at ingest** —
+  `steam.js:27` `&maxlength=600` + `bungie.js:39` `.slice(0, 400)`, and the full
+  patch-note body is never fetched. Editors only ever see a <=400-600 char blurb of
+  any patch -> the 1.1.0.2 "C.A.R.R.I.-only / no changes" failure. **Systemic, recurs
+  every patch.** No completeness gate (empty is handled; partial silently treated as
+  complete). Fix lives in the GATHER layer, not the editor prompts. **Design-first:
+  Justin wants to plan this before any build — NOT started.**
+- **Gap 2 (HIGH for DMZ):** the gather pipeline is **Marathon-hardcoded end to end**
+  (Steam appid 3065800, r/MarathonTheGame, YouTube queries, Twitch game id, wiki URLs,
+  relevance filter, stat tables). Per-game gather is **designed-only**. The "~5
+  parameterization-pending 'marathon' sites" are **storage-scoping/dedup flips only**,
+  NOT the source layer — DMZ editorial needs a real per-game gather config + sources,
+  not a 5-line flip. (Storage + display are game-aware; inputs are not.)
+- Verdict: well-orchestrated skeleton (good empty-source fallbacks, off-topic filter,
+  patch detection w/ freshness + fail-closed dedup, no-bleed scoping, honesty rules) —
+  but Marathon-shaped at the source level and fragile on patch-input completeness.
+
+---
+
 ## 2026-06-17 — Note: `feed_items.editor_note` is a DEAD (unrendered) field
 
 `feed_items.editor_note` has **zero references in any template** (confirmed: no use in `app/intel/[slug]/page.js` or other render sites) — it is not displayed anywhere. Flagged so it is not assumed live: it is NOT a corrections/edited-at home (the 1.1.0.2 addendum, if applied, goes in `body`).
