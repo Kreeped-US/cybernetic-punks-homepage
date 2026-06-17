@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { formatMonthYear } from '@/lib/formatDate';
 
 var SHELL_COLORS = {
   Assassin:  '#cc44ff',
@@ -82,7 +83,7 @@ function platformIcon(p) {
 
 function memberSince(dateStr) {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return formatMonthYear(dateStr) || '—';
 }
 
 export default function MeClient({ player }) {

@@ -6,6 +6,7 @@ import CoachCTA from '@/components/CoachCTA';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorByline } from '@/lib/editors/roster';
+import { formatPublishDate } from '@/lib/formatDate';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -978,7 +979,7 @@ function SidebarItemCard({ item, type, editorColor }) {
 
 function ArticlePage({ item, shells, weapons, mods, implants, comments, related, creatorAvatar }) {
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
-  var publishedAt = new Date(item.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  var publishedAt = formatPublishDate(item.created_at);
   var videoId = extractYouTubeId(item.source_url);
   var isTwitch = isTwitchClipUrl(item.source_url);
   var twitchSlug = extractTwitchClipSlug(item.source_url);
