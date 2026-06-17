@@ -5,6 +5,56 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — Security audit + first fix pass (findings #1/#2/#5 closed)
+
+Read-only security audit ranked the real risk surface (leaked keys, openly-
+triggerable paid routes, DB access). Honest top-line: **keys are clean** —
+Anthropic + Supabase SERVICE keys are server-only (Server Components / API
+routes), never `NEXT_PUBLIC`, never client, never logged/returned; `.env*`
+gitignored; no hardcoded secrets; no anon-key writes anywhere; `cp_player_id`
+is a proper `httpOnly`/`secure`/UUID session cookie; OAuth is closed-beta
+(allowlist = Justin only). The holes were openly-triggerable cost routes + an
+IDOR + the unknown RLS state.
+
+**Fixed this pass** (`fix(security): cron auth guard (fail-safe) + advisor
+auth/ratelimit + welcome IDOR fix`):
+- **#1 CRITICAL — `/api/cron` was fully open** (`GET()` took no req, no auth) →
+  anyone could force a PAID generation cycle. Now `GET(req)` with a **FAIL-SAFE**
+  guard: `CRON_SECRET` unset → ALLOW + warn (so deploying before the env var is
+  set does NOT lock out Vercel's scheduled job — avoids re-creating the
+  generation outage); `CRON_SECRET` set → require `Authorization: Bearer
+  <CRON_SECRET>` else 401. Vercel Cron sends that header automatically. **The
+  guard is INERT until Justin sets `CRON_SECRET` in Vercel — setting it ARMS it.**
+- **#2 HIGH — `/api/advisor`** had no auth + no rate limit (open paid Claude
+  call; the page gated it but the route didn't). Now gated on `cp_player_id`
+  (same pattern as audit/ask-editor) + per-player rate limit (10/60s) via new
+  `lib/rateLimit.js`. Injection hardening untouched.
+- **#5 MEDIUM — `/api/welcome/complete` IDOR**: trusted body `player_id` →
+  could update any profile. Now derives id from the `cp_player_id` cookie (body
+  value ignored); mirrors `/api/profile`.
+- **`lib/rateLimit.js` (new):** in-memory sliding-window limiter, zero deps / no
+  DDL. Documented as per-instance defense-in-depth (durable protection = the
+  auth gate + closed beta); `checkRateLimit()` is the seam to swap a shared
+  store (Upstash/DB) later. **#6 (audit/ask-editor) can adopt it as-is.**
+
+**Still open (NOT in this pass):**
+- **#3 HIGH — Supabase RLS state: IN PROGRESS separately (Justin, dashboard).**
+  Cannot be verified from code. If RLS is OFF, the browser-shipped anon key =
+  full read/write of all tables incl. `player_*` PII. Highest remaining item.
+- **#4 MEDIUM — `/api/admin`** full CRUD behind a single static `ADMIN_PASSWORD`
+  header, no lockout / non-constant-time compare. (Env value = Justin's;
+  code-side lockout = later batch.)
+- **#6 MEDIUM — `/api/audit` + `/api/ask-editor`** no per-user rate limit (low
+  now: UUID-cookie-gated + closed beta; audit fires 3 Sonnet calls/req). Adopt
+  `lib/rateLimit.js` before opening the beta.
+- **#7 LOW-MED — `/api/track`** unauthenticated service-key insert (spam/bloat).
+- **#8 LOW — error responses** return `err.message`/`detail` to client (info
+  disclosure, no secrets).
+- **Gated/dashboard (Justin):** set `CRON_SECRET` (arms #1), verify RLS (#3),
+  `ADMIN_PASSWORD` strength (#4).
+
+---
+
 ## 2026-06-17 — Gap 1 FIXED: full patch notes ingested + completeness signal
 
 `fix(gather): ingest full patch notes + completeness signal (gap 1)`. The

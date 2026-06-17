@@ -475,7 +475,28 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
   }
 }
 
-export async function GET() {
+export async function GET(req) {
+  // SECURITY (audit #1): FAIL-SAFE cron auth guard. This route triggers PAID
+  // generation, so it must not be publicly triggerable -- but the guard must
+  // also never lock out Vercel's own scheduled job.
+  //   - CRON_SECRET NOT set  -> ALLOW the request (log a warning). The guard is
+  //     INERT until the secret exists, so deploying this code BEFORE setting the
+  //     env var does NOT take down generation (avoids re-creating the outage).
+  //   - CRON_SECRET set      -> REQUIRE `Authorization: Bearer <CRON_SECRET>`,
+  //     else 401. Vercel Cron sends exactly this header automatically once the
+  //     secret is set, so the scheduled job keeps working while public callers
+  //     are rejected. Setting CRON_SECRET in Vercel is what ARMS the guard.
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.warn('[CRON] CRON_SECRET not set -- route is UNGUARDED (anyone can trigger a paid cycle). Set CRON_SECRET in Vercel env to arm the guard.');
+  } else {
+    const auth = req && req.headers ? req.headers.get('authorization') : null;
+    if (auth !== 'Bearer ' + cronSecret) {
+      console.warn('[CRON] Rejected request: missing/invalid Authorization Bearer.');
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

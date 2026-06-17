@@ -7,6 +7,7 @@
 // they'll just see /welcome once more next signin which is recoverable.
 
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
@@ -21,13 +22,18 @@ function getSupabase() {
 
 export async function POST(req) {
   try {
-    var body = await req.json();
-    var playerId = body?.player_id;
-    var intent = body?.intent;
-
+    // SECURITY (audit #5, IDOR fix): derive the player id from the session
+    // cookie, NEVER from the request body. Previously this trusted body
+    // `player_id`, letting anyone update an arbitrary profile. Mirrors the
+    // correct pattern in /api/profile. Any body `player_id` is now ignored.
+    var cookieStore = await cookies();
+    var playerId = cookieStore.get('cp_player_id')?.value;
     if (!playerId) {
-      return NextResponse.json({ error: 'missing_player_id' }, { status: 400 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+
+    var body = await req.json();
+    var intent = body?.intent;
 
     // Validate intent — defensive against junk values
     var validIntents = ['build', 'meta', 'intel', 'skip'];

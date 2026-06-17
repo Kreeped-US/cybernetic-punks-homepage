@@ -2,8 +2,20 @@
 // DEXTER Build Advisor — live Claude API call with full game context
 
 import Anthropic from '@anthropic-ai/sdk';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '@/lib/models';
+import { checkRateLimit } from '@/lib/rateLimit';
+
+// SECURITY (audit #2): this route makes a PAID Claude call per request. It is
+// gated on the cp_player_id session cookie (same pattern as /api/audit and
+// /api/ask-editor) so it can't be triggered anonymously, plus a per-player
+// rate limit as defense-in-depth. Tunable: 10 builds / 60s is generous for a
+// real user but stops a tight abuse loop. The injection hardening below
+// (sanitizeFreeText + <user_input> delimiters + system-prompt guard) is
+// unchanged.
+const ADVISOR_RATE_LIMIT = 10;
+const ADVISOR_RATE_WINDOW_MS = 60 * 1000;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -279,6 +291,22 @@ Return ONLY valid JSON — no markdown, no explanation:
 
 export async function POST(req) {
   try {
+    // Auth gate (audit #2): require the player session cookie before any paid work.
+    const cookieStore = await cookies();
+    const playerId = cookieStore.get('cp_player_id')?.value;
+    if (!playerId) {
+      return Response.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    // Per-player rate limit (audit #2): fail fast before the DB fetch + Claude call.
+    const rl = checkRateLimit('advisor:' + playerId, ADVISOR_RATE_LIMIT, ADVISOR_RATE_WINDOW_MS);
+    if (!rl.ok) {
+      return Response.json(
+        { error: 'Rate limit exceeded — slow down and try again shortly.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
+
     const body = await req.json();
     const shell = body.shell;
 
