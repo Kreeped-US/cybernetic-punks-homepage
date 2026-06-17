@@ -1,5 +1,6 @@
 import { callEditor, buildMirandaPrompt, generateArticleComments, consumeKeyword } from '@/lib/editorCore';
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
+import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 
@@ -251,7 +252,20 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
 
     if (!result || !result.headline || result._parseError) {
       console.log('[CRON] ' + editorName + ' failed: ' + JSON.stringify(result).slice(0, 200));
-      return { editor: editorName, success: false, error: 'Parse error or missing headline' };
+      // Surface the SPECIFIC failure reason (404/model error, rate limit, no
+      // tool_use, parse error) so the alert email is actionable rather than a
+      // generic "parse error". callEditor returns {_error, _message/_stop_reason}
+      // on an API/tool failure.
+      var reason;
+      if (result && result._error) {
+        reason = result._error + (result._message ? ': ' + String(result._message).slice(0, 300)
+          : (result._stop_reason ? ' (stop_reason: ' + result._stop_reason + ')' : ''));
+      } else if (result && result._parseError) {
+        reason = 'parse error';
+      } else {
+        reason = 'missing headline';
+      }
+      return { editor: editorName, success: false, error: reason };
     }
 
     var media = resolveMediaInfo(result, rawData, editorName);
@@ -722,6 +736,15 @@ export async function GET() {
 
     var succeeded = results.filter(function(r) { return r.success; }).length;
     var directivesUsed = results.filter(function(r) { return r.success && directiveMap[r.editor]; }).length;
+
+    // End-of-run safety-net alert: email on total outage (0 generated) or any
+    // per-editor failure. Inert until Resend env is provisioned. Wrapped so an
+    // alert failure can never affect the generation that just completed.
+    try {
+      await sendCronFailureAlert(results);
+    } catch (alertErr) {
+      console.log('[CRON] alert dispatch error (non-fatal): ' + alertErr.message);
+    }
 
     return Response.json({
       success: true,

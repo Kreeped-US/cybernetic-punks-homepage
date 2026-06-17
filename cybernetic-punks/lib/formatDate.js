@@ -32,3 +32,11 @@ export function formatMonthYear(dateInput) {
   if (isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-US', { timeZone: DISPLAY_TZ, month: 'long', year: 'numeric' });
 }
+
+// "June 17, 2026, 5:00 PM PDT" - date + time + zone, e.g. an alert/cycle stamp.
+export function formatDateTime(dateInput) {
+  if (!dateInput) return '';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-US', { timeZone: DISPLAY_TZ, year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+}
