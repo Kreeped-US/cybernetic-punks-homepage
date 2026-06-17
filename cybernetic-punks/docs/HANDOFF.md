@@ -5,6 +5,12 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — Note: `feed_items.editor_note` is a DEAD (unrendered) field
+
+`feed_items.editor_note` has **zero references in any template** (confirmed: no use in `app/intel/[slug]/page.js` or other render sites) — it is not displayed anywhere. Flagged so it is not assumed live: it is NOT a corrections/edited-at home (the 1.1.0.2 addendum, if applied, goes in `body`).
+
+---
+
 ## 2026-06-17 — Marathon verification debt PARKED (own future session)
 
 The 1.1.0.2 baseline scan surfaced the real data-quality exposure. Scoped as its own
