@@ -20,6 +20,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
+import { ARTICLE_MODEL } from '../models';
 
 // --- LAZY ANTHROPIC CLIENT ---
 let _anthropicClient = null;
@@ -50,7 +51,7 @@ const supabase = new Proxy({}, {
   }
 });
 
-const STATS_MODEL = 'claude-sonnet-4-6';
+const STATS_MODEL = ARTICLE_MODEL; // same Sonnet model; single source in lib/models.js
 const REFRESH_HOURS = 24;
 const PIPELINE_KEY = 'dexter_stats_extraction';
 

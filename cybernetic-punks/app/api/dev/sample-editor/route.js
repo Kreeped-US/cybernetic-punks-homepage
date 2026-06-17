@@ -18,6 +18,7 @@
 // a local dev server. Intended to be removed (or kept dev-gated) after Step 5b.
 
 import { callEditor, sampleEditorComment } from '@/lib/editorCore';
+import { ARTICLE_MODEL, COMMENT_MODEL } from '@/lib/models';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,7 @@ export async function GET(req) {
     'TOPIC / CONTEXT FOR THIS ARTICLE:\n' + topic +
     '\n\nWrite a single article on this topic, in your editorial lane and voice.';
 
-  var out = { editor: editor, topic: topic, model_article: 'claude-sonnet-4', model_comment: 'claude-haiku-4-5' };
+  var out = { editor: editor, topic: topic, model_article: ARTICLE_MODEL, model_comment: COMMENT_MODEL };
 
   // ARTICLE (real path, null client -> no writes)
   try {

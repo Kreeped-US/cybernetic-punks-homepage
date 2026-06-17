@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { ARTICLE_MODEL, COMMENT_MODEL } from './models';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -35,8 +36,7 @@ const client = new Proxy({}, {
 });
 
 // --- MODEL CONSTANTS ----------------------------------------
-const ARTICLE_MODEL = 'claude-sonnet-4-6';
-const COMMENT_MODEL = 'claude-haiku-4-5-20251001';
+// Single source of truth: lib/models.js (imported above). Do not redefine here.
 
 // --- GAME CONTEXT CACHE -------------------------------------
 let _gameContextCache = null;

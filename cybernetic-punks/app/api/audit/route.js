@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { ARTICLE_MODEL } from '@/lib/models';
 
 function getSupabase() {
   return createClient(
@@ -36,7 +37,7 @@ async function callClaude(systemPrompt, userContent) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: ARTICLE_MODEL,
       max_tokens: 2048,
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }],
