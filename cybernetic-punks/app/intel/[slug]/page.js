@@ -6,7 +6,7 @@ import CoachCTA from '@/components/CoachCTA';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorByline } from '@/lib/editors/roster';
-import { formatPublishDate } from '@/lib/formatDate';
+import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -1033,7 +1033,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
     author: { '@type': 'Organization', name: item.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/intel/' + item.editor.toLowerCase() },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
-    datePublished: item.created_at, dateModified: item.created_at,
+    datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.created_at),
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',
   };

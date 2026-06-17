@@ -26,6 +26,7 @@
 // -----------------------------------------------------------------
 
 import { createClient } from '@supabase/supabase-js';
+import { toISOWithPTOffset } from '@/lib/formatDate';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -207,7 +208,7 @@ export default async function sitemap() {
       if (data) {
         dynamicPages = data.map((item) => ({
           url: baseUrl + '/intel/' + item.slug,
-          lastModified: new Date(item.created_at),
+          lastModified: toISOWithPTOffset(item.created_at),
           changeFrequency: 'monthly',
           priority: 0.6,
         }));

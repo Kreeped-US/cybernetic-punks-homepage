@@ -29,6 +29,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { getEditorDisplay } from '@/lib/editors/roster';
+import { toISOWithPTOffset } from '@/lib/formatDate';
 
 // Display rename (editor rework Step 3): pills + bylines show the editor's tag
 // (proper case), not the raw uppercase codename. Null-safe -> raw key fallback.
@@ -152,7 +153,7 @@ export default async function IntelHubPage() {
     name: 'Marathon News & Latest Updates',
     description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/intel',
-    dateModified: lastArticleDate,
+    dateModified: toISOWithPTOffset(lastArticleDate),
     publisher: {
       '@type': 'Organization',
       name: 'CyberneticPunks',
@@ -176,7 +177,7 @@ export default async function IntelHubPage() {
           '@type': 'Article',
           name:           item.headline,
           url:            'https://cyberneticpunks.com/intel/' + item.slug,
-          datePublished:  item.created_at,
+          datePublished:  toISOWithPTOffset(item.created_at),
           author: {
             '@type': 'Person',
             name: item.editor,
