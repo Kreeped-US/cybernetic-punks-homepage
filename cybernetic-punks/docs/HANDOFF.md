@@ -5,6 +5,38 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — Editor rework Step 6 (Broker) PAUSED — scoping done, deferred to DMZ launch
+
+Scoped the 6th editor, **Broker / Vera Sloan** (economy & market lane). **Verdict:
+PAUSE activation.** Full write-up: [docs/network/BROKER_STEP6_SCOPING.md](network/BROKER_STEP6_SCOPING.md).
+
+- **Why paused (the gate):** Marathon has no RENEWING economy/market data to
+  sustain a dedicated per-cron editor. There is no player marketplace/auction/
+  pricing system (the "market" half); the only economy data is `faction_armory`
+  (44 static verified rows of credit/material costs) + `faction_upgrades` (6),
+  which already feed `fetchGameContext` and whose beat overlaps DEXTER (build
+  cost/accessibility) and GHOST. Every other editor has a renewing source;
+  Broker would have none — and that input is the hardest requirement. (Context:
+  Marathon reportedly underperformed commercially — poor ROI to add a thin lane.)
+- **DMZ-launch trigger (when to revisit):** Broker's genuinely rich beat is
+  **DMZ's launch economy (Oct 23, 2026)** — 3D Printer recipes + material costs,
+  FOB progression costs, the cash-tied Gunsmith, loot/extraction value. Editors
+  are network-level, so debut Broker WITH DMZ. Alt trigger: Marathon adds a real
+  market/trading system. Until one is true, hold.
+- **Status today:** Broker exists in the display map (`lib/editors/roster.js`:
+  Vera Sloan, `$`, slate, `status:'incoming'`) and renders as "incoming" on
+  `/editors`; `/intel/broker` 404s; it does NOT publish. The map-driven layer
+  (Footer/Nav/editors page) auto-surfaces it when `status` flips to `'live'`.
+- **The full activation plan lives in the scoping doc** (Part 3): data source
+  FIRST (the gate) -> persona+voice via the harness -> wire the ~10 hardcoded-5
+  sites + kill the silent-CIPHER fallback -> enable the lane -> flip
+  `status:'live'` and add to the cron LAST (hard ordering rule: all wiring
+  before any Broker publish, or an unconfigured Broker article renders AS CIPHER).
+- **Editor rework status:** Steps 0-5 COMPLETE (all 5 active editors voiced).
+  Step 6 (Broker) is the only remaining step, now PARKED pending the trigger.
+
+---
+
 ## 2026-06-16 — DMZ gated go-live VERIFIED end-to-end (probe inserted, all filters held, probe removed)
 
 The load-bearing test. Inserted the **first `game_slug='dmz'` row** as a single controlled
