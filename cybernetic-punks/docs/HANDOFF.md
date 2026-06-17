@@ -5,6 +5,43 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — Gap 1 FIXED: full patch notes ingested + completeness signal
+
+`fix(gather): ingest full patch notes + completeness signal (gap 1)`. The
+patch-note ingest truncation (the 1.1.0.2 "C.A.R.R.I.-only" failure) is closed.
+
+- **Root cause overturned a locked assumption (verify-first win):** the Step-1
+  fetch probe found the truncation was **100% self-inflicted**, not a Bungie.net
+  access problem. The Steam news API called **uncapped (`maxlength=0`) already
+  returns the full official Bungie notes** (1.1.0.2 = 6,362 raw chars; the
+  `steam_community_announcements` feed IS Bungie's posts cross-posted). So we
+  **did NOT build a Bungie.net scraper** (the originally-locked source) — no new
+  fragile external dependency; we just stopped truncating what we already get.
+- **Changes (3 files):** `steam.js` — `maxlength=600`→`0`, dropped `.slice(0,500)`,
+  added `bbcodeToText()` (Steam posts are BBCode, not HTML) + `source` +
+  `notes_complete`. `bungie.js` — dropped RSS `.slice(0,400)`, RSS marked
+  `notes_complete:false` (secondary/summary source), merge now **prefers the
+  fuller version** (was first-seen), completeness label threaded into
+  `formatBungieNewsForEditor`. `cipher.js` — dropped `.slice(0,800)` in
+  `buildPatchImpactPrompt`, full notes + completeness label to CIPHER.
+- **Completeness signal:** each Bungie-news item carries `notes_complete`; editor
+  prompts now state `COMPLETENESS: FULL …` vs `COMPLETENESS: PARTIAL — only a
+  short blurb … do not state specific values as confirmed`. Closes the
+  partial-treated-as-complete gap for patches (the editor voices' thin-source
+  honesty can only act on thinness they can SEE — this makes it visible).
+- **Verified (live API):** 1.1.0.2 cleaned body = 5,451 chars, all cut changes
+  survive (Cradle/Folding Stock/Bluenique/Prestige/Folio), zero BBCode tags
+  remain, merge collapses Steam+RSS dup to the complete one order-independently,
+  both completeness labels correct, fetch-failure resilience intact (`[]` fallback).
+- **Scope:** Marathon-only (appid unchanged), **no distiller** (raw notes), only
+  the patch-note path touched. Token cost ~1.4k input × ~5 editors **only on a
+  patch cycle** — negligible. Per-decision: authoritative source effectively
+  remains Bungie's official notes (via the Steam cross-post), just untruncated.
+- **Still open:** Gap 2 (per-game gather for DMZ) unchanged below; general
+  sufficiency/staleness gate beyond patches (MEDIUM) not addressed.
+
+---
+
 ## 2026-06-17 — Gather/ingest pipeline AUDIT done (read-only) — 2 gaps flagged
 
 Full map + assessment: [docs/network/GATHER_PIPELINE_AUDIT.md](network/GATHER_PIPELINE_AUDIT.md).
@@ -15,8 +52,8 @@ No code changed. Headline findings:
   patch-note body is never fetched. Editors only ever see a <=400-600 char blurb of
   any patch -> the 1.1.0.2 "C.A.R.R.I.-only / no changes" failure. **Systemic, recurs
   every patch.** No completeness gate (empty is handled; partial silently treated as
-  complete). Fix lives in the GATHER layer, not the editor prompts. **Design-first:
-  Justin wants to plan this before any build — NOT started.**
+  complete). Fix lives in the GATHER layer, not the editor prompts. **FIXED
+  2026-06-17 — see the Gap-1-closure entry above.**
 - **Gap 2 (HIGH for DMZ):** the gather pipeline is **Marathon-hardcoded end to end**
   (Steam appid 3065800, r/MarathonTheGame, YouTube queries, Twitch game id, wiki URLs,
   relevance filter, stat tables). Per-game gather is **designed-only**. The "~5

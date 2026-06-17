@@ -4,6 +4,28 @@
 
 const STEAM_APP_ID = '3065800';
 
+// Steam announcement bodies (feedname "steam_community_announcements") are
+// Bungie's official posts cross-posted to Steam, and carry the FULL patch
+// notes -- but they are authored in BBCode ([h2], [list], [*], [p], [b],
+// [url=...], etc.), not HTML. Convert to readable plain text so editors get
+// the complete notes in a usable form. Closing block tags become line breaks,
+// list items become "- " bullets, opening block + inline tags are stripped
+// (their text is kept). No length cap -- the whole point of the fix is that the
+// full notes survive ingest. See docs/network/GATHER_PIPELINE_AUDIT.md (Gap 1).
+function bbcodeToText(raw) {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/\[\*\]\s*/gi, '\n- ')              // list items -> bullets
+    .replace(/\[\/\*\]/gi, '')                   // closing list-item tags -> remove
+    .replace(/\[\/(?:p|h[1-6]|list)\]/gi, '\n')  // closing block tags -> newline
+    .replace(/\[(?:p|list|h[1-6])\]/gi, '')      // opening block tags -> remove
+    .replace(/\[\/?[a-z*][^\]]*\]/gi, '')        // strip remaining inline bbcode, keep text
+    .replace(/[ \t]+/g, ' ')                     // collapse runs of spaces/tabs
+    .replace(/[ \t]*\n[ \t]*/g, '\n')            // trim spaces around newlines
+    .replace(/\n{3,}/g, '\n\n')                  // cap blank-line runs
+    .trim();
+}
+
 export async function fetchSteamPlayerCount() {
   try {
     const res = await fetch(
@@ -23,20 +45,34 @@ export async function fetchSteamPlayerCount() {
 
 export async function fetchSteamNews() {
   try {
+    // maxlength=0 = NO truncation: return the full announcement body. This is
+    // the core of the Gap 1 fix -- maxlength=600 was silently cutting patch
+    // notes to a headline blurb at ingest, so editors published off incomplete
+    // notes (the 1.1.0.2 "C.A.R.R.I.-only" failure). The full body is then
+    // BBCode-cleaned below.
     const res = await fetch(
-      `https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${STEAM_APP_ID}&count=8&maxlength=600&format=json`
+      `https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${STEAM_APP_ID}&count=8&maxlength=0&format=json`
     );
     if (!res.ok) throw new Error(`Steam news: ${res.status}`);
     const d = await res.json();
     const items = d?.appnews?.newsitems || [];
-    const articles = items.map(item => ({
-      title:    item.title,
-      url:      item.url,
-      date:     new Date(item.date * 1000).toISOString(),
-      contents: item.contents?.slice(0, 500) || '',
-      author:   item.author || 'Bungie',
-      feedname: item.feedname || '',
-    }));
+    const articles = items.map(item => {
+      const contents = bbcodeToText(item.contents || '');
+      return {
+        title:    item.title,
+        url:      item.url,
+        date:     new Date(item.date * 1000).toISOString(),
+        contents,
+        author:   item.author || 'Bungie',
+        feedname: item.feedname || '',
+        source:   'steam-news',
+        // Completeness signal (Gap 1): the Steam news JSON is fetched uncapped,
+        // so a non-empty body IS the full official notes. Empty -> not complete.
+        // Threaded into the editor prompts so a partial ingest degrades to an
+        // honest hedge instead of confident-wrong.
+        notes_complete: contents.length > 0,
+      };
+    });
     console.log(`[steam.js] Steam news: ${articles.length} articles`);
     return articles;
   } catch (err) {

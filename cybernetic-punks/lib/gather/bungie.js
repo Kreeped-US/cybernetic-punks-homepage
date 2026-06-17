@@ -32,11 +32,16 @@ async function fetchBungieNetNews() {
       const pubDate = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
       const description = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1]
         || item.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '';
+      // No length cap (Gap 1: dropped the old .slice(0, 400)). This RSS path is
+      // the SECONDARY/fallback source -- the Steam news JSON (steam.js, fetched
+      // uncapped) is the authoritative full-notes source and wins the merge
+      // below. RSS <description> is a Steam-side summary, so even uncapped we
+      // treat it as INCOMPLETE (notes_complete:false): conservative on purpose
+      // so an RSS-only patch degrades to an honest hedge rather than over-claim.
       const cleanDesc = description
         .replace(/<[^>]+>/g, ' ')
         .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 400);
+        .trim();
       if (title) {
         articles.push({
           title: title.trim(),
@@ -45,6 +50,7 @@ async function fetchBungieNetNews() {
           contents: cleanDesc,
           author: 'Bungie',
           source: 'steam-rss',
+          notes_complete: false,
         });
       }
     }
@@ -63,17 +69,25 @@ export async function gatherBungieNews() {
       fetchBungieNetNews(),
     ]);
 
-    // Merge and deduplicate by title
-    const seen = new Set();
-    const all = [];
-
+    // Merge and deduplicate by title, PREFERRING THE FULLER VERSION (Gap 1).
+    // The same patch can appear in both the Steam news JSON (full notes,
+    // notes_complete:true) and the RSS feed (summary, notes_complete:false).
+    // We must keep the complete one regardless of source order, so dedup picks
+    // the better entry instead of first-seen. "Fuller" = notes_complete wins;
+    // tie-break on longer contents.
+    const byKey = new Map();
+    const isFuller = (cand, cur) => {
+      if (!!cand.notes_complete !== !!cur.notes_complete) return !!cand.notes_complete;
+      return (cand.contents || '').length > (cur.contents || '').length;
+    };
     for (const article of [...steamNews, ...rssNews]) {
-      const key = article.title.toLowerCase().slice(0, 60);
-      if (!seen.has(key)) {
-        seen.add(key);
-        all.push(article);
+      const key = (article.title || '').toLowerCase().slice(0, 60);
+      const existing = byKey.get(key);
+      if (!existing || isFuller(article, existing)) {
+        byKey.set(key, article);
       }
     }
+    const all = [...byKey.values()];
 
     // Sort by date descending
     all.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -122,8 +136,16 @@ export function formatBungieNewsForTicker(articles) {
 export function formatBungieNewsForEditor(articles) {
   if (!articles || articles.length === 0) return '';
   const recent = articles.slice(0, 6);
-  const lines = recent.map(a =>
-    `[${a.is_patch_note ? 'PATCH NOTE' : 'DEV NEWS'}] ${a.title}\n  Date: ${new Date(a.date).toLocaleDateString()}\n  ${a.contents || '(No preview available)'}\n  URL: ${a.url}`
-  ).join('\n\n');
+  const lines = recent.map(a => {
+    const label = a.is_patch_note ? 'PATCH NOTE' : 'DEV NEWS';
+    // Completeness signal (Gap 1): tell the editor whether it has the full
+    // official notes or only a blurb, so a partial ingest produces an honest
+    // hedge instead of confident-wrong. The editor voices' thin-source-honesty
+    // rules can only act on thinness they can SEE -- this is how they see it.
+    const completeness = a.notes_complete === true
+      ? 'COMPLETENESS: FULL official notes ingested below.'
+      : 'COMPLETENESS: PARTIAL -- only a short blurb was ingested this cycle, NOT the full notes. Do NOT state specific values, numbers, or change lists as confirmed; report only what this blurb explicitly says and note that the full notes were not available.';
+    return `[${label}] ${a.title}\n  Date: ${new Date(a.date).toLocaleDateString()}\n  ${completeness}\n  ${a.contents || '(No preview available)'}\n  URL: ${a.url}`;
+  }).join('\n\n');
   return `\n\n--- OFFICIAL BUNGIE NEWS (most recent first) ---\n${lines}\n--- END BUNGIE NEWS ---`;
 }

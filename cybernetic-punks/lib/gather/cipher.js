@@ -493,9 +493,16 @@ async function buildHolotagPrompt() {
 
 async function buildPatchImpactPrompt(patchItems) {
   const patchSection = patchItems.map(function(p) {
+    // Full notes (Gap 1: dropped the old .slice(0, 800)) plus a completeness
+    // signal so CIPHER hedges honestly when only a blurb was ingested rather
+    // than fabricating ranked implications from incomplete notes.
+    var completeness = p.notes_complete === true
+      ? 'COMPLETENESS: FULL official notes below.'
+      : 'COMPLETENESS: PARTIAL -- only a short blurb was ingested, NOT the full notes. Analyze ONLY what is explicitly stated below; do not assume or invent specific changes, and note the limitation.';
     return 'TITLE: ' + p.title
       + (p.url ? '\nURL: ' + p.url : '')
-      + (p.contents ? '\nCONTENT: ' + p.contents.slice(0, 800) : '');
+      + '\n' + completeness
+      + (p.contents ? '\nCONTENT:\n' + p.contents : '\nCONTENT: (none ingested)');
   }).join('\n\n---\n\n');
 
   // Pull current meta state for "before/after" framing
