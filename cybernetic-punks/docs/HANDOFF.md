@@ -5,6 +5,44 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — RLS hardening applied (Supabase SQL editor — verified) + audit state
+
+SQL-only work, run in Supabase by Justin and verified successful. **No repo code
+changed for the RLS fix itself** (the read-path audit found nothing to reroute),
+so this is a docs-only record.
+
+**Fix A — 6 identity tables locked server-only.** Enabled RLS + added
+`service_role`-only policies (`service_all_*`, matching the
+`player_profiles` / `service_all_profiles` convention) on the 6 previously
+RLS-OFF identity tables: `network_account`, `linked_identity`, `game_profile`,
+`build`, `build_grade`, `subscription`. Safe — all empty/inert, no readers.
+
+**Fix B — 3 player-stats tables locked server-only.** `player_stats`,
+`player_shell_stats`, `player_weapon_stats`. Read-path audit found **ZERO code
+readers/writers and 0 rows**. Discovery query revealed the existing `"Public
+read"` **and** `"Service insert/update"` policies were all scoped to `PUBLIC`
+(`{-}`) — i.e. the "Service" *write* policies were **secretly public-writable**.
+Dropped all three public-scoped policies per table, replaced with a single
+`service_role`-only policy each. Now server-only, matching `player_profiles`.
+Public stats display (when later built) will go through a server API by
+construction (only access is the service key).
+
+**Verification:** the `rls_enabled = false` audit query now returns **zero
+rows** — no public table has RLS off.
+
+### Security audit status (running)
+- **CLOSED:** #1 cron auth guard (code `69bc200` + `CRON_SECRET` set in Vercel,
+  401 confirmed); #2 advisor auth/rate-limit; #3 RLS (this fix); #5 welcome IDOR.
+- **OPEN (lower-priority later batch):** #4 admin lockout / constant-time compare
+  + confirm `ADMIN_PASSWORD` strength; #6 rate limits on `/api/audit` +
+  `/api/ask-editor` (can adopt `lib/rateLimit.js` as-is); #7 `/api/track` auth;
+  #8 generic error responses (stop returning `err.message`/`detail` to client).
+- **CONFIRMED FINE (no action):** Anthropic key + Supabase service key
+  server-only; no hardcoded secrets; dev-sample route gated; Bungie OAuth CSRF +
+  allowlist; `cp_player_id` cookie solid.
+
+---
+
 ## 2026-06-17 — Security audit + first fix pass (findings #1/#2/#5 closed)
 
 Read-only security audit ranked the real risk surface (leaked keys, openly-
