@@ -5,6 +5,31 @@ Newest entries on top.
 
 ---
 
+## 2026-06-17 — Marathon verification debt PARKED (own future session)
+
+The 1.1.0.2 baseline scan surfaced the real data-quality exposure. Scoped as its own
+future session: [docs/MARATHON_VERIFICATION_DEBT.md](MARATHON_VERIFICATION_DEBT.md).
+
+- **Debt (baseline):** `weapon_stats` 16/32 + `mod_stats` 104/202 `verified=false` —
+  ~half the stat data underpinning builds/tiers/articles is unconfirmed. The real
+  "We don't agree, and we don't guess" credibility risk.
+- **Hard rule:** do NOT flip `verified=false -> true` to improve the number — a flag
+  with nothing behind it is worse than honest unverified data. No flips until a
+  defined source of truth exists per stat.
+- **Blocking question (Phase 1):** define what `verified` vs `patch_verified` each
+  assert (the latter likely the per-patch anti-regrowth mechanism) + pick a
+  designated source (official / in-game / datamine / community contributors —
+  LordTT + neodeye already credited on Maps).
+- **Plan:** Phase 0 read-only audit (category breakdown + patch_verified
+  distribution) -> Phase 1 definitions+sourcing decision -> Phase 2+ gated backfill
+  batches + per-patch cadence. Own branch from main; read-only until Phase 1; no new
+  tables/columns.
+- **NOT started** (this was scoping only; no data touched). Separate flagged thread:
+  the pipeline can publish off truncated patch notes (source-ingest quality), distinct
+  from stat-verification debt — its own future look.
+
+---
+
 ## 2026-06-17 — Editor rework Step 6 (Broker) PAUSED — scoping done, deferred to DMZ launch
 
 Scoped the 6th editor, **Broker / Vera Sloan** (economy & market lane). **Verdict:
