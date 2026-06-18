@@ -87,9 +87,23 @@ export const marathon = {
 
     // Patch-notes source. Marathon's official notes come via Bungie's posts
     // cross-posted to the Steam news feed for the appid (the Gap-1 engine in
-    // bungie.js + steam.js). DMZ (Phase B) will use a 'cod-blog' or its own
-    // steam-news adapter.
-    patchNotes: { type: 'steam-news', appId: '3065800' },
+    // bungie.js + steam.js). `type` selects the adapter (lib/gather/patchnotes
+    // registry); `detection` + `label` are consumed by the shared engine.
+    // Values are verbatim from bungie.js (patchVersionRe / patchKeywords / 48h /
+    // the "BUNGIE NEWS" section label). DMZ (Phase B) gets its own steam-news
+    // (MW4 appid) or a 'cod-blog' adapter.
+    patchNotes: {
+      type: 'steam-news',
+      appId: '3065800',
+      detection: {
+        versionRe: /update\s+\d+(\.\d+)+/i,
+        keywords: ['hotfix', 'patch notes', 'nerf', 'buff', 'balance pass', 'weapon tuning', 'patch'],
+        freshnessMs: 48 * 60 * 60 * 1000,
+      },
+      // Section label; the engine adds the "OFFICIAL ..." / "END ..." decoration
+      // to reproduce the original "OFFICIAL BUNGIE NEWS" / "END BUNGIE NEWS".
+      label: 'BUNGIE NEWS',
+    },
   },
 
   // Relevance filter terms (index.js isMarathonGameContent). gameTokens are
