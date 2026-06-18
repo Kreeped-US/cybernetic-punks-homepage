@@ -5,6 +5,44 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — Security audit item #7 closed — ALL 8 ITEMS NOW RESOLVED
+
+`fix(security): rate-limit + size-cap /api/track (closes audit item #7)`. The
+last open audit item. `/api/track` stays UNAUTHENTICATED (anonymous analytics)
+but is now flood/blob protected:
+- **Per-IP rate limit** via `lib/rateLimit.js` `checkRateLimit('track:'+ip, 60,
+  60_000)` -> 429 + Retry-After over 60 events/60s/IP. Generous for active users
+  + NAT; stops floods.
+- **event_data size cap** 2048 chars -> 400 (reject, not truncate). Legit
+  payloads ~hundreds of bytes.
+- **Generic error + server log:** catch now `console.error`s and returns the
+  existing non-leaky `{ok:false}`.
+- Allowlist unchanged (byte-identical for legit traffic). Verified via a unit
+  (legit passes; 61st/IP blocked; other IP unaffected; window slides; 3 KB blob
+  rejected; null/empty data pass); build green.
+
+### Security audit — FINAL ledger (all 8 resolved)
+- **#1** cron auth guard (fail-safe; CRON_SECRET armed) — CLOSED
+- **#2** advisor auth + rate-limit — CLOSED
+- **#3** RLS hardening (identity + player-stats tables, server-only) — CLOSED
+- **#4** admin lockout + constant-time compare — CLOSED
+- **#5** welcome IDOR (cookie-derived id) — CLOSED
+- **#6** audit/ask-editor rate limits — CLOSED
+- **#7** /api/track rate-limit + size-cap — CLOSED (this)
+- **#8** generic error responses — CLOSED
+**No open security-audit items remain.** Separate future task (not an audit
+finding): admin OAuth migration. Standing reminders: keep `CRON_SECRET` /
+`ADMIN_PASSWORD` set; RLS verified live.
+
+### Flagged (separate from the security fix) — /api/track allowlist drift
+The client fires `advisor_surprise` (AdvisorClient) and `signup_intent`
+(WelcomeClient) but neither is in `ALLOWED_EVENTS`, so the route 400s and drops
+them today. Left unchanged in #7 (byte-identical). Under read-only investigation
+to decide whether they're accidental drift vs deliberate drops before touching
+the allowlist.
+
+---
+
 ## 2026-06-18 — fetchGameContext cache made per-game (Phase C prerequisite)
 
 `editorCore.js` `fetchGameContext`'s context cache was game-blind (single global
