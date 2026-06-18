@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL, COMMENT_MODEL } from './models';
+import { unverifiedTag, UNVERIFIED_NOTE } from './verification';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -639,7 +640,7 @@ async function fetchGameContext() {
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, patch_verified').order('name').limit(30),
       supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, verified, patch_verified').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
-      supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved').eq('game_slug', 'marathon').order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
+      supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved, verified, patch_verified').eq('game_slug', 'marathon').order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
       supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', 'marathon').eq('verified', true),
       supabase.from('faction_upgrades').select('faction_slug, node_name, node_kind, rank_required, effect_desc, unlocks_in_armory').eq('game_slug', 'marathon').eq('verified', true),
       // GAME-WORLD GROUND TRUTH (added June 8, 2026): verified-only map/zone/boss/event/mode
@@ -655,26 +656,14 @@ async function fetchGameContext() {
       supabase.from('game_modes').select('mode_name, mode_type, available_on, summary').eq('game_slug', 'marathon').eq('verified', true).order('mode_name'),
     ]);
 
-    // Tag only genuinely-unconfirmed data: a row with verified=false, OR a row
-    // carrying an explicit pre-S2 patch stamp (e.g. "S1" = verified but stale).
-    // A null patch_verified on a verified=true row is NOT tagged - that row is
-    // confirmed, it simply lacks a 1.1.0 stamp; tagging it desensitized editors
-    // to the marker. Uniform across all stat tables (no patch_verified column =
-    // pv treated as empty, so only verified=false tags).
-    function unverifiedTag(row) {
-      var pv = row.patch_verified || '';
-      return (row.verified === false || /^s1\b/i.test(pv)) ? ' [UNVERIFIED]' : '';
-    }
+    // Unverified-row tagging is centralized in lib/verification.js (single
+    // source of truth, shared with the Miranda + advisor paths) so the rule for
+    // "how a stat gets hedged" can't drift across paths or games.
 
     let output = '';
 
     // Shared verification note (once, ahead of all data sections - not per persona).
-    output += '--- VERIFIED DATA NOTE ---\n' +
-      'Any item marked [UNVERIFIED] below is NOT confirmed against current Season 2 in-game data. ' +
-      'For an [UNVERIFIED] item you MUST NOT state its precise numeric stats (damage, RPM, magazine size, percentages, durations, credits). ' +
-      'Describe its role or effect qualitatively and note that the exact values are unconfirmed. Stating precise numbers for an [UNVERIFIED] item is an error. ' +
-      'Cite precise numeric stats as fact ONLY for items without the [UNVERIFIED] tag.\n' +
-      '--- END NOTE ---';
+    output += UNVERIFIED_NOTE;
 
     if (modsRes.data?.length) {
       const bySlot = {};
@@ -791,7 +780,7 @@ async function fetchGameContext() {
           if (n.is_perk) {
             // Perks are the load-bearing, citeable breakpoints.
             output += '  PERK "' + n.node_name + '" @ ' + (n.cumulative_energy != null ? n.cumulative_energy + ' Energy' : 'breakpoint') +
-              (n.effect ? ' - ' + n.effect : '') + '\n';
+              (n.effect ? ' - ' + n.effect : '') + unverifiedTag(n) + '\n';
           }
         });
         // Summarize the track's stat direction from its passive nodes without
@@ -947,7 +936,7 @@ export function buildMirandaPrompt(data) {
 
   const shellData = shellContext.length > 0
     ? shellContext.map(s => [
-        `${s.name}: Role=${s.role}, Difficulty=${s.difficulty}, BestFor=${s.best_for}`,
+        `${s.name}: Role=${s.role}, Difficulty=${s.difficulty}, BestFor=${s.best_for}${unverifiedTag(s)}`,
         s.active_ability_name    ? `  Active: ${s.active_ability_name} - ${s.active_ability_description || 'TBD'}${s.active_ability_cooldown_seconds ? ' (' + s.active_ability_cooldown_seconds + 's cooldown)' : ''}` : '  Active: TBD',
         s.passive_ability_name   ? `  Passive: ${s.passive_ability_name} - ${s.passive_ability_description || 'TBD'}` : '  Passive: TBD',
         s.trait_1_name           ? `  Trait: ${s.trait_1_name} - ${s.trait_1_description}` : '',
@@ -962,13 +951,13 @@ export function buildMirandaPrompt(data) {
 
   const weaponData = weaponContext.length > 0
     ? weaponContext.slice(0, 20).map(w =>
-        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${w.damage ? ', Dmg=' + w.damage : ''}${w.fire_rate ? ', RPM=' + w.fire_rate : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}`
+        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${w.damage ? ', Dmg=' + w.damage : ''}${w.fire_rate ? ', RPM=' + w.fire_rate : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${unverifiedTag(w)}`
       ).join('\n')
     : 'Weapon data seeding in progress.';
 
   const modData = modContext.length > 0
     ? modContext.map(m =>
-        `${m.name} [${m.slot_type}]: ${m.effect_summary}${m.ranked_notes ? ' - Ranked: ' + m.ranked_notes : ''}${m.faction_source ? ' [' + m.faction_source + ' Armory unlock]' : ''}`
+        `${m.name} [${m.slot_type}]: ${m.effect_summary}${m.ranked_notes ? ' - Ranked: ' + m.ranked_notes : ''}${m.faction_source ? ' [' + m.faction_source + ' Armory unlock]' : ''}${unverifiedTag(m)}`
       ).join('\n')
     : 'Mod data seeding in progress.';
 
@@ -1070,16 +1059,18 @@ CONTENT PRIORITY ORDER:
 ${directiveBlock}
 ${xIntelBlock}
 
-VERIFIED SHELL DATA:
+${UNVERIFIED_NOTE}
+
+SHELL DATA:
 ${shellData}
 
-VERIFIED WEAPON DATA:
+WEAPON DATA:
 ${weaponData}
 
-VERIFIED MOD DATA:
+MOD DATA:
 ${modData}
 
-VERIFIED IMPLANT DATA:
+IMPLANT DATA:
 ${implantData}
 
 OFFICIAL DEV NEWS:
