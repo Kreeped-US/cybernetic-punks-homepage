@@ -138,7 +138,7 @@ export async function gatherReddit(config = getGameConfig()) {
  * playerbase), Twitch clip activity (what's drawing attention). Bungie news is
  * appended separately by gather/index.js.
  */
-export function formatForGhost(posts, steamData, _legacyXData, clipSignal) {
+export function formatForGhost(posts, steamData, _legacyXData, clipSignal, subredditLabel = getGameConfig().sources.reddit.subreddits.map(function (s) { return 'r/' + s; }).join(' + ')) {
   const hasReddit = posts && posts.length > 0;
   const hasSteam = steamData && steamData.reviews && steamData.reviews.length > 0;
   const hasClips = typeof clipSignal === 'string' && clipSignal.length > 0;
@@ -154,7 +154,7 @@ export function formatForGhost(posts, steamData, _legacyXData, clipSignal) {
    Flair: ${p.flair || 'None'}
    ${p.selftext ? 'Body: ' + p.selftext.slice(0, 240) : '(Link post)'}`;
     }).join('\n\n');
-    redditSection = `--- REDDIT DISCUSSIONS (r/MarathonTheGame + r/Marathon) ---\n${postSummaries}\n--- END REDDIT ---`;
+    redditSection = `--- REDDIT DISCUSSIONS (${subredditLabel}) ---\n${postSummaries}\n--- END REDDIT ---`;
   } else {
     redditSection = '--- REDDIT: No posts available this cycle ---';
   }

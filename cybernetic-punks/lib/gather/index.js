@@ -7,6 +7,7 @@ import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { gatherBungieNews, formatBungieNewsForEditor } from './bungie.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
 import { gatherCipher } from './cipher.js';
+import { getGameConfig } from '../games';
 
 // X API intake removed April 27, 2026 — Free tier doesn't permit search/recent
 // endpoint, and Basic tier ($200/mo) wasn't justified by the data quality lift.
@@ -28,43 +29,19 @@ import { gatherCipher } from './cipher.js';
 // describing clip contents. formatClipsForCipher remains exported but unused
 // (CIPHER does internal synthesis; clips would reintroduce title-fabrication).
 
-// ── YOUTUBE RELEVANCE FILTER (added June 8, 2026) ─────────────────────────
-// Root-cause fix for off-topic YouTube intake. "Marathon" the Bungie game
-// shares its name with the running race, so the YouTube fetch was returning
-// foot-race / running content that editors then wrote articles around
-// (e.g. "runners hitting the pavement for real marathons"). This filter
-// drops any video that is not clearly about the GAME before it reaches any
-// editor.
+// ── RELEVANCE FILTER (added June 8, 2026; per-game config June 18, 2026) ───
+// Root-cause fix for off-topic YouTube intake. A game whose name collides with
+// a common word (e.g. "Marathon" the Bungie game vs the foot-race) pulls in
+// off-topic content editors then write around. This filter drops any video not
+// clearly about the GAME before it reaches any editor.
 //
 // STRICT by design: a video is KEPT only if it contains a strong game-specific
-// token (one a running video would never contain), OR the word "marathon"
-// PAIRED WITH a gaming-context word. Bare "marathon" alone does NOT qualify -
-// that is precisely the collision that let race content through. A thinner,
-// clean feed is the intended trade-off; editors degrade gracefully on thin
-// input (they report sparsely rather than fabricate).
-var MARATHON_GAME_TOKENS = [
-  // Publisher / genre
-  'bungie', 'extraction shooter', 'extraction', 'exfil', 'tau ceti',
-  // Core S2 systems / places
-  'holotag', 'holo tag', 'night marsh', 'the cradle', 'cradle', 'runner shell',
-  'sponsored kit', 'contraband', 'cryo archive',
-  // Factions (highly game-specific)
-  'cyberacme', 'nucaloric', 'traxus', 'mida', 'arachne', 'sekiguchi',
-  // Weapons / ammo codes
-  'kkv-9sd', 'kkv9sd', 'wstr', 'm77', 'stryder', 'biotoxic', 'hyphatic',
-  // The 8 Runner Shells
-  'destroyer', 'vandal', 'recon', 'assassin', 'triage', 'thief', 'rook', 'sentinel',
-];
-
-// "marathon" only counts when accompanied by one of these (separates the game
-// from the race: a race video says "marathon training/route/pace"; a game
-// video says "marathon season/build/loadout/gameplay").
-var GAME_CONTEXT_TOKENS = [
-  'season', 'update', 'patch', 'build', 'loadout', 'shell', 'weapon', 'meta',
-  'gameplay', 'tier', 'ranked', 'pvp', 'pve', 'fps', 'shooter', 'gaming',
-  'video game', 'dlc', 'beta', 'playtest', 'steam', 'playstation', 'xbox',
-  'crossplay', 'solo queue', 'squad', 'nightfall',
-];
+// token (relevance.gameTokens), OR the ambiguous game name
+// (relevance.ambiguousTerm) PAIRED WITH a gaming-context word
+// (relevance.contextTokens). The token lists are per-game config
+// (lib/games/<slug>.js relevance.*); Marathon's live in lib/games/marathon.js.
+// A thinner, clean feed is the intended trade-off; editors degrade gracefully
+// on thin input (they report sparsely rather than fabricate).
 
 // Build a lowercase haystack from every string field on the video object,
 // regardless of exact field names (title, description, channelTitle, snippet,
@@ -80,30 +57,32 @@ function videoHaystack(v) {
   return parts.join(' ').toLowerCase();
 }
 
-function isMarathonGameContent(v) {
+function isGameContent(v, relevance) {
   var hay = videoHaystack(v);
   if (!hay) return false; // strict: cannot verify relevance -> drop
-  for (var i = 0; i < MARATHON_GAME_TOKENS.length; i++) {
-    if (hay.indexOf(MARATHON_GAME_TOKENS[i]) !== -1) return true;
+  var gameTokens = relevance.gameTokens;
+  for (var i = 0; i < gameTokens.length; i++) {
+    if (hay.indexOf(gameTokens[i]) !== -1) return true;
   }
-  if (hay.indexOf('marathon') !== -1) {
-    for (var j = 0; j < GAME_CONTEXT_TOKENS.length; j++) {
-      if (hay.indexOf(GAME_CONTEXT_TOKENS[j]) !== -1) return true;
+  if (hay.indexOf(relevance.ambiguousTerm) !== -1) {
+    var contextTokens = relevance.contextTokens;
+    for (var j = 0; j < contextTokens.length; j++) {
+      if (hay.indexOf(contextTokens[j]) !== -1) return true;
     }
   }
   return false;
 }
 
-function filterGameVideos(videos, label) {
+function filterGameVideos(videos, label, relevance) {
   var input = Array.isArray(videos) ? videos : [];
-  var kept = input.filter(isMarathonGameContent);
+  var kept = input.filter(function (v) { return isGameContent(v, relevance); });
   var dropped = input.length - kept.length;
   console.log('[GATHER] ' + label + ' relevance filter: ' + input.length + ' -> ' + kept.length + ' kept (' + dropped + ' off-topic dropped)');
   return kept;
 }
 
-export async function gatherAll() {
-  console.log('[GATHER] Starting data collection...');
+export async function gatherAll(config = getGameConfig()) {
+  console.log('[GATHER] Starting data collection for ' + config.slug + '...');
 
   const wikiResults = await refreshWikiData();
   console.log('[GATHER] Wiki refresh:', wikiResults);
@@ -117,12 +96,12 @@ export async function gatherAll() {
     steamReviews,
     bungieNews,
   ] = await Promise.all([
-    gatherYouTube(),
-    gatherReddit(),
-    gatherTwitchClips(),
+    gatherYouTube(config),
+    gatherReddit(config),
+    gatherTwitchClips(config),
     gatherMirandaData(),
-    fetchSteamPlayerCount(),
-    fetchSteamReviews(),
+    fetchSteamPlayerCount(config.sources.steamAppId),
+    fetchSteamReviews(config.sources.steamAppId),
     gatherBungieNews(),
   ]);
 
@@ -137,9 +116,9 @@ export async function gatherAll() {
   // STRICT relevance filter: drop off-topic (non-game) YouTube content before
   // it reaches any editor. Applied to BOTH the shared youtubeVideos feed
   // (NEXUS/DEXTER + thumbnails + dexter-stats) and MIRANDA's own video set.
-  const youtubeFiltered = filterGameVideos(youtubeVideos, 'YouTube (NEXUS/DEXTER)');
+  const youtubeFiltered = filterGameVideos(youtubeVideos, 'YouTube (NEXUS/DEXTER)', config.relevance);
   if (mirandaData && Array.isArray(mirandaData.videos)) {
-    mirandaData.videos = filterGameVideos(mirandaData.videos, 'YouTube (MIRANDA)');
+    mirandaData.videos = filterGameVideos(mirandaData.videos, 'YouTube (MIRANDA)', config.relevance);
   }
 
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
@@ -198,7 +177,8 @@ export async function gatherAll() {
   // signal (what's being clipped/rewatched - titles + view counts only, never
   // clip content). Bungie news captures dev-driven discourse.
   var clipSignalForGhost = formatClipsForGhost(twitchClips);
-  var ghostPrompt = formatForGhost(redditPosts, steamReviews, null, clipSignalForGhost);
+  var redditLabel = config.sources.reddit.subreddits.map(function (s) { return 'r/' + s; }).join(' + ');
+  var ghostPrompt = formatForGhost(redditPosts, steamReviews, null, clipSignalForGhost, redditLabel);
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
   if (!ghostPrompt) {
