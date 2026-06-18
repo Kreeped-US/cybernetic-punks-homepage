@@ -98,7 +98,10 @@ function buildNoRepeatBlock(headlines) {
     '\n\n--- TOPICS YOU ALREADY COVERED -- DO NOT REPEAT THESE ANGLES ---\n' +
     headlines.map(function(h, i) { return (i + 1) + '. ' + h; }).join('\n') +
     '\nChoose a completely different weapon, shell, strategy, or topic this cycle. ' +
-    'If the source material overlaps with a previous topic, find a fresh angle within it.\n---'
+    'If the source material overlaps with a previous topic, find a fresh angle within it.\n' +
+    'This list is INTERNAL editorial guidance ONLY. Never mention, reference, or narrate it in the article -- ' +
+    'no "I already covered...", no "the previous article covered...", no "this cycle we\'re doing X instead". ' +
+    'Just write the fresh piece on the different angle; the reader must never see that a no-repeat rule shaped it.\n---'
   );
 }
 

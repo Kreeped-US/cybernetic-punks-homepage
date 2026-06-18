@@ -5,6 +5,23 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — Build-article self-correction artifact: diagnosed + seam closed
+
+Read-only survey of the last 400 published Marathon articles found the visible
+mid-text self-correction tic is **2/400 (~0.5%) — a one-off, NOT a pattern**
+(CIPHER 06-18 "Twin Tap" build + MIRANDA 05-25 mod guide; DEXTER, the build
+editor, was clean 0/77; the broad-regex 93 "hits" were ~91 false positives --
+"actually" as emphasis, "rethink" as reader advice). Root cause of the prompting
+article's specific tell was the cron's no-repeat block leaking into prose ("the
+previous Recon BR33 article already covered..."). Fix (`fix(cron): mark no-repeat
+block internal-only...`): added an internal-only guardrail to `buildNoRepeatBlock`
+([app/api/cron/route.js](../app/api/cron/route.js)) -- the no-repeat list must
+never be mentioned/narrated in the article. Existing dedup function unchanged; no
+voice prompts touched; shared across all 5 editors so the seam closes network-wide.
+Future generations only.
+
+---
+
 ## 2026-06-17 — Security batch #4/#6/#8 shipped (code)
 
 `fix(security): admin lockout + constant-time compare, rate limits on
