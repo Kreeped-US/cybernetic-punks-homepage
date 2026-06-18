@@ -5,6 +5,40 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — Monetization + AI-moat strategy locked (readiness audit → strategy doc)
+
+Read-only monetization-readiness audit + the strategy worked out from it:
+[docs/network/MONETIZATION_STRATEGY.md](network/MONETIZATION_STRATEGY.md). No code.
+
+**As-is (audit):** a real populated foundation exists — `subscription_tiers` (5
+priced tiers), `feature_gates` (19 feature×tier×daily_limit rows = a free/paid
+matrix already designed in data), `player_profiles.subscription_tier` anchor,
+`user_subscriptions` (Stripe-shaped, empty), `total_audits_run` counter,
+`override_all_free=true` beta switch, `monetization.js` env flag. **Missing:**
+enforcement (no route reads tier/gates — matrix unwired) + payments (Stripe
+greenfield; only anticipatory columns). **Clean anchor:** `cp_player_id` →
+`player_profiles.id` on every paid route. **Two-cluster problem:** Cluster A
+(player_profiles+subscription_tiers+user_subscriptions+feature_gates, populated)
+vs Cluster B (network_account+subscription, empty stub) — tier in 3 places.
+
+**DECIDED:** network-level sub (spans both games); core paid tier FUSES the draw
+(cross-game verified-data Coach career = retention) + the mechanic (unlimited AI =
+conversion); generous free tier as the acquisition engine (pre-traction: users >
+money); tiers are tunable data; ~5 tiers (tunable); names must go network-neutral
+(current scout/runner/etc. are Marathon-flavored). **AI moat ranking:** DURABLE =
+current + 3-state-hedged verified data we control, both games, already built (the
+verification work IS the monetization foundation); FRAGILE BONUS = personal
+CoD/DMZ match stats via the unofficial papi-client endpoint — position as
+fail-safe "when available," architect graceful-degrade, launch-window experiment;
+Marathon is asymmetric (no stats API → trusted-contributor model).
+
+**OPEN (decide later):** cluster reconciliation (gates enforcement), final tier
+count + feature→tier mapping, network-neutral names, pricing pressure-test, then
+the enforcement build (payment-INDEPENDENT — wire feature_gates+tier+metering now
+against override_all_free), then Stripe (greenfield, last, gated).
+
+---
+
 ## 2026-06-18 — Security audit item #7 closed — ALL 8 ITEMS NOW RESOLVED
 
 `fix(security): rate-limit + size-cap /api/track (closes audit item #7)`. The
