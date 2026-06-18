@@ -1,12 +1,31 @@
 # Marathon Verification Debt — Audit, Plumbing, and the Pending Decision
 
 ## Status (2026-06-18)
-Phase 0 audit **done**. Verification **plumbing shipped** (Phases 2, 1c, 5 below) so
-unverified stats are honestly hedged everywhere and stay honestly tracked. **No
-`verified` flag has been flipped and no stat VALUE has been corrected** — that is
-gated on the Phase-1 source-of-truth DECISION (still pending; see end). A false
-`verified=true` is worse than an honest `verified=false`, so nothing is flipped
-until the decision is made.
+Phase 0 audit **done**. **Phase-1 decision LOCKED** (the 3-state model, below).
+Verification **plumbing shipped** (Phases 2, 1c, 5) and **Phase 2.5** upgraded the
+hedging from binary to the locked **3 states** (unchecked / source-agreed /
+confirmed). **No `verified` flag has been flipped and no stat VALUE has been
+corrected** — that is gated on the source-of-truth *mechanisms* (who confirms,
+what "sources agree" requires), still pending; see end. A false `verified=true`
+is worse than an honest `verified=false`, so nothing is flipped yet.
+
+## Phase-1 DECISION — LOCKED: the 3-state model
+Verification is a **3-state model** read from the two existing flags (`verified`
+boolean + `patch_verified` text). Editors hedge at three honest registers:
+1. **UNCHECKED** — `verified=false` AND (`patch_verified` null or `s1`/pre-S2).
+   Raw, unchecked ingest. → **Hard hedge:** do NOT state the number; talk
+   strategy, not figures. Marker: `[UNVERIFIED]`.
+2. **SOURCE_AGREED** — `verified=false` AND `patch_verified` = a current/recent
+   patch (set, not `s1`). Sources concur & current, but no human confirmed
+   in-game. → **Soft hedge (the middle register):** ATTRIBUTE the number
+   ("reported as ~150 HP", "sources list 450 RPM") — use it, but signal it is
+   source-derived. Marker: `[SOURCE-LISTED]`.
+3. **CONFIRMED** — `verified=true`. A trusted human confirmed it in-game. →
+   **State as fact**, no marker.
+
+**Discipline rule (enforced by later phases):** `verified=true` is only ever set
+by trusted-human-in-game confirmation (the LordTT/neodeye Maps precedent). Phase
+2.5 only READS the flags.
 
 ---
 
@@ -18,11 +37,12 @@ Two flags on the stat tables, both **set manually** (admin PATCH / SQL). The
 - **`patch_verified`** (text: `"1.1.0"`, `"S2"`, `"S1"`, null) — "confirmed *as of*
   this patch/season" — the staleness axis.
 
-**Hedging rule** (now centralized in `lib/verification.js`): a row is tagged
-`[UNVERIFIED]` when **`verified === false` OR `patch_verified` starts with `s1`**
-(pre-S2 = stale). A `verified=true` row with null `patch_verified` is NOT tagged
-(confirmed, just unstamped). The editor prompt then forbids stating precise
-numbers for `[UNVERIFIED]` rows.
+**Hedging rule** (now centralized in `lib/verification.js` as the 3-state
+classifier `verificationState()` + `verificationTag()`): see the locked 3-state
+model above. CONFIRMED → no marker (fact); SOURCE_AGREED → `[SOURCE-LISTED]`
+(attribute); UNCHECKED → `[UNVERIFIED]` (hard hedge). The shared
+`VERIFICATION_NOTE` explains all three registers (incl. the attribution phrasing)
+to the model.
 
 **Inconsistency to resolve in Phase 1:** the flag's meaning isn't uniform. Some
 tables are wholesale `true` (`core_stats` 85/85, `implant_stats` 119/120,
@@ -87,23 +107,28 @@ wired on both paths (Phase 1c).
 
 ## Phase plan
 - **Phase 0 — audit.** ✅ Done (this doc).
-- **Phase 1 — DECISION (pending; gates all data correction).** See below.
+- **Phase 1 — DECISION: the 3-state model.** ✅ LOCKED (above).
 - **Phase 2 — close the hedging bypass.** ✅ Shipped.
-- **Phase 1c — add flags to the 3 unflagged tables + wire reads.** ✅ Shipped
-  (schema ALTER run in Supabase; cradle reads wired).
+- **Phase 1c — add flags to the 3 unflagged tables + wire reads.** ✅ Shipped.
 - **Phase 5 — make `dexter-stats` verification-aware.** ✅ Shipped.
+- **Phase 2.5 — 3-state hedging (unchecked/source-agreed/confirmed).** ✅ Shipped
+  (replaced the binary tag with the 3-state classifier + renderer + note).
 - **Phase 3 — backfill in gated batches** against the chosen mechanism,
-  baseline-before-write, never flip-to-look-better. *Pending Phase 1.*
+  baseline-before-write, never flip-to-look-better. *Pending the mechanisms.*
 - **Phase 4 — repeatable per-patch cadence** so `patch_verified` keeps debt from
   silently regrowing. Hook in place: `ACTIVE_PATCH` in `dexter-stats.js` (bump per
-  patch). *Full cadence pending Phase 1.*
+  patch). *Full cadence pending the mechanisms.*
 
 ---
 
-## What THIS task shipped (plumbing only — no flags flipped, no values changed)
-- **`lib/verification.js` (new)** — single source of truth: `isUnverified`,
-  `unverifiedTag`, `UNVERIFIED_NOTE`. **Game-agnostic** (no season/game hardcoded)
-  so every path — and DMZ — inherits one identical hedging rule that can't drift.
+## What the plumbing shipped (plumbing only — no flags flipped, no values changed)
+- **`lib/verification.js`** — single source of truth. Phase 2.5 made it the
+  **3-state** classifier: `verificationState()` → UNCHECKED | SOURCE_AGREED |
+  CONFIRMED, `verificationTag()` → the per-state marker, and `VERIFICATION_NOTE`
+  (the 3-register prompt note). **Game-agnostic** (no season/game hardcoded) so
+  every path — and DMZ — inherits one identical model that can't drift. (Replaced
+  the earlier binary `isUnverified`/`unverifiedTag`/`UNVERIFIED_NOTE`; all callers
+  updated — no stale binary path.)
 - **Phase 2** — `fetchGameContext` uses the shared helper (removed its private
   copy); `miranda.js` + `buildMirandaPrompt` and `/api/advisor` now select
   `verified`/`patch_verified` and tag shell/weapon/mod (+core/implant on advisor)
@@ -119,28 +144,54 @@ wired on both paths (Phase 1c).
 - **Phase 5** — `dexter-stats` stamps `verified=false` + `patch_verified=ACTIVE_PATCH`
   on every value it writes (shell/weapon/core/implant). Never sets `true`; never
   bulk-touches rows it isn't writing. Fresh ingest is honestly unverified-by-default.
+- **Phase 2.5** — replaced the binary tag with the 3-state classifier/renderer/note
+  across all paths (`fetchGameContext`, `miranda.js`+`buildMirandaPrompt`,
+  `/api/advisor`, cradle wiring). Also **fixed a latent Phase-2 regression**: the
+  advisor `core_stats`/`implant_stats` selects requested `patch_verified`, which
+  those two tables don't have → the queries errored and the advisor silently
+  dropped cores/implants. Now they select only `verified` (the classifier treats
+  absent `patch_verified` as null).
 
-**Verified live:** 7/8 shells, 50% of weapons/mods, and 84/84 cradle perks now
-render `[UNVERIFIED]` on the editor/advisor paths; `next build` green.
+**Verified live (3-state sim):** UNCHECKED renders `[UNVERIFIED]` (hard hedge),
+SOURCE_AGREED renders `[SOURCE-LISTED]` (attribute), CONFIRMED renders no marker
+(fact) — three visibly distinct treatments; `next build` green.
 
-### Known interaction to resolve in Phase 1
+### Live finding — SOURCE_AGREED is currently dormant
+**No live row is `verified=false` + current `patch_verified` today** — every
+existing `verified=false` row has null `patch_verified`, so the live distribution
+is CONFIRMED or UNCHECKED only (0 SOURCE_AGREED). The soft register is correctly
+wired but unexercised until data populates it. **`dexter-stats` (Phase 5) will be
+the first producer:** it writes `verified=false` + `patch_verified=ACTIVE_PATCH`
+(current), which classifies as **SOURCE_AGREED** → scraped wiki stats will be
+*attributed* ("sources list it at X"), not hard-hedged. That composition is
+consistent with the model (a scrape IS source-derived, not human-confirmed) —
+flagged so it's a conscious choice, not a surprise.
+
+### Known interaction to resolve (mechanism phase)
 `dexter-stats` primarily fills rows with NULL fields, but if it writes a field on a
-row a human later verified, it will demote that row to `verified=false`. Phase 1
-must decide precedence (e.g. scraper skips `verified=true` rows, or only writes
-when the value differs). Honest-but-pessimistic for now; flagged, not yet handled.
+row a human later verified, it will demote that row to `verified=false`. The
+mechanism phase must decide precedence (e.g. scraper skips `verified=true` rows, or
+only writes when the value differs). Honest-but-pessimistic for now; flagged, not
+yet handled.
 
 ---
 
-## PENDING — the Phase-1 DECISION (gates all data correction)
-**What should `verified` assert, and what is the source of truth?** Recommendation:
-- `verified` = **"confirmed in-game by a trusted contributor as of `patch_verified`."**
-- Source of truth = formalize the **LordTT / neodeye in-game-confirmation** process
-  (the Maps precedent), with wiki/datamine as corroboration, since no official
-  source exists.
-- Resolve the wholesale-`true` tables (audit real vs seeded) as part of this.
+## PENDING — the source-of-truth MECHANISMS (gate all data correction)
+The Phase-1 *model* is decided (3 states above) and the output now honors it. What
+remains before any flag is flipped or value corrected:
+- **CONFIRMED mechanism** — *who* confirms in-game and *how* it's submitted
+  (the trusted-contributor process; LordTT/neodeye Maps precedent). This is the
+  only path that may set `verified=true`.
+- **SOURCE_AGREED mechanism** — what "sources agree" requires to set
+  `patch_verified` on a `verified=false` row (how many sources, which, how
+  recorded). Until defined, the only producer is `dexter-stats` (see dormant-state
+  finding above).
+- **Wholesale-`true` audit** — are `core_stats`/`implant_stats`/`faction_*` trues
+  genuinely confirmed or seeded-true? Resolve before trusting them as CONFIRMED.
+- **Scraper-vs-human precedence** (the known interaction above).
 
-Until this is locked, **no row is flipped and no value corrected.** Everything
-downstream (Phase 3 backfill, Phase 4 cadence) depends on it.
+Until these are defined, **no row is flipped and no value corrected.** Phase 3
+(backfill) and Phase 4 (cadence) depend on them.
 
 ## Design intent — game-agnostic
 The hedging *logic* lives in shared `lib/verification.js`; each game's gather layer
@@ -149,6 +200,6 @@ honest-by-default hedging for free — its stat tables hedge until a trusted
 contributor verifies them, exactly like Marathon.
 
 ## Scope discipline (unchanged)
-- Data correction = its OWN gated effort on a fresh branch, after Phase 1.
+- Data correction = its OWN gated effort on a fresh branch, after the mechanisms.
 - Do NOT flip `verified=false → true` to improve the number.
 - Do NOT create new tables (Phase 1c added only the two flag columns to 3 tables).

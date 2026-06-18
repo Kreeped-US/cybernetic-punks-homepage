@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL, COMMENT_MODEL } from './models';
-import { unverifiedTag, UNVERIFIED_NOTE } from './verification';
+import { verificationTag, VERIFICATION_NOTE } from './verification';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -663,7 +663,7 @@ async function fetchGameContext() {
     let output = '';
 
     // Shared verification note (once, ahead of all data sections - not per persona).
-    output += UNVERIFIED_NOTE;
+    output += VERIFICATION_NOTE;
 
     if (modsRes.data?.length) {
       const bySlot = {};
@@ -676,7 +676,7 @@ async function fetchGameContext() {
           var statPairs = Object.entries(mod.stat_changes).map(function(e) { return e[0] + ' ' + e[1]; });
           if (statPairs.length > 0) statTag = ' [' + statPairs.join(', ') + ']';
         }
-        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${unverifiedTag(mod)}`);
+        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${verificationTag(mod)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
@@ -689,7 +689,7 @@ async function fetchGameContext() {
       for (const core of coresRes.data) {
         const runner = core.required_runner || 'Unknown';
         if (!byRunner[runner]) byRunner[runner] = [];
-        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${unverifiedTag(core)}`);
+        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
@@ -710,7 +710,7 @@ async function fetchGameContext() {
           imp.stat_5_label && imp.stat_5_value ? `${imp.stat_5_label}: ${imp.stat_5_value}` : null,
         ].filter(Boolean).join(', ');
         var factionTag = imp.faction_source ? ' [' + imp.faction_source + ' Armory unlock]' : '';
-        bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${unverifiedTag(imp)}`);
+        bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${verificationTag(imp)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
@@ -729,7 +729,7 @@ async function fetchGameContext() {
           w.range_rating ? 'RANGE:' + w.range_rating : '',
           w.ranked_viable === false ? '[RANKED-AVOID]' : '',
         ].filter(Boolean).join(' | ');
-        return '  ' + w.name + (parts ? ' - ' + parts : '') + unverifiedTag(w);
+        return '  ' + w.name + (parts ? ' - ' + parts : '') + verificationTag(w);
       }).join('\n');
       output += '\n\n--- WEAPON STATS DATABASE ---\n' + weaponLines + '\n--- END WEAPONS ---';
     }
@@ -750,7 +750,7 @@ async function fetchGameContext() {
       };
       const shellLines = shellsRes.data.map(function(s) {
         return [
-          '  ' + s.name + (s.role ? ' [' + s.role + ']' : '') + unverifiedTag(s),
+          '  ' + s.name + (s.role ? ' [' + s.role + ']' : '') + verificationTag(s),
           s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : '',
           fmtAbility('Prime', s.prime_ability_name, s.prime_ability_description),
           fmtAbility('Tactical', s.tactical_ability_name, s.tactical_ability_description),
@@ -780,7 +780,7 @@ async function fetchGameContext() {
           if (n.is_perk) {
             // Perks are the load-bearing, citeable breakpoints.
             output += '  PERK "' + n.node_name + '" @ ' + (n.cumulative_energy != null ? n.cumulative_energy + ' Energy' : 'breakpoint') +
-              (n.effect ? ' - ' + n.effect : '') + unverifiedTag(n) + '\n';
+              (n.effect ? ' - ' + n.effect : '') + verificationTag(n) + '\n';
           }
         });
         // Summarize the track's stat direction from its passive nodes without
@@ -936,7 +936,7 @@ export function buildMirandaPrompt(data) {
 
   const shellData = shellContext.length > 0
     ? shellContext.map(s => [
-        `${s.name}: Role=${s.role}, Difficulty=${s.difficulty}, BestFor=${s.best_for}${unverifiedTag(s)}`,
+        `${s.name}: Role=${s.role}, Difficulty=${s.difficulty}, BestFor=${s.best_for}${verificationTag(s)}`,
         s.active_ability_name    ? `  Active: ${s.active_ability_name} - ${s.active_ability_description || 'TBD'}${s.active_ability_cooldown_seconds ? ' (' + s.active_ability_cooldown_seconds + 's cooldown)' : ''}` : '  Active: TBD',
         s.passive_ability_name   ? `  Passive: ${s.passive_ability_name} - ${s.passive_ability_description || 'TBD'}` : '  Passive: TBD',
         s.trait_1_name           ? `  Trait: ${s.trait_1_name} - ${s.trait_1_description}` : '',
@@ -951,13 +951,13 @@ export function buildMirandaPrompt(data) {
 
   const weaponData = weaponContext.length > 0
     ? weaponContext.slice(0, 20).map(w =>
-        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${w.damage ? ', Dmg=' + w.damage : ''}${w.fire_rate ? ', RPM=' + w.fire_rate : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${unverifiedTag(w)}`
+        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${w.damage ? ', Dmg=' + w.damage : ''}${w.fire_rate ? ', RPM=' + w.fire_rate : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${verificationTag(w)}`
       ).join('\n')
     : 'Weapon data seeding in progress.';
 
   const modData = modContext.length > 0
     ? modContext.map(m =>
-        `${m.name} [${m.slot_type}]: ${m.effect_summary}${m.ranked_notes ? ' - Ranked: ' + m.ranked_notes : ''}${m.faction_source ? ' [' + m.faction_source + ' Armory unlock]' : ''}${unverifiedTag(m)}`
+        `${m.name} [${m.slot_type}]: ${m.effect_summary}${m.ranked_notes ? ' - Ranked: ' + m.ranked_notes : ''}${m.faction_source ? ' [' + m.faction_source + ' Armory unlock]' : ''}${verificationTag(m)}`
       ).join('\n')
     : 'Mod data seeding in progress.';
 
@@ -1059,7 +1059,7 @@ CONTENT PRIORITY ORDER:
 ${directiveBlock}
 ${xIntelBlock}
 
-${UNVERIFIED_NOTE}
+${VERIFICATION_NOTE}
 
 SHELL DATA:
 ${shellData}

@@ -5,6 +5,36 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — Verification Phase-1 LOCKED + Phase 2.5 (3-state hedging) shipped
+
+Full detail: [docs/MARATHON_VERIFICATION_DEBT.md](MARATHON_VERIFICATION_DEBT.md).
+Phase-1 decision LOCKED: verification is a **3-state model** read from the existing
+`verified` + `patch_verified` flags. Phase 2.5 upgraded the plumbing from binary to
+the 3 states. No flag flipped, no value changed (classification + rendering only).
+
+- **States:** UNCHECKED (`verified=false` + null/`s1` pv) → hard hedge `[UNVERIFIED]`;
+  SOURCE_AGREED (`verified=false` + current pv) → soft, attribute the number
+  `[SOURCE-LISTED]` ("reported as ~150 HP"); CONFIRMED (`verified=true`) → fact,
+  no marker. Discipline: `verified=true` only ever set by trusted-human in-game.
+- **`lib/verification.js`** now the 3-state source of truth: `verificationState()`,
+  `verificationTag()`, `VERIFICATION_NOTE` (replaced binary `isUnverified`/
+  `unverifiedTag`/`UNVERIFIED_NOTE`; all callers updated). Game-agnostic; DMZ inherits.
+- **Wired:** `fetchGameContext`, `miranda.js`+`buildMirandaPrompt`, `/api/advisor`,
+  cradle. Three visibly distinct treatments confirmed via live sim; build green.
+- **Fixed a latent Phase-2 regression:** the advisor `core_stats`/`implant_stats`
+  selects requested `patch_verified` (which those tables lack) → queries errored →
+  advisor silently dropped cores/implants. Now select only `verified`. (Was live
+  since `b8a2d25`.)
+- **Live finding:** SOURCE_AGREED matches **0 rows today** (all `verified=false`
+  rows have null pv). `dexter-stats` (Phase 5) will be the first producer — it
+  writes `verified=false` + `patch_verified=1.1.0.2` → SOURCE_AGREED, so scraped
+  wiki stats get *attributed*, not hard-hedged. Consistent with the model; flagged.
+- **Still pending (mechanisms, gate data correction):** who confirms in-game (set
+  `verified=true`); what "sources agree" requires (set `patch_verified`); audit
+  wholesale-`true` tables (real vs seeded); scraper-vs-human precedence.
+
+---
+
 ## 2026-06-18 — Verification-debt PLUMBING shipped (Phases 2/1c/5); Phase-1 decision pending
 
 Full audit + plan: [docs/MARATHON_VERIFICATION_DEBT.md](MARATHON_VERIFICATION_DEBT.md).

@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '@/lib/models';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { unverifiedTag, UNVERIFIED_NOTE } from '@/lib/verification';
+import { verificationTag, VERIFICATION_NOTE } from '@/lib/verification';
 
 // SECURITY (audit #2): this route makes a PAID Claude call per request. It is
 // gated on the cp_player_id session cookie (same pattern as /api/audit and
@@ -56,13 +56,18 @@ async function fetchAdvisorContext(shell) {
       .limit(100),
     supabase
       .from('core_stats')
-      .select('name, required_runner, rarity, effect_desc, ability_type, is_shell_exclusive, meta_rating, verified, patch_verified')
+      // core_stats has `verified` but no `patch_verified` column -> select only
+      // verified (classifier treats absent patch_verified as null: true=CONFIRMED,
+      // false=UNCHECKED). Requesting the missing column would error the query.
+      .select('name, required_runner, rarity, effect_desc, ability_type, is_shell_exclusive, meta_rating, verified')
       .or(`required_runner.is.null,required_runner.eq.${shell}`)
       .order('rarity', { ascending: false })
       .limit(80),
     supabase
       .from('implant_stats')
-      .select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, verified, patch_verified')
+      // implant_stats has `verified` but no `patch_verified` column -> select only
+      // verified (absent patch_verified treated as null by the classifier).
+      .select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, verified')
       .order('rarity', { ascending: false })
       .limit(80),
     supabase
@@ -83,14 +88,15 @@ async function fetchAdvisorContext(shell) {
       .order('node_order', { ascending: true }),
   ]);
 
-  // Hedging note shared with the cron + Miranda paths (lib/verification.js):
-  // any [UNVERIFIED]-tagged row below must NOT have its precise numbers stated.
-  let context = '\n\n' + UNVERIFIED_NOTE;
+  // 3-state confidence note shared with the cron + Miranda paths
+  // (lib/verification.js): rows below carry no marker (confirmed -> fact),
+  // [SOURCE-LISTED] (attribute the number), or [UNVERIFIED] (hard hedge).
+  let context = '\n\n' + VERIFICATION_NOTE;
 
   // Shell data
   if (shellRes.data) {
     const s = shellRes.data;
-    context += `\n\n--- TARGET SHELL: ${shell.toUpperCase()}${unverifiedTag(s)} ---`;
+    context += `\n\n--- TARGET SHELL: ${shell.toUpperCase()}${verificationTag(s)} ---`;
     context += `\nRole: ${s.role || 'Unknown'} | Difficulty: ${s.difficulty || 'Unknown'}`;
     if (s.base_health) context += `\nBase HP: ${s.base_health} | Shield: ${s.base_shield || 'N/A'} | Speed: ${s.base_speed || 'TBD'}`;
     if (s.prime_ability_name) context += `\nPrime Ability: ${s.prime_ability_name} — ${s.prime_ability_description || 'TBD'}`;
@@ -107,7 +113,7 @@ async function fetchAdvisorContext(shell) {
   if (weaponsRes.data?.length) {
     context += `\n\n--- WEAPONS DATABASE ---\n`;
     context += weaponsRes.data.map(w =>
-      `${w.name} [${w.category}] — Ammo: ${w.ammo_type || 'N/A'}, Range: ${w.range_rating || 'N/A'}${w.damage ? ', Dmg: ' + w.damage : ''}${w.fire_rate ? ', RPM: ' + w.fire_rate : ''}${w.magazine_size ? ', Mag: ' + w.magazine_size : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${unverifiedTag(w)}`
+      `${w.name} [${w.category}] — Ammo: ${w.ammo_type || 'N/A'}, Range: ${w.range_rating || 'N/A'}${w.damage ? ', Dmg: ' + w.damage : ''}${w.fire_rate ? ', RPM: ' + w.fire_rate : ''}${w.magazine_size ? ', Mag: ' + w.magazine_size : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${verificationTag(w)}`
     ).join('\n');
     context += `\n--- END WEAPONS ---`;
   }
@@ -124,7 +130,7 @@ async function fetchAdvisorContext(shell) {
         if (pairs.length) modLine += ` [${pairs.join(', ')}]`;
       }
       if (mod.ranked_notes) modLine += ` [Ranked: ${mod.ranked_notes}]`;
-      modLine += unverifiedTag(mod);
+      modLine += verificationTag(mod);
       bySlot[slot].push(modLine);
     }
     context += `\n\n--- WEAPON MODS DATABASE ---\n`;
@@ -142,13 +148,13 @@ async function fetchAdvisorContext(shell) {
     if (shellSpecific.length) {
       context += `\n${shell}-Specific Cores (PRIORITIZE THESE):\n`;
       context += shellSpecific.map(c =>
-        `  - ${c.name} (${c.rarity}, ${c.ability_type || 'Unknown'}${c.meta_rating ? ', Meta Rating: ' + c.meta_rating : ''}): ${c.effect_desc || 'TBD'}${unverifiedTag(c)}`
+        `  - ${c.name} (${c.rarity}, ${c.ability_type || 'Unknown'}${c.meta_rating ? ', Meta Rating: ' + c.meta_rating : ''}): ${c.effect_desc || 'TBD'}${verificationTag(c)}`
       ).join('\n');
     }
     if (universal.length) {
       context += `\nUniversal Cores (available to all shells):\n`;
       context += universal.slice(0, 25).map(c =>
-        `  - ${c.name} (${c.rarity}, ${c.ability_type || 'Unknown'}): ${c.effect_desc || 'TBD'}${unverifiedTag(c)}`
+        `  - ${c.name} (${c.rarity}, ${c.ability_type || 'Unknown'}): ${c.effect_desc || 'TBD'}${verificationTag(c)}`
       ).join('\n');
     }
     context += `\n--- END CORES ---`;
@@ -170,7 +176,7 @@ async function fetchAdvisorContext(shell) {
       if (stats.length) impLine += ` [${stats.join(', ')}]`;
       if (imp.passive_name) impLine += ` | Passive: ${imp.passive_name}${imp.passive_desc ? ' — ' + imp.passive_desc : ''}`;
       if (imp.description) impLine += ` — ${imp.description}`;
-      impLine += unverifiedTag(imp);
+      impLine += verificationTag(imp);
       bySlot[slot].push(impLine);
     }
     context += `\n\n--- IMPLANTS DATABASE ---\n`;
@@ -196,7 +202,7 @@ async function fetchAdvisorContext(shell) {
       context += `\n${track.toUpperCase()} TRACK (improves: ${nodes[0].stat_improved || '?'}):\n`;
       for (const n of nodes) {
         if (n.is_perk) {
-          context += `  PERK "${n.node_name}" @ ${n.cumulative_energy != null ? n.cumulative_energy + ' Energy' : 'breakpoint'}${n.effect ? ' - ' + n.effect : ''}${unverifiedTag(n)}\n`;
+          context += `  PERK "${n.node_name}" @ ${n.cumulative_energy != null ? n.cumulative_energy + ' Energy' : 'breakpoint'}${n.effect ? ' - ' + n.effect : ''}${verificationTag(n)}\n`;
         }
       }
     }
