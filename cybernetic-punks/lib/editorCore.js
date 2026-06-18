@@ -41,8 +41,10 @@ const client = new Proxy({}, {
 // Single source of truth: lib/models.js (imported above). Do not redefine here.
 
 // --- GAME CONTEXT CACHE -------------------------------------
-let _gameContextCache = null;
-let _gameContextTime = 0;
+// Per-game (keyed on config.slug) so a DMZ editor is never served Marathon's
+// cached context, and vice versa. With one game it behaves identically to the
+// old single-value cache. Same 5-min time-based TTL.
+const _gameContextCache = new Map(); // slug -> { context, time }
 const GAME_CONTEXT_TTL_MS = 5 * 60 * 1000;
 
 // ===========================================================
@@ -607,11 +609,10 @@ Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}
 // ===========================================================
 
 async function fetchGameContext(config = getGameConfig()) {
-  // NOTE (Phase A): the cache below is game-blind (single global slot). Safe
-  // while Marathon is the only game; Phase C must key it per game.slug before
-  // DMZ context is added, or DMZ would be served Marathon's cached context.
-  if (_gameContextCache && (Date.now() - _gameContextTime) < GAME_CONTEXT_TTL_MS) {
-    return _gameContextCache;
+  // Per-game cache: key on the slug so each game gets its own context entry.
+  const _cached = _gameContextCache.get(config.slug);
+  if (_cached && (Date.now() - _cached.time) < GAME_CONTEXT_TTL_MS) {
+    return _cached.context;
   }
 
   try {
@@ -912,8 +913,7 @@ async function fetchGameContext(config = getGameConfig()) {
       output += '--- END GAME WORLD ---';
     }
 
-    _gameContextCache = output;
-    _gameContextTime = Date.now();
+    _gameContextCache.set(config.slug, { context: output, time: Date.now() });
     return output;
   } catch (err) {
     console.error('[editorCore] fetchGameContext error:', err.message);

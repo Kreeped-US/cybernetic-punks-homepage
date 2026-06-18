@@ -5,6 +5,27 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — fetchGameContext cache made per-game (Phase C prerequisite)
+
+`editorCore.js` `fetchGameContext`'s context cache was game-blind (single global
+slot) — a latent cross-game bug (DMZ editor could be served Marathon's cached
+context). Fixed: scalar (`_gameContextCache`/`_gameContextTime`) → a slug-keyed
+Map (`Map<slug, {context,time}>`), keyed on `config.slug`; same 5-min time-based
+TTL; `output` computation untouched. Byte-identical for Marathon (Map-of-one ≡
+the old scalar). Verified via a cache-logic unit (5 assertions): miss-when-empty,
+hit-within-TTL, miss-after-TTL, **two slugs independent (the fix)**, and
+single-slug hit/miss sequence identical to the old scalar. Build green.
+
+**Phase C prerequisite still OPEN — dexter-stats throttle is game-blind:**
+`dexter-stats.js` `needsRefresh`/`logRefresh` use a `wiki_meta` row keyed by a
+pipeline/table name, NOT by game. When DMZ's stat-extraction runs, it could
+collide with Marathon's 24h throttle row (one game's run suppresses the other's,
+or they share a refresh timestamp). It's DB-based (not a module cache), so it was
+out of scope for the context-cache fix — but it MUST be made per-game (key the
+throttle row on game_slug) before DMZ stat extraction is wired in Phase C.
+
+---
+
 ## 2026-06-18 — Gap 2 Phase A LANDED: Marathon gather generalized to per-game config
 
 Scoping: [docs/network/GATHER_GAP2_DMZ_SCOPING.md](network/GATHER_GAP2_DMZ_SCOPING.md).
