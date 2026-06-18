@@ -68,7 +68,7 @@ ships with the code anyway.
 | `reddit.js` | Parameterize subreddit(s) → reusable. |
 | `youtube.js` | Parameterize search queries → reusable. |
 | `twitch.js` | Parameterize game name/id → reusable. |
-| `bungie.js` | **Structurally game-specific** (Bungie + version-regex + framing). Its CORE is the Gap-1 patch-notes engine (fetch → detect → BBCode-clean → completeness). Phase B refactors the *concept* into a generic patch-notes source with per-game adapters: Marathon = Steam-news adapter (built); DMZ = Steam-news (if MW4 cross-posts) or a `cod-blog` adapter over callofduty.com/patchnotes. Phase A: leave behavior unchanged. |
+| `bungie.js` | **Structurally game-specific** (Bungie + version-regex + framing). Its CORE is the Gap-1 patch-notes engine (fetch → detect → BBCode-clean → completeness). Phase B refactors the *concept* into a generic patch-notes source with per-game adapters: Marathon = Steam-news adapter (built); DMZ = Steam-news (if MW4 cross-posts) or a `cod-blog` adapter over callofduty.com/patchnotes. Phase A: leave behavior unchanged. **Detailed Phase-B engine/adapter design: [PATCHNOTES_PHASEB_SCOPING.md](PATCHNOTES_PHASEB_SCOPING.md).** |
 | `miranda.js` | Parameterize guide queries; shell/weapon/mod context is Marathon-shaped (ties to stat-storage decision). |
 | `dexter-stats.js` | Parameterize wiki URLs + extraction prompts + subreddit + target tables. Extraction engine reusable; sources + target schema per-game. |
 | `cipher.js` | Internal synthesis (reads own `feed_items` by `game_slug` + patch news) → mostly reusable; "bungie news" input becomes the per-game patch-notes source. |
