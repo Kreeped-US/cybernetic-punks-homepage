@@ -22,6 +22,21 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '../models';
 
+// VERIFICATION HONESTY (audit Phase 5): this scraper extracts stat values from
+// community wiki + AI parsing -- inherently UNVERIFIED (no authoritative source
+// for Marathon base stats; see docs/MARATHON_VERIFICATION_DEBT.md). So every
+// value it writes is stamped verified=false + patch_verified=ACTIVE_PATCH, so
+// fresh ingest is honestly unverified-by-default and shows [UNVERIFIED] to
+// editors until a trusted contributor confirms it. The scraper never sets
+// verified=true and never bulk-touches rows it isn't writing.
+//
+// ACTIVE_PATCH = the live patch new scrapes reflect. Marathon-scoped (this is
+// the Marathon scraper); a DMZ scraper would define its own. BUMP THIS each
+// patch -- it is the per-patch cadence hook (Phase 4): stamping the current
+// patch is what lets a future "re-verify stale rows" pass find what needs
+// rechecking after a balance patch.
+const ACTIVE_PATCH = '1.1.0.2';
+
 // --- LAZY ANTHROPIC CLIENT ---
 let _anthropicClient = null;
 function getAnthropicClient() {
@@ -372,6 +387,10 @@ async function updateShell(row) {
   ]);
   if (Object.keys(update).length === 0) return false;
   update.updated_at = new Date().toISOString();
+  // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
+  // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
+  update.verified = false;
+  update.patch_verified = ACTIVE_PATCH;
   const { error } = await supabase.from('shell_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Shell update failed: ' + row.name + ' -- ' + error.message);
@@ -385,6 +404,10 @@ async function updateWeapon(row) {
   const update = buildUpdate(row, ['damage', 'fire_rate', 'magazine_size', 'reload_time']);
   if (Object.keys(update).length === 0) return false;
   update.updated_at = new Date().toISOString();
+  // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
+  // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
+  update.verified = false;
+  update.patch_verified = ACTIVE_PATCH;
   const { error } = await supabase.from('weapon_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Weapon update failed: ' + row.name + ' -- ' + error.message);
@@ -398,6 +421,10 @@ async function updateCore(row) {
   const update = buildUpdate(row, ['effect_desc', 'ability_type', 'is_shell_exclusive', 'meta_rating']);
   if (Object.keys(update).length === 0) return false;
   update.updated_at = new Date().toISOString();
+  // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
+  // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
+  update.verified = false;
+  update.patch_verified = ACTIVE_PATCH;
   const { error } = await supabase.from('core_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Core update failed: ' + row.name + ' -- ' + error.message);
@@ -417,6 +444,10 @@ async function updateImplant(row) {
   ]);
   if (Object.keys(update).length === 0) return false;
   update.updated_at = new Date().toISOString();
+  // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
+  // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
+  update.verified = false;
+  update.patch_verified = ACTIVE_PATCH;
   const { error } = await supabase.from('implant_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Implant update failed: ' + row.name + ' -- ' + error.message);

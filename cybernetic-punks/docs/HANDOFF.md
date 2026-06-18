@@ -5,6 +5,39 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — Verification-debt PLUMBING shipped (Phases 2/1c/5); Phase-1 decision pending
+
+Full audit + plan: [docs/MARATHON_VERIFICATION_DEBT.md](MARATHON_VERIFICATION_DEBT.md).
+Built all the plumbing so unverified stats hedge everywhere and stay honestly
+tracked. **No `verified` flag flipped, no stat value corrected** — that is gated on
+the Phase-1 source-of-truth decision (no authoritative source exists for Marathon
+base stats; verification will be a trusted-contributor process).
+
+- **`lib/verification.js` (new)** — single, game-agnostic source of truth for
+  hedging (`isUnverified` / `unverifiedTag` / `UNVERIFIED_NOTE`). DMZ inherits it.
+- **Phase 2** (`b8a2d25`) — the `[UNVERIFIED]` mechanism existed only on the cron
+  path; the Miranda guide builder + `/api/advisor` re-injected stats UNTAGGED (the
+  "Vandal 150 HP / 35 Shield" artifact). Both now select `verified`/`patch_verified`
+  and apply the shared tag. `fetchGameContext` uses the shared helper (no more
+  private copy).
+- **Phase 1c** (`b8a2d25` + Supabase ALTER, run by Justin) — added `verified`
+  (DEFAULT false) + `patch_verified` to `shell_stat_values`, `cradle_nodes`,
+  `ammo_stats`. `cradle_nodes` wired on cron + advisor → all 84 perks now hedge
+  `[UNVERIFIED]` until verified. The other two feed display pages only (no LLM read
+  to wire). NOTE: PostgREST schema cache needed a reload (`NOTIFY pgrst`) after the
+  ALTER before the columns were REST-visible — verify-before-commit caught this.
+- **Phase 5** — `dexter-stats` now stamps `verified=false` + `patch_verified=
+  ACTIVE_PATCH` on every value it writes (never `true`). `ACTIVE_PATCH='1.1.0.2'`
+  is the per-patch cadence hook (bump each patch).
+
+**PENDING — Phase-1 DECISION (gates all data correction):** what `verified` asserts
++ the source-of-truth mechanism (recommend: trusted-contributor in-game
+confirmation, the LordTT/neodeye Maps precedent). Then Phase 3 backfill + Phase 4
+cadence. Also pending: audit whether wholesale-`true` tables (core/implant/faction)
+are genuinely verified vs seeded-true; decide scraper-vs-human verify precedence.
+
+---
+
 ## 2026-06-18 — Editorial guardrail: anonymize individuals in security/safety situations only
 
 `fix(editors): anonymize individuals in security/safety situations only`. Added a
