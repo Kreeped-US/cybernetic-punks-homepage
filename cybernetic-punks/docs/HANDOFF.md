@@ -5,6 +5,24 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — Editorial guardrail: anonymize individuals in security/safety situations only
+
+`fix(editors): anonymize individuals in security/safety situations only`. Added a
+single bullet to the `COMMUNITY & SENTIMENT` block of `DATA_INTEGRITY_RULES`
+([lib/editorCore.js](../lib/editorCore.js)) -- the shared constant appended to all
+5 editor prompts (CIPHER/NEXUS/DEXTER/GHOST/MIRANDA). Editors KEEP naming real
+users for ordinary public content (bug reports, LFG, build/strategy talk, plugs --
+it grounds them in the community), but MUST NOT attach a real handle to an
+individual's SECURITY/SAFETY situation (account hack, doxxing, stalking/harassment,
+personal-safety incident) -- report the phenomenon without the name ("a player
+reported a name-change account hack -- secure your accounts"). Narrow by
+construction (NOT a blanket no-usernames rule); no voice prompts touched; future
+generations only. Prompted by a GHOST article that named a real Reddit hack victim.
+The existing live GHOST row was separately scrubbed via a body-only DB UPDATE
+(not git).
+
+---
+
 ## 2026-06-18 — Build-article self-correction artifact: diagnosed + seam closed
 
 Read-only survey of the last 400 published Marathon articles found the visible
