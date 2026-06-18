@@ -107,8 +107,18 @@ launch with fewer editors / slower cadence (the cron reads `config.editorial.edi
   Broker (DMZ economy confirmed sourceable).
 - Remaining Marathon-isms (byte-identical now, Phase B): editor prompt PROSE
   ("Marathon"/"Season 2"), miranda `DEV_AUTHORS` official-poster allowlist.
-- 6 open decisions (stat storage, editor count, cadence, patch-notes source,
-  Broker debut, config location) still to be made — see the scoping doc.
+- The 6 DMZ decisions are now **RESOLVED** (2026-06-18; see
+  [GATHER_GAP2_DMZ_SCOPING.md](network/GATHER_GAP2_DMZ_SCOPING.md) "Decisions —
+  RESOLVED"): config = `lib/games/dmz.js`; **separate DMZ stat tables** (LOCKED);
+  patch-notes = try `steam-news` first, `cod-blog` only if needed; editor count =
+  3 + cadence = 24h (defaults, hold loosely); Broker = conditional on economy
+  data being dataminable post-launch. Phase C implication: `fetchGameContext`
+  becomes a per-slug DISPATCHER (`buildMarathonContext` extracted unchanged +
+  `buildDMZContext` new). Phase C prereq still open: key the dexter-stats 24h
+  throttle per `game_slug`.
+- Parked (separate): **Marathon cron stays 12h** — 24h cost-optimization
+  considered but held (no urgency at ~$43–45/mo); revisit as a cost/traffic call.
+  Do NOT touch vercel.json until then.
 
 ---
 

@@ -126,18 +126,47 @@ Marathon first (read-before-write / additive-first discipline).
 
 ---
 
-## Open decisions (with leans)
-1. **DMZ stat storage** — DMZ-specific tables vs shared-tables-+-`game_slug`.
-   **Lean: DMZ-specific** (Gunsmith/3D-print/FOB ≠ shell/mod/core/Cradle;
-   consistent with TABLE_INVENTORY Decision A).
-2. **DMZ editor count at launch** — **Lean: 3** (e.g. NEXUS/DEXTER/GHOST),
-   holding MIRANDA/CIPHER for scale-up.
-3. **DMZ cadence** — **Lean: 24h/daily** at launch, scale to 12h with audience.
-4. **DMZ patch-notes source** — **Lean: try Steam-news adapter first** (reuses
-   Gap-1), fall back to a callofduty.com/patchnotes scraper.
-5. **Broker debut at DMZ launch** — economy data confirmed; gatherability
-   post-launch. Yes/no/when.
-6. **Config location** — code module (recommended) vs DB table.
+## Decisions — RESOLVED (2026-06-18)
+Worked out with the user. 3 locked, 2 defaulted (hold loosely, revisit at
+launch), 1 conditional (decide post-launch).
+
+| # | Decision | Resolution | Status |
+|---|---|---|---|
+| 1 | **Config location** | `lib/games/dmz.js` (code module, matches the Phase A `marathon.js` pattern). | **LOCKED** |
+| 2 | **DMZ stat storage** | **SEPARATE DMZ-specific tables** (not shared-tables + `game_slug`). DMZ's content model (Gunsmith platforms/attachments + 3D-print recipes + FOB economy) is structurally unlike Marathon's (shells/mods/cores/implants/Cradle). | **LOCKED** |
+| 3 | **Patch-notes source** | Try the `steam-news` adapter first (`{type:'steam-news', appId:<MW4>}` — reuses the Phase B engine, zero new code); build a `cod-blog` adapter ONLY if MW4 doesn't cross-post full notes to Steam. | **LOCKED** (reversible at launch) |
+| 4 | **Editor count at launch** | **3** (e.g. NEXUS/DEXTER/GHOST), holding MIRANDA/CIPHER for scale-up. Cost lever. | **DEFAULT** — hold loosely, revisit at launch |
+| 5 | **DMZ cadence** | **24h/daily** at launch (vs Marathon's 12h). Cost lever; scale to 12h with audience. | **DEFAULT** — hold loosely |
+| 6 | **Broker debut** | Debut at DMZ launch **ONLY IF** the economy data (3D-print recipes, FOB costs, Gunsmith curve) proves gatherable post-launch (values are datamined after release). Defer if not. | **CONDITIONAL** — decide post-launch |
+
+### Phase C architecture implication (from decision 2 — separate tables)
+Separate DMZ tables mean `fetchGameContext` becomes a thin **DISPATCHER** that
+selects a per-game context builder on `config.slug`:
+- `buildMarathonContext()` — today's `fetchGameContext` logic extracted
+  UNCHANGED (preserves the byte-identical Marathon output proven in Phase A
+  Stage 4).
+- `buildDMZContext()` — new; queries DMZ's separate tables and assembles
+  DMZ-shaped context.
+
+This keeps the additive-first discipline (Marathon untouched, DMZ added
+alongside) and is the Phase C design starting point. **Still-open Phase C
+prerequisite** (already flagged): the `dexter-stats` 24h throttle
+(`needsRefresh`/`logRefresh` via `wiki_meta`) must be keyed per `game_slug`
+before DMZ stats are wired, or a DMZ run could collide with Marathon's throttle
+row. (The `fetchGameContext` context cache was already made per-slug — commit
+`f7c7aa2`.)
+
+## Parked — Marathon cron cadence (NOT one of the 6; separate)
+Marathon's editorial cron stays **12h** (`0 0,12 * * *`) for now. Moving to 24h
+was considered as a pre-traction cost optimization (~$12/mo saving) but
+**DECIDED TO HOLD** — no urgency at current spend (~$43–45/mo all-in), and no
+reason to touch the one working production cron without a forcing need.
+**Revisit down the road** as a cost/traffic call:
+- **Toward 24h:** saves cost; may raise per-article quality (fresher source per
+  cycle).
+- **Keep 12h:** grows the indexed-content corpus faster (more SEO surface).
+Phase-dependent; not decided now. (Do NOT touch `vercel.json` until this is
+revisited.)
 
 ---
 
