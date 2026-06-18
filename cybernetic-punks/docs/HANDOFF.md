@@ -34,12 +34,18 @@ but is now flood/blob protected:
 finding): admin OAuth migration. Standing reminders: keep `CRON_SECRET` /
 `ADMIN_PASSWORD` set; RLS verified live.
 
-### Flagged (separate from the security fix) — /api/track allowlist drift
-The client fires `advisor_surprise` (AdvisorClient) and `signup_intent`
-(WelcomeClient) but neither is in `ALLOWED_EVENTS`, so the route 400s and drops
-them today. Left unchanged in #7 (byte-identical). Under read-only investigation
-to decide whether they're accidental drift vs deliberate drops before touching
-the allowlist.
+### /api/track allowlist drift — investigated + resolved
+The client fired two events missing from `ALLOWED_EVENTS` (both 400'd/dropped):
+- **`signup_intent`** (/welcome intent cards: build|meta|intel|skip) — accidental
+  drift: the flow was built to emit it (the welcome/complete route comment even
+  names site_events as the analytics home), just never allowlisted. **ADDED**
+  (`feat(analytics): record signup_intent events`), so the intent/bounce funnel
+  records as a time series. (The latest per-user value also lives in
+  `player_profiles.signup_intent`.) Protected by the #7 rate-limit + size-cap
+  like every allowed event.
+- **`advisor_surprise`** — redundant: every surprise build already records as
+  `advisor_generate` with `surprise:true` (allowlisted). **LEFT OUT** (only
+  unique signal would be surprise-click-without-completion; marginal).
 
 ---
 

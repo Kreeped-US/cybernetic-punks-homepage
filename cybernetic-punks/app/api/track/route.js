@@ -19,6 +19,11 @@ const ALLOWED_EVENTS = [
   'meta_view',
   'tierlist_share',
   'advisor_share',
+  // /welcome intent-card selection (build|meta|intel|skip). The flow always
+  // emitted this but it was missing from the allowlist (stale drift) -> dropped.
+  // Added so the intent/bounce funnel is recorded as a time series (the latest
+  // per-user value also lives in player_profiles.signup_intent).
+  'signup_intent',
 ];
 
 // SECURITY (audit #7): /api/track stays UNAUTHENTICATED (anonymous analytics),
