@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL, COMMENT_MODEL } from './models';
 import { verificationTag, VERIFICATION_NOTE } from './verification';
+import { getGameConfig } from './games';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -605,7 +606,10 @@ Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}
 // GAME CONTEXT FETCH
 // ===========================================================
 
-async function fetchGameContext() {
+async function fetchGameContext(config = getGameConfig()) {
+  // NOTE (Phase A): the cache below is game-blind (single global slot). Safe
+  // while Marathon is the only game; Phase C must key it per game.slug before
+  // DMZ context is added, or DMZ would be served Marathon's cached context.
   if (_gameContextCache && (Date.now() - _gameContextTime) < GAME_CONTEXT_TTL_MS) {
     return _gameContextCache;
   }
@@ -640,20 +644,20 @@ async function fetchGameContext() {
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, patch_verified').order('name').limit(30),
       supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, verified, patch_verified').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
-      supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved, verified, patch_verified').eq('game_slug', 'marathon').order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
-      supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', 'marathon').eq('verified', true),
-      supabase.from('faction_upgrades').select('faction_slug, node_name, node_kind, rank_required, effect_desc, unlocks_in_armory').eq('game_slug', 'marathon').eq('verified', true),
+      supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved, verified, patch_verified').eq('game_slug', config.slug).order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
+      supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', config.slug).eq('verified', true),
+      supabase.from('faction_upgrades').select('faction_slug, node_name, node_kind, rank_required, effect_desc, unlocks_in_armory').eq('game_slug', config.slug).eq('verified', true),
       // GAME-WORLD GROUND TRUTH (added June 8, 2026): verified-only map/zone/boss/event/mode
       // facts so editors stop inventing world content (Eerie Marsh, Upper Complex Warden,
       // Sponsored Survival mechanics were all fabrications from this gap being empty).
       // Summary fields only - the rich jsonb `details` stays in the DB for future map pages
       // / coach, unread here to keep prompt cost moderate. verified=true filter is the
       // no-fabrication gate (unconfirmed rows like Ranked stay invisible).
-      supabase.from('game_maps').select('slug, name, difficulty, player_structure, summary, variant_of').eq('game_slug', 'marathon').eq('verified', true).order('difficulty'),
-      supabase.from('game_zones').select('map_slug, zone_name, zone_type, summary').eq('game_slug', 'marathon').eq('verified', true).order('map_slug'),
-      supabase.from('game_bosses').select('boss_name, map_slug, summary').eq('game_slug', 'marathon').eq('verified', true).order('map_slug'),
-      supabase.from('game_events').select('event_name, event_type, available_on, summary').eq('game_slug', 'marathon').eq('verified', true).order('event_name'),
-      supabase.from('game_modes').select('mode_name, mode_type, available_on, summary').eq('game_slug', 'marathon').eq('verified', true).order('mode_name'),
+      supabase.from('game_maps').select('slug, name, difficulty, player_structure, summary, variant_of').eq('game_slug', config.slug).eq('verified', true).order('difficulty'),
+      supabase.from('game_zones').select('map_slug, zone_name, zone_type, summary').eq('game_slug', config.slug).eq('verified', true).order('map_slug'),
+      supabase.from('game_bosses').select('boss_name, map_slug, summary').eq('game_slug', config.slug).eq('verified', true).order('map_slug'),
+      supabase.from('game_events').select('event_name, event_type, available_on, summary').eq('game_slug', config.slug).eq('verified', true).order('event_name'),
+      supabase.from('game_modes').select('mode_name, mode_type, available_on, summary').eq('game_slug', config.slug).eq('verified', true).order('mode_name'),
     ]);
 
     // Unverified-row tagging is centralized in lib/verification.js (single
@@ -1147,12 +1151,12 @@ function normalizeEditorOutput(editor, toolInput) {
   return result;
 }
 
-export async function callEditor(editor, userPrompt, supabaseClient) {
+export async function callEditor(editor, userPrompt, supabaseClient, config = getGameConfig()) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
 
   if (['DEXTER', 'NEXUS', 'CIPHER', 'GHOST', 'MIRANDA'].includes(editor)) {
-    const gameContext = await fetchGameContext();
+    const gameContext = await fetchGameContext(config);
     if (gameContext) systemPrompt += gameContext;
   }
 

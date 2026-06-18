@@ -3,16 +3,18 @@ import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel 
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
+import { getGameConfig } from '@/lib/games';
 
 export const dynamic = 'force-dynamic';
 
-// DMZ migration (step 3, batch B3): the game this cron cycle is producing for.
-// Editorial-input reads (no-repeat dedup, cross-editor synthesis) MUST scope to
-// this so a DMZ editor reads DMZ's prior articles, not Marathon's -- otherwise
-// no-repeat/synthesis bleeds across games. Constant 'marathon' for now; this is
-// the single knob that becomes the cron's per-game target parameter when DMZ
-// editorial starts. (The B1 writer at the insert also tags 'marathon'.)
-var PRODUCING_GAME_SLUG = 'marathon';
+// The game this cron cycle is producing for. Gap 2 Phase A: sourced from the
+// per-game config registry (lib/games) instead of a bare literal. Drives the
+// gather sources, the relevance filter, fetchGameContext scoping, the editor
+// roster, and the game_slug stamped on inserts + no-repeat/synthesis reads, so
+// a DMZ editor would read DMZ's prior articles, not Marathon's. Marathon today;
+// the cron becomes per-game (query param + its own cron entry) in Phase D.
+var PRODUCING_GAME = getGameConfig();
+var PRODUCING_GAME_SLUG = PRODUCING_GAME.slug;
 
 var TIER_ORDINAL = { S: 5, A: 4, B: 3, C: 2, D: 1 };
 
@@ -248,9 +250,9 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
 
     if (editorName === 'MIRANDA') {
       var mirandaPrompt = buildMirandaPrompt({ ...prompt, xData: rawData.xData || null });
-      result = await callEditor('MIRANDA', mirandaPrompt, supabase);
+      result = await callEditor('MIRANDA', mirandaPrompt, supabase, PRODUCING_GAME);
     } else {
-      result = await callEditor(editorName, prompt, supabase);
+      result = await callEditor(editorName, prompt, supabase, PRODUCING_GAME);
     }
 
     if (!result || !result.headline || result._parseError) {
@@ -291,7 +293,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       // target when DMZ editorial starts. Required before the column DEFAULT is
       // dropped (batch B2) -- a forgotten game_slug then errors instead of
       // silently defaulting.
-      game_slug: 'marathon',
+      game_slug: PRODUCING_GAME_SLUG,
     };
 
     if (editorName === 'CIPHER') {
@@ -506,7 +508,7 @@ export async function GET(req) {
   );
 
   try {
-    var prompts = await gatherAll();
+    var prompts = await gatherAll(PRODUCING_GAME);
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null, bungieNews: [] };
 
     var directiveMap = {};
@@ -700,13 +702,12 @@ export async function GET(req) {
       }
     }
 
-    var editors = [
-      { name: 'CIPHER',  prompt: prompts.CIPHER  },
-      { name: 'NEXUS',   prompt: prompts.NEXUS   },
-      { name: 'DEXTER',  prompt: prompts.DEXTER  },
-      { name: 'GHOST',   prompt: prompts.GHOST   },
-      { name: 'MIRANDA', prompt: prompts.MIRANDA },
-    ];
+    // Editor roster + order from per-game config (the cost lever): a game can
+    // launch with a subset / different cadence. Marathon = all 5 in this order,
+    // so the array is byte-identical to the prior hardcoded list.
+    var editors = PRODUCING_GAME.editorial.editors.map(function (name) {
+      return { name: name, prompt: prompts[name] };
+    });
 
     var settledResults = await Promise.allSettled(
       editors.map(function(e) { return processEditor(e.name, e.prompt, rawData, supabase, regradeContext, directiveMap[e.name]); })
