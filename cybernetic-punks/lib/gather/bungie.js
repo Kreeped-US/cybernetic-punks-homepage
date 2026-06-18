@@ -1,16 +1,22 @@
 // lib/gather/bungie.js
-// Polls Bungie official news from two sources:
+// Polls the active game's official news from two sources:
 // 1. Steam news API (captures patch notes + announcements, already working)
-// 2. Bungie.net news page (direct scrape as secondary source)
-// Returns structured array of Bungie dev news articles
+// 2. Steam community-announcements RSS feed (secondary source)
+// Returns a structured array of dev-news articles.
+//
+// NOTE (Gap 2 Phase A): this remains Marathon's patch-notes adapter -- the Steam
+// appid is now read from per-game config so it's not the odd module out, but the
+// Bungie-specific shape is unchanged. The generic per-game patch-notes adapter
+// (e.g. a cod-blog source for DMZ) is Phase B.
 
 import { fetchSteamNews } from './steam.js';
+import { getGameConfig } from '../games';
 
-async function fetchBungieNetNews() {
+async function fetchBungieNetNews(appId) {
   try {
-    // Bungie community announcements RSS via Steam's feed
+    // Community announcements RSS via Steam's feed for the appid
     const res = await fetch(
-      'https://store.steampowered.com/feeds/news/app/3065800/?cc=US&l=english&snr=1_2108_9__2107',
+      `https://store.steampowered.com/feeds/news/app/${appId}/?cc=US&l=english&snr=1_2108_9__2107`,
       {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; CyberneticPunks/1.0; +https://cyberneticpunks.com)',
@@ -61,12 +67,13 @@ async function fetchBungieNetNews() {
   }
 }
 
-export async function gatherBungieNews() {
+export async function gatherBungieNews(config = getGameConfig()) {
   try {
+    const appId = config.sources.steamAppId;
     // Run both sources in parallel
     const [steamNews, rssNews] = await Promise.all([
-      fetchSteamNews(),
-      fetchBungieNetNews(),
+      fetchSteamNews(appId),
+      fetchBungieNetNews(appId),
     ]);
 
     // Merge and deduplicate by title, PREFERRING THE FULLER VERSION (Gap 1).

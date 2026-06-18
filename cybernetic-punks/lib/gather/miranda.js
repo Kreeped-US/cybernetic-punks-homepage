@@ -3,6 +3,7 @@
 // Includes recent-headline dedup so MIRANDA never covers the same topic twice in a row
 
 import { createClient } from '@supabase/supabase-js';
+import { getGameConfig } from '../games';
 
 // FIXED May 15, 2026: Lazy-init Supabase via Proxy.
 // Module-scope createClient() throws during Next.js 16 build.
@@ -15,11 +16,9 @@ function getSupabaseClient() {
   );
   return _supabaseClient;
 }
-// DMZ migration (step 3, batch B3): the game MIRANDA is producing for. The
-// recent-headline no-repeat read MUST scope to this so a DMZ run dedups against
-// DMZ's prior headlines, not Marathon's. Constant 'marathon' for now; becomes a
-// per-game parameter (fed from the cron's target game) when DMZ editorial starts.
-const PRODUCING_GAME_SLUG = 'marathon';
+// The game MIRANDA is producing for is now passed per call (gatherMirandaData
+// receives the game config; the recent-headline no-repeat read scopes to
+// config.slug so a DMZ run dedups against DMZ's prior headlines, not Marathon's).
 
 const supabase = new Proxy({}, {
   get(_target, prop) {
@@ -30,25 +29,18 @@ const supabase = new Proxy({}, {
 const YT_KEY  = process.env.YOUTUBE_API_KEY;
 const YT_BASE = 'https://www.googleapis.com/youtube/v3';
 
-const GUIDE_QUERIES = [
-  'Marathon game beginner guide 2026',
-  'Marathon Bungie how to extract guide',
-  'Marathon runner shell guide tips',
-  'Marathon best loadout beginners',
-  'Marathon ranked mode tips how to rank up',
-  'Marathon Holotag guide ranked explained',
-  'Marathon survival tips how to win',
-  'Marathon mod guide best mods explained',
-];
+// MIRANDA's guide YouTube queries + dev-reddit subs are per-game config
+// (lib/games/<slug>.js sources.miranda.{guideQueries,subreddits}); Marathon's
+// live in lib/games/marathon.js.
 
 // ─── YOUTUBE ─────────────────────────────────────────────────
 
-async function fetchYouTubeGuides() {
+async function fetchYouTubeGuides(guideQueries) {
   const videos = [];
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 14);
 
-  for (const q of GUIDE_QUERIES) {
+  for (const q of guideQueries) {
     try {
       const res = await fetch(
         `${YT_BASE}/search?part=snippet&q=${encodeURIComponent(q)}&type=video&order=relevance&publishedAfter=${cutoff.toISOString()}&maxResults=3&key=${YT_KEY}`
@@ -93,11 +85,11 @@ function isGuideRelevant(post) {
   return GUIDE_KEYWORDS.some(kw => text.includes(kw));
 }
 
-async function fetchRedditGuides() {
+async function fetchRedditGuides(subreddits) {
   const posts = [];
   const seen = new Set();
 
-  for (const sub of ['Marathon', 'MarathonTheGame']) {
+  for (const sub of subreddits) {
     for (const feed of ['hot', 'new']) {
       try {
         const res = await fetch(
@@ -154,11 +146,11 @@ async function fetchSteamDevNews() {
 
 const DEV_AUTHORS = ['Bungie', 'BungieHelp', 'BungieIntel', 'marathon_game'];
 
-async function fetchDevRedditPosts() {
+async function fetchDevRedditPosts(subreddits) {
   const devPosts = [];
   const seen = new Set();
 
-  for (const sub of ['Marathon', 'MarathonTheGame']) {
+  for (const sub of subreddits) {
     // Scan new posts for dev author matches
     try {
       const res = await fetch(
@@ -236,13 +228,13 @@ async function fetchModContext() {
 // Pulled into the prompt so MIRANDA knows what she's already covered
 // and avoids writing the same guide topic twice in a row
 
-async function fetchRecentMirandaHeadlines() {
+async function fetchRecentMirandaHeadlines(producingSlug) {
   try {
     const { data } = await supabase
       .from('feed_items')
       .select('headline, created_at')
       .eq('editor', 'MIRANDA')
-      .eq('game_slug', PRODUCING_GAME_SLUG)
+      .eq('game_slug', producingSlug)
       .order('created_at', { ascending: false })
       .limit(12);
     return (data || []).map(r => r.headline);
@@ -254,18 +246,21 @@ async function fetchRecentMirandaHeadlines() {
 
 // ─── MAIN EXPORT ─────────────────────────────────────────────
 
-export async function gatherMirandaData() {
+export async function gatherMirandaData(config = getGameConfig()) {
   console.log('[miranda.js] Gathering...');
 
+  const guideQueries = config.sources.miranda.guideQueries;
+  const subreddits = config.sources.miranda.subreddits;
+
   const [videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines] = await Promise.all([
-    fetchYouTubeGuides(),
-    fetchRedditGuides(),
+    fetchYouTubeGuides(guideQueries),
+    fetchRedditGuides(subreddits),
     fetchSteamDevNews(),
-    fetchDevRedditPosts(),
+    fetchDevRedditPosts(subreddits),
     fetchShellContext(),
     fetchWeaponContext(),
     fetchModContext(),
-    fetchRecentMirandaHeadlines(),
+    fetchRecentMirandaHeadlines(config.slug),
   ]);
 
   console.log(`[miranda.js] ${videos.length} videos, ${redditPosts.length} Reddit posts, ${devNews.length} Steam news, ${devRedditPosts.length} dev posts`);

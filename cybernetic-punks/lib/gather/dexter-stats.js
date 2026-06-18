@@ -21,6 +21,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '../models';
+import { getGameConfig } from '../games';
 
 // VERIFICATION HONESTY (audit Phase 5): this scraper extracts stat values from
 // community wiki + AI parsing -- inherently UNVERIFIED (no authoritative source
@@ -120,16 +121,12 @@ async function logRefresh(updatedCount) {
 // Trimmed list -- only URLs that have historically returned content.
 // Each fetch has an 8s timeout to avoid hanging the whole pipeline.
 
-const WIKI_URLS = [
-  'https://marathon.wiki.gg/wiki/Shells',
-  'https://marathon.wiki.gg/wiki/Weapons',
-  'https://www.marathon.gg/shells',
-  'https://www.marathon.gg/weapons',
-];
+// Wiki / fan-site stat sources are per-game config (lib/games/<slug>.js
+// sources.wikiUrls); Marathon's live in lib/games/marathon.js.
 
-async function fetchWikiContent() {
+async function fetchWikiContent(wikiUrls) {
   const results = [];
-  for (const url of WIKI_URLS) {
+  for (const url of wikiUrls) {
     try {
       const res = await fetch(url, {
         headers: { 'User-Agent': 'CyberneticPunks/1.0 Marathon Intelligence Hub' },
@@ -459,7 +456,7 @@ async function updateImplant(row) {
 
 // --- MAIN EXPORT ---
 
-export async function runDexterStatPipeline(existingData = {}) {
+export async function runDexterStatPipeline(existingData = {}, config = getGameConfig()) {
   // -- THROTTLE CHECK --
   if (!(await needsRefresh())) {
     console.log('[dexter-stats] Skipped -- last refresh was within ' + REFRESH_HOURS + 'h');
@@ -482,7 +479,7 @@ export async function runDexterStatPipeline(existingData = {}) {
   }
 
   // -- GATHER SOURCES --
-  const wikiSources = await fetchWikiContent();
+  const wikiSources = await fetchWikiContent(config.sources.wikiUrls);
   const allSources = [...wikiSources];
 
   if (existingData.videos && existingData.videos.length > 0) {

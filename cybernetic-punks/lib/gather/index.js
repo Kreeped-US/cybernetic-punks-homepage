@@ -99,10 +99,10 @@ export async function gatherAll(config = getGameConfig()) {
     gatherYouTube(config),
     gatherReddit(config),
     gatherTwitchClips(config),
-    gatherMirandaData(),
+    gatherMirandaData(config),
     fetchSteamPlayerCount(config.sources.steamAppId),
     fetchSteamReviews(config.sources.steamAppId),
-    gatherBungieNews(),
+    gatherBungieNews(config),
   ]);
 
   console.log('[GATHER] YouTube: ' + youtubeVideos.length + ' videos collected');
@@ -217,7 +217,7 @@ export async function gatherAll(config = getGameConfig()) {
       videos: youtubeFiltered,
       redditPosts: redditPosts || [],
       steamReviews: steamReviews?.reviews || [],
-    });
+    }, config);
   } catch (err) {
     console.error('[GATHER] runDexterStatPipeline failed:', err.message);
   }

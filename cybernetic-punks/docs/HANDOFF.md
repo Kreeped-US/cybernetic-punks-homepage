@@ -5,6 +5,48 @@ Newest entries on top.
 
 ---
 
+## 2026-06-18 — Gap 2 Phase A LANDED: Marathon gather generalized to per-game config
+
+Scoping: [docs/network/GATHER_GAP2_DMZ_SCOPING.md](network/GATHER_GAP2_DMZ_SCOPING.md).
+The gather/generation path no longer hardcodes Marathon literals — it reads a
+**per-game config** (`lib/games/marathon.js` + `lib/games/index.js` registry,
+`getGameConfig(slug)`). Additive refactor, **Marathon output byte-identical**
+(verified). Shared code, per-game config — the pattern is proven on the working
+game before DMZ exists.
+
+Shipped in 5 gated stages (commits `ffdf9c1` → `2bcb96b` → `47abcec` → `aee5164`
+→ this):
+- **Config module + registry** (every Marathon literal lifted verbatim).
+- **steam/reddit/youtube/twitch** read source IDs from config (default
+  `getGameConfig()` = marathon).
+- **gatherAll(config)** + the relevance filter (`isGameContent(v, relevance)`,
+  tokens from `config.relevance`) + the GHOST subreddit label (derived from
+  config; byte-identical).
+- **fetchGameContext(config)** (8 `game_slug` filters → `config.slug`) +
+  **callEditor(...config)** + cron `PRODUCING_GAME`/editor-list/insert-slug from
+  config. **Gated by a real before/after via a temp write-free context probe:**
+  assembled context BYTE-IDENTICAL (sha `25439b99…`, len 63317, all 7 sections),
+  same 5 editors, same slug; probe removed after.
+- **bungie/miranda/dexter-stats** threaded (bungie kept as Marathon's patch-notes
+  adapter, behavior unchanged). Every source literal now lives ONLY in
+  `lib/games/marathon.js`.
+
+**Cost lever baked in:** per-game `editorial.{cadenceCron, editors}` — a game can
+launch with fewer editors / slower cadence (the cron reads `config.editorial.editors`).
+
+**Pending (Phase B+ / open decisions — unchanged):**
+- Phase B: `lib/games/dmz.js` (MW4 sources), the generic per-game patch-notes
+  adapter (cod-blog), DMZ relevance tokens. Phase C: DMZ stat storage + tables +
+  per-game keying of the fetchGameContext cache (currently game-blind, safe while
+  Marathon-only). Phase D: DMZ cron entry (reduced cadence) + go-live. Phase E:
+  Broker (DMZ economy confirmed sourceable).
+- Remaining Marathon-isms (byte-identical now, Phase B): editor prompt PROSE
+  ("Marathon"/"Season 2"), miranda `DEV_AUTHORS` official-poster allowlist.
+- 6 open decisions (stat storage, editor count, cadence, patch-notes source,
+  Broker debut, config location) still to be made — see the scoping doc.
+
+---
+
 ## 2026-06-18 — Verification Phase-1 LOCKED + Phase 2.5 (3-state hedging) shipped
 
 Full detail: [docs/MARATHON_VERIFICATION_DEBT.md](MARATHON_VERIFICATION_DEBT.md).
