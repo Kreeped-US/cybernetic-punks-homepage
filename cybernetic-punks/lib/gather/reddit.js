@@ -1,11 +1,10 @@
 // lib/gather/reddit.js
-// Fetches Marathon-related Reddit posts
-// Uses old.reddit.com + RSS fallback to work from Vercel's servers
+// Fetches game-related Reddit posts. Subreddits are per-game config
+// (lib/games/<slug>.js sources.reddit.subreddits); Marathon =
+// ['MarathonTheGame','Marathon']. Uses old.reddit.com + RSS fallback to work
+// from Vercel's servers.
 
-const SUBREDDITS = [
-  'MarathonTheGame',
-  'Marathon',
-];
+import { getGameConfig } from '../games';
 
 async function fetchSubredditJson(subreddit, limit = 10) {
   try {
@@ -87,9 +86,10 @@ async function fetchSubredditRss(subreddit) {
   }
 }
 
-export async function gatherReddit() {
+export async function gatherReddit(config = getGameConfig()) {
+  const subreddits = config.sources.reddit.subreddits;
   const allPosts = [];
-  for (const sub of SUBREDDITS) {
+  for (const sub of subreddits) {
     if (allPosts.length > 0) {
       await new Promise((r) => setTimeout(r, 2000));
     }

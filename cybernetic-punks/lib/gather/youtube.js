@@ -10,37 +10,19 @@
 // only — the tool schema handles the structural contract.
 
 import { fetchTranscripts } from './transcript.js';
+import { getGameConfig } from '../games';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
-// Broader search queries — more variety means fewer empty cycles
-// Rotates across runs so each cycle hits a different angle
-const SEARCH_QUERIES = [
-  'Marathon Bungie gameplay 2026',
-  'Marathon game builds loadout',
-  'Marathon PvP extraction shooter',
-  'Marathon meta guide ranked',
-  'Marathon tips tricks runner',
-  'Marathon Bungie shell guide',
-  'Marathon game ranked holotag',
-  'Marathon Bungie weapon tier list',
-  'Marathon game best build',
-  'Marathon Bungie extraction strategy',
-  'Marathon thief assassin vandal gameplay',
-  'Marathon Nightfall season 2 gameplay',
-];
+// Search queries + creator channels are per-game config
+// (lib/games/<slug>.js sources.youtube.{searchQueries,creatorChannels}).
+// Queries rotate across runs so each cycle hits a different angle; creator
+// channels are a higher-precision fallback. Marathon's values live in
+// lib/games/marathon.js.
 
-// Known Marathon content creators — search their channels directly when general queries come back thin
-const CREATOR_CHANNELS = [
-  'marathonaire',
-  'luckyy10p',
-  'Nirvous',
-  'chriscovent',
-  'vivaladoctor',
-  'taucetiGG',
-];
-
-export async function gatherYouTube() {
+export async function gatherYouTube(config = getGameConfig()) {
+  const searchQueries = config.sources.youtube.searchQueries;
+  const creatorChannels = config.sources.youtube.creatorChannels;
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) {
     console.error('[GATHER:YOUTUBE] No YOUTUBE_API_KEY found');
@@ -49,7 +31,7 @@ export async function gatherYouTube() {
 
   try {
     // Run 2 queries per cycle instead of 1 — better coverage, still quota-efficient
-    const shuffled = SEARCH_QUERIES.sort(function() { return Math.random() - 0.5; });
+    const shuffled = searchQueries.sort(function() { return Math.random() - 0.5; });
     const queries = shuffled.slice(0, 2);
 
     const allResults = [];
@@ -90,7 +72,7 @@ export async function gatherYouTube() {
     // defined but never used. We resolve each handle to a channel, take its
     // uploads playlist, and merge recent videos into the same pipeline.
     try {
-      const creatorResults = await gatherCreatorUploads(apiKey);
+      const creatorResults = await gatherCreatorUploads(apiKey, creatorChannels);
       if (creatorResults.length > 0) {
         allResults.push(...creatorResults);
         console.log(`[GATHER:YOUTUBE] Added ${creatorResults.length} videos from known creators`);
@@ -186,11 +168,11 @@ export async function gatherYouTube() {
 // results ({ item, query }) so they flow through the same stats/dedup/
 // transcript pipeline. Recency-bounded to the same 96h window. Best-effort
 // per channel: a failed lookup is skipped, not fatal.
-async function gatherCreatorUploads(apiKey) {
+async function gatherCreatorUploads(apiKey, creatorChannels) {
   const out = [];
   const publishedAfter = getTimeAgo(96);
 
-  for (const handle of CREATOR_CHANNELS) {
+  for (const handle of creatorChannels) {
     try {
       // Resolve the handle to a channel ID. The search endpoint with
       // type=channel is the most tolerant of handle/display-name variation.

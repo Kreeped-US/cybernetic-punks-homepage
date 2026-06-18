@@ -1,6 +1,10 @@
 // lib/gather/twitch.js
-// Fetches Marathon clips and live streamers from Twitch API
+// Fetches clips and live streamers from Twitch API for the active game.
+// The Twitch game name(s) are per-game config (lib/games/<slug>.js
+// sources.twitch.gameNames); Marathon = ['Marathon','Marathon (2026)'].
 // Requires TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET env vars
+
+import { getGameConfig } from '../games';
 
 let cachedToken = null;
 let tokenExpiry = 0;
@@ -68,28 +72,27 @@ async function twitchFetch(endpoint) {
 }
 
 /**
- * Get the Twitch game ID for Marathon
+ * Get the Twitch game ID for the active game. Tries each configured name in
+ * order (Marathon: 'Marathon' then 'Marathon (2026)') and returns the first
+ * match. Names are passed unencoded to match the prior request shape exactly.
  */
-async function getMarathonGameId() {
-  const data = await twitchFetch('games?name=Marathon');
-  if (!data || !data.data || data.data.length === 0) {
-    // Try alternate name
-    const data2 = await twitchFetch('games?name=Marathon (2026)');
-    if (!data2 || !data2.data || data2.data.length === 0) return null;
-    return data2.data[0].id;
+async function getGameId(gameNames) {
+  for (const name of gameNames) {
+    const data = await twitchFetch('games?name=' + name);
+    if (data && data.data && data.data.length > 0) return data.data[0].id;
   }
-  return data.data[0].id;
+  return null;
 }
 
 /**
  * Fetch top Marathon clips from the last 48 hours
  * Returns array of clip objects for CIPHER to analyze
  */
-export async function gatherTwitchClips() {
+export async function gatherTwitchClips(config = getGameConfig()) {
   try {
-    const gameId = await getMarathonGameId();
+    const gameId = await getGameId(config.sources.twitch.gameNames);
     if (!gameId) {
-      console.log('[GATHER:TWITCH] Could not find Marathon game ID');
+      console.log('[GATHER:TWITCH] Could not find game ID');
       return [];
     }
 
@@ -125,9 +128,9 @@ export async function gatherTwitchClips() {
 /**
  * Fetch currently live Marathon streamers
  */
-export async function getLiveStreamers() {
+export async function getLiveStreamers(config = getGameConfig()) {
   try {
-    const gameId = await getMarathonGameId();
+    const gameId = await getGameId(config.sources.twitch.gameNames);
     if (!gameId) return [];
 
     const data = await twitchFetch(

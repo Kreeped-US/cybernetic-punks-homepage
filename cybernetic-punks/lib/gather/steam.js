@@ -1,8 +1,10 @@
 // lib/gather/steam.js
-// Steam Web API — player count, news, reviews
-// App ID 3065800 = Marathon (Bungie, 2026). No API key required.
+// Steam Web API — player count, news, reviews. No API key required.
+// The Steam appid is per-game config (lib/games/<slug>.js sources.steamAppId);
+// Marathon = 3065800. Each export defaults to the active game's appid so existing
+// arg-less callers behave identically; gatherAll passes it explicitly (Phase A).
 
-const STEAM_APP_ID = '3065800';
+import { getGameConfig } from '../games';
 
 // Steam announcement bodies (feedname "steam_community_announcements") are
 // Bungie's official posts cross-posted to Steam, and carry the FULL patch
@@ -26,10 +28,10 @@ function bbcodeToText(raw) {
     .trim();
 }
 
-export async function fetchSteamPlayerCount() {
+export async function fetchSteamPlayerCount(appId = getGameConfig().sources.steamAppId) {
   try {
     const res = await fetch(
-      `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${STEAM_APP_ID}`
+      `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${appId}`
     );
     if (!res.ok) throw new Error(`Steam player count: ${res.status}`);
     const d = await res.json();
@@ -43,7 +45,7 @@ export async function fetchSteamPlayerCount() {
   }
 }
 
-export async function fetchSteamNews() {
+export async function fetchSteamNews(appId = getGameConfig().sources.steamAppId) {
   try {
     // maxlength=0 = NO truncation: return the full announcement body. This is
     // the core of the Gap 1 fix -- maxlength=600 was silently cutting patch
@@ -51,7 +53,7 @@ export async function fetchSteamNews() {
     // notes (the 1.1.0.2 "C.A.R.R.I.-only" failure). The full body is then
     // BBCode-cleaned below.
     const res = await fetch(
-      `https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${STEAM_APP_ID}&count=8&maxlength=0&format=json`
+      `https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${appId}&count=8&maxlength=0&format=json`
     );
     if (!res.ok) throw new Error(`Steam news: ${res.status}`);
     const d = await res.json();
@@ -81,10 +83,10 @@ export async function fetchSteamNews() {
   }
 }
 
-export async function fetchSteamReviews() {
+export async function fetchSteamReviews(appId = getGameConfig().sources.steamAppId) {
   try {
     const res = await fetch(
-      `https://store.steampowered.com/appreviews/${STEAM_APP_ID}?json=1&filter=recent&language=english&num_per_page=15&review_type=all`,
+      `https://store.steampowered.com/appreviews/${appId}?json=1&filter=recent&language=english&num_per_page=15&review_type=all`,
       { headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0' } }
     );
     if (!res.ok) throw new Error(`Steam reviews: ${res.status}`);
