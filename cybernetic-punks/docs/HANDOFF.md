@@ -5,6 +5,46 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — Ammo economy data: evidence in hand but HELD (needs a model decision)
+
+In-game item-card screenshots for 5 ammo types (Heavy Rounds, Light Rounds,
+MIPS, Volt Battery, Volt Cell) contain a MULTI-FIELD economy model that
+`ammo_stats` does NOT store. NOTHING written — no DDL, no data, no confirm. See
+[VERIFICATION_PROTOCOL.md](network/VERIFICATION_PROTOCOL.md).
+
+**Evidence captured (3 distinct economy concepts on the cards):**
+1. **Standalone VALUE field** — Light Rounds 5, Volt Cell 27, MIPS 30, Volt
+   Battery 5 (Heavy Rounds shows none). **MEANING UNRESOLVED -> NOT confirmed.**
+   An undefined number can't be verified (protocol: confirm requires knowing what
+   the value IS, not just the digit). Pin down what VALUE means in-game (sell
+   value? worth rating? something else?) BEFORE modeling it.
+2. **Per-vendor ARMORY PURCHASE (price + quantity)** — e.g. 40 Heavy Rounds =
+   300cr; Light Rounds 200cr/60x; Volt Cell 600cr/4x; Volt Battery 200cr/3x.
+   Clear data, but price + quantity PER VENDOR (CYAC / TRAXUS / ARACHNE) — a
+   multi-field, possibly multi-row concern.
+3. **Barter trades** — e.g. 2x Unstable Lead -> 40x item; 1x Unstable Gunmetal
+   -> 30x item. A separate acquisition model.
+
+**Why HELD (not written):**
+- `ammo_stats` has NO value/economy column and NO `verified_source` column.
+- Adding storage is a DATA-MODEL decision, not a quick column add: single
+  `value`/`sell_value` column vs. a vendor-keyed prices table (price + qty +
+  vendor) vs. a broader items/economy model (the VALUE/credit_value concept also
+  appears on mod_stats/implant_stats/core_stats — consider consistency).
+- The standalone VALUE meaning is unresolved — can't name/confirm it yet.
+- Fresh-head modeling decision; deferred deliberately. Nothing lost by waiting.
+
+**Separate, also open:** `ammo_stats.damage_modifier_pct` is placeholder 0s
+across all 5 rows (the original 0/5 backlog) — "needs real data first," distinct
+from the economy-value question. These screenshots do NOT address it.
+
+**Next time:** (1) determine what the standalone VALUE field means in-game;
+(2) decide the ammo economy data model (column vs vendor-keyed table vs shared
+items/economy model); (3) then gated DDL (+ verified_source) and the confirm
+write. Evidence (screenshots) is captured.
+
+---
+
 ## 2026-06-19 — Cradle verification: track-level facts confirmed, 84 nodes HELD
 
 Two in-game S2 Cradle screenshots were track-level evidence; the table is
