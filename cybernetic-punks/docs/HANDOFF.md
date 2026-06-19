@@ -5,6 +5,34 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — Strategy docs landed (creator + AI-quality roadmap + tier-quality fold)
+
+Docs-only housekeeping of the strategy thread. Three pieces:
+- **[AI_QUALITY_ROADMAP.md](network/AI_QUALITY_ROADMAP.md) (new)** — the substance
+  behind the "verified-data moat." Core reframe (can't fine-tune Claude → context
+  IS the moat); the 6 context layers sorted by the **3-state trust axis**; #2/#3
+  historical-context layer = BUILD FIRST (compressed patterns from our own DB,
+  precompute + code-over-LLM, additive/game-agnostic) with a ready-to-execute
+  read-only scoping pass; the measurement layer (instrument-first / prove-second,
+  brand-safe); cost profile (single-digit $/mo done right) + Supabase-plan/spend-
+  hygiene notes.
+- **[CREATOR_STRATEGY.md](network/CREATOR_STRATEGY.md) (new)** — 4 size-gated
+  stages (trusted-contributor package NOW → creator tools → traded promotion →
+  paid ads). Stage 1 = the verification CONFIRMED-mechanism + AI-moat layer #6,
+  productized; relationship-first, light build waits on monetization enforcement.
+- **[MONETIZATION_STRATEGY.md](network/MONETIZATION_STRATEGY.md) §3.6 (fold)** —
+  AI tier-quality principle: better quality for higher tiers, **accuracy/honesty
+  universal** (free = good+true baseline, paid = richer on top; build-up not
+  strip-down); dimensions + tunable per-tier sketch.
+
+Three threads now interlock in docs: **verification** (3-state) → **AI-quality
+roadmap** (#2/#3 historical first) → **monetization** (the moat = the paid depth)
+→ **creator strategy** (contributors = the CONFIRMED mechanism). Next concrete
+build candidate: the #2/#3 historical-context layer scoping pass (read-only,
+buildable now, no payment/launch gate). All open items unchanged.
+
+---
+
 ## 2026-06-18 — Monetization + AI-moat strategy locked (readiness audit → strategy doc)
 
 Read-only monetization-readiness audit + the strategy worked out from it:
