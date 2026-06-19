@@ -414,6 +414,24 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
               console.log('[CRON] NEXUS upserted meta_tiers: ' + metaRows.length + ' entries, ' + movers.length + ' movers');
               notifyMetaUpdate(metaRows).catch(function(e) { console.log('[DISCORD] meta notify error: ' + e.message); });
 
+              // Stage 3 seed (AI-quality roadmap #2/#3): append an immutable tier
+              // snapshot ALONGSIDE the upsert, into the append-only history table,
+              // so tier streak/churn history accrues (computed later, once enough
+              // snapshots exist). The meta_tiers upsert above is unchanged. This is
+              // purely additive capture and NON-FATAL: a snapshot failure can never
+              // break the live regrade (the upsert has already committed).
+              try {
+                var regradeId = new Date().toISOString();
+                var snapshotRows = metaRows.map(function(r) {
+                  return { game_slug: PRODUCING_GAME_SLUG, entity: r.name, entity_type: r.type, tier: r.tier, regrade_id: regradeId };
+                });
+                var { error: snapErr } = await supabase.from('meta_tier_snapshots').insert(snapshotRows);
+                if (snapErr) console.log('[CRON] tier-snapshot append failed (non-fatal): ' + snapErr.message);
+                else console.log('[CRON] tier-snapshot: appended ' + snapshotRows.length + ' rows (regrade_id=' + regradeId + ')');
+              } catch (snapEx) {
+                console.log('[CRON] tier-snapshot append error (non-fatal): ' + snapEx.message);
+              }
+
               if (movers.length > 0) {
                 tierChangeContext = {
                   isTierRegrade: true,

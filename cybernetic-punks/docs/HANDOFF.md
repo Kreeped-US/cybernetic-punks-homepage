@@ -5,6 +5,44 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — Historical-context layer SHIPPED (AI-quality roadmap #2/#3, Stages 1-3)
+
+The "verified-data moat" first build — compressed coverage patterns from our OWN
+DB that free AI can't replicate. Three staged, gated commits:
+- **Stage 1 (56be1cb)** — precompute pass: `lib/gather/historicalContext.js`
+  computes a small pattern blob from `feed_items` (pure SQL/code, NO LLM) and
+  UPSERTs it to a dedicated `historical_context` table each cron cycle. Patterns:
+  recent-top-topic, rising-topic (recent share >> all-time), shell coverage-skew
+  (most/least-covered), recent-shell-focus — each threshold-gated (thin data →
+  emit nothing). **Streak patterns intentionally dropped** (every shell covered
+  nearly every week → "N cycles" trivially true = low signal). Storage = its own
+  table (chose over `live_stats` after a reader-collision finding).
+- **Stage 2 (16668fa)** — wire the blob into editor prompts (`fetchHistoricalContext`
+  + `formatHistoricalContextBlock`), appended at the cron per-editor block layer to
+  **NEXUS/DEXTER/CIPHER only** (GHOST/MIRANDA skipped). `fetchGameContext` stays
+  byte-identical. Framing is the craft: **background awareness, NOT a topic
+  assignment** — may reference a pattern as texture, must NOT drive topic selection
+  (circularity guard: patterns derive from our own articles, so writing-about-them
+  would self-reinforce). Verified: wired-editor sample stayed on the current topic,
+  no hijack/shoehorn.
+- **Stage 3 seed (this commit)** — `meta_tier_snapshots` (new append-only table):
+  append a tier snapshot ALONGSIDE the current-only `meta_tiers` upsert each NEXUS
+  regrade (cron `processEditor` success branch). Additive + non-fatal (snapshot
+  failure can never break the live regrade; `meta_tiers` + display byte-identical).
+  Starts the clock so tier history accrues — every regrade without it was history
+  we could never recover.
+
+**FUTURE ENRICHMENT (not forgotten):** once enough `meta_tier_snapshots` accrue,
+add tier-streak/churn patterns to the Stage-1 precompute (e.g. "Conquest LMG held
+S-tier 8 cycles", "Sentinel churned A→B→A") — the marquee "N cycles" patterns that
+are currently unbacked. Capture-only this stage; computation is the later add.
+
+DDL lesson banked: verify a new table via `information_schema` + OpenAPI/real
+select (NOT a head-count) before assuming it exists — the Stage-1 "cache saga" was
+a CREATE that never landed, masked as cache lag.
+
+---
+
 ## 2026-06-19 — Strategy docs landed (creator + AI-quality roadmap + tier-quality fold)
 
 Docs-only housekeeping of the strategy thread. Three pieces:
