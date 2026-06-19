@@ -5,6 +5,45 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — Technical SEO arc COMPLETE (codeable side done -> next move is off-code)
+
+Audit found ~1,092 discovered-not-indexed. Worked the codeable levers to
+exhaustion across 5 commits:
+1. Org/WebSite schema + article breadcrumbs + dead public/robots.txt removed.
+2. f896a09 - /weapons index hub (weapon detail pages were orphans, no crawlable
+   parent unlike /shells etc.).
+3. 7b9ca43 - feed_items.noindex flag drives robots:{index:false,follow:true} +
+   sitemap/listing exclusion; 97 weak/stale/duplicate oldest articles de-indexed
+   (data flag-set, reversible, rows NOT deleted -> historical-context intact).
+4. bb1a3a3 - sitemap: removed the arbitrary limit(1000) cap (paginated fetch),
+   surfaces all 172 KEEP early articles; quality gate kept.
+5. 55f2a20 - /intel archive paginated (?page=N) so every quality article has a
+   crawlable internal link path, not just a sitemap entry (the long-tail win).
+
+ONE COHERENT RULE now governs visibility everywhere -- sitemap, all internal
+listings (intel index + pagination, editor lanes, homepage, sitrep, guides,
+related), and the robots meta: "published + indexable (non-noindex)". Add/flip
+the noindex flag and a page consistently leaves/returns across all surfaces.
+
+Cross-cutting lesson banked: PostgREST hard-caps a single response at 1000 rows
+(a high .limit() does NOT override server max-rows); fetch all via .range()
+pagination. Applies to sitemap + any full-corpus read.
+
+CONCLUSION: the engineering side of SEO is DONE. Do NOT manufacture more on-page
+work. The bottleneck is authority/distribution (off-code).
+NEXT MOVE (off-code, Justin):
+- Watch GSC over the next 2-4 weeks: does "discovered - currently not indexed"
+  fall as the de-index + new internal links take effect? Do the 172 KEEP get
+  indexed? Impressions trend? That data says whether indexation was the blocker
+  or it is purely authority.
+- Then authority/distribution: backlinks, Reddit/Discord, the creator strategy
+  (contributor pipeline) -- the real needle-mover at this stage.
+- RECONFIRM the GSC property is apex (cyberneticpunks.com) or a Domain property:
+  the site is apex-canonical (www 301s to apex), so a www-only property would
+  look empty. (Old notes said "www" -- the code + live redirects are apex.)
+
+---
+
 ## 2026-06-19 — SEO prune: 97 oldest articles noindexed (reversible, rows intact)
 
 Internal-linking audit found ~1,092 discovered-not-indexed; the oldest 379 (the
