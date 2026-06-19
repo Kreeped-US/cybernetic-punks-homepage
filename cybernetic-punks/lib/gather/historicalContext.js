@@ -86,6 +86,45 @@ export function computePatterns(items, config, now = Date.now()) {
 
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
+// Stage 2 — read the precomputed blob for a game. Non-fatal: missing row / error
+// -> [] (caller injects nothing, editor proceeds as today).
+export async function fetchHistoricalContext(config = getGameConfig(), supabase) {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('historical_context')
+      .select('patterns')
+      .eq('game_slug', config.slug)
+      .maybeSingle();
+    if (error || !data) return [];
+    return Array.isArray(data.patterns) ? data.patterns : [];
+  } catch (err) {
+    console.error('[historical] fetch failed (non-fatal):', err.message);
+    return [];
+  }
+}
+
+// Stage 2 — render the per-editor prompt block. The FRAMING is the craft:
+// background AWARENESS (texture), NOT a topic assignment. Empty patterns -> ''
+// (inject nothing). The patterns are SQL-derived from our own records
+// (CONFIRMED-tier), so an editor may state a referenced one as fact.
+export function formatHistoricalContextBlock(patterns) {
+  if (!patterns || patterns.length === 0) return '';
+  const lines = patterns.map((p) => '- ' + p).join('\n');
+  return '\n\n--- HISTORICAL CONTEXT (from our own coverage records) ---\n'
+    + 'Factual longitudinal patterns computed from our own published coverage over time '
+    + '(not external claims). You MAY reference one as supporting TEXTURE when it genuinely '
+    + 'fits the article you are ALREADY writing -- it lends your analysis longitudinal, '
+    + '"I have tracked this over time" depth. These are confirmed from our records, so you '
+    + 'may state a referenced pattern as fact (no hedging needed for these specific lines).\n'
+    + 'DO NOT treat these as topics to write about. They must NOT drive your topic selection '
+    + '-- your subject still comes from the current sources above. Reference a pattern ONLY '
+    + 'where it naturally fits; never shoehorn one in, and never pivot the article to a '
+    + 'flagged pattern.\n'
+    + lines + '\n'
+    + '--- END HISTORICAL CONTEXT ---';
+}
+
 // Precompute pass: read feed_items for the game, compute patterns, UPSERT the
 // blob. Self-catching + non-fatal (a failure must never break the cron). NO
 // editor reads this yet (Stage 2 wires it).

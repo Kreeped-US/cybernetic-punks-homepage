@@ -4,7 +4,7 @@ import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
-import { precomputeHistoricalContext } from '@/lib/gather/historicalContext';
+import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -631,12 +631,25 @@ export async function GET(req) {
 
     var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
 
+    // Historical-context block (AI-quality roadmap #2/#3, Stage 2): background
+    // awareness/texture for the meta + build editors. Read once; non-fatal
+    // (missing blob -> '' -> nothing injected). Wired into NEXUS/DEXTER/CIPHER
+    // only (GHOST/MIRANDA skipped). Appended at the per-editor block layer so
+    // fetchGameContext stays byte-identical.
+    var historicalBlock = '';
+    try {
+      historicalBlock = formatHistoricalContextBlock(await fetchHistoricalContext(PRODUCING_GAME, supabase));
+    } catch (hErr) {
+      console.log('[CRON] historical-context fetch failed (non-fatal): ' + hErr.message);
+    }
+
     if (typeof prompts.CIPHER === 'string') {
       if (directiveMap['CIPHER']) prompts.CIPHER += buildDirectiveBlock(directiveMap['CIPHER']);
       else {
         prompts.CIPHER += buildNoRepeatBlock(recentHeadlines.CIPHER);
         if (hasPatch) prompts.CIPHER += patchBlock;
       }
+      prompts.CIPHER += historicalBlock;
     }
 
     if (typeof prompts.NEXUS === 'string') {
@@ -647,6 +660,7 @@ export async function GET(req) {
       } else {
         prompts.NEXUS += buildNoRepeatBlock(recentHeadlines.NEXUS);
       }
+      prompts.NEXUS += historicalBlock;
     }
 
     if (typeof prompts.DEXTER === 'string') {
@@ -655,6 +669,7 @@ export async function GET(req) {
         prompts.DEXTER += buildNoRepeatBlock(recentHeadlines.DEXTER);
         if (hasPatch) prompts.DEXTER += patchBlock;
       }
+      prompts.DEXTER += historicalBlock;
     }
 
     if (typeof prompts.GHOST === 'string') {
