@@ -5,6 +5,55 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — Cradle verification: track-level facts confirmed, 84 nodes HELD
+
+Two in-game S2 Cradle screenshots were track-level evidence; the table is
+node-level (84 rows). Track evidence can't honestly stamp node flags, so NO
+cradle_nodes write was made (would overstate what was checked). See
+[VERIFICATION_PROTOCOL.md](network/VERIFICATION_PROTOCOL.md).
+
+**Confirmed (track-level, from the screenshots):**
+- The 6 tracks exist as named, matching `cradle_nodes.stat_track`: Strength,
+  Recharge, Dexterity, Endurance, Support, Resistance.
+- **Dexterity track -> Agility + Loot Speed** (Image 2 detail panel; exact match
+  to the stored `stat_improved` for that track).
+- Track cumulative-stat display observed (Strength +45, Recharge +40, Dexterity
+  +20 / maxed +55, Endurance +35, Support +15, Resistance +30) — reflects energy
+  invested; CONTEXT ONLY, not a per-node confirmation.
+
+**NOT confirmed — the 84 nodes remain UNCHECKED (0/84):**
+- `cradle_nodes` = 84 node-level rows (6 tracks x 14 = 11 passive + 3 perk each).
+  The screenshots show the TRACK view (cumulative stats + perk icons), NOT
+  per-node detail (each node's exact name/effect/cost).
+- Track-level evidence cannot verify node-level rows -> all 84 stay
+  verified=false until a PER-NODE source is confirmed to exist (the in-game
+  node-selection screen showing one node's exact name, effect, energy cost).
+  OPEN: does the game expose that per-node detail? If yes, capture + verify; if
+  not, these nodes may not be cleanly confirmable.
+
+**Before any future cradle_nodes confirm write:**
+- `cradle_nodes` is MISSING a `verified_source` column (same as shell_stat_values
+  was). Add via gated DDL (`alter table public.cradle_nodes add column if not
+  exists verified_source text;` + reload + verify) BEFORE confirming — no
+  untraceable confirmations.
+
+**Open structural questions (HOLD if unclear when verifying nodes):**
+- **Branching:** `branch_group` is null for all 84 -> the table models each track
+  as a LINEAR 14-node chain. Verify whether tracks branch (choices) or are
+  linear; if they branch, the data shape is wrong -> fix data, don't confirm a
+  linear shape.
+- **energy_cost uniform = 1:** verify it's the real design (cumulative steps
+  1->14), don't assume.
+
+**Protocol observation (ties to VERIFICATION_PROTOCOL.md):** this session saw
+repeated drift from exact screenshots to qualitative descriptions / "approximate"
+values when exact per-item data wasn't viewable (Rook x2; the Endurance-track
+writeup). Descriptions, relative rankings, and "approximate" figures are NOT
+confirmation-grade -> they get HELD, not confirmed. A recurring (and expected,
+esp. under fatigue) pattern the protocol is designed to catch.
+
+---
+
 ## 2026-06-19 — Session operational lessons + verification protocol
 
 The data-confirmation discipline got its own doc:
