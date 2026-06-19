@@ -138,6 +138,7 @@ export default async function SitrepPage() {
       .select('id, headline, body, slug, editor, tags, ce_score, thumbnail, created_at')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)
       .gte('created_at', new Date(Date.now() - 48 * 3600000).toISOString())
       .order('created_at', { ascending: false })
       .limit(40),
@@ -149,6 +150,7 @@ export default async function SitrepPage() {
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)
       .gte('created_at', new Date(Date.now() - 48 * 3600000).toISOString())
       .order('ce_score', { ascending: false })
       .limit(1)
@@ -160,6 +162,7 @@ export default async function SitrepPage() {
       .select('id, headline, slug, editor, tags, ce_score, thumbnail, created_at')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)
       .gte('created_at', new Date(Date.now() - 48 * 3600000).toISOString())
       .gt('ce_score', 0)
       .order('ce_score', { ascending: false })

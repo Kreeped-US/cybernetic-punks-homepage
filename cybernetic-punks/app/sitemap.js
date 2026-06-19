@@ -199,6 +199,9 @@ export default async function sitemap() {
         // for the single-domain SEO strategy. DMZ URL emission (/dmz/...) is a
         // Step-4 item: build it when the /dmz route group + DMZ content exist.
         .eq('game_slug', 'marathon')
+        // SEO prune: keep de-indexed articles out of the sitemap (no mixed
+        // signal). The rows stay; only their search visibility is removed.
+        .eq('noindex', false)
         .order('created_at', { ascending: false })
         .limit(1000);
 

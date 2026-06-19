@@ -45,6 +45,7 @@ export async function GET() {
         .select('headline, slug, editor, tags, thumbnail, ce_score, created_at')
         .eq('is_published', true)
         .eq('game_slug', 'marathon')
+        .eq('noindex', false)
         .order('created_at', { ascending: false })
         .limit(25),
 
@@ -55,6 +56,7 @@ export async function GET() {
         .eq('editor', 'GHOST')
         .eq('is_published', true)
         .eq('game_slug', 'marathon')
+        .eq('noindex', false)
         .order('created_at', { ascending: false })
         .limit(1)
         .single(),
@@ -65,6 +67,7 @@ export async function GET() {
         .select('headline, slug, body, editor, tags, thumbnail, ce_score, created_at, source_url')
         .eq('is_published', true)
         .eq('game_slug', 'marathon')
+        .eq('noindex', false)
         .gte('created_at', new Date(Date.now() - 24 * 3600000).toISOString())
         .gt('ce_score', 0)
         .order('ce_score', { ascending: false })

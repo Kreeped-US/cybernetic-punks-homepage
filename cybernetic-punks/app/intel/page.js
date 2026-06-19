@@ -119,6 +119,7 @@ export default async function IntelHubPage() {
     .select('*')
     .eq('is_published', true)
     .eq('game_slug', 'marathon')
+    .eq('noindex', false)
     .order('created_at', { ascending: false })
     .limit(100);
 

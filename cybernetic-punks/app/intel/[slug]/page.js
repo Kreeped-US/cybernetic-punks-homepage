@@ -257,6 +257,9 @@ export async function generateMetadata({ params }) {
     openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at, images: [{ url: item.thumbnail || 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }] },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: item.headline, description: desc, images: [item.thumbnail || 'https://cyberneticpunks.com/og-image.png'] },
     alternates: { canonical: 'https://cyberneticpunks.com/intel/' + item.slug },
+    // SEO prune: de-index flagged articles. follow:true so outbound link equity
+    // still flows. Row stays intact (historical-context reads it regardless).
+    robots: item.noindex ? { index: false, follow: true } : undefined,
   };
 }
 
@@ -1275,7 +1278,7 @@ export default async function IntelPage({ params }) {
   if (editorConfig) {
     var items = [];
     try {
-      var { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).eq('game_slug', 'marathon').order('created_at', { ascending: false }).limit(50);
+      var { data } = await supabase.from('feed_items').select('headline, body, slug, tags, ce_score, created_at, source, thumbnail, source_url').eq('editor', editorConfig.name).eq('is_published', true).eq('game_slug', 'marathon').eq('noindex', false).order('created_at', { ascending: false }).limit(50);
       if (data) items = data;
     } catch (err) { console.error('EditorLanePage fetch error:', err); }
     return <EditorLanePage config={editorConfig} items={items} />;
@@ -1332,8 +1335,19 @@ export default async function IntelPage({ params }) {
       if (!rpcResult.error && rpcResult.data) related = rpcResult.data;
     }
     if (related.length === 0) {
-      var fallback = await supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).eq('game_slug', 'marathon').neq('slug', slug).order('created_at', { ascending: false }).limit(6);
+      var fallback = await supabase.from('feed_items').select('headline, slug, editor, tags, created_at').eq('is_published', true).eq('game_slug', 'marathon').eq('noindex', false).neq('slug', slug).order('created_at', { ascending: false }).limit(6);
       if (!fallback.error && fallback.data) related = fallback.data;
+    }
+    // SEO prune: the get_related_articles RPC takes no noindex param, so drop any
+    // de-indexed related rows here -> we never internally link to a noindexed page.
+    if (related.length > 0) {
+      var relSlugs = related.map(function(r) { return r.slug; });
+      var { data: niRows } = await supabase.from('feed_items').select('slug').in('slug', relSlugs).eq('noindex', true);
+      if (niRows && niRows.length > 0) {
+        var niSet = {};
+        niRows.forEach(function(r) { niSet[r.slug] = true; });
+        related = related.filter(function(r) { return !niSet[r.slug]; });
+      }
     }
   } catch (err) { /* non-fatal */ }
 
