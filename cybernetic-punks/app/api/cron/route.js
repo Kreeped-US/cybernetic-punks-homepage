@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
+import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 
 export const dynamic = 'force-dynamic';
 
@@ -811,6 +812,11 @@ export async function GET(req) {
     // non-fatal. NOTHING reads the blob yet (editor wiring is Stage 2) -> zero
     // effect on generated output this stage.
     await precomputeHistoricalContext(PRODUCING_GAME, supabase);
+
+    // Internal AI-quality measurement (roadmap measurement layer): snapshot the
+    // objective verification/currency metrics each cycle. Pure SQL/code, NO LLM,
+    // non-fatal, internal-only -- nothing consumes it yet -> zero output change.
+    await precomputeQualityMetrics(PRODUCING_GAME, supabase);
 
     return Response.json({
       success: true,
