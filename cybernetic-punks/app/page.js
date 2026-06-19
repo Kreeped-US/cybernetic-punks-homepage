@@ -219,6 +219,24 @@ export default async function Home() {
 
   return (
     <div style={{ background: '#121418', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Site-entity structured data (Organization + WebSite). Apex canonical host,
+          matching metadataBase/sitemap/canonicals (www 301s to apex). Name matches
+          the existing Article-publisher entity ("CyberneticPunks") so Google sees
+          one entity. No SearchAction: there is no site-search endpoint to point at. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'CyberneticPunks',
+        url: 'https://cyberneticpunks.com',
+        logo: 'https://cyberneticpunks.com/icon-512.png',
+        sameAs: ['https://x.com/Cybernetic87250'],
+      }) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'CyberneticPunks',
+        url: 'https://cyberneticpunks.com',
+      }) }} />
       <style>{`
         .hp-wrap { max-width: 1100px; margin: 0 auto; width: 100%; }
         .hp-product-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }

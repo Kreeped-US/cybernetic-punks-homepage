@@ -1051,9 +1051,20 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
     if (sameAs.length > 0) jsonLd.about.sameAs = sameAs;
   }
 
+  // Breadcrumb trail (Home -> Intel -> this article). Apex canonical host.
+  var breadcrumbLd = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+      { '@type': 'ListItem', position: 2, name: 'Intel', item: 'https://cyberneticpunks.com/intel' },
+      { '@type': 'ListItem', position: 3, name: item.headline, item: articleUrl },
+    ],
+  };
+
   return (
     <main style={{ backgroundColor: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       {creatorPersonSchema && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(creatorPersonSchema) }} />
       )}
