@@ -5,6 +5,59 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — OPEN ITEM: verification-status guardrail fix (diagnosed, ready to build)
+
+Editorial-accuracy bug found in an article audit; diagnosed read-only; the edit
+is deferred to a fresh session. Ties to [verification.js](../../lib/verification.js)
++ [VERIFICATION_PROTOCOL.md](network/VERIFICATION_PROTOCOL.md) (verified=true means
+something; output must not counterfeit it).
+
+**The bug (June 19):** Miranda's Recon guide asserted "The 'Head Start' perk
+(confirmed at 4 Energy)" — stating a Cradle value as CONFIRMED when cradle_nodes
+is 0/84 verified. Same article also said "All Cradle values here are listed as
+unconfirmed" — a self-contradiction.
+
+**Diagnosis (traced in lib/editorCore.js — the PIPELINE IS CORRECT):**
+- fetchGameContext selects verified/patch_verified for cradle_nodes (~L648) and
+  renders each perk with verificationTag() -> [UNVERIFIED] (~L787-788); all 84
+  are verified=false so every perk line is tagged.
+- All 5 editors get this same tagged context (~L1158). Miranda has NO separate
+  untagged Cradle source (buildMirandaPrompt renders no Cradle block).
+- "4 Energy" = real cumulative_energy; "confirmed" is NOT in the data (editor-
+  added). => NOT a context gap (A) or hedging-coverage gap (B).
+
+**Verdict:**
+- (D) MODEL FREELANCING — primary. Same cycle, identical tagged context, Dexter +
+  Nexus hedged Cradle correctly, Miranda didn't. Her self-contradiction proves
+  the [UNVERIFIED] signal arrived + was understood; the "confirmed" line is a
+  generation lapse, not a missing signal.
+- (C) GUARDRAIL GAP — secondary (what let it through). VERIFICATION_NOTE
+  (verification.js ~L53-65) forbids stating precise numbers as fact, but has NO
+  explicit rule against the verification-STATUS vocabulary ("confirmed",
+  "verified", "official"). Asserting a status the data lacks is a distinct,
+  unnamed failure mode.
+
+**SCOPED FIX (ready to build, gated — do fresh):**
+- ~5-line edit to the SHARED VERIFICATION_NOTE in lib/verification.js (single
+  source -> all 5 editors + advisor; general, NOT Cradle-specific).
+- Add a hard status-UPGRADE rule, roughly: "Never describe any value as
+  'confirmed'/'verified'/'official' unless its line carries no marker. A
+  [UNVERIFIED]/[SOURCE-LISTED] value stated as confirmed — or any claim that data
+  is verified when it isn't — is a factual error. Never upgrade a value's status;
+  when in doubt, attribute or omit."
+- Frame as "never upgrade a value's status beyond its marker" (catches the
+  general case, not just the literal word). Apply to ALL stat data. Verify the
+  note reaches all 5 editors + advisor after the edit.
+
+**Residual model variance (acknowledged):** a prompt can't fully eliminate (D).
+IF it recurs after the guardrail, the proportionate backstop is a cheap
+post-generation LINT (flag any article with "confirmed/verified/official" within
+N chars of a stat/number for review — detection, not rewrite). Do NOT build the
+lint now — over-engineering for a single occurrence; the guardrail is the right
+first response.
+
+---
+
 ## 2026-06-19 — Ammo economy data: evidence in hand but HELD (needs a model decision)
 
 In-game item-card screenshots for 5 ammo types (Heavy Rounds, Light Rounds,
