@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '@/lib/models';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { checkFeatureAccess } from '@/lib/entitlements';
 
 // SECURITY (audit #6): one Claude call per request and a conversational Q&A
 // flow, so this is more permissive than the heavier audit route: 30 questions
@@ -74,6 +75,18 @@ export async function POST(request) {
     }
 
     const supabase = getSupabase();
+
+    // Entitlement gate (stage 2). INERT today: all tiers have override_all_free
+    // -> checkFeatureAccess short-circuits to ALLOW, so this never blocks. The
+    // helper is fail-safe (returns ALLOW on any error, never throws). The deny
+    // branch is unreachable until override_all_free is flipped (stage 3).
+    const access = await checkFeatureAccess(supabase, playerId, 'ask_editor');
+    if (!access.allowed) {
+      return NextResponse.json(
+        { error: 'limit_reached', feature: 'ask_editor', tier: access.tier, limit: access.limit, used: access.used, upgrade_to: access.upgrade_to ?? null },
+        { status: 402 }
+      );
+    }
 
     // Fetch latest audit and snapshot for context
     const { data: audit } = await supabase

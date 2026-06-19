@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '@/lib/models';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { checkFeatureAccess } from '@/lib/entitlements';
 
 // SECURITY (audit #6): this route fires ~3 Sonnet calls per request, so it gets
 // a TIGHTER limit than the chattier ask-editor route. 5 audits / 5 min is
@@ -83,6 +84,18 @@ export async function POST() {
     }
 
     const supabase = getSupabase();
+
+    // Entitlement gate (stage 2). INERT today: all tiers have override_all_free
+    // -> checkFeatureAccess short-circuits to ALLOW, so this never blocks. The
+    // helper is fail-safe (returns ALLOW on any error, never throws). The deny
+    // branch is unreachable until override_all_free is flipped (stage 3).
+    const access = await checkFeatureAccess(supabase, playerId, 'audit_run');
+    if (!access.allowed) {
+      return NextResponse.json(
+        { error: 'limit_reached', feature: 'audit_run', tier: access.tier, limit: access.limit, used: access.used, upgrade_to: access.upgrade_to ?? null },
+        { status: 402 }
+      );
+    }
 
     const { data: snap, error: snapErr } = await supabase
       .from('loadout_snapshots')

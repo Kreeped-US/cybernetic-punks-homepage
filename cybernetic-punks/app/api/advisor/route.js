@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '@/lib/models';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { checkFeatureAccess } from '@/lib/entitlements';
 import { verificationTag, VERIFICATION_NOTE } from '@/lib/verification';
 
 // SECURITY (audit #2): this route makes a PAID Claude call per request. It is
@@ -315,6 +316,19 @@ export async function POST(req) {
       return Response.json(
         { error: 'Rate limit exceeded — slow down and try again shortly.' },
         { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
+
+    // Entitlement gate (stage 2). advisor has no feature_gates row -> the helper
+    // returns no_gate ALLOW (pass-through today); wired so a future advisor gate
+    // is a data row, not a code change. INERT regardless (override_all_free) and
+    // fail-safe (ALLOW on error). Deny branch unreachable until stage 3.
+    const gateSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const access = await checkFeatureAccess(gateSupabase, playerId, 'advisor_generate');
+    if (!access.allowed) {
+      return Response.json(
+        { error: 'limit_reached', feature: 'advisor_generate', tier: access.tier, limit: access.limit, used: access.used, upgrade_to: access.upgrade_to ?? null },
+        { status: 402 }
       );
     }
 
