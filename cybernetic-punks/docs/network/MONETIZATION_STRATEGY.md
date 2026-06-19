@@ -97,6 +97,74 @@ every paid route — gating just needs to read the tier off it.
   (intel-org / clearance-level framing that reads naturally for any extraction
   shooter). **NOT yet named** — OPEN.
 
+### 3.6 AI tier-quality differentiation — better quality per tier, **accuracy universal**
+*How AI output differs by tier (DECIDED this session).*
+
+**Principle:** higher tiers get genuinely BETTER AI content — more depth,
+reasoning, personalization, scope. A real, honest upsell.
+
+**The ONE universal (the guardrail):** accuracy and honesty are **IDENTICAL at
+every tier, including free.** Correctness is the BRAND, not a premium feature.
+The verified-data foundation (current, verified, honestly-hedged stats) is the
+same for everyone. Tiers differ by how much / how deep / how personalized —
+**NEVER by how true.**
+
+**Construction rule (subtle but important):** build the FREE tier as a genuinely
+good, complete, accurate **standalone** product, then make paid tiers RICHER on
+top. Do NOT build the premium version and strip it down to free. Same output gap,
+opposite feel: *"upgrade for more"* converts; *"pay to unlock what we withheld"*
+resents — and resentment is fatal for a trust brand. Free = good + true baseline;
+paid = more + deeper.
+
+**Why it's safe AND strong:** the richest context layers (historical patterns
+#2/#3, personal-stats / cross-game personalization, deep analysis) are NATURALLY
+expensive to produce and genuinely more valuable — so gating THEM by tier is
+honest ("you pay for deeper analysis and personalization"), not artificial ("we
+made the cheap one worse"). **The AI-quality roadmap and the tier ladder are the
+same project:** the premium context layers ARE the paid depth.
+
+**Dimensions "better" scales on (none touch accuracy):**
+- **Depth:** recommendation → + reasoning ("why, and when to deviate") →
+  + alternatives/trade-offs → + matchup/situational variations
+- **Personalization:** generic → playstyle-aware → your-career/stats-aware
+  (cross-game hook, where data allows)
+- **Scope:** one editor's lens → multiple → all-editors / cross-editor synthesis
+- **Context richness:** current verified stats (UNIVERSAL) → + historical patterns
+  (#2/#3) → + community/creator signal (hedged as sentiment)
+- **Interaction:** one-shot answer → iterate / refine / follow-up
+- **Proactivity:** pull-on-demand → pushed alerts / coaching
+
+**TUNABLE per-tier sketch (starting point, NOT locked — mapped to 1-free + 4-paid;
+`feature_gates` is data, so move things by what converts; accuracy identical at
+every rung):**
+- **Free** — a genuinely good, complete, ACCURATE answer: current verified stats,
+  a solid build/recommendation, honest hedging. Limited QUANTITY (existing daily
+  caps). True and useful; just not deep or personalized. Good, not crippled.
+- **Tier 2 (entry paid)** — caps removed + **reasoning** ("why this, when to
+  deviate") + basic **playstyle personalization**. The "give me the *why*" tier.
+- **Tier 3** — + **historical/pattern context** (#2/#3: "held S-tier 8 cycles") +
+  alternatives/comparisons + analysis-editor depth (Cipher-level). The "help me
+  understand the meta" tier.
+- **Tier 4** — + **personalization from real stats/career** (where data allows:
+  CoD-stats bonus + cross-game profile) + **iterative/refine**. The "coach me
+  specifically" tier.
+- **Tier 5 (top)** — + **all-editors synthesis** + **proactive coaching/alerts** +
+  deepest analysis. The "everything, pushed to me" tier.
+
+**Honest caveats:**
+1. **Tunable, not locked** — start simpler than this if unsure (e.g. just
+   free=recommendation / paid=+reasoning+personalization), see what converts, tune
+   via `feature_gates`. Don't over-engineer a 5-way quality gradient on day one.
+2. **Higher tiers' richness FILLS IN as the moat gets built** — personal-stats
+   (CoD endpoint, fragile/bonus) and historical patterns (#2/#3, not built yet)
+   are roadmap items, so the top tiers' "better" partly arrives WITH the
+   AI-quality roadmap, not all at launch. The ladder and the roadmap are one project.
+3. **Accuracy/honesty identical at every rung** — the non-negotiable. Free is
+   never less TRUE, only less deep/personalized/broad.
+4. **Reading content stays free for all** — articles/meta/intel (the SEO + traffic
+   surface) are universal; tiering applies to the LIVE AI features, not the static
+   editorial content.
+
 ---
 
 ## 4. The AI moat (the make-or-break: why pay vs free ChatGPT)
