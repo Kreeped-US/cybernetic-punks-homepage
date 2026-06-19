@@ -5,6 +5,30 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — Contributor-program design doc (creator strategy stage 1 detail)
+
+[docs/network/CONTRIBUTOR_PROGRAM.md](network/CONTRIBUTOR_PROGRAM.md) (new,
+docs-only) — the detailed Stage 1 of CREATOR_STRATEGY.md. It operationalizes the
+verification CONFIRMED mechanism: contributors are the SUPPLY CHAIN for the
+moat's core input (no authoritative Marathon stats source exists -> verified=true
+only grows via a trusted human confirming in-game).
+- DECIDED — the OFFER (give: in-game confirmation of specific backlog stat values
+  + evidence; get: public attribution, status badge, influence, free premium at
+  rollout — recognition-as-reward, cash-free pre-revenue) and the TRUST MODEL
+  (graduated, moat-defending: submission != confirmation/human-in-the-loop;
+  evidence raises trust; track record earns standing; disagreement stays
+  unconfirmed; attribution = credit AND accountability; START small/high-trust,
+  2-5 vetted players, NOT an open form).
+- Target backlog = the quality_metrics 0%/low tables (cradle_nodes 0/84,
+  shell_stat_values 0/91, ammo 0/5, shells 1/8, mod source-attribution 17.3%).
+- OPEN — submission->approval->verified=true mechanics (light code, later),
+  recruitment (who + what to verify first), productization timing (premium grant
+  waits on monetization rollout; relationship + manual confirm-flow start now).
+- Lowest-friction first move (no code): recruit 2-3 known contributors, run the
+  confirm-flow manually against the 0% tables.
+
+---
+
 ## 2026-06-19 — Technical SEO arc COMPLETE (codeable side done -> next move is off-code)
 
 Audit found ~1,092 discovered-not-indexed. Worked the codeable levers to
