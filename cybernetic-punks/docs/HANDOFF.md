@@ -5,6 +5,51 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — OPEN ITEM: presence-only auth hardening (defense-in-depth, low priority)
+
+Diagnosed read-only after a bot/scraper wave (932 visitors/7d, 88% Singapore =
+datacenter/bot, likely search re-crawl after the SEO push + AI/datacenter
+scrapers). Question: can that traffic cost Anthropic money?
+
+**Confirmed — the observed wave is HARMLESS (no action needed):**
+- All 3 paid routes (/api/advisor, /api/ask-editor, /api/audit) require the
+  cp_player_id cookie and 401 a COOKIELESS caller BEFORE rate-limit and BEFORE
+  the Anthropic call. Order verified auth -> rate-limit -> Anthropic on all three.
+- /advisor page load does NOT fire a call — the fetch('/api/advisor') is inside
+  generateBuild(), only on the Generate/Surprise Me onClick. Bot page views =
+  server render + DB reads, zero Anthropic (the 12 /advisor hits were harmless).
+- The 2 other Anthropic call sites (lib/editorCore.js, lib/gather/dexter-stats.js)
+  are CRON-only (CRON_SECRET-gated), not bot-reachable.
+- => cookieless Singapore wave cannot reach a paid call. Console spend-limit
+  (set separately) is the hard backstop on top.
+
+**THE BANKED GAP (defense-in-depth, NOT urgent, NOT the bot wave):**
+Auth is PRESENCE-ONLY: `if (!cp_player_id) 401` — it does not verify the cookie
+is a REAL player. A DELIBERATE attacker could forge cp_player_id=<any string> to
+pass auth, and ROTATE the value to defeat the per-player rate-limit (fabricated
+id = fresh bucket). Per route:
+- /api/audit — incidentally safe: requires a real loadout_snapshots row ->
+  fabricated id 404s before Anthropic.
+- /api/advisor — REACHABLE: context is shell data, never checks player exists ->
+  forged cookie -> Anthropic fires.
+- /api/ask-editor — REACHABLE: loads player audit/snapshot as OPTIONAL context
+  (null ok) -> proceeds to Anthropic for a nonexistent player.
+Targeted-abuse vector (intentional cookie-forging), NOT generic bot traffic.
+
+**SCOPED FIX (ready to build, gated — do fresh):**
+- On /api/advisor and /api/ask-editor, validate cp_player_id exists in
+  player_profiles BEFORE the Anthropic call: one indexed PK lookup
+  (select id from player_profiles where id = playerId), 401/403 if absent.
+- Mirrors what /api/audit already does implicitly (its loadout lookup).
+- Side benefit: makes the per-player rate-limit BINDING — rotation can't mint
+  fresh buckets since only real ids pass.
+- Minimal — one lookup per route, before the call. No new auth system.
+
+**Priority:** low / when-convenient. The spend-limit + cookieless-401 already
+bound the real risk; this closes the deliberate-forgery vector.
+
+---
+
 ## 2026-06-19 — OPEN ITEM: verification-status guardrail fix (diagnosed, ready to build)
 
 Editorial-accuracy bug found in an article audit; diagnosed read-only; the edit
