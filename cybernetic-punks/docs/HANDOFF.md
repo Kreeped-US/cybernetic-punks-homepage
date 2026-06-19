@@ -5,6 +5,60 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — Session operational lessons + verification protocol
+
+The data-confirmation discipline got its own doc:
+**[VERIFICATION_PROTOCOL.md](network/VERIFICATION_PROTOCOL.md)** — how verified=true
+is earned honestly (uniformity test for placeholder data, correct-then-confirm,
+exact-measured-values-only, HOLD on contradiction, read-back-before-write,
+verified_source from the start). Read it before any confirmation write.
+
+**Operational gotchas hit repeatedly this session (bank these):**
+- **PostgREST/Supabase DDL:** after any CREATE/ALTER, VERIFY the object exists via
+  information_schema (require it to RETURN A ROW) before proceeding — a CREATE
+  silently not landing was misdiagnosed as cache lag for ~an hour. Don't trust
+  head-count selects; use a real select / the OpenAPI spec as ground truth.
+- **"Success. No rows returned" is NORMAL for DDL** (not an error). The same
+  message on a verify-SELECT means the object is ABSENT (a found object returns a
+  row). Know which statement you ran.
+- **PostgREST hard-caps a single response at 1000 rows** even with .limit(50000)
+  — RANGE-PAGINATE (.range) to get more. Bit the sitemap.
+- **Schema-cache reload:** `NOTIFY pgrst, 'reload schema'` first; if the write
+  path is still stale, the Dashboard Data API config-save (toggle a setting +
+  Save) reliably clears it (no dedicated reload button).
+- **ESM/unit-test pattern:** project .js modules are Next-resolved, NOT bare-node
+  importable. For testable logic: pure dependency-free `.mjs` core (bare-node +
+  node:test) + thin `.js` I/O wrapper that calls it. Used for computePatterns,
+  entitlementsDecision, qualityMetricsCore — repeat for any logic worth testing.
+- **git hygiene:** NO backticks in `git -m` (bash substitution blanks the word).
+  DB writes are a different safety category than git — the rollback net is the
+  captured before-SELECT, not a commit.
+
+**Session state (where things stand):**
+- **Data verification:** `confirmed_data_share` 52.1% -> **64.9%** (426/656).
+  `shell_stat_values` 0/91 -> **91/104** (6 shells corrected+confirmed, Sentinel
+  13 inserted+confirmed, all S2-screenshot-sourced). **Rook's 13 stay UNCHECKED**
+  (contradictory evidence). `shell_stats` (SEPARATE 8-shell top-line table) still
+  **1/8** — 7-shell confirm checklist ready from the earlier pull (verify
+  HP/shield/speed + the ability-schema question: prime/tactical set looks live,
+  active_ability_* may be stale).
+- **Shipped today (all pushed):** historical-context moat (3 stages); full
+  codeable SEO pass (audit, /weapons hub, noindex prune, sitemap uncap, /intel
+  pagination) — engineering side DONE, growth now off-code; monetization
+  enforcement Stages 1-2 (lib/entitlements engine wired into 3 routes, INERT
+  under override_all_free); quality measurement layer (quality_metrics precompute
+  + admin dashboard); contributor-program + verification-protocol docs.
+- **Open / next:** contributor recruitment (off-code, the real growth lever;
+  backlog targets: cradle 0/84, ammo 0/5 [placeholder — needs real data first,
+  like Rook], mod_stats source-backfill 81 [maybe self-serve], shell_stat_values
+  Rook 13); shell_stats 7-shell confirm (checklist ready); admin-auth
+  single-source TODO (migrate /api/admin + /api/admin/stats to lib/adminAuth.js);
+  Cluster B cleanup (drop dead network_account/subscription); monetization Stage 3
+  (rollout — needs Stripe + tier redesign); deferred metrics (hedging-input
+  logging, correction-rate snapshots).
+
+---
+
 ## 2026-06-19 — Contributor-program design doc (creator strategy stage 1 detail)
 
 [docs/network/CONTRIBUTOR_PROGRAM.md](network/CONTRIBUTOR_PROGRAM.md) (new,
