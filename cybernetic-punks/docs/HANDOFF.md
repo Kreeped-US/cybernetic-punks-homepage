@@ -5,6 +5,37 @@ Newest entries on top.
 
 ---
 
+## 2026-06-19 — SEO prune: 97 oldest articles noindexed (reversible, rows intact)
+
+Internal-linking audit found ~1,092 discovered-not-indexed; the oldest 379 (the
+pre-mature-pipeline cohort, Mar 7 - Apr 5 2026) were quality-classified
+KEEP 172 / HOLD 110 / PRUNE 97. The 97 PRUNE (empty / <150w thin / stale
+"launching soon" pre-launch language / duplicate-cluster extras) are now
+de-indexed so they can't drag site-level quality.
+
+Mechanism (NOT deletion -- rows must stay or the historical-context coverage
+patterns corrupt; the precompute counts feed_items by game_slug and ignores
+publish/noindex state, verified):
+- DDL: feed_items.noindex boolean not null default false (run in Supabase).
+- DATA FLAG-SET (this is a DB update, not code): noindex=true on the exact 97
+  PRUNE ids, regenerated from the deterministic classifier so they match the
+  reviewed set exactly. Verified count(noindex=true)=97. REVERSIBLE: flip the
+  flag to restore. To re-derive/extend: the classifier lives in the chat history
+  (word-count + headline-Jaccard>=0.55 clustering + stale-keyword scan).
+- CODE (committed): generateMetadata emits robots:{index:false,follow:true} when
+  item.noindex; sitemap + every article-linking listing (intel index, editor
+  lanes, homepage recent, sitrep, guide categories, related fallback + a
+  post-filter on the get_related_articles RPC) exclude noindex=true.
+
+Verified: a flagged article returns 200 + noindex meta (NOT 404); unflagged
+unchanged/indexable; flagged slug absent from sitemap + /intel; historical blob
+recomputes identical (corpus still 1786, 4 lines). Build green.
+
+Follow-ups (separate, not done): #4 selective sitemap-cap raise to surface the
+172 KEEP; #1 paginated /intel archive linking only the quality (non-noindex) set.
+
+---
+
 ## 2026-06-19 — Historical-context layer SHIPPED (AI-quality roadmap #2/#3, Stages 1-3)
 
 The "verified-data moat" first build — compressed coverage patterns from our OWN
