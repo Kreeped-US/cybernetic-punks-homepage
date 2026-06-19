@@ -4,6 +4,7 @@ import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
+import { precomputeHistoricalContext } from '@/lib/gather/historicalContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -770,6 +771,13 @@ export async function GET(req) {
     } catch (alertErr) {
       console.log('[CRON] alert dispatch error (non-fatal): ' + alertErr.message);
     }
+
+    // Historical-context precompute (AI-quality roadmap #2/#3, Stage 1): refresh
+    // the compressed coverage-pattern blob for this game AFTER publishing, so it
+    // reflects through the just-published cycle for the NEXT run. Self-catching +
+    // non-fatal. NOTHING reads the blob yet (editor wiring is Stage 2) -> zero
+    // effect on generated output this stage.
+    await precomputeHistoricalContext(PRODUCING_GAME, supabase);
 
     return Response.json({
       success: true,

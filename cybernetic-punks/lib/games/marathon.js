@@ -139,6 +139,18 @@ export const marathon = {
     cadenceCron: '0 0,12 * * *',
     editors: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'],
   },
+
+  // Historical-context layer (AI-quality roadmap #2/#3). Drives the precompute
+  // pass (lib/gather/historicalContext.js). Tag-based patterns need no config;
+  // entity patterns use coverageEntities (this game's roster). DMZ supplies its
+  // own coverageEntities (operators/platforms) when it lands.
+  historical: {
+    recentWindowDays: 14,
+    coverageEntities: {
+      label: 'shell',
+      names: ['Destroyer', 'Vandal', 'Recon', 'Assassin', 'Triage', 'Thief', 'Rook', 'Sentinel'],
+    },
+  },
 };
 
 export default marathon;
