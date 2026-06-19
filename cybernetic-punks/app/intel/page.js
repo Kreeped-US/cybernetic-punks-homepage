@@ -28,6 +28,7 @@
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { getEditorDisplay } from '@/lib/editors/roster';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 
@@ -37,27 +38,61 @@ function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.full
 
 export const dynamic = 'force-dynamic';
 
-export var metadata = {
-  title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel',
-  description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction — refreshed throughout the day.',
-  keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates, Marathon Season 2, Marathon S2 news',
-  openGraph: {
-    title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel | CyberneticPunks',
-    description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction.',
-    url: 'https://cyberneticpunks.com/intel',
-    siteName: 'CyberneticPunks',
-    type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@Cybernetic87250',
-    title: 'Marathon News & Latest Updates — CyberneticPunks',
-    description: 'Latest Marathon news, builds, meta shifts, and ranked intel. Refreshed throughout the day.',
-    images: ['https://cyberneticpunks.com/og-image.png'],
-  },
-  alternates: { canonical: 'https://cyberneticpunks.com/intel' },
-};
+// Per-page metadata so paginated archive pages (?page=N) self-canonical -> each
+// is its own indexable page (not a duplicate of page 1), keeping the crawl path
+// traversable. Page 1 keeps the canonical /intel (URL unchanged).
+export async function generateMetadata({ searchParams }) {
+  var sp = (await searchParams) || {};
+  var page = Math.max(1, parseInt(sp.page || '1', 10) || 1);
+  var suffix = page > 1 ? ' (Page ' + page + ')' : '';
+  var canonical = page > 1
+    ? 'https://cyberneticpunks.com/intel?page=' + page
+    : 'https://cyberneticpunks.com/intel';
+  return {
+    title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel' + suffix,
+    description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction — refreshed throughout the day.',
+    keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates, Marathon Season 2, Marathon S2 news',
+    openGraph: {
+      title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel' + suffix + ' | CyberneticPunks',
+      description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction.',
+      url: canonical,
+      siteName: 'CyberneticPunks',
+      type: 'website',
+      images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@Cybernetic87250',
+      title: 'Marathon News & Latest Updates — CyberneticPunks' + suffix,
+      description: 'Latest Marathon news, builds, meta shifts, and ranked intel. Refreshed throughout the day.',
+      images: ['https://cyberneticpunks.com/og-image.png'],
+    },
+    alternates: { canonical: canonical },
+  };
+}
+
+// Windowed page-number list for the pagination control: [1, '...', cur-1, cur,
+// cur+1, '...', last]. Small corpora (<=7 pages) just show every number.
+function pageWindow(cur, total) {
+  if (total <= 7) {
+    var all = [];
+    for (var i = 1; i <= total; i++) all.push(i);
+    return all;
+  }
+  var keep = [1, total, cur, cur - 1, cur + 1].filter(function (p) { return p >= 1 && p <= total; });
+  var uniq = Array.from(new Set(keep)).sort(function (a, b) { return a - b; });
+  var out = [];
+  var prev = 0;
+  uniq.forEach(function (p) {
+    if (p - prev > 1) out.push('...');
+    out.push(p);
+    prev = p;
+  });
+  return out;
+}
+
+// Page-1 href stays /intel (clean canonical); deeper pages add ?page=N.
+function pageHref(p) { return p <= 1 ? '/intel' : '/intel?page=' + p; }
 
 var EDITOR_INFO = {
   CIPHER:  { symbol: '◈', color: '#ff2222', role: 'Play Analyst' },
@@ -113,17 +148,31 @@ var MARATHON_FAQS = [
   },
 ];
 
-export default async function IntelHubPage() {
-  var { data: articles } = await supabase
+var ARCHIVE_PAGE_SIZE = 100;
+
+export default async function IntelHubPage({ searchParams }) {
+  var sp = (await searchParams) || {};
+  var page = Math.max(1, parseInt(sp.page || '1', 10) || 1);
+  var fromIdx = (page - 1) * ARCHIVE_PAGE_SIZE;
+
+  // One 100-row slice per archive page (well under PostgREST's 1000-row response
+  // cap). The FULL non-noindex set is reachable because there are N such pages,
+  // walkable via the prev/next + numbered links below. count:'exact' gives the
+  // total so we know how many pages exist. Same noindex gate as sitemap/listings.
+  var { data: articles, count } = await supabase
     .from('feed_items')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('is_published', true)
     .eq('game_slug', 'marathon')
     .eq('noindex', false)
     .order('created_at', { ascending: false })
-    .limit(100);
+    .range(fromIdx, fromIdx + ARCHIVE_PAGE_SIZE - 1);
 
   var items = articles || [];
+  var totalCount = count || 0;
+  var totalPages = Math.max(1, Math.ceil(totalCount / ARCHIVE_PAGE_SIZE));
+  // Out-of-range page -> 404 (no thin/empty archive pages in the index).
+  if (page > totalPages) notFound();
 
   var editorCounts = {};
   items.forEach(function(item) {
@@ -168,7 +217,7 @@ export default async function IntelHubPage() {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Latest Marathon Articles',
-    numberOfItems: items.length,
+    numberOfItems: totalCount,
     itemListOrder: 'https://schema.org/ItemListOrderDescending',
     itemListElement: items.slice(0, 30).map(function(item, i) {
       return {
@@ -255,7 +304,7 @@ export default async function IntelHubPage() {
           {/* Stat card */}
           <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00ff41', borderRadius: '0 0 3px 3px', padding: '14px 20px', minWidth: 180 }}>
             <div style={{ fontSize: 28, fontWeight: 900, color: '#00ff41', lineHeight: 1, letterSpacing: '-0.5px', marginBottom: 5 }}>
-              {items.length}
+              {totalCount}
             </div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700 }}>
               Articles Published
@@ -306,7 +355,7 @@ export default async function IntelHubPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>All Intel</span>
           <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace' }}>{items.length} TOTAL</span>
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace' }}>{totalCount} TOTAL{totalPages > 1 ? ' · PAGE ' + page + '/' + totalPages : ''}</span>
         </div>
 
         {items.length === 0 ? (
@@ -381,6 +430,27 @@ export default async function IntelHubPage() {
           </div>
         )}
       </section>
+
+      {/* ══ PAGINATION ═════════════════════════════════════ */}
+      {/* Real <Link> prev/next + numbered pages so a crawler can walk the FULL
+          non-noindex archive (page 1 -> last) and reach every quality article. */}
+      {totalPages > 1 && (
+        <nav aria-label="Intel archive pagination" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {page > 1 && (
+            <Link rel="prev" href={pageHref(page - 1)} style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', padding: '8px 14px', border: '1px solid #22252e', background: '#1a1d24', borderRadius: 2, textDecoration: 'none', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>← PREV</Link>
+          )}
+          {pageWindow(page, totalPages).map(function (p, i) {
+            if (p === '...') return <span key={'e' + i} style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', padding: '8px 4px', fontFamily: 'monospace' }}>…</span>;
+            var current = p === page;
+            return (
+              <Link key={p} href={pageHref(p)} aria-current={current ? 'page' : undefined} style={{ fontSize: 10, color: current ? '#000' : 'rgba(255,255,255,0.6)', background: current ? '#00ff41' : '#1a1d24', border: '1px solid ' + (current ? '#00ff41' : '#22252e'), padding: '8px 13px', borderRadius: 2, textDecoration: 'none', letterSpacing: 1, fontWeight: 800, fontFamily: 'monospace' }}>{p}</Link>
+            );
+          })}
+          {page < totalPages && (
+            <Link rel="next" href={pageHref(page + 1)} style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', padding: '8px 14px', border: '1px solid #22252e', background: '#1a1d24', borderRadius: 2, textDecoration: 'none', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>NEXT →</Link>
+          )}
+        </nav>
+      )}
 
       {/* ══ FAQ ═════════════════════════════════════════════ */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 48px' }}>
