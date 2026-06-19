@@ -189,21 +189,35 @@ export default async function sitemap() {
 
     // Article URLs from feed_items
     try {
-      const { data, error: feedErr } = await supabase
-        .from('feed_items')
-        .select('slug, created_at, tags')
-        .eq('is_published', true)
-        // DMZ migration (step 3, batch C1): emit ONLY Marathon slugs at the
-        // unprefixed /intel/<slug> paths. Without this, once DMZ rows exist the
-        // sitemap would advertise DMZ slugs at Marathon URLs -- wrong hierarchy
-        // for the single-domain SEO strategy. DMZ URL emission (/dmz/...) is a
-        // Step-4 item: build it when the /dmz route group + DMZ content exist.
-        .eq('game_slug', 'marathon')
-        // SEO prune: keep de-indexed articles out of the sitemap (no mixed
-        // signal). The rows stay; only their search visibility is removed.
-        .eq('noindex', false)
-        .order('created_at', { ascending: false })
-        .limit(1000);
+      // No row cap: the sitemap = ALL published, indexable (non-noindex)
+      // articles, defined by a rule, not a magic count. PostgREST caps a single
+      // response at 1000 rows (a high .limit() does NOT override the server
+      // max-rows), so we PAGE through every row. Sitemap protocol allows 50k
+      // URLs/file; the corpus is ~1.3k -> well within limits.
+      let data = [];
+      let feedErr = null;
+      let pageFrom = 0;
+      while (true) {
+        const { data: batch, error: batchErr } = await supabase
+          .from('feed_items')
+          .select('slug, created_at, tags')
+          .eq('is_published', true)
+          // DMZ migration (step 3, batch C1): emit ONLY Marathon slugs at the
+          // unprefixed /intel/<slug> paths. Without this, once DMZ rows exist the
+          // sitemap would advertise DMZ slugs at Marathon URLs -- wrong hierarchy
+          // for the single-domain SEO strategy. DMZ URL emission (/dmz/...) is a
+          // Step-4 item: build it when the /dmz route group + DMZ content exist.
+          .eq('game_slug', 'marathon')
+          // SEO prune: keep de-indexed articles out of the sitemap (no mixed
+          // signal). The rows stay; only their search visibility is removed.
+          .eq('noindex', false)
+          .order('created_at', { ascending: false })
+          .range(pageFrom, pageFrom + 999);
+        if (batchErr) { feedErr = batchErr; break; }
+        data = data.concat(batch || []);
+        if (!batch || batch.length < 1000) break;
+        pageFrom += 1000;
+      }
 
       console.log('[sitemap] feed_items:',
         data ? data.length + ' rows' : 'null',
