@@ -162,13 +162,11 @@ async function fetchExtractionTargets() {
   const targets = { shells: [], weapons: [], cores: [], implants: [] };
 
   try {
-    // Shells -- find rows missing any of the key fields
-    const { data: shells } = await supabase
-      .from('shell_stats')
-      .select('name, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, strengths, weaknesses');
-    targets.shells = (shells || [])
-      .filter(s => !s.base_health || !s.active_ability_name || !s.passive_ability_name || !s.strengths || !s.weaknesses)
-      .map(s => s.name);
+    // Shells are HUMAN-VERIFIED in shell_stats / shell_stat_values (in-game S2
+    // screens). dexter-stats must NOT LLM-extract or overwrite shell stats or
+    // abilities -- doing so would re-fabricate the Cradle-obsolete numerics and
+    // flip verified=false on confirmed rows. targets.shells stays empty so shells
+    // are never targeted, extracted, or written here.
 
     // Weapons
     const { data: weapons } = await supabase
@@ -212,26 +210,8 @@ const EXTRACT_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      shells: {
-        type: 'array',
-        description: 'Shell stat extractions. One entry per shell where data was found.',
-        items: {
-          type: 'object',
-          properties: {
-            name: { type: 'string', description: 'Exact shell name from the targets list' },
-            base_health: { type: ['number', 'null'] },
-            base_shield: { type: ['number', 'null'] },
-            base_speed: { type: ['string', 'null'], description: 'Slow / Medium / Fast' },
-            active_ability_name: { type: ['string', 'null'] },
-            active_ability_desc: { type: ['string', 'null'], description: 'Max 100 chars' },
-            passive_ability_name: { type: ['string', 'null'] },
-            passive_ability_desc: { type: ['string', 'null'], description: 'Max 100 chars' },
-            strengths: { type: ['string', 'null'], description: 'Max 150 chars' },
-            weaknesses: { type: ['string', 'null'], description: 'Max 150 chars' },
-          },
-          required: ['name'],
-        },
-      },
+      // shells: intentionally NOT extractable -- shell stats/abilities are
+      // human-verified (see fetchExtractionTargets). The tool cannot return them.
       weapons: {
         type: 'array',
         description: 'Weapon stat extractions. One entry per weapon where data was found.',
@@ -296,8 +276,8 @@ const EXTRACT_TOOL = {
 // --- CLAUDE STAT EXTRACTION ---
 
 async function extractStats(sourceTexts, targets) {
-  // Cap at top items per category to keep prompt manageable
-  const shellList   = targets.shells.slice(0, 10).join(', ') || '(none missing)';
+  // Cap at top items per category to keep prompt manageable. Shells are excluded
+  // entirely (human-verified -- never LLM-extracted).
   const weaponList  = targets.weapons.slice(0, 30).join(', ') || '(none missing)';
   const coreList    = targets.cores.slice(0, 30).join(', ') || '(none missing)';
   const implantList = targets.implants.slice(0, 30).join(', ') || '(none missing)';
@@ -328,7 +308,6 @@ EXTRACTION RULES:
 - For meta_rating on cores, only assign a tier if the source explicitly discusses ranked viability.
 
 EXTRACTION TARGETS (only items in these lists need values):
-SHELLS WITH MISSING DATA: ${shellList}
 WEAPONS WITH MISSING DATA: ${weaponList}
 CORES WITH MISSING DATA: ${coreList}
 IMPLANTS WITH MISSING DATA: ${implantList}
@@ -376,12 +355,12 @@ function buildUpdate(row, allowedFields) {
 }
 
 async function updateShell(row) {
-  const update = buildUpdate(row, [
-    'base_health', 'base_shield', 'base_speed',
-    'active_ability_name', 'active_ability_desc',
-    'passive_ability_name', 'passive_ability_desc',
-    'strengths', 'weaknesses',
-  ]);
+  // Shell stats + abilities are human-verified and must NEVER be LLM-written here
+  // (base_health/base_shield/base_speed + active_ability_*/passive_ability_*
+  // removed). Shells are also no longer targeted or returned by the tool, so this
+  // path is unreachable; the empty allow-list is a belt-and-suspenders guard so a
+  // stray shell row could still write nothing.
+  const update = buildUpdate(row, []);
   if (Object.keys(update).length === 0) return false;
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
