@@ -62,4 +62,10 @@ export const VERIFICATION_NOTE =
   'Use the figure, but signal it is source-derived, not confirmed.\n' +
   '3. No marker - confirmed in-game. State the number as fact, no hedge.\n' +
   'Never collapse [SOURCE-LISTED] into a hard hedge (you MAY use the number, attributed) or into bare fact (you MUST attribute it).\n' +
+  'STATUS RULE (all registers): never UPGRADE a value beyond its marker. ' +
+  'Do NOT describe a [UNVERIFIED] or [SOURCE-LISTED] value as "confirmed", "verified", or "official", ' +
+  'and do NOT claim data is verified or confirmed unless its line carries NO marker. ' +
+  'Asserting a confidence the marker does not show is a factual error, even for a [SOURCE-LISTED] number you may attribute. ' +
+  'You MAY still say a value is unverified or source-listed, and you MUST attribute [SOURCE-LISTED] figures; ' +
+  'describing or attributing confidence is fine, only INFLATING it is forbidden.\n' +
   '--- END NOTE ---';
