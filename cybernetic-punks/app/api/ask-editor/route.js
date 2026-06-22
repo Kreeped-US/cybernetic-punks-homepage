@@ -56,6 +56,15 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
+    // Auth hardening: presence alone is forgeable + rotatable -- validate the
+    // cookie maps to a REAL player before any paid work (mirrors what /api/audit
+    // does implicitly via its loadout lookup). maybeSingle -> absence is clean.
+    const authClient = getSupabase();
+    const { data: authPlayer } = await authClient.from('player_profiles').select('id').eq('id', playerId).maybeSingle();
+    if (!authPlayer) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
     // Per-player rate limit (audit #6): fail fast before the paid Claude call.
     const rl = checkRateLimit('ask-editor:' + playerId, ASK_RATE_LIMIT, ASK_RATE_WINDOW_MS);
     if (!rl.ok) {
