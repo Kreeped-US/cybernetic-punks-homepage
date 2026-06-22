@@ -5,6 +5,46 @@ Newest entries on top.
 
 ---
 
+## 2026-06-22 — Cron observability: a REAL silent failure found (Resend bumped to TOP)
+
+**What happened:** the Jun 22 12:01 UTC cron cycle published **0 feed_items**
+(every other recent cycle published 5, one per editor). Diagnosed read-only.
+
+**Determination: SILENT FAILURE, not a benign quiet cycle.**
+- `processEditor` (app/api/cron/route.js ~L243-289) has NO legitimate
+  "nothing to publish" path: it either inserts is_published:true (~L281-289), or
+  returns a FAILURE — `!prompt` -> "No data gathered" (~L246-248), or
+  `!result/!headline/_parseError` -> logs "[CRON] <editor> failed: <reason>"
+  (~L260-275). So 0 across all 5 editors = all 5 took a failure branch.
+
+**But transient, single cycle, self-recovered (pipeline is NOT broken):**
+- Cron ran end-to-end — historical_context upserted 12:01:23 + quality_metrics
+  12:01, both AFTER the editor loop, so gatherAll + the loop completed without
+  throwing. Jun 22 00:01 and all Jun 21 cycles published 5; only 12:01 failed.
+  Later cycles publish normally.
+
+**Root sub-cause (not chased — recovered one-off):** either (a) gather-empty
+(all 5 "No data gathered" — a source/gather blip) or (b) Anthropic transient
+(all 5 callEditor failed — outage/rate-limit at 12:01). Distinguishing needs the
+12:01 Vercel function logs (per-editor reasons ARE logged, ~L247/L261) — low
+value for a recovered transient; skip unless it recurs.
+
+**THE REAL FINDING — observability gap:** `sendCronFailureAlert(results)` EXISTS
+and is designed to email on 0-generated / any-editor-failure, but it is **INERT**
+(no Resend env provisioned). A genuine failure was invisible for ~13h, surfaced
+only by a manual orientation check. The system currently cannot tell you when a
+cycle fails.
+
+**ACTION — Resend outage-alert bumped to TOP of protective-infra:**
+- No longer hypothetical — a real silent failure occurred and went unnoticed.
+- The alert CODE already exists (sendCronFailureAlert) — it just needs
+  RESEND_API_KEY + ALERT_EMAIL_TO env vars in Vercel. A provisioning task
+  (your hands), NOT a code build.
+- Once armed: 0-publish / per-editor-failure cycles email immediately instead of
+  hiding in Vercel logs.
+
+---
+
 ## 2026-06-19 — OPEN ITEM: presence-only auth hardening (defense-in-depth, low priority)
 
 Diagnosed read-only after a bot/scraper wave (932 visitors/7d, 88% Singapore =
