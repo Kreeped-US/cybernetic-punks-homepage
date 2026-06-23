@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Footer from '@/components/Footer';
+import { Sep } from '@/components/Sep';
 import HomeEditorReactions from '@/app/HomeEditorReactions';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
@@ -351,6 +352,7 @@ export default async function Home() {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                          <Sep text=" - " />
                           <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{isShell ? 'SHELL' : 'WEAPON'}</div>
                         </div>
                       </div>
