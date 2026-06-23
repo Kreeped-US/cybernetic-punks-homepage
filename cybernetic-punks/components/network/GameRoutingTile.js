@@ -45,9 +45,15 @@ export default function GameRoutingTile({ game, pulse }) {
       aria-label={'Enter the ' + game.label + ' hub'}
     >
       {/* Optional treated atmosphere art (config-driven; absent = clean tile).
-          Decorative -> aria-hidden. Scrim/legibility handled in .nr-tile-art. */}
+          Decorative -> aria-hidden. Crop focus comes from game.imagePosition so
+          each image's own baked-in wordmark can be pushed out of frame per game
+          (cover unchanged). Scrim/legibility handled in .nr-tile-art. */}
       {game.heroImage && (
-        <span className="nr-tile-art" aria-hidden="true" style={{ backgroundImage: 'url(' + game.heroImage + ')' }} />
+        <span
+          className="nr-tile-art"
+          aria-hidden="true"
+          style={{ backgroundImage: 'url(' + game.heroImage + ')', backgroundPosition: game.imagePosition || 'center' }}
+        />
       )}
 
       {/* Header: game label (H3) + pre-launch tag */}

@@ -45,6 +45,13 @@ export const ROOT_GAMES = [
     // must be added to the repo at this public path; the component degrades
     // gracefully to the clean tile until the file exists.
     heroImage: '/images/games/marathon-hero.jpg',
+    // Crop focus for the art (CSS background-position; cover unchanged). The
+    // Marathon source is a SQUARE asset with its OWN vertical "MARATHON" wordmark
+    // down the right edge -> bias left to favor the scene. CAVEAT: under cover a
+    // square image fills this wide tile with zero horizontal slack, so position
+    // alone cannot fully evict a full-height right-edge wordmark; a re-cropped
+    // (wordmark-free) source is the clean fix. See report.
+    imagePosition: 'left center',
     theme: { primary: '#00ff41', tint: 'rgba(0,255,65,0.08)' }, // green (= --green; Marathon site identity)
     pulse: {
       mode: 'live',
@@ -63,6 +70,10 @@ export const ROOT_GAMES = [
     // for editorial use (traceability note). OWNER ACTION: file tracked in the
     // repo at this public path; component degrades to the clean tile if absent.
     heroImage: '/images/games/dmz-hero.jpg',
+    // Crop focus for the art (CSS background-position; cover unchanged). The DMZ
+    // source carries its OWN "DMZ" wordmark at bottom-center -> anchor to the top
+    // so the bottom band (with that lettering) is cropped out of the visible frame.
+    imagePosition: 'center top',
     theme: { primary: dmzGame.theme.primary, tint: 'rgba(232,154,44,0.08)' }, // amber
     pulse: {
       mode: 'pre-launch',
