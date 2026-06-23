@@ -16,12 +16,16 @@
 // root renders all games on one page (not wrapped in a per-game .theme class), so
 // each game's accent is declared here as an explicit value rather than relying on
 // the CSS-variable cascade swap:
-//   - Marathon -> teal (#00d4ff, the --nexus token) per the locked positioning
-//     doc (docs/network/cyberneticpunks-brand-positioning.md, "Marathon teal").
+//   - Marathon -> green (#00ff41, the --green token) -- Marathon's established
+//     site identity (Nav / homepage / meta). The positioning doc says "teal" but
+//     that predates the green identity; green keeps the root consistent with the
+//     hub it routes to.
 //   - DMZ      -> amber, sourced from the canonical lib/games/dmz.js theme.primary
 //     (kept in sync with the .dmz-theme --green swap) so it is not re-hardcoded.
-// Exact accents are POLISH-TUNABLE (a later styling pass). The STRUCTURE - one
-// config entry per game, agnostic components reading it - is what is locked here.
+// Accents are v1 STARTING VALUES, deliberately single-source here (one value per
+// game) so they are trivially swappable when the exact palette is iterated. The
+// STRUCTURE - one config entry per game, agnostic components reading it - is what
+// is locked. Components must read these, never hardcode an accent.
 //
 // PULSE: pulse.mode is the agnostic switch the components render on (NOT the
 // slug). 'live' = real online count + next-update + real feed_items column.
@@ -35,7 +39,7 @@ export const ROOT_GAMES = [
     slug: 'marathon',
     label: 'Marathon',
     route: '/marathon',
-    theme: { primary: '#00d4ff', tint: 'rgba(0,212,255,0.08)' }, // teal (= --nexus)
+    theme: { primary: '#00ff41', tint: 'rgba(0,255,65,0.08)' }, // green (= --green; Marathon site identity)
     pulse: {
       mode: 'live',
       onlineSource: 'steam',         // which live_stats source counts as "online"

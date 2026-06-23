@@ -1,23 +1,27 @@
 // app/network-preview/page.js
-// NEUTRAL ROOT SKELETON (network front door) at a TEMPORARY preview path.
-// This is the brand's front door above the games: brand hero (depth promise, NO
-// game vocabulary, NO AI in the hero), game-agnostic routing tiles + segmented
-// pulse driven by lib/network/rootGames.js (keyed by game_slug), reserved slots
-// for future workstreams, a light join-free affordance, and a neutral footer
-// where AI is whispered as the engine.
+// NEUTRAL ROOT (network front door) at a TEMPORARY preview path -- styled v1.
+// A lean, premium SHOWCASE ROUTER: brand hero (depth thesis, NO game vocabulary,
+// NO AI in the hero), game-agnostic routing tiles (the signature element) +
+// segmented pulse driven by lib/network/rootGames.js (keyed by game_slug),
+// reserved slots for future workstreams, a light join-free affordance, and a
+// neutral footer where AI is whispered as the engine.
 //
-// STAGING: lives at /network-preview, NOT /. noindex + absent from the sitemap.
-// / and /marathon are untouched. Structure-first; a visual-polish pass is a
-// separate later task. See docs/network/cyberneticpunks-brand-positioning.md.
+// STAGING: /network-preview, NOT /. noindex + absent from the sitemap. / and
+// /marathon are untouched. See docs/network/cyberneticpunks-brand-positioning.md.
+//
+// STYLING: drives off the codebase design tokens (app/globals.css :root vars +
+// .cp-* utilities). The ONLY injected colors are the two per-game accents, read
+// from rootGames.js config (single-source, swappable); everything else is neutral
+// tokens. Accent is restrained to tile spines, the live online-count, and the
+// live dot -- no glow/fill (avoids the dark-bg + neon AI-default look). Character
+// comes from the Orbitron / Rajdhani / mono type hierarchy + structure.
 //
 // Game-specific vocabulary (Cradle, shells, loadout, FOB, Season 2, etc.) MUST
-// NOT appear in the root's own copy -- those live on the game hubs. Game NAMES on
-// tiles/columns and a game's own content inside its segmented column are correct
-// (that is the routing + segmentation, not the root adopting game vocabulary).
+// NOT appear in the root's own copy. Game NAMES on tiles/columns and a game's own
+// content inside its segmented column are correct (routing + segmentation).
 //
-// The neutral root deliberately does NOT reuse components/Footer.js: that footer
-// carries Marathon vocabulary (Tau Ceti, Bungie TM, Marathon links) and would
-// break the no-game-vocabulary rule. A minimal neutral footer is rendered here.
+// The neutral root deliberately does NOT reuse components/Footer.js (that footer
+// carries Marathon vocabulary); a minimal neutral footer is rendered here.
 
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -28,10 +32,11 @@ import GamePulseColumn from '@/components/network/GamePulseColumn';
 
 // ── METADATA ────────────────────────────────────────────────
 // Neutral, network-level title (the layout title.template appends the site name;
-// no manual append here). noindex while this is a preview; not added to sitemap.
+// no manual append here). Real brand-level description for the SERP pitch. noindex
+// while this is a preview; not added to the sitemap.
 export const metadata = {
   title: 'Extraction-Shooter Intelligence Network',
-  description: 'The deepest, most current intel in every extraction shooter. Fast routing into each game hub, with a live network pulse.',
+  description: 'CyberneticPunks is the extraction-shooter intelligence network - the deepest, most current intel, build tools, and creator coverage across every extraction shooter we cover.',
   robots: { index: false, follow: false },
 };
 
@@ -47,8 +52,8 @@ function timeAgo(dateStr) {
 }
 
 // Next-update label for live games. Mirrors the /marathon page's cron-cycle math
-// (12h cycles at 00:00 + 12:00 UTC, the Marathon editorial cadence). Kept here as
-// the page-side resolver so the tile component stays data-agnostic.
+// (12h cycles at 00:00 + 12:00 UTC, the Marathon editorial cadence). Page-side
+// resolver so the tile component stays data-agnostic.
 function nextUpdateLabel() {
   var now = new Date();
   var minsIn = (now.getUTCHours() * 60 + now.getUTCMinutes()) % 720;
@@ -66,12 +71,10 @@ async function getNetworkPulse() {
   var pulse = {};   // slug -> { online, nextUpdate }
   var feeds = {};   // slug -> [{ headline, slug, editor, when }]
 
-  // Live counts (single shared snapshot; map each game's onlineSource onto it).
   var liveStats = null;
   try { liveStats = await getLiveStats(); } catch (e) { liveStats = null; }
   var nextUpd = nextUpdateLabel();
 
-  // Latest feed per live game, scoped by its configured game_slug.
   await Promise.all(liveGames.map(async function(g) {
     var online = null;
     if (liveStats && g.pulse.onlineSource && liveStats[g.pulse.onlineSource]) {
@@ -99,79 +102,203 @@ async function getNetworkPulse() {
   return { pulse: pulse, feeds: feeds };
 }
 
+// Brand entity + site structured data. Organization + WebSite ONLY (brand-level);
+// no game-specific structured data on the root (that belongs on hubs/articles).
+// Name matches the site-wide entity ("CyberneticPunks") so Google sees ONE entity.
+// No SearchAction (there is no site-search endpoint to point at).
+const JSONLD = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'CyberneticPunks',
+    url: 'https://cyberneticpunks.com',
+    logo: 'https://cyberneticpunks.com/icon-512.png',
+    sameAs: ['https://x.com/Cybernetic87250'],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'CyberneticPunks',
+    url: 'https://cyberneticpunks.com',
+  },
+];
+
 export default async function NetworkPreview() {
   var data = await getNetworkPulse();
 
   return (
-    <div style={{ background: 'var(--bg-page)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, maxWidth: 1100, width: '100%', margin: '0 auto', padding: '64px 24px 48px', display: 'flex', flexDirection: 'column', gap: 40 }}>
+    <div className="nr-page">
+      {JSONLD.map(function(node, i) {
+        return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }} />;
+      })}
 
-        {/* ══ BRAND HERO ══ (network identity + depth promise; no game vocab, no AI) */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--red)', flexShrink: 0 }} />
-            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 800, letterSpacing: 3, color: 'var(--text-primary)' }}>
-              CYBERNETIC<span style={{ color: 'var(--red)' }}>PUNKS</span>
-            </span>
+      <style>{NR_CSS}</style>
+
+      {/* ══ BRAND BANNER ══ */}
+      <header className="nr-header">
+        <div className="nr-wrap nr-header-row">
+          <div className="nr-brand">
+            <span className="nr-brand-dot" aria-hidden="true" />
+            <span className="nr-brand-name">CYBERNETIC<span className="nr-brand-accent">PUNKS</span></span>
           </div>
+          <Link href="#" className="nr-join">JOIN FREE</Link>
+        </div>
+      </header>
 
-          <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 34, fontWeight: 900, lineHeight: 1.1, color: 'var(--text-primary)', margin: 0, maxWidth: 760 }}>
+      <main className="nr-wrap nr-main">
+
+        {/* ══ HERO ══ (thesis; no game vocab, no AI) */}
+        <section className="nr-hero" aria-labelledby="nr-thesis">
+          <h1 id="nr-thesis" className="nr-h1">
             The deepest, most current intel in every extraction shooter
           </h1>
-
-          <p style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', margin: 0, textTransform: 'uppercase' }}>
-            The extraction-shooter intelligence network
+          <p className="nr-descriptor">The extraction-shooter intelligence network</p>
+          <p className="nr-offer">
+            Intel hubs, build tools, and creator coverage - across every extraction shooter we cover.
           </p>
 
           {/* RESERVED: network-voice slot (a network-editor intro renders here later) */}
-          <div style={{ border: '1px dashed var(--border)', borderRadius: 2, padding: '12px 14px', fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginTop: 6 }}>
-            [reserved: network voice]
-          </div>
-
-          {/* Light join-free affordance (present, not pushy; placeholder, no auth) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
-            <Link href="#" style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 2, padding: '7px 14px' }}>
-              JOIN FREE
-            </Link>
-            <span style={{ fontFamily: 'monospace', fontSize: 9, color: 'var(--text-tertiary)', letterSpacing: 1 }}>
-              track your runs across the network
-            </span>
+          <div className="nr-reserved nr-reserved-wide" role="note" aria-label="Reserved: network voice">
+            <span className="nr-reserved-label">Reserved</span>
+            <span className="nr-reserved-text">network voice</span>
           </div>
         </section>
 
-        {/* ══ ROUTING TILES ══ (game-agnostic, one per ROOT_GAMES entry) */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <span className="cp-section-label" style={{ margin: 0 }}>Choose your zone</span>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
+        {/* ══ ROUTING TILES ══ (signature; game-agnostic, one per ROOT_GAMES entry) */}
+        <nav className="nr-section" aria-label="Game hubs">
+          <h2 className="nr-h2">Choose your zone</h2>
+          <div className="nr-grid nr-stagger">
             {ROOT_GAMES.map(function(game) {
               return <GameRoutingTile key={game.slug} game={game} pulse={data.pulse[game.slug]} />;
             })}
           </div>
-        </section>
+        </nav>
 
         {/* ══ GAME-SEGMENTED PULSE ══ (per-game columns, never blended) */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <span className="cp-section-label" style={{ margin: 0 }}>Network pulse</span>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+        <section className="nr-section" aria-labelledby="nr-pulse-h">
+          <h2 id="nr-pulse-h" className="nr-h2">Network pulse</h2>
+          <div className="nr-pulse-grid nr-stagger">
             {ROOT_GAMES.map(function(game) {
               return <GamePulseColumn key={game.slug} game={game} items={data.feeds[game.slug]} />;
             })}
           </div>
         </section>
 
-      </div>
+      </main>
 
       {/* ══ NEUTRAL FOOTER ══ (whispered AI line; no game vocabulary) */}
-      <footer style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-nav)', padding: '24px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, color: 'var(--text-secondary)' }}>
-            Cybernetic Punks - the extraction-shooter intelligence network. No hype. Just intel.
-          </span>
-          <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)' }}>
-            powered by a live intelligence pipeline - updated continuously, verified against patch data
-          </span>
+      <footer className="nr-footer">
+        <div className="nr-wrap">
+          <p className="nr-footer-tag">Cybernetic Punks - the extraction-shooter intelligence network. No hype. Just intel.</p>
+          <p className="nr-footer-ai">powered by a live intelligence pipeline - updated continuously, verified against patch data</p>
         </div>
       </footer>
     </div>
   );
 }
+
+// ── STYLES ──────────────────────────────────────────────────
+// All colors are design tokens (var(--*)); the only per-game accents are injected
+// inline from rootGames.js config. Motion, hover, :focus-visible, reduced-motion,
+// and responsive collapse are centralized here.
+const NR_CSS = `
+.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; }
+.nr-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+
+/* Brand banner */
+.nr-header { border-bottom: 1px solid var(--border-subtle); background: var(--bg-nav); }
+.nr-header-row { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; padding-bottom: 16px; }
+.nr-brand { display: flex; align-items: center; gap: 9px; }
+.nr-brand-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+.nr-brand-name { font-family: var(--font-orbitron); font-size: 15px; font-weight: 800; letter-spacing: 3px; color: var(--text-primary); }
+.nr-brand-accent { color: var(--red); }
+.nr-join { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border); border-radius: 2px; padding: 7px 14px; transition: color .15s ease, border-color .15s ease; }
+.nr-join:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+
+/* Main rhythm */
+.nr-main { flex: 1; display: flex; flex-direction: column; gap: 56px; padding-top: 64px; padding-bottom: 56px; }
+
+/* Hero */
+.nr-hero { display: flex; flex-direction: column; gap: 16px; }
+.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.5px; line-height: 1.06; font-size: clamp(30px, 6vw, 52px); color: var(--text-primary); margin: 0; max-width: 18ch; }
+.nr-descriptor { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.nr-offer { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 56ch; }
+
+/* Reserved placeholders (intentional, not broken) */
+.nr-reserved { display: inline-flex; align-items: center; gap: 8px; border: 1px dashed var(--border); border-radius: 3px; padding: 10px 13px; background: linear-gradient(0deg, rgba(255,255,255,0.012), rgba(255,255,255,0.012)); }
+.nr-reserved-wide { margin-top: 6px; align-self: flex-start; }
+.nr-reserved-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 2px; padding: 2px 6px; }
+.nr-reserved-text { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-tertiary); }
+
+/* Sections */
+.nr-section { display: flex; flex-direction: column; gap: 18px; }
+.nr-h2 { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-secondary); margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+
+/* Grids */
+.nr-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.nr-pulse-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+/* ── SIGNATURE: routing tiles ── */
+.nr-tile { display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+.nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); }
+.nr-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.nr-tile-label { font-family: var(--font-orbitron); font-size: 22px; font-weight: 900; letter-spacing: 1px; line-height: 1; color: var(--text-primary); margin: 0; }
+.nr-tile-body { flex: 1; display: flex; flex-direction: column; gap: 12px; justify-content: center; }
+.nr-online { display: flex; align-items: baseline; gap: 9px; }
+.nr-dot { align-self: center; animation: pulse-glow 2.4s ease-in-out infinite; }
+.nr-online-num { font-family: var(--font-orbitron); font-size: 40px; font-weight: 900; line-height: 0.9; letter-spacing: -0.5px; }
+.nr-unit { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
+.nr-next { display: flex; align-items: baseline; gap: 8px; }
+.nr-next-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.nr-prelaunch { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary); }
+.nr-enter { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-tertiary); transition: color .16s ease; }
+.nr-tile:hover .nr-enter { color: var(--text-secondary); }
+
+/* ── Pulse columns (quiet) ── */
+.nr-col { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; }
+.nr-col-head { display: flex; align-items: center; gap: 8px; }
+.nr-col-marker { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+.nr-col-title { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.nr-col-all { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); text-decoration: none; margin-left: auto; transition: color .15s ease; }
+.nr-col-all:hover { color: var(--text-secondary); }
+.nr-col-body { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.nr-row { display: block; text-decoration: none; padding: 9px 11px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
+.nr-row:hover { background: var(--bg-card-hover); border-left-color: var(--text-tertiary); }
+.nr-row-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.nr-row-editor { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1px; }
+.nr-row-when { font-family: var(--font-mono); font-size: 8px; color: var(--text-tertiary); margin-left: auto; }
+.nr-row-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; font-weight: 500; line-height: 1.32; color: var(--text-primary); }
+.nr-col-empty, .nr-col-prelaunch { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
+
+/* Footer */
+.nr-footer { border-top: 1px solid var(--border-subtle); background: var(--bg-nav); padding-top: 22px; padding-bottom: 22px; }
+.nr-footer-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 7px; }
+.nr-footer-ai { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); margin: 0; }
+
+/* Load-in (once), staggered across grid children */
+@keyframes nrIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.nr-stagger > * { animation: nrIn .45s ease both; }
+.nr-stagger > *:nth-child(2) { animation-delay: .07s; }
+.nr-stagger > *:nth-child(3) { animation-delay: .14s; }
+.nr-stagger > *:nth-child(4) { animation-delay: .21s; }
+
+/* Keyboard focus (game-neutral ring) */
+.nr-tile:focus-visible, .nr-row:focus-visible, .nr-col-all:focus-visible, .nr-join:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.7); outline-offset: 2px;
+}
+
+/* Respect reduced motion: kill load-in, hover transforms, dot pulse */
+@media (prefers-reduced-motion: reduce) {
+  .nr-stagger > * { animation: none !important; }
+  .nr-tile, .nr-enter, .nr-row, .nr-join, .nr-col-all { transition: none !important; }
+  .nr-tile:hover { transform: none !important; }
+  .nr-dot { animation: none !important; }
+}
+
+/* Mobile collapse */
+@media (max-width: 640px) {
+  .nr-grid, .nr-pulse-grid { grid-template-columns: 1fr; }
+  .nr-main { gap: 44px; padding-top: 44px; }
+  .nr-online-num { font-size: 34px; }
+}
+`;

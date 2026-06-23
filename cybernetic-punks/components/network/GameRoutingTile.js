@@ -1,19 +1,21 @@
 // components/network/GameRoutingTile.js
-// GAME-AGNOSTIC routing tile for the neutral root. One tile per game, rendered
-// FROM a rootGames config entry (lib/network/rootGames.js) -> no per-game logic
-// lives here. The only branch is on pulse.mode ('live' vs 'pre-launch'), which is
-// a generic capability flag, NOT a game identity check. Adding a game adds a
-// config entry; this component does not change.
+// GAME-AGNOSTIC routing tile -- the SIGNATURE element of the neutral root. One
+// tile per game, rendered FROM a rootGames config entry (lib/network/rootGames.js)
+// -> no per-game logic here. The only branch is on pulse.mode ('live' vs
+// 'pre-launch'), a generic capability flag, NOT a game identity check. Adding a
+// game adds a config entry; this component does not change.
 //
 // Props:
 //   game  - a ROOT_GAMES entry { slug, label, route, theme, pulse }
-//   pulse - resolved live data for this game (page-supplied), shape:
-//           { online: number|null, nextUpdate: string|null }. Ignored for
-//           pre-launch tiles (those render game.pulse.note instead).
+//   pulse - resolved live data (page-supplied): { online, nextUpdate }. Ignored
+//           for pre-launch tiles (those render game.pulse.note).
 //
-// Styling is intentionally MINIMAL (structure-first; polish is a later task).
-// Colors come from the config's theme token + the global design tokens
-// (app/globals.css), not one-off literals.
+// DESIGN: boldness is spent here. The accent (game.theme.primary, the ONLY color
+// this component injects -- everything else is neutral design tokens) appears as a
+// full-height SPINE and, for live games, as the large online-count numerals (the
+// boldest type on the page). No glow/fill -- color encodes per-game identity, not
+// decoration. Hover/focus/motion come from .nr-* classes defined in the page's
+// style block (so prefers-reduced-motion + :focus-visible are honored centrally).
 
 import Link from 'next/link';
 
@@ -31,56 +33,41 @@ export default function GameRoutingTile({ game, pulse }) {
   return (
     <Link
       href={game.route}
-      className="cp-card"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-        minHeight: 180,
-        borderTop: '2px solid ' + accent,
-        background: game.theme.tint,
-        textDecoration: 'none',
-      }}
+      className="nr-tile"
+      style={{ borderLeft: '3px solid ' + accent }}
+      aria-label={'Enter the ' + game.label + ' hub'}
     >
-      {/* Header: game label + state tag */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: accent, letterSpacing: 1, lineHeight: 1 }}>
-          {game.label}
-        </span>
+      {/* Header: game label (H3) + pre-launch tag */}
+      <div className="nr-tile-head">
+        <h3 className="nr-tile-label">{game.label}</h3>
         {!isLive && (
           <span className="cp-tag" style={{ background: accent + '1a', color: accent }}>PRE-LAUNCH</span>
         )}
       </div>
 
       {/* Pulse region: live numbers OR pre-launch note (agnostic on pulse.mode) */}
-      <div style={{ flex: 1 }}>
+      <div className="nr-tile-body">
         {isLive ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span className="cp-live-dot" />
-              <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, color: 'var(--text-primary)' }}>
-                {formatNum(pulse ? pulse.online : null)}
-              </span>
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-secondary)' }}>ONLINE</span>
+          <>
+            <div className="nr-online">
+              <span className="cp-live-dot nr-dot" />
+              <span className="nr-online-num" style={{ color: accent }}>{formatNum(pulse ? pulse.online : null)}</span>
+              <span className="nr-unit">online</span>
             </div>
             {pulse && pulse.nextUpdate && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-secondary)' }}>NEXT UPDATE</span>
-                <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 800, color: accent }}>{pulse.nextUpdate}</span>
+              <div className="nr-next">
+                <span className="nr-unit">Next update</span>
+                <span className="nr-next-val">{pulse.nextUpdate}</span>
               </div>
             )}
-          </div>
+          </>
         ) : (
-          <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-secondary)' }}>
-            {game.pulse.note}
-          </span>
+          <span className="nr-prelaunch">{game.pulse.note}</span>
         )}
       </div>
 
-      {/* Footer: enter affordance */}
-      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: accent }}>
-        ENTER -&gt;
-      </span>
+      {/* Footer: enter affordance (quiet; brightens on hover via .nr-tile:hover) */}
+      <span className="nr-enter">ENTER -&gt;</span>
     </Link>
   );
 }
