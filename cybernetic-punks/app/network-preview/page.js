@@ -102,6 +102,25 @@ async function getNetworkPulse() {
   return { pulse: pulse, feeds: feeds };
 }
 
+// VANTAGE's latest surfaced framing. Reads the most recent NON-skipped
+// network_brief row (network-scoped, no game_slug). Null when none exists or the
+// latest cycle was skipped -> the voice slot stays in its clean reserved state.
+// Read-only here; generation lives in /api/network-editor.
+async function getNetworkVoice() {
+  try {
+    var { data } = await supabase
+      .from('network_brief')
+      .select('hero_line, brief, created_at')
+      .eq('skipped', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Brand entity + site structured data. Organization + WebSite ONLY (brand-level);
 // no game-specific structured data on the root (that belongs on hubs/articles).
 // Name matches the site-wide entity ("CyberneticPunks") so Google sees ONE entity.
@@ -124,7 +143,7 @@ const JSONLD = [
 ];
 
 export default async function NetworkPreview() {
-  var data = await getNetworkPulse();
+  var [data, voice] = await Promise.all([getNetworkPulse(), getNetworkVoice()]);
 
   return (
     <div className="nr-page">
@@ -157,11 +176,22 @@ export default async function NetworkPreview() {
             Intel hubs, build tools, and creator coverage - across every extraction shooter we cover.
           </p>
 
-          {/* RESERVED: network-voice slot (a network-editor intro renders here later) */}
-          <div className="nr-reserved nr-reserved-wide" role="note" aria-label="Reserved: network voice">
-            <span className="nr-reserved-label">Reserved</span>
-            <span className="nr-reserved-text">network voice</span>
-          </div>
+          {/* NETWORK-VOICE slot: VANTAGE's hero framing when present; otherwise the
+              clean reserved placeholder (graceful, like the tile-art fallback). */}
+          {voice && voice.hero_line ? (
+            <div className="nr-voice">
+              <span className="nr-voice-byline">
+                <span className="nr-voice-dot" aria-hidden="true" />
+                Vivian Cross / Vantage <span className="nr-voice-role">Network Editor</span>
+              </span>
+              <p className="nr-voice-line">{voice.hero_line}</p>
+            </div>
+          ) : (
+            <div className="nr-reserved nr-reserved-wide" role="note" aria-label="Reserved: network voice">
+              <span className="nr-reserved-label">Reserved</span>
+              <span className="nr-reserved-text">network voice</span>
+            </div>
+          )}
         </section>
 
         {/* ══ ROUTING TILES ══ (signature; game-agnostic, one per ROOT_GAMES entry) */}
@@ -177,6 +207,15 @@ export default async function NetworkPreview() {
         {/* ══ GAME-SEGMENTED PULSE ══ (per-game columns, never blended) */}
         <section className="nr-section" aria-labelledby="nr-pulse-h">
           <h2 id="nr-pulse-h" className="nr-h2">Network pulse</h2>
+          {/* VANTAGE's optional cross-game brief -- present only when there is real
+              movement; gracefully absent otherwise. Points at the per-game columns
+              below, never duplicates them. */}
+          {voice && voice.brief && (
+            <div className="nr-brief">
+              <span className="nr-brief-byline">Network brief - Vantage</span>
+              <p className="nr-brief-text">{voice.brief}</p>
+            </div>
+          )}
           <div className="nr-pulse-grid nr-stagger">
             {ROOT_GAMES.map(function(game) {
               return <GamePulseColumn key={game.slug} game={game} items={data.feeds[game.slug]} />;
@@ -202,7 +241,10 @@ export default async function NetworkPreview() {
 // inline from rootGames.js config. Motion, hover, :focus-visible, reduced-motion,
 // and responsive collapse are centralized here.
 const NR_CSS = `
-.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; }
+/* --nr-vantage: VANTAGE's own network-level accent (silver-blue / platinum per
+   the persona spec -- distinct from the game accents and the editor palette).
+   v1 starting value, single-source here; exact hex pinned at the styling pass. */
+.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; }
 .nr-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
 /* Brand banner */
@@ -233,6 +275,17 @@ const NR_CSS = `
 .nr-reserved-wide { margin-top: 6px; align-self: flex-start; }
 .nr-reserved-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 2px; padding: 2px 6px; }
 .nr-reserved-text { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-tertiary); }
+
+/* VANTAGE network voice (hero) + cross-game brief (pulse). Her own accent spine;
+   restrained, framing surfaces -- they point, never assert. */
+.nr-voice { display: flex; flex-direction: column; gap: 7px; margin-top: 6px; align-self: stretch; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; }
+.nr-voice-byline { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
+.nr-voice-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--nr-vantage); flex-shrink: 0; }
+.nr-voice-role { color: var(--text-tertiary); }
+.nr-voice-line { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; }
+.nr-brief { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; }
+.nr-brief-byline { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
+.nr-brief-text { font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; }
 
 /* Sections */
 .nr-section { display: flex; flex-direction: column; gap: 18px; }
