@@ -243,8 +243,14 @@ const NR_CSS = `
 .nr-pulse-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 
 /* ── SIGNATURE: routing tiles ── */
-.nr-tile { display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+.nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
 .nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); }
+/* Optional atmosphere art: image layer + a strong neutral scrim (rgb = --bg-page
+   #121418) so the spine, label, and live count stay legible; the live count
+   remains the boldest element. Content sits above via z-index. */
+.nr-tile-art { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; }
+.nr-tile-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,20,24,0.80) 0%, rgba(18,20,24,0.60) 48%, rgba(18,20,24,0.90) 100%); }
+.nr-tile-head, .nr-tile-body, .nr-enter { position: relative; z-index: 1; }
 .nr-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .nr-tile-label { font-family: var(--font-orbitron); font-size: 22px; font-weight: 900; letter-spacing: 1px; line-height: 1; color: var(--text-primary); margin: 0; }
 .nr-tile-body { flex: 1; display: flex; flex-direction: column; gap: 12px; justify-content: center; }
@@ -258,20 +264,26 @@ const NR_CSS = `
 .nr-enter { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-tertiary); transition: color .16s ease; }
 .nr-tile:hover .nr-enter { color: var(--text-secondary); }
 
-/* ── Pulse columns (quiet) ── */
-.nr-col { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; }
-.nr-col-head { display: flex; align-items: center; gap: 8px; }
+/* ── Pulse columns ── alive via our own editor content (not an afterthought):
+   weightier spacing, legible headlines, editor-accent codename tags, and
+   freshness as a live signal. Restraint held: editor-accent on the tags is the
+   only new color; everything else stays neutral tokens. */
+.nr-col { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; }
+.nr-col-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
 .nr-col-marker { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
-.nr-col-title { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.nr-col-title { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
 .nr-col-all { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); text-decoration: none; margin-left: auto; transition: color .15s ease; }
 .nr-col-all:hover { color: var(--text-secondary); }
-.nr-col-body { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.nr-row { display: block; text-decoration: none; padding: 9px 11px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
+.nr-col-body { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.nr-row { display: block; text-decoration: none; padding: 12px 13px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
 .nr-row:hover { background: var(--bg-card-hover); border-left-color: var(--text-tertiary); }
-.nr-row-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-.nr-row-editor { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1px; }
-.nr-row-when { font-family: var(--font-mono); font-size: 8px; color: var(--text-tertiary); margin-left: auto; }
-.nr-row-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; font-weight: 500; line-height: 1.32; color: var(--text-primary); }
+.nr-row-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+/* Editor codename tag (color/symbol injected inline from the roster). */
+.nr-tag { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.5; padding: 2px 7px; border: 1px solid var(--border); border-radius: 2px; color: var(--text-secondary); }
+.nr-tag-sym { font-size: 10px; line-height: 1; }
+/* Freshness: a live signal, not fine print. */
+.nr-row-when { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); margin-left: auto; }
+.nr-row-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
 .nr-col-empty, .nr-col-prelaunch { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
 
 /* Footer */

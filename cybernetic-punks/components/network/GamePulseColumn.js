@@ -22,6 +22,24 @@
 // are defined in the page style block.
 
 import Link from 'next/link';
+import { getEditorDisplay } from '@/lib/editors/roster';
+
+// Editor codename rendered as a real accent TAG -- the brand's characters made a
+// visual signal, not tiny grey text. Color/symbol come from the canonical roster
+// (lib/editors/roster.js); feed_items.editor stores the uppercase codename and
+// getEditorDisplay() normalizes case. No invented colors: an unknown codename
+// falls back to the neutral base .nr-tag (tokens only).
+function EditorTag({ codename }) {
+  var ed = getEditorDisplay(codename);
+  var label = codename || 'EDITOR';
+  var style = ed ? { color: ed.color, background: ed.color + '14', borderColor: ed.color + '33' } : undefined;
+  return (
+    <span className="nr-tag" style={style}>
+      {ed && ed.symbol ? <span className="nr-tag-sym" aria-hidden="true">{ed.symbol}</span> : null}
+      {label}
+    </span>
+  );
+}
 
 export default function GamePulseColumn({ game, items }) {
   var accent = game.theme.primary;
@@ -47,7 +65,7 @@ export default function GamePulseColumn({ game, items }) {
               return (
                 <Link key={item.slug} href={'/intel/' + item.slug} className="nr-row">
                   <div className="nr-row-meta">
-                    <span className="nr-row-editor" style={{ color: accent }}>{item.editor || 'EDITOR'}</span>
+                    <EditorTag codename={item.editor} />
                     <span className="nr-row-when">{item.when}</span>
                   </div>
                   <span className="nr-row-headline">{item.headline}</span>

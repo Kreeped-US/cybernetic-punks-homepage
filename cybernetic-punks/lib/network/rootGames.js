@@ -39,6 +39,12 @@ export const ROOT_GAMES = [
     slug: 'marathon',
     label: 'Marathon',
     route: '/marathon',
+    // Optional atmosphere art, rendered as a treated (scrim-masked) tile
+    // background by GameRoutingTile. SOURCE: press / promotional asset released by
+    // the publisher for editorial use (traceability note). OWNER ACTION: the file
+    // must be added to the repo at this public path; the component degrades
+    // gracefully to the clean tile until the file exists.
+    heroImage: '/images/games/marathon-hero.jpg',
     theme: { primary: '#00ff41', tint: 'rgba(0,255,65,0.08)' }, // green (= --green; Marathon site identity)
     pulse: {
       mode: 'live',
@@ -50,6 +56,7 @@ export const ROOT_GAMES = [
     slug: dmzGame.slug,              // 'dmz' from the canonical config
     label: dmzGame.label,           // 'DMZ'
     route: dmzGame.basePath,        // '/dmz' (pre-launch hub placeholder)
+    // no heroImage: DMZ stays the pre-launch clean state until launch art exists.
     theme: { primary: dmzGame.theme.primary, tint: 'rgba(232,154,44,0.08)' }, // amber
     pulse: {
       mode: 'pre-launch',

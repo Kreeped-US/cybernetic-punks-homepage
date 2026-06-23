@@ -16,6 +16,13 @@
 // boldest type on the page). No glow/fill -- color encodes per-game identity, not
 // decoration. Hover/focus/motion come from .nr-* classes defined in the page's
 // style block (so prefers-reduced-motion + :focus-visible are honored centrally).
+//
+// OPTIONAL ATMOSPHERE: if the config supplies game.heroImage, it renders as a
+// treated (scrim-masked) background layer BEHIND the content -- the scrim lives in
+// .nr-tile-art::after (page style block) and keeps the spine, label, and live
+// count fully legible; the live count stays the boldest thing on the tile. The
+// image is set via background-image (not <img>) so a not-yet-added file degrades
+// to the clean tile instead of a broken image. Absent heroImage = clean state.
 
 import Link from 'next/link';
 
@@ -37,6 +44,12 @@ export default function GameRoutingTile({ game, pulse }) {
       style={{ borderLeft: '3px solid ' + accent }}
       aria-label={'Enter the ' + game.label + ' hub'}
     >
+      {/* Optional treated atmosphere art (config-driven; absent = clean tile).
+          Decorative -> aria-hidden. Scrim/legibility handled in .nr-tile-art. */}
+      {game.heroImage && (
+        <span className="nr-tile-art" aria-hidden="true" style={{ backgroundImage: 'url(' + game.heroImage + ')' }} />
+      )}
+
       {/* Header: game label (H3) + pre-launch tag */}
       <div className="nr-tile-head">
         <h3 className="nr-tile-label">{game.label}</h3>
