@@ -12,6 +12,7 @@
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
+import { Sep } from '@/components/Sep';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,6 +120,7 @@ export default async function WeaponsIndexPage() {
                         <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#fff', lineHeight: 1.25, marginBottom: 4 }}>
                           {w.name}
                         </div>
+                        <Sep text=" - " />
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                           {w.ammo_type && (
                             <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>{w.ammo_type}</span>

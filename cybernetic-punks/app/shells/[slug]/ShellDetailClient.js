@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import CoachCTA from '@/components/CoachCTA';
+import { Sep } from '@/components/Sep';
 
 // SEO FIX June 1, 2026:
 // - Removed the duplicate FAQ schema at the bottom of this file. The server
@@ -139,6 +140,7 @@ export default function ShellDetailClient({
                 {shellName.toUpperCase()}
               </h1>
 
+              <Sep text=" - " />
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', letterSpacing: 3, marginBottom: 16, fontWeight: 700, textTransform: 'uppercase' }}>
                 {shell.role || '—'}
               </div>
@@ -534,7 +536,7 @@ export default function ShellDetailClient({
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: cColor, letterSpacing: 1, fontFamily: 'Orbitron, monospace' }}>{c.name.toUpperCase()}</div>
-                            {c.role && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700, fontFamily: 'monospace', marginTop: 2 }}>{c.role.toUpperCase()}</div>}
+                            {c.role && <><Sep text=" - " /><div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700, fontFamily: 'monospace', marginTop: 2 }}>{c.role.toUpperCase()}</div></>}
                           </div>
                           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontWeight: 700, fontFamily: 'monospace' }}>→</span>
                         </Link>
@@ -571,7 +573,7 @@ export default function ShellDetailClient({
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: cColor, letterSpacing: 1, fontFamily: 'Orbitron, monospace' }}>{c.name.toUpperCase()}</div>
-                            {c.role && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700, fontFamily: 'monospace', marginTop: 2 }}>{c.role.toUpperCase()}</div>}
+                            {c.role && <><Sep text=" - " /><div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700, fontFamily: 'monospace', marginTop: 2 }}>{c.role.toUpperCase()}</div></>}
                           </div>
                           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontWeight: 700, fontFamily: 'monospace' }}>→</span>
                         </Link>

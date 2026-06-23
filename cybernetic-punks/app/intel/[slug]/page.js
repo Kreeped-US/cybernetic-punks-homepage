@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getUserAvatars } from '@/lib/gather/twitch';
 import Footer from '@/components/Footer';
 import CoachCTA from '@/components/CoachCTA';
+import { Sep } from '@/components/Sep';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorByline } from '@/lib/editors/roster';
@@ -397,17 +398,8 @@ function CreatorHeader({ info, avatarUrl, editorColor, editorGlyph }) {
 }
 
 // ─── INLINE STAT CARD ────────────────────────────────────────
-// Visually-hidden separator. The card lays its parts out as adjacent flex
-// spans (icon / name / type / rarity) with only CSS gap between them, so when
-// the DOM is flattened to plain text (search crawlers, copy-paste, screen
-// readers) the parts glue together ("M77 Assault RifleAR"). These zero-footprint
-// separators sit between the parts so the flattened text reads "Name - Type -
-// Rarity". Absolutely-positioned + clipped, so they take no layout space and
-// are never painted — visual output is unchanged.
-var SR_ONLY = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 };
-function Sep({ text }) {
-  return <span style={SR_ONLY}>{text}</span>;
-}
+// Sep / SR_ONLY (the visually-hidden separator) now live in @/components/Sep,
+// imported above, so every card site can share the one canonical separator.
 
 function InlineStatCard({ item, type, color }) {
   var imgSrc = null;
@@ -909,9 +901,11 @@ function SidebarItemCard({ item, type, editorColor }) {
           <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 3, fontWeight: 700, fontFamily: 'monospace' }}>
             {labels[type]}
           </div>
+          <Sep text=" - " />
           <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: typeColor, lineHeight: 1.3, marginBottom: 4 }}>
             {item.name}
           </div>
+          <Sep text=" - " />
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
             {type === 'weapon' && item.weapon_type && (
               <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>
@@ -929,9 +923,12 @@ function SidebarItemCard({ item, type, editorColor }) {
               </span>
             )}
             {item.rarity && rarityColor && (
-              <span style={{ fontSize: 7, color: rarityColor, border: '1px solid ' + rarityColor + '40', padding: '1px 5px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>
-                {item.rarity}
-              </span>
+              <>
+                <Sep text=" - " />
+                <span style={{ fontSize: 7, color: rarityColor, border: '1px solid ' + rarityColor + '40', padding: '1px 5px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>
+                  {item.rarity}
+                </span>
+              </>
             )}
           </div>
         </div>

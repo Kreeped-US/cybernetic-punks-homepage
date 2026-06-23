@@ -18,6 +18,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Sep } from '@/components/Sep';
 
 // -- STATIC CONFIG ----------------------------------------------
 const TIERS = [
@@ -440,6 +441,7 @@ export default function RankedClient({ data }) {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{w.name}</div>
+                    <Sep text=" - " />
                     <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,34,34,0.6)', letterSpacing: 1, fontWeight: 700 }}>{w.weapon_type || 'WEAPON'}</div>
                   </div>
                 </div>

@@ -20,6 +20,7 @@
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import Link from 'next/link';
+import { Sep } from '@/components/Sep';
 
 export const dynamic = 'force-dynamic';
 
@@ -679,7 +680,7 @@ export default async function BuildsPage() {
                           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                             <div>
                               <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: color, letterSpacing: 2, lineHeight: 1 }}>{shell.name.toUpperCase()}</div>
-                              {shell.role && <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginTop: 4, fontWeight: 700 }}>{shell.role.toUpperCase()}</div>}
+                              {shell.role && <><Sep text=" - " /><div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginTop: 4, fontWeight: 700 }}>{shell.role.toUpperCase()}</div></>}
                             </div>
                             {displayTier && <TierBadge tier={displayTier} size="lg" />}
                           </div>
@@ -857,6 +858,7 @@ export default async function BuildsPage() {
 
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: weapon.ranked_viable === false ? 'rgba(255,255,255,0.4)' : '#fff', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{weapon.name}</div>
+                          <Sep text=" - " />
                           <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
                           {weapon.rarity && <RarityBadge rarity={weapon.rarity} />}
                             {weapon.ranked_viable === false && <span style={{ fontFamily: 'monospace', fontSize: 7, color: RED, letterSpacing: 1, fontWeight: 700 }}>⚠ NOT RANKED</span>} 

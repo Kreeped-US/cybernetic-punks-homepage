@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { Sep } from '@/components/Sep';
 
 // Rarity accent colors — drawn from the established rarity ladder.
 // Prestige and Deluxe are the two tiers present for uniques. Contraband
@@ -206,6 +207,7 @@ export default function UniquesHubClient(props) {
                             <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: '#fff', letterSpacing: 1, lineHeight: 1.15 }}>
                               {u.name.toUpperCase()}
                             </span>
+                            <Sep text=" - " />
                             <span style={{ flexShrink: 0, background: color, color: u.rarity === 'Deluxe' ? '#000' : '#fff', fontSize: 9, fontWeight: 900, letterSpacing: 1, padding: '3px 8px', borderRadius: 2, fontFamily: 'Orbitron, monospace', lineHeight: 1 }}>
                               {(u.rarity || '').toUpperCase()}
                             </span>
