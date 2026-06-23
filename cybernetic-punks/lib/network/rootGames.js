@@ -56,7 +56,13 @@ export const ROOT_GAMES = [
     slug: dmzGame.slug,              // 'dmz' from the canonical config
     label: dmzGame.label,           // 'DMZ'
     route: dmzGame.basePath,        // '/dmz' (pre-launch hub placeholder)
-    // no heroImage: DMZ stays the pre-launch clean state until launch art exists.
+    // Optional atmosphere art, rendered as a treated (scrim-masked) tile
+    // background by GameRoutingTile -- BEHIND the pre-launch markers, which stay
+    // the foreground (the amber PRE-LAUNCH tag + the "Oct 23" note remain on top
+    // and legible). SOURCE: press / promotional asset released by the publisher
+    // for editorial use (traceability note). OWNER ACTION: file tracked in the
+    // repo at this public path; component degrades to the clean tile if absent.
+    heroImage: '/images/games/dmz-hero.jpg',
     theme: { primary: dmzGame.theme.primary, tint: 'rgba(232,154,44,0.08)' }, // amber
     pulse: {
       mode: 'pre-launch',
