@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { Sep } from '@/components/Sep';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/useTrack';
 import { supabase } from '@/lib/supabase';
@@ -914,6 +915,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                   ) : (
                                     <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5 }}>{item.name}</span>
                                   )}
+                                  <Sep text=" - " />
                                   <span style={{ fontSize: 8, letterSpacing: 2, color: typeColor, background: typeColor + '18', border: '1px solid ' + typeColor + '30', borderRadius: 2, padding: '2px 7px', fontWeight: 700, textTransform: 'uppercase' }}>
                                     {(item.type || '').toUpperCase()}
                                   </span>
