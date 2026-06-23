@@ -220,7 +220,11 @@ const NR_CSS = `
 
 /* Hero */
 .nr-hero { display: flex; flex-direction: column; gap: 16px; }
-.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.5px; line-height: 1.06; font-size: clamp(30px, 6vw, 52px); color: var(--text-primary); margin: 0; max-width: 18ch; }
+/* Thesis: a confident single line, not a slogan-wall. Sized DOWN to sit just
+   below the signature online-count (40px) so the tiles + live data lead; min/max
+   track the existing scale (offer 16px floor -> ~30px lead), not a one-off value.
+   Wider max-width lets it form 1-2 lines instead of the old narrow multi-line wall. */
+.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.3px; line-height: 1.2; font-size: clamp(20px, 3vw, 30px); color: var(--text-primary); margin: 0; max-width: 52ch; }
 .nr-descriptor { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
 .nr-offer { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 56ch; }
 
