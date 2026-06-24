@@ -161,7 +161,7 @@ export default async function NetworkPreview() {
             <span className="nr-brand-dot" aria-hidden="true" />
             <span className="nr-brand-name">CYBERNETIC<span className="nr-brand-accent">PUNKS</span></span>
           </div>
-          <Link href="#" className="nr-join">JOIN FREE</Link>
+          <Link href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer" className="nr-join">JOIN FREE</Link>
         </div>
       </header>
 
