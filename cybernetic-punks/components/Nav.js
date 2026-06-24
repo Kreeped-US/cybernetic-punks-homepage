@@ -13,7 +13,7 @@ function intelChild(key, desc) {
 }
 
 var NAV_ITEMS = [
-  { label: 'HOME',     href: '/' },
+  { label: 'HOME',     href: '/marathon' },
   { label: 'META',     href: '/meta' },
   { label: 'SHELLS',   href: '/shells' },
   { label: 'WEAPONS',  href: '/weapons' },
@@ -198,10 +198,11 @@ export default function Nav() {
 
   // DMZ (and future game route groups) render their own per-game header
   // (GAME_TEMPLATE.md D4); network-level pages (e.g. /profile-preview) aren't
-  // Marathon pages either. Suppress Marathon's global nav on these. Declared
-  // after all hooks so hook order stays stable. Marathon's unprefixed routes
-  // are unaffected.
-  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview'))) return null;
+  // Marathon pages either. The neutral root ('/') is the network front door and
+  // renders its own brand banner, so Marathon's global nav is suppressed there
+  // too. Declared after all hooks so hook order stays stable. Marathon's other
+  // unprefixed routes are unaffected.
+  if (pathname === '/' || (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview')))) return null;
 
   return (
     <nav style={{
@@ -224,7 +225,7 @@ export default function Nav() {
       }}>
 
         {/* Logo */}
-        <Link href="/" style={{
+        <Link href="/marathon" style={{
           display:      'flex',
           alignItems:   'center',
           gap:          8,

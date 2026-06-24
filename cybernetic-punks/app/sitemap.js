@@ -49,6 +49,7 @@ export default async function sitemap() {
 
   const staticPages = [
     { url: baseUrl,                  lastModified: new Date(), changeFrequency: 'daily',   priority: 1.0 },
+    { url: baseUrl + '/marathon',    lastModified: new Date(), changeFrequency: 'daily',   priority: 0.95 },
     { url: baseUrl + '/meta',        lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.95 },
     { url: baseUrl + '/sitrep',      lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.95 },
     { url: baseUrl + '/factions',    lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },

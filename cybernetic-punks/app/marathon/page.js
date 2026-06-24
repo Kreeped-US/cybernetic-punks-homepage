@@ -7,20 +7,19 @@ import { getLiveStats } from '@/lib/liveStats';
 import { getUserAvatars } from '@/lib/gather/twitch';
 
 // ── METADATA ────────────────────────────────────────────────
-// STAGING COPY of the homepage (app/page.js). Lives at /marathon as a testable
-// duplicate ahead of the network-front-door cutover. noindex + NOT in the sitemap
-// so it does not compete with the live / in search or create duplicate content.
-// Both reverse at cutover, when /marathon becomes canonical and / becomes the
-// neutral root. No alternates.canonical here yet (it gets /marathon at cutover).
+// MARATHON HUB (canonical). Post-cutover the Marathon homepage lives here at
+// /marathon; the network root (/) is the neutral front door. Indexed,
+// self-canonical to /marathon, and listed in the sitemap. (Pre-cutover this was
+// a noindex staging copy of the homepage.)
 export const metadata = {
   title: 'Marathon Meta, Builds & Tier List - Updated Daily',
   description: 'Live Marathon tier list, build advisor, and Cradle build planner. Tier rankings, weapon and shell guides, and Season 2 progression tools - refreshed throughout the day.',
   keywords: 'Marathon, Marathon meta, Marathon tier list, Marathon builds, Marathon loadouts, Marathon ranked, Marathon weapons, Marathon shells, Marathon guides, Marathon build advisor, Marathon cradle, Marathon cradle planner, best Marathon builds, what to run in Marathon, Bungie Marathon, Marathon intelligence',
-  robots: { index: false, follow: false },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon' },
   openGraph: {
     title: 'Marathon Meta, Builds & Tier List - Updated Daily',
     description: 'Live Marathon tier list, build advisor, and Cradle build planner. Refreshed throughout the day.',
-    url: 'https://cyberneticpunks.com',
+    url: 'https://cyberneticpunks.com/marathon',
     siteName: 'CyberneticPunks',
     type: 'website',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Marathon Meta, Builds & Tier List - CyberneticPunks' }],
@@ -225,24 +224,9 @@ export default async function Home() {
 
   return (
     <div style={{ background: '#121418', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Site-entity structured data (Organization + WebSite). Apex canonical host,
-          matching metadataBase/sitemap/canonicals (www 301s to apex). Name matches
-          the existing Article-publisher entity ("CyberneticPunks") so Google sees
-          one entity. No SearchAction: there is no site-search endpoint to point at. */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'CyberneticPunks',
-        url: 'https://cyberneticpunks.com',
-        logo: 'https://cyberneticpunks.com/icon-512.png',
-        sameAs: ['https://x.com/Cybernetic87250'],
-      }) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: 'CyberneticPunks',
-        url: 'https://cyberneticpunks.com',
-      }) }} />
+      {/* Site-entity JSON-LD (Organization + WebSite) intentionally lives ONLY on
+          the network root (/), not on this hub, to avoid duplicate entity
+          declarations across pages. */}
       <style>{`
         .hp-wrap { max-width: 1100px; margin: 0 auto; width: 100%; }
         .hp-product-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }

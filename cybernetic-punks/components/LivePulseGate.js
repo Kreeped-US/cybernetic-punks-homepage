@@ -1,8 +1,8 @@
 'use client';
-// Client gate for the site-wide LivePulseStrip. Hides the strip on the
-// homepage ('/'), where the homepage renders its own richer top strip
-// (player counts + DB counts + freshness) to avoid showing the same
-// Steam/Twitch numbers twice. Everywhere else, the strip renders normally.
+// Client gate for the site-wide LivePulseStrip. Hides the strip on the neutral
+// root ('/') and the Marathon hub ('/marathon') -- both render their own richer
+// top strip (player counts + DB counts + freshness), so the global strip would
+// double up the Steam/Twitch numbers there. Everywhere else it renders normally.
 
 import { usePathname } from 'next/navigation';
 
@@ -14,7 +14,7 @@ function formatNum(n) {
 
 export default function LivePulseGate({ stats }) {
   var pathname = usePathname();
-  if (pathname === '/') return null;
+  if (pathname === '/' || pathname === '/marathon') return null;
   // DMZ route group has its own shell (GAME_TEMPLATE.md D4) and network-level
   // pages (e.g. /profile-preview) aren't Marathon pages -- Marathon-specific
   // live stats don't apply on either. Marathon routes are unaffected.

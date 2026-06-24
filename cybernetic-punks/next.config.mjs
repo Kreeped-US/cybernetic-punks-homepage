@@ -27,6 +27,11 @@ const nextConfig = {
         destination: '/builds',
         permanent: true,
       },
+      {
+        source: '/network-preview',
+        destination: '/',
+        permanent: true,
+      },
     ];
   },
 };

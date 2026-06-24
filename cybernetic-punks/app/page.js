@@ -1,551 +1,374 @@
+// app/page.js
+// NEUTRAL ROOT (network front door) -- the LIVE site root at /. Styled v1.
+// A lean, premium SHOWCASE ROUTER: brand hero (depth thesis, NO game vocabulary,
+// NO AI in the hero), game-agnostic routing tiles (the signature element) +
+// segmented pulse driven by lib/network/rootGames.js (keyed by game_slug),
+// reserved slots for future workstreams, a light join-free affordance, and a
+// neutral footer where AI is whispered as the engine.
+//
+// CUTOVER: this replaced the Marathon homepage at /, which now lives at /marathon.
+// Indexed, self-canonical apex. See docs/network/cyberneticpunks-brand-positioning.md.
+//
+// STYLING: drives off the codebase design tokens (app/globals.css :root vars +
+// .cp-* utilities). The ONLY injected colors are the two per-game accents, read
+// from rootGames.js config (single-source, swappable); everything else is neutral
+// tokens. Accent is restrained to tile spines, the live online-count, and the
+// live dot -- no glow/fill (avoids the dark-bg + neon AI-default look). Character
+// comes from the Orbitron / Rajdhani / mono type hierarchy + structure.
+//
+// Game-specific vocabulary (Cradle, shells, loadout, FOB, Season 2, etc.) MUST
+// NOT appear in the root's own copy. Game NAMES on tiles/columns and a game's own
+// content inside its segmented column are correct (routing + segmentation).
+//
+// The neutral root deliberately does NOT reuse components/Footer.js (that footer
+// carries Marathon vocabulary); a minimal neutral footer is rendered here.
+
 import Link from 'next/link';
-import Footer from '@/components/Footer';
-import { Sep } from '@/components/Sep';
-import HomeEditorReactions from './HomeEditorReactions';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
-import { getUserAvatars } from '@/lib/gather/twitch';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
+import GameRoutingTile from '@/components/network/GameRoutingTile';
+import GamePulseColumn from '@/components/network/GamePulseColumn';
 
 // ── METADATA ────────────────────────────────────────────────
+// Neutral, network-level title (the layout title.template appends the site name;
+// no manual append here). Real brand-level description for the SERP pitch.
+// Indexed (inherits the layout's robots:index) with a self-referential canonical
+// to the apex -- this is the network root's own canonical home.
 export const metadata = {
-  title: 'Marathon Meta, Builds & Tier List - Updated Daily',
-  description: 'Live Marathon tier list, build advisor, and Cradle build planner. Tier rankings, weapon and shell guides, and Season 2 progression tools - refreshed throughout the day.',
-  keywords: 'Marathon, Marathon meta, Marathon tier list, Marathon builds, Marathon loadouts, Marathon ranked, Marathon weapons, Marathon shells, Marathon guides, Marathon build advisor, Marathon cradle, Marathon cradle planner, best Marathon builds, what to run in Marathon, Bungie Marathon, Marathon intelligence',
-  openGraph: {
-    title: 'Marathon Meta, Builds & Tier List - Updated Daily',
-    description: 'Live Marathon tier list, build advisor, and Cradle build planner. Refreshed throughout the day.',
-    url: 'https://cyberneticpunks.com',
-    siteName: 'CyberneticPunks',
-    type: 'website',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Marathon Meta, Builds & Tier List - CyberneticPunks' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@Cybernetic87250',
-    title: 'Marathon Meta, Builds & Tier List - Updated Daily',
-    description: 'Live Marathon tier list, build advisor, and Cradle build planner. Refreshed throughout the day.',
-    images: ['/og-image.png'],
-  },
+  title: 'Extraction-Shooter Intelligence Network',
+  description: 'CyberneticPunks is the extraction-shooter intelligence network - the deepest, most current intel, build tools, and creator coverage across every extraction shooter we cover.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
 
-// ── HELPERS ────────────────────────────────────────────────────
+export const dynamic = 'force-dynamic';
+
+// ── HELPERS ─────────────────────────────────────────────────
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   var diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
-  if (diff < 3600)  return Math.floor(diff / 60)   + 'm ago';
-  if (diff < 86400) return Math.floor(diff / 3600)  + 'h ago';
+  if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
   return Math.floor(diff / 86400) + 'd ago';
 }
 
-// Extract a lowercased twitch login from a creator_info.twitch URL (mirrors /rising).
-function twitchLoginFromUrl(url) {
-  if (!url || typeof url !== 'string') return null;
+// Next-update label for live games. Mirrors the /marathon page's cron-cycle math
+// (12h cycles at 00:00 + 12:00 UTC, the Marathon editorial cadence). Page-side
+// resolver so the tile component stays data-agnostic.
+function nextUpdateLabel() {
+  var now = new Date();
+  var minsIn = (now.getUTCHours() * 60 + now.getUTCMinutes()) % 720;
+  var minsLeft = 720 - minsIn;
+  var h = Math.floor(minsLeft / 60);
+  var m = minsLeft % 60;
+  return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+}
+
+// Resolve the live pulse (online count, next update, latest feed items) for the
+// games that declare a live pulse. Pre-launch games need no query. Reads the SAME
+// sources the /marathon page uses: getLiveStats() + feed_items.
+async function getNetworkPulse() {
+  var liveGames = ROOT_GAMES.filter(function(g) { return g.pulse.mode === 'live'; });
+  var pulse = {};   // slug -> { online, nextUpdate }
+  var feeds = {};   // slug -> [{ headline, slug, editor, when }]
+
+  var liveStats = null;
+  try { liveStats = await getLiveStats(); } catch (e) { liveStats = null; }
+  var nextUpd = nextUpdateLabel();
+
+  await Promise.all(liveGames.map(async function(g) {
+    var online = null;
+    if (liveStats && g.pulse.onlineSource && liveStats[g.pulse.onlineSource]) {
+      online = liveStats[g.pulse.onlineSource].value;
+    }
+    pulse[g.slug] = { online: online, nextUpdate: nextUpd };
+
+    feeds[g.slug] = [];
+    try {
+      var res = await supabase
+        .from('feed_items')
+        .select('headline, slug, editor, created_at')
+        .eq('is_published', true)
+        .eq('game_slug', g.pulse.feed.gameSlug)
+        .order('created_at', { ascending: false })
+        .limit(4);
+      feeds[g.slug] = (res.data || []).map(function(it) {
+        return { headline: it.headline, slug: it.slug, editor: it.editor, when: timeAgo(it.created_at) };
+      });
+    } catch (e) {
+      feeds[g.slug] = [];
+    }
+  }));
+
+  return { pulse: pulse, feeds: feeds };
+}
+
+// VANTAGE's latest surfaced framing. Reads the most recent NON-skipped
+// network_brief row (network-scoped, no game_slug). Null when none exists or the
+// latest cycle was skipped -> the voice slot stays in its clean reserved state.
+// Read-only here; generation lives in /api/network-editor.
+async function getNetworkVoice() {
   try {
-    var clean = url.split('?')[0].replace(/\/+$/, '');
-    var parts = clean.split('/');
-    var last = parts[parts.length - 1];
-    return last ? last.toLowerCase() : null;
+    var { data } = await supabase
+      .from('network_brief')
+      .select('hero_line, brief, created_at')
+      .eq('skipped', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data || null;
   } catch (e) {
     return null;
   }
 }
 
-function formatNum(n) {
-  if (!n || n < 1000) return n ? n.toString() : '0';
-  if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0) + 'K';
-  return (n / 1000000).toFixed(1) + 'M';
-}
+// Brand entity + site structured data. Organization + WebSite ONLY (brand-level);
+// no game-specific structured data on the root (that belongs on hubs/articles).
+// Name matches the site-wide entity ("CyberneticPunks") so Google sees ONE entity.
+// No SearchAction (there is no site-search endpoint to point at).
+const JSONLD = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'CyberneticPunks',
+    url: 'https://cyberneticpunks.com',
+    logo: 'https://cyberneticpunks.com/icon-512.png',
+    sameAs: ['https://x.com/Cybernetic87250'],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'CyberneticPunks',
+    url: 'https://cyberneticpunks.com',
+  },
+];
 
-function tierBg(tier) {
-  if (tier === 'S') return { background: '#ff2222', color: '#fff' };
-  if (tier === 'A') return { background: '#ff8800', color: '#000' };
-  if (tier === 'B') return { background: '#00d4ff', color: '#000' };
-  return { background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)' };
-}
-
-function trendArrow(trend) {
-  var t = (trend || '').toLowerCase();
-  if (t === 'up')   return { symbol: '↑', color: '#00ff41' };
-  if (t === 'down') return { symbol: '↓', color: '#ff2222' };
-  return null;
-}
-
-function imagePath(type, filename) {
-  if (!filename) return null;
-  var folder = (type || '').toLowerCase() === 'shell' ? 'shells' : 'weapons';
-  return '/images/' + folder + '/' + filename;
-}
-
-// Cron cadence: 12h cycles at 00:00 + 12:00 UTC (`0 0,12 * * *`).
-function cronCycleInfo() {
-  var now        = new Date();
-  var totalMins  = now.getUTCHours() * 60 + now.getUTCMinutes();
-  var cycleMins  = 720;
-  var minsIn     = totalMins % cycleMins;
-  var minsLeft   = cycleMins - minsIn;
-  var progress   = Math.round((minsIn / cycleMins) * 100);
-  var hLeft      = Math.floor(minsLeft / 60);
-  var mLeft      = minsLeft % 60;
-  var nextLabel  = hLeft > 0 ? hLeft + 'h ' + mLeft + 'm' : mLeft + 'm';
-  return { progress, nextLabel };
-}
-
-var SHELL_COLORS = {
-  Assassin: '#cc44ff', Destroyer: '#ff3333', Recon: '#00d4ff',
-  Rook: '#888888', Thief: '#ffd700', Triage: '#00ff88', Vandal: '#ff8800',
-};
-
-// Editor accent colors + glyphs for creator-spotlight cards (mirrors /rising).
-var EDITOR_ACCENT = {
-  CIPHER: '#ff2222', NEXUS: '#00d4ff', DEXTER: '#ff8800', GHOST: '#00ff88', MIRANDA: '#9b5de5',
-};
-var EDITOR_GLYPH = {
-  CIPHER: '◈', NEXUS: '⬡', DEXTER: '⬢', GHOST: '◇', MIRANDA: '◎',
-};
-
-// ── DATA FETCH ─────────────────────────────────────────────────
-async function getHomepageData() {
-  try {
-    var [
-      tiersRes, weaponRes, shellRes, weaponImgRes, shellImgRes,
-      weeklyBuildsRes, shellListRes, lastUpdatedRes, spotlightRes,
-    ] = await Promise.all([
-      supabase
-        .from('meta_tiers')
-        .select('name, type, tier, trend')
-        .in('tier', ['S', 'A', 'B'])
-        .order('tier', { ascending: true })
-        .order('name', { ascending: true })
-        .limit(18),
-
-      supabase.from('weapon_stats').select('id', { count: 'exact', head: true }),
-      supabase.from('shell_stats').select('id', { count: 'exact', head: true }),
-      supabase.from('weapon_stats').select('name, image_filename'),
-      supabase.from('shell_stats').select('name, image_filename'),
-
-      supabase
-        .from('site_events')
-        .select('id', { count: 'exact', head: true })
-        .eq('event_name', 'advisor_generate')
-        .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
-
-      supabase.from('shell_stats').select('name, image_filename').order('name'),
-
-      supabase
-        .from('feed_items')
-        .select('created_at')
-        .eq('is_published', true)
-        .eq('game_slug', 'marathon')
-        .order('created_at', { ascending: false })
-        .limit(1),
-
-      supabase
-        .from('feed_items')
-        .select('headline, slug, editor, creator_info, created_at')
-        .eq('directive_type', 'creator_spotlight')
-        .eq('is_published', true)
-        .eq('game_slug', 'marathon')
-        .order('created_at', { ascending: false })
-        .limit(3),
-    ]);
-
-    var weaponMap = {};
-    (weaponImgRes.data || []).forEach(function(w) { weaponMap[w.name] = w; });
-    var shellMap = {};
-    (shellImgRes.data || []).forEach(function(s) { shellMap[s.name] = s; });
-
-    var enrichedTiers = (tiersRes.data || []).map(function(t) {
-      var extra = (t.type || '').toLowerCase() === 'shell'
-        ? (shellMap[t.name] || {})
-        : (weaponMap[t.name] || {});
-      return Object.assign({}, t, { image_filename: extra.image_filename || null });
-    });
-
-    return {
-      tiers:        enrichedTiers,
-      weaponCount:  weaponRes.count || 0,
-      shellCount:   shellRes.count || 0,
-      weeklyBuilds: weeklyBuildsRes.count || 0,
-      shells:       shellListRes.data || [],
-      lastUpdated:  (lastUpdatedRes.data || [])[0]?.created_at || null,
-      spotlights:   spotlightRes.data || [],
-    };
-  } catch (e) {
-    return { tiers: [], weaponCount: 0, shellCount: 0, weeklyBuilds: 0, shells: [], lastUpdated: null, spotlights: [] };
-  }
-}
-
-export const dynamic = 'force-dynamic';
-
-export default async function Home() {
-  var data = await getHomepageData();
-  var liveStats = await getLiveStats();
-  var tiers        = data.tiers;
-  var weaponCount  = data.weaponCount;
-  var shellCount   = data.shellCount;
-  var weeklyBuilds = data.weeklyBuilds;
-  var shells       = data.shells;
-  var lastUpdated  = data.lastUpdated;
-  var spotlights   = data.spotlights;
-
-  // Resolve creator Twitch avatars in one batched call (same as /rising).
-  var spotlightAvatars = {};
-  var spotlightLogins = [];
-  spotlights.forEach(function(item) {
-    var l = twitchLoginFromUrl(item.creator_info && item.creator_info.twitch);
-    if (l) spotlightLogins.push(l);
-  });
-  if (spotlightLogins.length > 0) {
-    try { spotlightAvatars = await getUserAvatars(spotlightLogins); } catch (e) { spotlightAvatars = {}; }
-  }
-
-  var cron = cronCycleInfo();
-
-  var gridPreview = tiers.filter(function(t) { return t.tier === 'S'; }).slice(0, 3);
-  if (gridPreview.length < 3) {
-    var aFill = tiers.filter(function(t) { return t.tier === 'A'; }).slice(0, 3 - gridPreview.length);
-    gridPreview = gridPreview.concat(aFill);
-  }
-
-  var boardS = tiers.filter(function(t) { return t.tier === 'S'; }).slice(0, 3);
-  var boardA = tiers.filter(function(t) { return t.tier === 'A'; }).slice(0, 3);
-  var boardB = tiers.filter(function(t) { return t.tier === 'B' || !t.tier; }).slice(0, 3);
-
-  var sampleShells = ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Thief', 'Triage', 'Vandal'];
-  var forgeShells = sampleShells.map(function(name) {
-    var found = shells.find(function(s) { return s.name === name; });
-    return { name: name, color: SHELL_COLORS[name] || '#888', image_filename: found ? found.image_filename : null };
-  });
+export default async function NetworkPreview() {
+  var [data, voice] = await Promise.all([getNetworkPulse(), getNetworkVoice()]);
 
   return (
-    <div style={{ background: '#121418', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Site-entity structured data (Organization + WebSite). Apex canonical host,
-          matching metadataBase/sitemap/canonicals (www 301s to apex). Name matches
-          the existing Article-publisher entity ("CyberneticPunks") so Google sees
-          one entity. No SearchAction: there is no site-search endpoint to point at. */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'CyberneticPunks',
-        url: 'https://cyberneticpunks.com',
-        logo: 'https://cyberneticpunks.com/icon-512.png',
-        sameAs: ['https://x.com/Cybernetic87250'],
-      }) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: 'CyberneticPunks',
-        url: 'https://cyberneticpunks.com',
-      }) }} />
-      <style>{`
-        .hp-wrap { max-width: 1100px; margin: 0 auto; width: 100%; }
-        .hp-product-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media (min-width: 760px) { .hp-product-grid { grid-template-columns: repeat(2, 1fr); } }
-        .product-panel { transition: background 0.12s, border-color 0.12s; }
-        .product-panel:hover { background: #1e2228 !important; }
-        .tier-chip { transition: background 0.1s; }
-      `}</style>
+    <div className="nr-page">
+      {JSONLD.map(function(node, i) {
+        return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }} />;
+      })}
 
-      <div style={{ flex: 1, marginTop: 48, position: 'relative', overflow: 'hidden' }}>
-        {/* Ambient background */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(0,255,65,0.05) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-          <div style={{ position: 'absolute', top: -140, right: -100, width: 480, height: 480, border: '1px solid rgba(0,255,65,0.04)', transform: 'rotate(45deg)' }} />
-          <div style={{ position: 'absolute', bottom: 40, left: -120, width: 320, height: 320, border: '1px solid rgba(0,212,255,0.03)', transform: 'rotate(45deg)' }} />
+      <style>{NR_CSS}</style>
+
+      {/* ══ BRAND BANNER ══ */}
+      <header className="nr-header">
+        <div className="nr-wrap nr-header-row">
+          <div className="nr-brand">
+            <span className="nr-brand-dot" aria-hidden="true" />
+            <span className="nr-brand-name">CYBERNETIC<span className="nr-brand-accent">PUNKS</span></span>
+          </div>
+          <Link href="#" className="nr-join">JOIN FREE</Link>
         </div>
+      </header>
 
-        {/* ══ HERO ══ */}
-        <section style={{ position: 'relative', zIndex: 1, borderBottom: '1px solid #1e2028', background: '#0e1014' }}>
-          <div className="hp-wrap" style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.6)' }} />
-              <span style={{ fontSize: 9, color: '#00ff41', letterSpacing: 2, fontWeight: 800, fontFamily: 'monospace' }}>LIVE</span>
-            </div>
+      <main className="nr-wrap nr-main">
 
-            {liveStats.steam && (
-              <>
-                <div style={{ width: 1, height: 14, background: '#22252e' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace' }}>STEAM</span>
-                  <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>{formatNum(liveStats.steam.value)}</span>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>RUNNERS ONLINE</span>
-                </div>
-              </>
-            )}
+        {/* ══ HERO ══ (thesis; no game vocab, no AI) */}
+        <section className="nr-hero" aria-labelledby="nr-thesis">
+          <h1 id="nr-thesis" className="nr-h1">
+            The deepest, most current intel in every extraction shooter
+          </h1>
+          <p className="nr-descriptor">The extraction-shooter intelligence network</p>
+          <p className="nr-offer">
+            Intel hubs, build tools, and creator coverage - across every extraction shooter we cover.
+          </p>
 
-            {liveStats.twitch && (
-              <>
-                <div style={{ width: 1, height: 14, background: '#22252e' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(145,70,255,0.65)', letterSpacing: 1.5, fontFamily: 'monospace' }}>TWITCH</span>
-                  <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>{formatNum(liveStats.twitch.value)}</span>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>WATCHING · {liveStats.twitch.stream_count} LIVE</span>
-                </div>
-              </>
-            )}
-
-            <div style={{ width: 1, height: 14, background: '#22252e' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 12, fontWeight: 900, color: '#00ff41', fontFamily: 'Orbitron, monospace' }}>{weaponCount}</span>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>WEAPONS</span>
+          {/* NETWORK-VOICE slot: VANTAGE's hero framing when present; otherwise the
+              clean reserved placeholder (graceful, like the tile-art fallback). */}
+          {voice && voice.hero_line ? (
+            <div className="nr-voice">
+              <span className="nr-voice-byline">
+                <span className="nr-voice-dot" aria-hidden="true" />
+                Vivian Cross / Vantage <span className="nr-voice-role">Network Editor</span>
+              </span>
+              <p className="nr-voice-line">{voice.hero_line}</p>
             </div>
-            <div style={{ width: 1, height: 14, background: '#22252e' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 12, fontWeight: 900, color: '#00d4ff', fontFamily: 'Orbitron, monospace' }}>{shellCount}</span>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>SHELLS</span>
+          ) : (
+            <div className="nr-reserved nr-reserved-wide" role="note" aria-label="Reserved: network voice">
+              <span className="nr-reserved-label">Reserved</span>
+              <span className="nr-reserved-text">network voice</span>
             </div>
-            <div style={{ width: 1, height: 14, background: '#22252e' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>NEXT UPDATE</span>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#00ff41', fontFamily: 'monospace' }}>{cron.nextLabel}</span>
-            </div>
-            {lastUpdated && (
-              <>
-                <div style={{ width: 1, height: 14, background: '#22252e' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>UPDATED</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace' }}>{timeAgo(lastUpdated)}</span>
-                </div>
-              </>
-            )}
-          </div>
+          )}
         </section>
 
-        {/* ══ PRODUCTS ══ */}
-        <section style={{ position: 'relative', zIndex: 1 }}>
-          <div className="hp-wrap" style={{ padding: '28px 24px 32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase' }}>Products</span>
-              <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', letterSpacing: 1 }}>4 AVAILABLE</span>
-            </div>
-
-            <div className="hp-product-grid">
-
-              {/* CARD 1: TIER LIST (Maker folded in) */}
-              <Link href="/meta" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00ff41', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#00ff41', letterSpacing: 1, lineHeight: 1 }}>TIER LIST</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>Every weapon &amp; shell, ranked S-C</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
-                    <span style={{ fontSize: 8, color: '#00ff41', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{cron.nextLabel}</span>
-                  </div>
-                </div>
-                <div style={{ marginTop: 14, flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  {gridPreview.length > 0 ? gridPreview.map(function(item) {
-                    var imgSrc = imagePath(item.type, item.image_filename);
-                    var isShell = (item.type || '').toLowerCase() === 'shell';
-                    return (
-                      <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: '#0e1014', border: '1px solid #22252e', borderRadius: 2 }}>
-                        <div style={{ ...tierBg(item.tier), padding: '3px 7px', fontSize: 10, fontWeight: 900, borderRadius: 2, fontFamily: 'Orbitron, monospace', lineHeight: 1, flexShrink: 0 }}>{item.tier}</div>
-                        <div style={{ width: 30, height: 30, flexShrink: 0, background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                          {imgSrc ? <img src={imgSrc} alt={item.name} style={{ width: 26, height: 26, objectFit: 'contain' }} /> : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>{isShell ? '◎' : '⬢'}</span>}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                          <Sep text=" - " />
-                          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{isShell ? 'SHELL' : 'WEAPON'}</div>
-                        </div>
-                      </div>
-                    );
-                  }) : (
-                    <div style={{ padding: 20, textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.15)', letterSpacing: 1 }}>LOADING...</div>
-                  )}
-                </div>
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{weaponCount} weapons · {shellCount} shells</span>
-                  <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>RANK YOUR OWN -&gt;</span>
-                </div>
-              </Link>
-
-              {/* CARD 2: BUILD ADVISOR */}
-              <Link href="/advisor" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #ff8800', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
-                <div>
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#ff8800', letterSpacing: 1, lineHeight: 1 }}>BUILD ADVISOR</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>Tell us your shell, we build the loadout</div>
-                </div>
-                <div style={{ marginTop: 16, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  {forgeShells.map(function(s) {
-                    var imgSrc = s.image_filename ? '/images/shells/' + s.image_filename : null;
-                    return (
-                      <div key={s.name} title={s.name} style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid ' + s.color + '55', background: '#0e1014', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {imgSrc ? <img src={imgSrc} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 11, color: s.color }}>{'◈'}</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ marginTop: 14, padding: '12px', background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #ffd700', borderRadius: '0 2px 2px 0', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 800, color: '#ffd700', letterSpacing: 1 }}>THIEF</span>
-                    <div style={{ background: '#ff8800', color: '#000', padding: '2px 7px', fontSize: 10, fontWeight: 900, borderRadius: 2, fontFamily: 'Orbitron, monospace' }}>A-GRADE</div>
-                  </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>WSTR + Longshot</div>
-                  <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                    {['Suppressor', 'Thermal', 'Stabilizer'].map(function(mod) {
-                      return <span key={mod} style={{ fontSize: 8, padding: '1px 5px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{mod}</span>;
-                    })}
-                  </div>
-                </div>
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{weeklyBuilds > 0 ? weeklyBuilds + ' forged this week' : 'Built from live data'}</span>
-                  <span style={{ fontSize: 8, color: 'rgba(255,136,0,0.7)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>FROM LIVE DATA</span>
-                </div>
-              </Link>
-
-              {/* CARD 3: CRADLE PLANNER (new S2 flagship) */}
-              <Link href="/cradle" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00f5ff', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#00f5ff', letterSpacing: 1, lineHeight: 1 }}>CRADLE PLANNER</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>Plan your Season 2 stat build</div>
-                  </div>
-                  <span style={{ padding: '2px 7px', background: 'rgba(0,245,255,0.1)', color: '#00f5ff', border: '1px solid rgba(0,245,255,0.3)', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, borderRadius: 2, fontFamily: 'monospace', flexShrink: 0 }}>NEW</span>
-                </div>
-                <div style={{ marginTop: 16, flex: 1, display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'center' }}>
-                  {[
-                    { t: 'Strength', c: '#ff2222', p: 70 },
-                    { t: 'Endurance', c: '#00ff41', p: 100 },
-                    { t: 'Dexterity', c: '#ffd700', p: 50 },
-                    { t: 'Resistance', c: '#ff8800', p: 35 },
-                  ].map(function(row) {
-                    return (
-                      <div key={row.t} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.5)', width: 76, letterSpacing: 0.5, fontWeight: 700 }}>{row.t.toUpperCase()}</span>
-                        <div style={{ flex: 1, height: 8, background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ width: row.p + '%', height: '100%', background: row.c, opacity: 0.8 }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, marginTop: 6 }}>
-                    Allocate Energy across six tracks, unlock perks at every breakpoint, test builds free.
-                  </div>
-                </div>
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>6 tracks · free respec</span>
-                  <span style={{ fontSize: 8, color: 'rgba(0,245,255,0.7)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>SEASON 2 -&gt;</span>
-                </div>
-              </Link>
-
-              {/* CARD 4: BUILD COACH */}
-              <Link href="#" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #9b5de5', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300, position: 'relative', cursor: 'default' }}>
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(155,93,229,0.015) 8px, rgba(155,93,229,0.015) 9px)', pointerEvents: 'none', borderRadius: '0 0 3px 3px' }} />
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
-                  <div>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#9b5de5', letterSpacing: 1, lineHeight: 1 }}>BUILD COACH</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>Already built? Get yours graded</div>
-                  </div>
-                  <span style={{ padding: '2px 7px', background: 'rgba(155,93,229,0.15)', color: '#9b5de5', border: '1px solid rgba(155,93,229,0.3)', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, borderRadius: 2, fontFamily: 'monospace', flexShrink: 0 }}>COMING SOON</span>
-                </div>
-                <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-around', gap: 8, position: 'relative', zIndex: 1 }}>
-                  {[
-                    { name: 'Build AI', img: 'dexter', color: '#ff8800', label: 'Build Score' },
-                    { name: 'Meta AI', img: 'nexus', color: '#00d4ff', label: 'Meta Score' },
-                    { name: 'Field-Guide AI', img: 'miranda', color: '#9b5de5', label: 'Runner Type' },
-                  ].map(function(ed) {
-                    return (
-                      <div key={ed.name} style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid ' + ed.color + '50', background: '#0e1014', overflow: 'hidden', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img src={'/images/editors/' + ed.img + '.jpg'} alt={ed.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                        </div>
-                        <div style={{ fontSize: 8, color: ed.color, letterSpacing: 1, fontWeight: 700, marginTop: 5, fontFamily: 'monospace' }}>{ed.name}</div>
-                        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 0.5, fontWeight: 700, marginTop: 2, fontFamily: 'monospace' }}>{ed.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ marginTop: 14, padding: '12px', background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #9b5de5', borderRadius: '0 2px 2px 0', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5, position: 'relative', zIndex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ background: '#9b5de5', color: '#fff', padding: '4px 10px', fontSize: 18, fontWeight: 900, borderRadius: 2, fontFamily: 'Orbitron, monospace', lineHeight: 1 }}>A</div>
-                    <div>
-                      <div style={{ fontSize: 10, color: '#9b5de5', letterSpacing: 1, fontWeight: 800, fontFamily: 'monospace' }}>S-TIER SOLO</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 700, fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>"THE EXTRACTOR"</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginTop: 4, fontFamily: 'monospace', fontWeight: 600 }}>3 AI editors · 8 slot analysis · Live meta context</div>
-                </div>
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>Bungie OAuth · Scored &amp; saved</span>
-                  <span style={{ fontSize: 10, color: '#9b5de5', letterSpacing: 1, fontWeight: 800, fontFamily: 'monospace' }}>COMING SOON</span>
-                </div>
-              </Link>
-
-            </div>
-          </div>
-        </section>
-
-        {/* ══ CREATOR SPOTLIGHTS → RISING ══ */}
-        {spotlights.length > 0 && (
-          <section style={{ position: 'relative', zIndex: 1 }}>
-            <div className="hp-wrap" style={{ padding: '0 24px 32px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00ff88', textTransform: 'uppercase', fontFamily: 'monospace' }}>Creator Spotlights</span>
-                <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-                <Link href="/rising" style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#00ff88', textDecoration: 'none', fontFamily: 'monospace' }}>RISING RUNNERS -&gt;</Link>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
-                {spotlights.map(function(item) {
-                  var ec = EDITOR_ACCENT[item.editor] || '#00ff88';
-                  var glyph = EDITOR_GLYPH[item.editor] || '◇';
-                  var info = item.creator_info || {};
-                  var creatorName = info.name ? info.name : 'Marathon Creator';
-                  var login = twitchLoginFromUrl(info.twitch);
-                  var avatarUrl = login && spotlightAvatars[login] ? spotlightAvatars[login] : null;
-                  return (
-                    <Link key={item.slug} href={'/intel/' + item.slug} className="product-panel" style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + ec, borderRadius: '0 3px 3px 0', padding: '12px 14px', textDecoration: 'none' }}>
-                      <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: '50%', background: '#0e1014', border: '1px solid ' + ec + '50', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: ec }}>
-                        {avatarUrl ? (
-                          <img src={avatarUrl} alt={creatorName} width={40} height={40} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
-                        ) : (
-                          glyph
-                        )}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                          <span style={{ fontSize: 8, color: ec, letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{(item.editor || 'EDITOR') + ' SPOTLIGHT'}</span>
-                          <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(item.created_at)}</span>
-                        </div>
-                        <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{creatorName}</div>
-                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.headline}</div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ══ WHERE THE EDITORS DISAGREE ══ */}
-        <section style={{ position: 'relative', zIndex: 1 }}>
-          <div className="hp-wrap" style={{ padding: '0 24px 32px' }}>
-            <HomeEditorReactions />
-          </div>
-        </section>
-      </div>
-
-      {/* Footer bar */}
-      <div style={{ background: '#0e1014', borderTop: '1px solid #1e2028', padding: '10px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {['#ff2222', '#00d4ff', '#ff8800', '#00ff88', '#9b5de5'].map(function(c) {
-              return <div key={c} style={{ width: 6, height: 6, borderRadius: 1, background: c }} />;
+        {/* ══ ROUTING TILES ══ (signature; game-agnostic, one per ROOT_GAMES entry) */}
+        <nav className="nr-section" aria-label="Game hubs">
+          <h2 className="nr-h2">Choose your zone</h2>
+          <div className="nr-grid nr-stagger">
+            {ROOT_GAMES.map(function(game) {
+              return <GameRoutingTile key={game.slug} game={game} pulse={data.pulse[game.slug]} />;
             })}
           </div>
-          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', letterSpacing: 2, textTransform: 'uppercase' }}>
-            Marathon Meta, Builds &amp; Tier List - Refreshed Throughout The Day
-          </span>
-        </div>
-        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.1)', letterSpacing: 1, textTransform: 'uppercase' }}>
-          CyberneticPunks.com
-        </span>
-      </div>
+        </nav>
 
-      <Footer />
+        {/* ══ GAME-SEGMENTED PULSE ══ (per-game columns, never blended) */}
+        <section className="nr-section" aria-labelledby="nr-pulse-h">
+          <h2 id="nr-pulse-h" className="nr-h2">Network pulse</h2>
+          {/* VANTAGE's optional cross-game brief -- present only when there is real
+              movement; gracefully absent otherwise. Points at the per-game columns
+              below, never duplicates them. */}
+          {voice && voice.brief && (
+            <div className="nr-brief">
+              <span className="nr-brief-byline">Network brief - Vantage</span>
+              <p className="nr-brief-text">{voice.brief}</p>
+            </div>
+          )}
+          <div className="nr-pulse-grid nr-stagger">
+            {ROOT_GAMES.map(function(game) {
+              return <GamePulseColumn key={game.slug} game={game} items={data.feeds[game.slug]} />;
+            })}
+          </div>
+        </section>
+
+      </main>
+
+      {/* ══ NEUTRAL FOOTER ══ (whispered AI line; no game vocabulary) */}
+      <footer className="nr-footer">
+        <div className="nr-wrap">
+          <p className="nr-footer-tag">Cybernetic Punks - the extraction-shooter intelligence network. No hype. Just intel.</p>
+          <p className="nr-footer-ai">powered by a live intelligence pipeline - updated continuously, verified against patch data</p>
+        </div>
+      </footer>
     </div>
   );
 }
+
+// ── STYLES ──────────────────────────────────────────────────
+// All colors are design tokens (var(--*)); the only per-game accents are injected
+// inline from rootGames.js config. Motion, hover, :focus-visible, reduced-motion,
+// and responsive collapse are centralized here.
+const NR_CSS = `
+/* --nr-vantage: VANTAGE's own network-level accent (silver-blue / platinum per
+   the persona spec -- distinct from the game accents and the editor palette).
+   v1 starting value, single-source here; exact hex pinned at the styling pass. */
+.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; }
+.nr-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+
+/* Brand banner */
+.nr-header { border-bottom: 1px solid var(--border-subtle); background: var(--bg-nav); }
+.nr-header-row { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; padding-bottom: 16px; }
+.nr-brand { display: flex; align-items: center; gap: 9px; }
+.nr-brand-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+.nr-brand-name { font-family: var(--font-orbitron); font-size: 15px; font-weight: 800; letter-spacing: 3px; color: var(--text-primary); }
+.nr-brand-accent { color: var(--red); }
+.nr-join { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border); border-radius: 2px; padding: 7px 14px; transition: color .15s ease, border-color .15s ease; }
+.nr-join:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+
+/* Main rhythm */
+.nr-main { flex: 1; display: flex; flex-direction: column; gap: 56px; padding-top: 64px; padding-bottom: 56px; }
+
+/* Hero */
+.nr-hero { display: flex; flex-direction: column; gap: 16px; }
+/* Thesis: a confident single line, not a slogan-wall. Sized DOWN to sit just
+   below the signature online-count (40px) so the tiles + live data lead; min/max
+   track the existing scale (offer 16px floor -> ~30px lead), not a one-off value.
+   Wider max-width lets it form 1-2 lines instead of the old narrow multi-line wall. */
+.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.3px; line-height: 1.2; font-size: clamp(20px, 3vw, 30px); color: var(--text-primary); margin: 0; max-width: 52ch; }
+.nr-descriptor { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.nr-offer { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 56ch; }
+
+/* Reserved placeholders (intentional, not broken) */
+.nr-reserved { display: inline-flex; align-items: center; gap: 8px; border: 1px dashed var(--border); border-radius: 3px; padding: 10px 13px; background: linear-gradient(0deg, rgba(255,255,255,0.012), rgba(255,255,255,0.012)); }
+.nr-reserved-wide { margin-top: 6px; align-self: flex-start; }
+.nr-reserved-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 2px; padding: 2px 6px; }
+.nr-reserved-text { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-tertiary); }
+
+/* VANTAGE network voice (hero) + cross-game brief (pulse). Her own accent spine;
+   restrained, framing surfaces -- they point, never assert. */
+.nr-voice { display: flex; flex-direction: column; gap: 7px; margin-top: 6px; align-self: stretch; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; }
+.nr-voice-byline { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
+.nr-voice-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--nr-vantage); flex-shrink: 0; }
+.nr-voice-role { color: var(--text-tertiary); }
+.nr-voice-line { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; }
+.nr-brief { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; }
+.nr-brief-byline { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
+.nr-brief-text { font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; }
+
+/* Sections */
+.nr-section { display: flex; flex-direction: column; gap: 18px; }
+.nr-h2 { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-secondary); margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+
+/* Grids */
+.nr-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.nr-pulse-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+/* ── SIGNATURE: routing tiles ── */
+.nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+.nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); }
+/* Optional atmosphere art: image layer + a strong neutral scrim (rgb = --bg-page
+   #121418) so the spine, label, and live count stay legible; the live count
+   remains the boldest element. Content sits above via z-index. */
+.nr-tile-art { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; }
+.nr-tile-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,20,24,0.80) 0%, rgba(18,20,24,0.60) 48%, rgba(18,20,24,0.90) 100%); }
+.nr-tile-head, .nr-tile-body, .nr-enter { position: relative; z-index: 1; }
+.nr-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.nr-tile-label { font-family: var(--font-orbitron); font-size: 22px; font-weight: 900; letter-spacing: 1px; line-height: 1; color: var(--text-primary); margin: 0; }
+.nr-tile-body { flex: 1; display: flex; flex-direction: column; gap: 12px; justify-content: center; }
+.nr-online { display: flex; align-items: baseline; gap: 9px; }
+.nr-dot { align-self: center; animation: pulse-glow 2.4s ease-in-out infinite; }
+.nr-online-num { font-family: var(--font-orbitron); font-size: 40px; font-weight: 900; line-height: 0.9; letter-spacing: -0.5px; }
+.nr-unit { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
+.nr-next { display: flex; align-items: baseline; gap: 8px; }
+.nr-next-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.nr-prelaunch { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary); }
+.nr-enter { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-tertiary); transition: color .16s ease; }
+.nr-tile:hover .nr-enter { color: var(--text-secondary); }
+
+/* ── Pulse columns ── alive via our own editor content (not an afterthought):
+   weightier spacing, legible headlines, editor-accent codename tags, and
+   freshness as a live signal. Restraint held: editor-accent on the tags is the
+   only new color; everything else stays neutral tokens. */
+.nr-col { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; }
+.nr-col-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+.nr-col-marker { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+.nr-col-title { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.nr-col-all { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); text-decoration: none; margin-left: auto; transition: color .15s ease; }
+.nr-col-all:hover { color: var(--text-secondary); }
+.nr-col-body { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.nr-row { display: block; text-decoration: none; padding: 12px 13px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
+.nr-row:hover { background: var(--bg-card-hover); border-left-color: var(--text-tertiary); }
+.nr-row-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+/* Editor codename tag (color/symbol injected inline from the roster). */
+.nr-tag { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.5; padding: 2px 7px; border: 1px solid var(--border); border-radius: 2px; color: var(--text-secondary); }
+.nr-tag-sym { font-size: 10px; line-height: 1; }
+/* Freshness: a live signal, not fine print. */
+.nr-row-when { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); margin-left: auto; }
+.nr-row-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+.nr-col-empty, .nr-col-prelaunch { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
+
+/* Footer */
+.nr-footer { border-top: 1px solid var(--border-subtle); background: var(--bg-nav); padding-top: 22px; padding-bottom: 22px; }
+.nr-footer-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 7px; }
+.nr-footer-ai { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); margin: 0; }
+
+/* Load-in (once), staggered across grid children */
+@keyframes nrIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.nr-stagger > * { animation: nrIn .45s ease both; }
+.nr-stagger > *:nth-child(2) { animation-delay: .07s; }
+.nr-stagger > *:nth-child(3) { animation-delay: .14s; }
+.nr-stagger > *:nth-child(4) { animation-delay: .21s; }
+
+/* Keyboard focus (game-neutral ring) */
+.nr-tile:focus-visible, .nr-row:focus-visible, .nr-col-all:focus-visible, .nr-join:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.7); outline-offset: 2px;
+}
+
+/* Respect reduced motion: kill load-in, hover transforms, dot pulse */
+@media (prefers-reduced-motion: reduce) {
+  .nr-stagger > * { animation: none !important; }
+  .nr-tile, .nr-enter, .nr-row, .nr-join, .nr-col-all { transition: none !important; }
+  .nr-tile:hover { transform: none !important; }
+  .nr-dot { animation: none !important; }
+}
+
+/* Mobile collapse */
+@media (max-width: 640px) {
+  .nr-grid, .nr-pulse-grid { grid-template-columns: 1fr; }
+  .nr-main { gap: 44px; padding-top: 44px; }
+  .nr-online-num { font-size: 34px; }
+}
+`;
