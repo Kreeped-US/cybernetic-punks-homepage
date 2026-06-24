@@ -9,19 +9,19 @@ spec.
 ## Verbal identity (locked)
 - Brand name: **Cybernetic Punks** (TWO words — not "CyberneticPunks").
 - Descriptor (under logo / hero / meta — clear, SEO): **"The
-  extraction-shooter intelligence network"**. Claims the category ("the"),
+  competitive-shooter intelligence network"**. Claims the category ("the"),
   carries multi-game scope ("network"), owns "intelligence."
 - Tagline (share card / memorable / attitude): **"No hype. Just intel."**
   Authority-with-punk-edge: anti-content-farm stance + a quality promise
   in one line; reinforces depth-over-AI-buzz positioning.
-- Pairing: "Cybernetic Punks — the extraction-shooter intelligence
+- Pairing: "Cybernetic Punks — the competitive-shooter intelligence
   network. No hype. Just intel."
 - Retire: "Built on the Grid" (Marathon-flavored, doesn't survive into the
   network brand).
 
 ## The brand inversion (locked)
 Cybernetic Punks is NO LONGER "a Marathon site that's adding games." It is
-**the extraction-shooter intelligence network** — a brand in its own
+**the competitive-shooter intelligence network** — a brand in its own
 right. Individual games (Marathon, DMZ, future titles) are PROPERTIES /
 coverage areas UNDER that brand, not the brand itself.
 - The brand is the network. Games are what the network covers.
@@ -73,7 +73,7 @@ coverage areas UNDER that brand, not the brand itself.
 
 ## How this shapes the neutral root hub
 The root is the BRAND'S FRONT DOOR. Its jobs, in priority order:
-1. ESTABLISH THE BRAND — "Cybernetic Punks: extraction-shooter
+1. ESTABLISH THE BRAND — "Cybernetic Punks: competitive-shooter
    intelligence network." Lead with depth/quality positioning (NOT "AI
    inside").
 2. ROUTE to the visitor's game — fast, themed game tiles (Marathon teal /
