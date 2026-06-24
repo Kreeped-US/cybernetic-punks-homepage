@@ -151,6 +151,31 @@ export const marathon = {
       names: ['Destroyer', 'Vandal', 'Recon', 'Assassin', 'Triage', 'Thief', 'Rook', 'Sentinel'],
     },
   },
+
+  // Operational-monitoring agents (a separate, additive path -- NOT the editorial
+  // pipeline). Quality Audit (lib/agents/qualityAudit.js) reads recent published
+  // articles and flags quality defects.
+  //   retiredFeatures: precise phrases for SITE features that no longer exist, to
+  //   catch an editor referencing one. CURATED to avoid colliding with LIVE
+  //   content: "Cryo Archive" is a CURRENT in-game raid map (a canonical tag), so
+  //   it is deliberately NOT listed -- only the retired ARG-tracker site feature
+  //   is. Likewise the brand's live X account is fine; only the retired auto-post
+  //   "Twitter/X integration" is matched (bare "X"/"Twitter" are NOT). Tune here.
+  // (Editor codenames for the leakage check are network-level and sourced from
+  // lib/editors/roster.js + VANTAGE in the agent, not configured per game.)
+  operationalAgents: {
+    qualityAudit: {
+      retiredFeatures: [
+        'Grid Cred',
+        'ARG tracker',
+        '/topics',
+        'Faction Advisor',
+        'Built on the Grid',
+        'Twitter integration',
+        'X integration',
+      ],
+    },
+  },
 };
 
 export default marathon;
