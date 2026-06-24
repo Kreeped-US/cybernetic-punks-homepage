@@ -165,6 +165,10 @@ export const marathon = {
   // lib/editors/roster.js + VANTAGE in the agent, not configured per game.)
   operationalAgents: {
     qualityAudit: {
+      // Forward-looking metadata only -- vercel.json is the REAL schedule. v1 runs
+      // every enabled game on each cron fire; per-game schedule honoring is a later
+      // stage. (Quiet slot: clear of the editor cron 00:00/12:00 + Vantage 00:00.)
+      schedule: '0 6 * * *',
       retiredFeatures: [
         'Grid Cred',
         'ARG tracker',
