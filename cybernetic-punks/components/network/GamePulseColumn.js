@@ -80,13 +80,14 @@ export default function GamePulseColumn({ game, items }) {
         )}
       </div>
 
-      {/* RESERVED (per-game): creator-spotlight slot. Intentional styled
-          placeholder -- the creator-spotlight element renders here in a future
-          workstream. Labeled so the architecture proves it holds the slot without
+      {/* Per-game creator-coverage slot, framed as an intentional "incoming"
+          feature (not a TODO). The creator-spotlight element renders here in a
+          future workstream; the slot proves the architecture holds it without
           coupling this build to that work. */}
-      <div className="nr-reserved" role="note" aria-label="Reserved: creator spotlight">
-        <span className="nr-reserved-label">Reserved</span>
-        <span className="nr-reserved-text">creator spotlight</span>
+      <div className="nr-coming" role="note" aria-label={'Creator coverage for ' + game.label + ' coming soon'}>
+        <span className="nr-coming-label">Creator coverage</span>
+        <span className="nr-coming-soon">Soon</span>
+        <span className="nr-coming-text">Spotlights on the creators shaping {game.label} land here.</span>
       </div>
     </div>
   );

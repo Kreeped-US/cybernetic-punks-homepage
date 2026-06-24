@@ -1,23 +1,28 @@
 // app/page.js
-// NEUTRAL ROOT (network front door) -- the LIVE site root at /. Styled v1.
-// A lean, premium SHOWCASE ROUTER: brand hero (depth thesis, NO game vocabulary,
-// NO AI in the hero), game-agnostic routing tiles (the signature element) +
-// segmented pulse driven by lib/network/rootGames.js (keyed by game_slug),
-// reserved slots for future workstreams, a light join-free affordance, and a
-// neutral footer where AI is whispered as the engine.
+// NEUTRAL ROOT (network front door) -- the LIVE site root at /. Styled v2.
+// A lean, premium SHOWCASE ROUTER: brand hero (eyebrow -> depth thesis -> offer
+// -> live telemetry proof; NO game vocabulary, NO AI in the hero), game-agnostic
+// routing tiles (the signature element) + segmented pulse driven by
+// lib/network/rootGames.js (keyed by game_slug), the network editor's voice
+// (Vantage), a light join-free affordance, and a neutral footer where AI is
+// whispered as the engine.
 //
 // CUTOVER: this replaced the Marathon homepage at /, which now lives at /marathon.
 // Indexed, self-canonical apex. See docs/network/cyberneticpunks-brand-positioning.md.
 //
-// STYLING: drives off the codebase design tokens (app/globals.css :root vars +
-// .cp-* utilities). The ONLY injected colors are the two per-game accents, read
-// from rootGames.js config (single-source, swappable); everything else is neutral
-// tokens. Accent is restrained to tile spines, the live online-count, and the
-// live dot -- no glow/fill (avoids the dark-bg + neon AI-default look). Character
-// comes from the Orbitron / Rajdhani / mono type hierarchy + structure.
+// STYLING (v2 visual pass): depth/elevation + a faint ambient texture give warmth
+// WITHOUT new hue -- the cool silver/platinum network identity is preserved. All
+// colors are design tokens (globals.css :root vars); the ONLY injected colors are
+// the two per-game accents (read from rootGames.js config) + the network's own
+// silver accent (--nr-vantage). ~90% neutral; accent only where it carries meaning
+// (brand dot, live dot, game spines, the live online-count, Vantage). Aliveness
+// comes from REAL live data (telemetry bar + freshness timestamps) + the existing
+// dot pulse -- no looping background animation. Character from the Orbitron /
+// Rajdhani / mono type hierarchy + structure.
 //
-// Game-specific vocabulary (Cradle, shells, loadout, FOB, Season 2, etc.) MUST
-// NOT appear in the root's own copy. Game NAMES on tiles/columns and a game's own
+// Game-specific vocabulary (Cradle, shells, loadout, FOB, Season 2, Runners, etc.)
+// MUST NOT appear in the root's own copy -- telemetry labels stay neutral
+// (games / online / articles). Game NAMES on tiles/columns and a game's own
 // content inside its segmented column are correct (routing + segmentation).
 //
 // The neutral root deliberately does NOT reuse components/Footer.js (that footer
@@ -52,9 +57,22 @@ function timeAgo(dateStr) {
   return Math.floor(diff / 86400) + 'd ago';
 }
 
-// Next-update label for live games. Mirrors the /marathon page's cron-cycle math
-// (12h cycles at 00:00 + 12:00 UTC, the Marathon editorial cadence). Page-side
-// resolver so the tile component stays data-agnostic.
+// Compact number (1.2K, 3.4M) for the live online count.
+function formatNum(n) {
+  if (n == null) return '--';
+  if (n < 1000) return String(n);
+  if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0) + 'K';
+  return (n / 1000000).toFixed(1) + 'M';
+}
+
+// Thousands separators for the article count (a real big number reads as a
+// genuine depth flex). No locale dependency.
+function addCommas(n) {
+  if (n == null) return '--';
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Next-update label for the editorial cadence (12h cycles at 00:00 + 12:00 UTC).
 function nextUpdateLabel() {
   var now = new Date();
   var minsIn = (now.getUTCHours() * 60 + now.getUTCMinutes()) % 720;
@@ -103,9 +121,34 @@ async function getNetworkPulse() {
   return { pulse: pulse, feeds: feeds };
 }
 
+// NETWORK-LEVEL telemetry: total published article count + the latest publish
+// timestamp across ALL games (network-wide depth + freshness). Cheap: one head
+// count + one 1-row read. Game-agnostic (no per-game filter). force-dynamic.
+async function getNetworkStats() {
+  var out = { articles: null, updated: null };
+  try {
+    var { count } = await supabase
+      .from('feed_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_published', true);
+    out.articles = typeof count === 'number' ? count : null;
+  } catch (e) {}
+  try {
+    var { data } = await supabase
+      .from('feed_items')
+      .select('created_at')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    out.updated = data && data.created_at ? data.created_at : null;
+  } catch (e) {}
+  return out;
+}
+
 // VANTAGE's latest surfaced framing. Reads the most recent NON-skipped
 // network_brief row (network-scoped, no game_slug). Null when none exists or the
-// latest cycle was skipped -> the voice slot stays in its clean reserved state.
+// latest cycle was skipped -> the voice slot shows its teaching placeholder.
 // Read-only here; generation lives in /api/network-editor.
 async function getNetworkVoice() {
   try {
@@ -143,8 +186,24 @@ const JSONLD = [
   },
 ];
 
-export default async function NetworkPreview() {
-  var [data, voice] = await Promise.all([getNetworkPulse(), getNetworkVoice()]);
+export default async function NetworkRoot() {
+  var [data, voice, stats] = await Promise.all([getNetworkPulse(), getNetworkVoice(), getNetworkStats()]);
+
+  // Network telemetry (game-agnostic). online = sum across live games' pulses.
+  var onlineTotal = 0;
+  var anyOnline = false;
+  ROOT_GAMES.forEach(function(g) {
+    var p = data.pulse[g.slug];
+    if (p && typeof p.online === 'number') { onlineTotal += p.online; anyOnline = true; }
+  });
+  var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
+  var teleItems = [
+    { label: 'GAMES', value: String(ROOT_GAMES.length) },
+    anyOnline ? { label: 'ONLINE', value: formatNum(onlineTotal) } : null,
+    stats.articles != null ? { label: 'ARTICLES', value: addCommas(stats.articles) } : null,
+    updatedLabel ? { label: 'UPDATED', value: updatedLabel } : null,
+    { label: 'NEXT UPDATE', value: nextUpdateLabel() },
+  ].filter(Boolean);
 
   return (
     <div className="nr-page">
@@ -165,71 +224,103 @@ export default async function NetworkPreview() {
         </div>
       </header>
 
-      <main className="nr-wrap nr-main">
+      <main className="nr-main">
 
-        {/* ══ HERO ══ (thesis; no game vocab, no AI) */}
-        <section className="nr-hero" aria-labelledby="nr-thesis">
-          <h1 id="nr-thesis" className="nr-h1">
-            The deepest, most current intel in every extraction shooter
-          </h1>
-          <p className="nr-descriptor">The extraction-shooter intelligence network</p>
-          <p className="nr-offer">
-            Intel hubs, build tools, and creator coverage - across every extraction shooter we cover.
-          </p>
+        {/* ══ HERO BAND ══ (eyebrow -> thesis -> offer -> live proof; depth + faint texture) */}
+        <section className="nr-hero-band" aria-labelledby="nr-thesis">
+          <div className="nr-ambient" aria-hidden="true" />
+          <div className="nr-wrap nr-hero">
+            <p className="nr-eyebrow">The extraction-shooter intelligence network</p>
+            <h1 id="nr-thesis" className="nr-h1">
+              The deepest, most current intel in every extraction shooter
+            </h1>
+            <p className="nr-offer">
+              Intel hubs, build tools, and creator coverage - across every extraction shooter we cover.
+            </p>
 
-          {/* NETWORK-VOICE slot: VANTAGE's hero framing when present; otherwise the
-              clean reserved placeholder (graceful, like the tile-art fallback). */}
-          {voice && voice.hero_line ? (
-            <div className="nr-voice">
-              <span className="nr-voice-byline">
-                <span className="nr-voice-dot" aria-hidden="true" />
-                Vivian Cross / Vantage <span className="nr-voice-role">Network Editor</span>
+            {/* LIVE TELEMETRY -- the centerpiece. Network-level, game-agnostic. */}
+            <div className="nr-telemetry" role="group" aria-label="Live network status">
+              <span className="nr-tele-live">
+                <span className="cp-live-dot nr-dot" aria-hidden="true" />
+                <span className="nr-tele-live-text">LIVE</span>
               </span>
-              <p className="nr-voice-line">{voice.hero_line}</p>
+              {teleItems.map(function(it) {
+                return (
+                  <span key={it.label} className="nr-tele-item">
+                    <span className="nr-tele-val">{it.value}</span>
+                    <span className="nr-tele-label">{it.label}</span>
+                  </span>
+                );
+              })}
             </div>
-          ) : (
-            <div className="nr-reserved nr-reserved-wide" role="note" aria-label="Reserved: network voice">
-              <span className="nr-reserved-label">Reserved</span>
-              <span className="nr-reserved-text">network voice</span>
-            </div>
-          )}
-        </section>
 
-        {/* ══ ROUTING TILES ══ (signature; game-agnostic, one per ROOT_GAMES entry) */}
-        <nav className="nr-section" aria-label="Game hubs">
-          <h2 className="nr-h2">Choose your zone</h2>
-          <div className="nr-grid nr-stagger">
-            {ROOT_GAMES.map(function(game) {
-              return <GameRoutingTile key={game.slug} game={game} pulse={data.pulse[game.slug]} />;
-            })}
-          </div>
-        </nav>
-
-        {/* ══ GAME-SEGMENTED PULSE ══ (per-game columns, never blended) */}
-        <section className="nr-section" aria-labelledby="nr-pulse-h">
-          <h2 id="nr-pulse-h" className="nr-h2">Network pulse</h2>
-          {/* VANTAGE's optional cross-game brief -- present only when there is real
-              movement; gracefully absent otherwise. Points at the per-game columns
-              below, never duplicates them. */}
-          {voice && voice.brief && (
-            <div className="nr-brief">
-              <span className="nr-brief-byline">Network brief - Vantage</span>
-              <p className="nr-brief-text">{voice.brief}</p>
-            </div>
-          )}
-          <div className="nr-pulse-grid nr-stagger">
-            {ROOT_GAMES.map(function(game) {
-              return <GamePulseColumn key={game.slug} game={game} items={data.feeds[game.slug]} />;
-            })}
+            {/* NETWORK VOICE (Vantage) -- featured editorial callout when filled
+                (the default once her cron runs); a teaching placeholder otherwise
+                so the slot reads as a known feature, never unfinished. */}
+            {voice && voice.hero_line ? (
+              <figure className="nr-voice">
+                <figcaption className="nr-voice-byline">
+                  <span className="nr-voice-dot" aria-hidden="true" />
+                  Vivian Cross / Vantage <span className="nr-voice-role">Network Editor</span>
+                </figcaption>
+                <blockquote className="nr-voice-line">{voice.hero_line}</blockquote>
+              </figure>
+            ) : (
+              <div className="nr-voice nr-voice-empty" role="note" aria-label="Network editor briefing">
+                <span className="nr-voice-byline">
+                  <span className="nr-voice-dot" aria-hidden="true" />
+                  Vantage <span className="nr-voice-role">Network Editor</span>
+                </span>
+                <p className="nr-voice-line nr-voice-teaching">The network editor&apos;s read on what is moving posts here each cycle.</p>
+              </div>
+            )}
           </div>
         </section>
 
+        {/* ══ BODY ══ */}
+        <div className="nr-wrap nr-body">
+
+          {/* ROUTING TILES (signature; game-agnostic, one per ROOT_GAMES entry) */}
+          <nav className="nr-section" aria-label="Game hubs">
+            <h2 className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Choose your zone</h2>
+            <div className="nr-grid nr-stagger">
+              {ROOT_GAMES.map(function(game) {
+                return <GameRoutingTile key={game.slug} game={game} pulse={data.pulse[game.slug]} />;
+              })}
+            </div>
+          </nav>
+
+          {/* GAME-SEGMENTED PULSE (per-game columns, never blended) */}
+          <section className="nr-section" aria-labelledby="nr-pulse-h">
+            <h2 id="nr-pulse-h" className="nr-h2">
+              <span className="nr-h2-tick" aria-hidden="true" />Network pulse
+              {updatedLabel && <span className="nr-h2-meta">updated {updatedLabel}</span>}
+            </h2>
+            {/* VANTAGE's optional cross-game brief -- present only when there is real
+                movement; gracefully absent otherwise. Points at the columns below. */}
+            {voice && voice.brief && (
+              <div className="nr-brief">
+                <span className="nr-brief-byline">Network brief - Vantage</span>
+                <p className="nr-brief-text">{voice.brief}</p>
+              </div>
+            )}
+            <div className="nr-pulse-grid nr-stagger">
+              {ROOT_GAMES.map(function(game) {
+                return <GamePulseColumn key={game.slug} game={game} items={data.feeds[game.slug]} />;
+              })}
+            </div>
+          </section>
+
+        </div>
       </main>
 
       {/* ══ NEUTRAL FOOTER ══ (whispered AI line; no game vocabulary) */}
       <footer className="nr-footer">
         <div className="nr-wrap">
-          <p className="nr-footer-tag">Cybernetic Punks - the extraction-shooter intelligence network. No hype. Just intel.</p>
+          <p className="nr-footer-tag">
+            <span className="nr-footer-dot" aria-hidden="true" />
+            Cybernetic Punks - the extraction-shooter intelligence network. No hype. Just intel.
+          </p>
           <p className="nr-footer-ai">powered by a live intelligence pipeline - updated continuously, verified against patch data</p>
         </div>
       </footer>
@@ -238,14 +329,15 @@ export default async function NetworkPreview() {
 }
 
 // ── STYLES ──────────────────────────────────────────────────
-// All colors are design tokens (var(--*)); the only per-game accents are injected
-// inline from rootGames.js config. Motion, hover, :focus-visible, reduced-motion,
-// and responsive collapse are centralized here.
+// All colors are design tokens (var(--*)); the only injected accents are the
+// per-game accents (inline, from rootGames.js config) and the network's silver
+// (--nr-vantage). Depth via --nr-elev + inset highlights. Motion, hover,
+// :focus-visible, reduced-motion, and responsive collapse are centralized here.
 const NR_CSS = `
-/* --nr-vantage: VANTAGE's own network-level accent (silver-blue / platinum per
-   the persona spec -- distinct from the game accents and the editor palette).
-   v1 starting value, single-source here; exact hex pinned at the styling pass. */
-.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; }
+/* --nr-vantage: the network's own accent (silver/platinum per the persona spec --
+   distinct from the game accents + editor palette). --nr-elev: shared soft
+   elevation (depth/warmth without hue). Single-source here. */
+.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; --nr-elev: 0 2px 12px rgba(0,0,0,0.22); }
 .nr-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
 /* Brand banner */
@@ -255,53 +347,53 @@ const NR_CSS = `
 .nr-brand-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
 .nr-brand-name { font-family: var(--font-orbitron); font-size: 15px; font-weight: 800; letter-spacing: 3px; color: var(--text-primary); }
 .nr-brand-accent { color: var(--red); }
-.nr-join { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border); border-radius: 2px; padding: 7px 14px; transition: color .15s ease, border-color .15s ease; }
-.nr-join:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+.nr-join { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border); border-radius: 2px; padding: 7px 14px; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+.nr-join:hover { color: var(--text-primary); border-color: var(--text-tertiary); background: var(--bg-card); }
 
-/* Main rhythm */
-.nr-main { flex: 1; display: flex; flex-direction: column; gap: 56px; padding-top: 64px; padding-bottom: 56px; }
+.nr-main { flex: 1; }
 
-/* Hero */
-.nr-hero { display: flex; flex-direction: column; gap: 16px; }
-/* Thesis: a confident single line, not a slogan-wall. Sized DOWN to sit just
-   below the signature online-count (40px) so the tiles + live data lead; min/max
-   track the existing scale (offer 16px floor -> ~30px lead), not a one-off value.
-   Wider max-width lets it form 1-2 lines instead of the old narrow multi-line wall. */
-.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.3px; line-height: 1.2; font-size: clamp(20px, 3vw, 30px); color: var(--text-primary); margin: 0; max-width: 52ch; }
-.nr-descriptor { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
-.nr-offer { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 56ch; }
+/* ── HERO BAND ── recessed gradient + faint static ambient texture (depth, no hue) */
+.nr-hero-band { position: relative; overflow: hidden; background: linear-gradient(180deg, var(--bg-nav) 0%, var(--bg-page) 100%); border-bottom: 1px solid var(--border-subtle); padding-top: 56px; padding-bottom: 44px; }
+.nr-ambient { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.nr-ambient::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 30px 30px; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+.nr-ambient::after { content: ""; position: absolute; top: -140px; right: -110px; width: 460px; height: 460px; border: 1px solid rgba(255,255,255,0.03); transform: rotate(45deg); }
+.nr-hero { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
 
-/* Reserved placeholders (intentional, not broken) */
-.nr-reserved { display: inline-flex; align-items: center; gap: 8px; border: 1px dashed var(--border); border-radius: 3px; padding: 10px 13px; background: linear-gradient(0deg, rgba(255,255,255,0.012), rgba(255,255,255,0.012)); }
-.nr-reserved-wide { margin-top: 6px; align-self: flex-start; }
-.nr-reserved-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 2px; padding: 2px 6px; }
-.nr-reserved-text { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-tertiary); }
+.nr-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--nr-vantage); margin: 0; }
+.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.5px; line-height: 1.08; font-size: clamp(30px, 5vw, 48px); color: var(--text-primary); margin: 0; max-width: 20ch; }
+.nr-offer { font-size: 17px; font-weight: 500; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 60ch; }
 
-/* VANTAGE network voice (hero) + cross-game brief (pulse). Her own accent spine;
-   restrained, framing surfaces -- they point, never assert. */
-.nr-voice { display: flex; flex-direction: column; gap: 7px; margin-top: 6px; align-self: stretch; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; }
+/* ── LIVE TELEMETRY (centerpiece) ── elevated bar; dividers between items */
+.nr-telemetry { display: flex; align-items: center; flex-wrap: wrap; gap: 0 18px; margin-top: 6px; padding: 13px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); }
+.nr-tele-live { display: inline-flex; align-items: center; gap: 7px; }
+.nr-tele-live-text { font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--green); }
+.nr-tele-item { display: inline-flex; align-items: baseline; gap: 7px; padding-left: 18px; border-left: 1px solid var(--border-subtle); }
+.nr-tele-val { font-family: var(--font-orbitron); font-size: 15px; font-weight: 900; letter-spacing: 0.3px; color: var(--text-primary); }
+.nr-tele-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
+
+/* ── NETWORK VOICE (Vantage) ── featured callout; silver spine + quote */
+.nr-voice { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; align-self: stretch; max-width: 760px; padding: 14px 16px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); }
 .nr-voice-byline { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
 .nr-voice-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--nr-vantage); flex-shrink: 0; }
 .nr-voice-role { color: var(--text-tertiary); }
-.nr-voice-line { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; }
-.nr-brief { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; }
-.nr-brief-byline { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
-.nr-brief-text { font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; }
+.nr-voice-line { font-size: 17px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; font-style: normal; }
+.nr-voice-teaching { font-size: 14px; color: var(--text-tertiary); }
+.nr-voice-empty { border-left-color: var(--border); }
 
-/* Sections */
+/* ── SECTIONS ── header gets an accent tick + optional freshness meta */
+.nr-body { display: flex; flex-direction: column; gap: 48px; padding-top: 44px; padding-bottom: 56px; }
 .nr-section { display: flex; flex-direction: column; gap: 18px; }
-.nr-h2 { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-secondary); margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+.nr-h2 { display: flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-secondary); margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
+.nr-h2-tick { width: 9px; height: 9px; border-radius: 1px; background: var(--nr-vantage); flex-shrink: 0; }
+.nr-h2-meta { margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); text-transform: none; }
 
 /* Grids */
 .nr-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .nr-pulse-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 
-/* ── SIGNATURE: routing tiles ── */
-.nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
-.nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); }
-/* Optional atmosphere art: image layer + a strong neutral scrim (rgb = --bg-page
-   #121418) so the spine, label, and live count stay legible; the live count
-   remains the boldest element. Content sits above via z-index. */
+/* ── SIGNATURE: routing tiles ── (depth added; live count stays boldest) */
+.nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px rgba(0,0,0,0.30); }
 .nr-tile-art { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; }
 .nr-tile-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,20,24,0.80) 0%, rgba(18,20,24,0.60) 48%, rgba(18,20,24,0.90) 100%); }
 .nr-tile-head, .nr-tile-body, .nr-enter { position: relative; z-index: 1; }
@@ -318,11 +410,8 @@ const NR_CSS = `
 .nr-enter { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-tertiary); transition: color .16s ease; }
 .nr-tile:hover .nr-enter { color: var(--text-secondary); }
 
-/* ── Pulse columns ── alive via our own editor content (not an afterthought):
-   weightier spacing, legible headlines, editor-accent codename tags, and
-   freshness as a live signal. Restraint held: editor-accent on the tags is the
-   only new color; everything else stays neutral tokens. */
-.nr-col { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; }
+/* ── Pulse columns ── editor content; elevated; freshness as a live signal */
+.nr-col { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); }
 .nr-col-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
 .nr-col-marker { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
 .nr-col-title { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
@@ -332,17 +421,22 @@ const NR_CSS = `
 .nr-row { display: block; text-decoration: none; padding: 12px 13px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
 .nr-row:hover { background: var(--bg-card-hover); border-left-color: var(--text-tertiary); }
 .nr-row-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-/* Editor codename tag (color/symbol injected inline from the roster). */
 .nr-tag { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.5; padding: 2px 7px; border: 1px solid var(--border); border-radius: 2px; color: var(--text-secondary); }
 .nr-tag-sym { font-size: 10px; line-height: 1; }
-/* Freshness: a live signal, not fine print. */
 .nr-row-when { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); margin-left: auto; }
 .nr-row-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
 .nr-col-empty, .nr-col-prelaunch { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
 
+/* ── Creator-coverage "incoming" panel (intentional, not a TODO) ── */
+.nr-coming { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 2px; }
+.nr-coming-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
+.nr-coming-soon { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px; }
+.nr-coming-text { flex-basis: 100%; font-size: 11px; line-height: 1.45; color: var(--text-tertiary); }
+
 /* Footer */
 .nr-footer { border-top: 1px solid var(--border-subtle); background: var(--bg-nav); padding-top: 22px; padding-bottom: 22px; }
-.nr-footer-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 7px; }
+.nr-footer-tag { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 7px; }
+.nr-footer-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
 .nr-footer-ai { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); margin: 0; }
 
 /* Load-in (once), staggered across grid children */
@@ -368,7 +462,11 @@ const NR_CSS = `
 /* Mobile collapse */
 @media (max-width: 640px) {
   .nr-grid, .nr-pulse-grid { grid-template-columns: 1fr; }
-  .nr-main { gap: 44px; padding-top: 44px; }
+  .nr-body { gap: 40px; padding-top: 36px; }
+  .nr-hero-band { padding-top: 40px; }
   .nr-online-num { font-size: 34px; }
+  /* Telemetry: drop the dividers when wrapped tight so it reads as chips */
+  .nr-telemetry { gap: 10px 16px; }
+  .nr-tele-item { padding-left: 0; border-left: 0; }
 }
 `;
