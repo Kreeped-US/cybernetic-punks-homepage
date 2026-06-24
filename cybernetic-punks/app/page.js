@@ -355,7 +355,7 @@ const NR_CSS = `
 /* --nr-vantage: the network's own accent (silver/platinum per the persona spec --
    distinct from the game accents + editor palette). --nr-elev: shared soft
    elevation (depth/warmth without hue). Single-source here. */
-.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; --nr-elev: 0 2px 12px rgba(0,0,0,0.22); }
+.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; --nr-elev: 0 3px 16px rgba(0,0,0,0.30); }
 .nr-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
 /* Brand banner */
@@ -375,7 +375,7 @@ const NR_CSS = `
 .nr-ambient { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .nr-ambient::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 30px 30px; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
 .nr-ambient::after { content: ""; position: absolute; top: -140px; right: -110px; width: 460px; height: 460px; border: 1px solid rgba(255,255,255,0.03); transform: rotate(45deg); }
-.nr-hero { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+.nr-hero { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
 
 .nr-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--nr-vantage); margin: 0; }
 /* Punchy short headline -> sized up to be the confident anchor of the hero
@@ -395,7 +395,7 @@ const NR_CSS = `
 .nr-point-clause { color: var(--text-secondary); }
 
 /* ── LIVE TELEMETRY (centerpiece) ── elevated bar; dividers between items */
-.nr-telemetry { display: flex; align-items: center; flex-wrap: wrap; gap: 0 18px; margin-top: 6px; padding: 13px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); }
+.nr-telemetry { display: flex; align-items: center; flex-wrap: wrap; gap: 0 18px; margin-top: 18px; padding: 14px 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
 .nr-tele-live { display: inline-flex; align-items: center; gap: 7px; }
 .nr-tele-live-text { font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--green); }
 .nr-tele-item { display: inline-flex; align-items: baseline; gap: 7px; padding-left: 18px; border-left: 1px solid var(--border-subtle); }
@@ -403,17 +403,21 @@ const NR_CSS = `
 .nr-tele-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
 
 /* ── NETWORK VOICE (Vantage) ── featured callout; silver spine + quote */
-.nr-voice { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; align-self: stretch; max-width: 760px; padding: 14px 16px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); }
+.nr-voice { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; align-self: stretch; max-width: 760px; padding: 16px 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
 .nr-voice-byline { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
 .nr-voice-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--nr-vantage); flex-shrink: 0; }
 .nr-voice-role { color: var(--text-tertiary); }
 .nr-voice-line { font-size: 17px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; font-style: normal; }
 .nr-voice-teaching { font-size: 14px; color: var(--text-tertiary); }
 .nr-voice-empty { border-left-color: var(--border); }
+/* Vantage cross-game brief (Network pulse) -- same surface language as the voice. */
+.nr-brief { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
+.nr-brief-byline { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
+.nr-brief-text { font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; }
 
 /* ── SECTIONS ── header gets an accent tick + optional freshness meta */
-.nr-body { display: flex; flex-direction: column; gap: 48px; padding-top: 44px; padding-bottom: 56px; }
-.nr-section { display: flex; flex-direction: column; gap: 18px; }
+.nr-body { display: flex; flex-direction: column; gap: 64px; padding-top: 56px; padding-bottom: 56px; }
+.nr-section { display: flex; flex-direction: column; gap: 20px; }
 .nr-h2 { display: flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-secondary); margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
 .nr-h2-tick { width: 9px; height: 9px; border-radius: 1px; background: var(--nr-vantage); flex-shrink: 0; }
 .nr-h2-meta { margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); text-transform: none; }
@@ -423,7 +427,7 @@ const NR_CSS = `
 .nr-pulse-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 
 /* ── SIGNATURE: routing tiles ── (depth added; live count stays boldest) */
-.nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
 .nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px rgba(0,0,0,0.30); }
 .nr-tile-art { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; }
 .nr-tile-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,20,24,0.80) 0%, rgba(18,20,24,0.60) 48%, rgba(18,20,24,0.90) 100%); }
@@ -442,7 +446,7 @@ const NR_CSS = `
 .nr-tile:hover .nr-enter { color: var(--text-secondary); }
 
 /* ── Pulse columns ── editor content; elevated; freshness as a live signal */
-.nr-col { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); }
+.nr-col { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
 .nr-col-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
 .nr-col-marker { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
 .nr-col-title { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
