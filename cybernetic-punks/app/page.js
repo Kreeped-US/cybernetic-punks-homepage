@@ -234,9 +234,27 @@ export default async function NetworkRoot() {
             <h1 id="nr-thesis" className="nr-h1">
               Where the serious players check first.
             </h1>
-            <p className="nr-offer">
-              Everyone has opinions. We have the data - every weapon, shell, and extraction build analyzed deeper than anywhere else and verified against the live game. No guessing. No hype.
-            </p>
+            <div className="nr-pitch">
+              <p className="nr-kicker">Everyone has opinions. We have the data.</p>
+              <ul className="nr-points">
+                <li className="nr-point">
+                  <span className="nr-point-tick" aria-hidden="true" />
+                  <span className="nr-point-text"><span className="nr-point-lead">Verified against the live game</span><span className="nr-point-clause"> — every stat checked in-game, never guessed or scraped</span></span>
+                </li>
+                <li className="nr-point">
+                  <span className="nr-point-tick" aria-hidden="true" />
+                  <span className="nr-point-text"><span className="nr-point-lead">An intelligence engine that never sleeps</span><span className="nr-point-clause"> — every weapon, shell, and patch tracked continuously</span></span>
+                </li>
+                <li className="nr-point">
+                  <span className="nr-point-tick" aria-hidden="true" />
+                  <span className="nr-point-text"><span className="nr-point-lead">Analyzed deeper than anywhere else</span><span className="nr-point-clause"> — the most thorough intel in the genre</span></span>
+                </li>
+                <li className="nr-point">
+                  <span className="nr-point-tick" aria-hidden="true" />
+                  <span className="nr-point-text"><span className="nr-point-lead">No hype. No guesswork. Just intel.</span><span className="nr-point-clause"> — the standard others can&apos;t match</span></span>
+                </li>
+              </ul>
+            </div>
 
             {/* LIVE TELEMETRY -- the centerpiece. Network-level, game-agnostic. */}
             <div className="nr-telemetry" role="group" aria-label="Live network status">
@@ -319,7 +337,7 @@ export default async function NetworkRoot() {
         <div className="nr-wrap">
           <p className="nr-footer-tag">
             <span className="nr-footer-dot" aria-hidden="true" />
-            Cybernetic Punks - the extraction-shooter intelligence network. No hype. Just intel.
+            Cybernetic Punks - the competitive-shooter intelligence network. No hype. Just intel.
           </p>
           <p className="nr-footer-ai">powered by a live intelligence pipeline - updated continuously, verified against patch data</p>
         </div>
@@ -364,7 +382,17 @@ const NR_CSS = `
    (the strongest statement on the page); a tight max-width gives it a bold
    two-line stack on desktop, scaling down responsively via clamp. */
 .nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.5px; line-height: 1.05; font-size: clamp(34px, 6vw, 58px); color: var(--text-primary); margin: 0; max-width: 18ch; }
-.nr-offer { font-size: 17px; font-weight: 500; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 60ch; }
+/* Pitch: kicker lead-in + 4 differentiator bullets (designed, not a dash list).
+   Small silver diamond ticks (accent = network identity); bold lead + muted
+   clause per bullet; tight rhythm. Real ul/li; ticks are decorative. */
+.nr-pitch { display: flex; flex-direction: column; gap: 12px; max-width: 62ch; }
+.nr-kicker { font-size: 18px; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin: 0; }
+.nr-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.nr-point { display: flex; align-items: flex-start; gap: 11px; }
+.nr-point-tick { flex-shrink: 0; width: 6px; height: 6px; margin-top: 7px; border-radius: 1px; background: var(--nr-vantage); transform: rotate(45deg); }
+.nr-point-text { font-size: 14px; line-height: 1.45; }
+.nr-point-lead { color: var(--text-primary); font-weight: 700; }
+.nr-point-clause { color: var(--text-secondary); }
 
 /* ── LIVE TELEMETRY (centerpiece) ── elevated bar; dividers between items */
 .nr-telemetry { display: flex; align-items: center; flex-wrap: wrap; gap: 0 18px; margin-top: 6px; padding: 13px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--nr-elev); }
