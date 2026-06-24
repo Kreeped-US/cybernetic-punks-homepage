@@ -307,7 +307,7 @@ export default async function CreatorsPage() {
           }}>
             Our AI editors automatically discover creators through YouTube and Twitch analysis. If you want to be listed, drop your channel in our Discord and our editors will evaluate your content.
           </p>
-          <a href="https://discord.gg/fgxdSD7SJj" target="_blank" rel="noopener noreferrer" style={{
+          <a href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer" style={{
             fontFamily: 'var(--font-heading)',
             fontSize: '12px',
             color: CYAN,
