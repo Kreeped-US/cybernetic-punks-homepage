@@ -41,8 +41,8 @@ import GamePulseColumn from '@/components/network/GamePulseColumn';
 // Indexed (inherits the layout's robots:index) with a self-referential canonical
 // to the apex -- this is the network root's own canonical home.
 export const metadata = {
-  title: 'Extraction-Shooter Intelligence Network',
-  description: 'CyberneticPunks is the extraction-shooter intelligence network - the deepest, most current intel, build tools, and creator coverage across every extraction shooter we cover.',
+  title: 'Competitive-Shooter Intelligence Network',
+  description: 'The competitive-shooter intelligence network - deep, verified intel for Marathon and extraction shooters. Every weapon, shell, and build analyzed deeper than anywhere else and verified against the live game.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
 
@@ -230,12 +230,12 @@ export default async function NetworkRoot() {
         <section className="nr-hero-band" aria-labelledby="nr-thesis">
           <div className="nr-ambient" aria-hidden="true" />
           <div className="nr-wrap nr-hero">
-            <p className="nr-eyebrow">The extraction-shooter intelligence network</p>
+            <p className="nr-eyebrow">Competitive-Shooter Intelligence Network</p>
             <h1 id="nr-thesis" className="nr-h1">
-              The deepest, most current intel in every extraction shooter
+              Where the serious players check first.
             </h1>
             <p className="nr-offer">
-              Intel hubs, build tools, and creator coverage - across every extraction shooter we cover.
+              Everyone has opinions. We have the data - every weapon, shell, and extraction build analyzed deeper than anywhere else and verified against the live game. No guessing. No hype.
             </p>
 
             {/* LIVE TELEMETRY -- the centerpiece. Network-level, game-agnostic. */}
@@ -360,7 +360,10 @@ const NR_CSS = `
 .nr-hero { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
 
 .nr-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--nr-vantage); margin: 0; }
-.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.5px; line-height: 1.08; font-size: clamp(30px, 5vw, 48px); color: var(--text-primary); margin: 0; max-width: 20ch; }
+/* Punchy short headline -> sized up to be the confident anchor of the hero
+   (the strongest statement on the page); a tight max-width gives it a bold
+   two-line stack on desktop, scaling down responsively via clamp. */
+.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.5px; line-height: 1.05; font-size: clamp(34px, 6vw, 58px); color: var(--text-primary); margin: 0; max-width: 18ch; }
 .nr-offer { font-size: 17px; font-weight: 500; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 60ch; }
 
 /* ── LIVE TELEMETRY (centerpiece) ── elevated bar; dividers between items */
