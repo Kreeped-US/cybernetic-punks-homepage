@@ -68,7 +68,9 @@ function parseJSON(raw) {
 export async function POST() {
   try {
     const session = await resolveSession();
-    if (!session) {
+    // Require a Marathon profile: a Discord-only session is a truthy object with
+    // playerProfileId null -- reject it exactly like no session.
+    if (!session || !session.playerProfileId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
     const playerId = session.playerProfileId;

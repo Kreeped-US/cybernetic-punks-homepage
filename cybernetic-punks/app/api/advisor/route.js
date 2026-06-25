@@ -307,7 +307,9 @@ export async function POST(req) {
     // cp_player_id maps to a REAL player_profiles row (presence alone is forgeable);
     // a DB error during validation propagates to the outer try -> 500 (unchanged).
     const session = await resolveSession({ validate: true, supabase: createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY) });
-    if (!session) {
+    // Require a Marathon profile: a Discord-only session is a truthy object with
+    // playerProfileId null -- reject it exactly like no session.
+    if (!session || !session.playerProfileId) {
       return Response.json({ error: 'Not authenticated' }, { status: 401 });
     }
     const playerId = session.playerProfileId;

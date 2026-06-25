@@ -27,7 +27,9 @@ export async function POST(req) {
     // `player_id`, letting anyone update an arbitrary profile. Mirrors the
     // correct pattern in /api/profile. Any body `player_id` is now ignored.
     var session = await resolveSession();
-    if (!session) {
+    // Require a Marathon profile: a Discord-only session is a truthy object with
+    // playerProfileId null -- reject it exactly like no session.
+    if (!session || !session.playerProfileId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
     var playerId = session.playerProfileId;
