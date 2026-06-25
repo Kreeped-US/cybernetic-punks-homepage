@@ -79,6 +79,25 @@ export default async function JoinPage({ searchParams }) {
             CONNECT BUNGIE ACCOUNT
           </a>
 
+          <a
+            href="/api/auth/discord"
+            style={{
+              display: 'block',
+              textAlign: 'center',
+              padding: '13px 24px',
+              background: '#5865f2',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: '1px',
+              borderRadius: 2,
+              textDecoration: 'none',
+              marginBottom: 12,
+            }}
+          >
+            SIGN IN WITH DISCORD
+          </a>
+
           <div style={{ textAlign: 'center', fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: 2, fontFamily: 'monospace' }}>
             SECURE · NO PASSWORD STORED · BUNGIE OAUTH 2.0
           </div>
