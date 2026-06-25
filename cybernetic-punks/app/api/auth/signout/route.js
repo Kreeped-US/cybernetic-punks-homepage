@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // app/api/auth/signout/route.js
-// Clears the cp_player_id cookie and redirects to the homepage.
+// Clears the session cookies (cp_player_id AND cp_account) and redirects home.
 //
 // Accepts both POST (preferred — CSRF-resistant; called from a <form> in the
 // nav) and GET (fallback — supports direct URL navigation for testing or
@@ -26,9 +26,30 @@ function buildSignoutResponse(request) {
     path: '/',
   });
 
+  // Clear the network-account session cookie too (cp_account, set by the Discord
+  // flow). After dual-cookie auth, sign-out must drop BOTH session cookies, or a
+  // user carrying cp_account would still resolve as logged in via resolveSession.
+  response.cookies.set('cp_account', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
+
   // Defensive cleanup — bungie_oauth_state should already be cleared by the
   // callback, but if a sign-out happens mid-OAuth it could still be present.
   response.cookies.set('bungie_oauth_state', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
+
+  // Same defensive cleanup for the Discord OAuth state cookie (discord_oauth_state,
+  // set by lib/auth/oauth.js as <provider>_oauth_state).
+  response.cookies.set('discord_oauth_state', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
