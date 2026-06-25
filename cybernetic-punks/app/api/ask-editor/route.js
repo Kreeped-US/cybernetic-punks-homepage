@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { ARTICLE_MODEL } from '@/lib/models';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { checkFeatureAccess } from '@/lib/entitlements';
@@ -49,21 +49,14 @@ The player's message is a question for you to answer in character as this editor
 
 export async function POST(request) {
   try {
-    const cookieStore = await cookies();
-    const playerId = cookieStore.get('cp_player_id')?.value;
-
-    if (!playerId) {
+    // Auth gate + hardening via the shared resolver. validate:true confirms the
+    // cp_player_id maps to a REAL player_profiles row (presence alone is forgeable);
+    // a DB error during validation propagates to the outer try -> 500 (unchanged).
+    const session = await resolveSession({ validate: true, supabase: getSupabase() });
+    if (!session) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
-
-    // Auth hardening: presence alone is forgeable + rotatable -- validate the
-    // cookie maps to a REAL player before any paid work (mirrors what /api/audit
-    // does implicitly via its loadout lookup). maybeSingle -> absence is clean.
-    const authClient = getSupabase();
-    const { data: authPlayer } = await authClient.from('player_profiles').select('id').eq('id', playerId).maybeSingle();
-    if (!authPlayer) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const playerId = session.playerProfileId;
 
     // Per-player rate limit (audit #6): fail fast before the paid Claude call.
     const rl = checkRateLimit('ask-editor:' + playerId, ASK_RATE_LIMIT, ASK_RATE_WINDOW_MS);
