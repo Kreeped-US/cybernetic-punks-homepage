@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { bridgeBungieAccount } from '@/lib/auth/bungieBridge';
 
 // ─── COACH ACCESS ALLOWLIST ───────────────────────────────────────────────────
 // Add Bungie membership IDs here to grant access.
@@ -162,6 +163,18 @@ export async function GET(request) {
       console.error('Supabase upsert error:', upsertError);
       return NextResponse.redirect(new URL('/join?error=db_error', request.url));
     }
+
+    // One-time, best-effort bridge into the network identity spine. Idempotent
+    // (skips when account_id is already set) and self-contained: bridgeBungieAccount
+    // never throws, so login continues to the cookie-set + redirect below
+    // regardless of whether the bridge succeeds. The cookie/redirect that follow do
+    // NOT depend on this. (Bridge lives here, the one-time login event, NOT in the
+    // per-request resolveSession read path.)
+    await bridgeBungieAccount(supabase, player.id, {
+      membershipId: bungieMembershipId,
+      displayName,
+      avatarUrl: avatarPath,
+    });
 
     const redirectTo = resolvePostAuthRedirect(player);
     const response = NextResponse.redirect(new URL(redirectTo, request.url));
