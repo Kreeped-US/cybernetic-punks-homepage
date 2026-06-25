@@ -307,15 +307,17 @@ export async function POST(req) {
     // cp_player_id maps to a REAL player_profiles row (presence alone is forgeable);
     // a DB error during validation propagates to the outer try -> 500 (unchanged).
     const session = await resolveSession({ validate: true, supabase: createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY) });
-    // Require a Marathon profile: a Discord-only session is a truthy object with
-    // playerProfileId null -- reject it exactly like no session.
-    if (!session || !session.playerProfileId) {
+    // accountId-based access (4b): advisor is stateless (form inputs + game tables
+    // -> Claude, no per-user data), so ANY authenticated account may use it --
+    // Bungie OR Discord-only. Reject only when NEITHER identity is present.
+    if (!session || (!session.accountId && !session.playerProfileId)) {
       return Response.json({ error: 'Not authenticated' }, { status: 401 });
     }
-    const playerId = session.playerProfileId;
+    // Prefer accountId; fall back to playerProfileId for an un-bridged Bungie session.
+    const advisorId = session.accountId || session.playerProfileId;
 
     // Per-player rate limit (audit #2): fail fast before the DB fetch + Claude call.
-    const rl = checkRateLimit('advisor:' + playerId, ADVISOR_RATE_LIMIT, ADVISOR_RATE_WINDOW_MS);
+    const rl = checkRateLimit('advisor:' + advisorId, ADVISOR_RATE_LIMIT, ADVISOR_RATE_WINDOW_MS);
     if (!rl.ok) {
       return Response.json(
         { error: 'Rate limit exceeded — slow down and try again shortly.' },
@@ -328,7 +330,7 @@ export async function POST(req) {
     // is a data row, not a code change. INERT regardless (override_all_free) and
     // fail-safe (ALLOW on error). Deny branch unreachable until stage 3.
     const gateSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-    const access = await checkFeatureAccess(gateSupabase, playerId, 'advisor_generate');
+    const access = await checkFeatureAccess(gateSupabase, advisorId, 'advisor_generate');
     if (!access.allowed) {
       return Response.json(
         { error: 'limit_reached', feature: 'advisor_generate', tier: access.tier, limit: access.limit, used: access.used, upgrade_to: access.upgrade_to ?? null },
