@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { resolveSession } from '@/lib/auth/resolveSession';
 
 function getSupabase() {
   return createClient(
@@ -9,11 +9,11 @@ function getSupabase() {
 }
 
 export async function PATCH(request) {
-  var cookieStore = await cookies();
-  var playerId = cookieStore.get('cp_player_id')?.value;
-  if (!playerId) {
+  var session = await resolveSession();
+  if (!session) {
     return Response.json({ error: 'Not authenticated' }, { status: 401 });
   }
+  var playerId = session.playerProfileId;
 
   var body = await request.json();
   var allowed = ['favorite_shell', 'preferred_playstyle', 'onboarding_complete'];
