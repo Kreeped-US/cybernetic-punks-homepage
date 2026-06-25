@@ -28,12 +28,12 @@
 // The neutral root deliberately does NOT reuse components/Footer.js (that footer
 // carries Marathon vocabulary); a minimal neutral footer is rendered here.
 
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import GameRoutingTile from '@/components/network/GameRoutingTile';
 import GamePulseColumn from '@/components/network/GamePulseColumn';
+import AccountMenu from '@/components/AccountMenu';
 
 // ── METADATA ────────────────────────────────────────────────
 // Neutral, network-level title (the layout title.template appends the site name;
@@ -220,7 +220,7 @@ export default async function NetworkRoot() {
             <span className="nr-brand-dot" aria-hidden="true" />
             <span className="nr-brand-name">CYBERNETIC<span className="nr-brand-accent">PUNKS</span></span>
           </div>
-          <Link href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer" className="nr-join">JOIN FREE</Link>
+          <AccountMenu align="right" />
         </div>
       </header>
 
