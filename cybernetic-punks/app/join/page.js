@@ -7,9 +7,12 @@ export const metadata = {
 };
 
 export default async function JoinPage({ searchParams }) {
-  // Already logged in — send to profile
+  // Already logged in WITH a usable Marathon profile -> send to profile. Bounce
+  // only on session?.playerProfileId (not bare session): a truthy-but-unresolvable
+  // session (Discord-only, or a stale cp_player_id) has playerProfileId null, so it
+  // RENDERS /join here while /me sends it to /join -- the two agree, no redirect loop.
   var session = await resolveSession();
-  if (session) redirect('/me');
+  if (session?.playerProfileId) redirect('/me');
 
   var error = searchParams?.error;
 
