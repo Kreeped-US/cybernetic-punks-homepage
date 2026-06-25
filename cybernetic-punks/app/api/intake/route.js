@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { createClient } from '@supabase/supabase-js';
 
 // PROMPT-INJECTION HARDENING AT THE SOURCE (June 8, 2026):
@@ -34,12 +34,11 @@ function sanitizeList(value, maxItems, maxLen) {
 
 export async function POST(request) {
   try {
-    const cookieStore = await cookies();
-    const playerId = cookieStore.get('cp_player_id')?.value;
-
-    if (!playerId) {
+    const session = await resolveSession();
+    if (!session) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+    const playerId = session.playerProfileId;
 
     const answers = await request.json();
 

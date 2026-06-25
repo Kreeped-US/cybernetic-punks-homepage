@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
@@ -8,9 +8,8 @@ export const metadata = {
 
 export default async function JoinPage({ searchParams }) {
   // Already logged in — send to profile
-  var cookieStore = await cookies();
-  var playerId = cookieStore.get('cp_player_id')?.value;
-  if (playerId) redirect('/me');
+  var session = await resolveSession();
+  if (session) redirect('/me');
 
   var error = searchParams?.error;
 

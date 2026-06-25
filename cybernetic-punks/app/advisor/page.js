@@ -26,7 +26,7 @@
 //   from the Cradle; factions gate gear) — the old copy referenced the retired
 //   faction-stat-grind ("faction unlock requirements").
 
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { createClient } from '@supabase/supabase-js';
 import AdvisorClient from './AdvisorClient';
 
@@ -189,8 +189,8 @@ export default async function AdvisorPage({ searchParams }) {
   // Pre-fill from logged-in user profile
   var profilePrefill = null;
   try {
-    var cookieStore = await cookies();
-    var playerId = cookieStore.get('cp_player_id')?.value;
+    var session = await resolveSession();
+    var playerId = session ? session.playerProfileId : null;
     if (playerId) {
       var supabase = getSupabase();
       var { data: player } = await supabase

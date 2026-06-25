@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '@/lib/models';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -67,12 +67,11 @@ function parseJSON(raw) {
 
 export async function POST() {
   try {
-    const cookieStore = await cookies();
-    const playerId = cookieStore.get('cp_player_id')?.value;
-
-    if (!playerId) {
+    const session = await resolveSession();
+    if (!session) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+    const playerId = session.playerProfileId;
 
     // Per-player rate limit (audit #6): fail fast before the 3 paid Claude calls.
     const rl = checkRateLimit('audit:' + playerId, AUDIT_RATE_LIMIT, AUDIT_RATE_WINDOW_MS);

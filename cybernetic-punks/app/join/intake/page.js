@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import IntakeClient from './IntakeClient';
@@ -15,10 +15,9 @@ function getSupabase() {
 }
 
 export default async function IntakePage() {
-  const cookieStore = await cookies();
-  const playerId = cookieStore.get('cp_player_id')?.value;
-
-  if (!playerId) redirect('/join');
+  const session = await resolveSession();
+  if (!session) redirect('/join');
+  const playerId = session.playerProfileId;
 
   const supabase = getSupabase();
 

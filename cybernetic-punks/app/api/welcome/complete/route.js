@@ -7,7 +7,7 @@
 // they'll just see /welcome once more next signin which is recoverable.
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
@@ -26,11 +26,11 @@ export async function POST(req) {
     // cookie, NEVER from the request body. Previously this trusted body
     // `player_id`, letting anyone update an arbitrary profile. Mirrors the
     // correct pattern in /api/profile. Any body `player_id` is now ignored.
-    var cookieStore = await cookies();
-    var playerId = cookieStore.get('cp_player_id')?.value;
-    if (!playerId) {
+    var session = await resolveSession();
+    if (!session) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+    var playerId = session.playerProfileId;
 
     var body = await req.json();
     var intent = body?.intent;

@@ -22,7 +22,7 @@
 //   data instances.
 
 import { supabase } from '../../../lib/supabase';
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CoachCTA from '@/components/CoachCTA';
@@ -143,8 +143,8 @@ export default async function ShellHubPage({ params }) {
   if (!shell) notFound();
 
   // Viewer match — check if logged-in user's favorite_shell matches this page
-  var cookieStore = await cookies();
-  var playerId = cookieStore.get('cp_player_id')?.value;
+  var session = await resolveSession();
+  var playerId = session ? session.playerProfileId : null;
   var viewerMatches = false;
   if (playerId) {
     try {

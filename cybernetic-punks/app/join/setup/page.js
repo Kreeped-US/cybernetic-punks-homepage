@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import SetupClient from './SetupClient';
@@ -13,9 +13,9 @@ function getSupabase() {
 }
 
 export default async function SetupPage() {
-  var cookieStore = await cookies();
-  var playerId = cookieStore.get('cp_player_id')?.value;
-  if (!playerId) redirect('/join');
+  var session = await resolveSession();
+  if (!session) redirect('/join');
+  var playerId = session.playerProfileId;
 
   var supabase = getSupabase();
   var { data: player } = await supabase

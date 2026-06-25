@@ -4,7 +4,7 @@
 // Logs intent to site_events, marks player_profiles.has_seen_welcome = true,
 // redirects user to chosen destination.
 
-import { cookies } from 'next/headers';
+import { resolveSession } from '@/lib/auth/resolveSession';
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import WelcomeClient from './WelcomeClient';
@@ -29,12 +29,12 @@ export default async function WelcomePage() {
   // ── AUTH GUARD ───────────────────────────────────────────────
   // Welcome page only makes sense for logged-in users. Redirect
   // anonymous visitors back to homepage.
-  var cookieStore = await cookies();
-  var playerId = cookieStore.get('cp_player_id')?.value;
+  var session = await resolveSession();
 
-  if (!playerId) {
+  if (!session) {
     redirect('/');
   }
+  var playerId = session.playerProfileId;
 
   // ── FETCH PROFILE ────────────────────────────────────────────
   // Need bungie_display_name for the greeting.
