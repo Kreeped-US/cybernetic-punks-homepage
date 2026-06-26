@@ -153,9 +153,14 @@ export default function MeClient({ player }) {
              pills / buttons to the SAME left edge, and hide the fixed-size diamond
              decorations (they cannot scale into a phone column). */
           .me-hero-row { flex-direction: column !important; align-items: flex-start !important; }
-          .me-hero-name { flex: none !important; }
+          .me-hero-name { flex: none !important; align-self: stretch !important; }
           .me-hero-actions { align-items: flex-start !important; }
           .me-hero-diamond { display: none !important; }
+          /* P5b: the shell/role/playstyle row was as wide as its content, so the
+             shrink-to-fit name block never constrained it and the playstyle pill sat
+             at the far right. Stretching the name block to full width (above) bounds
+             this row to the viewport so it wraps; keep it explicitly left-packed. */
+          .me-hero-shellrow { justify-content: flex-start !important; }
         }
       `}</style>
 
@@ -252,7 +257,7 @@ export default function MeClient({ player }) {
 
             {/* Shell + playstyle inline */}
             {shell && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div className="me-hero-shellrow" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: shellColor + '12', border: '1px solid ' + shellColor + '30', borderRadius: 2 }}>
                   <span style={{ fontSize: 12, color: shellColor }}>{shellSymbol}</span>
                   <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: shellColor, textTransform: 'uppercase' }}>{shell}</span>
