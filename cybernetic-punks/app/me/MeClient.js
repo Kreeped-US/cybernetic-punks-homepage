@@ -471,7 +471,7 @@ export default function MeClient({ player }) {
 
           {/* Runner card */}
           <div style={{ background: '#121418', padding: '22px 20px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', marginBottom: 18 }}>Runner</div>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', marginBottom: 18 }}>Player</div>
 
             {/* Shell artwork — large */}
             {shellImg && (
@@ -586,7 +586,7 @@ export default function MeClient({ player }) {
                 {[
                   { label: 'BUILD AI',       role: 'Build Analysis', color: '#ff8800' },
                   { label: 'META AI',        role: 'Meta Position',  color: '#00d4ff' },
-                  { label: 'FIELD-GUIDE AI', role: 'Runner Profile', color: '#9b5de5' },
+                  { label: 'FIELD-GUIDE AI', role: 'Player Profile', color: '#9b5de5' },
                 ].map(function(item) {
                   var c = item.color;
                   return (

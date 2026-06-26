@@ -122,7 +122,7 @@ export default function WelcomeClient({ displayName, playerId }) {
               letterSpacing: 3,
               fontWeight: 700,
             }}>
-              SIGNAL ACQUIRED · WELCOME RUNNER
+              SIGNAL ACQUIRED · WELCOME PLAYER
             </span>
           </div>
 

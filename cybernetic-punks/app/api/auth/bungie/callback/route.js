@@ -124,7 +124,7 @@ export async function GET(request) {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    const displayName = bungieUser.uniqueName || bungieUser.displayName || 'Runner';
+    const displayName = bungieUser.uniqueName || bungieUser.displayName || 'Player';
     const avatarPath = bungieUser.profilePicturePath
       ? `https://www.bungie.net${bungieUser.profilePicturePath}`
       : null;

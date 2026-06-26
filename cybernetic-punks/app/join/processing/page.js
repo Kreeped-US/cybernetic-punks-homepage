@@ -21,7 +21,7 @@ const LINES = [
   { editor: 'MIRANDA', color: '#9b5de5', sym: '◎', delay: 6600, lines: [
     { t: 6800, text: '▸ Playstyle profile: reading motivation' },
     { t: 7400, text: '▸ Squad context and zone preference: mapped' },
-    { t: 8000, text: '▸ Runner archetype: classifying' },
+    { t: 8000, text: '▸ Player archetype: classifying' },
     { t: 8600, text: '▸ Personalized field notes: compiling' },
     { t: 9200, text: '✓ MIRANDA profile complete', color: 'rgba(0,255,136,0.7)' },
   ]},
@@ -139,7 +139,7 @@ export default function ProcessingPage() {
           {canView && (
             <div>
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: 'rgba(0,245,255,0.6)', letterSpacing: '3px', marginBottom: '20px' }}>
-                ● AUDIT COMPILED · RUNNER RATING CALCULATED
+                ● AUDIT COMPILED · PLAYER RATING CALCULATED
               </div>
               <button
                 onClick={() => router.push('/me')}

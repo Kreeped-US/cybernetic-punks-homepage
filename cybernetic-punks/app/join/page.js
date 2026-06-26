@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 
 export const metadata = {
   title: 'Create Account | CyberneticPunks',
-  description: 'Connect your Bungie account and claim your Runner profile.',
+  description: 'Connect your Bungie account and claim your player profile.',
 };
 
 export default async function JoinPage({ searchParams }) {
@@ -47,7 +47,7 @@ export default async function JoinPage({ searchParams }) {
           </div>
 
           <h1 style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 12px', color: '#fff' }}>
-            Create your<br />Runner profile.
+            Create your<br />player profile.
           </h1>
 
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: '0 0 28px' }}>
@@ -106,7 +106,7 @@ export default async function JoinPage({ searchParams }) {
         {/* Value props */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: '#1e2028' }}>
           {[
-            { icon: '⬡', color: '#00ff41',  label: 'RUNNER PROFILE',   desc: 'Your shell, playstyle and platform badge' },
+            { icon: '⬡', color: '#00ff41',  label: 'PLAYER PROFILE',   desc: 'Your shell, playstyle and platform badge' },
             { icon: '◈', color: '#ff2222',   label: 'EARLY ADOPTER',    desc: 'Permanent status for founding members' },
             { icon: '◎', color: '#9b5de5',   label: 'PRIORITY ACCESS',  desc: 'First in line when new tools launch' },
           ].map(function(item) {

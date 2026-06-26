@@ -73,7 +73,7 @@ export async function GET() {
         .eq('id', session.playerProfileId)
         .maybeSingle();
       if (!profile) return loggedOut();
-      const displayName = (profile.bungie_display_name || '').replace(/#\d+$/, '').trim() || 'Runner';
+      const displayName = (profile.bungie_display_name || '').replace(/#\d+$/, '').trim() || 'Player';
       return identity({
         handle: null,
         displayName: displayName,

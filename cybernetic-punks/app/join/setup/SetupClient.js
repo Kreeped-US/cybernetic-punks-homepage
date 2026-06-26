@@ -80,7 +80,7 @@ export default function SetupClient({ displayName }) {
           <div>
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 10 }}>
-                Welcome, {displayName || 'Runner'}
+                Welcome, {displayName || 'Player'}
               </div>
               <h1 style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.05, margin: '0 0 8px', color: '#fff' }}>
                 What's your main shell?

@@ -46,7 +46,7 @@ function Dot({ done, active }) {
 function Sidebar({ step }) {
   return (
     <div style={{ width: 200, flexShrink: 0, background: 'rgba(0,245,255,0.015)', borderRight: '1px solid rgba(0,245,255,0.07)', padding: '36px 22px', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
-      <div style={{ fontFamily: 'Share Tech Mono, monospace', color: 'rgba(0,245,255,0.5)', fontSize: 8, letterSpacing: 4, marginBottom: 32 }}>RUNNER INTAKE</div>
+      <div style={{ fontFamily: 'Share Tech Mono, monospace', color: 'rgba(0,245,255,0.5)', fontSize: 8, letterSpacing: 4, marginBottom: 32 }}>PLAYER INTAKE</div>
       <div style={{ marginBottom: 28, opacity: step <= 4 || step > 4 ? 1 : 0.35 }}>
         <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, letterSpacing: 3, color: step <= 4 ? '#00f5ff' : step > 4 ? 'rgba(0,245,255,0.4)' : 'rgba(255,255,255,0.2)', marginBottom: 10 }}>A · IDENTITY</div>
         <div style={{ display: 'flex', gap: 5 }}>{[1,2,3,4].map(i => <Dot key={i} done={step > i} active={step === i} />)}</div>
@@ -423,7 +423,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
 
       case 1: return (
         <>
-          <div style={S.label}>SECTION A · RUNNER IDENTITY · 01 / 08</div>
+          <div style={S.label}>SECTION A · PLAYER IDENTITY · 01 / 08</div>
           <H2>WHEN YOU DEPLOY,<br/>WHAT MATTERS MOST?</H2>
           <WHY text="Calibrates which editors lead your audit and what they prioritize. Your answer shapes the entire tone of the report." />
           {MOTIVATIONS.map(m => (
@@ -443,7 +443,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
 
       case 2: return (
         <>
-          <div style={S.label}>SECTION A · RUNNER IDENTITY · 02 / 08</div>
+          <div style={S.label}>SECTION A · PLAYER IDENTITY · 02 / 08</div>
           <H2>YOUR INSTINCT<br/>IN A FIREFIGHT?</H2>
           <WHY text="Our play-analysis AI uses this to flag patterns where your shell and weapon choices contradict your engagement style. Mismatch here is the most common source of underperformance." />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -463,7 +463,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
 
       case 3: return (
         <>
-          <div style={S.label}>SECTION A · RUNNER IDENTITY · 03 / 08</div>
+          <div style={S.label}>SECTION A · PLAYER IDENTITY · 03 / 08</div>
           <H2>BUILD ENGAGEMENT<br/>&amp; ZONE PREFERENCE</H2>
           <WHY text="Sets the vocabulary level of your audit — plain language vs full stat analysis. Zone preference lets our meta AI weight meta recommendations to where you actually play." />
 
@@ -496,7 +496,7 @@ export default function IntakeClient({ playerName, weapons, metaTiers, mods, cor
 
       case 4: return (
         <>
-          <div style={S.label}>SECTION A · RUNNER IDENTITY · 04 / 08</div>
+          <div style={S.label}>SECTION A · PLAYER IDENTITY · 04 / 08</div>
           <H2>HOW DO YOU<br/>USUALLY DEPLOY?</H2>
           <WHY text="Solo builds differ fundamentally from crew builds. Some shells lose most of their value without teammates. Our meta AI and build AI both factor this heavily." />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
