@@ -609,6 +609,15 @@ function EditorLanePage({ config, items }) {
 
       <style>{`
         .lane-row:hover { background: #1e2228 !important; }
+        /* Mobile (P4): the "Latest Intel" featured card is an inline 1fr 280px grid
+           (text | image). The fixed 280px image track crushes the text column to
+           ~30px on a phone (headline wraps 1-2 words). Collapse to one column so
+           text + image STACK; desktop (>640px) keeps the inline 1fr 280px. Site 640px
+           convention. (This style block is the editor-hub render path, where the
+           card lives -- not the ArticlePage block.) */
+        @media (max-width: 640px) {
+          .latest-intel-card { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       <section style={{ position: 'relative', overflow: 'hidden', background: '#0e1014', borderBottom: '1px solid #1e2028' }}>
@@ -699,7 +708,7 @@ function EditorLanePage({ config, items }) {
                 </div>
 
                 <Link href={'/intel/' + featured.slug} className="lane-row" style={{ textDecoration: 'none', display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + config.color, borderRadius: '0 0 3px 3px', overflow: 'hidden', marginBottom: 8, transition: 'background 0.1s' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: featured.thumbnail ? '1fr 280px' : '1fr', minHeight: 150 }}>
+                  <div className="latest-intel-card" style={{ display: 'grid', gridTemplateColumns: featured.thumbnail ? '1fr 280px' : '1fr', minHeight: 150 }}>
                     <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
