@@ -33,7 +33,23 @@ export async function GET(req) {
     const { data, error } = await q;
     if (error) throw error;
 
-    return Response.json({ alerts: data || [] });
+    // Heartbeat health signal: the most recent agent run, regardless of findings.
+    // Best-effort -- if quality_audit_runs does not exist yet, lastRun stays null
+    // and the alerts read is unaffected.
+    let lastRun = null;
+    try {
+      const runRes = await supabase
+        .from('quality_audit_runs')
+        .select('game_slug, ran_at, articles_checked, alerts_found, window_hours')
+        .order('ran_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!runRes.error) lastRun = runRes.data || null;
+    } catch (e) {
+      lastRun = null;
+    }
+
+    return Response.json({ alerts: data || [], lastRun: lastRun });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }

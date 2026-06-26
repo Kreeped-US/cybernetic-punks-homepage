@@ -118,6 +118,23 @@ export async function runQualityAudit(gameSlug, hoursWindow) {
     }
   });
 
+  // HEARTBEAT: record this run on EVERY path (clean OR with findings) so an empty
+  // quality_alerts table is unambiguous -- a recent quality_audit_runs row proves the
+  // agent ran and found nothing. Best-effort: a heartbeat failure (e.g. the table not
+  // created yet) is logged and NEVER breaks the scan. supabase-js does not throw on a
+  // DB error (it returns { error }), so check both the result error and a rejection.
+  try {
+    var hb = await supabase.from('quality_audit_runs').insert({
+      game_slug: gameSlug,
+      articles_checked: summary.checked,
+      alerts_found: findings.length,
+      window_hours: hoursWindow,
+    });
+    if (hb && hb.error) console.error('[quality-audit] heartbeat write failed (scan unaffected):', hb.error);
+  } catch (e) {
+    console.error('[quality-audit] heartbeat write threw (scan unaffected):', e);
+  }
+
   if (findings.length === 0) return summary;
 
   // Light dedupe: skip findings already alerted for the same (article, type) so

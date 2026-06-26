@@ -23,6 +23,7 @@ export default function QualityAlertsPanel({ password }) {
   var [status, setStatus] = useState('new');
   var [severity, setSeverity] = useState('all');
   var [game, setGame] = useState('all');
+  var [lastRun, setLastRun] = useState(null);
 
   useEffect(function () {
     if (!password) return;
@@ -36,7 +37,7 @@ export default function QualityAlertsPanel({ password }) {
         var res = await fetch('/api/admin/quality-alerts?' + qs, { headers: { 'x-admin-password': password } });
         if (!res.ok) throw new Error('Failed to fetch (' + res.status + ')');
         var data = await res.json();
-        if (!cancelled) { setAlerts(data.alerts || []); setError(null); }
+        if (!cancelled) { setAlerts(data.alerts || []); setLastRun(data.lastRun || null); setError(null); }
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -69,6 +70,14 @@ export default function QualityAlertsPanel({ password }) {
       <div style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, margin: '8px 0 14px', lineHeight: 1.5 }}>
         Deterministic checks on recent published articles -- editor-codename leakage + retired-feature references. Triage by reading; fix at the source article.
       </div>
+
+      {!loading && !error && (
+        <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: 1, margin: '0 0 14px', lineHeight: 1.5, color: lastRun ? 'rgba(0,255,65,0.6)' : 'rgba(255,136,0,0.6)' }}>
+          {lastRun
+            ? 'LAST RUN ' + (lastRun.ran_at ? new Date(lastRun.ran_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '?') + ' / ' + (lastRun.game_slug || '?') + ' / CHECKED ' + (lastRun.articles_checked != null ? lastRun.articles_checked : '?') + ' / FOUND ' + (lastRun.alerts_found != null ? lastRun.alerts_found : '?')
+            : 'NO AGENT RUN RECORDED YET -- run the quality_audit_runs migration; the agent then records each run.'}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         {filterLabel('STATUS', status, setStatus, ['all', 'new', 'reviewed', 'resolved'])}
