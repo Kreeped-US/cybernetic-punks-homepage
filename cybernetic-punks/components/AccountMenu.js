@@ -55,6 +55,30 @@ var ITEM_BUTTON = {
   background: 'transparent', cursor: 'pointer', transition: 'background 0.1s', fontFamily: 'inherit',
 };
 
+// Mobile-variant rows -- mirror Nav.js's mobile leaf-row style (padding 14px 20px,
+// borderBottom #1e2028, uppercase, left accent gutter) so they look native in the
+// hamburger panel.
+var M_IDENTITY = {
+  display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px',
+  borderBottom: '1px solid #1e2028',
+};
+var M_NAME = {
+  fontSize: 12, fontWeight: 700, letterSpacing: '1px', color: 'rgba(255,255,255,0.85)',
+  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+};
+var M_AVATAR_IMG = { width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', display: 'block', flexShrink: 0 };
+var M_AVATAR_FALLBACK = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24,
+  borderRadius: '50%', background: '#5865f2', color: '#fff', fontSize: 10, fontWeight: 800, flexShrink: 0,
+};
+var M_ROW = {
+  display: 'block', padding: '14px 20px', fontSize: 11, fontWeight: 600, letterSpacing: '2px',
+  textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', textDecoration: 'none',
+  borderBottom: '1px solid #1e2028', borderLeft: '2px solid transparent', background: 'none',
+  fontFamily: 'inherit',
+};
+var M_ROW_BUTTON = Object.assign({}, M_ROW, { width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer' });
+
 function initialsOf(name) {
   var s = (name || '').trim();
   if (!s) return '?';
@@ -64,7 +88,7 @@ function initialsOf(name) {
   return ((a + b) || s[0]).toUpperCase();
 }
 
-export default function AccountMenu({ align }) {
+export default function AccountMenu({ align, variant, onResolved }) {
   var alignRight = align !== 'left';
   var [status, setStatus] = useState('loading'); // 'loading' | 'in' | 'out'
   var [data, setData] = useState(null);
@@ -79,11 +103,15 @@ export default function AccountMenu({ align }) {
       .then(function(r) { return r.ok ? r.json() : { authenticated: false }; })
       .then(function(j) {
         if (cancelled) return;
+        var authed = !!(j && j.authenticated);
         setData(j || null);
-        setStatus(j && j.authenticated ? 'in' : 'out');
+        setStatus(authed ? 'in' : 'out');
+        if (onResolved) onResolved(authed);
       })
       .catch(function() {
-        if (!cancelled) setStatus('out');
+        if (cancelled) return;
+        setStatus('out');
+        if (onResolved) onResolved(false);
       });
     return function() { cancelled = true; };
   }, []);
@@ -104,6 +132,41 @@ export default function AccountMenu({ align }) {
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  // MOBILE VARIANT: flat rows inside the already-open hamburger panel -- NO dropdown,
+  // NO click-toggle. Renders the account section ONLY when logged in; loading /
+  // logged out -> null (the panel's existing JOIN FREE pill is the logged-out
+  // affordance, and onResolved tells Nav to hide it once logged in).
+  if (variant === 'mobile') {
+    if (status !== 'in' || !data) return null;
+    var mName = data.displayName || data.handle || 'Account';
+    var mShowAvatar = data.avatarUrl && !avatarBroken;
+    return (
+      <div>
+        <div style={M_IDENTITY}>
+          {mShowAvatar ? (
+            <img
+              src={data.avatarUrl}
+              alt=""
+              width={24}
+              height={24}
+              onError={function() { setAvatarBroken(true); }}
+              style={M_AVATAR_IMG}
+            />
+          ) : (
+            <span style={M_AVATAR_FALLBACK}>{initialsOf(mName)}</span>
+          )}
+          <span style={M_NAME}>{mName}</span>
+        </div>
+        {data.hasMarathonProfile && (
+          <Link href="/me" style={M_ROW}>Profile</Link>
+        )}
+        <form method="POST" action="/api/auth/signout" style={{ margin: 0 }}>
+          <button type="submit" style={M_ROW_BUTTON}>Sign out</button>
+        </form>
+      </div>
+    );
+  }
 
   // LOADING: neutral skeleton sized like the pill -- no layout shift, no flash.
   if (status === 'loading') {

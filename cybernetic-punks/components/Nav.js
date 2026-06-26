@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useRef } from 'react';
 import { getEditorDisplay } from '@/lib/editors/roster';
+import AccountMenu from '@/components/AccountMenu';
 
 // INTEL-dropdown editor item, sourced from the display map: label = tag (proper
 // case, not raw uppercase), color from the map. Desc stays (editor flavor copy
@@ -191,6 +192,9 @@ export default function Nav() {
   var pathname = usePathname();
   var [mobileOpen, setMobileOpen]       = useState(false);
   var [mobileExpanded, setMobileExpanded] = useState(null);
+  // Set by the mobile AccountMenu after it resolves /api/account/me -> hides the
+  // JOIN FREE pill below for logged-in users (single fetch lives in AccountMenu).
+  var [mobileAuthed, setMobileAuthed]   = useState(false);
 
   function toggleSection(label) {
     setMobileExpanded(mobileExpanded === label ? null : label);
@@ -337,20 +341,9 @@ export default function Nav() {
             DISCORD
           </Link>
 
-          {/* Join CTA */}
-          <Link href="/join" style={{
-            padding:        '7px 14px',
-            background:     '#00ff41',
-            color:          '#000',
-            fontSize:       10,
-            fontWeight:     800,
-            letterSpacing:  '1px',
-            borderRadius:   2,
-            textDecoration: 'none',
-            whiteSpace:     'nowrap',
-          }}>
-            JOIN FREE
-          </Link>
+          {/* Account menu (logged out -> JOIN FREE -> /join; logged in -> avatar dropdown).
+              Replaces the desktop Join CTA; the Discord community pill above stays. */}
+          <AccountMenu align="right" />
         </div>
 
         {/* Mobile hamburger */}
@@ -509,6 +502,11 @@ export default function Nav() {
             );
           })}
 
+          {/* Account section (logged in only): identity + Profile + Sign out, flat
+              rows. Self-fetches /api/account/me and reports auth up via onResolved so
+              the JOIN FREE pill below hides when logged in. */}
+          <AccountMenu variant="mobile" onResolved={setMobileAuthed} />
+
           {/* Mobile bottom links */}
           <div style={{ padding: '12px 20px', display: 'flex', gap: 10 }}>
             <Link href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer"
@@ -516,11 +514,13 @@ export default function Nav() {
               style={{ flex: 1, textAlign: 'center', padding: '10px', background: 'rgba(88,101,242,0.1)', border: '1px solid rgba(88,101,242,0.3)', borderRadius: 2, fontSize: 10, fontWeight: 700, color: '#7289da', textDecoration: 'none', letterSpacing: 1 }}>
               DISCORD
             </Link>
-            <Link href="/join"
-              onClick={function() { setMobileOpen(false); }}
-              style={{ flex: 1, textAlign: 'center', padding: '10px', background: '#00ff41', borderRadius: 2, fontSize: 10, fontWeight: 800, color: '#000', textDecoration: 'none', letterSpacing: 1 }}>
-              JOIN FREE
-            </Link>
+            {!mobileAuthed && (
+              <Link href="/join"
+                onClick={function() { setMobileOpen(false); }}
+                style={{ flex: 1, textAlign: 'center', padding: '10px', background: '#00ff41', borderRadius: 2, fontSize: 10, fontWeight: 800, color: '#000', textDecoration: 'none', letterSpacing: 1 }}>
+                JOIN FREE
+              </Link>
+            )}
           </div>
         </div>
       )}
