@@ -143,6 +143,13 @@ export default function MeClient({ player }) {
         .setup-shell:hover { border-color: rgba(255,255,255,0.2) !important; }
         .setup-style { transition: border-color 0.1s, background 0.1s; }
         .setup-style:hover { background: rgba(255,255,255,0.02) !important; }
+        /* Mobile (P2): stack the 220px sidebar + tools into one column, and wrap the
+           tools cards via auto-fit so nothing is cut off. Desktop (>640px) keeps the
+           inline values (220px 1fr sidebar, 3-up cards). Site 640px convention. */
+        @media (max-width: 640px) {
+          .me-main-grid { grid-template-columns: 1fr !important; }
+          .me-tools-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; }
+        }
       `}</style>
 
       {/* ══ HERO HEADER ════════════════════════════════════════ */}
@@ -448,7 +455,7 @@ export default function MeClient({ player }) {
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px 24px 48px' }}>
 
         {/* ── RUNNER STATS + TOOLS ─────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 1, background: '#1e2028', marginBottom: 1 }}>
+        <div className="me-main-grid" style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 1, background: '#1e2028', marginBottom: 1 }}>
 
           {/* Runner card */}
           <div style={{ background: '#121418', padding: '22px 20px' }}>
@@ -499,7 +506,7 @@ export default function MeClient({ player }) {
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.1)', letterSpacing: 1 }}>6 AVAILABLE</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div className="me-tools-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               {TOOLS.map(function(tool) {
                 return (
                   <Link
