@@ -19,6 +19,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { resolveSession } from '@/lib/auth/resolveSession';
 import { brand } from '@/app/profile-preview/brand';
+import EditProfile from './EditProfile';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,12 +78,23 @@ export default async function ProfilePage({ params }) {
   // Linked provider TYPES (badges) -- never external_id.
   var { data: links } = await supabase
     .from('linked_identity')
-    .select('provider')
+    .select('provider, provider_avatar_url')
     .eq('account_id', account.id);
   var providers = [];
   var seen = {};
   (links || []).forEach(function(l) {
     if (l && l.provider && !seen[l.provider]) { seen[l.provider] = true; providers.push(l.provider); }
+  });
+
+  // Provider avatar URLs, deduped by provider. Built here but ONLY passed to the
+  // owner's EditProfile (rendered only when isOwner) -- non-owners never receive it.
+  var providerAvatars = [];
+  var seenAv = {};
+  (links || []).forEach(function(l) {
+    if (l && l.provider && l.provider_avatar_url && !seenAv[l.provider]) {
+      seenAv[l.provider] = true;
+      providerAvatars.push({ provider: l.provider, url: l.provider_avatar_url });
+    }
   });
 
   // Does this account have a Marathon (player_profiles) slice?
@@ -106,9 +118,10 @@ export default async function ProfilePage({ params }) {
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
 
         {isOwner && (
-          <div style={{ fontSize: 11, color: brand.textDim, letterSpacing: 0.5, marginBottom: 14 }}>
-            <span style={{ color: accent, fontWeight: 700 }}>◆</span> This is your profile.
-          </div>
+          <EditProfile
+            account={{ handle: account.handle, display_name: account.display_name, bio: account.bio, accent_color: account.accent_color, avatar_url: account.avatar_url }}
+            providerAvatars={providerAvatars}
+          />
         )}
 
         <div style={{ background: brand.panel, border: '1px solid ' + brand.borderHi, borderRadius: 10, overflow: 'hidden', boxShadow: '0 18px 50px rgba(0,0,0,0.5)' }}>
