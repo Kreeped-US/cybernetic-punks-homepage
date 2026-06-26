@@ -1,17 +1,41 @@
 import { resolveSession } from '@/lib/auth/resolveSession';
 import { redirect } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 
 export const metadata = {
   title: 'Create Account | CyberneticPunks',
   description: 'Connect your Bungie account and claim your player profile.',
 };
 
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+}
+
 export default async function JoinPage({ searchParams }) {
-  // Already logged in WITH a usable Marathon profile -> send to profile. Bounce
-  // only on session?.playerProfileId (not bare session): a truthy-but-unresolvable
-  // session (Discord-only, or a stale cp_player_id) has playerProfileId null, so it
-  // RENDERS /join here while /me sends it to /join -- the two agree, no redirect loop.
+  // Logged-in users go to their OWN profile. Order preserves the no-loop property:
+  //   1. accountId present -> their network_account handle -> /u/[handle] (covers
+  //      Discord-only AND bridged Bungie users). /u/[handle] is a PUBLIC page that
+  //      never redirects away, so sending logged-in users there can never loop.
+  //   2. else playerProfileId (un-bridged Bungie: a Marathon profile but no account
+  //      yet) -> /me (the existing safe path; they have a profile so /me renders).
+  //   3. else (logged out / unresolvable) -> render the signup form below.
+  // Defensive: if accountId resolves no handle (shouldn't happen -- every account has
+  // one), fall through rather than redirect to a broken /u/.
   var session = await resolveSession();
+
+  if (session?.accountId) {
+    var supabase = getSupabase();
+    var { data: acct } = await supabase
+      .from('network_account')
+      .select('handle')
+      .eq('id', session.accountId)
+      .maybeSingle();
+    if (acct?.handle) redirect('/u/' + acct.handle);
+  }
+
   if (session?.playerProfileId) redirect('/me');
 
   var error = searchParams?.error;
