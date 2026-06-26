@@ -149,6 +149,13 @@ export default function MeClient({ player }) {
         @media (max-width: 640px) {
           .me-main-grid { grid-template-columns: 1fr !important; }
           .me-tools-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; }
+          /* P5: left-align the profile header on mobile -- stack avatar / name /
+             pills / buttons to the SAME left edge, and hide the fixed-size diamond
+             decorations (they cannot scale into a phone column). */
+          .me-hero-row { flex-direction: column !important; align-items: flex-start !important; }
+          .me-hero-name { flex: none !important; }
+          .me-hero-actions { align-items: flex-start !important; }
+          .me-hero-diamond { display: none !important; }
         }
       `}</style>
 
@@ -177,14 +184,14 @@ export default function MeClient({ player }) {
         {/* Geometric accent — shell color */}
         {shell && (
           <>
-            <div style={{
+            <div className="me-hero-diamond" style={{
               position: 'absolute', top: -40, right: '30%',
               width: 200, height: 200,
               border: '1px solid ' + shellColor + '12',
               transform: 'rotate(45deg)',
               pointerEvents: 'none',
             }} />
-            <div style={{
+            <div className="me-hero-diamond" style={{
               position: 'absolute', top: 0, right: '28%',
               width: 320, height: 320,
               border: '1px solid ' + shellColor + '06',
@@ -200,7 +207,7 @@ export default function MeClient({ player }) {
           </>
         )}
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1000, margin: '0 auto', padding: '36px 32px', display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
+        <div className="me-hero-row" style={{ position: 'relative', zIndex: 1, maxWidth: 1000, margin: '0 auto', padding: '36px 32px', display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
 
           {/* Avatar */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -229,7 +236,7 @@ export default function MeClient({ player }) {
           </div>
 
           {/* Name + meta */}
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="me-hero-name" style={{ flex: 1, minWidth: 220 }}>
             <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-1px', margin: '0 0 8px', color: '#fff', lineHeight: 1 }}>
               {displayName}
             </h1>
@@ -272,7 +279,7 @@ export default function MeClient({ player }) {
           </div>
 
           {/* Badges */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, alignItems: 'flex-end' }}>
+          <div className="me-hero-actions" style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, alignItems: 'flex-end' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2 }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.5)' }} />
               <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 3, color: '#00ff41', textTransform: 'uppercase' }}>Early Adopter</span>
