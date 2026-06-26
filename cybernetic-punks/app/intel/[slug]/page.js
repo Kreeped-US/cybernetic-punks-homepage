@@ -1071,6 +1071,14 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
 
       <style>{`
         .article-related:hover { background: #1e2228 !important; }
+        /* Mobile: collapse the article/data-reference grid to one column so the
+           300px reference card STACKS BELOW the body instead of colliding with the
+           crushed body column. !important overrides the inline gridTemplateColumns;
+           desktop (>640px) keeps the inline 1fr 300px. Matches the site 640px convention. */
+        @media (max-width: 640px) {
+          .intel-article-grid { grid-template-columns: 1fr !important; }
+          .intel-data-aside { position: static !important; top: auto !important; }
+        }
       `}</style>
 
       <div style={{ position: 'relative', background: '#0e1014', borderBottom: '1px solid #1e2028', overflow: 'hidden' }}>
@@ -1122,7 +1130,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 64px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: hasDataRef ? '1fr 300px' : '1fr', gap: 44, alignItems: 'start' }}>
+        <div className="intel-article-grid" style={{ display: 'grid', gridTemplateColumns: hasDataRef ? '1fr 300px' : '1fr', gap: 44, alignItems: 'start' }}>
 
           <article style={{ paddingTop: 32, minWidth: 0 }}>
             {videoId && (
@@ -1166,7 +1174,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
           </article>
 
           {hasDataRef && (
-            <aside style={{ position: 'sticky', top: 64, paddingTop: 32 }}>
+            <aside className="intel-data-aside" style={{ position: 'sticky', top: 64, paddingTop: 32 }}>
               <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + editor.color, borderRadius: '0 0 3px 3px', padding: 18 }}>
                 <div style={{ fontSize: 9, color: editor.color, letterSpacing: 3, marginBottom: 18, paddingBottom: 10, borderBottom: '1px solid #22252e', fontWeight: 700, textTransform: 'uppercase' }}>
                   Data Reference · {allMentionedItems.length} ITEMS
