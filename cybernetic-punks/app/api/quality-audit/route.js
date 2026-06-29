@@ -13,7 +13,7 @@
 // (lib/agents/qualityAudit.js), so there is no module-scope client here and this
 // route is force-dynamic-safe.
 
-import { runQualityAudit } from '@/lib/agents/qualityAudit';
+import { runQualityAudit, runBriefAudit } from '@/lib/agents/qualityAudit';
 import { GAMES } from '@/lib/games';
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +46,14 @@ export async function GET(req) {
       } catch (e) {
         results[slug] = { error: e && e.message ? e.message : 'audit failed' };
       }
+    }
+
+    // NETWORK-LEVEL brief scan -- run ONCE after the per-game loop (network_brief has no
+    // game_slug; briefs span all games). Codename-leak coverage for cross-game briefs.
+    try {
+      results.network = await runBriefAudit(24);
+    } catch (e) {
+      results.network = { error: e && e.message ? e.message : 'brief audit failed' };
     }
 
     var totalNew = Object.keys(results).reduce(function (n, slug) {

@@ -82,7 +82,7 @@ export default function QualityAlertsPanel({ password }) {
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         {filterLabel('STATUS', status, setStatus, ['all', 'new', 'reviewed', 'resolved'])}
         {filterLabel('SEVERITY', severity, setSeverity, ['all', 'high', 'medium'])}
-        {filterLabel('GAME', game, setGame, ['all', 'marathon', 'dmz'])}
+        {filterLabel('GAME', game, setGame, ['all', 'marathon', 'dmz', 'network'])}
       </div>
 
       {loading ? (
