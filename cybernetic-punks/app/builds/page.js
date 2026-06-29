@@ -25,11 +25,11 @@ import { Sep } from '@/components/Sep';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides',
+  title: 'Marathon Builds & Loadouts — Best Shells & Weapons',
   description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides — refreshed throughout the day.',
   keywords: 'Marathon builds, Marathon loadouts, Marathon best weapons, Marathon weapon stats, Marathon shell tier list, Marathon cores, Marathon implants, Marathon mods, Marathon meta, best Marathon loadout, Marathon ranked builds, Marathon shell builds, Marathon weapon guide, Marathon loadout guide',
   openGraph: {
-    title: 'Marathon Builds & Loadouts — Best Shells, Weapons & Loadout Guides | CyberneticPunks',
+    title: 'Marathon Builds & Loadouts — Best Shells & Weapons | CyberneticPunks',
     description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides.',
     url: 'https://cyberneticpunks.com/builds',
     siteName: 'CyberneticPunks',
@@ -39,7 +39,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Builds & Loadouts — CyberneticPunks',
+    title: 'Marathon Builds & Loadouts — Best Shells & Weapons | CyberneticPunks',
     description: 'Best Marathon builds, weapon stats, shell rankings, and loadout guides. Refreshed throughout the day.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },

@@ -29,11 +29,11 @@ import MetaClient from './MetaClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
+  title: 'Marathon Meta Tier List — Best Weapons & Shells (Live)',
   description: 'Live Marathon meta tier list ranking every weapon and Runner Shell. See what\'s S-tier, A-tier, and what\'s falling — updated throughout the day.',
   keywords: 'Marathon tier list, Marathon meta, Marathon best weapons, Marathon S-tier, Marathon weapons ranked, Marathon shells tier list, best Marathon weapons, Marathon meta tier list, Marathon ranked tier list, Marathon weapon tier list 2026, Marathon top weapons, Marathon top shells, Marathon dominant builds, Marathon meta snapshot, Marathon weapon ranking, what is the meta in Marathon',
   openGraph: {
-    title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
+    title: 'Marathon Meta Tier List — Best Weapons & Shells (Live) | CyberneticPunks',
     description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/meta',
     siteName: 'CyberneticPunks',
@@ -43,7 +43,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Meta Tier List — Best Weapons & Shells Ranked (Live)',
+    title: 'Marathon Meta Tier List — Best Weapons & Shells (Live) | CyberneticPunks',
     description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },

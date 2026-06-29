@@ -29,11 +29,11 @@ import Footer from '@/components/Footer';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Guides — Shell Guides, Ranked Prep, Extraction Strategy & Build Tips',
+  title: 'Marathon Guides — Shells, Ranked Prep & Builds',
   description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips — updated throughout the day by our field-guide AI. Covers all 7 shells, weapons, mods, and map intel.',
   keywords: 'Marathon guides, Marathon guide, Marathon tips, Marathon beginner guide, Marathon shell guide, Marathon ranked guide, Marathon weapon guide, Marathon mod guide, Marathon extraction guide, Marathon strategy, how to play Marathon, Marathon Bungie guide, Marathon Thief guide, Marathon Destroyer guide, Marathon Assassin guide, Marathon Recon guide, Marathon Vandal guide, Marathon Triage guide, Marathon Rook guide',
   openGraph: {
-    title: 'Marathon Guides — Shell Breakdowns, Ranked Prep & Extraction Strategy',
+    title: 'Marathon Guides — Shells, Ranked Prep & Builds | CyberneticPunks',
     description: 'Every Marathon guide you need. Shells, ranked, weapons, mods, extraction, and beginner tips. Auto-updated throughout the day.',
     url: 'https://cyberneticpunks.com/guides',
     siteName: 'CyberneticPunks',
@@ -43,7 +43,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Guides | CyberneticPunks',
+    title: 'Marathon Guides — Shells, Ranked Prep & Builds | CyberneticPunks',
     description: 'Shell breakdowns, ranked prep, extraction strategy, and more. Updated throughout the day.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },

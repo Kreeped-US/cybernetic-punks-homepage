@@ -21,11 +21,11 @@
 import Link from 'next/link';
 
 export var metadata = {
-  title: 'Marathon Leaderboard — Ranked Players, Top Runners & Global Rankings',
+  title: 'Marathon Ranked Leaderboard — Global Top Players',
   description: 'Marathon global leaderboard tracks the top ranked players from Bronze to Master. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie\'s extraction shooter.',
   keywords: 'Marathon leaderboard, Marathon ranked leaderboard, Marathon top players, Marathon rankings, Marathon ranked mode, Marathon best players, Marathon global leaderboard, Marathon Bronze, Marathon Silver, Marathon Gold, Marathon Platinum, Marathon Diamond, Marathon Master, Marathon ranked stats, how to reach Master Marathon, Marathon Holotag score, Marathon ranked tiers explained, Marathon competitive rankings, Marathon player stats',
   openGraph: {
-    title: 'Marathon Leaderboard — Global Rankings | CyberneticPunks',
+    title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',
     description: 'Track the top Marathon players worldwide. Ranked leaderboards from Bronze to Master.',
     url: 'https://cyberneticpunks.com/leaderboard',
     siteName: 'CyberneticPunks',
@@ -35,7 +35,7 @@ export var metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Leaderboard | CyberneticPunks',
+    title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',
     description: 'Global Marathon rankings. Track top players from Bronze to Master.',
     images: ['/og-image.png'],
   },

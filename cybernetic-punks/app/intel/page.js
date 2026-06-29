@@ -49,11 +49,11 @@ export async function generateMetadata({ searchParams }) {
     ? 'https://cyberneticpunks.com/intel?page=' + page
     : 'https://cyberneticpunks.com/intel';
   return {
-    title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel' + suffix,
+    title: 'Marathon News & Updates — Builds, Meta & Patches' + suffix,
     description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction — refreshed throughout the day.',
     keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates, Marathon Season 2, Marathon S2 news',
     openGraph: {
-      title: 'Marathon News & Latest Updates — Builds, Meta, Patches & Ranked Intel' + suffix + ' | CyberneticPunks',
+      title: 'Marathon News & Updates — Builds, Meta & Patches' + suffix + ' | CyberneticPunks',
       description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction.',
       url: canonical,
       siteName: 'CyberneticPunks',
@@ -63,7 +63,7 @@ export async function generateMetadata({ searchParams }) {
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
-      title: 'Marathon News & Latest Updates — CyberneticPunks' + suffix,
+      title: 'Marathon News & Updates — Builds, Meta & Patches' + suffix + ' | CyberneticPunks',
       description: 'Latest Marathon news, builds, meta shifts, and ranked intel. Refreshed throughout the day.',
       images: ['https://cyberneticpunks.com/og-image.png'],
     },

@@ -23,11 +23,11 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Server Status — Is Marathon Down? Live Status, Reset & Error Codes',
+  title: 'Marathon Server Status — Is Marathon Down? Live Uptime',
   description: 'Is Marathon down? Live Marathon server status for Steam, PlayStation 5, and Xbox Series X|S. Weekly reset schedule, ranked queue rotation, faction contracts, Armory stock, and complete Marathon error code reference.',
   keywords: 'Marathon server status, is Marathon down, Marathon servers down, Marathon maintenance, Marathon weekly reset, Marathon reset schedule, Marathon ranked rotation, Marathon error codes, Marathon WEASEL, Marathon BROCCOLI, Marathon BASIL, Marathon ANTEATER, Marathon CENTIPEDE, Marathon CURRANT, Marathon GINGER, Marathon server issues, Marathon outage, Marathon player count, Marathon steam reviews',
   openGraph: {
-    title: 'Marathon Server Status — Is Marathon Down? | CyberneticPunks',
+    title: 'Marathon Server Status — Is Marathon Down? Live Uptime | CyberneticPunks',
     description: 'Live Marathon server status across all platforms. Weekly reset tracker, ranked rotations, and error code fixes.',
     url: 'https://cyberneticpunks.com/status',
     siteName: 'CyberneticPunks',
@@ -37,7 +37,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Server Status — Is Marathon Down? | CyberneticPunks',
+    title: 'Marathon Server Status — Is Marathon Down? Live Uptime | CyberneticPunks',
     description: 'Live server status, weekly reset tracker, and error code reference.',
     images: ['https://cyberneticpunks.com/og-image.png'],
   },
