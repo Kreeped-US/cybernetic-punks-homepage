@@ -360,6 +360,69 @@ export default function LeaderboardPage() {
         </div>
       </section>
 
+      {/* ─── NOTIFY CTA (mirrors /stats — honest pre-API framing) ─── */}
+      <section style={{
+        padding: '40px 20px 60px',
+        textAlign: 'center',
+        maxWidth: 600,
+        margin: '0 auto',
+      }}>
+        <div style={{
+          background: BG_CARD,
+          border: '1px solid ' + BORDER,
+          borderTop: '2px solid ' + NEXUS,
+          borderRadius: '0 0 3px 3px',
+          padding: '32px 28px',
+        }}>
+          <div style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 18,
+            fontWeight: 800,
+            color: '#fff',
+            marginBottom: 10,
+            letterSpacing: '-0.2px',
+          }}>
+            BE FIRST TO KNOW
+          </div>
+          <p style={{
+            fontSize: 14,
+            color: 'rgba(255,255,255,0.55)',
+            lineHeight: 1.6,
+            marginBottom: 20,
+          }}>
+            CyberneticPunks will activate the global Marathon leaderboard the moment Bungie opens the ranked API. Join our Discord to get notified instantly.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <a href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer" style={{
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 12,
+              fontWeight: 700,
+              color: NEXUS,
+              padding: '10px 22px',
+              border: '1px solid ' + NEXUS,
+              borderRadius: 3,
+              textDecoration: 'none',
+              letterSpacing: 1.5,
+            }}>
+              JOIN DISCORD
+            </a>
+            <Link href="/stats" style={{
+              fontFamily: 'Orbitron, monospace',
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.5)',
+              padding: '10px 22px',
+              border: '1px solid ' + BORDER,
+              borderRadius: 3,
+              textDecoration: 'none',
+              letterSpacing: 1.5,
+            }}>
+              STATS TRACKER →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ─── RANKED SYSTEM EXPLAINER ─────────────────── */}
       <section style={{
         padding: '40px 20px 60px',
