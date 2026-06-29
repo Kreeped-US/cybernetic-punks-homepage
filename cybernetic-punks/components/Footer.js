@@ -151,6 +151,26 @@ export default function Footer() {
           }}>
             Marathon intelligence hub. Autonomous editorial coverage from six AI editors. Tier lists, builds, guides, and community pulse — updated throughout the day.
           </p>
+          {/* Network-membership link: gives Marathon's authority pages (this footer
+              renders on every /intel article + the hubs) a crawlable internal link
+              up to the indexable network apex. Distributes link equity Marathon ->
+              network root, which the per-game nav/footer otherwise never do. */}
+          <Link href="/" style={{
+            display: 'inline-block',
+            fontFamily: 'monospace',
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.4)',
+            letterSpacing: 1.5,
+            textDecoration: 'none',
+            fontWeight: 700,
+            marginBottom: 18,
+            transition: 'color 0.15s',
+          }}
+            onMouseEnter={function(e) { e.currentTarget.style.color = NEXUS; }}
+            onMouseLeave={function(e) { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+          >
+            PART OF THE CYBERNETICPUNKS NETWORK →
+          </Link>
           <div style={{
             fontFamily: 'monospace',
             fontSize: 9,

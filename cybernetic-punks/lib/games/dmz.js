@@ -15,6 +15,19 @@ export const dmz = {
   tagline: 'Extraction intelligence for the zone',
   basePath: '/dmz',
 
+  // SEO LAUNCH GATE (single source of truth for DMZ search visibility).
+  // While false, /dmz is PRE-LAUNCH thin content (coming-soon hub + empty/soon
+  // sections, no article detail route yet) -> it must be noindex and absent from
+  // the sitemap so it never enters the index as orphaned thin pages. Two consumers
+  // read this flag:
+  //   - app/dmz/layout.js  -> robots: noindex,follow while !launched (covers
+  //     /dmz and every /dmz/[section] via metadata inheritance).
+  //   - app/sitemap.js     -> emits the /dmz hub + section URLs only when launched.
+  // FLIP TO true at go-live (once real game_slug='dmz' content + the article
+  // detail route exist). That single change makes DMZ indexable AND adds it to the
+  // sitemap in one move -- no other SEO edits needed.
+  launched: false,
+
   // ROUGH theme tokens — approx the locked DMZ direction (GAME_TEMPLATE.md D3).
   // NOT final: the palette is tuned at the launch-polish pass. The actual
   // CSS-variable swap that drives rendering lives in `.dmz-theme` in

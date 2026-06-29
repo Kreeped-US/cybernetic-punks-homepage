@@ -27,6 +27,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { toISOWithPTOffset } from '@/lib/formatDate';
+import { dmz } from '@/lib/games/dmz';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -268,13 +269,33 @@ export default async function sitemap() {
 
   const shellPages = dbShellPages.length > 0 ? dbShellPages : fallbackShellPages;
 
+  // DMZ network section (the deferred "Step-4" emission, now wired but GATED).
+  // While dmz.launched is false the section is pre-launch thin content (noindex via
+  // app/dmz/layout.js) -> emit NOTHING, so the sitemap never advertises thin URLs.
+  // Flipping dmz.launched to true (at go-live) auto-adds the DMZ hub + section
+  // pages here, in lock-step with robots becoming indexable. Article URLs are NOT
+  // emitted yet: the /dmz/[section]/[slug] detail route does not exist, so listing
+  // them would advertise 404s -- add that emission when that route ships.
+  const dmzPages = dmz.launched
+    ? [
+        { url: baseUrl + '/dmz', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+        ...dmz.sections.map((sec) => ({
+          url: baseUrl + '/dmz/' + sec.slug,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        })),
+      ]
+    : [];
+
   console.log('[sitemap] final counts:',
     'static=' + staticPages.length,
     'guides=' + guideCategoryPages.length,
     'shells=' + shellPages.length,
     'weapons=' + weaponPages.length,
     'maps=' + mapPages.length,
+    'dmz=' + dmzPages.length,
     'dynamic=' + dynamicPages.length);
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...mapPages, ...dynamicPages];
+  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...mapPages, ...dmzPages, ...dynamicPages];
 }
