@@ -370,7 +370,7 @@ export default function LeaderboardPage() {
         <div style={{
           background: BG_CARD,
           border: '1px solid ' + BORDER,
-          borderTop: '2px solid ' + NEXUS,
+          borderTop: '2px solid #ffcc00',
           borderRadius: '0 0 3px 3px',
           padding: '32px 28px',
         }}>
@@ -397,9 +397,9 @@ export default function LeaderboardPage() {
               fontFamily: 'Orbitron, monospace',
               fontSize: 12,
               fontWeight: 700,
-              color: NEXUS,
+              color: '#ffcc00',
               padding: '10px 22px',
-              border: '1px solid ' + NEXUS,
+              border: '1px solid #ffcc00',
               borderRadius: 3,
               textDecoration: 'none',
               letterSpacing: 1.5,
