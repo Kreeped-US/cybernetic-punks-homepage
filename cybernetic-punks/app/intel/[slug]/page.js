@@ -860,7 +860,7 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
           );
         }
         return (
-          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.85, margin: '0 0 18px', letterSpacing: 0.1, maxWidth: 680 }}>
+          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, margin: '0 0 1.5em', letterSpacing: 0.1, maxWidth: '66ch' }}>
             <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
           </p>
         );
