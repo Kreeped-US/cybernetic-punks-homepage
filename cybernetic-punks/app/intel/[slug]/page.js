@@ -42,6 +42,7 @@ const ITEM_COLORS = {
   mod:     '#ff2222',
   implant: '#9b5de5',
   core:    '#ffd700',
+  faction: '#e8459b',
 };
 
 const ITEM_SYMBOLS = {
@@ -50,6 +51,7 @@ const ITEM_SYMBOLS = {
   mod:     '◈',
   implant: '◇',
   core:    '⬡',
+  faction: '◆',
 };
 
 const RARITY_COLORS = {
@@ -409,6 +411,7 @@ function InlineStatCard({ item, type, color }) {
   if (type === 'shell' && item.image_filename) imgSrc = '/images/shells/' + item.image_filename;
   else if (type === 'weapon' && item.image_filename) imgSrc = '/images/weapons/' + item.image_filename;
   else if (type === 'implant' && item.image_filename) imgSrc = '/images/implants/' + item.image_filename;
+  else if (type === 'faction' && item.image_filename) imgSrc = '/images/factions/' + item.image_filename;
 
   var typeColor = color || ITEM_COLORS[type];
   var symbol = ITEM_SYMBOLS[type] || '◈';
@@ -486,6 +489,7 @@ function InlineStatCard({ item, type, color }) {
           {type === 'shell' && item.role && <span>{item.role}</span>}
           {type === 'mod' && item.slot_type && <span>{item.slot_type} MOD</span>}
           {type === 'implant' && item.slot_type && <span>{item.slot_type}</span>}
+          {type === 'faction' && <span>{item.focus || 'Faction'}</span>}
           {item.rarity && rarityColor && (
             <>
               <Sep text=" - " />
@@ -863,7 +867,7 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
           );
         }
         return (
-          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, margin: '0 0 1.5em', letterSpacing: 0.1, maxWidth: '66ch' }}>
+          <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.84)', lineHeight: 1.6, margin: '0 0 1.5em', letterSpacing: 0.1, maxWidth: '66ch' }}>
             <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
           </p>
         );
@@ -989,7 +993,7 @@ function SidebarItemCard({ item, type, editorColor }) {
 // ARTICLE PAGE
 // ═══════════════════════════════════════════════════════════
 
-function ArticlePage({ item, shells, weapons, mods, implants, comments, related, creatorAvatar }) {
+function ArticlePage({ item, shells, weapons, mods, implants, factions, comments, related, creatorAvatar }) {
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
   var publishedAt = formatPublishDate(item.created_at);
   var videoId = extractYouTubeId(item.source_url);
@@ -1024,8 +1028,11 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
     .filter(function(imp) { return bodyHasWholeName(bodyLower, imp.name); })
     .slice(0, 8)
     .map(function(imp) { return Object.assign({}, imp, { _type: 'implant' }); });
+  var mentionedFactions = (factions || [])
+    .filter(function(f) { return bodyHasWholeName(bodyLower, f.name); })
+    .map(function(f) { return Object.assign({}, f, { _type: 'faction' }); });
 
-  var allMentionedItems = [].concat(mentionedShells, mentionedWeapons, mentionedMods, mentionedImplants);
+  var allMentionedItems = [].concat(mentionedShells, mentionedWeapons, mentionedMods, mentionedImplants, mentionedFactions);
 
   var hasDataRef = allMentionedItems.length > 0;
 
@@ -1188,7 +1195,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
                             {role && <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{role}</span>}
                             <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(comment.created_at)}</span>
                           </div>
-                          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6 }}>{comment.body}</div>
+                          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.84)', lineHeight: 1.6 }}>{comment.body}</div>
                         </div>
                       </li>
                     );
@@ -1303,12 +1310,13 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  var [itemResult, shellResult, weaponResult, modResult, implantResult] = await Promise.all([
+  var [itemResult, shellResult, weaponResult, modResult, implantResult, factionResult] = await Promise.all([
     supabase.from('feed_items').select('*').eq('slug', slug).eq('game_slug', 'marathon').maybeSingle(),
     supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name, image_filename').limit(20),
     supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type, image_filename').limit(40),
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(120),
     supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, image_filename').limit(100),
+    supabaseService.from('factions').select('name, leader, focus, image_filename').limit(20),
   ]);
 
   var comments = [];
@@ -1377,6 +1385,7 @@ export default async function IntelPage({ params }) {
       weapons={weaponResult.data || []}
       mods={modResult.data || []}
       implants={implantResult.data || []}
+      factions={factionResult.data || []}
       comments={comments}
       related={related}
       creatorAvatar={creatorAvatar}
