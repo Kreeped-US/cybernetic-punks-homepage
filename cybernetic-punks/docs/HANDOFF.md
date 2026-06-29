@@ -5,6 +5,22 @@ Newest entries on top.
 
 ---
 
+## 2026-06-29 — Account-merge EXECUTED (CLOSED — not an open thread)
+
+The two split network_accounts for the same person were merged into one. DONE,
+verified, and removed from open/parked work — do not resurface it.
+
+- **Was:** two network_account rows — Discord "kreeped" (da2cfedc, the richer data)
+  + Bungie "kreeped-2" (f93458a7, which held the player_profiles row). A Stage-0
+  read-only pass had planned the careful destructive SQL; this records it RAN.
+- **Done (step-by-step destructive SQL, order mattered due to FK/cascade):**
+  re-pointed linked_identity + player_profiles to the survivor da2cfedc, then
+  DELETED the orphan f93458a7.
+- **Verified live:** /u/kreeped shows Discord + Bungie + Plays-Marathon badges; /me
+  works. Survivor = the single "kreeped" account.
+
+---
+
 ## 2026-06-22 — Cron observability: a REAL silent failure found (Resend bumped to TOP)
 
 **What happened:** the Jun 22 12:01 UTC cron cycle published **0 feed_items**
