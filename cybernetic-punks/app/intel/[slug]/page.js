@@ -6,7 +6,7 @@ import CoachCTA from '@/components/CoachCTA';
 import { Sep } from '@/components/Sep';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEditorDisplay, editorByline } from '@/lib/editors/roster';
+import { getEditorDisplay, editorByline, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
@@ -15,6 +15,9 @@ import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 // key, never a silent Cipher. KEYS (item.editor, EDITORS/EDITOR_STYLES routing,
 // JSON-LD author) are untouched.
 function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
+function edRole(key) { var d = getEditorDisplay(key); return d ? d.role : ''; }
+function edSymbol(key) { var d = getEditorDisplay(key); return d ? d.symbol : ''; }
+function edColor(key) { var d = getEditorDisplay(key); return d ? d.color : '#888'; }
 
 const EDITORS = {
   cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'CIPHER — Marathon Play Analysis & Competitive Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
@@ -1161,6 +1164,39 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
               <BodyRenderer parsed={parsed} editorColor={editor.color} allItems={allMentionedItems} />
             </div>
 
+            {comments && comments.length > 0 && (
+              <section id="editor-reactions" aria-labelledby="editor-panel-heading" style={{ marginTop: 36 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+                  <h2 id="editor-panel-heading" style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.2px' }}>The panel weighs in</h2>
+                  <div style={{ flex: 1, height: 1, background: '#1e2028', minWidth: 20 }} />
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{comments.length} {comments.length === 1 ? 'TAKE' : 'TAKES'}</span>
+                </div>
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {comments.map(function(comment, i) {
+                    var color = edColor(comment.editor);
+                    var role = edRole(comment.editor);
+                    return (
+                      <li key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + color, borderRadius: '0 3px 3px 0' }}>
+                        {editorHasPortrait(comment.editor) ? (
+                          <img src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'} alt="" width={36} height={36} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', border: '1px solid ' + color + '55', background: '#0e1014', flexShrink: 0, display: 'block' }} />
+                        ) : (
+                          <div aria-hidden="true" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid ' + color + '55', background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'Orbitron, monospace', fontWeight: 800, fontSize: 14, color: color }}>{editorInitial(comment.editor)}</div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1.5 }}>{edSymbol(comment.editor)} {edTag(comment.editor)}</span>
+                            {role && <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{role}</span>}
+                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(comment.created_at)}</span>
+                          </div>
+                          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6 }}>{comment.body}</div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 24, marginTop: 32, borderTop: '1px solid #1e2028', flexWrap: 'wrap' }}>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginRight: 4, fontWeight: 700, fontFamily: 'monospace' }}>SHARE</div>
               <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '7px 13px', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>POST TO X</a>
@@ -1208,37 +1244,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, comments, related,
             </aside>
           )}
         </div>
-
-        {comments && comments.length > 0 && (
-          <div id="editor-reactions" style={{ marginTop: 14 }}>
-            <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 18px', borderBottom: '1px solid #22252e', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Editor Reactions</div>
-                <div style={{ flex: 1, height: 1, background: '#22252e' }} />
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: 'monospace' }}>{comments.length} {comments.length === 1 ? 'COMMENT' : 'COMMENTS'}</div>
-              </div>
-              {comments.map(function(comment, i) {
-                var commentEditor = EDITOR_STYLES[comment.editor] || EDITOR_STYLES.CIPHER;
-                var isLast = i === comments.length - 1;
-                return (
-                  <div key={i} style={{ padding: '14px 18px', borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 12, borderLeft: '3px solid ' + commentEditor.color + '66' }}>
-                    <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', border: '1px solid ' + commentEditor.color + '50', overflow: 'hidden', background: '#0e1014' }}>
-                      <img src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'} alt={edTag(comment.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: commentEditor.color, letterSpacing: 2 }}>{editorByline(comment.editor)}</span>
-                        <span style={{ fontSize: 7, color: commentEditor.color, background: commentEditor.color + '15', border: '1px solid ' + commentEditor.color + '30', borderRadius: 2, padding: '1px 6px', letterSpacing: 1, fontWeight: 700 }}>EDITOR</span>
-                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(comment.created_at)}</span>
-                      </div>
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>{comment.body}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {related && related.length > 0 && (
           <div style={{ marginTop: 40, paddingTop: 32, borderTop: '1px solid #1e2028' }}>

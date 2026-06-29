@@ -121,6 +121,15 @@ export function editorInitial(key) {
   return e ? e.fullName.charAt(0).toUpperCase() : '?';
 }
 
+// Whether an editor currently has a portrait image on disk. broker.jpg has not been
+// generated yet (status 'incoming'); the live editors have portraits. Server
+// components have no <img onError>, so consumers call this to fall back to an
+// editorInitial() badge instead of rendering a broken image.
+export function editorHasPortrait(key) {
+  var e = getEditorDisplay(key);
+  return !!(e && e.status === 'live');
+}
+
 // How to render the byline name from a display entry (helper, not yet wired):
 // Miranda -> "Miranda Malini"; everyone else -> "Marcus Vane / Cipher".
 export function editorByline(key) {
