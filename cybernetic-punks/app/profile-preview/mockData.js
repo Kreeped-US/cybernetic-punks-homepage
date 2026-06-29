@@ -28,7 +28,7 @@ export const mockProfile = {
     {
       game_slug: 'marathon',
       label: 'Marathon',
-      accent: '#2dd4bf',      // teal
+      accent: '#00ff41',      // green (matches the live Marathon --green)
       active: true,
       // progression (jsonb) — game-shaped
       progression: { rank: 'Diamond II', cradle: 'S-tier Cradle', hoursTracked: 142 },

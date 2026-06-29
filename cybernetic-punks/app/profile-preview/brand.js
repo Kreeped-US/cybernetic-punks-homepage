@@ -16,7 +16,7 @@ export const brand = {
   textDim:   'rgba(255,255,255,0.50)',
   textFaint: 'rgba(255,255,255,0.28)',
   ink:       '#e8eaed', // neutral network-brand ink (games carry the color)
-  marathon:  '#2dd4bf', // teal
+  marathon:  '#00ff41', // green (matches the live Marathon --green)
   dmz:       '#e89a2c', // amber
   premium:   '#d9a441', // gold-ish premium accent
 };
