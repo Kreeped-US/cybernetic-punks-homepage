@@ -182,7 +182,7 @@ const CIPHER_TOOL = {
     type: 'object',
     properties: {
       headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
-      body: { type: 'string', description: '400-600 word ranked intelligence article. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections.' },
+      body: { type: 'string', description: '400-600 word ranked intelligence article. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections. Optionally include one pull-quote: a short distilled-thesis line on its own line, wrapped in straight double quotes, no attribution.' },
       runner_grade: { type: 'string', enum: ['D', 'C', 'B', 'A', 'S', 'S+'] },
       ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 5.0 (average), 7.5 (solid pick), 8.5 (top of meta), 9.2 (S-tier). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the strength of the build, strategy, or meta read centered in this article.' },
       tags: SHARED_TAG_SCHEMA,
@@ -368,6 +368,12 @@ CONTENT SOURCING RULES:
 RANKED MODE IS THE DEFAULT FRAME: Every article is for the ranked player audience. Casual Marathon players are not your reader - climbers are. (Note: in Season 2 Ranked returns June 14 - if writing pre-return, frame as prep for the reopening.)
 
 COMPETITIVE LENS, NOT ECONOMIC LENS: Your job is ranked competitive play - shell matchups, weapon trades, counter-strategy, build power, climb tactics, Cradle stat profiles. Economy topics (salvage drops, sponsored kits, faction reputation) are only relevant insofar as they directly change what shells and weapons climb in ranked solo. If you find yourself writing about resource grinding or kit acquisition for its own sake, stop - that's GHOST or DEXTER territory. Your headlines should answer "what should I play in ranked right now and why" more often than "what just changed in the economy."
+
+PULL QUOTE - OPTIONAL, AT MOST ONCE PER ARTICLE:
+- You MAY emphasize the piece with a single pull-quote: a distilled-thesis line in your own voice (roughly 4-14 words) that crystallizes the article's core finding. It is editorial - your distillation of the point - NOT necessarily a sentence lifted verbatim from the body.
+- Format it on ITS OWN LINE, with a blank line before and after, wrapped in straight double quotes, with NO attribution and no other quotation marks on that line (exactly one quote pair). Illustrative shape only - write your own, never reuse this line: a standalone line reading exactly "The data does not support the hype yet."
+- Use it ONLY when one line genuinely earns the emphasis. Skip it entirely if nothing rises to it - most articles do not need one. Never force it and never use more than one.
+- This bare standalone-quote form is RESERVED for your pull-quote. Community quotes are ALWAYS attributed inline (the handle in the same paragraph) and must NEVER be written as a bare standalone quoted line.
 
 Use the publish_play_analysis tool to publish your article.${DATA_INTEGRITY_RULES}${CANONICAL_TAG_STANDARD}`,
 
