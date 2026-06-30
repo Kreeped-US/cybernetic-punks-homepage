@@ -102,7 +102,8 @@ const SYSTEM_PROMPT = [
   '- 350-550 words. Use **HEADER TEXT** section breaks; at least 2-3 sections.',
   '- Straight quotes only. No backticks, no curly quotes, no emoji.',
   '- Headline: lead with "DMZ" and the primary searchable term (FOB, crafting,',
-  '  map name) in the first few words. 70 characters maximum. Sentence or title',
+  '  map name) in the first few words. Keep it short -- 58 characters is the',
+  '  target, 65 the hard cap; count before you finalize. Sentence or title',
   '  case only -- never all-caps. Any persona hook goes AFTER a colon or dash. Do',
   '  not append the site name or any suffix.',
   '- Tags: 3-6 short lowercase search tags (e.g. "dmz", "modern warfare 4", "fob").',
@@ -119,7 +120,7 @@ const NEWS_TOOL = {
     properties: {
       headline: {
         type: 'string',
-        description: 'Leads with "DMZ" + the searchable term; 70 chars max; not all-caps; no site suffix.',
+        description: 'Leads with "DMZ" + the searchable term; 65 chars max (58 target); not all-caps; no site suffix.',
       },
       body: {
         type: 'string',
@@ -135,51 +136,125 @@ const NEWS_TOOL = {
   },
 };
 
-// --- hand-fed source excerpts (from the official MW4 DMZ Deep Dive) -----------
-// PROVENANCE NOTE: the official page (callofduty.com/blog/2026/06/...dmz-deep-dive)
-// would not fetch directly during authoring (connection reset); these excerpts were
-// reconstructed from a web search that surfaced the official blog's content. The
-// FOB and crafting wording reads as near-verbatim official copy; a few Hajin
-// specifics (size comparison, region list) may originate in secondary coverage.
-// Treat this as the dry-run basis ONLY -- verify against the verbatim Deep Dive
-// before any persistence (Part 2). Source is the ONLY factual basis the model gets.
+// --- hand-fed source excerpts (VERBATIM from the official MW4 DMZ Deep Dive) ---
+// These are the verbatim excerpts supplied from the official Call of Duty blog
+// "Modern Warfare 4 DMZ Deep Dive: Explore the Hajin Exclusion Zone" (callofduty.com,
+// June 6 2026, by Call of Duty Staff). This REPLACES the earlier web-search
+// reconstruction, which had uncertain provenance -- the "nine regions" count and the
+// Al Mazrah size comparison are NOT in this verbatim text and were dropped. This
+// excerpt is the ONLY factual basis the model gets; nothing beyond it may be stated.
 const SOURCE_URL = 'https://www.callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive';
-const SOURCE_LABEL = 'Call of Duty official MW4 DMZ Deep Dive (callofduty.com, June 6 2026)';
+const SOURCE_LABEL = 'the official Call of Duty MW4 DMZ Deep Dive (callofduty.com, June 6 2026)';
 
 const TOPICS = [
   {
     slug: 'fob',
     name: 'The Forward Operating Base (FOB): your between-deployments hub',
     source: [
-      'Between deployments into Hajin, players return to the Forward Operating Base,',
-      'or FOB. The FOB is where DMZ handles your stash, loadout, missions, crafting,',
-      'Operator progression, and longer-term upgrades. As you increase your DMZ rank,',
-      'you unlock new stations and new functionality, your FOB upgrades visually, and',
-      'you unlock the 3D Printer, the vendor, the gunsmith, and much more.',
+      'Before and after every extraction operation inside the DMZ, players return to',
+      'their Forward Operating Base (FOB), a central hub built around preparation,',
+      'progression, and long-term squad support. The FOB gives players access to key',
+      'operational services including the 3D Printer crafting station, The Stash where',
+      'inventory items can be stored deployment to deployment, weapon purchasing, a',
+      'firing range, bounty boards, and additional upgrade systems that unlock over',
+      'time. It also serves as a staging ground and social hub where squad members can',
+      'regroup, rearm, inspect their Operators, assist with onboarding newer players,',
+      'and prepare before deployment. As players earn XP, complete Missions, progress',
+      'through the Trait System, gaining the reputation and skillset of an elite Tier 1',
+      'operator over time, the Forward Operating Base evolves alongside you, unlocking',
+      'new functionality while visually transforming to better support your growing',
+      'capabilities.',
+      '',
+      'A Tour of Your Forward Operating Base: Orders and Objectives (track active',
+      'Missions, review completed objectives, check rewards, plan future operations).',
+      'Stash and Loadout (persistent inventory of weapons, equipment, consumables,',
+      'valuables; gear organized between Stash and your Active Duty Operator\'s',
+      'Backpack/Loadout; Stash size upgrades by ranking up; a Free Loadout option for',
+      'immediate infil). Wallet (in-game cash primarily for weapons and Gunsmithing',
+      'attachments, rescuing MIA operators, paying for Lieutenant Intel; completing',
+      'Missions and Ops is the primary source of cash, wired directly to the Wallet;',
+      'players may employ an Active Duty Operator as a cash mule with particular skills',
+      'when breaking into vaults, defeating HVTs, or completing Dynamic Ops). 3D Printer',
+      '(gather resources, return to the FOB\'s crafting station; manufactures functional',
+      'equipment and support gear excluding Primary/Secondary/Melee weapons; recipes',
+      'unlock crafting gear like NVGs, ballistic vests, backpacks, consumables,',
+      'Killstreaks). Gunsmith (purchase weapons and attachments with cash; more',
+      'effective gear costs more; up to five Attachments plus an Apex Attachment per',
+      'weapon, though eight-Attachment weapons have been confirmed within Hajin; weapon',
+      'progression tracks across Multiplayer and DMZ). Weapon Vendor (limited rotating',
+      'selection of specialized weaponry purchasable with cash, refreshing',
+      'periodically). Firing Range (first-person, test Primary/Secondary builds). Active',
+      'Duty/Operators (manage available Operators including those awaiting recovery after',
+      'failed exfils; each Operator has a persistent Backpack, Loadout, and Trait Tree).',
+      'Boss Board (intel on hostile Lieutenants; pay for intel to pinpoint locations, or',
+      'climb Hunt Towers for intel on the closest Lieutenant; slaying a Lieutenant drops',
+      'Dog Tags, which populate your Boss Board but are also trackable/valuable to enemy',
+      'squads). Bounty Leaderboard (monitor the most dangerous rival players currently in',
+      'the Exclusion Zone). Deploy (choose infil method via the Paid Infil System --',
+      'quiet on foot, or fast and loud via helicopter or plane, with optional vehicle',
+      'drop).',
     ].join('\n'),
   },
   {
     slug: 'crafting',
     name: 'The 3D Printer: DMZ\'s crafting system',
     source: [
-      'The 3D Printer is capable of manufacturing a vast array of functional equipment',
-      'and support gear, excluding Primary, Secondary, and Melee weaponry. The 3D',
-      'Printer lets you craft gear across 10 categories, including NVGs, backpacks,',
-      'plate carriers, consumables, Field Upgrades, and Killstreaks. You gather',
-      'resources and ingredients throughout Hajin during deployments, and materials',
-      'auto-disassemble so you stay focused on gameplay.',
+      'Crafting gives players greater control over how they prepare for future',
+      'operations by transforming recovered resources into valuable equipment and',
+      'combat-ready tools. Materials are disassembled automatically during a mission so',
+      'players can stay focused on the action, while inventory management is easy to',
+      'navigate. Extracted loot can be used back at your FOB within an intuitive',
+      'crafting system built around a powerful upgradable 3D Printer capable of',
+      'unlocking increasingly advanced crafting options, allowing players to manufacture',
+      'equipment and rare gear.',
+      '',
+      'The categories of Gear you can 3D print are as follows: Gear (tactical equipment',
+      'such as NVGs and Parachutes). Backpacks (packs of varying sizes and',
+      'specializations). Plate Carriers (different types of armor vests). Tacticals',
+      '(strategic, non-lethal equipment). Lethals (offensive equipment designed to',
+      'damage or eliminate threats). Consumables (beneficial items, from pain killers to',
+      'radiation blockers). Field Upgrades (abilities providing tactical support or',
+      'intelligence; unlike Multiplayer, Field Upgrades in DMZ do not recharge). Fire',
+      'Support Items (deployable offensive killstreak support). Tracked Recipes (a series',
+      'of tagged recipes you\'re on the hunt for). Special Items (a wide variety of items',
+      'for a wide variety of purposes). The deeper players push into the region, the more',
+      'opportunities they uncover to secure rarer resources needed to support stronger',
+      'loadouts and specialized playstyles.',
     ].join('\n'),
   },
   {
     slug: 'hajin',
     name: 'Hajin: the setting / the exclusion zone',
     source: [
-      'DMZ takes place in Hajin, a South Korean exclusion zone created after a nuclear',
-      'reactor meltdown during the events of the Modern Warfare 4 campaign. The Hajin',
-      'Exclusion Zone is larger than Al Mazrah from Warzone 2.0 and spans three',
-      'distinct landmasses across a tri-point region bordering Russia and the Korean',
-      'peninsula, with nine distinct regions including an irradiated reactor, a prison',
-      'complex, Hajin City, and a military base.',
+      'Following the events of the Modern Warfare 4 Campaign, an exclusion zone across',
+      'the Korean peninsula remains saturated with abandoned military technology,',
+      'weapons stockpiles, and destabilizing threats. Operating as a shadow CIA asset,',
+      'you are deployed behind enemy lines and tasked with securing the various weapons',
+      'and technology left behind before they fall into enemy hands. Both Rogue',
+      'Operators and enemy combatants are active throughout the zone, forcing every',
+      'squad to decide when to cooperate, when to engage, and when to disappear before',
+      'tensions escalate. Loot, fight, negotiate, betray, and extract whatever you can',
+      'carry.',
+      '',
+      'Nestled within a tri-point region bordering Russia and the Korean peninsula,',
+      'Hajin is a contested exclusion zone where rival forces battle for control of',
+      'abandoned military technology and strategic assets left behind after the events',
+      'of the Modern Warfare 4 Campaign. The atmosphere within the Hajin Exclusion Zone',
+      'shifts can change based environmental effects, creating new opportunities and',
+      'challenges on every run. Sudden downpours can reduce visibility and force',
+      'Operators to adapt how they explore, move and engage, while dense fog banks and',
+      'overcast skies transform familiar routes into tense navigational gambles. Scarred',
+      'by radiation, mass evacuation, and the collapse of civilian infrastructure, the',
+      'region is one of the largest and most ambitious Call of Duty environments ever',
+      'built, designed around exploration, environmental storytelling, and high-risk',
+      'operations. From the irradiated Fallout reactor and the highly secured Prison',
+      'complex to the remains of Hajin City and the heavily defended Military Base, every',
+      'region inside the border area and exclusion zone offers different combat',
+      'opportunities, sealed or secret areas waiting to be discovered, traversal',
+      'challenges and points of interest with unexpected entrances accessible only via',
+      'water, and other operational risks. Players willing to push deeper into the',
+      'unknown can uncover hidden mysteries, pursue high-value gear, and engage in',
+      'increasingly dangerous missions with greater risks and rewards.',
     ].join('\n'),
   },
 ];
