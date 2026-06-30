@@ -14,6 +14,7 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games/registry';
+import { dmzArticleSlugsForSection } from '@/lib/games/dmz';
 import DmzEmptyState from '../DmzEmptyState';
 import DmzComingSoon from '../DmzComingSoon';
 import Link from 'next/link';
@@ -46,19 +47,27 @@ export default async function DmzSectionPage({ params }) {
     return <DmzComingSoon section={section} />;
   }
 
-  // Editor-fed section: read DMZ articles (game-scoped). Empty pre-launch.
+  // Editor-fed section: read DMZ articles scoped to THIS section. Articles are
+  // assigned to a section via DMZ_ARTICLE_SECTION (lib/games/dmz.js) since
+  // feed_items has no section column yet -- so a section shows only its own
+  // pieces (not every game_slug='dmz' row). No assigned slugs -> empty state
+  // (no query). Empty pre-launch for any unassigned section.
+  var sectionSlugs = dmzArticleSlugsForSection(section.slug);
   var articles = [];
-  try {
-    var { data } = await supabase
-      .from('feed_items')
-      .select('id, headline, slug, editor, tags, created_at')
-      .eq('is_published', true)
-      .eq('game_slug', DMZ_GAME_SLUG)
-      .order('created_at', { ascending: false })
-      .limit(30);
-    if (data) articles = data;
-  } catch (err) {
-    // non-fatal: fall through to empty-state
+  if (sectionSlugs.length > 0) {
+    try {
+      var { data } = await supabase
+        .from('feed_items')
+        .select('id, headline, slug, editor, tags, created_at')
+        .eq('is_published', true)
+        .eq('game_slug', DMZ_GAME_SLUG)
+        .in('slug', sectionSlugs)
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (data) articles = data;
+    } catch (err) {
+      // non-fatal: fall through to empty-state
+    }
   }
 
   if (articles.length === 0) {

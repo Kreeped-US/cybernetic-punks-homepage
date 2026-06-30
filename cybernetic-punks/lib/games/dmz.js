@@ -59,3 +59,36 @@ export const dmz = {
     { slug: 'regions',     label: 'Hajin Regions', source: 'data',   contentFilter: null },
   ],
 };
+
+// DMZ ARTICLE -> SECTION ASSIGNMENT (config-driven section scoping).
+// feed_items has NO section column yet, and DDL is not runnable from the app
+// (the service key drives PostgREST row ops, not ALTER TABLE). The DMZ pieces are
+// hand-curated and pre-launch, so their section assignment lives here -- ONE slug
+// maps to exactly ONE editor section, so a piece can't leak across sections (the
+// bug this fixes: the section page filtered only by game_slug, so all 3 showed
+// under every section). The DMZ section page filters its query to these slugs;
+// the detail route checks the URL's [section] against this map (so [section] is
+// genuine, not cosmetic). Marathon is untouched -- it lanes /intel by editor and
+// never reads this map.
+//
+// UPGRADE PATH (when DMZ editorial scales past hand-curation): add a nullable
+// `section` text column to feed_items (Marathon rows stay NULL), backfill these
+// three, and replace this map with a `.eq('section', ...)` filter. Until then a
+// NEW DMZ article must get an entry here or it renders in no section (intentional
+// fail-safe: unassigned = hidden, never mis-placed).
+export const DMZ_ARTICLE_SECTION = {
+  // Setting / map / regions -> Field Intel (general zone intel).
+  'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals': 'field-intel',
+  // Whole-base overview (Stash, Wallet, Gunsmith, Boss Board, ...) -> Field Intel,
+  // not Loadouts: it is a hub orientation, not a build/loadout guide.
+  'dmz-forward-operating-base-every-hub-system-detailed': 'field-intel',
+  // Craftable gear/equipment (NVGs, vests, backpacks, killstreaks) -> Loadouts.
+  'dmz-3d-printer-crafting-system-every-category-detailed': 'loadouts',
+};
+
+// Slugs assigned to a given DMZ section (empty array if none -> empty state).
+export function dmzArticleSlugsForSection(sectionSlug) {
+  return Object.keys(DMZ_ARTICLE_SECTION).filter(function (s) {
+    return DMZ_ARTICLE_SECTION[s] === sectionSlug;
+  });
+}

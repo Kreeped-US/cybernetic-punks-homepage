@@ -12,10 +12,12 @@
 // comments, related-article rails) can come later, once DMZ has its own
 // editorial infrastructure -- keep this lean for now.
 //
-// SECTION param is cosmetic: DMZ articles are not section-scoped in the DB (the
-// section page reads all game_slug='dmz' rows), so [section] only drives the
-// breadcrumb/back-link. An unknown section slug 404s; a missing/unpublished
-// article 404s. Neither crashes.
+// SECTION param is GENUINE: each DMZ article is assigned to exactly one section
+// via DMZ_ARTICLE_SECTION (lib/games/dmz.js). This route 404s unless the URL's
+// [section] matches the article's assigned section -- so a piece is reachable
+// only under its own section, never any DMZ section. An unknown section slug
+// 404s; a missing/unpublished article 404s; a section/article mismatch 404s.
+// Nothing crashes.
 //
 // NOINDEX: this route lives under app/dmz/layout.js, which sets
 // robots: { index:false, follow:true } while !dmz.launched. This page sets NO
@@ -29,6 +31,7 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games/registry';
+import { DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
 import { getEditorDisplay, editorByline } from '@/lib/editors/roster';
 import { formatPublishDate } from '@/lib/formatDate';
 import Link from 'next/link';
@@ -69,7 +72,9 @@ export async function generateMetadata({ params }) {
   var p = await params;
   var section = getGameSection('dmz', p.section);
   var article = await fetchArticle(p.slug);
-  if (!section || !article) return { title: 'DMZ — Not Found' };
+  if (!section || !article || DMZ_ARTICLE_SECTION[article.slug] !== section.slug) {
+    return { title: 'DMZ — Not Found' };
+  }
   // NO robots key here on purpose -> inherits app/dmz/layout.js noindex,follow
   // while !dmz.launched.
   return {
@@ -160,6 +165,10 @@ export default async function DmzArticlePage({ params }) {
 
   var article = await fetchArticle(p.slug);
   if (!article) notFound();
+
+  // [section] must be the article's assigned section -> reachable only under its
+  // own section, not any DMZ section (DMZ_ARTICLE_SECTION, lib/games/dmz.js).
+  if (DMZ_ARTICLE_SECTION[article.slug] !== section.slug) notFound();
 
   var display = getEditorDisplay(article.editor);
   var editorColor = display ? display.color : '#888';
