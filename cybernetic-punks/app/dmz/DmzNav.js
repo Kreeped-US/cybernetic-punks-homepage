@@ -36,7 +36,7 @@ export default function DmzNav() {
           <span style={{
             width: 8, height: 8, borderRadius: '50%',
             background: 'var(--green)',
-            boxShadow: '0 0 8px rgba(232,154,44,0.55)',
+            boxShadow: '0 0 8px rgba(63,125,68,0.55)',
             flexShrink: 0,
           }} />
           <span style={{

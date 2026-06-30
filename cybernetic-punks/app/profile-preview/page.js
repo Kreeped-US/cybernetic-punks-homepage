@@ -159,7 +159,7 @@ export default function ProfilePreviewPage() {
     <main style={{ minHeight: '100vh', background: brand.bg, color: brand.text, paddingTop: 64, paddingBottom: 96 }}>
       <div style={{ maxWidth: 880, margin: '0 auto', padding: '0 16px' }}>
         {/* Mock banner */}
-        <div style={{ background: 'rgba(232,154,44,0.08)', border: '1px solid ' + brand.border, borderRadius: 4, padding: '8px 14px', marginBottom: 28, fontSize: 11, color: brand.textDim, letterSpacing: 0.5 }}>
+        <div style={{ background: 'rgba(63,125,68,0.08)', border: '1px solid ' + brand.border, borderRadius: 4, padding: '8px 14px', marginBottom: 28, fontSize: 11, color: brand.textDim, letterSpacing: 0.5 }}>
           <strong style={{ color: brand.dmz }}>MOCK PREVIEW</strong> — sample data, not a live feature. Design artifact for the profile/premium vision.
         </div>
 

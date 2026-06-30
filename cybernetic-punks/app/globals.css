@@ -36,7 +36,7 @@
    The /dmz route group wraps its subtree in .dmz-theme, which REDEFINES the
    same design tokens with DMZ values — so any token-driven component renders
    in DMZ colors under /dmz while Marathon (:root) is untouched.
-   ROUGH tokens, approximating the locked DMZ direction (amber / cold grey-blue
+   ROUGH tokens, approximating the locked DMZ direction (forest green / cold grey-blue
    / irradiated red-orange). NOT final — tuned at the launch-polish pass.
    Keep in sync with the `theme` block in lib/games/dmz.js. */
 .dmz-theme {
@@ -49,7 +49,7 @@
   --border:        #2b3640;
   --border-subtle: #1c242b;
 
-  --green:         #e89a2c; /* amber primary (rough) */
+  --green:         #3f7d44; /* forest green primary (rough) */
   --red:           #e0563a; /* irradiated red-orange hazard (rough) */
 
   --text-primary:   rgba(255,255,255,0.88);

@@ -12,6 +12,8 @@
 //
 // Flip `subscription.tier` 'free' <-> 'premium' to preview both states.
 
+import { DMZ_FOREST } from '@/lib/brandColors';
+
 export const mockProfile = {
   // network_account
   account: {
@@ -42,7 +44,7 @@ export const mockProfile = {
     {
       game_slug: 'dmz',
       label: 'DMZ',
-      accent: '#e89a2c',      // amber
+      accent: DMZ_FOREST,      // forest green
       comingSoon: true,       // tracking at launch (Oct 23) — the empty-but-present tile sells the network
       builds: [],
     },

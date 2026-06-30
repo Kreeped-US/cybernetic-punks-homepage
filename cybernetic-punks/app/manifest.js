@@ -4,6 +4,8 @@
 // scripts/gen-icons.mjs -- the same 'CNP' burgundy mark. theme_color = network burgundy,
 // background_color = the dark site bg (globals.css --bg-page).
 
+import { NETWORK_BURGUNDY, BG_PAGE } from '@/lib/brandColors';
+
 export default function manifest() {
   return {
     name: 'Cybernetic Punks',
@@ -11,8 +13,8 @@ export default function manifest() {
     description: 'The competitive-shooter intelligence network.',
     start_url: '/',
     display: 'standalone',
-    theme_color: '#b32d40',
-    background_color: '#121418',
+    theme_color: NETWORK_BURGUNDY,
+    background_color: BG_PAGE,
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

@@ -8,6 +8,8 @@
 // per-game data, declared here. Nothing about DMZ's specific sections is
 // baked into the renderer.
 
+import { DMZ_FOREST } from '../brandColors.js';
+
 export const dmz = {
   slug: 'dmz',
   label: 'DMZ',
@@ -34,7 +36,7 @@ export const dmz = {
   // globals.css; these values are recorded here for reference / future
   // programmatic theming and MUST be kept in sync with that block.
   theme: {
-    primary: '#e89a2c', // amber
+    primary: DMZ_FOREST, // forest green
     bgPage:  '#0b0e11', // cold grey-blue base
     bgCard:  '#11151a',
     border:  '#2b3640',

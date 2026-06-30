@@ -115,7 +115,7 @@ export default function ShareableCard({ account, hero = 'career', data }) {
         borderBottom: '1px solid ' + brand.border,
         background: brand.bg,
       }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: brand.dmz, boxShadow: '0 0 8px rgba(232,154,44,0.5)' }} />
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: brand.dmz, boxShadow: '0 0 8px rgba(63,125,68,0.5)' }} />
         <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, letterSpacing: 2.5, color: '#fff' }}>
           CYBERNETIC<span style={{ color: brand.textDim }}>PUNKS</span>
         </span>

@@ -20,7 +20,7 @@
 //     site identity (Nav / homepage / meta). The positioning doc says "teal" but
 //     that predates the green identity; green keeps the root consistent with the
 //     hub it routes to.
-//   - DMZ      -> amber, sourced from the canonical lib/games/dmz.js theme.primary
+//   - DMZ      -> forest, sourced from the canonical lib/games/dmz.js theme.primary
 //     (kept in sync with the .dmz-theme --green swap) so it is not re-hardcoded.
 // Accents are v1 STARTING VALUES, deliberately single-source here (one value per
 // game) so they are trivially swappable when the exact palette is iterated. The
@@ -33,6 +33,7 @@
 // the live numbers/items and passes them in; the config only declares intent.
 
 import { dmz as dmzGame } from '@/lib/games/dmz';
+import { MARATHON_GREEN } from '../brandColors.js';
 
 export const ROOT_GAMES = [
   {
@@ -52,7 +53,7 @@ export const ROOT_GAMES = [
     // alone cannot fully evict a full-height right-edge wordmark; a re-cropped
     // (wordmark-free) source is the clean fix. See report.
     imagePosition: 'left center',
-    theme: { primary: '#00ff41', tint: 'rgba(0,255,65,0.08)' }, // green (= --green; Marathon site identity)
+    theme: { primary: MARATHON_GREEN, tint: 'rgba(0,255,65,0.08)' }, // green (= --green; Marathon site identity)
     pulse: {
       mode: 'live',
       onlineSource: 'steam',         // which live_stats source counts as "online"
@@ -74,7 +75,7 @@ export const ROOT_GAMES = [
     // source carries its OWN "DMZ" wordmark at bottom-center -> anchor to the top
     // so the bottom band (with that lettering) is cropped out of the visible frame.
     imagePosition: 'center top',
-    theme: { primary: dmzGame.theme.primary, tint: 'rgba(232,154,44,0.08)' }, // amber
+    theme: { primary: dmzGame.theme.primary, tint: 'rgba(63,125,68,0.08)' }, // forest (= --green under .dmz-theme)
     pulse: {
       mode: 'pre-launch',
       note: 'Oct 23 / field intel incoming',
