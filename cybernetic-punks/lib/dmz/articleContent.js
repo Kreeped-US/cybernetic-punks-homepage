@@ -89,28 +89,68 @@ export function parseBody(body) {
   return out;
 }
 
+// Lead TERM of a bullet item, for long lists where the useful signal is the term
+// (the system / category name), not the whole sentence: the **bold** lead if
+// present (FOB's "**Wallet** -- ..."), else the text before the first
+// " -- "/dash/":" separator (crafting's "Gear -- ..."). No separator -> whole item.
+function leadTerm(item) {
+  var bold = item.match(/^\*\*\s*([^*]+?)\s*\*\*/);
+  if (bold) return bold[1].trim();
+  var plain = stripMarkers(item).trim();
+  var m = plain.match(/^(.+?)(?:\s+(?:--|—|–)\s+|:\s+)/);
+  return (m ? m[1] : plain).trim();
+}
+
+// True for a sentence that is meta-commentary, not a fact about the game: the
+// article's own sourcing/dateline, or a purely negative/absence statement. Used to
+// keep the last-resort fallback from surfacing "Call of Duty's official blog..." or
+// "the excerpt does not detail..." as a "key fact".
+function isMetaSentence(s) {
+  var t = s.toLowerCase();
+  if (/^(call of duty'?s official blog|the blog\b|according to|the dmz deep dive|the deep dive)/.test(t)) return true;
+  if (/(does not detail|does not specify|not detailed|not specified|has not been|have not been|no further detail|not yet (been )?(specified|detailed|published|announced|shared|revealed))/.test(t)) return true;
+  return false;
+}
+
 // KEY-FACTS extraction (deterministic, no AI):
-//   1) If the FIRST bullet block in the body has 2-5 SHORT items (<= 90 chars
-//      each), use those items verbatim.
-//   2) Otherwise fall back to the first sentence of each of the first 3 paragraph
-//      blocks (skipping headers, bullets, list lead-ins ending in ":", and
-//      standalone quotes), each truncated to ~100 chars at a word boundary.
-//   3) If fewer than 2 usable facts result, return null (caller HIDES the box).
+//   P1) FIRST bullet block has 2-5 SHORT items (<= 90 chars each) -> use verbatim
+//       (e.g. Hajin's 4 named locations).
+//   P2) FIRST bullet block is LONGER (6+ items) -> use the lead TERM of the first
+//       4 items (bold lead, or text before the separator) -- e.g. FOB's stations
+//       ("Orders and Objectives", "Wallet", ...) or crafting's categories
+//       ("Gear", "Plate Carriers", ...). Only when the terms come out short
+//       (<= 60 chars); otherwise fall through.
+//   P3) Last resort: first sentence of the first 3 paragraph blocks, SKIPPING
+//       headers, bullets, list lead-ins (":"), quotes, AND sourcing/dateline +
+//       negative/absence sentences (meta-commentary, not facts). Each truncated
+//       to ~100 chars at a word boundary.
+//   If fewer than 2 usable facts result, return null (caller HIDES the box).
 export function extractKeyFacts(body) {
   var blocks = splitBlocks(body);
 
-  // 1) first bullet block, if it qualifies (plain text -- markers stripped)
+  // Locate the FIRST bullet block (items keep their ** markers).
+  var firstBullet = null;
   for (var i = 0; i < blocks.length; i++) {
-    var items = bulletItems(blocks[i]);
-    if (items) {
-      var clean = items.map(function (t) { return stripMarkers(t).trim(); });
-      var shortEnough = clean.every(function (t) { return t.length <= 90; });
-      if (clean.length >= 2 && clean.length <= 5 && shortEnough) return clean;
-      break; // only the FIRST bullet block is considered
+    var it = bulletItems(blocks[i]);
+    if (it) { firstBullet = it; break; }
+  }
+
+  if (firstBullet) {
+    // P1: short list -> items verbatim (markers stripped).
+    var clean = firstBullet.map(function (t) { return stripMarkers(t).trim(); });
+    if (clean.length >= 2 && clean.length <= 5 && clean.every(function (t) { return t.length <= 90; })) {
+      return clean;
+    }
+    // P2: long list -> lead term of the first 4 items.
+    if (firstBullet.length >= 6) {
+      var terms = firstBullet.slice(0, 4)
+        .map(leadTerm)
+        .filter(function (t) { return t && t.length <= 60; });
+      if (terms.length >= 2) return terms;
     }
   }
 
-  // 2) fallback: first sentence of the first 3 paragraph blocks
+  // P3: last-resort first-sentence fallback (skips meta/sourcing/negatives).
   var facts = [];
   for (var j = 0; j < blocks.length && facts.length < 3; j++) {
     var block = blocks[j];
@@ -120,7 +160,9 @@ export function extractKeyFacts(body) {
     if (!para) continue;
     if (para.charAt(para.length - 1) === ':') continue; // list lead-in, not a fact
     if (wholeQuote(para)) continue;
-    var sentence = truncateAtWord(firstSentence(para), 100);
+    var sentence = firstSentence(para);
+    if (isMetaSentence(sentence)) continue; // article's own sourcing or a negative
+    sentence = truncateAtWord(sentence, 100);
     if (sentence) facts.push(sentence);
   }
 
