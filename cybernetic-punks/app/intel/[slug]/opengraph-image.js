@@ -43,18 +43,17 @@ export default async function Image({ params }) {
     item = null;
   }
 
-  // Accent + game tag from game_slug; network burgundy is the fallback.
-  let accent = OG_COLORS.network;
-  let gameTag = null;
-  if (item && item.game_slug === 'marathon') {
-    accent = OG_COLORS.marathon;
-    gameTag = 'MARATHON';
-  } else if (item && item.game_slug === 'dmz') {
+  // /intel is Marathon, so default to the Marathon-green card -- this covers null/unknown
+  // slugs (e.g. editor lanes like /intel/cipher) instead of the burgundy network
+  // fallback. A real article keeps green for marathon and switches to forest for dmz.
+  let accent = OG_COLORS.marathon;
+  let gameTag = 'MARATHON';
+  if (item && item.game_slug === 'dmz') {
     accent = OG_COLORS.dmz;
     gameTag = 'DMZ';
   }
 
-  const headline = (item && item.headline) || 'Competitive-shooter intelligence network';
+  const headline = (item && item.headline) || 'Marathon News & Intel';
 
   return new ImageResponse(
     (
