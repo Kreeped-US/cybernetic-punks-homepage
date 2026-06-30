@@ -168,3 +168,50 @@ export function extractKeyFacts(body) {
 
   return facts.length >= 2 ? facts : null;
 }
+
+// Snippet-skip filter (for list-card snippets). Like the key-facts meta filter but
+// DELIBERATELY one clause looser: it skips the DATELINE / pure sourcing intro
+// ("Call of Duty's official blog published...", "According to..."), the launch-date
+// boilerplate (the same closing line on every article), and negative/absence
+// sentences -- but ALLOWS an attributed CONTENT sentence like "The blog is explicit
+// that the FOB is not static." For a bare KEY FACT that attribution is unwanted (so
+// extractKeyFacts skips it); for a prose SNIPPET it reads fine and, without this
+// relaxation, FOB's first two paragraphs are both sourcing-framed and it would have
+// no usable snippet at all.
+function isSnippetSkip(s) {
+  var t = s.toLowerCase();
+  if (/^according to/.test(t)) return true;
+  if (/call of duty'?s official blog/.test(t)) return true;
+  if (/(deep dive|blog) (published|posted|detailed)/.test(t)) return true;
+  if (/\bdmz launches\b/.test(t) || /launches october 23/.test(t)) return true;
+  if (/(does not detail|does not specify|not detailed|not specified|has not been|have not been|no further detail|not yet (been )?(specified|detailed|published|announced|shared|revealed))/.test(t)) return true;
+  return false;
+}
+
+// Snippet for a list card: the first real prose sentence (skipping headers, bullets,
+// list lead-ins, quotes, and dateline/sourcing/launch/negative sentences per
+// isSnippetSkip), truncated to ~maxLen at a word boundary. Null if none usable.
+export function extractSnippet(body, maxLen) {
+  maxLen = maxLen || 170;
+  var blocks = splitBlocks(body);
+  for (var i = 0; i < blocks.length; i++) {
+    var block = blocks[i];
+    if (headerText(block)) continue;
+    if (bulletItems(block)) continue;
+    var para = stripMarkers(block.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim());
+    if (!para) continue;
+    if (para.charAt(para.length - 1) === ':') continue;
+    if (wholeQuote(para)) continue;
+    var sentence = firstSentence(para);
+    if (isSnippetSkip(sentence)) continue;
+    return truncateAtWord(sentence, maxLen);
+  }
+  return null;
+}
+
+// Rough read-time label from a body (words / 200 wpm, min 1).
+export function readTime(body) {
+  if (!body) return '1 min read';
+  var words = body.split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200)) + ' min read';
+}

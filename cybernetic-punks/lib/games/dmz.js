@@ -50,13 +50,15 @@ export const dmz = {
   //          renders a "coming soon" shell now, contentFilter is null (no query).
   // The source flag is the one justified extra field (D2): it tells the renderer
   // where each section's content comes from. No other speculative fields.
+  // description: one-line section summary (used in the section-list header and the
+  // landing coverage cards). Display copy only; not used by gather/editorial.
   sections: [
-    { slug: 'field-intel', label: 'Field Intel',   source: 'editor', contentFilter: { table: 'feed_items' } },
-    { slug: 'meta',        label: 'Meta',          source: 'editor', contentFilter: { table: 'feed_items' } },
-    { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' } },
-    { slug: 'printer',     label: '3D Printer',    source: 'data',   contentFilter: null },
-    { slug: 'fob',         label: 'FOB',           source: 'data',   contentFilter: null },
-    { slug: 'regions',     label: 'Hajin Regions', source: 'data',   contentFilter: null },
+    { slug: 'field-intel', label: 'Field Intel',   source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
+    { slug: 'meta',        label: 'Meta',          source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates at launch, once real match data exists.' },
+    { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
+    { slug: 'printer',     label: '3D Printer',    source: 'data',   contentFilter: null, description: 'The 3D Printer crafting tool. Structured data launches with the zone.' },
+    { slug: 'fob',         label: 'FOB',           source: 'data',   contentFilter: null, description: 'Forward Operating Base progression reference. Launches with the zone.' },
+    { slug: 'regions',     label: 'Hajin Regions', source: 'data',   contentFilter: null, description: 'Region-by-region guides for the Hajin Exclusion Zone. Launch with the zone.' },
   ],
 };
 
