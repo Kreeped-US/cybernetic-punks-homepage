@@ -23,7 +23,6 @@ export const metadata = {
     description: 'Marathon meta tier lists, build guides, weapon stats, and ranked intel for Bungie\'s extraction shooter. Refreshed throughout the day.',
     url: 'https://cyberneticpunks.com',
     siteName: 'CyberneticPunks',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'CyberneticPunks — Marathon Intelligence Hub' }],
     locale: 'en_US',
     type: 'website',
   },
@@ -32,7 +31,6 @@ export const metadata = {
     site: '@Cybernetic87250',
     title: 'CyberneticPunks — Marathon Intelligence Hub',
     description: 'Marathon tier lists, builds, weapon stats, and ranked intel — refreshed throughout the day.',
-    images: ['/og-image.png'],
   },
   robots: {
     index: true,

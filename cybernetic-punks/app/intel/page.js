@@ -58,14 +58,12 @@ export async function generateMetadata({ searchParams }) {
       url: canonical,
       siteName: 'CyberneticPunks',
       type: 'website',
-      images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
       title: 'Marathon News & Updates — Builds, Meta & Patches' + suffix + ' | CyberneticPunks',
       description: 'Latest Marathon news, builds, meta shifts, and ranked intel. Refreshed throughout the day.',
-      images: ['https://cyberneticpunks.com/og-image.png'],
     },
     alternates: { canonical: canonical },
   };

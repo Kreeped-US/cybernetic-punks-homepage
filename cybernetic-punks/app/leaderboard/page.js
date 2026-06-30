@@ -30,14 +30,12 @@ export var metadata = {
     url: 'https://cyberneticpunks.com/leaderboard',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',
     description: 'Global Marathon rankings. Track top players from Bronze to Master.',
-    images: ['/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/leaderboard' },
 };

@@ -6,9 +6,11 @@
 // margins). The `accent` drives the top rule, the CNP block background, and the
 // game-tag pill; `blockTextColor` is the contrast color for the CNP block text.
 //
-// Props: { accent, blockTextColor, gameTag (string|null), headline, tagline }.
+// Props: { accent, blockTextColor, gameTag (string|null), headline, tagline,
+//          headlineFontSize (px number, default 50) }. The per-article card passes a
+// length-derived headlineFontSize; the headline clamps to 3 lines either way.
 
-export function Card({ accent, blockTextColor, gameTag, headline, tagline }) {
+export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50 }) {
   return (
     <div
       style={{
@@ -84,13 +86,16 @@ export function Card({ accent, blockTextColor, gameTag, headline, tagline }) {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div
           style={{
-            display: 'flex',
-            fontSize: '50px',
+            display: '-webkit-box',
+            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: 3,
+            overflow: 'hidden',
+            fontSize: headlineFontSize + 'px',
             fontWeight: 800,
             color: '#ffffff',
             lineHeight: 1.12,
             letterSpacing: '-0.01em',
-            maxWidth: '1000px',
+            maxWidth: '1072px',
           }}
         >
           {headline}

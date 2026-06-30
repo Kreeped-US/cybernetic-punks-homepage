@@ -28,14 +28,12 @@ export const metadata = {
     url: 'https://cyberneticpunks.com/factions',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Factions — Roles, Reputation & Cryo Archive Access | CyberneticPunks',
     description: 'What each faction offers in Season 2: contracts, reputation, unique gear, Cryo Archive access.',
-    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/factions' },
 };

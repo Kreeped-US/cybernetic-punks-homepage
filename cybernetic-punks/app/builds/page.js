@@ -34,14 +34,12 @@ export const metadata = {
     url: 'https://cyberneticpunks.com/builds',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Builds & Loadouts — Best Shells & Weapons | CyberneticPunks',
     description: 'Best Marathon builds, weapon stats, shell rankings, and loadout guides. Refreshed throughout the day.',
-    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: {
     canonical: 'https://cyberneticpunks.com/builds',

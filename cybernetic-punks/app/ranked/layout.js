@@ -7,14 +7,12 @@ export const metadata = {
     url: 'https://cyberneticpunks.com/ranked',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630, alt: 'Marathon Ranked Mode Guide — CyberneticPunks' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Ranked Mode Guide — CyberneticPunks',
     description: 'Complete Marathon ranked mode guide. All 6 tiers, Holotag mechanics, shell tier list, and season 1 rewards.',
-    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: {
     canonical: 'https://cyberneticpunks.com/ranked',
