@@ -36,14 +36,12 @@ export const metadata = {
     url: 'https://cyberneticpunks.com/sitrep',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Sitrep — Live Meta Snapshot',
     description: 'Everything you need to know before you drop in.',
-    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/sitrep' },
 };

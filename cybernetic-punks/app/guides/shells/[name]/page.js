@@ -148,7 +148,6 @@ export async function generateMetadata({ params }) {
       url: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
       siteName: 'CyberneticPunks',
       type: 'website',
-      images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',

@@ -21,14 +21,12 @@ export const metadata = {
     url: 'https://cyberneticpunks.com/cradle',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Cradle Build Planner',
     description: 'Plan and test your Season 2 Cradle build - allocate Energy, unlock perks, share it.',
-    images: ['https://cyberneticpunks.com/og-image.png'],
   },
   alternates: { canonical: 'https://cyberneticpunks.com/cradle' },
 };

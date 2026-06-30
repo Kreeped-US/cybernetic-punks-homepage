@@ -61,14 +61,12 @@ export const metadata = {
     url: 'https://cyberneticpunks.com/rising',
     siteName: 'CyberneticPunks',
     type: 'website',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Rising Marathon Game Streamers',
     description: 'Live small streamers playing Marathon right now. Discover the next wave.',
-    images: ['/og-image.png'],
   },
   alternates: {
     canonical: 'https://cyberneticpunks.com/rising',
