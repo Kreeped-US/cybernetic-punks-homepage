@@ -200,7 +200,6 @@ async function main() {
       source_url: SOURCE_URL,
       tags: a.tags,
       ce_score: 0,
-      viral_score: 0,
       is_published: true,
       thumbnail: null,
       slug: slugify(a.headline),

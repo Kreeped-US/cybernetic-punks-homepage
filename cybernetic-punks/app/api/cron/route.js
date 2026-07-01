@@ -285,7 +285,6 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       source: media.source,
       tags: result.tags || [],
       ce_score: 0,
-      viral_score: 0,
       is_published: true,
       slug: generateSlug(result.headline),
       thumbnail: media.thumbnail,

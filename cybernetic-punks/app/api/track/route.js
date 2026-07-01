@@ -26,6 +26,9 @@ const ALLOWED_EVENTS = [
   'signup_intent',
 ];
 
+// Known network games for the per-game analytics dimension. Anything else -> 'marathon'.
+const ALLOWED_GAMES = ['marathon', 'dmz', 'network'];
+
 // SECURITY (audit #7): /api/track stays UNAUTHENTICATED (anonymous analytics),
 // so the abuse controls are a per-IP rate limit + a payload size cap, not auth.
 // 60 events / 60s / IP is ~6x generous for an active user (legit is <10/min) and
@@ -62,6 +65,10 @@ export async function POST(req) {
       return Response.json({ ok: false, error: 'Unknown event' }, { status: 400 });
     }
 
+    // Per-game tagging. Sanitize to a known network game (junk -> 'marathon') so a
+    // spoofed/garbage value cannot pollute the analytics dimension.
+    var gameSlug = ALLOWED_GAMES.includes(body.game_slug) ? body.game_slug : 'marathon';
+
     // Size cap (audit #7): reject oversized event_data rather than truncate
     // (a truncated JSON blob would corrupt the column).
     if (data != null && JSON.stringify(data).length > EVENT_DATA_MAX_CHARS) {
@@ -73,10 +80,19 @@ export async function POST(req) {
       process.env.SUPABASE_SERVICE_KEY
     );
 
-    await supabase.from('site_events').insert({
+    // Insert WITH game_slug. If the column has not been added to site_events yet
+    // (the ALTER is a manual Supabase step -- no in-repo migrations), PostgREST
+    // rejects the unknown column; we then retry WITHOUT it so no event is ever
+    // lost. Once the column exists, the first insert succeeds and the fallback is
+    // never reached. Safe to deploy before OR after the ALTER runs.
+    var ins = await supabase.from('site_events').insert({
       event_name: event,
       event_data: data || null,
+      game_slug: gameSlug,
     });
+    if (ins.error && /game_slug|schema cache|PGRST204/i.test(ins.error.message || '')) {
+      await supabase.from('site_events').insert({ event_name: event, event_data: data || null });
+    }
 
     return Response.json({ ok: true });
   } catch (err) {
