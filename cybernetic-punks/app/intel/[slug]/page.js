@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorByline, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
+import ViewTracker from '@/components/ViewTracker';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -1082,6 +1083,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, comments
 
   return (
     <main style={{ backgroundColor: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
+      <ViewTracker slug={item.slug} type="article" headline={item.headline} gameSlug="marathon" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       {creatorPersonSchema && (

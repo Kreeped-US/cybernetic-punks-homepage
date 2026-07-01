@@ -19,6 +19,7 @@
 // - Cross-link label "BUILD LAB →" → "BUILDS & LOADOUTS →" (page renamed).
 
 import Link from 'next/link';
+import ViewTracker from '@/components/ViewTracker';
 
 export var metadata = {
   title: 'Marathon Ranked Leaderboard — Global Top Players',
@@ -147,6 +148,7 @@ var FAQS = [
 export default function LeaderboardPage() {
   return (
     <main style={{ background: BG_PAGE, minHeight: '100vh', color: '#ffffff', paddingTop: 48 }}>
+      <ViewTracker slug="leaderboard" type="tool" gameSlug="marathon" />
 
       {/* ─── BREADCRUMB ──────────────────────────────── */}
       <div style={{

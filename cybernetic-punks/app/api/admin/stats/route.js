@@ -60,14 +60,20 @@ export async function GET(req) {
 
     // Seed the per-game buckets from the network registry (marathon, dmz, ...) so
     // every known game renders even with zero events.
+    var month = 30 * day;
+
+    function newBucket() {
+      return { events: {}, shellCounts: {}, playstyleCounts: {}, articleViews: {}, toolViews: {} };
+    }
+
     var byGame = {};
     ROOT_GAMES.forEach(function (g) {
-      byGame[g.slug] = { events: {}, shellCounts: {}, playstyleCounts: {} };
+      byGame[g.slug] = newBucket();
     });
 
     rows.forEach(function (r) {
       var g = r.game_slug || 'marathon';
-      if (!byGame[g]) byGame[g] = { events: {}, shellCounts: {}, playstyleCounts: {} };
+      if (!byGame[g]) byGame[g] = newBucket();
       var bucket = byGame[g];
       var e = r.event_name;
       if (!bucket.events[e]) bucket.events[e] = { total: 0, last24h: 0, last7d: 0 };
@@ -79,6 +85,21 @@ export async function GET(req) {
         if (r.event_data.shell) bucket.shellCounts[r.event_data.shell] = (bucket.shellCounts[r.event_data.shell] || 0) + 1;
         if (r.event_data.playstyle) bucket.playstyleCounts[r.event_data.playstyle] = (bucket.playstyleCounts[r.event_data.playstyle] || 0) + 1;
       }
+      // page_view -> per-slug view tallies (article rankings + tool totals), with
+      // all-time / 30d / 7d windows. Headline is denormalized in event_data; rows
+      // are newest-first, so the first time a slug is seen captures the latest title.
+      if (e === 'page_view' && r.event_data) {
+        var d = r.event_data;
+        var mapKey = d.type === 'tool' ? 'toolViews' : 'articleViews';
+        var vslug = d.slug || d.path || 'unknown';
+        var rec = bucket[mapKey][vslug];
+        if (!rec) {
+          rec = bucket[mapKey][vslug] = { slug: vslug, path: d.path || null, headline: d.headline || null, all: 0, w30: 0, w7: 0 };
+        }
+        rec.all++;
+        if (age < month) rec.w30++;
+        if (age < week) rec.w7++;
+      }
     });
 
     // Ordered game list: registry order first, then any unexpected slugs seen in data.
@@ -87,11 +108,15 @@ export async function GET(req) {
 
     var out = {};
     games.forEach(function (g) {
-      var b = byGame[g] || { events: {}, shellCounts: {}, playstyleCounts: {} };
+      var b = byGame[g] || newBucket();
       out[g] = {
         events: b.events,
         topShells: Object.entries(b.shellCounts).sort(function (a, b2) { return b2[1] - a[1]; }).slice(0, 7),
         topPlaystyles: Object.entries(b.playstyleCounts).sort(function (a, b2) { return b2[1] - a[1]; }),
+        // Most-viewed articles (ranking) + tool-page view totals. Sorted all-time
+        // desc; the client re-sorts by the selected window (all / w30 / w7).
+        articleViews: Object.values(b.articleViews).sort(function (a, b2) { return b2.all - a.all; }).slice(0, 25),
+        toolViews: Object.values(b.toolViews).sort(function (a, b2) { return b2.all - a.all; }),
       };
     });
 

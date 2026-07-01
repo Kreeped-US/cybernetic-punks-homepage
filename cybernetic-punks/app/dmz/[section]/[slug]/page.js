@@ -33,6 +33,7 @@ import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/ros
 import { formatPublishDate } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers } from '@/lib/dmz/articleContent';
 import DmzShare from '../../DmzShare';
+import ViewTracker from '@/components/ViewTracker';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -178,6 +179,7 @@ export default async function DmzArticlePage({ params }) {
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
+      <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
       {/* 1. Breadcrumb: Network / DMZ / section */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
         <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>

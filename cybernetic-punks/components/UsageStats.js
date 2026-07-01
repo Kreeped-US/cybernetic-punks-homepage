@@ -22,6 +22,7 @@ export default function UsageStats({ password }) {
   var [stats, setStats] = useState(null);
   var [loading, setLoading] = useState(true);
   var [error, setError] = useState(null);
+  var [viewWindow, setViewWindow] = useState('all'); // 'all' | 'w30' | 'w7' for the Most-Viewed ranking
 
   useEffect(function () {
     if (!password) return;
@@ -60,10 +61,37 @@ export default function UsageStats({ password }) {
   var games = (stats && stats.games) || [];
   var byGame = (stats && stats.byGame) || {};
 
+  // Pick a view-count for the selected time window; label for the UI.
+  function winCount(rec) { return viewWindow === 'w7' ? rec.w7 : viewWindow === 'w30' ? rec.w30 : rec.all; }
+  var winLabel = viewWindow === 'w7' ? 'THIS WEEK' : viewWindow === 'w30' ? 'THIS MONTH' : 'ALL TIME';
+  var WINDOWS = [['all', 'ALL'], ['w30', '30D'], ['w7', '7D']];
+
   return (
     <div style={{ marginBottom: 32 }}>
-      <div style={{ fontFamily: heading, fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: 3, marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        SITE USAGE &middot; PER GAME
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ fontFamily: heading, fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: 3 }}>
+          SITE USAGE &middot; PER GAME
+        </div>
+        {/* Time window for the Most-Viewed ranking below. */}
+        <div style={{ display: 'flex', gap: 4 }}>
+          {WINDOWS.map(function (w) {
+            var active = viewWindow === w[0];
+            return (
+              <button
+                key={w[0]}
+                type="button"
+                onClick={function () { setViewWindow(w[0]); }}
+                style={{
+                  fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1,
+                  color: active ? '#000' : 'rgba(255,255,255,0.5)',
+                  background: active ? '#00f5ff' : 'transparent',
+                  border: '1px solid ' + (active ? '#00f5ff' : 'rgba(255,255,255,0.15)'),
+                  borderRadius: 3, padding: '3px 9px', cursor: 'pointer',
+                }}
+              >{w[1]}</button>
+            );
+          })}
+        </div>
       </div>
 
       {games.map(function (game) {
@@ -147,6 +175,60 @@ export default function UsageStats({ password }) {
                 </div>
               </div>
             )}
+
+            {/* Most-viewed articles (ranking) + tool-page view totals, per game.
+                Sorted by the selected time window. Empty -> clean "no data" line. */}
+            {(function () {
+              var articleViews = (g.articleViews || []).slice().sort(function (a, b) { return winCount(b) - winCount(a); }).filter(function (r) { return winCount(r) > 0; });
+              var toolViews = (g.toolViews || []).filter(function (r) { return winCount(r) > 0; });
+              var noViews = articleViews.length === 0 && toolViews.length === 0;
+              return (
+                <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed rgba(255,255,255,0.06)' }}>
+                  <div style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, marginBottom: 10 }}>
+                    MOST VIEWED &middot; {winLabel}
+                  </div>
+                  {noViews ? (
+                    <div style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: 1, padding: '4px 0' }}>
+                      NO PAGE VIEWS YET
+                    </div>
+                  ) : (
+                    <>
+                      {articleViews.length > 0 && (
+                        <div style={{ marginBottom: toolViews.length > 0 ? 14 : 0 }}>
+                          <div style={{ fontFamily: mono, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 6 }}>ARTICLES</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            {articleViews.slice(0, 15).map(function (r, i) {
+                              return (
+                                <div key={r.slug} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 4, padding: '7px 12px' }}>
+                                  <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.25)', width: 18, flexShrink: 0 }}>{i + 1}</span>
+                                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.headline || r.slug}</span>
+                                  <span style={{ fontFamily: heading, fontSize: 12, fontWeight: 700, color: accent, flexShrink: 0 }}>{winCount(r).toLocaleString()}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {toolViews.length > 0 && (
+                        <div>
+                          <div style={{ fontFamily: mono, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginBottom: 6 }}>TOOL PAGES</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {toolViews.map(function (r) {
+                              return (
+                                <div key={r.slug} style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.5)', letterSpacing: 1 }}>{String(r.slug).toUpperCase()}</span>
+                                  <span style={{ fontFamily: heading, fontSize: 12, fontWeight: 700, color: accent }}>{winCount(r).toLocaleString()}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         );
       })}

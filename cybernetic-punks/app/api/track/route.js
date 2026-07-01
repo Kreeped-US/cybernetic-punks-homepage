@@ -24,6 +24,9 @@ const ALLOWED_EVENTS = [
   // Added so the intent/bounce funnel is recorded as a time series (the latest
   // per-user value also lives in player_profiles.signup_intent).
   'signup_intent',
+  // Session-debounced page/article view (Part 2). event_data:
+  // { slug, path, type: 'article'|'tool', headline }. One per path per tab-session.
+  'page_view',
 ];
 
 // Known network games for the per-game analytics dimension. Anything else -> 'marathon'.
