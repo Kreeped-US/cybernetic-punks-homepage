@@ -10,7 +10,11 @@
 //          headlineFontSize (px number, default 50) }. The per-article card passes a
 // length-derived headlineFontSize; the headline clamps to 3 lines either way.
 
-export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50 }) {
+// marathonLogo (data URI | null|undefined): when gameTag === 'MARATHON' and this is
+// present, the official wordmark image renders INSIDE the existing tag pill in place
+// of the text; the pill's border/padding/radius are unchanged. Any other gameTag
+// (e.g. 'DMZ'), or a missing logo, keeps the plain text tag.
+export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50, marathonLogo }) {
   return (
     <div
       style={{
@@ -77,7 +81,14 @@ export function Card({ accent, blockTextColor, gameTag, headline, tagline, headl
               letterSpacing: '0.10em',
             }}
           >
-            {gameTag}
+            {gameTag === 'MARATHON' && marathonLogo ? (
+              // 34px tall, width from the native 1920x650 aspect (~2.95:1) so satori
+              // gets explicit, undistorted dimensions. Transparent PNG blends with the
+              // dark card; sits inside the pill's existing padding.
+              <img src={marathonLogo} height={34} width={Math.round(34 * 1920 / 650)} alt="Marathon" style={{ display: 'block' }} />
+            ) : (
+              gameTag
+            )}
           </div>
         ) : null}
       </div>

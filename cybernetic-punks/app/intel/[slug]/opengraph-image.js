@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { Card } from '@/lib/og/card';
 import { OG_COLORS, blockTextColor } from '@/lib/og/colors';
 import { loadExo2 } from '@/lib/og/fonts';
+import { loadMarathonLogo } from '@/lib/og/logo';
 
 export const runtime = 'nodejs';
 
@@ -27,6 +28,7 @@ function headlineSize(headline) {
 
 export default async function Image({ params }) {
   const fonts = await loadExo2();
+  const marathonLogo = await loadMarathonLogo();
   const { slug } = await params;
 
   // Best-effort fetch -- a missing/unknown slug or a query error must NOT throw; it
@@ -61,6 +63,7 @@ export default async function Image({ params }) {
         accent={accent}
         blockTextColor={blockTextColor(accent)}
         gameTag={gameTag}
+        marathonLogo={marathonLogo}
         headline={headline}
         tagline="NO HYPE. JUST INTEL."
         headlineFontSize={headlineSize(headline)}

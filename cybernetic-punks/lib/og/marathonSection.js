@@ -12,11 +12,13 @@ import { ImageResponse } from 'next/og';
 import { Card } from './card';
 import { OG_COLORS, blockTextColor } from './colors';
 import { loadExo2 } from './fonts';
+import { loadMarathonLogo } from './logo';
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
 export async function marathonSectionCard(headline) {
   const fonts = await loadExo2();
+  const marathonLogo = await loadMarathonLogo();
   const accent = OG_COLORS.marathon;
 
   return new ImageResponse(
@@ -25,6 +27,7 @@ export async function marathonSectionCard(headline) {
         accent={accent}
         blockTextColor={blockTextColor(accent)}
         gameTag="MARATHON"
+        marathonLogo={marathonLogo}
         headline={headline}
         tagline="NO HYPE. JUST INTEL."
       />
