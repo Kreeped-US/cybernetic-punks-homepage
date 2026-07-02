@@ -17,17 +17,20 @@ export const dmz = {
   tagline: 'Extraction intelligence for the zone',
   basePath: '/dmz',
 
-  // SEO LAUNCH GATE (single source of truth for DMZ search visibility).
-  // While false, /dmz is PRE-LAUNCH thin content (coming-soon hub + empty/soon
-  // sections, no article detail route yet) -> it must be noindex and absent from
-  // the sitemap so it never enters the index as orphaned thin pages. Two consumers
-  // read this flag:
-  //   - app/dmz/layout.js  -> robots: noindex,follow while !launched (covers
-  //     /dmz and every /dmz/[section] via metadata inheritance).
-  //   - app/sitemap.js     -> emits the /dmz hub + section URLs only when launched.
-  // FLIP TO true at go-live (once real game_slug='dmz' content + the article
-  // detail route exist). That single change makes DMZ indexable AND adds it to the
-  // sitemap in one move -- no other SEO edits needed.
+  // SEO INDEXING GATE vs LAUNCH GATE -- two DELIBERATELY separate flags.
+  //
+  // indexable: controls SEO exposure ONLY (robots + sitemap). Set true on
+  //   2026-07-02 to open /dmz to search early, pre-launch, now that the article
+  //   detail route + real game_slug='dmz' content exist. Two consumers read it:
+  //     - app/dmz/layout.js  -> robots (index vs noindex,follow) for /dmz and
+  //       every /dmz/[section] + /dmz/[section]/[slug] via metadata inheritance.
+  //     - app/sitemap.js     -> emits the /dmz hub, section, and article URLs.
+  //
+  // launched: whether the game is actually LIVE (Oct 23 2026). STILL FALSE. When
+  //   launch wiring happens, gate live-only behavior on THIS flag -- live player
+  //   counts, LIVE tiles, tier-list pipeline activation, dropping the PRE-LAUNCH
+  //   framing -- NOT on indexable. These are separate on purpose; do not re-merge.
+  indexable: true,
   launched: false,
 
   // ROUGH theme tokens — approx the locked DMZ direction (GAME_TEMPLATE.md D3).

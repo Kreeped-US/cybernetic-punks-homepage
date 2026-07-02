@@ -10,7 +10,7 @@
 //
 // Queries Supabase -> force-dynamic. `supabase` is the lazy anon Proxy.
 //
-// NOINDEX: under app/dmz/layout.js (robots noindex,follow while !dmz.launched).
+// ROBOTS: gated in app/dmz/layout.js on dmz.indexable (index vs noindex,follow).
 // This page sets NO robots of its own -> inherits that gate.
 
 import { supabase } from '@/lib/supabase';

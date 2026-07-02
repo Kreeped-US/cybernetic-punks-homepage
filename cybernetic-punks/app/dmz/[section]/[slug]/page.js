@@ -18,7 +18,7 @@
 // DMZ_ARTICLE_SECTION (lib/games/dmz.js). 404s on unknown section, missing/
 // unpublished article, or a section/article mismatch. Nothing crashes.
 //
-// NOINDEX: under app/dmz/layout.js (robots noindex,follow while !dmz.launched).
+// ROBOTS: gated in app/dmz/layout.js on dmz.indexable (index vs noindex,follow).
 // This page sets NO robots of its own, so it INHERITS that gate.
 //
 // Supabase read via the lazy anon Proxy (no module-scope createClient).
@@ -92,7 +92,7 @@ export async function generateMetadata({ params }) {
   var title = seo && seo.title ? seo.title : article.headline;
   var description = seo && seo.description ? seo.description : metaDescription(article.body, article.headline);
   var canonical = CANONICAL_BASE + '/dmz/' + section.slug + '/' + article.slug;
-  // NO robots key -> inherits the dmz layout's noindex,follow while !launched.
+  // NO robots key -> inherits the dmz layout's robots gate (dmz.indexable).
   // openGraph/twitter override the Marathon-branded root defaults so shared DMZ
   // links carry the article's own title/description; the per-article DMZ OG image
   // comes from the sibling opengraph-image.js (Next wires og:image automatically).

@@ -14,12 +14,13 @@ export const metadata = {
   title: 'DMZ — Extraction Intelligence Hub',
   description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for the DMZ. Part of the CyberneticPunks game network.',
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
-  // Pre-launch the whole /dmz subtree is thin coming-soon content -> keep it OUT of
-  // the index (follow stays on so crawlers still traverse to the network root via
-  // DmzNav). This robots value inherits down to /dmz and every /dmz/[section] (the
-  // section page sets no robots of its own). Gated on the single dmz.launched flag;
-  // when that flips true, robots falls back to the root layout's index:true.
-  robots: dmz.launched ? undefined : { index: false, follow: true },
+  // SEO exposure is gated on dmz.indexable (NOT dmz.launched -- see lib/games/dmz.js).
+  // While indexable is false the /dmz subtree stays OUT of the index (follow stays on
+  // so crawlers still traverse to the network root via DmzNav). This robots value
+  // inherits down to /dmz and every /dmz/[section] + /dmz/[section]/[slug] (those pages
+  // set no robots of their own). When indexable is true, robots falls back to the root
+  // layout's index:true.
+  robots: dmz.indexable ? undefined : { index: false, follow: true },
 };
 
 export default function DmzLayout({ children }) {

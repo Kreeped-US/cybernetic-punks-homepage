@@ -27,7 +27,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { toISOWithPTOffset } from '@/lib/formatDate';
-import { dmz } from '@/lib/games/dmz';
+import { dmz, DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -95,6 +95,7 @@ export default async function sitemap() {
   let weaponPages = [];
   let mapPages = [];
   let dynamicPages = [];
+  let dmzArticlePages = [];
   let activeGuideCategories = [];
 
   console.log('[sitemap] starting generation, env vars present:',
@@ -254,6 +255,40 @@ export default async function sitemap() {
     } catch (err) {
       console.error('[sitemap] feed_items fetch threw:', err);
     }
+
+    // DMZ article URLs (decoupled indexable emission). Only fetched/emitted when
+    // dmz.indexable. Mirrors the DMZ homepage/section filter (game_slug='dmz',
+    // is_published=true). Each row resolves its section via DMZ_ARTICLE_SECTION;
+    // a slug NOT in that map is SKIPPED (fail-safe: unmapped = never a 404 URL in
+    // the sitemap). Only ~3 DMZ rows today; PostgREST caps a response at 1000 rows
+    // -- add pagination (see the feed_items loop above) if DMZ ever exceeds that.
+    if (dmz.indexable) {
+      try {
+        const { data: dmzRows, error: dmzErr } = await supabase
+          .from('feed_items')
+          .select('slug, created_at')
+          .eq('game_slug', 'dmz')
+          .eq('is_published', true)
+          .order('created_at', { ascending: false });
+
+        console.log('[sitemap] dmz feed_items:',
+          dmzRows ? dmzRows.length + ' rows' : 'null',
+          dmzErr ? 'error: ' + dmzErr.message : '');
+
+        if (dmzRows) {
+          dmzArticlePages = dmzRows
+            .filter((r) => DMZ_ARTICLE_SECTION[r.slug])
+            .map((r) => ({
+              url: baseUrl + '/dmz/' + DMZ_ARTICLE_SECTION[r.slug] + '/' + r.slug,
+              lastModified: toISOWithPTOffset(r.created_at),
+              changeFrequency: 'monthly',
+              priority: 0.6,
+            }));
+        }
+      } catch (err) {
+        console.error('[sitemap] dmz feed fetch threw:', err);
+      }
+    }
   } catch (err) {
     console.error('[sitemap] Supabase init failed at build time, using static fallback:', err);
   }
@@ -269,14 +304,13 @@ export default async function sitemap() {
 
   const shellPages = dbShellPages.length > 0 ? dbShellPages : fallbackShellPages;
 
-  // DMZ network section (the deferred "Step-4" emission, now wired but GATED).
-  // While dmz.launched is false the section is pre-launch thin content (noindex via
-  // app/dmz/layout.js) -> emit NOTHING, so the sitemap never advertises thin URLs.
-  // Flipping dmz.launched to true (at go-live) auto-adds the DMZ hub + section
-  // pages here, in lock-step with robots becoming indexable. Article URLs are NOT
-  // emitted yet: the /dmz/[section]/[slug] detail route does not exist, so listing
-  // them would advertise 404s -- add that emission when that route ships.
-  const dmzPages = dmz.launched
+  // DMZ network section, gated on dmz.indexable (SEO exposure) -- NOT dmz.launched.
+  // While indexable is false, emit NOTHING (pre-launch thin content, noindex via
+  // app/dmz/layout.js) so the sitemap never advertises thin URLs. When indexable is
+  // true, emit the /dmz hub, the section pages, AND the article URLs (fetched above,
+  // each mapped to its section via DMZ_ARTICLE_SECTION -- the /dmz/[section]/[slug]
+  // detail route exists now), in lock-step with robots becoming indexable.
+  const dmzPages = dmz.indexable
     ? [
         { url: baseUrl + '/dmz', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
         ...dmz.sections.map((sec) => ({
@@ -285,6 +319,7 @@ export default async function sitemap() {
           changeFrequency: 'weekly',
           priority: 0.8,
         })),
+        ...dmzArticlePages,
       ]
     : [];
 

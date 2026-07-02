@@ -7,7 +7,7 @@
 // Server component + a Supabase read for live counts -> force-dynamic. Reads via
 // the lazy anon Proxy (no module-scope createClient).
 //
-// NOINDEX: under app/dmz/layout.js (robots noindex,follow while !dmz.launched).
+// ROBOTS: gated in app/dmz/layout.js on dmz.indexable (index vs noindex,follow).
 // This page sets NO robots of its own -> inherits that gate. (Do not add robots.)
 
 import Link from 'next/link';
