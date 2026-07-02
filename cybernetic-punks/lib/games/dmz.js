@@ -94,3 +94,44 @@ export function dmzArticleSlugsForSection(sectionSlug) {
     return DMZ_ARTICLE_SECTION[s] === sectionSlug;
   });
 }
+
+// PER-ARTICLE SEO OVERRIDES (Chunk C). Keyed by slug: an authored { title,
+// description, keyFacts } that the DMZ article template PREFERS over the generic
+// headline-derived title / auto-truncated meta / bullet-scraped key facts. Titles
+// lead with the "MW4 DMZ" disambiguator (DMZ also = the MWII mode); the root
+// title.template appends " | CyberneticPunks" -- do NOT append the site name here.
+// keyFacts are authored because the prose rewrites removed the bullet lists the
+// render-time extractor relied on. A slug NOT in this map falls back to the
+// template's existing derivations (headline title, metaDescription(), extractKeyFacts).
+export const DMZ_ARTICLE_SEO = {
+  'dmz-forward-operating-base-every-hub-system-detailed': {
+    title: 'MW4 DMZ Forward Operating Base Guide: Every Station Explained',
+    description: 'How the Forward Operating Base works in MW4 DMZ: the economy, crafting, storage, prep, and hunt stations, from the official Call of Duty Deep Dive.',
+    keyFacts: [
+      'The FOB is the hub you return to before and after every DMZ run.',
+      'It evolves as you progress -- unlocking functionality and changing visually.',
+      'The 3D Printer cannot make Primary, Secondary, or Melee weapons.',
+      'Slain Lieutenants drop Dog Tags that are also trackable by enemy squads.',
+    ],
+  },
+  'dmz-3d-printer-crafting-system-every-category-detailed': {
+    title: 'MW4 DMZ Crafting Guide: Every 3D Printer Category Explained',
+    description: 'Every 3D Printer crafting category in MW4 DMZ, grouped by role, plus the resource-rarity rule -- sourced from the official Call of Duty Deep Dive.',
+    keyFacts: [
+      'All crafting runs through one upgradable 3D Printer at your FOB.',
+      'Ten printable categories span survivability, offense, utility, and specials.',
+      'Field Upgrades in DMZ do not recharge, unlike in Multiplayer.',
+      'Rarer resources come from pushing deeper into the region.',
+    ],
+  },
+  'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals': {
+    title: 'MW4 DMZ Hajin Exclusion Zone: Setting, Loop, and Map Overview',
+    description: 'Inside MW4 DMZ\'s Hajin Exclusion Zone: the setting, the secure-and-extract loop, dynamic weather, and the map\'s key regions, per the official Deep Dive.',
+    keyFacts: [
+      'Hajin is a post-Modern Warfare 4 exclusion zone on the Korean peninsula.',
+      'The core loop: secure abandoned tech before rival forces, then extract.',
+      'Dynamic weather -- rain, fog, overcast -- changes visibility each run.',
+      'One of the largest Call of Duty environments, built for high-risk ops.',
+    ],
+  },
+};

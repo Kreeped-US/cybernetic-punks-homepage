@@ -28,9 +28,9 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games/registry';
-import { DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
+import { DMZ_ARTICLE_SECTION, DMZ_ARTICLE_SEO } from '@/lib/games/dmz';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
-import { formatPublishDate } from '@/lib/formatDate';
+import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers } from '@/lib/dmz/articleContent';
 import DmzShare from '../../DmzShare';
 import ViewTracker from '@/components/ViewTracker';
@@ -84,11 +84,35 @@ export async function generateMetadata({ params }) {
   if (!section || !article || DMZ_ARTICLE_SECTION[article.slug] !== section.slug) {
     return { title: 'DMZ — Not Found' };
   }
+  // Authored SEO overrides (lib/games/dmz.js) preferred; fall back to the
+  // headline title + auto-truncated meta for any unmapped slug. The "-- DMZ"
+  // suffix is dropped (headlines already lead with "DMZ"); the root
+  // title.template appends " | CyberneticPunks".
+  var seo = DMZ_ARTICLE_SEO[article.slug] || null;
+  var title = seo && seo.title ? seo.title : article.headline;
+  var description = seo && seo.description ? seo.description : metaDescription(article.body, article.headline);
+  var canonical = CANONICAL_BASE + '/dmz/' + section.slug + '/' + article.slug;
   // NO robots key -> inherits the dmz layout's noindex,follow while !launched.
+  // openGraph/twitter override the Marathon-branded root defaults so shared DMZ
+  // links carry the article's own title/description; the per-article DMZ OG image
+  // comes from the sibling opengraph-image.js (Next wires og:image automatically).
   return {
-    title: article.headline + ' — DMZ',
-    description: metaDescription(article.body, article.headline),
-    alternates: { canonical: CANONICAL_BASE + '/dmz/' + section.slug + '/' + article.slug },
+    title: title,
+    description: description,
+    alternates: { canonical: canonical },
+    openGraph: {
+      title: title,
+      description: description,
+      url: canonical,
+      siteName: 'CyberneticPunks',
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@Cybernetic87250',
+      title: title,
+      description: description,
+    },
   };
 }
 
@@ -173,13 +197,37 @@ export default async function DmzArticlePage({ params }) {
   var pubDate = formatPublishDate(article.created_at);
   var rt = readTime(article.body);
   var tags = Array.isArray(article.tags) ? article.tags : [];
-  var keyFacts = extractKeyFacts(article.body);
+
+  // Authored SEO overrides (lib/games/dmz.js) preferred; fall back to the
+  // render-time derivations for unmapped slugs. keyFacts null-hides as before.
+  var seo = DMZ_ARTICLE_SEO[article.slug] || null;
+  var keyFacts = (seo && Array.isArray(seo.keyFacts) && seo.keyFacts.length > 0)
+    ? seo.keyFacts
+    : extractKeyFacts(article.body);
+  var description = seo && seo.description ? seo.description : metaDescription(article.body, article.headline);
 
   var canonical = CANONICAL_BASE + '/dmz/' + section.slug + '/' + article.slug;
+
+  // NewsArticle JSON-LD -- mirrors the /intel Article shape (author + publisher +
+  // datePublished helper + mainEntityOfPage), DMZ-branded, @type NewsArticle.
+  // headline = DB headline (not the SEO title); author mirrors /intel exactly (the
+  // editor codename byline is an intentional public byline). The DMZ article page
+  // carries no other JSON-LD, so this is the only block.
+  var jsonLd = {
+    '@context': 'https://schema.org', '@type': 'NewsArticle',
+    headline: article.headline,
+    description: description,
+    author: { '@type': 'Organization', name: article.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/intel/' + (article.editor || '').toLowerCase() },
+    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
+    url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+    keywords: article.tags ? article.tags.join(', ') : 'DMZ, Call of Duty',
+  };
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* 1. Breadcrumb: Network / DMZ / section */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
         <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
