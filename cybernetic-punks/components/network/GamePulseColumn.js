@@ -52,29 +52,29 @@ export default function GamePulseColumn({ game, items }) {
       <div className="nr-col-head">
         <span className="nr-col-marker" style={{ background: accent }} aria-hidden="true" />
         <h3 className="nr-col-title">Latest from {game.label}</h3>
-        {isLive && (
+        {list.length > 0 && (
           <Link href={game.route} className="nr-col-all">ALL -&gt;</Link>
         )}
       </div>
 
-      {/* Body: real feed items (live) OR pre-launch placeholder (agnostic) */}
+      {/* Body: real feed items for ANY game with published rows (using the
+          page-resolved item.href); otherwise the empty-state -- "No recent intel."
+          for a live game, the pre-launch note for a pre-launch game. */}
       <div className="nr-col-body">
-        {isLive ? (
-          list.length > 0 ? (
-            list.map(function(item) {
-              return (
-                <Link key={item.slug} href={'/intel/' + item.slug} className="nr-row">
-                  <div className="nr-row-meta">
-                    <EditorTag codename={item.editor} />
-                    <span className="nr-row-when">{item.when}</span>
-                  </div>
-                  <span className="nr-row-headline">{item.headline}</span>
-                </Link>
-              );
-            })
-          ) : (
-            <span className="nr-col-empty">No recent intel.</span>
-          )
+        {list.length > 0 ? (
+          list.map(function(item) {
+            return (
+              <Link key={item.slug} href={item.href} className="nr-row">
+                <div className="nr-row-meta">
+                  <EditorTag codename={item.editor} />
+                  <span className="nr-row-when">{item.when}</span>
+                </div>
+                <span className="nr-row-headline">{item.headline}</span>
+              </Link>
+            );
+          })
+        ) : isLive ? (
+          <span className="nr-col-empty">No recent intel.</span>
         ) : (
           <span className="nr-col-prelaunch">{game.pulse.note}</span>
         )}

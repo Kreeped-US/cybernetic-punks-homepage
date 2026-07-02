@@ -87,20 +87,30 @@ function nextUpdateLabel() {
 // sources the /marathon page uses: getLiveStats() + feed_items.
 async function getNetworkPulse() {
   var liveGames = ROOT_GAMES.filter(function(g) { return g.pulse.mode === 'live'; });
-  var pulse = {};   // slug -> { online, nextUpdate }
-  var feeds = {};   // slug -> [{ headline, slug, editor, when }]
+  var feedGames = ROOT_GAMES.filter(function(g) { return g.pulse.feed && g.pulse.feed.gameSlug; });
+  var pulse = {};   // slug -> { online, nextUpdate }  (live games only -> tiles unchanged)
+  var feeds = {};   // slug -> [{ headline, slug, editor, when, href }]
 
   var liveStats = null;
   try { liveStats = await getLiveStats(); } catch (e) { liveStats = null; }
   var nextUpd = nextUpdateLabel();
 
-  await Promise.all(liveGames.map(async function(g) {
+  // Live pulse (online count + next update) -- LIVE games only. Pre-launch games
+  // (DMZ) get no pulse entry, so GameRoutingTile renders exactly as before.
+  liveGames.forEach(function(g) {
     var online = null;
     if (liveStats && g.pulse.onlineSource && liveStats[g.pulse.onlineSource]) {
       online = liveStats[g.pulse.onlineSource].value;
     }
     pulse[g.slug] = { online: online, nextUpdate: nextUpd };
+  });
 
+  // Feed columns -- ANY game that declares a feed scope (live OR pre-launch), so
+  // published DMZ articles surface in its pulse column while the tile stays
+  // pre-launch. SAME select/filters/order/limit as before. Each row is mapped
+  // through the game's articleHref; a null href (unmapped slug) is dropped so the
+  // column never dead-links.
+  await Promise.all(feedGames.map(async function(g) {
     feeds[g.slug] = [];
     try {
       var res = await supabase
@@ -111,8 +121,9 @@ async function getNetworkPulse() {
         .order('created_at', { ascending: false })
         .limit(4);
       feeds[g.slug] = (res.data || []).map(function(it) {
-        return { headline: it.headline, slug: it.slug, editor: it.editor, when: timeAgo(it.created_at) };
-      });
+        var href = g.pulse.articleHref ? g.pulse.articleHref(it.slug) : ('/intel/' + it.slug);
+        return { headline: it.headline, slug: it.slug, editor: it.editor, when: timeAgo(it.created_at), href: href };
+      }).filter(function(it) { return it.href; });
     } catch (e) {
       feeds[g.slug] = [];
     }

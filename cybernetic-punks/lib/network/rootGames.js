@@ -32,7 +32,7 @@
 // 'pre-launch' = the designed coming-soon state, no live data. The page resolves
 // the live numbers/items and passes them in; the config only declares intent.
 
-import { dmz as dmzGame } from '@/lib/games/dmz';
+import { dmz as dmzGame, DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
 import { MARATHON_GREEN } from '../brandColors.js';
 
 export const ROOT_GAMES = [
@@ -58,6 +58,9 @@ export const ROOT_GAMES = [
       mode: 'live',
       onlineSource: 'steam',         // which live_stats source counts as "online"
       feed: { gameSlug: 'marathon' }, // feed_items scope for this game's column
+      // Article URL builder for a pulse row (config-level, so the column stays
+      // game-agnostic). Marathon articles live at unprefixed /intel/<slug>.
+      articleHref: function (slug) { return '/intel/' + slug; },
     },
   },
   {
@@ -77,8 +80,20 @@ export const ROOT_GAMES = [
     imagePosition: 'center top',
     theme: { primary: dmzGame.theme.primary, tint: 'rgba(63,125,68,0.08)' }, // forest (= --green under .dmz-theme)
     pulse: {
+      // Tile framing stays PRE-LAUNCH (mode drives the routing tile + the column
+      // empty-state). The feed key is independent of mode: DMZ has published
+      // articles now, so the pulse column surfaces them while the tile still reads
+      // pre-launch. `note` is used only as the column empty-state (zero rows).
       mode: 'pre-launch',
       note: 'Oct 23 / field intel incoming',
+      feed: { gameSlug: 'dmz' },      // feed_items scope for this game's column
+      // Article URL builder: resolve the section from DMZ_ARTICLE_SECTION and emit
+      // /dmz/<section>/<slug>. An unmapped slug returns null so the page drops that
+      // row (fail-safe -- never a dead link), mirroring Chunk D's sitemap emission.
+      articleHref: function (slug) {
+        var section = DMZ_ARTICLE_SECTION[slug];
+        return section ? '/dmz/' + section + '/' + slug : null;
+      },
     },
   },
 ];
