@@ -7,6 +7,7 @@
 // own header below. Built FOR DMZ — not extracted to a shared layer yet (D4).
 
 import DmzNav from './DmzNav';
+import DmzDisclaimer from '@/components/dmz/DmzDisclaimer';
 import { dmz } from '@/lib/games/dmz';
 
 export const metadata = {
@@ -33,6 +34,7 @@ export default function DmzLayout({ children }) {
     >
       <DmzNav />
       {children}
+      <DmzDisclaimer />
     </div>
   );
 }
