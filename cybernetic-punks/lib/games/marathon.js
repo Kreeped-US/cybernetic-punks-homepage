@@ -133,10 +133,10 @@ export const marathon = {
     ambiguousTerm: 'marathon',
   },
 
-  // The cost lever: which editors run + how often. Marathon = all 5, twice daily
-  // (vercel.json "0 0,12 * * *"). DMZ launches with a subset at a slower cadence.
+  // The cost lever: which editors run + how often. Marathon = all 5, once daily
+  // (vercel.json "0 19 * * *"). DMZ launches with a subset at a slower cadence.
   editorial: {
-    cadenceCron: '0 0,12 * * *',
+    cadenceCron: '0 19 * * *',
     editors: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'],
   },
 

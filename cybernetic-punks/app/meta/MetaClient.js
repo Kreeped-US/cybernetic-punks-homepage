@@ -6,7 +6,7 @@
 //
 // JUNE 2, 2026 FIXES:
 // - getSecondsToNextCron targeted [6,12,18,24] UTC (6h cadence) but the cron
-//   only fires at 00:00 + 12:00 UTC. Countdown now targets [12, 24].
+//   fires once daily at 19:00 UTC. Countdown now uses lib/cronCadence.js.
 // - Season label pulled into CURRENT_SEASON constant (was hardcoded "SEASON 1"
 //   inside the share-image generator; stale once S2 launched).
 // - "every 6 hours" copy replaced with cadence-agnostic phrasing.
@@ -17,6 +17,7 @@ import { Sep } from '@/components/Sep';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/useTrack';
 import { supabase } from '@/lib/supabase';
+import { secondsToNextRun } from '@/lib/cronCadence';
 
 // ─── CONSTANTS ───────────────────────────────────────────────
 
@@ -93,15 +94,10 @@ function hoursAgo(date) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-// Cron fires at 00:00 + 12:00 UTC (`0 0,12 * * *`). Countdown targets the
-// next of those two cycles. Was [6,12,18,24] (stale 6h cadence) until June 2.
+// Cron fires once daily at 19:00 UTC (`0 19 * * *`). Cadence math is centralized
+// in lib/cronCadence.js (isomorphic, client-safe -- pure Date math, no imports).
 function getSecondsToNextCron() {
-  const now = new Date();
-  const s = now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
-  for (const h of [12, 24]) {
-    if (s < h * 3600) return h * 3600 - s;
-  }
-  return 86400 - s;
+  return secondsToNextRun();
 }
 
 function formatCronCountdown(secs) {

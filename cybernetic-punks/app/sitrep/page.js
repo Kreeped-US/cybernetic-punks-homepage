@@ -10,7 +10,7 @@
 //   RANKED_RETURN gate — before June 14 the card shows "RETURNS JUN 14";
 //   on/after June 14 the existing Sun→Thu rotation takes over automatically.
 //   Self-correcting, no manual flip needed.
-// - Cadence: removed all "every 6 hours" claims (cron is 12h). Description,
+// - Cadence: removed all "every 6 hours" claims (cron is once daily, 19:00 UTC). Description,
 //   OG description, and the cross-links footer now say "throughout the day".
 // - Path 2 (editors as bylines, not products): "AUTONOMOUS INTELLIGENCE"
 //   footer label → "LIVE INTELLIGENCE"; "NEXUS RANKED" stat sublabel →

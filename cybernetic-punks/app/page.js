@@ -31,6 +31,7 @@
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { minutesToNextRun } from '@/lib/cronCadence';
 import GameRoutingTile from '@/components/network/GameRoutingTile';
 import GamePulseColumn from '@/components/network/GamePulseColumn';
 import AccountMenu from '@/components/AccountMenu';
@@ -72,11 +73,10 @@ function addCommas(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-// Next-update label for the editorial cadence (12h cycles at 00:00 + 12:00 UTC).
+// Next-update label for the editorial cadence. Cadence math is centralized in
+// lib/cronCadence.js (single source anchored at 19:00 UTC, once daily).
 function nextUpdateLabel() {
-  var now = new Date();
-  var minsIn = (now.getUTCHours() * 60 + now.getUTCMinutes()) % 720;
-  var minsLeft = 720 - minsIn;
+  var minsLeft = minutesToNextRun();
   var h = Math.floor(minsLeft / 60);
   var m = minsLeft % 60;
   return h > 0 ? h + 'h ' + m + 'm' : m + 'm';

@@ -17,7 +17,7 @@
 // - OG and Twitter titles aligned to the same searcher-voice copy.
 //
 // CADENCE FIX June 2, 2026:
-// - Cron cadence is now 12h (00:00 + 12:00 UTC), not 6h. Replaced all
+// - Cron cadence is now once daily (19:00 UTC). Replaced all
 //   "every 6 hours" claims with cadence-agnostic "throughout the day"
 //   to match the homepage and avoid stale-interval claims going forward.
 

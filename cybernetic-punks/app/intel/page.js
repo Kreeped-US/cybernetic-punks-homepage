@@ -7,7 +7,7 @@
 // MAJOR REWRITE June 2, 2026 — fixed 235 impressions / 0 clicks GSC problem:
 // - Old title led with cadence ("Every 6 Hours") which (a) doesn't match a
 //   real search query and (b) was factually inaccurate after the cadence
-//   change to 12h. New title leads with searcher intent ("Marathon News &
+//   change to once daily (19:00 UTC). New title leads with searcher intent ("Marathon News &
 //   Latest Updates").
 // - Old description led with brand claim ("most current Marathon intel hub").
 //   New description names concrete content types (news, builds, meta, ranked,
@@ -24,7 +24,7 @@
 //   Latest Updates." (what the page actually is).
 // - Section header "About Our Editors" → "Frequently Asked About Marathon".
 // - All "every 6 hours" copy replaced with "throughout the day" to match
-//   the meta page and the actual 12h cron.
+//   the meta page and the actual once-daily (19:00 UTC) cron.
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';

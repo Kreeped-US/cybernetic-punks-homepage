@@ -5,6 +5,7 @@ import HomeEditorReactions from '@/app/HomeEditorReactions';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { getUserAvatars } from '@/lib/gather/twitch';
+import { cycleInfo } from '@/lib/cronCadence';
 
 // ── METADATA ────────────────────────────────────────────────
 // MARATHON HUB (canonical). Post-cutover the Marathon homepage lives here at
@@ -79,16 +80,13 @@ function imagePath(type, filename) {
   return '/images/' + folder + '/' + filename;
 }
 
-// Cron cadence: 12h cycles at 00:00 + 12:00 UTC (`0 0,12 * * *`).
+// Cron cadence: once daily at 19:00 UTC (`0 19 * * *`). Cycle math is centralized
+// in lib/cronCadence.js (single source); this keeps its own label formatting.
 function cronCycleInfo() {
-  var now        = new Date();
-  var totalMins  = now.getUTCHours() * 60 + now.getUTCMinutes();
-  var cycleMins  = 720;
-  var minsIn     = totalMins % cycleMins;
-  var minsLeft   = cycleMins - minsIn;
-  var progress   = Math.round((minsIn / cycleMins) * 100);
-  var hLeft      = Math.floor(minsLeft / 60);
-  var mLeft      = minsLeft % 60;
+  var info       = cycleInfo();
+  var progress   = info.progress;
+  var hLeft      = Math.floor(info.minsLeft / 60);
+  var mLeft      = info.minsLeft % 60;
   var nextLabel  = hLeft > 0 ? hLeft + 'h ' + mLeft + 'm' : mLeft + 'm';
   return { progress, nextLabel };
 }

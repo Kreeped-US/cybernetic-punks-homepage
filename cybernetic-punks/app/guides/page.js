@@ -15,7 +15,7 @@
 //   counts (235, 431, 592) don't crowd the labels.
 //
 // FIXED June 2, 2026:
-// - Cron cadence is 12h (00:00 + 12:00 UTC), not 6h. Replaced all "every 6 hours"
+// - Cron cadence is once daily (19:00 UTC). Replaced all "every 6 hours"
 //   / "EVERY 6H" copy (including two strings inside the FAQPage JSON-LD) with
 //   cadence-agnostic phrasing.
 // - "RANKED SEASON 1" CTA label was stale after S2 launch; changed to season-
