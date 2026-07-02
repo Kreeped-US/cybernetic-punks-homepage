@@ -26,6 +26,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games/registry';
 import { DMZ_ARTICLE_SECTION, DMZ_ARTICLE_SEO } from '@/lib/games/dmz';
@@ -33,6 +34,7 @@ import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/ros
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers } from '@/lib/dmz/articleContent';
 import DmzShare from '../../DmzShare';
+import DmzNotifyStrip from '@/components/dmz/DmzNotifyStrip';
 import ViewTracker from '@/components/ViewTracker';
 import Link from 'next/link';
 
@@ -189,6 +191,12 @@ export default async function DmzArticlePage({ params }) {
   if (!article) notFound();
   if (DMZ_ARTICLE_SECTION[article.slug] !== section.slug) notFound();
 
+  // Launch-email strip: read the dismissal cookie server-side so a dismissed strip
+  // is never rendered (no hydration flash / flicker-in-then-out).
+  var cookieStore = await cookies();
+  var notifyCookie = cookieStore.get('dmz_notify_dismissed');
+  var notifyDismissed = notifyCookie ? notifyCookie.value === '1' : false;
+
   var display = getEditorDisplay(article.editor);
   var editorColor = display ? display.color : '#888';
   var byline = editorByline(article.editor) || article.editor;
@@ -236,6 +244,10 @@ export default async function DmzArticlePage({ params }) {
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
         <Link href={'/dmz/' + section.slug} style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>{section.label}</Link>
       </nav>
+
+      {/* Launch-email capture strip (article surface). Server-gated by the dismissal
+          cookie above -> not rendered at all once dismissed (no hydration flash). */}
+      {!notifyDismissed && <DmzNotifyStrip />}
 
       {/* 2. DMZ tag pill + eyebrow */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>

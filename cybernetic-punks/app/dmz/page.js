@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { dmz, dmzArticleSlugsForSection } from '@/lib/games/dmz';
+import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -215,6 +216,10 @@ export default async function DmzLanding() {
         {/* Factions: informational only, not a section/route. */}
         <FactionsCard />
       </div>
+
+      {/* Launch-email capture (owned list). Landing gets the dedicated BLOCK; the
+          dismissible strip runs on ARTICLE pages only (see placement note). */}
+      <DmzNotifyBlock />
     </main>
   );
 }
