@@ -247,16 +247,20 @@ export default async function NetworkRoot() {
                 The LIVE moment lives here now (removed from the telemetry bar) so
                 there is a single, high-contrast live signal. */}
             <div className="nr-hero-top">
-              <p className="nr-eyebrow">Competitive-Shooter Intelligence Network</p>
+              <p className="nr-eyebrow">No hype. Just intel.</p>
               <span className="nr-livepill"><span className="nr-livepill-dot" aria-hidden="true" />LIVE</span>
             </div>
-            <h1 id="nr-thesis" className="nr-h1">
-              Where the serious players check first.
-            </h1>
             <p className="nr-kicker">Everyone has opinions. We have the data.</p>
+            <h1 id="nr-thesis" className="nr-h1">
+              The intelligence network for competitive shooters.
+            </h1>
             <p className="nr-subhead">
-              The intelligence network for competitive shooters &mdash; human-verified intel across every game you grind.
+              Human-verified intel across every game you grind. No hype, just data.
             </p>
+            {/* Secondary tagline (reuses the kicker style -- no new styling). Moved
+                here from the H1 slot; Justin to decide keep/drop next pass after
+                seeing the new headline in place. */}
+            <p className="nr-kicker">Where the serious players check first.</p>
             <div className="nr-cta-row">
               <a href="#nr-subscribe" className="nr-cta nr-cta-primary">Get intel drops</a>
               <a href="#nr-zones" className="nr-cta nr-cta-secondary">Explore the network</a>
@@ -324,7 +328,7 @@ export default async function NetworkRoot() {
 
           {/* ROUTING TILES (signature; game-agnostic, one per ROOT_GAMES entry) */}
           <nav id="nr-zones" className="nr-section" aria-label="Game hubs">
-            <h2 className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Choose your zone</h2>
+            <h2 className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Choose your game</h2>
             <div className="nr-grid nr-stagger">
               {ROOT_GAMES.map(function(game) {
                 return <GameRoutingTile key={game.slug} game={game} pulse={data.pulse[game.slug]} />;
