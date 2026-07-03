@@ -30,6 +30,7 @@ const EXPLORE_LINKS = [
   { label: 'FIELD GUIDES',  href: '/guides'  },
   { label: 'RANKED GUIDE',  href: '/ranked'  },
   { label: 'EDITORS',       href: '/editors' },
+  { label: 'ABOUT',         href: '/about'   },
 ];
 
 // Discovery pages — community + tracker tools, often missed from main nav

@@ -376,6 +376,18 @@ export default async function NetworkRoot() {
             </div>
           </section>
 
+          {/* ABOUT THE NETWORK -- short blurb + link to the full /about page.
+              Server-rendered, crawlable. Network accent (red) on the link only. */}
+          <section className="nr-section" aria-labelledby="nr-about-h">
+            <h2 id="nr-about-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />What is Cybernetic Punks?</h2>
+            <div className="nr-about">
+              <p className="nr-about-body">
+                An intelligence network for competitive shooters &mdash; Marathon now, Call of Duty&apos;s DMZ next, more to come. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.
+              </p>
+              <Link href="/about" className="nr-about-link">How the network works &rarr;</Link>
+            </div>
+          </section>
+
           {/* SUBSCRIBE -- network-level email capture (shared list, source-tagged). */}
           <section id="nr-subscribe" className="nr-section" aria-labelledby="nr-sub-h">
             <h2 id="nr-sub-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Get intel drops</h2>
@@ -399,6 +411,7 @@ export default async function NetworkRoot() {
             Cybernetic Punks - the competitive-shooter intelligence network. No hype. Just intel.
           </p>
           <p className="nr-footer-ai">powered by a live intelligence pipeline - updated continuously, verified against patch data</p>
+          <Link href="/about" className="nr-footer-link">About the network &rarr;</Link>
         </div>
       </footer>
     </div>
@@ -524,6 +537,12 @@ const NR_CSS = `
 .nr-subscribe-lead { font-family: var(--font-orbitron); font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0; }
 .nr-subscribe-clause { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 60ch; }
 
+/* ── About blurb ── short network summary + link to /about (crawlable) */
+.nr-about { display: flex; flex-direction: column; gap: 14px; }
+.nr-about-body { font-size: 15px; line-height: 1.7; color: var(--text-secondary); margin: 0; max-width: 74ch; }
+.nr-about-link { align-self: flex-start; font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); text-decoration: none; transition: opacity .15s ease; }
+.nr-about-link:hover { opacity: 0.75; }
+
 /* ── SIGNATURE: routing tiles ── (depth added; live count stays boldest) */
 .nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
 .nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px rgba(0,0,0,0.30); }
@@ -573,6 +592,8 @@ const NR_CSS = `
 .nr-footer-tag { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 7px; }
 .nr-footer-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
 .nr-footer-ai { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); margin: 0; }
+.nr-footer-link { display: inline-block; margin-top: 10px; font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); text-decoration: none; transition: opacity .15s ease; }
+.nr-footer-link:hover { opacity: 0.75; }
 
 /* Load-in (once), staggered across grid children */
 @keyframes nrIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
