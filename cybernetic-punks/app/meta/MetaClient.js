@@ -84,6 +84,14 @@ const TYPE_COLORS = {
   loadout: '#ff8800', shell: '#00d4ff', ability: '#ffd700',
 };
 
+// Stats-verification badge colors. This file uses hex color CONSTANTS as its
+// design system (Marathon pages have no CSS-var tokens); the badge references
+// these by name. The badge reflects whether an entry's underlying STATS are
+// verified against the live game -- NOT the tier letter, which is always an
+// editorial call assigned by the NEXUS editor.
+const VERIFIED_COLOR = '#00ff41';    // established site green (positive / verified)
+const UNVERIFIED_COLOR = '#8a8f99';  // muted grey -- honest "not yet verified", not alarming
+
 // ─── HELPERS ─────────────────────────────────────────────────
 
 function hoursAgo(date) {
@@ -915,6 +923,17 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                   <span style={{ fontSize: 8, letterSpacing: 2, color: typeColor, background: typeColor + '18', border: '1px solid ' + typeColor + '30', borderRadius: 2, padding: '2px 7px', fontWeight: 700, textTransform: 'uppercase' }}>
                                     {(item.type || '').toUpperCase()}
                                   </span>
+                                  {/* Stats-verification badge -- about the UNDERLYING stats, not the tier.
+                                      Rendered from server-passed props (in the SSR HTML, crawlable). */}
+                                  {(function() {
+                                    const vd = shellData || weaponData;
+                                    if (!vd || (vd.verified !== true && vd.verified !== false)) return null;
+                                    return vd.verified === true ? (
+                                      <span title="Underlying weapon/shell stats verified against the live game (the tier letter is still an editorial call)" style={{ fontSize: 8, letterSpacing: 1.5, color: VERIFIED_COLOR, background: VERIFIED_COLOR + '14', border: '1px solid ' + VERIFIED_COLOR + '30', borderRadius: 2, padding: '2px 7px', fontWeight: 700 }}>&#10003; STATS VERIFIED</span>
+                                    ) : (
+                                      <span title="Underlying stats not yet verified; the tier is an editorial call" style={{ fontSize: 8, letterSpacing: 1.5, color: UNVERIFIED_COLOR, background: UNVERIFIED_COLOR + '14', border: '1px solid ' + UNVERIFIED_COLOR + '30', borderRadius: 2, padding: '2px 7px', fontWeight: 700 }}>STATS UNVERIFIED</span>
+                                    );
+                                  })()}
                                   {mv === 'up'   && <span style={{ fontSize: 8, color: '#00ff41', background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>↑ MOVED UP</span>}
                                   {mv === 'down' && <span style={{ fontSize: 8, color: '#ff2222', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>↓ MOVED DOWN</span>}
                                   {mv === 'new'  && <span style={{ fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>★ NEW</span>}
