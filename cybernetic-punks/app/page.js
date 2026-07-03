@@ -243,7 +243,13 @@ export default async function NetworkRoot() {
         <section className="nr-hero-band" aria-labelledby="nr-thesis">
           <div className="nr-ambient" aria-hidden="true" />
           <div className="nr-wrap nr-hero">
-            <p className="nr-eyebrow">Competitive-Shooter Intelligence Network</p>
+            {/* Broadcast top row: mono network label (the eyebrow) + LIVE pill.
+                The LIVE moment lives here now (removed from the telemetry bar) so
+                there is a single, high-contrast live signal. */}
+            <div className="nr-hero-top">
+              <p className="nr-eyebrow">Competitive-Shooter Intelligence Network</p>
+              <span className="nr-livepill"><span className="nr-livepill-dot" aria-hidden="true" />LIVE</span>
+            </div>
             <h1 id="nr-thesis" className="nr-h1">
               Where the serious players check first.
             </h1>
@@ -276,15 +282,12 @@ export default async function NetworkRoot() {
               </ul>
             </div>
 
-            {/* LIVE TELEMETRY -- the centerpiece. Network-level, game-agnostic. */}
+            {/* LIVE TELEMETRY -- the centerpiece. Network-level, game-agnostic.
+                ONLINE gets the one accent color; every other stat stays quiet. */}
             <div className="nr-telemetry" role="group" aria-label="Live network status">
-              <span className="nr-tele-live">
-                <span className="cp-live-dot nr-dot" aria-hidden="true" />
-                <span className="nr-tele-live-text">LIVE</span>
-              </span>
               {teleItems.map(function(it) {
                 return (
-                  <span key={it.label} className="nr-tele-item">
+                  <span key={it.label} className={'nr-tele-item' + (it.label === 'ONLINE' ? ' nr-tele-accent' : '')}>
                     <span className="nr-tele-val">{it.value}</span>
                     <span className="nr-tele-label">{it.label}</span>
                   </span>
@@ -429,7 +432,13 @@ const NR_CSS = `
 .nr-ambient::after { content: ""; position: absolute; top: -140px; right: -110px; width: 460px; height: 460px; border: 1px solid rgba(255,255,255,0.03); transform: rotate(45deg); }
 .nr-hero { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
 
-.nr-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--nr-vantage); margin: 0; }
+/* Broadcast top row -- mono network label (eyebrow) left, LIVE pill right. */
+.nr-hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%; }
+.nr-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.nr-eyebrow::before { content: "// "; color: var(--nr-vantage); }
+/* LIVE pill -- THE one broadcast accent (neon green); everything else stays quiet. */
+.nr-livepill { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--green); background: var(--bg-nav); border: 1px solid var(--green); border-radius: 2px; padding: 4px 10px; }
+.nr-livepill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); animation: pulse-glow 2.4s ease-in-out infinite; }
 /* Punchy short headline -> sized up to be the confident anchor of the hero
    (the strongest statement on the page); a tight max-width gives it a bold
    two-line stack on desktop, scaling down responsively via clamp. */
@@ -457,11 +466,13 @@ const NR_CSS = `
 .nr-point-clause { color: var(--text-secondary); }
 
 /* ── LIVE TELEMETRY (centerpiece) ── elevated bar; dividers between items */
-.nr-telemetry { display: flex; align-items: center; flex-wrap: wrap; gap: 0 18px; margin-top: 18px; padding: 14px 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
-.nr-tele-live { display: inline-flex; align-items: center; gap: 7px; }
-.nr-tele-live-text { font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--green); }
-.nr-tele-item { display: inline-flex; align-items: baseline; gap: 7px; padding-left: 18px; border-left: 1px solid var(--border-subtle); }
-.nr-tele-val { font-family: var(--font-orbitron); font-size: 15px; font-weight: 900; letter-spacing: 0.3px; color: var(--text-primary); }
+/* Bold mono stat strip -- darker recessed bar for contrast; ONLINE is the lone
+   accent-colored stat, the rest stay primary/quiet. */
+.nr-telemetry { display: flex; align-items: center; flex-wrap: wrap; gap: 0 18px; margin-top: 18px; padding: 16px 20px; background: var(--bg-nav); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
+.nr-tele-item { display: inline-flex; align-items: baseline; gap: 8px; padding-left: 18px; border-left: 1px solid var(--border-subtle); }
+.nr-tele-item:first-child { padding-left: 0; border-left: 0; }
+.nr-tele-val { font-family: var(--font-orbitron); font-size: 18px; font-weight: 900; letter-spacing: 0.3px; color: var(--text-primary); }
+.nr-tele-accent .nr-tele-val { color: var(--green); }
 .nr-tele-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
 
 /* ── NETWORK VOICE (Vantage) ── featured callout; silver spine + quote */
@@ -469,7 +480,7 @@ const NR_CSS = `
 .nr-voice-byline { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
 .nr-voice-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--nr-vantage); flex-shrink: 0; }
 .nr-voice-role { color: var(--text-tertiary); }
-.nr-voice-line { font-size: 17px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; font-style: normal; }
+.nr-voice-line { font-size: 18px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; font-style: italic; }
 .nr-voice-teaching { font-size: 14px; color: var(--text-tertiary); }
 .nr-voice-empty { border-left-color: var(--border); }
 /* Vantage's cross-game brief, featured directly under her hero line. */
@@ -540,7 +551,9 @@ const NR_CSS = `
 .nr-col-empty, .nr-col-prelaunch { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
 
 /* ── Creator-coverage "incoming" panel (intentional, not a TODO) ── */
-.nr-coming { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 2px; }
+/* Reserved creator-coverage slot -- a subtle left accent + mono labels make it
+   read as an intentional "incoming" slot, not a broken/empty box. */
+.nr-coming { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-left: 2px solid var(--border); border-radius: 2px; }
 .nr-coming-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
 .nr-coming-soon { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px; }
 .nr-coming-text { flex-basis: 100%; font-size: 11px; line-height: 1.45; color: var(--text-tertiary); }
