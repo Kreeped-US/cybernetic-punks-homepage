@@ -231,7 +231,7 @@ export default async function NetworkRoot() {
         <div className="nr-wrap nr-header-row">
           <div className="nr-brand">
             <span className="nr-brand-dot" aria-hidden="true" />
-            <span className="nr-brand-name">CYBERNETIC<span className="nr-brand-accent">PUNKS</span></span>
+            <span className="nr-brand-name">CYBERNETIC <span className="nr-brand-accent">PUNKS</span></span>
           </div>
           <AccountMenu align="right" />
         </div>
@@ -411,9 +411,15 @@ export default async function NetworkRoot() {
 // (--nr-vantage). Depth via --nr-elev + inset highlights. Motion, hover,
 // :focus-visible, reduced-motion, and responsive collapse are centralized here.
 const NR_CSS = `
-/* --nr-vantage: the network's own accent (silver/platinum per the persona spec --
-   distinct from the game accents + editor palette). --nr-elev: shared soft
-   elevation (depth/warmth without hue). Single-source here. */
+/* NETWORK PALETTE (two tiers, restrained):
+   - The RED brand accent (var(--red), CP red from the logo) carries the few
+     "pops": the LIVE pill, the ONLINE stat, and the primary CTA -- alongside the
+     pre-existing brand dot / wordmark / footer dot. This replaced Marathon's green
+     so the network no longer reads as a Marathon site.
+   - --nr-vantage stays the quiet, NEUTRAL structural accent (silver) for the many
+     small ticks/borders/bylines, so red does not blanket the page (restraint).
+   Neither is a per-game color: Marathon green + DMZ forest come from
+   game.theme.primary and are never recolored here. */
 .nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; --nr-elev: 0 3px 16px rgba(0,0,0,0.30); }
 .nr-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
@@ -440,9 +446,9 @@ const NR_CSS = `
 .nr-hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%; }
 .nr-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
 .nr-eyebrow::before { content: "// "; color: var(--nr-vantage); }
-/* LIVE pill -- THE one broadcast accent (neon green); everything else stays quiet. */
-.nr-livepill { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--green); background: var(--bg-nav); border: 1px solid var(--green); border-radius: 2px; padding: 4px 10px; }
-.nr-livepill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); animation: pulse-glow 2.4s ease-in-out infinite; }
+/* LIVE pill -- a red broadcast accent (var(--red), CP brand); everything else quiet. */
+.nr-livepill { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--red); background: var(--bg-nav); border: 1px solid var(--red); border-radius: 2px; padding: 4px 10px; }
+.nr-livepill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); box-shadow: 0 0 5px var(--red); animation: pulse-glow 2.4s ease-in-out infinite; }
 /* Punchy short headline -> sized up to be the confident anchor of the hero
    (the strongest statement on the page); a tight max-width gives it a bold
    two-line stack on desktop, scaling down responsively via clamp. */
@@ -455,10 +461,10 @@ const NR_CSS = `
    subhead follows it for newcomer clarity. */
 .nr-kicker { font-size: 18px; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin: 0; }
 .nr-subhead { font-size: clamp(15px, 2.2vw, 18px); font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 54ch; }
-/* Hero CTAs: primary (silver fill) + secondary (outline). Anchor links -> no JS. */
+/* Hero CTAs: primary (red fill) + secondary (outline). Anchor links -> no JS. */
 .nr-cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
 .nr-cta { font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 3px; border: 1px solid var(--border); transition: transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease; }
-.nr-cta-primary { background: var(--nr-vantage); border-color: var(--nr-vantage); color: var(--bg-page); }
+.nr-cta-primary { background: var(--red); border-color: var(--red); color: var(--text-primary); }
 .nr-cta-primary:hover { transform: translateY(-1px); }
 .nr-cta-secondary { background: transparent; color: var(--text-primary); }
 .nr-cta-secondary:hover { border-color: var(--text-tertiary); background: var(--bg-card); }
@@ -476,7 +482,7 @@ const NR_CSS = `
 .nr-tele-item { display: inline-flex; align-items: baseline; gap: 8px; padding-left: 18px; border-left: 1px solid var(--border-subtle); }
 .nr-tele-item:first-child { padding-left: 0; border-left: 0; }
 .nr-tele-val { font-family: var(--font-orbitron); font-size: 18px; font-weight: 900; letter-spacing: 0.3px; color: var(--text-primary); }
-.nr-tele-accent .nr-tele-val { color: var(--green); }
+.nr-tele-accent .nr-tele-val { color: var(--red); }
 .nr-tele-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
 
 /* ── NETWORK VOICE (Vantage) ── featured callout; silver spine + quote */
