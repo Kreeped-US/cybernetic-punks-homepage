@@ -139,12 +139,23 @@ function buildNoRepeatBlock(headlines) {
     '\n\n--- TOPICS YOU ALREADY COVERED -- DO NOT REPEAT THESE ANGLES ---\n' +
     headlines.map(function(h, i) { return (i + 1) + '. ' + h; }).join('\n') +
     '\nChoose a completely different weapon, shell, strategy, or topic this cycle. ' +
-    'If the source material overlaps with a previous topic, find a fresh angle within it.\n' +
+    'If the source material overlaps with a previous topic, find a fresh angle within it. ' +
+    'Never reuse an exact title from the list above -- your headline must be a distinct string, not one already used.\n' +
     'This list is INTERNAL editorial guidance ONLY. Never mention, reference, or narrate it in the article -- ' +
     'no "I already covered...", no "the previous article covered...", no "this cycle we\'re doing X instead". ' +
     'Just write the fresh piece on the different angle; the reader must never see that a no-repeat rule shaped it.\n---'
   );
 }
+
+// Forward-only publish guards (prevent duplicate-title + empty-body articles).
+// MIN_BODY_WORDS: an article below this is treated as empty/near-empty and is NOT
+// published. The floor sits well under the shortest LEGITIMATE content (~82-word
+// GHOST community blurbs), so it only catches broken/empty bodies, never real
+// short pieces. normalizeTitle: case/whitespace-insensitive compare for the exact-
+// title collision guard.
+var MIN_BODY_WORDS = 50;
+function wordCount(s) { return (s || '').trim().split(/\s+/).filter(Boolean).length; }
+function normalizeTitle(t) { return (t || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
 
 function buildPatchPriorityBlock(patchItems) {
   if (!patchItems || patchItems.length === 0) return '';
@@ -491,6 +502,31 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       }
     }
 
+    // ── FORWARD-ONLY PUBLISH GUARDS (no existing rows touched) ──
+    // These run AFTER the NEXUS tier regrade above, so a skipped article never
+    // costs the meta_tiers update; only the article publication is prevented.
+    //
+    // (1) Empty/near-empty body: never publish a thin/empty article as indexable.
+    //     (The persist path previously only checked for a MISSING headline, so
+    //     0-word bodies slipped through as is_published+noindex=false.)
+    var bodyWords = wordCount(result.body);
+    if (bodyWords < MIN_BODY_WORDS) {
+      console.log('[CRON] ' + editorName + ' SKIP publish: body too short (' + bodyWords + ' words < ' + MIN_BODY_WORDS + ')');
+      return { editor: editorName, success: false, error: 'body too short (' + bodyWords + ' words)' };
+    }
+    // (2) Exact-title collision vs this editor's RECENT published titles. The soft
+    //     prompt no-repeat is proven insufficient on its own, so enforce at persist.
+    //     MIRANDA reads its own last-12 (prompt.recentHeadlines from gatherMirandaData);
+    //     the other four read the cron's last-8 map (rawData.recentHeadlines).
+    var recentTitles = editorName === 'MIRANDA'
+      ? (prompt && Array.isArray(prompt.recentHeadlines) ? prompt.recentHeadlines : [])
+      : ((rawData.recentHeadlines && rawData.recentHeadlines[editorName]) || []);
+    var newTitleNorm = normalizeTitle(result.headline);
+    if (recentTitles.some(function(t) { return normalizeTitle(t) === newTitleNorm; })) {
+      console.log('[CRON] ' + editorName + ' SKIP publish: duplicate title vs recent ("' + result.headline + '")');
+      return { editor: editorName, success: false, error: 'duplicate title vs recent' };
+    }
+
     var { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
 
     if (error) {
@@ -607,6 +643,11 @@ export async function GET(req) {
       DEXTER: (headlineResults[2].data || []).map(function(r) { return r.headline; }),
       GHOST:  (headlineResults[3].data || []).map(function(r) { return r.headline; }),
     };
+
+    // Expose the recent-title map to processEditor for the persist-time exact-title
+    // guard (CIPHER/NEXUS/DEXTER/GHOST). MIRANDA is absent here on purpose -- it
+    // carries its own last-12 titles on prompt.recentHeadlines (gatherMirandaData).
+    rawData.recentHeadlines = recentHeadlines;
 
     // Recent source videos for the ONLY two editors that attach a pool clip
     // (NEXUS/DEXTER). resolveMediaInfo reads this off rawData to skip a clip the

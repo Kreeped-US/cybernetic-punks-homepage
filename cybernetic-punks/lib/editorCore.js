@@ -1101,7 +1101,7 @@ ${videoSummaries}
 
 TOPICS YOU ALREADY COVERED - DO NOT REPEAT THESE ANGLES:
 ${recentHeadlinesBlock}
-Choose a completely different shell, weapon, mod, or topic this cycle. If a topic overlaps a previous one, find a genuinely fresh angle - do not republish the same guide.
+Choose a completely different shell, weapon, mod, or topic this cycle. If a topic overlaps a previous one, find a genuinely fresh angle - do not republish the same guide. Never reuse an exact title from the list above - your headline must be a distinct string, not one already used.
 
 SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec, seasonal reset), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the planner at /cradle. Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to /factions. Use both links sparingly and only when they genuinely help the reader.
 
