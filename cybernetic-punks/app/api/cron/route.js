@@ -84,11 +84,24 @@ function resolveMediaInfo(result, rawData, editorName) {
     };
   }
 
-  if (['NEXUS', 'DEXTER'].includes(editorName) && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
-    var topVideo = rawData.youtubeVideos[0];
+  // Pool fallback for the two editors that attach a trending clip when their
+  // article did not center on a specific video. Give each a DIFFERENT pool slot
+  // so two SAME-CYCLE fallbacks stop landing on the identical top clip (the
+  // incidental-clustering root cause): NEXUS -> [0], DEXTER -> [1]. When the pool
+  // holds only one entry, DEXTER degrades to [0] (unavoidable on a thin cycle).
+  // Only these two editors reach this branch -- CIPHER/GHOST null source_url
+  // downstream and MIRANDA carries its own source_url. An editor whose result
+  // named a specific video already returned above (source_video_id branch), so
+  // this only diversifies the no-specific-video DEFAULT; every article that got a
+  // clip still gets one, and the emitted source_url shape is unchanged (the
+  // article template's extractYouTubeId keeps parsing it).
+  var POOL_SLOT = { NEXUS: 0, DEXTER: 1 };
+  if (POOL_SLOT[editorName] !== undefined && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
+    var slot = Math.min(POOL_SLOT[editorName], rawData.youtubeVideos.length - 1);
+    var poolVideo = rawData.youtubeVideos[slot];
     return {
-      thumbnail: topVideo.thumbnail || 'https://img.youtube.com/vi/' + topVideo.youtube_id + '/hqdefault.jpg',
-      source_url: 'https://www.youtube.com/watch?v=' + topVideo.youtube_id,
+      thumbnail: poolVideo.thumbnail || 'https://img.youtube.com/vi/' + poolVideo.youtube_id + '/hqdefault.jpg',
+      source_url: 'https://www.youtube.com/watch?v=' + poolVideo.youtube_id,
       source: 'YOUTUBE',
     };
   }
