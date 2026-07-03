@@ -15,7 +15,12 @@
 
   /* Accents */
   --green:         #00ff41;
-  --red:           #ff2222;
+  /* --red is the Cybernetic Punks NETWORK brand accent (homepage + /about). A few
+     shades darker than the original #ff2222 -- same hue, less glare on the dark
+     theme. Its only consumers are the network surfaces; DMZ overrides --red in
+     .dmz-theme, and CIPHER's editor red is a separate literal (#ff2222 in
+     lib/editors/roster.js), so neither is affected by this value. */
+  --red:           #cc2222;
 
   /* Editor colors */
   --cipher:        #ff2222;

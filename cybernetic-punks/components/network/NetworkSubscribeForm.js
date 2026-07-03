@@ -3,9 +3,10 @@
 // Network-wide email capture for the front door. Posts to /api/network-notify with
 // { email, honeypot, source:'network-home' } -> the shared dmz_launch_emails table
 // (game_slug='network'). Mirrors the DMZ form's pattern (visually-hidden honeypot,
-// idle/submitting/success/error states, honest copy -- no fake counts) with the
-// network's silver accent token (--nr-vantage). Rendered inside .nr-page, so the
-// page-local --nr-vantage token cascades.
+// idle/submitting/success/error states, honest copy -- no fake counts). The submit
+// button uses the network red accent (var(--red)) to match the rest of the network
+// chrome; the success line uses the neutral silver (--nr-vantage). Rendered inside
+// .nr-page, so both tokens cascade.
 
 import { useState } from 'react';
 
@@ -86,8 +87,8 @@ export default function NetworkSubscribeForm() {
         type="submit"
         disabled={submitting}
         style={{
-          background: 'var(--nr-vantage)', border: '1px solid var(--nr-vantage)', borderRadius: 4,
-          color: 'var(--bg-page)', fontWeight: 800, fontSize: 12, letterSpacing: 1.5,
+          background: 'var(--red)', border: '1px solid var(--red)', borderRadius: 4,
+          color: 'var(--text-primary)', fontWeight: 800, fontSize: 12, letterSpacing: 1.5,
           textTransform: 'uppercase', fontFamily: 'var(--font-mono)', padding: '11px 20px',
           cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.7 : 1, whiteSpace: 'nowrap',
         }}
