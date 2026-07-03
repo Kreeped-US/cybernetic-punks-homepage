@@ -28,6 +28,7 @@
 // The neutral root deliberately does NOT reuse components/Footer.js (that footer
 // carries Marathon vocabulary); a minimal neutral footer is rendered here.
 
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
@@ -35,6 +36,7 @@ import { minutesToNextRun } from '@/lib/cronCadence';
 import GameRoutingTile from '@/components/network/GameRoutingTile';
 import GamePulseColumn from '@/components/network/GamePulseColumn';
 import AccountMenu from '@/components/AccountMenu';
+import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
 
 // ── METADATA ────────────────────────────────────────────────
 // Neutral, network-level title (the layout title.template appends the site name;
@@ -211,9 +213,9 @@ export default async function NetworkRoot() {
   var teleItems = [
     { label: 'GAMES', value: String(ROOT_GAMES.length) },
     anyOnline ? { label: 'ONLINE', value: formatNum(onlineTotal) } : null,
-    stats.articles != null ? { label: 'ARTICLES', value: addCommas(stats.articles) } : null,
+    stats.articles != null ? { label: 'REPORTS', value: addCommas(stats.articles) } : null,
     updatedLabel ? { label: 'UPDATED', value: updatedLabel } : null,
-    { label: 'NEXT UPDATE', value: nextUpdateLabel() },
+    { label: 'NEXT DROP', value: nextUpdateLabel() },
   ].filter(Boolean);
 
   return (
@@ -245,16 +247,23 @@ export default async function NetworkRoot() {
             <h1 id="nr-thesis" className="nr-h1">
               Where the serious players check first.
             </h1>
+            <p className="nr-kicker">Everyone has opinions. We have the data.</p>
+            <p className="nr-subhead">
+              The intelligence network for competitive shooters &mdash; human-verified intel across every game you grind.
+            </p>
+            <div className="nr-cta-row">
+              <a href="#nr-subscribe" className="nr-cta nr-cta-primary">Get intel drops</a>
+              <a href="#nr-zones" className="nr-cta nr-cta-secondary">Explore the network</a>
+            </div>
             <div className="nr-pitch">
-              <p className="nr-kicker">Everyone has opinions. We have the data.</p>
               <ul className="nr-points">
                 <li className="nr-point">
                   <span className="nr-point-tick" aria-hidden="true" />
-                  <span className="nr-point-text"><span className="nr-point-lead">Verified against the live game</span><span className="nr-point-clause"> — every stat checked in-game, never guessed or scraped</span></span>
+                  <span className="nr-point-text"><span className="nr-point-lead">Verified against the live game</span><span className="nr-point-clause"> — every stat checked in-game, never scraped</span></span>
                 </li>
                 <li className="nr-point">
                   <span className="nr-point-tick" aria-hidden="true" />
-                  <span className="nr-point-text"><span className="nr-point-lead">An intelligence engine that never sleeps</span><span className="nr-point-clause"> — every weapon, shell, and patch tracked continuously</span></span>
+                  <span className="nr-point-text"><span className="nr-point-lead">An engine that never sleeps</span><span className="nr-point-clause"> — every weapon, shell, and patch tracked</span></span>
                 </li>
                 <li className="nr-point">
                   <span className="nr-point-tick" aria-hidden="true" />
@@ -262,7 +271,7 @@ export default async function NetworkRoot() {
                 </li>
                 <li className="nr-point">
                   <span className="nr-point-tick" aria-hidden="true" />
-                  <span className="nr-point-text"><span className="nr-point-lead">No hype. No guesswork. Just intel.</span><span className="nr-point-clause"> — the standard others can&apos;t match</span></span>
+                  <span className="nr-point-text"><span className="nr-point-lead">No hype. Just intel.</span><span className="nr-point-clause"> — the standard others can&apos;t match</span></span>
                 </li>
               </ul>
             </div>
@@ -290,9 +299,10 @@ export default async function NetworkRoot() {
               <figure className="nr-voice">
                 <figcaption className="nr-voice-byline">
                   <span className="nr-voice-dot" aria-hidden="true" />
-                  Vivian Cross / Vantage <span className="nr-voice-role">Network Editor</span>
+                  Vivian Cross / Vantage <span className="nr-voice-role">Network editor</span>
                 </figcaption>
                 <blockquote className="nr-voice-line">{voice.hero_line}</blockquote>
+                {voice.brief && <p className="nr-voice-brief">{voice.brief}</p>}
               </figure>
             ) : (
               <div className="nr-voice nr-voice-empty" role="note" aria-label="Network editor briefing">
@@ -310,7 +320,7 @@ export default async function NetworkRoot() {
         <div className="nr-wrap nr-body">
 
           {/* ROUTING TILES (signature; game-agnostic, one per ROOT_GAMES entry) */}
-          <nav className="nr-section" aria-label="Game hubs">
+          <nav id="nr-zones" className="nr-section" aria-label="Game hubs">
             <h2 className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Choose your zone</h2>
             <div className="nr-grid nr-stagger">
               {ROOT_GAMES.map(function(game) {
@@ -325,18 +335,49 @@ export default async function NetworkRoot() {
               <span className="nr-h2-tick" aria-hidden="true" />Network pulse
               {updatedLabel && <span className="nr-h2-meta">updated {updatedLabel}</span>}
             </h2>
-            {/* VANTAGE's optional cross-game brief -- present only when there is real
-                movement; gracefully absent otherwise. Points at the columns below. */}
-            {voice && voice.brief && (
-              <div className="nr-brief">
-                <span className="nr-brief-byline">Network brief - Vantage</span>
-                <p className="nr-brief-text">{voice.brief}</p>
-              </div>
-            )}
+            {/* Vantage's cross-game brief now lives in the featured hero callout
+                (with her hero line); the pulse section stays the per-game columns. */}
             <div className="nr-pulse-grid nr-stagger">
               {ROOT_GAMES.map(function(game) {
                 return <GamePulseColumn key={game.slug} game={game} items={data.feeds[game.slug]} />;
               })}
+            </div>
+          </section>
+
+          {/* TOOLS ROW -- the search-strength reference pages (these are the pages
+              that actually rank). Real links, game-agnostic network utilities. */}
+          <section className="nr-section" aria-labelledby="nr-tools-h">
+            <h2 id="nr-tools-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Tools &amp; references</h2>
+            <div className="nr-tools nr-stagger">
+              {[
+                { href: '/meta',        glyph: '◈', label: 'Tier list',     sub: 'Weapons & shells ranked' },
+                { href: '/leaderboard', glyph: '▲', label: 'Leaderboard',   sub: 'Top runners tracked' },
+                { href: '/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
+                { href: '/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },
+              ].map(function(t) {
+                return (
+                  <Link key={t.href} href={t.href} className="nr-tool">
+                    <span className="nr-tool-glyph" aria-hidden="true">{t.glyph}</span>
+                    <span className="nr-tool-text">
+                      <span className="nr-tool-label">{t.label}</span>
+                      <span className="nr-tool-sub">{t.sub}</span>
+                    </span>
+                    <span className="nr-tool-arrow" aria-hidden="true">&rarr;</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SUBSCRIBE -- network-level email capture (shared list, source-tagged). */}
+          <section id="nr-subscribe" className="nr-section" aria-labelledby="nr-sub-h">
+            <h2 id="nr-sub-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Get intel drops</h2>
+            <div className="nr-subscribe">
+              <div className="nr-subscribe-copy">
+                <p className="nr-subscribe-lead">One email when the meta moves.</p>
+                <p className="nr-subscribe-clause">Network-wide intel across every game we cover. No spam, no hype &mdash; just the drops that matter.</p>
+              </div>
+              <NetworkSubscribeForm />
             </div>
           </section>
 
@@ -397,7 +438,17 @@ const NR_CSS = `
    Small silver diamond ticks (accent = network identity); bold lead + muted
    clause per bullet; tight rhythm. Real ul/li; ticks are decorative. */
 .nr-pitch { display: flex; flex-direction: column; gap: 12px; max-width: 62ch; }
+/* Punchy positioning line (kept) directly under the H1; the plain-language
+   subhead follows it for newcomer clarity. */
 .nr-kicker { font-size: 18px; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin: 0; }
+.nr-subhead { font-size: clamp(15px, 2.2vw, 18px); font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 54ch; }
+/* Hero CTAs: primary (silver fill) + secondary (outline). Anchor links -> no JS. */
+.nr-cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.nr-cta { font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 3px; border: 1px solid var(--border); transition: transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease; }
+.nr-cta-primary { background: var(--nr-vantage); border-color: var(--nr-vantage); color: var(--bg-page); }
+.nr-cta-primary:hover { transform: translateY(-1px); }
+.nr-cta-secondary { background: transparent; color: var(--text-primary); }
+.nr-cta-secondary:hover { border-color: var(--text-tertiary); background: var(--bg-card); }
 .nr-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .nr-point { display: flex; align-items: flex-start; gap: 11px; }
 .nr-point-tick { flex-shrink: 0; width: 6px; height: 6px; margin-top: 7px; border-radius: 1px; background: var(--nr-vantage); transform: rotate(45deg); }
@@ -421,10 +472,8 @@ const NR_CSS = `
 .nr-voice-line { font-size: 17px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; font-style: normal; }
 .nr-voice-teaching { font-size: 14px; color: var(--text-tertiary); }
 .nr-voice-empty { border-left-color: var(--border); }
-/* Vantage cross-game brief (Network pulse) -- same surface language as the voice. */
-.nr-brief { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
-.nr-brief-byline { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
-.nr-brief-text { font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; }
+/* Vantage's cross-game brief, featured directly under her hero line. */
+.nr-voice-brief { font-size: 14px; font-weight: 500; line-height: 1.55; color: var(--text-secondary); margin: 0; }
 
 /* ── SECTIONS ── header gets an accent tick + optional freshness meta */
 .nr-body { display: flex; flex-direction: column; gap: 64px; padding-top: 56px; padding-bottom: 56px; }
@@ -436,6 +485,23 @@ const NR_CSS = `
 /* Grids */
 .nr-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .nr-pulse-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+/* ── Tools row ── search-strength reference pages; compact link cards */
+.nr-tools { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.nr-tool { display: flex; align-items: center; gap: 13px; padding: 16px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); transition: transform .16s ease, border-color .16s ease; }
+.nr-tool:hover { transform: translateY(-2px); border-color: var(--text-disabled); }
+.nr-tool-glyph { font-size: 18px; line-height: 1; color: var(--nr-vantage); flex-shrink: 0; }
+.nr-tool-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.nr-tool-label { font-family: var(--font-orbitron); font-size: 14px; font-weight: 800; letter-spacing: 0.3px; color: var(--text-primary); }
+.nr-tool-sub { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary); }
+.nr-tool-arrow { font-family: var(--font-mono); font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; transition: color .16s ease; }
+.nr-tool:hover .nr-tool-arrow { color: var(--nr-vantage); }
+
+/* ── Subscribe ── network email capture; elevated card, silver spine */
+.nr-subscribe { display: flex; flex-direction: column; gap: 16px; padding: 22px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
+.nr-subscribe-copy { display: flex; flex-direction: column; gap: 6px; }
+.nr-subscribe-lead { font-family: var(--font-orbitron); font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0; }
+.nr-subscribe-clause { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 60ch; }
 
 /* ── SIGNATURE: routing tiles ── (depth added; live count stays boldest) */
 .nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
@@ -507,12 +573,15 @@ const NR_CSS = `
 
 /* Mobile collapse */
 @media (max-width: 640px) {
-  .nr-grid, .nr-pulse-grid { grid-template-columns: 1fr; }
+  .nr-grid, .nr-pulse-grid, .nr-tools { grid-template-columns: 1fr; }
   .nr-body { gap: 40px; padding-top: 36px; }
   .nr-hero-band { padding-top: 40px; }
   .nr-online-num { font-size: 34px; }
   /* Telemetry: drop the dividers when wrapped tight so it reads as chips */
   .nr-telemetry { gap: 10px 16px; }
   .nr-tele-item { padding-left: 0; border-left: 0; }
+  /* CTAs go full-width, stacked, so they are easy thumb targets */
+  .nr-cta-row { flex-direction: column; align-items: stretch; }
+  .nr-cta { text-align: center; }
 }
 `;
