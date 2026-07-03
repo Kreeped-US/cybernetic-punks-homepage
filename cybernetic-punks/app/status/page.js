@@ -23,12 +23,12 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Server Status — Is Marathon Down? Live Uptime',
-  description: 'Is Marathon down? Live Marathon server status for Steam, PlayStation 5, and Xbox Series X|S. Weekly reset schedule, ranked queue rotation, faction contracts, Armory stock, and complete Marathon error code reference.',
+  title: 'Marathon Server Status & Player Activity (Live)',
+  description: 'Live Marathon player activity — current Steam player count and review sentiment — plus the weekly reset schedule, ranked queue rotation, and a complete Marathon error code reference. We report real player activity; we do not have a direct server-health feed, so we do not claim to detect outages.',
   keywords: 'Marathon server status, is Marathon down, Marathon servers down, Marathon maintenance, Marathon weekly reset, Marathon reset schedule, Marathon ranked rotation, Marathon error codes, Marathon WEASEL, Marathon BROCCOLI, Marathon BASIL, Marathon ANTEATER, Marathon CENTIPEDE, Marathon CURRANT, Marathon GINGER, Marathon server issues, Marathon outage, Marathon player count, Marathon steam reviews',
   openGraph: {
-    title: 'Marathon Server Status — Is Marathon Down? Live Uptime | CyberneticPunks',
-    description: 'Live Marathon server status across all platforms. Weekly reset tracker, ranked rotations, and error code fixes.',
+    title: 'Marathon Server Status & Player Activity (Live) | CyberneticPunks',
+    description: 'Live Marathon player count and review sentiment, weekly reset tracker, ranked rotation, and a complete error code reference.',
     url: 'https://cyberneticpunks.com/status',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -36,8 +36,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Server Status — Is Marathon Down? Live Uptime | CyberneticPunks',
-    description: 'Live server status, weekly reset tracker, and error code reference.',
+    title: 'Marathon Server Status & Player Activity (Live) | CyberneticPunks',
+    description: 'Live player activity, weekly reset tracker, and error code reference.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/status' },
 };
@@ -55,18 +55,11 @@ const ORANGE = '#ff8800';
 const YELLOW = '#ffd700';
 const PURPLE = '#9b5de5';
 
-const PLATFORM_INFO = {
-  steam:       { label: 'STEAM (PC)',       icon: '⊞' },
-  playstation: { label: 'PLAYSTATION 5',    icon: '△' },
-  xbox:        { label: 'XBOX SERIES X|S',  icon: '⊕' },
-};
-
-const STATUS_STYLES = {
-  online:      { color: GREEN,  label: 'ONLINE' },
-  issues:      { color: YELLOW, label: 'ISSUES' },
-  maintenance: { color: ORANGE, label: 'MAINTENANCE' },
-  offline:     { color: RED,    label: 'OFFLINE' },
-};
+// NOTE: the old server_status-driven up/down (PLATFORM_INFO + STATUS_STYLES + the
+// aggregate "operational" banner) was removed -- the server_status table has no
+// writer and no reachability source backs it, so any UP/DOWN claim was
+// unsubstantiated. The page now reports only what is real (live player count,
+// review sentiment, weekly reset, ranked-queue schedule, error-code reference).
 
 const ERROR_CODES = [
   { code: 'BASIL',     desc: 'Basic disconnect. Try logging back in. If persistent, check server status above.',                                             severity: 'low' },
@@ -182,53 +175,32 @@ function SectionHeader({ label, color, count, rightLink }) {
 
 // ─── PAGE ───────────────────────────────────────────────────
 export default async function StatusPage() {
-  var [steamPlayers, steamReviews, serverStatusRes, weeklyResetRes, incidentsRes] = await Promise.all([
+  // NO server_status fetch: it has no writer and no reachability source, so it
+  // cannot substantiate an up/down claim. We fetch only what is real.
+  var [steamPlayers, steamReviews, weeklyResetRes, incidentsRes] = await Promise.all([
     getLiveSteamPlayers(),
     getSteamReviews(),
-    supabase.from('server_status').select('*').order('updated_at', { ascending: false }),
     supabase.from('weekly_reset').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
     supabase.from('server_incidents').select('*').order('created_at', { ascending: false }).limit(5),
   ]);
 
-  var serverStatus = serverStatusRes.data || [];
-  var weeklyReset  = weeklyResetRes.data || [];
-  var incidents    = incidentsRes.data || [];
-
-  var platforms = ['steam', 'playstation', 'xbox'];
-  var statusMap = {};
-  serverStatus.forEach(function(s) { statusMap[s.platform] = s; });
+  var weeklyReset = weeklyResetRes.data || [];
+  var incidents   = incidentsRes.data || [];
 
   var resetItems = (weeklyReset && weeklyReset.length > 0) ? weeklyReset : null;
   var queueStatus = getRankedStatus();
 
-  // Queue card display values, derived from phase
+  // Queue card display values, derived from phase (real, date-computed)
   var queueColor = queueStatus.phase === 'returns' ? YELLOW : (queueStatus.isOpen ? GREEN : ORANGE);
   var queueLabel = queueStatus.phase === 'returns' ? 'RETURNS JUN 14' : (queueStatus.isOpen ? 'OPEN' : 'CLOSED');
   var queueSub   = queueStatus.phase === 'returns'
     ? 'Season 2 ranked returns June 14'
     : (queueStatus.isOpen ? 'Closes Thursday 10AM PT' : 'Reopens Sunday 10AM PT');
 
-  // Aggregate status for banner
-  var allOnline = platforms.every(function(p) {
-    var data = statusMap[p];
-    return !data || data.status === 'online' || !data.status;
-  });
-  var anyOffline = platforms.some(function(p) {
-    var data = statusMap[p];
-    return data && (data.status === 'offline' || data.status === 'maintenance');
-  });
-  var aggregateStatus = anyOffline
-    ? { color: RED, label: 'SERVICE DISRUPTION', desc: 'One or more platforms are experiencing issues' }
-    : allOnline
-      ? { color: GREEN, label: 'ALL SYSTEMS OPERATIONAL', desc: 'All platforms online and responding normally' }
-      : { color: YELLOW, label: 'MINOR ISSUES REPORTED', desc: 'Some platforms reporting degraded service' };
-
-  // Active (unresolved) incidents
+  // Active (unresolved) incidents -- a manually-curated table; renders only when
+  // real incidents exist (makes NO claim when empty, unlike the removed banner).
   var activeIncidents = incidents.filter(function(i) { return !i.resolved; });
   var hasActiveIncidents = activeIncidents.length > 0;
-
-  // Last incident for uptime indicator
-  var lastIncident = incidents[0] || null;
 
   // Structured data
   var breadcrumbSchema = {
@@ -279,13 +251,9 @@ export default async function StatusPage() {
         </ol>
       </nav>
 
-      {/* ══ HERO + AGGREGATE STATUS ═════════════════════════ */}
+      {/* ══ HERO + LIVE PLAYER ACTIVITY ═════════════════════ */}
       <section style={{ padding: '24px 24px 32px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: aggregateStatus.color, background: aggregateStatus.color + '15', border: '1px solid ' + aggregateStatus.color + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: aggregateStatus.color, animation: 'stPulse 2s ease-in-out infinite' }} />
-            {aggregateStatus.label}
-          </span>
           {steamPlayers && (
             <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(0,255,65,0.08)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
               {steamPlayers.toLocaleString()} RUNNERS ONLINE
@@ -299,8 +267,8 @@ export default async function StatusPage() {
         <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2rem, 5.5vw, 3.4rem)', fontWeight: 900, letterSpacing: 1, lineHeight: 1.05, margin: '0 0 18px' }}>
           MARATHON<br /><span style={{ color: GREEN }}>SERVER STATUS</span>
         </h1>
-        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 580, marginBottom: 20 }}>
-          Live Marathon server status across Steam, PlayStation 5, and Xbox Series X|S. Plus weekly reset schedule, ranked queue rotation, recent incidents, and error code reference.
+        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 620, marginBottom: 20 }}>
+          Live Marathon player activity — current player count and review sentiment — plus the weekly reset schedule, ranked queue rotation, and a full error code reference. We report real player activity; we do not have a direct server-health feed, so we do not claim to detect outages. For official outage and maintenance news, follow @BungieHelp below.
         </p>
         <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700, letterSpacing: 1 }}>
           FOLLOW <a href="https://x.com/BungieHelp" target="_blank" rel="noopener noreferrer" style={{ color: CYAN, textDecoration: 'none' }}>@BUNGIEHELP</a> FOR OFFICIAL ANNOUNCEMENTS
@@ -323,40 +291,12 @@ export default async function StatusPage() {
         </section>
       )}
 
-      {/* ══ PLATFORM STATUS + QUEUE STATUS ══════════════════ */}
+      {/* ══ RANKED QUEUE STATUS ═════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
-        <SectionHeader label="PLATFORM STATUS" count="3 PLATFORMS" />
+        <SectionHeader label="RANKED QUEUE" />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 6 }}>
-          {platforms.map(function(platform) {
-            var info = PLATFORM_INFO[platform];
-            var data = statusMap[platform];
-            var status = data && STATUS_STYLES[data.status] ? STATUS_STYLES[data.status] : STATUS_STYLES.online;
-            return (
-              <div key={platform} className="st-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + status.color, borderRadius: '0 0 2px 2px', padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{ fontSize: 24, flexShrink: 0 }}>{info.icon}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: 1, marginBottom: 2 }}>{info.label}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: status.color }} />
-                      <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: status.color, letterSpacing: 1 }}>{status.label}</span>
-                    </div>
-                  </div>
-                </div>
-                {data && data.note && (
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4, marginTop: 8, paddingTop: 8, borderTop: '1px solid ' + BORDER }}>{data.note}</div>
-                )}
-                {data && data.updated_at && (
-                  <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', marginTop: 8, letterSpacing: 1, fontWeight: 700 }}>
-                    UPDATED {timeAgo(data.updated_at).toUpperCase()}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Ranked Queue Status Card */}
+          {/* Ranked Queue Status Card (real, date-computed rotation) */}
           <div className="st-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + queueColor, borderRadius: '0 0 2px 2px', padding: '18px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <div style={{ fontSize: 24, flexShrink: 0 }}>◎</div>
