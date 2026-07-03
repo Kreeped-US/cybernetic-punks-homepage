@@ -59,6 +59,15 @@ function isTwitchContent(result) {
   return false;
 }
 
+// Extract the YouTube id from a watch/embed/youtu.be URL -- mirrors the article
+// template's extractYouTubeId. Used to compare a pool clip against an editor's
+// recently-used source videos for the cross-cycle no-repeat.
+function youtubeIdFromUrl(url) {
+  if (!url) return null;
+  var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
 function resolveMediaInfo(result, rawData, editorName) {
   var videoId = result.source_video_id || null;
   var isTwitch = isTwitchContent(result);
@@ -97,8 +106,23 @@ function resolveMediaInfo(result, rawData, editorName) {
   // article template's extractYouTubeId keeps parsing it).
   var POOL_SLOT = { NEXUS: 0, DEXTER: 1 };
   if (POOL_SLOT[editorName] !== undefined && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
-    var slot = Math.min(POOL_SLOT[editorName], rawData.youtubeVideos.length - 1);
-    var poolVideo = rawData.youtubeVideos[slot];
+    var pool = rawData.youtubeVideos;
+    var slot = Math.min(POOL_SLOT[editorName], pool.length - 1);
+    var poolVideo = pool[slot];
+    // Cross-cycle no-repeat: from this editor's slot FORWARD, prefer the first
+    // pool clip it did NOT use in its recent window (rawData.recentVideoIds), so a
+    // clip that stays top-of-pool for days stops recurring across daily cycles.
+    // Scanning from `slot` (not 0) preserves the same-cycle separation -- DEXTER
+    // still starts at [1], never reaching for NEXUS's [0]. If every clip from the
+    // slot onward was recently used (or there is no history), keep the slot clip:
+    // a repeat beats no clip. Per-editor history only, so this stays race-free
+    // across the parallel editors.
+    var recentIds = (rawData.recentVideoIds && rawData.recentVideoIds[editorName]) || [];
+    if (recentIds.length > 0) {
+      for (var k = slot; k < pool.length; k++) {
+        if (recentIds.indexOf(pool[k].youtube_id) === -1) { poolVideo = pool[k]; break; }
+      }
+    }
     return {
       thumbnail: poolVideo.thumbnail || 'https://img.youtube.com/vi/' + poolVideo.youtube_id + '/hqdefault.jpg',
       source_url: 'https://www.youtube.com/watch?v=' + poolVideo.youtube_id,
@@ -566,11 +590,15 @@ export async function GET(req) {
       console.log('[CRON] Directive fetch failed (non-fatal): ' + dirErr.message);
     }
 
+    // Recent per-editor rows (last 8) feed TWO no-repeat mechanisms off ONE read:
+    // the angle no-repeat (headline -> buildNoRepeatBlock) and the cross-cycle
+    // SOURCE-VIDEO no-repeat (source_url -> resolveMediaInfo). source_url is added
+    // to the same query so there is no extra round-trip.
     var headlineResults = await Promise.all([
-      supabase.from('feed_items').select('headline').eq('editor', 'CIPHER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline').eq('editor', 'NEXUS').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline').eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline').eq('editor', 'GHOST').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline, source_url').eq('editor', 'CIPHER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline, source_url').eq('editor', 'NEXUS').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline, source_url').eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline, source_url').eq('editor', 'GHOST').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
     ]);
 
     var recentHeadlines = {
@@ -578,6 +606,14 @@ export async function GET(req) {
       NEXUS:  (headlineResults[1].data || []).map(function(r) { return r.headline; }),
       DEXTER: (headlineResults[2].data || []).map(function(r) { return r.headline; }),
       GHOST:  (headlineResults[3].data || []).map(function(r) { return r.headline; }),
+    };
+
+    // Recent source videos for the ONLY two editors that attach a pool clip
+    // (NEXUS/DEXTER). resolveMediaInfo reads this off rawData to skip a clip the
+    // editor used recently. Non-fallback editors need no entry.
+    rawData.recentVideoIds = {
+      NEXUS:  (headlineResults[1].data || []).map(function(r) { return youtubeIdFromUrl(r.source_url); }).filter(Boolean),
+      DEXTER: (headlineResults[2].data || []).map(function(r) { return youtubeIdFromUrl(r.source_url); }).filter(Boolean),
     };
 
     var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
