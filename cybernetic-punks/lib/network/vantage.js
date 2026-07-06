@@ -153,6 +153,19 @@ OUTPUT - call the publish_discourse_article tool:
 - body: the discourse article, following the structure and honesty rules above.
 - skip: set TRUE only if the vetted source text is too thin, vague, or unclear to write an honest article from. When skip is true, leave headline and body null and give a one-sentence skip_reason. Refusing is correct when the source cannot support an honest piece; fabricating to fill space is not.`;
 
+// AUTO-SOURCE ADDENDUM: appended to the discourse system prompt ONLY when the
+// source was auto-selected from a YouTube video (scripts/gen-vantage-discourse-auto.mjs),
+// not a human-vetted paste. The manual path does NOT use this. It raises the
+// inference bar for the higher-risk auto case: characterize only what the video's
+// own text actually argues; a provocative title with no supporting argument is a
+// SKIP. All the base honesty rules still apply.
+export const VANTAGE_DISCOURSE_AUTO_ADDENDUM = `--- AUTO-SOURCE NOTE (this source was auto-selected from a YouTube video, not a human-vetted quote) ---
+The VETTED SOURCE TEXT above is a single video's OWN title, description, and (when present) auto-generated transcript -- machine-pulled, not a human-checked paste. Treat it with EXTRA caution:
+- Characterize ONLY the argument the video's text actually makes. If the substance is a provocative title with no supporting argument in the description or transcript, that is NOT enough to write from -- SKIP it (skip=true, with a skip_reason). Do NOT infer the argument the title implies.
+- View counts, likes, and the title's framing are NOT evidence of what the creator argues; only their actual words (description / transcript) count.
+- Every base rule still applies exactly: write strictly from the source, attribute don't assert, never call a game's state or reception settled in your own voice.
+--- END AUTO-SOURCE NOTE ---`;
+
 // Tool schema -- forces structured output (headline / body / skip).
 export const VANTAGE_DISCOURSE_TOOL = {
   name: 'publish_discourse_article',

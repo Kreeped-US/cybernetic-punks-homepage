@@ -4,7 +4,7 @@
 // the only game today; DMZ (lib/games/dmz.js) is added in Phase B.
 // See docs/network/GATHER_GAP2_DMZ_SCOPING.md.
 
-import { marathon } from './marathon';
+import { marathon } from './marathon.js';
 
 export const GAMES = {
   marathon,

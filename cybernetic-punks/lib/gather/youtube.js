@@ -10,7 +10,7 @@
 // only — the tool schema handles the structural contract.
 
 import { fetchTranscripts } from './transcript.js';
-import { getGameConfig } from '../games';
+import { getGameConfig } from '../games/index.js';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 

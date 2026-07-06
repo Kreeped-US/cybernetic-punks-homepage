@@ -8,6 +8,7 @@ import { gatherBungieNews, formatBungieNewsForEditor } from './bungie.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
 import { gatherCipher } from './cipher.js';
 import { getGameConfig } from '../games';
+import { filterGameVideos } from './relevance.js';
 
 // X API intake removed April 27, 2026 — Free tier doesn't permit search/recent
 // endpoint, and Basic tier ($200/mo) wasn't justified by the data quality lift.
@@ -43,43 +44,11 @@ import { getGameConfig } from '../games';
 // A thinner, clean feed is the intended trade-off; editors degrade gracefully
 // on thin input (they report sparsely rather than fabricate).
 
-// Build a lowercase haystack from every string field on the video object,
-// regardless of exact field names (title, description, channelTitle, snippet,
-// etc.) - robust to differing shapes across the youtube/miranda gatherers.
-function videoHaystack(v) {
-  if (!v || typeof v !== 'object') return '';
-  var parts = [];
-  for (var k in v) {
-    if (Object.prototype.hasOwnProperty.call(v, k) && typeof v[k] === 'string') {
-      parts.push(v[k]);
-    }
-  }
-  return parts.join(' ').toLowerCase();
-}
-
-function isGameContent(v, relevance) {
-  var hay = videoHaystack(v);
-  if (!hay) return false; // strict: cannot verify relevance -> drop
-  var gameTokens = relevance.gameTokens;
-  for (var i = 0; i < gameTokens.length; i++) {
-    if (hay.indexOf(gameTokens[i]) !== -1) return true;
-  }
-  if (hay.indexOf(relevance.ambiguousTerm) !== -1) {
-    var contextTokens = relevance.contextTokens;
-    for (var j = 0; j < contextTokens.length; j++) {
-      if (hay.indexOf(contextTokens[j]) !== -1) return true;
-    }
-  }
-  return false;
-}
-
-function filterGameVideos(videos, label, relevance) {
-  var input = Array.isArray(videos) ? videos : [];
-  var kept = input.filter(function (v) { return isGameContent(v, relevance); });
-  var dropped = input.length - kept.length;
-  console.log('[GATHER] ' + label + ' relevance filter: ' + input.length + ' -> ' + kept.length + ' kept (' + dropped + ' off-topic dropped)');
-  return kept;
-}
+// The relevance filter (videoHaystack / isGameContent / filterGameVideos) now
+// lives in ./relevance.js -- a barrel-free module so bare-node scripts can reuse
+// filterGameVideos without importing this whole gather index. filterGameVideos is
+// imported at the top; behavior here is unchanged (same calls at the two sites
+// below).
 
 export async function gatherAll(config = getGameConfig()) {
   console.log('[GATHER] Starting data collection for ' + config.slug + '...');
