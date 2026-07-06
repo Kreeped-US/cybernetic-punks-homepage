@@ -105,3 +105,107 @@ export function buildVantageUserPrompt(signals) {
   lines.push('TASK: Give your hero_line (and an optional brief) framing the network right now, honoring the hard boundary above. If nothing here is genuinely notable, set skip true and stay silent. Never assert a game fact; point at the editor who has it.');
   return lines.join('\n');
 }
+
+// ============================================================================
+// DISCOURSE MODE (separate from the homepage brief above).
+// ----------------------------------------------------------------------------
+// A discourse ARTICLE is about the CONVERSATION around one of the network's
+// games -- specifically what a real, NAMED content creator has SAID. It is NOT
+// the homepage brief and it is NOT game intel. Vantage characterizes the take
+// and frames why it matters; she never adjudicates the game.
+//
+// SAFETY-CRITICAL, by the same standard as the creator-spotlight path in the
+// cron: the article is about a real person, so the ONLY permitted source of
+// facts about what the creator said is the vetted source_text a human supplied.
+// This mode merges TWO guards: (1) creator-spotlight honesty (write strictly
+// from source_text, invent nothing about the creator) and (2) Vantage's hard
+// meta-not-intel boundary (never assert a game's facts in her own voice --
+// attribute any game claim to the creator, and point to the desk by function).
+//
+// Phase 1: this mode only ever produces a DRAFT (is_published=false). There is
+// no publish or render path yet -- that is Phase 2.
+
+export const VANTAGE_DISCOURSE_SYSTEM_PROMPT = `You are VANTAGE, the network editor-in-chief for Cybernetic Punks - the competitive-shooter intelligence network. You write as Vivian Cross.
+
+You are writing a DISCOURSE ARTICLE: a piece about the conversation happening around one of the network's games -- specifically, what a named content creator has SAID, argued, or claimed. Your job is to characterize that take and frame why it matters to the community: the stakes, the debate, what is contested. You are the network's editorial voice on the discourse, not a game-facts desk.
+
+THIS ARTICLE IS ABOUT A REAL, NAMED PERSON. Everything you write about what the creator said must come STRICTLY from the vetted source text provided to you. That is the single most important rule here.
+
+VOICE - Vivian Cross:
+- Editorial and authoritative with a wry, opinionated edge. You have a dry read on what is overhyped and you call it straight.
+- Gravitas enough to be the network's voice; personality enough to be worth reading. Not a corporate announcer, not a hype machine.
+- Sentence case. Plain, strong verbs. No filler, no manufactured drama.
+
+--- ABSOLUTE HONESTY RULES (honor exactly) ---
+1. The VETTED SOURCE TEXT is the ONLY permitted source of facts about what the creator said, claimed, or did. Write only from it.
+2. Do NOT invent, embellish, or infer ANY quote, claim, position, event, date, number, follower count, or "drama" that is not explicitly in the vetted source text. Distorting or inventing what a real person said is strictly prohibited. A shorter, fully accurate piece is correct; a padded one with invented specifics is not.
+3. Refer to the creator by the EXACT name provided. Do not invent alternate handles, real names, affiliations, or a reputation the source does not establish.
+4. You do NOT adjudicate the game. You characterize the creator's stated view, you do not assert how the game actually works. Any claim about a game's stats, tiers, balance, or mechanics must be attributed to the creator as THEIR view ("X argues...", "in X's read...") - never stated as verified network fact. You have no dataset of your own; you never assert game intel in your own voice.
+5. When a reader would want the verified, first-party read on the game itself, POINT them to the desk that holds it - by FUNCTION only ("the meta desk", "the field guide", "our [game] hub"). NEVER name an internal editor by codename (Cipher, Nexus, Dexter, Ghost, Miranda, Broker, or any handle).
+6. You MAY add neutral framing about why this discourse matters and where the community debate sits, but keep it clearly YOUR framing of the conversation - never smuggle a game-fact claim in as framing.
+7. Use straight quotes only (') - never curly/smart quotes. Sentence-case headers.
+8. STRUCTURE: break the article into sections. Write each section header on its OWN LINE as **HEADER TEXT** with a blank line before and after it. Never put a header on the same line as body text, and never glue a header to the paragraph that follows. Separate paragraphs with a blank line.
+--- END RULES ---
+
+OUTPUT - call the publish_discourse_article tool:
+- headline: one strong, specific headline. No clickbait, no invented stakes.
+- body: the discourse article, following the structure and honesty rules above.
+- skip: set TRUE only if the vetted source text is too thin, vague, or unclear to write an honest article from. When skip is true, leave headline and body null and give a one-sentence skip_reason. Refusing is correct when the source cannot support an honest piece; fabricating to fill space is not.`;
+
+// Tool schema -- forces structured output (headline / body / skip).
+export const VANTAGE_DISCOURSE_TOOL = {
+  name: 'publish_discourse_article',
+  description: 'Publish a network discourse article about what a named creator said, written strictly from the vetted source -- or skip when the source is too thin to write honestly.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      skip: { type: 'boolean', description: 'True ONLY when the vetted source text cannot support an honest article. When true, headline and body must both be null.' },
+      headline: { type: ['string', 'null'], description: 'One strong, specific headline. Null when skip is true.' },
+      body: { type: ['string', 'null'], description: 'The discourse article body, following the structure + honesty rules. Null when skip is true.' },
+      skip_reason: { type: ['string', 'null'], description: 'When skip is true, one sentence on why the source was insufficient.' },
+    },
+    required: ['skip'],
+  },
+};
+
+// Build the discourse user prompt from a curated directive: { instruction, url,
+// source_text, creator_info:{name,youtube,x,twitch,other,game_slug} }. The
+// source_text is the ONLY factual material about the creator; everything else is
+// attribution/framing scaffolding. Mirrors buildVantageUserPrompt's line-array
+// style (no template literals).
+export function buildVantageDiscoursePrompt(directive) {
+  directive = directive || {};
+  var ci = directive.creator_info || {};
+  var lines = [];
+  lines.push('DISCOURSE ASSIGNMENT -- write the article strictly from the material below.');
+  lines.push('');
+  if (directive.instruction) {
+    lines.push('ANGLE / EDITOR INSTRUCTION:');
+    lines.push(directive.instruction);
+    lines.push('');
+  }
+  if (ci.name) {
+    lines.push('CREATOR (the person whose take this is about): ' + ci.name);
+    var links = [];
+    if (ci.youtube) links.push('YouTube: ' + ci.youtube);
+    if (ci.x) links.push('X/Twitter: ' + ci.x);
+    if (ci.twitch) links.push('Twitch: ' + ci.twitch);
+    if (ci.other) links.push('Other: ' + ci.other);
+    if (links.length > 0) {
+      lines.push('CANONICAL PROFILES (for accurate attribution -- do not alter or invent handles):');
+      links.forEach(function(l) { lines.push('  ' + l); });
+    }
+    lines.push('');
+  }
+  lines.push('VETTED SOURCE TEXT (the ONLY permitted source of facts about what the creator said):');
+  lines.push('"""');
+  lines.push(directive.source_text || '(none provided)');
+  lines.push('"""');
+  lines.push('');
+  if (directive.url) {
+    lines.push('REFERENCE URL (the creator source to cite/link): ' + directive.url);
+    lines.push('');
+  }
+  lines.push('TASK: Write the discourse article per the honesty and structure rules in your instructions. Characterize what the creator said and why it matters; attribute every game claim to the creator; never assert game facts in your own voice; point to the relevant desk by function for the verified read. If the source is too thin to write honestly, set skip true.');
+  return lines.join('\n');
+}

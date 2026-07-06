@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import UsageStats from '@/components/UsageStats';
 import QualityMetricsPanel from '@/components/QualityMetricsPanel';
 import QualityAlertsPanel from '@/components/QualityAlertsPanel';
+import VantageDraftsPanel from '@/components/VantageDraftsPanel';
 
 const FACTION_NAMES = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
 const STAT_NAMES = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration', 'DBNO', 'TAD'];
@@ -139,8 +140,8 @@ const SCHEMAS = {
   ],
 
   editor_directives: [
-    { key: 'editor',        label: 'Editor',          type: 'select',         required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'] },
-    { key: 'directive_type',label: 'Directive Type',  type: 'select',         required: true, options: ['standard', 'creator_spotlight'] },
+    { key: 'editor',        label: 'Editor',          type: 'select',         required: true, options: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA', 'VANTAGE'] },
+    { key: 'directive_type',label: 'Directive Type',  type: 'select',         required: true, options: ['standard', 'creator_spotlight', 'discourse'] },
     { key: 'instruction',   label: 'Instruction',     type: 'textarea',       required: true, placeholder: 'e.g. Cover the April 14 balance patch -- Longshot nerf, Recon Echo Pulse buffs.' },
     { key: 'url',           label: 'Source URL',      type: 'text',           placeholder: 'e.g. https://x.com/BungieHelp/status/...' },
     { key: 'source_text',     label: 'Vetted Source Text', type: 'textarea',  creatorOnly: true, placeholder: 'Paste the VETTED facts the article must be built from. The editor writes ONLY from this -- it will not add or invent anything beyond what you put here.' },
@@ -149,6 +150,7 @@ const SCHEMAS = {
     { key: 'creator_x',       label: 'Creator X/Twitter URL', type: 'text',   creatorOnly: true, placeholder: 'https://x.com/...' },
     { key: 'creator_twitch',  label: 'Creator Twitch URL', type: 'text',      creatorOnly: true, placeholder: 'https://twitch.tv/...' },
     { key: 'creator_other',   label: 'Creator Other URL',  type: 'text',      creatorOnly: true, placeholder: 'Any other canonical profile (optional)' },
+    { key: 'creator_game',    label: 'Game Slug (discourse)', type: 'text',    creatorOnly: true, placeholder: 'e.g. dmz (defaults to dmz for VANTAGE discourse drafts)' },
     { key: 'scheduled_for', label: 'Scheduled For',   type: 'datetime-local', placeholder: 'Leave blank to fire on next cycle' },
     { key: 'status',        label: 'Status',          type: 'select',         options: ['pending', 'consumed'] },
   ],
@@ -246,7 +248,14 @@ const CREATOR_FIELD_MAP = {
   creator_x:       'x',
   creator_twitch:  'twitch',
   creator_other:   'other',
+  creator_game:    'game_slug',
 };
+
+// Directive types that carry a vetted source_text + creator_info block (the
+// source-strict flows): creator_spotlight (published by the cron) and discourse
+// (drafted by scripts/gen-vantage-discourse.mjs). Both surface the creatorOnly
+// fields and pack creator_info; standard directives do neither.
+const SOURCE_DIRECTIVE_TYPES = ['creator_spotlight', 'discourse'];
 
 const TABS = [
   { key: 'editor_directives',    label: 'DIRECTIVES',   color: '#ff2d55' },
@@ -378,10 +387,11 @@ function formDataToRow(formData, schema) {
     if (row[formKey]) { creatorInfo[jsonKey] = row[formKey]; hasCreator = true; }
     delete row[formKey];
   });
-  // Only attach creator_info on creator_spotlight directives; otherwise leave it empty.
-  if (row.directive_type === 'creator_spotlight' && hasCreator) {
+  // Attach creator_info on the source-strict directive types (creator_spotlight,
+  // discourse); standard directives leave it empty and null their source_text.
+  if (SOURCE_DIRECTIVE_TYPES.includes(row.directive_type) && hasCreator) {
     row.creator_info = creatorInfo;
-  } else if ('directive_type' in row && row.directive_type !== 'creator_spotlight') {
+  } else if ('directive_type' in row && !SOURCE_DIRECTIVE_TYPES.includes(row.directive_type)) {
     row.creator_info = {};
     row.source_text = row.source_text || null;
   }
@@ -582,18 +592,23 @@ export default function AdminPage() {
       );
     }
     if (isDirectives) {
-      var isCreator = formData.directive_type === 'creator_spotlight';
+      var needsSource = SOURCE_DIRECTIVE_TYPES.includes(formData.directive_type);
+      var isDiscourse = formData.directive_type === 'discourse';
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
             {schema.filter(f => f.key === 'editor' || f.key === 'directive_type' || f.key === 'status').map(field => renderField(field))}
           </div>
           {schema.filter(f => f.key === 'instruction' || f.key === 'url').map(field => renderField(field))}
-          {isCreator && (
+          {needsSource && (
             <div style={{ background: 'rgba(0,245,255,0.04)', border: '1px solid rgba(0,245,255,0.18)', borderLeft: '3px solid #00f5ff', borderRadius: 6, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', letterSpacing: 2 }}>CREATOR SPOTLIGHT -- VETTED SOURCE + CREATOR IDENTITY</div>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 8, color: '#00f5ff', letterSpacing: 2 }}>
+                {isDiscourse ? 'DISCOURSE -- VETTED SOURCE + CREATOR IDENTITY' : 'CREATOR SPOTLIGHT -- VETTED SOURCE + CREATOR IDENTITY'}
+              </div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-                The editor writes the article STRICTLY from the vetted source text below -- it will not add, infer, or invent anything beyond it. The creator URLs power the article's tagging and Person/sameAs SEO schema.
+                {isDiscourse
+                  ? 'VANTAGE writes a discourse DRAFT (is_published=false -- nothing publishes in Phase 1) STRICTLY from the vetted source text below. She characterizes what the creator SAID and never asserts game facts herself. Set Game Slug for the game the discourse is about (defaults to dmz). Run scripts/gen-vantage-discourse.mjs to generate the draft.'
+                  : 'The editor writes the article STRICTLY from the vetted source text below -- it will not add, infer, or invent anything beyond it. The creator URLs power the article\'s tagging and Person/sameAs SEO schema.'}
               </div>
               {schema.filter(f => f.creatorOnly).map(field => renderField(field))}
             </div>
@@ -825,6 +840,7 @@ export default function AdminPage() {
         <UsageStats password={password} />
         <QualityMetricsPanel password={password} />
         <QualityAlertsPanel password={password} />
+        <VantageDraftsPanel password={password} />
       </div>
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>
@@ -866,7 +882,7 @@ export default function AdminPage() {
           <div style={{ background: 'rgba(255,45,85,0.03)', border: '1px solid rgba(255,45,85,0.12)', borderLeft: '3px solid #ff2d55', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#ff2d55', letterSpacing: 1, marginBottom: 6 }}>EDITOR DIRECTIVES</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-              Queue a topic for any editor. Use <span style={{ color: '#00f5ff' }}>creator_spotlight</span> type to feed vetted creator/community news the editor writes up and tags. Set <span style={{ color: '#00f5ff' }}>Scheduled For</span> to fire on a future date (your local time), or leave blank for the next cron cycle. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
+              Queue a topic for any editor. Use <span style={{ color: '#00f5ff' }}>creator_spotlight</span> type to feed vetted creator/community news the editor writes up and tags. Use <span style={{ color: '#c8d4e0' }}>discourse</span> (editor <span style={{ color: '#c8d4e0' }}>VANTAGE</span>) to queue a curated take for a discourse DRAFT -- generated by running scripts/gen-vantage-discourse.mjs, reviewed in the DRAFTS panel above; nothing publishes in Phase 1. Set <span style={{ color: '#00f5ff' }}>Scheduled For</span> to fire on a future date (your local time), or leave blank for the next cron cycle. Status auto-updates to <span style={{ color: '#00ff88' }}>consumed</span> after use.
             </div>
           </div>
         )}
