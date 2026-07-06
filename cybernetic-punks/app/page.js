@@ -32,6 +32,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { discourseHref } from '@/lib/discourse';
 import { minutesToNextRun } from '@/lib/cronCadence';
 import GameRoutingTile from '@/components/network/GameRoutingTile';
 import GamePulseColumn from '@/components/network/GamePulseColumn';
@@ -178,6 +179,36 @@ async function getNetworkVoice() {
   }
 }
 
+// NETWORK DESK feed: VANTAGE's PUBLISHED discourse articles across ALL games,
+// newest first, surfaced on the root under her brief. is_published=true +
+// tags-array-contains 'discourse' (drafts never appear here). Each row links to
+// its CANONICAL HOME via discourseHref (marathon -> /intel/<slug>, dmz ->
+// /dmz/discourse/<slug>); a null href (unknown game) is dropped so a card never
+// dead-links. Empty result -> the section renders nothing (no empty box).
+async function getNetworkDeskFeed() {
+  try {
+    var { data } = await supabase
+      .from('feed_items')
+      .select('headline, slug, game_slug, created_at, creator_info, tags')
+      .eq('is_published', true)
+      .contains('tags', ['discourse'])
+      .order('created_at', { ascending: false })
+      .limit(6);
+    return (data || []).map(function(it) {
+      return {
+        headline: it.headline,
+        slug: it.slug,
+        game_slug: it.game_slug,
+        when: timeAgo(it.created_at),
+        creator: (it.creator_info && it.creator_info.name) || null,
+        href: discourseHref(it),
+      };
+    }).filter(function(it) { return it.href; });
+  } catch (e) {
+    return [];
+  }
+}
+
 // Brand entity + site structured data. Organization + WebSite ONLY (brand-level);
 // no game-specific structured data on the root (that belongs on hubs/articles).
 // Name matches the site-wide entity ("CyberneticPunks") so Google sees ONE entity.
@@ -200,7 +231,7 @@ const JSONLD = [
 ];
 
 export default async function NetworkRoot() {
-  var [data, voice, stats] = await Promise.all([getNetworkPulse(), getNetworkVoice(), getNetworkStats()]);
+  var [data, voice, stats, deskFeed] = await Promise.all([getNetworkPulse(), getNetworkVoice(), getNetworkStats(), getNetworkDeskFeed()]);
 
   // Network telemetry (game-agnostic). online = sum across live games' pulses.
   var onlineTotal = 0;
@@ -319,6 +350,35 @@ export default async function NetworkRoot() {
                 </span>
                 <p className="nr-voice-line nr-voice-teaching">The network editor&apos;s read on what is moving posts here each cycle.</p>
               </div>
+            )}
+
+            {/* NETWORK DESK -- Vantage's PUBLISHED discourse across games, directly
+                under her brief. Only published pieces surface (drafts never); each
+                links to its canonical subject-game home. Renders nothing when empty
+                (no box), so it only appears once there is real coverage. */}
+            {deskFeed.length > 0 && (
+              <section className="nr-desk" aria-label="From the network desk">
+                <div className="nr-desk-head">
+                  <span className="nr-desk-tick" aria-hidden="true" />
+                  <span className="nr-desk-label">From the network desk</span>
+                </div>
+                <ul className="nr-desk-list">
+                  {deskFeed.map(function(a) {
+                    return (
+                      <li key={a.slug}>
+                        <Link href={a.href} className="nr-desk-row">
+                          <span className="nr-desk-meta">
+                            <span className="nr-desk-game">{a.game_slug}</span>
+                            {a.creator && <span className="nr-desk-creator">on {a.creator}</span>}
+                            <span className="nr-desk-when">{a.when}</span>
+                          </span>
+                          <span className="nr-desk-headline">{a.headline}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             )}
           </div>
         </section>
@@ -508,6 +568,21 @@ const NR_CSS = `
 .nr-voice-empty { border-left-color: var(--border); }
 /* Vantage's cross-game brief, featured directly under her hero line. */
 .nr-voice-brief { font-size: 14px; font-weight: 500; line-height: 1.55; color: var(--text-secondary); margin: 0; }
+
+/* ── NETWORK DESK feed ── Vantage's published discourse, under her brief. Network
+   red chrome (spine + tick + hover) per the brand pass; neutral game tags. */
+.nr-desk { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; align-self: stretch; max-width: 760px; padding: 16px 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--red); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
+.nr-desk-head { display: flex; align-items: center; gap: 8px; }
+.nr-desk-tick { width: 8px; height: 8px; border-radius: 1px; background: var(--red); flex-shrink: 0; }
+.nr-desk-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
+.nr-desk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.nr-desk-row { display: block; text-decoration: none; padding: 11px 13px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
+.nr-desk-row:hover { background: var(--bg-card-hover); border-left-color: var(--red); }
+.nr-desk-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.nr-desk-game { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px; line-height: 1.5; }
+.nr-desk-creator { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
+.nr-desk-when { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); margin-left: auto; }
+.nr-desk-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
 
 /* ── SECTIONS ── header gets an accent tick + optional freshness meta */
 .nr-body { display: flex; flex-direction: column; gap: 64px; padding-top: 56px; padding-bottom: 56px; }
