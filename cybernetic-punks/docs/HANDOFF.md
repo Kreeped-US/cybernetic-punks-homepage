@@ -5,6 +5,163 @@ Newest entries on top.
 
 ---
 
+## 2026-07-06 — Homepage redesign + VANTAGE discourse pipeline + /intel guard + drafts cleanup
+
+Multi-session arc that was previously unlogged. Final main tip at time of writing:
+**abda60e** (7c43223 = homepage/discourse/2b; abda60e = the /intel render-guard
+commit on top) + a Supabase-only stub delete (no git artifact — DB-only).
+
+Big arc across several working sessions: (1) a full homepage redesign, (2) the
+complete VANTAGE discourse-article pipeline built end-to-end, (3) an /intel
+render-layer security/SEO guard, and (4) a scoped cleanup of unpublished draft
+rows. Also: a persistent paste/injection bug in the planning chat (project
+instructions replaced pasted content); worked around with screenshots + saved
+files, project-instructions field was deleted mid-arc.
+
+### 1. Homepage redesign (SHIPPED)
+
+Went from "boring/confusing, unclear what to do" to a real network front page.
+Shipped in gated passes:
+- STRUCTURE/CLARITY: clarity-first hero, featured VANTAGE brief, tools row
+  (/meta, /leaderboard, /status, /weapons), network subscribe (generalized the
+  DMZ notify form -> writes dmz_launch_emails with game_slug='network'),
+  "Choose your game" (was "Choose your zone").
+- ESPORTS VISUAL: fused broadcast + terminal + editorial energy; restrained
+  (few accent moments); mono "//" texture; bold hero.
+- COPY: H1 "The intelligence network for competitive shooters"; kicker
+  "Everyone has opinions. We have the data."; eyebrow "No hype. Just intel.";
+  "Where the serious players check first" kept as a secondary line.
+- BRAND: network accent switched Marathon-green -> Cybernetic Punks RED
+  (per-game sections keep their own colors); wordmark split "CYBERNETIC PUNKS";
+  red darkened a few shades (was too bright); subscribe button uses network red.
+- ABOUT: homepage "What is Cybernetic Punks?" blurb + dedicated /about page
+  (mission, how-we-work, the AI editorial desk with real roster names, the
+  games, "independent project"). Footer About link added.
+  - DESIGN TOKEN CONVENTION (resolved): Marathon pages use NAMED HEX CONSTANTS as
+    their design system; DMZ pages use CSS-VAR TOKENS (var(--green) etc.).
+    "Reference tokens by name" = the right one per surface.
+
+### 2. VANTAGE discourse pipeline (SHIPPED, end-to-end, live)
+
+VANTAGE now writes DISCOURSE articles (e.g. "a creator said X about the meta,
+here's the controversy, in our lens for SEO/backlinks") via a DRAFT-AND-APPROVE
+flow. She is the network editor: covers the DISCOURSE around games, NOT single-
+game facts (that stays the per-game desks). Justin is the double verification
+layer: he curates the source AND approves every draft before publish.
+
+- INPUT: editor_directives table (already existed; reused). New 'discourse'
+  directive_type (directive_type is free text -> no DDL needed). Source is
+  human-curated: Justin adds a directive with vetted source_text + creator_info
+  (creator name, url) + game_slug in creator_info. NOT automated scraping
+  (X/Reddit scraping explicitly rejected on ToS + honesty grounds).
+- SCHEMA CHANGE RUN: editor_directives_editor_check CHECK constraint originally
+  allowed only CIPHER/NEXUS/DEXTER/GHOST/MIRANDA. Ran an ALTER to add 'VANTAGE'
+  so VANTAGE directives insert. (directive_type had no constraint; status still
+  pending/consumed.)
+- GENERATION: manual script scripts/gen-vantage-discourse.mjs (Fork 1A — not on
+  cron, web-unreachable; runs only when Justin runs it). Reads a pending VANTAGE
+  discourse directive, drafts strictly from source_text, inserts a feed_items
+  row is_published=FALSE + noindex=TRUE (a DRAFT). REQUIRES creator_info.game_slug
+  to be set (SUBJECT game) — refuses to guess (fail-loud guard), routing depends
+  on it. Marks directive consumed.
+- HONESTY HARDENING (in the discourse prompt, lib/network/vantage.js): write
+  STRICTLY from source_text; invent nothing about the creator; attribute all game
+  claims to the creator, never assert game facts in VANTAGE's own voice; a tune
+  was added (Rule 5) forbidding her from characterizing a game's state/reception/
+  launch/health as "settled/consensus" in her own voice — widely-held views must
+  be ATTRIBUTED. Verified on a real regeneration.
+- DRAFT REVIEW: admin DRAFTS panel (read-only GET /api/admin/drafts +
+  VantageDraftsPanel). feed_items deliberately kept OFF the generic admin CRUD
+  allowlist so nothing can flip is_published via the generic path.
+- APPROVE (2a): narrow POST /api/admin/drafts/approve — flips is_published
+  false->true AND clears noindex for ONE row, filtered .eq('is_published',false)
+  so it can only ever touch a draft, never mutate a live row. This is the ONLY
+  publish path. An APPROVE button in the drafts panel.
+- RENDER (2a): a SHARED game-neutral DiscourseArticle renderer, branched into
+  BOTH /intel/[slug] (marathon) and /dmz/[section]/[slug] (dmz) BEFORE the
+  game-specific templates — so the fragile 1,396-line Marathon ArticlePage is
+  NEVER touched (it would otherwise inject rogue weapon/shell stat cards, break
+  the byline, load a nonexistent portrait). Renders identically under both
+  themes. Parses **bold** + [text](url) inline links.
+- ROUTING = BY SUBJECT GAME (decision): a discourse article's canonical HOME is
+  its subject game — marathon-subject -> /intel/<slug>, dmz-subject ->
+  /dmz/discourse/<slug>. (Rejected DMZ-hub-everything: would strand Marathon
+  content under /dmz/, bad for SEO + confusing.) lib/discourse.js is the single
+  source of truth for is-discourse + href.
+- BYLINE: VANTAGE added to roster.js EDITORS ("Vivian Cross / Vantage, Network
+  editor") but NOT to EDITOR_ORDER — so editorByline/JSON-LD resolve her, without
+  adding her to the /editors masthead or /about desk ordering.
+- HOMEPAGE SURFACING (2b): a "FROM THE NETWORK DESK" feed directly under her
+  brief on the homepage — newest published discourse across ALL games, each
+  card tagged with its game (MARATHON/DMZ), linking to its canonical home. She's
+  the network editor so her work surfaces at root level. Per-game Creator-coverage
+  slots were DEFERRED (not built).
+- FIRST LIVE ARTICLE: "Lord Charizard flags Marathon's new all-time low player
+  count..." — a Marathon-subject discourse piece, verbatim-quoted his X post,
+  attributed, published, live at /intel/<slug>, showing in the network-desk feed.
+  Editorial position (settled): VANTAGE covers real discourse INCLUDING criticism
+  of games we cover (Marathon included) — honest, from-source; it's legitimate,
+  the numbers are real, it's the dev's job to make a game players want.
+
+### 3. /intel render guard (SHIPPED)
+
+Found a real gap: app/intel/[slug]/page.js fetched by slug WITHOUT an
+is_published filter (both the router fetch AND generateMetadata), and those rows
+are noindex=false — so ~407 UNPUBLISHED Marathon articles were directly
+reachable/renderable at their /intel/<slug> URLs (only hidden by absence from
+feeds/sitemap). DMZ already filtered is_published=true; Marathon didn't.
+FIX: added .eq('is_published', true) to both Marathon fetches -> unpublished
+slugs now 404 (notFound) and emit no metadata. Also hardens the discourse draft
+gate at the render layer (draft discourse 404s too). Published articles + the
+published Lord Charizard discourse piece verified still rendering. (Commit abda60e.)
+
+### 4. Unpublished drafts cleanup (DONE — Supabase only, no git artifact)
+
+The admin panel showed "100 drafts" (panel caps at 100); the true count was 407
+unpublished Marathon feed_items rows: 258 THIN STUBS (<50 words, non-publishable
+junk) + 149 SUBSTANTIAL real articles (300-380 words, never published). NONE were
+VANTAGE discourse drafts (those are directive_type='discourse'/noindex=true —
+structurally distinct). Blanket "delete all unpublished" would have destroyed the
+149 real articles — investigation prevented that.
+ACTION: deleted ONLY the 258 stubs via a scoped Supabase DELETE (WHERE
+is_published=false AND game_slug='marathon' AND directive_type='standard' AND
+noindex=false AND word_count < 50). Verified: 258 deleted, 149 remaining.
+The 149 real unpublished articles are KEPT (unpublished, now properly hidden by
+the render guard) — an editorial "review/publish later or leave" decision, not
+deleted. NOTE: this delete left NO git diff (DB-only) — the repo is unchanged by it.
+
+### Still open / on the horizon
+- The 149 unpublished real Marathon articles: decide later whether to review/
+  publish any or leave hidden. They're inert (guard hides them).
+- Per-game Creator-coverage homepage slots: deferred (network-desk feed shipped
+  instead).
+- dmz_launch_emails naming debt: now holds network signups too (game_slug=
+  'network') — a rename/dedicated table would be a Justin-run SQL step someday.
+- DMZ-6 remaining articles: CLOSED/held — the 6 PENDING_TOPICS are deliberately
+  unsourced (the June 6 Deep Dive doesn't cover them as standalone topics; they'd
+  be thin FOB-sub-bullet duplicates or fabrication). Do NOT generate until
+  genuinely new official CoD material drops.
+- Generate more discourse pieces to populate the network-desk feed; watch that
+  discourse articles don't all use identical section headers over time (templating
+  risk, same lesson as the MIRANDA duplicate-title fix).
+- Paste/injection bug: project-instructions field was deleted mid-arc; re-adding
+  current instructions (watch whether re-adding re-triggers the injection — if so,
+  the field is the culprit; report to support).
+
+### Key learnings reinforced this session
+- Read-before-write on destructive ops caught two big ones: the DMZ-hub
+  miscategorization (would strand Marathon content) and the blanket draft delete
+  (would destroy 149 real articles).
+- Prompt instructions aren't guarantees — the "largely settled" own-voice slip
+  slipped a rule that only covered mechanical facts, not reception; fixed by
+  adding the reception category. (Same lesson as the earlier soft-prompt failures.)
+- Phase gating on content that characterizes real people: draft-only first,
+  verify honesty on a real example with zero public exposure, THEN wire publish.
+- feed_items stays OFF generic admin CRUD; the ONLY publish path is the narrow,
+  draft-filtered approve endpoint + human APPROVE click.
+
+---
+
 ## 2026-06-29 — Account-merge EXECUTED (CLOSED — not an open thread)
 
 The two split network_accounts for the same person were merged into one. DONE,
