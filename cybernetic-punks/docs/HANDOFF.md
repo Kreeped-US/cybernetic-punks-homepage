@@ -5,6 +5,97 @@ Newest entries on top.
 
 ---
 
+## 2026-07-06 (later) — VANTAGE YouTube auto-source, drafts re-check, X-posting scoped
+
+### VANTAGE auto-source pipeline (Phase A — SHIPPED, main edd6cb5)
+VANTAGE can now AUTO-SOURCE discourse ideas from the YouTube gather, not just
+from hand-curated directives. scripts/gen-vantage-discourse-auto.mjs (manual-
+trigger; NOT on cron): calls gatherYouTube() -> relevance filter -> eligibility
+gate -> VANTAGE drafts or self-skips -> inserts source-flagged drafts
+(is_published=false). Justin's admin APPROVE remains the ONLY publish path.
+
+THREE honesty guards (layered):
+1. RELEVANCE FILTER (deterministic): drops off-topic "Marathon" name-collisions
+   (running sports, Xbox news) before anything else. Reuses the cron's
+   filterGameVideos logic — which was EXTRACTED to a new lib/gather/relevance.js
+   (pure, no imports) so a bare-node .mjs can import it without dragging the
+   un-importable gather barrel; lib/gather/index.js re-imports it (behavior
+   identical).
+2. ELIGIBILITY GATE (pre-generation): a video is a candidate ONLY if it has a
+   transcript OR a description >= ~300 chars. Title-only/ultra-thin videos never
+   reach VANTAGE -> can't fabricate an argument that only exists in a title.
+3. VANTAGE SELF-SKIP: existing skip_reason mechanism refuses thin/non-discourse
+   sources even if they pass the gate.
+Plus: dedup vs already-drafted YouTube ids; auto-source PROMPT ADDENDUM
+(VANTAGE_DISCOURSE_AUTO_ADDENDUM in vantage.js) stating the source is a video's
+own title/description/transcript, not a vetted quote, and view/like counts are
+NOT evidence of the argument. game_slug='marathon' (gather is Marathon-only) ->
+canonical home /intel/<slug> (Phase 2a render path). --dry + --max flags.
+Also fixed two ESM import-path issues (lib/gather/youtube.js '../games' ->
+'../games/index.js'; lib/games/index.js './marathon' -> './marathon.js') so the
+gather chain imports under bare node (Next bundler resolved both forms; prod
+unchanged).
+
+PROVENANCE NOTE: the script + addendum const were PRIOR-SESSION work sitting
+untracked in the tree since this session's first snapshot (likely from the
+paste-bug-interrupted session). This session completed it (relevance filter +
+import fixes) and shipped it.
+
+YIELD IS LOW/SPORADIC BY DESIGN: --dry runs this session produced 0 drafts (no
+transcripts, short/off-topic descriptions) — that's the CORRECT bias (better
+nothing than a fabricated take). Expect frequent 0-draft runs; a draft appears
+only when a substantial, on-topic, captioned/long-description Marathon-game video
+is live.
+
+OUTSTANDING VALIDATION: committed OUTPUT-UNSEEN (no qualifying video appeared to
+preview a real draft). The FIRST real auto-sourced draft still needs an honesty
+review before approving — confirm it draws STRICTLY from the video's real
+description/transcript, not inference. Safe because approval gate blocks publish.
+
+### Drafts cleanup — re-check + correction + second delete (DONE, DB-only)
+Earlier this session we deleted 258 sub-50-word stubs and thought 149 "substantial
+300-380 word articles" remained. A re-check CORRECTED that: the earlier "149
+substantial" label was a sampling error (looked at the 3 longest rows). Reality:
+of ~148 unpublished marathon rows, 144 were 50-99 words (short GHOST community
+blurbs + NEXUS/DEXTER video-pool pieces), only 2 were 300+, 2 mid. All old
+(Feb-Mar 2026), never published; NONE were VANTAGE discourse drafts. The scoped
+stub delete had worked perfectly (0 sub-50 remained); the 144 were legit-but-thin
+content ABOVE the 50-word floor, never in scope.
+ACTION: deleted the stale short backlog via scoped SQL (is_published=false AND
+game_slug='marathon' AND directive_type='standard' AND noindex=false AND
+wordcount<300), KEEPING the 2 long pieces. Verified: 146 deleted, 2 remaining.
+The clause structurally excludes VANTAGE discourse (directive_type='discourse'/
+noindex=true). DB-only, no git artifact.
+LESSON: classification needs the full distribution, not a sample of extremes.
+
+### X/Twitter posting pipeline (SCOPED, PARKED)
+Justin wants: when VANTAGE publishes a discourse article, draft a PROMOTIONAL X
+post about it -> Justin approves -> it posts (draft-and-approve, same philosophy).
+Scope: discourse articles only for now; expand later. PARKED pending Justin
+confirming X API write-tier access/pricing on developer.x.com (free-tier post
+caps + cost + OAuth write scope shape the build). Build the draft-and-approve
+machinery once access is confirmed; the actual post step is the API-gated part.
+NO automated X/Reddit scraping — ever (ToS + honesty). Manual X/Reddit source
+drop for discourse already works via the admin directive form.
+
+### Render-guard reminder (from earlier this session, for completeness)
+/intel/[slug] now filters is_published=true (both the router fetch AND
+generateMetadata) so unpublished Marathon articles 404 and emit no metadata —
+matching the DMZ route. The 2 remaining unpublished pieces are inert/hidden by it.
+
+### Open / horizon
+- FIRST real VANTAGE auto-sourced draft: review for honesty before approving
+  (deferred validation). Run --dry a few times to catch one.
+- Cron the auto-source: deliberate LATER decision, only once drafts prove honest.
+- X-posting pipeline: build once developer.x.com write access confirmed.
+- SEO measurement: /meta tier-list experiment shipped recently — too soon; check
+  GSC at ~4-8 weeks (climbing from ~pos 3.5? FAQ snippets? clicks?).
+- The 2 remaining long unpublished pieces: glance -> keep/publish/drop someday.
+- dmz_launch_emails naming debt (holds network signups too) — Justin-run SQL.
+- DMZ-6: still held until genuinely new official CoD material.
+
+---
+
 ## 2026-07-06 — Homepage redesign + VANTAGE discourse pipeline + /intel guard + drafts cleanup
 
 Multi-session arc that was previously unlogged. Final main tip at time of writing:
