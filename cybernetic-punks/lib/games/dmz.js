@@ -62,6 +62,13 @@ export const dmz = {
     { slug: 'printer',     label: '3D Printer',    source: 'data',   contentFilter: null, description: 'The 3D Printer crafting tool. Structured data launches with the zone.' },
     { slug: 'fob',         label: 'FOB',           source: 'data',   contentFilter: null, description: 'Forward Operating Base progression reference. Launches with the zone.' },
     { slug: 'regions',     label: 'Hajin Regions', source: 'data',   contentFilter: null, description: 'Region-by-region guides for the Hajin Exclusion Zone. Launch with the zone.' },
+    // DISCOURSE (VANTAGE network desk): the network editor-in-chief's coverage of
+    // the conversation around DMZ -- what creators and the community are saying,
+    // and why it matters. Membership is by TAG ('discourse'), not the per-slug
+    // DMZ_ARTICLE_SECTION map (discourse slugs are generated, not hand-curated) --
+    // contentFilter.byTag flags that for the section list + landing count. Articles
+    // render via the game-neutral components/DiscourseArticle renderer.
+    { slug: 'discourse',   label: 'Discourse',     source: 'editor', contentFilter: { table: 'feed_items', byTag: 'discourse' }, description: 'Network-desk coverage of the conversations shaping DMZ -- what creators and the community are saying, and what is actually at stake.' },
   ],
 };
 
@@ -96,6 +103,19 @@ export function dmzArticleSlugsForSection(sectionSlug) {
   return Object.keys(DMZ_ARTICLE_SECTION).filter(function (s) {
     return DMZ_ARTICLE_SECTION[s] === sectionSlug;
   });
+}
+
+// Resolve which DMZ section an article belongs to -- the single resolver used by
+// the detail route, the sitemap, and (later) any DMZ href builder. Curated news
+// pieces map by slug (DMZ_ARTICLE_SECTION); VANTAGE discourse pieces map by the
+// 'discourse' TAG (their slugs are generated, so they are not in the per-slug
+// map). Returns null when unassigned (fail-safe: unmapped = never routed/emitted).
+export function dmzSectionForArticle(article) {
+  if (!article || !article.slug) return null;
+  if (DMZ_ARTICLE_SECTION[article.slug]) return DMZ_ARTICLE_SECTION[article.slug];
+  var tags = Array.isArray(article.tags) ? article.tags : [];
+  if (tags.indexOf('discourse') !== -1) return 'discourse';
+  return null;
 }
 
 // PER-ARTICLE SEO OVERRIDES (Chunk C). Keyed by slug: an authored { title,

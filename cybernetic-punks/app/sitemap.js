@@ -27,7 +27,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { toISOWithPTOffset } from '@/lib/formatDate';
-import { dmz, DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
+import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -266,7 +266,7 @@ export default async function sitemap() {
       try {
         const { data: dmzRows, error: dmzErr } = await supabase
           .from('feed_items')
-          .select('slug, created_at')
+          .select('slug, created_at, tags')
           .eq('game_slug', 'dmz')
           .eq('is_published', true)
           .order('created_at', { ascending: false });
@@ -276,11 +276,15 @@ export default async function sitemap() {
           dmzErr ? 'error: ' + dmzErr.message : '');
 
         if (dmzRows) {
+          // Resolve each row's section: curated news maps by slug, VANTAGE
+          // discourse maps by the 'discourse' tag (dmzSectionForArticle). Rows that
+          // resolve to no section are SKIPPED (fail-safe: never a 404 URL).
           dmzArticlePages = dmzRows
-            .filter((r) => DMZ_ARTICLE_SECTION[r.slug])
-            .map((r) => ({
-              url: baseUrl + '/dmz/' + DMZ_ARTICLE_SECTION[r.slug] + '/' + r.slug,
-              lastModified: toISOWithPTOffset(r.created_at),
+            .map((r) => ({ r: r, section: dmzSectionForArticle(r) }))
+            .filter((x) => x.section)
+            .map((x) => ({
+              url: baseUrl + '/dmz/' + x.section + '/' + x.r.slug,
+              lastModified: toISOWithPTOffset(x.r.created_at),
               changeFrequency: 'monthly',
               priority: 0.6,
             }));

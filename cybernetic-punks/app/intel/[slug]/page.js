@@ -9,6 +9,8 @@ import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorByline, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import ViewTracker from '@/components/ViewTracker';
+import DiscourseArticle from '@/components/DiscourseArticle';
+import { isDiscourseArticle } from '@/lib/discourse';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -1321,6 +1323,17 @@ export default async function IntelPage({ params }) {
     supabaseService.from('factions').select('name, leader, focus, image_filename').limit(20),
   ]);
 
+  if (!itemResult.data) notFound();
+
+  // VANTAGE discourse pieces render via the game-neutral DiscourseArticle renderer,
+  // branched in BEFORE the Marathon-coupled ArticlePage (which is never touched --
+  // no stat-card injection, editor lane, or portrait). Canonical home stays
+  // /intel/<slug> for a marathon-subject discourse piece. Skips the comments /
+  // avatar / related fetches below (they assume Marathon editorial).
+  if (isDiscourseArticle(itemResult.data)) {
+    return <DiscourseArticle item={itemResult.data} />;
+  }
+
   var comments = [];
   if (itemResult.data) {
     var { data: commentData } = await supabase
@@ -1330,8 +1343,6 @@ export default async function IntelPage({ params }) {
       .order('created_at', { ascending: true });
     comments = commentData || [];
   }
-
-  if (!itemResult.data) notFound();
 
   // Creator-spotlight avatar: only fetch when this article is a spotlight with a
   // twitch handle. Normal articles skip this entirely (zero added cost). Never throws.

@@ -96,9 +96,31 @@ export const EDITORS = {
     bio:      "Unsentimental EV accountant. The game is a ledger; she only cares whether it pays — and will call your favorite meta a value trap. Authority from the ledger.",
     image:    '/images/editors/broker.jpg', // NOTE: does not exist yet (imaging pass pending)
   },
+  // VANTAGE / Vivian Cross -- the NETWORK editor-in-chief (persona in
+  // lib/network/vantage.js). Added here so a feed_items row with editor='VANTAGE'
+  // (her discourse articles) resolves a real byline / accent / initial via the
+  // same helpers every article renderer uses. status:'network' (NOT 'live') so
+  // editorHasPortrait() returns false -> consumers use the editorInitial() badge
+  // (no vantage.jpg exists, and she has no /intel/<lane>). Deliberately KEPT OUT
+  // of EDITOR_ORDER below, so the /editors masthead + /about desk (which lists
+  // her separately) are unchanged. Silver accent matches the homepage
+  // --nr-vantage structural color.
+  vantage: {
+    key:      'vantage',
+    status:   'network',
+    fullName: 'Vivian Cross',
+    tag:      'Vantage',
+    role:     'Network editor',
+    color:    '#c8d4e0', // silver (network structural accent; matches --nr-vantage)
+    symbol:   '◆',
+    bio:      "The network editor-in-chief. Frames what matters across every game and covers the discourse around them -- never a single game's in-game facts.",
+    image:    '/images/editors/vantage.jpg', // does not exist; consumers fall back to editorInitial()
+  },
 };
 
 // Display order for roster/masthead surfaces (Step 2). Broker last (newest lane).
+// VANTAGE is intentionally ABSENT: she is the network editor, surfaced on /about
+// separately, not part of the per-game editor masthead.
 export const EDITOR_ORDER = ['cipher', 'nexus', 'dexter', 'ghost', 'miranda', 'broker'];
 
 // Case-normalized lookup. Accepts the DB value ('CIPHER') or the slug ('cipher').

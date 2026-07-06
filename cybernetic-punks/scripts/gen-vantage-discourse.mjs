@@ -169,8 +169,16 @@ async function main() {
 
   // 3. Build the DRAFT feed_items row. is_published=false is the HARD GATE;
   //    noindex=true is defense-in-depth (both NOT NULL columns are set). game_slug
-  //    comes from the directive's creator_info.game_slug, default 'dmz'.
-  var gameSlug = (directive.creator_info && directive.creator_info.game_slug) || 'dmz';
+  //    is the SUBJECT game -- it decides the article's canonical home and render
+  //    path (marathon -> /intel, dmz -> /dmz/discourse). REQUIRED: refuse rather
+  //    than silently default, so a marathon-subject piece can never land in DMZ.
+  //    Set it via the directive's "Game Slug (discourse)" field (creator_info.game_slug).
+  var gameSlug = directive.creator_info && directive.creator_info.game_slug;
+  if (!gameSlug || !String(gameSlug).trim()) {
+    console.error('ERROR: directive ' + directive.id + ' has no Game Slug (creator_info.game_slug). Set it to the SUBJECT game (e.g. marathon or dmz) in the directive -- refusing to guess.');
+    process.exit(1);
+  }
+  gameSlug = String(gameSlug).trim().toLowerCase();
   var slug = slugify(out.headline);
   var row = {
     headline: out.headline,

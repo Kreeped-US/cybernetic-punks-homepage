@@ -46,6 +46,7 @@ function ArticleCard({ section, article }) {
   var snippet = extractSnippet(article.body, 170);
   var date = formatPublishDate(article.created_at);
   var rt = readTime(article.body);
+  var isDiscourse = Array.isArray(article.tags) && article.tags.indexOf('discourse') !== -1;
   return (
     <Link
       href={'/dmz/' + section.slug + '/' + article.slug}
@@ -59,7 +60,7 @@ function ArticleCard({ section, article }) {
         <span style={{
           fontFamily: EXO, fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase',
           color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 999, padding: '2px 9px',
-        }}>News</span>
+        }}>{isDiscourse ? 'Discourse' : 'News'}</span>
         <span style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.5, fontWeight: 600 }}>
           {[date, rt].filter(Boolean).join('  ·  ')}
         </span>
@@ -71,7 +72,7 @@ function ArticleCard({ section, article }) {
         <span style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.55 }}>{snippet}</span>
       )}
       <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-        Sourced from the official Call of Duty blog
+        {isDiscourse ? 'Network desk -- Vivian Cross / Vantage' : 'Sourced from the official Call of Duty blog'}
       </span>
     </Link>
   );
@@ -87,25 +88,39 @@ export default async function DmzSectionPage({ params }) {
     return <DmzComingSoon section={section} />;
   }
 
-  // Editor-fed section: read DMZ articles scoped to THIS section (DMZ_ARTICLE_SECTION
-  // in lib/games/dmz.js, since feed_items has no section column). No assigned slugs
-  // -> empty state (no query).
-  var sectionSlugs = dmzArticleSlugsForSection(section.slug);
+  // Editor-fed section: read DMZ articles scoped to THIS section. Curated news
+  // sections map by slug (DMZ_ARTICLE_SECTION, since feed_items has no section
+  // column). The Discourse section maps by TAG (contentFilter.byTag) -- its slugs
+  // are generated, not hand-curated. No members -> empty state.
+  var byTag = section.contentFilter && section.contentFilter.byTag;
   var articles = [];
-  if (sectionSlugs.length > 0) {
-    try {
-      var { data } = await supabase
+  try {
+    if (byTag) {
+      var { data: tagData } = await supabase
         .from('feed_items')
         .select('id, headline, slug, editor, tags, body, source_url, created_at')
         .eq('is_published', true)
         .eq('game_slug', DMZ_GAME_SLUG)
-        .in('slug', sectionSlugs)
+        .contains('tags', [byTag])
         .order('created_at', { ascending: false })
         .limit(30);
-      if (data) articles = data;
-    } catch (err) {
-      // non-fatal: fall through to empty-state
+      if (tagData) articles = tagData;
+    } else {
+      var sectionSlugs = dmzArticleSlugsForSection(section.slug);
+      if (sectionSlugs.length > 0) {
+        var { data } = await supabase
+          .from('feed_items')
+          .select('id, headline, slug, editor, tags, body, source_url, created_at')
+          .eq('is_published', true)
+          .eq('game_slug', DMZ_GAME_SLUG)
+          .in('slug', sectionSlugs)
+          .order('created_at', { ascending: false })
+          .limit(30);
+        if (data) articles = data;
+      }
     }
+  } catch (err) {
+    // non-fatal: fall through to empty-state
   }
 
   if (articles.length === 0) {

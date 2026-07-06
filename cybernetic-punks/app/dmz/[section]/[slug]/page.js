@@ -29,10 +29,12 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games/registry';
-import { DMZ_ARTICLE_SECTION, DMZ_ARTICLE_SEO } from '@/lib/games/dmz';
+import { DMZ_ARTICLE_SEO, dmzSectionForArticle } from '@/lib/games/dmz';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers } from '@/lib/dmz/articleContent';
+import DiscourseArticle from '@/components/DiscourseArticle';
+import { isDiscourseArticle } from '@/lib/discourse';
 import DmzShare from '../../DmzShare';
 import DmzNotifyStrip from '@/components/dmz/DmzNotifyStrip';
 import ViewTracker from '@/components/ViewTracker';
@@ -51,7 +53,7 @@ async function fetchArticle(slug) {
   try {
     var { data } = await supabase
       .from('feed_items')
-      .select('id, headline, body, editor, tags, slug, created_at, source, source_url')
+      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, creator_info, directive_type, game_slug')
       .eq('slug', slug)
       .eq('game_slug', DMZ_GAME_SLUG)
       .eq('is_published', true)
@@ -70,7 +72,9 @@ function readTime(body) {
 
 function metaDescription(body, fallback) {
   if (!body) return fallback;
-  var text = stripMarkers(body).replace(/\s+/g, ' ').trim();
+  // Strip inline [text](url) links (discourse bodies use them; DMZ news bodies do
+  // not, so this is a no-op for existing articles) THEN the **bold** markers.
+  var text = stripMarkers(body.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')).replace(/\s+/g, ' ').trim();
   if (!text) return fallback;
   if (text.length <= 155) return text;
   var cut = text.slice(0, 155);
@@ -83,7 +87,7 @@ export async function generateMetadata({ params }) {
   var p = await params;
   var section = getGameSection('dmz', p.section);
   var article = await fetchArticle(p.slug);
-  if (!section || !article || DMZ_ARTICLE_SECTION[article.slug] !== section.slug) {
+  if (!section || !article || dmzSectionForArticle(article) !== section.slug) {
     return { title: 'DMZ — Not Found' };
   }
   // Authored SEO overrides (lib/games/dmz.js) preferred; fall back to the
@@ -189,7 +193,14 @@ export default async function DmzArticlePage({ params }) {
 
   var article = await fetchArticle(p.slug);
   if (!article) notFound();
-  if (DMZ_ARTICLE_SECTION[article.slug] !== section.slug) notFound();
+  if (dmzSectionForArticle(article) !== section.slug) notFound();
+
+  // VANTAGE discourse pieces render via the game-neutral DiscourseArticle renderer
+  // (the same one /intel uses), not the DMZ news template. Canonical home is
+  // /dmz/discourse/<slug> for a dmz-subject discourse piece.
+  if (isDiscourseArticle(article)) {
+    return <DiscourseArticle item={article} />;
+  }
 
   // Launch-email strip: read the dismissal cookie server-side so a dismissed strip
   // is never rendered (no hydration flash / flicker-in-then-out).

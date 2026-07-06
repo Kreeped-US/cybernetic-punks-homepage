@@ -46,6 +46,22 @@ function sectionCount(slug, publishedSet) {
   return dmzArticleSlugsForSection(slug).filter(function (s) { return publishedSet.has(s); }).length;
 }
 
+// Published DMZ discourse count (tag-based -- the Discourse section maps by tag,
+// not the per-slug DMZ_ARTICLE_SECTION map, so sectionCount would miss it).
+async function discourseCount() {
+  try {
+    var { count } = await supabase
+      .from('feed_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('game_slug', 'dmz')
+      .eq('is_published', true)
+      .contains('tags', ['discourse']);
+    return typeof count === 'number' ? count : 0;
+  } catch (err) {
+    return 0;
+  }
+}
+
 function Pill({ text, tone }) {
   // tone: 'live' (forest) | 'soon' | 'muted'
   var color = tone === 'live' ? 'var(--green)' : 'var(--text-tertiary)';
@@ -167,7 +183,7 @@ function FactionsCard() {
 }
 
 export default async function DmzLanding() {
-  var published = await publishedDmzSlugs();
+  var [published, dCount] = await Promise.all([publishedDmzSlugs(), discourseCount()]);
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
@@ -210,6 +226,8 @@ export default async function DmzLanding() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
         {dmz.sections.map(function (sec) {
           if (sec.slug === 'meta') return <MetaCard key={sec.slug} section={sec} />;
+          // Discourse: tag-based count (not the per-slug map).
+          if (sec.contentFilter && sec.contentFilter.byTag === 'discourse') return <CountCard key={sec.slug} section={sec} count={dCount} />;
           if (sec.source === 'editor') return <CountCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} />;
           return <SoonCard key={sec.slug} section={sec} />;
         })}
