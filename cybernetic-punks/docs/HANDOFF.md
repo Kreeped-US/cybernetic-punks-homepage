@@ -120,6 +120,21 @@ PATTERN: the spiciest on-topic takes (e.g. "Marathon 2026 is Unpretty Awful",
 gate correctly rejects. So auto-source favors long-form/captioned content, while
 short-form hot takes are better captured via the MANUAL X/Reddit drop path.
 
+### Non-issue (investigated + DISMISSED 2026-07-07 -- do NOT re-flag): Sentinel /shells/[slug] generateStaticParams
+A flag that Sentinel is missing from app/shells/[slug]/page.js generateStaticParams
+(so it "renders dynamically") was investigated and dismissed as a NON-ISSUE. Root
+cause: /shells/[slug] has export const dynamic = 'force-dynamic', so the build
+renders it as f (Dynamic) and generateStaticParams is INERT -- NO shell is
+statically pre-rendered; Sentinel renders identically to the other 7 (all dynamic).
+Adding sentinel to the list would change nothing observable. force-dynamic is
+CORRECT here: (1) build-time Supabase throws "supabaseUrl is required" (env not
+populated at build -- why the list is hardcoded, and why "derive from shell_stats"
+would re-break the build), and (2) live-data freshness (meta_tiers regrade daily,
+builds, articles). Dynamic SSR serves fully crawlable HTML, so SEO is fine. Real
+static pre-render (removing force-dynamic) is blocked by the build-env issue + a
+freshness tradeoff -- a separate, larger decision, not a cleanup. CONCLUSION: no
+change made; not a bug.
+
 ### Open / horizon
 - FIRST real VANTAGE auto-sourced draft: review for honesty before approving
   (deferred validation). Run --dry a few times to catch one.
