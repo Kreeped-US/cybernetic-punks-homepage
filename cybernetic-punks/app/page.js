@@ -420,6 +420,7 @@ export default async function NetworkRoot() {
                 { href: '/meta',        glyph: '◈', label: 'Tier list',     sub: 'Weapons & shells ranked' },
                 { href: '/leaderboard', glyph: '▲', label: 'Leaderboard',   sub: 'Top runners tracked' },
                 { href: '/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
+                { href: '/player-count',glyph: '◱', label: 'Player count',   sub: 'Live Steam concurrents' },
                 { href: '/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },
               ].map(function(t) {
                 return (

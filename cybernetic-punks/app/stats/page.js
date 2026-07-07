@@ -574,6 +574,19 @@ export default function StatsPage() {
         textAlign: 'center',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <Link href="/player-count" style={{
+            fontFamily: 'Orbitron, monospace',
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#1b9fff',
+            padding: '8px 18px',
+            border: '1px solid #1b9fff44',
+            borderRadius: 3,
+            textDecoration: 'none',
+            letterSpacing: 1.5,
+          }}>
+            PLAYER COUNT →
+          </Link>
           <Link href="/leaderboard" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
