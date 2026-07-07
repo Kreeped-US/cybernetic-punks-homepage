@@ -83,6 +83,12 @@ drop for discourse already works via the admin directive form.
 generateMetadata) so unpublished Marathon articles 404 and emit no metadata —
 matching the DMZ route. The 2 remaining unpublished pieces are inert/hidden by it.
 
+### Discourse SEO — Article JSON-LD (SHIPPED; publisher.logo OPEN)
+Discourse Article JSON-LD enriched (image/Person/Article/BreadcrumbList);
+publisher.logo still OPEN - needs a real static logo asset (no icon-512.png
+exists; og-image.png rejected as wrong-purpose). One-line add once public/logo.png
+exists.
+
 ### Open / horizon
 - FIRST real VANTAGE auto-sourced draft: review for honesty before approving
   (deferred validation). Run --dry a few times to catch one.
