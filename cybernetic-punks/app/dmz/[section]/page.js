@@ -35,10 +35,35 @@ export async function generateMetadata({ params }) {
   var sectionSlug = (await params).section;
   var section = getGameSection('dmz', sectionSlug);
   if (!section) return { title: 'DMZ — Not Found' };
+  // Description resolves to the config `description` (all current sections have one).
+  // The fallback is state-aware and never implies coverage exists: a data section is a
+  // coming-soon structured-data shell (launches with the zone); an editor section without
+  // copy is framed as incoming, not populated. openGraph/twitter/keywords are set here so
+  // sections stop inheriting the root layout's Marathon og/twitter/keywords (same fix as
+  // the hub; the /dmz/[section]/[slug] article pages already override on their own).
+  var desc = section.description || (section.source === 'data'
+    ? section.label + ' for DMZ -- structured data launches with the zone.'
+    : section.label + ' for DMZ -- coverage arrives as official details are confirmed.');
+  var ogTitle = section.label + ' — DMZ';
+  var url = 'https://cyberneticpunks.com/dmz/' + section.slug;
   return {
-    title: section.label + ' — DMZ',
-    description: section.description || ('DMZ ' + section.label + ' on the CyberneticPunks game network.'),
-    alternates: { canonical: 'https://cyberneticpunks.com/dmz/' + section.slug },
+    title: ogTitle,
+    description: desc,
+    keywords: ['DMZ', 'DMZ ' + section.label, 'Modern Warfare 4 DMZ', 'MW4 DMZ', 'Call of Duty DMZ'],
+    alternates: { canonical: url },
+    openGraph: {
+      title: ogTitle,
+      description: desc,
+      url: url,
+      siteName: 'CyberneticPunks',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@Cybernetic87250',
+      title: ogTitle,
+      description: desc,
+    },
   };
 }
 

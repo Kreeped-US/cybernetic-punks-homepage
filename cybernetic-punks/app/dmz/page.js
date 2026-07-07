@@ -21,10 +21,29 @@ var EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 export const dynamic = 'force-dynamic';
 
+// openGraph/twitter/keywords are set HERE (not inherited) -- without them the hub
+// falls back to the root layout's Marathon-branded og/twitter/keywords. Mirrors the
+// article template's override. No openGraph.images: the file-based opengraph-image
+// (app/dmz/opengraph-image) already supplies the DMZ og:image.
 export const metadata = {
   title: 'DMZ — Extraction Intelligence Hub',
   description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for the DMZ.',
+  keywords: ['DMZ', 'DMZ Modern Warfare 4', 'MW4 DMZ', 'Call of Duty DMZ', 'DMZ extraction zone', 'DMZ Hajin', 'DMZ FOB', 'DMZ crafting', 'DMZ loadouts', 'DMZ guide'],
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
+  openGraph: {
+    title: 'DMZ — Extraction Intelligence Hub',
+    description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for Call of Duty Modern Warfare 4 DMZ.',
+    url: 'https://cyberneticpunks.com/dmz',
+    siteName: 'CyberneticPunks',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@Cybernetic87250',
+    title: 'DMZ — Extraction Intelligence Hub',
+    description: 'Field intel, meta, loadouts, crafting, and region guides for Call of Duty Modern Warfare 4 DMZ.',
+  },
 };
 
 // Set of currently-published game_slug='dmz' article slugs -> drives REAL per-section
