@@ -89,6 +89,37 @@ publisher.logo still OPEN - needs a real static logo asset (no icon-512.png
 exists; og-image.png rejected as wrong-purpose). One-line add once public/logo.png
 exists.
 
+### VANTAGE discourse honesty review + YouTube auto-source yield finding
+HONESTY REVIEW -- PASS. A controlled test (fictional "Test Creator", in-memory
+directive, ZERO DB writes, real committed modules confirmed loaded:
+VANTAGE_DISCOURSE_SYSTEM_PROMPT + buildVantageDiscoursePrompt +
+VANTAGE_DISCOURSE_TOOL + ARTICLE_MODEL) ran a manual-directive draft through the
+SAME generator/prompt/tool the manual + auto paths use. VANTAGE: invented no
+identity/reputation/affiliation, attributed every game claim to the creator,
+declined to adjudicate and pointed to the Marathon desk by function without
+stating figures, quoted the source verbatim, framed reception as open (no
+consensus slip), and emitted zero invented URLs/handles/figures/sameAs. Captured
+in candidate-review.md (untracked local file, not committed).
+
+COMMUNITY-FRAMING -- DELIBERATE EDITORIAL BOUNDARY (do NOT "fix" as a bug). The
+one soft note from the review -- VANTAGE writing "the community is actively
+contesting / these are live questions" -- is RULED ACCEPTABLE AS-IS.
+Contextualizing a take as part of an ongoing conversation is intentional, allowed
+discourse framing for VANTAGE as the discourse editor; it is NOT a defect. The
+honesty line is drawn at FACTS, FIGURES, IDENTITY, and RECEPTION-AS-SETTLED (all
+of which she attributes or avoids) -- NOT at discourse contextualization. A future
+session must not "correct" this framing as a bug.
+
+YOUTUBE AUTO-SOURCE YIELD -- confirmed working + correctly strict. The --dry
+pipeline works; the relevance filter + eligibility gate function as designed.
+Multiple recent runs produced 0 qualifying candidates because the pool had no
+transcripts/captions and descriptions under the 300-char floor -- the correct
+low/sporadic-yield behavior (better nothing than a fabricated take). STRUCTURAL
+PATTERN: the spiciest on-topic takes (e.g. "Marathon 2026 is Unpretty Awful",
+"I hate bubble shields") tend to be SHORT-form videos with thin descriptions the
+gate correctly rejects. So auto-source favors long-form/captioned content, while
+short-form hot takes are better captured via the MANUAL X/Reddit drop path.
+
 ### Open / horizon
 - FIRST real VANTAGE auto-sourced draft: review for honesty before approving
   (deferred validation). Run --dry a few times to catch one.
