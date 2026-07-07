@@ -213,6 +213,45 @@ export default async function DmzLanding() {
     },
   };
 
+  // ---- Hub FAQ (source-backed; owner-approved 2026-07-07). Three Q&As: map / mode /
+  // confirmed-so-far. Answers are VERBATIM the approved text and the SAME strings feed
+  // BOTH the visible block and the FAQPage schema below (single source -> visible text
+  // === schema, no drift). Every answer is Deep-Dive-backed; the launch DATE was
+  // deliberately EXCLUDED -- no official CoD source (see docs/HANDOFF.md). ----
+  var FAQ_ARTICLES = {
+    fob:     { href: '/dmz/field-intel/dmz-forward-operating-base-every-hub-system-detailed', label: 'the Forward Operating Base' },
+    printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
+    hajin:   { href: '/dmz/field-intel/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'the Hajin Exclusion Zone' },
+  };
+  var FAQ_MAP_Q = 'Where is DMZ set?';
+  var FAQ_MAP_A = 'DMZ is set in the Hajin Exclusion Zone, a contested area on the Korean peninsula left saturated with abandoned military technology after the events of the Modern Warfare 4 campaign.';
+  var FAQ_MODE_Q = 'What kind of mode is DMZ?';
+  var FAQ_MODE_A = "DMZ is a mode within Call of Duty: Modern Warfare 4. The official Deep Dive frames it around extraction operations: squads deploy into the Hajin Exclusion Zone behind enemy lines and 'loot, fight, negotiate, betray, and extract whatever you can carry,' with both rival Operators and enemy combatants active throughout the zone.";
+  var FAQ_CONFIRMED_Q = 'What has been officially confirmed about DMZ so far?';
+  var FAQ_CONFIRMED_PRE = 'Three areas have been covered in depth so far, each drawn from the official Deep Dive: ';
+  var FAQ_CONFIRMED_MID1 = ' (the between-deployments hub), ';
+  var FAQ_CONFIRMED_MID2 = ', and ';
+  var FAQ_CONFIRMED_MID3 = ' (the setting)';
+  var FAQ_CONFIRMED_SUF = '. More coverage follows as official details are confirmed.';
+  // Schema answer for confirmed-so-far: SAME words as the visible render, the 3 article
+  // labels wrapped in <a> (absolute URLs). Stripping the tags yields the visible text.
+  var faqConfirmedHtml = FAQ_CONFIRMED_PRE
+    + '<a href="' + HUB_BASE + FAQ_ARTICLES.fob.href + '">' + FAQ_ARTICLES.fob.label + '</a>' + FAQ_CONFIRMED_MID1
+    + '<a href="' + HUB_BASE + FAQ_ARTICLES.printer.href + '">' + FAQ_ARTICLES.printer.label + '</a>' + FAQ_CONFIRMED_MID2
+    + '<a href="' + HUB_BASE + FAQ_ARTICLES.hajin.href + '">' + FAQ_ARTICLES.hajin.label + '</a>' + FAQ_CONFIRMED_MID3
+    + FAQ_CONFIRMED_SUF;
+  var faqLd = {
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: [
+      { '@type': 'Question', name: FAQ_MAP_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MAP_A } },
+      { '@type': 'Question', name: FAQ_MODE_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MODE_A } },
+      { '@type': 'Question', name: FAQ_CONFIRMED_Q, acceptedAnswer: { '@type': 'Answer', text: faqConfirmedHtml } },
+    ],
+  };
+  var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
+  var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
+  var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };
+
   return (
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubBreadcrumbLd) }} />
@@ -263,6 +302,38 @@ export default async function DmzLanding() {
         })}
         {/* Factions: informational only, not a section/route. */}
         <FactionsCard />
+      </div>
+
+      {/* FAQ -- source-backed (map / mode / confirmed-so-far). The FAQPage schema
+          directly below is built from the SAME strings this block renders, so visible
+          text === schema (no drift). Launch DATE intentionally omitted (unsourced). */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 18px' }}>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Common questions</h2>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+      <div style={{ display: 'grid', gap: 20 }}>
+        <div>
+          <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
+          <p style={faqAStyle}>{FAQ_MAP_A}</p>
+        </div>
+        <div>
+          <h3 style={faqQStyle}>{FAQ_MODE_Q}</h3>
+          <p style={faqAStyle}>{FAQ_MODE_A}</p>
+        </div>
+        <div>
+          <h3 style={faqQStyle}>{FAQ_CONFIRMED_Q}</h3>
+          <p style={faqAStyle}>
+            {FAQ_CONFIRMED_PRE}
+            <Link href={FAQ_ARTICLES.fob.href} style={faqLinkStyle}>{FAQ_ARTICLES.fob.label}</Link>
+            {FAQ_CONFIRMED_MID1}
+            <Link href={FAQ_ARTICLES.printer.href} style={faqLinkStyle}>{FAQ_ARTICLES.printer.label}</Link>
+            {FAQ_CONFIRMED_MID2}
+            <Link href={FAQ_ARTICLES.hajin.href} style={faqLinkStyle}>{FAQ_ARTICLES.hajin.label}</Link>
+            {FAQ_CONFIRMED_MID3}
+            {FAQ_CONFIRMED_SUF}
+          </p>
+        </div>
       </div>
 
       {/* Launch-email capture (owned list). Landing gets the dedicated BLOCK; the
