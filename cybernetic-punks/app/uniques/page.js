@@ -85,7 +85,7 @@ export default async function UniquesIndexPage() {
               '@type': 'ListItem',
               position: i + 1,
               name: u.name + ' — Marathon ' + (u.rarity || '') + ' Unique Weapon',
-              url: 'https://cyberneticpunks.com/uniques#' + (u.slug || weaponSlug(u.name)),
+              url: 'https://cyberneticpunks.com/uniques/' + (u.slug || weaponSlug(u.name)),
             };
           }),
         },

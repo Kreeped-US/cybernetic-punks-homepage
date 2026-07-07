@@ -93,6 +93,7 @@ export default async function sitemap() {
 
   let dbShellPages = [];
   let weaponPages = [];
+  let uniquePages = [];
   let mapPages = [];
   let dynamicPages = [];
   let dmzArticlePages = [];
@@ -161,6 +162,33 @@ export default async function sitemap() {
       }
     } catch (err) {
       console.error('[sitemap] weapon fetch threw:', err);
+    }
+
+    // Unique-weapon detail pages from DB. unique_weapons has a real `slug`
+    // column, so this is direct (no name-deriving, unlike weapons). Mirrors the
+    // weapon-page pattern; the /uniques/[slug] route renders each row.
+    try {
+      const { data: uniques, error: uniquesErr } = await supabase
+        .from('unique_weapons')
+        .select('slug, updated_at')
+        .order('slug');
+
+      console.log('[sitemap] unique_weapons:',
+        uniques ? uniques.length + ' rows' : 'null',
+        uniquesErr ? 'error: ' + uniquesErr.message : '');
+
+      if (uniques && uniques.length > 0) {
+        uniquePages = uniques
+          .filter((u) => u.slug)
+          .map((u) => ({
+            url: baseUrl + '/uniques/' + u.slug,
+            lastModified: u.updated_at ? new Date(u.updated_at) : new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.75,
+          }));
+      }
+    } catch (err) {
+      console.error('[sitemap] unique fetch threw:', err);
     }
 
     // Map detail pages from DB (game_maps SEO layer, added June 8, 2026).
@@ -336,5 +364,5 @@ export default async function sitemap() {
     'dmz=' + dmzPages.length,
     'dynamic=' + dynamicPages.length);
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...mapPages, ...dmzPages, ...dynamicPages];
+  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...uniquePages, ...mapPages, ...dmzPages, ...dynamicPages];
 }

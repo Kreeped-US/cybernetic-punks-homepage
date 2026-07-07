@@ -249,7 +249,7 @@ export default function WeaponDetailClient({
               {uniqueVariants.map(function(u) {
                 var uColor = RARITY_COLORS[u.rarity] || '#ff2d55';
                 return (
-                  <Link key={u.name} href={'/uniques#' + u.slug} className="uniq-row" style={{
+                  <Link key={u.name} href={'/uniques/' + u.slug} className="uniq-row" style={{
                     display: 'block', background: '#1a1d24', border: '1px solid #22252e',
                     borderLeft: '3px solid ' + uColor, borderRadius: '0 3px 3px 0',
                     padding: '12px 16px', textDecoration: 'none', transition: 'background 0.1s',

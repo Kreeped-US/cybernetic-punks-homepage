@@ -268,11 +268,9 @@ export default function UniquesHubClient(props) {
                             {sourceLabel}
                             {u.acquisition_detail ? ' · ' + u.acquisition_detail.toUpperCase() : ''}
                           </span>
-                          {u.baseWeaponSlug && (
-                            <Link href={'/weapons/' + u.baseWeaponSlug} className="uniq-view" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, textDecoration: 'none', transition: 'color 0.1s', flexShrink: 0 }}>
-                              VIEW BASE →
-                            </Link>
-                          )}
+                          <Link href={'/uniques/' + anchor} className="uniq-view" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, textDecoration: 'none', transition: 'color 0.1s', flexShrink: 0 }}>
+                            FULL DETAILS →
+                          </Link>
                         </div>
                       </div>
                     );
