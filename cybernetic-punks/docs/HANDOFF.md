@@ -151,6 +151,9 @@ DMZ hub: BreadcrumbList structured-only, visible hub breadcrumb pending (follow-
 - The 2 remaining long unpublished pieces: glance -> keep/publish/drop someday.
 - dmz_launch_emails naming debt (holds network signups too) — Justin-run SQL.
 - DMZ-6: still held until genuinely new official CoD material.
+- DMZ launch date Oct 23 2026 asserted site-wide; no official CoD source located
+  in-repo -- verify against an official announcement or soften to expected/targeted
+  if unconfirmed.
 
 ---
 
