@@ -185,8 +185,38 @@ function FactionsCard() {
 export default async function DmzLanding() {
   var [published, dCount] = await Promise.all([publishedDmzSlugs(), discourseCount()]);
 
+  // Source-independent structured data for the hub. BreadcrumbList: Network -> DMZ
+  // (DMZ is the current page, so it is the leaf with no `item`). NOTE: the hub has no
+  // VISIBLE breadcrumb of its own -- this emits the graph position without an on-page
+  // equivalent; a visible hub breadcrumb is a later, separate pass (do not invent one
+  // here). CollectionPage describes the hub as its coverage sections (from dmz.sections,
+  // never a hardcoded list), so it tracks the config.
+  var HUB_BASE = 'https://cyberneticpunks.com';
+  var hubBreadcrumbLd = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Network', item: HUB_BASE + '/' },
+      { '@type': 'ListItem', position: 2, name: 'DMZ' },
+    ],
+  };
+  var hubCollectionLd = {
+    '@context': 'https://schema.org', '@type': 'CollectionPage',
+    name: 'DMZ - Extraction Intelligence Hub',
+    description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for Call of Duty Modern Warfare 4 DMZ.',
+    url: HUB_BASE + '/dmz',
+    isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: HUB_BASE },
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: dmz.sections.map(function (sec, i) {
+        return { '@type': 'ListItem', position: i + 1, name: sec.label, url: HUB_BASE + '/dmz/' + sec.slug };
+      }),
+    },
+  };
+
   return (
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubBreadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubCollectionLd) }} />
       {/* Hero */}
       <div style={{ marginBottom: 34 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>

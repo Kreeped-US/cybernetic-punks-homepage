@@ -78,14 +78,59 @@ function ArticleCard({ section, article }) {
   );
 }
 
+// Source-independent structured data for a DMZ section page. BreadcrumbList mirrors
+// the VISIBLE breadcrumb (Network / DMZ / <section label>) using the literals the
+// visible nav uses; only section.label is dynamic. CollectionPage is emitted ONLY
+// when the section has published articles (no empty article-collection claims on the
+// coming-soon / empty sections -- those get the BreadcrumbList alone).
+function DmzSectionSchema({ section, articles }) {
+  var base = 'https://cyberneticpunks.com';
+  var schemas = [{
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Network', item: base + '/' },
+      { '@type': 'ListItem', position: 2, name: 'DMZ', item: base + '/dmz' },
+      { '@type': 'ListItem', position: 3, name: section.label },
+    ],
+  }];
+  if (articles && articles.length > 0) {
+    schemas.push({
+      '@context': 'https://schema.org', '@type': 'CollectionPage',
+      name: section.label + ' - DMZ',
+      description: section.description || ('DMZ ' + section.label + ' on the CyberneticPunks network.'),
+      url: base + '/dmz/' + section.slug,
+      isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: base },
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: articles.map(function (a, i) {
+          return { '@type': 'ListItem', position: i + 1, name: a.headline, url: base + '/dmz/' + section.slug + '/' + a.slug };
+        }),
+      },
+    });
+  }
+  return (
+    <>
+      {schemas.map(function (s, i) {
+        return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />;
+      })}
+    </>
+  );
+}
+
 export default async function DmzSectionPage({ params }) {
   var sectionSlug = (await params).section;
   var section = getGameSection('dmz', sectionSlug);
   if (!section) notFound();
 
-  // Data-fed section: structured-data tool, no feed_items query.
+  // Data-fed section: structured-data tool, no feed_items query. BreadcrumbList still
+  // emits (indexed URL) -- no CollectionPage since there are no articles.
   if (section.source !== 'editor') {
-    return <DmzComingSoon section={section} />;
+    return (
+      <>
+        <DmzSectionSchema section={section} articles={[]} />
+        <DmzComingSoon section={section} />
+      </>
+    );
   }
 
   // Editor-fed section: read DMZ articles scoped to THIS section. Curated news
@@ -124,11 +169,17 @@ export default async function DmzSectionPage({ params }) {
   }
 
   if (articles.length === 0) {
-    return <DmzEmptyState section={section} />;
+    return (
+      <>
+        <DmzSectionSchema section={section} articles={[]} />
+        <DmzEmptyState section={section} />
+      </>
+    );
   }
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
+      <DmzSectionSchema section={section} articles={articles} />
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
         <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
