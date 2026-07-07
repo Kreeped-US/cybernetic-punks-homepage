@@ -1335,7 +1335,7 @@ export default async function IntelPage({ params }) {
   // /intel/<slug> for a marathon-subject discourse piece. Skips the comments /
   // avatar / related fetches below (they assume Marathon editorial).
   if (isDiscourseArticle(itemResult.data)) {
-    return <DiscourseArticle item={itemResult.data} />;
+    return <DiscourseArticle item={itemResult.data} ogImageUrl={'https://cyberneticpunks.com/intel/' + itemResult.data.slug + '/opengraph-image'} />;
   }
 
   var comments = [];

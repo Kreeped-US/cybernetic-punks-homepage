@@ -199,7 +199,7 @@ export default async function DmzArticlePage({ params }) {
   // (the same one /intel uses), not the DMZ news template. Canonical home is
   // /dmz/discourse/<slug> for a dmz-subject discourse piece.
   if (isDiscourseArticle(article)) {
-    return <DiscourseArticle item={article} />;
+    return <DiscourseArticle item={article} ogImageUrl={'https://cyberneticpunks.com/dmz/discourse/' + article.slug + '/opengraph-image'} />;
   }
 
   // Launch-email strip: read the dismissal cookie server-side so a dismissed strip

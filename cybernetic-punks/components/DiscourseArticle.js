@@ -116,7 +116,7 @@ function Body({ body, accent }) {
   );
 }
 
-export default function DiscourseArticle({ item }) {
+export default function DiscourseArticle({ item, ogImageUrl }) {
   var display = getEditorDisplay(item.editor);
   var accent = display ? display.color : '#c8d4e0';
   var byline = editorByline(item.editor) || item.editor;
@@ -135,16 +135,24 @@ export default function DiscourseArticle({ item }) {
     ? ('Sourced from ' + ci.name + (srcLabel ? ' on ' + srcLabel : ''))
     : (srcLabel ? ('Sourced from the original ' + srcLabel + ' post') : 'Sourced from the original post');
 
-  // NewsArticle JSON-LD. author = VANTAGE's public byline (network editor); when a
-  // creator is named, an `about` Person with their canonical profiles.
+  // Article JSON-LD (discourse is editorial COMMENTARY -- Article, not NewsArticle,
+  // which mildly over-claims; Article is fully rich-result eligible). author = the
+  // network editor as a Person (a byline is a person, not an org). publisher.logo is
+  // intentionally OMITTED for now -- it needs a real, purpose-built static logo asset
+  // (no icon-512.png exists; og-image.png is a social card, wrong purpose); add it
+  // once public/logo.png exists. image is emitted ONLY when a per-route OG URL is
+  // passed in (never a hardcoded /intel path on a DMZ page -- better no image than a
+  // broken one). The `about` Person (the creator) stays minimal + from real profiles
+  // only -- unchanged.
   var jsonLd = {
-    '@context': 'https://schema.org', '@type': 'NewsArticle',
+    '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
-    author: { '@type': 'Organization', name: byline + ' — CyberneticPunks', url: CANONICAL_BASE + '/about' },
+    author: { '@type': 'Person', name: (display && display.fullName) ? display.fullName : byline, worksFor: { '@type': 'Organization', name: 'CyberneticPunks', url: CANONICAL_BASE } },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: CANONICAL_BASE },
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: tags.length ? tags.join(', ') : 'discourse',
+    ...(ogImageUrl ? { image: { '@type': 'ImageObject', url: ogImageUrl } } : {}),
   };
   if (ci.name) {
     var sameAs = [ci.youtube, ci.x, ci.twitch, ci.other].filter(Boolean);
@@ -152,10 +160,24 @@ export default function DiscourseArticle({ item }) {
     if (sameAs.length) jsonLd.about.sameAs = sameAs;
   }
 
+  // BreadcrumbList JSON-LD -- mirrors the VISIBLE breadcrumb, game-neutral (reuses
+  // `home`, so DMZ discourse renders "DMZ" not "Marathon"). The last crumb has no
+  // `item` (it is the current page). Reads home.href as-is, so if the parked
+  // discourseHome retarget lands later, this updates in lockstep.
+  var breadcrumbLd = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Network', item: CANONICAL_BASE + '/' },
+      { '@type': 'ListItem', position: 2, name: home.label, item: CANONICAL_BASE + home.href },
+      { '@type': 'ListItem', position: 3, name: 'Discourse' },
+    ],
+  };
+
   return (
     <main style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px', color: 'var(--text-primary)' }}>
       <ViewTracker slug={item.slug} type="article" headline={item.headline} gameSlug={item.game_slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
       {/* Breadcrumb: Network / <subject-game hub> / Discourse */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 1.5, fontFamily: MONO, fontWeight: 700, flexWrap: 'wrap' }}>
