@@ -62,7 +62,7 @@ export async function generateMetadata({ params }) {
 
   // Title leads with "Marathon [Shell] Guide" — matches literal search pattern.
   // No '| CyberneticPunks' suffix here; layout's title.template appends it.
-  var title = 'Marathon ' + shell.name + ' Guide — Builds, Tier List & Best Loadouts';
+  var title = 'Marathon ' + shell.name + ' Guide — Builds, Loadouts, Tier List & Stats';
 
   // Description: lore_tagline if available, otherwise generic. Both use a real
   // em-dash and lead with "Marathon [Shell] guide" — the actual search term.
@@ -84,7 +84,7 @@ export async function generateMetadata({ params }) {
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
-      title: 'Marathon ' + shell.name + ' Guide — Builds & Tier List',
+      title: 'Marathon ' + shell.name + ' Guide — Builds, Loadouts & Tier List',
       description: 'Stats, abilities, builds, and tier ranking for the ' + shell.name + ' shell.',
     },
     alternates: { canonical: 'https://cyberneticpunks.com/shells/' + slug },

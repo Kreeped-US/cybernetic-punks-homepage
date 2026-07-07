@@ -23,7 +23,7 @@ import ViewTracker from '@/components/ViewTracker';
 
 export var metadata = {
   title: 'Marathon Ranked Leaderboard — Global Top Players',
-  description: 'Marathon global leaderboard tracks the top ranked players from Bronze to Master. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie\'s extraction shooter.',
+  description: 'The Marathon game\'s global leaderboard tracks the top ranked players from Bronze to Master. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie\'s extraction shooter.',
   keywords: 'Marathon leaderboard, Marathon ranked leaderboard, Marathon top players, Marathon rankings, Marathon ranked mode, Marathon best players, Marathon global leaderboard, Marathon Bronze, Marathon Silver, Marathon Gold, Marathon Platinum, Marathon Diamond, Marathon Master, Marathon ranked stats, how to reach Master Marathon, Marathon Holotag score, Marathon ranked tiers explained, Marathon competitive rankings, Marathon player stats',
   openGraph: {
     title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',

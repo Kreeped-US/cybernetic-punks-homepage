@@ -137,18 +137,17 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
 
   // Article JSON-LD (discourse is editorial COMMENTARY -- Article, not NewsArticle,
   // which mildly over-claims; Article is fully rich-result eligible). author = the
-  // network editor as a Person (a byline is a person, not an org). publisher.logo is
-  // intentionally OMITTED for now -- it needs a real, purpose-built static logo asset
-  // (no icon-512.png exists; og-image.png is a social card, wrong purpose); add it
-  // once public/logo.png exists. image is emitted ONLY when a per-route OG URL is
-  // passed in (never a hardcoded /intel path on a DMZ page -- better no image than a
-  // broken one). The `about` Person (the creator) stays minimal + from real profiles
-  // only -- unchanged.
+  // network editor as a Person (a byline is a person, not an org). publisher.logo
+  // points at the real static site icon (/icon-512.png -- the same canonical logo the
+  // homepage Organization schema uses), which Google requires for Article rich
+  // results. image is emitted ONLY when a per-route OG URL is passed in (never a
+  // hardcoded /intel path on a DMZ page -- better no image than a broken one). The
+  // `about` Person (the creator) stays minimal + from real profiles only -- unchanged.
   var jsonLd = {
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
     author: { '@type': 'Person', name: (display && display.fullName) ? display.fullName : byline, worksFor: { '@type': 'Organization', name: 'CyberneticPunks', url: CANONICAL_BASE } },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: CANONICAL_BASE },
+    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: CANONICAL_BASE, logo: { '@type': 'ImageObject', url: CANONICAL_BASE + '/icon-512.png' } },
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: tags.length ? tags.join(', ') : 'discourse',
