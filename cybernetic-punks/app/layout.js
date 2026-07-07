@@ -10,17 +10,21 @@ const rajdhani = Rajdhani({ subsets: ['latin'], weight: ['300','400','500','600'
 
 export const metadata = {
   metadataBase: new URL('https://cyberneticpunks.com'),
+  // NETWORK-LEVEL defaults (root = the network front door post-cutover; the Marathon
+  // homepage now lives at /marathon). Game pages self-set their own OG (Marathon hub +
+  // content pages, DMZ, article template), so these defaults only surface on the apex
+  // homepage and network/utility pages -- exactly where network copy belongs.
   title: {
-    default: 'CyberneticPunks — Marathon Intelligence Hub',
+    default: 'CyberneticPunks — Competitive-Shooter Intelligence Network',
     template: '%s | CyberneticPunks',
   },
-  description: 'Marathon meta tier lists, build guides, weapon stats, shell rankings, and ranked intel for Bungie\'s extraction shooter — refreshed throughout the day.',
-  keywords: ['Marathon', 'Marathon game', 'Marathon builds', 'Marathon meta', 'Marathon loadouts', 'Marathon tier list', 'Bungie Marathon', 'extraction shooter', 'Marathon guide', 'Marathon tips'],
+  description: 'The competitive-shooter intelligence network. First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
+  keywords: ['CyberneticPunks', 'competitive shooter intelligence', 'Marathon', 'DMZ', 'extraction shooter'],
   authors: [{ name: 'CyberneticPunks' }],
   creator: 'CyberneticPunks',
   openGraph: {
-    title: 'CyberneticPunks — Marathon Intelligence Hub',
-    description: 'Marathon meta tier lists, build guides, weapon stats, and ranked intel for Bungie\'s extraction shooter. Refreshed throughout the day.',
+    title: 'CyberneticPunks — Competitive-Shooter Intelligence Network',
+    description: 'The competitive-shooter intelligence network. First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
     url: 'https://cyberneticpunks.com',
     siteName: 'CyberneticPunks',
     locale: 'en_US',
@@ -29,8 +33,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'CyberneticPunks — Marathon Intelligence Hub',
-    description: 'Marathon tier lists, builds, weapon stats, and ranked intel — refreshed throughout the day.',
+    title: 'CyberneticPunks — Competitive-Shooter Intelligence Network',
+    description: 'First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
   },
   robots: {
     index: true,

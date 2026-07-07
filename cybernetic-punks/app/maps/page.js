@@ -30,6 +30,22 @@ export const metadata = {
   title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel | CyberneticPunks',
   description: 'Marathon map guides for every location. Zones, bosses, events, and game modes for each map, with interactive vault breakdowns and credential routes where available.',
   alternates: { canonical: 'https://cyberneticpunks.com/maps' },
+  // Self-set Marathon OG so /maps keeps its game-appropriate card instead of inheriting
+  // the network-level root defaults (mirrors /marathon; the other Marathon pages already
+  // self-set their own OG).
+  openGraph: {
+    title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel',
+    description: 'Marathon map guides for every location. Zones, bosses, events, and game modes for each map, with interactive vault breakdowns and credential routes where available.',
+    url: 'https://cyberneticpunks.com/maps',
+    siteName: 'CyberneticPunks',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@Cybernetic87250',
+    title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel',
+    description: 'Marathon map guides for every location. Zones, bosses, events, and game modes for each map.',
+  },
 };
 
 function getServiceClient() {
