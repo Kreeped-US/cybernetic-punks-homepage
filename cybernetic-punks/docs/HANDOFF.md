@@ -135,6 +135,12 @@ static pre-render (removing force-dynamic) is blocked by the build-env issue + a
 freshness tradeoff -- a separate, larger decision, not a cleanup. CONCLUSION: no
 change made; not a bug.
 
+### DMZ hub/section schema (SHIPPED 2026-07-07, feat/profile-auth 94033bc)
+BreadcrumbList + CollectionPage JSON-LD added to the /dmz hub and every /dmz/[section]
+page (source-independent scaffolding; no factual claims). Section BreadcrumbLists mirror
+the visible breadcrumb; CollectionPage emits only where a section has published articles.
+DMZ hub: BreadcrumbList structured-only, visible hub breadcrumb pending (follow-up).
+
 ### Open / horizon
 - FIRST real VANTAGE auto-sourced draft: review for honesty before approving
   (deferred validation). Run --dry a few times to catch one.
