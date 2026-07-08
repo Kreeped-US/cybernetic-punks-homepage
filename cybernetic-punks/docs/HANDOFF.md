@@ -162,9 +162,7 @@ No old-mark icon remains -- the earlier favicon.ico / manifest "old art" deferra
 - The 2 remaining long unpublished pieces: glance -> keep/publish/drop someday.
 - dmz_launch_emails naming debt (holds network signups too) — Justin-run SQL.
 - DMZ-6: still held until genuinely new official CoD material.
-- DMZ launch date Oct 23 2026 asserted site-wide; no official CoD source located
-  in-repo -- verify against an official announcement or soften to expected/targeted
-  if unconfirmed.
+- DMZ launch date Oct 23 2026 — VERIFIED official. Source: https://www.callofduty.com/blog/2026/05/call-of-duty-modern-warfare-4-announcement (official Call of Duty blog, May 28 2026, by Call of Duty Staff). The post states: 'Call of Duty: Modern Warfare 4 releases on Friday, October 23, 2026.' DMZ ships as part of MW4, so it launches Oct 23 2026 with the game. Provenance confirmed 2026-07-08. Earlier 'no official source located' flag resolved. Oct 23 2026 may now be asserted site-wide, in schema/FAQ, banner, and bio as a sourced fact. Downstream unblocked: the 'When does DMZ launch?' FAQ item dropped from the hub FAQPage (because the date was unsourced) can now be re-added honestly, citing this source.
 
 ---
 
