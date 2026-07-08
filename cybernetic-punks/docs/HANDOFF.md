@@ -145,6 +145,35 @@ DMZ hub: BreadcrumbList + visible Network / DMZ breadcrumb now both present (str
 - DMZ hub: launch-date FAQ item re-added (sourced to CoD MW4 blog); visible hub breadcrumb added (structured-only debt closed).
 - VANTAGE discourse is DRAFT-AND-APPROVE, not scheduled/queued. Auto-source is manual-run with near-zero yield (YouTube descriptions too short / no captions). Nothing publishes without Justin feeding a source + approving. 'Waiting on the system' = nothing is coming; to produce a discourse article, trigger the manual path with a real curated source.
 
+### X API exception decision (2026-07-08)
+DECISION 2026-07-08: Official PAID X API affirmed by Justin as the sanctioned,
+ToS-compliant exception to the standing "no automated X/Reddit scraping -- ever" rule.
+Scraping (unauthorized reading of X content) stays FORBIDDEN; reading SPECIFIED
+accounts via the X-authorized paid API is permitted as a discourse SOURCE. All
+honesty gates unchanged: source-only writing, attribution to the creator, no
+wholesale post reproduction, and Justin approves every draft before publish.
+
+Intent: read specific X accounts + ~30-40 curated discourse sources daily to supply
+VANTAGE drafts, feeding the EXISTING source-agnostic discourse spine (generator,
+draft insert, admin panel, approve endpoint all already built).
+
+COST NOTE: the repo comment at lib/gather/index.js:14 ("Basic tier $200/mo") is
+STALE (written 2026-04-27, and was about the search/recent access tier). Justin has
+confirmed against current X developer pricing that reading specified accounts at the
+intended low volume costs roughly <$10/mo. When the X adapter is built, CORRECT or
+remove that stale comment so it stops causing re-litigation. Do not treat the $200
+figure as current.
+
+### Reddit gather review flag (OPEN, 2026-07-08)
+OPEN / TO REVIEW (2026-07-08): lib/gather/reddit.js is ACTIVE and feeds GHOST
+sentiment. The standing rule reads "no automated X/REDDIT scraping -- ever." This is a
+potential rule-vs-reality contradiction: is the live Reddit gather using the OFFICIAL
+Reddit API (compliant, like the affirmed X API exception) or actual scraping (rule
+violation)? Needs a READ-ONLY look next session: identify the access method (official
+API + credential/env var, or unauthorized fetch), and either (a) confirm it's
+compliant and record it as an affirmed exception like X, or (b) flag it for
+remediation. Not adjudicated yet; flagging so it does not stay unexamined.
+
 ### Icons refreshed to new static mark (SHIPPED 2026-07-08, feat/profile-auth)
 The favicon set (public/cnp-16/32/48.png, CNP-only), apple-touch icon (public/cnp-180.png,
 full mark), PWA 512 + both JSON-LD Organization logos (homepage app/page.js + discourse
