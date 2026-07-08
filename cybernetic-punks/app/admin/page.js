@@ -4,6 +4,7 @@ import UsageStats from '@/components/UsageStats';
 import QualityMetricsPanel from '@/components/QualityMetricsPanel';
 import QualityAlertsPanel from '@/components/QualityAlertsPanel';
 import VantageDraftsPanel from '@/components/VantageDraftsPanel';
+import SourceReviewPanel from '@/components/SourceReviewPanel';
 
 const FACTION_NAMES = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
 const STAT_NAMES = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration', 'DBNO', 'TAD'];
@@ -841,6 +842,7 @@ export default function AdminPage() {
         <QualityMetricsPanel password={password} />
         <QualityAlertsPanel password={password} />
         <VantageDraftsPanel password={password} />
+        <SourceReviewPanel password={password} />
       </div>
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>

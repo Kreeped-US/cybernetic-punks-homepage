@@ -61,6 +61,22 @@ export const marathon = {
       gameNames: ['Marathon', 'Marathon (2026)'],
     },
 
+    // X (official paid API) intake for VANTAGE discourse -- Stage 1. watchlist =
+    // TRUSTED seed accounts (origin='watchlist' in x_sources); searchQueries = the
+    // games-scoped discovery door (matching authors become PENDING candidates).
+    // START SMALL -- Justin drops the full 30-40 vetted handles + queries in here
+    // with no code change. Handles are WITHOUT @, lowercased.
+    // NOTE: these seed handles are PLACEHOLDERS to verify against the live API on the
+    // first dry run; replace with the real vetted watchlist. Unknown handles are
+    // skipped gracefully (logged), never fabricated.
+    x: {
+      watchlist: ['luckyy10p', 'nirvous'],
+      searchQueries: [
+        '(Marathon Bungie) (meta OR build OR loadout OR nerf OR buff OR tier) -is:retweet -is:reply lang:en',
+        '(Marathon Bungie) (broken OR underrated OR overrated OR balance) -is:retweet -is:reply lang:en',
+      ],
+    },
+
     // MIRANDA's field-guide gather has its own YouTube guide queries + dev-reddit
     // subs (distinct from the general reddit.subreddits above).
     miranda: {

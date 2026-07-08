@@ -33,6 +33,37 @@ export const dmz = {
   indexable: true,
   launched: false,
 
+  // X (official paid API) intake for VANTAGE discourse -- Stage 1 (mirrors the
+  // marathon.sources.x shape). watchlist = TRUSTED seed accounts; searchQueries =
+  // the games-scoped discovery door. START SMALL -- Justin drops the full vetted
+  // list in with no code change. Handles WITHOUT @, lowercased. Seed handles are
+  // PLACEHOLDERS to verify on the first dry run (unknown handles skip gracefully).
+  sources: {
+    x: {
+      watchlist: ['charlieintel'],
+      searchQueries: [
+        '(DMZ "Modern Warfare 4") (extraction OR Hajin OR FOB OR loadout OR meta) -is:retweet -is:reply lang:en',
+        '(MW4 DMZ) (release OR launch OR gameplay OR mode) -is:retweet -is:reply lang:en',
+      ],
+    },
+  },
+
+  // Relevance filter terms for the X off-topic gate (same shape as marathon.relevance).
+  // "dmz" is the ambiguous term (collides with military "demilitarized zone" and other
+  // games' DMZ modes) -- it only counts when PAIRED with a gaming-context token.
+  relevance: {
+    gameTokens: [
+      'modern warfare 4', 'mw4', 'call of duty', 'cod', 'hajin', 'exclusion zone',
+      'forward operating base', 'fob', 'exfil', 'extraction shooter', 'warzone',
+    ],
+    contextTokens: [
+      'extraction', 'loadout', 'meta', 'build', 'gameplay', 'mode', 'launch',
+      'release', 'operator', 'raid', 'contract', 'faction', 'gaming', 'fps',
+      'shooter', 'playstation', 'xbox', 'season', 'update', 'patch', 'beta',
+    ],
+    ambiguousTerm: 'dmz',
+  },
+
   // ROUGH theme tokens — approx the locked DMZ direction (GAME_TEMPLATE.md D3).
   // NOT final: the palette is tuned at the launch-polish pass. The actual
   // CSS-variable swap that drives rendering lives in `.dmz-theme` in

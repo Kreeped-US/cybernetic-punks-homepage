@@ -67,9 +67,13 @@ export async function GET(req) {
   if (!auth.ok) return auth.response;
 
   var supabase = getSupabase();
+  // select('*') (not an explicit column list) so the new feed_items.rejected column is
+  // included WHEN it exists, without 400-ing before Justin runs the ALTER. The panel
+  // filters rejected drafts out client-side (undefined -> shown), so this stays correct
+  // both before and after the migration.
   var { data, error } = await supabase
     .from('feed_items')
-    .select('id, headline, body, editor, game_slug, source, source_url, slug, directive_type, creator_info, is_published, noindex, created_at')
+    .select('*')
     .eq('is_published', false)
     .order('created_at', { ascending: false })
     .limit(100);

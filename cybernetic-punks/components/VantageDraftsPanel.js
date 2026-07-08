@@ -52,6 +52,30 @@ export default function VantageDraftsPanel({ password }) {
     }
   }
 
+  // Reject = record this ONE draft as rejected via the narrow endpoint (rejected=true,
+  // is_published stays false). Never publishes, never touches a live row. On success it
+  // drops off this list -- the queue then shows only drafts awaiting a real decision.
+  async function reject(d) {
+    if (busy) return;
+    if (typeof window !== 'undefined' && !window.confirm('Reject this draft?\n\n"' + d.headline + '"\n\nRecorded as rejected and removed from the queue (not published, not deleted).')) return;
+    setBusy(d.id); setNote(null);
+    try {
+      var res = await fetch('/api/admin/drafts/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+        body: JSON.stringify({ id: d.id }),
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('Failed (' + res.status + ')'));
+      setDrafts(function (list) { return list.filter(function (x) { return x.id !== d.id; }); });
+      setNote('Rejected: ' + d.headline);
+    } catch (err) {
+      setNote('Reject failed: ' + err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   useEffect(function () {
     if (!password) return;
     var cancelled = false;
@@ -61,7 +85,9 @@ export default function VantageDraftsPanel({ password }) {
         var res = await fetch('/api/admin/drafts', { headers: { 'x-admin-password': password } });
         if (!res.ok) throw new Error('Failed to fetch (' + res.status + ')');
         var data = await res.json();
-        if (!cancelled) { setDrafts(data.data || []); setError(null); }
+        // Hide rejected drafts. Before the feed_items.rejected column exists it is
+        // undefined -> shown (correct: nothing rejected yet); after, rejected rows drop.
+        if (!cancelled) { setDrafts((data.data || []).filter(function (x) { return !x.rejected; })); setError(null); }
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -115,7 +141,8 @@ export default function VantageDraftsPanel({ password }) {
                   {d.creator_info && d.creator_info.name && <span style={{ fontFamily: mono, fontSize: 9, color: accent }}>creator: {d.creator_info.name}</span>}
                   {d.source_url && <a href={d.source_url} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
                   <button onClick={function () { setOpen(function (o) { var n = { ...o }; n[d.id] = !n[d.id]; return n; }); }} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: accent, background: 'transparent', border: '1px solid ' + accent + '44', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>{isOpen ? 'HIDE BODY' : 'READ BODY'}</button>
-                  <button onClick={function () { approve(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : 'APPROVE + PUBLISH'}</button>
+                  <button onClick={function () { reject(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#ff4444', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'REJECT'}</button>
+                  <button onClick={function () { approve(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : 'APPROVE + PUBLISH'}</button>
                 </div>
                 {isOpen && (
                   <pre style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: '12px 0 0', padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>{d.body}</pre>
