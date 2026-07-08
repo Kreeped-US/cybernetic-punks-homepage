@@ -23,6 +23,15 @@ import pngToIco from 'png-to-ico';
 import { iconMark } from '../lib/og/iconMark.js';
 import { loadExo2 } from '../lib/og/fonts.js';
 
+// RETIRED 2026-07-08. Icons are now STATIC, hand-authored PNGs committed under public/
+// (public/cnp-16.png, cnp-32.png, cnp-48.png, cnp-180.png, cnp-512.png) + public/favicon.ico.
+// This generator emits the OLD programmatic 'CNP' iconMark art and would CLOBBER those
+// assets if run. It is disabled (this guard + the commented write targets below). To
+// re-enable for a future brand pass, remove this guard and repoint the writes at the
+// current asset names.
+console.error('gen-icons.mjs is RETIRED -- icons are static assets in public/. Aborting so it cannot clobber them.');
+process.exit(1);
+
 const fonts = await loadExo2();
 
 async function renderPng(text, px, radiusPct) {
@@ -30,16 +39,13 @@ async function renderPng(text, px, radiusPct) {
   return Buffer.from(await img.arrayBuffer());
 }
 
-// PWA icons + JSON-LD logo: full-square 'CNP' (maskable-safe center), 192 + 512.
-await writeFile('public/icon-192.png', await renderPng('CNP', 192, 0));
-await writeFile('public/icon-512.png', await renderPng('CNP', 512, 0));
-
-// favicon.ico: rounded 'C' at 16/32/48 -> one multi-size .ico.
-const ico = await pngToIco([
-  await renderPng('C', 16, 0.2),
-  await renderPng('C', 32, 0.2),
-  await renderPng('C', 48, 0.2),
-]);
-await writeFile('app/favicon.ico', ico);
-
-console.log('Generated: public/icon-192.png, public/icon-512.png, app/favicon.ico');
+// RETIRED -- write targets disabled (see guard above); kept for reference only.
+// await writeFile('public/icon-192.png', await renderPng('CNP', 192, 0));
+// await writeFile('public/icon-512.png', await renderPng('CNP', 512, 0));
+// const ico = await pngToIco([
+//   await renderPng('C', 16, 0.2),
+//   await renderPng('C', 32, 0.2),
+//   await renderPng('C', 48, 0.2),
+// ]);
+// await writeFile('app/favicon.ico', ico);
+// console.log('Generated: public/icon-192.png, public/icon-512.png, app/favicon.ico');

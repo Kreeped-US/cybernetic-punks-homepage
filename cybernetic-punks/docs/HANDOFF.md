@@ -141,6 +141,17 @@ page (source-independent scaffolding; no factual claims). Section BreadcrumbList
 the visible breadcrumb; CollectionPage emits only where a section has published articles.
 DMZ hub: BreadcrumbList structured-only, visible hub breadcrumb pending (follow-up).
 
+### Icons refreshed to new static mark (SHIPPED 2026-07-08, feat/profile-auth)
+The favicon set (public/cnp-16/32/48.png, CNP-only), apple-touch icon (public/cnp-180.png,
+full mark), PWA 512 + both JSON-LD Organization logos (homepage app/page.js + discourse
+publisher.logo -> /cnp-512.png) now use the new hand-authored mark, all as STATIC public/
+assets wired via app/layout.js metadata.icons. REMOVED: the dynamic app/icon.js +
+app/apple-icon.js, and the old app/favicon.ico (public/favicon.ico now serves the .ico).
+PWA 192 (public/icon-192.png) was refreshed in place; manifest 512 repointed
+/icon-512.png -> /cnp-512.png (old public/icon-512.png deleted). scripts/gen-icons.mjs is
+RETIRED (exit guard + commented writes) so it can no longer clobber the static assets.
+No old-mark icon remains -- the earlier favicon.ico / manifest "old art" deferral is CLOSED.
+
 ### Open / horizon
 - FIRST real VANTAGE auto-sourced draft: review for honesty before approving
   (deferred validation). Run --dry a few times to catch one.

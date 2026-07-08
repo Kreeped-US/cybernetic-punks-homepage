@@ -219,7 +219,7 @@ const JSONLD = [
     '@type': 'Organization',
     name: 'CyberneticPunks',
     url: 'https://cyberneticpunks.com',
-    logo: 'https://cyberneticpunks.com/icon-512.png',
+    logo: 'https://cyberneticpunks.com/cnp-512.png',
     sameAs: ['https://x.com/Cybernetic87250'],
   },
   {

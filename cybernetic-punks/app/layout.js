@@ -50,6 +50,20 @@ export const metadata = {
   verification: {
     google: 'M2lvAyNiEj7COYx4hguAd1l3TOOP7WwkQ1EjY3qoi0I',
   },
+  // Static, hand-authored icons committed under public/. Replaced the dynamic
+  // app/icon.js + app/apple-icon.js (deleted) with purpose-built PNGs; the favicon
+  // set is CNP-only for small-size legibility, the apple touch icon is the full mark.
+  // favicon.ico is served from public/favicon.ico (old app/favicon.ico deleted so the
+  // new one wins). shortcut links the .ico explicitly now that the app/ convention is gone.
+  icons: {
+    icon: [
+      { url: '/cnp-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/cnp-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/cnp-48.png', sizes: '48x48', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: { url: '/cnp-180.png', sizes: '180x180', type: 'image/png' },
+  },
   // NOTE: No alternates/canonical here — each page defines its own.
   // Pages without a canonical will have none, which is correct.
 };
