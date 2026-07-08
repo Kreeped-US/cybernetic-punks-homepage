@@ -51,7 +51,10 @@ function tweetUrl(handle, id) {
 }
 
 // Normalize a raw v2 tweet + its author handle into the shared post shape.
-function normalizePost(raw, mode, authorHandle) {
+// authorFollowers (FIX 2) comes from the author's public_metrics -- fetched for FREE in
+// the same user-lookup / search-expansion call (no extra API request). It is SORT/
+// PRIORITY only: it never gates eligibility (the substance gate decides that).
+function normalizePost(raw, mode, authorHandle, authorFollowers) {
   var m = raw.public_metrics || {};
   var attachments = raw.attachments || {};
   var hasMedia = !!(attachments.media_keys && attachments.media_keys.length);
@@ -63,6 +66,7 @@ function normalizePost(raw, mode, authorHandle) {
     text: raw.text || '',
     author_handle: authorHandle,
     author_id: raw.author_id || null,
+    author_followers: (typeof authorFollowers === 'number') ? authorFollowers : null,
     created_at: raw.created_at || null,
     metrics: {
       replies: m.reply_count || 0,
@@ -88,8 +92,12 @@ export async function resolveUserIds(handles, counter) {
   if (!clean.length) return out;
   // v2 caps usernames lookup at 100 per call; Stage-1 lists are tiny (one call).
   var batch = clean.slice(0, 100);
-  var data = await xGet('/users/by', { usernames: batch.join(','), 'user.fields': 'username' }, counter);
-  (data.data || []).forEach(function (u) { out[handleClean(u.username)] = { id: u.id, handle: handleClean(u.username) }; });
+  // user.fields=public_metrics -> followers_count comes back in the SAME call (free).
+  var data = await xGet('/users/by', { usernames: batch.join(','), 'user.fields': 'username,public_metrics' }, counter);
+  (data.data || []).forEach(function (u) {
+    var followers = (u.public_metrics && typeof u.public_metrics.followers_count === 'number') ? u.public_metrics.followers_count : null;
+    out[handleClean(u.username)] = { id: u.id, handle: handleClean(u.username), followers: followers };
+  });
   // Unresolved handles (typo / suspended / renamed) are simply absent -- caller logs them.
   return out;
 }
@@ -98,12 +106,13 @@ export async function resolveUserIds(handles, counter) {
 // read the account's own takes, not its reply chatter. ONE call.
 export async function fetchTimeline(userId, handle, opts, counter) {
   opts = opts || {};
+  var followers = (typeof opts.followers === 'number') ? opts.followers : null; // from resolveUserIds (free)
   var data = await xGet('/users/' + userId + '/tweets', {
     max_results: String(opts.maxResults || 10),
     exclude: 'retweets,replies',
     'tweet.fields': TWEET_FIELDS,
   }, counter);
-  return (data.data || []).map(function (raw) { return normalizePost(raw, 'timeline', handle); });
+  return (data.data || []).map(function (raw) { return normalizePost(raw, 'timeline', handle, followers); });
 }
 
 // SEARCH: games-scoped recent search (the discovery door). ONE call per query.
@@ -115,14 +124,17 @@ export async function searchRecent(query, opts, counter) {
     max_results: String(opts.maxResults || 20),
     'tweet.fields': TWEET_FIELDS + ',author_id',
     expansions: 'author_id',
-    'user.fields': 'username',
+    'user.fields': 'username,public_metrics', // followers_count in the SAME call (free)
   }, counter);
   var users = {};
   var inc = (data.includes && data.includes.users) || [];
-  inc.forEach(function (u) { users[u.id] = handleClean(u.username); });
+  inc.forEach(function (u) {
+    var followers = (u.public_metrics && typeof u.public_metrics.followers_count === 'number') ? u.public_metrics.followers_count : null;
+    users[u.id] = { handle: handleClean(u.username), followers: followers };
+  });
   return (data.data || []).map(function (raw) {
-    var handle = users[raw.author_id] || 'unknown';
-    return normalizePost(raw, 'search', handle);
+    var u = users[raw.author_id] || { handle: 'unknown', followers: null };
+    return normalizePost(raw, 'search', u.handle, u.followers);
   });
 }
 

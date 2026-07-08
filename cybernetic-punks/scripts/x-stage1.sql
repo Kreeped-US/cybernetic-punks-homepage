@@ -30,3 +30,31 @@ create index if not exists x_sources_state_idx on public.x_sources (state);
 -- reject endpoint only ever sets this true on an UNPUBLISHED row (never a live row).
 alter table public.feed_items
   add column if not exists rejected boolean not null default false;
+
+-- ============================================================================
+-- REVISION (2026-07-08 dry-run findings) -- post-level review model (FIX 3).
+-- All statements idempotent; safe to re-run the whole file.
+-- ============================================================================
+
+-- 3) x_declined_posts --------------------------------------------------------
+-- Per-POST decline memory. DECLINE passes THIS tweet only (never resurfaces) while the
+-- ACCOUNT stays eligible (its x_sources row stays 'pending'). The dry runner skips any
+-- tweet id present here (also saves API calls -- no re-expansion of a declined thread).
+create table if not exists public.x_declined_posts (
+  tweet_id       text primary key,
+  account_handle text not null,
+  declined_at    timestamptz not null default now()
+);
+
+-- 4) x_sources triggering-post snapshot + follower count ---------------------
+-- The specific post that surfaced a PENDING account, shown in the review queue so
+-- Justin vets WHAT was said (not just the account). sample_followers (FIX 2) is
+-- SORT/priority only -- higher-following takes shown first; it never gates eligibility.
+-- All nullable; set by the dry runner when a pending account is surfaced, cleared on
+-- DECLINE (so the account only reappears when a NEW take surfaces).
+alter table public.x_sources
+  add column if not exists sample_tweet_id  text,
+  add column if not exists sample_url       text,
+  add column if not exists sample_text      text,
+  add column if not exists sample_followers integer,
+  add column if not exists sample_metrics   jsonb;

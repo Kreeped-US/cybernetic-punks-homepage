@@ -49,7 +49,7 @@ function short(text, n) {
 
 var GAMES = { marathon: marathon, dmz: dmz };
 
-async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly) {
+async function runGame(slug, cfg, supabase, seenIds, declinedIds, states, counter, printOnly) {
   var xcfg = cfg.sources && cfg.sources.x;
   console.log('\n============================================================');
   console.log('GAME: ' + slug);
@@ -65,6 +65,7 @@ async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly)
   var pulledByAuthor = {};   // handle -> [posts]  (for baselines)
   var allPosts = [];         // every pulled post (timeline + search), pre-dedup
   var perSource = {};        // handle -> { pulled, dropped:{reason:count}, passed }
+  var pendingCandidates = {}; // handle -> { game_slug, post, followers, eng } (new authors w/ a QUALIFYING take)
 
   function recordDrop(handle, reason) {
     perSource[handle] = perSource[handle] || { pulled: 0, dropped: {}, passed: 0 };
@@ -80,7 +81,7 @@ async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly)
       var u = idMap[handle];
       if (!u) { console.log('  @' + handle + ': UNRESOLVED (handle not found / suspended / renamed -- skipped)'); continue; }
       var posts = [];
-      try { posts = await fetchTimeline(u.id, handle, { maxResults: 10 }, counter); }
+      try { posts = await fetchTimeline(u.id, handle, { maxResults: 10, followers: u.followers }, counter); }
       catch (e) { console.log('  @' + handle + ': timeline error -- ' + e.message); continue; }
       pulledByAuthor[handle] = (pulledByAuthor[handle] || []).concat(posts);
       allPosts = allPosts.concat(posts);
@@ -94,7 +95,6 @@ async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly)
 
   // ---- SEARCH (discovery) ---------------------------------------------------
   console.log('\n-- SEARCH (' + (xcfg.searchQueries || []).length + ' queries) --');
-  var discoveredAuthors = {};   // handle -> game_slug (new, not trusted/blocked)
   var trustedHits = 0, blockedDrops = 0;
   for (var q = 0; q < (xcfg.searchQueries || []).length; q++) {
     var query = xcfg.searchQueries[q];
@@ -114,8 +114,8 @@ async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly)
         perSource[ah].pulled += 1;
         continue;
       }
-      // NEW author -> pending candidate; also feed their post through the gate report.
-      if (!states.pending.has(ah) && ah !== 'unknown') discoveredAuthors[ah] = slug;
+      // NEW author -> their post flows through the gate; pending candidacy is decided
+      // by QUALIFICATION below (a real take), not by merely appearing in search.
       pulledByAuthor[ah] = (pulledByAuthor[ah] || []).concat([p]);
       allPosts.push(p);
       perSource[ah] = perSource[ah] || { pulled: 0, dropped: {}, passed: 0 };
@@ -132,6 +132,10 @@ async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly)
     seenThisRun.add(post.id);
     if (seenIds.has(post.id)) {                      // cross-run dedup (already drafted in Stage 2)
       recordDrop(post.author_handle, 'already-seen');
+      continue;
+    }
+    if (declinedIds.has(post.id)) {                  // declined post -> never resurfaces (also saves an expand call)
+      recordDrop(post.author_handle, 'declined');
       continue;
     }
     var pf = preFilter(post, relevance);
@@ -153,8 +157,22 @@ async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly)
       catch (e) { console.log('    (thread expand failed: ' + e.message + ')'); }
     }
     var qv = qualifies(pp);
-    if (qv.qualifies) qualifyingCount++;
-    console.log('  @' + pp.author_handle + ' [' + pp.mode + ']  replies=' + pp.metrics.replies + ' quotes=' + pp.metrics.quotes + ' likes=' + pp.metrics.likes);
+    if (qv.qualifies) {
+      qualifyingCount++;
+      // A qualifying take from a NEW search author -> pending candidate, with THIS post
+      // as the review snapshot. Keep the highest-reach take per author (follower sort).
+      var ah2 = pp.author_handle;
+      var isNewAuthor = pp.mode === 'search' && ah2 !== 'unknown' && !states.trusted.has(ah2) && !states.blocked.has(ah2) && watchlist.indexOf(ah2) === -1;
+      if (isNewAuthor) {
+        var eng2 = (pp.metrics.replies || 0) + (pp.metrics.quotes || 0) + (pp.metrics.likes || 0);
+        var fol2 = pp.author_followers || 0;
+        var prevc = pendingCandidates[ah2];
+        if (!prevc || fol2 > prevc.followers || (fol2 === prevc.followers && eng2 > prevc.eng)) {
+          pendingCandidates[ah2] = { game_slug: slug, post: pp, followers: fol2, eng: eng2 };
+        }
+      }
+    }
+    console.log('  @' + pp.author_handle + ' [' + pp.mode + ']  followers=' + (pp.author_followers == null ? '?' : pp.author_followers) + '  replies=' + pp.metrics.replies + ' quotes=' + pp.metrics.quotes + ' likes=' + pp.metrics.likes);
     console.log('    text: ' + short(pp.text, 180));
     console.log('    expansion: ' + (trig.expand ? 'TRIGGERED -- ' + trig.why : 'no -- ' + trig.why));
     if (pp.thread_text) console.log('    thread (would go to VANTAGE): ' + short(pp.thread_text, 240));
@@ -171,15 +189,33 @@ async function runGame(slug, cfg, supabase, seenIds, states, counter, printOnly)
   });
 
   // ---- QUEUE NEW PENDING SOURCES (the only write) ---------------------------
-  var newHandles = Object.keys(discoveredAuthors);
+  // Only accounts with a QUALIFYING take are queued (FIX 1 tightening), each carrying
+  // the triggering post as the review snapshot (FIX 3), sorted by follower reach (FIX 2).
+  var newHandles = Object.keys(pendingCandidates).sort(function (a, b) { return pendingCandidates[b].followers - pendingCandidates[a].followers; });
   console.log('\n-- SEARCH DISCOVERY --');
   console.log('  trusted-author hits: ' + trustedHits + '   blocked-author drops: ' + blockedDrops);
-  console.log('  NEW pending accounts discovered: ' + newHandles.length + (newHandles.length ? ' -> ' + newHandles.map(function (x) { return '@' + x; }).join(', ') : ''));
+  console.log('  NEW pending accounts (with a QUALIFYING take): ' + newHandles.length);
+  newHandles.forEach(function (h) {
+    var c = pendingCandidates[h];
+    console.log('    @' + h + '  (' + c.followers + ' followers)  ' + short(c.post.text, 90));
+  });
   if (newHandles.length && !printOnly) {
-    var rows = newHandles.map(function (h) { return { account_handle: h, state: 'pending', origin: 'search', game_slug: discoveredAuthors[h] }; });
-    var up = await supabase.from('x_sources').upsert(rows, { onConflict: 'account_handle', ignoreDuplicates: true });
+    var rows = newHandles.map(function (h) {
+      var c = pendingCandidates[h];
+      return {
+        account_handle: h, state: 'pending', origin: 'search', game_slug: c.game_slug,
+        account_id: c.post.author_id || null,
+        sample_tweet_id: c.post.id, sample_url: c.post.url, sample_text: c.post.text,
+        sample_followers: c.followers, sample_metrics: c.post.metrics,
+        updated_at: new Date().toISOString(),
+      };
+    });
+    // onConflict update (NOT ignoreDuplicates) so a pending row's snapshot refreshes to
+    // the latest qualifying take. Candidates exclude trusted/blocked, so this never
+    // clobbers a trust decision.
+    var up = await supabase.from('x_sources').upsert(rows, { onConflict: 'account_handle' });
     if (up.error) console.log('  (queue upsert error: ' + up.error.message + ')');
-    else console.log('  queued ' + newHandles.length + ' pending source(s) into x_sources (review in admin SOURCE REVIEW).');
+    else console.log('  queued ' + newHandles.length + ' pending source(s) + triggering-post snapshot (review in admin SOURCE REVIEW).');
   } else if (newHandles.length) {
     console.log('  (--print-only: NOT queued)');
   }
@@ -219,13 +255,21 @@ async function main() {
   } catch (e) { /* non-fatal */ }
   console.log('already-seen tweet ids (cross-run dedup): ' + seenIds.size);
 
+  // Declined tweet ids (FIX 3): a declined post never resurfaces + its thread is not re-expanded.
+  var declinedIds = new Set();
+  try {
+    var xd = await supabase.from('x_declined_posts').select('tweet_id').limit(5000);
+    (xd.data || []).forEach(function (row) { if (row.tweet_id) declinedIds.add(String(row.tweet_id)); });
+  } catch (e) { console.log('(x_declined_posts read failed -- table created? continuing empty: ' + e.message + ')'); }
+  console.log('declined tweet ids: ' + declinedIds.size);
+
   var counter = { calls: 0 };
   var totals = { qualifying: 0, passed: 0, discovered: 0 };
   var slugs = onlyGame ? [onlyGame] : ['marathon', 'dmz'];
   for (var g = 0; g < slugs.length; g++) {
     var cfg = GAMES[slugs[g]];
     if (!cfg) { console.log('unknown game: ' + slugs[g]); continue; }
-    var res = await runGame(slugs[g], cfg, supabase, seenIds, states, counter, printOnly);
+    var res = await runGame(slugs[g], cfg, supabase, seenIds, declinedIds, states, counter, printOnly);
     if (res) { totals.qualifying += res.qualifying; totals.passed += res.passed; totals.discovered += res.discovered; }
   }
 

@@ -57,12 +57,19 @@ export async function GET(req) {
   if (!VALID_STATES.includes(state)) return Response.json({ error: 'Invalid state' }, { status: 400 });
 
   var supabase = getSupabase();
-  var { data, error } = await supabase
+  var q = supabase
     .from('x_sources')
-    .select('id, account_handle, account_id, state, origin, game_slug, created_at, updated_at')
-    .eq('state', state)
-    .order('created_at', { ascending: false })
-    .limit(500);
+    .select('id, account_handle, account_id, state, origin, game_slug, sample_tweet_id, sample_url, sample_text, sample_followers, sample_metrics, created_at, updated_at')
+    .eq('state', state);
+  // Pending review = accounts surfaced by a specific post -> require a snapshot, and
+  // sort by follower count (FIX 2: reach prioritizes what Justin sees first; it never
+  // gates). Nulls last. Other states just list by recency.
+  if (state === 'pending') {
+    q = q.not('sample_tweet_id', 'is', null).order('sample_followers', { ascending: false, nullsFirst: false });
+  } else {
+    q = q.order('created_at', { ascending: false });
+  }
+  var { data, error } = await q.limit(500);
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });

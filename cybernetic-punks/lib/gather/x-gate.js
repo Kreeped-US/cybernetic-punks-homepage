@@ -17,8 +17,8 @@
 //   qualifies(post)                      -> { qualifies, reason }  substance A + B
 
 // ── TUNABLE CONSTANTS (over-strict start) ────────────────────────────────────
-export var MIN_MEANINGFUL_WORDS = 8;   // below this + no reasoning signal -> one-liner drop
-export var MIN_COVERABLE_WORDS  = 6;   // below this, an article would be >50% reprint -> drop
+export var MIN_MEANINGFUL_WORDS = 8;   // media-only threshold (thin text beside media)
+export var MIN_STANCE_WORDS     = 3;   // a stance-bearing take this short still qualifies -- brevity is fine
 export var FLOOR_ENGAGEMENT     = 25;  // absolute floor: replies+quotes+likes must clear this
 export var DEPTH_MIN            = 8;    // conversation-depth score needed to read a thread
 export var DEPTH_REPLY_WEIGHT   = 2;    // replies weight
@@ -45,6 +45,33 @@ var REASONING_SIGNALS = [
   'loadout', 'strategy', 'actually', 'the reason', 'imo', 'take', 'wrong', 'right',
 ];
 
+// STANCE markers -- the mention-vs-take line (FIX 1). A "take" states an OPINION,
+// ARGUMENT, CRITIQUE, or CLAIM WITH A STANCE (evaluative / comparative / prescriptive /
+// complaint), even if brief. A "mention" (neutral / factual / hype with no stance) does
+// NOT hit these and is dropped as 'mention (no stance)'. MODERATE by design: matched as
+// substrings of the normalized text so "too fast", "should nerf", "ruins" etc. all read.
+export var STANCE_MARKERS = [
+  'too ', ' should', 'shouldnt', ' need ', ' needs ', 'need to', 'needs to', 'broken',
+  'overtuned', 'undertuned', 'underrated', 'overrated', 'busted', ' op ', 'overpowered',
+  'underpowered', 'useless', 'worthless', 'ruin', 'mishandl', 'unfair', 'annoying',
+  'frustrat', 'better than', 'worse than', ' best ', ' worst ', 'the best', 'the worst',
+  'garbage', 'terrible', 'awful', 'amazing', 'disappoint', 'why is', 'why are', 'why do',
+  'makes no sense', 'no reason', 'unpopular opinion', 'hot take', 'imo', 'imho',
+  'honestly', 'disagree', ' agree', ' wrong', ' right about', 'not viable', 'skill gap',
+  'needs a nerf', 'needs a buff', 'needs nerf', 'needs buff', 'please fix', 'fix the',
+  'killed the', 'saved the', 'love how', 'hate how', 'love that', 'hate that',
+  'problem with', 'issue with', 'stop making', 'way too', 'so bad', 'so good', 'meta is',
+  'unbalanced', 'balance is', 'is broken', 'is busted', 'is op', 'ttk', 'time to kill',
+];
+
+// PROMO / self-promo / giveaway markers -- dropped as 'promo' (no argument to cover).
+export var PROMO_MARKERS = [
+  'check out', 'check my', 'my video', 'my stream', 'my channel', 'new video',
+  'link in bio', 'giveaway', 'give away', 'subscribe', 'watch my', 'live now',
+  'going live', 'go live', 'streaming', 'use code', 'promo code', 'sponsored',
+  'drop a follow', 'follow me', 'retweet to', 'rt to', 'enter to win', 'sign up',
+];
+
 function normalize(text) {
   return String(text || '')
     .toLowerCase()
@@ -62,6 +89,20 @@ function wordsOf(norm) {
 function hasReasoningSignal(norm) {
   for (var i = 0; i < REASONING_SIGNALS.length; i++) {
     if (norm.indexOf(REASONING_SIGNALS[i]) !== -1) return true;
+  }
+  return false;
+}
+
+function hasStance(norm) {
+  for (var i = 0; i < STANCE_MARKERS.length; i++) {
+    if (norm.indexOf(STANCE_MARKERS[i]) !== -1) return true;
+  }
+  return false;
+}
+
+function isPromo(norm) {
+  for (var i = 0; i < PROMO_MARKERS.length; i++) {
+    if (norm.indexOf(PROMO_MARKERS[i]) !== -1) return true;
   }
   return false;
 }
@@ -109,20 +150,25 @@ export function preFilter(post, relevance) {
   // Off-topic / name-collision: fails the X-shaped relevance rule.
   if (!isGameRelevant(text, relevance)) return drop('off-topic');
 
-  // Media-primary with thin text: substance lives in an image/clip we cannot read.
-  if (post && post.has_media && words.length < MIN_MEANINGFUL_WORDS) {
+  // Promo / self-promo / giveaway: no argument to characterize. Kept only if it also
+  // carries a real stance (e.g. "my video on why X is broken").
+  if (isPromo(norm) && !hasStance(norm)) return drop('promo');
+
+  // Media-primary with thin text: substance is in media we cannot read (unless the
+  // text itself carries a stance).
+  if (post && post.has_media && words.length < MIN_MEANINGFUL_WORDS && !hasStance(norm)) {
     return drop('media-only-thin');
   }
 
-  // One-liner with no reasoning: short AND makes no claim we could characterize.
-  if (words.length < MIN_MEANINGFUL_WORDS && !hasReasoningSignal(norm)) {
-    return drop('one-liner-no-reasoning');
-  }
-
-  // Too thin to cover without reproducing: so short that any article would be >50%
-  // reprint of the post + invented padding. Copyright + substance both fail here.
-  if (words.length < MIN_COVERABLE_WORDS) {
-    return drop('too-thin-to-cover-without-reproducing');
+  // MENTION vs TAKE (FIX 1). A non-anchor post must carry a STANCE (opinion / argument /
+  // critique / claim-with-stance). No stance -> it is a neutral / factual / hype MENTION,
+  // not discourse -> drop. Brevity is fine WHEN a stance is present; only ultra-tiny
+  // fragments drop. Thread ANCHORS are EXEMPT here (their substance may live in the
+  // thread) -- they proceed to the expansion eval and are judged on the expanded thread
+  // in qualifies(). Bias: over-drop a borderline mention rather than pass it.
+  if (!post.is_thread_anchor) {
+    if (!hasStance(norm)) return drop('mention (no stance)');
+    if (words.length < MIN_STANCE_WORDS) return drop('too-thin-to-cover-without-reproducing');
   }
 
   return { pass: true };
@@ -189,13 +235,14 @@ export function qualifies(post) {
   if (post.is_thread_anchor && !(post.thread_text && post.thread_text.trim())) {
     return { qualifies: false, reason: 'thread-anchor-unexpanded (substance lives in the unread thread)' };
   }
-  if (words.length < MIN_MEANINGFUL_WORDS) {
-    return { qualifies: false, reason: 'insufficient-substance (' + words.length + ' words)' };
+  // B: enough to characterize without reproducing.
+  if (words.length < MIN_STANCE_WORDS) {
+    return { qualifies: false, reason: 'too-thin-to-cover-without-reproducing (' + words.length + ' words)' };
   }
-  var isQuotePosition = !!post.is_quote && hasReasoningSignal(norm);
-  var isStandaloneTake = hasReasoningSignal(norm);
-  if (!isStandaloneTake && !isQuotePosition) {
-    return { qualifies: false, reason: 'no-characterizable-position (no claim/reasoning to write about)' };
+  // A: must state a STANCE (opinion / argument / critique). No stance == a mention,
+  // even after expansion (a popular-but-empty thread reads then drops here).
+  if (!hasStance(norm)) {
+    return { qualifies: false, reason: 'mention (no stance)' };
   }
-  return { qualifies: true, reason: post.thread_text ? 'thread take (expanded)' : (isQuotePosition ? 'quote+position' : 'standalone take') };
+  return { qualifies: true, reason: post.thread_text ? 'thread take (expanded, stance)' : (post.is_quote ? 'quote + stance' : 'take (stance)') };
 }
