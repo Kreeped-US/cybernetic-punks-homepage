@@ -139,7 +139,11 @@ change made; not a bug.
 BreadcrumbList + CollectionPage JSON-LD added to the /dmz hub and every /dmz/[section]
 page (source-independent scaffolding; no factual claims). Section BreadcrumbLists mirror
 the visible breadcrumb; CollectionPage emits only where a section has published articles.
-DMZ hub: BreadcrumbList structured-only, visible hub breadcrumb pending (follow-up).
+DMZ hub: BreadcrumbList + visible Network / DMZ breadcrumb now both present (structured-only debt CLOSED 2026-07-08).
+
+### DMZ hub FAQ + breadcrumb (SHIPPED 2026-07-08, feat/profile-auth)
+- DMZ hub: launch-date FAQ item re-added (sourced to CoD MW4 blog); visible hub breadcrumb added (structured-only debt closed).
+- VANTAGE discourse is DRAFT-AND-APPROVE, not scheduled/queued. Auto-source is manual-run with near-zero yield (YouTube descriptions too short / no captions). Nothing publishes without Justin feeding a source + approving. 'Waiting on the system' = nothing is coming; to produce a discourse article, trigger the manual path with a real curated source.
 
 ### Icons refreshed to new static mark (SHIPPED 2026-07-08, feat/profile-auth)
 The favicon set (public/cnp-16/32/48.png, CNP-only), apple-touch icon (public/cnp-180.png,

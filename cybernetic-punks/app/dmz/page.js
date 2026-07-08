@@ -205,11 +205,10 @@ export default async function DmzLanding() {
   var [published, dCount] = await Promise.all([publishedDmzSlugs(), discourseCount()]);
 
   // Source-independent structured data for the hub. BreadcrumbList: Network -> DMZ
-  // (DMZ is the current page, so it is the leaf with no `item`). NOTE: the hub has no
-  // VISIBLE breadcrumb of its own -- this emits the graph position without an on-page
-  // equivalent; a visible hub breadcrumb is a later, separate pass (do not invent one
-  // here). CollectionPage describes the hub as its coverage sections (from dmz.sections,
-  // never a hardcoded list), so it tracks the config.
+  // (DMZ is the current page, so it is the leaf with no `item`). The visible
+  // Network / DMZ breadcrumb at the top of <main> mirrors this exactly (same labels,
+  // same order) -- the structured-only gap is closed. CollectionPage describes the hub
+  // as its coverage sections (from dmz.sections, never a hardcoded list) -> tracks config.
   var HUB_BASE = 'https://cyberneticpunks.com';
   var hubBreadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -232,16 +231,19 @@ export default async function DmzLanding() {
     },
   };
 
-  // ---- Hub FAQ (source-backed; owner-approved 2026-07-07). Three Q&As: map / mode /
-  // confirmed-so-far. Answers are VERBATIM the approved text and the SAME strings feed
-  // BOTH the visible block and the FAQPage schema below (single source -> visible text
-  // === schema, no drift). Every answer is Deep-Dive-backed; the launch DATE was
-  // deliberately EXCLUDED -- no official CoD source (see docs/HANDOFF.md). ----
+  // ---- Hub FAQ (source-backed). Four Q&As: launch date / map / mode / confirmed-so-far.
+  // Answers are VERBATIM and the SAME strings feed BOTH the visible block and the FAQPage
+  // schema below (single source -> visible text === schema, no drift). The launch DATE is
+  // now sourced (verified-official CoD MW4 announcement -- MW4 releases Oct 23 2026, DMZ
+  // ships with it; see docs/HANDOFF.md), so it LEADS the list; the other three are
+  // Deep-Dive-backed. ----
   var FAQ_ARTICLES = {
     fob:     { href: '/dmz/field-intel/dmz-forward-operating-base-every-hub-system-detailed', label: 'the Forward Operating Base' },
     printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
     hajin:   { href: '/dmz/field-intel/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'the Hajin Exclusion Zone' },
   };
+  var FAQ_LAUNCH_Q = 'When does DMZ launch?';
+  var FAQ_LAUNCH_A = 'DMZ launches on October 23, 2026, alongside Call of Duty: Modern Warfare 4. The date is confirmed by the official Call of Duty announcement, which states Modern Warfare 4 releases Friday, October 23, 2026; DMZ ships as part of the game.';
   var FAQ_MAP_Q = 'Where is DMZ set?';
   var FAQ_MAP_A = 'DMZ is set in the Hajin Exclusion Zone, a contested area on the Korean peninsula left saturated with abandoned military technology after the events of the Modern Warfare 4 campaign.';
   var FAQ_MODE_Q = 'What kind of mode is DMZ?';
@@ -262,6 +264,7 @@ export default async function DmzLanding() {
   var faqLd = {
     '@context': 'https://schema.org', '@type': 'FAQPage',
     mainEntity: [
+      { '@type': 'Question', name: FAQ_LAUNCH_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_LAUNCH_A } },
       { '@type': 'Question', name: FAQ_MAP_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MAP_A } },
       { '@type': 'Question', name: FAQ_MODE_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MODE_A } },
       { '@type': 'Question', name: FAQ_CONFIRMED_Q, acceptedAnswer: { '@type': 'Answer', text: faqConfirmedHtml } },
@@ -275,6 +278,14 @@ export default async function DmzLanding() {
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubBreadcrumbLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubCollectionLd) }} />
+      {/* Breadcrumb: Network / DMZ -- mirrors the BreadcrumbList JSON-LD above and the
+          section pages' visible breadcrumb style. DMZ is the current page (styled as
+          current, not a link). */}
+      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
+        <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
+        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
+        <span style={{ color: 'var(--text-secondary)' }}>DMZ</span>
+      </nav>
       {/* Hero */}
       <div style={{ marginBottom: 34 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -328,15 +339,19 @@ export default async function DmzLanding() {
         <FactionsCard />
       </div>
 
-      {/* FAQ -- source-backed (map / mode / confirmed-so-far). The FAQPage schema
-          directly below is built from the SAME strings this block renders, so visible
-          text === schema (no drift). Launch DATE intentionally omitted (unsourced). */}
+      {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far). The FAQPage
+          schema directly below is built from the SAME strings this block renders, so
+          visible text === schema (no drift). Launch date is now sourced (see HANDOFF). */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 18px' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Common questions</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
       <div style={{ display: 'grid', gap: 20 }}>
+        <div>
+          <h3 style={faqQStyle}>{FAQ_LAUNCH_Q}</h3>
+          <p style={faqAStyle}>{FAQ_LAUNCH_A}</p>
+        </div>
         <div>
           <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
           <p style={faqAStyle}>{FAQ_MAP_A}</p>
