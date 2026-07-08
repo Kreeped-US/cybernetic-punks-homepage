@@ -2,8 +2,10 @@
 // Admin source-review for the X adapter (Stage 1). Narrow + admin-authed, mirroring
 // app/api/admin/drafts/approve. Two actions:
 //   GET  ?state=pending|trusted|blocked (default pending) -> list x_sources rows.
-//   POST { id, state } -> set ONE row's state to 'trusted' | 'blocked' | 'pending'
-//        (APPROVE -> trusted, DECLINE -> blocked, and revocable back to pending/trusted).
+//   POST { account_handle, state } -> set the state of ALL rows for that account
+//        (ACCOUNT-WIDE). APPROVE -> 'trusted', BLOCK -> 'blocked'. Trust and block are
+//        account-level: a "both" account (one row per game) is trusted/blocked across
+//        every game at once. (Per-POST decline is a separate route: x-sources/decline.)
 // This is the ONLY web path that mutates x_sources.state. It cannot write feed_items,
 // cannot generate, cannot publish -- it only files an account's trust state.
 // Same admin auth (SHA-256 constant-time + per-IP lockout). force-dynamic.
@@ -81,20 +83,23 @@ export async function POST(req) {
 
   var body = null;
   try { body = await req.json(); } catch (e) { body = null; }
-  var id = body && body.id;
+  var handle = body && body.account_handle;
   var state = body && body.state;
-  if (!id) return Response.json({ error: 'Missing id' }, { status: 400 });
+  if (!handle) return Response.json({ error: 'Missing account_handle' }, { status: 400 });
   if (!VALID_STATES.includes(state)) return Response.json({ error: 'Invalid state' }, { status: 400 });
 
+  var h = String(handle).trim().replace(/^@/, '').toLowerCase();
   var supabase = getSupabase();
+  // ACCOUNT-WIDE: trust/block apply to EVERY row for this account (all games), so a
+  // "both" account is trusted/blocked across games in one action. Per-game surfacing
+  // (pending) and per-post decline are handled elsewhere.
   var { data, error } = await supabase
     .from('x_sources')
     .update({ state: state, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select('id, account_handle, state, origin, game_slug')
-    .maybeSingle();
+    .eq('account_handle', h)
+    .select('id, account_handle, state, game_slug');
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  if (!data) return Response.json({ error: 'No x_sources row for that id.' }, { status: 404 });
-  return Response.json({ data });
+  if (!data || !data.length) return Response.json({ error: 'No x_sources rows for that account_handle.' }, { status: 404 });
+  return Response.json({ data: data });
 }

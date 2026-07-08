@@ -211,9 +211,11 @@ async function runGame(slug, cfg, supabase, seenIds, declinedIds, states, counte
       };
     });
     // onConflict update (NOT ignoreDuplicates) so a pending row's snapshot refreshes to
-    // the latest qualifying take. Candidates exclude trusted/blocked, so this never
-    // clobbers a trust decision.
-    var up = await supabase.from('x_sources').upsert(rows, { onConflict: 'account_handle' });
+    // the latest qualifying take. Conflict target is (account_handle, game_slug) -- the
+    // composite unique -- so an account can hold one PENDING row PER GAME (a "both"
+    // account surfaces a separate take in each). Candidates exclude trusted/blocked
+    // (account-wide), so this never clobbers a trust decision.
+    var up = await supabase.from('x_sources').upsert(rows, { onConflict: 'account_handle,game_slug' });
     if (up.error) console.log('  (queue upsert error: ' + up.error.message + ')');
     else console.log('  queued ' + newHandles.length + ' pending source(s) + triggering-post snapshot (review in admin SOURCE REVIEW).');
   } else if (newHandles.length) {

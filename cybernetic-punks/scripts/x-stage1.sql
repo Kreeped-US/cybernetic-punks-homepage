@@ -58,3 +58,27 @@ alter table public.x_sources
   add column if not exists sample_text      text,
   add column if not exists sample_followers integer,
   add column if not exists sample_metrics   jsonb;
+
+-- ============================================================================
+-- REVISION 2 (2026-07-08) -- uniqueness swap (account_handle) -> (account_handle,
+-- game_slug), so ONE account can hold one PENDING row PER GAME (trusted/blocked stay
+-- account-wide in code; the composite unique is only about the per-game pending rows).
+-- ============================================================================
+
+-- PRECHECK -- run this FIRST and confirm it returns ZERO rows before the swap.
+-- (If it returns any row, two rows already share a (handle, game_slug) pair and the
+-- new constraint would fail; resolve those first.)
+--   select account_handle, game_slug, count(*)
+--   from public.x_sources
+--   group by account_handle, game_slug
+--   having count(*) > 1;
+
+-- Swap (re-runnable: drops the old single-column unique AND the new one if present,
+-- then adds the composite). The old constraint is the column-level UNIQUE auto-named
+-- x_sources_account_handle_key; confirm with:
+--   select conname from pg_constraint
+--   where conrelid = 'public.x_sources'::regclass and contype = 'u';
+alter table public.x_sources drop constraint if exists x_sources_account_handle_key;
+alter table public.x_sources drop constraint if exists x_sources_handle_game_key;
+alter table public.x_sources add constraint x_sources_handle_game_key
+  unique (account_handle, game_slug);
