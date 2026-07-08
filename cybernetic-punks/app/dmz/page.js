@@ -305,6 +305,11 @@ export default async function DmzLanding() {
         </div>
       </div>
 
+      {/* Launch-email capture (owned list). Landing gets the dedicated BLOCK; the
+          dismissible strip runs on ARTICLE pages only (see placement note). Placed
+          directly after the hero so the pre-launch visitor sees it above the fold. */}
+      <DmzNotifyBlock />
+
       {/* Coverage */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coverage</h2>
@@ -354,10 +359,6 @@ export default async function DmzLanding() {
           </p>
         </div>
       </div>
-
-      {/* Launch-email capture (owned list). Landing gets the dedicated BLOCK; the
-          dismissible strip runs on ARTICLE pages only (see placement note). */}
-      <DmzNotifyBlock />
     </main>
   );
 }
