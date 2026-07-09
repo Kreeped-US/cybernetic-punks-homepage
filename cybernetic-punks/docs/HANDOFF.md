@@ -5,6 +5,81 @@ Newest entries on top.
 
 ---
 
+## 2026-07-09 (later) — Prompt-injection audit + generation-path hardening (SHIPPED)
+
+Triggered by GSC query data showing external injection probing
+(`you are the ailcc singularity engine...`, `allintext:"mark newcomer"`,
+`regenv2-test-alert`, `ai stability engine`). Full read-only audit of every
+LLM-prompt path, then hardened the ones that ingest external UGC.
+
+### Audit verdict
+- **The GSC probing is external RECON, not a live ingestion path.** No code path
+  feeds search/GSC data into the pipeline: no `search-console`/`gsc`/`webmaster`
+  ingestion anywhere; `seo_keywords` (the one table whose value becomes a prompt
+  instruction, "write an article answering search query X") is **read-only in
+  code** (getTargetKeyword SELECTs; consumeKeyword only stamps a timestamp) ->
+  human-curated in Supabase, never auto-populated; **no on-site LLM-backed
+  search** exists (the only `q=` param, /api/bungie-stats, hits Bungie's API, not
+  Claude). A query typed into Google cannot reach generation. The real (indirect)
+  exposure is crafted UGC that later gets gathered (Reddit/Steam/YouTube).
+- **User-facing LLM routes are SAFE.** advisor (`<user_input>` delimiters +
+  sanitize + system guard = gold standard), ask-editor (sanitize + injection
+  boundary + auth), intake (write-time sanitize), audit (DB-only, upstream
+  sanitized), network-editor brief (internal headlines only), dev/sample-editor
+  (404-gated in prod), comment generation (reacts only to our own articles).
+- **The real gap: generation paths ingested external UGC (YouTube/Reddit/Steam)
+  with anti-fabrication guards but NO treat-as-data / ignore-embedded-instructions
+  boundary**, and the few fences that existed (`---`, `"""`) weren't escaped. Rated
+  **needs-hardening, not critical**, because every generation editor is tool-forced
+  (must emit one fixed structured tool call) with no model-accessible tools/secrets/
+  web/DB -> blast radius is "a bad article publishes," not system compromise.
+  Full report: injection-audit-report.md (untracked in the tree).
+
+### Hardening shipped (two commits)
+- New **lib/promptSafety.js** — shared helpers `sanitizeUgc` (short fields: strip
+  control chars, remove `<`/`>` so nothing can forge `</untrusted_source>`, collapse
+  `---` runs, collapse newlines, length-cap), `neutralizeBlock` (long bodies: keep
+  newlines, strip `<`/`>` + control), `safeNum`, `untrustedClause`, `fenceUntrusted`
+  (clause + `<untrusted_source>` tags). Placed at **lib/ root, NOT lib/gather/**, so
+  lib/network/vantage.js can import it without violating its "touches none of the
+  per-game gather machinery" boundary.
+- **GHOST** (commit **402bf4c**): Reddit + Steam + Twitch-clip text fenced.
+- **NEXUS/DEXTER, MIRANDA, CIPHER, dexter-stats, VANTAGE auto** (commit
+  **7af9f3c**): all fence external UGC in `<untrusted_source>` + the treat-as-data
+  clause + delimiter-escape + ingest-sanitize, reusing the shared helpers.
+- **MIRANDA**: the internal VERIFIED DB sections (shell/weapon/mod/implant) are kept
+  OUTSIDE the wrapper (trusted data, not UGC); creator_spotlight source_text keeps
+  its human-vetted `"""` fence.
+- **X-path pre-hardened**: MIRANDA's `xIntelBlock` is inert today (`xData` null) but
+  wired through the same fencing, and VANTAGE's `source_text` fencing covers the
+  discourse path, so Stage 2 X intake (the most attacker-controllable source)
+  inherits the treatment with no retrofit.
+- **Adversarially verified per path**: a payload with a forged `</untrusted_source>`,
+  forged `---` fence, injected newline+`SYSTEM:` line, and NUL/BEL bytes fails to
+  break out of the data block on every path (only the one real closing tag exists;
+  no `<`/`>`/control bytes survive inside the body).
+- Tool-forced structured output unchanged everywhere (still the blast-radius
+  limiter); no editor OUTPUT behavior changed — only how external text is fenced.
+
+### Deferred (flagged, NOT done)
+1. **Bungie-news patch text via the shared patchnotes/ engine** — appended to
+   NEXUS/DEXTER/MIRANDA/GHOST via formatBungieNewsForEditor. First-party (official),
+   lower risk; its CIPHER consumption point IS fenced. The shared engine (5
+   consumers, documented byte-identical contract) was left untouched pending a
+   separate decision.
+2. **app/api/audit/route.js:140** — `bungie_display_name` / `platform` interpolated
+   raw into the prompt (OAuth-derived, length-bounded). Minor; wrap in the intake
+   `sanitizeField` for defense-in-depth.
+3. **network-editor CRON_SECRET** — the cron auth guard fails OPEN when the env var
+   is unset. Ops hygiene (not injection): set CRON_SECRET.
+
+### STANDING RULE
+NEVER give a generation editor additional tools (web fetch / DB write / code exec)
+without re-running this audit. Tool-forced, tool-limited output is the reason the
+external-UGC exposure is bounded; adding a tool changes the blast radius.
+
+---
+
 ## 2026-07-09 — Evergreen article duplication project CLOSED OUT (Phase 1 + Phase 2)
 
 Fixed the MIRANDA/CIPHER evergreen re-mint problem end-to-end: a generator guard
