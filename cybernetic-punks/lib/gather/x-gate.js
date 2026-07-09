@@ -35,14 +35,22 @@ export var BARE_REACTIONS = [
   'nah', 'yikes', 'oof', 'this', 'exactly', 'preach', 'agreed', 'true', 'valid',
 ];
 
-// Reasoning signals: words that mark a CLAIM / argument rather than a bare phrase.
-// Presence lets a shortish post through the one-liner gate (it is saying something).
-var REASONING_SIGNALS = [
-  'because', 'since', 'so', 'therefore', 'if', 'when', 'means', 'why', 'vs', 'versus',
-  'better', 'worse', 'stronger', 'weaker', 'should', 'shouldnt', 'needs', 'problem',
-  'issue', 'broken', 'underrated', 'overrated', 'buff', 'nerf', 'nerfed', 'buffed',
-  'meta', 'tier', 'viable', 'balance', 'balanced', 'op', 'busted', 'counter', 'build',
-  'loadout', 'strategy', 'actually', 'the reason', 'imo', 'take', 'wrong', 'right',
+// REASONING words: distinctive argument / mechanic terms that mark a REASONED CLAIM
+// of ANY polarity (a positive take that explains WHY qualifies exactly like a critique
+// does). This is the substance-not-sentiment path: a post that ARGUES a point passes
+// even if it hits no stance MARKER.
+//
+// Matched as whole TOKENS (word membership), NOT substring -- so "also" no longer
+// matches "so", "metal" no longer matches "meta", "mistake" no longer matches "take".
+// Ambiguous short tokens (so / if / op / vs / take / right / when) are deliberately
+// OMITTED: even at word-boundary they carry no argument on their own, and a couple
+// (op) would still be noisy. Overlap with STANCE_MARKERS (underrated/overrated/nerf/
+// buff/counter) is fine -- either list qualifying is the whole point.
+var REASONING_WORDS = [
+  'because', 'since', 'therefore', 'means', 'why', 'reason', 'reasons',
+  'stronger', 'weaker', 'underrated', 'overrated', 'buff', 'buffed', 'nerf', 'nerfed',
+  'viable', 'counter', 'build', 'builds', 'loadout', 'loadouts', 'strategy', 'synergy',
+  'imo',
 ];
 
 // STANCE markers -- the mention-vs-take line (FIX 1). A "take" states an OPINION,
@@ -86,9 +94,12 @@ function wordsOf(norm) {
   return norm ? norm.split(' ').filter(Boolean) : [];
 }
 
-function hasReasoningSignal(norm) {
-  for (var i = 0; i < REASONING_SIGNALS.length; i++) {
-    if (norm.indexOf(REASONING_SIGNALS[i]) !== -1) return true;
+// Token-membership match (NOT substring): a REASONING_WORD must BE one of the post's
+// words, so it can't match inside a longer common word. Takes the already-tokenized
+// words array (both gate points compute it), keeping the word-boundary guarantee.
+function hasReasoning(words) {
+  for (var i = 0; i < words.length; i++) {
+    if (REASONING_WORDS.indexOf(words[i]) !== -1) return true;
   }
   return false;
 }
@@ -160,14 +171,15 @@ export function preFilter(post, relevance) {
     return drop('media-only-thin');
   }
 
-  // MENTION vs TAKE (FIX 1). A non-anchor post must carry a STANCE (opinion / argument /
-  // critique / claim-with-stance). No stance -> it is a neutral / factual / hype MENTION,
-  // not discourse -> drop. Brevity is fine WHEN a stance is present; only ultra-tiny
-  // fragments drop. Thread ANCHORS are EXEMPT here (their substance may live in the
-  // thread) -- they proceed to the expansion eval and are judged on the expanded thread
-  // in qualifies(). Bias: over-drop a borderline mention rather than pass it.
+  // MENTION vs TAKE (FIX 1). A non-anchor post must carry a STANCE (opinion / critique /
+  // claim-with-stance) OR REASONING (an argued point of any polarity -- a positive take
+  // that explains WHY is substance too). Neither -> a neutral / factual / hype MENTION,
+  // not something to cover -> drop. Brevity is fine WHEN substance is present; only
+  // ultra-tiny fragments drop. Thread ANCHORS are EXEMPT here (their substance may live
+  // in the thread) -- they proceed to the expansion eval and are judged on the expanded
+  // thread in qualifies(). Bias: over-drop a borderline mention rather than pass it.
   if (!post.is_thread_anchor) {
-    if (!hasStance(norm)) return drop('mention (no stance)');
+    if (!hasStance(norm) && !hasReasoning(words)) return drop('mention (no stance/reasoning)');
     if (words.length < MIN_STANCE_WORDS) return drop('too-thin-to-cover-without-reproducing');
   }
 
@@ -239,10 +251,14 @@ export function qualifies(post) {
   if (words.length < MIN_STANCE_WORDS) {
     return { qualifies: false, reason: 'too-thin-to-cover-without-reproducing (' + words.length + ' words)' };
   }
-  // A: must state a STANCE (opinion / argument / critique). No stance == a mention,
-  // even after expansion (a popular-but-empty thread reads then drops here).
-  if (!hasStance(norm)) {
-    return { qualifies: false, reason: 'mention (no stance)' };
+  // A: must state a STANCE (opinion / critique) OR carry REASONING (an argued claim of
+  // any polarity -- a positive take that explains WHY qualifies just like a critique).
+  // Neither == a mention, even after expansion (a popular-but-empty thread reads then
+  // drops here).
+  var stance = hasStance(norm);
+  if (!stance && !hasReasoning(words)) {
+    return { qualifies: false, reason: 'mention (no stance/reasoning)' };
   }
-  return { qualifies: true, reason: post.thread_text ? 'thread take (expanded, stance)' : (post.is_quote ? 'quote + stance' : 'take (stance)') };
+  var basis = stance ? 'stance' : 'reasoning';
+  return { qualifies: true, reason: post.thread_text ? ('thread take (expanded, ' + basis + ')') : (post.is_quote ? ('quote + ' + basis) : ('take (' + basis + ')')) };
 }
