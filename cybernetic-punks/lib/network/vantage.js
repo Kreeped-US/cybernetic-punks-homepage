@@ -14,7 +14,7 @@
 // utility (no imports), deliberately NOT under lib/gather/, so importing it here
 // does not couple Vantage to the per-game gather machinery this module's header
 // forbids. Used only to fence the external source_text in the discourse builder.
-import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety';
+import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety.js';
 
 // THE HARD BOUNDARY -- meta, not intel. Mirrors the VERIFICATION_NOTE pattern:
 // a delimited, absolute clause injected into her system prompt. The WOULD /

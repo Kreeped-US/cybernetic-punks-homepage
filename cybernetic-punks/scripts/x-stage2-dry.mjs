@@ -8,24 +8,35 @@
 // via the existing lib/gather/x.js client -> run the existing (now stance-OR-reasoning)
 // lib/gather/x-gate.js -> PRINT the posts that WOULD become VANTAGE discourse drafts.
 //
-// It is DRY by construction:
-//   - ZERO DB writes (only SELECT reads: trust states, declined ids, already-drafted ids).
-//   - ZERO LLM calls (no VANTAGE, no Anthropic -- generation is a later increment).
-//   - It DOES make billed X API READ calls (timelines, + a thread expand when triggered);
-//     the run prints its exact API-call footprint. No retries, no loops, no fan-out.
+// DRY by construction:
+//   - ZERO DB writes ALWAYS (only SELECT reads: trust states, declined ids, drafted ids;
+//     and generate-and-print -- NEVER a feed_items insert, NEVER a publish).
+//   - Default (Increment 1): read + gate + print candidates. ZERO LLM.
+//   - With --generate (Increment 2): additionally run the FIRST --limit candidates
+//     through the EXISTING VANTAGE discourse generator and PRINT the draft (or the
+//     self-skip). This makes ONE LLM call per generated candidate. Still ZERO DB writes.
+//   - It makes billed X API READS (timelines + a thread expand when triggered) and, with
+//     --generate, billed LLM calls; the run prints both footprints. No retries/loops.
 //
-// Reuses x.js + x-gate.js AS-IS -- no new fetch path, no gate reimplementation.
+// Reuses x.js + x-gate.js AND the existing VANTAGE discourse generator + fencing AS-IS
+// (buildVantageDiscoursePrompt runs source_text through promptSafety's neutralizeBlock +
+// fenceUntrusted). No new fetch path, no gate reimplementation, no new prompt.
 //
-// RUN:  node scripts/x-stage2-dry.mjs             (both games)
-//       node scripts/x-stage2-dry.mjs --game dmz  (one game)
-//       node scripts/x-stage2-dry.mjs --max 20    (posts per timeline; default 10)
-// Needs X_API_BEARER + NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_KEY (auto-loaded from
-// .env.local if not already in env). X_API_BEARER is server-only; never printed.
+// RUN:  node scripts/x-stage2-dry.mjs                      (Increment 1: read+gate+print)
+//       node scripts/x-stage2-dry.mjs --game dmz           (one game)
+//       node scripts/x-stage2-dry.mjs --max 20             (posts per timeline; default 10)
+//       node scripts/x-stage2-dry.mjs --generate           (Increment 2: also generate 1 draft, dry)
+//       node scripts/x-stage2-dry.mjs --generate --limit 3 (generate up to N drafts, dry)
+// Needs X_API_BEARER + NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_KEY; --generate also
+// needs ANTHROPIC_API_KEY (auto-loaded from .env.local). X_API_BEARER never printed.
 
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+import Anthropic from '@anthropic-ai/sdk';
 import { xEnabled, resolveUserIds, fetchTimeline, expandThread } from '../lib/gather/x.js';
 import { preFilter, expansionTrigger, accountBaseline, qualifies } from '../lib/gather/x-gate.js';
+import { ARTICLE_MODEL } from '../lib/models.js';
+import { VANTAGE_DISCOURSE_SYSTEM_PROMPT, VANTAGE_DISCOURSE_AUTO_ADDENDUM, VANTAGE_DISCOURSE_TOOL, buildVantageDiscoursePrompt } from '../lib/network/vantage.js';
 import { marathon } from '../lib/games/marathon.js';
 import { dmz } from '../lib/games/dmz.js';
 
@@ -175,19 +186,62 @@ async function runGameTrusted(slug, cfg, supabase, seenIds, declinedIds, states,
   return { candidates: candidates, pulled: pulled, resolved: resolved, timelineCalls: timelineCalls, resolveCalls: resolveCalls, expandCalls: expandCalls };
 }
 
+// Build the VANTAGE discourse directive from an X candidate. source_text = the clean
+// creator take (Increment-1 output); attribution from the x_sources handle. NO human
+// instruction on the X path (we don't fabricate an angle). game_slug = the SUBJECT game.
+// NOTE (flagged): x_sources stores only the handle, not a display NAME -- so creator_info
+// .name is the @handle (real + honest attribution); if a display name is wanted later it
+// must be added to the intake, not faked here.
+function candidateToDirective(cand) {
+  var handle = cand.handle;
+  return {
+    // no `instruction` -- the X path has no human-authored angle; omit rather than invent
+    url: cand.url,                                  // tweet url -> REFERENCE URL + X source label
+    source_text: cand.source_text,                  // clean creator take -> fenced inside buildVantageDiscoursePrompt
+    creator_info: {
+      name: '@' + handle,                           // attribute by real handle (no display name in x_sources)
+      x: 'https://x.com/' + handle,                 // canonical X profile for accurate attribution
+      game_slug: cand.game_slug,                    // SUBJECT game (decides canonical home)
+    },
+  };
+}
+
+// Generate ONE discourse draft from a candidate via the EXISTING generator. Machine-pulled
+// X content -> use the SAME system composition as the YouTube auto path (base honesty
+// prompt + the auto-source EXTRA-CAUTION addendum). Returns { out, usage } (out = the tool
+// input: {skip, headline, body, skip_reason}). Writes NOTHING.
+async function generateDraft(anthropic, directive) {
+  var message = await anthropic.messages.create({
+    model: ARTICLE_MODEL,
+    max_tokens: 2000,
+    system: VANTAGE_DISCOURSE_SYSTEM_PROMPT + '\n\n' + VANTAGE_DISCOURSE_AUTO_ADDENDUM,
+    tools: [VANTAGE_DISCOURSE_TOOL],
+    tool_choice: { type: 'tool', name: VANTAGE_DISCOURSE_TOOL.name },
+    messages: [{ role: 'user', content: buildVantageDiscoursePrompt(directive) }],
+  });
+  var block = (message.content || []).find(function (b) { return b.type === 'tool_use' && b.name === VANTAGE_DISCOURSE_TOOL.name; });
+  return { out: block ? (block.input || {}) : null, usage: message.usage || null, stop_reason: message.stop_reason };
+}
+
 async function main() {
   loadEnvLocal();
   var gameIdx = process.argv.indexOf('--game');
   var onlyGame = (gameIdx !== -1 && process.argv[gameIdx + 1]) ? process.argv[gameIdx + 1] : null;
   var maxIdx = process.argv.indexOf('--max');
   var maxResults = (maxIdx !== -1 && process.argv[maxIdx + 1]) ? Math.max(1, Math.min(100, parseInt(process.argv[maxIdx + 1], 10) || 10)) : 10;
+  var doGenerate = process.argv.indexOf('--generate') !== -1;
+  var limIdx = process.argv.indexOf('--limit');
+  var genLimit = (limIdx !== -1 && process.argv[limIdx + 1]) ? Math.max(1, parseInt(process.argv[limIdx + 1], 10) || 1) : 1;
 
   if (!xEnabled()) { console.error('ERROR: X_API_BEARER must be set (server-only env var). Cannot read timelines without it.'); process.exit(1); }
   var url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
   if (!url || !key) { console.error('ERROR: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_KEY must be set.'); process.exit(1); }
+  var anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (doGenerate && !anthropicKey) { console.error('ERROR: --generate needs ANTHROPIC_API_KEY (env or .env.local).'); process.exit(1); }
   var supabase = createClient(url, key);
 
-  console.log('X STAGE 2 -- INCREMENT 1 (DRY): trusted-source read + gate + print. NO DB writes. NO LLM.');
+  console.log('X STAGE 2 -- ' + (doGenerate ? 'INCREMENT 2 (DRY): read+gate+print, then GENERATE up to ' + genLimit + ' draft(s). NO DB writes.'
+    : 'INCREMENT 1 (DRY): trusted-source read + gate + print. NO DB writes. NO LLM.'));
   console.log('posts per timeline: ' + maxResults);
 
   // Trust states (SELECT only).
@@ -217,12 +271,16 @@ async function main() {
 
   var counter = { calls: 0 };
   var totalCandidates = 0, totalResolve = 0, totalTimeline = 0, totalExpand = 0;
+  var allCandidates = [];
   var slugs = onlyGame ? [onlyGame] : ['marathon', 'dmz'];
   for (var g = 0; g < slugs.length; g++) {
     var cfg = GAMES[slugs[g]];
     if (!cfg) { console.log('unknown game: ' + slugs[g]); continue; }
     var res = await runGameTrusted(slugs[g], cfg, supabase, seenIds, declinedIds, states, counter, maxResults);
-    if (res) { totalCandidates += res.candidates.length; totalResolve += (res.resolveCalls || 0); totalTimeline += res.timelineCalls; totalExpand += res.expandCalls; }
+    if (res) {
+      totalCandidates += res.candidates.length; totalResolve += (res.resolveCalls || 0); totalTimeline += res.timelineCalls; totalExpand += res.expandCalls;
+      res.candidates.forEach(function (c) { c.game_slug = slugs[g]; allCandidates.push(c); }); // tag subject game for the directive
+    }
   }
 
   console.log('\n============================================================');
@@ -232,7 +290,53 @@ async function main() {
   console.log('  X API CALLS: ' + counter.calls + '  (resolve=' + totalResolve + ', timelines=' + totalTimeline + ', thread-expands=' + totalExpand + ')');
   console.log('  COST SHAPE: ~1 batched user-lookup per game + 1 timeline call per trusted account + 1 extra call per triggered thread expand.');
   console.log('             All are X API v2 READS (pay-per-use); no writes to X. No retries. A 429 stops the run cleanly (no retry).');
-  console.log('  WROTE NOTHING to the DB. Called NO LLM. This is a candidate PREVIEW only (drafting is Increment 2+).');
+
+  if (!doGenerate) {
+    console.log('  WROTE NOTHING to the DB. Called NO LLM. This is a candidate PREVIEW only (add --generate for Increment 2).');
+    return;
+  }
+
+  // ── INCREMENT 2: generate up to genLimit drafts from the candidates (DRY) ──
+  console.log('\n============================================================');
+  console.log('GENERATE (DRY) -- up to ' + genLimit + ' draft(s), one LLM call each, NOTHING written');
+  console.log('============================================================');
+  if (!allCandidates.length) { console.log('  no candidates to generate from this run.'); return; }
+
+  var anthropic = new Anthropic({ apiKey: anthropicKey });
+  var toGen = allCandidates.slice(0, genLimit);
+  var inTok = 0, outTok = 0, drafted = 0, skipped = 0;
+  for (var c = 0; c < toGen.length; c++) {
+    var cand = toGen[c];
+    var directive = candidateToDirective(cand);
+    console.log('\n[' + (c + 1) + '/' + toGen.length + '] candidate @' + cand.handle + '  game=' + cand.game_slug + '  basis=' + cand.basis);
+    console.log('  source_url : ' + cand.url);
+    console.log('  source_text: ' + short(cand.source_text, 400));
+    var r;
+    try { r = await generateDraft(anthropic, directive); }
+    catch (e) { console.log('  ANTHROPIC error (skipping candidate): ' + e.message); continue; }
+    if (r.usage) { inTok += (r.usage.input_tokens || 0); outTok += (r.usage.output_tokens || 0); }
+    var out = r.out;
+    if (!out) { console.log('  no tool_use returned (stop_reason=' + r.stop_reason + ').'); continue; }
+    if (out.skip === true || !out.headline || !out.body) {
+      skipped++;
+      console.log('  VANTAGE SELF-SKIPPED (source too thin/unusable for an honest article).');
+      if (out.skip_reason) console.log('    reason: ' + out.skip_reason);
+      continue;
+    }
+    drafted++;
+    console.log('\n  ===== GENERATED DRAFT (DRY -- NOT written, NOT published) =====');
+    console.log('  HEADLINE: ' + out.headline);
+    console.log('  GAME: ' + cand.game_slug + '   would-be SOURCE: X   URL: ' + cand.url);
+    console.log('  ---------------------------------------------------------------');
+    out.body.split('\n').forEach(function (ln) { console.log('  ' + ln); });
+    console.log('  ===============================================================');
+  }
+
+  console.log('\n-- GENERATE TOTALS (DRY) --');
+  console.log('  drafts printed: ' + drafted + '   self-skipped: ' + skipped + '   of ' + toGen.length + ' attempted');
+  console.log('  LLM tokens: in=' + inTok + ' out=' + outTok + ' (model ' + ARTICLE_MODEL + ')');
+  console.log('  approx cost: ~$' + ((inTok / 1e6) * 3 + (outTok / 1e6) * 15).toFixed(4) + ' total (rough Sonnet-tier estimate: ~$3/M in, ~$15/M out; ~$0.02-0.05 per draft)');
+  console.log('  WROTE NOTHING to the DB. No feed_items insert, no publish. Persistence + per-tweet dedup is Increment 3.');
 }
 
 main();
