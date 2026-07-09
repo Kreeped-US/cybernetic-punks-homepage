@@ -13,6 +13,7 @@
 // static (no force-dynamic needed). Keys/feed_items/article pipeline untouched.
 
 import { getAllEditors } from '@/lib/editors/roster';
+import Link from 'next/link';
 import NewsroomMasthead from './NewsroomMasthead';
 import StaffCard from './StaffCard';
 
@@ -49,6 +50,13 @@ export default function EditorsPage() {
           { '@type': 'ListItem', position: 2, name: 'Editors', item: 'https://cyberneticpunks.com/editors' },
         ],
       }) }} />
+      <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
+        <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, fontWeight: 700 }}>
+          <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
+          <li>/</li>
+          <li style={{ color: 'var(--red)' }}>EDITORS</li>
+        </ol>
+      </nav>
       <NewsroomMasthead />
 
       <section style={{ padding: '24px 24px 72px', maxWidth: 1100, margin: '0 auto' }}>

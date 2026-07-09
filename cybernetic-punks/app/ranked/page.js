@@ -9,6 +9,7 @@
 //   cadence copy -> "throughout the day".
 
 import RankedClient from './RankedClient';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
@@ -123,6 +124,13 @@ export default async function RankedPage() {
           { '@type': 'ListItem', position: 2, name: 'Ranked', item: 'https://cyberneticpunks.com/ranked' },
         ],
       }) }} />
+      <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
+        <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, fontWeight: 700 }}>
+          <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
+          <li>/</li>
+          <li style={{ color: 'var(--red)' }}>RANKED</li>
+        </ol>
+      </nav>
       <RankedClient data={data} />
     </>
   );
