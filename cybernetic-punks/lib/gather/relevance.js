@@ -28,19 +28,30 @@ function videoHaystack(v) {
   return parts.join(' ').toLowerCase();
 }
 
+// WORD-BOUNDARY token match (shared shape with lib/gather/x-gate.js). Normalize both
+// sides to lowercase alphanumeric-with-single-spaces so a token must sit between spaces
+// ("rook" no longer matches "rookie").
+function tokenHit(hay, token) {
+  var t = String(token || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return t ? hay.indexOf(' ' + t + ' ') !== -1 : false;
+}
+function anyHit(hay, list) {
+  for (var i = 0; i < (list || []).length; i++) { if (tokenHit(hay, list[i])) return true; }
+  return false;
+}
+
+// A video is relevant if: (1) any UNIQUE gameToken, OR (2) the ambiguous game NAME +
+// a contextToken, OR (3) an AMBIGUOUS token (shell name / colliding abbrev) anchored by
+// the game name. A bare shell name / generic gaming word alone is NOT sufficient -- same
+// rule as the X gate, so an "Assassin's Creed" video no longer matches on "assassin".
 export function isGameContent(v, relevance) {
-  var hay = videoHaystack(v);
-  if (!hay) return false; // strict: cannot verify relevance -> drop
-  var gameTokens = relevance.gameTokens;
-  for (var i = 0; i < gameTokens.length; i++) {
-    if (hay.indexOf(gameTokens[i]) !== -1) return true;
-  }
-  if (hay.indexOf(relevance.ambiguousTerm) !== -1) {
-    var contextTokens = relevance.contextTokens;
-    for (var j = 0; j < contextTokens.length; j++) {
-      if (hay.indexOf(contextTokens[j]) !== -1) return true;
-    }
-  }
+  var raw = videoHaystack(v);
+  if (!raw) return false; // strict: cannot verify relevance -> drop
+  var hay = ' ' + raw.replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+  if (anyHit(hay, relevance.gameTokens || [])) return true;                                 // (1)
+  var hasName = relevance.ambiguousTerm ? tokenHit(hay, relevance.ambiguousTerm) : false;
+  if (hasName && anyHit(hay, relevance.contextTokens || [])) return true;                   // (2)
+  if (hasName && anyHit(hay, relevance.ambiguousTokens || [])) return true;                 // (3)
   return false;
 }
 

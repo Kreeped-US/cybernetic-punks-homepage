@@ -52,10 +52,16 @@ export const dmz = {
   // "dmz" is the ambiguous term (collides with military "demilitarized zone" and other
   // games' DMZ modes) -- it only counts when PAIRED with a gaming-context token.
   relevance: {
+    // UNIQUE tokens -> relevant on their own. "call of duty" (full phrase) stays here;
+    // its abbreviation "cod" moves to ambiguousTokens (it collides with the fish).
     gameTokens: [
-      'modern warfare 4', 'mw4', 'call of duty', 'cod', 'hajin', 'exclusion zone',
-      'forward operating base', 'fob', 'exfil', 'extraction shooter', 'warzone',
+      'modern warfare 4', 'mw4', 'call of duty', 'hajin', 'exclusion zone',
+      'forward operating base', 'exfil', 'extraction shooter', 'warzone',
     ],
+    // Ambiguous common-word abbreviations: "cod" (the fish), "fob" (key fob). Relevant
+    // ONLY when paired with "dmz" or a UNIQUE gameToken above -- a bare "cod" is not
+    // enough (a real COD post almost always also says "call of duty"/"mw4"/"warzone").
+    ambiguousTokens: [ 'cod', 'fob' ],
     contextTokens: [
       'extraction', 'loadout', 'meta', 'build', 'gameplay', 'mode', 'launch',
       'release', 'operator', 'raid', 'contract', 'faction', 'gaming', 'fps',

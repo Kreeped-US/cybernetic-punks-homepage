@@ -118,24 +118,35 @@ function isPromo(norm) {
   return false;
 }
 
-// X-shaped reuse of the video relevance rule (mirrors lib/gather/relevance.js intent):
-// KEEP only if a strong game token appears, OR the ambiguous term is PAIRED with a
-// gaming-context token. No relevance config -> cannot judge -> treat as NOT relevant
-// (strict: a game we cannot scope should not pull open-ended search noise).
+// WORD-BOUNDARY token match. Normalize BOTH sides to lowercase alphanumeric-with-single
+// -spaces, then require the token to sit between spaces -- so "rook" no longer matches
+// "rookie", "recon" no longer matches "reconnaissance". (It DOES still match "assassin"
+// as a whole word, e.g. "Assassin's Creed" -> "assassin s creed" -> "assassin"; the
+// ambiguous-token TIER below, not word-boundary alone, is what drops that off-topic.)
+function tokenHit(hay, token) {
+  var t = String(token || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return t ? hay.indexOf(' ' + t + ' ') !== -1 : false;
+}
+function anyHit(hay, list) {
+  for (var i = 0; i < (list || []).length; i++) { if (tokenHit(hay, list[i])) return true; }
+  return false;
+}
+
+// X-shaped reuse of the video relevance rule (mirrors lib/gather/relevance.js). A post
+// is game-relevant if:
+//   (1) it carries any UNIQUE gameToken (a genuine game fingerprint), OR
+//   (2) the ambiguous game NAME is present AND a contextToken is present, OR
+//   (3) an AMBIGUOUS token (a shell name / colliding abbrev) is present AND anchored by
+//       the game name. (Shell + a UNIQUE token is already covered by clause 1.)
+// A bare shell name or a generic gaming word alone is NOT sufficient. No relevance config
+// -> cannot judge -> NOT relevant (strict: a game we cannot scope pulls no search noise).
 export function isGameRelevant(text, relevance) {
   if (!relevance) return false;
   var hay = ' ' + normalize(text) + ' ';
-  var strong = relevance.gameTokens || [];
-  for (var i = 0; i < strong.length; i++) {
-    if (hay.indexOf(' ' + String(strong[i]).toLowerCase()) !== -1) return true;
-  }
-  var amb = relevance.ambiguousTerm ? String(relevance.ambiguousTerm).toLowerCase() : null;
-  if (amb && hay.indexOf(amb) !== -1) {
-    var ctx = relevance.contextTokens || [];
-    for (var j = 0; j < ctx.length; j++) {
-      if (hay.indexOf(String(ctx[j]).toLowerCase()) !== -1) return true;
-    }
-  }
+  if (anyHit(hay, relevance.gameTokens || [])) return true;                                 // (1)
+  var hasName = relevance.ambiguousTerm ? tokenHit(hay, relevance.ambiguousTerm) : false;
+  if (hasName && anyHit(hay, relevance.contextTokens || [])) return true;                   // (2)
+  if (hasName && anyHit(hay, relevance.ambiguousTokens || [])) return true;                 // (3)
   return false;
 }
 

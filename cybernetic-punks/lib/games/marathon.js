@@ -122,9 +122,13 @@ export const marathon = {
     },
   },
 
-  // Relevance filter terms (index.js isMarathonGameContent). gameTokens are
-  // strong game-specific signals; contextTokens only count when paired with the
-  // ambiguous word "marathon" (separates the game from the foot-race).
+  // Relevance filter terms (shared by the X off-topic gate isGameRelevant and the
+  // video filter isGameContent). Three tiers:
+  //   gameTokens     - UNIQUE, genuinely Marathon-specific -> relevant on their own.
+  //   ambiguousTokens - collide with common English / other games -> relevant ONLY when
+  //                     paired with "marathon" or a UNIQUE gameToken.
+  //   ambiguousTerm + contextTokens - the game name paired with a gaming-context word
+  //                     (separates the game from the foot-race).
   relevance: {
     gameTokens: [
       // Publisher / genre
@@ -136,7 +140,11 @@ export const marathon = {
       'cyberacme', 'nucaloric', 'traxus', 'mida', 'arachne', 'sekiguchi',
       // Weapons / ammo codes
       'kkv-9sd', 'kkv9sd', 'wstr', 'm77', 'stryder', 'biotoxic', 'hyphatic',
-      // The 8 Runner Shells
+    ],
+    // The 8 Runner Shell names. Common English / other-game words -- "Assassin's Creed"
+    // normalizes to "assassin", "Thief"/"Vandal"/"Rook" collide broadly -- so a bare
+    // shell name is NOT sufficient; it must be anchored by "marathon" or a UNIQUE token.
+    ambiguousTokens: [
       'destroyer', 'vandal', 'recon', 'assassin', 'triage', 'thief', 'rook', 'sentinel',
     ],
     contextTokens: [
@@ -145,7 +153,8 @@ export const marathon = {
       'video game', 'dlc', 'beta', 'playtest', 'steam', 'playstation', 'xbox',
       'crossplay', 'solo queue', 'squad', 'nightfall',
     ],
-    // The ambiguous bare term that only counts when paired with a contextToken.
+    // The ambiguous bare term: counts only when paired with a contextToken, or when it
+    // anchors an ambiguousToken (a shell name).
     ambiguousTerm: 'marathon',
   },
 
