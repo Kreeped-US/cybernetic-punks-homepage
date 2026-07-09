@@ -5,6 +5,97 @@ Newest entries on top.
 
 ---
 
+## 2026-07-09 (evening) — X Stage 2: Increment 1 + three input-integrity fixes (SHIPPED); banked before the generation half
+
+Built the FIRST half of X pipeline Stage 2 (turning trusted X accounts into VANTAGE
+discourse candidates) and hardened the intake so its input is honest. All READ-ONLY /
+dry / zero-LLM. Deliberately BANKED here before Increment 2 (the first LLM/generation
+step) -- see the decision note at the end.
+
+Context: Stage 1 (x-dry-run.mjs) discovers NEW search authors -> queues x_sources
+PENDING for human review; admin approves to state='trusted'. It never generates or
+publishes. The VANTAGE discourse SPINE already exists end-to-end (directive ->
+gen-vantage-discourse.mjs draft is_published=false+noindex=true -> POST
+/api/admin/drafts/approve flips published, the ONLY publish path -> shared
+DiscourseArticle renderer). Stage 2 = make X the SOURCE feeding that spine.
+
+### SHIPPED this stretch (all on main)
+- **Increment 1 (5c67322)** `scripts/x-stage2-dry.mjs` -- the missing read: x_sources
+  state='trusted' (+ per-game watchlist) -> resolve + fetch each timeline via the
+  existing lib/gather/x.js -> run lib/gather/x-gate.js -> honor x_declined_posts (+ skip
+  already-drafted tweet ids) -> PRINT would-be VANTAGE candidates (tweet id, url,
+  source_text, stance/reasoning basis) sorted by reach. ZERO DB writes, ZERO LLM; makes
+  billed X READS only (prints the call footprint). Reuses x.js + x-gate.js as-is.
+- **Three input-integrity fixes** making Stage 2's input honest -- on-topic,
+  substance-gated, creator-words-only:
+  1. **eeefeb2 substance-not-sentiment**: x-gate now qualifies on STANCE OR REASONING
+     (a substantive POSITIVE take that explains WHY passes, not just contested ones).
+     Fixed the reasoning matcher's substring looseness first (whole-token match; dropped
+     ambiguous shorts so/if/op/vs/take/right/when). NOTE: empty positivity via a bare
+     sentiment marker (amazing/so good/the best) still passes -- the deferred
+     sentiment-marker tightening, not done.
+  2. **55f9e08 off-topic leak (relevance)**: shell NAMES (assassin/thief/vandal/rook/
+     recon/sentinel/destroyer/triage) collided with common/other-game words -- an
+     "Assassin's Creed" review from a trusted multi-game creator qualified as Marathon.
+     Fix (Option C+A): split relevance gameTokens into UNIQUE (bungie/holotag/cradle/
+     factions/weapon codes -> relevant alone) + ambiguousTokens (the 8 shells; DMZ:
+     cod/fob) that count ONLY when paired with the game name or a UNIQUE token; word-
+     boundary matching (rook != rookie). Applied to BOTH consumers -- x-gate
+     isGameRelevant AND relevance.js isGameContent (video filter shares the config +
+     collision). Config: lib/games/marathon.js, dmz.js.
+  3. **04e2f6d reply-bleed (thread expansion)**: expandThread trusted the `from:` search
+     operator alone (no author_id, no client check; timeline anchors carried null
+     author_id), so a candidate's source_text trailed into OTHER people's replies
+     ("@Dummy118224 One of the worst decisions..."). Fix: author_id added to TWEET_FIELDS
+     + expandThread; call sites pass the authoritative id (resolveUserIds); expanded
+     tweets hard-filtered to author_id===anchor's (Part A) AND any tweet OPENING with a
+     foreign @handle dropped (Part B, the creator's own replies-to-commenters). Pure
+     filter exported as authorOwnThreadTexts() for network-free tests. Shared with
+     Stage 1 (both call sites updated). source_text is now creator-words-only.
+
+### OPEN / parked (flagged, NOT done)
+- **Gate-coverage gap (recall)**: substantive critical takes phrased WITHOUT a stance/
+  reasoning marker are dropped. Proven: @lordcharizard33's "Marathon is now cemented
+  below the 10k player mark ... hard time believing this game sold 1.5 million copies ...
+  trend line is brutal" -- a real substantive take -- now DROPS as 'mention (no stance/
+  reasoning)'. It had only qualified BEFORE because the contaminated reply-scrap
+  "@Dummy... One of the worst decisions" lent it the marker 'worst'. So the drop is
+  CORRECT by the gate's rules (never a standalone take by its measure) but reveals a
+  real recall gap for understated statistical/observational critique. Optional minimal
+  fix: a tight, distinctive set of game-health-critique markers (all-time low, player
+  count, below the Nk, dead game, bleeding players, hard time believing, sold N copies,
+  trend line) -- precision-guarded, separate gated change if wanted. Same class as the
+  positive-substantive gap that motivated fix #1.
+- **Residual relevance collisions** (left in the UNIQUE tier, out of the reported scope):
+  'mida' (Destiny's MIDA weapon) and 'stryder' (Titanfall titan) in marathon gameTokens
+  could false-positive; DMZ 'cod' demotion means a bare "cod"-only post now needs a
+  pairing (reversible if too tight).
+- **Stale comment**: lib/gather/index.js:14 "$200/mo" X-cost note is stale (Justin
+  confirmed ~<$10/mo for reading specified accounts) -- correct/remove when next in x.js.
+
+### Stage 2 remaining increments (well-scoped, waiting)
+- **Increment 2** -- X post -> VANTAGE draft, `--dry`: feed a candidate's source_text
+  through the EXISTING buildVantageDiscoursePrompt (already fences source_text via
+  lib/promptSafety) + VANTAGE_DISCOURSE_TOOL, PRINT the draft or self-skip; write
+  nothing. This is the FIRST LLM call + the first generated article text.
+- **Increment 3** -- persist drafts + per-TWEET-ID dedup (mirror the auto path's
+  youtube-id dedup; VANTAGE bypasses the MIRANDA-scoped findDuplicateEvergreen guard, so
+  it needs its own per-post dedup -- flagged gap).
+- **Increment 4** -- verify approve->publish->render inherits (no new code).
+- **Increment 5** -- cron (DEFERRED until drafts prove honest across runs).
+
+### DECISION: banked at Increment 1, take the generation half fresh
+Everything so far was read-only/dry/zero-LLM -- cheap to run, cheap to check, impossible
+to do real damage; that's why it went clean. Increment 2 crosses a line: first LLM call,
+first generated article text, and its whole VALUE is the editorial-integrity judgment
+(does the draft attribute honestly, does the fencing hold, does it self-skip thin
+material) that the network's public honesty rests on. Different gear from mechanical
+dry-run correctness -- better done deliberately as its own focused session than as step
+N of a long fix-heavy stretch. Clean boundary: three fixes on main, Increment 1
+validated, plan clear, no half-finished state.
+
+---
+
 ## 2026-07-09 (later) — Prompt-injection audit + generation-path hardening (SHIPPED)
 
 Triggered by GSC query data showing external injection probing
