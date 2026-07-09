@@ -5,6 +5,91 @@ Newest entries on top.
 
 ---
 
+## 2026-07-09 — Evergreen article duplication project CLOSED OUT (Phase 1 + Phase 2)
+
+Fixed the MIRANDA/CIPHER evergreen re-mint problem end-to-end: a generator guard
+so it stops (Phase 1), then a per-cluster cleanup of the existing backlog
+(Phase 2). Both done; nothing parked.
+
+### Phase 1 — generator dedup guard (SHIPPED, main)
+Root cause: the generation pipeline (processEditor in app/api/cron/route.js, the
+one shared path that auto-publishes) selected evergreen topics with no check for
+"does a near-duplicate already exist." The pre-existing exact-title check only
+looked at the last-12 window, so re-mints days/weeks apart slipped through — e.g.
+the "Essential Weapon Mod Builds for New Runners" topic was published 44 times
+over 22 days.
+
+- **2a8147c** `feat(gen): dedup guard` — hard topic-similarity gate before the
+  MIRANDA insert. Jaccard overlap of significant (stopword-stripped, singularized)
+  headline tokens vs the editor+game's last 500 published headlines.
+  DUP_JACCARD_THRESHOLD=0.7 (named tunable), min 3 shared tokens. On match: LOG
+  the matched article (headline+slug+score) and skip publish — never silent,
+  never error, fail-open on DB error. MIRANDA-scoped (the only evergreen
+  generator; news editors legitimately overlap day-to-day).
+- **f134fc3** `refine(gen): subject-weighted dedup` — plain Jaccard over-blocked
+  distinct per-SUBJECT variants sharing a rigid template (the real per-weapon Rook
+  builds — M77 / Repeater / Twin Tap — scored ~0.8 on "<Weapon> Build Best Ranked
+  Solo Loadout" boilerplate alone). Fix: weight each token by corpus rarity (IDF
+  over the SAME 500-headline history already fetched — no extra query). Template
+  scaffolding fades; the distinguishing weapon/shell name dominates. Verified on
+  the real 380-headline corpus: true re-mints still 1.0 (blocked), same-weapon
+  Impact HAR pair still 1.0 (blocked), distinct per-weapon variants 0.8 -> ~0.2-0.5
+  (pass), -no19 distinct angle 0.33 (pass). Threshold unchanged.
+
+### Phase 2 — backlog cleanup (DB-only noindex writes, no git; done per-cluster)
+Guarded `UPDATE feed_items SET noindex=true WHERE id IN (...) AND noindex=false`
+per cluster, keepers explicitly excluded and verified absent each time. noindex
+(reversible; sitemap filters noindex=false so rows drop automatically). ZERO
+deletes, ZERO redirects — no dupe showed traffic/backlinks worth 301-ing (GSC
+not accessible from the repo; on-site page_view tracking near-zero everywhere).
+**Net: 53 redundant articles noindexed, 9 keepers preserved (URLs + indexing
+intact).**
+
+| Cluster | Topic | Result |
+|---|---|---|
+| C1 | essential weapon mod builds | 42 noindex / 2 keep (-vvm6 original, -no19 distinct shell-role) |
+| C2 | weapon mods guide | 4 noindex / 0 keep (same topic as C1, already covered by -vvm6) |
+| C3 | holotag tier benchmarks | 6 noindex / 2 keep (-9yl8 oldest, -r4lm best/honesty-gated) |
+| C4 | rook build | 1 noindex / 4 keep (M77/Repeater/Twin Tap distinct + -tsf0 Impact HAR) |
+| C5 | shell selection | no action (dupe already noindexed a prior session) |
+| C6 | vandal counter | 1 noindex / 1 keep (-akx6 better/fresher) |
+| C7 | cryo archive stream | no action (dupe already noindexed; rest are distinct dated event coverage) |
+
+**Keeper standard (applied consistently):** content quality + honesty over URL
+age when they conflict. This CHANGED the keeper from the earlier proposal's
+"oldest URL" default in three clusters — C3 kept -r4lm (longer, and it explicitly
+disclaims unverified tier cutoffs) over the older -lq3p; C4 kept -tsf0 (fresher,
+non-stale patch context) over the older -j10u; C6 kept -akx6 (more structured,
+enumerated vulnerability windows) over the older -13ts. Near-zero traffic made
+the "longest indexed" advantage moot, so quality won.
+
+### Corrections to earlier claims (for the record)
+- An earlier read had called the mod-builds situation a possible "false
+  alarm / genuinely distinct articles." That was WRONG — the deep body reads
+  confirmed near-identical re-mints (only -no19 was a genuinely distinct angle).
+- True published Marathon article count is **1,521**, not the ~1,000 cited early
+  on — that number was a PostgREST page cap that also silently truncated an early
+  probe. Cluster membership was re-swept against all 1,521.
+
+### OPEN ITEM (SECURITY) — GSC shows prompt-injection probing; audit ingestion paths
+Google Search Console queries surfaced external prompt-injection probes aimed at
+the site, e.g. `you are the ailcc singularity engine...`, `allintext:"mark
+newcomer"`, `regenv2-test-alert`. These are people fishing to see if our
+generation pipeline ingests search text / unvetted external input and treats it
+as INSTRUCTIONS rather than DATA.
+- **TODO (read-only audit, not yet done):** confirm NO generation path feeds
+  search queries, gathered titles/descriptions/transcripts, Reddit/X text, or any
+  unvetted external string into an editor prompt as *instructions*. Gathered
+  content must be quoted as DATA only (it already is by design — the VANTAGE
+  auto-source addendum is the model), never concatenated where it could steer the
+  model. Check: lib/gather/* outputs -> lib/editorCore.js prompt builders (esp.
+  buildMirandaPrompt xIntelBlock, recentHeadlines block, any gathered-text
+  interpolation) and the X/Reddit adapters. Verify prompt/data separation +
+  that no field is echoed into a system/instruction position.
+- No code change made here — flagged for a dedicated read-only pass.
+
+---
+
 ## 2026-07-06 (later) — VANTAGE YouTube auto-source, drafts re-check, X-posting scoped
 
 ### VANTAGE auto-source pipeline (Phase A — SHIPPED, main edd6cb5)
