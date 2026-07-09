@@ -83,7 +83,9 @@ function normalizePost(raw, mode, authorHandle, authorFollowers) {
   };
 }
 
-var TWEET_FIELDS = 'public_metrics,created_at,conversation_id,referenced_tweets,attachments';
+// author_id included so TIMELINE posts carry it too (the /users/:id/tweets endpoint
+// otherwise omits it -> normalizePost got null). Thread expansion hard-filters on it.
+var TWEET_FIELDS = 'public_metrics,created_at,conversation_id,referenced_tweets,attachments,author_id';
 
 // Resolve up to 100 handles -> { handle: { id, handle } } in ONE batched call.
 export async function resolveUserIds(handles, counter) {
@@ -122,7 +124,7 @@ export async function searchRecent(query, opts, counter) {
   var data = await xGet('/tweets/search/recent', {
     query: query,
     max_results: String(opts.maxResults || 20),
-    'tweet.fields': TWEET_FIELDS + ',author_id',
+    'tweet.fields': TWEET_FIELDS, // author_id now included in TWEET_FIELDS
     expansions: 'author_id',
     'user.fields': 'username,public_metrics', // followers_count in the SAME call (free)
   }, counter);
@@ -138,21 +140,51 @@ export async function searchRecent(query, opts, counter) {
   });
 }
 
+// Does the text OPEN as a reply addressed to someone OTHER than the author? A leading
+// @handle at the very START marks a reply directed at that account; if it isn't the
+// author's own handle, the tweet is a reply-scrap ("@Dummy118224 one of the worst...")
+// aimed at a commenter, not part of the creator's own take -> drop it. A mid-text
+// @mention is fine (only the OPENING position matters); the author replying to
+// THEMSELVES (opens with their own @handle) is kept as a self-thread continuation.
+function opensAsForeignReply(text, selfHandle) {
+  var m = String(text || '').trim().match(/^@(\w+)/);
+  if (!m) return false;                                     // doesn't open with @ -> keep
+  return handleClean(m[1]) !== handleClean(selfHandle);     // opens @someone-else -> foreign reply
+}
+
+// Pure (network-free, exported for tests): from the raw conversation tweets, keep ONLY
+// the creator's clean take -- the anchor author's OWN tweets (author_id hard-filter),
+// excluding the anchor itself and any tweet that opens as a reply to another commenter --
+// sorted chronologically, mapped to text. `anchorAuthorId` is the AUTHORITATIVE author
+// (passed from resolveUserIds); when it is null nothing survives the author filter, so
+// only the anchor text is used downstream (safe: never risk foreign bleed).
+export function authorOwnThreadTexts(tweets, post, anchorAuthorId) {
+  var selfHandle = post.author_handle;
+  var wantId = anchorAuthorId != null ? String(anchorAuthorId)
+    : (post.author_id != null ? String(post.author_id) : null);
+  return (tweets || [])
+    .filter(function (t) { return String(t.id) !== String(post.id); })                              // not the anchor
+    .filter(function (t) { return wantId != null && t.author_id != null && String(t.author_id) === wantId; }) // PART A: creator's own tweets ONLY
+    .filter(function (t) { return !opensAsForeignReply(t.text, selfHandle); })                       // PART B: drop replies to commenters
+    .sort(function (a, b) { return String(a.created_at || '').localeCompare(String(b.created_at || '')); })
+    .map(function (t) { return t.text || ''; });
+}
+
 // THREAD EXPANSION: called ONLY when the popularity trigger fires. Reads the ANCHOR
-// author's own continuation of the conversation (from:author conversation_id:id), the
-// substance of a self-thread. ONE call. Assembles thread_text (anchor + continuation),
-// which the substance gate then judges. Popularity got us here; substance still decides.
-export async function expandThread(post, counter) {
+// author's own continuation of the conversation (from:author conversation_id:id) and
+// assembles thread_text = anchor + the creator's OWN self-thread continuations, which the
+// substance gate then judges. `authorId` (from resolveUserIds) is the authoritative author
+// to keep: we hard-filter expanded tweets by author_id IN ADDITION to the from: operator,
+// so a commenter's reply can never reach source_text even if from: misbehaves. ONE call.
+export async function expandThread(post, counter, authorId) {
   var q = 'conversation_id:' + post.conversation_id + ' from:' + post.author_handle;
   var data = await xGet('/tweets/search/recent', {
     query: q,
     max_results: '25',
-    'tweet.fields': 'created_at,conversation_id',
+    'tweet.fields': 'created_at,conversation_id,author_id',
   }, counter);
-  var parts = (data.data || [])
-    .filter(function (t) { return String(t.id) !== String(post.id); })
-    .sort(function (a, b) { return String(a.created_at || '').localeCompare(String(b.created_at || '')); })
-    .map(function (t) { return t.text || ''; });
+  var anchorAuthorId = (authorId != null) ? authorId : post.author_id;
+  var parts = authorOwnThreadTexts(data.data || [], post, anchorAuthorId);
   var assembled = [post.text].concat(parts).join('\n\n').trim();
   return assembled;
 }

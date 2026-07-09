@@ -153,7 +153,10 @@ async function runGame(slug, cfg, supabase, seenIds, declinedIds, states, counte
     var baseline = accountBaseline(pulledByAuthor[pp.author_handle] || []);
     var trig = expansionTrigger(pp, baseline);
     if (trig.expand && pp.is_thread_anchor) {
-      try { pp.thread_text = await expandThread(pp, counter); }
+      // Authoritative author to keep = the resolved id (from resolveUserIds) when the
+      // anchor is a known account, else the post's own author_id (search posts carry it).
+      var anchorId = (idMap && idMap[pp.author_handle] && idMap[pp.author_handle].id) || pp.author_id || null;
+      try { pp.thread_text = await expandThread(pp, counter, anchorId); }
       catch (e) { console.log('    (thread expand failed: ' + e.message + ')'); }
     }
     var qv = qualifies(pp);

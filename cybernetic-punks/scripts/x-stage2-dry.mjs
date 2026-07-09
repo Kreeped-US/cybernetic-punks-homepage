@@ -126,9 +126,12 @@ async function runGameTrusted(slug, cfg, supabase, seenIds, declinedIds, states,
     var baseline = accountBaseline(pulledByAuthor[pp.author_handle] || []);
     var trig = expansionTrigger(pp, baseline);
     if (trig.expand && pp.is_thread_anchor) {
+      // Authoritative author to keep = the resolved id (from resolveUserIds); trusted
+      // timelines are always in idMap, else fall back to the post's own author_id.
+      var anchorId = (idMap[pp.author_handle] && idMap[pp.author_handle].id) || pp.author_id || null;
       try {
         var exBefore = counter.calls;
-        pp.thread_text = await expandThread(pp, counter);
+        pp.thread_text = await expandThread(pp, counter, anchorId);
         expandCalls += (counter.calls - exBefore);
       } catch (e) { console.log('    (thread expand failed for ' + pp.id + ': ' + e.message + ')'); }
     }
