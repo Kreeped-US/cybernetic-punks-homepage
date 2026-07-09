@@ -62,6 +62,19 @@ function short(text, n) {
   return t.length > n ? t.slice(0, n) + '...' : t;
 }
 
+// A TOTAL X-API host/network failure (DNS / connection down) vs a per-account handle
+// issue. A host-unreachable error must abort the whole run cleanly -- it can't be
+// skipped per account (every account would fail the same way, and a "0 candidates"
+// result would masquerade success). Matched on the underlying node/undici error text.
+function isXApiUnreachable(e) {
+  var m = String((e && e.message) || e || '').toLowerCase();
+  return m.indexOf('enotfound') !== -1 || m.indexOf('eai_again') !== -1
+    || m.indexOf('econnrefused') !== -1 || m.indexOf('econnreset') !== -1
+    || m.indexOf('etimedout') !== -1 || m.indexOf('getaddrinfo') !== -1
+    || m.indexOf('fetch failed') !== -1 || m.indexOf('socket hang up') !== -1
+    || m.indexOf('network') !== -1;
+}
+
 var GAMES = { marathon: marathon, dmz: dmz };
 
 // Read one game's TRUSTED timelines, gate them, collect the qualifying VANTAGE
@@ -104,6 +117,7 @@ async function runGameTrusted(slug, cfg, supabase, seenIds, declinedIds, states,
       posts = await fetchTimeline(u.id, handle, { maxResults: maxResults, followers: u.followers }, counter);
       timelineCalls += (counter.calls - tlBefore);
     } catch (e) {
+      if (isXApiUnreachable(e)) throw e; // host down -> abort the whole run cleanly, not a per-account skip
       console.log('  @' + handle + ': timeline error -- ' + e.message + ' (skipped, not fatal)');
       continue;
     }
@@ -244,43 +258,66 @@ async function main() {
     : 'INCREMENT 1 (DRY): trusted-source read + gate + print. NO DB writes. NO LLM.'));
   console.log('posts per timeline: ' + maxResults);
 
-  // Trust states (SELECT only).
+  // Trust states (SELECT only). A FAILED read is FATAL + loud -- it determines the whole
+  // trusted set, and silently degrading to trusted=0 would masquerade as "0 trusted
+  // accounts" and quietly run on just the 2 watchlist seeds. supabase-js returns query
+  // errors in .error (it does NOT throw on a fetch/DB failure), so we must check .error
+  // explicitly; a genuine "0 trusted" is error=null + data=[] and prints normally.
   var states = { trusted: new Set(), blocked: new Set(), pending: new Set() };
   try {
     var sres = await supabase.from('x_sources').select('account_handle, state').limit(5000);
+    if (sres.error) throw new Error(sres.error.message);
     (sres.data || []).forEach(function (row) { var st = states[row.state]; if (st) st.add(String(row.account_handle).toLowerCase()); });
     console.log('x_sources loaded: trusted=' + states.trusted.size + ' blocked=' + states.blocked.size + ' pending=' + states.pending.size);
-  } catch (e) { console.log('(x_sources read failed -- table created? continuing empty: ' + e.message + ')'); }
+  } catch (e) {
+    console.error('ERROR: x_sources read FAILED: ' + e.message + ' -- aborting. A failed read is NOT the same as 0 trusted accounts; refusing to run on an incomplete trusted set.');
+    process.exit(1);
+  }
 
   // Already-drafted tweet ids (SELECT only) -- so a candidate that already became a
-  // VANTAGE discourse row is not re-proposed (Increment 3 makes this a hard guard).
+  // VANTAGE discourse row is not re-proposed (Increment 3 makes this a hard guard). A
+  // failed read here is NON-fatal (dedup safety net; this run writes nothing) but LOUD.
   var seenIds = new Set();
   try {
     var dres = await supabase.from('feed_items').select('source_url').eq('editor', 'VANTAGE').contains('tags', ['discourse']).limit(2000);
+    if (dres.error) throw new Error(dres.error.message);
     (dres.data || []).forEach(function (row) { var id = tweetIdFromUrl(row.source_url); if (id) seenIds.add(id); });
-  } catch (e) { /* non-fatal */ }
+  } catch (e) { console.warn('WARNING: already-drafted read failed (' + e.message + ') -- proceeding WITHOUT that dedup (dry run writes nothing).'); }
   console.log('already-drafted tweet ids: ' + seenIds.size);
 
-  // Declined tweet ids (SELECT only) -- honor x_declined_posts.
+  // Declined tweet ids (SELECT only) -- honor x_declined_posts. Failed read = LOUD but
+  // non-fatal (dry run writes nothing; Increment 3 makes declined-filtering a hard guard).
   var declinedIds = new Set();
   try {
     var xd = await supabase.from('x_declined_posts').select('tweet_id').limit(5000);
+    if (xd.error) throw new Error(xd.error.message);
     (xd.data || []).forEach(function (row) { if (row.tweet_id) declinedIds.add(String(row.tweet_id)); });
-  } catch (e) { console.log('(x_declined_posts read failed -- table created? continuing empty: ' + e.message + ')'); }
+  } catch (e) { console.warn('WARNING: x_declined_posts read failed (' + e.message + ') -- proceeding WITHOUT declined-tweet filtering (dry run writes nothing).'); }
   console.log('declined tweet ids: ' + declinedIds.size);
 
   var counter = { calls: 0 };
   var totalCandidates = 0, totalResolve = 0, totalTimeline = 0, totalExpand = 0;
   var allCandidates = [];
   var slugs = onlyGame ? [onlyGame] : ['marathon', 'dmz'];
-  for (var g = 0; g < slugs.length; g++) {
-    var cfg = GAMES[slugs[g]];
-    if (!cfg) { console.log('unknown game: ' + slugs[g]); continue; }
-    var res = await runGameTrusted(slugs[g], cfg, supabase, seenIds, declinedIds, states, counter, maxResults);
-    if (res) {
-      totalCandidates += res.candidates.length; totalResolve += (res.resolveCalls || 0); totalTimeline += res.timelineCalls; totalExpand += res.expandCalls;
-      res.candidates.forEach(function (c) { c.game_slug = slugs[g]; allCandidates.push(c); }); // tag subject game for the directive
+  try {
+    for (var g = 0; g < slugs.length; g++) {
+      var cfg = GAMES[slugs[g]];
+      if (!cfg) { console.log('unknown game: ' + slugs[g]); continue; }
+      var res = await runGameTrusted(slugs[g], cfg, supabase, seenIds, declinedIds, states, counter, maxResults);
+      if (res) {
+        totalCandidates += res.candidates.length; totalResolve += (res.resolveCalls || 0); totalTimeline += res.timelineCalls; totalExpand += res.expandCalls;
+        res.candidates.forEach(function (c) { c.game_slug = slugs[g]; allCandidates.push(c); }); // tag subject game for the directive
+      }
     }
+  } catch (e) {
+    // A total X-API host/network failure (or any unexpected read error) aborts the whole
+    // run CLEANLY -- a clear message + non-zero exit, never a raw uncaught stack trace.
+    if (isXApiUnreachable(e)) {
+      console.error('\nCould not reach the X API (api.x.com) -- aborting this run: ' + ((e && e.message) || e));
+    } else {
+      console.error('\nX read failed unexpectedly -- aborting this run: ' + ((e && e.message) || e));
+    }
+    process.exit(1);
   }
 
   console.log('\n============================================================');
