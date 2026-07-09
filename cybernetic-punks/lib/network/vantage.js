@@ -10,6 +10,12 @@
 // VERIFICATION_NOTE (lib/verification.js) -- it is the single most important
 // thing about her build.
 
+// Shared prompt-injection helpers live at lib/promptSafety.js -- a neutral leaf
+// utility (no imports), deliberately NOT under lib/gather/, so importing it here
+// does not couple Vantage to the per-game gather machinery this module's header
+// forbids. Used only to fence the external source_text in the discourse builder.
+import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety';
+
 // THE HARD BOUNDARY -- meta, not intel. Mirrors the VERIFICATION_NOTE pattern:
 // a delimited, absolute clause injected into her system prompt. The WOULD /
 // WOULD NOT calibration lines come straight from the persona spec.
@@ -198,13 +204,20 @@ export function buildVantageDiscoursePrompt(directive) {
     lines.push(directive.instruction);
     lines.push('');
   }
+  // PROMPT-INJECTION HARDENING (July 9, 2026): in the AUTO path, source_text is a
+  // YouTube video's own title/description/transcript and creator_info.name is the
+  // channel title -- both machine-pulled external text (the manual path is
+  // human-vetted, but this fences both uniformly). Short attribution fields are
+  // sanitized; source_text is neutralized + wrapped in <untrusted_source> tags
+  // with a treat-as-data clause, replacing the old """ fence a payload could close
+  // with its own """. The honesty rules in the system prompt are unchanged.
   if (ci.name) {
-    lines.push('CREATOR (the person whose take this is about): ' + ci.name);
+    lines.push('CREATOR (the person whose take this is about): ' + sanitizeUgc(ci.name, 120));
     var links = [];
-    if (ci.youtube) links.push('YouTube: ' + ci.youtube);
-    if (ci.x) links.push('X/Twitter: ' + ci.x);
-    if (ci.twitch) links.push('Twitch: ' + ci.twitch);
-    if (ci.other) links.push('Other: ' + ci.other);
+    if (ci.youtube) links.push('YouTube: ' + sanitizeUgc(ci.youtube, 200));
+    if (ci.x) links.push('X/Twitter: ' + sanitizeUgc(ci.x, 200));
+    if (ci.twitch) links.push('Twitch: ' + sanitizeUgc(ci.twitch, 200));
+    if (ci.other) links.push('Other: ' + sanitizeUgc(ci.other, 200));
     if (links.length > 0) {
       lines.push('CANONICAL PROFILES (for accurate attribution -- do not alter or invent handles):');
       links.forEach(function(l) { lines.push('  ' + l); });
@@ -212,12 +225,10 @@ export function buildVantageDiscoursePrompt(directive) {
     lines.push('');
   }
   lines.push('VETTED SOURCE TEXT (the ONLY permitted source of facts about what the creator said):');
-  lines.push('"""');
-  lines.push(directive.source_text || '(none provided)');
-  lines.push('"""');
+  lines.push(fenceUntrusted(neutralizeBlock(directive.source_text || '(none provided)'), "a content creator's quote or a YouTube video's own title, description, and transcript"));
   lines.push('');
   if (directive.url) {
-    lines.push('REFERENCE URL (the creator source to cite/link): ' + directive.url);
+    lines.push('REFERENCE URL (the creator source to cite/link): ' + sanitizeUgc(directive.url, 300));
     lines.push('');
   }
   lines.push('TASK: Write the discourse article per the honesty and structure rules in your instructions. Characterize what the creator said and why it matters; attribute every game claim to the creator; never assert game facts in your own voice; point to the relevant desk by function for the verified read. If the source is too thin to write honestly, set skip true.');

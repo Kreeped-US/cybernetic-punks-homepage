@@ -16,6 +16,7 @@
 // for an extended period. This rebuild eliminates that dependency entirely.
 
 import { createClient } from '@supabase/supabase-js';
+import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety';
 
 // FIXED May 15, 2026: Lazy-init Supabase client via Proxy.
 // Module-scope createClient() throws "supabaseUrl is required" during
@@ -492,6 +493,11 @@ async function buildHolotagPrompt() {
 // content into ranked competitive implications.
 
 async function buildPatchImpactPrompt(patchItems) {
+  // PROMPT-INJECTION HARDENING (July 9, 2026): patch title/url/contents are
+  // fetched (Bungie first-party, cross-posted via Steam) but still unvetted
+  // external text. Short fields sanitized; the long notes body neutralized
+  // (angle brackets + control chars stripped, structure kept). The assembled
+  // section is wrapped in <untrusted_source> tags + a treat-as-data clause below.
   const patchSection = patchItems.map(function(p) {
     // Full notes (Gap 1: dropped the old .slice(0, 800)) plus a completeness
     // signal so CIPHER hedges honestly when only a blurb was ingested rather
@@ -499,10 +505,10 @@ async function buildPatchImpactPrompt(patchItems) {
     var completeness = p.notes_complete === true
       ? 'COMPLETENESS: FULL official notes below.'
       : 'COMPLETENESS: PARTIAL -- only a short blurb was ingested, NOT the full notes. Analyze ONLY what is explicitly stated below; do not assume or invent specific changes, and note the limitation.';
-    return 'TITLE: ' + p.title
-      + (p.url ? '\nURL: ' + p.url : '')
+    return 'TITLE: ' + sanitizeUgc(p.title, 300)
+      + (p.url ? '\nURL: ' + sanitizeUgc(p.url, 300) : '')
       + '\n' + completeness
-      + (p.contents ? '\nCONTENT:\n' + p.contents : '\nCONTENT: (none ingested)');
+      + (p.contents ? '\nCONTENT:\n' + neutralizeBlock(p.contents) : '\nCONTENT: (none ingested)');
   }).join('\n\n---\n\n');
 
   // Pull current meta state for "before/after" framing
@@ -526,7 +532,7 @@ async function buildPatchImpactPrompt(patchItems) {
     + 'Your job: translate the Bungie patch below into ranked competitive implications. What '
     + 'shells got better? What got worse? What builds are now broken or newly viable? Players '
     + 'reading this just heard about the patch and want to know what to swap to immediately.\n\n'
-    + 'BUNGIE PATCH CONTENT:\n\n' + patchSection + '\n\n'
+    + fenceUntrusted(patchSection, 'official Bungie/Steam patch notes') + '\n\n'
     + metaSection + '\n\n'
     + 'ARTICLE GUIDANCE:\n'
     + '- Headline must reference the patch and ranked impact. Examples: "Marathon Patch '

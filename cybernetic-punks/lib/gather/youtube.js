@@ -11,6 +11,7 @@
 
 import { fetchTranscripts } from './transcript.js';
 import { getGameConfig } from '../games/index.js';
+import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from '../promptSafety';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
@@ -225,15 +226,21 @@ async function gatherCreatorUploads(apiKey, creatorChannels) {
 export function formatForEditor(videos, editor) {
   if (!videos || !videos.length) return null;
 
+  // PROMPT-INJECTION HARDENING (July 9, 2026): title/channel/description/
+  // transcript are external, attacker-controllable YouTube text. Every field is
+  // sanitized (shared helpers in ../promptSafety); numeric metrics coerced.
+  // The assembled videoSummaries are wrapped in <untrusted_source> tags + a
+  // treat-as-data clause below, so a crafted title/description can't break out or
+  // issue instructions. Tool-forced output (per-editor schema) stays the limiter.
   const videoSummaries = videos.slice(0, 5).map(function(v, i) {
-    let summary = `${i + 1}. "${v.title}" by ${v.channel}
-   Views: ${v.view_count.toLocaleString()} | Likes: ${v.like_count.toLocaleString()} | Comments: ${v.comment_count.toLocaleString()}
-   Duration: ${v.duration}
-   Description: ${v.description.slice(0, 800)}
-   YouTube ID: ${v.youtube_id}`;
+    let summary = `${i + 1}. "${sanitizeUgc(v.title, 200)}" by ${sanitizeUgc(v.channel, 60)}
+   Views: ${safeNum(v.view_count).toLocaleString()} | Likes: ${safeNum(v.like_count).toLocaleString()} | Comments: ${safeNum(v.comment_count).toLocaleString()}
+   Duration: ${sanitizeUgc(v.duration, 12)}
+   Description: ${sanitizeUgc(v.description, 800)}
+   YouTube ID: ${sanitizeUgc(v.youtube_id, 20)}`;
 
     if (editor === 'CIPHER' && v.transcript) {
-      summary += `\n   TRANSCRIPT:\n   ${v.transcript}`;
+      summary += `\n   TRANSCRIPT:\n   ${neutralizeBlock(v.transcript)}`;
     }
     if (editor === 'CIPHER' && !v.transcript) {
       summary += `\n   TRANSCRIPT: Not available. Use the title, description, view count, and channel reputation to build your analysis. Infer the play style, shell choice, and decision-making from context clues in the description. Be specific — extract any weapon names, shell names, or tactical details mentioned.`;
@@ -242,11 +249,14 @@ export function formatForEditor(videos, editor) {
     return summary;
   }).join('\n\n');
 
+  // Wrap the external video block once; reused across all three editor cases.
+  const untrustedVideos = fenceUntrusted(videoSummaries, 'YouTube video titles, descriptions, and auto-generated transcripts');
+
   switch (editor) {
     case 'CIPHER':
       return `Here are the latest Marathon gameplay videos trending on YouTube. Some include full auto-generated transcripts of creator narration. Use the transcript to analyze actual gameplay decisions, mechanical skill, and strategic thinking when available.
 
-${videoSummaries}
+${untrustedVideos}
 
 ANALYSIS GUIDANCE:
 - Pick the video that demonstrates the highest competitive skill or most interesting strategic play
@@ -261,7 +271,7 @@ Use the publish_play_analysis tool to publish your analysis.`;
     case 'DEXTER':
       return `Here are the latest Marathon build and loadout videos on YouTube. Analyze the most interesting build or loadout discussion.
 
-${videoSummaries}
+${untrustedVideos}
 
 ANALYSIS GUIDANCE:
 - Pick the video with the most useful build information
@@ -276,7 +286,7 @@ Use the publish_build_analysis tool to publish your analysis.`;
     case 'NEXUS':
       return `Here are the latest Marathon videos trending on YouTube. Summarize what these videos COVER about the current Marathon meta - the weapons, shells, and strategies they discuss. Do not infer community size, interest, or health from how many videos exist; few videos means limited creator coverage this cycle, not a declining game.
 
-${videoSummaries}
+${untrustedVideos}
 
 ANALYSIS GUIDANCE:
 - What patterns do you see across these videos? What's shifting? What are players focused on?

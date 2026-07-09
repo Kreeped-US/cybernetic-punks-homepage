@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL, COMMENT_MODEL } from './models';
 import { verificationTag, VERIFICATION_NOTE } from './verification';
 import { getGameConfig } from './games';
+import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -938,13 +939,21 @@ async function fetchGameContext(config = getGameConfig()) {
 export function buildMirandaPrompt(data) {
   const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, implantContext, recentHeadlines, xData, _directive } = data;
 
+  // PROMPT-INJECTION HARDENING (July 9, 2026): YouTube titles/descriptions,
+  // Reddit titles/bodies, dev-news, dev-Reddit, and X post text are external,
+  // attacker-controllable UGC. Every interpolated field is sanitized (shared
+  // helpers in ./promptSafety); the external sections are then wrapped together
+  // in <untrusted_source> tags + a treat-as-data clause below (externalSources).
+  // The internal verified DB sections (shell/weapon/mod/implant) stay outside the
+  // wrapper -- they are trusted data, not untrusted UGC. creator_spotlight
+  // source_text is human-vetted and keeps its own """ fence.
   const videoSummaries = videos.slice(0, 6).map(v =>
-    `TITLE: ${v.title}\nCHANNEL: ${v.channelTitle}\nDESC: ${v.description?.slice(0, 200)}\nVIDEO_ID: ${v.videoId}`
+    `TITLE: ${sanitizeUgc(v.title, 200)}\nCHANNEL: ${sanitizeUgc(v.channelTitle, 60)}\nDESC: ${sanitizeUgc(v.description, 200)}\nVIDEO_ID: ${sanitizeUgc(v.videoId, 20)}`
   ).join('\n---\n');
 
   const redditSummaries = redditPosts?.length > 0
     ? redditPosts.slice(0, 5).map(p =>
-        `TITLE: ${p.title}\nFLAIR: ${p.flair}\nCONTENT: ${p.selftext}\nSCORE: ${p.score}`
+        `TITLE: ${sanitizeUgc(p.title, 200)}\nFLAIR: ${sanitizeUgc(p.flair, 60)}\nCONTENT: ${sanitizeUgc(p.selftext, 500)}\nSCORE: ${safeNum(p.score)}`
       ).join('\n---\n')
     : 'Limited community posts this cycle.';
 
@@ -988,11 +997,11 @@ export function buildMirandaPrompt(data) {
     : 'Implant data seeding in progress.';
 
   const bungieNewsData = devNews?.length > 0
-    ? devNews.map(n => `TITLE: ${n.title}\nURL: ${n.url}`).join('\n---\n')
+    ? devNews.map(n => `TITLE: ${sanitizeUgc(n.title, 200)}\nURL: ${sanitizeUgc(n.url, 300)}`).join('\n---\n')
     : 'No recent Bungie news found.';
 
   const devRedditData = devRedditPosts?.length > 0
-    ? devRedditPosts.map(p => `TITLE: ${p.title}\nAUTHOR: ${p.author}\nCONTENT: ${p.selftext}\nURL: ${p.url}`).join('\n---\n')
+    ? devRedditPosts.map(p => `TITLE: ${sanitizeUgc(p.title, 200)}\nAUTHOR: ${sanitizeUgc(p.author, 40)}\nCONTENT: ${sanitizeUgc(p.selftext, 600)}\nURL: ${sanitizeUgc(p.url, 300)}`).join('\n---\n')
     : 'No recent official Reddit posts found.';
 
   const recentHeadlinesBlock = recentHeadlines?.length > 0
@@ -1033,25 +1042,47 @@ export function buildMirandaPrompt(data) {
     directiveBlock = `\n\n--- EDITOR DIRECTIVE - THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\nASSIGNMENT: ${_directive.instruction}\n${_directive.url ? 'SOURCE URL: ' + _directive.url + '\n' : ''}Write your article specifically about this topic. This overrides your normal content selection.\n---`;
   }
 
-  // X intel block kept for backward compat - xData is null after April 27, 2026
+  // X intel block. xData is null today (removed April 27, 2026), so this is INERT
+  // -- but it is pre-hardened so that when Stage 2 wires X back in, tweet text
+  // (the MOST attacker-controllable source -- anyone can post a tweet designed to
+  // be ingested) flows through the SAME fencing automatically, no retrofit. Each
+  // author/text is sanitized and the whole block is wrapped in <untrusted_source>
+  // tags + the treat-as-data clause.
   let xIntelBlock = '';
   if (xData?.posts?.length) {
-    let xOut = '\n\n--- X COMMUNITY INTELLIGENCE ---';
+    let xOut = '';
     if (xData.eventPosts?.length > 0) {
-      xOut += '\n\nACTIVE EVENTS / TOURNAMENTS DETECTED:\n';
-      xOut += xData.eventPosts.slice(0, 6).map(p => `@${p.author}: "${p.text.slice(0, 300)}"`).join('\n\n');
+      xOut += 'ACTIVE EVENTS / TOURNAMENTS DETECTED:\n';
+      xOut += xData.eventPosts.slice(0, 6).map(p => `@${sanitizeUgc(p.author, 40)}: "${sanitizeUgc(p.text, 300)}"`).join('\n\n');
     }
     if (xData.officialPosts?.length > 0) {
       xOut += '\n\nOFFICIAL BUNGIE/MARATHON POSTS:\n';
-      xOut += xData.officialPosts.slice(0, 5).map(p => `@${p.author}: "${p.text.slice(0, 300)}"`).join('\n\n');
+      xOut += xData.officialPosts.slice(0, 5).map(p => `@${sanitizeUgc(p.author, 40)}: "${sanitizeUgc(p.text, 300)}"`).join('\n\n');
     }
     if (xData.communityPosts?.length > 0) {
       xOut += '\n\nCOMMUNITY CREATOR POSTS:\n';
-      xOut += xData.communityPosts.slice(0, 10).map(p => `@${p.author}: "${p.text.slice(0, 250)}"`).join('\n\n');
+      xOut += xData.communityPosts.slice(0, 10).map(p => `@${sanitizeUgc(p.author, 40)}: "${sanitizeUgc(p.text, 250)}"`).join('\n\n');
     }
-    xOut += '\n--- END X INTELLIGENCE ---';
-    xIntelBlock = xOut;
+    xIntelBlock = '\n\n' + fenceUntrusted(xOut, 'X / Twitter posts (attacker-controllable — anyone can post)');
   }
+
+  // The external UGC sections (dev news, dev Reddit, community Reddit, YouTube),
+  // each with its already-sanitized fields, wrapped once in <untrusted_source>
+  // tags + the treat-as-data clause. Internal verified DB sections stay outside.
+  const externalSources = fenceUntrusted(
+`OFFICIAL DEV NEWS:
+${bungieNewsData}
+
+OFFICIAL DEV REDDIT POSTS:
+${devRedditData}
+
+COMMUNITY REDDIT POSTS (what players are discussing - use as topic signals and sentiment; cite only what a post actually states, never restate as fact):
+${redditSummaries}
+
+YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about Marathon the Bungie extraction shooter):
+${videoSummaries}`,
+    'official dev news, community Reddit posts, and YouTube video titles/descriptions'
+  );
 
   return `You are MIRANDA, the field guide editor for Cybernetic Punks - the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
@@ -1087,17 +1118,7 @@ ${modData}
 IMPLANT DATA:
 ${implantData}
 
-OFFICIAL DEV NEWS:
-${bungieNewsData}
-
-OFFICIAL DEV REDDIT POSTS:
-${devRedditData}
-
-COMMUNITY REDDIT POSTS (what players are discussing - use as topic signals and sentiment; cite only what a post actually states, never restate as fact):
-${redditSummaries}
-
-YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about Marathon the Bungie extraction shooter):
-${videoSummaries}
+${externalSources}
 
 TOPICS YOU ALREADY COVERED - DO NOT REPEAT THESE ANGLES:
 ${recentHeadlinesBlock}

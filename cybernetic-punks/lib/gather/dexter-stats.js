@@ -22,6 +22,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '../models';
 import { getGameConfig } from '../games';
+import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety';
 
 // VERIFICATION HONESTY (audit Phase 5): this scraper extracts stat values from
 // community wiki + AI parsing -- inherently UNVERIFIED (no authoritative source
@@ -293,8 +294,16 @@ async function extractStats(sourceTexts, targets) {
     return null;
   }
 
+  // PROMPT-INJECTION HARDENING (July 9, 2026): source content is genuinely
+  // external scraped text (wiki HTML, YouTube transcripts, Reddit, Steam
+  // reviews) -- the highest-volume external ingestor. Each source label is
+  // sanitized and each body neutralized (angle brackets + control chars stripped,
+  // line structure preserved for extraction). The combined block is wrapped in
+  // <untrusted_source> tags + a treat-as-data clause in the user prompt below.
+  // Defense-in-depth on top of the existing limiters: forced tool schema,
+  // field allow-lists, and verified=false on every extracted row.
   const combinedContent = sourceTexts
-    .map(s => `[SOURCE: ${s.source}]\n${s.content}`)
+    .map(s => `[SOURCE: ${sanitizeUgc(s.source, 60)}]\n${neutralizeBlock(s.content)}`)
     .join('\n\n---\n\n')
     .slice(0, 12000);
 
@@ -314,7 +323,7 @@ IMPLANTS WITH MISSING DATA: ${implantList}
 
 Use the submit_extracted_stats tool to return findings. Submit empty arrays for categories where no data was found.`;
 
-  const userPrompt = `Extract Marathon stats from the following source material:\n\n${combinedContent}`;
+  const userPrompt = `Extract Marathon stats from the source material below.\n\n${fenceUntrusted(combinedContent, 'wiki pages, YouTube transcripts, Reddit posts, Steam reviews')}`;
 
   try {
     const message = await client.messages.create({
