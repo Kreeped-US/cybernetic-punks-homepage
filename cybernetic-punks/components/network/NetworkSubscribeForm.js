@@ -1,7 +1,7 @@
 'use client';
 // components/network/NetworkSubscribeForm.js
 // Network-wide email capture for the front door. Posts to /api/network-notify with
-// { email, honeypot, source:'network-home' } -> the shared dmz_launch_emails table
+// { email, honeypot, source:'network-home' } -> the shared email_signups table
 // (game_slug='network'). Mirrors the DMZ form's pattern (visually-hidden honeypot,
 // idle/submitting/success/error states, honest copy -- no fake counts). The submit
 // button uses the network red accent (var(--red)) to match the rest of the network

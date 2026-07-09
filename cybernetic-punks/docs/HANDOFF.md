@@ -193,7 +193,7 @@ No old-mark icon remains -- the earlier favicon.ico / manifest "old art" deferra
 - SEO measurement: /meta tier-list experiment shipped recently — too soon; check
   GSC at ~4-8 weeks (climbing from ~pos 3.5? FAQ snippets? clicks?).
 - The 2 remaining long unpublished pieces: glance -> keep/publish/drop someday.
-- dmz_launch_emails naming debt (holds network signups too) — Justin-run SQL.
+- email_signups: renamed from dmz_launch_emails 2026-07-09 (holds DMZ launch + network signups). Naming debt resolved.
 - DMZ-6: still held until genuinely new official CoD material.
 - DMZ launch date Oct 23 2026 — VERIFIED official. Source: https://www.callofduty.com/blog/2026/05/call-of-duty-modern-warfare-4-announcement (official Call of Duty blog, May 28 2026, by Call of Duty Staff). The post states: 'Call of Duty: Modern Warfare 4 releases on Friday, October 23, 2026.' DMZ ships as part of MW4, so it launches Oct 23 2026 with the game. Provenance confirmed 2026-07-08. Earlier 'no official source located' flag resolved. Oct 23 2026 may now be asserted site-wide, in schema/FAQ, banner, and bio as a sourced fact. Downstream unblocked: the 'When does DMZ launch?' FAQ item dropped from the hub FAQPage (because the date was unsourced) can now be re-added honestly, citing this source.
 
@@ -218,7 +218,7 @@ Went from "boring/confusing, unclear what to do" to a real network front page.
 Shipped in gated passes:
 - STRUCTURE/CLARITY: clarity-first hero, featured VANTAGE brief, tools row
   (/meta, /leaderboard, /status, /weapons), network subscribe (generalized the
-  DMZ notify form -> writes dmz_launch_emails with game_slug='network'),
+  DMZ notify form -> writes email_signups with game_slug='network'),
   "Choose your game" (was "Choose your zone").
 - ESPORTS VISUAL: fused broadcast + terminal + editorial energy; restrained
   (few accent moments); mono "//" texture; bold hero.
@@ -329,8 +329,8 @@ deleted. NOTE: this delete left NO git diff (DB-only) — the repo is unchanged 
   publish any or leave hidden. They're inert (guard hides them).
 - Per-game Creator-coverage homepage slots: deferred (network-desk feed shipped
   instead).
-- dmz_launch_emails naming debt: now holds network signups too (game_slug=
-  'network') — a rename/dedicated table would be a Justin-run SQL step someday.
+- email_signups: renamed from dmz_launch_emails 2026-07-09 (holds network signups
+  too, game_slug='network'). Naming debt resolved.
 - DMZ-6 remaining articles: CLOSED/held — the 6 PENDING_TOPICS are deliberately
   unsourced (the June 6 Deep Dive doesn't cover them as standalone topics; they'd
   be thin FOB-sub-bullet duplicates or fabrication). Do NOT generate until

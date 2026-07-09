@@ -1,15 +1,14 @@
 // app/api/network-notify/route.js
 // Network-wide email capture for the front door. POST { email, honeypot, source }
-// -> inserts one row into the SHARED dmz_launch_emails table with
+// -> inserts one row into the SHARED email_signups table with
 // game_slug='network' (game_slug + source scope each signup; the unique index on
 // lower(email) keeps it one-row-per-email network-wide). Mirrors /api/dmz-notify
 // exactly: honeypot silent-drop, shape/length validation, duplicate-as-success,
 // service key created INSIDE the handler (never module scope, never client). NO
 // Resend / auto-send here.
 //
-// NAMING DEBT (intentional, flagged): the table is named dmz_launch_emails but
-// now holds the whole network's list; a rename or dedicated table is a future
-// Justin-run SQL step, not required to ship. game_slug distinguishes the sources.
+// email_signups was renamed from dmz_launch_emails (which had grown to hold the whole
+// network's list, not just DMZ launch). game_slug distinguishes the sources.
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -41,7 +40,7 @@ export async function POST(req) {
 
     var userAgent = (req.headers.get('user-agent') || '').slice(0, 512) || null;
 
-    var ins = await supabase.from('dmz_launch_emails').insert({
+    var ins = await supabase.from('email_signups').insert({
       email: email.toLowerCase(),
       source: source,
       user_agent: userAgent,

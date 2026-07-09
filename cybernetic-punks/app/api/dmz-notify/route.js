@@ -1,6 +1,6 @@
 // app/api/dmz-notify/route.js
 // Owned DMZ launch-email capture. POST { email, honeypot, source } -> inserts one
-// row into dmz_launch_emails (game_slug='dmz') using the SERVICE key server-side.
+// row into email_signups (game_slug='dmz') using the SERVICE key server-side.
 // This is an OWNED list (manual send at launch) -- NO Resend, NO auto-send, NO
 // double opt-in. The service key is created INSIDE the handler (never module-scope
 // -- Next 16 evaluates module scope at build before env is present; see
@@ -47,7 +47,7 @@ export async function POST(req) {
 
     var userAgent = (req.headers.get('user-agent') || '').slice(0, 512) || null;
 
-    var ins = await supabase.from('dmz_launch_emails').insert({
+    var ins = await supabase.from('email_signups').insert({
       email: email.toLowerCase(),
       source: source,
       user_agent: userAgent,
