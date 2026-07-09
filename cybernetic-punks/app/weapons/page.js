@@ -66,6 +66,13 @@ export default async function WeaponsIndexPage() {
 
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+          { '@type': 'ListItem', position: 2, name: 'Weapons', item: 'https://cyberneticpunks.com/weapons' },
+        ],
+      }) }} />
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
 
         {/* Header */}

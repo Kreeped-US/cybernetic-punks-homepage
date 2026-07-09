@@ -75,6 +75,13 @@ export default async function CreatorsPage() {
 
   return (
     <main style={{ background: '#030303', minHeight: '100vh', color: '#ffffff' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+          { '@type': 'ListItem', position: 2, name: 'Creators', item: 'https://cyberneticpunks.com/creators' },
+        ],
+      }) }} />
 
       {/* ─── HERO ─────────────────────────────────────── */}
       <section style={{

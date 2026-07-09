@@ -114,6 +114,13 @@ export default async function MapsIndex() {
 
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+          { '@type': 'ListItem', position: 2, name: 'Maps', item: 'https://cyberneticpunks.com/maps' },
+        ],
+      }) }} />
       <style>{`
         .mi-card { transition: background 0.12s, border-color 0.12s, transform 0.12s; }
         .mi-card:hover { background: #1e2228 !important; transform: translateY(-1px); border-color: ${CYAN}55 !important; }

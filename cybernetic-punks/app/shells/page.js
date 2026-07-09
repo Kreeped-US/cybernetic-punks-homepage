@@ -82,6 +82,13 @@ export default async function ShellsIndexPage() {
 
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+          { '@type': 'ListItem', position: 2, name: 'Shells', item: 'https://cyberneticpunks.com/shells' },
+        ],
+      }) }} />
       <ShellsHubClient shells={enriched} totalPicks={totalPicks} />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({

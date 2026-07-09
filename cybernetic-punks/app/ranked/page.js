@@ -116,6 +116,13 @@ export default async function RankedPage() {
   var data = await getRankedData();
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+          { '@type': 'ListItem', position: 2, name: 'Ranked', item: 'https://cyberneticpunks.com/ranked' },
+        ],
+      }) }} />
       <RankedClient data={data} />
     </>
   );

@@ -42,6 +42,13 @@ export default function EditorsPage() {
   var editors = getAllEditors();
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+          { '@type': 'ListItem', position: 2, name: 'Editors', item: 'https://cyberneticpunks.com/editors' },
+        ],
+      }) }} />
       <NewsroomMasthead />
 
       <section style={{ padding: '24px 24px 72px', maxWidth: 1100, margin: '0 auto' }}>

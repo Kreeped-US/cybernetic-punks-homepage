@@ -247,6 +247,18 @@ export default async function DmzArticlePage({ params }) {
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* BreadcrumbList JSON-LD -- matches the VISIBLE breadcrumb below exactly
+          (Network / DMZ / <section>). Discourse articles render via DiscourseArticle,
+          which emits its own breadcrumb, so this news template is the only DMZ-article
+          path that needed one. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Network', item: 'https://cyberneticpunks.com/' },
+          { '@type': 'ListItem', position: 2, name: 'DMZ', item: 'https://cyberneticpunks.com/dmz' },
+          { '@type': 'ListItem', position: 3, name: section.label, item: 'https://cyberneticpunks.com/dmz/' + section.slug },
+        ],
+      }) }} />
       {/* 1. Breadcrumb: Network / DMZ / section */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
         <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>

@@ -220,6 +220,13 @@ export default async function Home() {
 
   return (
     <div style={{ background: '#121418', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
+          { '@type': 'ListItem', position: 2, name: 'Marathon', item: 'https://cyberneticpunks.com/marathon' },
+        ],
+      }) }} />
       {/* Site-entity JSON-LD (Organization + WebSite) intentionally lives ONLY on
           the network root (/), not on this hub, to avoid duplicate entity
           declarations across pages. */}
