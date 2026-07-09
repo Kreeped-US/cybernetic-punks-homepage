@@ -187,12 +187,21 @@ function normalizeTitle(t) { return (t || '').toLowerCase().replace(/\s+/g, ' ')
 //   DUP_HISTORY_LIMIT 500 -- compare against the editor+game's last 500 published
 //     headlines (~months of MIRANDA output) so a topic covered weeks ago is still
 //     caught. The last-12 window is exactly why the re-mints slipped through.
-// KNOWN LIMIT: two genuinely-distinct SUBJECTS under a rigid identical template
-// (e.g. per-shell "<Shell> Build Best Ranked Solo Loadout") can score high on
-// boilerplate alone. Not seen in the data (every real cluster is same-subject
-// re-mint), and a block is LOGGED (never silent), so a false block is visible in
-// the cron logs and self-heals next cycle. Subject-token weighting is a Phase-2
-// option if per-subject guides ever become common.
+// SUBJECT WEIGHTING (July 2026 refinement): plain Jaccard proved to over-score
+// distinct per-SUBJECT variants sharing a rigid template -- the real per-weapon
+// Rook builds (M77 / Repeater HPR / Twin Tap HBR) are genuinely distinct content
+// but hit ~0.8 on the "Marathon Rook Build Best Ranked Solo Loadout With The..."
+// boilerplate alone. Fix: weight each token by corpus rarity (IDF over the SAME
+// 500-headline history the guard already fetches -- no extra query, and the
+// corpus self-updates as MIRANDA publishes). Template scaffolding ("build",
+// "ranked", "guide", "best") appears in dozens of headlines -> near-zero weight;
+// the distinguishing subject ("m77", "repeater", "twin", "tap") appears in one
+// or two -> dominant weight. Score = weighted Jaccard: idf-sum(shared) /
+// idf-sum(union). Verified on production headlines: true re-mints (identical
+// token sets) still score 1.0 -> blocked; the same-weapon Impact HAR dupe pair
+// still collides at 1.0; distinct per-weapon Rook variants drop from ~0.8 to
+// ~0.2-0.3 -> pass; -no19's distinct angle drops from 0.33 -> pass by a wider
+// margin. The threshold itself is unchanged.
 var DUP_JACCARD_THRESHOLD = 0.7;
 var DUP_MIN_SHARED_TOKENS = 3;
 var DUP_HISTORY_LIMIT = 500;
@@ -226,15 +235,38 @@ function topicTokens(headline) {
   return Object.keys(set);
 }
 
-// Jaccard overlap + shared-count for two token arrays.
-function topicJaccard(tokensA, tokensB) {
+// IDF map over a corpus of headlines: token -> log(1 + N/(1+df)). df counts
+// HEADLINES containing the token (set semantics), not raw occurrences. A token
+// the corpus has never seen gets the maximum weight (df=0) -- a novel subject is
+// maximally distinguishing.
+function buildIdfMap(headlines) {
+  var df = {};
+  for (var i = 0; i < headlines.length; i++) {
+    var toks = topicTokens(headlines[i]);
+    for (var j = 0; j < toks.length; j++) df[toks[j]] = (df[toks[j]] || 0) + 1;
+  }
+  var n = headlines.length || 1;
+  var idf = {};
+  for (var t in df) idf[t] = Math.log(1 + n / (1 + df[t]));
+  idf._max = Math.log(1 + n); // weight for unseen tokens
+  return idf;
+}
+
+// Subject-weighted Jaccard: idf-sum of shared tokens / idf-sum of the union.
+// `shared` stays the RAW shared-token count (the DUP_MIN_SHARED_TOKENS floor is
+// about real overlap existing at all, not its weight).
+function topicJaccard(tokensA, tokensB, idf) {
   if (!tokensA.length || !tokensB.length) return { score: 0, shared: 0 };
-  var setB = {};
-  for (var i = 0; i < tokensB.length; i++) setB[tokensB[i]] = 1;
-  var shared = 0;
-  for (var j = 0; j < tokensA.length; j++) if (setB[tokensA[j]]) shared++;
-  var union = tokensA.length + tokensB.length - shared;
-  return { score: union ? shared / union : 0, shared: shared };
+  function w(t) { return idf[t] || idf._max; }
+  var setA = {};
+  for (var i = 0; i < tokensA.length; i++) setA[tokensA[i]] = 1;
+  var shared = 0, sharedW = 0, unionW = 0;
+  for (var j = 0; j < tokensA.length; j++) unionW += w(tokensA[j]);
+  for (var k = 0; k < tokensB.length; k++) {
+    if (setA[tokensB[k]]) { shared++; sharedW += w(tokensB[k]); }
+    else unionW += w(tokensB[k]);
+  }
+  return { score: unionW ? sharedW / unionW : 0, shared: shared };
 }
 
 // Read-only: return the closest published article by this editor+game whose
@@ -254,11 +286,15 @@ async function findDuplicateEvergreen(supabase, editorName, gameSlug, candidateH
       .order('created_at', { ascending: false })
       .limit(DUP_HISTORY_LIMIT);
     if (error || !data) return null;
+    // Corpus IDF from this same history read: template boilerplate is frequent
+    // across MIRANDA's headlines -> low weight; the distinguishing subject is
+    // rare -> high weight (see the subject-weighting note above the constants).
+    var idf = buildIdfMap(data.map(function(r) { return r.headline || ''; }));
     var best = null;
     for (var i = 0; i < data.length; i++) {
       var existing = data[i];
       if (!existing.headline) continue;
-      var cmp = topicJaccard(candTokens, topicTokens(existing.headline));
+      var cmp = topicJaccard(candTokens, topicTokens(existing.headline), idf);
       if (cmp.shared < DUP_MIN_SHARED_TOKENS) continue;
       if (cmp.score >= DUP_JACCARD_THRESHOLD && (!best || cmp.score > best.score)) {
         best = { headline: existing.headline, slug: existing.slug, created_at: existing.created_at, score: cmp.score, shared: cmp.shared };
