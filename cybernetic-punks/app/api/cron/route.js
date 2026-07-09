@@ -157,6 +157,120 @@ var MIN_BODY_WORDS = 50;
 function wordCount(s) { return (s || '').trim().split(/\s+/).filter(Boolean).length; }
 function normalizeTitle(t) { return (t || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
 
+// ── NEAR-DUPLICATE EVERGREEN GUARD (MIRANDA) ────────────────────────────────
+// The exact-title check above only catches BYTE-identical repeats inside the
+// recent window. The real re-mint failure it misses: the SAME evergreen guide
+// regenerated WEEKS apart with a reworded headline -- e.g. the 44 "Essential
+// Weapon Mod Builds for New Runners" pieces published over 22 days, most of them
+// outside any last-12 window. This gate compares a candidate headline's TOPIC
+// against the editor's FULL recent published history and blocks a clear
+// near-duplicate before it publishes.
+//
+// Method -- Jaccard overlap of significant headline tokens. Chosen over
+// embeddings deliberately: it is simple, deterministic, dependency-free, and an
+// evergreen re-mint is exactly a same-topic headline restated, so topic-word
+// overlap is the right, sufficient signal. No body compare needed -- the re-mint
+// headline already collides at ~1.0; the body would only echo that.
+//
+// Drawing the line (block dupes, never distinct angles):
+//   DUP_JACCARD_THRESHOLD 0.7 -- an observed re-mint scores ~0.85-1.0 against an
+//     existing piece (the cluster headlines are near-identical). A genuinely
+//     distinct angle scores far lower: the shell-role weapon guide
+//     ("Marathon Weapon Mods for New Runners - Combat and Extraction Builds by
+//     Shell Role") tops out ~0.45 against the generic weapon-class cluster, so it
+//     PASSES with a 0.25 margin. The threshold sits in the empty gap between the
+//     two, and is skewed to UNDER-block: cross-phrasing variants (e.g. a
+//     "Weapon Mods Guide" restatement, ~0.4) slip through to Phase 2 cleanup
+//     rather than risk suppressing a real new piece.
+//   DUP_MIN_SHARED_TOKENS 3 -- require real topic overlap, not a 2-word
+//     coincidence spiking Jaccard on short headlines.
+//   DUP_HISTORY_LIMIT 500 -- compare against the editor+game's last 500 published
+//     headlines (~months of MIRANDA output) so a topic covered weeks ago is still
+//     caught. The last-12 window is exactly why the re-mints slipped through.
+// KNOWN LIMIT: two genuinely-distinct SUBJECTS under a rigid identical template
+// (e.g. per-shell "<Shell> Build Best Ranked Solo Loadout") can score high on
+// boilerplate alone. Not seen in the data (every real cluster is same-subject
+// re-mint), and a block is LOGGED (never silent), so a false block is visible in
+// the cron logs and self-heals next cycle. Subject-token weighting is a Phase-2
+// option if per-subject guides ever become common.
+var DUP_JACCARD_THRESHOLD = 0.7;
+var DUP_MIN_SHARED_TOKENS = 3;
+var DUP_HISTORY_LIMIT = 500;
+
+// Genuine function words only -- kept minimal so content words (best, new, start)
+// still contribute to overlap naturally and the threshold stays predictable.
+var TOPIC_STOPWORDS = {
+  the: 1, and: 1, for: 1, are: 1, you: 1, your: 1, with: 1, this: 1, that: 1,
+  from: 1, how: 1, what: 1, why: 1, when: 1, which: 1, who: 1, not: 1, but: 1,
+  all: 1, any: 1, its: 1, our: 1, has: 1, had: 1, was: 1, were: 1, they: 1,
+  them: 1, their: 1, into: 1, out: 1, about: 1,
+};
+
+// Significant-token SET of a headline: lowercase, split on non-alphanumerics,
+// drop short tokens + stopwords, and lightly singularize (mods->mod, builds->
+// build, runners->runner) so phrasing variants collapse together. Double-s words
+// (class, boss) keep their tail. Consistency matters more than linguistic
+// correctness -- both sides run the identical transform.
+function topicTokens(headline) {
+  var raw = (headline || '').toLowerCase().split(/[^a-z0-9]+/);
+  var set = {};
+  for (var i = 0; i < raw.length; i++) {
+    var w = raw[i];
+    if (w.length < 3) continue;
+    if (TOPIC_STOPWORDS[w]) continue;
+    if (w.length > 3 && w.charAt(w.length - 1) === 's' && w.charAt(w.length - 2) !== 's') {
+      w = w.slice(0, -1);
+    }
+    set[w] = 1;
+  }
+  return Object.keys(set);
+}
+
+// Jaccard overlap + shared-count for two token arrays.
+function topicJaccard(tokensA, tokensB) {
+  if (!tokensA.length || !tokensB.length) return { score: 0, shared: 0 };
+  var setB = {};
+  for (var i = 0; i < tokensB.length; i++) setB[tokensB[i]] = 1;
+  var shared = 0;
+  for (var j = 0; j < tokensA.length; j++) if (setB[tokensA[j]]) shared++;
+  var union = tokensA.length + tokensB.length - shared;
+  return { score: union ? shared / union : 0, shared: shared };
+}
+
+// Read-only: return the closest published article by this editor+game whose
+// topic crosses the near-duplicate threshold, or null. Never touches existing
+// rows. Fail-OPEN -- a lookup error returns null (let the piece publish) so a
+// transient DB blip never blocks generation.
+async function findDuplicateEvergreen(supabase, editorName, gameSlug, candidateHeadline) {
+  var candTokens = topicTokens(candidateHeadline);
+  if (candTokens.length < DUP_MIN_SHARED_TOKENS) return null;
+  try {
+    var { data, error } = await supabase
+      .from('feed_items')
+      .select('headline, slug, created_at')
+      .eq('editor', editorName)
+      .eq('game_slug', gameSlug)
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(DUP_HISTORY_LIMIT);
+    if (error || !data) return null;
+    var best = null;
+    for (var i = 0; i < data.length; i++) {
+      var existing = data[i];
+      if (!existing.headline) continue;
+      var cmp = topicJaccard(candTokens, topicTokens(existing.headline));
+      if (cmp.shared < DUP_MIN_SHARED_TOKENS) continue;
+      if (cmp.score >= DUP_JACCARD_THRESHOLD && (!best || cmp.score > best.score)) {
+        best = { headline: existing.headline, slug: existing.slug, created_at: existing.created_at, score: cmp.score, shared: cmp.shared };
+      }
+    }
+    return best;
+  } catch (err) {
+    console.log('[CRON] ' + editorName + ' dup-check error (non-fatal, publishing): ' + err.message);
+    return null;
+  }
+}
+
 function buildPatchPriorityBlock(patchItems) {
   if (!patchItems || patchItems.length === 0) return '';
   return (
@@ -525,6 +639,24 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     if (recentTitles.some(function(t) { return normalizeTitle(t) === newTitleNorm; })) {
       console.log('[CRON] ' + editorName + ' SKIP publish: duplicate title vs recent ("' + result.headline + '")');
       return { editor: editorName, success: false, error: 'duplicate title vs recent' };
+    }
+    // (3) Near-duplicate EVERGREEN guard (MIRANDA only). (2) above catches only
+    //     byte-identical titles inside the recent window; the real failure is the
+    //     same evergreen guide re-minted weeks later with a reworded headline.
+    //     This compares topic tokens against MIRANDA's FULL recent published
+    //     history and SKIPS publish on a clear near-duplicate -- LOGGING which
+    //     existing article it matched, never silently dropping. The other four
+    //     editors are exempt on purpose: their day-to-day topic overlap is
+    //     legitimately high (dated meta/news), so only the evergreen field guide
+    //     runs the topic-similarity gate.
+    if (editorName === 'MIRANDA') {
+      var dup = await findDuplicateEvergreen(supabase, editorName, PRODUCING_GAME_SLUG, result.headline);
+      if (dup) {
+        console.log('[CRON] MIRANDA SKIP publish: near-duplicate evergreen (score ' +
+          dup.score.toFixed(2) + ', ' + dup.shared + ' shared topic words) of existing "' +
+          dup.headline + '" [' + dup.slug + '] -- new "' + result.headline + '" not published');
+        return { editor: editorName, success: false, error: 'near-duplicate of existing article (' + dup.slug + ', score ' + dup.score.toFixed(2) + ')' };
+      }
     }
 
     var { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
