@@ -5,6 +5,44 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — MULTI-GAME REFERENCE-ROUTING: state + open items (found during /mods Increment 1)
+
+Architecture findings surfaced by the `/mods` build. Docs-only record; the only code change
+that came out of it is the `game_slug` filter shipped inside `/mods`' own first commit.
+
+### DATABASE is fully game-scoped
+Every entity table carries `game_slug`: `shell_stats`, `weapon_stats`, `mod_stats` (202 rows),
+`unique_weapons`, `game_maps`, plus `cores` / `implants` / `cradle` / `meta_tiers`. All are
+`marathon:*` today. `feed_items` already has `dmz:3` rows. `factions` is the lone table
+**without** `game_slug`.
+
+### ROUTES are not yet game-scoped
+Marathon is **root-implicit** (`/weapons`, `/shells`, `/mods` — `marathon.js` has no
+`basePath`); DMZ is **namespaced** (`/dmz/[section]` — `dmz.js` sets `basePath: '/dmz'`,
+sections config-driven). There is **no `[game]` URL segment and no game-aware href builder**;
+`basePath` is consumed in exactly one place (`rootGames.js:69`).
+
+### ROUTE-LEVEL `game_slug` FILTERING IS INCONSISTENT (latent bug)
+- **Filter correctly:** `/maps`, `/factions`, the sitemap DMZ block, and now `/mods`
+  (fixed in its first commit).
+- **Missing the filter:** `/weapons`, `/shells`, `/uniques`, and the sitemap's dynamic
+  shell/weapon blocks.
+
+Harmless today (all entity rows are marathon), but the day DMZ entity rows land in
+`weapon_stats` / `shell_stats` these routes **silently render Marathon + DMZ mixed**.
+Fix as **one focused change BEFORE DMZ entity data arrives**. `/maps` is the correct precedent.
+
+### OPEN DECISION (before Oct 23): DMZ reference-data routing shape
+The trajectory implied by `dmz.js` config is `/dmz/[section]` (printer / fob / regions as
+`source: 'data'`, "launches with the zone") — **not** `/dmz/mods` mirroring `/mods`. That
+would give the two games **different reference-routing shapes**.
+
+This is **inferred from config, not decided.** Decide deliberately pre-launch, per the
+"infrastructure game-agnostic, config per-game" principle. It affects whether the eventual
+game-scoping refactor **unifies** the reference sections or **keeps them split**.
+
+---
+
 ## 2026-07-15 — SHELL TIER/META CONSOLIDATION, Pass 1 (EXECUTED: 73 noindexed across 6 shells)
 
 Part of the topic-cannibalization cleanup. DB-only writes; **no git artifact for the cuts**
