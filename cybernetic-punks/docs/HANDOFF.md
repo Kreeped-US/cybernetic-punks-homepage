@@ -5,6 +5,80 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — mod_stats IN-GAME VERIFICATION PASS (5 mods corrected against the game)
+
+Justin verified 5 flagged mods **against the actual game** and corrected the DB. This is
+**GROUND TRUTH (in-game checked)**, not field-reconciliation. All writes reversible.
+
+### ROWS FIXED (all game-verified)
+1. **Flash Draw Chip** [Chip/Superior, `4397cb6b`] — `effect_desc` was a **copy-paste of
+   Alternating Current** ("EMP heal"); corrected to **"Greatly increases ready and swap
+   speed."** `verified` **left false** (reconciled fields *before* the in-game pass).
+2. **Stack Overflow** [Chip] — Deluxe was "damage stacking"; corrected to the
+   **magazine-overflow ladder small/moderate/massive**. Deluxe `verified` -> true.
+3. **Swarm Directive** [Chip] — Deluxe was "fire rate"; **BOTH** tiers corrected to
+   **"flechette seekers that heal you when damaging hostiles"** (moderate/large). Superior
+   was `verified=true` but said **"heal ALLIES"** — wrong, corrected.
+4. **Torch Bug** [Chip] — **3 unrelated mechanics**; ALL corrected to the
+   **explosion-on-elimination ladder small/moderate/massive**. Superior was `verified=true`
+   but said **"reload time"** — wrong.
+5. **Insomniac** [Chip] — Enhanced said "sustained fire" but it is **Energy Amp
+   duration-extension**; corrected to small/moderate/massive, **AND the Deluxe tier was
+   MISSING — INSERTED** (id `53c3d0b4-6f4c-4607-91da-a0efbf70be29`, **reversible by
+   delete**, `slug` NULL, credit 207). Prices game-verified **69 / 207 / 621**. All 3
+   `verified=true`.
+
+### CRITICAL — `verified=true` is NOT a truth signal
+**3 `verified=true` June rows were game-verified WRONG** (Swarm Directive Superior, Torch
+Bug Superior, Flash Draw Chip). **`verified` means "reviewed", not "correct".**
+**The "June/verified = trustworthy" prior is WEAK.** Only in-game checks are ground truth.
+**Future sessions must not trust the flag.**
+
+### CRITICAL — the pipeline was still leaking
+`1f62da92` (**DEXTER, 2026-07-08**) carried bad-DB data into **FRESH content last week**.
+And for Insomniac, **NOT ONE of 7 live articles mentions "Energy Amp"** — the correct
+mechanic was **never written**; 100% inherited the wrong DB row. **Fixing rows is the
+upstream leak-stop.**
+
+Some editors got mods **RIGHT** (`216c1597`, `6d1cb08c`) — so **P1 is inconsistent SOURCING**
+(good row vs bad row), **not a uniform prompt failure**. **Fixing rows may be most of the P1
+fix.**
+
+### METHOD — paragraph, not grep
+False claims sit in the sentence **AFTER** the mod mention (`2c4f7b42`'s Swarm Directive line
+**did not contain "Swarm Directive"**). **Sweeps must read paragraphs, not grep names.**
+
+### ARTICLE FOLLOW-UP LIST (~14 distinct LIVE, game-verified WRONG — content-fix backlog)
+| mod | live articles |
+|---|---|
+| **Insomniac (7)** | `247a0adb`, `0cb48f34`, `058b6349`, `21ad614f`, `4f98f5dc`, `51dd48dd`, `2c4f7b42` |
+| **Stack Overflow (8)** | `058b6349`, `4474dd9c`, `888cc74f`, `c15551e1`, `8f323bf1`, `c75af28c`, `247a0adb`, `2c4f7b42` |
+| **Swarm Directive (2)** | `1f62da92`, `2c4f7b42` |
+| **Torch Bug (2)** | `b84ef4fc`, `2c4f7b42` |
+
+(~10 more **noindexed** carry the same claims — **no action**, already out of the index.)
+
+### 2c4f7b42 KEEPER IS DEAD
+The Increment-5 **Chip keeper** (preserved *and* headline-rewritten this session) carries
+**FOUR game-verified false mechanics** (Stack Overflow, Swarm Directive, Torch Bug,
+Insomniac) across **~10 sentences** — **the worst article in the corpus by verified error
+count**. `ad828fbf` was **CUT for 3**; this has **4**.
+
+**Recommendation: CUT it**, and **re-audit `debecdfb`** (the cut alternative) as the
+replacement Chip keeper — **the Shield-reversal pattern**.
+
+### STILL OPEN in mod_stats
+- **2 Combat Mag placeholders** (render filler as an effect; need the real effect from
+  Justin in-game).
+- **No-scaling ladders (4)**, **opaque-name Chips (~15, uncheckable without the game)**,
+  **bad-summary-not-rendered rows** (Ornithologist, Insurrection).
+
+**CORRECTION to the integrity-audit entry below: `slug` HAS a UNIQUE constraint**
+(`mod_stats_slug_key`; one slug-owner per mod name — 58 populated / 58 distinct). That entry
+wrongly implied it was non-unique. The failed INSERT proved it.
+
+---
+
 ## 2026-07-16 — mod_stats DATA-INTEGRITY AUDIT + Flash Draw Chip fix
 
 **All 202 rows READ, not pattern-matched.** This was the **GATE** before article-accuracy
