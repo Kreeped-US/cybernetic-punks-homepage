@@ -5,6 +5,92 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — CONTENT-ACCURACY AUDIT + keeper headline fixes
+
+Read-only scan of **1,317 live indexed** Marathon articles for claims contradicting ground
+truth (`mod_stats` / `meta_tiers` / `shell_stats`). Came out of Increment 5, where the
+Shield keeper `ad828fbf` was found to carry **3 error types** — discovered only by reading
+prose against data. **~40 defensible candidates across ~33 articles.**
+
+### PATTERN 1 — TIER-BLIND EFFECT CLAIMS (HIGH confidence · **THE systemic finding** · OPEN)
+**24 candidates / 20 articles, across MIRANDA + DEXTER + CIPHER** = **template-repeated,
+not isolated.** Articles state a mod's **SUPERIOR-tier** effect as its baseline/only effect:
+
+> "Weighted Barrel **greatly increases aim assist and accuracy while moving**"
+
+That is the **Superior** text verbatim; `Enhanced = "Slightly increases aim assist."`
+
+**Checkable surface is only 7 mods** (those with `slightly -> greatly` ladders), so **24
+hits is a HIGH strike rate** — the true count is likely higher on ladders this test cannot
+see.
+
+**NOW READER-VISIBLE:** `/mods/[slot]` publishes the full ladder next to these articles.
+
+Affected mods: **Weighted Barrel** (most frequent), **Vigilant Lens**, **Rangefinder
+Optic**, **Control Shield**, **Air-Cooled Chamber**. Example articles: `ea3d4c7f` (3 hits),
+`b92ff87f`, `5a621cf2`.
+
+**LIKELY FIX IS GENERATION-SIDE** — the editor prompt that quotes effects grabs the
+Superior text. Fixing 20 articles by hand leaves the editor still generating it.
+**Investigate the prompt root cause before/alongside article fixes.**
+
+### PATTERN 2 — FALSE COUNT CLAIMS (3 real · HIGH)
+- `ab1dfdea` — "**Only four Generator mods exist**" — DB: **5** (omits Turbo Generator).
+  **This is a Generator ORPHAN we are holding.**
+- `2bba5719` — enumerates "**all seven shells**" — DB: **8** (omits Sentinel).
+
+Small, but **includes held articles**.
+
+### PATTERN 3 — FALSE "COMPLETE"/"EVERY" (13 · HIGH · **MOSTLY FIXED**)
+**All 6 Increment-5 keepers** claimed "Complete" while covering a fraction of their slot.
+
+**FIXED 2026-07-16** — headlines rewritten to honest descriptions (e.g. Shield `d7772873`
+-> **"Marathon Shield Mod Guide: Fortress vs Control"**). Single-field
+`feed_items.headline` UPDATE, guarded on the exact current value, **slugs UNCHANGED** —
+URL stability over removing a buried word, a **recorded decision**: `complete-` stays in
+the slug. The claim that mattered was in title / `<h1>` / SERP, all cleared, since
+`headline` is the **single render source** (title, OG, Twitter, JSON-LD, breadcrumb, h1,
+OG image, share text).
+
+**STILL TO FIX** — two multi-slot pieces with the same false "Complete":
+`44d2c9e1` (Generator+Grip) and `51dd48dd` (Shield+Chip).
+
+**BODY-LINK FOLLOW-UP:** the 6 fixed keepers should link to their `/mods/[slot]` canonical
+("full list see /mods/x") to make the honest division of labor **real** — none currently
+link it.
+
+### PATTERN 4 — TIER CLAIMS vs meta_tiers (**UNUSABLE — do NOT act**)
+Naive scan gave **234**, but a hand-check showed **~33% precision**: the regex assigns
+solo/squad scope from a **+/-50-char window**, so it flags **CORRECT** articles (one saying
+"S-tier overall, S-tier squad, B-tier solo" got its *overall* claim checked against the
+*solo* column).
+
+**Same failure mode as the Shield ladder detector, caught the same way — reading prose.**
+
+**Needs a REBUILD:** sentence-scoped parsing + **TIER HISTORY** (`meta_tiers` was regraded
+**07-15**, so we cannot distinguish "false when published" from "true then, stale now").
+2 hand-verified real hits (`08c6c8d8` Recon solo-A vs canonical solo-B; `6cdd485e`
+Assassin) — **both predate the regrade, so even those need history**.
+
+### TWO STRUCTURAL FINDINGS (both worth their own follow-up)
+1. **SOURCE-OF-TRUTH SPLIT:** `shell_stats.ranked_tier` and `meta_tiers.tier` **DISAGREE**
+   (Rook **C vs A**; Destroyer **A vs S**). If code reads `shell_stats` while editors read
+   `meta_tiers`, that is an upstream split — **possibly the ROOT of tier-claim errors**.
+   Investigate which is authoritative and reconcile.
+2. **`shell_stats.base_health` / `base_shield` are NULL for all 8 shells** — every
+   HP/shield number in the corpus is **UNVERIFIABLE** (not false — uncheckable). Two Shield
+   guides cite **different Destroyer values**, so **>=1 is wrong**. Fill from a verified
+   source before HP-claim accuracy checks are possible.
+
+### METHOD NOTE
+This audit is **error-prone by nature** (reading claims vs ladders). Detectors
+**false-flagged twice** (the P4 regex; the earlier Shield ladder detector) — **both caught
+by reading actual sentences against the DB**. **Every future accuracy flag must cite
+article text AND DB ground truth, as a CANDIDATE with a confidence level — never a
+confident verdict list.**
+
+---
+
 ## 2026-07-16 — INCREMENT 5: MOD-GUIDE CONSOLIDATION (EXECUTED: 13/13 cuts landed)
 
 DB-only writes; **no git artifact for the cuts** (this entry is the record). All reversible
