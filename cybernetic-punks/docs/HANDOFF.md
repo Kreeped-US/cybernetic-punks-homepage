@@ -5,6 +5,82 @@ Newest entries on top.
 
 ---
 
+## 2026-07-15 — SHELL TIER/META CONSOLIDATION, Pass 1 (EXECUTED: 73 noindexed across 6 shells)
+
+Part of the topic-cannibalization cleanup. DB-only writes; **no git artifact for the cuts**
+(this entry is the record). All reversible (`noindex`, never delete).
+
+### How we got the number
+The **D1 topic-cluster audit** (`topic-cluster-audit.md`, content-based rather than
+headline-substring based) found ~158 shell `tier/meta` articles cannibalizing the 8
+DB-backed `/shells/<slug>` canonical pages. A **corrected classifier** then cut the true
+tier/meta count to **76**, moving ~120 articles into out-of-scope buckets. Three fixes:
+1. **Word-boundary matcher ported from the x-gate fix (`55f9e08`)** — the audit's first
+   pass reused the old prefix-match, so "Assassin" matched "Assassination" and "Recon"
+   matched "Reconnaissance". Removed 5 ghost rows (Assassin -3, Recon -1, Rook -1).
+2. **creator-coverage class added** — commentary ON a creator's video ("PixelBros …
+   Lacks Meta Context", "TayXDc's 200-Hour Meta Analysis") is NOT a shell tier/meta
+   guide; it was landing in the bucket purely on the word "Meta".
+3. **Tightened intent** — build-guides ("Best X Ranked Solo **Build** … Meta") and news
+   ("**Security Updates** …") are checked BEFORE tier/meta so they leave the bucket.
+
+An earlier body-text-fallback method produced a wildly inflated "92% redundant" figure;
+it was validated against real headlines (240 shell-guide articles were being labelled
+"extraction" off a body mention — Marathon *is* an extraction shooter), found wrong, and
+**discarded**. Do not resurrect that number.
+
+### EXECUTED (2026-07-15)
+noindexed **73** tier/meta duplicates across 6 shells: **Thief 19, Destroyer 11,
+Triage 14, Recon 13, Vandal 9, Assassin 7**. Each shell ran as its OWN guarded
+`UPDATE feed_items SET noindex=true WHERE id IN (<that shell's ids>) AND noindex=false`
+— noindex-only, explicit id list, idempotent — with per-shell rows-affected verification
+(**all 6 matched exactly**; a mismatch would have halted the run). Pre-flight confirmed
+all 73 ids were unique, `published`, `noindex=false`, `game_slug='marathon'`, that each
+headline mentions its own shell, and that no held-back id was present.
+
+### The governing argument was ACCURACY, not just SEO
+`meta_tiers` is regraded continuously (last update 2026-07-15), so `/shells/<slug>` is
+always current while **every dated tier/meta article is a frozen snapshot that rots** —
+and several already **CONTRADICTED the live canonical grades**: articles claiming Vandal
+"Solo S-Tier" when canonical = solo **A**; Triage "A-Tier Support" when canonical =
+solo **D**; Assassin "Climbs to S-Tier Solo" when canonical = solo **A**. Consolidating
+removed pages that were lying relative to our own live data.
+
+### GUARDRAILS HELD
+- **Triage keeper `6bbf13c7`** — "Winning Despite the Shell's Weakest Tier", the honest
+  solo-D coping angle the canonical lacks — untouched, still `noindex=false`.
+- **All Rook per-weapon build variants** (`intent=build-guide`) untouched.
+- **`-no19` untouched.** **CORRECTION to earlier sessions:** `-no19` is an **INDEXED
+  keeper** (`build-guide`/`extraction`, `noindex=false`) — an earlier note wrongly
+  described it as noindexed. It is a keeper that stays indexed.
+- All 8 canonical `meta_tiers` / `shell_stats` rows intact and unmodified.
+- Note: `/shells/<slug>` is a **Next route**, not a `feed_items` row — it has no
+  `noindex` column; the id-scoped UPDATE cannot reach it. Verified via the underlying
+  `shell_stats` + `meta_tiers` rows instead.
+
+### STILL OPEN
+- **ROOK (3 tier/meta cuts) HELD** — canonical `ranked_tier_squad` is **NULL** (a real
+  data gap: the page cannot answer "is Rook good in squad?"). **Fill that field before
+  cutting Rook.** **Sentinel also has NULL solo AND squad** — flag if Sentinel
+  consolidation ever happens.
+- **ENGINE-SERIES sub-decisions NOT run.** Re-mint pairs need keep-1-cut-the-rest:
+  Destroyer "Impact Siphons" x5 (cut 4) + "Riot Barricade" x2; Recon "Echo Chamber" x2 +
+  "Early Warning System" x2; Triage "No Good Deed" x2; Rook "Adaptive Frame" x2. The
+  ~34 **unique** Engine pieces need merge-up review: does the ability+core synthesis
+  belong IN the canonical before the article is cut? (My first "Engine = merge-up" rule
+  was too coarse — grouping by engine NAME is what exposed the duplicate pairs.)
+- **OUT-OF-SCOPE BUCKETS (~250)**: news/patch ~126, build-guide ~87, creator-coverage
+  ~22. **DIFFERENT intents — NOT the same cannibalization.** Real patch-news is
+  legitimately sequential. Separate future decision whether/how to consolidate.
+- **`topic-cluster-audit.md`** remains the reference for the non-shell clusters: cryo
+  archive ~165 (**flagged legitimate** dated launch coverage, not duplicates), holotag
+  23, and the **632 unclassified** bucket (where the method has no opinion — not a
+  finding, needs vocab additions / a manual eyeball).
+- **GSC cross-reference still not determinable** — no Search Console API/credential is
+  wired; the 378 "crawled — not indexed" set needs an export pasted in.
+
+---
+
 ## 2026-07-09 (evening) — X Stage 2: Increment 1 + three input-integrity fixes (SHIPPED); banked before the generation half
 
 Built the FIRST half of X pipeline Stage 2 (turning trusted X accounts into VANTAGE
