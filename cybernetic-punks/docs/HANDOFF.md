@@ -5,6 +5,96 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — VAULT BREAKER CANONICAL + 29-ARTICLE CLUSTER RECONCILIATION
+
+### SHIPPED: `/modes/vault-breaker` (commit `c471ef8`)
+**The only page on the site citing Bungie for VB facts**, live **5 days pre-launch**. New
+`/modes` route type, Marathon root-implicit.
+
+Facts live in a `VAULT_BREAKER` const **shaped like a `game_modes` row** (`mode_name` /
+`summary` / `available_on` / `is_limited_time` / `details` / `verified` / `updated_at`) —
+swapping to a DB read is a **fetch + destructure**; the file comments that the future query
+**MUST carry `.eq('game_slug','marathon')`**.
+
+**JSON-LD:** BreadcrumbList (**2-item, Home > Vault Breaker — NO Modes crumb**, because
+`/modes` has no index route and a middle crumb would **404**, per the `/mods` lesson; add it
+when a `/modes` index exists) + **Event** (`startDate 2026-07-21`, `endDate 2026-08-04`) +
+FAQPage + WebPage + VirtualLocation. **`dateModified` fixed at 2026-07-16**, never
+`new Date()`. Bungie URL cited **visibly in the body twice** + in JSON-LD. **Leads with the
+UESC Commander gap.** **Nav/homepage correctly SKIPPED** (one page, not a section).
+
+### TWO OFFICIAL BUNGIE SOURCES (not one, as the earlier HANDOFF implied)
+- **June 23** dev update / key-dates / mid-season roadmap → source for the **26 EARLIER**
+  articles. Revealed: the mode, Cryo Archive, July 21, no-loot-out, Vault Data,
+  Season 3 = Sept 22.
+- **July 16** Mid-Season 2 Preview
+  (`https://www.bungie.net/7/en/News/Article/mid_season_2_preview`) → source for **3 recent**
+  articles. Added: **Aug 4 end**, **Update 1.1.5**, **T2 mechanics**, **Armory contents**,
+  **no-level-gate**, **the UESC Commander T1 source**.
+
+### 29-ARTICLE RECONCILIATION — the corpus is ACCURATE but was UNSOURCED
+**The inverse of `mod_stats`:** there, articles inherited a wrong DB and published
+falsehoods. **Here, editors read official posts, got it RIGHT, and the pipeline recorded the
+wrong provenance.**
+
+- **ZERO contradictions across all 29.** No wrong dates / mechanics / currency / exfil claims.
+- **`source_url` was universally wrong: 0/29 cited bungie.net.** Several **actively
+  misleading** — `6c0a37c1`'s URL is a video **its own body calls "Subway Surfers content"**;
+  **4 articles share one unrelated URL** (`ZKRcJ_CJA_M`).
+- **PROVENANCE SORT: only 3 of 29 post-date the July-16 post; 26 predate it.** A blanket stamp
+  would have **back-dated a citation onto 90% of the corpus — fabricated provenance.**
+- **FIXED:** `source=BUNGIE` + the July-16 URL on **`89392498`** (GHOST, names the preview,
+  12/12 facts) and **`96312d50`** (NEXUS, cites 1.1.5 + Aug 4 — facts unique to July-16; its
+  old YouTube URL was a **PHANTOM** citation, body references no video). **`70608353` held**
+  (ranked piece, VB secondary). `source=BUNGIE` is a **new 9th source-vocab value** — verified
+  all consumers handle it (generic fallback), no CHECK constraint fired,
+  `DEEP DIVE -> callofduty.com` is precedent.
+- **HELD: the 26 pre-dating articles.** Their true source is the **June 23 post — URL NOT YET
+  AVAILABLE. Get it, then fix all 26.** **Do NOT stamp the July-16 URL on them
+  (anachronistic).**
+
+### CONTENT GAPS (opportunities — our corpus omits these)
+- **UESC Commander T1 Vault Data source** (post-run, **exfil or not**) — the canonical now
+  covers it; **all 29 articles omit it**.
+- **The BALANCE/SANDBOX half of the July-16 post is UNCOVERED:** WSTR buff (dmg **85 -> 100**,
+  range-limited, precision multiplier **removed from ballistic shotguns**), D54 nerf (now **3
+  bursts** to down a grey shield), **grenade infil limit** (max **2** throwables combined),
+  **Cradle Evolution** (reset-at-max for **+1 Energy** + cosmetic shells), implant iconography.
+  **`058b6349`** (WSTR build guide — also on the mod-mechanic fix-list) is now **STALE against
+  the confirmed WSTR buff**. Content opportunity **+ a stale-guide fix**.
+
+### BUGS / FINDINGS uncovered (each its own task — do NOT fix as launch side-effects)
+- **`availableOnMap` BUG (the biggest find):** `game_modes` renders **ZERO rows on all 5 map
+  pages**. Rows store `available_on='cryo-archive'` (the **slug**); the matcher compares
+  against the map **NAME** `"Cryo Archive"` — **never matches**. `game_events` renders on
+  **only 2 of 5** maps; **Cryo Archive / Dire Marsh / Night Marsh show none**, including
+  **Anomaly + Upper Complex Encounter** which belong there. **A whole SEO section that has
+  never displayed anything.** Independent of VB.
+- **PHANTOM-MEDIA pipeline:** NEXUS **auto-attaches `media.thumbnail` / `media.source`** from
+  its YouTube pool **even when the article does not use the video** — the mechanism behind
+  `96312d50`'s phantom `source_url` **AND its still-wrong YouTube hero thumbnail**. **Likely
+  corpus-wide, not one row.**
+
+### VB PAGE FOLLOW-UPS
+The page is **ORPHANED** — only the sitemap links it (Nav/homepage correctly skipped).
+**Cheap win: link it from `/maps/cryo-archive`** (topically exact) **+ the `/intel` feed**.
+
+**POST-LAUNCH:** ~4 VB fact-writeups (`89392498`, `6c0a37c1`, `59e893d7`, `6b7062a4`) become
+**dated news the canonical outranks** after July 21; **all 29 go stale Aug 4** —
+consolidation pass **then, not now**.
+
+### TWO LOOSE ITEMS from earlier this session
+- **`2c4f7b42` CUT** (`noindex=true`) — the Chip keeper with **4 game-verified false
+  mechanics**. **Chip now has NO live strategy guide.** `debecdfb` re-audit is the restore
+  path **but may fail the same bar** (it also cites Stack Overflow damage-stacking + Torch Bug
+  fire-patch) → **Chip may need new content.**
+- **CRON STILL RUNNING:** the corpus grew **~4 mid-session**. **The adopted-strategy article
+  FREEZE was DECIDED but NEVER IMPLEMENTED.** The machine is live and generating — correctly
+  for VB (it ingested the July-16 post **same-day**) — but **the freeze decision is
+  unenforced.**
+
+---
+
 ## 2026-07-16 — mod_stats IN-GAME VERIFICATION PASS (5 mods corrected against the game)
 
 Justin verified 5 flagged mods **against the actual game** and corrected the DB. This is
