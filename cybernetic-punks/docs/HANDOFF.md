@@ -5,6 +5,53 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — ACCURACY AUDIT FOLLOW-UP: new error class + mod_stats data-integrity finding
+
+Came out of proposing headline fixes for the 2 remaining multi-slot "Complete" articles.
+`44d2c9e1` was **confirmed clean** (headline was its only defect — fixed). `51dd48dd` was
+not, and reading it turned up **two findings bigger than the headline work**.
+
+### NEW ERROR CLASS — EFFECT-MISMATCH (**the P1 audit was structurally blind to this**)
+Found in `51dd48dd`. **Not** tier-blind (= wrong magnitude of the *right* effect). This is a
+**WRONG EFFECT ENTIRELY** — the described mechanic is not the mod's effect **at any tier**.
+
+| mod | article says | `mod_stats` says |
+|---|---|---|
+| **Flash Draw Chip** | "ready/swap speed" | "restore health/shields when damaging an **EMP-affected** target" |
+| **Background Process** | "shield buffer" after not taking damage | "**auto-reloads when stowed**" |
+| **Eyes on Fire** | "ADS damage below half health" | "**ability energy on kill** after deactivating a tactical/trait" |
+
+**P1 only tested magnitude-vs-ladder, so it CANNOT see this class.** It is **unmeasured
+across all 1,317 live articles.**
+
+### mod_stats MAY HAVE WRONG ROWS (**affects the /mods canonical shipped this session**)
+**It is not always the article that is wrong.**
+- **Flash Draw Chip** — the name means *quick-draw*; the **article** fits the name, the **DB**
+  (EMP heal) does not → **DB row likely MIS-ENTERED**.
+- **Background Process** — the name fits the **DB** (a process running while stowed →
+  auto-reload); the **article** is wrong.
+
+Connects to the **Stack Overflow / Torch Bug** bad rows flagged in /mods **Increment 0**.
+
+**IMPACT: `/mods/[slot]` publishes the `mod_stats` version NOW** — wrong rows mean the
+**canonical is publishing false data**. Needs **a human who knows the game, not a detector**.
+
+**RECOMMEND: a `mod_stats` data-integrity audit** (name-vs-effect across all **202 rows**).
+It **gates** both trusting the `/mods` canonical **and** any article-accuracy work — there is
+no point checking articles against a source that may itself be wrong.
+
+### 51dd48dd — CUT CANDIDATE, not a headline fix (**HELD**)
+**4 false claims** (1 tier-blind Control Shield + 3 effect-mismatch) **+ a false "Complete"
+headline**. `ad828fbf` was **cut for 3**. Fixing its headline would make it **read as vetted
+while 4 false claims remain**. Defer to a future accuracy pass.
+
+### P3 STATUS
+False-"Complete" **resolved except `51dd48dd`**: 6 keepers + `44d2c9e1` fixed = **7 of 8**.
+(`44d2c9e1` -> "Marathon Generator and Grip Mods: Energy Builds and Recoil Control";
+guarded single-field `headline` UPDATE, slug unchanged, same recorded decision.)
+
+---
+
 ## 2026-07-16 — CONTENT-ACCURACY AUDIT + keeper headline fixes
 
 Read-only scan of **1,317 live indexed** Marathon articles for claims contradicting ground
