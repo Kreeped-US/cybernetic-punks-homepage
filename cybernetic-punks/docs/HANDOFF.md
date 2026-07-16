@@ -5,6 +5,77 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — mod_stats DATA-INTEGRITY AUDIT + Flash Draw Chip fix
+
+**All 202 rows READ, not pattern-matched.** This was the **GATE** before article-accuracy
+work — and it **proved necessary**: any accuracy pass run before these rows are resolved
+would generate **FALSE accusations against articles that are actually right**.
+
+### THE MECHANISM
+`mod_stats` has **TWO effect fields** — `effect_desc` and `effect_summary`. On **5 rows they
+describe DIFFERENT mechanics**, so one is **provably wrong with no game knowledge needed**.
+
+`/mods/[slot]` renders **`effect_desc || effect_summary`** (prefers `effect_desc`). So:
+- a bad **`effect_desc`** → **publishes false data**
+- a bad **`effect_summary`** → **latent** (nothing renders it)
+
+### FIXED THIS SESSION
+**Flash Draw Chip** [Chip / Superior / 540cr, id `4397cb6b`] — `effect_desc` was *"Restore
+health/shields vs EMP-affected target"*, a **copy-paste of Alternating Current** (the
+adjacent, verified row). Corrected to the row's **own `effect_summary`**: **"Greatly
+increases ready and swap speed."** — agrees with the **name**, with article `51dd48dd`, and
+with Superior-tier house convention (20/47 Superior rows lead with "Greatly").
+
+`verified` **LEFT false** — fields were reconciled, **not game-verified**; the row stays
+flagged for an in-game check.
+
+Corroborating: the row was `updated_at` **2026-03-10**, the **oldest in the table**, never
+touched by the June refresh — while Alternating Current is `verified: true`, updated 06-05.
+Contamination direction confirmed. **Reversible.**
+
+### TWO PRIORS THIS OVERTURNS (important)
+- **`51dd48dd` did NOT fabricate the Flash Draw Chip claim — the DB did. The article was
+  RIGHT.** We flagged it for an effect-mismatch **it did not commit**. **Re-weigh its
+  disposition:** it had 4 flagged claims, but **at least 1 was the DB's error**, not the
+  article's.
+- **Chip keeper `2c4f7b42`** cites Stack Overflow's **Deluxe** (damage-stacking) version — if
+  Deluxe is the bad row (**suspected**), **that article is RIGHT too**.
+
+**PATTERN: some "article errors" are articles being CORRECT against a WRONG database. The
+content-accuracy problem is partly a DATA problem.**
+
+### STILL OPEN (~18 rows — needs **Justin's game knowledge**; candidate list, NOT a fix list)
+- **LADDER INCOHERENCE** (4 mods · HIGH confidence something is wrong · **live-render
+  risk**): **Torch Bug** (Superior outlier), **Stack Overflow** (Deluxe outlier), **Swarm
+  Directive** (Deluxe vs Superior conflict), **Insomniac** (Enhanced vs Superior conflict).
+  Each has one tier that reads **pasted from another mod**. The **outlier tier is
+  identifiable; WHICH text is correct needs the game.**
+- **COMBAT MAG PLACEHOLDERS** (2 · **render filler-as-effect**): a **621cr Superior** mod
+  whose `effect_desc` is *"Standard combat magazine for ballistic weapons"* while its
+  **Enhanced** tier has real text. The junk guard **misses it** (not "N/A"). Needs the real
+  effect.
+- **BAD `effect_summary`, NOT rendered** (latent · fix for cleanliness): **Ornithologist**,
+  **Insurrection** (their other tiers prove the summary is the outlier).
+- **NO-SCALING LADDERS** (4 · medium · may be genuine): Background Process, Cloudborn,
+  Optimal Prime, Insurance Plan — identical text across tiers.
+- **8 junk/null `effect_desc`** — render "Effect not documented yet." (**fail safe**;
+  completeness gap).
+- **~15 UNCHECKABLE opaque-name Chips** (Rorschach Test, Chaos Theory, etc.) — the name
+  implies no mechanic; **only in-game play can verify**.
+- **SLOT/EFFECT mismatches: NONE found** — every effect matches its slot domain.
+
+### REVISED SEQUENCE (the mod_stats gate is now **partially cleared**)
+1. **mod_stats ladder-incoherence + Combat Mag rows** — needs **Justin's in-game
+   verification**. *Highest remaining value: live-render risk.*
+2. **THEN P1 generation-side root cause** — why editors quote Superior text as baseline.
+   **Now investigable.**
+3. **Source-of-truth split** — `shell_stats.ranked_tier` vs `meta_tiers.tier`.
+4. **`51dd48dd` re-weigh** — 1 claim was a DB error.
+5. **P4 rebuild.**
+6. **Generator data refresh.**
+
+---
+
 ## 2026-07-16 — ACCURACY AUDIT FOLLOW-UP: new error class + mod_stats data-integrity finding
 
 Came out of proposing headline fixes for the 2 remaining multi-slot "Complete" articles.
