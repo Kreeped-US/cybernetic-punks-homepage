@@ -995,9 +995,48 @@ export async function GET(req) {
     }
 
     // Editor roster + order from per-game config (the cost lever): a game can
-    // launch with a subset / different cadence. Marathon = all 5 in this order,
-    // so the array is byte-identical to the prior hardcoded list.
-    var editors = PRODUCING_GAME.editorial.editors.map(function (name) {
+    // launch with a subset / different cadence.
+    //
+    // ── ARTICLE FREEZE (adopted strategy, implemented 2026-07-16) ────────────
+    // Two layers, both driven by lib/games/<game>.js editorial (see the long
+    // WHY comment there):
+    //   1. UNCONDITIONALLY OFF -- simply absent from `editors`. Marathon dropped
+    //      MIRANDA (near-duplicate evergreen minting; 139 articles noindexed
+    //      across the consolidation project) and GHOST. Nothing here to check:
+    //      they are not in the array, so they never run.
+    //   2. GATED TO PATCH CYCLES -- listed in `editorsRequiringPatch`. Marathon
+    //      gates CIPHER/NEXUS/DEXTER: they run ONLY when this cycle detected a
+    //      patch, so same-day patch coverage survives (the patch-priority prompt
+    //      block below is written for exactly these three) while the daily
+    //      evergreen churn stops.
+    // VANTAGE is unaffected -- it is not on this cron (separate path:
+    // /api/network-editor, draft-only + human-gated).
+    //
+    // `|| []` keeps this a NO-OP for any game without the field (e.g. DMZ):
+    // empty list -> nothing is gated -> the roster passes through unchanged.
+    //
+    // KNOWN GAP: `hasPatch` is bungieNews filtered by `is_patch_note`, which is
+    // (versionRe || keywords) && fresh<=48h. That is PATCH-NOTE-SHAPED news, not
+    // ALL official news -- a dev blog with no patch vocabulary will NOT open the
+    // gate. If that bites, widen the condition here to any fresh bungieNews item.
+    //
+    // REVERSAL: delete this filter block + restore
+    //   var editors = PRODUCING_GAME.editorial.editors.map(...)
+    // and re-add GHOST/MIRANDA to the config array.
+    var editorsRequiringPatch = PRODUCING_GAME.editorial.editorsRequiringPatch || [];
+    var activeRoster = PRODUCING_GAME.editorial.editors.filter(function (name) {
+      if (editorsRequiringPatch.indexOf(name) === -1) return true;
+      if (!hasPatch) {
+        console.log('[CRON] FREEZE: skipping ' + name + ' -- gated to patch cycles and no patch detected this cycle');
+        return false;
+      }
+      return true;
+    });
+    if (activeRoster.length === 0) {
+      console.log('[CRON] FREEZE: no editors active this cycle (roster=' +
+        PRODUCING_GAME.editorial.editors.join(',') + ', hasPatch=' + hasPatch + ')');
+    }
+    var editors = activeRoster.map(function (name) {
       return { name: name, prompt: prompts[name] };
     });
 

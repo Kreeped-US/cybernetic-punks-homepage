@@ -160,9 +160,44 @@ export const marathon = {
 
   // The cost lever: which editors run + how often. Marathon = all 5, once daily
   // (vercel.json "0 19 * * *"). DMZ launches with a subset at a slower cadence.
+  // ── ARTICLE FREEZE (adopted strategy, implemented 2026-07-16) ──────────────
+  // The roster IS the disable switch (see the cron's "editor roster + order from
+  // per-game config -- the cost lever" comment). Removing a name stops that
+  // editor entirely; re-adding the string restores it. Nothing else to unwind.
+  //
+  // WHY:
+  //   MIRANDA -- OFF. It was minting near-duplicate evergreen guides; 139
+  //     articles have been noindexed across the consolidation project, most of
+  //     them MIRANDA's. The Phase 1 dup-guard slowed the bleeding but the real
+  //     fix is to stop producing until the backlog is cleared.
+  //   GHOST   -- OFF, per the adopted strategy.
+  //   CIPHER / NEXUS / DEXTER -- PAUSED EXCEPT patch/news coverage. They stay in
+  //     `editors` but are listed in `editorsRequiringPatch`, so the cron runs them
+  //     ONLY on a cycle where a patch is detected. On a quiet cycle they skip and
+  //     log. This preserves same-day patch coverage (they correctly covered the
+  //     July-16 Mid-Season 2 preview) while stopping the daily evergreen churn.
+  //   VANTAGE -- untouched. It is NOT on this cron at all (separate path:
+  //     /api/network-editor, draft-only + human-gated). It keeps running.
+  //
+  // KNOWN GAP (do not re-derive this): the gate reads `hasPatch`, which is
+  // bungieNews filtered by `is_patch_note` -- and that classifier is
+  // (versionRe || keywords) && fresh<=48h (see sources.patchNotes.detection
+  // below). It is PATCH-NOTE-SHAPED news, not ALL official news. A Bungie dev
+  // blog / roadmap with no patch vocabulary in its title or body will NOT open
+  // the gate, and CIPHER/NEXUS/DEXTER will skip it. If that ever bites, widen the
+  // gate in app/api/cron/route.js to any fresh bungieNews item rather than
+  // is_patch_note only -- it is a one-condition change at the filter.
+  //
+  // REVERSAL: re-add 'GHOST' and 'MIRANDA' to `editors`, delete the
+  // `editorsRequiringPatch` field, and delete the roster-filter block in
+  // app/api/cron/route.js. That restores the prior behaviour exactly.
   editorial: {
     cadenceCron: '0 19 * * *',
-    editors: ['CIPHER', 'NEXUS', 'DEXTER', 'GHOST', 'MIRANDA'],
+    // FROZEN: 'GHOST' and 'MIRANDA' removed 2026-07-16 (see above).
+    editors: ['CIPHER', 'NEXUS', 'DEXTER'],
+    // These run ONLY when the cycle detects a patch. Absent on other games ->
+    // the cron's `|| []` makes the whole gate a no-op for them (e.g. DMZ).
+    editorsRequiringPatch: ['CIPHER', 'NEXUS', 'DEXTER'],
   },
 
   // Historical-context layer (AI-quality roadmap #2/#3). Drives the precompute
