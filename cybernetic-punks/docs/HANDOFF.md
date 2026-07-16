@@ -11,7 +11,7 @@ Part of the topic-cannibalization cleanup. DB-only writes; **no git artifact for
 (this entry is the record). All reversible (`noindex`, never delete).
 
 ### How we got the number
-The **D1 topic-cluster audit** (`topic-cluster-audit.md`, content-based rather than
+The **D1 topic-cluster audit** (`docs/topic-cluster-audit.md`, content-based rather than
 headline-substring based) found ~158 shell `tier/meta` articles cannibalizing the 8
 DB-backed `/shells/<slug>` canonical pages. A **corrected classifier** then cut the true
 tier/meta count to **76**, moving ~120 articles into out-of-scope buckets. Three fixes:
@@ -72,7 +72,7 @@ removed pages that were lying relative to our own live data.
 - **OUT-OF-SCOPE BUCKETS (~250)**: news/patch ~126, build-guide ~87, creator-coverage
   ~22. **DIFFERENT intents — NOT the same cannibalization.** Real patch-news is
   legitimately sequential. Separate future decision whether/how to consolidate.
-- **`topic-cluster-audit.md`** remains the reference for the non-shell clusters: cryo
+- **`docs/topic-cluster-audit.md`** remains the reference for the non-shell clusters: cryo
   archive ~165 (**flagged legitimate** dated launch coverage, not duplicates), holotag
   23, and the **632 unclassified** bucket (where the method has no opinion — not a
   finding, needs vocab additions / a manual eyeball).
