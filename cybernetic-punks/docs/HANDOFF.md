@@ -5,6 +5,86 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — INCREMENT 5: MOD-GUIDE CONSOLIDATION (EXECUTED: 13/13 cuts landed)
+
+DB-only writes; **no git artifact for the cuts** (this entry is the record). All reversible
+(`noindex`, never delete); every row stays `is_published=true`.
+
+### THE REFRAME (important — the original framing was wrong)
+The task framing was "consolidate mod-guide articles **ONTO** the `/mods/[slot]` canonicals."
+That **FAILED on contact with data**: the canonical is a **DATA TABLE** (name / ladder /
+effect / credit, **100% roster**, zero strategy); the guides are **STRATEGY PROSE**
+(**13–44% roster**, real recommendations). The canonical does **NOT** subsume the guides —
+noindexing a guide "onto" it would destroy strategy content existing nowhere else.
+
+So the real duplication is **ARTICLE-vs-ARTICLE** (seven "Magazine Mod Guide" articles
+competing for one query), **NOT** article-vs-canonical. The canonical owns "what mods
+exist"; that frees the guides to be judged as strategy, where each slot needs **ONE**, not
+seven.
+
+**Rationale: completeness + single canonical + intra-cluster cannibalization.**
+**NOT accuracy-vs-rot** — mods have no live tiers. **Do not reuse the shell-consolidation
+framing here.**
+
+### CONFIDENCE CAVEAT (recorded)
+Body-level Jaccard was **0.20–0.36** — these are **TOPICAL/SERP duplicates, NOT text
+re-mints**. Each guide names a partly-different mod subset. Cutting discards some unique
+prose — judged acceptable (discarded = generic slot theory; facts all on the canonical) but
+it is a **JUDGMENT CALL, not a measurement**.
+
+### CUTS (13; each a guarded per-cluster UPDATE, rows-affected verified, reversible)
+| Slot | Cut | Keeper |
+|---|---|---|
+| Magazine | 6 | `135323dc` |
+| Barrel | 3 | `c1c3af82` |
+| Optic | 2 | `b6935b84` |
+| Chip | 1 | `2c4f7b42` |
+| Shield | 1 | `d7772873` |
+
+Keeper criterion: **depth** for the clean clusters (the canonical owns breadth, so keep the
+deepest strategy) — but **ACCURACY** for Shield.
+
+### SHIELD — keeper reversed on accuracy (the important sub-story)
+Originally picked `ad828fbf` on **word count** (631w). Reading it against `mod_stats` ground
+truth found **THREE false claims**:
+1. **"the two shield mods"** — there are **8**.
+2. **"Control Shield greatly increases stability"** — states the **Superior-tier** effect as
+   the mod's, ignoring Enhanced = *"slightly"*.
+3. Headline **"for Every Shell"** — covers **7/8**; **Sentinel absent**.
+
+The rival `d7772873` (494w, thinner) is **tier-aware** and has **ZERO false claims**. Kept
+the **ACCURATE** one, cut the flawed one.
+
+**Lesson: word count is a bad keeper heuristic; ground-truth accuracy is the right one, and
+it only surfaces by READING prose, not measuring it.** (A detector false-positive nearly
+kept the wrong article too — caught by reading the actual sentences.)
+
+### HELD BACK (do NOT cut)
+- **Generator orphans** (`ab1dfdea`, `44d2c9e1`) — no canonical (`/mods/generator` withheld),
+  **80% roster coverage**, the only generator-mod docs on the site. **Blocked on the
+  Generator data refresh.**
+- **Shield merge-up** `7d5fe46a` (shell-pairing meta) — unique content, no canonical home.
+- **Multi-slot (2) + general/hub-level guides (5)** — a separate **hub-level** pass, not
+  slot-level.
+
+### PROJECT CONSOLIDATION TOTAL
+**139 noindexed** = 53 mod-builds + 73 shell tier/meta + 13 mod-guides. All reversible, all
+`is_published=true`.
+
+### NEW FINDINGS from this pass (both worth their own follow-up)
+1. **CONTENT-ACCURACY AUDIT needed.** `ad828fbf` had **3 error TYPES** in a live indexed
+   article: false mod count; **tier-blind effect claims** (stating a Superior-tier effect as
+   the mod's only effect); false "complete/every" headlines. The **tier-blind error
+   especially is likely REPEATED** across template-driven editor output. A dedicated
+   accuracy pass (check live articles' effect claims against `mod_stats` / `meta_tiers`
+   ladders) is **arguably higher-value than more consolidation** — it is about whether
+   **SURVIVING** content is honest.
+2. **`shell_stats.base_health` / `base_shield` are NULL for all 8 shells.** Every article
+   citing HP/shield numbers is **unverifiable**, and the two Shield guides cite **DIFFERENT
+   Destroyer values** (at least one wrong). **Fill before more accuracy passes.**
+
+---
+
 ## 2026-07-16 — MULTI-GAME REFERENCE-ROUTING: state + open items (found during /mods Increment 1)
 
 Architecture findings surfaced by the `/mods` build. Docs-only record; the only code change
