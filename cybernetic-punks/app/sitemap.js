@@ -74,6 +74,12 @@ export default async function sitemap() {
     { url: baseUrl + '/mods',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/uniques',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/maps',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
+    // Vault Breaker: the official-sourced canonical for Marathon's first PvE mode
+    // (July 21 - Aug 4, 2026). Priority 0.9 + daily while the event runs -- it is a
+    // dated event page, not evergreen reference. NOTE: there is no /modes index yet;
+    // this is currently the only page under /modes, so no parent entry is emitted.
+    // Revisit priority/changeFrequency after Aug 4 when the event ends.
+    { url: baseUrl + '/modes/vault-breaker', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: baseUrl + '/rising',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
     { url: baseUrl + '/stats',       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.75 },
     { url: baseUrl + '/leaderboard', lastModified: new Date(), changeFrequency: 'daily',   priority: 0.75 },
