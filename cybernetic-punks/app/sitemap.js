@@ -60,6 +60,11 @@ export default async function sitemap() {
     { url: baseUrl + '/intel',       lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
     { url: baseUrl + '/shells',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
     { url: baseUrl + '/weapons',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
+    // /mods = the ENTITY REFERENCE hub (app/mods/page.js), DISTINCT from the
+    // /guides/mods CATEGORY generated from GUIDE_CATEGORIES above - same split as
+    // /maps vs /guides/maps. Weekly: mod_stats changes far less than the
+    // daily-regraded shells/weapons.
+    { url: baseUrl + '/mods',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/uniques',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/maps',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/rising',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },

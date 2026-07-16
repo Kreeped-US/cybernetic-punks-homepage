@@ -18,6 +18,7 @@ var NAV_ITEMS = [
   { label: 'META',     href: '/meta' },
   { label: 'SHELLS',   href: '/shells' },
   { label: 'WEAPONS',  href: '/weapons' },
+  { label: 'MODS',     href: '/mods' },
   { label: 'UNIQUES',  href: '/uniques' },
   { label: 'FACTIONS', href: '/factions' },
   {

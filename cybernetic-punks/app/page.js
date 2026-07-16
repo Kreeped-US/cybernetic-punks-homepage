@@ -422,6 +422,7 @@ export default async function NetworkRoot() {
                 { href: '/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
                 { href: '/player-count',glyph: '◱', label: 'Player count',   sub: 'Live Steam concurrents' },
                 { href: '/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },
+                { href: '/mods',        glyph: '⬡', label: 'Mods',           sub: 'Every mod, every slot' },
               ].map(function(t) {
                 return (
                   <Link key={t.href} href={t.href} className="nr-tool">
