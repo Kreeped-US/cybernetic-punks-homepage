@@ -23,11 +23,18 @@
 // sitemap once their game_maps row is verified=true.
 //   NOTE: /maps/[slug] (the map pages) is DISTINCT from /guides/maps
 //   (the "maps" guide category) - both can coexist; do not conflate.
+//
+// JULY 16, 2026: Added dynamic /mods/[slot] category pages from mod_stats
+// (marathon). The slot list is NOT hardcoded here - it comes from
+// lib/mods.js SLOT_PAGES, the same list app/mods/[slot]/page.js resolves
+// against, so the sitemap cannot advertise a slot the route 404s (Generator
+// is deliberately withheld; see lib/mods.js for why).
 // -----------------------------------------------------------------
 
 import { createClient } from '@supabase/supabase-js';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
+import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -101,6 +108,7 @@ export default async function sitemap() {
   let weaponPages = [];
   let uniquePages = [];
   let mapPages = [];
+  let modSlotPages = [];
   let dynamicPages = [];
   let dmzArticlePages = [];
   let activeGuideCategories = [];
@@ -222,6 +230,44 @@ export default async function sitemap() {
       }
     } catch (err) {
       console.error('[sitemap] map fetch threw:', err);
+    }
+
+    // Mod category pages (/mods/[slot], added July 16 2026). The slot list comes
+    // from lib/mods.js SLOT_PAGES via hasSlotPage() - the SAME list the resolver
+    // in app/mods/[slot]/page.js matches against - so this can never advertise a
+    // URL the route 404s. That matters here: Generator is deliberately withheld
+    // (thin + stale data, see lib/mods.js), and a hardcoded list here would
+    // happily publish /mods/generator.
+    //   NOTE: /mods/[slot] (entity reference) is DISTINCT from /guides/mods (the
+    //   "mods" guide category) - same split as /maps vs /guides/maps.
+    try {
+      const { data: modRows, error: modsErr } = await supabase
+        .from('mod_stats')
+        .select('name, slot_type, updated_at')
+        .eq('game_slug', 'marathon');
+
+      console.log('[sitemap] mod_stats:',
+        modRows ? modRows.length + ' rows' : 'null',
+        modsErr ? 'error: ' + modsErr.message : '');
+
+      if (modRows && modRows.length > 0) {
+        const bySlot = {};
+        for (const m of normalizeModRows(modRows)) {
+          if (!hasSlotPage(m.slot_type)) continue;
+          (bySlot[m.slot_type] = bySlot[m.slot_type] || []).push(m);
+        }
+        modSlotPages = Object.keys(bySlot).map((slot) => {
+          const newest = newestUpdatedAt(bySlot[slot]);
+          return {
+            url: baseUrl + '/mods/' + slotToSlug(slot),
+            lastModified: newest ? new Date(newest) : new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+          };
+        });
+      }
+    } catch (err) {
+      console.error('[sitemap] mod slot fetch threw:', err);
     }
 
     // Article URLs from feed_items
@@ -367,8 +413,9 @@ export default async function sitemap() {
     'shells=' + shellPages.length,
     'weapons=' + weaponPages.length,
     'maps=' + mapPages.length,
+    'modSlots=' + modSlotPages.length,
     'dmz=' + dmzPages.length,
     'dynamic=' + dynamicPages.length);
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...uniquePages, ...mapPages, ...dmzPages, ...dynamicPages];
+  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...uniquePages, ...mapPages, ...modSlotPages, ...dmzPages, ...dynamicPages];
 }

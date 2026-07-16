@@ -12,12 +12,14 @@
 // /maps (reference) vs /guides/maps (guide category) - see sitemap.js. Both
 // coexist; do not conflate them.
 //
-// SELF-CONTAINED BY DESIGN (Increment 1): the slot sections render their mods
-// INLINE and link nowhere, because /mods/[slot] and /mods/[slug] do not exist
-// yet. Linking to them now would ship a sitemap'd + Nav'd hub whose entire
-// navigation 404s. Increment 2 adds /mods/[slot] and turns each slot heading
-// into a link; Increment 3 adds /mods/[slug] and links each mod name. No broken
-// state at any step.
+// Increment 2: each slot heading now LINKS to its /mods/[slot] category page --
+// but only for slots that HAVE one (lib/mods.js SLOT_PAGES). Generator is
+// withheld (5 mods, no rarity ladders, stale March data = a completeness claim
+// we can't verify -- reasoning lives in lib/mods.js), so its heading stays plain
+// text and its mods render here in full. hasSlotPage() drives that, so a slot
+// added to SLOT_PAGES self-links with no edit here. Mod NAMES are still not
+// links: /mods/[slug] lands in Increment 3. Nothing links to a page that does
+// not exist, at any step.
 //
 // DATA NOTES (verified against all 202 rows before building):
 //   - A mod NAME can hold several rarity rows (41 of them do) - that is the
@@ -34,42 +36,18 @@
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
+import {
+  MOD_ACCENT,
+  SLOT_BLURB,
+  effectText,
+  groupByName,
+  hasSlotPage,
+  normalizeModRows,
+  slotRank,
+  slotToSlug,
+} from '@/lib/mods';
 
 export const dynamic = 'force-dynamic';
-
-const MOD_ACCENT = '#00f5ff';
-
-// Rarity ladder order. Anything unrecognised sorts last.
-const RARITY_ORDER = { Standard: 1, Enhanced: 2, Deluxe: 3, Superior: 4, Prestige: 5 };
-function rarityRank(r) { return RARITY_ORDER[r] || 99; }
-
-// Slot display order: biggest catalogue first (matches the real counts).
-const SLOT_ORDER = ['Chip', 'Magazine', 'Barrel', 'Optic', 'Grip', 'Shield', 'Generator'];
-function slotRank(s) {
-  var i = SLOT_ORDER.indexOf(s);
-  return i === -1 ? 99 : i;
-}
-
-// One-line description per slot, written from what the data actually shows.
-const SLOT_BLURB = {
-  Chip:      'Utility effects - economy, ammo, healing, and situational perks.',
-  Magazine:  'Reload speed, magazine size, and ammo handling.',
-  Barrel:    'Accuracy, stability, range, and aim assist.',
-  Optic:     'Sights, zoom, and target acquisition.',
-  Grip:      'ADS speed, ready speed, and handling.',
-  Shield:    'Stability and ready-up speed for the weapon.',
-  Generator: 'Energy-weapon output and heat behaviour.',
-};
-
-// Junk guard: 8 rows carry a literal "N/A" or null effect. Show nothing rather
-// than surfacing a placeholder as if it were an effect.
-function effectText(mod) {
-  var raw = (mod.effect_desc || mod.effect_summary || '').trim();
-  if (!raw) return null;
-  var flat = raw.toLowerCase();
-  if (flat === 'n/a' || flat === 'na' || flat === 'tbd' || flat === 'none' || flat === '-') return null;
-  return raw;
-}
 
 export const metadata = {
   title: 'Marathon Mods — Every Weapon Mod, Effect & Rarity',
@@ -104,21 +82,19 @@ export default async function ModsIndexPage() {
     .eq('game_slug', 'marathon')
     .order('name');
 
-  var rows = modsRes.data || [];
+  // Trim on read ("Balanced Shield " has a trailing space and would otherwise
+  // present as a second entry) - shared with /mods/[slot] via lib/mods.js.
+  var mods = normalizeModRows(modsRes.data);
 
-  // Trim on read: "Balanced Shield " (trailing space) is the SAME mod as
-  // "Balanced Shield" - untrimmed it would present as a second entry.
-  var mods = rows.map(function(m) {
-    return { ...m, name: (m.name || '').trim(), slot_type: (m.slot_type || 'Other').trim() };
-  }).filter(function(m) { return m.name; });
-
-  // Group by slot -> then by NAME (a name holds its rarity ladder).
-  var slots = {};
+  // Group by slot -> then by NAME (a name holds its rarity ladder, pre-sorted
+  // Standard -> Prestige by groupByName).
+  var bySlot = {};
   mods.forEach(function(m) {
-    if (!slots[m.slot_type]) slots[m.slot_type] = {};
-    if (!slots[m.slot_type][m.name]) slots[m.slot_type][m.name] = [];
-    slots[m.slot_type][m.name].push(m);
+    if (!bySlot[m.slot_type]) bySlot[m.slot_type] = [];
+    bySlot[m.slot_type].push(m);
   });
+  var slots = {};
+  Object.keys(bySlot).forEach(function(s) { slots[s] = groupByName(bySlot[s]); });
 
   var slotNames = Object.keys(slots).sort(function(a, b) { return slotRank(a) - slotRank(b); });
   var uniqueCount = slotNames.reduce(function(acc, s) { return acc + Object.keys(slots[s]).length; }, 0);
@@ -166,8 +142,20 @@ export default async function ModsIndexPage() {
           return (
             <section key={slot} id={slot.toLowerCase()} style={{ marginBottom: 40 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 6px' }}>
-                <h2 style={{ fontSize: 13, color: MOD_ACCENT, letterSpacing: 3, fontWeight: 800, textTransform: 'uppercase', fontFamily: 'Orbitron, monospace', margin: 0 }}>{slot}</h2>
+                {/* Heading links to the slot's category page -- but ONLY when that
+                    page exists (SLOT_PAGES). Generator has none, so it stays plain
+                    text rather than linking to a 404. */}
+                <h2 style={{ fontSize: 13, color: MOD_ACCENT, letterSpacing: 3, fontWeight: 800, textTransform: 'uppercase', fontFamily: 'Orbitron, monospace', margin: 0 }}>
+                  {hasSlotPage(slot)
+                    ? <Link href={'/mods/' + slotToSlug(slot)} style={{ color: MOD_ACCENT, textDecoration: 'none' }}>{slot}</Link>
+                    : slot}
+                </h2>
                 <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+                {hasSlotPage(slot) && (
+                  <Link href={'/mods/' + slotToSlug(slot)} style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
+                    ALL {slot.toUpperCase()} MODS →
+                  </Link>
+                )}
                 <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', letterSpacing: 1 }}>{names.length}</span>
               </div>
               {SLOT_BLURB[slot] && (
@@ -176,7 +164,7 @@ export default async function ModsIndexPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 8 }}>
                 {names.map(function(name) {
-                  var ladder = byName[name].slice().sort(function(a, b) { return rarityRank(a.rarity) - rarityRank(b.rarity); });
+                  var ladder = byName[name];
                   return (
                     <div key={name} style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + MOD_ACCENT + '88', borderRadius: '0 3px 3px 0', padding: '12px 14px' }}>
                       <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#fff', lineHeight: 1.25, marginBottom: 8 }}>
