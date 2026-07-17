@@ -5,6 +5,70 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — DMZ VERTICAL: PRE-LAUNCH CANONICAL WORK + FOB relocation
+
+**STRATEGIC CONTEXT:** DMZ (MW4 extraction mode, confirmed official, launches **Oct 23
+2026**) pre-launch play = **claim canonical URLs on CONFIRMED facts NOW** so they age into
+authority before the launch search wave. The Marathon strategy repeated with **~3 months
+runway**.
+
+### VERTICAL IS HEALTHIER THAN ASSUMED (scoping findings)
+- **Official spec confirmed:** the CoD **"Deep Dive"** blog (stored June URL,
+  `source=DEEP DIVE`) is the full official source — Hajin + 5 named POIs (Fallout reactor,
+  Prison, Hajin City, Military Base, casino/vault, Hunt Towers, eastern fallout zone), the
+  FOB + all named stations, 3D Printer (10 categories), Trait System, operation types,
+  threat system / Lieutenants, MIA / Tourniquet, PvP / bounty, weather. **Justin confirmed
+  the pasted spec IS that June post** (not a newer one).
+- **Provenance already CLEAN:** all 3 DMZ articles cite the official CoD blog (unlike the
+  Marathon VB cluster, which was accurate-but-unsourced). **The DMZ vertical had the source
+  discipline built in.**
+- **Architecture is RIGHT:** `/dmz` is the launch-info canonical (FAQ single-array =
+  visible + FAQPage schema, no drift — same pattern as `/modes/vault-breaker`, and it
+  predates it). The 3 entities with real confirmed depth (**Hajin, FOB, 3D Printer**)
+  already own stable claimed slugs (`/dmz/regions`, `/dmz/fob`, `/dmz/printer`). **The gap
+  is CONTENT DEPTH, not structure/routing.**
+- Only **3 articles / 1,578 words** exist for the whole vertical; several sections are
+  **empty-but-indexed "coming soon" shells** (a thin-content liability).
+
+### FOB RELOCATED (commit `99cf04c`) — the first DMZ canonical done properly
+- The FOB article (`dmz-forward-operating-base-every-hub-system-detailed`, **~85% complete
+  already**) was at `/dmz/field-intel/<slug>`; `/dmz/fob` was an **empty indexed shell**.
+- **Option A executed:** re-tagged article `field-intel -> fob` (`DMZ_ARTICLE_SECTION`),
+  flipped the fob section descriptor `source: 'data' -> 'editor'` (+ `contentFilter` +
+  factual description, since *"launches with the zone"* became false on a live hub), added
+  a **308 redirect** (`next.config.mjs`, house pattern) old -> new URL.
+- **RESULT:** `/dmz/fob` is now a real editor-fed hub at the correct URL; old URL
+  **308-redirects** (authority transfers); **slug unchanged**; **zero DB writes**;
+  **relocation-only (NO new facts)**.
+- **301/308 math:** a 16-day-old pre-launch page on a near-zero-authority vertical = the
+  **cheapest possible moment to move it**. Every day toward Oct 23 raises the cost.
+
+### PROVEN PATTERN for the remaining entities
+**RETAG** (`DMZ_ARTICLE_SECTION`) + **FLIP** section descriptor (`data -> editor`,
+`+contentFilter`, `+honest description`) + **308 REDIRECT** (`next.config.mjs`).
+**Config-only, zero DB.**
+
+### NEXT DMZ MOVE (proven, high-value): HAJIN -> `/dmz/regions`
+Identical shape: `/dmz/regions` is the claimed slug, currently an empty data shell; the
+Hajin article sits under `field-intel`. Same **retag + flip + redirect**. Highest-value
+because **regions/POIs = the #1-ranked pre-launch asset** (the map/POI space). The Deep
+Dive **names the geography** = real fillable content.
+
+### RECURRING DISCIPLINE (held 3x this arc)
+**Only the June Deep Dive is a confirmed source.** Do NOT add facts absent from it (e.g.
+*"3 named Trait trees"*, *"Stash upgrade tiers"* — the FOB article's own **"Still
+unconfirmed"** section says these AREN'T in the Deep Dive). Adding them under the June
+citation would be the **same anachronism refused on the 26 VB articles**. A newer CoD post
+= needs its **own permalink** before its facts can be cited.
+
+### CAVEAT for the future FOB data-tool
+`/dmz/fob` is now an editor hub (was `source: 'data'`, the original intent = a launch-day
+progression optimizer). That tool must now **CO-EXIST on `/dmz/fob`** (tool above the
+article list, or the section carries both) — a design note for whoever builds it, so the
+repurposing isn't a surprise.
+
+---
+
 ## 2026-07-16 — VAULT BREAKER CANONICAL + 29-ARTICLE CLUSTER RECONCILIATION
 
 ### SHIPPED: `/modes/vault-breaker` (commit `c471ef8`)
