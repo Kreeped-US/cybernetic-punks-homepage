@@ -5,6 +5,42 @@ Newest entries on top.
 
 ---
 
+## 2026-07-17 — SHELL MATCHUP MATRIX: game-verified, written to shell_stats
+
+**Foundation for the `/matchups` hub build.** New column `counter_items jsonb` added (Justin's
+DDL). 14 guarded writes to `shell_stats`, all OWNER-GAME-VERIFIED by Justin.
+
+### countered_by (shells that beat it — `text[]`)
+- **Filled 3:** Recon=`[Recon]` (mirror), Vandal=`[Thief,Destroyer]`,
+  Sentinel=`[Vandal,Thief,Assassin]`.
+- **Rook=`[]` — game-verified NO specific counter** (low-stakes solo scavenger; any geared
+  squad outguns it). The page must render this as **CONTENT, not an empty gap**.
+- **4 populated CONFIRMED correct as-is:** Assassin=`[Recon,Triage]`, Destroyer=`[Assassin,
+  Recon]`, Thief=`[Destroyer,Vandal]`, Triage=`[Assassin]`. **Assassin<->Triage mutual is REAL.**
+
+### counter_items (items/tactics that beat it — new `jsonb` field, names-only)
+Recon=`[Signal Jammers]`, Vandal=`[Heat Grenades]`, Sentinel=`[Signal Jammers]`. Others `[]`.
+
+### verified_source — honesty fix
+Appended (**not overwritten**) on all 8 to record matchup verification distinct from the old
+stat-screen provenance: `…; matchup data owner-verified in-game (S2, 2026-07-17)`. The existing
+`verified=true` was earned for the STAT SCREEN, not the matrix — appending keeps the flag from
+silently over-claiming (the mod_stats lesson, applied proactively).
+
+### ACCURACY RESOLUTION — the matrix is now the ADJUDICATOR
+Article `88f957e5` claims **Destroyer/Vandal beat Assassin — game-verified WRONG**
+(Assassin=`[Recon,Triage]`). So `88f957e5` is a **CUT, not a keeper**, when the 27-article
+matchup cluster is adjudicated. **The verified matrix now adjudicates all 27 counter-guides:**
+right if it matches `countered_by`, wrong if not.
+
+### GUARD note
+`countered_by` is `text[]` (empty guard `{}` / null via `is null`); `counter_items` is `jsonb`
+(empty guard `[]`). First attempt halted cleanly on the type mismatch (0 rows written),
+introspected types read-only, corrected guards, re-ran. Reversible: fills back to `{}`/`null`/
+`[]`; verified_source strip the appended suffix.
+
+---
+
 ## 2026-07-17 — GSC CLEAN-CUT CONSOLIDATION: COMPLETE (26 verified cuts, 3 batches)
 
 **Corpus 1323 -> 1297, all reversible.**
