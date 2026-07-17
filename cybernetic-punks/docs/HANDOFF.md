@@ -5,6 +5,49 @@ Newest entries on top.
 
 ---
 
+## 2026-07-16 — DMZ RELOCATIONS UPDATE: Hajin done, Printer held, pattern nuance corrected
+
+**Supersedes the "just repeat the pattern" framing in the DMZ entry below.**
+
+### DONE: Hajin relocated `field-intel -> /dmz/regions` (commit `ea85776`)
+Old URL **308-redirects**, `/dmz/regions` is a live editor hub, canonical correct, slug
+unchanged, **zero DB**. A **genuine URL upgrade** (regions = the geographically-correct slug
++ the #1 pre-launch asset).
+
+### CANONICAL STATE NOW
+- `/dmz/fob` <- FOB (done)
+- `/dmz/regions` <- Hajin (done)
+- `/dmz/loadouts` <- 3D Printer (**INTENTIONALLY KEPT** — see below)
+- `/dmz/printer`, `/dmz/meta`, `/dmz/field-intel`, `/dmz/discourse` — **empty** (printer is
+  **RESERVED for the launch recipe data-tool**; the others are catch-alls awaiting content)
+
+### PATTERN CORRECTION (the prior entry oversold "just repeat it")
+The **retag + flip + redirect** pattern applies **CLEANLY only when the source section
+RETAINS other content** (as `field-intel` did for FOB — it kept Hajin). **When the source
+has only the one article, the move EMPTIES it — a SWAP, not a net improvement** in the
+empty-shell count. So **each remaining relocation is a JUDGMENT CALL, not a mechanical
+repeat:**
+- **Hajin was worth the swap:** `regions` is higher-value than the emptied `field-intel` (a
+  generic catch-all that refills with any future intel article). **ACCEPTED tradeoff:**
+  `field-intel` now renders `DmzEmptyState` (intentionally empty-pending-content, **NOT a
+  bug**).
+- **Printer was NOT worth it (Option A, left in Loadouts):** (1) its Loadouts placement is a
+  **DELIBERATE prior decision** (the mapping comment: *craftable gear -> Loadouts*);
+  (2) `/dmz/printer` is **RESERVED for the launch-day recipe data-tool** — moving the article
+  there would squat the tool's slot; (3) it would **empty Loadouts** (a real content section)
+  for a **LATERAL move** (`loadouts -> printer` isn't a clearer URL). **DO NOT re-litigate
+  this — Printer stays in Loadouts.**
+
+### RULE for future DMZ relocations
+Only relocate when **(a)** the target slug is genuinely more correct/valuable than the source
+**AND (b)** either the source retains content **or** the source's emptiness is low-risk (a
+catch-all). **Otherwise leave it.**
+
+**`field-intel` is now INTENTIONALLY EMPTY** (renders `DmzEmptyState`) — not a bug to
+investigate.
+
+---
+
 ## 2026-07-16 — DMZ VERTICAL: PRE-LAUNCH CANONICAL WORK + FOB relocation
 
 **STRATEGIC CONTEXT:** DMZ (MW4 extraction mode, confirmed official, launches **Oct 23
