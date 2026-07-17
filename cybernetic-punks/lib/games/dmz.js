@@ -107,7 +107,14 @@ export const dmz = {
     // stable either way. To revert: source -> 'data', contentFilter -> null,
     // restore the old description, and re-map the article to 'field-intel'.
     { slug: 'fob',         label: 'FOB',           source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Forward Operating Base reference -- the between-runs hub, its stations, economy, and progression, from the official Deep Dive.' },
-    { slug: 'regions',     label: 'Hajin Regions', source: 'data',   contentFilter: null, description: 'Region-by-region guides for the Hajin Exclusion Zone. Launch with the zone.' },
+    // HAJIN REGIONS: FLIPPED 'data' -> 'editor' on 2026-07-16, same move as fob.
+    // Renders the editor article-hub (the Hajin canonical + future region/POI
+    // pieces as cards) instead of the DmzComingSoon shell. Article mapped via
+    // DMZ_ARTICLE_SECTION. When launch-day structured region/map data ships it can
+    // co-exist above the article list on this same URL. To revert: source ->
+    // 'data', contentFilter -> null, restore the old description, re-map the
+    // article to 'field-intel'.
+    { slug: 'regions',     label: 'Hajin Regions', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The Hajin Exclusion Zone -- setting, the secure-and-extract loop, weather, and the map\'s regions, from the official Deep Dive.' },
     // DISCOURSE (VANTAGE network desk): the network editor-in-chief's coverage of
     // the conversation around DMZ -- what creators and the community are saying,
     // and why it matters. Membership is by TAG ('discourse'), not the per-slug
@@ -135,8 +142,19 @@ export const dmz = {
 // NEW DMZ article must get an entry here or it renders in no section (intentional
 // fail-safe: unassigned = hidden, never mis-placed).
 export const DMZ_ARTICLE_SECTION = {
-  // Setting / map / regions -> Field Intel (general zone intel).
-  'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals': 'field-intel',
+  // Hajin (setting / map / geography) -> Hajin Regions.
+  // RELOCATED 2026-07-16 from 'field-intel' to 'regions': the article is the
+  // canonical for the Hajin Exclusion Zone and belongs under the map/geography
+  // URL (regions/POIs is the top pre-launch SEO target). Moved its live URL from
+  //   /dmz/field-intel/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals
+  // to
+  //   /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals
+  // SLUG unchanged; only the [section] segment moved. Old URL was indexed, so a
+  // 308 redirect old->new is in next.config.mjs. NOTE: this leaves 'field-intel'
+  // with no assigned article (it renders DmzEmptyState until the next general
+  // intel piece publishes -- field-intel is the generic catch-all, so it refills
+  // trivially; that is why Hajin, not a generic piece, is the one that moves out).
+  'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals': 'regions',
   // Whole-base overview (Stash, Wallet, Gunsmith, Boss Board, ...) -> FOB.
   // RELOCATED 2026-07-16 from 'field-intel' to its own 'fob' section: the article
   // is a 628-word canonical for the Forward Operating Base and belongs under the

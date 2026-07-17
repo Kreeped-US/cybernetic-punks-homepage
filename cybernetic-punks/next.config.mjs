@@ -43,6 +43,15 @@ const nextConfig = {
         destination: '/dmz/fob/dmz-forward-operating-base-every-hub-system-detailed',
         permanent: true,
       },
+      // DMZ Hajin relocation (2026-07-16): the Hajin canonical moved section
+      // field-intel -> regions (lib/games/dmz.js DMZ_ARTICLE_SECTION). Same as the
+      // FOB move above -- fixed-path 308, slug unchanged, only the [section]
+      // segment moves. Preserves the indexed old URL's authority.
+      {
+        source: '/dmz/field-intel/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals',
+        destination: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals',
+        permanent: true,
+      },
     ];
   },
 };
