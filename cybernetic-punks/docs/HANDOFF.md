@@ -5,6 +5,48 @@ Newest entries on top.
 
 ---
 
+## 2026-07-17 — GSC CLEAN-CUT batch 2 (weapon cluster): 10 cut, even-more-over-broad, energy-hub found
+
+DB-only writes (noindex flips); all reversible.
+
+### EVEN MORE OVER-BROAD than the shell batch
+Of the 12 "weapon-specific" candidates: only **4 were true weapon-dups**; **6 were
+shell-builds mislabeled as weapon** (the title names a gun, but the article is a shell
+loadout → dups `/shells/<slug>`, not `/weapons`); **2 pulled**. Two batches in, the pattern
+is firm: **the GSC keyword buckets systematically mislabel — every batch needs read-then-cut,
+and the canonical an article duplicates is often NOT the one the bucket name implies.**
+
+### CUT (10, guarded, reversible — corpus 1309 -> 1299)
+- **weapon-dups → `/weapons`:** `8044bfb3` (M77), `7780f82c` (D54, stale vs nerf), `67ea29f4`
+  (Misriah), `216c1597` (D54).
+- **shell-builds → `/shells` (mislabeled):** `af30f3a9` (Assassin+KKV), `b92ff87f` (Rook+Twin
+  Tap — twin of shell-batch cut `1abd15f4`), `00d3b984` (Rook+M77), `53952dff` (Triage+volt),
+  `dd97b617` (Vandal), `dd98f7b5` (Vandal+WSTR).
+
+### PULL (2, NOT cut)
+- `1f0ddcca` — energy-weapons CATEGORY guide (no single canonical).
+- `349ffe3b` — dated BR33 commentary; "Victory Lap" is a UNIQUE variant → `/uniques`, not
+  `/weapons/br33`.
+
+### 🎯 ENERGY-CATEGORY HUB — a 2nd canonical opportunity (after the matchup hub)
+`1f0ddcca` covers the V75 Scar / V22 / V85 energy-weapon tier hierarchy — a category no
+single `/weapons/<slug>` owns. Like the matchup hub, a BUILD-not-prune. **Both canonical
+opportunities were found by READING pulled articles instead of cutting them** — the
+strongest argument yet for the verify step.
+
+### 216c1597 re-confirmed citing Stack Overflow CORRECTLY
+The SO-WRONG regex false-flagged it AGAIN — the **3rd detector false-flag this session** (P4
+tier regex, Shield ladder detector, this). Rule holds: **read the prose, don't trust the
+keyword match.**
+
+### RUNNING TOTAL
+double-flag (4) + shell (10) + weapon (10) = **24 GSC-verified cuts**, corpus **1323 ->
+1299**. Remaining CLEAN-CUT: weapon-mods/build (7) — the last fast batch (expect over-broad).
+Deliberate queue: 9 held shell + 2 weapon pulls + cryo/holotag (49) + **two canonical builds
+(matchup hub, energy-category hub)**.
+
+---
+
 ## 2026-07-17 — GSC CLEAN-CUT batch 1 (shell cluster): 10 cut, worklist corrected, matchup-hub found
 
 DB-only writes (noindex flips); all reversible.
