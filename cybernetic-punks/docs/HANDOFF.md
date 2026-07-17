@@ -5,6 +5,42 @@ Newest entries on top.
 
 ---
 
+## 2026-07-17 — /matchups CANONICAL SHIPPED (commit db6dead)
+
+Hub + 8 per-shell counter pages, **live and nav-linked**. Built entirely on the
+game-verified `shell_stats` matchup matrix (this session) — **the first canonical built on
+data that didn't exist as trustworthy until owner in-game verification filled it.**
+
+### WHAT SHIPPED
+`/matchups` (hub, 8 shell cards) + `/matchups/[shell]` (per-shell), mirrors the `/mods`
+pattern: `force-dynamic`, `game_slug='marathon'`, `lib/matchups.js` shared list,
+BreadcrumbList + FAQPage JSON-LD, sitemap emits 9 (hub + 8), fixed `dateModified`. **MATCHUPS**
+added to the Marathon nav after SHELLS (`startsWith` highlight on hub + all 8). All
+live-verified 200 + content-checked.
+
+### HONEST-DESIGN DECISIONS (the moat details)
+- **BOTH DIRECTIONS per page:** "how to beat X" (`shell.countered_by`) + "X is strong against"
+  (**COMPUTED inverse** — shells whose `countered_by` contains X). Essential: `countered_by`-only
+  made Recon's page MISLEADING (would've shown "only beaten by mirror", hiding that Recon beats
+  3 shells). Both trace to the verified matrix.
+- **ROOK EMPTY-STATE:** `countered_by=[]` renders as CONTENT ("no hard counter — low-stakes solo
+  scavenger any geared squad outguns"), keyed on the `verified_source` matchup marker, DISTINCT
+  from a genuinely-unfilled shell ("analysis pending"). **Verified-empty != unfilled.**
+- **WEAKNESSES** rendered under a separate "General notes" section, explicitly labelled NOT
+  game-verified (pre-existing shell-profile data), visually set apart from the game-verified
+  counters — kept but de-provenanced, never shown as fact alongside the matchup data. (Honest
+  provenance-labelling, not omission — preserves the info while marking its lower trust level.)
+
+### STILL AHEAD (separate next step)
+The **27-article self-cannibalizing counter-guide cluster** (10 "beat Thief", 7 "beat Assassin",
+7 "beat Vandal", all live) still competes until consolidated INTO `/matchups`. Adjudicate each
+against the verified matrix (keeper per shell + cut the wrong ones), point them at the canonical.
+**`88f957e5` is ALREADY a confirmed cut** (game-verified wrong: claims Destroyer/Vandal beat
+Assassin; matrix says `[Recon,Triage]`). The matrix is the adjudicator: article is right if it
+matches `countered_by`, wrong if not.
+
+---
+
 ## 2026-07-17 — SHELL MATCHUP MATRIX: game-verified, written to shell_stats
 
 **Foundation for the `/matchups` hub build.** New column `counter_items jsonb` added (Justin's
