@@ -97,7 +97,16 @@ export const dmz = {
     { slug: 'meta',        label: 'Meta',          source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates at launch, once real match data exists.' },
     { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
     { slug: 'printer',     label: '3D Printer',    source: 'data',   contentFilter: null, description: 'The 3D Printer crafting tool. Structured data launches with the zone.' },
-    { slug: 'fob',         label: 'FOB',           source: 'data',   contentFilter: null, description: 'Forward Operating Base progression reference. Launches with the zone.' },
+    // FOB: FLIPPED 'data' -> 'editor' on 2026-07-16. It now renders the editor
+    // article-hub (lists the FOB canonical + future FOB pieces as cards) instead
+    // of the DmzComingSoon shell. The FOB article is mapped here via
+    // DMZ_ARTICLE_SECTION. contentFilter matches the other editor sections; the
+    // description no longer says "launches with the zone" because the section is
+    // live NOW. When the launch-day structured FOB tool (progression/optimizer)
+    // ships, it can render above the article list on this same URL -- the slug is
+    // stable either way. To revert: source -> 'data', contentFilter -> null,
+    // restore the old description, and re-map the article to 'field-intel'.
+    { slug: 'fob',         label: 'FOB',           source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Forward Operating Base reference -- the between-runs hub, its stations, economy, and progression, from the official Deep Dive.' },
     { slug: 'regions',     label: 'Hajin Regions', source: 'data',   contentFilter: null, description: 'Region-by-region guides for the Hajin Exclusion Zone. Launch with the zone.' },
     // DISCOURSE (VANTAGE network desk): the network editor-in-chief's coverage of
     // the conversation around DMZ -- what creators and the community are saying,
@@ -128,9 +137,17 @@ export const dmz = {
 export const DMZ_ARTICLE_SECTION = {
   // Setting / map / regions -> Field Intel (general zone intel).
   'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals': 'field-intel',
-  // Whole-base overview (Stash, Wallet, Gunsmith, Boss Board, ...) -> Field Intel,
-  // not Loadouts: it is a hub orientation, not a build/loadout guide.
-  'dmz-forward-operating-base-every-hub-system-detailed': 'field-intel',
+  // Whole-base overview (Stash, Wallet, Gunsmith, Boss Board, ...) -> FOB.
+  // RELOCATED 2026-07-16 from 'field-intel' to its own 'fob' section: the article
+  // is a 628-word canonical for the Forward Operating Base and belongs under the
+  // semantically-correct URL. This moved its live URL from
+  //   /dmz/field-intel/dmz-forward-operating-base-every-hub-system-detailed
+  // to
+  //   /dmz/fob/dmz-forward-operating-base-every-hub-system-detailed
+  // The SLUG is unchanged; only the [section] segment moved. The old URL was
+  // indexed, so a permanent (308) redirect old->new is in next.config.mjs -- if
+  // you ever rename this section, update that redirect too or the old URL 404s.
+  'dmz-forward-operating-base-every-hub-system-detailed': 'fob',
   // Craftable gear/equipment (NVGs, vests, backpacks, killstreaks) -> Loadouts.
   'dmz-3d-printer-crafting-system-every-category-detailed': 'loadouts',
 };
