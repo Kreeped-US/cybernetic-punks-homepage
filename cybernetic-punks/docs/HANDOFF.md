@@ -5,6 +5,69 @@ Newest entries on top.
 
 ---
 
+## 2026-07-17 — GSC INDEXING ANALYSIS + consolidation worklist + first double-flag cut batch (4 cut)
+
+**DB-only writes** (noindex flips); this entry is the record. All reversible.
+
+### THE INPUT: 200 GSC "discovered — not indexed" slugs (Google's cannibalization verdict)
+Justin pasted the GSC export (the API is still not wired — this was a one-time paste; a
+future GSC cross-reference needs the export re-pasted). These are URLs Google **discovered
+and declined to crawl** — the highest-signal cut source we have. All 200 matched a
+`feed_items` row.
+
+### THE SPLIT
+- **19 already `noindex=true`** — Google reporting our prior cuts. NO ACTION. (Includes 7 of
+  the mod-mechanic-backlog family already cut.)
+- **181 live** (`noindex=false`) — the real cut/keep pool.
+
+### CLUSTER BUCKETS (live pool, heuristic tagging — candidates, not decisions)
+| bucket | count | note |
+|---|---|---|
+| **LEGIT-DATED KEEP** | 74 | news/patch/community (45) + creator/stream spotlight (24) + tournament (5). Dated coverage; ages naturally; lowest cut priority. |
+| **NEEDS CANONICAL FIRST** | 49 | cryo-archive (42) + holotag (7). **NO canonical exists** — can't consolidate until one is built (like `/mods` was), or prune outright. cryo is a **mix** of dated stream coverage + evergreen "cryo meta build" dupes; needs a split-pass, not a blanket call. |
+| **CLEAN CUT** | 38 | evergreen duplicates WITH a canonical: shell tier/meta/build (19 → `/shells/<slug>`), weapon-specific (12 → `/weapons/<slug>`), weapon-mods/build (7 → `/mods`). The fast-action batch. |
+| **NEEDS-JUDGMENT** | 20 | ranked/shell generic guide (15) + systems/misc (4) + other (1). |
+
+### THE METHOD THAT FOUND THE FIRST BATCH — GSC-declined ∩ factually-wrong
+The **intersection of "Google declined it" AND "cites a game-verified-wrong mod mechanic"**
+is the highest-confidence cut signal: redundancy verdict + factual error agree. **4 live
+articles** sat in that intersection.
+
+### CUT: the 4-article double-flag batch (all 4, guarded, reversible)
+| id | headline | wrong mechanic | load-bearing? |
+|---|---|---|---|
+| `8f323bf1` | Combat Flow Guide | Stack Overflow consecutive-hit damage | stray line |
+| `c15551e1` | Loadout Crafting Guide | Stack Overflow consecutive-hit scaling | stray line |
+| `0cb48f34` | Weapon Heat System | Insomniac sustained-fire damage | stray line |
+| `247a0adb` | Chip Priority Guide | Stack Overflow damage-stack + Insomniac sustained-fire | **PREMISE** (the recommendation itself) |
+
+Cut rationale: each is **GSC-declined (redundant) AND factually wrong**. Fixing the wrong
+line would NOT earn indexation (Google declined for cannibalization, not the error), so
+noindex is correct. Verified per-article before cutting: live, false claim in body
+(paragraph-read), `/mods/chip` covers both cited chips (no topic orphaned). `247a0adb` was
+briefly HELD for a coverage-gap decision (see below), then cut on Justin's approval.
+**Corpus: live 1323 -> 1319** (−4). All rows `is_published=true` (intact); reversible by
+flipping `noindex`.
+
+### FOLLOW-UP: chip STRATEGY coverage is now an HONEST GAP
+`/mods/chip` covers chip **DATA** (what exists / effects / rarity ladders) — intact and
+accurate. But **no live chip build-STRATEGY guide remains**: `2c4f7b42`, `debecdfb`,
+`247a0adb` all cut; `51dd48dd` is a held cut-candidate (its own 4 false claims), not a real
+keeper. This is the correct outcome (every one was built on now-corrected false mechanics —
+misleading strategy is worse than a gap), but it leaves a real content hole. **"Build an
+honest chip strategy guide" is a CONTENT-CREATION follow-up** — new prose written against
+the corrected `mod_stats`, linking `/mods/chip` as its data source. Not a consolidation task.
+
+### STILL ON THE WORKLIST (for a fresh session)
+- **CLEAN-CUT 38** (shell/weapon/mods dupes with canonicals) — the next fast batch; verify
+  keepers absent first (shell-consolidation discipline).
+- **cryo-archive (42) + holotag (7)** — NEEDS CANONICAL FIRST; decide build-canonical vs prune.
+- **WSTR/D54 stale flags** — 6 live articles touch the now-confirmed buff/nerf, but they
+  SPLIT: weapon-build guides (cut-toward-`/weapons`) vs dated patch news (legit-keep). Do
+  NOT blanket-cut on the WSTR keyword.
+
+---
+
 ## 2026-07-16 — DMZ RELOCATIONS UPDATE: Hajin done, Printer held, pattern nuance corrected
 
 **Supersedes the "just repeat the pattern" framing in the DMZ entry below.**
