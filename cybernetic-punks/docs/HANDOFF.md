@@ -5,6 +5,49 @@ Newest entries on top.
 
 ---
 
+## 2026-07-17 — GSC CLEAN-CUT CONSOLIDATION: COMPLETE (26 verified cuts, 3 batches)
+
+**Corpus 1323 -> 1297, all reversible.**
+
+### BATCHES
+double-flag (4) + shell (**10 of 19**) + weapon (**10 of 12**) + mod-guide (**2 of 4 live**,
+3 already-cut). Batch 3 final: `b0b4c3d0` + `f02e8fcb` cut; `5630c9a6` + `3e965414` (heat
+guides) pulled.
+
+### THE DURABLE LESSON (capstone of the arc)
+**ALL THREE batches were over-broad — the GSC keyword buckets systematically mislabel.**
+Genuine-dup rates: shell **10/19**, weapon **4/12** (6 were shell-builds mislabeled as
+weapons), mod-guide **~2/4**. Bulk-cutting the worklist's "38 clean cuts" would have
+**orphaned ~12 articles AND missed build opportunities**. The verify-then-cut step caught
+mislabeling **every time**. And **READING THE PULLS** (instead of cutting them) surfaced **2
+build opportunities + 2 content gaps**. This is the **standing rule for cryo/holotag and all
+future GSC work**: the worklist is a candidate-finder, **never a verdict**; read each body;
+the true canonical often isn't the bucket's name.
+
+Also: **3 detector false-flags this session** (P4 tier regex, Shield ladder detector,
+SO-WRONG regex on `216c1597`) — all caught by reading prose. **Read the prose, don't trust
+the keyword.**
+
+### DELIBERATE-DECISION QUEUE (no more fast batches — all need judgment)
+- **CANONICAL BUILDS** (opportunities found in the prune list):
+  - **MATCHUP HUB** — the 4 counter-guides (`2ec2a58c`, `5c6bab92`, `cf06499c`, `88f957e5`),
+    cross-shell "how to beat X", no canonical. Build like `/mods`.
+  - **ENERGY-CATEGORY HUB** — `1f0ddcca` (energy weapons as a class), no single canonical.
+- **CONTENT-CREATION FOLLOW-UPS** (gaps opened by correct cuts): chip-strategy guide +
+  mod-strategy guide — **COMBINABLE** into one honest "how to build your loadout" piece,
+  written against corrected `mod_stats`.
+- **PRUNE-OR-KEEP CALLS:** cryo-archive (42) + holotag (7) — need a canonical-or-prune
+  decision (cryo is a dated/evergreen **MIX**, needs a split pass). 2 heat guides
+  (`5630c9a6`, `3e965414` — thin dated near-dups of each other). `349ffe3b` (dated BR33 ->
+  `/uniques`). 1 tactic + 2 dated playbooks + 2 Night Marsh map-meta (from the shell holds).
+
+### SESSION-LONG consolidation
+26 GSC cuts + earlier this session 73 shell tier/meta + 13 mod-guide + 53 dedup + 7 headline
+fixes. **The freeze (implemented, confirmed working) means none of this is racing new
+generation anymore.**
+
+---
+
 ## 2026-07-17 — GSC CLEAN-CUT batch 2 (weapon cluster): 10 cut, even-more-over-broad, energy-hub found
 
 DB-only writes (noindex flips); all reversible.
