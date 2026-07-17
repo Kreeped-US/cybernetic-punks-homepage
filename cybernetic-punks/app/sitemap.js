@@ -35,6 +35,7 @@ import { createClient } from '@supabase/supabase-js';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
+import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug } from '@/lib/matchups';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -72,6 +73,11 @@ export default async function sitemap() {
     // /maps vs /guides/maps. Weekly: mod_stats changes far less than the
     // daily-regraded shells/weapons.
     { url: baseUrl + '/mods',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
+    // /matchups = the ENTITY REFERENCE hub for the game-verified shell matchup
+    // matrix (app/matchups/page.js). Weekly, like /mods: the matrix changes far
+    // less than the daily-regraded shells/weapons. The 8 per-shell pages are
+    // emitted dynamically below (matchupPages), list from lib/matchups.js SHELLS.
+    { url: baseUrl + '/matchups',    lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/uniques',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/maps',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     // Vault Breaker: the official-sourced canonical for Marathon's first PvE mode
@@ -115,6 +121,7 @@ export default async function sitemap() {
   let uniquePages = [];
   let mapPages = [];
   let modSlotPages = [];
+  let matchupPages = [];
   let dynamicPages = [];
   let dmzArticlePages = [];
   let activeGuideCategories = [];
@@ -276,6 +283,38 @@ export default async function sitemap() {
       console.error('[sitemap] mod slot fetch threw:', err);
     }
 
+    // Matchup per-shell pages (/matchups/[shell], added July 17 2026). The shell
+    // list comes from lib/matchups.js SHELLS -- the SAME allowlist the resolver
+    // in app/matchups/[shell]/page.js matches against -- so this can never
+    // advertise a URL the route 404s. lastModified from shell_stats.updated_at
+    // (game_slug='marathon', matching the pages' own filter), falling back to now
+    // only when a row is missing.
+    try {
+      const { data: matchupRows, error: matchupErr } = await supabase
+        .from('shell_stats')
+        .select('name, updated_at')
+        .eq('game_slug', 'marathon');
+
+      console.log('[sitemap] matchups shell_stats:',
+        matchupRows ? matchupRows.length + ' rows' : 'null',
+        matchupErr ? 'error: ' + matchupErr.message : '');
+
+      const updatedByName = {};
+      (matchupRows || []).forEach((r) => { updatedByName[r.name] = r.updated_at; });
+
+      matchupPages = MATCHUP_SHELLS.map((name) => {
+        const u = updatedByName[name];
+        return {
+          url: baseUrl + '/matchups/' + matchupSlug(name),
+          lastModified: u ? new Date(u) : new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        };
+      });
+    } catch (err) {
+      console.error('[sitemap] matchup fetch threw:', err);
+    }
+
     // Article URLs from feed_items
     try {
       // No row cap: the sitemap = ALL published, indexable (non-noindex)
@@ -420,8 +459,9 @@ export default async function sitemap() {
     'weapons=' + weaponPages.length,
     'maps=' + mapPages.length,
     'modSlots=' + modSlotPages.length,
+    'matchups=' + matchupPages.length,
     'dmz=' + dmzPages.length,
     'dynamic=' + dynamicPages.length);
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...uniquePages, ...mapPages, ...modSlotPages, ...dmzPages, ...dynamicPages];
+  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...uniquePages, ...mapPages, ...modSlotPages, ...matchupPages, ...dmzPages, ...dynamicPages];
 }

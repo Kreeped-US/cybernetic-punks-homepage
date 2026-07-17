@@ -17,6 +17,7 @@ var NAV_ITEMS = [
   { label: 'HOME',     href: '/marathon' },
   { label: 'META',     href: '/meta' },
   { label: 'SHELLS',   href: '/shells' },
+  { label: 'MATCHUPS', href: '/matchups' },
   { label: 'WEAPONS',  href: '/weapons' },
   { label: 'MODS',     href: '/mods' },
   { label: 'UNIQUES',  href: '/uniques' },
