@@ -41,10 +41,11 @@ the keyword.**
   (`5630c9a6`, `3e965414` — thin dated near-dups of each other). `349ffe3b` (dated BR33 ->
   `/uniques`). 1 tactic + 2 dated playbooks + 2 Night Marsh map-meta (from the shell holds).
 
-### SESSION-LONG consolidation
-26 GSC cuts + earlier this session 73 shell tier/meta + 13 mod-guide + 53 dedup + 7 headline
-fixes. **The freeze (implemented, confirmed working) means none of this is racing new
-generation anymore.**
+### CONSOLIDATION PROJECT TOTAL (across recent sessions)
+26 GSC cuts (2026-07-17) + 73 shell tier/meta (07-15) + 13 mod-guide + 53 dedup + 7 headline
+fixes = the 139-article project + 26 GSC. **Only the 26 GSC cuts, 13 mod-guide, and 7
+headline fixes are strictly this session.** The freeze (implemented, confirmed working)
+means none of this is racing new generation anymore.
 
 ---
 
