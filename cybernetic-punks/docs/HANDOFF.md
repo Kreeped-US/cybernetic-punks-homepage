@@ -39,6 +39,26 @@ against the verified matrix (keeper per shell + cut the wrong ones), point them 
 Assassin; matrix says `[Recon,Triage]`). The matrix is the adjudicator: article is right if it
 matches `countered_by`, wrong if not.
 
+### CLUSTER COUNT — CORRECTED from quoted article evidence (not assumption)
+Re-derivation **reading the article bodies** found, of the 26 remaining matchup articles:
+- **14 CONTRADICT** the matrix by naming a SHELL counter it disproves. Verbatim examples:
+  `33420c0c` *"Recon is the direct counter shell"* for Thief (counters = Destroyer, Vandal);
+  `b543db86` *"Destroyer Hard-Counters Assassin"* (counters = Recon, Triage); `6561828f`
+  *"Destroyer beats Rook"* (Rook = no counter).
+- **3 MIXED** (correct + incorrect shell claims in the same article).
+- **8 VALID-SHELL** (name a correct counter matching `countered_by`).
+- **1 VALID-TACTICAL** (weapon-only, no shell claim — `c2aff172`).
+
+**Both earlier framings were imprecise:** NOT "all wrong" (the "12+2" lumped some valid ones)
+and NOT "only 1 wrong" (that undercounted by ignoring explicit false shell-counter claims — a
+wrong conclusion reasoned from a clean narrative, corrected by reading the quotes). The **Rook
+articles DO contradict**: they name shells (Vandal / Destroyer) as Rook hard-counters when
+Rook = `[]` — false-premise confirmed, not "valid player-tactics."
+
+**LESSON (reinforced hard):** cut ONLY on a QUOTED shell-counter claim the matrix disproves,
+verified per-article from the body — never on a bucket label OR a plausible-sounding summary.
+A tidy narrative ("it's all just tactical advice") nearly enshrined the wrong count.
+
 ---
 
 ## 2026-07-17 — SHELL MATCHUP MATRIX: game-verified, written to shell_stats
