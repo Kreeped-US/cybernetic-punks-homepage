@@ -5,6 +5,45 @@ Newest entries on top.
 
 ---
 
+## 2026-07-17 — MATCHUP CLUSTER: reconciled accuracy-pass state (DB-verified)
+
+**DB is the source of truth over any running tally.** DONE THIS ARC: matchup matrix
+game-verified + `/matchups` hub built & live (`91c3690`) + accuracy adjudication of the
+27-article cluster against the matrix.
+
+### CUT (3, verified in DB)
+- `88f957e5` — contradiction (Destroyer/Vandal beat Assassin; matrix `[Recon,Triage]`).
+- `badf02a3` — MIXED, load-bearing false anti-Destroyer stance (rewrite, not fix).
+- `28326aa9` — pre-session noindex.
+
+### FIXED & LIVE (1)
+- `8480f407` (Assassin) — false "Vandal is a secondary counter" + "Avoid Triage" lines
+  replaced with accurate *"Triage is the other shell the game-verified matchup data lists as
+  an Assassin counter"* per matrix. Body edit, coherence-confirmed, guarded on full body.
+
+### PENDING ACCURACY CUTS (13, adjudicated + quoted-evidence-backed, NOT yet written)
+The running tally wrongly assumed these ran; **DB confirms they're LIVE.**
+- **12 contradictions:** `fef3e56a`, `b543db86` (Assassin/Destroyer-wrong); `33420c0c`,
+  `8d382d19` (Thief/Recon-wrong); `c048793e`, `8ab3eae9`, `9494c13e`, `8d681f26`, `b52cbace`
+  (Vandal/Recon-wrong); `5c6bab92` (Recon/Vandal-wrong); `a3a27ec6`, `6561828f` (Rook — name a
+  shell counter vs `Rook=[]`).
+- **+ `9ec5d332`** (Vandal MIXED, load-bearing Recon-primary).
+- Each has a quoted false shell-counter claim the matrix disproves (receipts in-thread).
+  Guarded noindex, one row each, projected **1295 -> 1282**. **NEXT-SESSION CLEAN BATCH.**
+
+### CORRECTLY LEFT LIVE (valid)
+8 VALID-SHELL (`2ec2a58c`, `22419223`, `ceb0cec1`, `cf06499c`, `0e6dd2b4`, `d53e6765`,
+`c596f288`, `4c86abf8`), 1 VALID-TACTICAL (`c2aff172`), 2 weapon-led (`14092c2b`, `d1acb0eb`).
+These 11 + `8480f407` are the **INTRA-CLUSTER QUALITY-DEDUP pool** (valid but
+self-cannibalizing; quality-keeper selection, NOT accuracy — separate future step).
+
+### LESSON
+Reconcile cut-state against the **DB**, not a running tally — this arc reported cuts that were
+held-not-written; only the DB is truth. **Cuts are noindex flips (they don't move the git
+tip)**, so "what's cut" must be queried, never assumed.
+
+---
+
 ## 2026-07-17 — /matchups CANONICAL SHIPPED (commit db6dead)
 
 Hub + 8 per-shell counter pages, **live and nav-linked**. Built entirely on the
