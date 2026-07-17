@@ -5,6 +5,47 @@ Newest entries on top.
 
 ---
 
+## 2026-07-17 — GSC CLEAN-CUT batch 1 (shell cluster): 10 cut, worklist corrected, matchup-hub found
+
+DB-only writes (noindex flips); all reversible.
+
+### VERIFICATION CORRECTED THE WORKLIST (key lesson)
+The "19 shell tier/meta/build" CLEAN-CUT bucket was **over-broad** (keyword clustering, not a
+verdict). Reading the bodies: only **10 were genuine single-shell duplicates** of a
+`/shells/<slug>` canonical; **9 were mis-bucketed**. **The worklist is a CANDIDATE-finder —
+every CLEAN-CUT batch needs read-then-cut verification before writing.** The remaining
+**weapon (12) + mod-guide (7)** batches will likely be over-broad too — **do not bulk-cut
+them.**
+
+### CUT (10, guarded, reversible — corpus 1319 -> 1309)
+`2d6231b8`, `a1735d1a`, `2687feaa`, `1abd15f4`, `351398ff`, `d02421d1`, `98dfd937`,
+`1cc43328`, `d2adfe2e`, `2cac6341` — single-shell guides with a real `/shells` canonical.
+
+### HELD 9 (mis-bucketed, NOT cut)
+- **4 COUNTER-GUIDES:** `2ec2a58c`, `5c6bab92`, `cf06499c`, `88f957e5`.
+- **1 tactic how-to:** `48aa0f9d` (Recon drone depth).
+- **2 dated playbooks:** `d359fac9`, `da7d3713` (age naturally, likely keep).
+- **2 Night Marsh map-meta:** `3e99742e`, `a6c095b9` (map-specific).
+
+### 🎯 MATCHUP HUB — a canonical OPPORTUNITY (not a prune)
+The **4 counter-guides** are a coherent cross-shell **MATCHUP cluster with NO canonical**.
+"How to beat X" is genuinely distinct from single-shell reference pages. **Build a
+`/matchups` (or similar) canonical hub** like `/mods` was — gives them a home AND fills a
+real competitive-intel niche that's hard to replicate. **This is a BUILD, not a cut.
+High-value find.**
+
+### d2adfe2e cited Stack Overflow CORRECTLY (magazine-overflow)
+Another editor that sourced it right pre-fix. **Reinforces: P1 = inconsistent sourcing;
+read Stack Overflow mentions individually, don't blanket-flag the keyword.**
+
+### SESSION CONSOLIDATION TOTAL
+double-flag batch (4) + shell batch (10) = **14 GSC-verified cuts**, corpus **1323 -> 1309**.
+Remaining CLEAN-CUT: **weapon-specific (12), weapon-mods (7)** — each needs the same
+verify-first pass. The **9 held + cryo/holotag (49) + the matchup-hub build** are the
+deliberate-decision queue.
+
+---
+
 ## 2026-07-17 — GSC INDEXING ANALYSIS + consolidation worklist + first double-flag cut batch (4 cut)
 
 **DB-only writes** (noindex flips); this entry is the record. All reversible.
