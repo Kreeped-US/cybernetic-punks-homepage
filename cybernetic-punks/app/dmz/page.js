@@ -39,9 +39,12 @@ export const metadata = {
   description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
   keywords: ['DMZ', 'DMZ Modern Warfare 4', 'MW4 DMZ', 'Call of Duty DMZ', 'DMZ extraction zone', 'DMZ Hajin', 'DMZ FOB', 'DMZ crafting', 'DMZ loadouts', 'DMZ guide'],
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
+  // og/twitter mirror the meta title+description above. They previously carried the
+  // old "Extraction Intelligence Hub" positioning, so a search result led with the
+  // release date while the social card led with brand copy. Same string, one message.
   openGraph: {
-    title: 'DMZ — Extraction Intelligence Hub',
-    description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for Call of Duty Modern Warfare 4 DMZ.',
+    title: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+    description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
     url: 'https://cyberneticpunks.com/dmz',
     siteName: 'CyberneticPunks',
     locale: 'en_US',
@@ -50,8 +53,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'DMZ — Extraction Intelligence Hub',
-    description: 'Field intel, meta, loadouts, crafting, and region guides for Call of Duty Modern Warfare 4 DMZ.',
+    title: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+    description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
   },
 };
 

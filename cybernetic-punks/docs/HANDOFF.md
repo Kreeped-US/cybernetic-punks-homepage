@@ -5,6 +5,44 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — /dmz copy targets live pre-launch demand (READ BEFORE EDITING THIS COPY)
+
+**WHY THE COPY IS SHAPED THIS WAY.** `/dmz` now targets the live pre-launch query set found in
+the **2026-07-18 keyword research** (Mangools): **~1,600/mo of winnable demand**. The head
+terms (KD 41-45) are **closed to us**; these are not:
+`dmz 2 release date` **630/mo** · `what is dmz in cod` 500 · `is dmz coming back` 250 ·
+`dmz 2026` / `dmz update 2026` 170 · `when is the new dmz coming out` 70.
+
+**Title/meta now lead with release date + 2026 + MW4, NOT brand positioning.** The old title
+("DMZ - Extraction Intelligence Hub") had **zero search volume** and omitted the date, the
+year, and the game. Title 53 chars / meta 145 chars (Gate 4: <=60 / <=155). og + twitter
+mirror them exactly, so the search result and the social card carry one message.
+
+### "DMZ 2" is PLAYER PHRASING, used deliberately for search
+It is **NOT an official name**. It is the **highest-volume live term (630/mo)**, so it appears
+in **the FAQ question and one body line** -- and in **both places it is used and corrected in
+the same breath** ("Many players search for it as 'DMZ 2', but the official name is simply
+DMZ"). **Do NOT promote it into the title.** A title asserts; putting a non-official name
+there would state it as fact.
+
+### *** NO SOURCE CONFIRMS ANY RELATIONSHIP TO THE 2022 MODERN WARFARE II DMZ ***
+The queries **"is dmz coming back"** and **"dmz 2"** both **presuppose that link**. The FAQ
+answers **yes to what IS confirmed** (MW4 includes a mode called DMZ, dated **Oct 23 2026**,
+detailed in the official Deep Dive) and **explicitly marks the relationship -- progression,
+factions, any carry-over -- as UNCONFIRMED.**
+
+**Do NOT "tighten" this into a sequel or revival claim.** An in-code note sits on
+`FAQ_BACK_A` saying exactly that. This is the same discipline that refused the anachronistic
+facts on the 26 VB articles and the "only the June Deep Dive is a confirmed source" rule.
+
+### FAQ 4 -> 5 items
+Added "Is DMZ coming back?"; re-phrased the launch and mode questions to searcher wording
+("What is the DMZ 2 release date?", "What is DMZ in Call of Duty?"). All questions and answers
+remain **single-source constants** feeding BOTH the visible block and the `FAQPage` schema, so
+**visible text and schema cannot drift** (verified at render: parity 5/5).
+
+---
+
 ## 2026-07-18 — COVERAGE REGISTRY populated + shadow reads it (backfill session)
 
 ### What landed
