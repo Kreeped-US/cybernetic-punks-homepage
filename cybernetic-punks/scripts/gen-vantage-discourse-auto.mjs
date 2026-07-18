@@ -38,6 +38,7 @@ import { VANTAGE_DISCOURSE_SYSTEM_PROMPT, VANTAGE_DISCOURSE_AUTO_ADDENDUM, VANTA
 import { gatherYouTube } from '../lib/gather/youtube.js';
 import { filterGameVideos } from '../lib/gather/relevance.js';
 import { getGameConfig } from '../lib/games/index.js';
+import { logCoverageShadow } from '../lib/coverageShadow.js';
 
 var GAME_SLUG = 'marathon';   // the gather is Marathon-only
 var MIN_DESC_CHARS = 300;     // eligibility floor: a description under ~300 chars is
@@ -226,6 +227,17 @@ async function main() {
     // idempotent slug guard
     var existing = await supabase.from('feed_items').select('id').eq('slug', slug).eq('game_slug', GAME_SLUG).maybeSingle();
     if (existing.data) { console.log('  SKIP insert (slug already exists): ' + slug + '  id=' + existing.data.id); continue; }
+    // COVERAGE SHADOW (Unit 4b) -- LOG ONLY, fail-open. This path bypasses the
+    // cron's processEditor entirely, so without this call VANTAGE output is
+    // invisible to the coverage gate. Never blocks: the insert below runs
+    // unconditionally regardless of the verdict or any error inside the probe.
+    await logCoverageShadow(supabase, {
+      source: 'vantage-auto',
+      editor: 'VANTAGE',
+      gameSlug: GAME_SLUG,
+      headline: row.headline,
+    });
+
     var ins = await supabase.from('feed_items').insert(row).select('id, slug, is_published').maybeSingle();
     if (ins.error) { console.error('  INSERT FAILED: ' + ins.error.message); continue; }
     drafted++;

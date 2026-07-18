@@ -6,7 +6,7 @@ import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
-import { loadVocabulary, deriveTuple, isCovered } from '@/lib/coverage';
+import { logCoverageShadow } from '@/lib/coverageShadow';
 
 export const dynamic = 'force-dynamic';
 
@@ -470,45 +470,11 @@ function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
 // -- it measures the INCREMENTAL effect of coverage enforcement on articles that
 // currently DO publish, rather than double-counting pieces another guard already
 // stopped.
-var _coverageVocabCache = {};
-async function getCoverageVocab(supabase, gameSlug) {
-  if (_coverageVocabCache[gameSlug]) return _coverageVocabCache[gameSlug];
-  var v = await loadVocabulary(supabase, gameSlug);
-  _coverageVocabCache[gameSlug] = v;
-  return v;
-}
-
-async function logCoverageShadow(supabase, editorName, gameSlug, headline) {
-  try {
-    var vocab = await getCoverageVocab(supabase, gameSlug);
-    var tuple = deriveTuple({ headline: headline, game_slug: gameSlug }, vocab);
-    // Registry rows are not consulted yet: coverage_registry is unpopulated
-    // (Unit 3 backfill is a separate gated step), so this measures CANONICAL
-    // coverage only. Article-level coverage lands when the registry is seeded.
-    var verdict = isCovered(tuple, []);
-    var rec = {
-      editor: editorName,
-      game_slug: gameSlug,
-      headline: headline,
-      entity_type: tuple.unclassified ? null : tuple.entity_type,
-      entity_slug: tuple.unclassified ? null : tuple.entity_slug,
-      facet: tuple.unclassified ? null : tuple.facet,
-      unclassified: !!tuple.unclassified,
-      unclassified_reason: tuple.unclassified ? (tuple.reason || null) : null,
-      covered: !!verdict.covered,
-      coverage_kind: verdict.kind || null,
-      canonical_route: verdict.covered ? (verdict.ref || null) : null,
-      would_block: !!verdict.covered,
-    };
-    console.log('[COVERAGE:SHADOW] ' + JSON.stringify(rec));
-    var ins = await supabase.from('coverage_shadow').insert(rec);
-    if (ins.error) {
-      console.log('[COVERAGE:SHADOW] persist failed (non-fatal, publishing anyway): ' + ins.error.message);
-    }
-  } catch (err) {
-    console.log('[COVERAGE:SHADOW] check error (non-fatal, publishing anyway): ' + err.message);
-  }
-}
+//
+// UNIT 4b: the probe itself now lives in lib/coverageShadow.js, shared with the
+// three script write paths (VANTAGE auto/manual, DMZ news) that bypass this route
+// entirely. One implementation so the derivation and record shape cannot drift
+// between paths; see that module for the choke-point reasoning.
 
 async function processEditor(editorName, prompt, rawData, supabase, regradeContext, directive) {
   var tierChangeContext = null;
@@ -772,7 +738,12 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     //     is deliberately fail-open. Awaited so the record is durably written
     //     before the function can be torn down, but its outcome is ignored: the
     //     insert below runs unconditionally.
-    await logCoverageShadow(supabase, editorName, PRODUCING_GAME_SLUG, result.headline);
+    await logCoverageShadow(supabase, {
+      source: 'cron',
+      editor: editorName,
+      gameSlug: PRODUCING_GAME_SLUG,
+      headline: result.headline,
+    });
 
     var { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
 

@@ -35,6 +35,7 @@ import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import { ARTICLE_MODEL } from '../lib/models.js';
 import { VANTAGE_DISCOURSE_SYSTEM_PROMPT, VANTAGE_DISCOURSE_TOOL, buildVantageDiscoursePrompt } from '../lib/network/vantage.js';
+import { logCoverageShadow } from '../lib/coverageShadow.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
 // Unlike gen-dmz-news.mjs this does NOT early-return on ANTHROPIC_API_KEY, since
@@ -223,6 +224,16 @@ async function main() {
     console.log('SKIP insert (slug already exists): ' + slug + '  id=' + existing.data.id);
     return;
   }
+  // COVERAGE SHADOW (Unit 4b) -- LOG ONLY, fail-open. This path bypasses the
+  // cron's processEditor entirely. Never blocks: the insert below runs
+  // unconditionally, and the probe cannot reach the process.exit(1) path.
+  await logCoverageShadow(supabase, {
+    source: 'vantage-manual',
+    editor: 'VANTAGE',
+    gameSlug: gameSlug,
+    headline: row.headline,
+  });
+
   var ins = await supabase.from('feed_items').insert(row).select('id, slug, is_published').maybeSingle();
   if (ins.error) {
     console.error('INSERT FAILED: ' + ins.error.message);

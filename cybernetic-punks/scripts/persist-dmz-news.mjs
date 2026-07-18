@@ -23,6 +23,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+import { logCoverageShadow } from '../lib/coverageShadow.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
 function loadEnvLocal() {
@@ -241,6 +242,20 @@ async function main() {
       console.log('SKIP (exists): ' + row.slug + '  id=' + existing.data.id);
       continue;
     }
+    // COVERAGE SHADOW (Unit 4b) -- LOG ONLY, fail-open. THE STRATEGICALLY
+    // IMPORTANT PATH: Gate 2 exists primarily to stop uncontrolled DMZ
+    // generation, and this is a DMZ write path that bypasses the cron entirely.
+    // game_slug is 'dmz' (row.game_slug), NOT marathon -- lib/coverage.js
+    // loadVocabulary is game-scoped, so DMZ rows are never matched against the
+    // Marathon shell/mod allowlists. Never blocks: the insert below runs
+    // unconditionally.
+    await logCoverageShadow(supabase, {
+      source: 'dmz-news',
+      editor: row.editor || null,
+      gameSlug: row.game_slug,
+      headline: row.headline,
+    });
+
     var ins = await supabase.from('feed_items').insert(row).select('id, slug').maybeSingle();
     if (ins.error) {
       console.error('FAIL: ' + row.slug + ' -> ' + ins.error.message);

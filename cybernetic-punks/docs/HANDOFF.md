@@ -5,6 +5,57 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — COVERAGE REGISTRY unit 4b: ALL FOUR write paths now observed
+
+**All four `feed_items` write paths are observed**, each tagged with a `source` field for
+segmentation. Still **LOG-ONLY, fail-open everywhere.**
+
+| path | source | game_slug |
+|---|---|---|
+| `app/api/cron/route.js:741` | `cron` | marathon |
+| `scripts/gen-vantage-discourse-auto.mjs:234` | `vantage-auto` | marathon |
+| `scripts/gen-vantage-discourse.mjs:230` | `vantage-manual` | (gameSlug var) |
+| `scripts/persist-dmz-news.mjs:252` | `dmz-news` | **dmz** |
+
+### APPROACH: (a) shared helper, NOT a choke point
+`lib/coverageShadow.js`. The four paths have **three different select shapes** and **four
+different failure semantics** (return an error object / `continue` a loop / `process.exit(1)`
+/ log-and-continue), plus cron-only post-insert side effects. A shared insert wrapper would
+mean **rewriting production write logic to serve a logging probe** -- risk with no
+proportionate gain. The helper keeps **derivation and record shape identical**; only call
+placement is per-site. `route.js` net **-43 lines** (local probe replaced, not duplicated).
+
+**ANY FUTURE FIFTH WRITE PATH MUST CALL IT** -- noted in-module. Enforcement (Unit 5)
+inherits exactly the coverage this probe has.
+
+### BUG FOUND AND FIXED (on the strategically important path)
+`loadVocabulary` defaulted to the **Marathon** `SHELLS`/`SLOT_PAGES` allowlists **regardless
+of `gameSlug`** -- and `buildVocabulary`'s length-based fallback meant even an explicit `[]`
+fell through to Marathon. **DMZ articles would have derived nonsense tuples against Marathon
+shell names -- on the exact path Gate 2 exists to protect.** Fixed with an `== null` check
+that distinguishes "not provided" from "explicitly empty". **Same class as the
+`countered_by` empty-vs-null guard discipline** (a length/truthiness test silently
+collapsing two different states). Verified: marathon=8 shells, dmz=0, DMZ headline ->
+UNCLASSIFIED (correct).
+
+### Verified non-fatal (proven, not asserted)
+Build green; `node --check` passes on all three scripts; `lib/coverageShadow.js` imports
+cleanly under bare-node ESM (explicit `.js` extensions) AND under the Next `@/lib` alias;
+calling the probe with a `null` client returns `null` and **does not throw**. No caller
+branches on the return value -- every insert runs unconditionally.
+
+### *** UNIT 4b PREREQUISITE FOR UNIT 5 IS NOW SATISFIED *** (all paths observed)
+
+### Remaining undercount (unchanged by 4b)
+Registry rows are still unconsulted (`isCovered(tuple, [])`): this measures **CANONICAL
+collisions only, not article-vs-article**. The registry backfill is a separate gated step and
+is required before the would-block rate reflects true duplication.
+
+**DDL note:** the record now carries `source`. If `coverage_shadow` was already created:
+`alter table public.coverage_shadow add column if not exists source text not null default 'unknown';`
+
+---
+
 ## 2026-07-18 — COVERAGE REGISTRY unit 4: SHADOW MODE wired (log only, no blocking)
 
 Wired at **`app/api/cron/route.js:770`**, **ALL editors**, immediately before the

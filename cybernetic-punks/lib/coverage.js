@@ -123,11 +123,15 @@ function entitySlugFor(entityType, name) {
 // routes + sitemap). Weapons/maps/modes/events are DB-defined and must be loaded
 // with a game_slug filter -- the same filter every entity read carries, and whose
 // omission is a known latent bug elsewhere (the /shells sitemap block).
+// NOTE the null/undefined check (not a truthiness/length check): an explicitly
+// EMPTY array must mean "this game has no code-defined shells", not "fall back to
+// Marathon's". A length-based test silently gave every non-Marathon game the
+// Marathon allowlist.
 export function buildVocabulary(opts) {
   var o = opts || {};
   return {
-    shell: (o.shells && o.shells.length ? o.shells : SHELLS).slice(),
-    mod_slot: (o.modSlots && o.modSlots.length ? o.modSlots : SLOT_PAGES).slice(),
+    shell: (o.shells == null ? SHELLS : o.shells).slice(),
+    mod_slot: (o.modSlots == null ? SLOT_PAGES : o.modSlots).slice(),
     weapon: (o.weapons || []).slice(),
     map: (o.maps || []).slice(),
     mode: (o.modes || []).slice(),
@@ -136,7 +140,16 @@ export function buildVocabulary(opts) {
 }
 
 // Read-only DB load. Explicitly called; never runs at import.
+//
+// GAME-SCOPED DEFAULTS: SHELLS and SLOT_PAGES are MARATHON code-defined
+// allowlists (lib/matchups.js / lib/mods.js). buildVocabulary falls back to them
+// when none are supplied, which is correct for Marathon and WRONG for any other
+// game -- a DMZ article would otherwise be matched against Marathon shell names
+// and derive a nonsense tuple. Non-Marathon games therefore get empty
+// code-defined vocabularies and rely on their own DB entity rows until they have
+// allowlist modules of their own.
 export async function loadVocabulary(supabase, gameSlug) {
+  var isMarathon = gameSlug === 'marathon';
   function names(res) {
     if (!res || res.error || !res.data) return [];
     return res.data.map(function (r) { return r.name || r.mode_name || r.event_name || r.slug || ''; })
@@ -147,6 +160,8 @@ export async function loadVocabulary(supabase, gameSlug) {
   var mo = await supabase.from('game_modes').select('mode_name').eq('game_slug', gameSlug);
   var ev = await supabase.from('game_events').select('event_name').eq('game_slug', gameSlug);
   return buildVocabulary({
+    shells: isMarathon ? null : [],
+    modSlots: isMarathon ? null : [],
     weapons: names(w),
     maps: names(m),
     modes: names(mo),
