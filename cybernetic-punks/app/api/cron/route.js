@@ -6,6 +6,7 @@ import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
+import { loadVocabulary, deriveTuple, isCovered } from '@/lib/coverage';
 
 export const dynamic = 'force-dynamic';
 
@@ -438,6 +439,77 @@ function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
   return block;
 }
 
+// ── COVERAGE REGISTRY: SHADOW MODE (Unit 4) ─────────────────────────────────
+//
+// LOG ONLY. This does not block, skip, or alter a single publish. It records
+// what enforcement WOULD have done so Unit 5 has real data to decide on.
+//
+// WHY SHADOW FIRST: lib/coverage.js scores 20/20 on the regression fixture, but
+// that fixture only proves we recognise KNOWN duplicates. It proves nothing about
+// FALSE blocks on a genuinely new angle covering an existing entity. Turning
+// enforcement on off the back of a passing fixture would be exactly the mistake
+// this project keeps catching: trusting a detector's score instead of measuring
+// it against reality.
+//
+// WHAT WE ARE MEASURING (intent, so it survives):
+//   1. WOULD_BLOCK RATE   -- how often would enforcement have fired at all?
+//   2. THE OVER-BLOCK RISK -- of those would-blocks, how many are genuinely novel
+//      angles that SHOULD have published? This is the question the 20/20 fixture
+//      could not answer, and the only reason shadow mode exists.
+//   3. UNCLASSIFIED RATE on NEW content vs the 41.6% corpus baseline (measured
+//      2026-07-18 over 1,282 live articles).
+//
+// FAIL-OPEN IS CORRECT HERE, AND ONLY HERE. If this check throws, we log and keep
+// publishing. Shadow mode must never be able to stop the pipeline -- an
+// observability probe that can take down generation is worse than no probe.
+// DO NOT "fix" this to fail-closed: fail-CLOSED is the deliberate policy for Unit
+// 5 ENFORCEMENT, a separate change. Until then, open is the point.
+//
+// PLACEMENT: called immediately before the feed_items insert, AFTER the existing
+// body-length / exact-title / MIRANDA near-duplicate guards. That is deliberate
+// -- it measures the INCREMENTAL effect of coverage enforcement on articles that
+// currently DO publish, rather than double-counting pieces another guard already
+// stopped.
+var _coverageVocabCache = {};
+async function getCoverageVocab(supabase, gameSlug) {
+  if (_coverageVocabCache[gameSlug]) return _coverageVocabCache[gameSlug];
+  var v = await loadVocabulary(supabase, gameSlug);
+  _coverageVocabCache[gameSlug] = v;
+  return v;
+}
+
+async function logCoverageShadow(supabase, editorName, gameSlug, headline) {
+  try {
+    var vocab = await getCoverageVocab(supabase, gameSlug);
+    var tuple = deriveTuple({ headline: headline, game_slug: gameSlug }, vocab);
+    // Registry rows are not consulted yet: coverage_registry is unpopulated
+    // (Unit 3 backfill is a separate gated step), so this measures CANONICAL
+    // coverage only. Article-level coverage lands when the registry is seeded.
+    var verdict = isCovered(tuple, []);
+    var rec = {
+      editor: editorName,
+      game_slug: gameSlug,
+      headline: headline,
+      entity_type: tuple.unclassified ? null : tuple.entity_type,
+      entity_slug: tuple.unclassified ? null : tuple.entity_slug,
+      facet: tuple.unclassified ? null : tuple.facet,
+      unclassified: !!tuple.unclassified,
+      unclassified_reason: tuple.unclassified ? (tuple.reason || null) : null,
+      covered: !!verdict.covered,
+      coverage_kind: verdict.kind || null,
+      canonical_route: verdict.covered ? (verdict.ref || null) : null,
+      would_block: !!verdict.covered,
+    };
+    console.log('[COVERAGE:SHADOW] ' + JSON.stringify(rec));
+    var ins = await supabase.from('coverage_shadow').insert(rec);
+    if (ins.error) {
+      console.log('[COVERAGE:SHADOW] persist failed (non-fatal, publishing anyway): ' + ins.error.message);
+    }
+  } catch (err) {
+    console.log('[COVERAGE:SHADOW] check error (non-fatal, publishing anyway): ' + err.message);
+  }
+}
+
 async function processEditor(editorName, prompt, rawData, supabase, regradeContext, directive) {
   var tierChangeContext = null;
 
@@ -694,6 +766,13 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
         return { editor: editorName, success: false, error: 'near-duplicate of existing article (' + dup.slug + ', score ' + dup.score.toFixed(2) + ')' };
       }
     }
+
+    // (4) COVERAGE SHADOW MODE -- ALL editors, LOG ONLY, never blocks. See the
+    //     logCoverageShadow comment block above for what this measures and why it
+    //     is deliberately fail-open. Awaited so the record is durably written
+    //     before the function can be torn down, but its outcome is ignored: the
+    //     insert below runs unconditionally.
+    await logCoverageShadow(supabase, editorName, PRODUCING_GAME_SLUG, result.headline);
 
     var { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
 

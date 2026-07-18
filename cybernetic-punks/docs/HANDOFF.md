@@ -5,6 +5,64 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — COVERAGE REGISTRY unit 4: SHADOW MODE wired (log only, no blocking)
+
+Wired at **`app/api/cron/route.js:770`**, **ALL editors**, immediately before the
+`feed_items` insert. **Zero behaviour change** -- it does not block, skip, or alter a single
+publish.
+
+**FAIL-OPEN BY DESIGN, defended in-code -- do NOT "fix" it.** If the check throws, we log and
+keep publishing. An observability probe that can stop generation is worse than no probe.
+fail-CLOSED is the deliberate policy for **Unit 5 enforcement**, a separate change.
+
+**Placed AFTER** the existing body-length / exact-title / MIRANDA near-duplicate guards, so it
+measures the **incremental** effect of coverage enforcement on articles that currently DO
+publish, rather than double-counting pieces another guard already stopped.
+
+### *** SCOPE LIMIT -- THIS OBSERVES THE CRON PATH ONLY ***
+**Four `feed_items` insert paths exist; ONE is wired:**
+
+| path | status |
+|---|---|
+| `app/api/cron/route.js:698` (cron) | **WIRED** |
+| `scripts/gen-vantage-discourse-auto.mjs:229` | **BYPASSED** |
+| `scripts/gen-vantage-discourse.mjs:226` | **BYPASSED** |
+| `scripts/persist-dmz-news.mjs:244` | **BYPASSED** |
+
+**VANTAGE bypasses entirely** -- the same structural gap already recorded at HANDOFF:1074
+(it also skips `findDuplicateEvergreen`). **`persist-dmz-news.mjs` is a DMZ write path, and
+preventing uncontrolled DMZ generation is the whole purpose of Gate 2.**
+
+### CONSEQUENCE -- do NOT read shadow results as complete coverage
+- The **would-block rate is an UNDERCOUNT** (cron only). **VANTAGE and DMZ content is
+  invisible to the measurement.**
+- **Also an undercount** because registry rows are unconsulted (`isCovered(tuple, [])`):
+  this measures **CANONICAL collisions only**, not article-vs-article. The registry backfill
+  is a separate gated step.
+
+### What it records
+One structured row per generated article to `coverage_shadow`: timestamp, editor, game_slug,
+headline, derived tuple (entity_type / entity_slug / facet) or UNCLASSIFIED + reason,
+`covered`, `coverage_kind`, `canonical_route`, `would_block`. Also emitted as a
+`[COVERAGE:SHADOW]` console line. Vocabulary is memoized per invocation.
+
+**Requires the `coverage_shadow` DDL (Justin, Supabase).** Until it is run: the console record
+still emits, the insert no-ops non-fatally, and **publishing is unaffected**.
+
+### MEASURING (intent, restated in-code)
+1. **WOULD_BLOCK RATE** -- how often would enforcement have fired?
+2. **THE OVER-BLOCK RISK** -- of those, how many are genuinely novel angles that SHOULD have
+   published? **The question the 20/20 fixture could not answer, and the only reason shadow
+   mode exists.**
+3. **UNCLASSIFIED rate on NEW content** vs the 41.6% corpus baseline.
+
+### *** UNIT 4b IS NOW A PREREQUISITE FOR UNIT 5 ***
+Extract the check into a **shared helper (or a single choke point) that all four insert paths
+call**. **Enforcing a gate that three of four write paths bypass is security theatre.**
+**Unit 5 does not proceed until 4b lands.**
+
+---
+
 ## 2026-07-18 — COVERAGE REGISTRY unit 2b: extraction fixed, regression set 20/20 PASSES
 
 **2b PASSES the regression set banked in the previous entry: 20/20** (was 11/20).
