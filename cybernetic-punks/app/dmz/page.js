@@ -25,9 +25,18 @@ export const dynamic = 'force-dynamic';
 // falls back to the root layout's Marathon-branded og/twitter/keywords. Mirrors the
 // article template's override. No openGraph.images: the file-based opengraph-image
 // (app/dmz/opengraph-image) already supplies the DMZ og:image.
+// TITLE/DESCRIPTION target the live pre-launch demand (keyword research 2026-07-18):
+// "dmz 2 release date" 630/mo, "what is dmz in cod" 500/mo, "is dmz coming back"
+// 250/mo, "dmz 2026" 170/mo. The old title sold "Extraction Intelligence Hub",
+// which has no search volume and omitted the date, the year, and MW4.
+//
+// "DMZ 2" is deliberately NOT in the title: it is player phrasing, not an official
+// name, and a title asserts. The FAQ is where the term is used AND corrected in the
+// same breath (see FAQ_LAUNCH_A). Title 53 chars / description 145 chars (Gate 4:
+// <=60 / <=155).
 export const metadata = {
-  title: 'DMZ — Extraction Intelligence Hub',
-  description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for the DMZ.',
+  title: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+  description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
   keywords: ['DMZ', 'DMZ Modern Warfare 4', 'MW4 DMZ', 'Call of Duty DMZ', 'DMZ extraction zone', 'DMZ Hajin', 'DMZ FOB', 'DMZ crafting', 'DMZ loadouts', 'DMZ guide'],
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
   openGraph: {
@@ -210,6 +219,7 @@ export default async function DmzLanding() {
   // same order) -- the structured-only gap is closed. CollectionPage describes the hub
   // as its coverage sections (from dmz.sections, never a hardcoded list) -> tracks config.
   var HUB_BASE = 'https://cyberneticpunks.com';
+  var DMZ_NAMING_LINE = 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4, and it arrives October 23, 2026.';
   var hubBreadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
@@ -242,11 +252,22 @@ export default async function DmzLanding() {
     printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
     hajin:   { href: '/dmz/field-intel/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'the Hajin Exclusion Zone' },
   };
-  var FAQ_LAUNCH_Q = 'When does DMZ launch?';
-  var FAQ_LAUNCH_A = 'DMZ launches on October 23, 2026, alongside Call of Duty: Modern Warfare 4. The date is confirmed by the official Call of Duty announcement, which states Modern Warfare 4 releases Friday, October 23, 2026; DMZ ships as part of the game.';
+  // Q PHRASING follows the searcher, not our internal vocabulary: "release date" and
+  // "coming back" are the live high-volume terms. The ANSWERS stay strictly inside
+  // the confirmed sources (the May 28 CoD announcement for the date, the June Deep
+  // Dive for everything else).
+  var FAQ_LAUNCH_Q = 'What is the DMZ 2 release date?';
+  var FAQ_LAUNCH_A = 'DMZ comes out on October 23, 2026. Many players search for it as "DMZ 2", but the official name is simply DMZ: the extraction mode shipping inside Call of Duty: Modern Warfare 4. The date is confirmed by the official Call of Duty announcement, which states Modern Warfare 4 releases Friday, October 23, 2026, and DMZ ships as part of the game.';
+  // HONESTY-CRITICAL. The query "is dmz coming back" PRESUPPOSES a link to the 2022
+  // Modern Warfare II DMZ. No source confirms that relationship, so the answer says
+  // YES to what IS confirmed (MW4 has a mode called DMZ, dated, Deep-Dive detailed)
+  // and marks the presupposition as unconfirmed rather than quietly implying
+  // continuity. Do NOT "improve" this into a claim that DMZ is a sequel or revival.
+  var FAQ_BACK_Q = 'Is DMZ coming back?';
+  var FAQ_BACK_A = 'Yes. Call of Duty: Modern Warfare 4 includes a mode called DMZ, launching October 23, 2026, and Activision has detailed it in an official Deep Dive. What has not been confirmed is how it relates to the original DMZ from Modern Warfare II, including whether progression, factions, or any other systems carry over.';
   var FAQ_MAP_Q = 'Where is DMZ set?';
   var FAQ_MAP_A = 'DMZ is set in the Hajin Exclusion Zone, a contested area on the Korean peninsula left saturated with abandoned military technology after the events of the Modern Warfare 4 campaign.';
-  var FAQ_MODE_Q = 'What kind of mode is DMZ?';
+  var FAQ_MODE_Q = 'What is DMZ in Call of Duty?';
   var FAQ_MODE_A = "DMZ is a mode within Call of Duty: Modern Warfare 4. The official Deep Dive frames it around extraction operations: squads deploy into the Hajin Exclusion Zone behind enemy lines and 'loot, fight, negotiate, betray, and extract whatever you can carry,' with both rival Operators and enemy combatants active throughout the zone.";
   var FAQ_CONFIRMED_Q = 'What has been officially confirmed about DMZ so far?';
   var FAQ_CONFIRMED_PRE = 'Three areas have been covered in depth so far, each drawn from the official Deep Dive: ';
@@ -265,6 +286,7 @@ export default async function DmzLanding() {
     '@context': 'https://schema.org', '@type': 'FAQPage',
     mainEntity: [
       { '@type': 'Question', name: FAQ_LAUNCH_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_LAUNCH_A } },
+      { '@type': 'Question', name: FAQ_BACK_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_BACK_A } },
       { '@type': 'Question', name: FAQ_MAP_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MAP_A } },
       { '@type': 'Question', name: FAQ_MODE_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MODE_A } },
       { '@type': 'Question', name: FAQ_CONFIRMED_Q, acceptedAnswer: { '@type': 'Answer', text: faqConfirmedHtml } },
@@ -314,6 +336,13 @@ export default async function DmzLanding() {
           <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>DMZ launches October 23, 2026</span>
           <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>&mdash; the hub is already standing by.</span>
         </div>
+        {/* NAMING LINE. Uses the searcher's term ("DMZ 2", the highest-volume live
+            query) in visible body copy and corrects it in the same sentence, so the
+            page ranks for the phrase without asserting a name that is not official.
+            Held as a constant so the copy has one source, like the FAQ strings. */}
+        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0', maxWidth: 600, lineHeight: 1.6 }}>
+          {DMZ_NAMING_LINE}
+        </p>
       </div>
 
       {/* Launch-email capture (owned list). Landing gets the dedicated BLOCK; the
@@ -351,6 +380,10 @@ export default async function DmzLanding() {
         <div>
           <h3 style={faqQStyle}>{FAQ_LAUNCH_Q}</h3>
           <p style={faqAStyle}>{FAQ_LAUNCH_A}</p>
+        </div>
+        <div>
+          <h3 style={faqQStyle}>{FAQ_BACK_Q}</h3>
+          <p style={faqAStyle}>{FAQ_BACK_A}</p>
         </div>
         <div>
           <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
