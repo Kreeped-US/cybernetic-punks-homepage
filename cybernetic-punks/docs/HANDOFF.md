@@ -5,6 +5,28 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — CRON now HARD-FAILS without SUPABASE_SERVICE_KEY (operational)
+
+**Read this before a deploy.** The cron **hard-fails without `SUPABASE_SERVICE_KEY`**: logs to
+stderr, returns **HTTP 500**, and does nothing else. The guard sits **after** the `CRON_SECRET`
+auth check but **before** `gatherAll()`, so a misconfigured deploy costs **zero model spend**.
+
+Previously it silently fell back to the anon key
+(`SUPABASE_SERVICE_KEY || NEXT_PUBLIC_SUPABASE_ANON_KEY`), which -- with RLS enabled and no
+policies -- meant **writes were rejected while the fail-open shadow probe logged
+"persist failed (non-fatal)" and the cycle looked healthy. A config error became invisible
+data loss.**
+
+Chose **HTTP 500 over `sendCronFailureAlert` deliberately**: an alerter sitting in the
+config-guard path could fail for the same misconfiguration it is meant to report.
+
+Audit note: `route.js` has exactly ONE `createClient` and had exactly ONE anon reference (the
+fallback itself). Every write in the route (`editor_directives`, `feed_items`, `meta_tiers`,
+`meta_tier_snapshots`, `coverage_shadow`) needs the service role -- nothing legitimately used
+anon, so nothing broke. Behaviour when the key IS set is unchanged.
+
+---
+
 ## 2026-07-18 — COVERAGE facet rules tightened: 141 FALSE collisions removed
 
 ### THE HEADLINE

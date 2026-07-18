@@ -812,9 +812,29 @@ export async function GET(req) {
     }
   }
 
+  // SERVICE KEY REQUIRED -- NO ANON FALLBACK.
+  //
+  // This previously read `SUPABASE_SERVICE_KEY || NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+  // That fallback turned a config error into INVISIBLE DATA LOSS: tables with RLS
+  // enabled and no policies (coverage_registry, coverage_shadow) silently reject
+  // anon writes, and the coverage shadow probe is deliberately fail-OPEN, so a
+  // rejected insert logged "persist failed (non-fatal)" and the cycle carried on
+  // looking healthy. A week later the table is empty and nothing ever alerted.
+  //
+  // Every write this route performs (directives, feed_items, meta_tiers,
+  // meta_tier_snapshots, coverage_shadow) needs the service role. Nothing here
+  // legitimately uses the anon client, so there is no reason to accept one.
+  // Fail LOUDLY instead -- same discipline as the three standalone scripts, which
+  // hard-exit when SUPABASE_SERVICE_KEY is unset.
+  if (!process.env.SUPABASE_SERVICE_KEY) {
+    console.error('[CRON] ABORT: SUPABASE_SERVICE_KEY is not set. Refusing to run on the anon key -- ' +
+      'RLS-protected writes would be silently rejected. Set SUPABASE_SERVICE_KEY in the Vercel env.');
+    return Response.json({ error: 'SUPABASE_SERVICE_KEY not configured' }, { status: 500 });
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    process.env.SUPABASE_SERVICE_KEY
   );
 
   try {
