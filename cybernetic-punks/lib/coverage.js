@@ -154,38 +154,107 @@ export async function loadVocabulary(supabase, gameSlug) {
   });
 }
 
-// ── FACET DETECTION ───────────────────────────────────────────────────────────
+// ── GENERIC VOCABULARY TERMS (BUG 2, part 2) ──────────────────────────────────
 //
-// Ordered most-specific first. Order is behavioural: a "Best Rook Build: The
-// Destroyer Counter Meta" headline contains both build and counter language, and
-// resolving it to `counter` would wrongly mark it covered by /matchups. `build`
-// is therefore tested BEFORE `counter` -- an article that tells you what to RUN
-// is a build piece even when it frames itself against a matchup.
+// Some DB entity names are ordinary English words that appear constantly in
+// headlines with no entity meaning ("Ranked" is a game_modes row; "in Ranked
+// Solo" appears in dozens of shell articles). Left ungated they manufacture
+// phantom entities.
+//
+// GATED, NOT DROPPED. Dropping would lose genuine coverage of the real Ranked
+// mode / Outpost map. Instead these require an adjacent CONTEXT word to count as
+// an entity mention -- "Ranked mode"/"Ranked queue" is the entity, "in Ranked
+// Solo" is an adverbial phrase. Everything else in the vocabulary matches freely.
+var GENERIC_TERMS = {
+  ranked: 1, outpost: 1, perimeter: 1, intercept: 1, lockdown: 1, anomaly: 1, heatwave: 1,
+};
+var GENERIC_CONTEXT_RE = /\b(mode|modes|queue|playlist|ladder|map|maps|event|events|zone|run|runs)\b/i;
+
+// ── FACET DETECTION (BUG 3) ───────────────────────────────────────────────────
+//
+// `counter` is now tested BEFORE `build` -- the previous order absorbed counter
+// articles into build (only 32 counter classifications across 1,282 live rows,
+// implausibly low against a corpus with ~28 known counter guides).
+//
+// The collision that ordering originally guarded against ("Best Rook Build: The
+// Destroyer Counter Meta") is now handled properly by role awareness instead:
+// `counter` requires an actual TARGET role to have resolved. Counter WORDS alone
+// no longer make an article a counter piece -- so a build headline that merely
+// mentions a counter-meta stays `build`.
 var FACET_RULES = [
+  { facet: 'counter', re: /\bcounter\b|how to beat\b|\bbeat it\b|hard.?counter|\bmatchup\b|\bvs\.?\b/i, requiresTarget: true },
   { facet: 'build',   re: /\bbuild\b|\bloadout\b|\bsetup\b|\bengine\b/i },
-  { facet: 'counter', re: /\bcounter\b|how to beat\b|\bbeat it\b|hard.?counter|\bmatchup\b|\bvs\.?\b/i },
   { facet: 'tier',    re: /\btier\b|tier list|\bmeta\b|\branking/i },
   { facet: 'economy', re: /\bcredit|\beconomy\b|\bprice|\bcost\b|\bfarming\b/i },
   { facet: 'news',    re: /\bupdate\b|\bpatch\b|\bannounce|\bdev\b|season \d|\bhotfix\b/i },
   { facet: 'lore',    re: /\blore\b|\bstory\b|\bnarrative\b|\bcanon\b/i },
 ];
 
-export function detectFacet(text) {
+export function detectFacet(text, targetResolved) {
   var t = text || '';
   for (var i = 0; i < FACET_RULES.length; i++) {
-    if (FACET_RULES[i].re.test(t)) return FACET_RULES[i].facet;
+    var rule = FACET_RULES[i];
+    if (rule.requiresTarget && !targetResolved) continue;
+    if (rule.re.test(t)) return rule.facet;
   }
   return 'guide'; // entity named, no specific angle -> general reference angle
 }
 
-// ── ENTITY DETECTION ──────────────────────────────────────────────────────────
+// ── ROLE MARKERS (BUG 1) ──────────────────────────────────────────────────────
 //
-// Word-boundary matching against the vocabulary. Boundaries matter: the x-gate
-// fix (55f9e08) exists because substring matching made "rook" match "rookie".
-// Longest name first so multi-word entities win over a contained single word.
-function findEntity(text, vocab) {
-  var t = (text || '').toLowerCase();
-  var best = null;
+// The critical fix. "How to beat X with Y" was filing under Y (the shell being
+// RECOMMENDED) instead of X (the shell the article is ABOUT). That misfiled every
+// Thief article (0/7) because "Thief" lost a longest-name tiebreak to "Destroyer"
+// / "Conquest LMG" / "Ranked".
+//
+// Legible positional rules, deliberately NOT a scoring model:
+//   TARGET-1 (strong)  -- entity FOLLOWS: beat / counter to / counters / vs /
+//                         versus / against / how to deal with
+//   TARGET-2 (weaker)  -- entity immediately PRECEDES "counter"
+//                         ("Thief Counter Guide", "Rook Counter-Meta")
+//                         ...AND sits in the headline's FIRST CLAUSE (before the
+//                         first ':' or em dash). This is what keeps "Best Rook
+//                         Build: The Destroyer Counter Meta" from filing under
+//                         Destroyer -- a subtitle mention is not the subject.
+//   RECOMMENDATION     -- entity FOLLOWS: with / using / run / runs. Never a
+//                         target.
+// Resolution order: TARGET-1 wins, else TARGET-2, else the best non-recommendation
+// mention, else UNCLASSIFIED (only recommendation entities present -> we do not
+// guess).
+// NOTE the bare verb `counter` is included alongside "counter to"/"counters":
+// "How to Counter Assassin's One-Shot Meta" is a target construction and was
+// missed by the first pass (it filed as tier). Safe because the marker must be
+// IMMEDIATELY followed by a vocabulary entity -- "Grenade Spam Counter: Post-..."
+// and "Heavy Counter Meta" have no entity in that slot, so they do not false-fire.
+var TARGET_BEFORE_RE = /\b(?:how to beat|beat|counter to|counters|counter|versus|vs\.?|against|deal with)\s+(?:the\s+)?$/i;
+var REC_BEFORE_RE = /\b(?:with|using|runs?)\s+(?:the\s+)?$/i;
+var COUNTER_AFTER_RE = /^\s*[-:]?\s*counter/i;
+
+// Everything before the first ':' or em/en dash -- the headline's subject clause.
+function firstClauseEnd(text) {
+  var m = (text || '').search(/[:—–]/);
+  return m === -1 ? (text || '').length : m;
+}
+
+// ── ENTITY DETECTION (BUG 2) ──────────────────────────────────────────────────
+//
+// Word-boundary matching (the x-gate fix 55f9e08 exists because substring
+// matching made "rook" match "rookie").
+//
+// ENTITY-TYPE PRIORITY replaces longest-name-wins: shell > weapon > mod_slot >
+// map > mode > event. Name length now breaks ties only WITHIN a type. Previously
+// "Ranked" (mode, 6 chars) outranked "Thief" (shell, 5) purely on length.
+function typeRank(t) {
+  var i = ENTITY_TYPES.indexOf(t);
+  return i === -1 ? 99 : i;
+}
+
+// All entity mentions with position + role.
+function findMentions(text, vocab) {
+  var t = (text || '');
+  var lower = t.toLowerCase();
+  var clauseEnd = firstClauseEnd(t);
+  var out = [];
   for (var ti = 0; ti < ENTITY_TYPES.length; ti++) {
     var type = ENTITY_TYPES[ti];
     var names = vocab[type] || [];
@@ -193,12 +262,40 @@ function findEntity(text, vocab) {
       var name = names[i];
       if (!name) continue;
       var n = String(name).toLowerCase();
-      var re = new RegExp('(^|[^a-z0-9])' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9]|$)');
-      if (!re.test(t)) continue;
-      if (!best || n.length > best.nameLen) {
-        best = { entity_type: type, name: String(name), nameLen: n.length };
+      var esc = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var re = new RegExp('(^|[^a-z0-9])(' + esc + ')([^a-z0-9]|$)', 'g');
+      var m;
+      while ((m = re.exec(lower)) !== null) {
+        var at = m.index + m[1].length;
+        // Generic-term context gate (see GENERIC_TERMS above).
+        if (GENERIC_TERMS[n] && !GENERIC_CONTEXT_RE.test(t.slice(Math.max(0, at - 30), at + n.length + 30))) {
+          continue;
+        }
+        var before = t.slice(Math.max(0, at - 28), at);
+        var after = t.slice(at + n.length, at + n.length + 12);
+        var role = 'plain';
+        if (REC_BEFORE_RE.test(before)) role = 'rec';
+        else if (TARGET_BEFORE_RE.test(before)) role = 'target1';
+        else if (COUNTER_AFTER_RE.test(after) && at < clauseEnd) role = 'target2';
+        out.push({ entity_type: type, name: String(name), nameLen: n.length, at: at, role: role });
+        re.lastIndex = m.index + m[1].length + n.length;
       }
     }
+  }
+  return out;
+}
+
+// Best mention within a candidate set: entity-type priority, then longer name,
+// then earlier position.
+function pickBest(cands) {
+  var best = null;
+  for (var i = 0; i < cands.length; i++) {
+    var c = cands[i];
+    if (!best) { best = c; continue; }
+    var a = typeRank(c.entity_type), b = typeRank(best.entity_type);
+    if (a !== b) { if (a < b) best = c; continue; }
+    if (c.nameLen !== best.nameLen) { if (c.nameLen > best.nameLen) best = c; continue; }
+    if (c.at < best.at) best = c;
   }
   return best;
 }
@@ -206,23 +303,42 @@ function findEntity(text, vocab) {
 // ── TOPIC-KEY DERIVATION ──────────────────────────────────────────────────────
 //
 // Returns a tuple, or an UNCLASSIFIED marker. NEVER guesses an entity: if no
-// vocabulary term matches, the row is UNCLASSIFIED with a reason. A guessed tuple
-// would either block real work or silently mis-file coverage, and both are worse
-// than admitting the row is unclassifiable.
+// vocabulary term matches -- or only a RECOMMENDATION-position entity does -- the
+// row is UNCLASSIFIED with a reason. A guessed tuple would either block real work
+// or silently mis-file coverage, and both are worse than admitting we don't know.
 export function deriveTuple(row, vocab) {
   var r = row || {};
-  var text = [r.headline || '', r.slug || ''].join(' ');
-  var ent = findEntity(text, vocab);
-  if (!ent) {
+  // Headline only for role rules: the slug is a flattened, punctuation-stripped
+  // restatement, so appending it would destroy the positional signal the target/
+  // recommendation markers depend on.
+  var text = r.headline || '';
+  var mentions = findMentions(text, vocab);
+  if (!mentions.length) {
     return { unclassified: true, reason: 'no vocabulary entity matched', game_slug: r.game_slug || null };
   }
-  var facet = detectFacet(text);
+
+  function of(role) { return mentions.filter(function (m) { return m.role === role; }); }
+  var t1 = of('target1'), t2 = of('target2');
+  var nonRec = mentions.filter(function (m) { return m.role !== 'rec'; });
+
+  var targetResolved = !!(t1.length || t2.length);
+  var chosen = t1.length ? pickBest(t1) : (t2.length ? pickBest(t2) : pickBest(nonRec));
+
+  if (!chosen) {
+    return {
+      unclassified: true,
+      reason: 'only recommendation-position entities found (no target)',
+      game_slug: r.game_slug || null,
+    };
+  }
+
   return {
     game_slug: r.game_slug || null,
-    entity_type: ent.entity_type,
-    entity_slug: entitySlugFor(ent.entity_type, ent.name),
-    entity_name: ent.name,
-    facet: facet,
+    entity_type: chosen.entity_type,
+    entity_slug: entitySlugFor(chosen.entity_type, chosen.name),
+    entity_name: chosen.name,
+    facet: detectFacet(text, targetResolved),
+    role: chosen.role,
   };
 }
 

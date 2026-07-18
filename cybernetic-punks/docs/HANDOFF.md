@@ -5,6 +5,59 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — COVERAGE REGISTRY unit 2b: extraction fixed, regression set 20/20 PASSES
+
+**2b PASSES the regression set banked in the previous entry: 20/20** (was 11/20).
+- **12/12** cuts -> correct shell + flagged COVERED
+- **7/7** Thief articles (**was 0/7** -- the largest cluster, previously a total failure)
+- **8/8** valid-shell
+
+Still **UNWIRED**. Nothing touches `app/api/cron/route.js`.
+
+### The three fixes -- LEGIBLE RULES, not tuned scores
+1. **Role-aware positional extraction.** Resolution order: **TARGET-1** markers (entity
+   FOLLOWS `how to beat` / `beat` / `counter to` / `counters` / `counter` / `versus` / `vs` /
+   `against` / `deal with`) > **TARGET-2** (entity immediately PRECEDES "counter", **first
+   clause only** -- before the first `:` or em dash) > best non-recommendation mention >
+   **UNCLASSIFIED**. Entities following `with` / `using` / `run` / `runs` are
+   **RECOMMENDATIONS and never targets**. The first-clause constraint is what stops
+   "Best Rook Build: The Destroyer Counter Meta" filing under Destroyer -- a subtitle
+   mention is not the subject. (The bare verb `counter` was added beyond the original spec:
+   honest verification caught "How to Counter Assassin's One-Shot Meta" filing as `tier`.)
+2. **Entity-type priority** `shell > weapon > mod_slot > map > mode > event`; **name length
+   breaks ties only WITHIN a type** (previously "Ranked" at 6 chars outranked "Thief" at 5).
+3. **Generic terms GATED, not dropped** -- `ranked, outpost, perimeter, intercept, lockdown,
+   anomaly, heatwave` require an adjacent context word (`mode/queue/playlist/ladder/map/
+   event/zone/run`). Dropping would lose genuine coverage of the real Ranked mode.
+4. **Facet order:** `counter` tested BEFORE `build`, but `counter` **requires a resolved
+   target role** -- counter words alone no longer make a build article a counter piece.
+
+### Bug-2 confirmed by the broad sample
+`mode` **162 -> 22**, `map` **192 -> 118**, `shell` **313 -> 472**. Classified %
+**DROPPED 66.1 -> 58.4 and that is the fix working** -- phantom entities are gone, so the
+corpus is more *honestly* unclassified than before.
+
+### counter facet 32 -> 18: investigated, NOT a regression
+Of 29 counter-signalling live headlines, 16 classify `counter` and **13 of the 13
+non-classifications are correct** (build pieces that merely contain counter words; "How to
+Counter Cheaters" has no entity). **The original "32 is implausibly low" premise was WRONG** --
+the old 32 was inflated by counter-words on build articles. **18 is the honest number.**
+
+### TWO STANDING CAVEATS -- do NOT treat the registry as complete coverage
+1. **41.6% (533 live articles) UNCLASSIFIED**, all for one reason: no vocabulary entity in the
+   headline (news/community/patch). Arguably correct -- nothing to collide with -- but **the
+   gate is blind to two-fifths of the corpus.** A real limit on how much Gate 2 can protect.
+2. **OVER-BLOCK RISK IS UNTESTED.** The fixture proves we catch *known duplicates*; it proves
+   **nothing** about false blocks on a genuinely novel angle covering an existing entity.
+   **Only shadow mode measures this. Log-only before enforcement regardless of the 20/20.**
+
+### NEXT
+**Unit 4 shadow mode:** wire at `app/api/cron/route.js:688`, **all editors, LOG ONLY, no
+blocking**. Measure the would-block rate for ~1 week before **Unit 5 enforcement
+(fail-CLOSED)**. No DMZ gated generation until units 4-6 are green.
+
+---
+
 ## 2026-07-18 — COVERAGE REGISTRY units 1-3: module built, accuracy report FAILS
 
 **Gate 2 enforcement groundwork.** `lib/coverage.js` is **BUILT but UNWIRED and NOT
