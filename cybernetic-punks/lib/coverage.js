@@ -48,7 +48,17 @@ export const ENTITY_TYPES = ['shell', 'weapon', 'mod_slot', 'map', 'mode', 'even
 
 // Closed facet enum. Versioned like docs/TAG_TAXONOMY.md -- editors invent
 // variants when a vocabulary is open, which is why the tag taxonomy doc exists.
-export const FACETS = ['counter', 'build', 'tier', 'guide', 'news', 'economy', 'lore'];
+//
+// `community` added 2026-07-18. WHY IT IS A SEPARATE FACET FROM `news`: the two
+// have different BLOCK POLICIES, and facets exist to drive coverage decisions.
+//   news      -- patch/balance/incident. May one day route to a patch-notes
+//                canonical, so it is plausibly blockable.
+//   community -- stream/creator/Reddit/Steam-review coverage. Dated ephemera that
+//                NO canonical will ever own ("what Reddit thought this week" is
+//                not a reference topic). It must never be blocked.
+// Merged into one facet they would share a single policy, which is wrong for one
+// of them. Split, each can be governed correctly.
+export const FACETS = ['counter', 'build', 'tier', 'guide', 'news', 'community', 'economy', 'lore'];
 
 // ── CANONICAL MAP ─────────────────────────────────────────────────────────────
 //
@@ -196,15 +206,40 @@ var GENERIC_CONTEXT_RE = /\b(mode|modes|queue|playlist|ladder|map|maps|event|eve
 // `counter` requires an actual TARGET role to have resolved. Counter WORDS alone
 // no longer make an article a counter piece -- so a build headline that merely
 // mentions a counter-meta stays `build`.
+// ORDER IS BEHAVIOURAL. news-strong sits ABOVE community so "Patch 1.0.6.3:
+// Community Reacts" files as news (a version number is a hard news signal),
+// while community sits ABOVE news-soft so "Cryo Archive Launch Stream ... on
+// Twitch" files as community rather than being caught by the softer "launch"
+// signal. `guide` is LAST and no longer a fallback (see detectFacet).
 var FACET_RULES = [
-  { facet: 'counter', re: /\bcounter\b|how to beat\b|\bbeat it\b|hard.?counter|\bmatchup\b|\bvs\.?\b/i, requiresTarget: true },
-  { facet: 'build',   re: /\bbuild\b|\bloadout\b|\bsetup\b|\bengine\b/i },
-  { facet: 'tier',    re: /\btier\b|tier list|\bmeta\b|\branking/i },
-  { facet: 'economy', re: /\bcredit|\beconomy\b|\bprice|\bcost\b|\bfarming\b/i },
-  { facet: 'news',    re: /\bupdate\b|\bpatch\b|\bannounce|\bdev\b|season \d|\bhotfix\b/i },
-  { facet: 'lore',    re: /\blore\b|\bstory\b|\bnarrative\b|\bcanon\b/i },
+  { facet: 'counter',   re: /\bcounter\b|how to beat\b|\bbeat it\b|hard.?counter|\bmatchup\b|\bvs\.?\b/i, requiresTarget: true },
+  { facet: 'build',     re: /\bbuild\b|\bloadout\b|\bsetup\b|\bengine\b/i },
+  { facet: 'tier',      re: /\btier\b|tier list|\bmeta\b|\branking/i },
+  // news-strong: unambiguous patch/balance/incident signals.
+  { facet: 'news',      re: /\bpatch\b|\bhotfix\b|\bnerf|\bbuff|\bupdate\b|\d+\.\d+\.\d+|\bbalance\b|\bexploit\b|\bbug\b|\bcrash|\boutage\b|\bdowntime\b|\bfix(?:es|ed)?\b|\bdev\b|\bannounce|\bmatchmaking\b|\banti-?cheat\b/i },
+  // community: creator/player/social coverage. Above news-soft on purpose.
+  // Deliberately NOT a bare \bplayers?\b -- that phrase appears in dozens of
+  // legitimate guide/counter headlines ("Most Players Miss") and would swamp it.
+  { facet: 'community', re: /\bstream(?:s|ing|er|ers)?\b|\btwitch\b|\byoutube\b|\bcommunity\b|\breddit\b|\bsteam review|\breviews?\b|\bviewers?\b|\bcreator|\bclip\b|\btournament\b|\blfg\b|\bdiscord\b|\bplayer ?base\b|\bsentiment\b/i },
+  // news-soft: dated/event framing that is not a patch and not community chatter.
+  { facet: 'news',      re: /season \d|\blaunch(?:es|ed|ing)?\b|\breturns?\b|\bweekend\b|\bevent\b|\bgoes live\b|\bincoming\b/i },
+  { facet: 'economy',   re: /\bcredit|\beconomy\b|\bprice|\bcost\b|\bfarming\b|\bsalvage\b/i },
+  { facet: 'lore',      re: /\blore\b|\bstory\b|\bnarrative\b|\bcanon\b/i },
+  // guide LAST and POSITIVE-SIGNAL ONLY. Previously the catch-all.
+  { facet: 'guide',     re: /\bguide\b|how to\b|\bexplained\b|\bbreakdown\b|\bcomplete\b|\bbasics\b|\btips\b|\bwalkthrough\b|\bmastery\b|\bmaster\b|\blearn(?:ing)?\b|\bbeginner\b|\bfirst steps\b|\beverything you\b/i },
 ];
 
+// GUIDE IS NO LONGER A FALLBACK. It used to be returned whenever nothing else
+// matched, which quietly absorbed dated stream/event coverage into
+// map/<x>/guide and inflated the */guide collision counts (the 65-article cryo
+// cluster was substantially launch-stream and community pieces, not 65
+// competing guides).
+//
+// Returning null here makes deriveTuple emit UNCLASSIFIED instead. An honest
+// unclassified beats a wrong `guide`: the same discipline applied to entity
+// extraction, and the same reason we never guess a tuple. A wrong `guide` is
+// worse than no classification because `shell+guide` and `map+guide` HAVE
+// canonicals -- a mislabelled row becomes a false block at Unit 5.
 export function detectFacet(text, targetResolved) {
   var t = text || '';
   for (var i = 0; i < FACET_RULES.length; i++) {
@@ -212,7 +247,7 @@ export function detectFacet(text, targetResolved) {
     if (rule.requiresTarget && !targetResolved) continue;
     if (rule.re.test(t)) return rule.facet;
   }
-  return 'guide'; // entity named, no specific angle -> general reference angle
+  return null;
 }
 
 // ── ROLE MARKERS (BUG 1) ──────────────────────────────────────────────────────
@@ -347,12 +382,26 @@ export function deriveTuple(row, vocab) {
     };
   }
 
+  // A confident entity with no confident facet is NOT a tuple. Emitting
+  // `guide` here (the old fallback) would file dated coverage under a facet that
+  // HAS a canonical, manufacturing false blocks at enforcement.
+  var facet = detectFacet(text, targetResolved);
+  if (!facet) {
+    return {
+      unclassified: true,
+      reason: 'entity matched but no confident facet',
+      game_slug: r.game_slug || null,
+      entity_type: chosen.entity_type,
+      entity_slug: entitySlugFor(chosen.entity_type, chosen.name),
+    };
+  }
+
   return {
     game_slug: r.game_slug || null,
     entity_type: chosen.entity_type,
     entity_slug: entitySlugFor(chosen.entity_type, chosen.name),
     entity_name: chosen.name,
-    facet: detectFacet(text, targetResolved),
+    facet: facet,
     role: chosen.role,
   };
 }

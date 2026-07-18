@@ -5,6 +5,61 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — COVERAGE facet rules tightened: 141 FALSE collisions removed
+
+### THE HEADLINE
+**Canonical collisions: 30 tuples / 230 articles -> 22 tuples / 89 articles.** The `guide`
+fallback was manufacturing **141 FALSE would-blocks (61%)**. At Unit 5 those would have been
+**real suppressions of legitimate dated content**. This is the untested **over-block risk**
+-- found and fixed **BEFORE** enforcement, which is the entire reason shadow-first exists.
+
+### CRYO CORRECTION (changes a pending decision)
+The 65-article `map/cryo-archive/guide` cluster **was never 65 competing guides**. It splits:
+`tier=24, community=22, news=22, guide=11, build=3` -- **only 11 are guide-shaped**; the rest
+is launch-stream / event coverage the fallback laundered into `guide`. **The largest apparent
+cluster on the site was substantially a classifier artifact.** Relevant to the pending
+cryo-archive canonical-or-prune decision in the deliberate-decision queue: it is an
+**11-guide problem plus dated coverage, not an 89-article crisis.**
+
+### `community` ADDED as a facet, deliberately separate from `news`
+Policy reasoning: **news** (patch/balance/incident) may one day route to a patch-notes
+canonical and is **plausibly blockable**; **community** (stream/creator/Reddit/Steam-review)
+is dated ephemera **no canonical will ever own** and **must NEVER be blocked**. Merged, they
+would share one policy that is wrong for one of them.
+
+### `guide` is NO LONGER A FALLBACK
+Requires a positive signal (`guide, how to, explained, breakdown, complete, basics, tips,
+walkthrough, mastery, learn, beginner, first steps`); otherwise **UNCLASSIFIED** with reason
+`"entity matched but no confident facet"`. **A wrong `guide` is worse than no classification
+BECAUSE `shell+guide` and `map+guide` HAVE canonicals** -- so a mislabel becomes a false
+block.
+
+### Facet order is BEHAVIOURAL
+`counter > build > tier > news-strong > community > news-soft > economy > lore > guide`.
+news-strong above community so "Patch 1.0.6.3: Community Reacts" is **news**; community above
+news-soft so "Launch Stream on Twitch" is **community**.
+**Bare `\bplayers?\b` deliberately EXCLUDED** from community -- it appears in legitimate
+counter/guide headlines ("Most Players Miss") and would swamp the facet.
+
+### Numbers
+- **Regression fixture STILL 20/20** -- no counter regression.
+- Classified **58.4% -> 53.7%** (unclassified **41.6% -> 46.3%**); `guide` **221->74**,
+  `news` **30->86**, `community` **0->32**. The **+61 unclassified are the dated content
+  that was being laundered**, not a loss.
+
+### KNOWN LIMITATION (flagged, NOT fixed)
+**Entity-priority can pick the wrong subject when two entity types appear**: "Cryo Archive
+Returns: ... Thief Holotag" resolves to `shell/thief` when the subject is arguably the map.
+This is an **entity-priority issue, separate from facets** -- do not mistake it for a facet
+bug.
+
+### DDL CONSEQUENCE (still free -- neither table exists yet)
+`FACETS` now includes `community`, so the proposed `coverage_registry` CHECK must be:
+`check (facet in ('counter','build','tier','guide','news','community','economy','lore'))`.
+Running the earlier DDL as-written would **reject every community row**.
+
+---
+
 ## 2026-07-18 — COVERAGE REGISTRY unit 4b: ALL FOUR write paths now observed
 
 **All four `feed_items` write paths are observed**, each tagged with a `source` field for
