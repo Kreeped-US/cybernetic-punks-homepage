@@ -5,6 +5,92 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — COVERAGE REGISTRY units 1-3: module built, accuracy report FAILS
+
+**Gate 2 enforcement groundwork.** `lib/coverage.js` is **BUILT but UNWIRED and NOT
+gate-ready** — entity extraction scores **~55% correct entity** on the 20-article counter set,
+including **0/7 on Thief, the largest cluster**. Nothing is wired into `app/api/cron/route.js`;
+no `feed_items` writes.
+
+**What IS sound:** the canonical map, the DDL shape, and the module scaffolding. Only the
+entity-extraction heuristic fails. The module imports `lib/matchups.js` (`SHELLS`) and
+`lib/mods.js` (`SLOT_PAGES`) — the same sources `app/sitemap.js` reads — so no route list is
+duplicated.
+
+### UNIT 1 — proposed DDL (Justin runs in Supabase; NOT executed)
+```sql
+create table if not exists public.coverage_registry (
+  id uuid primary key default gen_random_uuid(),
+  game_slug text not null,
+  entity_type text not null check (entity_type in ('shell','weapon','mod_slot','map','mode','event')),
+  entity_slug text not null,
+  facet text not null check (facet in ('counter','build','tier','guide','news','economy','lore')),
+  coverage_kind text not null check (coverage_kind in ('canonical','article')),
+  ref_url text,
+  feed_item_id uuid references public.feed_items(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists coverage_registry_canonical_key
+  on public.coverage_registry (game_slug, entity_type, entity_slug, facet)
+  where coverage_kind = 'canonical';
+create index if not exists coverage_registry_tuple_idx
+  on public.coverage_registry (game_slug, entity_type, entity_slug, facet);
+```
+CHECK over Postgres enums on purpose: the facet vocabulary will change; a CHECK is a one-line
+ALTER, an enum is a migration.
+
+### Canonical (entity_type, facet) -> route map
+`shell+counter -> /matchups/<slug>` · `shell+guide -> /shells/<slug>` ·
+`mod_slot+guide -> /mods/<slug>` · `weapon+guide -> /weapons/<slug>` · `map+guide -> /maps/<slug>`.
+**Deliberately absent (no canonical -> must NOT block):** `shell+build`, `shell+tier`, and all
+`news`/`economy`/`lore`.
+
+### THE REGRESSION SET (the durable artifact)
+The 20 known counter articles are now the **fixed test fixture**. Any extractor iteration must
+score against these **before** wiring:
+- **12 cuts:** `fef3e56a`, `b543db86`, `33420c0c`, `8d382d19`, `c048793e`, `8ab3eae9`,
+  `9494c13e`, `8d681f26`, `b52cbace`, `5c6bab92`, `a3a27ec6`, `6561828f`
+- **8 valid-shell:** `2ec2a58c`, `22419223`, `ceb0cec1`, `cf06499c`, `0e6dd2b4`, `d53e6765`,
+  `c596f288`, `4c86abf8`
+
+### THE THREE DIAGNOSED BUGS
+1. **No target-vs-recommendation role awareness** — "beat X with Y" files under **Y**
+   (`b543db86` "Beat Assassin: The Destroyer Counter" -> `shell/destroyer`, should be assassin).
+2. **Name length beats entity-type priority** — "Ranked" (6, a `game_modes` row) outranks
+   "Thief" (5), so every Thief article resolves to `mode/ranked`.
+3. **Facet test order absorbs counter into build** — `build` is tested before `counter`
+   (only 32 `counter` classifications across 1,282 live articles, implausibly low).
+
+### FRAMING CORRECTION (worth recording)
+Flagging valid counter articles as COVERED is **NOT a false positive**. The registry is a
+**COVERAGE gate, not an accuracy gate** — `/matchups/<shell>` genuinely covers that topic
+regardless of whether a given article is accurate. It cannot distinguish the 8 accurate counter
+guides from the 12 wrong ones; that was a separate evidence-based judgment. **The real
+over-block risk — a genuinely novel angle on a covered topic — is UNTESTED and needs its own
+test.**
+
+### Corpus coverage
+**33.9% of live articles (435/1282) classify as UNCLASSIFIED**, mostly news/community pieces
+with no entity in the headline. Arguably correct (no canonical to collide with), but it means
+**a third of content is invisible to the gate**. Classified 66.1%; canonical-COVERED 16.5%.
+`map=192`/`mode=162` counts are inflated by the same generic-term over-matching as bug 2.
+
+### DECISIONS BANKED
+- **fail-CLOSED at enforcement** (Unit 5, not before — today's headline guard is fail-open).
+- **Facet enum starts:** counter, build, tier, guide, news, economy, lore.
+- **Ship (a) pre-persist block first, (c) topic-slate input filtering after.**
+
+### NEXT
+**Unit 2b** = fix the three bugs, re-score against the regression set. **Unit 4 shadow mode
+only after it passes.** **No DMZ gated generation until units 4-6 are green** (doctrine
+prerequisite). Also flagged: `weaponSlug()` in `lib/coverage.js` is a **third** copy of a rule
+already duplicated in `app/sitemap.js` + `app/weapons/[slug]/page.js` — extract to one shared
+helper in its own unit. And `seo_keywords` (read by `lib/editorCore.js:1136 getTargetKeyword`)
+**does not exist in the DB** — that pre-generation topic path is inert dead code, and it has no
+`game_slug` filter if resurrected.
+
+---
+
 ## 2026-07-17 — MATCHUP CLUSTER: reconciled accuracy-pass state (DB-verified)
 
 **DB is the source of truth over any running tally.** DONE THIS ARC: matchup matrix
