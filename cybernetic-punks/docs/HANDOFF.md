@@ -21,6 +21,9 @@ game-verified + `/matchups` hub built & live (`91c3690`) + accuracy adjudication
   replaced with accurate *"Triage is the other shell the game-verified matchup data lists as
   an Assassin counter"* per matrix. Body edit, coherence-confirmed, guarded on full body.
 
+> **UPDATE 2026-07-18 — PENDING CUT SET CLOSED: all 13 executed** (guarded, rows=1 each,
+> `is_published` unchanged; live corpus 1295 -> 1282 as projected). Reversible via `noindex=false`.
+
 ### PENDING ACCURACY CUTS (13, adjudicated + quoted-evidence-backed, NOT yet written)
 The running tally wrongly assumed these ran; **DB confirms they're LIVE.**
 - **12 contradictions:** `fef3e56a`, `b543db86` (Assassin/Destroyer-wrong); `33420c0c`,
