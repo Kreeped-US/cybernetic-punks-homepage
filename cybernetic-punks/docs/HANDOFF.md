@@ -5,6 +5,66 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — shell/*/build PRUNED: 266 -> 67 keepers, 199 cut (corpus 1282 -> 1083)
+
+### THE DECISION: prune, do NOT build a /builds/[shell] canonical
+**Basis:** the 266 articles produced **19 clicks / 707 impressions in 3 months** (GSC, last
+3mo), and the build recommendations are **100% MODEL-GENERATED** -- no table records which
+core+weapon+mod combination is actually good (the `builds` table is 6 stale rows naming
+shells that do not exist: Scout, Striker, Wraith). **A canonical built on unverified model
+output is exactly what the doctrine forbids.**
+
+**REVISIT only if the loadouts get game-verified** (~8-16 rows, same shape as the matchup
+matrix fill). The architecture answer was already clear -- `/builds` exists and its per-shell
+links are `#anchors`, and *an anchor cannot be a canonical* -- so the blocker is verification,
+not routing.
+
+### METHOD
+- **Population from the `coverage_registry` shell/*/build tuple, NOT a URL grep.** A grep
+  wrongly includes weapon-mods / signal-jammer / squad-composition / unique-weapon pieces --
+  which **cost a diagnostic cycle** when Justin's tier counts came from one and disagreed with
+  the registry join by 15 articles. The registry population was correct.
+- **Archetypes keyed on `core_stats`** (85 verified rows) + a **`weapon_stats` sub-key**;
+  ~56 archetypes across 8 shells.
+- **Keeper rule:** 1 per archetype; **2** where the archetype has >=8 articles AND >=2
+  performers at >=5 impressions. Within archetype: **impressions > recency > length**.
+
+### FAIR CLOCK (Justin's rule, applied)
+Zero-impression archetype keepers **published within 60 days (cutoff 2026-05-19) SURVIVE**.
+At DA 23 evergreen pages take 4-6 months to rank, so **zero impressions at 3 weeks is an
+unfinished bet, not a failed one**. Older than 60 days with zero impressions = failed bet.
+**24 survived on this rule, 7 cut as failed bets** -- and it **cost nothing measurable**
+(all zero-impression by definition).
+
+### THE RESULT IN ONE LINE
+**Retained 500/707 impressions (71%) and 8/12 clicks while cutting 75% of the articles.**
+That is the cannibalization case stated numerically: three quarters of the corpus was
+splitting demand, not adding it.
+
+### WEAKEST SPLIT: ROOK -- flagged for a human eye
+Rook's identity is **shell abilities (Adaptive Frame / Overclock), not cores**, so
+`core_stats` under-resolves it: **14 archetypes across 34 articles**, several split by
+**reading judgment rather than data** (marked `[judgment]` in the proposal). If Rook build
+coverage is ever revisited, re-do that split by hand.
+
+### SAFETY
+- **FIXTURE SAFE:** the cut set is a **strict subset** of the 266, which have **zero overlap**
+  with the 20-article coverage regression fixture (+2 weapon-led). **Guaranteed by set logic**,
+  not just observed.
+- **Executed as 8 gated batches by shell**, pre-flight per batch, **guarded UPDATE per row
+  asserting rows-affected=1** (199/199), `is_published` preserved on all 199.
+- **Verified after:** 199 cut, **67 keepers still `noindex=false`** (the prune did not touch
+  them), corpus **1083** confirmed by exact server-side count read 3x.
+- **Fully reversible:** each cut is a single `noindex=false` flip.
+
+### GOTCHA WORTH KEEPING
+Mid-run corpus counts wobbled (rook showed -22 for 21 cuts). Cause: **paginated `.range()`
+reads WITHOUT an explicit sort order** -- PostgREST can return overlapping/missing rows across
+page boundaries. **The writes were never wrong; the counting method was.** Use an exact
+server-side `{count:'exact', head:true}` query for corpus totals, not paginated reads.
+
+---
+
 ## 2026-07-18 — TITLE BUDGET: suffix dropped on articles + headline rules recalibrated
 
 ### *** A CORRECTION FIRST -- my earlier finding was WRONG ***
