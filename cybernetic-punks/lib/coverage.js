@@ -429,15 +429,31 @@ export function isCovered(tuple, registryRows) {
   if (!tuple || tuple.unclassified) {
     return { covered: false, kind: null, ref: null, reason: 'unclassified' };
   }
+  // CANONICAL WINS. Checked from the code-defined map first, then from the
+  // registry rows -- so if a tuple has BOTH a canonical page and colliding
+  // articles, the verdict is 'canonical'. The two kinds mean different things at
+  // enforcement (canonical = a real page to route readers to; article = mere
+  // duplication), so the caller must never see 'article' when a canonical exists.
   var url = canonicalUrlFor(tuple);
   if (url) return { covered: true, kind: 'canonical', ref: url, reason: null };
-  var rows = registryRows || [];
-  for (var i = 0; i < rows.length; i++) {
-    var x = rows[i];
-    if (x.game_slug === tuple.game_slug && x.entity_type === tuple.entity_type &&
-        x.entity_slug === tuple.entity_slug && x.facet === tuple.facet) {
-      return { covered: true, kind: x.coverage_kind || 'article', ref: x.ref_url || x.feed_item_id || null, reason: null };
-    }
+
+  var rows = (registryRows || []).filter(function (x) {
+    return x.game_slug === tuple.game_slug && x.entity_type === tuple.entity_type &&
+           x.entity_slug === tuple.entity_slug && x.facet === tuple.facet;
+  });
+  // Second canonical pass, over registry rows this time: covers a canonical that
+  // exists in the table but not in the code map.
+  var canon = rows.find(function (x) { return x.coverage_kind === 'canonical'; });
+  if (canon) return { covered: true, kind: 'canonical', ref: canon.ref_url || null, reason: null };
+
+  if (rows.length) {
+    return {
+      covered: true,
+      kind: 'article',
+      ref: rows[0].ref_url || rows[0].feed_item_id || null,
+      matches: rows.length,
+      reason: null,
+    };
   }
   return { covered: false, kind: null, ref: null, reason: null };
 }

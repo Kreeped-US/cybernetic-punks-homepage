@@ -61,10 +61,40 @@ export async function logCoverageShadow(supabase, opts) {
     }
     var vocab = await getVocab(supabase, gameSlug);
     var tuple = deriveTuple({ headline: headline, game_slug: gameSlug }, vocab);
-    // Registry rows are not consulted yet: coverage_registry is unpopulated (the
-    // backfill is a separate gated step), so this measures CANONICAL coverage
-    // only, never article-vs-article. Shadow counts are an undercount by design.
-    var verdict = isCovered(tuple, []);
+
+    // REGISTRY LOOKUP -- scoped to THIS tuple, never the whole table. One indexed
+    // 4-column lookup per generated article (a handful per day), so the cost is
+    // negligible and it stays correct as the registry grows.
+    //
+    // WHAT would_block NOW MEANS -- two different signals, and Unit 5 will want
+    // DIFFERENT POLICIES for them. `coverage_kind` on the record is what
+    // distinguishes them:
+    //   'canonical' -> a real reference page already answers this topic. A true
+    //                  enforcement signal: block and route the reader there.
+    //   'article'   -> only other ARTICLES cover it; there is no page to route to.
+    //                  A duplication signal. Blocking on this alone would suppress
+    //                  content with nowhere to send anyone, which is worse than
+    //                  the duplication (see the 266-article shell/*/build cluster).
+    // isCovered prefers 'canonical' whenever both exist for a tuple.
+    //
+    // FAIL-OPEN: a registry read failure degrades to "no rows" and the check
+    // continues on canonical-only. It must never stop publishing.
+    var registryRows = [];
+    if (!tuple.unclassified) {
+      var reg = await supabase
+        .from('coverage_registry')
+        .select('coverage_kind, ref_url, feed_item_id, game_slug, entity_type, entity_slug, facet')
+        .eq('game_slug', gameSlug)
+        .eq('entity_type', tuple.entity_type)
+        .eq('entity_slug', tuple.entity_slug)
+        .eq('facet', tuple.facet);
+      if (reg.error) {
+        console.log('[COVERAGE:SHADOW] registry read failed (non-fatal, canonical-only this run): ' + reg.error.message);
+      } else {
+        registryRows = reg.data || [];
+      }
+    }
+    var verdict = isCovered(tuple, registryRows);
     var rec = {
       source: source,
       editor: o.editor || null,
@@ -77,7 +107,12 @@ export async function logCoverageShadow(supabase, opts) {
       unclassified_reason: tuple.unclassified ? (tuple.reason || null) : null,
       covered: !!verdict.covered,
       coverage_kind: verdict.kind || null,
-      canonical_route: verdict.covered ? (verdict.ref || null) : null,
+      // ONLY set for a canonical match. An article collision's ref is an
+      // /intel/<slug> article URL, and storing that in a column named
+      // canonical_route would be a lie in the data -- `coverage_kind='article'`
+      // is what records that case. (If we later want the matched article's URL
+      // persisted, that is a new column, not this one.)
+      canonical_route: verdict.kind === 'canonical' ? (verdict.ref || null) : null,
       would_block: !!verdict.covered,
     };
     console.log('[COVERAGE:SHADOW] ' + JSON.stringify(rec));

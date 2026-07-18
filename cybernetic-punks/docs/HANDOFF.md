@@ -5,6 +5,62 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — COVERAGE REGISTRY populated + shadow reads it (backfill session)
+
+### What landed
+`coverage_registry` populated: **59 canonical** (idempotent, 404-verified, `game_maps.slug`
+used as the source of truth rather than deriving from `name`) **+ 316 article rows**
+(`counter` 18, `build` 298). **Table total 375.**
+
+**Article rows have NO DB-level uniqueness** -- the unique index is **canonical-only** -- so
+they rely on an **application-side `feed_item_id` + full-tuple guard**. Re-run verified as a
+clean **0-insert no-op**. Anyone adding article rows later must reuse that guard; the DB will
+not catch duplicates.
+
+### Restricted scope, deliberately
+**`counter` + `build` only.** Excluded: **tier/news** (ordering unsettled -- `tier` is tested
+BEFORE `news`, so balance-driven meta pieces file as `tier`); **guide** (74 rows want another
+eyeball before becoming registry truth); community/economy/lore.
+
+### *** THE FINDING ***
+**`shell/*/build` is 266 articles across 8 shells with NO canonical anywhere** -- the largest
+duplication concentration on the site, **~7x the counter cluster**. Every shell has **34-40
+competing build guides**.
+
+**This is a BUILD-THE-CANONICAL problem, not enforcement.** Unit 5 would block nothing here --
+correctly, because blocking build content with nowhere to route readers is worse than the
+status quo. **The 298 build rows are MEASUREMENT-ONLY and must not be read as enforcement
+material** (verified programmatically: build tuples with a canonical = 0).
+
+### CONSOLIDATION QUEUE REORDERS
+1. **`shell/*/build`, 266 articles -- needs a canonical.** Same shape as the matchup problem,
+   and **the `/matchups` build is the template.**
+2. **cryo/holotag -- smaller than believed** (11 guides + dated coverage, not 89).
+3. The 11-article intra-cluster matchup dedup.
+
+### Shadow now reads the registry (this commit)
+`coverageShadow.js` previously called `isCovered(tuple, [])` -- canonical collisions only.
+It now does one **indexed, tuple-scoped** lookup (`game_slug + entity_type + entity_slug +
+facet`), never the whole table, so **article-vs-article collisions register too**.
+
+**`would_block` now carries TWO different signals, and Unit 5 needs DIFFERENT POLICIES for
+them** -- `coverage_kind` on each record is what distinguishes them:
+- **`canonical`** -- a real reference page answers this topic. **True enforcement signal:**
+  block and route the reader there.
+- **`article`** -- only other articles cover it; **no page to route to.** A duplication
+  signal. Blocking on this alone suppresses content with nowhere to send anyone.
+
+`isCovered` **prefers `canonical`** whenever both exist for a tuple. `canonical_route` is set
+**only** for canonical matches -- an article ref is an `/intel/<slug>` URL, and storing that in
+a column named `canonical_route` would be a lie in the data.
+
+**Registry read is fail-open**: a failure degrades to canonical-only and never stops
+publishing. Verified by smoke test (10/10 assertions): article-only collision
+(`shell/vandal/build`) -> `coverage_kind='article'`, `canonical_route=null`; canonical+articles
+(`shell/thief/counter`) -> `coverage_kind='canonical'`, `canonical_route='/matchups/thief'`.
+
+---
+
 ## 2026-07-18 — CRON now HARD-FAILS without SUPABASE_SERVICE_KEY (operational)
 
 **Read this before a deploy.** The cron **hard-fails without `SUPABASE_SERVICE_KEY`**: logs to
