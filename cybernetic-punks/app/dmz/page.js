@@ -35,7 +35,11 @@ export const dynamic = 'force-dynamic';
 // same breath (see FAQ_LAUNCH_A). Title 53 chars / description 145 chars (Gate 4:
 // <=60 / <=155).
 export const metadata = {
-  title: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+  // `absolute` drops the root '%s | CyberneticPunks' suffix: with it this title
+  // rendered at 71 chars, over the SERP limit. This page exists to compete for
+  // "dmz 2 release date" (630/mo), so brand framing earns nothing here.
+  // (openGraph/twitter titles below are NOT templated -- they need no change.)
+  title: { absolute: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)' },
   description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
   keywords: ['DMZ', 'DMZ Modern Warfare 4', 'MW4 DMZ', 'Call of Duty DMZ', 'DMZ extraction zone', 'DMZ Hajin', 'DMZ FOB', 'DMZ crafting', 'DMZ loadouts', 'DMZ guide'],
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },

@@ -103,7 +103,11 @@ export async function generateMetadata({ params }) {
   // links carry the article's own title/description; the per-article DMZ OG image
   // comes from the sibling opengraph-image.js (Next wires og:image automatically).
   return {
-    title: title,
+    // Suffix dropped (`absolute` bypasses the root '%s | CyberneticPunks'
+    // template). DMZ article titles are keyword-competitive in exactly the way
+    // /intel articles are, so they follow the same rule: the 18-char suffix is
+    // budget spent branding a domain the SERP already shows.
+    title: { absolute: title },
     description: description,
     alternates: { canonical: canonical },
     openGraph: {

@@ -5,6 +5,67 @@ Newest entries on top.
 
 ---
 
+## 2026-07-18 — TITLE BUDGET: suffix dropped on articles + headline rules recalibrated
+
+### *** A CORRECTION FIRST -- my earlier finding was WRONG ***
+The scope report claimed **"no prompt constrains headline length / 100% failure across all
+five editors."** **That was wrong**, derived from corpus-wide stats **without segmenting by
+date**.
+
+**Headline rules HAVE existed since `d0ea153` (2026-06-12)** -- in both the tool schemas and
+all five system prompts, under a heading literally titled "HEADLINE RULES - NON-NEGOTIABLE",
+with BAD/GOOD examples. **And they WORK:**
+
+| metric (headline only) | BEFORE rules (n=1057) | AFTER rules (n=225) |
+|---|---|---|
+| avg length | 77 | **62** |
+| >60 chars | 88% | **47%** |
+| >70 chars | 49% | **10%** |
+| ALL-CAPS words | 22% | **4%** |
+
+**The 1,282 "100% over" figure is dominated by 1,057 PRE-RULE articles.**
+
+### ACTUAL root cause
+**The rules measure the HEADLINE; Google sees HEADLINE + the 18-char " | CyberneticPunks"
+suffix.** A perfectly compliant 70-char headline rendered at **88**. The rules were not being
+ignored -- **they were aimed at a budget that did not exist.**
+
+### Also corrected
+- **NEXUS is no longer the worst offender** -- **GHOST is** (76% >60, avg 66); NEXUS is 43%.
+- **The colon template is PRESCRIBED by the prompt**, not a defect ("Persona voice and the
+  specific hook go AFTER the separator"), which is why it rose to 99%. Do not "fix" it.
+
+### *** LESSON ***
+**A corpus-wide stat spanning a policy change measures the PRE-CHANGE population. Segment by
+date before concluding a rule is being ignored.** (Same error class as the "counter=32 is
+implausibly low" premise and the `head:true` false positive -- a number that looked damning
+until it was cut the right way.)
+
+### What shipped
+1. **Title suffix dropped on keyword-competitive routes** via `title: { absolute: ... }`
+   (bypasses the root `'%s | CyberneticPunks'` template in `app/layout.js:19`):
+   - `/intel/[slug]` (Marathon articles) -- **rendered length now equals the headline exactly**
+     (verified: 74 and 59 chars, previously 92 and 77)
+   - `/dmz` hub -- **71 -> 53 chars**
+   - `/dmz/[section]/[slug]` (DMZ articles) -- included by the same principle
+   **KEPT** on the homepage, `/marathon`, `/shells`, all other Marathon hubs, `/dmz/[section]`
+   sections, and the `/intel/<editor>` hub pages.
+2. **Prompt rule recalibrated x5:** "Target 55 characters or fewer; never exceed 65", and the
+   now-false clause *"The site name is appended automatically"* replaced with the truth (no
+   suffix is appended; still forbids the model writing one itself).
+3. **Tool schemas x5** matched: "55 characters or fewer preferred, 65 maximum".
+
+### HELD (deliberately)
+**Change 4 (post-generation retry validation) NOT built** -- it touches `app/api/cron/route.js`
+and tonight is the **first shadow measurement run**; that cron carries only already-verified
+changes.
+
+**Bulk title rewrite still deferred**; GSC-impression prioritisation is the filter.
+**NOTE: any future bulk headline write invalidates the 20/20 coverage fixture** (it is keyed
+on current headlines) **and may shift `deriveTuple` results -- re-run the fixture after.**
+
+---
+
 ## 2026-07-18 — /dmz copy targets live pre-launch demand (READ BEFORE EDITING THIS COPY)
 
 **WHY THE COPY IS SHAPED THIS WAY.** `/dmz` now targets the live pre-launch query set found in

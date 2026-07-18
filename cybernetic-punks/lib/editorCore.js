@@ -186,7 +186,7 @@ const CIPHER_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 55 characters or fewer preferred, 65 maximum, no all-caps words.' },
       body: { type: 'string', description: '400-600 word ranked intelligence article. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections. Optionally include one pull-quote: a short distilled-thesis line on its own line, wrapped in straight double quotes, no attribution.' },
       runner_grade: { type: 'string', enum: ['D', 'C', 'B', 'A', 'S', 'S+'] },
       ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 5.0 (average), 7.5 (solid pick), 8.5 (top of meta), 9.2 (S-tier). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the strength of the build, strategy, or meta read centered in this article.' },
@@ -224,7 +224,7 @@ const NEXUS_TOOL = {
           required: ['name', 'type', 'tier', 'trend', 'note'],
         },
       },
-      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 55 characters or fewer preferred, 65 maximum, no all-caps words.' },
       body: { type: 'string', description: '400-600 word meta analysis with **HEADER TEXT** section breaks.' },
       grid_pulse: { type: 'number' },
       tags: SHARED_TAG_SCHEMA,
@@ -240,7 +240,7 @@ const DEXTER_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 55 characters or fewer preferred, 65 maximum, no all-caps words.' },
       body: { type: 'string', description: '500-700 word build analysis with **HEADER TEXT** section breaks. At least 4 sections.' },
       loadout_grade: { type: 'string', enum: ['F', 'D', 'C', 'B', 'A', 'S'] },
       ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 4.0 (niche pick), 7.0 (solid build), 8.5 (top-tier loadout), 9.5 (S-tier dominant). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the build\'s overall power.' },
@@ -260,7 +260,7 @@ const GHOST_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 55 characters or fewer preferred, 65 maximum, no all-caps words.' },
       body: { type: 'string', description: '400-550 word community sentiment piece with **HEADER TEXT** section breaks. At least 3 sections.' },
       mood_score: { type: 'number', description: '0-10. 0=outrage, 5=neutral, 10=hype.' },
       sentiment: { type: 'string', enum: ['hype', 'positive', 'mixed', 'concerned', 'angry'] },
@@ -277,7 +277,7 @@ const MIRANDA_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 60 characters or fewer preferred, 70 maximum, no all-caps words.' },
+      headline: { type: 'string', description: 'Article headline. Game name and primary search term in the first 5-6 words, 55 characters or fewer preferred, 65 maximum, no all-caps words.' },
       body: { type: 'string', description: '500-700 words with **HEADER TEXT** section breaks. End with 2-3 concrete takeaways.' },
       guide_category: {
         type: 'string',
@@ -339,7 +339,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
 - Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
 - Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
 - Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
@@ -405,7 +405,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
 - Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
 - Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
 - Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
@@ -475,7 +475,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
 - Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
 - Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
 - Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
@@ -541,7 +541,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
 - Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
 - Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
 - Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
@@ -589,7 +589,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 
 HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 60 characters or fewer; never exceed 70. The site name is appended automatically - never write "| CyberneticPunks" or any other suffix.
+- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
 - Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
 - Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
 - Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.

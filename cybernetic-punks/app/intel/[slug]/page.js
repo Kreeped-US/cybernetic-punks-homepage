@@ -261,7 +261,12 @@ export async function generateMetadata({ params }) {
   if (!item) return { title: 'Intel Not Found' };
   var desc = buildMetaDescription(item.body, item.headline);
   return {
-    title: item.headline,
+    // TITLE SUFFIX DROPPED (`absolute` bypasses the root layout's
+    // '%s | CyberneticPunks' template). The suffix costs 18 chars of an ~60-char
+    // SERP budget on every article -- 30% of the budget spent on branding the
+    // domain already shows. Article titles are where keyword competition happens;
+    // the homepage and non-keyword hubs keep the suffix.
+    title: { absolute: item.headline },
     description: desc,
     openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: item.headline, description: desc },
