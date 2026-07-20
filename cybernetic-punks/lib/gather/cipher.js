@@ -173,10 +173,12 @@ async function buildShellBuildPrompt() {
   const tierSection = shellTier
     ? 'CURRENT TIER STATE: ' + targetShell + ' is '
       + (shellTier.tier || '?') + '-tier overall, '
-      + (shellTier.ranked_tier_solo || '?') + '-tier ranked solo, '
-      + (shellTier.ranked_tier_squad || '?') + '-tier ranked squad. '
+      // Ranked tiers/note from shell_stats (source of truth); tier/trend/holotag
+      // stay from meta_tiers. shellTier's mirrored columns are null post step 4.
+      + ((shell && shell.ranked_tier_solo) || '?') + '-tier ranked solo, '
+      + ((shell && shell.ranked_tier_squad) || '?') + '-tier ranked squad. '
       + 'Trend: ' + (shellTier.trend || 'stable') + '.'
-      + (shellTier.ranked_note ? ' Ranked context: ' + shellTier.ranked_note : '')
+      + ((shell && shell.ranked_notes) ? ' Ranked context: ' + shell.ranked_notes : '')
       + (shellTier.holotag_tier ? ' Holotag benchmark: ' + shellTier.holotag_tier : '')
     : 'CURRENT TIER STATE: ' + targetShell + ' tier data not yet established by NEXUS.';
 
@@ -301,6 +303,21 @@ async function rankedShellNames(tiers) {
   return (data || []).map(function(r) { return r.name; });
 }
 
+// name -> shell_stats ranked values. STEP 5 of the meta_tiers loop fix (2026-07-20):
+// step 4 nulled meta_tiers.ranked_tier_solo / _squad / ranked_note, so the CIPHER
+// prompt lines reading them from meta_tiers went blank. Renders were repointed to
+// shell_stats in step 3; the PROMPT layer was missed (neither render nor filter).
+// Overlay ranked values from shell_stats (source of truth). Note the PLURAL:
+// shell_stats.ranked_notes.
+async function shellRankedMap() {
+  const { data } = await supabase
+    .from('shell_stats')
+    .select('name, ranked_tier_solo, ranked_tier_squad, ranked_notes');
+  const m = {};
+  (data || []).forEach(function(r) { m[r.name] = r; });
+  return m;
+}
+
 async function buildCounterMetaForShell(targetShell, tierInfo) {
   const shellRes = await supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle();
 
@@ -309,8 +326,8 @@ async function buildCounterMetaForShell(targetShell, tierInfo) {
   const targetSection = shell
     ? 'COUNTER TARGET: ' + targetShell + '\n'
       + 'Why dominant: ' + (tierInfo
-          ? (tierInfo.ranked_tier_solo + '-tier ranked solo, trend ' + (tierInfo.trend || 'stable')
-            + (tierInfo.ranked_note ? '. ' + tierInfo.ranked_note : ''))
+          ? (((shell && shell.ranked_tier_solo) || '?') + '-tier ranked solo, trend ' + (tierInfo.trend || 'stable')
+            + ((shell && shell.ranked_notes) ? '. ' + shell.ranked_notes : ''))
           : 'Currently meta-relevant') + '\n'
       + 'Active Ability: ' + (shell.active_ability_name || 'Unknown')
       + (shell.active_ability_description ? ' — ' + shell.active_ability_description : '') + '\n'
@@ -387,14 +404,16 @@ async function buildWeeklyClimbPrompt() {
   ]);
 
   const topShells = topShellsRes.data || [];
+  const _rankedMap3 = await shellRankedMap();  // step-5 overlay (shell-only list)
   const ghostArticles = ghostRes.data || [];
   const dexterArticles = dexterRes.data || [];
 
   const shellSection = topShells.length > 0
     ? 'TOP SHELLS THIS WEEK (RANKED SOLO):\n' + topShells.map(function(s) {
-        return '- ' + s.name + ' [' + (s.ranked_tier_solo || '?') + '-solo, '
-          + (s.ranked_tier_squad || '?') + '-squad, ' + (s.trend || 'stable') + ']'
-          + (s.ranked_note ? ' — ' + s.ranked_note : '');
+        var _r = _rankedMap3[s.name] || {};
+        return '- ' + s.name + ' [' + (_r.ranked_tier_solo || '?') + '-solo, '
+          + (_r.ranked_tier_squad || '?') + '-squad, ' + (s.trend || 'stable') + ']'
+          + (_r.ranked_notes ? ' — ' + _r.ranked_notes : '');
       }).join('\n')
     : 'TOP SHELLS: NEXUS tier data pending.';
 
@@ -470,14 +489,19 @@ async function buildHolotagPrompt() {
   ]);
 
   const tierState = tierStateRes.data || [];
+  const _rankedMap4 = await shellRankedMap();  // step-5 overlay (shells only; weapons have no ranked_notes)
   const dexterBuilds = dexterBuildsRes.data || [];
 
   const tierSection = tierState.length > 0
     ? 'HOLOTAG-FLAGGED ITEMS:\n' + tierState.map(function(t) {
+        // Shell ranked fields from shell_stats; weapons have no ranked_notes at
+        // all in weapon_stats, so their annotation is intentionally dropped
+        // (same treatment as the dead weapon queries in step 1).
+        var _r = t.type === 'shell' ? (_rankedMap4[t.name] || {}) : {};
         return '- ' + t.name + ' (' + t.type + '): Holotag tier '
           + (t.holotag_tier || '?') + ', overall ' + (t.tier || '?')
-          + ', ranked solo ' + (t.ranked_tier_solo || '?')
-          + (t.ranked_note ? ' — ' + t.ranked_note : '');
+          + ', ranked solo ' + (_r.ranked_tier_solo || '?')
+          + (_r.ranked_notes ? ' — ' + _r.ranked_notes : '');
       }).join('\n')
     : 'HOLOTAG DATA: No items currently flagged with holotag tiers in NEXUS data.';
 
@@ -537,6 +561,7 @@ async function buildPatchImpactPrompt(patchItems) {
   }).join('\n\n---\n\n');
 
   // Pull current meta state for "before/after" framing
+  const _rankedMap5 = await shellRankedMap();  // step-5 overlay (shell-only list)
   const { data: currentMeta } = await supabase
     .from('meta_tiers')
     .select('name, type, ranked_tier_solo, ranked_tier_squad, trend, ranked_note')
@@ -548,10 +573,11 @@ async function buildPatchImpactPrompt(patchItems) {
 
   const metaSection = currentMeta && currentMeta.length > 0
     ? 'CURRENT META STATE (pre-patch baseline):\n' + currentMeta.map(function(m) {
-        return '- ' + m.name + ' (' + m.type + '): ' + (m.ranked_tier_solo || '?')
-          + '-tier solo, ' + (m.ranked_tier_squad || '?') + '-tier squad, '
+        var _r = _rankedMap5[m.name] || {};
+        return '- ' + m.name + ' (' + m.type + '): ' + (_r.ranked_tier_solo || '?')
+          + '-tier solo, ' + (_r.ranked_tier_squad || '?') + '-tier squad, '
           + (m.trend || 'stable')
-          + (m.ranked_note ? ' — ' + m.ranked_note : '');
+          + (_r.ranked_notes ? ' — ' + _r.ranked_notes : '');
       }).join('\n')
     : 'META STATE: tier data pending.';
 

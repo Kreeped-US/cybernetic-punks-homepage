@@ -132,6 +132,53 @@ Extraction) · Recon vs Triage duelling "best support" superlative.
 
 ---
 
+## 2026-07-20 — meta_tiers loop fix STEP 5: CIPHER prompt reads shell_stats
+
+Step 4 nulled the mirrored columns; CIPHER's prompt lines that read them from `meta_tiers` went
+blank. Repointed to `shell_stats` (source of truth). Verified by replicating the exact render
+logic against live data:
+
+```
+BEFORE: - Thief [?-solo, ?-squad, stable]
+AFTER : - Thief [S-solo, B-squad, stable] -- S-tier solo ranked -- built for hitting Holotag targets and extracting
+```
+
+Annotations match `shell_stats.ranked_notes` exactly (0 mismatches), **0 null/undefined
+artifacts** ("Thief S null" cannot occur).
+
+### SCOPE EXPANDED BEYOND ranked_note -- flagged
+The task scoped step 5 to `ranked_note`, but the same 5 sites also read
+`ranked_tier_solo` / `ranked_tier_squad`, which step 4 nulled too. Fixing only `ranked_note`
+would have left `?-tier ranked solo` garbage. Repointed **all three** ranked fields at every
+site -- the honest complete fix, not the literal instruction.
+
+### The 5 sites
+- **179 (single shell), 313 (counter-meta):** `shell` (shell_stats `select('*')`) already in
+  scope -> read `shell.ranked_tier_solo` / `_squad` / `ranked_notes` directly.
+- **397 (top shells), 567 (current meta):** shell-only lists -> overlay from a shared
+  `shellRankedMap()` helper (name -> shell_stats ranked values).
+- **481 (holotag, MIXED shell+weapon):** overlay shells; **weapon annotation DROPPED** --
+  `weapon_stats` has no `ranked_notes` column at all, same treatment as the dead weapon queries
+  in step 1. Comment records why.
+
+`tier`, `trend`, `holotag_tier`, `note` still come from `meta_tiers` (genuine editorial, never
+mirrored). Column-name trap handled: `shell_stats.ranked_notes` (**PLURAL**).
+
+### Cosmetic residue, NOT fixed
+The 5 `meta_tiers` selects still request the now-null `ranked_tier_solo` / `_squad` /
+`ranked_note` columns. Harmless (values unused), left to avoid unrelated churn. Candidate for a
+later tidy.
+
+### *** THE ENUMERATION LESSON, EIGHTH INSTANCE -- and the sharpest ***
+A column's read surface is **renders PLUS gather/prompt builders PLUS filters.** Step 3 was
+scoped to "render sites" and **missed the prompt layer entirely.** The gap only surfaced because
+step 4's verification happened to check CIPHER's *filters* -- a lucky adjacency, not a designed
+check. When retiring a column, grep every reader of it across ALL layers (`grep -rn 'columnname'`
+over app/ AND lib/), not just the pages that render it. The render/filter/prompt split is
+exactly where "I checked the obvious surface" fails.
+
+---
+
 ## 2026-07-20 — meta_tiers loop fix STEP 4: mirrored columns nulled
 
 The loop is now fully broken. `ranked_tier_solo`, `ranked_tier_squad`, `ranked_note` set to NULL
