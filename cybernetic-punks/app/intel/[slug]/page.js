@@ -40,6 +40,7 @@ const EDITOR_STYLES = {
 
 // Color tokens for item categories — used for icon fallbacks and accents
 const ITEM_COLORS = {
+  unique:  '#ffd700',
   shell:   '#00d4ff',
   weapon:  '#ff8800',
   mod:     '#ff2222',
@@ -49,6 +50,7 @@ const ITEM_COLORS = {
 };
 
 const ITEM_SYMBOLS = {
+  unique:  '★',
   shell:   '◎',
   weapon:  '⬢',
   mod:     '◈',
@@ -425,8 +427,17 @@ function InlineStatCard({ item, type, color }) {
   var symbol = ITEM_SYMBOLS[type] || '◈';
   var rarityColor = item.rarity ? RARITY_COLORS[item.rarity] : null;
 
+  // UNIQUES ONLY: render the card as a real <Link> to its canonical. Every other
+  // type stays a plain <span>. This is the single crawlable path from the article
+  // corpus to /uniques/[slug]; see the fetch comment in the page loader for why.
+  // Guarded on item.slug -- a unique row with no slug renders as a span rather
+  // than a link to /uniques/undefined.
+  var Wrapper = (type === 'unique' && item.slug) ? Link : 'span';
+  var wrapperProps = (type === 'unique' && item.slug) ? { href: '/uniques/' + item.slug } : {};
+
   return (
-    <span
+    <Wrapper
+      {...wrapperProps}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -439,6 +450,7 @@ function InlineStatCard({ item, type, color }) {
         margin: '2px 4px 2px 0',
         verticalAlign: 'middle',
         maxWidth: '100%',
+        textDecoration: 'none',
       }}
     >
       <span
@@ -498,6 +510,7 @@ function InlineStatCard({ item, type, color }) {
           {type === 'mod' && item.slot_type && <span>{item.slot_type} MOD</span>}
           {type === 'implant' && item.slot_type && <span>{item.slot_type}</span>}
           {type === 'faction' && <span>{item.focus || 'Faction'}</span>}
+          {type === 'unique' && item.base_weapon && <span>{item.base_weapon}</span>}
           {item.rarity && rarityColor && (
             <>
               <Sep text=" - " />
@@ -506,7 +519,7 @@ function InlineStatCard({ item, type, color }) {
           )}
         </span>
       </span>
-    </span>
+    </Wrapper>
   );
 }
 
@@ -1001,7 +1014,7 @@ function SidebarItemCard({ item, type, editorColor }) {
 // ARTICLE PAGE
 // ═══════════════════════════════════════════════════════════
 
-function ArticlePage({ item, shells, weapons, mods, implants, factions, comments, related, creatorAvatar }) {
+function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques, comments, related, creatorAvatar }) {
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
   var publishedAt = formatPublishDate(item.created_at);
   var videoId = extractYouTubeId(item.source_url);
@@ -1022,6 +1035,13 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, comments
   var rt = readTime(item.body);
 
   var bodyLower = (item.body || '').toLowerCase();
+  // Uniques are matched FIRST and placed at the head of allMentionedItems so the
+  // longer name wins: "BR33 Victory Lap" must card as the unique, not as its base
+  // weapon "BR33 Volley Rifle". ParagraphWithCards sorts by name length, which
+  // already favours the unique, but ordering here keeps the sidebar list honest too.
+  var mentionedUniques = (uniques || [])
+    .filter(function(u) { return bodyHasWholeName(bodyLower, u.name); })
+    .map(function(u) { return Object.assign({}, u, { _type: 'unique' }); });
   var mentionedShells = (shells || [])
     .filter(function(s) { return bodyHasWholeName(bodyLower, s.name); })
     .map(function(s) { return Object.assign({}, s, { _type: 'shell' }); });
@@ -1040,7 +1060,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, comments
     .filter(function(f) { return bodyHasWholeName(bodyLower, f.name); })
     .map(function(f) { return Object.assign({}, f, { _type: 'faction' }); });
 
-  var allMentionedItems = [].concat(mentionedShells, mentionedWeapons, mentionedMods, mentionedImplants, mentionedFactions);
+  var allMentionedItems = [].concat(mentionedUniques, mentionedShells, mentionedWeapons, mentionedMods, mentionedImplants, mentionedFactions);
 
   var hasDataRef = allMentionedItems.length > 0;
 
@@ -1319,7 +1339,7 @@ export default async function IntelPage({ params }) {
     return <EditorLanePage config={editorConfig} items={items} />;
   }
 
-  var [itemResult, shellResult, weaponResult, modResult, implantResult, factionResult] = await Promise.all([
+  var [itemResult, shellResult, weaponResult, modResult, implantResult, factionResult, uniqueResult] = await Promise.all([
     // is_published guard (matches the DMZ route): an unpublished slug resolves to
     // null -> notFound() below. This gates BOTH the normal ArticlePage and the
     // discourse branch (which runs after the null check), so unpublished drafts --
@@ -1330,6 +1350,15 @@ export default async function IntelPage({ params }) {
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(120),
     supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, image_filename').limit(100),
     supabaseService.from('factions').select('name, leader, focus, image_filename').limit(20),
+    // UNIQUES (2026-07-20). The only entity type whose inline card is a real
+    // <Link>. Every /uniques/[slug] canonical had exactly two inbound internal
+    // links -- the hub and its base-weapon page -- and ZERO from the 1,569
+    // article corpus, because no card type links and article bodies are plain
+    // text with no link syntax. Uniques get named in articles constantly, so
+    // matching them here converts those existing mentions into real links.
+    // Deliberately uniques-ONLY: converting weapon/shell/mod/implant/faction
+    // cards to links is a much larger crawl-graph change and is a separate call.
+    supabaseService.from('unique_weapons').select('name, slug, base_weapon, weapon_type, rarity, acquisition_source').eq('game_slug', 'marathon').limit(40),
   ]);
 
   if (!itemResult.data) notFound();
@@ -1408,6 +1437,7 @@ export default async function IntelPage({ params }) {
       mods={modResult.data || []}
       implants={implantResult.data || []}
       factions={factionResult.data || []}
+      uniques={uniqueResult.data || []}
       comments={comments}
       related={related}
       creatorAvatar={creatorAvatar}
