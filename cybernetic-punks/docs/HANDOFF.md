@@ -317,6 +317,45 @@ before NEXUS grades it will hit this again.
 
 ---
 
+## 2026-07-20 — ALT-TEXT audit: live number is ~ZERO, not 1,154; Gate 4 hardened
+
+### The finding
+The Ahrefs 2026-07-17 "1,154 missing alt" is **stale/misread**. Measured the LIVE site by
+**rendering 45 pages across every type** (articles, entity details, hubs, editor lanes, DMZ,
+tools) and parsing the actual `<img>` tags: **ZERO missing alt.** Every image has a real alt or
+a deliberate `alt=""` (correct decorative usage per WCAG -- info already in adjacent text).
+
+### Why it is already solved
+Alt is **DERIVED AT RENDER** from the entity name or the article headline (`alt={shell.name}`,
+`alt={article.headline}`, `alt={item.name}`, `alt={displayName + ' map'}`, editor `alt={edTag(
+...)}`), **never stored**. So there is no write-time path that can attach an image without an
+alt, and **no alt column exists or is needed** (deriving from name is correct and free -- the
+doctrine's hypothesised fix, already implemented everywhere). No `next/image` is used, so
+Ahrefs sees the SSR HTML directly; no hydration gap.
+
+### WHY THE AUDIT SAID 1,154 (hypothesis, not asserted -- can't inspect the export)
+Ahrefs' "Crawled" column counts **URLs affected, not images**: 1,154 of 1,606 crawled URLs.
+That fits "nearly every page renders at least one `alt=""` decorative image" IF the tool counts
+empty alt as missing. The same reading applies to "Title too long: 1,343" (also a URL count).
+**No alt-related commit exists between the audit and now**, which rules out "it was broken and
+got fixed" -- it was never broken on the indexable site.
+
+### NO BACKFILL
+The doctrine's "enforce at generation, then backfill" is already satisfied by render-time
+derivation plus the lint gate. Writing alt text would be the treadmill the doctrine warns
+against, for a solved problem.
+
+### GATE HARDENED (this commit)
+`jsx-a11y/alt-text` **warn -> error** in `eslint.config.mjs`. It shipped as a WARNING via
+`eslint-config-next/core-web-vitals` (a missing-alt `<img>` could merge past it). Now hard-fails.
+**Proven the gate bites, not just configured:** a deliberately alt-less `<img>` produces a
+`jsx-a11y/alt-text` ERROR and exit 1 at the new severity, versus only a WARNING at the old
+`warn` severity. Linting the real codebase shows **zero** alt-text violations (the 40 lint
+errors present are pre-existing `react/no-unescaped-entities`, unrelated). `npm run build`
+(Turbopack) is unaffected -- it does not run eslint, so this gate is for `next lint`/CI.
+
+---
+
 ## 2026-07-20 — DMZ registered in the gather pipeline (option A); Phase-D checklist
 
 Two low-risk changes so the DMZ config is pipeline-*ready*. This does NOT make the cron produce
