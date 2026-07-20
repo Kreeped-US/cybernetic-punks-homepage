@@ -4,6 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
+import { hasShellGuide } from '@/lib/shellGuides';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -175,6 +176,11 @@ function timeAgo(dateStr) {
 // ─── PAGE ───────────────────────────────────────────────────
 export default async function ShellGuidePage({ params }) {
   var resolved = await params;
+  // Shared roster (lib/shellGuides.js) is checked FIRST and is authoritative --
+  // it is the same list app/sitemap.js filters on, so the two cannot drift.
+  // The SHELLS null check below still stands: a slug listed without content
+  // 404s rather than crashing. Both directions fail safe.
+  if (!hasShellGuide(resolved.name)) notFound();
   var shell = SHELLS[resolved.name];
   if (!shell) notFound();
 

@@ -36,6 +36,7 @@ import { toISOWithPTOffset } from '@/lib/formatDate';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug } from '@/lib/matchups';
+import { hasShellGuide } from '@/lib/shellGuides';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -101,20 +102,25 @@ export default async function sitemap() {
     { url: baseUrl + '/join',          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
   ];
 
-  const fallbackShellPages = FALLBACK_SHELL_SLUGS.flatMap((slug) => [
-    {
+  // Same guide filter as the DB path below: the fallback must not advertise a
+  // guide route that does not exist either.
+  const fallbackShellPages = FALLBACK_SHELL_SLUGS.flatMap((slug) => {
+    const entries = [{
       url: baseUrl + '/shells/' + slug,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.75,
-    },
-    {
-      url: baseUrl + '/guides/shells/' + slug,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-  ]);
+    }];
+    if (hasShellGuide(slug)) {
+      entries.push({
+        url: baseUrl + '/guides/shells/' + slug,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      });
+    }
+    return entries;
+  });
 
   let dbShellPages = [];
   let weaponPages = [];
@@ -148,20 +154,34 @@ export default async function sitemap() {
         shellsErr ? 'error: ' + shellsErr.message : '');
 
       if (shells && shells.length > 0) {
-        dbShellPages = shells.flatMap((s) => [
-          {
-            url: baseUrl + '/shells/' + s.name.toLowerCase(),
+        // /shells/<slug> is emitted for EVERY shell_stats row -- that route reads
+        // the table directly, so every row has a page.
+        //
+        // /guides/shells/<slug> is emitted ONLY for slugs in
+        // lib/shellGuides.js SHELL_GUIDE_SLUGS, the SAME list the resolver in
+        // app/guides/shells/[name]/page.js matches against -- same discipline as
+        // SLOT_PAGES for /mods/[slot] and matchups SHELLS for /matchups/[shell].
+        // Before this, the emission was unfiltered and advertised
+        // /guides/shells/sentinel, which the route 404s (Sentinel is in
+        // shell_stats but deliberately has no guide -- see lib/shellGuides.js).
+        dbShellPages = shells.flatMap((s) => {
+          const shellSlug = s.name.toLowerCase();
+          const entries = [{
+            url: baseUrl + '/shells/' + shellSlug,
             lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
             changeFrequency: 'weekly',
             priority: 0.75,
-          },
-          {
-            url: baseUrl + '/guides/shells/' + s.name.toLowerCase(),
-            lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.7,
-          },
-        ]);
+          }];
+          if (hasShellGuide(shellSlug)) {
+            entries.push({
+              url: baseUrl + '/guides/shells/' + shellSlug,
+              lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
+              changeFrequency: 'weekly',
+              priority: 0.7,
+            });
+          }
+          return entries;
+        });
       }
     } catch (err) {
       console.error('[sitemap] shell fetch threw:', err);

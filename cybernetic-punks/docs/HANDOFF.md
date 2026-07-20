@@ -5,6 +5,69 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — 4xx INVENTORY CLOSED + the cannibalization pattern gets a second instance
+
+**Sitemap non-200: 1 -> 0. Internally-linked 4xx: 2 -> 0.** Derived from first principles (no
+Ahrefs URL list) by building, serving, and status-checking **all 1,421 sitemap URLs** plus a
+40-page crawl yielding 484 unique link targets.
+
+### The one sitemap 4xx: /guides/shells/sentinel
+`app/sitemap.js` emitted `/guides/shells/<name>` for **every** `shell_stats` row (8), while the
+route resolved against a **hardcoded 7-shell object**. Sentinel is in the table and has no
+guide, so the sitemap advertised a URL the route `notFound()`s.
+
+**Fixed by deriving the list from ONE place** -- new **`lib/shellGuides.js`**
+(`SHELL_GUIDE_SLUGS` + `hasShellGuide()`), matching the `SLOT_PAGES` (`/mods/[slot]`) and
+matchups `SHELLS` (`/matchups/[shell]`) pattern the sitemap's own comments already praised. The
+route checks the shared list FIRST; both directions fail safe.
+
+**BOTH emission paths were unfiltered** -- the live DB path AND `FALLBACK_SHELL_SLUGS`. The
+fallback was dormant only because it happens to hold the same 7 slugs today; it would have
+produced the identical bug the moment anyone added Sentinel to it. **Same duplicated-logic root
+cause as the `availableOnMap` bug in the entry below** -- second occurrence in one day.
+
+### Missing images: 9 rows, NOT 7
+**Filenames != rows.** `ballistic-turbine.webp` and `unstable-biomass.webp` each appear under
+**two factions**, so 7 missing files map to **9 rows**: 7 `faction_materials` + 2
+`implant_stats`. All 7 files confirmed absent from `public/` before writing. `image_filename`
+set to NULL so renderers fall back; **guarded on id + exact current value, 9/9
+`rows-affected=1`**, read-back confirms **0** remaining references to missing files.
+
+### VANTAGE portrait
+`lib/editors/roster.js` exposes `editorHasPortrait()` precisely because server components have
+no `<img onError>` -- and **both** `/intel` portrait sites bypassed it, hardcoding
+`/images/editors/<name>.jpg`. VANTAGE has no file, so `/intel` served a 404 on every render.
+`EditorAvatar` extracted, falling back to an initial badge. `vantage.jpg` and `broker.jpg` refs
+now **0**; the five live portraits still render. **Fixed the guard, not the asset.**
+
+### /modes index deliberately NOT built
+It would be **one real canonical (Vault Breaker) + two DB rows that link nowhere** (no
+`/modes/[slug]` route exists) **+ two `verified=false` rows that should not ship**. Revisit when
+the unverified rows are confirmed or a `/modes/[slug]` route exists. **Nothing links to
+`/modes`, so leaving it 404 costs nothing.**
+
+### *** CANNIBALIZATION PATTERN -- SECOND INSTANCE ***
+**An entity with ONE page outperforms the same entity split across two.**
+
+| Entity | Shape | Impressions | Clicks | Position |
+|---|---|---|---|---|
+| **Misery Disciple** | 1 page | 128 | **10** | 5.5 |
+| **BR33 Victory Lap** | 7 pages | 108 | **0** | 8.5 |
+| **Sentinel** | `/shells` only | 31 | **1** | best shell page on the site |
+| **Rook** | `/shells` + `/guides` | 26 + 26 | 0 | **9.3 and 12.7, split** |
+
+**Sentinel is the ONLY shell without a `/guides` twin and the best performer.** This is
+precisely why **no Sentinel guide was written** -- completing the set would have split the one
+shell page that currently works. The reasoning is recorded **in `lib/shellGuides.js` itself**
+so nobody "completes the set" later without reading it.
+
+### CONSOLIDATION CANDIDATE -- not decided
+**`/guides/shells/*` is 7 pages earning 53 impressions and 1 click**, competing with
+`/shells/*` (**100 im, 3 clicks**) for the **same 8 entities**. The data points toward folding
+the guides into `/shells` and redirecting. **Not decided.**
+
+---
+
 ## 2026-07-20 — availableOnMap FIXED: duplicated logic was the root cause, not the display-name bug
 
 **`game_modes` rendered ZERO rows on all 5 map pages; `game_events` rendered on only 2 of 5.**

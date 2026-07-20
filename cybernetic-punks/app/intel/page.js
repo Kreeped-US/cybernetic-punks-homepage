@@ -29,7 +29,30 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEditorDisplay } from '@/lib/editors/roster';
+import { getEditorDisplay, editorHasPortrait, editorInitial } from '@/lib/editors/roster';
+
+// Portrait or initial badge. lib/editors/roster.js already exposes
+// editorHasPortrait() precisely because server components have no <img onError>,
+// but BOTH portrait sites on this page bypassed it and hardcoded
+// '/images/editors/<name>.jpg'. VANTAGE has no portrait file, so /intel served a
+// 404 for vantage.jpg on every render -- one of the 4xx entries in the 2026-07-17
+// Ahrefs audit. broker.jpg never leaked because BROKER is not rendered here.
+// Fix the guard, not the asset: an editor without a portrait gets an initial.
+function EditorAvatar({ name, color, size }) {
+  var initialFontSize = size >= 30 ? 12 : 9;
+  if (!editorHasPortrait(name)) {
+    return (
+      <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + color + '40', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: initialFontSize, fontWeight: 800, color: color, fontFamily: 'Orbitron, monospace' }}>{editorInitial(name)}</span>
+      </div>
+    );
+  }
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + color + '40', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <img src={'/images/editors/' + name.toLowerCase() + '.jpg'} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+    </div>
+  );
+}
 import { toISOWithPTOffset } from '@/lib/formatDate';
 
 // Display rename (editor rework Step 3): pills + bylines show the editor's tag
@@ -334,9 +357,7 @@ export default async function IntelHubPage({ searchParams }) {
                   textDecoration: 'none',
                   transition: 'background 0.1s',
                 }}>
-                <div style={{ width: 30, height: 30, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + info.color + '40', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={'/images/editors/' + editorName.toLowerCase() + '.jpg'} alt={editorName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                </div>
+                <EditorAvatar name={editorName} color={info.color} size={30} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 11, color: info.color, letterSpacing: 2, fontWeight: 700 }}>{edTag(editorName)}</div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{info.role}</div>
@@ -384,9 +405,7 @@ export default async function IntelHubPage({ searchParams }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '40', background: '#0e1014' }}>
-                          <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={item.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                        </div>
+                        <EditorAvatar name={item.editor} color={editor.color} size={22} />
                         <span style={{ fontSize: 9, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{edTag(item.editor)}</span>
                       </div>
                       {item.source && (
