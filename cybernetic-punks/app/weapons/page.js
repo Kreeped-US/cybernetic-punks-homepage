@@ -175,6 +175,15 @@ export default async function WeaponsIndexPage() {
           }),
         },
       })}} />
+      {/* Reciprocal link to the guide category indexing this hub's articles.
+          Entity hubs linked guides in neither direction before 2026-07-20;
+          guides linked out to entities but never received a link back. */}
+      <section style={{ padding: '0 24px 48px', maxWidth: 1100, margin: '0 auto' }}>
+        <Link href="/guides/weapons" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', padding: '14px 18px', textDecoration: 'none' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff8800', letterSpacing: 2, fontWeight: 700, marginBottom: 4 }}>WEAPON GUIDES &rarr;</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Editorial analysis, matchups and loadouts</div>
+        </Link>
+      </section>
     </main>
   );
 }

@@ -102,6 +102,8 @@ function Dropdown({ item, active }) {
       }}
         onMouseEnter={function(e) { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; }}
         onMouseLeave={function(e) { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
+        aria-haspopup="true"
+        aria-expanded={open}
       >
         {item.label}
         <span style={{
@@ -114,8 +116,19 @@ function Dropdown({ item, active }) {
         }}>▾</span>
       </button>
 
-      {open && (
-        <div style={{
+      {/* ALWAYS RENDERED, hidden with CSS when closed (2026-07-20).
+          This was `{open && (...)}`, so a closed dropdown emitted NO HTML and
+          every link inside it was invisible to crawlers: ~10 routes had no nav
+          link anywhere on the site, and /builds + /join had none at all.
+          `visibility: hidden` (not conditional rendering) keeps the anchors in
+          the document for crawlers while still removing them from the tab order
+          AND the accessibility tree, so nothing is announced or focusable when
+          the menu is closed. aria-hidden mirrors that explicitly. The panel is
+          position:absolute, so being present costs no layout and there is no
+          visual change in the closed state. */}
+      <div
+        aria-hidden={!open}
+        style={{
           position:   'absolute',
           top:        '100%',
           left:       0,
@@ -126,6 +139,9 @@ function Dropdown({ item, active }) {
           borderRadius: 3,
           zIndex:     200,
           overflow:   'hidden',
+          visibility:    open ? 'visible' : 'hidden',
+          opacity:       open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
         }}>
           {item.children.map(function(child) {
             return (
@@ -183,8 +199,7 @@ function Dropdown({ item, active }) {
               </Link>
             );
           })}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

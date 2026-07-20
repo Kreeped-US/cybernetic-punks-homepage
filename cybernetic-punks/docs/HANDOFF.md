@@ -5,6 +5,85 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — NAV made crawlable: ~10 routes had no nav link in HTML at all
+
+### The defect
+`components/Nav.js` dropdowns rendered behind **`{open && (...)}`**, so a closed dropdown
+emitted **NO HTML**. Every link inside was invisible to crawlers: **~10 routes had no nav link
+site-wide, and `/builds` + `/join` had none at all.**
+
+### The fix
+Panel is now **always rendered** and hidden with **`visibility: hidden`** (+ `opacity: 0`,
+`pointer-events: none`), which keeps the anchors in the document for crawlers while removing
+them from **both the tab order and the accessibility tree**. `aria-hidden` mirrors the state;
+**`aria-haspopup` / `aria-expanded` added** (previously absent).
+
+**Verified by attempting REAL focus, not by `offsetParent`.** `offsetParent !== null` tests for
+`display:none`, NOT `visibility:hidden` -- it reported all 14 links as focusable and **would
+have looked like a genuine a11y failure**. The correct test (call `.focus()`, check
+`document.activeElement`) returned **false for every link when closed, true when open**.
+
+### Inbound counts, before -> after
+| Route | Before | After |
+|---|---|---|
+| `/join` | **0** | **240** |
+| `/builds` | 12 | **241** |
+| `/cradle` | 3 | **240** |
+| `/status` | 142 | **241** |
+| `/guides`, `/advisor`, `/sitrep`, `/editors` | 141-183 | **240** |
+| 5 editor lanes (`/intel/<editor>`) | 142-148 | **240** |
+
+### Mobile menu deliberately left client-gated
+`Nav.js` mobile menu is still `{mobileOpen && (...)}`. The desktop dropdowns now supply **every
+one of those links** in HTML, so rendering them twice would duplicate ~14 links per page for
+**zero crawl benefit**.
+
+### MAP -> MODE: the premise was wrong
+Map pages render mode/event **NAMES**, but **none of them have pages** -- there is no
+`/modes/[slug]` route and no event route at all. And **Vault Breaker is not a `game_modes`
+row** (its facts are a static const), so a map page **could never discover it from the data it
+already reads**. That is why `/modes/vault-breaker` had **0 inbound links site-wide**.
+
+Built **`lib/modePages.js`**: a registry of modes that HAVE canonical pages, matched through the
+**same `availableOnMap()` predicate on the same slug contract**. **Deliberately NOT a hardcoded
+`slug === 'cryo-archive'` check** -- that is the exact shape that produced the `availableOnMap`
+bug and the guides-shells roster bug. Verified: cryo-archive links it, the other 4 maps do not.
+
+### Reciprocal guide links (3)
+`/weapons` -> `/guides/weapons`, `/mods` -> `/guides/mods`, `/maps` -> `/guides/maps`. Entity
+hubs previously linked guides in **neither** direction; guides linked out to entities but never
+received a link back.
+
+**`/shells` -> `/guides/shells` deliberately NOT added** -- that pair is the pending
+fold-then-redirect decision, and the link would be churn.
+
+### *** THIRD INSTANCE TODAY: rendered HTML contradicted a source read ***
+1. The **double-suffix defect** (7 routes printing the site name twice)
+2. The **`/uniques` hub links** (nearly reported as absent; they are in the client component)
+3. The **`/guides` hub links** (reported as "only 1 of 16"; **all 16 are linked**)
+
+**RULE: measure rendered output.** A grep for **static** `href="..."` strings misses any href
+built by **concatenation** (`'/guides/' + slug`), which is how most of this codebase builds
+links. Every claim in this entry comes from a 253-page crawl of served HTML.
+
+### Verification caveat
+Visual checking was **computed-style and layout-geometry based, NOT a pixel diff** -- the
+screenshot tool timed out twice. Nav height **unchanged at 48px in both states**; panels are
+`position: absolute`, so nothing shifts.
+
+### OPEN -- homepage entity links (item 2, NOT built)
+`/` still has **0** links to `/shells`, `/matchups`, `/uniques`, `/factions`, `/ranked`.
+Two blockers found: **`components/Footer.js` does not render on `/` at all**
+(`app/page.js:28` -- the neutral root renders its own minimal footer), so server-rendering that
+footer's link row would place **zero** links on the homepage; and `/` is a **game-neutral
+network root** whose header comment forbids Marathon vocabulary in neutral chrome.
+**Proposed instead:** an optional `keyRoutes` array per game in `lib/network/rootGames.js`,
+rendered inside `GameRoutingTile` / `GamePulseColumn` -- which the same comment explicitly
+sanctions ("a game's own content inside its segmented column are correct"), stays game-agnostic,
+and gives DMZ the same mechanism at launch. **Awaiting Justin's call.**
+
+---
+
 ## 2026-07-20 — 4xx INVENTORY CLOSED + the cannibalization pattern gets a second instance
 
 **Sitemap non-200: 1 -> 0. Internally-linked 4xx: 2 -> 0.** Derived from first principles (no

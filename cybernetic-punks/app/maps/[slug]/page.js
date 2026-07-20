@@ -27,6 +27,7 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { availableOnMap } from '@/lib/availability';
+import { MODE_PAGES } from '@/lib/modePages';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,6 +146,11 @@ async function fetchSeoData(slug) {
   // "Dire Marsh" and 'all' never matched anything. See lib/availability.js.
   var events = (eventsRes.data || []).filter(function(e) { return availableOnMap(e.available_on, slug); });
   var modes  = (modesRes.data || []).filter(function(m) { return availableOnMap(m.available_on, slug); });
+  // Modes that have their OWN page (lib/modePages.js), matched through the same
+  // predicate. game_modes rows have no detail route, so these are the only
+  // linkable modes -- and Vault Breaker is not a game_modes row at all, which is
+  // why /modes/vault-breaker had zero inbound links site-wide.
+  var modePages = MODE_PAGES.filter(function(mp) { return availableOnMap(mp.available_on, slug); });
 
   return {
     gameMap: gameMap,
@@ -153,6 +159,7 @@ async function fetchSeoData(slug) {
     bosses: bossesRes.data || [],
     events: events,
     modes: modes,
+    modePages: modePages,
     parentMap: (parentRes && parentRes.data) ? parentRes.data : null,
   };
 }
@@ -255,6 +262,7 @@ export default async function MapPage({ params, searchParams }) {
   var bosses = seo.bosses;
   var events = seo.events;
   var modes = seo.modes;
+  var modePages = seo.modePages || [];
   var parentMap = seo.parentMap;
   var zoneCount = ownZones.length + inheritedZones.length;
 
@@ -478,7 +486,7 @@ export default async function MapPage({ params, searchParams }) {
           A `length > 0` gate is what let the available_on bug survive two
           audits: the filter matched nothing, the section vanished, and a
           missing section looks identical to a section that was never built. */}
-      {modes.length === 0 && (
+      {modes.length === 0 && modePages.length === 0 && (
         <SectionEmpty
           label="GAME MODES"
           color="#ff8800"
@@ -488,6 +496,18 @@ export default async function MapPage({ params, searchParams }) {
       {modes.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
           <SectionHeader label="GAME MODES" color="#ff8800" />
+          {modePages.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8, marginBottom: 8 }}>
+              {modePages.map(function(mp) {
+                return (
+                  <Link key={mp.href} href={mp.href} style={{ textDecoration: 'none', background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid #ff8800', borderRadius: '0 0 2px 2px', padding: '14px 16px', display: 'block' }}>
+                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#ff8800', marginBottom: 4 }}>{mp.name} &rarr;</div>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.55, margin: 0 }}>{mp.blurb}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
             {modes.map(function(m, i) {
               return (
