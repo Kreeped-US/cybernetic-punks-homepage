@@ -132,6 +132,52 @@ Extraction) · Recon vs Triage duelling "best support" superlative.
 
 ---
 
+## 2026-07-20 — meta_tiers loop fix STEP 4: mirrored columns nulled
+
+The loop is now fully broken. `ranked_tier_solo`, `ranked_tier_squad`, `ranked_note` set to NULL
+on every `meta_tiers` row that held them. **7 shell rows** (0 weapon rows -- weapons never had
+these populated). Guarded per-row by id, **7/7 rows-affected=1**, read-back confirms **0 rows
+with any non-null remain**.
+
+### Renders verified IDENTICAL (before vs after the null)
+All ranked values now come from `shell_stats`, so nulling `meta_tiers` was invisible:
+- `/shells/thief` FAQ -- byte-identical string.
+- `/shells/rook` + `/shells/sentinel` FAQ -- still absent; Sentinel pending note intact.
+- `/meta` SOLO badges -- A×4 B×4 D×2 S×2, unchanged.
+- `/sitrep` per-shell RANKED badges -- value-level comparison to the pre-null browser snapshot:
+  **zero differences** (Thief S, Destroyer B, Recon B, Assassin A, Triage D, Vandal A).
+- `/ranked`, `/builds`, `/guides/shells/thief`, `/weapons/*` -- all 200, no 500 on the nulls.
+
+### *** A GATHER-LAYER READ SURFACE WAS MISSED -- CIPHER now reads null (step 5) ***
+CIPHER's *filters* were repointed in step 1 (they read `shell_stats`, verified: same 3 shells --
+Assassin, Thief, Vandal). But CIPHER's *data* reads stayed on `meta_tiers` and append
+`ranked_note` to prompt lines at **5 sites** (`lib/gather/cipher.js:179, 313, 397, 480, 554`).
+Those now yield **null**, so CIPHER's daily prompt lost the ranked-note annotation on its
+shell/weapon list lines.
+
+**This is NOT a page regression** -- no rendered page changed, which was the stop condition.
+CIPHER is a cron-time prompt builder, a read surface that **step 3 did not cover (it was scoped
+to render sites)**. My own step-1 note said the data reads keep "tier, trend and note" -- I
+overlooked that `ranked_note` in the same selects is a MIRROR, not editorial. The null is
+correct; CIPHER is the reader that needs updating.
+
+**STEP 5 (follow-up, NOT done here):** repoint CIPHER's 5 `ranked_note` reads to
+`shell_stats.ranked_notes`, matching the render-site pattern. Line 179's target shell already
+has `shell` (shell_stats) in scope -- a one-line fix; the list contexts (313/397/480/554) need
+the same `shell_stats` join the render sites got. Left as its own gated change rather than
+rushed onto step 4. Until then CIPHER's supplementary ranked context is thinner (the target
+shell's `note` and abilities still come through; only the per-list ranked_note annotations are
+gone).
+
+### Method note
+Step 4's own instruction -- "any page change means a read site was missed" -- caught the render
+sites cleanly (none changed). It did NOT catch CIPHER because CIPHER is not a page. The full
+read surface of a column is renders PLUS gather/prompt builders PLUS filters; enumerating only
+one class misses the others. This is the same enumerate-every-surface lesson, applied to a
+column's readers rather than a value's render sites.
+
+---
+
 ## 2026-07-20 — meta_tiers.Sentinel.tier nulled — SECOND default-with-no-basis tier
 
 `/shells/sentinel` was rendering *"A-Tier in ranked. Tier placement pending June 2 launch"* --
