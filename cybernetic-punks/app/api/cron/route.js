@@ -591,9 +591,13 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
                 tier: newTier,
                 trend: computedTrend,
                 note: item.note || '',
-                ranked_note: item.ranked_note || null,
-                ranked_tier_solo: item.ranked_tier_solo || null,
-                ranked_tier_squad: item.ranked_tier_squad || null,
+                // ranked_note / ranked_tier_solo / ranked_tier_squad are NO LONGER
+                // WRITTEN (2026-07-20, step 2 of the meta_tiers loop fix). They were
+                // copies of shell_stats round-tripped through the NEXUS prompt, which
+                // made meta_tiers read as an independent second witness when it was
+                // not. Renders now read those fields from shell_stats (the source of
+                // truth). Existing column values persist until step 4 nulls them.
+                // tier/trend/note/holotag_tier are genuine editorial output and stay.
                 holotag_tier: item.holotag_tier || null,
                 updated_at: new Date().toISOString(),
               };

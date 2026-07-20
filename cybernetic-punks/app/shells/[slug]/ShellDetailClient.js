@@ -306,13 +306,13 @@ export default function ShellDetailClient({
         </section>
 
         {/* ══ NEXUS ANALYSIS / HOLOTAG NOTES ═══════════════ */}
-        {(metaTier?.note || metaTier?.ranked_note || shell.holotag_tier_recommendation) && (
+        {(metaTier?.note || shell.holotag_tier_recommendation) && (
           <section style={{ paddingTop: 20 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 6 }}>
-              {(metaTier?.note || metaTier?.ranked_note) && (
+              {metaTier?.note && (
                 <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00d4ff', borderRadius: '0 3px 3px 0', padding: '14px 18px' }}>
                   <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 2, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase' }}>⬡ Meta AI Analysis</div>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>{metaTier.note || metaTier.ranked_note}</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>{metaTier.note}</div>
                 </div>
               )}
               {shell.holotag_tier_recommendation && (

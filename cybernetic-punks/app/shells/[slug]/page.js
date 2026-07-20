@@ -210,7 +210,10 @@ export default async function ShellHubPage({ params }) {
   // meta_tiers still carries a stale tier (its `tier` column is NOT NULL, so it
   // cannot be nulled without DDL).
   var hasRankedTier = metaTier && metaTier.tier && shellName !== 'Rook';
-  if (hasRankedTier) faqItems.push({ q: 'Is ' + shellName + ' good in Marathon ranked?', a: shellName + ' is currently ' + metaTier.tier + '-Tier in ranked.' + (metaTier.ranked_note ? ' ' + metaTier.ranked_note : '') });
+  // Ranked note now reads shell_stats.ranked_notes (PLURAL -- the source of
+  // truth), NOT meta_tiers.ranked_note (SINGULAR -- a mirrored column being
+  // retired). tier still comes from meta_tiers (genuine editorial, not mirrored).
+  if (hasRankedTier) faqItems.push({ q: 'Is ' + shellName + ' good in Marathon ranked?', a: shellName + ' is currently ' + metaTier.tier + '-Tier in ranked.' + (shell.ranked_notes ? ' ' + shell.ranked_notes : '') });
   if (shell.active_ability_name) faqItems.push({ q: 'What is ' + shellName + "'s active ability?", a: shell.active_ability_name + (shell.active_ability_description ? ': ' + shell.active_ability_description : '') });
 
   // ─── JSON-LD SCHEMAS ────────────────────────────────────────

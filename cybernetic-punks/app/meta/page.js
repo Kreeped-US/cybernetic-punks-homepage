@@ -72,7 +72,7 @@ export default async function MetaPage() {
         .select('name, weapon_type, ammo_type, damage, fire_rate, range_rating, ranked_viable, firepower_score, accuracy_score, image_filename, verified'),
       supabase
         .from('shell_stats')
-        .select('name, role, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, image_filename, verified'),
+        .select('name, role, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes, image_filename, verified'),
       supabase.from('mod_stats').select('id', { count: 'exact', head: true }),
       supabase
         .from('feed_items')
@@ -89,6 +89,25 @@ export default async function MetaPage() {
     shells      = shellsRes.data  || [];
     modCount    = modsRes.count   || 0;
     recentPosts = postsRes.data   || [];
+
+    // Ranked fields are read from shell_stats (source of truth), not from the
+    // mirrored meta_tiers columns being retired (step 3 of the loop fix). Overlay
+    // them onto each shell-type tier row so MetaClient renders the source values.
+    // Column-name shift: shell_stats.ranked_notes (PLURAL) -> ranked_note
+    // (SINGULAR) which is what MetaClient reads. tier/trend/note stay from
+    // meta_tiers (genuine editorial).
+    var shellRankedByName = {};
+    shells.forEach(function(sh) { shellRankedByName[sh.name] = sh; });
+    metaTiers = metaTiers.map(function(row) {
+      if (row.type !== 'shell') return row;
+      var src = shellRankedByName[row.name];
+      if (!src) return row;
+      return Object.assign({}, row, {
+        ranked_tier_solo:  src.ranked_tier_solo || null,
+        ranked_tier_squad: src.ranked_tier_squad || null,
+        ranked_note:       src.ranked_notes || null,
+      });
+    });
   } catch (err) {
     console.error('[MetaPage] fetch error:', err);
   }

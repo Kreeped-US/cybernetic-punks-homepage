@@ -198,7 +198,7 @@ export default async function ShellGuidePage({ params }) {
 
     supabase
       .from('meta_tiers')
-      .select('tier, trend, note, ranked_note')
+      .select('tier, trend, note')
       .eq('type', 'shell')
       .eq('name', shell.name)
       .maybeSingle(),

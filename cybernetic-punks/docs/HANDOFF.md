@@ -132,6 +132,74 @@ Extraction) · Recon vs Triage duelling "best support" superlative.
 
 ---
 
+## 2026-07-20 — meta_tiers loop fix STEPS 2+3: stop writing mirrors, repoint renders
+
+**Columns NOT nulled yet -- that is step 4, after a render-verification window.** Existing
+column values persist, so renders keep working on stale-but-correct data in the interim.
+
+### Step 2 -- the write (cron/route.js)
+Removed `ranked_note`, `ranked_tier_solo`, `ranked_tier_squad` from the `meta_tiers` row object.
+`tier`, `trend`, `note`, `holotag_tier` untouched (genuine editorial output). The loop is broken:
+NEXUS no longer writes back copies of `shell_stats`.
+
+### Step 3 -- render repoints
+**JOIN shell_stats (source of truth):**
+- `/meta` -- shell_stats ranked fields overlaid onto shell-type meta rows before the client sees
+  them; MetaClient unchanged. Added `ranked_notes` to the shell_stats select.
+- `/sitrep` (page) + `/api/sitrep-data` -- same overlay. **UNFILTERED overlay source on
+  purpose:** Sentinel is A-tier with a NULL solo tier, so a `.not('ranked_tier_solo','is',null)`
+  source would have silently missed it (the existing filtered fetch stays, for the S/A schedule
+  list).
+- `/shells/[slug]` FAQ -- ranked note now reads `shell.ranked_notes`, tier still from meta_tiers.
+  The solo/squad badges were ALREADY on shell_stats. Client "Meta AI Analysis" block dropped its
+  `metaTier.ranked_note` fallback (`metaTier.note` is populated for every shell -> no visible
+  change).
+
+**DROP the display (mirrored value selected but not meaningfully rendered):**
+- `/builds` and `/guides/shells/[name]` -- `ranked_note` was in the meta_tiers select and never
+  rendered; removed from the select. Their visible ranked badges read shell_stats already.
+- `/weapons/[slug]` -- dropped the `metaTier.note || metaTier.ranked_note` fallback and the
+  select column. Weapon meta rows have 0/32 ranked fields anyway.
+
+### *** ITEM 8 WAS BASED ON A WRONG PREMISE -- admin left UNCHANGED ***
+The instruction was to remove `ranked_tier_solo` / `ranked_tier_squad` from the admin edit form
+at `admin/page.js:70-71` because "cron no longer writes them". **But those fields are in the
+`shell_stats` config block (starts line 55), NOT meta_tiers.** `meta_tiers` is **not in
+`ALLOWED_TABLES`** -- there is no admin form for it at all. Those fields edit the **source of
+truth** that every render now reads. **Removing them would delete the owner's only way to edit
+the authoritative ranked tiers.** Left untouched and flagged rather than executed. (My own step-3
+report cited the line number without checking the table -- the same class of miss the method
+rule is meant to catch.)
+
+### TWO GENUINE DATA DIVERGENCES surfaced by the repoint (NOT wrong joins)
+solo/squad agree across all 8 shells; two `ranked_note`s did not, so repointing to shell_stats
+changed two rendered notes -- both toward the source of truth, both confirmed in visible text
+AND FAQPage schema:
+- **Assassin**: `"High risk/reward solo -- Holotag theft specialist; B squad"` (model-elaborated
+  in meta_tiers) -> `"High risk/reward -- Holotag theft specialist"` (shell_stats). The dropped
+  "B squad" is already shown as a separate SQUAD badge.
+- **Sentinel**: `null` (meta_tiers) -> `"Tier placement pending June 2 launch..."` (shell_stats).
+  The repoint ADDS an honest pending note. **Side effect worth noting:** Sentinel now renders
+  "A-Tier in ranked. Tier placement pending" -- mildly self-contradictory, because
+  `meta_tiers.Sentinel.tier = A` is the **default-with-no-basis** case (null solo/squad, model
+  emitted A). That is the tier-is-not-judgment problem from step 1, unfixed here.
+
+### COLUMN-NAME TRAP handled
+`shell_stats.ranked_notes` (**PLURAL**) vs `meta_tiers.ranked_note` (**SINGULAR**). Every
+repoint maps plural->singular explicitly; a typo would have produced a silent null.
+
+### Verified by rendering (browser + curl)
+`/sitrep` per-shell RANKED badges exact (Thief S, Triage D, Destroyer B, Vandal A, Assassin A,
+Recon B, Sentinel none). `/meta` SOLO/SQUAD badge set complete (A,B,D,S / A,B,S). `/shells/thief`
+FAQ unchanged, `/shells/rook` FAQ absent, the two flagged notes changed as predicted in text and
+schema. All target pages 200.
+
+### STILL TO DO (step 4)
+Null the now-unread `ranked_tier_solo` / `ranked_tier_squad` / `ranked_note` columns on
+`meta_tiers` in one guarded sweep, after this render change is observed clean.
+
+---
+
 ## 2026-07-20 — meta_tiers loop fix STEP 1: repoint the FILTERS before any nulling
 
 **No write-path change in this commit.** This step makes every filter that keys on the mirrored

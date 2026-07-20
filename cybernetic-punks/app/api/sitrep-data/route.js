@@ -25,6 +25,7 @@ export async function GET() {
       metaTiersRes,
       latestArticlesRes,
       rankedRes,
+      shellRankedRes,
     ] = await Promise.all([
 
       // Full meta tier table -- weapons + shells
@@ -46,12 +47,32 @@ export async function GET() {
       // Ranked schedule context
       supabase
         .from('shell_stats')
-        .select('name, ranked_tier_solo, ranked_tier_squad, image_filename')
+        .select('name, ranked_tier_solo, ranked_tier_squad, ranked_notes, image_filename')
         .not('ranked_tier_solo', 'is', null)
         .order('ranked_tier_solo'),
+      // Unfiltered ranked overlay source (source of truth). Separate from the
+      // filtered fetch above, which powers the S/A ranked-schedule list and must
+      // keep excluding nulls. Sentinel is A-tier with a null solo tier, so the
+      // overlay needs every shell, not just the non-null ones.
+      supabase
+        .from('shell_stats')
+        .select('name, ranked_tier_solo, ranked_tier_squad, ranked_notes'),
     ]);
 
-    const allTiers = metaTiersRes.data || [];
+    // Overlay ranked fields from shell_stats (source of truth) onto shell rows;
+    // the meta_tiers ranked_tier_solo/squad/note columns are being retired.
+    const shellRankedMap = {};
+    (shellRankedRes.data || []).forEach(sh => { shellRankedMap[sh.name] = sh; });
+    const allTiers = (metaTiersRes.data || []).map(row => {
+      if (row.type !== 'shell') return row;
+      const src = shellRankedMap[row.name];
+      if (!src) return row;
+      return Object.assign({}, row, {
+        ranked_tier_solo:  src.ranked_tier_solo || null,
+        ranked_tier_squad: src.ranked_tier_squad || null,
+        ranked_note:       src.ranked_notes || null,
+      });
+    });
     const allArticles = latestArticlesRes.data || [];
 
     // Latest per editor

@@ -126,7 +126,7 @@ function SectionHeader({ label, count, color, rightLink }) {
 
 // ─── PAGE ───────────────────────────────────────────────────
 export default async function SitrepPage() {
-  var [metaTiersRes, latestArticlesRes, topBuildRes, risingIntelRes, liveStats] = await Promise.all([
+  var [metaTiersRes, latestArticlesRes, topBuildRes, risingIntelRes, liveStats, shellRankedRes] = await Promise.all([
     supabase
       .from('meta_tiers')
       .select('name, type, tier, trend, note, ranked_note, ranked_tier_solo, updated_at')
@@ -168,9 +168,22 @@ export default async function SitrepPage() {
       .limit(3),
 
     getLiveStats(),
+    // Overlay source for ranked fields (see allTiers below). Unfiltered.
+    supabase.from('shell_stats').select('name, ranked_tier_solo, ranked_tier_squad, ranked_notes'),
   ]);
 
-  var allTiers     = metaTiersRes.data     || [];
+  // Ranked fields from shell_stats (source of truth), overlaid onto the shell
+  // tier rows -- the meta_tiers ranked_tier_solo column is being retired.
+  // UNFILTERED source: Sentinel is A-tier with a null solo tier, so a
+  // .not('ranked_tier_solo','is',null) source would silently miss it.
+  var shellRankedMap = {};
+  (shellRankedRes && shellRankedRes.data ? shellRankedRes.data : []).forEach(function(sh) { shellRankedMap[sh.name] = sh; });
+  var allTiers     = (metaTiersRes.data || []).map(function(row) {
+    if (row.type !== 'shell') return row;
+    var src = shellRankedMap[row.name];
+    if (!src) return row;
+    return Object.assign({}, row, { ranked_tier_solo: src.ranked_tier_solo || null, ranked_note: src.ranked_notes || null });
+  });
   var allArticles  = latestArticlesRes.data || [];
   var topBuild     = topBuildRes.data       || null;
   var risingIntel  = risingIntelRes.data    || [];

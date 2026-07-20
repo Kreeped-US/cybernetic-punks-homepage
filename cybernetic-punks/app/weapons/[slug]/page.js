@@ -140,7 +140,7 @@ export default async function WeaponDetailPage({ params }) {
   var [weaponRes, metaTierRes, uniquesRes, dexterPicksRes, articlesRes, allWeaponsRes] = await Promise.all([
     supabase.from('weapon_stats').select('*').eq('name', weaponName).single(),
 
-    supabase.from('meta_tiers').select('tier, trend, note, ranked_note, updated_at').eq('name', weaponName).eq('type', 'weapon').maybeSingle(),
+    supabase.from('meta_tiers').select('tier, trend, note, updated_at').eq('name', weaponName).eq('type', 'weapon').maybeSingle(),
 
     // Unique variants whose base_weapon is this weapon (cross-link to /uniques)
     supabase.from('unique_weapons').select('name, slug, rarity, lore_tagline, acquisition_source').eq('base_weapon', weaponName).order('rarity'),

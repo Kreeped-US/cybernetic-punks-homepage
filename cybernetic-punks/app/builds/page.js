@@ -201,7 +201,7 @@ export default async function BuildsPage() {
       .order('name'),
     supabase
       .from('meta_tiers')
-      .select('name, type, tier, trend, note, ranked_note, updated_at')
+      .select('name, type, tier, trend, note, updated_at')
       .order('tier'),
     supabase
       .from('feed_items')
