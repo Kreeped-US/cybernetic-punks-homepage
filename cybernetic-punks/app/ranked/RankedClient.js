@@ -364,7 +364,28 @@ export default function RankedClient({ data }) {
         </div>
       </section>
 
-      {/* == LIVE META MOVERS (NEXUS data) =================== */}
+      {/* == LIVE META MOVERS (NEXUS data) ===================
+          Honest empty state (SectionEmpty / DmzEmptyState pattern): the section
+          ALWAYS renders. Silently omitting it is what let the available_on and
+          meta_tiers bugs hide -- a missing section looks identical to one that
+          was never built. Empty here means the tier list is stable, which is a
+          real statement, not an absence. */}
+      {data.metaMovers.length === 0 && (
+        <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00d4ff' }}>⬡ RANKED META MOVERS</span>
+            <div style={{ flex: 1, height: 1, background: '#22252e' }} />
+          </div>
+          <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '18px 16px' }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, margin: 0 }}>
+              No tier movement since the last regrade. Shells and weapons are holding their
+              positions. The current standings are on the{' '}
+              <Link href="/meta" style={{ color: '#00d4ff', textDecoration: 'none' }}>meta tier list</Link>.
+            </p>
+          </div>
+        </section>
+      )}
+
       {data.metaMovers.length > 0 && (
         <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>

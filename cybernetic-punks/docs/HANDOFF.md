@@ -132,6 +132,67 @@ Extraction) · Recon vs Triage duelling "best support" superlative.
 
 ---
 
+## 2026-07-20 — meta_tiers loop fix STEP 1: repoint the FILTERS before any nulling
+
+**No write-path change in this commit.** This step makes every filter that keys on the mirrored
+`meta_tiers` columns immune to the nulling that Step 2 (stop writing them) will do -- so nulling
+later cannot make them return zero rows silently.
+
+### Why filters first
+`ranked_tier_solo` / `ranked_tier_squad` / `ranked_note` on `meta_tiers` are COPIES of
+`shell_stats`, written back through the NEXUS prompt. Several reads FILTER on them
+(`.in('ranked_tier_solo', ['S','A'])`, `.not('ranked_note','is',null)`). Null the columns and
+those filters return **zero rows with no error** -- CIPHER's ranked context and the `/ranked`
+movers strip would just go quiet. **Seventh instance of the quiet-failure family this session.**
+
+### What changed
+- **3 CIPHER shell filters** (`lib/gather/cipher.js`): filter source split out to a shared
+  `rankedShellNames()` helper that reads **`shell_stats`**; the DATA still comes from
+  `meta_tiers` (which supplies `tier`/`trend`/`note`, fields `shell_stats` does not have).
+  Verified exact: BEFORE and AFTER both return the same **3 shells** (Thief S, Assassin A,
+  Vandal A). Rook correctly absent from both (its `shell_stats` ranked tiers are null).
+- **3 CIPHER weapon filters DROPPED.** They filtered `meta_tiers` weapons on
+  `ranked_tier_solo` and have returned **ZERO rows for their entire existence**: `weapon_stats`
+  has no such column (only the boolean `ranked_viable`), and **0 of 32** `meta_tiers` weapon
+  rows have it populated. **EIGHTH quiet-failure instance -- pre-existing, unrelated to the
+  loop.** A comment at each removal site records the reason.
+  - **NOT re-sourced from `meta_tiers.tier`**: those tiers are NEXUS-authored, so feeding them
+    back to CIPHER would create **editor-to-editor circularity** -- the same disease in a
+    different organ.
+  - **OPEN DESIGN QUESTION:** CIPHER was intended to have top-ranked-weapon context and has
+    never had it. Re-sourcing needs a REAL quality signal, not model output.
+- **`/ranked` movers**: filter switched from `.not('ranked_note','is',null)` to
+  **`.in('trend', ['up','down'])`**. A strip called "meta movers" filtering on "has ranked
+  prose" was showing non-movers as movers. `trend` is computed in code by `computeTrend()`,
+  never model-echoed, so it survives the loop fix. **Honest empty state added** (SectionEmpty /
+  DmzEmptyState pattern) for when nothing has moved. Today it renders **one genuine mover**
+  (Misriah 2442, weapon, trend down) instead of the old **6** prose-havers -- a real
+  improvement, not just a refactor.
+
+### *** CORRECTING AN EARLIER PREMISE: tier IS NOT INDEPENDENT JUDGMENT ***
+The prompt instructs *"set `tier` to the HIGHER of `ranked_tier_solo` and `ranked_tier_squad`"*
+(`editorCore.js:429`), and **`tier == max(solo, squad)` on 6 of 6 shells that have a basis**.
+The earlier "`tier` diverges on 6 of 8" compared against **`shell_stats.ranked_tier`** -- the
+WRONG column. So Option B removes the false second witness for solo/squad/note, but **`tier`
+remains downstream of `shell_stats`**. **Sentinel is the tell:** no basis (null/null), model
+emitted **A** anyway -- a default wearing the appearance of a grade.
+
+### ARCHITECTURAL QUESTION FOR ITS OWN SESSION
+If `tier = max(solo, squad)` and those live in `shell_stats`, **`tier` could be computed in code
+and NEXUS need not grade tiers at all.** What would remain of `meta_tiers` is `note` (genuine
+model prose) and `trend` (code-computed).
+
+### PROVENANCE COLUMN (Option C) DROPPED FROM THE PLAN
+After the full fix, everything in `meta_tiers` is either model-authored (`note`) or
+code-computed (`trend`, and `tier` derived) -- so a `source` column would read one value
+forever. **A column with one value is decoration, not provenance.**
+
+### STILL TO DO (Steps 2+)
+Remove the 3 mirrored columns from the `cron/route.js` write (3 lines); repoint or drop the ~6
+RENDER sites; null the now-unread columns in one guarded sweep.
+
+---
+
 ## 2026-07-20 — meta_tiers.tier NOT NULL dropped, Rook.tier nulled
 
 `meta_tiers.tier` NOT NULL constraint dropped (Justin ran the DDL) and **`meta_tiers.Rook.tier`

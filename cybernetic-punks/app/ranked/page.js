@@ -65,12 +65,17 @@ async function getRankedData() {
       supabase
         .from('meta_tiers')
         .select('name, type, tier, trend, ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier, updated_at')
-        .not('ranked_note', 'is', null)
-        // Rook has a ranked_note (saying it is NOT selectable in ranked), which
-        // would otherwise qualify it as a ranked "meta mover". Excluded: this is
-        // the SECOND /ranked path -- the SHELL_ORDER tier rows were fixed
-        // separately and this strip was missed.
-        .neq('name', 'Rook')
+        // FILTER ON trend, not ranked_note (2026-07-20). A strip called "meta
+        // movers" filtering on "has ranked prose" showed non-movers as movers --
+        // Rook qualified purely by HAVING a note. trend is computed in code by
+        // computeTrend(newTier, oldTier), never model-authored and never echoed
+        // from shell_stats, so it survives the meta_tiers loop fix intact.
+        //
+        // This renders ZERO entries while every shell is 'stable'. That is
+        // correct: nothing has moved. It self-heals the first time a real tier
+        // change sets up/down. The Rook exclusion is no longer needed -- a shell
+        // with no tier cannot have a trend.
+        .in('trend', ['up', 'down'])
         .order('updated_at', { ascending: false })
         .limit(8),
     ]);

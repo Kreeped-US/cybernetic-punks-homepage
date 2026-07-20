@@ -149,20 +149,15 @@ async function buildShellBuildPrompt() {
     ? available[Math.floor(Math.random() * available.length)]
     : SHELLS[Math.floor(Math.random() * SHELLS.length)];
 
-  const [shellRes, tierRes, weaponsRes] = await Promise.all([
+  const [shellRes, tierRes] = await Promise.all([
     supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle(),
     supabase.from('meta_tiers')
       .select('tier, ranked_tier_solo, ranked_tier_squad, note, ranked_note, trend, holotag_tier')
       .eq('name', targetShell).eq('type', 'shell').maybeSingle(),
-    supabase.from('meta_tiers')
-      .select('name, tier, ranked_tier_solo, note, ranked_note, trend')
-      .eq('type', 'weapon').in('ranked_tier_solo', ['S', 'A'])
-      .order('ranked_tier_solo'),
   ]);
 
   const shell = shellRes.data;
   const shellTier = tierRes.data;
-  const weapons = weaponsRes.data || [];
 
   const shellSection = shell
     ? 'SHELL: ' + targetShell + '\n'
@@ -185,13 +180,18 @@ async function buildShellBuildPrompt() {
       + (shellTier.holotag_tier ? ' Holotag benchmark: ' + shellTier.holotag_tier : '')
     : 'CURRENT TIER STATE: ' + targetShell + ' tier data not yet established by NEXUS.';
 
-  const weaponsSection = weapons.length > 0
-    ? 'CURRENT S AND A TIER WEAPONS (RANKED SOLO):\n' + weapons.map(function(w) {
-        return '- ' + w.name + ' [Solo: ' + (w.ranked_tier_solo || '?')
-          + ', Overall: ' + (w.tier || '?') + ', Trend: ' + (w.trend || 'stable') + ']'
-          + (w.ranked_note ? ' — ' + w.ranked_note : (w.note ? ' — ' + w.note : ''));
-      }).join('\n')
-    : 'WEAPON TIER STATE: NEXUS tier data not yet established. Use weapon database in system context.';
+      // WEAPON RANKED-TIER QUERY REMOVED (2026-07-20). It filtered meta_tiers on
+      // ranked_tier_solo for type='weapon' and returned ZERO rows for its entire
+      // existence: weapon_stats has no ranked_tier_solo column (only the boolean
+      // ranked_viable), and 0 of 32 meta_tiers weapon rows have it populated.
+      // CIPHER has never had the top-ranked-weapon context this was meant to give.
+      //
+      // NOT re-sourced from meta_tiers.tier on purpose: those tiers are authored by
+      // NEXUS, so feeding them to CIPHER would create editor-to-editor circularity --
+      // the same disease as the meta_tiers loop, in a different organ. Re-sourcing
+      // needs a real quality signal, not model output. The fallback string below is
+      // what already ran every single time.
+  const weaponsSection = 'WEAPON TIER STATE: NEXUS tier data not yet established. Use weapon database in system context.';
 
   return 'ARCHETYPE: BEST RANKED SOLO BUILD — ' + targetShell + '\n\n'
     + 'Your job: design and recommend the optimal ranked solo build for ' + targetShell + ' '
@@ -232,7 +232,8 @@ async function buildCounterMetaPrompt() {
     .from('meta_tiers')
     .select('name, tier, ranked_tier_solo, ranked_tier_squad, note, ranked_note, trend')
     .eq('type', 'shell')
-    .in('ranked_tier_solo', ['S', 'A'])
+    // Filter source: shell_stats (see rankedShellNames). Data source stays here.
+    .in('name', await rankedShellNames(['S', 'A']))
     .order('ranked_tier_solo'); // S first, then A
 
   if (!tieredShells || tieredShells.length === 0) {
@@ -280,16 +281,30 @@ async function buildCounterMetaPrompt() {
   return buildCounterMetaForShell(targetShell, targetTier);
 }
 
+// FILTER SOURCE for "which shells are ranked-competitive".
+//
+// STEP 1 of the meta_tiers loop fix (2026-07-20). These filters used to run
+// against meta_tiers.ranked_tier_solo -- a column that is a COPY of shell_stats,
+// written back through the NEXUS prompt. Once that column stops being written,
+// every `.in('ranked_tier_solo', [...])` filter against meta_tiers would return
+// ZERO rows SILENTLY: no error, just CIPHER quietly losing its ranked context.
+//
+// So the FILTER now reads shell_stats (the source of truth, never nulled by the
+// loop fix) while the DATA still comes from meta_tiers, which supplies tier,
+// trend and note -- fields that do not exist in shell_stats. Verified exact at
+// the time of the change: both sides returned the same 3 shells.
+async function rankedShellNames(tiers) {
+  const { data } = await supabase
+    .from('shell_stats')
+    .select('name')
+    .in('ranked_tier_solo', tiers);
+  return (data || []).map(function(r) { return r.name; });
+}
+
 async function buildCounterMetaForShell(targetShell, tierInfo) {
-  const [shellRes, weaponsRes] = await Promise.all([
-    supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle(),
-    supabase.from('meta_tiers')
-      .select('name, tier, ranked_tier_solo, note, ranked_note, trend')
-      .eq('type', 'weapon').in('ranked_tier_solo', ['S', 'A']),
-  ]);
+  const shellRes = await supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle();
 
   const shell = shellRes.data;
-  const weapons = weaponsRes.data || [];
 
   const targetSection = shell
     ? 'COUNTER TARGET: ' + targetShell + '\n'
@@ -305,13 +320,18 @@ async function buildCounterMetaForShell(targetShell, tierInfo) {
       + ' | Speed: ' + (shell.base_speed || '?')
     : 'COUNTER TARGET: ' + targetShell + ' (limited data)';
 
-  const counterWeaponsSection = weapons.length > 0
-    ? 'AVAILABLE COUNTER-WEAPONS (currently S/A tier):\n' + weapons.map(function(w) {
-        return '- ' + w.name + ' [' + (w.ranked_tier_solo || '?') + '-tier solo, '
-          + (w.trend || 'stable') + ']'
-          + (w.ranked_note ? ' — ' + w.ranked_note : '');
-      }).join('\n')
-    : 'COUNTER-WEAPONS: NEXUS tier data pending. Use weapon database in system context.';
+      // WEAPON RANKED-TIER QUERY REMOVED (2026-07-20). It filtered meta_tiers on
+      // ranked_tier_solo for type='weapon' and returned ZERO rows for its entire
+      // existence: weapon_stats has no ranked_tier_solo column (only the boolean
+      // ranked_viable), and 0 of 32 meta_tiers weapon rows have it populated.
+      // CIPHER has never had the top-ranked-weapon context this was meant to give.
+      //
+      // NOT re-sourced from meta_tiers.tier on purpose: those tiers are authored by
+      // NEXUS, so feeding them to CIPHER would create editor-to-editor circularity --
+      // the same disease as the meta_tiers loop, in a different organ. Re-sourcing
+      // needs a real quality signal, not model output. The fallback string below is
+      // what already ran every single time.
+  const counterWeaponsSection = 'COUNTER-WEAPONS: NEXUS tier data pending. Use weapon database in system context.';
 
   return 'ARCHETYPE: COUNTER-META — How to Beat ' + targetShell + '\n\n'
     + 'Your job: explain how to counter ' + targetShell + ' in ranked solo. Players reading '
@@ -345,15 +365,15 @@ async function buildCounterMetaForShell(targetShell, tierInfo) {
 async function buildWeeklyClimbPrompt() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
 
-  const [topShellsRes, topWeaponsRes, ghostRes, dexterRes] = await Promise.all([
+  // Resolved before Promise.all so the filter list is available to it.
+  const rankedShellsSA = await rankedShellNames(['S', 'A']);
+
+  const [topShellsRes, ghostRes, dexterRes] = await Promise.all([
     supabase.from('meta_tiers')
       .select('name, tier, ranked_tier_solo, ranked_tier_squad, ranked_note, trend')
-      .eq('type', 'shell').in('ranked_tier_solo', ['S', 'A'])
+      .eq('type', 'shell')
+      .in('name', rankedShellsSA)
       .order('ranked_tier_solo').limit(6),
-    supabase.from('meta_tiers')
-      .select('name, tier, ranked_tier_solo, ranked_note, trend')
-      .eq('type', 'weapon').in('ranked_tier_solo', ['S', 'A'])
-      .order('ranked_tier_solo').limit(8),
     supabase.from('feed_items')
       .select('headline, body, ce_score')
       .eq('editor', 'GHOST').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG)
@@ -367,7 +387,6 @@ async function buildWeeklyClimbPrompt() {
   ]);
 
   const topShells = topShellsRes.data || [];
-  const topWeapons = topWeaponsRes.data || [];
   const ghostArticles = ghostRes.data || [];
   const dexterArticles = dexterRes.data || [];
 
@@ -379,12 +398,18 @@ async function buildWeeklyClimbPrompt() {
       }).join('\n')
     : 'TOP SHELLS: NEXUS tier data pending.';
 
-  const weaponSection = topWeapons.length > 0
-    ? 'TOP WEAPONS THIS WEEK (RANKED SOLO):\n' + topWeapons.map(function(w) {
-        return '- ' + w.name + ' [' + (w.ranked_tier_solo || '?') + ', ' + (w.trend || 'stable') + ']'
-          + (w.ranked_note ? ' — ' + w.ranked_note : '');
-      }).join('\n')
-    : 'TOP WEAPONS: NEXUS tier data pending.';
+      // WEAPON RANKED-TIER QUERY REMOVED (2026-07-20). It filtered meta_tiers on
+      // ranked_tier_solo for type='weapon' and returned ZERO rows for its entire
+      // existence: weapon_stats has no ranked_tier_solo column (only the boolean
+      // ranked_viable), and 0 of 32 meta_tiers weapon rows have it populated.
+      // CIPHER has never had the top-ranked-weapon context this was meant to give.
+      //
+      // NOT re-sourced from meta_tiers.tier on purpose: those tiers are authored by
+      // NEXUS, so feeding them to CIPHER would create editor-to-editor circularity --
+      // the same disease as the meta_tiers loop, in a different organ. Re-sourcing
+      // needs a real quality signal, not model output. The fallback string below is
+      // what already ran every single time.
+  const weaponSection = 'TOP WEAPONS: NEXUS tier data pending.';
 
   const ghostSection = ghostArticles.length > 0
     ? 'COMMUNITY SENTIMENT (last 7 days, from GHOST):\n' + ghostArticles.map(function(g, i) {
@@ -515,7 +540,9 @@ async function buildPatchImpactPrompt(patchItems) {
   const { data: currentMeta } = await supabase
     .from('meta_tiers')
     .select('name, type, ranked_tier_solo, ranked_tier_squad, trend, ranked_note')
-    .in('ranked_tier_solo', ['S', 'A', 'BAN'])
+    // Filter source: shell_stats. 'BAN' kept in the requested set for symmetry
+    // with the old query; no shell currently holds it.
+    .in('name', await rankedShellNames(['S', 'A', 'BAN']))
     .order('ranked_tier_solo')
     .limit(20);
 
