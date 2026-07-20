@@ -944,7 +944,6 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                   {mv === 'new'  && <span style={{ fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>★ NEW</span>}
                                   {item.ranked_tier_solo  && <span style={{ fontSize: 8, color: '#9b5de5', background: 'rgba(155,93,229,0.08)', border: '1px solid rgba(155,93,229,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>SOLO {item.ranked_tier_solo}</span>}
                                   {item.ranked_tier_squad && <span style={{ fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>SQUAD {item.ranked_tier_squad}</span>}
-                                  {item.holotag_tier && <span style={{ fontSize: 8, color: '#ffd700', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>◈ {item.holotag_tier}</span>}
                                 </div>
                                 {item.note && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{item.note}</div>}
                                 {item.ranked_note && <div style={{ fontSize: 11, color: '#9b5de5', marginTop: 3, opacity: 0.8 }}>◎ {item.ranked_note}</div>}

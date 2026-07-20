@@ -633,8 +633,10 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
                 // made meta_tiers read as an independent second witness when it was
                 // not. Renders now read those fields from shell_stats (the source of
                 // truth). Existing column values persist until step 4 nulls them.
-                // tier/trend/note/holotag_tier are genuine editorial output and stay.
-                holotag_tier: item.holotag_tier || null,
+                // holotag_tier removed 2026-07-20: meta_tiers.holotag_tier was 0 of 40
+                // rows for its entire existence (the model never emitted a value).
+                // The real data is shell_stats.holotag_tier_recommendation. Column
+                // dropped by DDL after this lands. tier/trend/note stay (editorial).
                 updated_at: new Date().toISOString(),
               };
             })

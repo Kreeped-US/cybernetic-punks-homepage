@@ -401,7 +401,6 @@ export default function RankedClient({ data }) {
               var imgSrc = mover.image_filename ? '/images/' + folder + '/' + mover.image_filename : null;
               var tierColor = GRADE_COLORS[mover.tier] || '#888';
               var rankedSoloTier = mover.ranked_tier_solo;
-              var holotag = mover.holotag_tier;
               return (
                 <div key={mover.name} className="r-card" style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + tierColor, borderRadius: '0 2px 2px 0', padding: '12px 14px' }}>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -419,9 +418,6 @@ export default function RankedClient({ data }) {
                       <div style={{ display: 'flex', gap: 5, marginBottom: 6, flexWrap: 'wrap' }}>
                         {rankedSoloTier && (
                           <span style={{ fontFamily: 'monospace', fontSize: 7, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, padding: '1px 5px', letterSpacing: 1, fontWeight: 700 }}>SOLO {rankedSoloTier}</span>
-                        )}
-                        {holotag && (
-                          <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 2, padding: '1px 5px', letterSpacing: 1, fontWeight: 700 }}>{holotag.toUpperCase()} HOLOTAG</span>
                         )}
                       </div>
                       {mover.ranked_note && (

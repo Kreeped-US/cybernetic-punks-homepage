@@ -60,7 +60,7 @@ export default async function MetaPage() {
     const [metaRes, weaponsRes, shellsRes, modsRes, postsRes] = await Promise.all([
       supabase
         .from('meta_tiers')
-        .select('name, type, tier, trend, note, holotag_tier, updated_at')
+        .select('name, type, tier, trend, note, updated_at')
         // Rook is excluded from tier surfaces entirely: it cannot be selected in
         // ranked, so it does not belong on a tier ladder. NOTE this is the SECOND
         // /meta path -- MetaClient's builder pool was filtered separately. Both

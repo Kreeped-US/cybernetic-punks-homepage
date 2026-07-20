@@ -152,7 +152,7 @@ async function buildShellBuildPrompt() {
   const [shellRes, tierRes] = await Promise.all([
     supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle(),
     supabase.from('meta_tiers')
-      .select('tier, note, trend, holotag_tier')
+      .select('tier, note, trend')
       .eq('name', targetShell).eq('type', 'shell').maybeSingle(),
   ]);
 
@@ -173,13 +173,16 @@ async function buildShellBuildPrompt() {
   const tierSection = shellTier
     ? 'CURRENT TIER STATE: ' + targetShell + ' is '
       + (shellTier.tier || '?') + '-tier overall, '
-      // Ranked tiers/note from shell_stats (source of truth); tier/trend/holotag
-      // stay from meta_tiers. shellTier's mirrored columns are null post step 4.
+      // Ranked tiers/note + holotag benchmark from shell_stats (source of truth);
+      // tier/trend stay from meta_tiers. shellTier's mirrored columns are null
+      // post step 4. Holotag REPOINTED 2026-07-20: was shellTier.holotag_tier
+      // (meta_tiers, 0 of 40 rows ever set), now shell.holotag_tier_recommendation
+      // (shell_stats, the real data). Same read, real column.
       + ((shell && shell.ranked_tier_solo) || '?') + '-tier ranked solo, '
       + ((shell && shell.ranked_tier_squad) || '?') + '-tier ranked squad. '
       + 'Trend: ' + (shellTier.trend || 'stable') + '.'
       + ((shell && shell.ranked_notes) ? ' Ranked context: ' + shell.ranked_notes : '')
-      + (shellTier.holotag_tier ? ' Holotag benchmark: ' + shellTier.holotag_tier : '')
+      + ((shell && shell.holotag_tier_recommendation) ? ' Holotag benchmark: ' + shell.holotag_tier_recommendation : '')
     : 'CURRENT TIER STATE: ' + targetShell + ' tier data not yet established by NEXUS.';
 
       // WEAPON RANKED-TIER QUERY REMOVED (2026-07-20). It filtered meta_tiers on
@@ -476,34 +479,22 @@ async function buildWeeklyClimbPrompt() {
 async function buildHolotagPrompt() {
   const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
 
-  const [tierStateRes, dexterBuildsRes] = await Promise.all([
-    supabase.from('meta_tiers')
-      .select('name, type, tier, holotag_tier, trend')
-      .not('holotag_tier', 'is', null)
-      .order('holotag_tier'),
-    supabase.from('feed_items')
-      .select('headline, tags, ce_score')
-      .eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG)
-      .gte('created_at', fourteenDaysAgo)
-      .order('ce_score', { ascending: false }).limit(8),
-  ]);
+  // HOLOTAG-FLAGGED meta_tiers QUERY + SECTION REMOVED (2026-07-20). It selected
+  // meta_tiers.holotag_tier filtered on .not('holotag_tier','is',null) and returned
+  // ZERO rows for its entire existence -- 0 of 40 meta_tiers rows ever had a
+  // holotag_tier (the model never emitted one), so tierSection was always the
+  // "No items currently flagged" fallback. Same dead-from-inception failure shape
+  // as the three dead weapon queries removed in the loop fix. The real holotag data
+  // is shell_stats.holotag_tier_recommendation; the single-shell prompt above now
+  // reads it directly. This archetype still runs on DEXTER builds + the model's full
+  // game-DB context, which is where its benchmarks actually came from.
+  const dexterBuildsRes = await supabase.from('feed_items')
+    .select('headline, tags, ce_score')
+    .eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG)
+    .gte('created_at', fourteenDaysAgo)
+    .order('ce_score', { ascending: false }).limit(8);
 
-  const tierState = tierStateRes.data || [];
-  const _rankedMap4 = await shellRankedMap();  // step-5 overlay (shells only; weapons have no ranked_notes)
   const dexterBuilds = dexterBuildsRes.data || [];
-
-  const tierSection = tierState.length > 0
-    ? 'HOLOTAG-FLAGGED ITEMS:\n' + tierState.map(function(t) {
-        // Shell ranked fields from shell_stats; weapons have no ranked_notes at
-        // all in weapon_stats, so their annotation is intentionally dropped
-        // (same treatment as the dead weapon queries in step 1).
-        var _r = t.type === 'shell' ? (_rankedMap4[t.name] || {}) : {};
-        return '- ' + t.name + ' (' + t.type + '): Holotag tier '
-          + (t.holotag_tier || '?') + ', overall ' + (t.tier || '?')
-          + ', ranked solo ' + (_r.ranked_tier_solo || '?')
-          + (_r.ranked_notes ? ' — ' + _r.ranked_notes : '');
-      }).join('\n')
-    : 'HOLOTAG DATA: No items currently flagged with holotag tiers in NEXUS data.';
 
   const buildsSection = dexterBuilds.length > 0
     ? 'TOP DEXTER BUILDS (last 14 days):\n' + dexterBuilds.map(function(b) {
@@ -516,7 +507,6 @@ async function buildHolotagPrompt() {
     + 'Your job: explain what builds, skills, and shells define each Holotag tier in ranked '
     + 'play. Players reading this want to know: "What do I need to be doing to break into '
     + 'the next Holotag tier?" Give them concrete benchmarks.\n\n'
-    + tierSection + '\n\n'
     + buildsSection + '\n\n'
     + 'ARTICLE GUIDANCE:\n'
     + '- Headline framing: "Marathon Holotag Tier Benchmarks", "What Each Holotag Tier '

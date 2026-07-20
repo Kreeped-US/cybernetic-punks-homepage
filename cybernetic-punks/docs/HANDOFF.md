@@ -5,6 +5,47 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — meta_tiers.holotag_tier REMOVED from code (item 2; DDL still mine to run)
+
+Cleared every `meta_tiers.holotag_tier` code reference so the column can be
+dropped. 0 of 40 rows ever set — dead from inception, same failure shape as the
+three dead weapon queries in the loop fix. Commit `chore(meta): remove
+holotag_tier, never populated since inception`. Build green; `/meta` + `/ranked`
+render HTTP 200 with no gap (the removed badges were always-null, so nothing
+ever displayed there to lose).
+
+**Removed** (7 files): cron WRITE (`cron:637`), prompt schema field
+(`editorCore:223`), 4 selects (`meta/page:63`, `ranked/page:67`, `cipher:155`,
+`cipher:481`), the `cipher:482` `.not('holotag_tier','is',null)` FILTER + its
+entire dead **HOLOTAG-FLAGGED** prompt section in `buildHolotagPrompt`
+(`_rankedMap4` went with it — used only there; DEXTER-builds section preserved).
+
+**Per-site delete-vs-repoint calls** (the open judgment the task asked for):
+- **`cipher:182` shell-build prompt → REPOINTED** to
+  `shell.holotag_tier_recommendation`. `shell` (shell_stats `select('*')`) was
+  already in scope with the real data — one-line swap turns a dead prompt line
+  into a real benchmark. Clear better fix, so repointed not deleted.
+- **`MetaClient:947` ◈ badge → DELETED.** Repoint would need
+  `holotag_tier_recommendation` added to the `/meta` overlay (not fetched there)
+  and the semantics differ (a *range* recommendation vs a single assigned tier).
+  Surfacing it on `/meta` is a deliberate display decision, not a cleanup side
+  effect — flagged as optional follow-up, not done.
+- **`RankedClient:404` HOLOTAG badge → DELETED.** The movers strip has no
+  shell_stats overlay and is weapon-dominated (weapons have no holotag rec).
+  Not worth building an overlay for a badge that repoints to nothing on weapons.
+- The real holotag data already has a user-facing home: **`/shells/[slug]`
+  already renders `shell.holotag_tier_recommendation`** (ShellDetailClient:318).
+  So deleting the two dead badges loses no information a user could ever see.
+
+**ORDERING CONSTRAINT for the DDL:** this code removal must land BEFORE
+`ALTER TABLE meta_tiers DROP COLUMN holotag_tier;`. The cron write of
+`holotag_tier` is now gone, so once merged the next cron run no longer
+references the column — but if the DROP runs while the old code is still
+deployed, the next cron insert errors on a missing column. Merge this, deploy,
+then DROP.
+
+---
+
 ## 2026-07-20 — /shells QUIZ: difficulty scoring was entirely dead, Rook now reachable
 
 ### The scoring was DEAD, not merely wrong

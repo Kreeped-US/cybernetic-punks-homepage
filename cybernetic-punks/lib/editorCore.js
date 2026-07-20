@@ -220,7 +220,6 @@ const NEXUS_TOOL = {
             ranked_note: { type: ['string', 'null'] },
             ranked_tier_solo: { type: ['string', 'null'], enum: ['S', 'A', 'B', 'C', 'D', 'BAN', null] },
             ranked_tier_squad: { type: ['string', 'null'], enum: ['S', 'A', 'B', 'C', 'D', 'BAN', null] },
-            holotag_tier: { type: ['string', 'null'] },
           },
           required: ['name', 'type', 'tier', 'trend', 'note'],
         },
