@@ -5,6 +5,105 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — BR33 VICTORY LAP consolidated: 9 cut, 5 kept, uniques now linked from articles
+
+**Corpus 1086 -> 1077.** 7 accuracy cuts + 2 duplication cuts. The only cannibalized unique on
+the site.
+
+### ACCURACY BASIS -- 7 articles, mutually exclusive fabricated acquisition
+All seven contradict the verified row (`acquisition_source` **"Showcase encounter"**,
+`acquisition_detail` **"Perimeter / Dire Marsh"**, `verified_source` **"In-game Showcase
+data"**) **and each other**. Two invented exact prices:
+
+- `62733c1d` -- *"To unlock the BR33 Victory Lap, you need Traxus Rank 15 and 3,500 credits
+  plus 12 Anomalous Wire and 8 Plastic Filament."*
+- `1bb28ac1` -- *"available through direct purchase from the Armory ... early reports suggest
+  5,000+ credits"*
+- `ed45d544` -- *"Bungie hasn't revealed the exact unlock requirements"* (then guesses anyway)
+- `062d26d8` -- *"progress through the new Victory Lap challenges"*
+- `9d949e0e` -- *"unlocked through mid-season challenges and limited-time events"*
+- `1fd2e2e5` -- *"reward pass unique rather than faction-locked"*
+- `567adc52` -- *"available through the mid-season event rotation"*
+
+**Each quote was re-verified present in the LIVE body immediately before its own write**; a
+missing quote aborts that row. Duplication cuts: `21bba419`, `5ce7e319`. All guarded,
+`rows-affected=1` each.
+
+### CORPUS DEFINITION MADE EXPLICIT -- resolves a count disagreement
+The live-corpus figure is **`noindex=false` AND `is_published=true` AND
+`game_slug='marathon'`**. Bare `noindex=false` returns **1091** because it counts **3 live DMZ
+rows** and **2 unpublished Marathon rows** (`82bee9b7`, `899b3bbd`, both 2026-03-21) that never
+render. **Use the full filter for any corpus quote.** Justin's 1083 was correct; the 1091 in
+the preceding scope report was the loose filter and is wrong.
+
+### STEP 1 CORRECTION -- recorded because it contradicts how the change was argued
+Adding `unique_weapons` to the mentioned-items pipeline installs a site-wide **MECHANISM**, but
+**only BR33 Victory Lap had mentions to convert -- 40 articles. The other 15 uniques are named
+in ZERO of 1,086 articles.** It was argued as a site-wide fix worth more than one entity; the
+forward value is real (future mentions link automatically) but the immediate impact was **one
+entity**. This also **explains WHY BR33 is the only cannibalized unique**: nothing else has
+article competition because nothing else gets written about.
+
+Canonical inbound links **2 -> 33** (31 surviving articles + hub + base-weapon page).
+
+### The link mechanism
+`InlineStatCard` previously rendered a `<span>` for every entity type, so **no article produced
+a crawlable link to anything**. Article bodies are plain text -- **0 of 1,569 contain HTML**,
+and `parseBody` supports only `**bold**`, pull-quotes and paragraphs, so inserting markdown
+links into bodies would render as literal bracket text. The card is now a real `<Link>` **for
+uniques only**, guarded on slug presence.
+
+**Uniques match BEFORE weapons so the longer name wins** ("BR33 Victory Lap", not its base
+"BR33 Volley Rifle"). **Weapon/shell/mod/implant/faction cards deliberately NOT converted** --
+larger crawl-graph change, over-linking risk, separate decision.
+
+### NATURAL EXPERIMENT worth keeping (Justin's GSC)
+| Entity | Shape | Impressions | Clicks | Position |
+|---|---|---|---|---|
+| **Misery Disciple** | 1 page, no competitors | 128 | **10** | 5.5 |
+| **BR33 Victory Lap** | canonical + 6 articles | 108 | **0** | 8.5 |
+
+**Matched demand, opposite outcome.** This is the cannibalization case made on two entities
+rather than on aggregate ratios -- worth reusing as the argument.
+
+### 349ffe3b KEPT -- the proposed gate did NOT fire
+The claim that **"+20 Equip Speed / +10 Aim Assist appear in no other article"** came from a
+**truncated scan printing only the first 4 stat matches per article**. Actual: Equip Speed in
+**6** articles, Aim Assist in **3**. Not an outlier, no fabrication established, stays live.
+
+### What was deliberately NOT stretched into a contradiction
+The `weapon_stats` note (*"S2 1.1.0: corrected stats on the 'Victory Lap' Deluxe-unique variant
+only (under-the-hood cleanup, no gameplay bonus/penalty change)"*) is about the **1.1.0
+correction**, not about whether the variant has bonuses over base. **It does not disprove the
++30 Range claims and was not used as if it did.** The articles' **base weapon stats are
+CORRECT** (damage 14, fire_rate 900, magazine_size 27, all matching the verified row). **Only
+acquisition was fabricated.**
+
+### QUIET-FAILURE TRAP -- third of a family
+**`.ilike()` on a `uuid` column matches nothing and returns 0 rows WITHOUT erroring.** Caught by
+a `cand.length !== 1` guard that aborted **all 9 writes**; corpus stayed 1086 until the rerun
+with client-side prefix resolution.
+
+The family, all of which fail **silently**:
+1. `head:true` + count swallows a table-missing error and returns null (false EXISTS).
+2. Paginated `.range()` without an explicit sort order drifts counts between pages.
+3. `.ilike()` on `uuid` matches nothing, no error.
+
+**Guards and controls catch these. The operation itself never will.**
+
+### OPEN -- locked_mods, with a circularity guard
+`locked_mods` is **NULL** on the Victory Lap row while the page title promises **"Stats, Mods &
+How to Get It"**. 13 articles name the same four mods (**Trigger Discipline chip, Hi-Zoom Optic,
+Tru-Shot Barrel, Feather Mag**) and 11 carry the same stat block.
+
+**That is NOT corroboration.** They share one editor pipeline and one upstream source, so it is
+**one unverified claim repeated 13 times** -- and the same pipeline produced four mutually
+contradictory acquisition stories. **Justin to verify in-game before anything is written.**
+
+**CIRCULARITY GUARD: never populate a verified table from the site's own pipeline output.**
+
+---
+
 ## 2026-07-20 — TITLE-SUFFIX SWEEP: 9 detail routes freed, double-suffix defect found, /uniques template shortened
 
 ### Suffix dropped on 9 entity-detail routes
