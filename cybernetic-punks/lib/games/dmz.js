@@ -48,6 +48,30 @@ export const dmz = {
     },
   },
 
+  // EDITORIAL ROSTER (added 2026-07-20). Same shape as marathon.editorial; read
+  // by the cron's roster gate (app/api/cron/route.js) -- which is why its absence
+  // would have crashed the gate on `config.editorial.editors` if DMZ were ever
+  // selected. NEXUS ONLY, on purpose:
+  //   - NEXUS = news / meta tracking. Reporting official announcements is the one
+  //     editorial job that EXISTS pre-launch, when there is no verified data.
+  //   - CIPHER (ranked / play analysis) is EXCLUDED: it needs ranked and play
+  //     data that does not exist until the game is out. A launch-time addition.
+  //   - DEXTER (build analysis) is DELIBERATELY EXCLUDED: the keyword research
+  //     killed DMZ loadout guides (1,300/mo behind a KD wall vs 12,100/mo for
+  //     keys). Porting DEXTER would manufacture exactly the model-generated build
+  //     content that was just paused for Marathon, for a game with even less basis.
+  //
+  // NO `editorsRequiringPatch`: a pre-launch game has no patch feed, so the cron's
+  // `editorsRequiringPatch || []` makes the patch gate a no-op. With NEXUS not in
+  // that list it would run every cycle -- which is WHY DMZ deliberately stays OFF
+  // the auto-cron until launch (pre-launch official-announcement volume is near
+  // zero; a daily run would manufacture thin rehashes). scripts/gen-dmz-news.mjs
+  // is the manual owner-reviewed trigger until launch. See docs/HANDOFF.md.
+  editorial: {
+    cadenceCron: '0 19 * * *',
+    editors: ['NEXUS'],
+  },
+
   // Relevance filter terms for the X off-topic gate (same shape as marathon.relevance).
   // "dmz" is the ambiguous term (collides with military "demilitarized zone" and other
   // games' DMZ modes) -- it only counts when PAIRED with a gaming-context token.

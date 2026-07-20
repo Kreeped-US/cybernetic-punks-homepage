@@ -317,6 +317,51 @@ before NEXUS grades it will hit this again.
 
 ---
 
+## 2026-07-20 — DMZ registered in the gather pipeline (option A); Phase-D checklist
+
+Two low-risk changes so the DMZ config is pipeline-*ready*. This does NOT make the cron produce
+DMZ (see the STILL-OPEN gaps). The cron file was NOT touched.
+
+### FIXED
+- **DMZ absent from `lib/games/index.js` GAMES** -> `getGameConfig('dmz')` threw
+  `Unknown game slug: dmz`. **FIXED** -- registered. `getGameConfig()` with no argument still
+  resolves to **marathon** (default unchanged), verified; Marathon's path is byte-identical.
+- **`dmz.js` lacked `editorial`** -> the cron roster gate reads `config.editorial.editors`, so
+  its absence would have crashed on undefined if DMZ were ever selected. **FIXED (`['NEXUS']`
+  only).** No `editorsRequiringPatch`.
+
+### THE FOUR-GAP PHASE-D CHECKLIST (launch-time, so it is a checklist not a rediscovery)
+1. **[FIXED]** DMZ not in `index.js` GAMES -> `getGameConfig('dmz')` threw.
+2. **[FIXED]** `dmz.js` lacked `editorial` -> roster gate would crash on undefined.
+3. **[STILL OPEN, launch-time]** The cron uses **`getGameConfig()` with no argument**
+   (`cron/route.js:20`), so `PRODUCING_GAME` is **always marathon**. There is **no game-param
+   selection**. Registering DMZ does NOT make the cron produce it -- that is Phase D (a game
+   param on the trigger + a DMZ `vercel.json` cron entry).
+4. **[STILL OPEN, launch-time]** `dmz.js` `sources` has only `x` -- no `steamAppId`, no
+   `reddit`. **`gatherAll()` hard-crashes at `lib/gather/index.js:149`** on
+   `config.sources.reddit.subreddits` (undefined). These sources are **meaningless pre-launch
+   anyway** (no Steam page data, no subreddit traffic), so filling them is launch work BY
+   NATURE, not deferred work.
+
+### DELIBERATE non-actions
+- **DMZ stays OFF the auto-cron until launch.** Pre-launch official-announcement volume is near
+  zero, so a daily NEXUS run would manufacture thin rehashes -- the exact content the step-1
+  noindex gate was built to suppress. **`scripts/gen-dmz-news.mjs` stays** as the manual,
+  owner-reviewed trigger until launch, then retires.
+- **No `detection` block.** A pre-launch game has no patch feed, so a patch gate would key on an
+  event that cannot occur. The cron's `editorsRequiringPatch || []` no-ops the gate anyway.
+- **CIPHER / DEXTER excluded from the DMZ roster.** CIPHER needs ranked/play data that does not
+  exist yet (launch-time addition); DEXTER is killed by the research (DMZ loadout guides
+  1,300/mo behind a KD wall vs 12,100/mo for keys) -- porting it would manufacture the same
+  model-generated build content just paused for Marathon.
+
+### Coverage / shadow / dup -- confirmed game-parameterised (not a Phase-D gap)
+Verified against the call path, not the config: `findDuplicateEvergreen(..., PRODUCING_GAME_SLUG,
+...)` and `logCoverageShadow` (its `getIdf`/`findCrossEditorDuplicate` take `gameSlug`) all pass
+game_slug explicitly. These work for DMZ the moment it produces rows.
+
+---
+
 ## 2026-07-20 — meta_tiers loop fix STEPS 2+3: stop writing mirrors, repoint renders
 
 **Columns NOT nulled yet -- that is step 4, after a render-verification window.** Existing
