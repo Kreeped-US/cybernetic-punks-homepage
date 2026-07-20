@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import SetupClient from './SetupClient';
 
-export const metadata = { title: 'Set Up Your Profile | CyberneticPunks' };
+export const metadata = { title: 'Set Up Your Profile' };
 
 function getSupabase() {
   return createClient(

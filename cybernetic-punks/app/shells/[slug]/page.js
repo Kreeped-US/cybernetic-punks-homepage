@@ -71,7 +71,10 @@ export async function generateMetadata({ params }) {
     : 'Marathon ' + shell.name + ' guide — stats, abilities, best cores, implants, and tier rankings. Updated throughout the day.';
 
   return {
-    title: title,
+    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
+    // Keyword-competitive detail route: the entity name and its qualifiers
+    // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
+    title: { absolute: title },
     description: desc,
     openGraph: {
       // OG title keeps '| CyberneticPunks' for social-share recognizability

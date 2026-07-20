@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import MeClient from './MeClient';
 
-export const metadata = { title: 'My Profile | CyberneticPunks' };
+// Manual suffix REMOVED - was double-appended by the root layout template.
+export const metadata = { title: 'My Profile' };
 
 function getSupabase() {
   return createClient(

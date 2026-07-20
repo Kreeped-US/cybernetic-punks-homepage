@@ -27,7 +27,10 @@ const BORDER = '#22252e';
 const CYAN = '#00d4ff';
 
 export const metadata = {
-  title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel | CyberneticPunks',
+  // Manual suffix REMOVED: the root layout template appends it, so this
+  // rendered ' | CyberneticPunks | CyberneticPunks' (89 chars). Hub keeps the
+  // single templated suffix; it is not competing on a named-entity query.
+  title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel',
   description: 'Marathon map guides for every location. Zones, bosses, events, and game modes for each map, with interactive vault breakdowns and credential routes where available.',
   alternates: { canonical: 'https://cyberneticpunks.com/maps' },
   // Self-set Marathon OG so /maps keeps its game-appropriate card instead of inheriting

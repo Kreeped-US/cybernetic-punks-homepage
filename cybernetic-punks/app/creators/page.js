@@ -8,7 +8,8 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export var metadata = {
-  title: 'Marathon Content Creators — YouTubers, Streamers & Community Voices | CyberneticPunks',
+  // Manual suffix REMOVED - was double-appended by the root template (105 chars).
+  title: 'Marathon Content Creators — YouTubers, Streamers & Community Voices',
   description: 'Discover the best Marathon content creators — YouTubers, Twitch streamers, and community voices covering builds, gameplay, guides, and competitive play. Curated by CyberneticPunks.',
   keywords: 'Marathon content creators, Marathon YouTubers, Marathon streamers, Marathon Twitch, best Marathon channels, Marathon guides YouTube, Marathon gameplay creators, Marathon community creators',
   openGraph: {

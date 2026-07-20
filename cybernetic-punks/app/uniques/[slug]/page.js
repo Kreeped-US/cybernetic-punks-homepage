@@ -55,9 +55,20 @@ export async function generateMetadata({ params }) {
     if (base && base.image_filename) ogImage = 'https://cyberneticpunks.com/images/weapons/' + base.image_filename;
   }
 
-  // Title leads with "Marathon [name]" - the literal search pattern. No site-name
-  // suffix (layout title.template appends it).
-  var title = 'Marathon ' + u.name + ' - ' + (u.base_weapon ? u.base_weapon + ' ' : '') + (u.rarity ? u.rarity + ' ' : '') + 'Unique: Stats, Mods & How to Get It';
+  // Title leads with "Marathon [name]" - the literal search pattern.
+  //
+  // SHORTENED 2026-07-20. The old template interpolated base_weapon AND rarity
+  // ("Marathon BR33 Victory Lap - BR33 Volley Rifle Deluxe Unique: Stats, Mods
+  // & How to Get It"), which ran 71-89 chars on its own and 89-107 once the
+  // root layout appended " | CyberneticPunks". Against a ~60 char SERP budget
+  // that truncated the back half of every one of the 16 titles. base_weapon and
+  // rarity are still in the description and on the page; they do not need to be
+  // in the title, and pushing them there cost us the searched term.
+  //
+  // The previous comment here said "No site-name suffix (layout title.template
+  // appends it)", which read as though the rendered title had none. It did have
+  // one. `absolute` below is what actually makes that true now.
+  var title = 'Marathon ' + u.name + ': Stats, Mods & How to Get It';
   var acq = acquisitionLine(u);
   var desc = 'The ' + u.name + ' is a ' + (u.rarity ? u.rarity + ' ' : '') + 'unique variant of the ' + (u.base_weapon || 'base weapon')
     + ' in Marathon' + (u.weapon_type ? ' (' + u.weapon_type + ')' : '') + '.'
@@ -65,7 +76,11 @@ export async function generateMetadata({ params }) {
     + ' Base weapon stats, permanently locked mods, and how to get it.';
 
   return {
-    title: title,
+    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars). These
+    // are the site's best-verified pages and named-item queries convert best;
+    // spending 18 of a ~60 char budget on the site name pushes the item name's
+    // qualifiers out of the SERP. Same call as /intel/[slug] and /dmz (61c9095).
+    title: { absolute: title },
     description: desc,
     openGraph: {
       title: title + ' | CyberneticPunks',

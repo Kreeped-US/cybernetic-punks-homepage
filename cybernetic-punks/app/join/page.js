@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
 export const metadata = {
-  title: 'Create Account | CyberneticPunks',
+  // Manual suffix REMOVED - was double-appended by the root layout template.
+  title: 'Create Account',
   description: 'Connect your Bungie account and claim your player profile.',
 };
 

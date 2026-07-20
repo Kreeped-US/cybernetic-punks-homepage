@@ -27,7 +27,8 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Sitrep — Live Meta Snapshot & Drop-In Brief | CyberneticPunks',
+  // Manual suffix REMOVED - was double-appended by the root template (90 chars).
+  title: 'Marathon Sitrep — Live Meta Snapshot & Drop-In Brief',
   description: 'The 2-minute drop-in brief. Live Marathon meta snapshot — S-tier weapons, top shells, meta movers, community pulse, ranked queue status, and what every editor covered this cycle. Refreshed throughout the day.',
   keywords: 'Marathon meta today, Marathon current meta, Marathon meta snapshot, Marathon sitrep, Marathon what to run, Marathon ranked meta, Marathon meta tier list, Marathon daily briefing, Marathon live meta, Marathon top weapons, Marathon top shells',
   openGraph: {

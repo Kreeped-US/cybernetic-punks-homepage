@@ -5,6 +5,66 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — TITLE-SUFFIX SWEEP: 9 detail routes freed, double-suffix defect found, /uniques template shortened
+
+### Suffix dropped on 9 entity-detail routes
+`61c9095` had only covered `/intel/[slug]`, `/dmz` and `/dmz/[section]/[slug]`. Everything else
+still inherited `template: '%s | CyberneticPunks'` (18 chars) from `app/layout.js`.
+`title: { absolute: ... }` now applied to: **`/uniques/[slug]`, `/weapons/[slug]`,
+`/shells/[slug]`, `/mods/[slot]`, `/matchups/[shell]`, `/maps/[slug]`, `/modes/vault-breaker`,
+`/guides/shells/[name]`, `/guides/[category]`.**
+
+### DOUBLE-SUFFIX DEFECT -- found during the audit, not in scope going in
+**Seven routes appended `" | CyberneticPunks"` MANUALLY *and* inherited the layout template,
+rendering the site name TWICE.** Found by diffing rendered `<title>` against source, not by
+reading source -- the source line looks correct in isolation.
+
+| Route | Rendered before |
+|---|---|
+| `/creators` | **105** chars |
+| `/guides/shells/[name]` | **100** (`... & Strategy \| CyberneticPunks \| CyberneticPunks`) |
+| `/guides/shells` (category) | **99** |
+| `/sitrep` | **90** |
+| `/maps` (hub) | **89** |
+| `/me`, `/join`, `/join/intake`, `/join/setup` | 46-50 |
+
+The manual duplicate was removed everywhere. The two `/guides/*` routes are detail routes and
+took `absolute` instead. **Hubs and utility pages keep the SINGLE templated suffix** -- they
+just stop printing it twice.
+
+### /uniques template shortened
+`Marathon <Name> - <base_weapon> <rarity> Unique: Stats, Mods & How to Get It`
+-> **`Marathon <Name>: Stats, Mods & How to Get It`**
+
+**Max 54, min 45, all 16 under 60. Worst case was 107.** `base_weapon` and `rarity` dropped
+**from the title only** -- both remain in the description and on the page. Pushing them into
+the title cost us the searched term, which is the item name.
+
+**"Locked Mods" deliberately NOT targeted.** Justin's call, on GSC: demand sits on weapon
+NAMES, not attribute terms. (A `Marathon <Name>: Stats, Locked Mods & Drop Source` variant fits
+the budget at max 59 and was rejected on that basis, not on length.) Note the originally
+suggested `... Stats, Locked Mods & How to Get It` **maxed at 61** and would have missed the
+under-60 target on 5 of 16.
+
+### False comments corrected
+`/uniques/[slug]` and `/modes/vault-breaker` both carried a comment saying **"No site-name
+suffix (layout title.template appends it)"**. That read as a claim the rendered title had none;
+it did have one. Both now state that `absolute` is what makes it true.
+
+### STILL OVER 60 -- their own templates, not the suffix (SEPARATE JOB)
+`/weapons/[slug]` worst **65**, `/guides/shells/[name]` **64**, `/shells/[slug]` **63**.
+
+### OPEN -- deliberately not changed, scoped to detail routes
+**`/shells` hub (87)** and **`/matchups` hub (84)** still carry the suffix and are arguably
+keyword-competitive on "marathon shells" / "marathon matchups".
+
+### Method note
+Every length in this entry was measured from **rendered `<title>` on a built server**, not
+computed from source. That is what surfaced the double-suffix defect, which source-reading
+had missed on two prior passes over these same files.
+
+---
+
 ## 2026-07-20 — HONESTY PASS: unbuilt-capability claims removed from /stats, invented leaderboard values blanked
 
 ### /stats: no fake numbers, but a claimed product that does not exist

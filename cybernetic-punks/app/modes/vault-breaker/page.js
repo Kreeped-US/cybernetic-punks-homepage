@@ -79,8 +79,11 @@ const VAULT_BREAKER = {
 };
 
 export const metadata = {
-  // No '| CyberneticPunks' suffix - the layout title.template appends it.
-  title: 'Marathon Vault Breaker - Dates, Vault Data & How It Works',
+  // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars). This
+  // comment previously said the layout appends the suffix, which it did -- that
+  // was a description of the bug, not a reason to keep it. 57 chars bare, 75
+  // suffixed, against a ~60 char budget.
+  title: { absolute: 'Marathon Vault Breaker - Dates, Vault Data & How It Works' },
   description: 'Marathon Vault Breaker runs July 21 - August 4, 2026 (Update 1.1.5). The first experimental PvE mode: roguelite Vault runs in Cryo Archive, Solo/Duo/Trio, any Runner Level. How Vault Data, the Sponsored Kit, and the Armory work - sourced from Bungie.',
   alternates: { canonical: PAGE_URL },
   openGraph: {

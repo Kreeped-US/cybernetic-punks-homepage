@@ -190,7 +190,10 @@ export async function generateMetadata({ params }) {
     + 'Zones, boss, events, and what to expect on ' + name + '.').slice(0, 300);
 
   return {
-    title: title,
+    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
+    // Keyword-competitive detail route: the entity name and its qualifiers
+    // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
+    title: { absolute: title },
     description: desc,
     alternates: { canonical: 'https://cyberneticpunks.com/maps/' + slug },
     openGraph: {

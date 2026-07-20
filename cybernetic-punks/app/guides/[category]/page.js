@@ -406,7 +406,9 @@ export async function generateMetadata({ params }) {
   if (!cat) return { title: 'Not Found' };
 
   return {
-    title: cat.title + ' | CyberneticPunks',
+    // Same double-suffix defect as /guides/shells/[name]: the manual suffix was
+    // appended here AND again by the root layout template (99 chars rendered).
+    title: { absolute: cat.title },
     description: cat.description,
     keywords: cat.keywords,
     openGraph: {

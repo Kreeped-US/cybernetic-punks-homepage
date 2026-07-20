@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import IntakeClient from './IntakeClient';
 
 export const metadata = {
-  title: 'Player Intake | CyberneticPunks',
+  title: 'Player Intake',
 };
 
 function getSupabase() {

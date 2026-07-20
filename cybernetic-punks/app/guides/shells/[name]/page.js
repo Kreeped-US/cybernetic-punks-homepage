@@ -139,7 +139,11 @@ export async function generateMetadata({ params }) {
   if (!shell) return { title: 'Not Found' };
 
   return {
-    title: shell.title + ' | CyberneticPunks',
+    // Was `shell.title + ' | CyberneticPunks'`, which the root layout template
+    // then suffixed AGAIN -- these titles rendered with the site name TWICE
+    // (100 chars for Assassin). `absolute` both fixes the duplication and frees
+    // the budget for the shell name, which is the searched term.
+    title: { absolute: shell.title },
     description: shell.description,
     keywords: shell.keywords,
     openGraph: {
