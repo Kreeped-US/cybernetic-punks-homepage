@@ -5,6 +5,61 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — /shells QUIZ: difficulty scoring was entirely dead, Rook now reachable
+
+### The scoring was DEAD, not merely wrong
+The quiz matched `Easy` / `Medium` / `Hard` / `Expert` against a DB holding **only High /
+Medium / Low**. `Easy`, `Hard` and `Expert` matched **NOTHING**: **three of four answers awarded
+ZERO difficulty points** and results were driven almost entirely by q1.
+
+| Answer | tokens | matched (before -> after) |
+|---|---|---|
+| new | `Easy` -> **`Low`** | **0 -> 4** |
+| some | `Easy/Medium` -> **`Low/Medium`** | 3 -> 7 |
+| ranked | `Medium/Hard` -> **`Medium/High`** | 3 -> 4 |
+| veteran | `Hard/Expert` -> **`High`** | **0 -> 1** |
+
+**No dead rung remains.** Distribution: High 1 (Assassin), Medium 3 (Recon/Thief/Triage),
+Low 4 (Destroyer/Rook/Sentinel/Vandal), zero nulls.
+
+### Rook is reachable, and honestly described
+- Hardcoded **`-1` replaced with a conditional**: excluded **only** when the player answers
+  "Playing ranked", where it genuinely cannot be selected. **Deliberately NOT extended to
+  "veteran"** -- that answer describes **experience, not mode**, and inferring ranked intent
+  from it would be an unsupported leap.
+- **Exclusion keyed on `isRankedExcluded()`, NOT on null ranked tiers.** Sentinel is **also
+  null/null** but is **pending placement, not excluded** -- same data shape, opposite meaning.
+- **New q1 option** *"Avoid fights. Farm gear, learn the map."*, biased to **Rook only**. Stem
+  reworded *"How do you want to win a fight?"* -> *"What is your plan when you drop in?"* so the
+  option is coherent; all four original labels read correctly under the new stem.
+- **Result copy**: the `/advisor?shell=rook` CTA is swapped when the winner is ranked-excluded
+  -- **Rook uses a FREE LOADOUT, so "build a loadout" was a dead end on the very next click**.
+  Now "LEARN THE MAPS", plus a disclosure line: *free loadout, not selectable in ranked*.
+
+### Two scoring fixes, both replacing arbitrary behaviour with traceable rules
+1. **Bias weight 3 -> 4.** At 3 a q1 match tied exactly with difficulty (+2) + tier (+1), and
+   ties fell to **alphabetical array order**, producing **veteran + farm -> Assassin** for a
+   player who said "avoid fights, farm gear". **Intent must outrank experience.**
+2. **Tiebreak on DIFFICULTY, not array order.** Equal scores now break along the existing
+   `Low < Medium < High` ladder: `new`/`some` prefer **lower**, `ranked`/`veteran` prefer
+   **higher**. Shells with no difficulty sort last within a tie rather than winning by accident.
+   **Alphabetical order was the thing with no justification.**
+
+**Tiebreak effect measured across all 20 paths: exactly ONE changed.**
+`evasive + new`: **Assassin (High) -> Thief (Medium)** -- they tied at 4, and a new player was
+being handed the hardest shell in the game because "A" precedes "T". Confirmed in the live quiz,
+not just the harness.
+
+### lore_tagline was dead everywhere
+**NULL for all 8 shells**, so it rendered for **nobody** -- in the quiz result panel AND on the
+shell cards. Both replaced with **`best_for`**, which is populated for every shell.
+
+### NOTED, not fixed
+`base_health` / `base_shield` / `base_speed` are **NULL for all 8 shells**, still selected in
+`app/shells/page.js`, and feed nothing. **Candidate for removal.**
+
+---
+
 ## 2026-07-20 — GUIDES pass 1: deleted shell claims citing stats that do not exist
 
 ### Four HP/shield claims DELETED, not reworded

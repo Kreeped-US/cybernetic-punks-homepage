@@ -3,6 +3,21 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// SINGLE DEFINITION of "this shell cannot be selected in ranked", shared by the
+// card badge and the quiz. Owner-verified in-game 2026-07-20: Rook is a
+// free-loadout SCAVENGER and cannot be selected in ranked of any kind.
+//
+// Deliberately NOT derived from null ranked tiers: Sentinel also has null/null
+// tiers because its placement is PENDING, not because it is excluded. Conflating
+// the two would mislabel Sentinel.
+//
+// Previously this test was written inline in two places; keeping one definition
+// is the fix for the duplication pattern that produced the availableOnMap,
+// guides-roster and isBanned bugs.
+function isRankedExcluded(shellName) {
+  return shellName === 'Rook';
+}
+
 var SHELL_COLORS = {
   Assassin: '#cc44ff', Destroyer: '#ff3333', Recon: '#00d4ff',
   Rook: '#888888', Thief: '#ffd700', Triage: '#00ff88', Vandal: '#ff8800',
@@ -30,21 +45,34 @@ var TREND_DISPLAY = {
 
 var QUIZ_QUESTIONS = [
   {
-    q: 'How do you want to win a fight?',
+    // Stem reworded from "How do you want to win a fight?" so a non-combat answer
+    // is not a contradiction. All four original labels read unchanged under it.
+    q: 'What is your plan when you drop in?',
     options: [
       { key: 'aggressive', label: 'Push first. Win the opening.',         shellBias: ['Destroyer', 'Vandal', 'Assassin'] },
       { key: 'calculated', label: 'Wait, outsmart, counter.',             shellBias: ['Recon', 'Thief'] },
       { key: 'support',    label: 'Keep my squad alive and winning.',     shellBias: ['Triage'] },
       { key: 'evasive',    label: 'Pick my fights. Extract the loot.',    shellBias: ['Thief', 'Assassin'] },
+      // Rook-ONLY on purpose. Thief is already served by 'evasive' and is a
+      // fighting shell; this answer describes what Rook actually does (free
+      // loadout, Loot Speed 55 vs 25 for the next shell), so Rook wins here and
+      // nowhere else. Not a default and not a fallback.
+      { key: 'farm',       label: 'Avoid fights. Farm gear, learn the map.', shellBias: ['Rook'] },
     ],
   },
   {
     q: "What's your experience?",
     options: [
-      { key: 'new',     label: 'New to Marathon',              difficulty: ['Easy'] },
-      { key: 'some',    label: 'Some extractions in',          difficulty: ['Easy', 'Medium'] },
-      { key: 'ranked',  label: 'Playing ranked',               difficulty: ['Medium', 'Hard'] },
-      { key: 'veteran', label: 'Extraction shooter veteran',   difficulty: ['Hard', 'Expert'] },
+      // DIFFICULTY TOKENS MUST MATCH shell_stats.difficulty, which only ever holds
+      // High / Medium / Low. The old tokens were Easy / Medium / Hard / Expert, so
+      // 'Easy', 'Hard' and 'Expert' matched NOTHING: three of four answers awarded
+      // zero difficulty points and results were driven almost entirely by q1.
+      // Distribution: High 1 (Assassin), Medium 3 (Recon/Thief/Triage),
+      // Low 4 (Destroyer/Rook/Sentinel/Vandal). No nulls.
+      { key: 'new',     label: 'New to Marathon',              difficulty: ['Low'] },
+      { key: 'some',    label: 'Some extractions in',          difficulty: ['Low', 'Medium'] },
+      { key: 'ranked',  label: 'Playing ranked',               difficulty: ['Medium', 'High'] },
+      { key: 'veteran', label: 'Extraction shooter veteran',   difficulty: ['High'] },
     ],
   },
 ];
@@ -58,17 +86,42 @@ function recommendShell(answers, shells) {
 
   var scored = shells.map(function(s) {
     if (!s || !s.name) return { shell: null, score: -999 };
-    if (s.name === 'Rook') return { shell: s, score: -1 };
+    // Rook was hardcoded to -1 and filtered out, which treated it as a BAD shell
+    // rather than a DIFFERENT category. It is now excluded only when the player
+    // says they are playing ranked, where it genuinely cannot be selected.
+    // NOT extended to 'veteran': that answer describes experience, not mode.
+    if (isRankedExcluded(s.name) && answers[1] === 'ranked') return { shell: s, score: -1 };
     var score = 0;
-    if (biasedShells.includes(s.name)) score += 3;
+    // INTENT (q1) outweighs EXPERIENCE (q2) + tier bonus, which cap at 3. At the
+    // old weight of 3 they tied, and ties fell to array order (alphabetical): a
+    // veteran answering "avoid fights, farm" got Assassin rather than Rook, which
+    // contradicts the answer they gave. q1 is what the player actually described
+    // wanting, so it should win.
+    if (biasedShells.includes(s.name)) score += 4;
     if (difficulty.length && s.difficulty && difficulty.includes(s.difficulty)) score += 2;
     if ((answers[1] === 'ranked' || answers[1] === 'veteran') && s.meta && (s.meta.tier === 'S' || s.meta.tier === 'A')) score += 1;
     return { shell: s, score: score };
   }).filter(function(x) { return x.shell && x.score >= 0; });
 
-  scored.sort(function(a, b) { return b.score - a.score; });
+  // TIEBREAK ON DIFFICULTY, not array order. Equal scores previously fell to the
+  // array's alphabetical order, which has no justification: 'evasive' + 'new'
+  // returned Assassin (High) over Thief (Medium) purely because A precedes T.
+  // The difficulty field IS a ladder, so use it: beginners break toward the
+  // easier shell, experienced players toward the harder one. Shells with no
+  // difficulty value sort last within a tie rather than winning it by accident.
+  var DIFFICULTY_RANK = { Low: 0, Medium: 1, High: 2 };
+  var preferHarder = (answers[1] === 'ranked' || answers[1] === 'veteran');
+  scored.sort(function(a, b) {
+    if (b.score !== a.score) return b.score - a.score;
+    var ra = DIFFICULTY_RANK[a.shell.difficulty];
+    var rb = DIFFICULTY_RANK[b.shell.difficulty];
+    if (ra === undefined && rb === undefined) return 0;
+    if (ra === undefined) return 1;
+    if (rb === undefined) return -1;
+    return preferHarder ? rb - ra : ra - rb;
+  });
   if (scored.length > 0 && scored[0].shell) return scored[0].shell;
-  return shells.find(function(s) { return s && s.name && s.name !== 'Rook'; }) || null;
+  return shells.find(function(s) { return s && s.name; }) || null;
 }
 
 export default function ShellsHubClient(props) {
@@ -244,8 +297,7 @@ export default function ShellsHubClient(props) {
               var meta = shell.meta;
               var tierStyle = meta && meta.tier ? TIER_COLORS[meta.tier] : null;
               var trend = meta && meta.trend ? TREND_DISPLAY[meta.trend] : null;
-              // See the Rook note at the top of this file.
-              var isRankedExcluded = shell.name === 'Rook';
+              var rankedExcluded = isRankedExcluded(shell.name);
               var imgSrc = shell.image_filename ? '/images/shells/' + shell.image_filename : null;
               var pickPct = (totalPicks && totalPicks >= 10 && shell.pickRate) ? Math.round((shell.pickRate / totalPicks) * 100) : null;
 
@@ -262,10 +314,10 @@ export default function ShellsHubClient(props) {
                     display: 'block', textDecoration: 'none',
                     background: '#1a1d24',
                     border: '1px solid #22252e',
-                    borderTop: '2px solid ' + (isRankedExcluded ? '#555' : color),
+                    borderTop: '2px solid ' + (rankedExcluded ? '#555' : color),
                     borderRadius: '0 0 3px 3px',
                     overflow: 'hidden',
-                    opacity: isRankedExcluded ? 0.7 : 1,
+                    opacity: rankedExcluded ? 0.7 : 1,
                     transition: 'background 0.1s, border-color 0.1s',
                   }}
                 >
@@ -276,7 +328,7 @@ export default function ShellsHubClient(props) {
                       <img
                         src={imgSrc}
                         alt={shell.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1, filter: isRankedExcluded ? 'grayscale(1) brightness(0.5)' : 'none' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1, filter: rankedExcluded ? 'grayscale(1) brightness(0.5)' : 'none' }}
                       />
                     ) : (
                       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 64, color: color, opacity: 0.15 }}>{symbol}</div>
@@ -295,7 +347,7 @@ export default function ShellsHubClient(props) {
                       </div>
                     )}
 
-                    {isRankedExcluded && (
+                    {rankedExcluded && (
                       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 2, background: 'rgba(255,34,34,0.15)', border: '1px solid rgba(255,34,34,0.35)', borderRadius: 2, padding: '3px 8px' }}>
                         <span style={{ fontSize: 8, color: '#ff2222', letterSpacing: 1.5, fontWeight: 700 }}>NOT IN RANKED</span>
                       </div>
@@ -310,16 +362,19 @@ export default function ShellsHubClient(props) {
 
                   <div style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: isRankedExcluded ? 'rgba(255,255,255,0.4)' : '#fff', letterSpacing: 1 }}>{shell.name.toUpperCase()}</span>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: rankedExcluded ? 'rgba(255,255,255,0.4)' : '#fff', letterSpacing: 1 }}>{shell.name.toUpperCase()}</span>
                     </div>
 
                     <div style={{ fontSize: 9, color: color + 'aa', letterSpacing: 2, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', fontFamily: 'monospace' }}>
                       {shell.role || '—'}
                     </div>
 
-                    {shell.lore_tagline && (
-                      <div style={{ fontSize: 12, color: isRankedExcluded ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 10, fontStyle: 'italic' }}>
-                        "{shell.lore_tagline}"
+                    {/* best_for, NOT lore_tagline: lore_tagline is NULL for all 8
+                        shells, so this line rendered for nobody. best_for is
+                        populated for every shell. */}
+                    {shell.best_for && (
+                      <div style={{ fontSize: 12, color: rankedExcluded ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 10 }}>
+                        {shell.best_for}
                       </div>
                     )}
 
@@ -344,7 +399,7 @@ export default function ShellsHubClient(props) {
                           </span>
                         )}
                       </div>
-                      <span className="shell-view" style={{ fontSize: 9, color: isRankedExcluded ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, transition: 'color 0.1s' }}>
+                      <span className="shell-view" style={{ fontSize: 9, color: rankedExcluded ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, transition: 'color 0.1s' }}>
                         VIEW →
                       </span>
                     </div>
@@ -463,21 +518,40 @@ export default function ShellsHubClient(props) {
                     <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 5, fontFamily: 'monospace' }}>
                       {quizResult.role || '—'}
                     </div>
-                    {quizResult.lore_tagline && (
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic', lineHeight: 1.5 }}>
-                        "{quizResult.lore_tagline}"
+                    {/* best_for, NOT lore_tagline: lore_tagline is NULL for all 8
+                        shells, so that line rendered for nobody. best_for is
+                        populated for every shell. */}
+                    {quizResult.best_for && (
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
+                        {quizResult.best_for}
                       </div>
                     )}
                   </div>
                 </div>
 
+                {/* A ranked-excluded shell must say so HERE, not leave the player to
+                    discover it later. Rook also uses a FREE loadout, so the
+                    build-a-loadout CTA would be a dead end -- swapped for the map
+                    guides, which is what a Rook player actually needs. */}
+                {isRankedExcluded(qrName) && (
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.55, marginBottom: 14, padding: '10px 12px', background: '#121418', border: '1px solid #22252e', borderLeft: '2px solid #888888', borderRadius: '0 2px 2px 0' }}>
+                    Free loadout, not selectable in ranked. Best for farming gear and learning maps.
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <Link href={'/shells/' + qrName.toLowerCase()} style={{ flex: 1, minWidth: 180, padding: '12px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: 1 }}>
                     READ THE GUIDE
                   </Link>
-                  <Link href={'/advisor?shell=' + qrName.toLowerCase()} style={{ flex: 1, minWidth: 180, padding: '12px', background: '#ff8800', border: 'none', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
-                    BUILD A LOADOUT →
-                  </Link>
+                  {isRankedExcluded(qrName) ? (
+                    <Link href="/maps" style={{ flex: 1, minWidth: 180, padding: '12px', background: '#ff8800', border: 'none', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
+                      LEARN THE MAPS →
+                    </Link>
+                  ) : (
+                    <Link href={'/advisor?shell=' + qrName.toLowerCase()} style={{ flex: 1, minWidth: 180, padding: '12px', background: '#ff8800', border: 'none', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
+                      BUILD A LOADOUT →
+                    </Link>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, paddingTop: 14, borderTop: '1px solid #22252e' }}>
