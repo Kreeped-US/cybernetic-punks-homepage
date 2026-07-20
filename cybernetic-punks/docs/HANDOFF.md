@@ -5,6 +5,55 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — DEXTER PAUSED from daily generation (+ the patch gate is leaking)
+
+### The pause
+**`'DEXTER'` removed from `editorial.editors`** in `lib/games/marathon.js`. One line.
+
+**Basis:** **71% of its 295 lifetime articles are `shell/build`** (93% of the last 30); build
+articles earn **0.13 clicks/page** (GSC 3mo); **199 of 266 were cut 2026-07-18**; and the
+recommendations are **100% MODEL-GENERATED** -- no table records which core+weapon+mod
+combination is actually good. **175 of DEXTER's 295 (59%) are already noindexed.**
+
+This was a **DIRECTIVE decision, not an enforcement one.** Unit 5 blocking would have been the
+wrong instrument: it suppresses content with nowhere to route readers, because `shell/*/build`
+has no canonical.
+
+### REVERSAL
+**Re-add `'DEXTER'` to `editors`.** `editorsRequiringPatch` was left UNTOUCHED so the reversal
+is symmetric -- one token, nothing else. Do this **when the loadouts are game-verified**
+(~8-16 rows, same shape as the matchup matrix fill) and `/builds/[shell]` becomes buildable.
+
+### NOT redirected to another beat
+DEXTER's secondary beats (`weapon/build` 8%, `shell/tier` 4%, `weapon/tier` 2%) carry the
+**SAME verification problem** -- no table records which weapon+mod combination is good either.
+**No evidence-backed target exists; inventing one was declined.**
+
+### DEXTER remains fully alive as an interactive persona
+`/advisor` (the Build Advisor tool), `/api/ask-editor`, `/api/audit` are **independent of the
+cron and unaffected**. Only daily article generation stops. `/builds` keeps serving the **120
+live DEXTER articles**; it just stops growing.
+
+**COSMETIC:** `/about` still lists DEXTER's byline and beat -- same for GHOST/MIRANDA since
+07-16. Worth a consistency pass for all three, not a blocker.
+
+### *** THE BIGGER FINDING -- THE PATCH GATE IS LEAKING ***
+**All three patch-gated editors (CIPHER, NEXUS, DEXTER) published on 3 of 4 days since the
+07-16 freeze.** On **07-19 the trigger was Joe Ziegler's departure, NOT a patch.**
+
+`hasPatch` = `bungieNews` filtered by `is_patch_note` = **(version regex OR keywords) AND
+fresh <=48h** -- so it fires on **PATCH-NOTE-SHAPED NEWS, not patches**. The freeze is running
+at roughly **75% pass-through** (4-day sample -- indicative, not precise).
+
+**Consequence: "patch-gate only" is a FALSE pause.** DEXTER wrote another Assassin build on
+07-19 *while already patch-gated*. Do not rely on this gate alone to stop an editor.
+
+**SCOPED AS A FOLLOW-UP TASK: fix `hasPatch` precision -- affects CIPHER and NEXUS too.** If
+the gate detected real patches, gated editors would publish 2-4x/month, which is the behaviour
+the freeze was designed for.
+
+---
+
 ## 2026-07-20 — CROSS-EDITOR RARE-TOKEN duplicate detection (shadow only)
 
 ### The blind spot it closes

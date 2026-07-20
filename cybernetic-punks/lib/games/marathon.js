@@ -194,9 +194,28 @@ export const marathon = {
   editorial: {
     cadenceCron: '0 19 * * *',
     // FROZEN: 'GHOST' and 'MIRANDA' removed 2026-07-16 (see above).
-    editors: ['CIPHER', 'NEXUS', 'DEXTER'],
+    // PAUSED: 'DEXTER' removed 2026-07-20. 71% of its 295 lifetime articles are
+    //   shell/build (93% of the last 30); build articles earn 0.13 clicks/page
+    //   (GSC 3mo); 199 of 266 shell/*/build were cut 2026-07-18; and the
+    //   recommendations are 100% MODEL-GENERATED -- no table records which
+    //   core+weapon+mod combination is actually good. Pausing generation was the
+    //   DIRECTIVE call; Unit 5 enforcement would have been the wrong instrument
+    //   (blocking suppresses content with nowhere to route readers, since
+    //   shell/*/build has no canonical).
+    //   REVERSAL: re-add 'DEXTER' below. Do this when the loadouts are
+    //   game-verified (~8-16 rows, same shape as the matchup matrix fill) and
+    //   /builds/[shell] becomes buildable. `editorsRequiringPatch` is left
+    //   UNTOUCHED so the reversal is symmetric -- one token, nothing else.
+    editors: ['CIPHER', 'NEXUS'],
     // These run ONLY when the cycle detects a patch. Absent on other games ->
     // the cron's `|| []` makes the whole gate a no-op for them (e.g. DMZ).
+    // NOTE 'DEXTER' deliberately REMAINS listed here while paused: the entry is
+    // inert (the filter only sees editors in `editors`), and keeping it means
+    // re-adding DEXTER to `editors` restores the exact prior behaviour.
+    // KNOWN LEAK (measured 2026-07-20): this gate fires on PATCH-NOTE-SHAPED
+    // NEWS, not patches -- all three gated editors ran on 3 of 4 days after the
+    // 07-16 freeze, and the 07-19 trigger was a staff-departure story. Do NOT
+    // rely on this gate alone as a pause. See docs/HANDOFF.md.
     editorsRequiringPatch: ['CIPHER', 'NEXUS', 'DEXTER'],
   },
 
