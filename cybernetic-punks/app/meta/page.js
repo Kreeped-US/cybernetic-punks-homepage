@@ -61,6 +61,11 @@ export default async function MetaPage() {
       supabase
         .from('meta_tiers')
         .select('name, type, tier, trend, note, ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier, updated_at')
+        // Rook is excluded from tier surfaces entirely: it cannot be selected in
+        // ranked, so it does not belong on a tier ladder. NOTE this is the SECOND
+        // /meta path -- MetaClient's builder pool was filtered separately. Both
+        // needed it.
+        .neq('name', 'Rook')
         .order('updated_at', { ascending: false }),
       supabase
         .from('weapon_stats')

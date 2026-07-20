@@ -290,8 +290,11 @@ export default async function BuildsPage() {
     .filter(function(t) { return t.type === 'weapon'; })
     .sort(function(a, b) { return (tierOrder[a.tier] || 99) - (tierOrder[b.tier] || 99); })
     .slice(0, 8);
+  // Rook excluded: it cannot be selected in ranked, so it does not belong in a
+  // tier pulse. NOTE this is the SECOND tier surface on this page -- the shell
+  // cards at displayTier were fixed separately and this list was missed.
   var metaShellsList = metaTiers
-    .filter(function(t) { return t.type === 'shell'; })
+    .filter(function(t) { return t.type === 'shell' && t.name !== 'Rook'; })
     .sort(function(a, b) { return (tierOrder[a.tier] || 99) - (tierOrder[b.tier] || 99); });
   var lastMetaUpdate = metaTiers[0]?.updated_at;
 

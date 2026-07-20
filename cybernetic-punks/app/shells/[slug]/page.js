@@ -203,7 +203,14 @@ export default async function ShellHubPage({ params }) {
   });
 
   var faqItems = [];
-  if (metaTier) faqItems.push({ q: 'Is ' + shellName + ' good in Marathon ranked?', a: shellName + ' is currently ' + metaTier.tier + '-Tier in ranked.' + (metaTier.ranked_note ? ' ' + metaTier.ranked_note : '') });
+  // Ranked FAQ only when there IS a ranked tier. Rook has none -- it cannot be
+  // selected in ranked at all -- and this FAQ feeds BOTH the visible section and
+  // the FAQPage schema, so an untiered shell was emitting structured data saying
+  // "Rook is currently A-Tier in ranked". isRankedExcluded covers the case where
+  // meta_tiers still carries a stale tier (its `tier` column is NOT NULL, so it
+  // cannot be nulled without DDL).
+  var hasRankedTier = metaTier && metaTier.tier && shellName !== 'Rook';
+  if (hasRankedTier) faqItems.push({ q: 'Is ' + shellName + ' good in Marathon ranked?', a: shellName + ' is currently ' + metaTier.tier + '-Tier in ranked.' + (metaTier.ranked_note ? ' ' + metaTier.ranked_note : '') });
   if (shell.active_ability_name) faqItems.push({ q: 'What is ' + shellName + "'s active ability?", a: shell.active_ability_name + (shell.active_ability_description ? ': ' + shell.active_ability_description : '') });
 
   // ─── JSON-LD SCHEMAS ────────────────────────────────────────

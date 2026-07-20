@@ -5,6 +5,58 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — meta_tiers.Rook was LIVE-WRONG on three pages, including FAQPage schema
+
+### Live-wrong, not dormant
+`meta_tiers.Rook` still held **`tier: "A"`, `ranked_tier_solo: "B"`** and the pre-correction
+`ranked_note`, timestamped 2026-07-19. It surfaced on **three** pages:
+
+1. **`/shells/rook` -- FAQPage STRUCTURED DATA.** `app/shells/[slug]/page.js:206` composed
+   **"Is Rook good in Marathon ranked?" -> "Rook is currently A-Tier in ranked. Learn ranked
+   here before moving to specialist shells"** into BOTH the visible FAQ and the schema.
+   Machine-readable, about a shell that **cannot be selected in ranked at all**. Same class as
+   the `/stats` unbuilt-capability claims removed the same morning.
+2. **`/meta`** -- `SOLO B` badge + the stale note, from a SECOND query path
+   (`app/meta/page.js:62`), separate from the builder pool already filtered.
+3. **`/ranked`** -- the movers strip (`app/ranked/page.js:66`), which qualifies rows via
+   `.not('ranked_note','is',null)`, so Rook qualified purely by HAVING a note.
+
+### tier set to NULL rather than deleting the row -- BLOCKED BY A NOT-NULL CONSTRAINT
+Deletion was rejected on purpose: **NEXUS would treat Rook as new on its next regrade and
+re-insert a tier.** But `meta_tiers.tier` is **NOT NULL**, so the intended `tier: null` failed
+(`null value in column "tier" violates not-null constraint`) and the whole UPDATE rolled back.
+
+Applied instead: `ranked_tier_solo`, `ranked_tier_squad`, `trend` -> null; `ranked_note` and
+`note` replaced. **`tier` remains `"A"` in the DB** and is now suppressed in CODE at every
+render surface. **OPEN: a one-line DDL (`ALTER TABLE meta_tiers ALTER COLUMN tier DROP NOT
+NULL;`) is Justin's to run if the data itself should be corrected rather than masked.**
+
+`shell_stats.Rook.updated_at` set to 2026-07-20 -- the corrected row previously read
+**2026-04-04** and so looked staler than the wrong row it supersedes.
+
+### *** METHOD RULE: enumerate every consumer BEFORE changing one ***
+Both `/meta` and `/ranked` had **TWO query paths each**, and the earlier exclusions had covered
+**one each**. Enumerating all 14 `meta_tiers` read sites up front found a **FOURTH** surface the
+approved list did not include: `app/builds/page.js:293` `metaShellsList`, a separate derivation
+from the same rows, still rendering an **A** badge next to Rook after the shell-card
+`displayTier` fix. Fixed in this pass and flagged as beyond the approved three.
+
+**Fifth instance today of a fix landing on a SUBSET of surfaces**, after:
+- `availableOnMap` (two consumers, one fixed)
+- `FALLBACK_SHELL_SLUGS` (dormant twin of the guides-roster bug)
+- the `isBanned` rename (five missed references -> a 500)
+- `/meta` + `/ranked` (one path each)
+
+**Grep for all consumers first, then fix.** Verified after: a full sweep of 11 pages shows
+**zero** Rook-with-a-tier renders anywhere.
+
+### The mirrored fields are model round-trips for EVERY shell
+The seven other shells' `ranked_tier_solo` / `_squad` / `ranked_note` in `meta_tiers` are also
+NEXUS round-trips of `shell_stats`; they simply **happen to be correct**. **The loop fix does
+not repair existing rows** -- it only stops new ones being minted.
+
+---
+
 ## 2026-07-20 — ROOK: the VERIFIED row was WRONG and the hand-written copy was RIGHT
 
 ### *** THE EPISTEMIC LESSON -- this is the transferable part ***

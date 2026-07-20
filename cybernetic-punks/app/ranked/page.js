@@ -66,6 +66,11 @@ async function getRankedData() {
         .from('meta_tiers')
         .select('name, type, tier, trend, ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier, updated_at')
         .not('ranked_note', 'is', null)
+        // Rook has a ranked_note (saying it is NOT selectable in ranked), which
+        // would otherwise qualify it as a ranked "meta mover". Excluded: this is
+        // the SECOND /ranked path -- the SHELL_ORDER tier rows were fixed
+        // separately and this strip was missed.
+        .neq('name', 'Rook')
         .order('updated_at', { ascending: false })
         .limit(8),
     ]);
