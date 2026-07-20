@@ -31,6 +31,37 @@ export const dynamic = 'force-dynamic';
 
 var DMZ_GAME_SLUG = 'dmz';
 
+// Does this section currently have indexable content? Mirrors the page body's
+// fetch exactly (byTag vs slug-list; data sections render a coming-soon shell and
+// have NO content until their entity tables exist). Used by generateMetadata to
+// noindex empty sections -- an empty /dmz/<section> is a thin page that inherits
+// index:true from dmz.indexable, and four+ of them were crawlable pre-launch.
+// A section flips to index automatically the moment it has content.
+async function sectionHasContent(section) {
+  if (!section || section.source !== 'editor') return false; // data sections: coming-soon shell
+  var byTag = section.contentFilter && section.contentFilter.byTag;
+  try {
+    if (byTag) {
+      var { count: tagCount } = await supabase
+        .from('feed_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_published', true).eq('game_slug', DMZ_GAME_SLUG)
+        .contains('tags', [byTag]);
+      return (tagCount || 0) > 0;
+    }
+    var sectionSlugs = dmzArticleSlugsForSection(section.slug);
+    if (sectionSlugs.length === 0) return false;
+    var { count } = await supabase
+      .from('feed_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_published', true).eq('game_slug', DMZ_GAME_SLUG)
+      .in('slug', sectionSlugs);
+    return (count || 0) > 0;
+  } catch (err) {
+    return false; // fail-safe: an errored count -> treat as empty -> noindex (never over-expose)
+  }
+}
+
 export async function generateMetadata({ params }) {
   var sectionSlug = (await params).section;
   var section = getGameSection('dmz', sectionSlug);
@@ -46,10 +77,17 @@ export async function generateMetadata({ params }) {
     : section.label + ' for DMZ -- coverage arrives as official details are confirmed.');
   var ogTitle = section.label + ' — DMZ';
   var url = 'https://cyberneticpunks.com/dmz/' + section.slug;
+  // An empty section is a thin page -- keep it OUT of the index until it has
+  // content (follow:true so crawlers still traverse to real pages). When it has
+  // content, omit robots here and inherit the root/layout index:true. The /dmz
+  // hub and the article pages are unaffected -- they set their own metadata.
+  var hasContent = await sectionHasContent(section);
+  var robots = hasContent ? undefined : { index: false, follow: true };
   return {
     title: ogTitle,
     description: desc,
     keywords: ['DMZ', 'DMZ ' + section.label, 'Modern Warfare 4 DMZ', 'MW4 DMZ', 'Call of Duty DMZ'],
+    robots: robots,
     alternates: { canonical: url },
     openGraph: {
       title: ogTitle,
