@@ -36,6 +36,10 @@ const ALLOWED_TABLES = [
   'game_bosses',
   'game_events',
   'game_modes',
+  // DMZ launch-day entity tables (public-read, service-key write via this route).
+  'dmz_keys',
+  'dmz_missions',
+  'dmz_items',
 ];
 
 // SECURITY (audit #4): admin hardening. Keeps the password mechanism (OAuth

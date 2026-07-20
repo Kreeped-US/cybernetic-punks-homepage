@@ -237,6 +237,59 @@ const SCHEMAS = {
     { key: 'is_limited_time',label: 'Limited Time', type: 'boolean' },
     { key: 'verified',       label: 'Verified',     type: 'boolean' },
   ],
+
+  // ---- DMZ LAUNCH ENTITY TABLES ----------------------------------
+  // Order: identity (name -> slug) first, then the type-specific facts, then
+  // provenance/verification last. game_slug is omitted -- the DB defaults it to
+  // 'dmz'. id/created_at/updated_at are DB defaults (the form strips them).
+  // `verified` defaults to FALSE for dmz_ tables (see buildFormDefaults) so a new
+  // row is never silently confirmed. `autoSlug` derives the slug from the name.
+  dmz_keys: [
+    { key: 'name',               label: 'Name',               type: 'text',     required: true, placeholder: 'e.g. Crane Control Room Key' },
+    { key: 'slug',               label: 'Slug',               type: 'text',     required: true, autoSlug: true, placeholder: 'auto from name; edit if needed' },
+    { key: 'location',           label: 'Location (POI)',     type: 'text',     placeholder: 'e.g. Al Mazrah, Crane' },
+    { key: 'unlocks',            label: 'Unlocks',            type: 'text',     placeholder: 'what the key opens' },
+    { key: 'map_region',         label: 'Map Region',         type: 'text',     placeholder: 'e.g. Hajin - Northeast' },
+    { key: 'description',        label: 'Description',        type: 'textarea', placeholder: 'What this key is, in one or two sentences.' },
+    { key: 'acquisition_source', label: 'Acquisition Source', type: 'text',     placeholder: 'e.g. HVT drop, mission reward' },
+    { key: 'acquisition_detail', label: 'Acquisition Detail', type: 'text' },
+    { key: 'verified',           label: 'Verified in-game',   type: 'boolean' },
+    { key: 'verified_source',    label: 'Verified Source',    type: 'text',     placeholder: 'e.g. owner-verified in-game' },
+    { key: 'patch_verified',     label: 'Patch Verified',     type: 'text',     placeholder: 'e.g. S1' },
+    { key: 'source_url',         label: 'Source URL',         type: 'text' },
+    { key: 'notes',              label: 'Notes (internal)',   type: 'textarea' },
+  ],
+  dmz_missions: [
+    { key: 'name',               label: 'Name',               type: 'text',     required: true, placeholder: 'e.g. Konni Secrets' },
+    { key: 'slug',               label: 'Slug',               type: 'text',     required: true, autoSlug: true, placeholder: 'auto from name; edit if needed' },
+    { key: 'faction',            label: 'Faction',            type: 'text',     placeholder: 'e.g. Legion' },
+    { key: 'tier',               label: 'Tier',               type: 'text',     placeholder: 'e.g. Tier 3' },
+    { key: 'objectives',         label: 'Objectives',         type: 'array',    placeholder: 'One objective per line' },
+    { key: 'reward',             label: 'Reward',             type: 'text' },
+    { key: 'description',        label: 'Description',        type: 'textarea', placeholder: 'What the mission is, in one or two sentences.' },
+    { key: 'acquisition_source', label: 'Acquisition Source', type: 'text',     placeholder: 'e.g. faction board' },
+    { key: 'acquisition_detail', label: 'Acquisition Detail', type: 'text' },
+    { key: 'verified',           label: 'Verified in-game',   type: 'boolean' },
+    { key: 'verified_source',    label: 'Verified Source',    type: 'text' },
+    { key: 'patch_verified',     label: 'Patch Verified',     type: 'text' },
+    { key: 'source_url',         label: 'Source URL',         type: 'text' },
+    { key: 'notes',              label: 'Notes (internal)',   type: 'textarea' },
+  ],
+  dmz_items: [
+    { key: 'name',               label: 'Name',               type: 'text',     required: true, placeholder: 'e.g. Gold Skull' },
+    { key: 'slug',               label: 'Slug',               type: 'text',     required: true, autoSlug: true, placeholder: 'auto from name; edit if needed' },
+    { key: 'category',           label: 'Category',           type: 'text',     placeholder: 'e.g. Valuable, Key Item' },
+    { key: 'sell_value',         label: 'Sell Value',         type: 'text',     placeholder: 'e.g. 5000 (text -- ranges allowed)' },
+    { key: 'use',                label: 'Use',                type: 'text',     placeholder: 'what it is for' },
+    { key: 'description',        label: 'Description',        type: 'textarea', placeholder: 'What this item is, in one or two sentences.' },
+    { key: 'acquisition_source', label: 'Acquisition Source', type: 'text' },
+    { key: 'acquisition_detail', label: 'Acquisition Detail', type: 'text' },
+    { key: 'verified',           label: 'Verified in-game',   type: 'boolean' },
+    { key: 'verified_source',    label: 'Verified Source',    type: 'text' },
+    { key: 'patch_verified',     label: 'Patch Verified',     type: 'text' },
+    { key: 'source_url',         label: 'Source URL',         type: 'text' },
+    { key: 'notes',              label: 'Notes (internal)',   type: 'textarea' },
+  ],
 };
 
 const NULLABLE_SELECT_NULL_VALUE = 'Universal';
@@ -276,6 +329,9 @@ const TABS = [
   { key: 'game_bosses',          label: 'BOSSES',       color: '#00f5ff', group: 'world' },
   { key: 'game_events',          label: 'EVENTS',       color: '#00f5ff', group: 'world' },
   { key: 'game_modes',           label: 'MODES',        color: '#00f5ff', group: 'world' },
+  { key: 'dmz_keys',             label: 'DMZ KEYS',     color: '#00ff88', group: 'dmz' },
+  { key: 'dmz_missions',         label: 'DMZ MISSIONS', color: '#00ff88', group: 'dmz' },
+  { key: 'dmz_items',            label: 'DMZ ITEMS',    color: '#00ff88', group: 'dmz' },
 ];
 
 const S = {
@@ -346,6 +402,10 @@ function rowToFormData(row, schema) {
     if (field.type === 'datetime-local' && formData[field.key]) {
       formData[field.key] = toDatetimeLocal(formData[field.key]);
     }
+    // 'array' column -> newline-joined string for the textarea when editing.
+    if (field.type === 'array' && Array.isArray(formData[field.key])) {
+      formData[field.key] = formData[field.key].join(String.fromCharCode(10));
+    }
   });
   // Unpack creator_info jsonb into flat creator_* fields for the form.
   if (row && row.creator_info && typeof row.creator_info === 'object') {
@@ -369,6 +429,13 @@ function formDataToRow(formData, schema) {
     }
     if (field.type === 'boolean') {
       row[field.key] = row[field.key] === true || row[field.key] === 'true';
+    }
+    // 'array' (Postgres text[]): the textarea holds one entry per line. Split,
+    // trim, drop blanks -> a real array. Empty -> null (not an empty string,
+    // which Postgres would reject as a malformed array literal).
+    if (field.type === 'array') {
+      var parts = String(row[field.key] || '').split(String.fromCharCode(10)).map(function (x) { return x.trim(); }).filter(Boolean);
+      row[field.key] = parts.length > 0 ? parts : null;
     }
     if (field.type === 'datetime-local') {
       if (row[field.key] === '' || row[field.key] === undefined || row[field.key] === null) {
@@ -408,7 +475,10 @@ function buildFormDefaults(activeTab, stickyValues) {
       defaults[f.key] = stickyValues[f.key];
       return;
     }
-    if (f.type === 'boolean') defaults[f.key] = (activeTab && activeTab.indexOf('game_') === 0 && f.key === 'verified') ? false : true;
+    // verified defaults FALSE for game_ AND dmz_ entity tables -- a new row must
+    // never be silently confirmed (the honesty gate + the index gate). Other
+    // boolean fields keep their true default.
+    if (f.type === 'boolean') defaults[f.key] = (activeTab && (activeTab.indexOf('game_') === 0 || activeTab.indexOf('dmz_') === 0) && f.key === 'verified') ? false : true;
     else if (f.nullableSelect) defaults[f.key] = f.options && f.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
     else defaults[f.key] = '';
   });
@@ -536,7 +606,29 @@ export default function AdminPage() {
     } catch (e) { showToast(e.message, false); }
   }
 
-  function updateField(key, value) { setFormData(prev => ({ ...prev, [key]: value })); }
+  // Slug auto-derivation: when the operator types the NAME and the active table
+  // has an autoSlug slug field, keep slug = slugify(name) UNLESS the operator has
+  // manually overridden it (detected by comparing the current slug to the slug
+  // derived from the previous name). Prevents at-speed typos that the unique
+  // index would silently turn into duplicate rows.
+  function slugify(v) {
+    return String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function updateField(key, value) {
+    setFormData(function (prev) {
+      var next = { ...prev, [key]: value };
+      if (key === 'name') {
+        var schema = SCHEMAS[activeTab] || [];
+        var slugField = schema.find(function (f) { return f.key === 'slug' && f.autoSlug; });
+        if (slugField) {
+          var currentSlug = prev.slug || '';
+          var wasAuto = currentSlug === '' || currentSlug === slugify(prev.name || '');
+          if (wasAuto) next.slug = slugify(value);
+        }
+      }
+      return next;
+    });
+  }
 
   var activeTabConfig   = TABS.find(t => t.key === activeTab);
   var schema            = SCHEMAS[activeTab] || [];
@@ -645,7 +737,7 @@ export default function AdminPage() {
             <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#00f5ff', background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: 2, padding: '1px 5px', letterSpacing: 1 }}>STICKY</span>
           )}
         </div>
-        {field.type === 'textarea' ? (
+        {field.type === 'textarea' || field.type === 'array' ? (
           <textarea value={formData[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} rows={field.key === 'instruction' || field.key === 'description' || field.key === 'max_cost_summary' || field.key === 'source_text' || field.key === 'summary' || field.key === 'style' ? 5 : 3} placeholder={field.placeholder || ''} style={{ ...S.input, resize: 'vertical' }} />
         ) : field.type === 'select' ? (
           <select value={formData[field.key] ?? (field.nullableSelect ? nullVal : '')} onChange={e => updateField(field.key, e.target.value)} style={{ ...S.input }}>
