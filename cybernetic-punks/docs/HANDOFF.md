@@ -132,6 +132,35 @@ Extraction) · Recon vs Triage duelling "best support" superlative.
 
 ---
 
+## 2026-07-20 — meta_tiers.Sentinel.tier nulled — SECOND default-with-no-basis tier
+
+`/shells/sentinel` was rendering *"A-Tier in ranked. Tier placement pending June 2 launch"* --
+self-contradictory. `meta_tiers.Sentinel` had `ranked_tier_solo` null and `ranked_tier_squad`
+null, so per the prompt's own rule (`tier = higher of solo and squad`) there was **no basis for
+a tier**. The model emitted **A** anyway. `shell_stats.Sentinel` holds the honest state:
+`ranked_tier` null, note *"Tier placement pending June 2 launch"*.
+
+**Guarded write (id + tier='A'), rows-affected=1:** `tier` -> null AND `trend` -> null. `trend`
+was `'stable'` -- "held its tier since last regrade", but there is no tier to hold, the same
+no-basis default. `note` kept (genuine editorial: Defender System / grenade-cap mechanics,
+asserts no tier). **Now identical to how Rook was handled.**
+
+Verified: `/shells/sentinel` no longer renders the ranked FAQ (null tier -> `hasRankedTier`
+false), pending note intact; `/meta` shows no A badge for Sentinel (drops off the tier ladder
+correctly, still present as a shell); Sentinel still renders as a `/shells` card (tier-independent,
+shell_stats-driven); `/sitrep`, `/ranked`, `/builds` all 200; no 500 on the null.
+
+### *** SECOND default-with-no-basis tier (after Rook) -- a PROMPT defect, not data ***
+The prompt rule *"tier = the higher of ranked_tier_solo and ranked_tier_squad"* has **NO defined
+behaviour when both are null**, and the model fills the gap with a **plausible value (A) rather
+than declining**. Rook and Sentinel are two instances of the same failure: a default wearing the
+appearance of a grade, which then reads as editorial judgment downstream. Both were nulled by
+hand. **The fix belongs in the prompt / tier architecture, not in repeated manual nulls** --
+flagged for the tier architecture question, NOT fixed here. Any future shell that launches
+before NEXUS grades it will hit this again.
+
+---
+
 ## 2026-07-20 — meta_tiers loop fix STEPS 2+3: stop writing mirrors, repoint renders
 
 **Columns NOT nulled yet -- that is step 4, after a render-verification window.** Existing
