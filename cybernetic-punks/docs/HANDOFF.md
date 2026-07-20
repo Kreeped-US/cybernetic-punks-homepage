@@ -5,6 +5,78 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — GUIDES pass 1: deleted shell claims citing stats that do not exist
+
+### Four HP/shield claims DELETED, not reworded
+**There is no true version to write.** `base_health`, `base_shield` and `base_speed` are **NULL
+for all 8 shells**, and `shell_stat_values` contains **no health/shield/speed stat at all** (the
+13 stats are Agility, Fall Resistance, Finisher Siphon, Firewall, Hardware, Heat Capacity, Loot
+Speed, Melee Damage, Ping Duration, Prime Recovery, Revive Speed, Self-Repair Speed, Tactical
+Recovery). **All four fed FAQPage structured data.**
+
+| Shell | Deleted |
+|---|---|
+| Assassin | `"Lowest shield pool"` |
+| Destroyer | `"Top-tier HP + shield pool"` |
+| Thief | `"Low HP + shield"` |
+| Vandal | `"Medium HP/shield"` |
+
+### Three data-refuted fixes
+- **Thief** `"best-in-class extraction speed"` -> **`"highest loot speed of any ranked-eligible
+  shell"`**. Loot Speed: **Thief 25 vs Rook 55** -- but Rook is not ranked-eligible, so the new
+  wording is **precise and still strong**.
+- **Assassin** melee claim **deleted** (strengths item + intro clause). **Melee Damage 10 =
+  rank 3** behind Destroyer and Rook at 15.
+- **Vandal** `"Jump Jets"` -> **`"Microjets"`**, the actual DB trait.
+
+### FOUR RESIDUALS FOUND AFTER THE FIRST PASS
+- **Destroyer `playstyle`: "lean on your shield pool"** -- same nonexistent stat, and
+  `playstyle` **also feeds FAQPage schema**.
+- **Vandal `title`, `description`, `keywords`** all carried "Jump Jet". These were **MORE
+  load-bearing than the body prose originally listed** -- title and meta description are what
+  SERPs render.
+
+### *** METHOD RULE -- SIX INSTANCES TODAY: ENUMERATE EVERY SURFACE BEFORE CHANGING ONE ***
+1. `availableOnMap` -- two consumers, one fixed
+2. `FALLBACK_SHELL_SLUGS` -- dormant twin of the guides-roster bug
+3. `isBanned` rename -- five missed references, produced a 500
+4. `meta_tiers` Rook -- `/meta` and `/ranked` each had **two** query paths
+5. `/builds` `metaShellsList` -- second tier surface on an already-fixed page
+6. **This one** -- scanned `strengths`/`weaknesses` arrays but not `playstyle`, `title`,
+   `description`, `keywords`
+
+**Not six unrelated slips -- ONE HABIT. Grep the claim string across ALL fields and files
+first, then fix.**
+
+### AUDIT FINDING that reframes the /guides/shells fold
+**"DB wins because it is owner-verified" does NOT survive.** **Vandal is the counter-example:**
+the DB says *"Versatile"*, *"No specialist edge"*, *"Outclassed by specialists"*, while
+`shell_stat_values` shows **Agility 30 -- 50% above the next shell**. The guide's **"Movement
+Specialist"** framing is **right** and the DB is **wrong**.
+
+**The fold must be adjudicated FIELD BY FIELD** against `shell_stat_values` and the ability
+fields -- **not a mechanical overwrite in either direction.**
+
+### *** verified=true IS A ROW FLAG CARRYING FIELD-LEVEL MEANING IT NEVER HAD ***
+All seven shells share **one** `verified_source` string claiming matchup data was owner-verified
+**2026-07-17** -- but the rows have not been touched since **March/April**:
+
+| Shell | updated_at |
+|---|---|
+| Rook | 2026-07-20 (corrected) |
+| Thief / Triage / Destroyer | 2026-04-09 / 04-07 / 04-03 |
+| Vandal / Recon / Assassin | 2026-03-20 / 03-19 / **03-07** |
+
+**The flag attests to the MATCHUP fields. `role` / `strengths` / `weaknesses` inherited an
+authority nobody granted them.** That is how Rook's role and tiers drifted for four months
+without the flag ever being questioned.
+
+### HELD for pass 2 (needs in-game or a judgment call)
+Firewall/shields mapping · Vandal's role and DB strengths/weaknesses · Thief's role (Stealth vs
+Extraction) · Recon vs Triage duelling "best support" superlative.
+
+---
+
 ## 2026-07-20 — meta_tiers.tier NOT NULL dropped, Rook.tier nulled
 
 `meta_tiers.tier` NOT NULL constraint dropped (Justin ran the DDL) and **`meta_tiers.Rook.tier`
