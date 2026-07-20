@@ -111,9 +111,31 @@ export const marathon = {
     patchNotes: {
       type: 'steam-news',
       appId: '3065800',
+      // PRECISION FIX 2026-07-20. The old rules fired on 25 of 60 days (42%) to
+      // cover 7 real patches, because (a) keywords matched TITLE + FULL BODY, so
+      // the bare word 'patch' anywhere in any article opened the gate, and (b)
+      // there was NO source restriction, while 51% of this feed is third-party
+      // press (Gamemag.ru, PCGamesN, Rock Paper Shotgun). A Rock Paper Shotgun
+      // story about Joe Ziegler's departure matched 'patch' in its body and
+      // opened the gate for all three editors on 07-18 and 07-19.
       detection: {
+        // Steam's machine feed id for official announcements. Chosen over the
+        // display string `feedlabel` ("Community Announcements") because
+        // feedlabel is DROPPED by lib/gather/steam.js's normalisation while
+        // feedname is already plumbed through, and a machine id is stabler than
+        // a human-readable label. Verified 1:1 over 100 items: all 49 official
+        // posts carry steam_community_announcements; all 51 press items carry
+        // their outlet name.
+        //   ABSENT on a game -> NO source restriction (previous behaviour), so
+        //   DMZ and any future game are unaffected until they set their own.
+        officialFeedName: 'steam_community_announcements',
         versionRe: /update\s+\d+(\.\d+)+/i,
-        keywords: ['hotfix', 'patch notes', 'nerf', 'buff', 'balance pass', 'weapon tuning', 'patch'],
+        // TITLE-ONLY now (see engine.js). Bare 'patch'/'nerf'/'buff'/'balance
+        // pass'/'weapon tuning' REMOVED -- they were body-noise doing the
+        // leaking. 'update preview' and 'combat tuning' are ADDED DELIBERATELY:
+        // previews are official, dated, title-matchable, high-value events, and
+        // should be caught BY NAME rather than accidentally on a body keyword.
+        keywords: ['hotfix', 'patch notes', 'update preview', 'combat tuning'],
         freshnessMs: 48 * 60 * 60 * 1000,
       },
       // Section label; the engine adds the "OFFICIAL ..." / "END ..." decoration

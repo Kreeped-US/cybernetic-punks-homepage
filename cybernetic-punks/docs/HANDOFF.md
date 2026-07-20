@@ -5,6 +5,88 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — PATCH GATE precision fix: 42% -> 30% fire rate, 7/7 recall, 0 press FPs
+
+### The state it replaced (measured, 60-day backtest)
+The old gate **fired on 25 of 60 days (42%) to cover 7 real patches**. Press false-positives:
+**4** -- including the one that started this: **Rock Paper Shotgun's "A month after mass layoffs
+at Bungie, Marathon game director Joe Ziegler is leaving"**, which matched the bare keyword
+**`patch` in its BODY** and opened the gate for all three editors on 07-18 and 07-19.
+
+### TWO STRUCTURAL DEFECTS
+1. **Keywords matched TITLE + FULL BODY.** One occurrence of `patch` anywhere in any article's
+   text qualified it. `versionRe` already tested title only; keywords did not.
+2. **NO source restriction.** Steam's per-appid feed **mixes official announcements with
+   third-party PRESS** -- **51 of 100 Marathon items** were Gamemag.ru (25), PCGamesN (18),
+   Rock Paper Shotgun (8). Press coverage of a game is not a patch.
+
+### TWO RELIABLE SIGNALS FOUND
+1. **`feedname` separates official from press** -- verified 1:1 over 100 items: all 49 official
+   posts carry `steam_community_announcements`; all 51 press items carry their outlet name.
+   **Chosen over `feedlabel`** ("Community Announcements") because feedlabel is **DROPPED by
+   `lib/gather/steam.js`'s normalisation** while feedname is already plumbed through, and a
+   machine id is stabler than a display string. (There is **no** Steam `patchnotes` tag -- the
+   `tags` array holds only moderation artifacts.)
+2. **Bungie uses a rigid title convention: `"Marathon Update X.Y.Z"`.** Every one of the 7 real
+   patches matches `versionRe` on the title; no non-patch does.
+
+### The fix
+- **`officialFeedName` is CONFIG-DRIVEN** in `marathon.js` detection, read by `engine.js` --
+  **never hardcoded**, because the engine is shared and DMZ's source will use a different id.
+  **ABSENT on a game -> NO source restriction**, preserving prior behaviour for any game that
+  has not set one. **A MISSING `feedname` on an item -> treated as OFFICIAL**: the RSS half of
+  the adapter carries no feedname, and that feed is the official community-announcements
+  endpoint (verified 10/10 Bungie posts, zero press). Dropping it would lose official
+  announcements that RSS has and the `count=8` JSON window does not.
+- **Title-only keyword matching.**
+- **Keywords: `hotfix, patch notes, update preview, combat tuning`.** Removed the body-noise
+  words that were doing the leaking: `patch`, `nerf`, `buff`, `balance pass`, `weapon tuning`.
+
+### TWO IMPLEMENTATION DEVIATIONS (both deliberate, both verified)
+1. **`officialFeedName` (machine id) NOT `officialFeedLabel` (display string).** The Steam
+   adapter (`lib/gather/steam.js`) **passes `feedname` and DROPS `feedlabel`**, so keying on
+   feedlabel would have needed new plumbing through the adapter. A machine id is also stabler
+   than a human-readable label. **Verified 1:1 across 100 items** (49 official ->
+   `steam_community_announcements`; 51 press -> outlet names).
+2. **A MISSING `feedname` counts as OFFICIAL.** The adapter merges Steam **JSON (has
+   feedname)** with Steam **RSS (has none)**. A strict equality check **would have silently
+   dropped every RSS item.** RSS verified **official-only (10/10 Bungie posts, zero press)**,
+   and it carries announcements the **`count=8` JSON window misses**. Without this allowance
+   the gate would lose real patch coverage -- **the failure mode explicitly ruled worse than
+   leaking.**
+
+**Absent `officialFeedName` in a game's config = NO source restriction**, preserving current
+behaviour for DMZ and future games until they set their own.
+
+### THE DELIBERATE TRADEOFF
+**Previews are INCLUDED BY NAME** (`update preview`, `combat tuning`) because they are
+**official, dated, title-matchable, high-value events** -- caught deliberately rather than
+accidentally on a body keyword. The 07-16 Mid-Season 2 Update Preview still fires.
+
+### KNOWN INTENTIONAL GAP (not a bug -- do not "fix" by loosening the gate)
+**Three official Game-Director posts no longer fire** -- e.g. *"BALANCE SHAKE UP!" A note from
+Marathon's Game Director, Joe Ziegler* (2026-04-02), plus two more Ziegler notes (04-13,
+04-17). They are **official but carry no version or keyword in the title**.
+
+**Also intentionally OUT:** Season open/close ("Welcome to Season 2", "Season 1 Comes To A
+Close"), **Dev Team Updates**, and **economy notes**.
+
+**All of the above is DIRECTIVE TERRITORY -- cover via `editor_directives` if wanted.** That
+mechanism exists precisely so the automatic gate can stay narrow.
+
+### Backtest of the SHIPPED implementation (imports the real engine + real config)
+| | old | new |
+|---|---|---|
+| days fired / 60 | **25 (42%)** | **18 (30%)** |
+| real patches caught | 7/7 | **7/7 -- no misses** |
+| press false-positives | 4 | **0** |
+
+**Every one of the 18 fires traces to a real official event** -- 16 days across the 7 versioned
+patches (48h window = two runs each) plus the two previews. **Ziegler verified: `OLD
+is_patch_note=true -> NEW false`.**
+
+---
+
 ## 2026-07-20 — DEXTER PAUSED from daily generation (+ the patch gate is leaking)
 
 ### The pause

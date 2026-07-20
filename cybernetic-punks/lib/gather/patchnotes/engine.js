@@ -33,16 +33,44 @@ export function mergeAndDetect(articles, rules, now = Date.now()) {
   // Sort by date descending.
   all.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Detection: version pattern OR a patch keyword, AND fresh. Rules are
-  // per-game config (rules.versionRe, rules.keywords, rules.freshnessMs).
+  // Detection: OFFICIAL SOURCE, AND (version pattern OR a patch keyword) in the
+  // TITLE, AND fresh. Rules are per-game config (rules.officialFeedName,
+  // rules.versionRe, rules.keywords, rules.freshnessMs).
+  //
+  // TWO PRECISION FIXES (2026-07-20) -- both were leaking badly on Marathon,
+  // where the old rules fired on 25 of 60 days to cover 7 real patches:
+  //
+  // 1. SOURCE RESTRICTION. Steam's news feed for an appid mixes official
+  //    announcements with third-party PRESS (51 of 100 Marathon items were
+  //    Gamemag.ru / PCGamesN / Rock Paper Shotgun). Press coverage of a game is
+  //    not a patch. `rules.officialFeedName` is CONFIG-DRIVEN, never hardcoded --
+  //    this engine is shared and DMZ's source will use a different id.
+  //      ABSENT  -> no restriction, preserving prior behaviour for any game that
+  //                 has not set one.
+  //      MISSING feedname on the item -> treated as OFFICIAL. The RSS half of the
+  //                 steam-news adapter carries no feedname, and that feed is the
+  //                 official community-announcements endpoint (verified: 10/10
+  //                 items were Bungie posts, zero press). Dropping it would lose
+  //                 official announcements that RSS has and the count=8 JSON
+  //                 window does not.
+  //
+  // 2. TITLE-ONLY KEYWORDS. Keywords previously matched title + FULL BODY, so a
+  //    single occurrence of 'patch' anywhere in any article's text opened the
+  //    gate -- which is exactly how a staff-departure story qualified. versionRe
+  //    already tested the title only; keywords now match it too.
   const tagged = all.map((a) => {
     var title = a.title || '';
-    var hay = (title + ' ' + (a.contents || '')).toLowerCase();
+    var titleLower = title.toLowerCase();
+    var isOfficial = !rules.officialFeedName
+      || !a.feedname
+      || a.feedname === rules.officialFeedName;
     var matchesVersion = rules.versionRe.test(title);
-    var matchesKeyword = rules.keywords.some((k) => hay.includes(k));
+    var matchesKeyword = rules.keywords.some((k) => titleLower.includes(k));
     var articleAgeMs = now - new Date(a.date).getTime();
     var isFresh = !isNaN(articleAgeMs) && articleAgeMs >= 0 && articleAgeMs <= rules.freshnessMs;
-    return Object.assign({}, a, { is_patch_note: (matchesVersion || matchesKeyword) && isFresh });
+    return Object.assign({}, a, {
+      is_patch_note: isOfficial && (matchesVersion || matchesKeyword) && isFresh,
+    });
   });
 
   return tagged;
