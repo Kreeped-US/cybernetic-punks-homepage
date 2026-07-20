@@ -64,7 +64,7 @@ async function getRankedData() {
       // Meta tiers with ranked-specific notes populated
       supabase
         .from('meta_tiers')
-        .select('name, type, tier, trend, ranked_note, ranked_tier_solo, ranked_tier_squad, holotag_tier, updated_at')
+        .select('name, type, tier, trend, holotag_tier, updated_at')
         // FILTER ON trend, not ranked_note (2026-07-20). A strip called "meta
         // movers" filtering on "has ranked prose" showed non-movers as movers --
         // Rook qualified purely by HAVING a note. trend is computed in code by

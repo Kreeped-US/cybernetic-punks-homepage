@@ -31,7 +31,7 @@ export async function GET() {
       // Full meta tier table -- weapons + shells
       supabase
         .from('meta_tiers')
-        .select('name, type, tier, trend, note, ranked_note, ranked_tier_solo, ranked_tier_squad, updated_at')
+        .select('name, type, tier, trend, note, updated_at')
         .order('tier'),
 
       // Latest article per editor -- last 48h

@@ -317,6 +317,54 @@ before NEXUS grades it will hit this again.
 
 ---
 
+## 2026-07-20 — DEAD-COLUMN TIDIES: removed reads of never-populated columns (items 1 + 3; item 2 held for DDL)
+
+### Item 1 -- dead meta_tiers mirror selects: TEN, not five
+`ranked_tier_solo` / `ranked_tier_squad` / `ranked_note` were nulled in step 4; every consumer
+reads shell_stats now. **Ten selects still requested them** -- 5 in `app/` render sites + **5 in
+`cipher.js`** (the step-5 gather residue flagged as "candidate for a later tidy"). All removed.
+Downstream-read check (the step-5 lesson -- checked gather AND prompt builders, not just renders):
+- `sitrep-data`, `meta`, `sitrep` OVERWRITE these fields from shell_stats (overlay) -> select
+  values discarded.
+- `shells/[slug]` reads `shell.ranked_notes`, never `metaTier.ranked_note`.
+- `/ranked` movers reads `mover.ranked_tier_solo` + `mover.ranked_note` -- both NULL now and
+  `&&`-guarded, so null->undefined is behaviour-neutral. (The movers strip's solo/note display
+  is already dead; a later render tidy, not this one.)
+- `cipher.js` (5 selects) read only `shell.*` / `_r.*` (shell_stats sources) post step 5.
+Verified after: /meta SOLO badges unchanged (A×4 B×4 D×2 S×2 -- overlay still supplies them),
+/shells/thief FAQ unchanged, all pages 200.
+
+### Item 3 -- base_health / base_shield / base_speed: NOT dead-by-design -> KEEP + trim
+**Corrected the premise.** These are not dead columns: `lib/gather/wiki.js:135` INGESTS
+`base_health` from the wiki, `admin/page.js:59-61` edits them, and ~10 render sites display them
+(all null-guarded) plus editor prompts. Null now only because the source has not populated them,
+and Justin's in-game batch will answer whether they exist. **Kept the columns; trimmed only
+fetch-but-unused selects:**
+- `/shells` hub + `homepage-data` -- fetched base_* and rendered NONE -> removed all.
+- `meta` / `builds` / `intel/[slug]` -- render health+shield but NOT `base_speed` (verified:
+  base_speed renders only in ShellDetailClient via `select('*')` + advisor) -> removed base_speed
+  only. base_health/base_shield kept where used.
+
+### Item 2 -- holotag_tier: HELD for DDL (mine to run)
+`meta_tiers.holotag_tier` is 0 of 40 rows, ever. Real data is
+`shell_stats.holotag_tier_recommendation`. **Full surface**: cron WRITES it (`cron:637`), prompt
+schema ALLOWS it (`editorCore:223`), read by `MetaClient:947` / `RankedClient:404` /
+`cipher:182,502`, and `cipher:482` FILTERS `.not('holotag_tier','is',null)` -> that
+HOLOTAG-FLAGGED prompt section returns ZERO rows always (dead, like the old weapon queries).
+`advisor/route.js:295` is a DIFFERENT holotag_tier (build-advisor output) -- MUST NOT touch.
+
+**DDL to drop (owner runs):**
+```sql
+ALTER TABLE meta_tiers DROP COLUMN holotag_tier;
+```
+**Coupled code changes to apply WITH the drop (so the cron write does not error):** remove
+`holotag_tier` from the cron write (`cron:637`), the prompt schema (`editorCore:223`), the selects
+(`meta`, `ranked`, `cipher:155`, `cipher:481`), the `cipher:482` filter + its `HOLOTAG-FLAGGED`
+prompt section, and the render reads (`MetaClient:947`, `RankedClient:404`, `cipher:182,502`).
+Safe order: land the code removals first (harmless while the column still exists), then DROP.
+
+---
+
 ## 2026-07-20 — ALT-TEXT audit: live number is ~ZERO, not 1,154; Gate 4 hardened
 
 ### The finding

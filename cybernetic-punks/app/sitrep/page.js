@@ -129,7 +129,7 @@ export default async function SitrepPage() {
   var [metaTiersRes, latestArticlesRes, topBuildRes, risingIntelRes, liveStats, shellRankedRes] = await Promise.all([
     supabase
       .from('meta_tiers')
-      .select('name, type, tier, trend, note, ranked_note, ranked_tier_solo, updated_at')
+      .select('name, type, tier, trend, note, updated_at')
       .order('tier'),
 
     supabase

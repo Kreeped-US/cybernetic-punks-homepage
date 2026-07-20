@@ -197,7 +197,7 @@ export default async function BuildsPage() {
       .order('firepower_score', { ascending: false, nullsFirst: false }),
     supabase
       .from('shell_stats')
-      .select('id, name, role, difficulty, base_health, base_shield, base_speed, prime_ability_name, tactical_ability_name, trait_1_name, ranked_tier_solo, ranked_tier_squad, best_for, recommended_playstyle, image_filename')
+      .select('id, name, role, difficulty, base_health, base_shield, prime_ability_name, tactical_ability_name, trait_1_name, ranked_tier_solo, ranked_tier_squad, best_for, recommended_playstyle, image_filename')
       .order('name'),
     supabase
       .from('meta_tiers')

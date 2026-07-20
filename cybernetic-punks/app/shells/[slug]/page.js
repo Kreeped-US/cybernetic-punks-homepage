@@ -102,7 +102,7 @@ export default async function ShellHubPage({ params }) {
     supabase.from('shell_stats').select('*').eq('name', shellName).single(),
     supabase.from('core_stats').select('name, rarity, effect_desc, ability_type, ranked_viable, required_runner').or('required_runner.eq.' + shellName + ',required_runner.is.null').order('rarity', { ascending: false }),
     supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value').or('required_runner.eq.' + shellName + ',required_runner.is.null').order('rarity', { ascending: false }),
-    supabase.from('meta_tiers').select('tier, trend, note, ranked_note, updated_at').eq('name', shellName).eq('type', 'shell').maybeSingle(),
+    supabase.from('meta_tiers').select('tier, trend, note, updated_at').eq('name', shellName).eq('type', 'shell').maybeSingle(),
 
     // {shellName} Intel — excludes NEXUS and DEXTER (dedicated panels above)
     supabase

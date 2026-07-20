@@ -152,7 +152,7 @@ async function buildShellBuildPrompt() {
   const [shellRes, tierRes] = await Promise.all([
     supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle(),
     supabase.from('meta_tiers')
-      .select('tier, ranked_tier_solo, ranked_tier_squad, note, ranked_note, trend, holotag_tier')
+      .select('tier, note, trend, holotag_tier')
       .eq('name', targetShell).eq('type', 'shell').maybeSingle(),
   ]);
 
@@ -232,7 +232,7 @@ async function buildCounterMetaPrompt() {
   // Get all S/A tier shells from meta_tiers, ranked solo
   const { data: tieredShells } = await supabase
     .from('meta_tiers')
-    .select('name, tier, ranked_tier_solo, ranked_tier_squad, note, ranked_note, trend')
+    .select('name, tier, note, trend')
     .eq('type', 'shell')
     // Filter source: shell_stats (see rankedShellNames). Data source stays here.
     .in('name', await rankedShellNames(['S', 'A']))
@@ -387,7 +387,7 @@ async function buildWeeklyClimbPrompt() {
 
   const [topShellsRes, ghostRes, dexterRes] = await Promise.all([
     supabase.from('meta_tiers')
-      .select('name, tier, ranked_tier_solo, ranked_tier_squad, ranked_note, trend')
+      .select('name, tier, trend')
       .eq('type', 'shell')
       .in('name', rankedShellsSA)
       .order('ranked_tier_solo').limit(6),
@@ -478,7 +478,7 @@ async function buildHolotagPrompt() {
 
   const [tierStateRes, dexterBuildsRes] = await Promise.all([
     supabase.from('meta_tiers')
-      .select('name, type, tier, ranked_tier_solo, ranked_tier_squad, holotag_tier, ranked_note, trend')
+      .select('name, type, tier, holotag_tier, trend')
       .not('holotag_tier', 'is', null)
       .order('holotag_tier'),
     supabase.from('feed_items')
@@ -564,7 +564,7 @@ async function buildPatchImpactPrompt(patchItems) {
   const _rankedMap5 = await shellRankedMap();  // step-5 overlay (shell-only list)
   const { data: currentMeta } = await supabase
     .from('meta_tiers')
-    .select('name, type, ranked_tier_solo, ranked_tier_squad, trend, ranked_note')
+    .select('name, type, trend')
     // Filter source: shell_stats. 'BAN' kept in the requested set for symmetry
     // with the old query; no shell currently holds it.
     .in('name', await rankedShellNames(['S', 'A', 'BAN']))

@@ -36,7 +36,7 @@ export const metadata = {
 
 export default async function ShellsIndexPage() {
   var [shellsRes, metaTiersRes] = await Promise.all([
-    supabase.from('shell_stats').select('name, role, lore_tagline, difficulty, base_health, base_shield, base_speed, active_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, best_for, image_filename').order('name'),
+    supabase.from('shell_stats').select('name, role, lore_tagline, difficulty, active_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, best_for, image_filename').order('name'),
     supabase.from('meta_tiers').select('name, tier, trend').eq('type', 'shell'),
   ]);
 

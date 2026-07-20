@@ -1345,7 +1345,7 @@ export default async function IntelPage({ params }) {
     // discourse branch (which runs after the null check), so unpublished drafts --
     // including VANTAGE discourse drafts -- never render at /intel/<slug>.
     supabase.from('feed_items').select('*').eq('slug', slug).eq('game_slug', 'marathon').eq('is_published', true).maybeSingle(),
-    supabaseService.from('shell_stats').select('name, role, base_health, base_shield, base_speed, active_ability_name, active_ability_description, passive_ability_name, image_filename').limit(20),
+    supabaseService.from('shell_stats').select('name, role, base_health, base_shield, active_ability_name, active_ability_description, passive_ability_name, image_filename').limit(20),
     supabaseService.from('weapon_stats').select('name, damage, fire_rate, magazine_size, weapon_type, ammo_type, image_filename').limit(40),
     supabaseService.from('mod_stats').select('name, slot_type, rarity, effect_desc').limit(120),
     supabaseService.from('implant_stats').select('name, slot_type, rarity, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, image_filename').limit(100),

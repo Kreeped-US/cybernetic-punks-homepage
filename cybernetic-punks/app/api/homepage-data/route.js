@@ -77,7 +77,7 @@ export async function GET() {
       // Shell stats -- used by ShellPortraitStrip
       supabase
         .from('shell_stats')
-        .select('name, role, base_health, base_shield, active_ability_name, ranked_tier_solo, ranked_tier_squad, image_filename')
+        .select('name, role, active_ability_name, ranked_tier_solo, ranked_tier_squad, image_filename')
         .order('name'),
 
       // Weapon stats -- used by MetaWeaponShowcase
