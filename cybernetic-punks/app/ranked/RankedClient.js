@@ -183,8 +183,12 @@ export default function RankedClient({ data }) {
     return {
       name: shellName,
       color: SHELL_COLORS[shellName] || '#888',
-      solo: (dbShell && dbShell.ranked_tier_solo) || fallback.solo,
-      squad: (dbShell && dbShell.ranked_tier_squad) || fallback.squad,
+      // Rook is EXCLUDED from ranked entirely (owner-verified 2026-07-20). The
+      // DB row previously carried ranked_tier_solo 'B', and this expression
+      // preferred it over the correct 'BAN' fallback -- the DB error won on the
+      // live page. Explicit now, so a stale or re-inherited tier cannot override.
+      solo: shellName === 'Rook' ? fallback.solo : ((dbShell && dbShell.ranked_tier_solo) || fallback.solo),
+      squad: shellName === 'Rook' ? fallback.squad : ((dbShell && dbShell.ranked_tier_squad) || fallback.squad),
       why: (dbShell && dbShell.recommended_playstyle) || fallback.why,
       image_filename: dbShell ? dbShell.image_filename : null,
       role: dbShell ? dbShell.role : null,

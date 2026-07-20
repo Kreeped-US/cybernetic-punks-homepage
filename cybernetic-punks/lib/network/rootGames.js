@@ -54,6 +54,25 @@ export const ROOT_GAMES = [
     // (wordmark-free) source is the clean fix. See report.
     imagePosition: 'left center',
     theme: { primary: MARATHON_GREEN, tint: 'rgba(0,255,65,0.08)' }, // green (= --green; Marathon site identity)
+    // KEY ROUTES (2026-07-20). Reference hubs that get a crawlable link from the
+    // apex page, rendered INSIDE this game's pulse column by GamePulseColumn.
+    //
+    // WHY: Nav.js returns null on '/', so these five had ZERO inbound links from
+    // the highest-authority page on the site. They cannot go in the neutral
+    // chrome -- app/page.js states game-specific content belongs inside a game's
+    // own segmented column -- so they live in the column, which that same note
+    // explicitly sanctions.
+    //
+    // OPTIONAL and per-game: omit the key (or leave it empty) and the column
+    // renders nothing at all -- no container, no label. DMZ has none until launch.
+    // Shape: { label, href }. Labels are the hub's own noun, not a sentence.
+    keyRoutes: [
+      { label: 'Shells',   href: '/shells' },
+      { label: 'Matchups', href: '/matchups' },
+      { label: 'Uniques',  href: '/uniques' },
+      { label: 'Factions', href: '/factions' },
+      { label: 'Ranked',   href: '/ranked' },
+    ],
     pulse: {
       mode: 'live',
       onlineSource: 'steam',         // which live_stats source counts as "online"

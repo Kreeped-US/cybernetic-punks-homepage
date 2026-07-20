@@ -5,6 +5,92 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — ROOK: the VERIFIED row was WRONG and the hand-written copy was RIGHT
+
+### *** THE EPISTEMIC LESSON -- this is the transferable part ***
+Justin verified in-game: **Rook cannot be selected in ranked of any kind** -- solo, duo or trio.
+
+`shell_stats.Rook` carried **`ranked_tier: C`, `ranked_tier_solo: B`**, and a
+**"Rook is for SOLO play only"** playstyle. It was marked **`verified=true`, owner-verified**.
+Against it stood **twelve independent hardcoded locations** all saying "banned from Ranked".
+
+The assistant argued **for the DB**, on the grounds that the row was **internally consistent**
+(a banned shell would not carry ranked tiers). **THAT REASONING WAS BACKWARDS.** The tiers were
+**part of the same error**, not evidence against it.
+
+> **COHERENCE IS NOT CORROBORATION.** A wrong row can be perfectly internally consistent.
+
+And the **`verified` flag made it worse, not better**: it terminated inquiry and outweighed
+twelve independent authors. **Only going and looking settled it.** Justin's instinct -- "twelve
+hand-written instances is a lot of smoke" -- was the stronger signal and was under-weighted.
+
+### What Rook actually is
+**Not a weak competitive shell. A SCAVENGER / free-loadout farming option** (Justin: *"similar
+to Scavs in Escape from Tarkov"*). Drop in with **minimal personal risk** to farm gear, credits
+and map knowledge.
+
+### INDEPENDENT CORROBORATION -- from data that never went through the NEXUS loop
+`shell_stat_values` **Loot Speed**: **Rook 55**, Thief 25, Assassin 15, floor 5.
+**2.2x the next shell, 11x the lowest.** Meanwhile Self-Repair 5 (joint-bottom), Agility 12 (5th).
+**The stats were right the whole time; the prose fields were wrong.** This table is not fed to
+the editors, so it is the one witness the pipeline could not have contaminated.
+
+### The meta_tiers loop -- PROVEN, not hypothetical
+`meta_tiers.Rook` inherited the error through the NEXUS prompt and carried a **NEWER timestamp**
+(**2026-07-19** vs `shell_stats` **2026-04-04**), so it read as **fresh independent
+confirmation** -- and **was cited as corroboration during the audit**.
+
+**PROVEN: any error in `shell_stats` acquires a false second witness in `meta_tiers`.**
+**Correcting `shell_stats` does NOT fix the stale `meta_tiers` row.** Scoped separately, **not
+fixed in this pass**.
+
+### What changed
+**DB (`shell_stats.Rook`, guarded, rows-affected=1 each):** role `Flex` -> **`Scavenger`**;
+`ranked_tier` / `_solo` / `_squad` -> **all null**; `holotag_tier_recommendation` -> null;
+`ranked_notes`, `recommended_playstyle`, `best_for`, `strengths`, `weaknesses` rewritten around
+the free-loadout farming purpose. **`verified` stays TRUE** with a correction note in
+`verified_source` -- `false` means "unconfirmed", and this is **confirmed, previously confirmed
+wrong**. Flipping it would hide the row from editor context and cause a different error.
+
+**Code:** `isBanned` -> `isRankedExcluded` (Rook-scoped only); badge -> **`NOT IN RANKED`**;
+four role strings -> Scavenger; explicit Rook exclusions at `/ranked` (the DB tier had been
+**overriding the correct BAN fallback on the live page**), `/meta` shell pool, `/builds`.
+`/guides/shells/rook` prose rewritten off the corrected row.
+
+**FALSE SHIELD-POOL CLAIMS REMOVED (3).** Rook has **no `base_shield` value at all**, yet three
+places called it a "high shield pool" beginner pick -- one of them **inside FAQPage schema**
+(same class as the `/stats` unbuilt-capability claims removed the same morning). Replaced with
+what is actually true and equally useful: free loadout, highest loot speed.
+
+**Greyscale/dimming on `/shells` KEPT.** It asserts "not selectable in ranked", which is **true**.
+The assistant had proposed removing it and **was wrong**.
+
+**The 12 "banned from Ranked" claims are CORRECT and were NOT edited.**
+
+### QUIZ BUG FOUND, NOT FIXED
+The `/shells` quiz matches `difficulty` **Easy / Medium / Hard / Expert**, but
+`shell_stats.difficulty` only ever contains **High / Low / Medium**. **`Easy`, `Hard` and
+`Expert` match NOTHING**, so both the "new" and "veteran" answers score **zero** difficulty
+points and results are driven almost entirely by question 1. **Silent vocabulary mismatch, same
+family as `available_on` slugs vs display names.** Predates this work.
+
+The quiz also **scores Rook -1 and filters it out, treating it as BAD rather than DIFFERENT**.
+No quiz option means "farm and learn the map with nothing at risk", which is Rook's actual
+purpose. **Needs scoping alongside the difficulty repair.**
+
+### METHOD NOTE -- the comfortable explanation was wrong
+A rename left **five** `isBanned` references behind. `/shells/rook` returned **500**
+(`ReferenceError: isBanned is not defined`), and the verification showed **"badge: 0"** --
+which was **nearly written off as stale build artifacts**, having just run a stash/rebuild cycle.
+
+**Stale servers are a real phenomenon AND a tempting explanation for a real break.**
+**Check the HTTP status and the server log before accepting the comfortable reading.**
+
+(Also re-encountered: `weaknesses` is Postgres **`text[]`, not jsonb** -- a JSON-literal guard
+fails with "malformed array literal". Documented trap, caught by the fallback guard.)
+
+---
+
 ## 2026-07-20 — NAV made crawlable: ~10 routes had no nav link in HTML at all
 
 ### The defect

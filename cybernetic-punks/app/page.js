@@ -656,6 +656,16 @@ const NR_CSS = `
 .nr-row-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
 .nr-col-empty, .nr-col-prelaunch { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
 
+/* ── Key routes: per-game reference hubs inside the game's own column ──
+   Subordinate by design: smaller and quieter than .nr-row headlines, which stay
+   the column's primary content. Tokens only -- no injected color, so this cannot
+   compete with the game accent used on the marker and tiles. */
+.nr-keys { display: flex; flex-direction: column; gap: 6px; }
+.nr-keys-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-tertiary); }
+.nr-keys-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.nr-key { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; color: var(--text-secondary); background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 2px; padding: 4px 9px; transition: color .15s ease, border-color .15s ease; }
+.nr-key:hover { color: var(--text-primary); border-color: var(--border); }
+
 /* ── Creator-coverage "incoming" panel (intentional, not a TODO) ── */
 /* Reserved creator-coverage slot -- a subtle left accent + mono labels make it
    read as an intentional "incoming" slot, not a broken/empty box. */
@@ -680,14 +690,14 @@ const NR_CSS = `
 .nr-stagger > *:nth-child(4) { animation-delay: .21s; }
 
 /* Keyboard focus (game-neutral ring) */
-.nr-tile:focus-visible, .nr-row:focus-visible, .nr-col-all:focus-visible, .nr-join:focus-visible {
+.nr-tile:focus-visible, .nr-row:focus-visible, .nr-col-all:focus-visible, .nr-join:focus-visible, .nr-key:focus-visible {
   outline: 2px solid rgba(255,255,255,0.7); outline-offset: 2px;
 }
 
 /* Respect reduced motion: kill load-in, hover transforms, dot pulse */
 @media (prefers-reduced-motion: reduce) {
   .nr-stagger > * { animation: none !important; }
-  .nr-tile, .nr-enter, .nr-row, .nr-join, .nr-col-all { transition: none !important; }
+  .nr-tile, .nr-enter, .nr-row, .nr-join, .nr-col-all, .nr-key { transition: none !important; }
   .nr-tile:hover { transform: none !important; }
   .nr-dot { animation: none !important; }
 }

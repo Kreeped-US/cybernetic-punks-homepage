@@ -109,7 +109,7 @@ const SHELLS = [
   { name: 'Assassin',  color: '#cc44ff', tag: 'assassin',  role: 'Stealth Killer' },
   { name: 'Destroyer', color: '#ff3333', tag: 'destroyer', role: 'Heavy Combat' },
   { name: 'Recon',     color: '#00d4ff', tag: 'recon',     role: 'Information' },
-  { name: 'Rook',      color: '#aaaaaa', tag: 'rook',      role: 'Tank' },
+  { name: 'Rook',      color: '#aaaaaa', tag: 'rook',      role: 'Scavenger' },
   { name: 'Thief',     color: '#ffd700', tag: 'thief',     role: 'Extraction' },
   { name: 'Triage',    color: '#00ff88', tag: 'triage',    role: 'Support' },
   { name: 'Vandal',    color: '#ff8800', tag: 'vandal',    role: 'Movement' },
@@ -118,7 +118,7 @@ const SHELLS = [
 const FAQS = [
   {
     q: 'What is the best shell for beginners in Marathon?',
-    a: 'For new Runners, Triage and Rook are the most forgiving picks. Triage has self-repair and revive abilities that help you survive mistakes, while Rook\'s high shield pool gives you time to learn positioning. Once comfortable, transition to Vandal for movement-based play or Thief for extraction-focused runs.',
+    a: 'For new Runners, Triage and Rook are the most forgiving picks. Triage has self-repair and revive abilities that help you survive mistakes, while Rook\'s free loadout means nothing of yours is at risk, and its loot speed is by far the highest in the game - ideal for learning maps and farming gear. Rook cannot be selected in ranked. Once comfortable, transition to Vandal for movement-based play or Thief for extraction-focused runs.',
   },
   {
     q: 'How do I extract successfully in Marathon?',

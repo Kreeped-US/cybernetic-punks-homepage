@@ -72,7 +72,12 @@ export default function ShellDetailClient({
 
   var imgSrc = shell.image_filename ? '/images/shells/' + shell.image_filename : null;
   var maxHp = 175;
-  var isBanned = shellName === 'Rook';
+// Rook is NOT a competitive shell: it cannot be selected in ranked of any
+// kind (owner-verified in-game 2026-07-20). It is a free-loadout SCAVENGER --
+// drop in with nothing at risk and farm gear, credits and map knowledge.
+// The greyscale + badge treatment is CORRECT and deliberate: it asserts
+// "not selectable in ranked", which is exactly true. Do not soften it.
+  var isRankedExcluded = shellName === 'Rook';
   var tierStyle = metaTier ? TIER_COLORS[metaTier.tier] : null;
 
   // Defensive defaults — gracefully handle missing props
@@ -105,8 +110,8 @@ export default function ShellDetailClient({
               backgroundImage: 'url(' + imgSrc + ')',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: isBanned ? 0.08 : 0.2,
-              filter: isBanned ? 'grayscale(1)' : 'none',
+              opacity: isRankedExcluded ? 0.08 : 0.2,
+              filter: isRankedExcluded ? 'grayscale(1)' : 'none',
             }} />
             <div style={{
               position: 'absolute', right: 0, top: 0, bottom: 0,
@@ -164,9 +169,9 @@ export default function ShellDetailClient({
                     {shell.difficulty} Difficulty
                   </span>
                 )}
-                {isBanned && (
+                {isRankedExcluded && (
                   <span style={{ fontSize: 9, color: '#ff2222', background: 'rgba(255,34,34,0.1)', border: '1px solid rgba(255,34,34,0.3)', borderRadius: 2, padding: '4px 10px', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase' }}>
-                    Ranked Banned
+                    Not In Ranked
                   </span>
                 )}
                 {metaTier?.trend === 'up' && <span style={{ fontSize: 9, color: '#00ff41', background: 'rgba(0,255,65,0.1)', border: '1px solid rgba(0,255,65,0.25)', borderRadius: 2, padding: '4px 10px', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase' }}>↑ Rising Meta</span>}
@@ -802,7 +807,7 @@ export default function ShellDetailClient({
       </div>
 
       {/* ══ STICKY BUILD CTA ═══════════════════════════════ */}
-      {!isBanned && (
+      {!isRankedExcluded && (
         <div style={{
           position: 'fixed',
           bottom: stickyVisible ? 16 : -80,

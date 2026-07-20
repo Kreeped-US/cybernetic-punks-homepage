@@ -123,7 +123,12 @@ function getWeaponIcon(weaponType) {
 function buildPoolItems(weapons, shells, filter, categoryFilter) {
   let items = [];
   if (filter === 'shells') {
-    items = (shells || []).map(s => ({
+    // Rook is EXCLUDED from the shell tier pool entirely (owner-verified
+    // 2026-07-20): it cannot be selected in ranked of any kind, so it does not
+    // belong on a tier ladder. Excluded rather than shown untiered -- a blank
+    // tier cell still asserts "this belongs on the ladder, we just have not
+    // graded it", which is the wrong claim.
+    items = (shells || []).filter(s => s.name !== 'Rook').map(s => ({
       id: 'shell-' + s.name,
       name: s.name,
       kind: 'shell',

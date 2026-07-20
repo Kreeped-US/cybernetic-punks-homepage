@@ -46,7 +46,7 @@ const CATEGORIES = {
     ],
     faqs: [
       { q: 'What is the best shell in Marathon?', a: 'The "best" shell depends on playstyle. Vandal and Thief dominate solo ranked with their speed and extraction tools. Triage and Recon excel in squads through support and information. Assassin rewards mechanical players. Check our live tier list for current meta positioning.' },
-      { q: 'What is the easiest shell for beginners?', a: 'Triage and Rook are the most forgiving picks. Triage\'s self-repair and revive abilities help you survive mistakes. Rook\'s high shield pool gives you time to learn positioning. Both are excellent first shells before transitioning to more mechanically demanding picks.' },
+      { q: 'What is the easiest shell for beginners?', a: 'Triage and Rook are the most forgiving picks. Triage\'s self-repair and revive abilities help you survive mistakes. Rook\'s free loadout means nothing of yours is at risk, and its loot speed is by far the highest in the game - ideal for learning maps and farming gear. Rook cannot be selected in ranked. Both are excellent first shells before transitioning to more mechanically demanding picks.' },
       { q: 'How many shells are in Marathon?', a: 'Marathon has 7 Runner Shells: Assassin, Destroyer, Recon, Rook, Thief, Triage, and Vandal. Each has unique Prime and Tactical abilities, a passive trait, and distinct stat profiles that affect playstyle.' },
     ],
   },

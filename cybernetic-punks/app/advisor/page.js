@@ -80,7 +80,7 @@ const FALLBACK_SHELLS = [
   { name: 'Assassin',  role: 'Stealth Operator',    desc: 'Active Camo. Shadow Dive. Invisible kills.' },
   { name: 'Triage',    role: 'Combat Support',      desc: 'Healing. Team sustain. Frontline medic.' },
   { name: 'Thief',     role: 'Loot Specialist',     desc: 'X-Ray Visor. Pickpocket Drone. Extraction expert.' },
-  { name: 'Rook',      role: 'Anchor Tank',         desc: 'Fortify. Hold ground. Absorb punishment.' },
+  { name: 'Rook',      role: 'Scavenger',           desc: 'Free loadout. Farm gear, credits and map knowledge.' },
   { name: 'Sentinel',  role: 'Defensive Anchor',    desc: 'Shielding. Zone control. Protect the crew.' },
 ];
 

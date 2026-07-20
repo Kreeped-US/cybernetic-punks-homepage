@@ -244,7 +244,8 @@ export default function ShellsHubClient(props) {
               var meta = shell.meta;
               var tierStyle = meta && meta.tier ? TIER_COLORS[meta.tier] : null;
               var trend = meta && meta.trend ? TREND_DISPLAY[meta.trend] : null;
-              var isBanned = shell.name === 'Rook';
+              // See the Rook note at the top of this file.
+              var isRankedExcluded = shell.name === 'Rook';
               var imgSrc = shell.image_filename ? '/images/shells/' + shell.image_filename : null;
               var pickPct = (totalPicks && totalPicks >= 10 && shell.pickRate) ? Math.round((shell.pickRate / totalPicks) * 100) : null;
 
@@ -261,10 +262,10 @@ export default function ShellsHubClient(props) {
                     display: 'block', textDecoration: 'none',
                     background: '#1a1d24',
                     border: '1px solid #22252e',
-                    borderTop: '2px solid ' + (isBanned ? '#555' : color),
+                    borderTop: '2px solid ' + (isRankedExcluded ? '#555' : color),
                     borderRadius: '0 0 3px 3px',
                     overflow: 'hidden',
-                    opacity: isBanned ? 0.7 : 1,
+                    opacity: isRankedExcluded ? 0.7 : 1,
                     transition: 'background 0.1s, border-color 0.1s',
                   }}
                 >
@@ -275,7 +276,7 @@ export default function ShellsHubClient(props) {
                       <img
                         src={imgSrc}
                         alt={shell.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1, filter: isBanned ? 'grayscale(1) brightness(0.5)' : 'none' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1, filter: isRankedExcluded ? 'grayscale(1) brightness(0.5)' : 'none' }}
                       />
                     ) : (
                       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 64, color: color, opacity: 0.15 }}>{symbol}</div>
@@ -294,9 +295,9 @@ export default function ShellsHubClient(props) {
                       </div>
                     )}
 
-                    {isBanned && (
+                    {isRankedExcluded && (
                       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 2, background: 'rgba(255,34,34,0.15)', border: '1px solid rgba(255,34,34,0.35)', borderRadius: 2, padding: '3px 8px' }}>
-                        <span style={{ fontSize: 8, color: '#ff2222', letterSpacing: 1.5, fontWeight: 700 }}>RANKED BANNED</span>
+                        <span style={{ fontSize: 8, color: '#ff2222', letterSpacing: 1.5, fontWeight: 700 }}>NOT IN RANKED</span>
                       </div>
                     )}
 
@@ -309,7 +310,7 @@ export default function ShellsHubClient(props) {
 
                   <div style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: isBanned ? 'rgba(255,255,255,0.4)' : '#fff', letterSpacing: 1 }}>{shell.name.toUpperCase()}</span>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 900, color: isRankedExcluded ? 'rgba(255,255,255,0.4)' : '#fff', letterSpacing: 1 }}>{shell.name.toUpperCase()}</span>
                     </div>
 
                     <div style={{ fontSize: 9, color: color + 'aa', letterSpacing: 2, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', fontFamily: 'monospace' }}>
@@ -317,7 +318,7 @@ export default function ShellsHubClient(props) {
                     </div>
 
                     {shell.lore_tagline && (
-                      <div style={{ fontSize: 12, color: isBanned ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 10, fontStyle: 'italic' }}>
+                      <div style={{ fontSize: 12, color: isRankedExcluded ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 10, fontStyle: 'italic' }}>
                         "{shell.lore_tagline}"
                       </div>
                     )}
@@ -343,7 +344,7 @@ export default function ShellsHubClient(props) {
                           </span>
                         )}
                       </div>
-                      <span className="shell-view" style={{ fontSize: 9, color: isBanned ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, transition: 'color 0.1s' }}>
+                      <span className="shell-view" style={{ fontSize: 9, color: isRankedExcluded ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, transition: 'color 0.1s' }}>
                         VIEW →
                       </span>
                     </div>

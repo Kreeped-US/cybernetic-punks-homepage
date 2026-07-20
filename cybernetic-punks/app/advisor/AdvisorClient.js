@@ -20,7 +20,9 @@ const FALLBACK_SHELLS = [
   { name: 'Assassin',  color: '#cc44ff', symbol: '◈', role: 'Stealth Operator',    desc: 'Active Camo. Shadow Dive. Invisible kills.' },
   { name: 'Triage',    color: '#00ff88', symbol: '◎', role: 'Combat Support',      desc: 'Healing. Team sustain. Frontline medic.' },
   { name: 'Thief',     color: '#ffd700', symbol: '⬠', role: 'Loot Specialist',     desc: 'X-Ray Visor. Pickpocket Drone. Extraction expert.' },
-  { name: 'Rook',      color: '#888888', symbol: '▣', role: 'Anchor Tank',         desc: 'Fortify. Hold ground. Absorb punishment.' },
+  // Rook is a free-loadout SCAVENGER, not a tank: it cannot be selected in
+  // ranked at all (owner-verified 2026-07-20). Farm-focused, nothing at risk.
+  { name: 'Rook',      color: '#888888', symbol: '▣', role: 'Scavenger',           desc: 'Free loadout. Farm gear, credits and map knowledge.' },
   { name: 'Sentinel',  color: '#4d9fff', symbol: '⬣', role: 'Defensive Anchor',    desc: 'Shielding. Zone control. Protect the crew.' },
 ];
 

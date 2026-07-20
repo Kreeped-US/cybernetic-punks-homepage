@@ -13,6 +13,15 @@
 //   items - page-resolved feed rows for a 'live' game, each pre-shaped as
 //           { headline, slug, editor, when }. Ignored for pre-launch columns.
 //
+// KEY ROUTES (optional, 2026-07-20): game.keyRoutes renders a quiet row of this
+// game's reference hubs. Nav.js returns null on '/', so Marathon's /shells,
+// /matchups, /uniques, /factions and /ranked had ZERO inbound links from the apex
+// page. They belong HERE and not in the neutral chrome: app/page.js states that
+// game-specific content belongs inside a game's own segmented column.
+// Server-rendered, no client gating -- the whole lesson of the Nav.js fix was
+// that conditionally-rendered links are invisible to crawlers. Absent or empty
+// keyRoutes renders NOTHING (no container, no label), so DMZ is untouched.
+//
 // DESIGN: quiet by design (boldness lives in the tiles). The accent appears only
 // as a small marker by the header -- the column itself is neutral tokens. Every
 // headline is a real crawlable <a href> to the article. Also renders the per-game
@@ -79,6 +88,22 @@ export default function GamePulseColumn({ game, items }) {
           <span className="nr-col-prelaunch">{game.pulse.note}</span>
         )}
       </div>
+
+      {/* Key routes: this game's reference hubs. Deliberately subordinate -- a
+          plain wrapped row under the feed, quieter than .nr-row headlines. Guard
+          is a length check, so an absent or empty array renders nothing. */}
+      {Array.isArray(game.keyRoutes) && game.keyRoutes.length > 0 && (
+        <div className="nr-keys">
+          <span className="nr-keys-label">{game.label} reference</span>
+          <div className="nr-keys-row">
+            {game.keyRoutes.map(function(r) {
+              return (
+                <Link key={r.href} href={r.href} className="nr-key">{r.label}</Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Per-game creator-coverage slot, framed as an intentional "incoming"
           feature (not a TODO). The creator-spotlight element renders here in a

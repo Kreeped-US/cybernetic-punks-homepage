@@ -114,7 +114,7 @@ const BUILD_FAQS = [
   },
   {
     q: 'Which Marathon shell should I main?',
-    a: 'The right shell depends on your playstyle. For beginners, Triage and Rook are forgiving picks — Triage has self-repair and revive abilities, Rook has a high shield pool. For movement-based play, choose Vandal. For extraction-focused runs, choose Thief. The /shells page has dedicated guides for all seven shells with stats, abilities, builds, and matchup data.',
+    a: 'The right shell depends on your playstyle. For beginners, Triage is the forgiving pick — self-repair and revive abilities cover mistakes. Rook is a different thing entirely: a free-loadout scavenger for farming gear and map knowledge with nothing at risk, and it cannot be selected in ranked. For movement-based play, choose Vandal. For extraction-focused runs, choose Thief. The /shells page has dedicated guides for all seven shells with stats, abilities, builds, and matchup data.',
   },
   {
     q: 'What\'s the best weapon in Marathon?',
@@ -656,7 +656,10 @@ export default async function BuildsPage() {
               var shellStats = shellStatMap[shell.name] || {};
               var shellCores = (coresByShell[shell.name] || []).slice(0, 3);
               var hasStats = Object.keys(shellStats).length > 0;
-              var displayTier = metaTier ? metaTier.tier : shell.ranked_tier_solo;
+              // Rook has no ranked presence at all (owner-verified 2026-07-20), so it
+              // carries no tier. Explicit rather than relying on the null fallback:
+              // meta_tiers may still hold a stale inherited tier for it.
+              var displayTier = shell.name === 'Rook' ? null : (metaTier ? metaTier.tier : shell.ranked_tier_solo);
               var shellImg = shell.image_filename ? '/images/shells/' + shell.image_filename : null;
 
               var orderedStats = STAT_ORDER.filter(function(s) { return shellStats[s] != null; });
