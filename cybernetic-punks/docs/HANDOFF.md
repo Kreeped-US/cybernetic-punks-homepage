@@ -5,6 +5,76 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — availableOnMap FIXED: duplicated logic was the root cause, not the display-name bug
+
+**`game_modes` rendered ZERO rows on all 5 map pages; `game_events` rendered on only 2 of 5.**
+Modes now 0 -> 9 rendered rows across the five pages, events 3 -> 7.
+
+### ROOT CAUSE: the predicate was written correctly ONCE, then copied and the copy rotted
+`lib/editorCore.js:893` had the **correct** implementation all along -- slug-based, `'all'`
+sentinel handled. `app/maps/[slug]/page.js` carried a **second, divergent copy** that compared
+`available_on` against **`gameMap.name`, the DISPLAY NAME**, and had **no `'all'` branch**.
+
+The data was never wrong. The contract is documented in the admin form itself
+(`app/admin/page.js`, placeholder **`map slug(s) or "all"`**) and every row obeys it.
+
+Two independent defects in the copy, either alone sufficient:
+1. **`'all'` never handled.** Substring-matching a map name against the literal string `"all"`
+   cannot succeed -- this alone hid **Standard Extraction** (the one verified core mode) on
+   **every** map.
+2. **Slug vs display name.** `toLowerCase()` handles case but not the hyphen:
+   `"night-marsh".indexOf("night marsh") === -1`.
+
+### WHY IT SURVIVED TWO AUDITS: it worked BY ACCIDENT on 2 of 5 maps
+**Outpost** and **Perimeter** are single-word maps whose **slug equals the lowercased name**, so
+their events matched and the section looked functional. The multi-word maps (`dire-marsh` vs
+"Dire Marsh", `night-marsh`, `cryo-archive`) silently returned `[]`, and the render was gated on
+`length > 0` -- **so a broken filter looked identical to a section that was never built.**
+Partial success is what made this invisible.
+
+### THE FIX
+**`lib/availability.js` (new)** -- single source of truth, exporting `availableOnMap(availableOn,
+mapSlug)`. **Both** `editorCore` and the map page import it; **neither keeps a local copy.**
+Call sites now pass `slug`, not `gameMap.name`.
+
+**Extraction was the point.** Fixing only the display-name comparison would have left two copies
+of the same rule, which is the thing that failed.
+
+### HONEST EMPTY STATE -- replaces the `length > 0` gate
+EVENTS and GAME MODES now **always render**: rows, or an explicit *"No verified game modes are
+recorded for <Map> yet."* (Rook / DmzEmptyState pattern). It hides nothing today post-fix --
+**the point is that it would hide the next one.** Silent omission is what let this survive.
+
+### CONTRACT VIOLATION fixed in app/modes/vault-breaker/page.js
+`available_on` was **`'Cryo Archive'`** -- a display name -- inside a const commented *"shaped
+like a game_modes row so a future DB read drops straight in."* **It would not have.** The value
+fails the corrected slug match and would render on no map. Now `'cryo-archive'`, and the
+overclaiming comment carries a correction note. Not displayed anywhere, so no visible change --
+this was purely disarming a trap.
+
+### TWO THINGS FLAGGED, NOT FIXED
+1. **`game_events` has no `.order()` on the map page**, so event render order is **unspecified**.
+   Night Marsh came back as `Anomaly, Upper Complex Encounter` rather than the expected reverse
+   -- **same set, no missing rows**, but worth an `.order()` for deterministic output.
+2. **The substring-match assumption is documented in `lib/availability.js`**: a slug that is a
+   **substring of another slug** would false-match (`marsh` would match `dire-marsh`). **No
+   current pair does.** Splitting on commas was **rejected as brittle** against whitespace
+   variants in values like `'dire-marsh, night-marsh'`. If such a slug pair is ever added, the
+   file says to switch to exact list matching.
+
+### PROVENANCE GAP
+**`game_modes` has no `verified_source` column**, unlike `unique_weapons` / `weapon_stats`.
+Provenance is a **bare boolean** -- we know a row is claimed verified, not what verified it.
+
+### HONEST CEILING -- what this fix does NOT do
+**4 of 5 maps gain exactly ONE mode** (Standard Extraction); only night-marsh gains two. The
+events gain is larger. **This will not move pages sitting at position 12.6 / 19.4 on its own.**
+The rows with real substance are **`Ranked`** and **`Cryo Archive Runs`**, both **`verified=false`
+pending in-game confirmation (Justin's task)** -- verifying them would roughly double what these
+pages show and is separable from this code fix.
+
+---
+
 ## 2026-07-20 — BR33 VICTORY LAP consolidated: 9 cut, 5 kept, uniques now linked from articles
 
 **Corpus 1086 -> 1077.** 7 accuracy cuts + 2 duplication cuts. The only cannibalized unique on

@@ -22,6 +22,13 @@
 // table is game-scoped and /weapons, /shells, /uniques still lack that filter
 // (see docs/HANDOFF.md 2026-07-16, multi-game reference-routing).
 //
+// CONTRACT NOTE (2026-07-20): `available_on` was 'Cryo Archive' -- a DISPLAY
+// NAME, which violates the column's contract (`map slug(s) or "all"`). The
+// "drops straight in" claim above was therefore FALSE for this field: the value
+// would have failed lib/availability.js's slug match and rendered on no map at
+// all. Now 'cryo-archive'. If you add fields here, write them as the DB expects
+// them, not as they read on screen.
+//
 // THE UESC COMMANDER: Tier 1 Vault Data has TWO sources, and the second - killing
 // a UESC Commander, credited post-run whether or not you exfil - is omitted by
 // ALL 29 existing articles. It is called out prominently below. It is the one
@@ -67,7 +74,7 @@ const PAGE_URL = 'https://cyberneticpunks.com/modes/vault-breaker';
 const VAULT_BREAKER = {
   mode_name: 'Vault Breaker',
   mode_type: 'experimental',
-  available_on: 'Cryo Archive',
+  available_on: 'cryo-archive',
   is_limited_time: true,
   access_tier: 'free',
   verified: true,

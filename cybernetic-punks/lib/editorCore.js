@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL, COMMENT_MODEL } from './models';
 import { verificationTag, VERIFICATION_NOTE } from './verification';
+import { availableOnMap } from './availability';
 import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
 
@@ -889,8 +890,11 @@ async function fetchGameContext(config = getGameConfig()) {
       var worldLines = gameMapsRes.data.map(function(m) {
         var zones = (gameZonesRes.data || []).filter(function(z) { return z.map_slug === m.slug; });
         var bosses = (gameBossesRes.data || []).filter(function(b) { return b.map_slug === m.slug; });
+        // Shared predicate (lib/availability.js). This inline version was the
+        // CORRECT original; the map page's copy of it rotted. Extracted so the
+        // two cannot drift again -- see that file's header.
         var events = (gameEventsRes.data || []).filter(function(e) {
-          return e.available_on && (e.available_on === 'all' || e.available_on.indexOf(m.slug) !== -1);
+          return availableOnMap(e.available_on, m.slug);
         });
         var lines = [];
         lines.push('  ' + m.name + (m.difficulty ? ' [' + m.difficulty + ']' : '') + (m.variant_of ? ' (variant of ' + m.variant_of + ')' : ''));

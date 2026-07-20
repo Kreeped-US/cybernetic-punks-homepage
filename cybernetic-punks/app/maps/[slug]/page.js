@@ -26,6 +26,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { availableOnMap } from '@/lib/availability';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,12 +66,6 @@ function keyTierColor(tier) {
     case 'enhanced':   return '#00ff88';
     default:           return 'rgba(255,255,255,0.5)';
   }
-}
-
-// Match an event/mode to this map via its free-text available_on field.
-function availableOnMap(availableOn, mapName) {
-  if (!availableOn || !mapName) return false;
-  return availableOn.toLowerCase().indexOf(mapName.toLowerCase()) !== -1;
 }
 
 function getServiceClient() {
@@ -145,8 +140,11 @@ async function fetchSeoData(slug) {
   var allZones = zonesRes.data || [];
   var ownZones = allZones.filter(function(z) { return z.map_slug === slug; });
   var inheritedZones = allZones.filter(function(z) { return z.map_slug !== slug; });
-  var events = (eventsRes.data || []).filter(function(e) { return availableOnMap(e.available_on, gameMap.name); });
-  var modes  = (modesRes.data || []).filter(function(m) { return availableOnMap(m.available_on, gameMap.name); });
+  // SLUG, not gameMap.name. available_on holds slugs or the 'all' sentinel; the
+  // old local copy passed the display name, so "dire-marsh" never matched
+  // "Dire Marsh" and 'all' never matched anything. See lib/availability.js.
+  var events = (eventsRes.data || []).filter(function(e) { return availableOnMap(e.available_on, slug); });
+  var modes  = (modesRes.data || []).filter(function(m) { return availableOnMap(m.available_on, slug); });
 
   return {
     gameMap: gameMap,
@@ -451,7 +449,14 @@ export default async function MapPage({ params, searchParams }) {
         </section>
       )}
 
-      {/* EVENTS */}
+      {/* EVENTS -- section ALWAYS renders; empty is stated, not hidden. */}
+      {events.length === 0 && (
+        <SectionEmpty
+          label="EVENTS"
+          color={GHOST}
+          text={'No verified world events are recorded for ' + displayName + ' yet.'}
+        />
+      )}
       {events.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
           <SectionHeader label="EVENTS" color={GHOST} />
@@ -469,7 +474,17 @@ export default async function MapPage({ params, searchParams }) {
         </section>
       )}
 
-      {/* MODES */}
+      {/* MODES -- section ALWAYS renders; empty is stated, not hidden.
+          A `length > 0` gate is what let the available_on bug survive two
+          audits: the filter matched nothing, the section vanished, and a
+          missing section looks identical to a section that was never built. */}
+      {modes.length === 0 && (
+        <SectionEmpty
+          label="GAME MODES"
+          color="#ff8800"
+          text={'No verified game modes are recorded for ' + displayName + ' yet.'}
+        />
+      )}
       {modes.length > 0 && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
           <SectionHeader label="GAME MODES" color="#ff8800" />
@@ -658,6 +673,28 @@ function SectionHeader({ label, color }) {
       <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: color, letterSpacing: 2, margin: 0, textTransform: 'uppercase' }}>{label}</h2>
       <div style={{ flex: 1, height: 1, background: BORDER_SUBTLE }} />
     </div>
+  );
+}
+
+// Honest empty state for a world-data section (Rook / DmzEmptyState pattern):
+// name the section, say plainly that we have nothing verified for it, and do not
+// pretend the section does not exist. Silent omission is what let the
+// available_on bug hide -- see lib/availability.js.
+function SectionEmpty({ label, color, text }) {
+  return (
+    <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
+      <SectionHeader label={label} color={color} />
+      <div style={{
+        background: CARD_BG,
+        border: '1px solid ' + BORDER,
+        borderRadius: 2,
+        padding: '18px 16px',
+      }}>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, margin: 0 }}>
+          {text}
+        </p>
+      </div>
+    </section>
   );
 }
 
