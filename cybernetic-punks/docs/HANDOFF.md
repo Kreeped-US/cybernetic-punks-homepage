@@ -5,6 +5,17 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — meta_tiers.tier NOT NULL dropped, Rook.tier nulled
+
+`meta_tiers.tier` NOT NULL constraint dropped (Justin ran the DDL) and **`meta_tiers.Rook.tier`
+nulled** in one guarded write (rows-affected=1): **the data now matches what the code was
+masking**, so the code-level suppressions are belt-and-braces rather than load-bearing and are
+deliberately KEPT -- a future consumer would otherwise re-render it. Verified: 11 pages, zero
+Rook tier displays, no 500s on the null tier. **The other seven shells' tier values are genuine
+NEXUS editorial judgment and are untouched.**
+
+---
+
 ## 2026-07-20 — meta_tiers.Rook was LIVE-WRONG on three pages, including FAQPage schema
 
 ### Live-wrong, not dormant
