@@ -375,6 +375,30 @@ export default async function DmzLanding() {
         <FactionsCard />
       </div>
 
+      {/* REFERENCE -- the launch-day entity verticals (keys / missions / items).
+          Linked from the /dmz hub so they are never orphaned. Hubs are noindex
+          until they have rows; these links exist now so the crawl graph and the
+          internal-linking are in place before launch. "dmz missions" is the one
+          winnable hub term in the research (KD 30, 2,900/mo launch peak). */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Reference</h2>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+        {[
+          { href: '/dmz/missions', label: 'Missions', desc: 'Objectives, factions and rewards.' },
+          { href: '/dmz/keys',     label: 'Keys',     desc: 'Locations and what they unlock.' },
+          { href: '/dmz/items',    label: 'Items',    desc: 'Values, categories and uses.' },
+        ].map(function (c) {
+          return (
+            <Link key={c.href} href={c.href} style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '18px 20px', textDecoration: 'none' }}>
+              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 6 }}>{c.label} &rarr;</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{c.desc}</div>
+            </Link>
+          );
+        })}
+      </div>
+
       {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far). The FAQPage
           schema directly below is built from the SAME strings this block renders, so
           visible text === schema (no drift). Launch date is now sourced (see HANDOFF). */}

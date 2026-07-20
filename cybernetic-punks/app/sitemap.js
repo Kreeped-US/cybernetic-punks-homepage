@@ -34,6 +34,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
+import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug } from '@/lib/matchups';
 import { hasShellGuide } from '@/lib/shellGuides';
@@ -130,6 +131,7 @@ export default async function sitemap() {
   let matchupPages = [];
   let dynamicPages = [];
   let dmzArticlePages = [];
+  let dmzEntityPages = [];
   let activeGuideCategories = [];
 
   console.log('[sitemap] starting generation, env vars present:',
@@ -437,6 +439,37 @@ export default async function sitemap() {
       } catch (err) {
         console.error('[sitemap] dmz feed fetch threw:', err);
       }
+
+      // DMZ ENTITY VERTICALS (keys / missions / items). Shared list from
+      // lib/dmz/entities.js so the sitemap cannot advertise a vertical route that
+      // does not exist (the lib/shellGuides.js precedent). A HUB is emitted only
+      // when it has >=1 row -- matching its row-count noindex gate and the
+      // sitemap's own doctrine (exclude empty/thin pages; see the file header).
+      // DETAIL URLs come straight from the tables. Empty tables emit nothing,
+      // which is correct pre-launch.
+      try {
+        for (const entityKey of DMZ_ENTITY_KEYS) {
+          const entity = DMZ_ENTITIES[entityKey];
+          const rows = await fetchDmzSlugs(entity);
+          if (!rows || rows.length === 0) continue; // no rows -> no hub, no details
+          // HUB: emitted when >=1 row exists (matches its row-count index gate).
+          dmzEntityPages.push({ url: baseUrl + entity.routeBase, lastModified: new Date(), changeFrequency: 'daily', priority: 0.85 });
+          // DETAIL: VERIFIED rows only. An unverified row's page is noindex, and a
+          // sitemap must not advertise a noindex URL (the same reason empty hubs and
+          // empty guide categories are excluded -- see the file header).
+          rows.filter((r) => r.verified === true).forEach((r) => {
+            dmzEntityPages.push({
+              url: baseUrl + entity.routeBase + '/' + r.slug,
+              lastModified: r.updated_at ? new Date(r.updated_at) : new Date(),
+              changeFrequency: 'weekly',
+              priority: 0.7,
+            });
+          });
+        }
+        console.log('[sitemap] dmz entity pages:', dmzEntityPages.length);
+      } catch (err) {
+        console.error('[sitemap] dmz entity fetch threw:', err);
+      }
     }
   } catch (err) {
     console.error('[sitemap] Supabase init failed at build time, using static fallback:', err);
@@ -469,6 +502,7 @@ export default async function sitemap() {
           priority: 0.8,
         })),
         ...dmzArticlePages,
+        ...dmzEntityPages,
       ]
     : [];
 
