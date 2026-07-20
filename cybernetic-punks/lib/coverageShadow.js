@@ -33,6 +33,106 @@
 // request context; it only needs a supabase client the caller already has.
 
 import { loadVocabulary, deriveTuple, isCovered } from './coverage.js';
+import { topicTokens, buildIdfMap } from './topicTokens.js';
+
+// ── CROSS-EDITOR RARE-TOKEN DUPLICATE CHECK ──────────────────────────────────
+//
+// THE GAP THIS CLOSES: the coverage registry is entity-based, so a same-event
+// duplicate with no vocabulary entity is invisible to it. On 2026-07-19 NEXUS and
+// CIPHER both covered Joe Ziegler's exit; both classified UNCLASSIFIED (a person's
+// name is not in the entity vocabulary) and their Jaccard was ~0.25, far under the
+// 0.7 evergreen threshold. 46% of content is UNCLASSIFIED, so news/event
+// duplication was structurally invisible to Gate 2.
+//
+// THE SIGNAL: a RARE token shared by two DIFFERENT editors inside a short window
+// is a near-certain same-event duplicate, however differently the rest reads.
+// "ziegler" appears in 4 of 1564 headlines (idf 5.75); "marathon" appears in 561
+// (idf 1.33) and carries no signal. This needs NO vocabulary maintenance -- it
+// works on any proper noun: dev names, tournaments, outages, weapon codenames.
+//
+// CALIBRATION (backtest over 60 days / 515 articles, 2026-07-20):
+//   48h + idf>=5.0 + 1 shared token  -> 55 fires, ~60% false positive
+//   48h + idf>=5.0 + 2 shared tokens -> 14 fires, ~20% false positive
+// We LOG at 1 but record dup_shared_count, so Unit 5 can pick the enforcement
+// threshold from logged production data instead of a one-time read. The false
+// positives at 1 token are ordinary English words that happen to be rare in this
+// corpus ("right", "reality", "anchor") -- df alone cannot tell a proper noun from
+// a common word, which is exactly why the 2-token rule works so much better.
+//
+// PATCH DAY IS NOT THE PROBLEM (measured, contrary to expectation): patch-day
+// multi-editor coverage was only ~9% of fires, and patch VERSION numbers cannot
+// fire at all -- topicTokens drops sub-3-char tokens, so "1.1.0.3" contributes
+// nothing. No patch-token exclusion is needed.
+var DUP_WINDOW_HOURS = 48;   // ~2 cron cycles; catches next-day follow-ups
+var DUP_MIN_IDF = 5.0;       // df<=9 of ~1564 headlines (~0.6%)
+var DUP_MIN_SHARED = 1;      // LOG threshold. Enforcement threshold is Unit 5's call.
+
+// Per-invocation IDF corpus memo, same pattern as the vocabulary cache: the
+// corpus is read once per cron run, not once per article.
+var _idfCache = {};
+async function getIdf(supabase, gameSlug) {
+  if (_idfCache[gameSlug]) return _idfCache[gameSlug];
+  var heads = [], from = 0;
+  for (;;) {
+    var r = await supabase
+      .from('feed_items')
+      .select('headline')
+      .eq('game_slug', gameSlug)
+      .eq('is_published', true)
+      .range(from, from + 999);
+    if (r.error) throw new Error('idf corpus read: ' + r.error.message);
+    heads = heads.concat((r.data || []).map(function (x) { return x.headline || ''; }));
+    if (!r.data || r.data.length < 1000) break;
+    from += 1000;
+  }
+  var m = buildIdfMap(heads);
+  _idfCache[gameSlug] = m;
+  return m;
+}
+
+// Returns the BEST cross-editor match in the window, or null.
+//
+// MULTIPLE MATCHES -> BEST ONE. Ranked by shared-rare-token COUNT, tie-broken by
+// summed IDF (rarer shared tokens = stronger signal), then by recency. Rationale:
+// the singular dup_matched_id column answers "what would enforcement have fired
+// on", and that is the strongest match -- a weaker second match cannot change the
+// decision. dup_match_count records how many prior articles matched, so a
+// multi-editor pile-up (e.g. 4 editors on one patch item) is still visible in the
+// data rather than silently collapsed to one pair.
+async function findCrossEditorDuplicate(supabase, gameSlug, editorName, headline) {
+  var m = await getIdf(supabase, gameSlug);
+  var candTokens = topicTokens(headline);
+  if (!candTokens.length) return null;
+  var sinceIso = new Date(Date.now() - DUP_WINDOW_HOURS * 3600 * 1000).toISOString();
+  var r = await supabase
+    .from('feed_items')
+    .select('id, headline, editor, created_at')
+    .eq('game_slug', gameSlug)
+    .eq('is_published', true)
+    .gte('created_at', sinceIso)
+    .neq('editor', editorName);      // CROSS-EDITOR ONLY
+  if (r.error) throw new Error('dup window read: ' + r.error.message);
+  var best = null, matchCount = 0;
+  (r.data || []).forEach(function (other) {
+    var otherSet = {};
+    topicTokens(other.headline).forEach(function (t) { otherSet[t] = 1; });
+    var rare = candTokens.filter(function (t) {
+      return otherSet[t] && (m[t] || m._max) >= DUP_MIN_IDF;
+    });
+    if (rare.length < DUP_MIN_SHARED) return;
+    matchCount++;
+    var weight = rare.reduce(function (s, t) { return s + (m[t] || m._max); }, 0);
+    if (!best || rare.length > best.rare.length ||
+        (rare.length === best.rare.length && weight > best.weight) ||
+        (rare.length === best.rare.length && weight === best.weight && other.created_at > best.created_at)) {
+      best = { rare: rare, weight: weight, id: other.id, editor: other.editor,
+               headline: other.headline, created_at: other.created_at };
+    }
+  });
+  if (!best) return null;
+  best.matchCount = matchCount;
+  return best;
+}
 
 // Per-process vocabulary memo. In the cron this spans one invocation; in a
 // standalone script it spans the run. Keyed by game_slug so a multi-game process
@@ -95,6 +195,17 @@ export async function logCoverageShadow(supabase, opts) {
       }
     }
     var verdict = isCovered(tuple, registryRows);
+
+    // CROSS-EDITOR DUPLICATE CHECK -- independently fail-open. A failure here
+    // must not lose the coverage record, so it is caught separately and the row
+    // still writes with null dup_* fields.
+    var dup = null;
+    try {
+      dup = await findCrossEditorDuplicate(supabase, gameSlug, o.editor || '', headline);
+    } catch (dupErr) {
+      console.log('[COVERAGE:SHADOW] dup-check error (non-fatal, coverage record still written): ' + dupErr.message);
+    }
+
     var rec = {
       source: source,
       editor: o.editor || null,
@@ -113,7 +224,16 @@ export async function logCoverageShadow(supabase, opts) {
       // is what records that case. (If we later want the matched article's URL
       // persisted, that is a new column, not this one.)
       canonical_route: verdict.kind === 'canonical' ? (verdict.ref || null) : null,
+      // would_block stays a COVERAGE verdict only. A rare-token duplicate is a
+      // separate signal with its own (undecided) enforcement threshold -- folding
+      // it in here would silently change what would_block means for Unit 5's
+      // analysis of every row already logged.
       would_block: !!verdict.covered,
+      dup_rare_tokens: dup ? dup.rare : null,
+      dup_shared_count: dup ? dup.rare.length : 0,
+      dup_matched_id: dup ? dup.id : null,
+      dup_matched_editor: dup ? dup.editor : null,
+      dup_match_count: dup ? dup.matchCount : 0,
     };
     console.log('[COVERAGE:SHADOW] ' + JSON.stringify(rec));
     var ins = await supabase.from('coverage_shadow').insert(rec);

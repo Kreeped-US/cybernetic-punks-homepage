@@ -5,6 +5,79 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — CROSS-EDITOR RARE-TOKEN duplicate detection (shadow only)
+
+### The blind spot it closes
+**46% of content is UNCLASSIFIED** (no vocabulary entity in the headline), so the coverage
+registry **could not see** the 2026-07-19 NEXUS/CIPHER duplicate on Joe Ziegler's exit. Both
+logged UNCLASSIFIED; **Jaccard was ~0.25, far under the 0.7** evergreen threshold. News/event
+duplication was structurally invisible to Gate 2.
+
+**The signal:** a RARE token shared by two DIFFERENT editors in a short window is a
+near-certain same-event duplicate. `ziegler` df=4/1564 (idf 5.75); `marathon` df=561
+(idf 1.33). **Needs no vocabulary maintenance** -- works on any proper noun (dev names,
+tournaments, outages, weapon codenames).
+
+### Config
+**48h window, cross-editor only, idf >= 5.0, LOGS AT min-1** with `dup_shared_count` recorded
+so **Unit 5 picks the enforcement threshold from production data**, not a one-time read.
+Backtest (60d / 515 articles): **min-1 = 55 fires (~60% FP)**, **min-2 = 14 fires (~20% FP)**.
+**min-2 is the likely enforcement threshold.**
+
+### *** PATCH DAY IS NOT THE FALSE-POSITIVE DRIVER *** (contradicted the expectation)
+Only **~9% of fires** were patch-day multi-editor coverage. And **patch VERSION tokens cannot
+fire at all** -- `topicTokens` drops sub-3-char tokens, so `"1.1.0.3" -> nothing`
+(verified: `"Update 1.1.0.3"` -> `[update]`). **No exclusion and no patch-driven exemption is
+needed.** Measuring resolved an ambiguity that reasoning would not have.
+
+### THE ACTUAL FP DRIVER + the limit of the technique
+Ordinary English words that happen to be rare in THIS corpus: `right`(9), `reality`(8),
+`exposed`(7), `wall`(5), `anchor`(8), `boss`(9). e.g. *"Best Ranked Loadout Right Now"* vs
+*"Build the Right Three-Runner Team"* fired 4 times.
+**LIMIT: df alone cannot separate a proper noun from a common word.** `ziegler`(4) and
+`right`(9) are both "rare"; only one is an entity. This is why the 2-token rule works so much
+better -- a coincidental pair shares ONE odd word, a genuine same-event pair shares the entity
+AND its context (`joe`+`ziegler`, `d54`+`sidearm`, `2442`+`misriah`, `disaster`+`meltdown`).
+
+### Shared tokeniser
+`topicTokens` / `buildIdfMap` **extracted to `lib/topicTokens.js`** so
+`findDuplicateEvergreen` and the dup checker use ONE implementation and cannot drift.
+**Tokeniser equivalence verified IDENTICAL on 5 test headlines** -- the 0.7 Jaccard threshold
+stays calibrated. **IDF is corpus-size sensitive**, so the 5.0 cutoff is only meaningful near
+N=1564 (noted in-module).
+
+### Design calls
+- **`would_block` still reflects COVERAGE only.** The dup signal lives in its own columns so
+  **previously-logged rows stay comparable** and Unit 5's analysis is not retroactively
+  changed.
+- **Multiple matches -> BEST match** (shared-count > summed IDF > recency) in
+  `dup_matched_id`; **`dup_match_count`** records how many prior articles matched so a
+  multi-editor pile-up (the C.A.R.R.I. cluster was 4 editors on one item) stays visible.
+- **Wired INSIDE `logCoverageShadow`** -> all four write paths inherit it with **zero call-site
+  changes**; one row per article carries both signals.
+- **Independently fail-open**: a dup-check failure still writes the coverage record with null
+  `dup_*` fields rather than losing the row.
+
+### SHADOW MODE IS LIVE (first production data)
+The **2026-07-19 cron wrote its first 3 `coverage_shadow` rows** -- and they contain the exact
+miss this build fixes:
+```
+19:01:16 CIPHER dup=0  Marathon Ranked Outlook: What Joe Ziegler's Exit Means
+19:02:07 NEXUS  dup=0  Marathon Director Joe Ziegler Out: What It Means for the Meta
+```
+Both `dup=0` because the check did not exist yet. Also the **first production
+`would_block=true`** (DEXTER, Assassin build -> canonical collision).
+**Note the ordering:** editors publish ~20-50s apart within one run, so the LATER editor sees
+the earlier article. The check catches the **second** article of a pair -- inherent and
+correct, you cannot detect a duplicate of something not yet written.
+
+### Verified end-to-end
+Row read back FROM `coverage_shadow` (not the insert call): `dup_rare_tokens=["joe","ziegler"]`,
+`dup_shared_count=2`, `dup_matched_editor="NEXUS"`, `dup_matched_id` resolves to the real NEXUS
+article, `dup_match_count=1`. All assertions PASS. Test row deleted.
+
+---
+
 ## 2026-07-18 — shell/*/build PRUNED: 266 -> 67 keepers, 199 cut (corpus 1282 -> 1083)
 
 ### THE DECISION: prune, do NOT build a /builds/[shell] canonical

@@ -7,6 +7,7 @@ import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
+import { topicTokens, buildIdfMap } from '@/lib/topicTokens';
 
 export const dynamic = 'force-dynamic';
 
@@ -207,51 +208,12 @@ var DUP_JACCARD_THRESHOLD = 0.7;
 var DUP_MIN_SHARED_TOKENS = 3;
 var DUP_HISTORY_LIMIT = 500;
 
-// Genuine function words only -- kept minimal so content words (best, new, start)
-// still contribute to overlap naturally and the threshold stays predictable.
-var TOPIC_STOPWORDS = {
-  the: 1, and: 1, for: 1, are: 1, you: 1, your: 1, with: 1, this: 1, that: 1,
-  from: 1, how: 1, what: 1, why: 1, when: 1, which: 1, who: 1, not: 1, but: 1,
-  all: 1, any: 1, its: 1, our: 1, has: 1, had: 1, was: 1, were: 1, they: 1,
-  them: 1, their: 1, into: 1, out: 1, about: 1,
-};
-
-// Significant-token SET of a headline: lowercase, split on non-alphanumerics,
-// drop short tokens + stopwords, and lightly singularize (mods->mod, builds->
-// build, runners->runner) so phrasing variants collapse together. Double-s words
-// (class, boss) keep their tail. Consistency matters more than linguistic
-// correctness -- both sides run the identical transform.
-function topicTokens(headline) {
-  var raw = (headline || '').toLowerCase().split(/[^a-z0-9]+/);
-  var set = {};
-  for (var i = 0; i < raw.length; i++) {
-    var w = raw[i];
-    if (w.length < 3) continue;
-    if (TOPIC_STOPWORDS[w]) continue;
-    if (w.length > 3 && w.charAt(w.length - 1) === 's' && w.charAt(w.length - 2) !== 's') {
-      w = w.slice(0, -1);
-    }
-    set[w] = 1;
-  }
-  return Object.keys(set);
-}
-
-// IDF map over a corpus of headlines: token -> log(1 + N/(1+df)). df counts
-// HEADLINES containing the token (set semantics), not raw occurrences. A token
-// the corpus has never seen gets the maximum weight (df=0) -- a novel subject is
-// maximally distinguishing.
-function buildIdfMap(headlines) {
-  var df = {};
-  for (var i = 0; i < headlines.length; i++) {
-    var toks = topicTokens(headlines[i]);
-    for (var j = 0; j < toks.length; j++) df[toks[j]] = (df[toks[j]] || 0) + 1;
-  }
-  var n = headlines.length || 1;
-  var idf = {};
-  for (var t in df) idf[t] = Math.log(1 + n / (1 + df[t]));
-  idf._max = Math.log(1 + n); // weight for unseen tokens
-  return idf;
-}
+// topicTokens + buildIdfMap now live in lib/topicTokens.js (imported at the top
+// of this file). They were EXTRACTED so this guard and the cross-editor
+// rare-token duplicate check in lib/coverageShadow.js share ONE tokeniser --
+// two copies would drift and their scores would stop being comparable.
+// Behaviour is unchanged; the 0.7 threshold below is still calibrated against
+// the same transform.
 
 // Subject-weighted Jaccard: idf-sum of shared tokens / idf-sum of the union.
 // `shared` stays the RAW shared-token count (the DUP_MIN_SHARED_TOKENS floor is
