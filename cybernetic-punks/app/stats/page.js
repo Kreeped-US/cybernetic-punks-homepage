@@ -21,15 +21,53 @@
 //   renamed; old label was stale).
 // - WebApplication / BreadcrumbList / FAQPage schemas preserved as-is.
 
+// ─────────────────────────────────────────────────────────────
+// WHY THIS PAGE IS WRITTEN IN THE FUTURE TENSE. DO NOT "FIX" IT.
+//
+// There is no Marathon stats tracker. Bungie has not shipped a public
+// Marathon API, so player search, stat profiles and weapon analytics do not
+// exist here -- not degraded, not partial, absent. Every capability sentence
+// on this page is therefore "will" and not "does", on purpose.
+//
+// This reads as weaker marketing copy. It is not a mistake, and it is not a
+// draft awaiting polish. Before 2026-07-20 the title, meta description and
+// three FAQ answers described the tracker in confident present tense ("Track
+// your Marathon stats", "Look up any player on Steam, PlayStation, or Xbox",
+// "Our infrastructure is built and ready to connect", "Numbers refresh in
+// real time after each match"). Those claims were also emitted as FAQPage
+// structured data, which is Google being told, in a machine-readable format,
+// that we operate a product we do not operate.
+//
+// Rules for anyone editing this file:
+//   1. No sentence may assert a lookup, stat, refresh or search capability in
+//      the present tense until the API is live AND the feature is wired.
+//   2. The FAQPage schema is generated from the SAME `FAQS` array the visible
+//      section renders. Never fork them; a claim removed from the page must
+//      be removed from the structured data by construction.
+//   3. Keep targeting "Marathon Stats Tracker". The search demand is real and
+//      this page will eventually serve it. Ranking for a query is fine.
+//      Claiming a shipped feature to win it is not.
+//   4. What we actually have today is real data, and it is linked: live Steam
+//      concurrent players on /player-count, current tiers on /meta. Point
+//      people there instead of approximating what is missing.
+//   5. The WebApplication JSON-LD node was REMOVED, not reworded. It asserted
+//      an application exists at this URL; none does. Re-add it when the
+//      tracker actually works. (The June 2 2026 changelog line above says all
+//      three schemas were "preserved as-is" -- that was true then, and is
+//      superseded here.)
+//
+// Same discipline as the DMZ no-sequel-claim note in app/dmz/page.js.
+// ─────────────────────────────────────────────────────────────
+
 import Link from 'next/link';
 
 export var metadata = {
-  title: 'Marathon Stats Tracker — Player Stats, Extraction Rates & Performance',
-  description: 'Track your Marathon stats — extraction rates, K/D ratio, loot value, weapon kills, Runner Shell performance, and ranked progression. Look up any player on Steam, PlayStation, or Xbox. Powered by CyberneticPunks.',
+  title: 'Marathon Stats Tracker — What It Will Track When Bungie Ships the API',
+  description: 'Marathon has no public stats API yet, so player lookup is not live. Here is what the CyberneticPunks Marathon stats tracker will cover when Bungie ships one: extraction rates, K/D, loot value, weapon kills, and shell performance. Live now: Steam player count and current tiers.',
   keywords: 'Marathon stats, Marathon stats tracker, Marathon player stats, Marathon player lookup, Marathon K/D, Marathon extraction rate, Marathon weapon stats, Marathon ranked stats, Marathon leaderboard, Marathon performance tracker, Marathon Steam stats, Marathon PlayStation stats, Marathon Xbox stats, Marathon Bungie name lookup, Marathon profile stats, Marathon weapon kills',
   openGraph: {
     title: 'Marathon Stats Tracker | CyberneticPunks',
-    description: 'Look up any Marathon player. Track extraction rates, weapon performance, Runner Shell stats, and ranked progression.',
+    description: 'Player lookup is not live: Bungie has not opened a Marathon stats API. Here is what the tracker will cover when they do.',
     url: 'https://cyberneticpunks.com/stats',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -38,7 +76,7 @@ export var metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Stats Tracker | CyberneticPunks',
-    description: 'Look up any Marathon player. Extraction rates, weapon kills, shell performance, ranked stats.',
+    description: 'Marathon player lookup is not live yet. What the tracker will cover once Bungie ships a public stats API.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/stats' },
 };
@@ -106,11 +144,11 @@ var PLATFORMS = [
 var FAQS = [
   {
     q: 'When will Marathon stats tracking go live?',
-    a: "The moment Bungie releases the official Marathon API. Our infrastructure is built and ready to connect — player search, stat profiles, leaderboards, and weapon analytics will all activate simultaneously when the API endpoints become public.",
+    a: "There is no date, because it depends entirely on Bungie. Marathon has no public stats API, and nothing on this page can work without one. Player search, stat profiles, leaderboards and weapon analytics are planned, not built. If the endpoints become public, we will wire them and say so.",
   },
   {
     q: 'What platforms are supported?',
-    a: "Marathon supports full cross-play across Steam, PlayStation 5, and Xbox Series X|S. The CyberneticPunks stats tracker will search across all three platforms using Bungie Name lookup, identical to how Destiny 2 player tracking works today.",
+    a: "Marathon supports full cross-play across Steam, PlayStation 5, and Xbox Series X|S. No platform is searchable here yet, because there is no API to search. The intent is Bungie Name lookup across all three, the way Destiny 2 player tracking works today.",
   },
   {
     q: 'Will my Marathon stats carry over between seasons?',
@@ -118,7 +156,7 @@ var FAQS = [
   },
   {
     q: 'How is CyberneticPunks different from other Marathon stat trackers?',
-    a: "Most trackers show you raw numbers. CyberneticPunks pairs your stats with live meta context — so when you look at your most-used weapon, you also see where it ranks in the current tier list; when you review a loadout, you see its build viability; and your ranked performance sits alongside competitive grading. The goal is to tell you what your numbers mean, not just display them.",
+    a: "Right now the honest answer is that nobody has Marathon player stats, us included, because Bungie has not opened an API. What we do publish today is meta context: current shell and weapon tiers on /meta, and live Steam concurrent players on /player-count. The plan when stats arrive is to pair them with that context, so a most-used weapon sits next to its tier placement rather than being a bare number.",
   },
   {
     q: 'Is CyberneticPunks affiliated with Bungie?',
@@ -126,7 +164,7 @@ var FAQS = [
   },
   {
     q: 'How accurate will the stats be?',
-    a: "All stats will be pulled directly from Bungie's official Marathon API once it ships, identical to how the Destiny 2 ecosystem works. Numbers refresh in real time after each match. There is no manual entry, screenshot parsing, or third-party estimation — only official Bungie data.",
+    a: "There are no stats here to be accurate or inaccurate yet. When there are, they will be pulled directly from Bungie's official Marathon API, the way the Destiny 2 ecosystem works, and the refresh rate will be whatever that API supports. We will not fill the gap with manual entry, screenshot parsing, or third-party estimation, and we are not publishing estimated standings in the meantime.",
   },
 ];
 
@@ -205,7 +243,27 @@ export default function StatsPage() {
             maxWidth: 620,
             margin: '0 auto 30px',
           }}>
-            Look up any Marathon player across Steam, PlayStation, and Xbox. Track extraction rates, weapon performance, Runner Shell stats, and ranked progression — the moment Bungie opens the Marathon API.
+            Bungie has not opened a public Marathon stats API, so player lookup
+            is not live here. When they do, this page will cover extraction
+            rates, weapon performance, Runner Shell stats, and ranked
+            progression across Steam, PlayStation, and Xbox.
+          </p>
+
+          <p style={{
+            fontSize: 14,
+            color: 'rgba(255,255,255,0.55)',
+            lineHeight: 1.6,
+            maxWidth: 620,
+            margin: '0 auto 30px',
+          }}>
+            What we have today: live Steam concurrent players on{' '}
+            <Link href="/player-count" style={{ color: NEXUS, textDecoration: 'none' }}>
+              player count
+            </Link>{' '}
+            and current shell and weapon tiers on{' '}
+            <Link href="/meta" style={{ color: NEXUS, textDecoration: 'none' }}>
+              the meta report
+            </Link>.
           </p>
 
           <div style={{
@@ -642,20 +700,15 @@ export default function StatsPage() {
         </div>
       </section>
 
-      {/* ─── JSON-LD STRUCTURED DATA ─────────────────── */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'WebApplication',
-          name: 'CyberneticPunks Marathon Stats Tracker',
-          url: 'https://cyberneticpunks.com/stats',
-          description: 'Track Marathon player stats, extraction rates, weapon performance, and ranked progression across Steam, PlayStation, and Xbox.',
-          applicationCategory: 'GameApplication',
-          operatingSystem: 'Web',
-          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-        }),
-      }} />
-
+      {/* ─── JSON-LD STRUCTURED DATA ───────────────────
+          NO WebApplication NODE HERE, ON PURPOSE (removed 2026-07-20).
+          A WebApplication node asserts that an application exists at this URL.
+          It does not: player lookup is unbuilt because Bungie has no public
+          Marathon stats API. Rewording the node's description only makes that
+          false structured claim vaguer, not true, so it was dropped outright
+          rather than softened. RE-ADD IT when the tracker actually works --
+          at that point it will be accurate and worth having. FAQPage and
+          BreadcrumbList stay: both describe things that genuinely exist. */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: JSON.stringify({
           '@context': 'https://schema.org',

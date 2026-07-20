@@ -5,6 +5,74 @@ Newest entries on top.
 
 ---
 
+## 2026-07-20 — HONESTY PASS: unbuilt-capability claims removed from /stats, invented leaderboard values blanked
+
+### /stats: no fake numbers, but a claimed product that does not exist
+The page invented **no data**. What it did was describe an **unbuilt feature in the PRESENT
+TENSE**, in indexed copy **AND in FAQPage structured data** -- on the site's highest-demand tool
+query (**marathon stat tracker, 42 impressions, position 10.3**). Structured data made it worse
+than loose marketing copy: it told Google in a machine-readable format that we operate a stats
+tracker. There is no public Marathon stats API, so player lookup is not degraded or partial --
+it is **absent**.
+
+**Five claims removed.** Four came from the audit; the fifth (**FAQ 4**, `CyberneticPunks pairs
+your stats with live meta context ... you also see where it ranks`) was **found during the edit**
+and cut under the same rule rather than left as the one survivor.
+
+| Location | OLD (present tense) |
+|---|---|
+| meta description | `Track your Marathon stats ... Look up any player on Steam, PlayStation, or Xbox` |
+| hero body | `Look up any Marathon player across Steam, PlayStation, and Xbox` |
+| FAQ 1 | `Our infrastructure is built and ready to connect` |
+| FAQ 4 | `pairs your stats with live meta context ... you also see where it ranks` |
+| FAQ 6 | `Numbers refresh in real time after each match` |
+
+Title, og and twitter descriptions reframed to future tense. **Title still targets "Marathon
+Stats Tracker"** -- the demand is real and the page will eventually serve it.
+
+**WebApplication JSON-LD node DROPPED ENTIRELY, not reworded.** The node asserts an application
+exists at this URL. **No description wording makes a nonexistent app exist**; softening it would
+have left the same false structured claim, just vaguer. FAQPage and BreadcrumbList stay -- both
+describe things that genuinely exist. Re-add WebApplication when the tracker is real; the
+in-code note says so.
+
+**Schema/visible-text parity holds by construction**: both the visible FAQ section and
+`FAQPage.mainEntity` map the same `FAQS` array, so a claim removed from the page is removed
+from structured data automatically. No forked copy exists. Same discipline as `/dmz`.
+
+An **in-code note** at the top of `app/stats/page.js` records why the copy is future-tense,
+quotes the removed claims verbatim, and sets five rules -- so a future editor does not "improve"
+weaker-but-true copy back into confident-and-false copy. Same pattern as the DMZ
+no-sequel-claim note.
+
+### /leaderboard: NOT fabricated standings -- the premise was corrected before acting
+Names are `████████` redactions, score/kd/extractions are `— —`, rows render at **0.35 opacity**,
+and a `● AWAITING RANKED API DATA` banner sits above the H1. The page **already followed the
+honest-skeleton pattern**. The only genuine invented claims were **platform and shell** --
+asserting rank 1 is a Destroyer player on Steam came from nowhere, and `SHELL_COLORS`
+colour-coding made those invented values look **data-driven**. Both columns blanked to `———`;
+the colour lookup removed; `SHELL_COLORS` **deleted** (dead, and a live palette next to blanked
+placeholders invites repopulating them).
+
+An **honest empty state** was added **above** the skeleton table, so the disclosure is read
+before the shape. It routes to the real data we do have: **`/player-count` (1,010 tracked
+snapshots since March 2026)** and **`/meta`** (current shell and weapon tiers). Follows the
+Rook / DmzEmptyState pattern.
+
+### /api/bungie-stats has ZERO consumers
+`grep` across `app/`, `lib/`, `components/`, `scripts/` returns no reference outside the route
+file itself. It is an **unreached stub returning placeholder-shaped JSON, and it is publicly
+reachable**. Deleting or 404ing it is an **OPEN DECISION -- not done**.
+
+### PRINCIPLE (applies site-wide)
+**Keep targeting a keyword you can eventually serve; never describe an unbuilt feature in the
+present tense.** Ranking for a query is fine. Claiming a shipped feature to win it is not. An
+honest limitation beats a promise that fails on first use: a visitor who arrives, reads "look up
+any player", and finds nothing **bounces** -- a worse signal than an accurate empty state. A
+skeleton may convey **structure**, never **content**.
+
+---
+
 ## 2026-07-20 — PATCH GATE precision fix: 42% -> 30% fire rate, 7/7 recall, 0 press FPs
 
 ### The state it replaced (measured, 60-day backtest)

@@ -94,28 +94,34 @@ var RANKS = [
   },
 ];
 
+// SKELETON ROWS -- SHAPE ONLY, ZERO CLAIMS.
+//
+// Every column is blanked on purpose. This table exists to show what the page
+// WILL look like, not to imply any standing.
+//
+// platform and shell were previously POPULATED ('Steam'/'PSN'/'Xbox' and real
+// shell names, shell-colour-coded) while name and the stats were redacted. That
+// asserted things nothing supports -- "rank 1 is a Destroyer player on Steam"
+// came from nowhere -- and the colour-coding made invented values look
+// data-driven. Both are now blanked like the rest. Do NOT repopulate them for
+// visual interest: a skeleton may convey structure, never content.
 var PLACEHOLDER_ENTRIES = [
-  { rank: 1, name: '████████', platform: 'Steam', shell: 'Destroyer', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 2, name: '████████', platform: 'PSN', shell: 'Assassin', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 3, name: '████████', platform: 'Xbox', shell: 'Thief', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 4, name: '████████', platform: 'Steam', shell: 'Recon', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 5, name: '████████', platform: 'Steam', shell: 'Vandal', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 6, name: '████████', platform: 'PSN', shell: 'Triage', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 7, name: '████████', platform: 'Xbox', shell: 'Destroyer', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 8, name: '████████', platform: 'Steam', shell: 'Assassin', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 9, name: '████████', platform: 'PSN', shell: 'Thief', score: '— —', kd: '— —', extractions: '— —' },
-  { rank: 10, name: '████████', platform: 'Steam', shell: 'Recon', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 1, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 2, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 3, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 4, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 5, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 6, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 7, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 8, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 9, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
+  { rank: 10, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
 ];
 
-var SHELL_COLORS = {
-  Destroyer: '#ff3333',
-  Assassin: '#cc44ff',
-  Thief: '#ffd700',
-  Recon: '#00d4ff',
-  Vandal: '#ff8800',
-  Triage: '#00ff88',
-  Rook: '#888888',
-};
+// SHELL_COLORS was deleted here (2026-07-20). It only ever coloured the shell
+// column of the skeleton rows above, and those rows no longer carry shell
+// names. A live palette sitting next to blanked placeholders is an invitation
+// to repopulate them; there is nothing to colour until real data arrives.
 
 // ─── FAQ DATA — drives both visible section AND schema ───────
 var FAQS = [
@@ -257,7 +263,51 @@ export default function LeaderboardPage() {
         </div>
       </section>
 
-      {/* ─── LEADERBOARD TABLE (placeholder) ──────────── */}
+      {/* ─── HONEST EMPTY STATE ───────────────────────
+          Follows the Rook / DmzEmptyState pattern: say plainly what is not
+          here, say what IS here, and route to the real data instead of
+          approximating the missing data. Sits ABOVE the skeleton table so the
+          disclosure is read before the shape. */}
+      <section style={{ padding: '0 20px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{
+          background: BG_CARD,
+          border: '1px solid ' + BORDER,
+          borderRadius: 4,
+          padding: '28px 24px',
+          textAlign: 'center',
+        }}>
+          <p style={{
+            fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)',
+            margin: '0 0 10px',
+          }}>
+            Ranked standings are not live yet.
+          </p>
+          <p style={{
+            fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65,
+            margin: '0 auto 18px', maxWidth: 560,
+          }}>
+            Marathon has no public ranked API. When Bungie ships one, this page
+            will show global standings by rank, platform, and shell. We are not
+            estimating them in the meantime.
+          </p>
+          <p style={{
+            fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65,
+            margin: '0 auto 18px', maxWidth: 560,
+          }}>
+            What we do have now: live Steam concurrent players on{' '}
+            <Link href="/player-count" style={{ color: '#00d4ff', textDecoration: 'none' }}>
+              player count
+            </Link>{' '}
+            (1,010 tracked snapshots since March 2026), and current shell and
+            weapon tiers on{' '}
+            <Link href="/meta" style={{ color: '#00d4ff', textDecoration: 'none' }}>
+              the meta report
+            </Link>.
+          </p>
+        </div>
+      </section>
+
+      {/* ─── LEADERBOARD TABLE (skeleton, no data claims) ──────────── */}
       <section style={{
         padding: '20px 20px 60px',
         maxWidth: 1100,
@@ -287,7 +337,9 @@ export default function LeaderboardPage() {
         </div>
 
         {PLACEHOLDER_ENTRIES.map(function(entry) {
-          var shellColor = SHELL_COLORS[entry.shell] || '#444';
+          // No shellColor lookup: the shell column is blanked (see
+          // PLACEHOLDER_ENTRIES). Colour-coding a blank would be decoration
+          // pretending to be data.
           return (
             <div key={entry.rank} style={{
               display: 'grid',
@@ -333,7 +385,7 @@ export default function LeaderboardPage() {
               <span style={{
                 fontFamily: 'monospace',
                 fontSize: 11,
-                color: shellColor,
+                color: '#333',
                 opacity: 0.5,
                 fontWeight: 700,
                 letterSpacing: 1,
