@@ -26,6 +26,24 @@ function tierOrdinal(tier) {
   return TIER_ORDINAL[tier] || 0;
 }
 
+// Shell tier is a DETERMINISTIC CODE FACT, not a model output (2026-07-20). The
+// prompt rule was "tier = the HIGHER of ranked_tier_solo and ranked_tier_squad",
+// which is a mechanical max() the model kept performing (and twice defaulted to a
+// confident 'A' when both inputs were null -- Rook, Sentinel). Those inputs live
+// only in shell_stats now, so tier is derived here from the source of truth.
+//
+// EXPLICIT NULL when there is no basis: both inputs null -> null tier (the shell
+// is not on the ranked ladder). NO 'B' default -- that default is exactly what
+// this replaces. Weapons are a DIFFERENT case (no solo/squad exists) and keep
+// their model-authored tier; this is shell-only.
+function deriveShellTier(solo, squad) {
+  var candidates = [solo, squad].filter(function(v) {
+    return v != null && TIER_ORDINAL[v] !== undefined;
+  });
+  if (candidates.length === 0) return null;
+  return candidates.sort(function(a, b) { return TIER_ORDINAL[b] - TIER_ORDINAL[a]; })[0];
+}
+
 function computeTrend(newTier, oldTier) {
   if (!oldTier) return 'stable';
   var diff = tierOrdinal(newTier) - tierOrdinal(oldTier);
@@ -562,10 +580,14 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
         try {
           var [validWeaponsRes, validShellsRes] = await Promise.all([
             supabase.from('weapon_stats').select('name'),
-            supabase.from('shell_stats').select('name'),
+            supabase.from('shell_stats').select('name, ranked_tier_solo, ranked_tier_squad'),
           ]);
           var validWeapons = new Map((validWeaponsRes.data || []).map(function(w) { return [w.name.toLowerCase().trim(), w.name]; }));
           var validShells = new Map((validShellsRes.data || []).map(function(s) { return [s.name.toLowerCase().trim(), s.name]; }));
+          // Ranked tiers by canonical name -- the inputs to the shell-tier derivation.
+          var shellRankedByName = new Map((validShellsRes.data || []).map(function(s) {
+            return [s.name, { solo: s.ranked_tier_solo, squad: s.ranked_tier_squad }];
+          }));
 
           var existingTierMap = new Map();
           (regradeContext.currentTiers || []).forEach(function(t) {
@@ -581,9 +603,23 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
                 console.log('[CRON] NEXUS meta_tiers: rejecting unknown ' + item.type + ' "' + item.name + '"');
                 return null;
               }
-              var newTier = item.tier || 'B';
+              // SHELL tier is derived from shell_stats (deterministic); the model's
+              // item.tier is DISCARDED for shells. WEAPON tier stays model-authored
+              // (no derivable inputs exist). The 'B' default applies to weapons only
+              // -- a shell with no basis must be null, never 'B'.
+              var newTier;
+              if (item.type === 'shell') {
+                var sr = shellRankedByName.get(canonicalName) || {};
+                newTier = deriveShellTier(sr.solo, sr.squad); // null when no basis
+              } else {
+                newTier = item.tier || 'B';
+              }
               var oldTier = existingTierMap.get(canonicalName + ':' + item.type);
-              var computedTrend = computeTrend(newTier, oldTier);
+              // A null tier (ungraded shell) has no trend to speak of -- keep it null
+              // rather than letting computeTrend's !oldTier path emit 'stable'. This
+              // keeps Rook/Sentinel consistent across cron runs instead of resurrecting
+              // a 'stable' badge on a shell that is not on the ladder.
+              var computedTrend = newTier == null ? null : computeTrend(newTier, oldTier);
 
               return {
                 name: canonicalName,

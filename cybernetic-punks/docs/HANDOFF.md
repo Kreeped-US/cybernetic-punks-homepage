@@ -132,6 +132,69 @@ Extraction) · Recon vs Triage duelling "best support" superlative.
 
 ---
 
+## 2026-07-20 — SHELL TIER is now a code fact, not a model output (Option A)
+
+`cron/route.js` now DERIVES shell `tier` from `shell_stats` at write time instead of taking the
+model's `item.tier`. **Shell tier = `max(ranked_tier_solo, ranked_tier_squad)`**, computed by
+`deriveShellTier()`, with an **explicit NULL when both inputs are null** -- no `'B'` default.
+
+### Why
+The prompt rule "tier = the HIGHER of solo and squad" was a mechanical `max()` the model kept
+performing, and TWICE defaulted to a confident `A` when both inputs were null (Rook, Sentinel --
+a rule with no null case, and a model that defaults rather than declines). Those inputs live only
+in `shell_stats` now. **Shell tier is a deterministic code fact; a Rook/Sentinel-class phantom
+tier is now structurally impossible, not just prompt-discouraged.**
+
+### Weapons deliberately UNCHANGED -- different case
+Weapon tier is **genuine model judgment** (32 weapons across S/A/B/C/D, each with a defensible
+note; `ranked_tier_solo`/`squad` do NOT exist for weapons -- 0 of 32). There is nothing to derive
+it from, so a blanket derivation would wipe all 32. The write branches on `item.type`: shells
+derive, weapons keep `item.tier || 'B'`.
+
+### The read surface was DELIBERATELY NOT touched
+~15 files read `meta_tiers.tier` for shells (renders + prompt builders + api). **None changed.**
+The derivation lives at the single WRITE point, so `meta_tiers.tier` still holds a value --
+code-derived for shells, model-authored for weapons. Spreading `max()` across 15 read sites would
+have been the wrong fix; the step-5 lesson (a column's surface spans render/filter/prompt) says
+*enumerate* that surface, and here enumerating it showed the fix belongs at the one write, not
+across the fifteen reads. Readers already handle null tier safely (verified step 4, zero 500s),
+so ungraded shells render untiered rather than defaulting.
+
+### Verified by exercising (functions run against live shell_stats)
+Derived tier matches current `meta_tiers` on **all 8 shells, 0 mismatches**: 6 graded shells keep
+their tier, **Rook and Sentinel derive NULL**. The `deriveShellTier` source printed from the file
+matches the tested copy.
+
+### The three reported sub-questions
+- **No shell_stats row for a shell?** Cannot reach the derivation: the existing `validShells`
+  gate rejects any meta_update shell absent from `shell_stats` (returns null, filtered out) BEFORE
+  the row builder. Defensively, `shellRankedByName.get()` missing -> `{}` -> both inputs undefined
+  -> null tier. Fail-safe either way.
+- **'BAN' / non-SABCD values?** Do NOT appear in shell ranked tiers. Distinct values across all 8:
+  **S, A, B, D, null** -- no `C`, no `BAN`. Rook's ban is expressed as null tiers + a
+  `ranked_notes` sentence, not a `'BAN'` literal. `deriveShellTier` drops anything not in
+  `TIER_ORDINAL`, so a stray `'BAN'` would resolve to null (correct: a banned shell is off the
+  ladder).
+- **Trend with null tier:** `computeTrend(null, oldTier)` would return `'stable'` (via `!oldTier`
+  or ordinal 0), which would resurrect a `stable` badge on Rook/Sentinel each cron run. Guarded:
+  `newTier == null ? null : computeTrend(...)`, so a null-tier shell gets a null trend, staying
+  consistent with the manual Rook/Sentinel nulls across runs.
+
+### Prompt left unchanged -- recommendation
+The prompt still asks the model for shell tier; cron now discards it. **Recommend leaving it**:
+(a) the same instruction block still teaches the model how tier relates to solo/squad and still
+governs WEAPON grading, so editing it risks weapon behaviour; (b) the model emitting a
+now-discarded shell tier costs only a few tokens and no correctness (it is overwritten). A
+token-only optimization (tell the model "shell tier is derived server-side, do not emit it") is a
+possible later tidy, NOT bundled -- it touches the shared prompt and could perturb weapons.
+
+### FLAGGED, not fixed (separate pass)
+`meta_tiers.holotag_tier` is **DEAD -- 0 of 40 rows set.** The real holotag data lives in
+`shell_stats.holotag_tier_recommendation` (Thief: "Silver-Platinum"). The column is emitted-but-
+never-populated, a latent version of the same column-nobody-fills trap. Its own pass.
+
+---
+
 ## 2026-07-20 — meta_tiers loop fix STEP 5: CIPHER prompt reads shell_stats
 
 Step 4 nulled the mirrored columns; CIPHER's prompt lines that read them from `meta_tiers` went
