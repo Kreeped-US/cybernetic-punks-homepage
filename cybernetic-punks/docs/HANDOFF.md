@@ -5,6 +5,74 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 — Article #5 "all modes" corrected + THE METHOD RULE REFINED
+
+One-word body fix to the last confirmed live accuracy error, and a **third
+category** of wrongness that the morning's method rule does not cover.
+
+### The fix
+
+`marathon-cryo-archive-learning-the-map-before-vault-breaker-lands-6nf8`
+(NEXUS, 2026-07-06, live and indexed):
+
+> "Vault Data extracted from Vault Breaker converts into gear usable
+> ~~across all~~ **in standard** modes."
+
+Headline **deliberately left** as "Learning the Map Before Vault Breaker Lands".
+The piece is a pre-launch preparation argument in every paragraph ("Players
+running Cryo blind on July 21...", "You have until mid-season..."). A
+present-tense headline over a future-tense body reads worse than a consistently
+dated piece, and changing it fixes no staleness because the body is pre-launch
+throughout.
+
+### *** A THIRD CATEGORY: INTERNAL INCONSISTENCY ***
+
+This claim was **NOT superseded** and **NOT wrong-against-later-information.**
+The same article states it CORRECTLY at [1] and overreaches at [2], ~300 words
+apart:
+
+> **[1]** "...rewards Vault Data you can convert into gear usable in **standard
+>   modes**."  <- CORRECT
+> **[2]** "Vault Data extracted from Vault Breaker converts into gear usable
+>   **across all modes**."  <- the error
+
+And the **06-23 key-dates post — available when the article was written —**
+already drew the boundary correctly: *"gear that can be used in **other
+modes**"*. The 07-16 preview introduced NO new fact here. It only sharpened
+language the article already had access to and had already used correctly once.
+
+**"All modes" is wrong REGARDLESS OF DATE**, because it includes Vault Breaker
+itself, where gear bought with Vault Data explicitly does not apply ("Only Kit
+Upgrades will alter your loadout in Vault Breaker"). "Other modes" (06-23) and
+"standard activities" (07-16) both exclude it; "all modes" does not.
+
+### *** METHOD RULE REFINED — date-checking is step ONE, not the whole test ***
+
+The rule protects a claim from information that **did not exist yet**. It does
+NOT protect a claim that contradicts a source that WAS available, nor one that
+contradicts a correct sentence elsewhere in the same article.
+
+**The three checks, in order:**
+1. **Did the information exist yet?** (the original rule — publish date vs source date)
+2. **Does it contradict what WAS available at the time?**
+3. **Does it contradict ITSELF?**
+
+Applying only step 1 here would have wrongly cleared this claim as
+"pre-announcement, therefore fair" — the same over-correction risk as the
+morning's under-correction. Both failures come from stopping after one check.
+
+This matters for the corpus audit, where the instinct after the #2/#3 withdrawals
+is to date-check and move on. Date-checking clears a claim of ANACHRONISM, not of
+being wrong.
+
+### Verified
+DB re-read: corrected sentence present, old gone, **zero** remaining instances of
+"all modes" in the body, sentence [1] untouched, `noindex=false` preserved.
+Rendered: correction renders, [1] intact, headline unchanged, page still
+indexable (no robots meta).
+
+---
+
 ## 2026-07-21 — Dup detector: bigram signal + ratio-based rarity bar (shadow, LOG ONLY)
 
 ### CORRECTION to this morning's claim — one blind spot today, not two
