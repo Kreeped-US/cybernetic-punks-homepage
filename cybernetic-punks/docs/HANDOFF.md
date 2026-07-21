@@ -178,6 +178,21 @@ established than it is, which is the exact error class it exists to catch.
 test exit codes directly.** This bit twice in one day (once here, once verifying
 the sitemap deploy where a broken grep reported a live deploy as missing).
 
+**Backticks inside double quotes are executed by the shell, not matched.** This
+blanks the word in a grep pattern exactly as it does in a commit message - same
+substitution, different position. Use single quotes for patterns containing
+backticks, and verify the pattern reached the tool. (Recorded as a sibling to the
+existing `git -m` backtick rule in the git-hygiene bullets.)
+
+**grep is LINE-ORIENTED. Wrapped prose splits phrases across lines**, so a
+contiguous-string check can fail on text that is present. Verify prose documents
+whitespace-insensitively, or confirm against the file before concluding an
+element is missing.
+
+**RATIONALE FOR BOTH: a false negative is the MORE DANGEROUS direction - it
+invites editing something already correct.** Confirm against the file before
+acting on a failed check; never re-edit on the strength of one.
+
 ### Forward pointer - no action now
 
 **Check 4 plus the mod_stats 86 constitute the enumerated backfill worklist the
@@ -5148,6 +5163,12 @@ verified_source from the start). Read it before any confirmation write.
 - **git hygiene:** NO backticks in `git -m` (bash substitution blanks the word).
   DB writes are a different safety category than git — the rollback net is the
   captured before-SELECT, not a commit.
+- **grep patterns, same substitution (2026-07-21):** backticks inside DOUBLE
+  quotes are EXECUTED by the shell, not matched — this blanks the word in a grep
+  pattern exactly as it does in a commit message. Same substitution, different
+  position. Use SINGLE quotes for patterns containing backticks, and verify the
+  pattern reached the tool. See the CONVENTIONS block in the 2026-07-21
+  provenance-check entry for the companion rule and the shared rationale.
 
 **Session state (where things stand):**
 - **Data verification:** `confirmed_data_share` 52.1% -> **64.9%** (426/656).
