@@ -5,6 +5,343 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - *** C1 RESOLVED: verified_source added, 143 rows attributed ***
+
+**Owner ran the DDL and backfill directly in the Supabase SQL editor.** Documentation
+only here; every figure below is a read-only confirmation.
+
+- **`verified_source` text column added to `core_stats` and `implant_stats`** -
+  **nullable, NO DEFAULT.** Absence means *unsourced*; it asserts nothing.
+- **143 March rows backfilled** with an attributed source string.
+- **61 June-5 rows deliberately left unsourced.**
+- **One rename:** `core_stats` **Botique -> Boutique**.
+- **Read-back confirmed:** `core_stats` **85 total / 85 verified / 62 sourced / 23
+  unsourced**; `implant_stats` **120 / 119 / 81 / 38**.
+
+### 1. *** THE DECISION - AND WHY IT WAS NOT A FLIP ***
+
+C1 was framed for weeks as *"do we flip the 204 to `verified = false`?"* **It
+resolved differently.** The owner attested that the core and implant data was
+**entered by hand from in-game item cards and is correct.**
+
+> **THE FLAG WAS NEVER WRONG ABOUT THE DATA. IT WAS UNINFORMATIVE.** A pre-ticked
+> checkbox set `verified = true` **identically whether anyone verified or not**, so
+> the flag carried no signal - not a false signal.
+
+**Therefore the remedy is to RECORD the provenance, not to destroy the claim.**
+
+> **RECORD THIS DISTINCTION: an UNSUPPORTED claim and a FALSE claim need DIFFERENT
+> remedies.** The `mod_stats` 86 were flipped because nothing supported them and
+> nobody could say otherwise. These 143 were **attributed** because someone could.
+> Flipping them would have destroyed correct data to satisfy a process rule -
+> **the audit would have "improved" the metric by discarding true facts.**
+
+Contrast with the seven `is_shell_exclusive` rows corrected earlier today: those were
+**demonstrably self-contradictory** and needed correcting. **Three categories, three
+remedies: false -> correct it; unsupported -> flip or attribute; unrecorded-but-true
+-> attribute.**
+
+### 2. THE SCOPING, AND WHAT IT DELIBERATELY EXCLUDES
+
+**The backfill keys on `created_at < 2026-06-01`.**
+
+**The 61 rows from the 2026-06-05 batch (23 core + 38 implant) are NOT covered by the
+attestation.** They came from an **unidentified batch writer**, not the form, so
+**no claim is made about them.** They remain `verified = true` with **no source**.
+
+> **That is now a VISIBLE state rather than an invisible one.** Before the column
+> existed, "verified with no evidence" was indistinguishable from "verified with
+> evidence". Now `provenance-check.mjs`-style checks can surface it.
+> **THE 61 ARE THE CONCRETE RE-VERIFICATION TARGET.** Key on `id`.
+
+### 3. THE FOUR-ROW EXCEPTION INSIDE THE MARCH WINDOW
+
+**Thick Skull V2** and **Augmented Capacitors V1 / V2 / V3** share
+`created_at = 2026-03-16T20:39:55.970314+00`. The admin route inserts **one row per
+call** and **cannot** produce a microsecond-identical cluster - so their own
+timestamps contradict form entry.
+
+| id | name |
+|---|---|
+| e8351b53-b495-438d-ab6c-426d256b9125 | Thick Skull V2 |
+| 19e2beff-524b-4ea2-8655-d9afdcea1515 | Augmented Capacitors V1 |
+| 64b151d4-bac9-4821-851f-62793aab33fc | Augmented Capacitors V2 |
+| 868e3532-dea7-4924-a5c9-5d60b3161c3c | Augmented Capacitors V3 |
+
+**They received a different string recording BOTH facts** - the owner attestation
+**and** that the write mechanism is unidentified.
+
+> **THE REASONING: writing "owner in-game entry" on rows whose own timestamps
+> contradict form entry would have put a FALSE PROVENANCE CLAIM into the column
+> built to hold true ones.** The column would have been corrupted by its own first
+> backfill. **A provenance field that records a convenient story is worse than no
+> field**, because it is trusted.
+
+**A FIFTH ROW SHARES THAT TIMESTAMP AND WAS CORRECTLY NOT INCLUDED:** **Ping+ V2**
+(`69388a6f-c511-43a7-a048-63b434b9da2b`) is the **single `verified = false` implant
+row** (the 119/120), so it was never in the backfill population. **The exception is
+four because the fifth was never verified**, not because it was missed.
+
+**This is the ONLY microsecond-identical cluster in the entire March window across
+both tables** - confirmed read-only. The rest of the March population is
+individually timestamped, which is what makes the form attribution credible for it.
+
+### 4. THE SOURCE STRINGS - verbatim, both
+
+**Standard (62 core + 77 implant = 139 rows):**
+
+> `owner in-game entry, March 2026 (attested 2026-07-21)`
+
+**Exception (4 implant rows, section 3):**
+
+> `owner in-game entry, March 2026 (attested 2026-07-21); batch-inserted, write mechanism unidentified`
+
+> **THE TWO DATES ARE SEPARATED DELIBERATELY. Entry happened in March 2026;
+> ATTESTATION happened 2026-07-21.** A future reader must not mistake this for
+> provenance recorded at the time. **It is a memory written down four months later**,
+> and the string says so on its face rather than in a document the reader may never
+> open.
+
+### 5. THE ATTESTATION AND ITS LIMITS
+
+**Owner recollection** - the same class as the Q-Tap and `is_shell_exclusive`
+resolutions. **It is now RECORDED provenance rather than unrecorded, which is the
+improvement. It is attestation, NOT capture.** No screenshot, no card image, no
+timestamped artifact.
+
+**COUNTERVAILING EVIDENCE, recorded honestly:** **the same 2026-03-16 session
+produced the six `is_shell_exclusive` contradictions corrected earlier today**
+(exclusivity ticked, runner field left empty, six times in ~29 minutes).
+
+> **So "the March entry was careful" is supported FOR THE STAT VALUES and
+> demonstrably NOT UNIVERSAL across every field in that sitting.** The same hands
+> that read the numbers off the cards also left a boolean in a state that
+> contradicted its own neighbouring column. **Attesting the stat values is not
+> attesting the whole row.**
+
+### 6. THE CAPTURES - the two backfilled populations
+
+**PROVENANCE OF THESE TABLES, stated plainly:** **no pre-DDL capture was supplied to
+this session.** These lists were **derived read-only AFTER the backfill** by
+selecting rows with a non-blank `verified_source`.
+
+**Why that is materially less fragile than the 86-row `mod_stats` case:** there, the
+flip erased the only thing distinguishing the population, so the list had to be
+reconstructed by name-matching. **Here the source string ITSELF identifies the
+population** - the rows are self-marking, and the list can be regenerated at any time
+by the same query. **The recording below is a convenience, not the only record.**
+
+**The residual risk is narrow and worth naming:** `created_at` is the **only** thing
+separating the March population from the June-5 one. Nothing enforces or protects it,
+and if it were ever bulk-touched the boundary this backfill relied on would be
+unrecoverable.
+
+**`core_stats` - 62 sourced rows**
+
+| # | id | name | created_at |
+|---|---|---|---|
+| 1 | ab0a841e-debd-4507-96a9-f5891ea3fcda | Cluster Payload | 2026-03-12T13:24:25.429107+00:00 |
+| 2 | ba2936b1-871f-42d7-8361-54130e904a61 | Break and Enter | 2026-03-13T23:31:02.224514+00:00 |
+| 3 | 9fc59999-0df8-427d-bf24-51b2971ceb54 | Keen Eye | 2026-03-16T17:52:38.3029+00:00 |
+| 4 | a48f1537-4952-4e7f-9b82-6101bba312e8 | Adrenal Core | 2026-03-16T17:53:53.629471+00:00 |
+| 5 | 62c2afac-56e9-4b71-b64f-43afade2dc15 | Ankle Breaker | 2026-03-16T17:55:35.966703+00:00 |
+| 6 | a8a3d454-2db0-4a5c-9468-de98d4455fcc | Bad Cop | 2026-03-16T17:56:30.882448+00:00 |
+| 7 | 4683a30a-a9ed-4b5e-9199-430fdb5e018e | Blast Off | 2026-03-16T17:57:34.58734+00:00 |
+| 8 | fdfc87c4-e921-4b6c-8cc8-bc4cc87162a5 | Microjet Efficiency Package | 2026-03-16T17:58:47.082296+00:00 |
+| 9 | 4c2d96d7-fb4f-4a77-8bf3-e4429e529785 | Intuition | 2026-03-16T18:02:15.377884+00:00 |
+| 10 | a2ccd7de-7b54-40bf-9619-15cf301a2df1 | Predator | 2026-03-16T18:03:32.343804+00:00 |
+| 11 | 1c52b0ee-d3ae-4100-8d87-ef6c8c9b230d | Fresh Install | 2026-03-16T18:04:41.188118+00:00 |
+| 12 | 01a5aa02-fcaf-48da-8fd6-8de32241534c | Intake Vents | 2026-03-16T18:05:54.375781+00:00 |
+| 13 | 051b2a1c-a6c1-4d71-a10e-c4ca9646db0b | Heavy Ordnance | 2026-03-16T18:07:03.704509+00:00 |
+| 14 | 73232352-45f2-4d31-a9bd-4e74e1a015c7 | Hypocritic Oath | 2026-03-16T18:08:01.144161+00:00 |
+| 15 | f299b2d7-ada1-472a-b2ad-cbf8bc2903c8 | Mechanized Holsters | 2026-03-16T18:09:36.847727+00:00 |
+| 16 | 71e61e00-0761-4033-b428-e6e4588e1417 | Crime Spree | 2026-03-16T18:10:32.513233+00:00 |
+| 17 | 69403c5c-0e42-4c12-836c-15391baa5f7b | Greed is Good | 2026-03-16T18:11:15.297355+00:00 |
+| 18 | 8838a6e2-9b47-4b4f-9e55-cf6b5a88219b | Patience | 2026-03-16T18:12:11.30933+00:00 |
+| 19 | 6c2dd6e5-7f21-4dae-8b06-85ba4a06774c | Ghost Protocol | 2026-03-16T18:13:31.312133+00:00 |
+| 20 | 2c040c84-4ef5-45ad-97a3-d195187a8c0c | Premium Package | 2026-03-16T18:14:43.344447+00:00 |
+| 21 | 16229a0f-ee5e-4e51-8ca8-8dec3f812435 | Ounce of Prevention | 2026-03-16T18:15:45.941336+00:00 |
+| 22 | 822c6cb3-04ee-4c9d-9f6b-1ac4089d206d | No Good Deed | 2026-03-16T18:17:40.165363+00:00 |
+| 23 | 9ebda572-1222-4058-bf52-10676320f0e5 | Out of Dodge | 2026-03-16T18:18:26.544416+00:00 |
+| 24 | 40aa9024-c6bc-4d35-b41e-f919119adb2a | Glass Cannon | 2026-03-16T18:57:27.965699+00:00 |
+| 25 | 97e39028-9b04-4895-a93d-d72c9c9a666c | Bombardier | 2026-03-16T18:58:49.496782+00:00 |
+| 26 | 66fee488-7d94-4775-ab28-87dd0f895ec2 | Minus Sights | 2026-03-16T19:00:27.227205+00:00 |
+| 27 | 4bf046eb-6cf7-4123-8aed-d09cc3b07b4e | Partner in Crime | 2026-03-16T19:01:36.0833+00:00 |
+| 28 | 9ed8b06a-ef5d-4ad9-8657-a7f57fdc9a99 | Hot Pursuit | 2026-03-16T19:14:42.637805+00:00 |
+| 29 | 3b196228-bcdf-405b-811b-f7908976fe4c | High-Octane Propellant | 2026-03-16T19:15:37.693602+00:00 |
+| 30 | ee3a030b-f376-4eba-ac3a-adf2597e24a1 | Breathing Space | 2026-03-16T19:16:26.813147+00:00 |
+| 31 | cce0012e-1b85-456b-92a6-37bba67f9778 | Friendly Face | 2026-03-16T19:17:16.488757+00:00 |
+| 32 | 00bb608b-8829-4665-8bbb-73167ee9e669 | Lock 'N Load | 2026-03-16T19:18:12.860113+00:00 |
+| 33 | c31c027e-d28c-4a9c-9c6e-211a3da368ec | Cash Flow | 2026-03-16T19:19:06.812604+00:00 |
+| 34 | 3a1fb19d-5b52-4e67-966a-585c7ec7d0bd | Hit and Run | 2026-03-16T19:20:14.166571+00:00 |
+| 35 | 65f98afd-53e7-49f2-ac9d-d3a7704d2e5e | Static Casket | 2026-03-16T19:21:40.854901+00:00 |
+| 36 | f104ee78-e054-48e9-ae07-06a22a437806 | Like for Like | 2026-03-16T19:23:18.453039+00:00 |
+| 37 | 99afce49-25e6-4dc8-b498-852eab222e68 | The Big Score | 2026-03-16T19:24:04.887096+00:00 |
+| 38 | 86abe0d6-b4d5-4cef-a840-51b2f91ed855 | Bullrush | 2026-03-16T19:25:01.266547+00:00 |
+| 39 | 5ab1714f-a687-4373-aa25-27c39335fc86 | Flight Response | 2026-03-16T19:26:52.163548+00:00 |
+| 40 | f2a3e757-b5bc-46b8-9f38-2395cc789ed9 | High Voltage | 2026-03-16T19:28:01.57177+00:00 |
+| 41 | 3500c0d3-26ff-4f61-b245-8bf59bcdd3c5 | Tag! | 2026-03-16T19:28:37.726026+00:00 |
+| 42 | 053f91aa-aa9e-4fd9-aaf2-e96db9af9c14 | Flexweave casing | 2026-03-16T19:29:29.106653+00:00 |
+| 43 | 0d52fe0a-c3b9-496e-ad92-f03a77a7b396 | Myrmidon | 2026-03-16T19:30:07.572238+00:00 |
+| 44 | 478dfec6-5594-44b2-b70a-ebd8fac67738 | On the Trail | 2026-03-16T19:31:19.987744+00:00 |
+| 45 | 31b6d275-702b-4467-a5d7-bc13a9e111fd | Cut to the Chase | 2026-03-16T19:31:59.948884+00:00 |
+| 46 | caa93766-d4e2-40e7-ac68-b4ba6ae92916 | Bombing Run | 2026-03-16T19:33:32.028153+00:00 |
+| 47 | 39e0228d-cc7b-4bf2-bad9-f940d36b8371 | Calling Card | 2026-03-16T19:34:27.716735+00:00 |
+| 48 | 7ed6e54e-936b-41a3-9035-0b0378de9df7 | Eye in the Sky | 2026-03-16T19:35:17.68419+00:00 |
+| 49 | 8ac57a83-6fae-4d9a-bf19-25c746cb9edd | Case the Joint | 2026-03-16T19:36:00.172622+00:00 |
+| 50 | aee87e14-0382-4f69-87d3-28ab9904ce10 | Guerrilla | 2026-03-16T19:37:11.151423+00:00 |
+| 51 | 12d497ca-9617-4dcd-b617-005f63c51696 | Hunter/Killer | 2026-03-16T19:45:11.47769+00:00 |
+| 52 | b9187862-c416-4927-a288-a6cdf169a720 | Electron Recapture Sinks | 2026-03-16T19:46:00.477831+00:00 |
+| 53 | 20daa2ae-0e23-4145-b897-49f4cac47752 | Safe Landings | 2026-03-16T19:46:40.743042+00:00 |
+| 54 | 9daa5013-7cf8-4464-a73b-1fcbaaed8246 | Impact Siphons | 2026-03-16T19:47:21.447089+00:00 |
+| 55 | ac2b5add-41db-43af-a557-62e68c164ed8 | Shadow Strike | 2026-03-16T19:48:03.4945+00:00 |
+| 56 | 1084a9cf-fed6-4d6d-8db4-84e3ee8f66ed | Early Warning System | 2026-03-16T19:48:52.417516+00:00 |
+| 57 | a0102552-43b2-4a88-9d0a-1b5981b34794 | Echo Chamber | 2026-03-16T19:49:59.19972+00:00 |
+| 58 | 4c4a69fa-31fe-4c3a-83e7-41418bd081a4 | Low Profile | 2026-03-16T19:50:57.308061+00:00 |
+| 59 | 500e8076-23c5-4b74-b5cb-62ecace8f62a | Boutique | 2026-03-16T19:51:38.700124+00:00 |
+| 60 | 18ed91c0-86a5-446e-ba8a-921a9885e10d | Samaritan | 2026-03-16T19:52:29.04482+00:00 |
+| 61 | c75e2459-b4d6-401d-b565-fe03750ff7ab | Counter Attack | 2026-03-16T19:52:59.611605+00:00 |
+| 62 | 7bb49ba4-09b5-4b04-ad68-ad70d4ad0c5b | Hideout | 2026-03-16T19:53:45.064151+00:00 |
+
+**`implant_stats` - 81 sourced rows**
+
+| # | id | name | created_at |
+|---|---|---|---|
+| 1 | e8351b53-b495-438d-ab6c-426d256b9125 | Thick Skull V2 | 2026-03-16T20:39:55.970314+00:00 |
+| 2 | 19e2beff-524b-4ea2-8655-d9afdcea1515 | Augmented Capacitors V1 | 2026-03-16T20:39:55.970314+00:00 |
+| 3 | 64b151d4-bac9-4821-851f-62793aab33fc | Augmented Capacitors V2 | 2026-03-16T20:39:55.970314+00:00 |
+| 4 | 868e3532-dea7-4924-a5c9-5d60b3161c3c | Augmented Capacitors V3 | 2026-03-16T20:39:55.970314+00:00 |
+| 5 | 41dfd1d9-7d3e-46f8-8f46-60703d512c7a | Augmented Capacitors V4 | 2026-03-16T20:42:06.172281+00:00 |
+| 6 | 94c70d9b-90ce-48d3-b95d-182c52f65dc8 | Energy Harvesting V5 | 2026-03-16T20:42:52.479197+00:00 |
+| 7 | 31294f1b-6950-4a4e-a30c-16cb3fc44030 | Ping+ V3 | 2026-03-16T20:45:06.00456+00:00 |
+| 8 | 8ee7d47b-6368-479f-88ea-f9bca0828e31 | Energy Harvesting V3 | 2026-03-16T20:46:18.230549+00:00 |
+| 9 | 834eff3e-9364-45fd-8388-16622d4763bb | Ping+ V1 | 2026-03-16T20:48:20.42141+00:00 |
+| 10 | be0acf2a-e916-4e49-9865-edd382f9d89c | Sprint Kit V1 | 2026-03-16T20:49:14.233253+00:00 |
+| 11 | 36dd2ce9-23d0-49bb-9f94-d484d6ba760c | Energy Harvesting V1 | 2026-03-16T20:50:28.483429+00:00 |
+| 12 | 5cc21348-e0a6-4102-a51f-f38fca4ce2a4 | Energy Harvesting V2 | 2026-03-16T20:51:31.769484+00:00 |
+| 13 | ba838b8b-d0ff-44fc-b59b-7784d1a95cc8 | Sprint Kit V2 | 2026-03-16T20:52:50.762196+00:00 |
+| 14 | 4a153599-a715-4714-88a1-9bddb510d9e8 | Sprint Kit V4 | 2026-03-16T20:53:57.163+00:00 |
+| 15 | 2be767a9-4f63-4b34-83fd-4fc078c99899 | Ping+ V4 | 2026-03-16T20:55:19.391735+00:00 |
+| 16 | 1006353d-27c4-4fba-a556-911a6e4a55bd | Regen V4 | 2026-03-16T20:57:00.413078+00:00 |
+| 17 | 1c4ad858-b9b3-42c5-934b-f05a2f1e50b4 | Sprint Kit V3 | 2026-03-16T20:57:43.279752+00:00 |
+| 18 | b4b031f3-5c79-44b6-bd9f-0261dc295fa3 | Sprint Kit V5 | 2026-03-16T20:58:16.146245+00:00 |
+| 19 | 8ca0f0e5-da69-41d1-a29e-ec01a43a7581 | Regen V1 | 2026-03-16T20:59:12.064452+00:00 |
+| 20 | c0052dff-c1ab-4b62-9c54-96776d0e805b | Ping+ V5 | 2026-03-16T20:59:50.137451+00:00 |
+| 21 | 7056a6d5-c0fe-4bc2-bc56-b9251978c136 | Regen V2 | 2026-03-16T21:01:02.703327+00:00 |
+| 22 | 6c68c052-1bd2-4eab-9dc3-fdb73ff2d6ac | Regen V5 | 2026-03-16T21:01:34.958819+00:00 |
+| 23 | fad8382c-0318-48bd-b5a3-829ba1d6d65d | Augmented Capacitors V5 | 2026-03-16T21:02:41.698163+00:00 |
+| 24 | 3e6caa4c-e27f-41ff-90fe-247a951fd013 | Regen V3 | 2026-03-16T21:04:52.707838+00:00 |
+| 25 | 07b21e7b-5ab0-43ec-b56a-8f0bf776b347 | Energy Harvesting V4 | 2026-03-16T21:06:04.562694+00:00 |
+| 26 | 37375574-cb17-48dd-a0d8-23539e328934 | Distance Runner V3 | 2026-03-16T21:07:11.279042+00:00 |
+| 27 | 34ae3334-02c2-40d8-8b19-17e8d10ebe8c | Graceful Landings V2 | 2026-03-16T21:08:00.890779+00:00 |
+| 28 | 093f3b1e-b3a1-49cb-93de-12f1babd72df | Solid Stance V4 | 2026-03-16T21:08:59.687468+00:00 |
+| 29 | 925c5a0f-5d70-49e4-a526-772cac4f4195 | Solid Stance V2 | 2026-03-16T21:10:17.775264+00:00 |
+| 30 | cc40a1b6-de84-4738-a92d-f78c7e0b2c05 | Strike Kit V5 | 2026-03-16T21:12:06.493606+00:00 |
+| 31 | 2c038663-8483-4586-b48e-c32dae6a610c | Strike Kit V2 | 2026-03-16T21:13:57.551203+00:00 |
+| 32 | 84cc9aa2-e7f4-4672-90c7-250f98461418 | Solid Stance V5 | 2026-03-16T21:16:09.961808+00:00 |
+| 33 | 711179b0-ba9b-47c7-bcd8-85ae5dc0f748 | Bionic Leg Upgrades V4 | 2026-03-16T21:17:11.731262+00:00 |
+| 34 | a8c9251d-35a6-4b1a-82a3-34465207e410 | Distance Runner V5 | 2026-03-16T21:18:05.7822+00:00 |
+| 35 | 07b0786f-8ac2-4c02-b543-a2715c3c9e6f | Graceful Landings V1 | 2026-03-16T21:18:32.565114+00:00 |
+| 36 | def1b6de-784e-4530-8d8e-51f097a1fbad | Bionic Leg Upgrades V5 | 2026-03-16T21:20:50.810437+00:00 |
+| 37 | 1d25b722-bd59-493d-a732-1eefb4aeba3e | Bionic Leg Upgrades V1 | 2026-03-16T21:21:39.080157+00:00 |
+| 38 | 3fae0812-8242-4109-a610-d8f8e4920d91 | Solid Stance V1 | 2026-03-16T21:22:17.368013+00:00 |
+| 39 | ed75449b-b81a-443a-9f18-1b717534d342 | Distance Runner V2 | 2026-03-16T21:23:55.897587+00:00 |
+| 40 | 1528e0c5-a231-4e43-93ca-843e171ad387 | Strike Kit V4 | 2026-03-16T21:24:35.077334+00:00 |
+| 41 | ba917766-c177-4a01-b853-f01b0d70a1b2 | Strike Kit V1 | 2026-03-16T21:25:14.547757+00:00 |
+| 42 | 3101a3c7-46aa-479f-b244-e2f1e9c838c1 | Graceful Landings V3 | 2026-03-16T21:26:39.524834+00:00 |
+| 43 | afb988e1-43c9-45cc-a95e-502b5f644ef7 | Graceful Landings V4 | 2026-03-16T22:06:24.552458+00:00 |
+| 44 | 443b3f50-54db-45a9-99dc-dbe4329ea27b | Distance Runner V4 | 2026-03-16T22:07:27.316204+00:00 |
+| 45 | 833356af-8274-49ad-a3fb-2a6cb94e65b7 | Distance Runner V1 | 2026-03-16T22:08:44.590343+00:00 |
+| 46 | c0f432ee-f444-41e1-b8df-74ab320dd2a3 | Solid Stance V3 | 2026-03-16T22:10:29.087197+00:00 |
+| 47 | 220c8a19-cce5-426b-80d5-2ff145eef963 | Graceful Landings V5 | 2026-03-16T22:11:08.45481+00:00 |
+| 48 | b300a734-e6a4-4b89-8deb-4e8bf79e658d | Strike Kit V3 | 2026-03-16T22:11:54.62624+00:00 |
+| 49 | 5d1b52af-9247-46cc-bf07-aa631d234bf5 | Protector V2 | 2026-03-16T22:14:13.220471+00:00 |
+| 50 | 1e820986-a39f-4f46-a16d-1feee2359164 | Spectre Armor | 2026-03-16T22:15:35.669115+00:00 |
+| 51 | 26d23367-5014-46c0-9f2f-1442a6f00f37 | Kinetic Resistance V2 | 2026-03-16T22:16:31.730116+00:00 |
+| 52 | 83a82086-ca51-499a-a6d4-373ea08f8754 | Volt Resistance V2 | 2026-03-16T22:17:14.687159+00:00 |
+| 53 | e143fc61-7ca8-443f-b61b-b4a0226a4289 | Protector V1 | 2026-03-16T22:19:27.129502+00:00 |
+| 54 | 78bcc501-cd0f-462a-afa8-30e5c4dacb2f | Reinforced Shields V1 | 2026-03-16T22:20:20.670781+00:00 |
+| 55 | 34fead21-3bf0-41e1-a767-379f020f40a8 | Protector V3 | 2026-03-16T22:21:13.169153+00:00 |
+| 56 | 40d861e6-0eb2-4678-8b02-d2910453e605 | Volt Resistance V1 | 2026-03-16T22:22:07.73755+00:00 |
+| 57 | 320d8e93-d681-4323-ba5a-224f870ab112 | Reinforced Shields V2 | 2026-03-16T22:23:35.378839+00:00 |
+| 58 | 0c509126-2158-4531-a2cc-0d73f1d27c82 | Helping Hands V1 | 2026-03-16T22:25:11.517574+00:00 |
+| 59 | 24cc97fd-6830-4bb8-8719-547397567545 | Nimble Fingers V5 | 2026-03-16T22:26:22.826042+00:00 |
+| 60 | cb23db6a-b20d-4911-ba02-df4cc90ee4a9 | Helping Hands V4 | 2026-03-16T22:27:25.678985+00:00 |
+| 61 | 530ef4e7-a061-4ac8-b295-7923f18a0341 | Helping Hands V2 | 2026-03-19T14:46:32.796206+00:00 |
+| 62 | 11dc1a7e-0c42-4032-8360-5b16410a1a2e | Survival Kit V2 | 2026-03-19T14:48:23.212434+00:00 |
+| 63 | 0b2b04de-e5b5-4c50-850b-1e211f16795f | Hurting Hands V2 | 2026-03-19T14:56:27.485367+00:00 |
+| 64 | 943c412d-6a94-4b96-b2ff-e61b849f558c | Survival Kit V3 | 2026-03-19T14:58:31.875516+00:00 |
+| 65 | 490da9a1-729b-43ed-8a57-13662389696a | Helping Hands V3 | 2026-03-19T15:00:27.110302+00:00 |
+| 66 | 75a25188-baa4-4b3b-832e-6f6df7b24978 | Survival Kit V5 | 2026-03-19T15:09:20.863531+00:00 |
+| 67 | 15e89781-0ddb-4dd2-996a-e4b6586e966a | Knife Fight V2 | 2026-03-19T15:10:59.373524+00:00 |
+| 68 | 69c004db-1cdf-4a87-8608-86e6c857503d | Knife Fight V3 | 2026-03-19T15:22:49.391668+00:00 |
+| 69 | 570d4209-a6a5-4a04-8b66-10082e670755 | Knife Fight V4 | 2026-03-19T15:25:39.86686+00:00 |
+| 70 | 823eb3e3-f47e-4428-a828-904ca252b775 | Survival Kit V4 | 2026-03-19T15:28:28.513546+00:00 |
+| 71 | a345a39c-e565-401e-b382-9a729dc75801 | Nimble Fingers V1 | 2026-03-19T15:30:02.05257+00:00 |
+| 72 | befcee47-2107-4929-ad40-896f17ff5183 | Survival Kit V1 | 2026-03-19T15:31:17.417407+00:00 |
+| 73 | edae8848-b842-44d0-b369-393e1e6f8ece | Knife Fight V5 | 2026-03-19T15:32:22.392815+00:00 |
+| 74 | 4e77fff4-e184-4d81-b2fd-e41db3b8e963 | Nimble Fingers V2 | 2026-03-19T15:33:47.992272+00:00 |
+| 75 | 03e9b563-eea2-47fa-984b-708235809698 | Knife Fight V1 | 2026-03-19T15:35:27.816161+00:00 |
+| 76 | 49b11728-e517-438f-acfa-542ea882f452 | Helping Hands V5 | 2026-03-19T15:36:17.690822+00:00 |
+| 77 | dc5045ba-3177-4915-875c-ab8e259c381b | Hurting Hands V4 | 2026-03-19T15:38:03.377704+00:00 |
+| 78 | 343bdef1-a799-480e-b90e-9491e243a5e9 | Hurting Hands V1 | 2026-03-19T15:39:35.754582+00:00 |
+| 79 | 17b6bcb0-a9b1-44a0-9e32-bdd370160d86 | Hurting Hands V3 | 2026-03-19T15:40:54.699716+00:00 |
+| 80 | a3921919-b4be-4a40-91af-3ec4b2d16a3e | Hurting Hands V5 | 2026-03-19T15:41:52.889272+00:00 |
+| 81 | 6221ddad-a832-4416-9781-2f474ab70209 | Survivor Kit V2 | 2026-03-19T15:43:40.139485+00:00 |
+
+### 7. WHAT THIS UNBLOCKS
+
+- **`verificationState()` can now require a source without a 204-row cliff.** The
+  predicate question moves **from BLOCKED to DECIDABLE** - it is now a judgement
+  about the 61, not a 204-row downgrade.
+- **The dexter write gate's remaining blocker is now a DECISION, not a missing
+  capability.** `CORE_IMPLANT_WRITES_ENABLED` waits on a choice, not on schema.
+- **Corrections like today's `is_shell_exclusive` fix now have somewhere to live
+  besides HANDOFF.** The ceiling recorded in that entry - *"there is nowhere in the
+  row to record why this was corrected"* - **no longer applies to these two tables.**
+
+### 8. *** WHAT IS STILL MISSING - the gap that makes the columns inert ***
+
+**The admin form does NOT expose `verified_source` for `core_stats` or
+`implant_stats`.** It **does** expose `verified` as a boolean for both.
+
+> **So a future tick still has no source field beside it, and the new column will
+> stay EMPTY on every new row.** The DDL created the **capacity**; it did not create
+> the **practice**.
+
+**THE `weapon_stats` PRINCIPLE, restated because it is the whole lesson:**
+
+> **A truth flag and its justification must be a SINGLE UI ACT. Split them and the
+> flag drifts free of the claim.**
+
+`weapon_stats` has zero unsourced verified rows **not through discipline** but
+because the click that ticks its box demands a source in the same act.
+
+> *** THIS IS THE NEXT CODE TASK. Until the form change lands, this DDL is a
+> container nobody fills. ***
+
+### 9. STILL OPEN
+
+- **`Survivor Kit V2`** (`implant_stats` `6221ddad-a832-4416-9781-2f474ab70209`).
+  **Survival Kit V1-V5 all exist**, including a **V2 at
+  `11dc1a7e-0c42-4032-8360-5b16410a1a2e`**. Whether `Survivor Kit V2` is a **distinct
+  item or a typo'd duplicate is UNRESOLVED and needs an in-game check.**
+  **DO NOT RENAME BLIND:** doing so would create **two rows named `Survival Kit V2`**
+  and make the dexter resolver report **`ambiguous`** - converting a resolvable row
+  into an unresolvable one. **The fix would cause the bug.**
+- **Two renames landed:** `core_stats` **Botique -> Boutique**; `implant_stats`
+  **Graceful Landing V4 -> Graceful Landings V4** (now consistent with V1-V3, V5).
+  **These matter OPERATIONALLY, not cosmetically:** the dexter resolver keys on the
+  **exact raw name with no normalisation** (`50cd7ac`), so **a typo'd row can never
+  resolve and lands in the `absent` counter permanently.** A misspelling is a
+  permanent write failure, not a display blemish.
+- **`provenance-check.mjs` still does not cover `core_stats` or `implant_stats`.**
+  Now that both carry `verified_source`, **adding them is possible** and would put
+  **the 61 unsourced rows under the same watch as everything else.** Its coverage is
+  still **363 of 657 rows**. **Not done - flagged.**
+
+---
+
 ## 2026-07-21 - is_shell_exclusive: 7 self-contradicting rows corrected, and NULL IS NOT UNKNOWN
 
 **Owner ran the SQL directly in the Supabase SQL editor.** Documentation only here.
