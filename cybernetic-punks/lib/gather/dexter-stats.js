@@ -73,15 +73,19 @@ const ACTIVE_PATCH = '1.1.0.2';
 //    them on performs part of that unmade decision as a side effect, silently,
 //    on whichever rows the scraper happens to touch.
 //
-// 2. *** NAME IS NOT UNIQUE ON EITHER TABLE, AND THESE WRITERS KEY ON NAME. ***
-//    `.eq('name', row.name)` -- core_stats has 2 duplicate names over 4 rows
-//    (Predator, Hunter/Killer); implant_stats has 11 over 25 rows, INCLUDING
-//    "Pinata" x3. One scraped row would write to up to THREE rows.
-//    weapon_stats is clean (32/32 distinct), which is why its writer is ungated.
+// 2. ~~NAME IS NOT UNIQUE~~ -- RESOLVED, see below. core_stats has 2 duplicate
+//    names over 4 rows (Predator, Hunter/Killer); implant_stats has 11 over 25
+//    rows, with THREE at x3: "Pinata", "Edge//Runner" and "Petty Theft". (The
+//    first version of this comment named only Pinata and undercounted the
+//    hazard it exists to warn about.) shell_stats 8/8 and weapon_stats 32/32 are
+//    distinct TODAY, but that is a property of the data, not a constraint on the
+//    table -- nothing enforces name uniqueness anywhere.
+//    ALL FOUR writers now resolve name -> id and key their UPDATE on `id`, and
+//    REFUSE to write when a name matches 0 or 2+ rows. The fan-out is closed.
 //
-// DO NOT SET THIS TO true UNTIL THE name -> id KEYING HAS SHIPPED. Flipping it
-// first arms a fan-out writer against the parked rows. The id fix is deliberately
-// a separate commit; splitting it is only safe BECAUSE this is false.
+// SO THE REMAINING BLOCKER IS (1) ALONE. This gate is no longer waiting on the
+// keying work -- that shipped. It is waiting on the C1 policy decision about the
+// 204 parked rows. Keying by id made the writer precise; it did not make it safe.
 //
 // Default-false fails safe: doing nothing writes nothing. Deliberately a hardcoded
 // constant and not an env var -- an env var is invisible in review, varies per
@@ -407,10 +411,76 @@ Use the submit_extracted_stats tool to return findings. Submit empty arrays for 
 // into the same `false`, so the caller counted both as "not updated" and the
 // summary line could not tell a total failure from a quiet no-op. That ambiguity
 // hid 33 days of failed core/implant writes.
-//   'written' -- the update succeeded
-//   'failed'  -- the update was attempted and rejected  (MUST be visible)
-//   'skipped' -- nothing to write for this row          (normal, not a problem)
-//   'dry'     -- suppressed by CORE_IMPLANT_WRITES_ENABLED
+//   'written'       -- the update succeeded
+//   'failed'        -- the update was attempted and rejected  (MUST be visible)
+//   'skipped'       -- nothing to write for this row          (normal)
+//   'dry'           -- suppressed by CORE_IMPLANT_WRITES_ENABLED
+//   'ambiguous'     -- name matched 2+ rows; REFUSED           (MUST be visible)
+//   'absent'        -- name matched 0 rows;  REFUSED
+//   'lookup_failed' -- the name index could not be built;  REFUSED
+//
+// The last three are distinct on purpose. 'ambiguous' means the table cannot tell
+// which row was meant; 'absent' means the scraper produced a name that is not in
+// the table (an extraction-quality signal -- hallucination, rename, or stale
+// targets list); 'lookup_failed' means we do not know, which is neither. Sharing
+// a counter would merge three different problems into one number.
+
+// --- NAME -> id RESOLUTION ---
+// Writers used to key their UPDATE on `.eq('name', row.name)`. Name is not unique
+// (implant_stats has three names at x3), so one scraped row could update three.
+//
+// *** MATCHING SEMANTICS ARE DELIBERATELY IDENTICAL TO THE .eq('name', ...) THIS
+// REPLACES. *** The index is keyed on the RAW name string exactly as Postgres
+// returns it -- NO trim, NO case folding, NO normalisation of any kind. A JS Map
+// keyed on the raw string reproduces Postgres exact / case-sensitive /
+// whitespace-significant equality. Normalising here would make rows that used to
+// match stop matching, and they would surface as 'absent' -- a silent behaviour
+// change wearing the costume of improved visibility. Verified before shipping:
+// across 47 sampled names on all four tables, the raw-string index resolved to
+// the identical id set as a server-side .eq('name', X), 0 mismatches.
+//
+// If a name legitimately fails to match because of whitespace or case drift
+// between LLM output and the table, that is REAL and belongs in 'absent'. The
+// index must not paper over it.
+//
+// The cache lives on the per-run `ctx` passed in from runDexterStatPipeline, NOT
+// at module scope: module state survives warm serverless invocations and would go
+// stale between runs (the pipeline is throttled to 24h).
+async function nameIndex(ctx, table) {
+  if (ctx.index[table]) return ctx.index[table];
+  const { data, error } = await supabase.from(table).select('id, name');
+  if (error) {
+    console.error('[dexter-stats] Name index load FAILED for ' + table + ' -- ' + error.message);
+    ctx.index[table] = { error: true, map: null };
+    return ctx.index[table];
+  }
+  const map = new Map();
+  for (const r of (data || [])) {
+    if (!map.has(r.name)) map.set(r.name, []);
+    map.get(r.name).push(r.id);
+  }
+  ctx.index[table] = { error: false, map };
+  return ctx.index[table];
+}
+
+// Returns { id } on a unique match, or { status } naming why the write is refused.
+async function resolveId(ctx, table, name) {
+  const idx = await nameIndex(ctx, table);
+  if (idx.error) return { status: 'lookup_failed' };
+  const ids = idx.map.get(name) || [];
+  if (ids.length > 1) {
+    console.error('[dexter-stats] *** AMBIGUOUS: ' + table + ' "' + name + '" matches ' + ids.length
+      + ' rows (' + ids.join(', ') + '). NOTHING WRITTEN. Keying on name would have written all '
+      + ids.length + '. ***');
+    return { status: 'ambiguous' };
+  }
+  if (ids.length === 0) {
+    console.log('[dexter-stats] ABSENT: ' + table + ' "' + name + '" not found in the table -- '
+      + 'scraped name does not match any row (check for whitespace/case drift). Nothing written.');
+    return { status: 'absent' };
+  }
+  return { id: ids[0] };
+}
 
 function buildUpdate(row, allowedFields) {
   const update = {};
@@ -422,7 +492,7 @@ function buildUpdate(row, allowedFields) {
   return update;
 }
 
-async function updateShell(row) {
+async function updateShell(row, ctx) {
   // Shell stats + abilities are human-verified and must NEVER be LLM-written here
   // (base_health/base_shield/base_speed + active_ability_*/passive_ability_*
   // removed). Shells are also no longer targeted or returned by the tool, so this
@@ -430,12 +500,14 @@ async function updateShell(row) {
   // stray shell row could still write nothing.
   const update = buildUpdate(row, []);
   if (Object.keys(update).length === 0) return 'skipped';
+  const target = await resolveId(ctx, 'shell_stats', row.name);
+  if (target.status) return target.status;
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
   update.verified = false;
   update.patch_verified = ACTIVE_PATCH;
-  const { error } = await supabase.from('shell_stats').update(update).eq('name', row.name);
+  const { error } = await supabase.from('shell_stats').update(update).eq('id', target.id);
   if (error) {
     console.error('[dexter-stats] Shell update failed: ' + row.name + ' -- ' + error.message);
     return 'failed';
@@ -444,15 +516,17 @@ async function updateShell(row) {
   return 'written';
 }
 
-async function updateWeapon(row) {
+async function updateWeapon(row, ctx) {
   const update = buildUpdate(row, ['damage', 'fire_rate', 'magazine_size', 'reload_time']);
   if (Object.keys(update).length === 0) return 'skipped';
+  const target = await resolveId(ctx, 'weapon_stats', row.name);
+  if (target.status) return target.status;
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
   update.verified = false;
   update.patch_verified = ACTIVE_PATCH;
-  const { error } = await supabase.from('weapon_stats').update(update).eq('name', row.name);
+  const { error } = await supabase.from('weapon_stats').update(update).eq('id', target.id);
   if (error) {
     console.error('[dexter-stats] Weapon update failed: ' + row.name + ' -- ' + error.message);
     return 'failed';
@@ -461,9 +535,14 @@ async function updateWeapon(row) {
   return 'written';
 }
 
-async function updateCore(row) {
+async function updateCore(row, ctx) {
   const update = buildUpdate(row, ['effect_desc', 'ability_type', 'is_shell_exclusive', 'meta_rating']);
   if (Object.keys(update).length === 0) return 'skipped';
+  // Resolve BEFORE the gate, deliberately: a gated (dry) run then still reports
+  // the id it would have written and still surfaces ambiguity and absence. That
+  // makes the dry path a real audit instead of a silent no-op.
+  const target = await resolveId(ctx, 'core_stats', row.name);
+  if (target.status) return target.status;
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
@@ -472,10 +551,10 @@ async function updateCore(row) {
   // PostgREST reject the entire payload (see header). The stamp is partial on this
   // table by necessity: verified=false only, no freshness marker.
   if (!CORE_IMPLANT_WRITES_ENABLED) {
-    console.log('[dexter-stats] DRY core (gate off, nothing written): ' + row.name + ' -> ' + Object.keys(update).filter(k => k !== 'updated_at').join(', '));
+    console.log('[dexter-stats] DRY core (gate off, nothing written): ' + row.name + ' [id ' + target.id + '] -> ' + Object.keys(update).filter(k => k !== 'updated_at').join(', '));
     return 'dry';
   }
-  const { error } = await supabase.from('core_stats').update(update).eq('name', row.name);
+  const { error } = await supabase.from('core_stats').update(update).eq('id', target.id);
   if (error) {
     console.error('[dexter-stats] Core update failed: ' + row.name + ' -- ' + error.message);
     return 'failed';
@@ -484,7 +563,7 @@ async function updateCore(row) {
   return 'written';
 }
 
-async function updateImplant(row) {
+async function updateImplant(row, ctx) {
   const update = buildUpdate(row, [
     'description', 'passive_name', 'passive_desc',
     'stat_1_label', 'stat_1_value',
@@ -493,6 +572,9 @@ async function updateImplant(row) {
     'stat_4_label', 'stat_4_value',
   ]);
   if (Object.keys(update).length === 0) return 'skipped';
+  // Resolve before the gate -- same reasoning as updateCore above.
+  const target = await resolveId(ctx, 'implant_stats', row.name);
+  if (target.status) return target.status;
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
@@ -500,10 +582,10 @@ async function updateImplant(row) {
   // NO patch_verified HERE -- implant_stats has no such column. Same reason as
   // updateCore above: including it rejected the whole payload. Partial stamp.
   if (!CORE_IMPLANT_WRITES_ENABLED) {
-    console.log('[dexter-stats] DRY implant (gate off, nothing written): ' + row.name + ' -> ' + Object.keys(update).filter(k => k !== 'updated_at').join(', '));
+    console.log('[dexter-stats] DRY implant (gate off, nothing written): ' + row.name + ' [id ' + target.id + '] -> ' + Object.keys(update).filter(k => k !== 'updated_at').join(', '));
     return 'dry';
   }
-  const { error } = await supabase.from('implant_stats').update(update).eq('name', row.name);
+  const { error } = await supabase.from('implant_stats').update(update).eq('id', target.id);
   if (error) {
     console.error('[dexter-stats] Implant update failed: ' + row.name + ' -- ' + error.message);
     return 'failed';
@@ -590,9 +672,13 @@ export async function runDexterStatPipeline(existingData = {}, config = getGameC
   // Tally each status separately. The old code did `if (await updateX(row)) n++`,
   // which counted a REJECTED write and a row with nothing to write identically.
   const tally = { shells: {}, weapons: {}, cores: {}, implants: {} };
+  // PER-RUN name -> id index cache. Deliberately created here and passed down
+  // rather than held at module scope: module state survives warm serverless
+  // invocations and would serve a stale index to a later run.
+  const ctx = { index: {} };
   const run = async (rows, writer, bucket) => {
     for (const row of (rows || [])) {
-      const status = await writer(row);
+      const status = await writer(row, ctx);
       tally[bucket][status] = (tally[bucket][status] || 0) + 1;
     }
   };
@@ -607,8 +693,12 @@ export async function runDexterStatPipeline(existingData = {}, config = getGameC
   const implantsUpdated = tally.implants.written || 0;
   const totalUpdated = shellsUpdated + weaponsUpdated + coresUpdated + implantsUpdated;
 
-  const totalFailed = Object.values(tally).reduce((n, t) => n + (t.failed || 0), 0);
-  const totalDry    = Object.values(tally).reduce((n, t) => n + (t.dry    || 0), 0);
+  const sum = (k) => Object.values(tally).reduce((n, t) => n + (t[k] || 0), 0);
+  const totalFailed       = sum('failed');
+  const totalDry          = sum('dry');
+  const totalAmbiguous    = sum('ambiguous');
+  const totalAbsent       = sum('absent');
+  const totalLookupFailed = sum('lookup_failed');
 
   // SUMMARY LINE -- attempted/written/failed/skipped, per writer. The previous
   // wording ("0 cores, 0 implants updated") was true during a TOTAL write failure
@@ -618,6 +708,9 @@ export async function runDexterStatPipeline(existingData = {}, config = getGameC
     const attempted = (t.written || 0) + (t.failed || 0);
     return label + ' ' + attempted + ' attempted/' + (t.written || 0) + ' written'
       + (t.failed ? '/' + t.failed + ' FAILED' : '')
+      + (t.ambiguous ? '/' + t.ambiguous + ' AMBIGUOUS' : '')
+      + (t.absent ? '/' + t.absent + ' absent' : '')
+      + (t.lookup_failed ? '/' + t.lookup_failed + ' lookup-failed' : '')
       + (t.skipped ? '/' + t.skipped + ' skipped' : '')
       + (t.dry ? '/' + t.dry + ' dry' : '');
   };
@@ -629,13 +722,31 @@ export async function runDexterStatPipeline(existingData = {}, config = getGameC
     console.error('[dexter-stats] *** ' + totalFailed + ' WRITE FAILURE(S) -- those rows were NOT updated. '
       + 'A non-zero count here means the payload was rejected, not that there was nothing to do. ***');
   }
+  if (totalAmbiguous > 0) {
+    console.error('[dexter-stats] *** ' + totalAmbiguous + ' AMBIGUOUS -- a scraped name matched MULTIPLE rows, '
+      + 'so nothing was written for it. Keying on name (pre-2026-07-21) would have written every match. '
+      + 'See the per-row AMBIGUOUS lines above for the ids. ***');
+  }
+  if (totalAbsent > 0) {
+    console.log('[dexter-stats] ' + totalAbsent + ' row(s) ABSENT -- scraped name not found in the table. '
+      + 'This is an extraction-quality signal (hallucinated name, rename, stale targets list, or '
+      + 'whitespace/case drift), not a write error.');
+  }
+  if (totalLookupFailed > 0) {
+    console.error('[dexter-stats] *** ' + totalLookupFailed + ' row(s) skipped -- the name index could not be '
+      + 'loaded, so no id could be resolved. These rows were NOT evaluated, not merely unchanged. ***');
+  }
   if (totalDry > 0) {
-    console.log('[dexter-stats] GATE OFF: ' + totalDry + ' core/implant row(s) would have been written. '
-      + 'Set CORE_IMPLANT_WRITES_ENABLED once name -> id keying has shipped.');
+    console.log('[dexter-stats] GATE OFF: ' + totalDry + ' core/implant row(s) resolved to a single id and '
+      + 'would have been written. CORE_IMPLANT_WRITES_ENABLED is still false pending the C1 decision on the '
+      + '204 parked rows -- the name -> id keying prerequisite has shipped.');
   }
 
   await logRefresh(totalUpdated);
 
-  // Existing four keys kept for callers; failure/dry counts added alongside.
-  return { shellsUpdated, weaponsUpdated, coresUpdated, implantsUpdated, totalFailed, totalDry, tally };
+  // Existing four keys kept for callers; the rest added alongside.
+  return {
+    shellsUpdated, weaponsUpdated, coresUpdated, implantsUpdated,
+    totalFailed, totalDry, totalAmbiguous, totalAbsent, totalLookupFailed, tally,
+  };
 }
