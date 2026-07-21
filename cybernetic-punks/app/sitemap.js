@@ -552,7 +552,18 @@ export default async function sitemap() {
           const rows = await fetchDmzSlugs(entity);
           if (!rows || rows.length === 0) continue; // no rows -> no hub, no details
           // HUB: emitted when >=1 row exists (matches its row-count index gate).
-          dmzEntityPages.push({ url: baseUrl + entity.routeBase, lastModified: new Date(), changeFrequency: 'daily', priority: 0.85 });
+          // Dated from the VERIFIED rows -- the same set the detail URLs below are
+          // built from, so the hub reports the newest child it actually advertises.
+          // No max -> no lastmod, never a build timestamp.
+          //
+          // DORMANT TODAY (2026-07-21): every DMZ entity table is empty pre-launch,
+          // so this loop `continue`s above and no hub is emitted. Fixed now anyway,
+          // beside the entity-hub fix that established the pattern, so the
+          // build-timestamp bug is not left waiting to appear when DMZ fills.
+          const dmzHubMax = maxUpdatedAt(rows.filter((r) => r.verified === true));
+          const dmzHubEntry = { url: baseUrl + entity.routeBase, changeFrequency: 'daily', priority: 0.85 };
+          if (dmzHubMax) dmzHubEntry.lastModified = new Date(dmzHubMax);
+          dmzEntityPages.push(dmzHubEntry);
           // DETAIL: VERIFIED rows only. An unverified row's page is noindex, and a
           // sitemap must not advertise a noindex URL (the same reason empty hubs and
           // empty guide categories are excluded -- see the file header).
