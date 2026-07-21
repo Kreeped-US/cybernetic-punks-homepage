@@ -442,6 +442,19 @@ element is missing.
 invites editing something already correct.** Confirm against the file before
 acting on a failed check; never re-edit on the strength of one.
 
+**Content containing apostrophes goes through the Write tool, NOT a shell
+heredoc.** Heredoc quoting has now failed THREE times in one day on prose
+containing apostrophes. Third member of the same family as the two backtick
+rules above: shell quoting silently eating content that looked correct when it
+was written. The Write and Edit tools take the string verbatim with no shell in
+the path, so they are the correct instrument for any prose destined for a file.
+
+**The operationally useful half: heredoc quoting failures ABORT AT PARSE TIME,
+before anything is written.** The file is UNTOUCHED, not half-written. **Check
+state rather than assuming a partial write** - all three failures today left a
+clean tree, so re-running after a fix is safe. Trying to repair an imagined
+partial write is how a failed edit becomes a real one.
+
 ### Forward pointer - no action now
 
 **Check 4 plus the mod_stats 86 constitute the enumerated backfill worklist the
@@ -5418,6 +5431,11 @@ verified_source from the start). Read it before any confirmation write.
   position. Use SINGLE quotes for patterns containing backticks, and verify the
   pattern reached the tool. See the CONVENTIONS block in the 2026-07-21
   provenance-check entry for the companion rule and the shared rationale.
+- **heredoc apostrophes, same family (2026-07-21):** prose containing APOSTROPHES
+  must go through the Write/Edit tools, NOT a shell heredoc — heredoc quoting
+  failed three times in one day on it. These failures ABORT AT PARSE TIME, so the
+  file is UNTOUCHED, not half-written: check state, do not repair an imagined
+  partial write. Same CONVENTIONS block for the full rule.
 
 **Session state (where things stand):**
 - **Data verification:** `confirmed_data_share` 52.1% -> **64.9%** (426/656).
