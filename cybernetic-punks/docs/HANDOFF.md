@@ -5,6 +5,134 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Update 1.1.5 applied (6 fields), and the verified_source audit
+
+### What was written
+
+Six guarded updates, each on `id` AND current value, so a concurrent edit would
+return `rows=0` rather than silently overwrite. All 6 returned `rows=1`,
+read-back 10/10.
+
+| weapon | field | old | new |
+|---|---|---|---|
+| Misriah 2442 | precision_multiplier | 1.2 | 1.0 |
+| Misriah 2442 | fire_rate | 72 | 58 |
+| Twin Tap HBR | damage | 22 | 24 |
+| Twin Tap HBR | precision_multiplier | 1.3 | 1.4 |
+| KKV-9SD | damage | 8 | 9 |
+| KKV-9SD | precision_multiplier | 1.45 | 1.29 |
+
+`patch_verified` set to `1.1.5` on **ONLY those 3 rows**. The 143 rows carrying
+`1.1.0` were left alone deliberately - most of those values were not changed by
+this patch, and relabelling them would assert a verification that never happened.
+
+**UNTOUCHED as instructed:** all shotgun damage (Misriah 11, WSTR 15, V85 20) and
+every range column.
+
+### The field-scoped citation deviation
+
+`verified_source` is a ROW-level field, but only SOME fields on each row come
+from 1.1.5. Writing a bare "Bungie Update 1.1.5 patch notes" would have asserted
+the whole row came from that document - including Misriah's `damage=11`, which it
+demonstrably does not. **That would have manufactured a TENTH UNSUPPORTED row
+while auditing the other nine.** Field-scoped citations were written instead, of
+the form "Bungie Update 1.1.5 patch notes (precision_multiplier, fire_rate);
+damage unverified - see docs/HANDOFF.md shotgun scale".
+
+### The audit: 3 SUPPORTED, 9 UNSUPPORTED, 18 UNVERIFIABLE, 1 uncited
+
+**BEFORE THIS TURN, ZERO OF 32 ROWS HAD A VERIFIABLE CITATION.** All 3 SUPPORTED
+are the ones written today.
+
+**The 9 UNSUPPORTED:** BRRT SMG and Overrun AR cite Update 1.1.0, a document that
+never mentions them. BR33 Volley Rifle, CE Tactical Sidearm, Copperhead RF,
+Impact HAR, V66 Lookout, V75 Scar and Magnum MC cite 1.1.0 for values it does not
+state.
+
+**The 18 UNVERIFIABLE are HONEST** - 16 cite tauceti.gg (third-party, verifiable
+in principle, not fetched here), 2 cite in-game inspection. They name a real
+origin that cannot be checked against a patch document. No action needed beyond
+knowing which they are.
+
+### *** THE ROOT CAUSE: PATCH NOTES ARE CHANGELOGS ***
+
+**They state DELTAS, not current state.** A weapon whose damage did not change in
+1.1.0 has no damage figure in the 1.1.0 notes. So citing a changelog as
+provenance for a full stat row is a **CATEGORY ERROR, not sloppiness** - it can
+only ever support the handful of fields that patch actually touched.
+
+**Magnum MC is the proof:** right about damage, rpm and precision because 1.1.0
+changed those; silently wrong about `mag=12` because that patch never touched it.
+One citation, correct on three fields and wrong on the fourth, with nothing in
+the schema recording the difference.
+
+`verified_source` was being used to mean "where this weapon was last written
+about" while it READS as "where these numbers came from."
+
+**ROW-LEVEL verified_source CANNOT DESCRIBE FIELD-LEVEL ORIGINS.** Recommend
+either a `verified_fields` column, or self-scoping citations as written today.
+Without one of those, every future patch-day update recreates the same
+over-claim.
+
+### What the audit did NOT establish
+
+**It did not show the 9 rows are wrong.** It showed that nothing on the site says
+whether they are right. The values may be accurate from an origin that went
+unrecorded. **`Knife`, which has NO citation at all, is in better shape than the
+nine that have one** - a blank field prompts a check; a wrong citation terminates
+inquiry.
+
+### Tool correction - FIFTH INSTANCE TODAY OF A CHECK NEEDING CHECKING
+
+The audit initially scored **D54 Battle Pistol as SUPPORTED**. False: every
+probed field on that row is `null`, so there was nothing to check and it passed
+vacuously. Prior four: the orphaned `next start` serving a stale build, the
+"expected -1" annotation on a +1 change, the broken sitemap grep reporting
+`<none>` against a live deploy, and the non-global regex that made every article
+report exactly 1 body mention. **A negative or passing result deserves the same
+scrutiny as a positive one.**
+
+### THE DAMAGE-SCALE QUESTION - RESOLVED
+
+**`weapon_stats.damage` is per-projectile throughout.** Single-projectile weapons
+match the patch-note figures exactly (Twin Tap 22, KKV 8, both confirmed against
+1.1.0 which says "Damage per bullet increased from 17 to 22"). Shotguns do not,
+because the notes quote **full-pellet totals**. 1.1.0 mentions "pellet" ONLY
+under the Shotguns heading, and states no damage value for Misriah at all - which
+is why its `damage=11` never came from the document it cited.
+
+**The conversion is NOT DERIVABLE in either direction:** 140/11 = 12.7 and
+85/15 = 5.67, neither an integer, and there is **no `pellet_count` column**.
+1.1.5 never uses the word "pellet".
+
+**NEEDS AN IN-GAME READING:** pellets per shot and displayed damage for
+**Misriah 2442, WSTR Combat Shotgun and V85 Circuit Breaker**. Two numbers per
+shotgun settles it. Until then the shotgun rows and the patch notes cannot be
+used to validate each other.
+
+### range_meters is a SHAPE mismatch, not a scale one
+
+The notes quote **two** figures per weapon - falloff start and falloff end
+("Bully's maximum range before suffering falloff reduced from 40 meters to 32
+meters and maximum damage falloff range reduced from 70 meters to 62 meters").
+There is **one** `range_meters` column. `effective_range_m` EXISTS and is **null
+on all 32 rows** - plausibly the intended second field, never populated. Bully's
+18 corresponds to neither 40 nor 32.
+
+### The render surface exposes the units gap
+
+`app/weapons/[slug]/WeaponDetailClient.js:69` renders a bare label **"Damage"**
+with no unit, directly beside "Fire Rate ... RPM" which does carry one. A reader
+comparing Twin Tap **24** against Misriah **11** would conclude the shotgun hits
+half as hard, when it hits several times harder per shot. Also emitted as a
+schema.org `PropertyValue name: 'Damage'` (`app/weapons/[slug]/page.js:239`), so
+the ambiguity reaches structured data.
+
+Damage is NOT rendered on the `/weapons` index, so there is no side-by-side grid -
+a reader must open two detail pages to hit this.
+
+---
+
 ## 2026-07-21 - Sitemap lastmod: honest dates, and a FOURTH label-vs-substance case
 
 ### The bug
