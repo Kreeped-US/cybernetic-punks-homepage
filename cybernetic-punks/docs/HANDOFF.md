@@ -5,6 +5,87 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Provenance check script (109 findings, exit-code gated)
+
+### The tool
+
+**scripts/provenance-check.mjs** - READ ONLY at runtime. Only .select() is ever
+called; no DDL, no writes. Audits verified / verified_source / patch_verified
+across the five populated tables that carry them (weapon_stats, shell_stats,
+shell_stat_values, mod_stats, unique_weapons), plus the three empty DMZ tables so
+a future run picks them up automatically.
+
+**Exits 1 on findings, 0 on clean. READY FOR CI BUT DELIBERATELY NOT WIRED IN** -
+this run establishes scale; gating comes after the backlog is worked.
+
+### Design note - PRESERVE THIS PATTERN
+
+**Check 3 imports isMatchupVerified from lib/matchups.js instead of copying the
+regex.** A copied regex would drift, and the check would start validating a rule
+the site no longer applies. Any future check should import the predicate it is
+validating rather than restating it.
+
+### Findings: 109 total
+
+| check | result |
+|---|---|
+| 1. verified=true with no source | **86, ALL in mod_stats.** Every other table clean at zero. |
+| 2. patch-note citations needing manual document review | **23** - 20 citing 1.1.0 (the original audit population), 3 citing 1.1.5 (field-scoped, would survive review) |
+| 3. matchup marker missing where matchup data exists | **0 failures** - all 7 shells with data carry it |
+| 4. format distribution | **field-scoped exists on 3 of 363 rows, all written today** |
+
+**Check 4 is the headline: the citation convention is ASPIRATIONAL, NOT
+ESTABLISHED.** 3 field-scoped, 8 compound (all shell_stats), 165 bare, 187 none.
+
+Check 2 deliberately does NOT fetch the patch documents - the Steam feed window
+reaches back only ~16 patches, so an older citation would false-positive as
+"missing" when it is merely out of window. It flags for manual review and names
+the patch.
+
+### *** DISCREPANCY - UNEXPLAINED, DO NOT GUESS ***
+
+An earlier backlog entry recorded **mod_stats as ~81 rows** confirmed without a
+source path. **The classifier reports 86.** Both numbers are recorded here and
+the delta is **UNEXPLAINED**. It is either rows added without sources since the
+earlier tally, or a counting-method difference - **this has not been
+investigated and should not be assumed either way.**
+
+**A future session should resolve it READ-ONLY before any backfill work begins.**
+Backfilling against the wrong count would either miss rows or touch rows that
+were never in scope.
+
+### *** LESSON: THE AUDIT TOOL NEEDED AUDITING ***
+
+Two bugs caught before shipping, **both checks that LOOKED LIKE THEY PASSED**:
+
+1. **The classifier matched any parenthetical as field-scoped**, counting
+   "Confirmed in-game S2 (Justin)" and "In-game weapon inspect S2 (base, no
+   mods)" as scoped citations - **over-reporting 13 where the true number was 3.**
+   Fixed by validating the bracketed text against the table's REAL column list: a
+   citation is only field-scoped if the thing in brackets is a column someone
+   could actually check. The original miscount is preserved in a code comment so
+   nobody reverts to the looser regex.
+2. **The exit-code test read grep's status through a pipe instead of node's**,
+   reporting 0 when the script correctly exits 1.
+
+A provenance auditor shipped with a false-positive classifier would have been
+quietly self-undermining - it would have reported the convention as more
+established than it is, which is the exact error class it exists to catch.
+
+### CONVENTIONS
+
+**After a pipeline, $? reports the last command in the pipe, not the script -
+test exit codes directly.** This bit twice in one day (once here, once verifying
+the sitemap deploy where a broken grep reported a live deploy as missing).
+
+### Forward pointer - no action now
+
+**Check 4 plus the mod_stats 86 constitute the enumerated backfill worklist the
+contributor program targets.** Nothing to do yet; the discrepancy above is the
+first thing to settle.
+
+---
+
 ## 2026-07-21 - Internal-link sweep: noindex filtering on reader surfaces
 
 **71 cut-article instances across 16 reader-facing surfaces, reduced to 22.**
