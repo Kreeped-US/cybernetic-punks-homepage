@@ -5,6 +5,90 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Internal-link sweep: noindex filtering on reader surfaces
+
+**71 cut-article instances across 16 reader-facing surfaces, reduced to 22.**
+Surfaces that already filtered (`/intel`, `/sitrep`, `/guides/[category]`,
+`/intel/[slug]` related) were clean at zero. Scope was all **668** noindexed
+articles, not just today's 181 - a reader cannot tell which pass cut a link.
+
+### THE HEADLINE, FIXED
+
+**7 of 8 shell pages had DEXTER build blocks that were 100% de-indexed.** Every
+"recommended build" linked to an article we had cut. **Not a broken link - a
+quality claim the site had already voted against.** Consistent with DEXTER being
+the most-cut editor (199 on 07-18, 35 today).
+
+All 8 now recommend only live articles, and the blocks refill **3 of 3**
+everywhere except Triage (3->2, non-empty). `/guides` 12->0, `/builds` 9->0.
+
+### STOPPED on two surfaces, deliberately
+
+- **`/weapons/[slug]`** - filters were APPLIED, MEASURED, then **REVERTED**.
+- **`/guides/shells/[name]`** - not applied.
+
+The blocks do not refill:
+
+```
+Misriah 2442   DEXTER 3->1   articles 6->2
+Twin Tap HBR   DEXTER 0->0   articles 3->2
+assassin       MIRANDA 10->4
+rook           MIRANDA 10->4
+triage         MIRANDA 10->7, DEXTER 6->3
+```
+
+**Shipping those would have traded a quality contradiction for a materially
+thinner page.**
+
+### *** WHY THE DIFFERENCE: THE REFILL IS A PROPERTY OF THE POOL, NOT OF FILTERING ***
+
+Shell HUB queries are **tag-scoped across all editors with small limits (6/2/3)**,
+so there is depth behind them. Weapons and shell-GUIDE queries are **narrow
+per-entity slices with larger limits (6/10) against a thinner corpus** - there is
+simply no live article to promote into the gap.
+
+This is worth remembering before assuming any future filter is free: it was free
+for shell hubs and expensive two routes away, for reasons that have nothing to do
+with the filter itself.
+
+Options if revisited: raise the limits, widen the per-entity scoping, or accept
+the thinner page as the honest state.
+
+### `/api/homepage-data:90` is NOT a link surface
+
+It is the **EditorsStrip counter** - `select('editor, created_at')` over the last
+24h - and renders no links. **Filtering it would understate what editors actually
+produced**, since a noindexed article was still written. Left alone deliberately.
+The other three homepage queries already filter.
+
+### lib/ and gather/ reads deliberately UNFILTERED
+
+An editor reading its own noindexed back-catalogue is **correct behaviour**, and
+the dedup logic needs the full corpus - filtering there would hide from the
+detector exactly the articles it exists to compare against. Applies to
+`cipher.js`, `miranda.js`, `historicalContext.js`, `qualityAudit.js`.
+
+### The mentioned-items pipeline was NOT the exposure
+
+It maps **entity tables** (uniques/shells/weapons/mods/implants/factions), not
+`feed_items`, so no cut article can feed it. **The exposure ran the other way:
+entity pages listing articles.**
+
+### Reader experience: acceptable as-is
+
+Cut articles remain fully reachable - HTTP 200, `noindex, follow`, ~1,290 words,
+**no reader-facing notice**. That is fine: they were cut for **duplication, not
+inaccuracy**, so a reader gets redundant but valid content and equity still flows.
+**The problem was never the article, it was recommending it.**
+
+### METHOD - ninth check-needing-checking today
+
+A de-index-notice check false-positived because the regex `archiv` matched **"Cryo
+Archive"** in a headline. The page has no notice. Caught only by printing the
+actual regex hits instead of trusting the boolean.
+
+---
+
 ## 2026-07-21 - Four dateModified chains fixed, and two briefed premises corrected
 
 ### Two premises in the brief were WRONG, and both corrections came from here

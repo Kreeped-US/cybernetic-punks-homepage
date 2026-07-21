@@ -110,6 +110,7 @@ export default async function ShellHubPage({ params }) {
       .select('id, headline, slug, tags, ce_score, editor, thumbnail, created_at')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .contains('tags', [shellName.toLowerCase()])
       .in('editor', ['CIPHER', 'GHOST', 'MIRANDA'])
       .order('created_at', { ascending: false })
@@ -124,6 +125,7 @@ export default async function ShellHubPage({ params }) {
       .eq('editor', 'NEXUS')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .contains('tags', [shellName.toLowerCase()])
       .order('created_at', { ascending: false })
       .limit(2),
@@ -135,6 +137,7 @@ export default async function ShellHubPage({ params }) {
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .contains('tags', [shellName.toLowerCase()])
       .order('ce_score', { ascending: false })
       .limit(3),

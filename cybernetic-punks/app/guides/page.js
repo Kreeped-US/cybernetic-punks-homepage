@@ -245,6 +245,7 @@ export default async function GuidesPage({ searchParams }) {
       .eq('editor', 'MIRANDA')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .order('created_at', { ascending: false })
       .limit(80),
 
@@ -254,6 +255,7 @@ export default async function GuidesPage({ searchParams }) {
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .order('ce_score', { ascending: false })
       .limit(4),
 
@@ -263,6 +265,7 @@ export default async function GuidesPage({ searchParams }) {
       .eq('editor', 'NEXUS')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .order('created_at', { ascending: false })
       .limit(4),
 
@@ -281,6 +284,7 @@ export default async function GuidesPage({ searchParams }) {
       .select('tags')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .overlaps('tags', canonicalTags),
   ]);
 

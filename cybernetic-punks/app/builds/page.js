@@ -209,6 +209,7 @@ export default async function BuildsPage() {
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
+      .eq('noindex', false)   // reader-facing surface: never recommend a de-indexed article
       .order('created_at', { ascending: false })
       .limit(48),
     Promise.resolve({ data: null }),
