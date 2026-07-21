@@ -32,12 +32,61 @@ import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety';
 // editors until a trusted contributor confirms it. The scraper never sets
 // verified=true and never bulk-touches rows it isn't writing.
 //
+// *** NOT UNIFORM ACROSS TABLES -- core_stats and implant_stats get a PARTIAL
+// stamp, and this is a real gap, not a formality. ***
+// Those two tables have NO `patch_verified` column (weapon_stats and shell_stats
+// do). There, the scraper can stamp `verified = false` and NOTHING ELSE:
+//   - no per-patch freshness marker on the row, so
+//   - the Phase-4 cadence hook described below does NOT exist for them. A future
+//     "re-verify rows stamped with an older patch" pass can find stale weapon and
+//     shell rows and CANNOT find stale core or implant rows.
+// Closing that needs DDL (add the column) -- it is not fixable in this file. Do
+// not read the paragraph above as claiming parity; it describes weapon_stats and
+// shell_stats fully and core_stats / implant_stats only halfway.
+//
+// HOW THIS WAS FOUND (2026-07-21): 2d6cb9c (2026-06-18) added BOTH the
+// `verified = false` and `patch_verified` lines to all four writers at once.
+// Because `patch_verified` does not exist on two of the four tables, PostgREST
+// rejected the whole payload and EVERY core/implant update failed for 33 days --
+// so the honesty stamp that commit introduced has never once landed on the two
+// tables that most needed it. The failures logged to a cron function log nobody
+// reads, and the pipeline summary line reported them as "0 cores, 0 implants
+// updated", which is also what a legitimate no-op looks like. See the summary
+// line at the end of this file -- it was changed to stop being ambiguous.
+//
 // ACTIVE_PATCH = the live patch new scrapes reflect. Marathon-scoped (this is
 // the Marathon scraper); a DMZ scraper would define its own. BUMP THIS each
 // patch -- it is the per-patch cadence hook (Phase 4): stamping the current
 // patch is what lets a future "re-verify stale rows" pass find what needs
 // rechecking after a balance patch.
 const ACTIVE_PATCH = '1.1.0.2';
+
+// *** WRITE GATE for core_stats + implant_stats -- DEFAULT OFF. READ BEFORE FLIPPING. ***
+//
+// These two writers have not successfully written since 2026-06-18 (see the header:
+// invalid `patch_verified` column). Repairing the payload RE-ARMS them. Two reasons
+// that is not automatically safe:
+//
+// 1. THE 204 PARKED ROWS. core_stats is 85/85 and implant_stats 119/120
+//    `verified = true`, and those flags are parked pending a policy decision
+//    (HANDOFF 2026-07-21, item C1). These writers set `verified = false`. Turning
+//    them on performs part of that unmade decision as a side effect, silently,
+//    on whichever rows the scraper happens to touch.
+//
+// 2. *** NAME IS NOT UNIQUE ON EITHER TABLE, AND THESE WRITERS KEY ON NAME. ***
+//    `.eq('name', row.name)` -- core_stats has 2 duplicate names over 4 rows
+//    (Predator, Hunter/Killer); implant_stats has 11 over 25 rows, INCLUDING
+//    "Pinata" x3. One scraped row would write to up to THREE rows.
+//    weapon_stats is clean (32/32 distinct), which is why its writer is ungated.
+//
+// DO NOT SET THIS TO true UNTIL THE name -> id KEYING HAS SHIPPED. Flipping it
+// first arms a fan-out writer against the parked rows. The id fix is deliberately
+// a separate commit; splitting it is only safe BECAUSE this is false.
+//
+// Default-false fails safe: doing nothing writes nothing. Deliberately a hardcoded
+// constant and not an env var -- an env var is invisible in review, varies per
+// environment, and an unset value fails dangerous.
+const CORE_IMPLANT_WRITES_ENABLED = false;
 
 // --- LAZY ANTHROPIC CLIENT ---
 let _anthropicClient = null;
@@ -352,6 +401,16 @@ Use the submit_extracted_stats tool to return findings. Submit empty arrays for 
 // --- SUPABASE WRITERS ---
 // Each writer accepts a row and only updates fields that have values.
 // Skips entirely if no writeable fields present.
+//
+// RETURN CONTRACT (changed 2026-07-21): each writer returns a STATUS STRING, not
+// a boolean. The old boolean collapsed "nothing to write" and "the write failed"
+// into the same `false`, so the caller counted both as "not updated" and the
+// summary line could not tell a total failure from a quiet no-op. That ambiguity
+// hid 33 days of failed core/implant writes.
+//   'written' -- the update succeeded
+//   'failed'  -- the update was attempted and rejected  (MUST be visible)
+//   'skipped' -- nothing to write for this row          (normal, not a problem)
+//   'dry'     -- suppressed by CORE_IMPLANT_WRITES_ENABLED
 
 function buildUpdate(row, allowedFields) {
   const update = {};
@@ -370,7 +429,7 @@ async function updateShell(row) {
   // path is unreachable; the empty allow-list is a belt-and-suspenders guard so a
   // stray shell row could still write nothing.
   const update = buildUpdate(row, []);
-  if (Object.keys(update).length === 0) return false;
+  if (Object.keys(update).length === 0) return 'skipped';
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
@@ -379,15 +438,15 @@ async function updateShell(row) {
   const { error } = await supabase.from('shell_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Shell update failed: ' + row.name + ' -- ' + error.message);
-    return false;
+    return 'failed';
   }
   console.log('[dexter-stats] Shell updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
-  return true;
+  return 'written';
 }
 
 async function updateWeapon(row) {
   const update = buildUpdate(row, ['damage', 'fire_rate', 'magazine_size', 'reload_time']);
-  if (Object.keys(update).length === 0) return false;
+  if (Object.keys(update).length === 0) return 'skipped';
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
@@ -396,27 +455,33 @@ async function updateWeapon(row) {
   const { error } = await supabase.from('weapon_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Weapon update failed: ' + row.name + ' -- ' + error.message);
-    return false;
+    return 'failed';
   }
   console.log('[dexter-stats] Weapon updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
-  return true;
+  return 'written';
 }
 
 async function updateCore(row) {
   const update = buildUpdate(row, ['effect_desc', 'ability_type', 'is_shell_exclusive', 'meta_rating']);
-  if (Object.keys(update).length === 0) return false;
+  if (Object.keys(update).length === 0) return 'skipped';
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
   update.verified = false;
-  update.patch_verified = ACTIVE_PATCH;
+  // NO patch_verified HERE -- core_stats has no such column, and including it made
+  // PostgREST reject the entire payload (see header). The stamp is partial on this
+  // table by necessity: verified=false only, no freshness marker.
+  if (!CORE_IMPLANT_WRITES_ENABLED) {
+    console.log('[dexter-stats] DRY core (gate off, nothing written): ' + row.name + ' -> ' + Object.keys(update).filter(k => k !== 'updated_at').join(', '));
+    return 'dry';
+  }
   const { error } = await supabase.from('core_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Core update failed: ' + row.name + ' -- ' + error.message);
-    return false;
+    return 'failed';
   }
   console.log('[dexter-stats] Core updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
-  return true;
+  return 'written';
 }
 
 async function updateImplant(row) {
@@ -427,19 +492,24 @@ async function updateImplant(row) {
     'stat_3_label', 'stat_3_value',
     'stat_4_label', 'stat_4_value',
   ]);
-  if (Object.keys(update).length === 0) return false;
+  if (Object.keys(update).length === 0) return 'skipped';
   update.updated_at = new Date().toISOString();
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
   update.verified = false;
-  update.patch_verified = ACTIVE_PATCH;
+  // NO patch_verified HERE -- implant_stats has no such column. Same reason as
+  // updateCore above: including it rejected the whole payload. Partial stamp.
+  if (!CORE_IMPLANT_WRITES_ENABLED) {
+    console.log('[dexter-stats] DRY implant (gate off, nothing written): ' + row.name + ' -> ' + Object.keys(update).filter(k => k !== 'updated_at').join(', '));
+    return 'dry';
+  }
   const { error } = await supabase.from('implant_stats').update(update).eq('name', row.name);
   if (error) {
     console.error('[dexter-stats] Implant update failed: ' + row.name + ' -- ' + error.message);
-    return false;
+    return 'failed';
   }
   console.log('[dexter-stats] Implant updated: ' + row.name + ' (' + Object.keys(update).filter(k => k !== 'updated_at').join(', ') + ')');
-  return true;
+  return 'written';
 }
 
 // --- MAIN EXPORT ---
@@ -517,25 +587,55 @@ export async function runDexterStatPipeline(existingData = {}, config = getGameC
   }
 
   // -- WRITE TO DB --
-  let shellsUpdated = 0, weaponsUpdated = 0, coresUpdated = 0, implantsUpdated = 0;
+  // Tally each status separately. The old code did `if (await updateX(row)) n++`,
+  // which counted a REJECTED write and a row with nothing to write identically.
+  const tally = { shells: {}, weapons: {}, cores: {}, implants: {} };
+  const run = async (rows, writer, bucket) => {
+    for (const row of (rows || [])) {
+      const status = await writer(row);
+      tally[bucket][status] = (tally[bucket][status] || 0) + 1;
+    }
+  };
+  await run(extracted.shells,   updateShell,   'shells');
+  await run(extracted.weapons,  updateWeapon,  'weapons');
+  await run(extracted.cores,    updateCore,    'cores');
+  await run(extracted.implants, updateImplant, 'implants');
 
-  for (const row of (extracted.shells || [])) {
-    if (await updateShell(row)) shellsUpdated++;
-  }
-  for (const row of (extracted.weapons || [])) {
-    if (await updateWeapon(row)) weaponsUpdated++;
-  }
-  for (const row of (extracted.cores || [])) {
-    if (await updateCore(row)) coresUpdated++;
-  }
-  for (const row of (extracted.implants || [])) {
-    if (await updateImplant(row)) implantsUpdated++;
-  }
-
+  const shellsUpdated   = tally.shells.written   || 0;
+  const weaponsUpdated  = tally.weapons.written  || 0;
+  const coresUpdated    = tally.cores.written    || 0;
+  const implantsUpdated = tally.implants.written || 0;
   const totalUpdated = shellsUpdated + weaponsUpdated + coresUpdated + implantsUpdated;
-  console.log('[dexter-stats] Pipeline complete -- ' + shellsUpdated + ' shells, ' + weaponsUpdated + ' weapons, ' + coresUpdated + ' cores, ' + implantsUpdated + ' implants updated');
+
+  const totalFailed = Object.values(tally).reduce((n, t) => n + (t.failed || 0), 0);
+  const totalDry    = Object.values(tally).reduce((n, t) => n + (t.dry    || 0), 0);
+
+  // SUMMARY LINE -- attempted/written/failed/skipped, per writer. The previous
+  // wording ("0 cores, 0 implants updated") was true during a TOTAL write failure
+  // and equally true when there was simply nothing to update, so 33 days of
+  // rejected writes read as a normal run. Every status is now on the line.
+  const part = (label, t) => {
+    const attempted = (t.written || 0) + (t.failed || 0);
+    return label + ' ' + attempted + ' attempted/' + (t.written || 0) + ' written'
+      + (t.failed ? '/' + t.failed + ' FAILED' : '')
+      + (t.skipped ? '/' + t.skipped + ' skipped' : '')
+      + (t.dry ? '/' + t.dry + ' dry' : '');
+  };
+  console.log('[dexter-stats] Pipeline complete -- '
+    + part('shells', tally.shells) + ', ' + part('weapons', tally.weapons) + ', '
+    + part('cores', tally.cores) + ', ' + part('implants', tally.implants));
+
+  if (totalFailed > 0) {
+    console.error('[dexter-stats] *** ' + totalFailed + ' WRITE FAILURE(S) -- those rows were NOT updated. '
+      + 'A non-zero count here means the payload was rejected, not that there was nothing to do. ***');
+  }
+  if (totalDry > 0) {
+    console.log('[dexter-stats] GATE OFF: ' + totalDry + ' core/implant row(s) would have been written. '
+      + 'Set CORE_IMPLANT_WRITES_ENABLED once name -> id keying has shipped.');
+  }
 
   await logRefresh(totalUpdated);
 
-  return { shellsUpdated, weaponsUpdated, coresUpdated, implantsUpdated };
+  // Existing four keys kept for callers; failure/dry counts added alongside.
+  return { shellsUpdated, weaponsUpdated, coresUpdated, implantsUpdated, totalFailed, totalDry, tally };
 }
