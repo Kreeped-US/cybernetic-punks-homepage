@@ -5,6 +5,97 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 — Corpus duplication audit: 179 noindexed (1075 -> 896)
+
+### The shape of the corpus
+
+**1,075 live, 579 (54%) with ZERO impressions, and only 32 articles earning a
+single click.** Whole corpus: 3,282 impressions, 37 clicks.
+
+### *** THE STRATEGIC NUMBER ***
+
+**16 `/uniques/` pages earn 21 clicks. 1,075 articles earn 37.**
+
+Sixteen entity pages nearly match a corpus 67x their size. This is the strongest
+evidence yet for canonical-first. Articles are 45% of site impressions but only
+32% of site clicks — the entity routes convert and the article corpus does not.
+
+### METHOD: IDF-weighted similarity is the WRONG instrument here
+
+It **down-weights common tokens**, so 29 articles about "thief shell" score LOW
+similarity to each other *precisely because* "thief" and "shell" are common. The
+measure is weakest exactly where duplication is worst — the same blind spot that
+missed vault/breaker this morning. Connected-components also chained badly below
+0.35 (one 366-article blob at 0.25).
+
+**Used `lib/coverage.js` `deriveTuple` (entity+facet) as the PRIMARY instrument**
+instead: immune to the frequency problem, and it carries canonical collision
+natively. 45% classified (489); unweighted Jaccard as a secondary pass on the
+586 unclassified, which turned out to be genuinely heterogeneous — only 44 sat in
+clusters of 4+. **The duplication is concentrated in the entity-classified half.**
+
+### MINIMAL TERM-LEVEL CANNIBALIZATION
+
+**"thief" queries total 2 impressions site-wide against 58 thief-cluster
+articles.** These articles are largely NOT ranking for their apparent subject.
+The 146-vs-38 lesson at corpus scale.
+
+**Caveat on the caveat:** the GSC query dimension covers only ~24% of page
+impressions (1,764 vs 7,247) due to privacy thresholding, so **absence of a query
+is NOT proof of no demand.** Direction is clear; magnitude is not provable.
+
+### *** THIS CUT IS HYGIENE, NOT A GROWTH PLAY ***
+
+**20 of 29 clusters have NO canonical to consolidate into** — `shell/X+tier` and
+`shell/X+build` have no route BY DESIGN (`CANONICAL_PAIRS` excludes them because
+`/shells/[slug]` is a stat reference, not a tier list). Cutting them removes
+competition but banks nothing. Only the **76 articles shadowing real canonicals**
+(`/maps/cryo-archive`, `/shells/assassin`, `/shells/rook`, `/matchups/thief`) get
+the Misery Disciple effect. **DO NOT EXPECT A TRAFFIC BUMP.**
+
+### What was cut — 179 (noindex, NOT deleted; renders `noindex, follow`)
+
+From a 195 candidate list (clusters >=5, evergreen facets only — all `news` and
+`community` excluded per coverage.js policy that community "must never be
+blocked"), with three owner adjustments:
+- **HELD 15** published within 30 days — indexing lag is real (0-30d cohort is
+  25% zero-impression vs 90% at 120d+). Revisit at 60 days.
+- **KEPT** the strongest Compiler guide (`...compiler-boss-dpmg`, 7 imp); cut the
+  other two near-identical takes.
+- **CUT 8 patch-specific articles. REASON IS "SUPERSEDED", NOT "INACCURATE"** —
+  they were accurate to the patch they analysed (post-1.0.6.2/1.0.6.3, patch
+  1.0.5). Applying the morning's method rule.
+- **CUT 32 MIRANDA articles.** Her aggregate stats are the corpus's best (11
+  clicks, lowest zero-imp rate at 48%) but **her value is concentrated in her
+  weapon-mod and guide earners, which are NOT in this list.** Seven near-identical
+  "Complete Rook Shell Guide" variants earning 5 impressions and 0 clicks between
+  them is the corpus's densest duplication. The higher bar applies per-article.
+
+Cost: **87 impressions (2.7% of corpus), ZERO clicks.** By editor: NEXUS 64,
+CIPHER 47, DEXTER 35, MIRANDA 32, GHOST 1. No cluster reduced to zero.
+
+Benchmark: 76% of the >=5 pool cut for 15% of its impressions, vs the build
+prune's 75% -> 29%. Cheaper because this pool was already deader (198 of 344 at
+zero impressions before the cut).
+
+### COMPILER RESOLVED
+
+**Pre-existing Cryo Archive endgame boss, reused in Vault Breaker
+(owner-confirmed 2026-07-21).** The pre-launch MIRANDA guides describe a REAL
+encounter players could fight — not fabricated, not superseded. One kept as the
+site's instructional Compiler coverage and as a reference for filling the
+`/modes/vault-breaker` Compiler gap after play. 13 live articles mention it in
+the headline; 9 survive.
+
+### Verified after the cut
+live corpus 1075 -> **896** (exactly -179) · all 179 `noindex=true` and still
+`is_published=true` (archive preserved) · all 179 gone from the sitemap (1,034
+`<loc>` remaining) · sampled pages render `content="noindex, follow"` · **zero
+articles with >=1 click were cut** · kept Compiler guide still indexed and in the
+sitemap · all 15 held articles still live · canonical routes all HTTP 200.
+
+---
+
 ## 2026-07-21 — Vault Breaker cluster audit: 2 cut, 2 accuracy charges WITHDRAWN
 
 Audited the article cluster competing with `/modes/vault-breaker` on launch day.
