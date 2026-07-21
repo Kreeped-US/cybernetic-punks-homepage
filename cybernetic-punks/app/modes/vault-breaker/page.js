@@ -186,6 +186,15 @@ const FAQ_ITEMS = [
     q: 'Is there a Runner Level requirement for Vault Breaker?',
     a: 'No. Vault Breaker is open at any Runner Level, and can be played Solo, Duo, or Trio, either matchmade or as a premade group.',
   },
+  // TIER 1 + TIER 2 ONLY. FAQ_ITEMS feeds the FAQPage JSON-LD, so it carries
+  // only what Bungie stated or what has actually been played. NOTHING from the
+  // "expected, not verified" tier goes in here or in any other schema -- an
+  // inference asserted as a Question/Answer pair is an inference asserted as
+  // fact to a crawler, which is worse than saying it on the page, not better.
+  {
+    q: 'Is the Compiler in Marathon Vault Breaker?',
+    a: 'Yes. The Vault Breaker Overview from Bungie names the Compiler as the culminating threat, after UESC hordes and vault security measures. The Compiler is the existing endgame boss at Vault 7 in Cryo Archive, which Vault Breaker reuses. Bungie has not described how the fight differs inside Vault Breaker.',
+  },
 ];
 
 export default function VaultBreakerPage() {
@@ -450,6 +459,130 @@ export default function VaultBreakerPage() {
             &ldquo;apply only to standard Marathon activities. Only Kit Upgrades will alter your
             loadout in Vault Breaker.&rdquo; Buy gear to take <em>out</em> of the mode; spend on
             Kit Upgrades to get stronger <em>inside</em> it.
+          </p>
+        </div>
+      </section>
+
+      {/* ── THE COMPILER ───────────────────────────────────────────────────
+          THREE TIERS OF CLAIM, and they must never be confusable. Bungie named
+          the Compiler in the 07-20 overview and described NOTHING; the base Cryo
+          Archive encounter is separately known; the rest is inference. Merging
+          those produces exactly the confident-wrong page every other site will
+          publish this week.
+
+          FIVE REDUNDANT SIGNALS mark the tier, so no single cue carries it:
+            1. eyebrow  CONFIRMED BY BUNGIE / THE CRYO ARCHIVE FIGHT /
+                        EXPECTED, NOT VERIFIED
+            2. accent   ORANGE (the page's source colour) / CYAN / grey
+            3. border   solid-left / solid-left / DASHED all round
+            4. grammar  "Bungie's overview lists" / "In Cryo Archive:" /
+                        "should ... Not yet verified"
+            5. prefix   inline citation / "In Cryo Archive:" / "Expected:"
+          The dashed border is the strongest: it reads as provisional even in a
+          screenshot with the text too small to read.
+
+          TIER 3 IS EXCLUDED FROM ALL STRUCTURED DATA -- not in FAQ_ITEMS, not in
+          eventSchema, nowhere a crawler reads. An inference asserted as a
+          Question/Answer pair is an inference asserted as fact.
+
+          DELIBERATELY ABSENT: any claim that beating the Compiler in Vault
+          Breaker withholds the S'Phticide shell style. Searched 100 Steam posts
+          / 335,660 chars for "phticide" and for any sentence linking the
+          Compiler to a reward: ZERO matches. Uncitable, therefore unpublished.
+          If a source turns up it is one Tier 1 bullet plus a fourth SOURCES
+          entry. Do NOT add it from memory.
+
+          NEW COPY IN THIS SECTION USES STRAIGHT QUOTES AND NO EM-DASHES per the
+          2026-07-21 instruction. Existing copy elsewhere on the page was left
+          alone, so the two differ typographically on purpose. */}
+      <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
+        <SectionHeader label="The Compiler" color={ORANGE} />
+
+        {/* Honesty first, above all three tiers. This IS the differentiator:
+            every competing page will assert the Vault Breaker fight confidently
+            within days, and none of them will have fought it either. */}
+        <div style={{ marginBottom: 14, padding: '12px 14px', background: DEEP_BG, border: '1px dashed ' + BORDER, borderRadius: 2, maxWidth: 780 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.45)', fontWeight: 700, marginBottom: 6 }}>
+            NOBODY HAS FOUGHT THIS YET
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+            Vault Breaker went live on July 21, 2026. At the time of writing, nobody has fought the
+            Vault Breaker version of the Compiler, us included. Bungie named it and described nothing.
+            This section separates what Bungie has stated, what the Compiler does in the base Cryo
+            Archive fight, and what Vault Breaker&#39;s ruleset implies but nobody has verified. We
+            will update it once we have fought it ourselves.
+          </p>
+        </div>
+
+        {/* TIER 1 -- ORANGE, solid left border, inline citation to SOURCES[1]. */}
+        <div style={{ marginBottom: 10, padding: '14px 16px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ORANGE, borderRadius: '0 2px 2px 0', maxWidth: 780 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: ORANGE, fontWeight: 700, marginBottom: 8 }}>
+            CONFIRMED BY BUNGIE
+          </div>
+          <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+            The Compiler appears in Vault Breaker. Bungie&#39;s{' '}
+            <a href={SOURCES[1].url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>
+              {SOURCES[1].name}
+            </a>
+            {' '}({SOURCES[1].date}) lists it as the culminating threat, after UESC hordes and vault
+            security measures. That is the entire statement. No mechanics, no arena, no rewards.
+          </p>
+        </div>
+
+        {/* TIER 2 -- CYAN, solid left border, every bullet prefixed "In Cryo Archive:".
+            ITS ATTRIBUTION IS WEAKER THAN THE SECTION LOOKS, AND SAYS SO. Checked
+            before writing: the dpmg guide first proposed as the cross-link does
+            NOT contain these mechanics at all (339 words; it only says "avoiding
+            the Compiler threat"). The article that does describe them is 2urw,
+            and it carries NO source_url. ZERO live articles mentioning the
+            Compiler cite bungie.net. Citing our own coverage as support would be
+            a chain of internal references with no external anchor -- the same
+            shape as meta_tiers reading as corroboration for shell_stats. The
+            honest anchor is first-hand play, and the closing line says that. */}
+        <div style={{ marginBottom: 10, padding: '14px 16px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + CYAN, borderRadius: '0 2px 2px 0', maxWidth: 780 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: CYAN, fontWeight: 700, marginBottom: 8 }}>
+            THE CRYO ARCHIVE FIGHT
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+            The Compiler is not new. It is the existing endgame encounter at Cryo Archive&#39;s Vault 7,
+            and Vault Breaker reuses it. In Cryo Archive, the fight works like this:
+          </p>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+            <li>In Cryo Archive: three terminals must be activated with matching symbols, which spawns a green shield bubble at the centre of the arena.</li>
+            <li>In Cryo Archive: damage phases happen inside the bubble, where the shield core is exposed and shootable.</li>
+            <li>In Cryo Archive: its attacks include lasers and tracking orbs.</li>
+            <li>In Cryo Archive: the arena is reached by completing the run to the final vault.</li>
+          </ul>
+          <p style={{ margin: '10px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+            This comes from playing the base-game encounter, not from Bungie. Bungie has published no
+            description of the Compiler fight, and no article on this site that mentions the Compiler
+            cites bungie.net. Our own{' '}
+            <Link href="/intel/marathon-cryo-archive-guide-first-steps-into-the-endgame-2urw" style={{ color: CYAN, textDecoration: 'underline' }}>
+              Cryo Archive endgame guide
+            </Link>
+            {' '}describes the same encounter, but that is our coverage rather than a source, so it is
+            offered as further reading and not as corroboration. Whether Vault Breaker changes any of
+            this is unknown.
+          </p>
+        </div>
+
+        {/* TIER 3 -- grey, DASHED all round, every bullet prefixed "Expected:".
+            Excluded from every schema on this page. */}
+        <div style={{ padding: '14px 16px', background: DEEP_BG, border: '1px dashed ' + BORDER, borderRadius: 2, maxWidth: 780 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.45)', fontWeight: 700, marginBottom: 8 }}>
+            EXPECTED, NOT VERIFIED
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>
+            Vault Breaker&#39;s ruleset implies the following. None of it has been verified in game,
+            none of it comes from Bungie, and any of it may turn out to be wrong.
+          </p>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+            <li>Expected: no rival Runners, so no third-partying and no contested exfil. This follows from the mode being pure PvE, not from anything Bungie said about the Compiler.</li>
+            <li>Expected: Sponsored Kit progression should make later attempts easier, since kit upgrades persist across runs.</li>
+            <li>Expected: in-run gear does not exfil, so a Compiler kill should pay out in Vault Data and Codex cosmetics rather than gear.</li>
+          </ul>
+          <p style={{ margin: '10px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6, fontStyle: 'italic' }}>
+            Not yet verified in game.
           </p>
         </div>
       </section>

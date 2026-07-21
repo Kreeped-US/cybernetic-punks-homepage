@@ -5,6 +5,82 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Tiered Compiler section, and: OUR OWN COVERAGE IS NOT A SOURCE
+
+### What shipped
+
+A three-tier Compiler section on `/modes/vault-breaker`: **Bungie-stated**,
+**known Cryo Archive encounter**, and **expected-not-verified**. Nobody has
+fought the Vault Breaker version, us included, and the page says so above all
+three tiers. That honesty is the differentiator: every competing page will
+assert this fight confidently within days on no better information.
+
+**Five redundant tier signals** (eyebrow label, accent colour, border, grammar,
+bullet prefix) so no reader has to decode a key and no single cue carries the
+meaning. **Tier 3 uses a dashed border** - it reads as provisional even in a
+screenshot with the text too small to read, which is how this content travels.
+
+**Tier 3 excluded from ALL structured data, verified by rendering** (six probe
+strings, all absent from the JSON-LD). Structured data carries only what is
+sourced or observed. An inference asserted as a Question/Answer pair is an
+inference asserted as fact to a crawler.
+
+**S'Phticide reward claim NOT PUBLISHED.** Searched 100 Steam posts / 335,660
+chars for any variant of "phticide" and for any sentence linking the Compiler to
+a reward: ZERO matches. True-but-uncitable does not belong on a page whose whole
+value is sourcing. The section comment records the search numbers and warns
+against adding it from memory.
+
+### *** OUR OWN COVERAGE IS NOT A SOURCE - third instance of this shape today ***
+
+The **dpmg guide was kept in the 179-article cut specifically as "the site's
+instructional Compiler coverage"**. Checked before writing this section: it is
+**339 words, YouTube-sourced, and contains NO mechanics** - two passing mentions
+("avoiding the Compiler threat", "Vaults 5-7 introduce the Compiler boss
+encounter") and nothing else.
+
+**The keep decision inferred content from a headline.** The headline said
+"Compiler Boss"; the body did not deliver one. The article that actually
+describes the fight is **2urw**, which carries **no source_url at all**.
+
+Worse, corpus-wide:
+- **ZERO live articles mentioning the Compiler cite bungie.net.** Every one is
+  YouTube-sourced or unsourced.
+- **"green shield bubble", the three-matching-icons detail, and the damage-phase
+  description appear in NO article.** They came from Justin having played the
+  base-game encounter.
+
+**The site's Compiler coverage was headline-deep; the knowledge was in the
+owner's head.** That gap was invisible until someone read the bodies.
+
+This is the same shape as `meta_tiers` appearing to corroborate `shell_stats`,
+and as the `/modes/vault-breaker` SOURCE block citing one post while drawing on
+two. Three instances in one day: **a thing that looks like corroboration,
+isn't.**
+
+The Tier 2 attribution line therefore names **first-hand play** as the anchor and
+states plainly that our own article is "offered as further reading and not as
+corroboration".
+
+### *** METHOD: A HEADLINE IS NOT EVIDENCE OF CONTENT ***
+
+**Check the body before citing an article as coverage of anything - including
+when deciding what to KEEP in a prune.** The prune's cut criteria were applied to
+bodies; the keep rationale for dpmg was applied to a headline. The asymmetry is
+the bug. A keep decision needs the same evidence standard as a cut decision, and
+arguably more, because a wrong cut is reversible by flipping `noindex` while a
+wrong keep silently certifies content nobody has read.
+
+### Build note
+
+First insertion attempt failed: a **Python heredoc silently ate the `'` escapes**
+and produced a broken JS string (`'Yes. Bungie's Vault Breaker...'`). Caught by
+lint, fixed with the Edit tool. Same family as the documented `
+`-in-heredoc
+trap. **Use Edit, not a shell heredoc, for content containing apostrophes.**
+
+---
+
 ## 2026-07-21 — PROCESS: record DDL as DONE at the moment it is confirmed
 
 **Second time in one day a completed DDL was carried forward as pending.**
