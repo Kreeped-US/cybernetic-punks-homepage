@@ -50,6 +50,31 @@ const ALL_GUIDE_CATEGORIES = [
 
 const FALLBACK_SHELL_SLUGS = ['assassin', 'destroyer', 'recon', 'rook', 'thief', 'triage', 'vandal'];
 
+// Newest `updated_at` across a set of rows, or null when none has one.
+//
+// WHY (2026-07-21): the entity HUB pages (/shells, /weapons, /uniques, /maps,
+// /mods) were built in the static array BEFORE any DB read, so they carried a
+// build timestamp while their content was weeks old -- /weapons and /uniques were
+// 49 days stale, /maps 43. That was the largest remaining false-freshness signal
+// on the site, bigger than the one fixed earlier the same day.
+//
+// An index page's honest lastmod is the newest of the rows it indexes. Every hub
+// query ALREADY selects `updated_at` for the detail URLs, so this costs no extra
+// round trip.
+//
+// RETURNS NULL, NOT A DATE, when nothing qualifies. The caller must then OMIT
+// lastmod rather than fall back to `new Date()` -- falling back is precisely the
+// bug this removes, and a hub with no rows has no honest date to report.
+function maxUpdatedAt(rows) {
+  let best = null;
+  for (const r of rows || []) {
+    const u = r && r.updated_at;
+    if (!u) continue;
+    if (best === null || u > best) best = u;
+  }
+  return best;
+}
+
 // Weapon name -> URL slug. MUST match app/weapons/[slug]/page.js.
 function weaponSlug(name) {
   return (name || '')
@@ -103,10 +128,12 @@ export default async function sitemap() {
   // when someone edits the file, so they are (c), not (b). Check the module, not
   // the route name.
   //
-  // NOT CHANGED THIS PASS: the entity hub-index routes (/shells, /weapons,
-  // /mods, /uniques, /maps). A constant is WRONG for them -- their honest
-  // lastmod is max(updated_at) across their children, which needs a query this
-  // function does not currently make for the hubs. See docs/HANDOFF.md.
+  //   (d) ENTITY HUBS -> max(updated_at) of the rows they index. FIXED
+  //                       2026-07-21 (see hubPages below). A constant would be
+  //                       wrong for an index over changing children, and a build
+  //                       timestamp was wrong by 49 days on /weapons and
+  //                       /uniques. They are emitted AFTER the DB reads now, so
+  //                       they are no longer in this static array.
 
   // (c) STATIC ROUTES -- last substantive content commit, from `git log`.
   // UPDATE THESE BY HAND when the page actually changes. A stale date here is a
@@ -127,16 +154,10 @@ export default async function sitemap() {
     { url: baseUrl + '/advisor',     changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/cradle',      changeFrequency: 'daily',   priority: 0.9 },
     { url: baseUrl + '/intel',       changeFrequency: 'hourly',  priority: 0.9 },
-    // Entity hubs: still new Date() pending the max(updated_at) work described
-    // in the policy note. Left ALONE deliberately rather than given a constant,
-    // which would be wrong for an index over changing children.
-    { url: baseUrl + '/shells',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
-    { url: baseUrl + '/weapons',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
-    // /mods = the ENTITY REFERENCE hub (app/mods/page.js), DISTINCT from the
-    // /guides/mods CATEGORY generated from GUIDE_CATEGORIES above - same split as
-    // /maps vs /guides/maps. Weekly: mod_stats changes far less than the
-    // daily-regraded shells/weapons.
-    { url: baseUrl + '/mods',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
+    // ENTITY HUBS (/shells, /weapons, /mods, /uniques, /maps) are NOT here --
+    // they are emitted as `hubPages` after the DB reads, dated from the rows
+    // they index. Adding one back to this array would silently restore the
+    // build-timestamp bug.
     // (a) FACT-DATED. /matchups = the ENTITY REFERENCE hub for the game-verified
     // shell matchup matrix (app/matchups/page.js). Weekly, like /mods: the matrix
     // changes far less than the daily-regraded shells/weapons. The 8 per-shell
@@ -146,8 +167,6 @@ export default async function sitemap() {
     //   dateModified, so before this the HUB disagreed with its own children.
     //   One constant now feeds both.
     { url: baseUrl + '/matchups',    lastModified: MATCHUP_VERIFIED_DATE, changeFrequency: 'weekly', priority: 0.85 },
-    { url: baseUrl + '/uniques',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
-    { url: baseUrl + '/maps',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     // (a) FACT-DATED. Vault Breaker: the official-sourced canonical for Marathon's
     // first PvE mode (July 21 - Aug 4, 2026). Priority 0.9 + daily while the event
     // runs -- it is a dated event page, not evergreen reference. NOTE: there is no
@@ -204,6 +223,10 @@ export default async function sitemap() {
   let dmzArticlePages = [];
   let dmzEntityPages = [];
   let activeGuideCategories = [];
+  // Newest updated_at per entity HUB, collected from the SAME rows the detail
+  // URLs are built from (see maxUpdatedAt). Stays null for any hub whose query
+  // failed or returned nothing, and a null means the hub emits NO lastmod.
+  const hubLastMod = { shells: null, weapons: null, uniques: null, maps: null, mods: null };
 
   console.log('[sitemap] starting generation, env vars present:',
     !!process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -226,6 +249,7 @@ export default async function sitemap() {
         shells ? shells.length + ' rows' : 'null',
         shellsErr ? 'error: ' + shellsErr.message : '');
 
+      hubLastMod.shells = maxUpdatedAt(shells);
       if (shells && shells.length > 0) {
         // /shells/<slug> is emitted for EVERY shell_stats row -- that route reads
         // the table directly, so every row has a page.
@@ -272,6 +296,7 @@ export default async function sitemap() {
         weapons ? weapons.length + ' rows' : 'null',
         weaponsErr ? 'error: ' + weaponsErr.message : '');
 
+      hubLastMod.weapons = maxUpdatedAt(weapons);
       if (weapons && weapons.length > 0) {
         weaponPages = weapons.map((w) => ({
           url: baseUrl + '/weapons/' + weaponSlug(w.name),
@@ -297,6 +322,7 @@ export default async function sitemap() {
         uniques ? uniques.length + ' rows' : 'null',
         uniquesErr ? 'error: ' + uniquesErr.message : '');
 
+      hubLastMod.uniques = maxUpdatedAt(uniques);
       if (uniques && uniques.length > 0) {
         uniquePages = uniques
           .filter((u) => u.slug)
@@ -326,6 +352,7 @@ export default async function sitemap() {
         maps ? maps.length + ' rows' : 'null',
         mapsErr ? 'error: ' + mapsErr.message : '');
 
+      hubLastMod.maps = maxUpdatedAt(maps);
       if (maps && maps.length > 0) {
         mapPages = maps.map((m) => ({
           url: baseUrl + '/maps/' + m.slug,
@@ -356,6 +383,7 @@ export default async function sitemap() {
         modRows ? modRows.length + ' rows' : 'null',
         modsErr ? 'error: ' + modsErr.message : '');
 
+      hubLastMod.mods = maxUpdatedAt(modRows);
       if (modRows && modRows.length > 0) {
         const bySlot = {};
         for (const m of normalizeModRows(modRows)) {
@@ -555,6 +583,32 @@ export default async function sitemap() {
     priority: 0.65,
   }));
 
+  // ── (d) ENTITY HUBS -- dated from the rows they index ────────────────────
+  // Emitted HERE, after the DB reads, because a hub's honest lastmod is the
+  // newest of its children and that is not known until the queries return.
+  //
+  // NO BUILD-TIME FALLBACK, deliberately: when a hub has no max (query failed or
+  // zero rows) the entry OMITS lastmod entirely. next/sitemap's truthiness guard
+  // then emits no <lastmod> element. Falling back to `new Date()` is the exact
+  // bug being removed -- a failed query must not be reported as fresh content.
+  //
+  // priority/changeFrequency preserved verbatim from the static array they left.
+  // /mods is the ENTITY REFERENCE hub (app/mods/page.js), DISTINCT from the
+  // /guides/mods CATEGORY -- same split as /maps vs /guides/maps; do not conflate.
+  const HUBS = [
+    ['/shells',  hubLastMod.shells,  'daily',  0.85],
+    ['/weapons', hubLastMod.weapons, 'daily',  0.85],
+    ['/mods',    hubLastMod.mods,    'weekly', 0.85],
+    ['/uniques', hubLastMod.uniques, 'weekly', 0.85],
+    ['/maps',    hubLastMod.maps,    'weekly', 0.85],
+  ];
+  const hubPages = HUBS.map(([route, max, cf, pr]) => {
+    const entry = { url: baseUrl + route, changeFrequency: cf, priority: pr };
+    if (max) entry.lastModified = new Date(max);
+    return entry;
+  });
+  console.log('[sitemap] hub lastmod:', JSON.stringify(hubLastMod));
+
   const shellPages = dbShellPages.length > 0 ? dbShellPages : fallbackShellPages;
 
   // DMZ network section, gated on dmz.indexable (SEO exposure) -- NOT dmz.launched.
@@ -588,5 +642,5 @@ export default async function sitemap() {
     'dmz=' + dmzPages.length,
     'dynamic=' + dynamicPages.length);
 
-  return [...staticPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...uniquePages, ...mapPages, ...modSlotPages, ...matchupPages, ...dmzPages, ...dynamicPages];
+  return [...staticPages, ...hubPages, ...guideCategoryPages, ...shellPages, ...weaponPages, ...uniquePages, ...mapPages, ...modSlotPages, ...matchupPages, ...dmzPages, ...dynamicPages];
 }
