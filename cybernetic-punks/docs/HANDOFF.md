@@ -24,6 +24,25 @@ that confirms it.** Do not leave it in the open list "until the next update".
 The entry that announces the DDL is the entry that must be edited — not a new
 one appended, since the open list is what future sessions read first.
 
+### *** A CORRECTION IS NOT DONE WHEN IT IS COMMITTED — IT IS DONE WHEN IT IS ON MAIN ***
+
+**Both stale-DDL incidents today were live on `main` while a fix existed
+elsewhere** — the first as an uncorrected entry, the second as a correction
+sitting on an unpushed branch. **From the reader's side the failure mode is
+identical, and the reader is the point.** A fix nobody can see is not a fix.
+
+The second one is the sharper lesson because the work was actually done: the
+entry was rewritten, verified against the database, and committed — and the open
+list that anyone actually reads still said `DDL PENDING (owner runs)`. It took a
+second report of the same staleness to surface it.
+
+**WORKING AGREEMENT (2026-07-21, standing for the session):** HANDOFF-only
+commits do not need a separate push instruction — write, commit, merge, push in
+one go, then report what landed. The gated-diff requirement stays for CODE
+changes, because that gate exists so a diff can be reviewed; it should not apply
+to documentation of decisions already made. Gating docs behind a second
+round-trip is exactly what stranded this correction.
+
 **And VERIFY before recording DONE.** Both corrections today were verified
 against the database rather than taken on report (`42703` on the dropped column
 plus a control select; the OpenAPI schema plus a live select for the new ones).
