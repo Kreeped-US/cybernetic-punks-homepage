@@ -178,7 +178,7 @@ wrong meaning.
 
 ---
 
-## 2026-07-20 — meta_tiers.holotag_tier REMOVED from code (item 2; DDL still mine to run)
+## 2026-07-20 — meta_tiers.holotag_tier REMOVED from code (item 2; DDL DONE 2026-07-21)
 
 Cleared every `meta_tiers.holotag_tier` code reference so the column can be
 dropped. 0 of 40 rows ever set — dead from inception, same failure shape as the
@@ -210,12 +210,23 @@ entire dead **HOLOTAG-FLAGGED** prompt section in `buildHolotagPrompt`
   already renders `shell.holotag_tier_recommendation`** (ShellDetailClient:318).
   So deleting the two dead badges loses no information a user could ever see.
 
-**ORDERING CONSTRAINT for the DDL:** this code removal must land BEFORE
-`ALTER TABLE meta_tiers DROP COLUMN holotag_tier;`. The cron write of
-`holotag_tier` is now gone, so once merged the next cron run no longer
-references the column — but if the DROP runs while the old code is still
-deployed, the next cron insert errors on a missing column. Merge this, deploy,
-then DROP.
+**DDL DONE — `ALTER TABLE meta_tiers DROP COLUMN holotag_tier;` was run by
+Justin on 2026-07-21 and VERIFIED gone the same day.** Verification, not
+assumption: selecting the column returns Postgres `42703 column
+meta_tiers.holotag_tier does not exist`, a control select on the same table
+succeeds (so the error is the column, not an unreachable table), and `select *`
+returns `game_slug, id, name, note, ranked_note, ranked_tier_solo,
+ranked_tier_squad, tier, trend, type, updated_at` — no `holotag_tier`. Nothing
+further is owed on this item.
+
+The ordering constraint it was held for (kept for the record, now satisfied): the
+code removal had to land BEFORE the DROP, because a DROP against still-deployed
+code that writes the column errors the next cron insert. Code merged and deployed
+first, then the DROP. That sequence is the reusable part.
+
+NOTE the mirror columns `ranked_tier_solo` / `ranked_tier_squad` / `ranked_note`
+are STILL in the table (visible in the column list above). They were NULLED, not
+dropped — a separate open item, and not to be confused with this one.
 
 ---
 
@@ -559,7 +570,7 @@ fetch-but-unused selects:**
   base_speed renders only in ShellDetailClient via `select('*')` + advisor) -> removed base_speed
   only. base_health/base_shield kept where used.
 
-### Item 2 -- holotag_tier: HELD for DDL (mine to run)
+### Item 2 -- holotag_tier: DDL DONE 2026-07-21 (was HELD)
 `meta_tiers.holotag_tier` is 0 of 40 rows, ever. Real data is
 `shell_stats.holotag_tier_recommendation`. **Full surface**: cron WRITES it (`cron:637`), prompt
 schema ALLOWS it (`editorCore:223`), read by `MetaClient:947` / `RankedClient:404` /
@@ -567,9 +578,9 @@ schema ALLOWS it (`editorCore:223`), read by `MetaClient:947` / `RankedClient:40
 HOLOTAG-FLAGGED prompt section returns ZERO rows always (dead, like the old weapon queries).
 `advisor/route.js:295` is a DIFFERENT holotag_tier (build-advisor output) -- MUST NOT touch.
 
-**DDL to drop (owner runs):**
+**DDL — RUN AND VERIFIED 2026-07-21. Nothing outstanding here:**
 ```sql
-ALTER TABLE meta_tiers DROP COLUMN holotag_tier;
+ALTER TABLE meta_tiers DROP COLUMN holotag_tier;   -- DONE 2026-07-21
 ```
 **Coupled code changes to apply WITH the drop (so the cron write does not error):** remove
 `holotag_tier` from the cron write (`cron:637`), the prompt schema (`editorCore:223`), the selects
