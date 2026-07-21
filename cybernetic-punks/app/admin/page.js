@@ -242,7 +242,7 @@ const SCHEMAS = {
   // Order: identity (name -> slug) first, then the type-specific facts, then
   // provenance/verification last. game_slug is omitted -- the DB defaults it to
   // 'dmz'. id/created_at/updated_at are DB defaults (the form strips them).
-  // `verified` defaults to FALSE for dmz_ tables (see buildFormDefaults) so a new
+  // `verified` defaults to FALSE for every table (see buildFormDefaults) so a new
   // row is never silently confirmed. `autoSlug` derives the slug from the name.
   dmz_keys: [
     { key: 'name',               label: 'Name',               type: 'text',     required: true, placeholder: 'e.g. Crane Control Room Key' },
@@ -475,10 +475,16 @@ function buildFormDefaults(activeTab, stickyValues) {
       defaults[f.key] = stickyValues[f.key];
       return;
     }
-    // verified defaults FALSE for game_ AND dmz_ entity tables -- a new row must
-    // never be silently confirmed (the honesty gate + the index gate). Other
-    // boolean fields keep their true default.
-    if (f.type === 'boolean') defaults[f.key] = (activeTab && (activeTab.indexOf('game_') === 0 || activeTab.indexOf('dmz_') === 0) && f.key === 'verified') ? false : true;
+    // `verified` defaults FALSE on EVERY table -- a new row must never arrive
+    // pre-ticked. It is a claim about evidence, not a convenience default
+    // (the honesty gate + the index gate).
+    // Scoped by FIELD NAME, not by table prefix: the old game_/dmz_ prefix guard
+    // left core_stats, implant_stats and weapon_stats pre-ticking it. The
+    // 2026-07-21 audit found 204 verified rows across the first two, of which the
+    // individually-timestamped majority match this mechanism (a microsecond-
+    // clustered minority came from somewhere else and is NOT explained by the
+    // form). Other boolean fields keep their true default.
+    if (f.type === 'boolean') defaults[f.key] = f.key === 'verified' ? false : true;
     else if (f.nullableSelect) defaults[f.key] = f.options && f.options[0] === 'None' ? NULLABLE_SELECT_FACTION_NULL : NULLABLE_SELECT_NULL_VALUE;
     else defaults[f.key] = '';
   });
