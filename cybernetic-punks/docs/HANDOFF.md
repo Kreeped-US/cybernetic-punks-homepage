@@ -31,12 +31,33 @@ batch-set values are even self-consistent. **They were not.**
 
 ### 2. THE FLIPPED SIX - the only record of which rows moved
 
-**PROVENANCE OF THIS TABLE - RECONSTRUCTED POST-FLIP, stated plainly.** No id list
-was captured before the UPDATE. These ids were resolved **after** the flip by name.
-Soundness: **all six names are unique in `core_stats`** (the table has exactly two
-duplicate names, Predator and Hunter/Killer, neither of them here), so the join is
+**PROVENANCE OF THIS TABLE - RECONSTRUCTED POST-FLIP, NOT YET DIFFED AGAINST THE
+CAPTURE THAT EXISTS.**
+
+*How it was built:* these ids were resolved **after** the flip by name. Soundness:
+**all six names are unique in `core_stats`** (the table has exactly two duplicate
+names, Predator and Hunter/Killer, neither of them here), so the join is
 deterministic; `created_at` was not touched by the UPDATE. **Post-flip these six are
 otherwise indistinguishable from the four rows that were already universal.**
+
+*Its verification status:* ~~No id list was captured before the UPDATE.~~
+**CORRECTED 2026-07-21 - that sentence was FALSE.** A **pre-flip capture DOES
+exist**: the query output including ids was run in the Supabase SQL editor and
+**recorded in the planning chat transcript before the UPDATE ran.** It was **not
+supplied** to the session that wrote this entry, so **the reconstruction has NOT
+been diffed against it.**
+
+> **STATUS: UNVERIFIED-BUT-VERIFIABLE.** That is a third state, and it is not the
+> same as either of the two it sits between. **Not verified** - no comparison has
+> been performed, and nothing here may be read as one. **Not unverifiable** - the
+> authoritative record exists and the check remains available to any later session
+> that is handed it. The original sentence collapsed this into "unverifiable",
+> which understated what is recoverable and would have discouraged a check that can
+> still be done.
+
+**Contrast with the 86-row `mod_stats` list**, which was reconstructed the same way
+and *was* diffed against its capture (0 differences on all 86 ids). **Same method,
+different verification status. Do not read one as evidence for the other.**
 
 | # | id | name | rarity | required_runner | created_at |
 |---|---|---|---|---|---|
