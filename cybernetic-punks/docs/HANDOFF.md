@@ -5,6 +5,40 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 — PROCESS: record DDL as DONE at the moment it is confirmed
+
+**Second time in one day a completed DDL was carried forward as pending.**
+
+1. `meta_tiers.holotag_tier` DROP — recorded as open in TWO places after it ran.
+2. `coverage_shadow` `dup_unigram_tokens` / `dup_bigram_tokens` — recorded as
+   "DDL PENDING (owner runs)" after it ran.
+
+Both were corrected only when someone noticed and asked. Neither caused damage,
+but the failure mode is real: **a stale "pending" entry is indistinguishable from
+a genuine one**, so the next session either redoes finished work or, worse,
+treats the whole open list as untrustworthy and stops reading it. An index that
+lies about state is worse than no index.
+
+**THE RULE: when a DDL is confirmed run, edit the HANDOFF entry in the SAME turn
+that confirms it.** Do not leave it in the open list "until the next update".
+The entry that announces the DDL is the entry that must be edited — not a new
+one appended, since the open list is what future sessions read first.
+
+**And VERIFY before recording DONE.** Both corrections today were verified
+against the database rather than taken on report (`42703` on the dropped column
+plus a control select; the OpenAPI schema plus a live select for the new ones).
+Recording a false DONE is strictly worse than a stale PENDING — pending work gets
+re-checked, "done" work does not.
+
+Corollary worth keeping: **state the ordering constraint when the DDL is
+proposed, not after.** `holotag_tier` needed code deployed BEFORE the DROP (the
+cron write would error on a missing column); the `coverage_shadow` adds were the
+reverse — code could ship first because the insert fails open. Same shape of
+task, opposite orderings, and getting it backwards breaks production in one
+direction only.
+
+---
+
 ## 2026-07-21 — Article #5 "all modes" corrected + THE METHOD RULE REFINED
 
 One-word body fix to the last confirmed live accuracy error, and a **third
@@ -182,12 +216,23 @@ now, not weeks already banked.
 noindex filter, deliberately — a noindexed article is still a real duplicate
 target). So the 179-article cut did not move the calibration at all.
 
-**DDL PENDING (owner runs).** Until then the insert fails and the probe logs
-`persist failed (non-fatal)` — fail-open by design, generation unaffected:
+**DDL DONE — run by Justin 2026-07-21 and VERIFIED the same day.** Both columns
+exist as `text[]`, matching `dup_rare_tokens`. Nothing outstanding here.
 ```sql
-ALTER TABLE coverage_shadow ADD COLUMN dup_unigram_tokens text[];
-ALTER TABLE coverage_shadow ADD COLUMN dup_bigram_tokens  text[];
+ALTER TABLE coverage_shadow ADD COLUMN dup_unigram_tokens text[];  -- DONE 2026-07-21
+ALTER TABLE coverage_shadow ADD COLUMN dup_bigram_tokens  text[];  -- DONE 2026-07-21
 ```
+Verified two independent ways, not assumed: the PostgREST OpenAPI schema reports
+both as `type=array format=text[]`, and a live `select` on both succeeds while a
+control select on a known column also succeeds (so the pass is not a false
+positive from an unreachable table). Full `dup_*` set is now
+`dup_rare_tokens, dup_unigram_tokens, dup_bigram_tokens, dup_shared_count,
+dup_matched_id, dup_matched_editor, dup_match_count`.
+
+The fail-open path this replaced (kept for the record): before the DDL the insert
+failed and the probe logged `persist failed (non-fatal)`, leaving generation
+unaffected. That is why the code could ship first — the reverse of the
+`holotag_tier` ordering constraint, where the DROP had to follow the deploy.
 
 ### NOT built, deliberately
 - **(b) entity+facet tuple collision.** Verified useless for this failure: all
