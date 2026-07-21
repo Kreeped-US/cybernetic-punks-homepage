@@ -5,6 +5,90 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 — Vault Breaker cluster audit: 2 cut, 2 accuracy charges WITHDRAWN
+
+Audited the article cluster competing with `/modes/vault-breaker` on launch day.
+Proposed 4 cuts, **cut 2** — two of my own accuracy charges did not survive a
+re-read. The withdrawals are the more useful record here than the cuts.
+
+### The numbers
+
+7 headline articles + the canonical: **146 impressions, ZERO clicks.** The
+canonical holds the **BEST position (6.81) while carrying the FEWEST impressions
+(32)** — the profile of a page held down by its own siblings.
+
+**ARITHMETIC CAVEAT (Justin's catch, and it reframes the case).** Total VB *query*
+impressions site-wide are only **38**, while the cluster *pages* total **146**. So
+most of these articles' impressions come from NON-VB queries. Cannibalization on
+VB terms specifically is much smaller than the raw page totals suggest, and the
+canonical likely already wins most VB query traffic. **The cuts are justified on
+honesty grounds, not SEO.** Do not cite the 146 as a cannibalization figure.
+
+Also unprovable from the data we had: `Pages.csv` and `Queries.csv` are separate
+GSC dimension exports with **no page-query join**, so "which page earns which
+query" could not be answered — only inferred from position gaps. Pull the joined
+view before cutting anything on ranking grounds.
+
+### CUT (noindex=true, reversible; NOT deleted)
+
+- **#1 GHOST 06-25 "Big Week, But the Lobby Has Notes"** — VB headline, **zero VB
+  mechanics** in 661 words. Verified absent: Vault Data, Sponsored Kit, Armory,
+  exfil, Cryo Archive, PvE. Two passing mentions. A dev-week roundup wearing a
+  Vault Breaker headline. Headline/content mismatch is its own honesty problem.
+- **#7 NEXUS 07-17 "Mid-Season 2 Update"** — near-duplicate of #6 one day later,
+  same three subjects in the same order. Both accurate; **#6 cites bungie.net,
+  #7 cites a YouTube video.** Source attribution is the tiebreak.
+
+`noindex` renders as `noindex, follow`, so the archive and link graph survive.
+
+### *** TWO ACCURACY CHARGES WITHDRAWN ON RE-READ — BOTH MINE ***
+
+- **#3 "It's prestige progression"** refers to the **CRADLE EVOLUTION SYSTEM**,
+  which the preceding sentence names as *"the other mid-season story"* — NOT to
+  Vault Breaker. And the claim is correct: Cradle Evolution resets a *maxed*
+  Cradle, so "for players approaching the Cradle ceiling" describes it accurately.
+  The article **never mentions Runner Level at all**, so it cannot contradict
+  *"regardless of your Runner Level"*. **A pronoun was read as pointing at the
+  wrong antecedent.**
+- **#2 was published 2026-06-25, THREE WEEKS BEFORE the 07-16 preview it was
+  judged against.** The Tier 1/Tier 2 split and the "designated rewards" language
+  did not exist publicly yet. Its "loadout advantage" claim also refers to
+  **standard modes**, which the preview grants — the footnote only restricts
+  loadouts INSIDE Vault Breaker.
+
+### *** METHOD RULE: do not judge pre-announcement content against a later announcement. ***
+
+Check **publish date against source date** before calling a claim wrong. This is
+a live risk for the corpus audit, where much of what gets reviewed is dated
+speculation that was accurate to what was knowable when written. Judging it by a
+document published later manufactures errors that were never made.
+
+Companion rule, from the #3 miss: **when a claim hinges on a pronoun, resolve the
+antecedent from the surrounding sentences before ruling on it.** Quoting a
+sentence in isolation is how the wrong subject gets convicted.
+
+### Remaining live accuracy error — exactly ONE
+
+**#5 "Vault Data converts into gear usable across all modes"** contradicts the
+preview's footnote (Armory purchases apply to standard activities only; only Kit
+Upgrades alter your VB loadout). **#5 is KEEP-and-FIX**, corrected after play.
+Kept because its subject is the Cryo Archive map, a distinct intent.
+
+**#4 kept despite being the highest-impression VB page**: 76 impressions exceeds
+the entire 38-impression VB query pool, so it ranks primarily for BUILD queries.
+It is a build article that mentions VB, not a VB competitor.
+
+### The detector blind spot, predicted then observed
+
+**#6 and #7 are a cross-editor near-duplicate one day apart** — exactly the
+failure the rare-token detector cannot see, since `vault` (idf 4.15) and `breaker`
+(idf 4.80) both sit under the 5.0 threshold. **The detector goes blind to a
+subject once prior coverage has made its tokens common — which is precisely when
+clustering is most likely.** Predicted in the morning's launch-protection report,
+then found in the data the same day.
+
+---
+
 ## 2026-07-21 — Vault Breaker launch day: cron skipped, canonical corrected
 
 Marathon's first PvE mode went live today. Two shipped changes, both defensive.
