@@ -5,6 +5,226 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - SCOPE CORRECTIONS, and the THIRD flag mechanism (form default)
+
+Corrects four statements in the `127275d` entry and records the arc that postdates
+it. **Documentation + one code fix (`3d9d928`). No data writes, no DDL.**
+
+### B1. FORWARD MEASUREMENT CONFIRMED THE REMEDIATION
+
+`scripts/provenance-check.mjs` re-run at `0fb0339`. **Five predictions recorded
+BEFORE the run, so this was a test rather than an observation. All five held:**
+
+| | predicted | actual |
+|---|---|---|
+| check 1 (verified, no source) | 86 -> **0** | 0, on all five tables |
+| check 2 (patch-note citations) | **23**, unchanged | 23 (13 + 1 + 9) |
+| check 3 (matchup marker) | **0**, unchanged | 0 of 7 with data |
+| TOTAL | 109 -> **23** | 23 |
+| exit code | still **1** | 1 (read directly, not through a pipe) |
+
+**This is what the pre-backfill gate was replaced with, and it worked as designed:**
+a deterministic re-run against a recorded baseline settled the question in one
+command - no archaeology, and no dependence on the timestamp column that does not
+exist.
+
+**WHAT DID *NOT* MOVE - the honest half.** `mod_stats` check 4 still reads **17
+bare / 186 none**, unchanged. The remediation flipped **`verified`**, not
+**`verified_source`**. The 86 became **honestly unverified; they did not acquire
+sources.** The citation-format picture is identical because nothing about it was
+fixed.
+
+### B2. *** THE MEASUREMENT WAS SCOPED TOO NARROWLY - the error that drove this arc ***
+
+A follow-up measurement reported **"requiring a source would move zero rows
+today"**. It was taken across **five** tables, because an earlier brief named those
+five. **`verificationState()` serves nine.**
+
+**The figure was true of what it measured and false of what it was used to claim.**
+The real number is **204**.
+
+**SAME FAMILY as the ~81 misattribution and as A4 below:** a correctly-executed
+count, carried out of the scope it was valid in and used to answer a wider
+question. The count was never wrong. The sentence around it was.
+
+**THE RULE THIS EARNS:** *when a measurement is scoped by a brief rather than by
+the thing being measured, the scope must travel with the number.* "Zero rows would
+move" should have been written "zero rows would move **in the five tables carrying
+`verified_source`**" - at which point the gap is visible on the page.
+
+### B3. THE FOUR OUT-OF-SCOPE TABLES, as audited (read-only)
+
+| table | rows | `verified=true` | has `verified_source`? | would move |
+|---|---|---|---|---|
+| `core_stats` | 85 | **85** | **no column** | **85** |
+| `implant_stats` | 120 | **119** | **no column** | **119** |
+| `cradle_nodes` | 84 | 0 | no column | **0** |
+| `ammo_stats` | 5 | 0 | no column | **0** |
+
+**This is a TWO-table question, not a four-table one.** `cradle_nodes` and
+`ammo_stats` carry zero migration cost - and note **they are not empty** (84 and 5
+rows); the earlier expectation that they were was wrong on row count and right only
+on effect.
+
+- `core_stats` and `implant_stats` have **no `verified_source`, no
+  `patch_verified`, no `source_url`.**
+- `notes` is **0/85 and 0/119 non-blank** on verified rows. The column exists and
+  is entirely empty exactly where provenance would live.
+- `implant_stats.description` is **73/119 populated but 0 provenance hits** -
+  gameplay prose, not sourcing.
+
+**THE ONE REGEX HIT, AND WHY IT WAS REJECTED:** the free-text scan returned a
+single match in `core_stats.effect_desc` - *Restorative Overflow, "Using a **patch
+kit** briefly increases your hardware…"*. That matched on `/patch/` inside **"patch
+kit", the in-game healing item.** Effect text, not a citation. **Recorded as a
+false positive rather than counted**, because one unexamined hit is how a zero
+becomes a one.
+
+**NO `SOURCE_AGREED` LANDING ZONE.** Under a source-requiring predicate all 204 go
+**`CONFIRMED -> UNCHECKED` directly** - the hardest hedge, whose instruction is
+*"You MUST NOT state its precise numbers as fact."* Not a soft downgrade: neither
+table has the `patch_verified` column the middle branch reads.
+
+### B4. CAUSE OF THE 204 - A THIRD MECHANISM, and it is NOT uniform
+
+**`app/admin/page.js` defaulted every boolean to `true`**, with a `false` exception
+for `verified` scoped by **TABLE-NAME PREFIX** (`game_` / `dmz_`) rather than by
+field name. `core_stats`, `implant_stats` and `weapon_stats` match neither prefix
+and expose `verified` as an editable boolean, so **it arrived at the create form
+pre-ticked** and was POSTed explicitly by the generic writer. The DB default
+(**`false`, confirmed on all nine tables**) never got a chance to apply.
+
+**So the flag recorded "a human saved this row through the form", NOT "a human
+confirmed it in-game."** That is a third mechanism - weaker than a verification
+pass, different in kind from a bulk SQL set, and it must not be rounded toward
+either.
+
+**NOT UNIFORM - the form explains the majority, not the whole:**
+
+- **~143 March rows are individually timestamped** (63 and 81 distinct values) -
+  one insert at a time, the shape a form produces. **These match the mechanism.**
+- **61 rows on 2026-06-05 sit in FOUR microsecond-identical clusters** (23, 22, 10,
+  6). **The admin route inserts one row per call** (`.insert(row).select().single()`)
+  and **cannot** produce those. Something batched wrote them. **It is not
+  identified.**
+
+**2026-06-05 is the same date as the `mod_stats` cluster** (81 of 86, 22 sharing a
+microsecond). **The coincidence is RECORDED, NOT RESOLVED.** The archaeology on
+that session already dead-ended once - the statement is unrecoverable and the
+author does not recall it. Recording the date as a lead, not as a finding.
+
+### B5. *** THE DESIGN PRINCIPLE - the transferable half ***
+
+`weapon_stats` sat on the **same** side of the prefix guard and was **equally**
+pre-ticked - yet it has **zero** unsourced verified rows. The difference is not
+discipline. **It exposes `verified_source` alongside `verified`, so the click that
+ticks the box demands a source in the same act.**
+
+> **RULE: a truth flag and its justification must be a single UI act.**
+> **Split them and the flag drifts free of the claim.**
+
+`core_stats` and `implant_stats` got the pre-ticked box with **no source field to
+fill**, because the column does not exist. Same guard, same default, opposite
+outcome - and the variable is whether the interface made the claim and its basis
+inseparable.
+
+### B6. THE FIX SHIPPED - `3d9d928`
+
+Boolean default **scoped by field name, not table prefix**: `verified` now defaults
+`false` on **every** table.
+
+```js
+- if (f.type === 'boolean') defaults[f.key] = (activeTab && (activeTab.indexOf('game_') === 0 || activeTab.indexOf('dmz_') === 0) && f.key === 'verified') ? false : true;
++ if (f.type === 'boolean') defaults[f.key] = f.key === 'verified' ? false : true;
+```
+
+**Verified WITHOUT writing a row.** A scratchpad harness (**not committed**)
+extracts and evaluates the **real** source text of `SCHEMAS` and
+`buildFormDefaults` with the real local constants - **no reimplementation, no
+stubs**, because a paraphrase that agrees with itself proves nothing. Before/after:
+**207 keys across 20 tables compared, exactly 3 differ** - `weapon_stats.verified`,
+`core_stats.verified`, `implant_stats.verified`, each `true -> false`. No other
+boolean default moved.
+
+**Five guard assertions passed, including one that reproduced the bug on HEAD
+before measuring the fix** - if the before-state had not shown the three pre-ticked
+`true`s, the harness would have been wrong, not the finding. Four lint issues
+**confirmed pre-existing at HEAD** (same 2 errors + 2 warnings, line numbers shifted
+by the +6 comment lines) rather than assumed pre-existing.
+
+**STATED PLAINLY: THIS FIXES THE FAUCET, NOT THE BUCKET. No stored value changed.
+The 204 existing rows are untouched and still read `CONFIRMED` to the editors.**
+
+### B7. EXPOSURE, as established
+
+Both tables are in **`editorCore.js:654-655`** and the **advisor's**
+(`app/api/advisor/route.js:63, :71`) select sets, **both with `verified`
+selected**.
+
+**All 204 currently reach the five editors and the advisor as `CONFIRMED`, with an
+empty tag, under a `VERIFICATION_NOTE` instructing the model *"No marker -
+confirmed in-game. State the number as fact, no hedge."***
+
+**No public route renders a verified badge from either table.** Every public select
+(`/builds`, `/shells/[slug]`, `/join/intake`, `/guides/shells/[name]`,
+`/intel/[slug]`) omits `verified` entirely.
+
+### B8. COVERAGE GAP IN THE AUDIT TOOL
+
+`provenance-check.mjs` iterates **eight** tables: the five carrying
+`verified_source` plus the three DMZ tables. **`core_stats`, `implant_stats`,
+`cradle_nodes` and `ammo_stats` are outside its coverage.**
+
+**The script's own comment is accurate as written** - it scopes itself to *"the
+five populated tables carrying `verified_source`"*, and check 1 keys on a column
+these four do not have. **The gap is in framing, not in code.**
+
+**CONSEQUENCE: it audits provenance for 363 of the 657 rows `verificationState()`
+serves - and the 204 that would move are in the 294 it never looks at.** A green
+run on this tool is not a statement about the corpus.
+
+### B9. THE METRIC, forward-looking, predicate attached
+
+**Predicate: `confirmed_data_share` = share of rows across the 9 STAT_TABLES where
+`verificationState(row)` returns `CONFIRMED`, i.e. `verified === true` alone,
+unscoped by source.**
+
+- **NOW: 365/657 = 55.6%.**
+- **Exactly 204 of that 365 are the `core_stats` + `implant_stats` rows.**
+- **If they were flipped: 161/657 = 24.5%** - and **161 is precisely the sourced
+  population of the five tables** (16 + 8 + 104 + 17 + 16).
+
+**Recorded now so the movement is not a surprise later. NOTHING IS BEING FLIPPED.**
+The arithmetic closing exactly on 161 is the point: it means the remaining
+confirmed population would be **entirely** rows that carry a source.
+
+### C. OPEN - each flagged NOT resolved
+
+- **C1. The 204 rows.** Cause established as far as code can establish it **for the
+  March majority**; the **June 5 clustered minority is unexplained**. No
+  remediation decided. **Unlike `mod_stats`, there is nowhere to record provenance
+  without DDL** - the remediation shape used on the 86 does not exist here.
+- **C2. `lib/gather/dexter-stats.js` - REAL DEFECT, separate pass.** `updateCore`
+  and `updateImplant` write **`patch_verified`** to two tables that **lack the
+  column**, so every such call fails at PostgREST. **`app/api/advisor/route.js:60`
+  carries a comment naming this exact hazard** (*"Requesting the missing column
+  would error the query"*) and was fixed; **the gather script was not.**
+  **Consequence: the scraper's own `verified=false` honesty stamping has never
+  landed on those two tables.** Established from **schema + code, not tested** -
+  testing it requires a write.
+- **C3. `shield_compatible` and `is_shell_exclusive`** still default `true` and
+  both assert **game facts nobody checked** - the same shape as the `verified`
+  default, one field over. **Named and deliberately excluded from `3d9d928`**; they
+  get their own pass, not a ride-along.
+- **C4. Whether `verificationState()` should require a source. PARKED.** The "zero
+  migration cost" basis is **void per B2**; the real cost is **204 rows**, and the
+  policy for the columnless tables has **no measured basis yet**.
+- **C5. Carried forward, unchanged:** the **2026-06-15 tag recalibration** remains
+  **unexamined**; the **~81 vs 86 delta** remains **UNRESOLVED**; **in-game
+  re-verification of the 86, KEYED ON `id`**, remains outstanding.
+
+---
+
 ## 2026-07-21 - mod_stats provenance REMEDIATED: 86 flags cleared
 
 **Owner ran the remediation SQL directly in the Supabase SQL editor.** 86 rows
@@ -33,6 +253,33 @@ Read-back confirmed: **still_true 17, unsourced_true 0, total 203.**
   recoverable and the author does not recall the reasoning. **Shape observation,
   not an established sequence.**
 
+> **STILL CORRECT FOR `mod_stats`, BUT INCOMPLETE AS A GENERAL ACCOUNT - added
+> 2026-07-21 (A3).** The conclusion above holds for `mod_stats`: its admin form
+> genuinely does not expose `verified`, so a form-created row genuinely does take
+> the default. **But a THIRD mechanism existed and was not in view when this was
+> written.** `app/admin/page.js` defaulted every boolean to `true` with a `false`
+> exception scoped by **table-name prefix** (`game_` / `dmz_`) rather than by field
+> name. `core_stats`, `implant_stats` and `weapon_stats` match neither prefix and
+> **do** expose `verified`, so the box arrived **pre-ticked** and was POSTed
+> explicitly - the DB default never applied.
+> **Read this section as "how it happened HERE", not "how a flag can be wrongly
+> set".** Three mechanisms are now known: hand-written SQL (this entry), a
+> pre-ticked form default (`3d9d928`), and - for the 61 clustered June rows - a
+> batched writer still unidentified. See the 2026-07-21 scope-corrections entry.
+
+> **SCOPE NOTE added 2026-07-21 (A2).** The brief for this correction quoted a
+> sentence - *"mod_stats is an outlier in outcome, not in mechanism"* - as
+> appearing in this entry. **It does not appear here, or anywhere in HANDOFF.md.**
+> Searched for the exact phrase and for "in outcome" / "in mechanism": no match.
+> **No wording was changed on its account**, because inventing an original to
+> correct would be worse than the error it was meant to fix.
+> **The substance is recorded anyway, because it is true and it matters:** with all
+> **nine** tables `verificationState()` serves in view, `mod_stats` is **not** the
+> worst case. `core_stats` and `implant_stats` are strictly worse off - they have
+> **no `verified_source` column at all**, so the remediation applied here (flip the
+> unsourced flags, keep the sourced ones) has no equivalent there. `mod_stats` was
+> at least *able* to record provenance.
+
 ### 2. *** THE INVARIANT THAT WAS NEVER ENFORCED - the core finding ***
 
 `lib/verification.js` documents that `verified = true` means a trusted human
@@ -44,8 +291,20 @@ The predicate short-circuits on `verified === true` as its first line and
 is not even selected into editor context (`editorCore.js:653` selects `verified`
 and `patch_verified` only), **so the tagger could not have keyed on it.**
 
-All **13 consumers** (editorCore x9, advisor x7, qualityMetrics x1) route through
+All **17 consumers** (editorCore x9, advisor x7, qualityMetrics x1) route through
 the same two exported functions. **One predicate, no divergence.**
+
+> **CORRECTED 2026-07-21 (A1).** This originally read **"All 13 consumers"** beside
+> the identical parenthetical - which sums to **17**. The sentence contradicted
+> itself within its own line and was committed that way.
+> Recount, read-only: **16 literal `verificationTag(...)` call sites** (editorCore
+> x9, advisor x7) plus **`lib/qualityMetrics.js:55`**, which passes
+> `verificationState` by reference as `classify` rather than calling it inline =
+> **17 consumers**. The parenthetical was right all along; the total was never
+> measured. It was carried into the entry, and the three numbers sitting next to it
+> were never added up.
+> **The standing rule generalises: a bare integer is not a measurement - including
+> when its own supporting breakdown is printed beside it.**
 
 **Consequence before the fix:** all 86 reached the five editors and the advisor
 as `CONFIRMED`, with an empty tag, under a `VERIFICATION_NOTE` instructing the
@@ -260,8 +519,22 @@ it from editor context. Flipped with the other 85. Pending in-game capture.
 ### 10. STILL OPEN - flagged NOT resolved, each needs its own pass
 
 - **Whether `verificationState()` should require a source** rather than trust
-  `verified` alone. **The cost is low:** `shell_stat_values` is 104/104 sourced
-  and `weapon_stats` 31/32, so **only mod_stats would move.**
+  `verified` alone. ~~**The cost is low:** `shell_stat_values` is 104/104 sourced
+  and `weapon_stats` 31/32, so **only mod_stats would move.**~~
+  > **CORRECTED 2026-07-21 (A4) - THIS WAS THE SWEEP HIT. Struck, not deleted.**
+  > **Two independent errors in one sentence:**
+  > **(a) Scope.** "Only mod_stats would move" was measured across the **five**
+  > tables carrying `verified_source` and stated as a claim about the predicate,
+  > which serves **nine**. Measured across all nine: **204 more rows move** -
+  > `core_stats` 85 and `implant_stats` 119, every one `CONFIRMED -> UNCHECKED`.
+  > The cost is not low and it is not confined to `mod_stats`.
+  > **(b) Wrong denominator.** "`weapon_stats` 31/32" counts **rows carrying any
+  > `verified_source`**, but the migration cost depends only on **`verified=true`
+  > rows lacking one**. The right figure is **16 verified, 16 sourced, 0 would
+  > move**. It reached the correct conclusion for that table by the wrong measure -
+  > the same family as the ~81 misattribution: a real count, relabelled as an
+  > answer to a question it was not counting.
+  > **Status: PARKED, basis void.** See C4 in the scope-corrections entry.
 - **The 2026-06-15 tag recalibration.** The current predicate has no `pv=null`
   condition for `verified=true` rows, consistent with that recalibration. Whether
   it was correct is **unexamined**, and it was made on a population measured on
