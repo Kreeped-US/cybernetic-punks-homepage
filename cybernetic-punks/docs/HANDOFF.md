@@ -5,6 +5,80 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Shell guide dateModified: per-shell, co-located
+
+### The original false-freshness bug, still live in JSON-LD
+
+`app/guides/shells/[name]/page.js` emitted `dateModified: new Date().toISOString()`,
+so all 7 shell guides claimed modification **at whatever second the crawler
+arrived**. This is the same bug already fixed in `app/weapons/[slug]/page.js` and
+**warned against in comments in TWO other files** (`app/matchups/[shell]/page.js`
+and `app/modes/vault-breaker/page.js`, both of which say "never new Date()").
+
+**The discipline was written down twice and applied everywhere except the file
+the comments were about.** Worse than the sitemap cases fixed earlier the same
+day, because JSON-LD `dateModified` is a direct assertion rather than a hint.
+
+### datePublished '2026-03-05' was FABRICATED, not stale
+
+`git log --follow` dates the content to **2026-04-24** (`32a288f`, "feat(guides):
+Phase 2 SEO - dynamic category + shell guide routes", plus three same-day moves
+producing the current path). **The guides claimed publication SEVEN WEEKS BEFORE
+THEY EXISTED.**
+
+Now `GUIDES_PUBLISHED = '2026-04-24'`, with the commit named in the comment and an
+explicit **DO NOT RESTORE THE OLDER-LOOKING DATE** - an earlier datePublished
+looks like a stronger signal and someone will be tempted.
+
+### Per-shell dates, co-located inside SHELL_GUIDES
+
+`git log -L` per shell block:
+
+| shells | last prose change |
+|---|---|
+| assassin, destroyer, rook, thief, vandal | 2026-07-20 |
+| **recon, triage** | **2026-04-24 - never touched since creation** |
+
+**A single file-level date would have claimed a three-month-old page changed
+yesterday** for recon and triage. Smaller than "right now", but the same kind of
+claim.
+
+The `updated` field sits INSIDE each shell's object, as the last field under the
+prose it dates. **That answers the maintenance objection to per-shell dates** -
+an editor rewriting the copy sees the date on the same screen, where a separate
+file-level constant is the version people forget.
+
+**FAIL CLOSED:** `if (shell.updated) articleSchema.dateModified = shell.updated;`
+- no `||` fallback on that line, deliberately. A shell without `updated` emits no
+`dateModified` at all. Same rule as the sitemap entity hubs.
+
+Verified by rendering all 7: datePublished 2026-04-24 everywhere, recon/triage
+2026-04-24, the other five 2026-07-20, no page emitting a crawl-time value.
+
+### FOUR DB-DERIVED dateModified FALLBACKS FOUND, NOT FIXED
+
+```
+app/builds/page.js:336        lastMetaUpdate || dexterArticles[0].created_at || new Date()
+app/meta/page.js:121          metaTiers.length > 0 ? max(updated_at) : new Date()
+app/sitrep/page.js            same shape
+app/shells/[slug]/page.js:239 metaTier.updated_at || nexusTake || articles || new Date()
+```
+
+All four are **dormant while data is populated and silently assert "modified now"
+the moment a query returns empty.** An empty result is exactly what an outage
+looks like - **so these fail loudest precisely when the site is least
+trustworthy.** `/meta` is the most exposed: an empty `metaTiers` makes every meta
+page claim crawl-time freshness.
+
+All four should OMIT rather than fall back. Separate pass.
+
+### Note
+The 3 `react/no-unescaped-entities` eslint errors in this file are PRE-EXISTING
+(verified by linting the committed version at HEAD). Left alone rather than
+folding unrelated fixes into this diff.
+
+---
+
 ## 2026-07-21 - Entity hub lastmod: max(updated_at) of their children
 
 ### The bug

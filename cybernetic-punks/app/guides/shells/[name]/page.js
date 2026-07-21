@@ -9,7 +9,42 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
+// When these guide routes were CREATED. Feeds Article datePublished on all 7.
+//
+// CORRECTED 2026-07-21 from '2026-03-05', which was FABRICATED rather than
+// merely stale: `git log --follow` dates the content to 2026-04-24 (32a288f,
+// "feat(guides): Phase 2 SEO - dynamic category + shell guide routes", plus
+// three same-day moves that produced the current path). The guides claimed
+// publication SEVEN WEEKS BEFORE THEY EXISTED.
+//
+// DO NOT "RESTORE" THE OLDER-LOOKING DATE. An earlier datePublished is not a
+// stronger signal, it is a false one, and this one is checkable: the commit is
+// named above.
+const GUIDES_PUBLISHED = '2026-04-24';
+
 // ─── SHELL CONFIG ───────────────────────────────────────────
+//
+// `updated` = when THAT SHELL'S PROSE last changed, and it feeds the Article
+// JSON-LD dateModified for that shell's page. MOVE IT WHEN YOU EDIT THE PROSE
+// ABOVE IT. It sits inside each shell's object rather than as one file-level
+// constant precisely so an editor rewriting the copy sees the date on the same
+// screen -- a separate constant is the version people forget.
+//
+// WHY PER-SHELL (2026-07-21): this file previously emitted
+// `dateModified: new Date().toISOString()`, so all 7 guides claimed modification
+// at whatever second the crawler arrived. That is the original false-freshness
+// bug -- already fixed in app/weapons/[slug]/page.js and warned against in
+// comments in app/matchups/[shell]/page.js and app/modes/vault-breaker/page.js.
+// The discipline was written down twice and applied everywhere except here.
+//
+// A single file-level date would have been wrong too: `git log -L` per shell
+// block shows recon and triage have NOT been touched since the route was created
+// on 2026-04-24, so a file date of 2026-07-20 would have claimed a three-month-old
+// page changed yesterday. Dates below come from that per-block history.
+//
+// NO FALLBACK: a shell with no `updated` emits NO dateModified at all (see the
+// schema block). Fail closed -- same rule as the sitemap entity hubs. A missing
+// date must never become "now".
 const SHELLS = {
   assassin: {
     name: 'Assassin',
@@ -24,6 +59,7 @@ const SHELLS = {
     strengths: ['Active Camo breaks line of sight on demand', 'Excellent mobility and reposition tools', 'Solo-dominant in ranked'],
     weaknesses: ['Punished hard by team shooting', 'Mechanical skill floor is steep', 'Not forgiving for beginners'],
     priorityStats: ['Prime Recovery', 'Firewall', 'Melee Damage'],
+    updated: '2026-07-20',  // prose last changed 2026-07-20 (shield-pool claim deletions / Rook rewrite)
   },
   destroyer: {
     name: 'Destroyer',
@@ -38,6 +74,7 @@ const SHELLS = {
     strengths: ['Heavy weapon optimization', 'Melee damage bonus', 'Consistent DPS winner'],
     weaknesses: ['Low mobility', 'Punished by repositioners', 'Poor solo extraction', 'Weak vs long-range specialists'],
     priorityStats: ['Melee Damage', 'Tactical Recovery', 'Hardware', 'Firewall'],
+    updated: '2026-07-20',  // prose last changed 2026-07-20 (shield-pool claim deletions / Rook rewrite)
   },
   recon: {
     name: 'Recon',
@@ -52,6 +89,7 @@ const SHELLS = {
     strengths: ['Unmatched information gathering', 'Strong in coordinated squads', 'Safe from ambushes (passive scan)', 'Scales with teammate skill'],
     weaknesses: ['Moderate combat stats', 'Underwhelming solo in late-match', 'Requires squad to maximize value', 'Average TTK'],
     priorityStats: ['Tactical Recovery', 'Finisher Siphon', 'Ping Duration'],
+    updated: '2026-04-24',  // prose last changed 2026-04-24 (untouched since the route was created)
   },
   rook: {
     name: 'Rook',
@@ -66,6 +104,7 @@ const SHELLS = {
     strengths: ['Free loadout - no personal gear at risk', 'Highest loot speed of any shell', 'Low-pressure way to learn maps'],
     weaknesses: ['BANNED from Ranked mode', 'Not a competitive shell', 'Weak in contested fights over objectives'],
     priorityStats: ['Loot Speed', 'Heat Capacity', 'Fall Resistance'],
+    updated: '2026-07-20',  // prose last changed 2026-07-20 (shield-pool claim deletions / Rook rewrite)
   },
   thief: {
     name: 'Thief',
@@ -80,6 +119,7 @@ const SHELLS = {
     strengths: ['Highest loot speed of any ranked-eligible shell', 'Passive loot generation', 'Excellent escape tools', 'S-tier solo ranked pick'],
     weaknesses: ['Poor sustained combat', 'Falls off in extended fights', 'Greedy plays get punished'],
     priorityStats: ['Loot Speed', 'Prime Recovery', 'Fall Resistance'],
+    updated: '2026-07-20',  // prose last changed 2026-07-20 (shield-pool claim deletions / Rook rewrite)
   },
   triage: {
     name: 'Triage',
@@ -94,6 +134,7 @@ const SHELLS = {
     strengths: ['Best squad support in game', 'Self-sustain through fights', 'Forgiving for beginners', 'Turns losing fights into wins via revives'],
     weaknesses: ['Weak solo combat', 'Lower damage output', 'Requires squad to shine', 'Pure solo play is uphill'],
     priorityStats: ['Prime Recovery', 'Self-Repair Speed', 'Revive Speed'],
+    updated: '2026-04-24',  // prose last changed 2026-04-24 (untouched since the route was created)
   },
   vandal: {
     name: 'Vandal',
@@ -108,6 +149,7 @@ const SHELLS = {
     strengths: ['Unmatched mobility', 'Forces favorable engagement ranges', 'Dominant solo ranked pick', 'High skill ceiling'],
     weaknesses: ['Punished if you stop moving', 'Heat management takes practice', 'Bad at long-range fights'],
     priorityStats: ['Heat Capacity', 'Agility', 'Prime Recovery'],
+    updated: '2026-07-20',  // prose last changed 2026-07-20 (shield-pool claim deletions / Rook rewrite)
   },
 };
 
@@ -282,10 +324,17 @@ export default async function ShellGuidePage({ params }) {
     url: 'https://cyberneticpunks.com',
     logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/og-image.png' }
   },
-  datePublished: '2026-03-05',
-  dateModified: new Date().toISOString(),
+  datePublished: GUIDES_PUBLISHED,
+  // dateModified is attached BELOW, and only when the shell declares `updated`.
+  // Assigning it here with a fallback is what produced the crawl-time value this
+  // replaced -- there is deliberately no `|| something` on this line.
   mainEntityOfPage: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
 };
+
+  // FAIL CLOSED: a shell with no `updated` emits NO dateModified rather than a
+  // stand-in. Same rule as the sitemap entity hubs -- a missing date must never
+  // become "now", because a wrong freshness claim is worse than a silent one.
+  if (shell.updated) articleSchema.dateModified = shell.updated;
 
   var faqSchema = {
     '@context': 'https://schema.org',
