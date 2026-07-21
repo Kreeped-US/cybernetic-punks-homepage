@@ -89,12 +89,31 @@ Post-flip these are **indistinguishable** from the 100 rows already `false`
 (`updated_at` was NOT bumped by the UPDATE - the whole-table distribution still
 shows no 2026-07-21 rows).
 
-**PROVENANCE OF THIS LIST, stated honestly:** ids were **RECONSTRUCTED after the
-flip** by matching the name+rarity pairs captured during the pre-flip
-characterization run against the live table. `(name, rarity)` is unique across
-all 203 rows (0 collisions), so the join is deterministic. Soundness checks: all
-86 resolved, all now read `verified=false`, all have no `verified_source`, and
-86 + 17 sourced = 103, exactly the pre-flip `verified=true` count.
+**PROVENANCE OF THIS LIST - RECONSTRUCTED, THEN INDEPENDENTLY VERIFIED.**
+
+*How it was built:* ids were **RECONSTRUCTED after the flip** by matching the
+name+rarity pairs captured during the pre-flip characterization run against the
+live table. `(name, rarity)` is unique across all 203 rows (0 collisions), so the
+join is deterministic. Soundness checks at the time: all 86 resolved, all now read
+`verified=false`, all have no `verified_source`, and 86 + 17 sourced = 103,
+exactly the pre-flip `verified=true` count.
+
+*How it was confirmed:* **VERIFIED 2026-07-21 against the authoritative captured
+query output** - the actual pre-flip step-1 result exported from the Supabase SQL
+editor (`Supabase Snippet Untitled query.csv`, 5,800 bytes, header +
+86 data rows, 86 unique ids, 0 malformed). Diffed on `id`:
+
+- **0** ids in the capture but not in this table
+- **0** ids in this table but not in the capture
+- **86** ids present in both
+- **0** field mismatches on `name`, `rarity` or `slot_type`
+
+**Reconstruction and capture agree on all 86 ids.** The reconstruction method is
+kept described above rather than deleted, because the list was built that way and
+the record should say so - the verification upgrades the confidence, it does not
+change the history. **The capture cannot be regenerated** (the predicate no longer
+selects these rows), so this table plus that CSV are the only records of which
+rows moved.
 
 | # | id | name | rarity | slot_type |
 |---|---|---|---|---|
