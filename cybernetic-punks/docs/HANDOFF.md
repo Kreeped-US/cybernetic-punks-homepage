@@ -5,6 +5,255 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - mod_stats provenance REMEDIATED: 86 flags cleared
+
+**Owner ran the remediation SQL directly in the Supabase SQL editor.** 86 rows
+flipped `verified = true` -> `verified = false`.
+Predicate: `verified = true AND (verified_source IS NULL OR btrim(verified_source) = '')`.
+Read-back confirmed: **still_true 17, unsourced_true 0, total 203.**
+
+**No data was deleted or altered beyond the flag.** All `effect_desc`,
+`credit_value`, `stat_changes` and `notes` remain intact.
+
+### 1. CAUSE - established read-only, now CLOSED
+
+- **`verified` DEFAULT false on all five tables** (positive PostgREST read; the
+  spec exposes real DDL defaults on 275 properties, so this is a read, not an
+  absence). The flag is NOT a default.
+- **No insert / update / upsert against `mod_stats` anywhere** in `app/`, `lib/`
+  or `scripts/`. `lib/gather/mod-stats.js` states the table is manually seeded
+  via SQL because all external mod sources block server-side requests.
+- **The admin form exposes 8 fields** (name, slot_type, rarity, effect_desc,
+  faction_source, credit_value, ranked_viable, image_filename) and does **NOT**
+  expose `verified`, `verified_source` or `patch_verified`, so a form-created row
+  takes the default `false`.
+- **Therefore the 86 flags were set by hand-written SQL**, most plausibly a bulk
+  statement during a 2026-06-05 seeding session (81 of 86 carried `updated_at` on
+  that date; 22 shared an identical microsecond timestamp). The statement is not
+  recoverable and the author does not recall the reasoning. **Shape observation,
+  not an established sequence.**
+
+### 2. *** THE INVARIANT THAT WAS NEVER ENFORCED - the core finding ***
+
+`lib/verification.js` documents that `verified = true` means a trusted human
+confirmed it in-game, and states the discipline is **"enforced by later phases,
+NOT here."** **No later phase ever enforced it.**
+
+The predicate short-circuits on `verified === true` as its first line and
+**never reads `verified_source`.** The column is not referenced in the module and
+is not even selected into editor context (`editorCore.js:653` selects `verified`
+and `patch_verified` only), **so the tagger could not have keyed on it.**
+
+All **13 consumers** (editorCore x9, advisor x7, qualityMetrics x1) route through
+the same two exported functions. **One predicate, no divergence.**
+
+**Consequence before the fix:** all 86 reached the five editors and the advisor
+as `CONFIRMED`, with an empty tag, under a `VERIFICATION_NOTE` instructing the
+model *"No marker - confirmed in-game. State the number as fact, no hedge."*
+
+**THE PATTERN:** the same label-vs-substance failure as `verified=true` carrying
+field-level meaning in the Rook arc, and as the meta_tiers echo loop. **Here the
+flag carried ANY meaning it never had** - not a wrong scope, an absent basis.
+
+### 3. BLAST RADIUS
+
+- **No public page renders a verified badge from the column.** `/mods` and
+  `/mods/[slot]` select `verified` but never reference it in render.
+- **The advisor DOES consume it:** `modLine += verificationTag(mod)`.
+- **quality_metrics:** `confirmed` increments on `verificationState()` returning
+  `CONFIRMED`, i.e. `verified === true` alone. `confirmed_with_source` is tracked
+  separately and **does not gate the headline share**. `hasVerifiedSource: true`
+  means only *"this table has the column."*
+
+### 4. THE METRIC MOVEMENT - both values WITH their predicate attached
+
+Per the standing rule that a bare integer is not a measurement:
+
+**Predicate: `confirmed_data_share` = share of stat rows where
+`verificationState(row)` returns `CONFIRMED`, i.e. `verified === true` alone,
+across the 9 STAT_TABLES, unscoped by source.**
+
+- **BEFORE:** 451/657 = **68.6%** (stored snapshot `computed_at
+  2026-07-20T19:00:47Z`; live recompute today identical, so not a stale figure).
+  mod_stats component 103/203 = 50.7%.
+- **AFTER:** 365/657 = **55.6%**. mod_stats component 17/203 = **8.4%**.
+- **Delta 13.1 percentage points.**
+
+**RECORD THIS AS A CORRECTION, NOT A REGRESSION. 55.6% is the first reading of
+this metric that is not inflated by unsupported flags.** The number went down
+because it was wrong before, not because anything got worse.
+
+### 5. THE FLIPPED POPULATION - the only record of which rows moved
+
+Post-flip these are **indistinguishable** from the 100 rows already `false`
+(`updated_at` was NOT bumped by the UPDATE - the whole-table distribution still
+shows no 2026-07-21 rows).
+
+**PROVENANCE OF THIS LIST, stated honestly:** ids were **RECONSTRUCTED after the
+flip** by matching the name+rarity pairs captured during the pre-flip
+characterization run against the live table. `(name, rarity)` is unique across
+all 203 rows (0 collisions), so the join is deterministic. Soundness checks: all
+86 resolved, all now read `verified=false`, all have no `verified_source`, and
+86 + 17 sourced = 103, exactly the pre-flip `verified=true` count.
+
+| # | id | name | rarity | slot_type |
+|---|---|---|---|---|
+| 1 | 425f327a-534e-4417-8828-1e397e6e7fee | Adrenal Feedback | Prestige | Magazine |
+| 2 | 16b22268-76a4-4f1f-9c03-733627c5f947 | Alternating Current | Deluxe | Chip |
+| 3 | 5b8b9ead-b005-4617-97d7-aa391c39d67a | Balanced Mag | Enhanced | Magazine |
+| 4 | 8dbd678e-12f6-4b2f-9f2a-d0a2d8c24c86 | Balanced Shield | Enhanced | Shield |
+| 5 | a015c96a-ebe4-4aea-adf6-8ba326affce8 | Battle Runner | Enhanced | Chip |
+| 6 | dfc24347-b183-4353-850f-7f0f31368001 | Bits Per Second | Enhanced | Chip |
+| 7 | 1c3c75cb-cbf3-46ee-8937-6cdde782db25 | Blue Blood | Superior | Chip |
+| 8 | 37e928ef-5c80-4119-b89c-dd5759804266 | Bounty Hunter | Enhanced | Chip |
+| 9 | ff6a75f1-f73f-491e-9b47-f7cc3f120257 | Bounty Hunter | Standard | Chip |
+| 10 | 4ff60052-df10-4564-9fbe-533bc6182b46 | Chaos Theory | Standard | Chip |
+| 11 | ad8ec082-a792-4a89-9bdc-183fdef13312 | Circuit Shield | Prestige | Shield |
+| 12 | d351b41f-5e0e-45d8-aba3-d23e66149769 | Circuit Tracers | Superior | Chip |
+| 13 | 0c6f0273-f29c-4222-801d-de0a96a175d2 | Combat Grip | Deluxe | Grip |
+| 14 | 5c5d990b-c10a-4f2f-9ae3-47e4ce932ef9 | Combat Mag | Superior | Magazine |
+| 15 | 9f03fc6b-98f3-492c-888a-54c7a0433e36 | Combat Mag | Standard | Magazine |
+| 16 | fe1719fa-60db-4adb-b291-2928aaaa927b | Control Shield | Enhanced | Shield |
+| 17 | bfb7a3cb-c38c-4d5f-98fa-21d2f1e4c270 | Drum Magazine | Deluxe | Magazine |
+| 18 | 0b27d20f-7e01-47f4-806d-7b70f657600d | Far Reach Optic | Superior | Optic |
+| 19 | 51d9be83-464d-44be-8a2d-f5b3ea306d01 | Farshot Barrel | Superior | Barrel |
+| 20 | a04be5db-fc2b-4232-ad6d-86cca38e2a9a | Feather Mag | Deluxe | Magazine |
+| 21 | 1b73a90f-0749-426e-86fd-c36b7f46ee0e | Five Finger Discount | Enhanced | Chip |
+| 22 | 474f399c-94d3-4774-8379-40c0f496c504 | Full-Auto Selector | Prestige | Grip |
+| 23 | 078d7d7b-682a-4306-a26d-2d7108658273 | Guarded Grip | Deluxe | Grip |
+| 24 | ab234ca5-79d4-433d-a1ae-e1d1c2857b23 | Heatsink | Standard | Chip |
+| 25 | 3c2ddc31-4492-4017-a0c6-0be2ad19741c | Hi-Cap Mag | Superior | Magazine |
+| 26 | 0fda2404-c13e-4e41-984b-7af4e7e2b44d | Hi-Speed Mag | Superior | Magazine |
+| 27 | 34537372-f6b8-4ec0-87cc-6a987813c5fa | Hi-Zoom Optic | Superior | Optic |
+| 28 | 7613fbfe-367a-4ed1-a2ac-ca2d66683eb2 | Hollow-Case Rounds | Deluxe | Magazine |
+| 29 | d52bafb0-3ab1-4d02-90a6-44256561d088 | Impact Shockwave | Prestige | Magazine |
+| 30 | 7f5540e7-81a5-4595-a4a0-448e96724182 | Infinity Belt | Prestige | Magazine |
+| 31 | f104bdda-ff5b-48ca-974f-1b5efb9996ab | Insomniac | Enhanced | Chip |
+| 32 | 0a03a151-6882-4221-89f4-8921bb672550 | Insomniac | Superior | Chip |
+| 33 | 53c3d0b4-6f4c-4607-91da-a0efbf70be29 | Insomniac | Deluxe | Chip |
+| 34 | c69fe164-6e96-4952-b426-4c143dad2a5c | Insurance Plan | Deluxe | Chip |
+| 35 | 4dd28b6c-acbc-49c1-9a53-5c42c5fb59fe | Insurance Plan | Standard | Chip |
+| 36 | d2c66f2d-e898-4a1f-9bee-edb0f98e683d | Insurrection | Superior | Chip |
+| 37 | 76a26f97-0d84-4bdf-9da6-61a575874d6e | Insurrection | Standard | Chip |
+| 38 | abc1cc67-66e9-4402-9e50-1e0c70d8de03 | Interval Mag | Prestige | Magazine |
+| 39 | ea05429d-810c-45a9-bc85-3e4045c8b260 | Ironhold Barrel | Superior | Barrel |
+| 40 | e1e78d9f-dff5-4fe4-bc13-b4dd74c17f3d | Keyboard Warrior | Enhanced | Chip |
+| 41 | cc328cff-92b1-4d74-843a-fdf07c4eca34 | Last Resort | Superior | Chip |
+| 42 | ddd53b1f-a78e-4c89-9c06-27a81ef82592 | Lockout Muzzle Brake | Prestige | Barrel |
+| 43 | 9cdf7747-bb29-45e0-95ed-a596ff338605 | Long-Range Barrel | Deluxe | Barrel |
+| 44 | 0058afc8-9d4d-4d34-a942-e40e108971ed | Midsight Optic | Deluxe | Optic |
+| 45 | aae1ba93-d77a-4f86-b0fb-bd5cac309ae8 | MIPS Slug Converter | Prestige | Barrel |
+| 46 | b960b671-03f1-4bb5-866c-32d70fb07b42 | Opportunist | Standard | Chip |
+| 47 | e7fbc152-1956-43de-83c6-6a79cd3d6292 | Optimal Prime | Enhanced | Chip |
+| 48 | d3d906dc-33fd-4d1c-a805-6889d5414c70 | Optimal Prime | Standard | Chip |
+| 49 | aa61d10b-ecaa-4e6d-8ffb-c528168dfce1 | Ornithologist | Enhanced | Chip |
+| 50 | cf590bfa-46d1-4dbb-8cb7-a2ff9e371438 | Ornithologist | Standard | Chip |
+| 51 | 5d85e43a-ed0f-4d0a-90ec-ca96bf1c59f7 | Outland Suppressor | Prestige | Barrel |
+| 52 | db93d71e-d0fe-495e-94d2-8395c1b4eab1 | Overclocked Shield | Prestige | Shield |
+| 53 | 3999a95b-d38c-4f21-afd8-8738d1978613 | Precision Barrel | Enhanced | Barrel |
+| 54 | 56ae0d16-c73b-48ce-a247-f74ee83222b2 | Punishment | Superior | Chip |
+| 55 | 4f476266-9b14-4423-89d7-022926d2348a | Q-Tap Regen Optic | Prestige | Optic |
+| 56 | b5c14e6e-ed24-4b57-baf7-ea081ac29315 | Rangefinder Lens | Enhanced | Optic |
+| 57 | 63ef5671-07e9-430d-b428-b206cd972b48 | Rangefinder Optic | Superior | Optic |
+| 58 | a66de4c4-75f4-42a0-8237-5cc4cc0287e7 | Reloader Mag | Deluxe | Magazine |
+| 59 | 0b9bddeb-6b65-4ba3-831f-1adc77baf406 | Reverse Card | Superior | Chip |
+| 60 | a6d1419a-f207-47a4-a014-b10df26678dd | Rocket Start | Standard | Chip |
+| 61 | ff9c2c90-cec8-4061-81b0-fd51be2bbfa6 | Rodeo Mag | Prestige | Magazine |
+| 62 | 4862a3c8-b892-48e4-8600-094eb8b47cdf | See Ya | Superior | Chip |
+| 63 | 05d9796a-a596-4539-aa4b-77cd53cb1aef | Slip Protocol | Superior | Chip |
+| 64 | c2772ed5-58ec-488e-9cbe-0f15abf881bf | Snapshot Grip | Deluxe | Grip |
+| 65 | 9542193d-dc20-499c-864c-dadbac106c63 | Sonar Shot | Prestige | Barrel |
+| 66 | eb93373d-5bb1-429d-b554-cb4727a99bc0 | SP Scope II | Deluxe | Optic |
+| 67 | c3d3ed67-37b3-4713-b4ef-fc2207a48ce2 | Speed Scout Grip | Deluxe | Grip |
+| 68 | 4775289d-42c6-40cf-bd8a-6b169aca847c | Stack Overflow | Superior | Chip |
+| 69 | 65c6cb22-db8d-4797-a75e-adc29369e95a | Stack Overflow | Standard | Chip |
+| 70 | ba46c855-f4ee-4d9a-b46f-ede4713d1823 | Stack Overflow | Deluxe | Chip |
+| 71 | 68e48d2c-b64f-40a7-afe7-7861b7aebede | Steady Barrel | Deluxe | Barrel |
+| 72 | cc370152-4d12-4552-8de0-af13f393069e | Stopping Mag | Prestige | Magazine |
+| 73 | 49bb93ce-47c2-48f3-8191-3b04fbae33fd | Sturdy Brace Grip | Enhanced | Grip |
+| 74 | d2bb9cbb-f857-47b8-b759-5d562f43e0cb | Sucker Punch | Enhanced | Chip |
+| 75 | a6f294dd-2843-49e8-a0f0-a18f81e32a90 | Sucker Punch | Standard | Chip |
+| 76 | 735f97b8-560e-4566-971f-27d06ee23425 | Swarm Directive | Deluxe | Chip |
+| 77 | 122114a7-f3cf-43ec-9480-f9ab100bfc1a | Swarm Directive | Superior | Chip |
+| 78 | 520f4c82-3d5f-43d1-8f0c-492c27baa41b | Testament | Superior | Chip |
+| 79 | 6d7f509c-c276-4102-9802-1cdff2c743c9 | Thermal Surge Battery | Prestige | Magazine |
+| 80 | 7a485a61-7bcd-4e4a-be83-b3c7a93c1517 | Torch Bug | Deluxe | Chip |
+| 81 | 74561c7f-a733-426c-9000-1ead4e94d8b3 | Torch Bug | Superior | Chip |
+| 82 | 038c5b79-3dd7-475f-86f9-3c04baadfc8f | Torch Bug | Standard | Chip |
+| 83 | ec372177-3a70-4745-a517-d4c7a16bb93a | Trigger Discipline | Enhanced | Chip |
+| 84 | 3f00a712-eaf7-456d-a30c-8d1358277197 | Trigger Discipline | Standard | Chip |
+| 85 | 49a550a9-a383-4f42-b89d-083d611aface | Triple Barrel | Prestige | Barrel |
+| 86 | 1610a9f0-e79d-46be-a093-902b3bb7a929 | Vigilant Lens | Superior | Optic |
+
+### 6. *** METHOD RULE: mod_stats.name is NOT unique - key on id ***
+
+**Bounty Hunter, Combat Mag, Insomniac, Insurance Plan, Insurrection, Optimal
+Prime, Ornithologist, Stack Overflow, Sucker Punch, Swarm Directive, Torch Bug
+and Trigger Discipline all appear at multiple rarities.**
+
+**Any re-verification or backfill MUST key on `id`. A confirm keyed on name would
+silently land on up to three rows.** (`(name, rarity)` is unique and was safe for
+the reconstruction above, but `id` is the only stable key.)
+
+### 7. OVERLAP WITH THE 2026-06-15 POPULATION - bounded, does NOT resolve the delta
+
+The 06-15 entry named four exemplars of "the 81 dropped": **Thermal Surge
+Battery, Sonar Shot, Hi-Cap Mag Superior, Steady Barrel Deluxe.** All four appear
+in today's 86 at those exact rarities.
+
+**The two populations demonstrably intersect**, which strengthens the
+misattribution finding. **It does NOT distinguish "the gap grew by five" from "81
+was approximate." The ~81 vs 86 delta stays UNRESOLVED as already recorded.**
+
+### 8. Q-TAP REGEN OPTIC - content resolved, provenance not
+
+Row `4f476266-9b14-4423-89d7-022926d2348a` was flagged during investigation as
+possible wrong data: an `effect_desc` describing a Twin Tap HBR burst mod on a
+row typed `Optic`.
+
+**RESOLVED as NOT wrong.** Q-Tap is **Quad Tap** - a weapon-integrated mod for the
+Twin Tap HBR taking the burst from 2 to 4 rounds. The Prestige trait occupies the
+Optic slot: at very low health, landing all rounds of a full burst triggers health
+regeneration. The original stub's open question (pure optic vs weapon-integrated)
+is answered: **weapon-integrated.**
+
+**Source of that resolution: OWNER RECOLLECTION, 2026-07-21. Recorded as
+recollection, NOT captured provenance. It does not restore `verified = true`.**
+Row remains `false` pending in-game card capture, same as the other 85.
+
+**The mismatch reading was an incorrect inference from internal coherence,
+corrected by owner game knowledge - the same shape as the Rook correction.**
+
+**The owner DID update the notes.** New value, verbatim:
+
+> "Weapon-integrated mod for the Twin Tap HBR (burst 2 -> 4 rounds, hence Quad
+> Tap). Prestige trait occupies the Optic slot: at very low health, landing all
+> rounds of a full burst triggers health regeneration (comparable to a depleted
+> Patch Kit). Slot/effect question from the original June 2 stub entry is RESOLVED
+> by owner knowledge 2026-07-21 - this is recollection, NOT captured provenance.
+> Row remains verified=false pending in-game card capture."
+
+### 9. RANGEFINDER LENS - no action taken
+
+Partial entry, **honest about being partial**, null `effect_desc` already excludes
+it from editor context. Flipped with the other 85. Pending in-game capture.
+
+### 10. STILL OPEN - flagged NOT resolved, each needs its own pass
+
+- **Whether `verificationState()` should require a source** rather than trust
+  `verified` alone. **The cost is low:** `shell_stat_values` is 104/104 sourced
+  and `weapon_stats` 31/32, so **only mod_stats would move.**
+- **The 2026-06-15 tag recalibration.** The current predicate has no `pv=null`
+  condition for `verified=true` rows, consistent with that recalibration. Whether
+  it was correct is **unexamined**, and it was made on a population measured on
+  the column now marked misattributed.
+- **Re-verification of the 86 in-game. KEY ON ID.** The underlying data looks
+  genuinely measured (80 distinct `effect_desc`, no zeros in `credit_value`, no
+  cross-row duplicate fingerprints), so this is **confirmation work, not data
+  reconstruction.**
+
+---
+
 ## 2026-07-21 - mod_stats delta reconciliation: UNRESOLVED, and MISATTRIBUTED
 
 Investigated read-only 2026-07-21 at 012b70e. No writes, no DDL, no script edits.
