@@ -5,6 +5,97 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Four dateModified chains fixed, and two briefed premises corrected
+
+### Two premises in the brief were WRONG, and both corrections came from here
+
+**1. sitrep does NOT fall back to `new Date()`** - it terminates in `null`. The
+earlier report grepped `new Date()` COUNTS per file and **reported a count as a
+location**; sitrep's single occurrence is line 95, `var now = new Date()`, an
+unrelated display helper. **Seventh instance today of a check needing checking.**
+
+sitrep still had a real defect, just a different one: `null` was assigned straight
+into the schema, emitting `dateModified: null` - an INVALID value rather than an
+absent one. Now omitted.
+
+**2. "Omit is correct everywhere" was wrong.** `/shells/[slug]` had better real
+data unreached, and `builds`/`sitrep` needed their FIRST link fixed before the
+fallback mattered. Fixing only the fallbacks would have left two variables whose
+names asserted something the code did not compute.
+
+### *** builds:299 `lastMetaUpdate` was not the last meta update ***
+
+The `meta_tiers` query is **`.order('tier')`** - tier LETTER, not recency - so
+`metaTiers[0]` is whichever row sorts first alphabetically (A before S), **not the
+newest**. Right today only by coincidence: the cron writes every row in one pass,
+so all timestamps matched. Edit one row alone and it silently diverges.
+
+**RENDERED TO USERS** at builds:463 as `"UPDATED n days ago"`. Not just a schema
+value - a visible claim read from an arbitrary row.
+
+**Quiet-failure family: ordering by a non-recency column and then treating
+position zero as newest.** Same shape as a paginated `.range()` with no sort.
+
+### shells/[slug]: the entity data was fetched and never consulted
+
+The chain reached for `meta_tiers.updated_at` first, then articles. **`shell` is
+the `shell_stats` row, fetched with `select('*')` at line 102 and already in
+scope.** So a SHELL ENTITY page was dated by NEXUS's derived tier grading, and
+failing that by the publish date of ARTICLES ABOUT the shell - a different claim
+entirely.
+
+Correct precedence now: the entity's own row, then the editorial grading of it.
+Both article links **dropped** - an article about a shell is not a modification of
+the shell page. **Same precedence error the pipeline loop fix corrected**
+(shell_stats is source of truth, meta_tiers is derived), still live in a
+dateModified chain months later.
+
+**`/shells/recon` now reports 2026-03-19 instead of a NEXUS grading date - four
+months older and CORRECT.** The page is about the shell; the shell has not changed
+since March. **Everything making it look fresher was measuring something else.**
+
+### meta:121's comment stated the bug's rationale outright
+
+The old comment read `// Latest tier update timestamp -- gives Google fresh-content
+signal`. **The fallback existed TO guarantee a freshness signal.** That is exactly
+why it was dishonest: with `metaTiers` empty - an outage, or a failed cron - EVERY
+meta page would have claimed modification at crawl time. **An empty result is what
+an outage looks like, so these fail loudest precisely when the site is least
+trustworthy.**
+
+### ORDERING AUDIT (builds + sitrep)
+
+**Two instances of the defect, both fixed:**
+- `builds:299` `metaTiers[0]` under `.order('tier')`
+- `sitrep:206` `allTiers[0]` under `.order('tier')`
+
+**Four other `[0]` reads cleared:**
+- `builds:335` and `sitrep:206` `allArticles[0]` - both under
+  `.order('created_at', desc)`, so `[0]` genuinely IS newest. Honest links, kept.
+- `sitrep:338/349` `sTierWeapons[0]` / `sTierShells[0]` - read `[0]` from
+  tier-filtered lists to show a REPRESENTATIVE S-tier name. Arbitrary selection,
+  not a recency claim. Which name shows depends on tier-sort order, but no page
+  asserts it is newest or best. Not the same bug.
+
+### Verified - and the limit, stated plainly
+
+**Verified by execution:** every page emits a real date; **no page emits today's
+timestamp** (0 of 5); the corrected first links match an independently computed
+max (`/builds`, `/meta`, `/sitrep` all resolve to 2026-07-19T19:02:07.458, the
+true `max(updated_at)`).
+
+**THE OMISSION PATH IS VERIFIED BY INSPECTION ONLY, NOT EXECUTION.** These are
+`force-dynamic` pages against a populated live DB, and an empty-query state could
+not be forced without writing to production or mocking the client. That
+`if (x) schema.dateModified = x` omits the key when `x` is null is a code-reading
+claim, not a tested one.
+
+### Note
+Pre-existing `react/no-unescaped-entities` errors in builds (3) and sitrep (3),
+verified unchanged against HEAD. Left alone rather than folding unrelated fixes in.
+
+---
+
 ## 2026-07-21 - Shell guide dateModified: per-shell, co-located
 
 ### The original false-freshness bug, still live in JSON-LD

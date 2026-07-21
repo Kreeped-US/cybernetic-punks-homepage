@@ -231,12 +231,23 @@ export default async function ShellHubPage({ params }) {
     ],
   };
 
-  // dateModified: prefer the meta_tier update timestamp (most recent NEXUS
-  // grading) if available, otherwise fall back to the latest article.
-  var lastModified = (metaTier && metaTier.updated_at)
-    || (nexusTake[0] && nexusTake[0].created_at)
-    || (articles[0] && articles[0].created_at)
-    || new Date().toISOString();
+  // dateModified: THE SHELL ENTITY FIRST (2026-07-21).
+  //
+  // This chain used to reach for meta_tiers.updated_at first, then articles.
+  // `shell` is the shell_stats row (fetched with select('*') above) and was
+  // already in scope -- fetched and never consulted. So a SHELL ENTITY page was
+  // dated by NEXUS's derived tier grading, and failing that by the publish date
+  // of ARTICLES ABOUT the shell, which is a different claim entirely.
+  //
+  // Correct precedence: the entity's own row, then the editorial grading of it.
+  // The two article links are DROPPED -- an article about a shell is not a
+  // modification of the shell page. Same precedence error the pipeline loop fix
+  // corrected (shell_stats is the source of truth, meta_tiers is derived).
+  //
+  // FAIL CLOSED: no `|| new Date()`. dateModified is omitted below when null.
+  var lastModified = (shell && shell.updated_at)
+    || (metaTier && metaTier.updated_at)
+    || null;
 
   var webPageSchema = {
     '@context': 'https://schema.org',
@@ -244,7 +255,7 @@ export default async function ShellHubPage({ params }) {
     name: 'Marathon ' + shellName + ' Guide',
     description: 'Complete guide to the ' + shellName + ' Runner Shell in Marathon — stats, abilities, cores, implants, builds, and tier ranking.',
     url: 'https://cyberneticpunks.com/shells/' + slug,
-    dateModified: lastModified,
+    // dateModified attached below, only when a real date exists.
     about: {
       '@type': 'Thing',
       name: shellName + ' Runner Shell',
@@ -256,6 +267,9 @@ export default async function ShellHubPage({ params }) {
       url:  'https://cyberneticpunks.com',
     },
   };
+
+  // Omit rather than emit a stand-in -- see lastModified above.
+  if (lastModified) webPageSchema.dateModified = lastModified;
 
   var faqSchema = faqItems.length > 0 ? {
     '@context': 'https://schema.org',

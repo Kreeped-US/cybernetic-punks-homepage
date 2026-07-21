@@ -296,7 +296,20 @@ export default async function BuildsPage() {
   var metaShellsList = metaTiers
     .filter(function(t) { return t.type === 'shell' && t.name !== 'Rook'; })
     .sort(function(a, b) { return (tierOrder[a.tier] || 99) - (tierOrder[b.tier] || 99); });
-  var lastMetaUpdate = metaTiers[0]?.updated_at;
+  // REAL max, not metaTiers[0] (2026-07-21). The meta_tiers query above is
+  // `.order('tier')` -- ordered by tier LETTER, not recency -- so position zero is
+  // whichever row sorts first alphabetically (A before S), NOT the newest. This
+  // read was right only by coincidence: the cron writes every row in one pass, so
+  // all timestamps matched. Edit a single row and it silently diverges.
+  //
+  // The name asserted something the code did not compute, and the value is ALSO
+  // RENDERED to users below as "UPDATED n days ago".
+  //
+  // Quiet-failure family: ordering by a non-recency column and then treating
+  // position zero as newest. Same shape as a paginated .range() with no sort.
+  var lastMetaUpdate = metaTiers.length > 0
+    ? metaTiers.reduce(function (a, b) { return (a.updated_at || '') > (b.updated_at || '') ? a : b; }).updated_at
+    : null;
 
   // Weapons grouped by category
   var weaponsByCategory = {};
@@ -331,9 +344,13 @@ export default async function BuildsPage() {
   var maxHp  = Math.max.apply(null, shells.map(function(s) { return s.base_health || 0; }).concat([1]));
 
   // ─── JSON-LD SCHEMAS ────────────────────────────────────
+  // FAIL CLOSED: no `|| new Date()`. An empty query is what an OUTAGE looks like,
+  // so a build/crawl-time fallback asserts "modified now" exactly when the site is
+  // least trustworthy. dexterArticles IS ordered by created_at desc, so its [0] is
+  // genuinely the newest -- that link is honest and stays.
   var lastModified = lastMetaUpdate
     || (dexterArticles[0] && dexterArticles[0].created_at)
-    || new Date().toISOString();
+    || null;
 
   var breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -350,13 +367,17 @@ export default async function BuildsPage() {
     name: 'Marathon Builds & Loadouts',
     description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides.',
     url: 'https://cyberneticpunks.com/builds',
-    dateModified: lastModified,
+    // dateModified attached below, only when a real date exists.
     publisher: {
       '@type': 'Organization',
       name: 'CyberneticPunks',
       url:  'https://cyberneticpunks.com',
     },
   };
+
+  // Omit rather than emit a stand-in. Same rule as the sitemap entity hubs and
+  // the shell guides: a missing date must never become "now".
+  if (lastModified) collectionPageSchema.dateModified = lastModified;
 
   var faqSchema = {
     '@context': 'https://schema.org',

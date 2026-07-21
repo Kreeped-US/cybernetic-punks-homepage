@@ -115,10 +115,19 @@ export default async function MetaPage() {
   // -- JSON-LD SCHEMAS --
   // Built from the live data, so they reflect actual tier list state.
 
-  // Latest tier update timestamp -- gives Google fresh-content signal
+  // Latest tier update timestamp. The reduce is a REAL max and is correct
+  // regardless of query order -- only the fallback was wrong.
+  //
+  // The old fallback was `new Date().toISOString()`, and this comment used to read
+  // "gives Google fresh-content signal" -- the bug's rationale stated outright.
+  // The fallback existed TO guarantee a freshness signal, which is exactly why it
+  // was dishonest: with metaTiers empty (an outage, or a failed cron) EVERY meta
+  // page would claim modification at crawl time.
+  //
+  // FAIL CLOSED: null here, dateModified omitted below.
   const lastUpdated = metaTiers.length > 0
     ? metaTiers.reduce(function(a, b) { return a.updated_at > b.updated_at ? a : b; }).updated_at
-    : new Date().toISOString();
+    : null;
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -135,7 +144,7 @@ export default async function MetaPage() {
     name: 'Marathon Meta Tier List',
     description: 'Live Marathon tier list ranking weapons, shells, and loadouts. Updated throughout the day by AI editors analyzing gameplay, community sentiment, and patch impacts.',
     url: 'https://cyberneticpunks.com/meta',
-    dateModified: lastUpdated,
+    // dateModified attached below, only when a real date exists.
     publisher: {
       '@type': 'Organization',
       name: 'CyberneticPunks',
@@ -154,6 +163,9 @@ export default async function MetaPage() {
       return ta - tb;
     })
     .slice(0, 30); // top 30 items only -- schema rewards focused lists
+
+  // Omit rather than emit a stand-in -- see lastUpdated above.
+  if (lastUpdated) webPageSchema.dateModified = lastUpdated;
 
   const itemListSchema = {
     '@context': 'https://schema.org',

@@ -203,7 +203,19 @@ export default async function SitrepPage() {
   var moversDown   = allTiers.filter(function(t) { return t.trend === 'down'; }).slice(0, 6);
   var hasMovers    = moversUp.length > 0 || moversDown.length > 0;
   var hasMetaData  = allTiers.length > 0;
-  var lastUpdated  = allTiers[0]?.updated_at || allArticles[0]?.created_at || null;
+  // REAL max, not allTiers[0] (2026-07-21). The meta_tiers query is `.order('tier')`
+  // -- tier LETTER, not recency -- so position zero is whichever row sorts first
+  // alphabetically, NOT the newest. Same defect as app/builds/page.js:299.
+  // allArticles IS ordered created_at desc, so its [0] is genuinely newest.
+  //
+  // The terminal was already `null` rather than `new Date()` -- but `null` was then
+  // assigned straight into the schema, emitting `dateModified: null`, which is an
+  // INVALID value rather than an absent one. Now omitted entirely below.
+  var lastUpdated  = (allTiers.length > 0
+      ? allTiers.reduce(function (a, b) { return (a.updated_at || '') > (b.updated_at || '') ? a : b; }).updated_at
+      : null)
+    || allArticles[0]?.created_at
+    || null;
 
   // Faction activity — count articles mentioning each faction
   var factionActivity = {};
@@ -253,9 +265,13 @@ export default async function SitrepPage() {
     name: 'Marathon Sitrep — Live Meta Snapshot',
     description: 'Everything you need to know before you drop in. Live Marathon meta snapshot refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/sitrep',
-    dateModified: lastUpdated,
+    // dateModified attached below, only when a real date exists.
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
   };
+
+  // Omit rather than emit `dateModified: null`. An explicit null is an INVALID
+  // schema value; absence is the honest representation of "we do not know".
+  if (lastUpdated) webPageSchema.dateModified = lastUpdated;
 
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
