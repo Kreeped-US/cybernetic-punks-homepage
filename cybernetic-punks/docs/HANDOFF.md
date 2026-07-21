@@ -5,6 +5,98 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Sitemap lastmod: honest dates, and a FOURTH label-vs-substance case
+
+### The bug
+
+`app/sitemap.js` used `new Date()` for **28 hardcoded static routes**, so lastmod
+tracked the DEPLOY rather than the content. Measured on the live sitemap: **29
+URLs shared the millisecond `2026-07-21T15:50:41.939Z`** - the push time.
+
+`/modes/vault-breaker` was the clearest case: an honest `FACTS_UPDATED` in its
+JSON-LD and a build timestamp in the sitemap. **Two freshness stories for one
+page**, agreeing only by coincidence on the day both read 2026-07-21. This is the
+same false-freshness bug the page comment records as fixed in
+`app/weapons/[slug]/page.js` - **the discipline reached the JSON-LD and never
+reached the sitemap.**
+
+### What shipped
+
+**`FACTS_UPDATED` moved to `lib/vaultBreaker.js`**, imported by both the page and
+the sitemap. Matches the `MATCHUP_VERIFIED_DATE` precedent. One definition, two
+consumers, cannot drift. `/matchups` now uses `MATCHUP_VERIFIED_DATE`, which
+already drove its own children's JSON-LD - the hub had been disagreeing with the
+detail pages it indexes.
+
+**(b) DB-driven routes now OMIT lastmod entirely.** `next/sitemap` uses a
+truthiness guard (`if (item.lastModified)`), verified at source in
+`node_modules/next/dist/.../resolve-route-data.js` AND empirically in the
+generated XML - omitting the key emits no element rather than defaulting to
+`now()`. A page refreshing every 15 minutes cannot honour any lastmod; a build
+timestamp is wrong IMMEDIATELY, not eventually. **The decisive argument: stamping
+18 routes with deploy time degrades trust in the 896 article URLs that carry real
+per-article dates.**
+
+**Next passes `lastModified` STRINGS verbatim**, so `'2026-07-21'` was used rather
+than `new Date('2026-07-21')` - the latter emits `T00:00:00.000Z` and invents a
+midnight precision these dates do not have.
+
+**(c) static routes** carry literal constants from `git log`, each verified as a
+substantive commit: `/editors` 2026-07-09, `/stats` 2026-07-20, `/leaderboard`
+2026-07-20, `/join` 2026-07-20.
+
+### *** FOURTH INSTANCE TODAY OF A LABEL STANDING IN FOR SUBSTANCE ***
+
+**`/stats` and `/leaderboard` were categorised GENUINELY DYNAMIC from their names
+and their `changefreq`.** Both have **ZERO supabase refs, zero fetch, zero
+await** - static placeholders, the same ones stripped of false capability claims
+on 2026-07-20. They were claiming daily/weekly `changefreq` on content that never
+changes by itself. `/marathon` and `/ranked` moved the other way (10 and 7
+supabase refs). **Four routes moved.**
+
+**RULE, now in the code comment: check the MODULE for data sources, not the route
+name.**
+
+Prior three instances today:
+1. `meta_tiers` reading as corroboration for `shell_stats`
+2. our own articles reading as citation
+3. a headline reading as content (the dpmg keep decision)
+
+Four different surfaces, one shape: **a label was trusted in place of the thing it
+named.** Every one was caught only by opening the thing itself.
+
+### LARGEST REMAINING FALSE-FRESHNESS SIGNAL - not fixed
+
+The **hub-index pages** claim build-time lastmod while their content is weeks old:
+
+| hub | max(updated_at) | staleness |
+|---|---|---|
+| `/weapons` | 2026-06-02 | **49 days** |
+| `/uniques` | 2026-06-02 | **49 days** |
+| `/maps` | 2026-06-08 | 43 days |
+| `/shells` | 2026-07-20 | 1 day |
+
+**Bigger than the bug just fixed.** Fixing needs the hub entries moved AFTER their
+DB reads - they are currently built in the static array before any query runs, so
+they cannot see the results. A constant would be wrong for them: an index over
+changing children should report `max(updated_at)`, not a frozen date.
+
+### The /weapons build-time fallback is DORMANT
+
+`w.updated_at ? new Date(w.updated_at) : new Date()`. Measured: **0 of 32
+weapon_stats, 0 of 8 shell_stats, 0 of 16 unique_weapons, 0 of 5 game_maps have
+NULL updated_at.** Latent, not active. Would silently stamp build time if a future
+insert omits `updated_at`.
+
+### STILL OPEN - the original bug, still live
+
+`app/guides/shells/[name]/page.js:286` has `datePublished: '2026-03-05'` beside
+`dateModified: new Date().toISOString()`. **Every shell guide claims modification
+at crawl time.** Worse than the sitemap case, because JSON-LD `dateModified` is a
+direct assertion rather than a hint.
+
+---
+
 ## 2026-07-21 - Tiered Compiler section, and: OUR OWN COVERAGE IS NOT A SOURCE
 
 ### What shipped

@@ -57,6 +57,7 @@
 
 import Link from 'next/link';
 import Footer from '@/components/Footer';
+import { FACTS_UPDATED } from '@/lib/vaultBreaker';
 
 export const dynamic = 'force-dynamic';
 
@@ -109,8 +110,10 @@ const SOURCES = [
   },
 ];
 
-// When this page was last CHECKED AGAINST ITS SOURCES. Feeds dateModified.
-// Moves on a real verification pass, never on a render.
+// When this page was last CHECKED AGAINST ITS SOURCES. Feeds dateModified here
+// AND lastmod in app/sitemap.js -- ONE definition, so the two can never tell
+// different freshness stories. MOVED to lib/vaultBreaker.js 2026-07-21 for
+// exactly that reason; see that file for the bug it closes.
 //
 // 2026-07-21: was '2026-07-16', which had become impossible as written -- the
 // footer claimed the facts were last checked on 07-16 while citing a source
@@ -123,7 +126,6 @@ const SOURCES = [
 // which is a different and weaker claim -- see the `verified` field below, whose
 // ambiguity between those two meanings is a known defect pending a split into
 // source_verified_at / play_verified_at.
-const FACTS_UPDATED = '2026-07-21';
 
 const PAGE_URL = 'https://cyberneticpunks.com/modes/vault-breaker';
 

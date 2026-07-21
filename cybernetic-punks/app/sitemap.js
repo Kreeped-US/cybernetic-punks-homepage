@@ -36,8 +36,11 @@ import { toISOWithPTOffset } from '@/lib/formatDate';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
-import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug } from '@/lib/matchups';
+import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug, MATCHUP_VERIFIED_DATE } from '@/lib/matchups';
 import { hasShellGuide } from '@/lib/shellGuides';
+// FACT DATES read from lib/ so the sitemap and the pages' JSON-LD cannot tell
+// different freshness stories. See the lastmod policy note in sitemap() below.
+import { FACTS_UPDATED } from '@/lib/vaultBreaker';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -58,16 +61,75 @@ function weaponSlug(name) {
 export default async function sitemap() {
   const baseUrl = 'https://cyberneticpunks.com';
 
+  // ── lastmod POLICY (2026-07-21) ──────────────────────────────────────────
+  // Every hardcoded static route used `lastModified: new Date()`, so lastmod
+  // tracked the DEPLOY, not the content. Measured on the live sitemap before the
+  // fix: 29 URLs shared the millisecond `2026-07-21T15:50:41.939Z`, which was
+  // the push time. /modes/vault-breaker was the clearest case -- its JSON-LD
+  // dateModified read the honest FACTS_UPDATED while its lastmod read the build
+  // clock, so one page told crawlers two different freshness stories. They
+  // agreed only by coincidence, on the one day both happened to be 2026-07-21.
+  //
+  // Routes now fall into three buckets, decided on EVIDENCE (supabase refs +
+  // fetch/await in the page module), not on the route name:
+  //
+  //   (a) FACT-DATED   -> a real constant. Content changes when a human edits
+  //                       it, and we know when that was.
+  //   (b) DB-DRIVEN    -> NO lastmod at all. Content changes without a deploy,
+  //                       so any lastmod is wrong the moment it is written. A
+  //                       build timestamp is not "imprecise", it is wrong
+  //                       IMMEDIATELY -- the data has already moved. changefreq
+  //                       carries the signal, and Google ignores lastmod it
+  //                       judges unreliable. Stamping 15 pages with deploy time
+  //                       degrades trust in the ~900 ARTICLE URLs whose
+  //                       per-article lastmod is genuinely honest. That trade is
+  //                       the whole argument for omitting.
+  //   (c) STATIC       -> a literal date from `git log`, the last SUBSTANTIVE
+  //                       content commit. These pages have a real last-changed
+  //                       date; declining to answer when we know it is worse
+  //                       than answering.
+  //
+  // next/sitemap emits <lastmod> ONLY when the field is truthy (verified in
+  // node_modules/next/dist/.../resolve-route-data.js: `if (item.lastModified)`),
+  // so OMITTING the key emits no element. It does NOT default to now(). It also
+  // passes a STRING through verbatim, which is why the constants below are
+  // 'YYYY-MM-DD' strings and not `new Date(...)` -- the latter would emit
+  // `T00:00:00.000Z` and invent a midnight precision these dates do not have.
+  //
+  // TWO ROUTES I INITIALLY MIS-CATEGORISED, kept as a warning: /stats and
+  // /leaderboard look dynamic and carry changefreq daily/weekly, but both are
+  // SEO PLACEHOLDERS -- zero supabase refs, zero fetch, zero await, both headed
+  // "ready to wire to the Bungie API when available". Their content only changes
+  // when someone edits the file, so they are (c), not (b). Check the module, not
+  // the route name.
+  //
+  // NOT CHANGED THIS PASS: the entity hub-index routes (/shells, /weapons,
+  // /mods, /uniques, /maps). A constant is WRONG for them -- their honest
+  // lastmod is max(updated_at) across their children, which needs a query this
+  // function does not currently make for the hubs. See docs/HANDOFF.md.
+
+  // (c) STATIC ROUTES -- last substantive content commit, from `git log`.
+  // UPDATE THESE BY HAND when the page actually changes. A stale date here is a
+  // small lie; `new Date()` was a daily one.
+  const EDITORS_UPDATED = '2026-07-09';      // visible breadcrumbs + BreadcrumbList JSON-LD
+  const STATS_UPDATED = '2026-07-20';        // fix(honesty): removed unbuilt-capability claims
+  const LEADERBOARD_UPDATED = '2026-07-20';  // fix(honesty): blanked invented leaderboard data
+  const JOIN_UPDATED = '2026-07-20';         // fix(seo): title suffix drop
+
   const staticPages = [
-    { url: baseUrl,                  lastModified: new Date(), changeFrequency: 'daily',   priority: 1.0 },
-    { url: baseUrl + '/marathon',    lastModified: new Date(), changeFrequency: 'daily',   priority: 0.95 },
-    { url: baseUrl + '/meta',        lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.95 },
-    { url: baseUrl + '/sitrep',      lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.95 },
-    { url: baseUrl + '/factions',    lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
-    { url: baseUrl + '/ranked',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
-    { url: baseUrl + '/advisor',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
-    { url: baseUrl + '/cradle',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
-    { url: baseUrl + '/intel',       lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
+    // (b) DB-DRIVEN -- no lastmod. See the policy note above.
+    { url: baseUrl,                  changeFrequency: 'daily',   priority: 1.0 },
+    { url: baseUrl + '/marathon',    changeFrequency: 'daily',   priority: 0.95 },
+    { url: baseUrl + '/meta',        changeFrequency: 'hourly',  priority: 0.95 },
+    { url: baseUrl + '/sitrep',      changeFrequency: 'hourly',  priority: 0.95 },
+    { url: baseUrl + '/factions',    changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/ranked',      changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/advisor',     changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/cradle',      changeFrequency: 'daily',   priority: 0.9 },
+    { url: baseUrl + '/intel',       changeFrequency: 'hourly',  priority: 0.9 },
+    // Entity hubs: still new Date() pending the max(updated_at) work described
+    // in the policy note. Left ALONE deliberately rather than given a constant,
+    // which would be wrong for an index over changing children.
     { url: baseUrl + '/shells',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
     { url: baseUrl + '/weapons',     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.85 },
     // /mods = the ENTITY REFERENCE hub (app/mods/page.js), DISTINCT from the
@@ -75,32 +137,41 @@ export default async function sitemap() {
     // /maps vs /guides/maps. Weekly: mod_stats changes far less than the
     // daily-regraded shells/weapons.
     { url: baseUrl + '/mods',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
-    // /matchups = the ENTITY REFERENCE hub for the game-verified shell matchup
-    // matrix (app/matchups/page.js). Weekly, like /mods: the matrix changes far
-    // less than the daily-regraded shells/weapons. The 8 per-shell pages are
-    // emitted dynamically below (matchupPages), list from lib/matchups.js SHELLS.
-    { url: baseUrl + '/matchups',    lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
+    // (a) FACT-DATED. /matchups = the ENTITY REFERENCE hub for the game-verified
+    // shell matchup matrix (app/matchups/page.js). Weekly, like /mods: the matrix
+    // changes far less than the daily-regraded shells/weapons. The 8 per-shell
+    // pages are emitted dynamically below (matchupPages), list from
+    // lib/matchups.js SHELLS.
+    //   MATCHUP_VERIFIED_DATE already drives the per-shell pages' JSON-LD
+    //   dateModified, so before this the HUB disagreed with its own children.
+    //   One constant now feeds both.
+    { url: baseUrl + '/matchups',    lastModified: MATCHUP_VERIFIED_DATE, changeFrequency: 'weekly', priority: 0.85 },
     { url: baseUrl + '/uniques',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: baseUrl + '/maps',        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
-    // Vault Breaker: the official-sourced canonical for Marathon's first PvE mode
-    // (July 21 - Aug 4, 2026). Priority 0.9 + daily while the event runs -- it is a
-    // dated event page, not evergreen reference. NOTE: there is no /modes index yet;
-    // this is currently the only page under /modes, so no parent entry is emitted.
-    // Revisit priority/changeFrequency after Aug 4 when the event ends.
-    { url: baseUrl + '/modes/vault-breaker', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: baseUrl + '/rising',      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8 },
-    { url: baseUrl + '/stats',       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.75 },
-    { url: baseUrl + '/leaderboard', lastModified: new Date(), changeFrequency: 'daily',   priority: 0.75 },
-    { url: baseUrl + '/status',      lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.7 },
-    { url: baseUrl + '/player-count',lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.8 },
-    { url: baseUrl + '/editors',     lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.7 },
-    { url: baseUrl + '/intel/cipher',  lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: baseUrl + '/intel/nexus',   lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: baseUrl + '/intel/dexter',  lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: baseUrl + '/intel/ghost',   lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: baseUrl + '/intel/miranda', lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: baseUrl + '/guides',        lastModified: new Date(), changeFrequency: 'weekly', priority: 0.65 },
-    { url: baseUrl + '/join',          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    // (a) FACT-DATED. Vault Breaker: the official-sourced canonical for Marathon's
+    // first PvE mode (July 21 - Aug 4, 2026). Priority 0.9 + daily while the event
+    // runs -- it is a dated event page, not evergreen reference. NOTE: there is no
+    // /modes index yet; this is currently the only page under /modes, so no parent
+    // entry is emitted. Revisit priority/changeFrequency after Aug 4.
+    //   FACTS_UPDATED is the SAME constant the page's JSON-LD dateModified reads
+    //   (lib/vaultBreaker.js), so sitemap and structured data cannot disagree.
+    { url: baseUrl + '/modes/vault-breaker', lastModified: FACTS_UPDATED, changeFrequency: 'daily', priority: 0.9 },
+    { url: baseUrl + '/rising',      changeFrequency: 'daily',   priority: 0.8 },
+    // (c) STATIC placeholders -- see the mis-categorisation warning above.
+    { url: baseUrl + '/stats',       lastModified: STATS_UPDATED, changeFrequency: 'weekly',  priority: 0.75 },
+    { url: baseUrl + '/leaderboard', lastModified: LEADERBOARD_UPDATED, changeFrequency: 'daily', priority: 0.75 },
+    { url: baseUrl + '/status',      changeFrequency: 'hourly',  priority: 0.7 },
+    { url: baseUrl + '/player-count',changeFrequency: 'hourly',  priority: 0.8 },
+    // (c) STATIC -- roster comes from lib/editors/roster.js, no DB read.
+    { url: baseUrl + '/editors',     lastModified: EDITORS_UPDATED, changeFrequency: 'weekly', priority: 0.7 },
+    { url: baseUrl + '/intel/cipher',  changeFrequency: 'daily', priority: 0.7 },
+    { url: baseUrl + '/intel/nexus',   changeFrequency: 'daily', priority: 0.7 },
+    { url: baseUrl + '/intel/dexter',  changeFrequency: 'daily', priority: 0.7 },
+    { url: baseUrl + '/intel/ghost',   changeFrequency: 'daily', priority: 0.7 },
+    { url: baseUrl + '/intel/miranda', changeFrequency: 'daily', priority: 0.7 },
+    { url: baseUrl + '/guides',        changeFrequency: 'weekly', priority: 0.65 },
+    // (c) STATIC -- supabase here is an auth redirect, not page content.
+    { url: baseUrl + '/join',          lastModified: JOIN_UPDATED, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
   // Same guide filter as the DB path below: the fallback must not advertise a
