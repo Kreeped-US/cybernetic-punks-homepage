@@ -33,7 +33,7 @@
 // request context; it only needs a supabase client the caller already has.
 
 import { loadVocabulary, deriveTuple, isCovered } from './coverage.js';
-import { topicTokens, buildIdfMap } from './topicTokens.js';
+import { topicTokens, buildIdfMap, topicBigrams, buildBigramIdfMap, rarityCutoff } from './topicTokens.js';
 
 // ── CROSS-EDITOR RARE-TOKEN DUPLICATE CHECK ──────────────────────────────────
 //
@@ -64,11 +64,46 @@ import { topicTokens, buildIdfMap } from './topicTokens.js';
 // fire at all -- topicTokens drops sub-3-char tokens, so "1.1.0.3" contributes
 // nothing. No patch-token exclusion is needed.
 var DUP_WINDOW_HOURS = 48;   // ~2 cron cycles; catches next-day follow-ups
-var DUP_MIN_IDF = 5.0;       // df<=9 of ~1564 headlines (~0.6%)
 var DUP_MIN_SHARED = 1;      // LOG threshold. Enforcement threshold is Unit 5's call.
 
+// RARITY BAR as a document-frequency RATIO, not a literal idf (2026-07-21).
+// The old `DUP_MIN_IDF = 5.0` was calibrated at N=1564 and this file's own
+// tokeniser warns an absolute idf only means what you think near that N -- as
+// the corpus grows a fixed 5.0 admits steadily more tokens. 0.006 reproduces
+// the old bar EXACTLY today (N=1564 -> maxDf 9 -> cutoff idf 5.0588; the old
+// 5.0 also resolved to df<=9, and the two admit an identical 1,448 tokens --
+// symmetric difference ZERO, measured). It only diverges as N moves.
+var DUP_MAX_DF_RATIO = 0.006;
+
+// ── WHY A BIGRAM SIGNAL (2026-07-21) ─────────────────────────────────────────
+// The unigram check went BLIND to Vault Breaker on its launch day, and the
+// failure is inverted: prior coverage drove "vault" (df 24, idf 4.15) and
+// "breaker" (df 12, idf 4.80) below the bar, so the detector lost the subject
+// precisely BECAUSE the site had covered it a lot -- which is exactly when
+// cross-editor clustering is most likely. The phrase did not go common with its
+// words: "vault_breaker" is df 7 / idf 5.28 and clears the same bar.
+//
+// TWO THINGS THIS DOES NOT FIX, both measured, both worth knowing before anyone
+// trusts this to catch duplication generally:
+//   1. PHRASE SATURATION. Once a bigram itself goes common the blind spot comes
+//      back one level up -- "cryo_archive" is already df 184 / idf 2.25 and is
+//      invisible here. This delays the failure, it does not remove it.
+//   2. THE WINDOW CEILING, which is the bigger one. A 48h window sees only
+//      ADJACENT pairs, never a cluster. The Vault Breaker cluster accreted from
+//      06-25 to 07-17 and NO window-based detector would ever have caught it.
+//      Same-week duplication and slow-accretion duplication are different
+//      problems; only the first has a detector. The corpus audit (2026-07-21)
+//      found 29 clusters of the second kind. Do not read a quiet dup log as
+//      evidence the corpus is not duplicating.
+
 // Per-invocation IDF corpus memo, same pattern as the vocabulary cache: the
-// corpus is read once per cron run, not once per article.
+// corpus is read once per cron run, not once per article. Caches BOTH maps plus
+// the corpus size, since the rarity bar is now derived from N.
+//
+// NOTE the corpus is `is_published` and deliberately NOT noindex-filtered: a
+// noindexed article is still published content and still a real duplicate
+// target. Consequence worth knowing -- the 179-article noindex prune on
+// 2026-07-21 did not move this calibration at all (N stayed 1,564).
 var _idfCache = {};
 async function getIdf(supabase, gameSlug) {
   if (_idfCache[gameSlug]) return _idfCache[gameSlug];
@@ -85,7 +120,11 @@ async function getIdf(supabase, gameSlug) {
     if (!r.data || r.data.length < 1000) break;
     from += 1000;
   }
-  var m = buildIdfMap(heads);
+  var m = {
+    uni: buildIdfMap(heads),
+    bi: buildBigramIdfMap(heads),
+    n: heads.length || 1,
+  };
   _idfCache[gameSlug] = m;
   return m;
 }
@@ -101,8 +140,15 @@ async function getIdf(supabase, gameSlug) {
 // data rather than silently collapsed to one pair.
 async function findCrossEditorDuplicate(supabase, gameSlug, editorName, headline) {
   var m = await getIdf(supabase, gameSlug);
+  // ONE bar, derived from the corpus, applied to both signals. The two maps are
+  // separate because bigram and unigram frequencies are not comparable -- a
+  // bigram is rarer than either of its words by construction -- but the RATIO
+  // means the same thing in each: "appears in at most 0.6% of headlines".
+  var cutUni = rarityCutoff(m.n, DUP_MAX_DF_RATIO);
+  var cutBi = rarityCutoff(m.n, DUP_MAX_DF_RATIO);
   var candTokens = topicTokens(headline);
-  if (!candTokens.length) return null;
+  var candBigrams = topicBigrams(headline);
+  if (!candTokens.length && !candBigrams.length) return null;
   var sinceIso = new Date(Date.now() - DUP_WINDOW_HOURS * 3600 * 1000).toISOString();
   var r = await supabase
     .from('feed_items')
@@ -116,16 +162,28 @@ async function findCrossEditorDuplicate(supabase, gameSlug, editorName, headline
   (r.data || []).forEach(function (other) {
     var otherSet = {};
     topicTokens(other.headline).forEach(function (t) { otherSet[t] = 1; });
-    var rare = candTokens.filter(function (t) {
-      return otherSet[t] && (m[t] || m._max) >= DUP_MIN_IDF;
+    var otherBi = {};
+    topicBigrams(other.headline).forEach(function (b) { otherBi[b] = 1; });
+
+    var uni = candTokens.filter(function (t) {
+      return otherSet[t] && (m.uni[t] || m.uni._max) >= cutUni;
     });
+    var bi = candBigrams.filter(function (b) {
+      return otherBi[b] && (m.bi[b] || m.bi._max) >= cutBi;
+    });
+    // UNION is the match set. Kept as `rare` so dup_rare_tokens / dup_shared_count
+    // keep meaning what they meant before (total shared rare signals); the two new
+    // per-signal columns carry the breakdown so Unit 5 can set thresholds per
+    // signal instead of inheriting a blended one.
+    var rare = uni.concat(bi);
     if (rare.length < DUP_MIN_SHARED) return;
     matchCount++;
-    var weight = rare.reduce(function (s, t) { return s + (m[t] || m._max); }, 0);
+    var weight = uni.reduce(function (s, t) { return s + (m.uni[t] || m.uni._max); }, 0)
+               + bi.reduce(function (s, b) { return s + (m.bi[b] || m.bi._max); }, 0);
     if (!best || rare.length > best.rare.length ||
         (rare.length === best.rare.length && weight > best.weight) ||
         (rare.length === best.rare.length && weight === best.weight && other.created_at > best.created_at)) {
-      best = { rare: rare, weight: weight, id: other.id, editor: other.editor,
+      best = { rare: rare, uni: uni, bi: bi, weight: weight, id: other.id, editor: other.editor,
                headline: other.headline, created_at: other.created_at };
     }
   });
@@ -231,6 +289,12 @@ export async function logCoverageShadow(supabase, opts) {
       would_block: !!verdict.covered,
       dup_rare_tokens: dup ? dup.rare : null,
       dup_shared_count: dup ? dup.rare.length : 0,
+      // PER-SIGNAL breakdown (2026-07-21). dup_rare_tokens above stays the UNION
+      // so existing rows remain comparable; these two say WHICH signal fired, so
+      // enforcement can be tuned per signal rather than on a blended count.
+      // Both are null (not []) when there is no match, matching dup_rare_tokens.
+      dup_unigram_tokens: dup ? dup.uni : null,
+      dup_bigram_tokens: dup ? dup.bi : null,
       dup_matched_id: dup ? dup.id : null,
       dup_matched_editor: dup ? dup.editor : null,
       dup_match_count: dup ? dup.matchCount : 0,

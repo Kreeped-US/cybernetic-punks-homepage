@@ -5,6 +5,134 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 — Dup detector: bigram signal + ratio-based rarity bar (shadow, LOG ONLY)
+
+### CORRECTION to this morning's claim — one blind spot today, not two
+
+**The GHOST 07-16 / NEXUS 07-17 roundups were NOT a detector miss.** They share
+`"limit"` (df=2, idf 6.26) and their token sets are **byte-identical** — the
+detector WOULD have fired. The earlier claim conflated *"did not block"* with
+*"did not detect"*: the probe is log-only and was never going to block anything.
+Only the Vault Breaker Mode pair was a genuine blind spot (verified: zero shared
+tokens at the bar).
+
+### *** THE CEILING — the more important finding ***
+
+**The Vault Breaker cluster spanned 06-25 to 07-17. A 48h window sees only
+ADJACENT pairs, never a cluster. NO window-based detector would have caught it.**
+
+Same-week duplication and slow-accretion duplication are **different problems,
+and only the first has a detector.** The corpus audit found **29 clusters of the
+second kind**. Do not read a quiet dup log as evidence the corpus is not
+duplicating — it is evidence about one of the two problems only.
+
+### What shipped
+
+**(c) BIGRAM SIGNAL.** Fires on a shared adjacent token pair at the same rarity
+bar as unigrams. The inversion it fixes: prior coverage drove `"vault"` (df 24,
+idf 4.15) and `"breaker"` (df 12, idf 4.80) below the bar, so the detector lost
+the subject *because* the site had covered it — exactly when clustering is most
+likely. `"vault_breaker"` is df 7 / idf 5.28 and clears the same bar. A phrase
+stays rare after its words go common.
+
+`topicTokens` returns an unordered set, so adjacency had to be recovered.
+**Chosen approach: extracted the existing loop body into a new exported
+`topicTokenSeq()` (ordered), and rebuilt `topicTokens` on top of it** — rather
+than adding a second copy of the transform, which is the drift the module warns
+against. `topicBigrams()` uses the same primitive. **`topicTokens`' own output is
+byte-identical, verified against the original implementation over all 1,564
+published headlines: ZERO differences.** Its two production callers
+(findDuplicateEvergreen, the shadow probe) are unaffected.
+
+**(d) RATIO-BASED RARITY BAR.** `DUP_MIN_IDF = 5.0` -> `DUP_MAX_DF_RATIO = 0.006`
+via `rarityCutoff(n, ratio)`. **Exact no-op at adoption, measured**: both admit
+an identical 1,448 tokens, symmetric difference ZERO. It only bites as N grows,
+stopping the cutoff drifting — this file already warned an absolute idf is only
+meaningful near its calibration size.
+
+**Per-signal logging.** `dup_unigram_tokens` / `dup_bigram_tokens` added;
+`dup_rare_tokens` and `dup_shared_count` keep their old meaning (the UNION) so
+existing rows stay comparable.
+
+### Backtest
+
+| | fires | % of articles |
+|---|---|---|
+| current unigram-only | 212 | 13.6% |
+| **new combined** | **352** | **22.5%** |
+| documented original | 55/515 | 10.7% |
+
+**+10.7 points of fire rate. SURVIVABLE ONLY BECAUSE THIS IS LOG-ONLY** — stated
+explicitly, not assumed. Nothing blocks; the cost is more rows and noisier
+analysis. It must STAY log-only until real data justifies a threshold.
+
+Confirmed on the actual miss: `[marathon_vault, vault_breaker, breaker_mode]` ->
+FIRES where the unigram signal found nothing.
+
+**FP rate is NOT measured.** The ~60% figure came from manual review of the
+original backtest; those labels do not exist here. Sampled bigram-only fires look
+better than the unigram baseline (`launch_spark`, `vandal_wstr`, `recon_intel`
+are real pairs; `weekend_meta` is a generic-phrase FP) — but that is an eyeball
+on 10 samples, a HYPOTHESIS for the shadow log to test, not a measurement.
+
+### FP SHAPE HYPOTHESIS — for the shadow data to test
+
+The apparent false positives among the 10 bigram-only fires share a shape:
+**GENERIC MODIFIER + COMMON NOUN** (`weekend_meta`, `knife_build`). The phrase is
+corpus-rare but **names no subject**. The apparent true positives mostly contain
+a proper noun or name a specific event (`vault_breaker`, `recon_intel`,
+`perfect_game`, `launch_spark`, `weekend_only`, `vandal_wstr`).
+
+**HYPOTHESIS: bigram precision correlates with whether either token is a proper
+noun.** If it holds, a proper-noun filter would cut FPs without touching recall.
+
+**This is a hypothesis from 10 eyeballed samples, NOT a measured rate.** The
+original ~60% figure came from manual labels that do not exist here. Test it
+against logged rows before acting on it.
+
+THE DISCRIMINATING CASE, worth keeping: **`launch_weekend` was read as an FP by
+its FORM and a TP by its REFERENT** — generic-modifier + common-noun in shape,
+but it named one real event (the Cryo Archive launch weekend) that two editors
+genuinely both covered. A purely lexical proper-noun test would drop it. That
+single bigram is the sharpest available test of whether the rule is about SHAPE
+or about REFERENCE, and the two answers diverge on it.
+
+### Two limits that remain, both measured
+
+1. **PHRASE SATURATION.** Once a bigram goes common the blind spot returns one
+   level up — `"cryo_archive"` is already df 184 / idf 2.25 and invisible.
+   This DELAYS the failure mode, it does not remove it.
+2. **The window ceiling above.** Nothing here addresses slow accretion.
+
+### Prerequisites / state
+
+**`coverage_shadow` has THREE rows** (probe shipped 2026-07-20). Unit 5
+enforcement cannot be tuned from production data yet — it needs weeks starting
+now, not weeks already banked.
+
+**The IDF corpus reads all 1,564 PUBLISHED headlines, not the 896 live** (no
+noindex filter, deliberately — a noindexed article is still a real duplicate
+target). So the 179-article cut did not move the calibration at all.
+
+**DDL PENDING (owner runs).** Until then the insert fails and the probe logs
+`persist failed (non-fatal)` — fail-open by design, generation unaffected:
+```sql
+ALTER TABLE coverage_shadow ADD COLUMN dup_unigram_tokens text[];
+ALTER TABLE coverage_shadow ADD COLUMN dup_bigram_tokens  text[];
+```
+
+### NOT built, deliberately
+- **(b) entity+facet tuple collision.** Verified useless for this failure: all
+  four VB articles, both roundups AND the Ziegler control classify
+  **UNCLASSIFIED** (Vault Breaker has no `game_modes` row). It can only help the
+  classified 45% and is blind by construction to new subjects — which is exactly
+  when clustering happens. 2 of 3 live shadow rows are unclassified.
+- **Lowering the unigram bar.** Catching `"vault"` (4.15) needs >=4.0, which
+  fires on 40% of articles and admits more of the common-English words that are
+  the documented FP mechanism.
+
+---
+
 ## 2026-07-21 — Corpus duplication audit: 179 noindexed (1075 -> 896)
 
 ### The shape of the corpus
