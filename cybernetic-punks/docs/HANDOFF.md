@@ -5,6 +5,139 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - verified_source exposed in the admin form (`25ab594`)
+
+Closes the gap flagged as the next code task in `49dc7e6`: the DDL created the
+capacity, this creates the practice. **No DDL, no data writes.**
+
+### 1. WHAT SHIPPED
+
+`verified_source` exposed for **`core_stats`** and **`implant_stats`** as
+**`type: 'text'`** - *not* a select - positioned **immediately after `verified`**
+in both schemas, with a placeholder carrying the canonical string form:
+
+```js
+{ key: 'verified_source', label: 'Verified Source', type: 'text',
+  placeholder: 'e.g. owner in-game entry, March 2026 (attested 2026-07-21)' },
+```
+
+Adjacency is the point: the source field has to be in the **eye-line of the click
+that ticks the box**. That is the whole mechanism `weapon_stats` relies on.
+
+### 2. *** WHY TEXT, NOT SELECT - the load-bearing decision ***
+
+**The mechanical reason - a select would have been DESTRUCTIVE here.** The renderer
+sets the control's value from `formData`:
+
+```js
+<select value={formData[field.key] ?? ''} ...>
+  {!field.nullableSelect && <option value="">-- Select --</option>}
+  {(field.options || []).map(o => <option key={o} value={o}>{o}</option>)}
+```
+
+A value matching **no option renders BLANK while the underlying string survives in
+`formData`.** So editing any of the 143 backfilled rows would have shown an **empty
+control** over live attested prose, and **one stray interaction would silently
+replace it with a three-word token.**
+
+> **Destructive editing on the one field whose entire purpose is to be
+> trustworthy.** A provenance column that can be blanked by a mis-click is worse
+> than none, because it is believed.
+
+**The substantive reason.** `weapon_stats`' closed option set
+(`in-game` / `tauceti.gg` / `both`) is **genuine for `weapon_stats`** - its
+provenance really is two external references and their union. **Core/implant
+provenance is attestation-based and open-ended:** *who* attested, *when*, and *with
+what caveat* - as the two backfilled strings already show, one of which carries
+`; batch-inserted, write mechanism unidentified`. **That is not enumerable**, and a
+fixed list would force every future entry to lie by rounding.
+
+**THE COST, recorded honestly: free text drifts.** The compensating control is
+**extending `provenance-check.mjs` to these two tables** - already flagged open in
+`49dc7e6`, and now more valuable than it was, because this change guarantees the
+column will start accumulating hand-written strings. The placeholder carries the
+convention; **nothing enforces it.**
+
+### 3. *** THE CAVEAT - THIS MAKES A MISSING SOURCE VISIBLE, NOT IMPOSSIBLE ***
+
+> **`required` is COSMETIC. 37 uses across the schemas, ONE consumer
+> (`app/admin/page.js:741`), which appends `' *'` to the label. Nothing reads it at
+> submit time.**
+> **`saveEdit` (`:558`) and `saveNew` (`:573`) run NO CHECKS.** Each builds the row
+> and fires the request unconditionally.
+
+**Ticking `verified` and leaving `verified_source` blank is still silently possible
+- on `weapon_stats` too.**
+
+> **`weapon_stats`' zero unsourced verified rows are OWNER DISCIPLINE MADE EASY BY
+> ADJACENCY, not a guarantee the form provides.** Do not read this commit as
+> enforcing the pairing. It puts the field where the omission is obvious; a
+> determined or hurried save still omits it.
+
+### 4. BEHAVIOUR
+
+**New rows:** a blank source becomes **SQL `NULL`**, via `formDataToRow`'s
+`if (row[field.key] === '') row[field.key] = null;`. That matches the DDL intent
+recorded in `49dc7e6` - nullable, no default, **absence means unsourced** - so
+**there is no `''` / `NULL` split** in the column.
+
+**Edit path:** the **143 backfilled rows now DISPLAY their prose** in a text input
+where the column was previously invisible in the UI. **`type: 'text'` round-trips
+losslessly and NO STORED VALUE CHANGES.** This is a rendering change until someone
+types.
+
+### 5. STILL OPEN - THE VALIDATION FOLLOW-UP, scoped but not built
+
+**Conditional requirement (`verified === true` implies non-blank `verified_source`)
+CANNOT be expressed in the existing field-config shape.** `required` is a **flat
+boolean consumed only for label decoration** and has **no notion of a predicate over
+sibling fields**.
+
+**It would need:**
+
+- a **NEW property** - a `requiredWhen` predicate over `formData`, or a per-table
+  validator function;
+- a **blocked-submit path** in both save handlers, which today submit
+  unconditionally;
+- an **error-surfacing mechanism** - only `showToast` exists;
+- **field-level error styling**, which does not exist at all.
+
+> *** THE TRAP - RECORD IT AND DO NOT FALL INTO IT: because `required` is currently
+> INERT EVERYWHERE, giving it teeth would RETROACTIVELY BLOCK SAVES on all 20
+> tables' 37 existing `required: true` fields. *** The safe scoping is a **separate
+> opt-in property**. **NEVER repurpose `required`.**
+
+**Affected immediately:** `weapon_stats`, `core_stats`, `implant_stats` - the three
+that expose `verified`. **The five `game_*` and three `dmz_*` tables also expose
+`verified` but have NO `verified_source` column**, so the rule **cannot apply there
+without DDL**.
+
+### 6. VERIFICATION - no row written
+
+A scratchpad harness (**not committed**) evaluates the **real extracted `SCHEMAS`
+and `buildFormDefaults`** with the real local constants - no stubs, no
+reimplementation.
+
+**Before-state guard:** confirmed `verified_source` **ABSENT** from both
+`core_stats` and `implant_stats` while **PRESENT** on `weapon_stats`. **The gap was
+demonstrated before it was closed** - had the before-run not shown it, the harness
+would have been wrong rather than the finding.
+
+**After: 16 assertions passed**, including the ones that could have caught a wrong
+implementation - **`type: 'text'` not select**, **placeholder present**, **position
+immediately after `verified`** (core 10 -> 11, implant 19 -> 20),
+**`weapon_stats.verified_source` UNCHANGED as a select with its three options**, and
+**`verified` still defaults `false`** on all three.
+
+**Diff: 20 tables, 209 field slots and 209 default keys compared. Exactly 2 default
+keys changed** - `core_stats.verified_source` and `implant_stats.verified_source`,
+both `undefined -> ""`. **Field-list movement confined to the two intended tables**
+(the two insertions plus the trailing shift they cause). **No other table changed in
+any respect.** Four lint issues **confirmed pre-existing at HEAD** by comparison, not
+assumed - identical set, shifted by the +13 lines.
+
+---
+
 ## 2026-07-21 - *** C1 RESOLVED: verified_source added, 143 rows attributed ***
 
 **Owner ran the DDL and backfill directly in the Supabase SQL editor.** Documentation
