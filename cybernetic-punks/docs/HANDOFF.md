@@ -5,6 +5,158 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - provenance-check now covers all 657 rows (`ef9a4d4`)
+
+Closes the coverage gap flagged in `49dc7e6`. **No data writes, no DDL, no CI
+wiring.**
+
+### 1. WHAT SHIPPED
+
+**`core_stats` and `implant_stats` added to the `TABLES` list.** Two config
+entries; `label()` and the format classifier **untouched**.
+
+- **Coverage: 363 -> 657 rows** - **the full population `verificationState()`
+  serves.** No stat table it reads is now outside the auditor.
+- **Total findings: 23 -> 84.** Exit code still **1**.
+- New per-table rows: `core_stats 85 / noSrc 23 / patchCite 0`,
+  `implant_stats 120 / noSrc 38 / patchCite 0`.
+
+The table comment now states the **RULE** ("every table carrying
+`verified_source`") **rather than a count** - a count in a comment goes stale
+silently while continuing to look correct, which is how *"the five populated
+tables"* survived being wrong. It also records that both tables were
+**STRUCTURALLY UNCHECKABLE before `49dc7e6`, not overlooked**: check 1 keys on a
+column that did not exist on them.
+
+### 2. THE UNSOURCED POPULATION IS INCLUDED **UNSUPPRESSED** - argued, not assumed
+
+The June-5 rows are deliberately unsourced and documented. **Including them as
+check-1 findings was a real decision with a real case against it**, and it was
+argued out rather than defaulted:
+
+**The case against:** a permanent findings floor is an alarm that fires every run,
+which trains the reader to stop reading it - **the same failure as the dexter
+summary line, in a different costume.**
+
+**Why they are included anyway:**
+
+1. **Check 1's semantic is exactly their state.** It asks *"is anything flagged
+   verified with nothing behind it?"* They are. Suppressing them would make the
+   check report something other than its own name - **the label-vs-substance
+   failure, introduced deliberately this time.**
+2. **`49dc7e6` made visibility the entire point** - *"a VISIBLE state rather than
+   an invisible one"*. Extending the auditor and then hiding them from it would
+   undo what the DDL was for.
+3. **An allowlist is itself an unaudited claim.** It would need maintaining, would
+   keep suppressing a row after someone sourced it, and would be a second place
+   where *"this is fine"* is asserted without evidence. **We spent the day removing
+   exactly that construct.**
+4. **It does not convert a green gate to red - the script already failed** (23,
+   exit 1) and is deliberately not in CI. It is a **report with an exit code**, not
+   a pass/fail gate.
+
+### 3. *** THE PERMANENT FLOOR - the operational consequence ***
+
+**Check 1 now has a standing floor** from a documented population that will not
+shrink until those rows are re-verified in-game.
+
+> *** A FUTURE CI WIRING MUST NOT GATE ON THE RAW TOTAL. *** It would fire forever
+> on a known state, and an alarm that is always on is an alarm nobody reads.
+> **The useful signal is GROWTH against a recorded baseline** - a check-1 count
+> ABOVE the baseline means **new** source-less verified rows appeared, which is the
+> thing worth interrupting someone for.
+> **Flagged in the script beside the exit-code comment. NOT BUILT.**
+
+### 4. THE `extraId` DIVERGENCE - both measurements recorded
+
+**`label()` renders `${id}/${extraId}`, and a finding has to identify ONE row.**
+The two tables needed **different** answers, and the measurement is recorded in the
+script so nobody copies one config to the other:
+
+| table | rows | distinct `(name, rarity)` | collisions | config |
+|---|---|---|---|---|
+| **`core_stats`** | 85 | 83 | **2** - `Predator\|Deluxe` x2, `Hunter/Killer\|Deluxe` x2 | **`extraId: 'id'`** |
+| **`implant_stats`** | 120 | **120** | **0** | **`extraId: 'rarity'`** |
+
+**`(name, rarity)` uniqueness had been measured on `mod_stats` earlier today and was
+initially carried across to these two. That was wrong** - it holds on
+`implant_stats` and fails on `core_stats`. Measured before wiring, per the standing
+rule.
+
+> **WHY `rarity` + A CAVEAT COMMENT WAS REJECTED for `core_stats`:** the caveat
+> would live **in the script** while the misleading label lives **in the output
+> someone reads at 2am.** A label that is adequate 83 times out of 85 - **failing
+> precisely on the rows someone needs to act on** - is worse than one that looks
+> ambiguous, because it *looks* precise. `Predator/Deluxe` would read as an
+> identification and would not be one.
+
+### 5. THE DEXTER HAZARD DOES NOT APPLY HERE - established by READING, not by analogy
+
+The obvious worry: neither new table has `patch_verified`, and **requesting a
+missing column is exactly what broke `dexter-stats` for 33 days.** Checked rather
+than reasoned from similarity:
+
+- **Check 2 reads `verified_source`, NOT `patch_verified`:**
+  `PATCH_CITE_RE.exec(r.verified_source || '')`. It regexes the citation text for
+  `Update X.Y`; it never touches the column.
+- **The script fetches with `select('*')`** - it never names columns, so **there is
+  no missing-column request to error on.**
+- Confirmed in the output: `patch_verified` appears nowhere in the two new
+  sections, and both report **check 2 = 0** (the backfilled strings say "March
+  2026", not a dotted version).
+- **Check 3 is already guarded** by `'countered_by' in rows[0] || 'counter_items' in
+  rows[0]` and prints nothing for either table.
+
+> **THE CONTRAST THAT MATTERS: `dexter-stats` ENUMERATED `patch_verified` in an
+> UPDATE payload. This script enumerates nothing.** Same missing column, opposite
+> outcome - **because of how the query was written, not because of what the schema
+> lacked.** Similar-looking hazards are not the same hazard; the difference was only
+> visible by reading both.
+
+### 6. VERIFICATION - prediction recorded BEFORE the run
+
+**Before-state guard:** both tables **absent** from coverage, **23 findings, exit
+1**. The gap was demonstrated before it was closed.
+
+**Prediction, recorded before running, so this was a test:** **84 findings, exit 1**,
+with `core_stats 85/23/0/0` and `implant_stats 120/38/0/0`.
+
+**It held cell for cell.** No deviation to report.
+
+**Also asserted:** all five pre-existing **summary rows AND section bodies
+byte-identical**; **three DMZ skip lines intact**; **check 3 prints nothing** for the
+new tables; exit code **read directly, not through a pipe**. ESLint clean.
+
+*Two false alarms in the comparison harness were mine, not the script's:* a node PID
+embedded in a warning line, and an `awk` range that made `unique_weapons` look
+changed because it is the last section in the before-file and now has a separator
+after it. **Both were extractor artifacts; the section bodies compare clean.**
+
+### 7. NEW OPEN ITEM - `core_stats` duplicate pairs, NOT investigated
+
+**`Predator|Deluxe` and `Hunter/Killer|Deluxe` each appear TWICE at identical name
+AND rarity:**
+
+| name | rarity | ids |
+|---|---|---|
+| Predator | Deluxe | `e5be8e41-8ce3-4e79-a249-8e37730f1dd3`, `a2ccd7de-7b54-40bf-9619-15cf301a2df1` |
+| Hunter/Killer | Deluxe | `d1cecc89-68fb-4f61-a0e4-dbac7ab654a6`, `12d497ca-9617-4dcd-b617-005f63c51696` |
+
+**`implant_stats`' 11 duplicate names ALL separate cleanly by rarity tier**
+(Standard/Enhanced/Deluxe/Prestige) - **that is the expected shape** for a
+tiered-item table. **`core_stats` does not match that pattern.**
+
+**CANDIDATE DATA DEFECT: possibly genuine duplicate rows rather than distinct
+items. NOT INVESTIGATED.**
+
+> **THE IMPLICATION WORTH CHECKING FIRST: if they ARE duplicates, one of each pair
+> may sit OUTSIDE the March capture** - meaning **an unverified twin of a sourced
+> row**, carrying the same name and rarity but no provenance. That would make the
+> `verified_source` backfill look complete for an item while half of it is
+> unattributed.
+
+---
+
 ## 2026-07-21 - verified_source exposed in the admin form (`25ab594`)
 
 Closes the gap flagged as the next code task in `49dc7e6`: the DDL created the
