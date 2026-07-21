@@ -112,6 +112,14 @@ const SCHEMAS = {
     { key: 'credit_value',       label: 'Credit Value',   type: 'number' },
     { key: 'ranked_viable',      label: 'Ranked Viable',  type: 'boolean' },
     { key: 'verified',           label: 'Verified',       type: 'boolean' },
+    // Sits DIRECTLY under `verified` on purpose: the source field has to be in
+    // the eye-line of the click that ticks the box. TEXT, not a select like
+    // weapon_stats -- this column already holds long-form attested prose, and a
+    // fixed select would render those values as blank while the string survived
+    // in formData, so one stray interaction would silently replace attested
+    // provenance with a three-word token. See docs/HANDOFF.md 2026-07-21 (C1).
+    { key: 'verified_source',    label: 'Verified Source', type: 'text',
+      placeholder: 'e.g. owner in-game entry, March 2026 (attested 2026-07-21)' },
     { key: 'notes',              label: 'Notes',          type: 'textarea' },
     { key: 'image_filename',     label: 'Image Filename', type: 'text',    placeholder: 'e.g. implant-name.webp' },
   ],
@@ -136,6 +144,11 @@ const SCHEMAS = {
     { key: 'ranked_viable',      label: 'Ranked Viable',      type: 'boolean' },
     { key: 'meta_rating',        label: 'Meta Rating',        type: 'select',  options: ['', 'S', 'A', 'B', 'C', 'D'] },
     { key: 'verified',           label: 'Verified',           type: 'boolean' },
+    // Directly under `verified`, same reasoning as implant_stats above: text
+    // rather than a select, because the backfilled prose in this column cannot
+    // be represented by a fixed option set and a select would risk destroying it.
+    { key: 'verified_source',    label: 'Verified Source',    type: 'text',
+      placeholder: 'e.g. owner in-game entry, March 2026 (attested 2026-07-21)' },
     { key: 'notes',              label: 'Notes',              type: 'textarea' },
     { key: 'image_filename',     label: 'Image Filename',     type: 'text',    placeholder: 'e.g. core-name.webp' },
   ],
