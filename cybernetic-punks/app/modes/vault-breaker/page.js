@@ -3,8 +3,10 @@
 // VAULT BREAKER — THE CANONICAL (July 16, 2026)
 // ============================================================
 // Marathon's first experimental PvE mode, July 21 - August 4, 2026. This is the
-// properly-sourced page: every fact below comes from Bungie's own Mid-Season 2
-// Update Preview (SOURCE_URL) and the June 23 key-dates/dev update.
+// properly-sourced page. Every fact below comes from an official Bungie post --
+// see the SOURCES array, which is the single definition feeding all four
+// citation sites. There is more than one source and there always was; the
+// rendered text claimed otherwise until 2026-07-21 (see SOURCES for why).
 //
 // WHY THIS PAGE EXISTS: 29 live articles mention Vault Breaker and NONE of them
 // cited bungie.net until today (only 2 do now, set by hand). They are news and
@@ -35,8 +37,15 @@
 // genuinely new fact this page contributes.
 //
 // HEDGES (deliberate omissions, per the reconciliation pass):
-//   - "Solo/Duo/Trio" verbatim. NOT "crew" - our own articles use "crew, duo, or
-//     solo" and the official post says Solo/Duo/Trio. We say what Bungie says.
+//   - "Solo/Duo/Trio" verbatim. CONFIRMED IN GAME 2026-07-21.
+//     The rationale here used to be that "crew, duo, or solo" was OUR phrasing
+//     and not Bungie's. That was FALSIFIED by the 2026-07-20 Vault Breaker
+//     Overview, which says "Play as a crew, duo, or solo" in Bungie's own words.
+//     Bungie uses BOTH constructions: "crew" is their term for a pre-made group,
+//     per the preview's "Crews and Queues" section ("we'll have Duos and Trios -
+//     both for matchmade and pre-made Crews"). So the two are not in conflict --
+//     a Trio is a crew of three. We keep Solo/Duo/Trio because it states the
+//     group SIZES, which "crew" does not, and because it is now game-verified.
 //   - NO "progression stays inside the mode" framing. The official post supports
 //     "kit upgrades persist across runs" and nothing broader.
 //   - Nothing here is inferred, extrapolated, or sourced from the pre-official
@@ -60,13 +69,61 @@ const BORDER_SUBTLE = '#1e2028';
 const ORANGE = '#ff8800';   // the GAME MODES accent on /maps/[slug]
 const CYAN = '#00d4ff';
 
-const SOURCE_URL = 'https://www.bungie.net/7/en/News/Article/mid_season_2_preview';
-const SOURCE_NAME = 'Marathon Mid-Season 2 Update Preview';
-const SOURCE_DATE = '2026-07-16';
+// ALL sources this page draws on, in ONE place. Feeds FOUR sites -- the hero
+// SOURCE block, the footer, eventSchema.citation and webPageSchema.citation --
+// so the visible text and the JSON-LD cannot list different sources. Same
+// single-definition discipline FAQ_ITEMS already uses for the FAQ section and
+// its FAQPage schema.
+//
+// WHY THIS IS AN ARRAY (2026-07-21). It was a single SOURCE_* triple, and the
+// rendered text asserted "Every fact on this page comes from Bungie's Mid-Season
+// 2 Update Preview". That was FALSE, and independently of any later post: the
+// Season 3 date (September 22, 2026) is not in the preview at all -- it comes
+// from the June 23 key-dates update. This file's own header comment already
+// admitted that second source while the rendered sentence denied it. A page
+// whose entire premise is citation discipline cannot mis-state its own sources.
+//
+// URL PROVENANCE -- DO NOT "TIDY" THESE INTO bungie.net SLUGS. Only the preview
+// has a hand-verified bungie.net URL. The other two are cited at Bungie's own
+// Steam cross-post, each verified by fetching it and confirming the page echoes
+// that article's title. bungie.net is a client-rendered SPA that returns HTTP
+// 200 with an identical empty shell for ANY /News/Article/<slug> path --
+// including slugs that do not exist (measured: an invented slug and the real one
+// were byte-identical). A guessed bungie.net URL therefore cannot be validated
+// and would 404 silently for readers. Cite what can be verified.
+const SOURCES = [
+  {
+    name: 'Marathon Mid-Season 2 Update Preview',
+    url: 'https://www.bungie.net/7/en/News/Article/mid_season_2_preview',
+    date: '2026-07-16',
+  },
+  {
+    name: 'Vault Breaker Overview',
+    url: 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1838407329266906',
+    date: '2026-07-20',
+  },
+  {
+    name: 'Marathon Dev Team Update: Key Dates',
+    url: 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1835871199316610',
+    date: '2026-06-23',
+  },
+];
 
-// The date the FACTS last changed (the Bungie preview's publication). Feeds
-// dateModified. Update this when the source updates - not on every render.
-const FACTS_UPDATED = '2026-07-16';
+// When this page was last CHECKED AGAINST ITS SOURCES. Feeds dateModified.
+// Moves on a real verification pass, never on a render.
+//
+// 2026-07-21: was '2026-07-16', which had become impossible as written -- the
+// footer claimed the facts were last checked on 07-16 while citing a source
+// published 07-20. Moved on an actual pass: the full preview text was pulled and
+// every high-risk claim (Vault Data T1/T2, kit contents, Armory stock, the
+// 3x/5x/1x weekly limits, the four-Codex count) was checked against it word for
+// word, and the 07-20 overview was compared against the whole page.
+//
+// THIS IS NOT AN IN-GAME VERIFICATION. It means "matches what Bungie published",
+// which is a different and weaker claim -- see the `verified` field below, whose
+// ambiguity between those two meanings is a known defect pending a split into
+// source_verified_at / play_verified_at.
+const FACTS_UPDATED = '2026-07-21';
 
 const PAGE_URL = 'https://cyberneticpunks.com/modes/vault-breaker';
 
@@ -134,6 +191,19 @@ const FAQ_ITEMS = [
 export default function VaultBreakerPage() {
   var vb = VAULT_BREAKER;
 
+  // schema.org `citation` accepts an ARRAY, so both schemas below cite every
+  // source rather than only the first. Derived from SOURCES, never re-listed --
+  // the JSON-LD cannot cite fewer sources than the visible text does.
+  var citations = SOURCES.map(function (s) {
+    return {
+      '@type': 'CreativeWork',
+      name: s.name,
+      url: s.url,
+      datePublished: s.date,
+      publisher: { '@type': 'Organization', name: 'Bungie' },
+    };
+  });
+
   // --- JSON-LD ------------------------------------------------
   // BREADCRUMB: Home > Vault Breaker (TWO levels, deliberately).
   // The plan specified "Home > Modes > Vault Breaker", but /modes DOES NOT
@@ -170,26 +240,20 @@ export default function VaultBreakerPage() {
     organizer: { '@type': 'Organization', name: 'Bungie', url: 'https://www.bungie.net' },
     isAccessibleForFree: true,
     url: PAGE_URL,
-    citation: {
-      '@type': 'CreativeWork',
-      name: SOURCE_NAME,
-      url: SOURCE_URL,
-      datePublished: SOURCE_DATE,
-      publisher: { '@type': 'Organization', name: 'Bungie' },
-    },
+    citation: citations,
   };
 
   var webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'Marathon Vault Breaker - Dates, Vault Data & How It Works',
-    description: 'Dates, Vault Data tiers, Sponsored Kit, and Armory stock for Marathon Vault Breaker, sourced from Bungie\'s Mid-Season 2 Update Preview.',
+    description: 'Dates, Vault Data tiers, Sponsored Kit, and Armory stock for Marathon Vault Breaker, sourced from Bungie\'s official announcements.',
     url: PAGE_URL,
     mainEntity: eventSchema,
     // Honest freshness: a fixed date tied to the source, NOT new Date().
     dateModified: FACTS_UPDATED,
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
-    citation: { '@type': 'CreativeWork', name: SOURCE_NAME, url: SOURCE_URL, datePublished: SOURCE_DATE },
+    citation: citations,
   };
 
   var faqSchema = {
@@ -253,11 +317,7 @@ export default function VaultBreakerPage() {
             SOURCE
           </div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
-            Every fact on this page comes from Bungie&rsquo;s{' '}
-            <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>
-              {SOURCE_NAME}
-            </a>
-            {' '}(published {SOURCE_DATE}).
+            Every fact on this page comes from Bungie&rsquo;s official posts: <SourceList />.
           </div>
         </div>
       </section>
@@ -338,7 +398,7 @@ export default function VaultBreakerPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
           <FactCard label="Cost" value="Free" />
           <FactCard label="Where" value="Vault Breaker Armory tab" note="Events section" />
-          <FactCard label="Starting kit" value="1 standard weapon + small equipment" note="It starts at its weakest" />
+          <FactCard label="Starting kit" value="1 standard weapon + small equipment and consumables" note="It starts at its weakest" />
         </div>
         <div style={{ marginTop: 10, background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2, padding: '16px 18px', maxWidth: 780 }}>
           <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 8 }}>
@@ -374,6 +434,24 @@ export default function VaultBreakerPage() {
             <li>Prestige Weapons: one of each, per event.</li>
           </ul>
         </div>
+
+        {/* The caveat a reader most needs before spending. Bungie's own footnote:
+            "purchases made from the Weekly and Limited Offers apply only to
+            standard Marathon activities. Only Kit Upgrades will alter your
+            loadout in Vault Breaker." Without this the Armory section reads as
+            though buying gear improves your runs. It does not. */}
+        <div style={{ marginTop: 10, padding: '12px 14px', background: DEEP_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + CYAN, borderRadius: '0 2px 2px 0', maxWidth: 780 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: CYAN, fontWeight: 700, marginBottom: 6 }}>
+            BEFORE YOU SPEND
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+            Armory purchases do <strong style={{ color: '#fff' }}>not</strong> change your loadout inside
+            Vault Breaker. Bungie&rsquo;s note: purchases from the Weekly and Limited Offers
+            &ldquo;apply only to standard Marathon activities. Only Kit Upgrades will alter your
+            loadout in Vault Breaker.&rdquo; Buy gear to take <em>out</em> of the mode; spend on
+            Kit Upgrades to get stronger <em>inside</em> it.
+          </p>
+        </div>
       </section>
 
       {/* CODEX + CONTEXT */}
@@ -384,8 +462,24 @@ export default function VaultBreakerPage() {
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#fff', marginBottom: 8 }}>
               Codex Challenges
             </div>
-            <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
-              Four Codex challenges run with the event, rewarding cosmetics.
+            <p style={{ margin: '0 0 8px', fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+              Four Codex challenges run with the event, each rewarding a cosmetic:
+            </p>
+            {/* Names verbatim from the Mid-Season 2 Update Preview. "USEC" on the
+                Weapon Charm is BUNGIE'S TYPO (every other entry reads UESC) and is
+                reproduced deliberately -- do NOT "correct" it. Quoting a source
+                means quoting it, and a silent fix would make our text stop matching
+                what a reader sees in game. The visible note below says so, so the
+                next person to spot it does not helpfully break it. */}
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+              <li>Profile Emblem &mdash; Opposition marker</li>
+              <li>Profile Background &mdash; UESC Command</li>
+              <li>Circuit Breaker Weapon Style &mdash; UESC Bulwark</li>
+              <li>Weapon Charm &mdash; USEC Control</li>
+            </ul>
+            <p style={{ margin: '8px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, fontStyle: 'italic' }}>
+              &ldquo;USEC Control&rdquo; is spelled that way in Bungie&rsquo;s announcement, where every
+              other entry reads UESC. Reproduced as written rather than silently corrected.
             </p>
           </div>
           <div className="vb-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2, padding: '16px 18px' }}>
@@ -419,12 +513,10 @@ export default function VaultBreakerPage() {
       <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ borderTop: '1px solid ' + BORDER_SUBTLE, paddingTop: 16, maxWidth: 780 }}>
           <p style={{ margin: 0, fontSize: 12.5, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-            Sourced from Bungie&rsquo;s{' '}
-            <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>
-              {SOURCE_NAME}
-            </a>
-            , published {SOURCE_DATE}. Facts last checked against the source on {FACTS_UPDATED}.
-            Vault Breaker is a limited-time event; details may change when the mode goes live.
+            Sourced from Bungie&rsquo;s <SourceList />. Checked against all three sources
+            on {FACTS_UPDATED} &mdash; <strong style={{ color: 'rgba(255,255,255,0.55)' }}>not
+            yet verified in game</strong>. Vault Breaker is a limited-time event; details may
+            differ from the announcements now that the mode is live.
           </p>
           <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link href="/maps/cryo-archive" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
@@ -442,6 +534,27 @@ export default function VaultBreakerPage() {
 
       <Footer />
     </main>
+  );
+}
+
+// Renders SOURCES as linked citations. Used by BOTH the hero source block and
+// the footer, so the two can never list different sources -- and neither can
+// drift from the JSON-LD, which builds its `citation` array from the same const.
+function SourceList() {
+  return (
+    <>
+      {SOURCES.map(function (s, i) {
+        return (
+          <span key={s.url}>
+            {i > 0 ? (i === SOURCES.length - 1 ? ', and ' : ', ') : ''}
+            <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>
+              {s.name}
+            </a>
+            {' '}({s.date})
+          </span>
+        );
+      })}
+    </>
   );
 }
 

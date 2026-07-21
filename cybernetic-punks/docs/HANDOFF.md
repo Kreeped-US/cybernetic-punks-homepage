@@ -5,6 +5,95 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 — Vault Breaker launch day: cron skipped, canonical corrected
+
+Marathon's first PvE mode went live today. Two shipped changes, both defensive.
+
+### 1. One-day cron skip (`chore(cron): skip one run on 2026-07-21`)
+
+Editors cannot play the game, so everything they could write today would be
+announcement-sourced — which `/modes/vault-breaker` already covers in one place,
+with citations. Generating 2+ articles to compete with our own canonical on
+launch day is the BR33 pattern with a known outcome.
+
+**Mechanism: a literal single-date guard** in `app/api/cron/route.js`, after the
+auth check and before any paid work. **REMOVE THE BLOCK** (it is inert from
+2026-07-22, so a forgotten cleanup costs nothing).
+
+Chosen over the alternatives on the FORGOTTEN-CLEANUP failure mode, which is the
+one that actually matters:
+- remove the `vercel.json` cron entry → forgotten = generation off indefinitely, silently
+- env-var kill switch → forgotten = same, plus a permanent kill switch in the code
+- **dated literal → forgotten = a dead `if`.** Fails SAFE; the others fail DANGEROUS.
+
+MEASURED WHILE SCOPING THIS — worth keeping: **both active editors (CIPHER,
+NEXUS) are already in `editorsRequiringPatch`**, so the cycle generates NOTHING
+unless the patch gate opens. The skip was insurance against Bungie posting a
+version-titled launch patch before 19:00 UTC, not a certainty. Also measured: the
+07-20 "Vault Breaker Overview" does NOT open the gate (no version string, none of
+the four keywords) — the documented KNOWN GAP behaving as designed.
+
+**The rare-token dup detector is structurally blind to Vault Breaker.** Measured
+over all 1564 published Marathon headlines: `vault` df=24 idf=4.15, `breaker`
+df=12 idf=4.80 — BOTH under the 5.0 threshold. Two editors both writing "Marathon
+Vault Breaker ..." share only sub-threshold tokens, so it would not fire or even
+log. It is blind precisely BECAUSE 29 prior articles made those tokens common —
+the exact inverse of the Ziegler case it was built for (df=4, idf 5.75, fired).
+The detector protects novel subjects; Vault Breaker stopped being novel a month
+ago. Nothing else would have stopped a cluster: `findDuplicateEvergreen` is
+MIRANDA-only and per-editor, and the coverage registry cannot see the page at all
+(no `mode` pair in CANONICAL_PAIRS, and no `game_modes` row so it is not even in
+the vocabulary). Registering it needs the `/modes/[slug]` route first — parked.
+
+### 2. Canonical corrected (`fix(vault-breaker): multi-source citation, loadout caveat, codex rewards`)
+
+- **The SOURCE block was false BEFORE the overview existed.** The September 22
+  Season 3 date comes from the 06-23 key-dates post, not the cited preview. The
+  page's header comment ADMITTED the dual sourcing while the rendered sentence
+  denied it — an internal note that was honest while the user-facing claim was
+  not. That asymmetry is the thing to watch for elsewhere.
+- Restructured to a **`SOURCES` array feeding all FOUR citation sites** (hero,
+  footer, `eventSchema.citation`, `webPageSchema.citation`). schema.org
+  `citation` accepts an array. Same single-definition discipline as `FAQ_ITEMS`,
+  so visible text and JSON-LD cannot drift.
+- **bungie.net cannot be used to verify a URL.** It is a SPA that returns HTTP
+  200 with a byte-identical empty shell for ANY `/News/Article/<slug>`, including
+  invented ones (measured: a slug I made up and the real one were identical).
+  Cited Bungie's Steam cross-posts instead, each verified by fetching it and
+  confirming the page echoes that article's title. A comment warns against
+  "tidying" them into bungie.net slugs — the obvious-looking mistake.
+- **Loadout caveat added** — the preview's "Only Kit Upgrades will alter your
+  loadout in Vault Breaker" was absent while the page described Armory purchases
+  and weekly limits, so a reader could spend Vault Data expecting an in-mode
+  benefit. Highest-value single addition available from the source.
+- **Four Codex rewards named**, with Bungie's `USEC Control` typo preserved as
+  written (every other entry reads UESC) plus a visible note, so nobody silently
+  "corrects" it and makes our text stop matching what players see in game.
+- **Solo/Duo/Trio is now PLAY-VERIFIED** (Justin, 2026-07-21), not source-
+  verified. The header comment's old rationale — that "crew, duo, or solo" was
+  OUR phrasing and not Bungie's — was falsified by the 07-20 overview using that
+  exact construction. **The conclusion stayed correct while its reasoning
+  rotted**; a future reader trusting the stale rationale would have "fixed"
+  correct text. Rationales need re-checking, not just conclusions.
+- `FACTS_UPDATED` → 2026-07-21 on a real verification pass (full preview text
+  pulled, every high-risk claim checked word for word, overview compared against
+  the whole page). It had become impossible as written: the footer claimed a
+  07-16 check while citing a 07-20 source. Footer now says what actually
+  happened — checked against all three sources, **not yet verified in game**.
+
+### STILL PENDING PLAY
+All HIGH-risk numbers (Vault Data T1/T2 mechanics, kit contents, Armory stock and
+rotation, the 3x/5x/1x weekly limits, the four-Codex count) — every one is
+accurate to the preview but preview-accurate is not live-accurate. Plus **the
+Compiler**, named in the 07-20 overview ("and even the Compiler") and undescribed
+anywhere on the page. Plus the `verified: true` split into `source_verified_at` /
+`play_verified_at` — the 7b.10 problem in a third place after shell_stats and
+meta_tiers, currently LATENT because nothing renders the flag, but the field is
+shaped like a `game_modes` column so a future DB read would silently inherit the
+wrong meaning.
+
+---
+
 ## 2026-07-20 — meta_tiers.holotag_tier REMOVED from code (item 2; DDL still mine to run)
 
 Cleared every `meta_tiers.holotag_tier` code reference so the column can be
