@@ -5,6 +5,196 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - dexter-stats writers repaired: 33 days of silent total failure
+
+Two commits shipping as one unit: **`72650fb`** (payload repair + write gate +
+summary line) and **`50cd7ac`** (key on `id`, refuse ambiguous/absent names).
+**No data writes, no DDL, gate still off.**
+
+### 1. THE DEFECT AND ITS AGE
+
+`updateCore` and `updateImplant` set `update.patch_verified = ACTIVE_PATCH`.
+**Neither `core_stats` nor `implant_stats` has that column.** PostgREST rejects an
+unknown column in an update payload, so **every core and implant write failed on
+every call for ~33 days** (2026-06-18 -> 2026-07-21).
+
+Established from **schema + code, never tested** - testing it requires a write.
+
+**THE SHARP PART:** the breaking commit is **`2d6cb9c` (2026-06-18),
+`feat(verification): dexter-stats stamps unverified-by-default (phase 5)`** - the
+commit that **introduced the honesty stamp**. It added `verified = false` and
+`patch_verified = ACTIVE_PATCH` to all four writers **simultaneously**, and because
+the two lines were added **as a pair**, the rejection took both down together.
+
+**So the unverified-by-default stamp has never once landed on the two tables that
+most needed it.** `core_stats` (85/85 `verified = true`) and `implant_stats`
+(119/120) are exactly the tables where honest hedging mattered, and the fix for
+that exempted them by accident. **The honesty fix broke the honesty it was adding.**
+
+Before `2d6cb9c` both writers had neither line and **wrote successfully** - so this
+is *worked, then broke*, not *never worked*.
+
+### 2. *** WHY IT WAS INVISIBLE - the error handling was present, correct, and unread ***
+
+```js
+if (error) {
+  console.error('[dexter-stats] Core update failed: ' + row.name + ' -- ' + error.message);
+  return false;   // <- caller loop just continues
+}
+```
+
+Logged, did not throw. The caller's `if (await updateCore(row)) coresUpdated++;`
+simply did not increment and moved to the next row. The outer `try/catch` in
+`lib/gather/index.js:184` never fired because nothing threw. The run completed
+normally and re-armed its 24h throttle.
+
+**What a reader saw:**
+
+```
+[dexter-stats] Pipeline complete -- 0 shells, 3 weapons, 0 cores, 0 implants updated
+```
+
+**`0 cores, 0 implants` is EXACTLY what a legitimate no-op prints.** This pipeline
+only targets rows with NULL fields, so "nothing needed updating" is a normal,
+expected outcome. **The summary line did not merely fail to report the failure - it
+actively asserted the innocent reading of it.**
+
+**THE PATTERN, and it is the strongest instance yet:** *a check that runs, works,
+and is never read is not a check.* `console.error` in a cron-invoked gather module
+goes to a platform function log with no alerting and nothing that reads it. The
+defect was fully instrumented and completely invisible for 33 days.
+
+### 3. WHAT SHIPPED IN `72650fb`
+
+- **Payload repaired** - `patch_verified` removed from those two writers only.
+  `updateWeapon` / `updateShell` keep it; their tables have the column.
+- **`CORE_IMPLANT_WRITES_ENABLED`, hardcoded `false`.** Repairing the payload
+  **re-arms** writers that set `verified = false` against the 204 parked rows.
+  Hardcoded constant, not an env var: an unset env var **fails dangerous** and is
+  invisible in review; a default-`false` constant means **doing nothing writes
+  nothing.**
+- **Summary line rebuilt.** Writers now return a **status string**
+  (`written` / `failed` / `skipped` / `dry`) instead of a boolean - the old boolean
+  collapsed *"nothing to write"* and *"the write was rejected"* into the same
+  `false`, **which is precisely what hid this.** Per-writer
+  attempted/written/failed/skipped/dry, with the failure and gate lines appearing
+  **only when non-zero**.
+  *This changed the return contract of all four writers, including the two working
+  ones - leaving those on booleans would have let the weapon line lie in exactly
+  the way being fixed.*
+- **Header amended** to state the **partial stamp** plainly: on these two tables the
+  scraper can write `verified = false` **and nothing else**. No `patch_verified`,
+  therefore **no per-patch freshness marker and no Phase-4 stale-row cadence hook
+  without DDL.** A future "re-verify rows stamped with an older patch" pass can find
+  stale weapon and shell rows and **cannot** find stale core or implant rows. **Not
+  parity with `weapon_stats`, and the comment now says so.**
+
+### 4. WHAT SHIPPED IN `50cd7ac` - keying on `id`
+
+All four writers keyed their UPDATE on `.eq('name', row.name)`. **Name is not
+unique.** Measured:
+
+| table | rows | distinct | duplicate names | rows behind one |
+|---|---|---|---|---|
+| `shell_stats` | 8 | 8 | 0 | 0 |
+| `weapon_stats` | 32 | 32 | 0 | 0 |
+| `core_stats` | 85 | 83 | **2** - Predator, Hunter/Killer | 4 |
+| `implant_stats` | 120 | 106 | **11**, THREE at x3 - **Pinata, Edge//Runner, Petty Theft** | **25** |
+
+**`72650fb`'s gate comment named only Pinata and undercounted the hazard it exists
+to warn about. `50cd7ac` corrects it** - a comment that understates its own warning
+is the artifact a future session reads before deciding whether to flip the gate.
+
+**SCOPE - all four, not just the two dirty ones.** `shell_stats` and `weapon_stats`
+are unique **BY DATA, not by design**: nothing enforces name uniqueness anywhere,
+and the duplicates in the other two arose **exactly as a new variant would**. **Same
+principle as the `game_slug` no-op already recorded: a no-op by data is not a no-op
+by design.** Hardening two writers and leaving two keyed on a field the codebase has
+now twice discovered is not unique would be an asymmetry with no defence.
+
+**RESOLUTION RUNS BEFORE THE GATE**, deliberately. A gated run therefore reports the
+**id** it would have written and **still surfaces ambiguity and absence**. That makes
+the dry path **a real audit rather than a projection** - fan-out exposure becomes
+measurable without enabling a single write.
+
+**THREE REFUSAL STATUSES, deliberately separate:**
+
+- **`ambiguous`** - name matched 2+ rows. *The table cannot tell which row was
+  meant.* `console.error`, names the row and every id.
+- **`absent`** - name matched 0 rows. *The scraper produced a name that is not in
+  the table* - an **extraction-quality** signal (hallucination, rename, stale
+  targets list, whitespace/case drift). Quieter line.
+- **`lookup_failed`** - the index could not be built. *We do not know.* **Distinct
+  from `failed` because no update was attempted**, and `failed` means "attempted and
+  rejected".
+
+Merging any two of these would fold different problems into one number - the same
+mistake as the boolean that started this.
+
+### 5. *** THE SEMANTICS REQUIREMENT - the subtle half ***
+
+Replacing a server-side `.eq('name', X)` with a JS `Map` lookup **silently changes
+what "matches" means** unless the index is keyed on the raw string. Postgres `=` on
+text is exact, case-sensitive and whitespace-significant.
+
+**The index keys on the raw name exactly as Postgres returns it - no `trim`, no case
+fold, no `normalize`.**
+
+**WHY THIS MATTERS MORE THAN IT LOOKS:** an index that normalised would make rows
+that used to match **stop matching**, and they would surface in the new `absent`
+counter - **reported as a finding about the data when it was actually a side effect
+of the fix.** The change would arrive wearing the costume of improved visibility, and
+the new instrumentation would be the thing manufacturing the false signal.
+
+**Verified three ways, all selects:**
+
+1. **Empirical equivalence: 47/47 names, 0 mismatches** - index id-set vs
+   server-side `.eq('name', X)`, across all four tables. Sample loaded onto the hard
+   cases: every duplicate name, then any name failing `!== n.trim()`, then a spread
+   of singles.
+2. **Run BEFORE and after the change**, so the equivalence claim is independent of
+   the implementation being tested.
+3. **Static assertion against the shipped source** - `nameIndex()` must contain no
+   normalising call, so a future edit that adds one **fails the check** rather than
+   quietly re-introducing this.
+
+**A name that legitimately fails to match on whitespace or case drift is a REAL
+finding and belongs in `absent`. The index must not paper over it** - which is the
+same reason it must not normalise.
+
+### 6. WHAT REMAINS - the gate is still off
+
+**Keying by `id` removes the fan-out. It does NOT make the writer safe to enable.**
+
+- **The 204 parked rows are untouched.** The writer still sets `verified = false` on
+  whatever single row it resolves - **performing part of the unmade C1 decision
+  precisely rather than broadly.** Precision is not consent.
+- **`CORE_IMPLANT_WRITES_ENABLED` stays `false`.** `50cd7ac` cleared the *keying*
+  prerequisite named in `72650fb`; the remaining blocker is **the C1 policy decision
+  alone**, and the gate comment now says exactly that.
+- **Nothing here validates that the LLM matched the RIGHT row.** A confidently
+  resolved, genuinely unique name can still be the wrong item. Uniqueness is not
+  correctness.
+- **No `patch_verified` on those two tables** - needs DDL, out of scope.
+
+### 7. METHOD RULES (inline convention)
+
+> **A guard that refuses to report a clean result is worth more than one that
+> passes.** The payload harness exited **2**, not 0, when the writer signature became
+> `(row, ctx)` and its extraction regex stopped matching. **It had found zero
+> writers, not zero problems** - and without the guard it would have printed "0
+> invalid columns" and meant nothing. Build the refusal in first; a harness that
+> cannot fail cannot verify.
+
+> **Sample output in a commit message or comment is documentation, and drifts from
+> behaviour like any other label.** `72650fb`'s illustrative summary showed 12 dry
+> alongside 12 failures - **a state the code cannot produce**, since the dry return
+> precedes the network call. It appeared **in the very commit that fixed a lying
+> summary line.** If an example is worth printing, it is worth deriving from the
+> code path rather than imagined.
+
+---
+
 ## 2026-07-21 - SCOPE CORRECTIONS, and the THIRD flag mechanism (form default)
 
 Corrects four statements in the `127275d` entry and records the arc that postdates
