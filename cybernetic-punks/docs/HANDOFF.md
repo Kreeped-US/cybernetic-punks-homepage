@@ -5,6 +5,76 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - Entity hub lastmod: max(updated_at) of their children
+
+### The bug
+
+`/shells`, `/weapons`, `/mods`, `/uniques` and `/maps` were built in the static
+array **~100 lines BEFORE the queries that date them**, so they carried a build
+timestamp while their content was weeks old:
+
+| hub | real max(updated_at) | staleness of the claim |
+|---|---|---|
+| `/weapons` | 2026-06-02 | **49 days** |
+| `/uniques` | 2026-06-02 | **49 days** |
+| `/maps` | 2026-06-08 | 43 days |
+| `/mods` | 2026-07-16 | 5 days |
+| `/shells` | 2026-07-20 | 1 day |
+
+Largest remaining false-freshness signal on the site, bigger than the one fixed
+earlier the same day. `/uniques` is the best-converting content we have (16 pages,
+21 clicks - more than the entire 896-article corpus).
+
+### The fix
+
+The five hubs move OUT of `staticPages` and are emitted as `hubPages` AFTER the DB
+reads, dated from the rows they index. **Every hub query already selected
+`updated_at`** for the detail URLs, so the max costs no extra round trip.
+
+**THE MAX IS TAKEN FROM THE RAW QUERY ROWS, NOT THE BUILT DETAIL ARRAYS.** Those
+arrays carry per-row `(u ? new Date(u) : new Date())` fallbacks, so **a single
+null `updated_at` would have made the hub max the build time again -
+reintroducing the bug inside the fix**. Measured 0 nulls across all four entity
+tables today, so this is future-proofing rather than a live correction. It is the
+kind of thing that would have been invisible until one insert omitted a column.
+
+**A FAILED QUERY OMITS `lastModified` RATHER THAN FALLING BACK TO BUILD TIME.**
+A freshness claim must fail CLOSED. `next/sitemap`'s truthiness guard then emits
+no element at all. Falling back is precisely the bug being removed - a failed
+query is not fresh content.
+
+### A hub sharing a timestamp with its child is CORRECT, not the bug
+
+`/uniques` shares its lastmod with all 16 of its children, because **all 16
+`unique_weapons` rows were bulk-inserted in one instant** (verified: 1 distinct
+lastmod across 16 detail URLs). That is genuine shared data. **The meaningful
+test is that no hub shares the BUILD timestamp**, not that its value is unique.
+The first verification pass flagged this as "(shared - check)", which was a
+misleading label on a correct outcome.
+
+### DMZ entity hubs - fixed, but DORMANT
+
+Same one-line pattern, same helper, dated from the VERIFIED rows (the set the
+detail URLs are built from). **Every DMZ entity table is empty pre-launch**, so
+the loop `continue`s and no hub is emitted today. Fixed anyway, beside the fix
+that established the pattern, so the bug is not left waiting to appear when DMZ
+fills on 2026-10-23.
+
+### STILL CARRYING BUILD TIMESTAMPS - 24 URLs
+
+- **16 x `/guides/[category]`** - needs a per-category `max(created_at)` grouping
+  over `feed_items`. Real work; **HELD for a separate decision** on what it costs.
+- **`/dmz` + 7 x `/dmz/[section]`** - NOT fixed in this pass. Their children are
+  article pages dated via `toISOWithPTOffset(created_at)`, not `updated_at` rows,
+  so `maxUpdatedAt` does not apply, and the sections need the same per-section
+  grouping as `/guides`. Same shape, same held decision.
+
+### Verified
+5/5 hubs carry their children's max on the deployed sitemap, 896 article URLs
+untouched, 1034 URLs total unchanged.
+
+---
+
 ## 2026-07-21 - Update 1.1.5 applied (6 fields), and the verified_source audit
 
 ### What was written
