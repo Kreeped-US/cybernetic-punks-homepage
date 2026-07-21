@@ -228,7 +228,32 @@ export const marathon = {
     //   game-verified (~8-16 rows, same shape as the matchup matrix fill) and
     //   /builds/[shell] becomes buildable. `editorsRequiringPatch` is left
     //   UNTOUCHED so the reversal is symmetric -- one token, nothing else.
-    editors: ['CIPHER', 'NEXUS'],
+    // ── ONE-DAY NARROWING: 2026-07-21 (Update 1.1.5 patch day) ──────────────
+    // RESTORE 'CIPHER' AFTER THE PATCH HAS BEEN PLAYED. Full line to restore:
+    //     editors: ['CIPHER', 'NEXUS'],
+    //
+    // THIS IS NOT DUPLICATION CONTROL. It is a claim-quality decision, and the
+    // two editors are not symmetric today:
+    //   NEXUS reports an OFFICIAL DOCUMENT -- Bungie published Update 1.1.5,
+    //     here is what it says. Doable and honest the hour it lands.
+    //   CIPHER analyses the META, and the 1.1.5 meta DOES NOT EXIST YET. Nobody
+    //     has played these changes. Misriah lost 30 damage and 14 rpm, the WSTR
+    //     gained 15 damage and 20% spread -- what that does to ranked is an
+    //     empirical question about a game state no one has observed. CIPHER
+    //     writing today would be INFERENCE ABOUT AN UNOBSERVED GAME STATE
+    //     PRESENTED AS ANALYSIS, which is the same failure shape as asserting
+    //     the Vault Breaker Compiler fight before anyone had fought it.
+    //
+    // Restore CIPHER once the patch has actually been played -- its analysis is
+    // valuable, it just needs a played meta to analyse.
+    //
+    // A DATED LITERAL, deliberately, exactly like the cron skip guard removed in
+    // the same commit: obvious in the diff, self-documenting, and impossible to
+    // leave running silently. NOT an env var and NOT a date check -- a date check
+    // would restore CIPHER automatically at midnight UTC whether or not anyone
+    // has played, which is precisely the judgement this is meant to hold.
+    // `editorsRequiringPatch` is left UNTOUCHED so the restore is one token.
+    editors: ['NEXUS'],
     // These run ONLY when the cycle detects a patch. Absent on other games ->
     // the cron's `|| []` makes the whole gate a no-op for them (e.g. DMZ).
     // NOTE 'DEXTER' deliberately REMAINS listed here while paused: the entry is

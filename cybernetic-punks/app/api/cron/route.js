@@ -816,30 +816,6 @@ export async function GET(req) {
     }
   }
 
-  // ── ONE-DAY SKIP: 2026-07-21 (Vault Breaker launch day) ────────────────────
-  // REMOVE THIS BLOCK after 2026-07-21.
-  //
-  // Editors cannot play the game. Everything they could write today is
-  // announcement-sourced, and /modes/vault-breaker already covers that in one
-  // place, with citations. Generating 2+ articles to compete with our own
-  // canonical on launch day is the BR33 pattern with a known outcome. Justin
-  // plays today; tomorrow's cycle runs against a corrected canonical.
-  //
-  // A LITERAL SINGLE DATE, deliberately. The alternatives both fail DANGEROUS on
-  // a forgotten cleanup: removing the vercel.json cron entry or setting an env
-  // kill-switch leaves generation off indefinitely and silently. This cannot
-  // skip any run but this one -- on 2026-07-22 it is inert by construction, so
-  // the worst case of forgetting is a dead `if`, not a dead pipeline.
-  //
-  // Placed AFTER the auth guard (an unauthorized caller still gets its 401) and
-  // BEFORE any paid work -- no gather, no model calls, no writes. Scope is this
-  // route only; /api/cron/stats, /api/network-editor and /api/quality-audit are
-  // separate routes and are NOT affected.
-  if (new Date().toISOString().slice(0, 10) === '2026-07-21') {
-    console.log('[CRON] SKIP: one-day manual skip for Vault Breaker launch (2026-07-21). Remove this block.');
-    return Response.json({ skipped: true, reason: 'vault-breaker-launch-day', date: '2026-07-21' });
-  }
-
   // SERVICE KEY REQUIRED -- NO ANON FALLBACK.
   //
   // This previously read `SUPABASE_SERVICE_KEY || NEXT_PUBLIC_SUPABASE_ANON_KEY`.
