@@ -5,6 +5,185 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - is_shell_exclusive: 7 self-contradicting rows corrected, and NULL IS NOT UNKNOWN
+
+**Owner ran the SQL directly in the Supabase SQL editor.** Documentation only here.
+
+- **6 rows** flipped `is_shell_exclusive` **true -> false**. Predicate:
+  `is_shell_exclusive = true AND required_runner blank`.
+- **1 row (Cluster Payload)** flipped **false -> true**, keeping `required_runner = Recon`.
+- **Read-back confirmed: still_exclusive 75, exclusive_no_runner 0,
+  universal_with_runner 0, universal 10, total 85.**
+- **No other column altered. Row count unchanged.**
+
+### 1. THE CONTRADICTION AUDIT - established from the data alone
+
+**7 of 85 rows were internally inconsistent.** A row cannot be both:
+
+- **6 claimed exclusivity while naming no shell** (`is_shell_exclusive = true`,
+  `required_runner` null) - exclusive to a shell they do not identify.
+- **1 claimed universal while naming a shell** (Cluster Payload:
+  `is_shell_exclusive = false`, `required_runner = Recon`).
+
+**NO GAME KNOWLEDGE WAS NEEDED TO FIND THESE.** The contradiction is visible in the
+two columns alone, which is what made it the cheapest available check on whether
+batch-set values are even self-consistent. **They were not.**
+
+### 2. THE FLIPPED SIX - the only record of which rows moved
+
+**PROVENANCE OF THIS TABLE - RECONSTRUCTED POST-FLIP, stated plainly.** No id list
+was captured before the UPDATE. These ids were resolved **after** the flip by name.
+Soundness: **all six names are unique in `core_stats`** (the table has exactly two
+duplicate names, Predator and Hunter/Killer, neither of them here), so the join is
+deterministic; `created_at` was not touched by the UPDATE. **Post-flip these six are
+otherwise indistinguishable from the four rows that were already universal.**
+
+| # | id | name | rarity | required_runner | created_at |
+|---|---|---|---|---|---|
+| 1 | 40aa9024-c6bc-4d35-b41e-f919119adb2a | Glass Cannon | Standard | NULL | 2026-03-16T18:57:27.965699+00:00 |
+| 2 | c31c027e-d28c-4a9c-9c6e-211a3da368ec | Cash Flow | Standard | NULL | 2026-03-16T19:19:06.812604+00:00 |
+| 3 | 65f98afd-53e7-49f2-ac9d-d3a7704d2e5e | Static Casket | Standard | NULL | 2026-03-16T19:21:40.854901+00:00 |
+| 4 | f104ee78-e054-48e9-ae07-06a22a437806 | Like for Like | Standard | NULL | 2026-03-16T19:23:18.453039+00:00 |
+| 5 | 99afce49-25e6-4dc8-b498-852eab222e68 | The Big Score | Standard | NULL | 2026-03-16T19:24:04.887096+00:00 |
+| 6 | 5ab1714f-a687-4373-aa25-27c39335fc86 | Flight Response | Standard | NULL | 2026-03-16T19:26:52.163548+00:00 |
+
+**Cluster Payload** (the 1 flipped the other way) is older still: created
+**2026-03-12T13:24:25.429107+00:00**, `required_runner = Recon`, now
+`is_shell_exclusive = true`.
+
+### 3. MECHANISM - *** DIFFERENT FROM THE 204 ***
+
+The six `created_at` values run **2026-03-16 18:57:27 -> 19:26:52**, each **distinct
+to the microsecond**: roughly **29 minutes of individual inserts**, one at a time.
+
+**THIS IS NOT THE JUNE 5 CLUSTERED WRITER.** No microsecond collisions, no batch
+signature. It reads as **one sitting at the admin form** where the exclusivity box
+was ticked six times and the runner field left empty each time. **Cluster Payload
+(2026-03-12) also predates the June 5 batch.**
+
+So `is_shell_exclusive` carries values from **at least two distinct origins** - this
+March form session, and the June 5 batch that set 23 of the other rows. **The 204
+arc and this one share a column and not a cause.**
+
+### 4. RESOLUTION SOURCE, AND ITS CEILING
+
+**Correctness was settled by OWNER GAME KNOWLEDGE, 2026-07-21:** cores are
+ability/trait modifiers, two slots per shell; **the six appear in the shared pool any
+shell can equip**, and **Cluster Payload is a Recon Superior core**.
+
+**RECORDED AS RECOLLECTION, NOT CAPTURED PROVENANCE** - the same class as the Q-Tap
+resolution, and it does not become evidence by being correct.
+
+> *** THE CEILING, stated plainly: `core_stats` HAS NO `verified_source` COLUMN.
+> There is NOWHERE IN THE ROW to record why this was corrected. This HANDOFF entry
+> is the only record that these seven rows were touched, by whom, or on what basis.
+> ***
+
+**This is a concrete, shipped instance of exactly what the C1 DDL question is
+blocking.** Not hypothetical debt: a correction was made today whose justification
+has no home in the database.
+
+### 5. WHAT WAS LIVE - *** CONFIRMED WRONG, not merely unproven ***
+
+Before the fix, reaching generation every run:
+
+- **`lib/editorCore.js:708`** rendered the six as **", Shell-Exclusive"** into editor
+  context for **all five editors**.
+- **`app/join/intake/IntakeClient.js:194`** **withheld them from shells they belong
+  on** - the filter routes an exclusive core only to its named runner, and with a
+  null runner they reached fewer shells than they should.
+- **Cluster Payload rendered ", Universal"** while carrying `Recon`.
+
+> **CATEGORY DISTINCTION, and it matters: these were CONFIRMED WRONG FACTS reaching
+> generation. The 204 parked rows are UNPROVEN - unsupported flags that may well be
+> right. These seven were demonstrably self-contradictory.** Different severity,
+> different urgency, and the reason this one was fixed today while the 204 stay
+> parked.
+
+### 6. *** NULL IS NOT UNKNOWN - the finding that forecloses the obvious fix ***
+
+`is_shell_exclusive` is **nullable** with **DEFAULT false**, so **the schema can
+represent unknown.** The consumers cannot.
+
+**All three read sites test FALSINESS, and `null` is falsy in JS:**
+
+| site | expression | `true` | `false` | **`null`** |
+|---|---|---|---|---|
+| `editorCore.js:708` | `core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'` | Shell-Exclusive | Universal | **Universal** |
+| `IntakeClient.js:194` | `if (!c.is_shell_exclusive) return true;` | runner check | offered to all | **offered to all** |
+| `IntakeClient.js:221` | `c.is_shell_exclusive && c.required_runner ? ...` | tag shown | tag suppressed | **tag suppressed** |
+
+**Verified: `null` and `false` produce byte-identical behaviour at all three sites.
+Nothing throws, nothing renders oddly.**
+
+> **CONSEQUENCE - RECORD THIS AS A SEQUENCING RULE.**
+> **`null` cannot mean "unknown" to any current reader.** A null core would be
+> rendered **"Universal"** to editors and **offered on every shell** - it would MAKE
+> THE CLAIM, not abstain from it.
+> **THEREFORE THE CONSUMER CHANGE IS THE PREREQUISITE, NOT THE FOLLOW-UP.** Any
+> future migration of uncertain rows to `null` must teach all three sites to
+> distinguish THREE states **FIRST**. Do it in the other order and the intermediate
+> state publishes wrong facts - migrating to null would look like hedging while
+> actually asserting.
+
+**The generalisation:** a nullable column only expresses uncertainty if something
+reads it that way. Schema capability is not semantics.
+
+### 7. `shield_compatible` - DEAD COLUMN, no action taken
+
+**`weapon_stats.shield_compatible` has ZERO readers** in `app/`, `lib/`,
+`components/` or `scripts/`. Its **only** appearance in the repo is the admin field
+config (`app/admin/page.js:49`). Nothing selects it, renders it, filters on it or
+gates by it; **the scraper does not write it.**
+
+Distribution: **32 rows, 2 true, 30 false, 0 null.** So the form default of `true` is
+the **MINORITY** value (~94% of weapons are false) - **but with no consumer, the
+claim is made to no audience.**
+
+> **The open question is whether the column should EXIST, not what its default
+> should be.** Justin's call, needs DDL. **Not touched in `3d9d928`, not touched
+> here.**
+
+### 8. THE `3d9d928` FRAMING WAS WRONG - corrected
+
+Both columns were excluded from `3d9d928` as *"the same shape as `verified`, one
+field over."* **That framing is incorrect and must not be carried forward.**
+
+- **`verified = false` means NO CLAIM MADE.** Removing a `true` default removes an
+  unearned assertion.
+- **`is_shell_exclusive = false` and `shield_compatible = false` are POSITIVE CLAIMS
+  about game facts.** Changing their default would **INVERT an unchecked assertion
+  rather than remove one.**
+
+And the arithmetic would have made it worse: **`is_shell_exclusive` is 80 of 85
+true**, so flipping its default to `false` **would have been wrong far more often
+than right** - and the wrongness would surface as a **confident "Universal"** in
+editor context rather than as a visible gap.
+
+> **METHOD RULE: before copying a fix to a neighbouring field, establish what that
+> field's `false` value ASSERTS. A safe default exists only where one value means
+> "no claim." Where both values are claims, there is no honest default and the fix
+> belongs somewhere other than the default.**
+
+This is the same label-vs-substance family as the rest of the arc, inverted: here the
+*fix* nearly inherited a meaning it did not have.
+
+### 9. STILL OPEN - each flagged NOT resolved
+
+- **The admin form still defaults `is_shell_exclusive` and `shield_compatible` to
+  `true`** and **cannot express unset** - every save necessarily writes true or
+  false. **Deliberately not changed**, because the right change depends on 6 and 7.
+- **The remaining 75 exclusive rows are now internally COHERENT but UNVERIFIED.**
+  **Coherence is not correctness** - the same distinction the Rook arc produced. All
+  75 now agree with themselves; nothing establishes they agree with the game.
+- **`shield_compatible` existence question** - needs Justin and DDL.
+- **C1 unchanged, and now blocking a THIRD column.** `mod_stats` had
+  `verified_source` and could be remediated; `core_stats` and `implant_stats` cannot
+  record provenance at all; and today a correction was made to `core_stats` with
+  nowhere to write down why.
+
+---
+
 ## 2026-07-21 - dexter-stats writers repaired: 33 days of silent total failure
 
 Two commits shipping as one unit: **`72650fb`** (payload repair + write gate +
