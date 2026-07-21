@@ -2,8 +2,9 @@
 // ============================================================
 // PROVENANCE CHECK -- READ ONLY. REPORTS, NEVER WRITES.
 // ============================================================
-// Audits `verified` / `verified_source` / `patch_verified` across the five
-// populated tables that carry them. Establishes SCALE; it fixes nothing.
+// Audits `verified` / `verified_source` / `patch_verified` across the populated
+// tables that carry them -- see the TABLES list below for the rule and its
+// history. Establishes SCALE; it fixes nothing.
 //
 // WHY THIS EXISTS (2026-07-21). An audit of 32 weapon_stats rows found NINE
 // UNSUPPORTED citations -- the cited document does not contain the values it
@@ -22,6 +23,13 @@
 //
 // EXIT CODE: non-zero if any check fails, so it can become a CI gate later.
 // DELIBERATELY NOT WIRED INTO CI in the commit that adds it -- see HANDOFF.
+//
+// IF IT EVER DOES BECOME A GATE, the check-1 count is the wrong trigger: it has a
+// permanent floor (the documented unsourced population below), so a gate on
+// "findings > 0" would be red forever and get ignored. The signal worth gating on
+// is GROWTH -- a check-1 count ABOVE a recorded baseline means new source-less
+// verified rows appeared. Baseline tracking is NOT built here; flagged so whoever
+// wires the gate does not reach for the raw total.
 //
 // WHAT IT DOES NOT DO: check 2 flags patch-note citations for MANUAL review and
 // does NOT fetch or parse the patch documents. Doing so would make a provenance
@@ -61,15 +69,42 @@ if (!URL_ || !KEY) {
 }
 const supabase = createClient(URL_, KEY);
 
-// The five populated tables carrying verified_source. The three DMZ tables
-// (dmz_items / dmz_keys / dmz_missions) have the columns but ZERO rows
-// pre-launch; they are listed so a future run picks them up automatically.
+// EVERY table carrying `verified_source` -- that is the rule, deliberately not a
+// count, because a count in a comment goes stale silently while looking correct.
+//
+// `core_stats` and `implant_stats` gained the column on 2026-07-21 (49dc7e6) and
+// are covered from that date. Before it they were STRUCTURALLY UNCHECKABLE, not
+// overlooked: check 1 keys on a column that did not exist on them, so no version
+// of this script could have audited them.
+//
+// Those two also carry a DELIBERATELY UNSOURCED population, recorded in
+// docs/HANDOFF.md 2026-07-21 (49dc7e6). Those rows are KNOWN OUTSTANDING WORK,
+// not newly discovered rot -- check 1 surfaces them every run, on purpose and
+// unsuppressed. There is no allowlist: an allowlist is itself an unaudited claim,
+// it goes stale the moment a row is sourced, and suppressing a state the column
+// was added to make VISIBLE would undo the reason it exists.
+//
+// The three DMZ tables (dmz_items / dmz_keys / dmz_missions) have the columns but
+// ZERO rows pre-launch; they are listed so a future run picks them up
+// automatically.
+//
+// *** extraId DIFFERS BETWEEN THE TWO NEW TABLES. DO NOT COPY ONE TO THE OTHER. ***
+// `label()` renders `${id}/${extraId}`, and a finding has to identify ONE row.
+//   core_stats    -- (name, rarity) is NOT unique: measured 2026-07-21, 85 rows /
+//                    83 distinct pairs, 2 collisions -- Predator|Deluxe x2 and
+//                    Hunter/Killer|Deluxe x2. Rarity CANNOT disambiguate here, so
+//                    the label carries the uuid, which is the only stable key.
+//   implant_stats -- (name, rarity) IS unique: measured 2026-07-21, 120 rows /
+//                    120 distinct pairs, 0 collisions. Its 11 duplicate names all
+//                    separate by rarity tier, so rarity suffices and reads better.
 const TABLES = [
   { name: 'weapon_stats',      id: 'name' },
   { name: 'shell_stats',       id: 'name' },
   { name: 'shell_stat_values', id: 'shell_name', extraId: 'stat_name' },
   { name: 'mod_stats',         id: 'name' },
   { name: 'unique_weapons',    id: 'name' },
+  { name: 'core_stats',        id: 'name', extraId: 'id' },
+  { name: 'implant_stats',     id: 'name', extraId: 'rarity' },
   { name: 'dmz_items',         id: 'name' },
   { name: 'dmz_keys',          id: 'name' },
   { name: 'dmz_missions',      id: 'name' },
