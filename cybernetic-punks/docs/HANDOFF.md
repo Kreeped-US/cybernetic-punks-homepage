@@ -5,6 +5,106 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - mod_stats delta reconciliation: UNRESOLVED, and MISATTRIBUTED
+
+Investigated read-only 2026-07-21 at 012b70e. No writes, no DDL, no script edits.
+
+### VERDICT: UNRESOLVED, AND UNRECONCILABLE IN PRINCIPLE
+
+**The discriminating fact was never recorded and cannot be recovered.**
+
+Two causes remain live and undistinguished. **Do not pick one:**
+- the gap grew by 5 rows since 2026-06-15, or
+- the original 81 was already approximate
+
+The source entry's own arithmetic supports the second being at least partly true:
+**92% -> 51% of 202 rows is a drop of ~82**, not 81. The figure was approximate
+at the moment it was written.
+
+### *** PRIMARY FINDING: MISATTRIBUTION, NOT DRIFT ***
+
+**The 81 was NEVER a source-path count.** It counted
+`verified = true AND patch_verified IS NULL`, recorded **2026-06-15** while
+recalibrating the [UNVERIFIED] editor tag (HANDOFF line 6186):
+
+> "Tag rate verified live: weapons 16/32 unchanged; mods 92% -> 51% (104/202).
+> The 81 dropped were verified=true & pv=null hand-verified mods"
+
+It was then **relabelled as a source-backfill figure** in a later backlog entry
+(line 5068: "mod_stats source-backfill 81 [maybe self-serve]").
+
+**THE VALUE SURVIVED; THE MEANING DID NOT.**
+
+**Mark the ~81 MISATTRIBUTED, not superseded.** It cannot be compared to any
+`verified_source` measurement. **Any backfill scoped from it would have been
+scoped from the wrong column.**
+
+### *** METHOD RULE: A MEASUREMENT CARRIED BETWEEN ENTRIES MUST CARRY ITS PREDICATE ***
+
+**A bare integer in the backlog is not a measurement - it is a number that can
+change meaning without changing value.**
+
+This is the same label-vs-substance failure as `verified=true` carrying
+field-level meaning it never had, and as the meta_tiers echo loop. **Third
+instance.** The difference, and the reason it matters more than the other two:
+**this one occurred in HANDOFF itself - the instrument used to watch the data,
+and the one artifact never audited.**
+
+### THE NEW BASELINE - PREDICATE IN THE NAME, NOT IN A FOOTNOTE
+
+Record it so the predicate **cannot be separated from the number by a later
+copy**. The backlog line reads as the measurement itself:
+
+**mod_stats verified-no-verified_source (unscoped) = 86 as of 2026-07-21, 012b70e**
+
+NOT "mod_stats backfill 86" with the definition sitting nearby - that is exactly
+the shape that produced this entry.
+
+Full predicate:
+- `verified === true` (strict; null/false excluded)
+- `verified_source` blank **after trim** - null, empty string and whitespace-only
+  all collapse into the same bucket
+- **`source_url` NOT consulted** - only `verified_source` counts as a source path
+- **no `game_slug` scope.** All 203 rows are currently `marathon`, so scope is a
+  **NO-OP BY DATA, NOT BY DESIGN.** DMZ rows will change this, and when they land
+  the unscoped count will silently start meaning something else.
+
+### THE REPLACED GATE - REPLACED, NOT WAIVED
+
+Growth is answered **FORWARD, not backward**: `scripts/provenance-check.mjs` is
+deterministic, read-only and cheap, so **a second run at a recorded later date
+against the 86 baseline settles the growth question in one command** - no
+archaeology, and no dependence on a timestamp column that does not exist.
+
+**Backfill is UNBLOCKED from here. It proceeds against 86, not 81.**
+
+### WHAT WAS RULED OUT
+
+**All three pre-registered predicates return 86.** No variant diverges:
+
+| predicate | result |
+|---|---|
+| Marathon-scoped (`game_slug`) | 86 - every row is marathon, scope is a no-op |
+| `source_url` counted as a source path | 86 - none of the 86 has a source_url either |
+| null / empty-string / whitespace split | null=86, empty=0, whitespace=0 |
+
+**The documented 2026-06-15 predicate (`verified=true AND patch_verified IS
+NULL`) also returns 86 today** - so the definitional gap does not produce the
+arithmetic gap. The same definition moved 81 -> 86.
+
+**No verification timestamp exists.** `mod_stats` has `updated_at` only - **no
+`verified_at`.** No audit table records mod_stats field changes: `editor_logs`
+holds 4 rows, all `feed_item` entities from 2026-02-27; the other audit-shaped
+tables (`site_events`, `quality_audit_runs`, `player_audits`, `player_qa_history`)
+are domain tables, not schema history.
+
+**`updated_at` shows 1 of 86 modified after 2026-06-15.** Recorded for
+completeness and **EXPLICITLY NOT A DISCRIMINATOR** - it moves on ANY edit and
+cannot date when `verified` was set. **Do not let a later reader promote it into
+evidence.**
+
+---
+
 ## 2026-07-21 - Provenance check script (109 findings, exit-code gated)
 
 ### The tool
