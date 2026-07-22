@@ -5,6 +5,176 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - *** THE 2026-06-15 RECALIBRATION: EXAMINED AND EXONERATED. NO REVERT. ***
+
+Read-only investigation. **No writes, no code change, no predicate change, no
+revert.** This was the last item that could have been wrong *at the root*.
+
+**VERDICT: `d15a06a` was a correct change reasoning from a false premise, and it
+needs no revert - because the population it exposed no longer exists.** The
+reasoning matters more than the verdict; both are below.
+
+### 1. WHAT IT WAS
+
+**`d15a06a` (2026-06-15) - "Calibrate [UNVERIFIED] tag to verified=false and harden
+citation enforcement".** One file, +22/-20.
+
+**`lib/verification.js` DID NOT EXIST YET.** It was created **2026-06-18**
+(`b8a2d25`), three days later. The tagging logic lived in **`lib/editorCore.js`** as
+a local function.
+
+**BEFORE** (`d15a06a^`, `editorCore.js:658-665`):
+```js
+function unverifiedTag(row, usePatch) {
+  var bad = row.verified === false;
+  if (usePatch) {
+    var pv = row.patch_verified;
+    if (!pv || /^s1\b/i.test(pv)) bad = true;
+  }
+  return bad ? ' [UNVERIFIED]' : '';
+}
+```
+`usePatch=true` for **mods, weapons, shells**; `usePatch=false` for **cores,
+implants**.
+
+**AFTER:**
+```js
+function unverifiedTag(row) {
+  var pv = row.patch_verified || '';
+  return (row.verified === false || /^s1\b/i.test(pv)) ? ' [UNVERIFIED]' : '';
+}
+```
+
+**THE SINGLE SEMANTIC CHANGE: the `!pv` clause was dropped.** `usePatch` was removed
+and all five call sites unified.
+
+### 2. THE ENTRY'S CLAIM VS THE DIFF - accurate mechanically, wrong in one word
+
+**The 6/15 entry's mechanical description is ACCURATE.** Checked line by line against
+the diff: it did drop `pv=null`, it did remove `usePatch`, it did unify five call
+sites, and the tag rate did move **92% -> 51% on mods**. **No gap between claim and
+code.**
+
+**The gap is ONE WORD.** The entry describes the dropped rows as:
+
+> *"The 81 dropped were `verified=true & pv=null` **hand-verified** mods"*
+
+**"Hand-verified" is an assertion about PROVENANCE, offered as the JUSTIFICATION for
+untagging them.** Yesterday established that population had **no `verified_source`
+at all**, and that its `verified=true` came from **hand-written SQL**, not from
+anyone confirming anything.
+
+> **THE COUNT WAS REAL. THE CHARACTERISATION WAS NOT.**
+> **Same shape as the ~81 misattribution one layer up** - a correctly-executed
+> measurement wearing a label it did not earn. The number `81` was measured; the
+> word "hand-verified" was assumed, and it was the word that carried the decision.
+
+*(The 81 vs 86 arithmetic gap is untouched by this investigation and remains
+UNRESOLVED.)*
+
+### 3. *** THE PIVOT - what the change actually did ***
+
+Established **from the two predicates**, not from the entry. For the three
+`usePatch=true` tables (mods, weapons, shells):
+
+| row state | OLD | NEW |
+|---|---|---|
+| **`verified=true`, `pv=null`** | **`[UNVERIFIED]`** | **untagged (CONFIRMED)** |
+| `verified=true`, `pv='1.1.0'` | untagged | untagged |
+| `verified=true`, `pv='s1'` | `[UNVERIFIED]` | `[UNVERIFIED]` |
+| `verified=false` | `[UNVERIFIED]` | `[UNVERIFIED]` |
+
+The 86 unsourced `mod_stats` rows were established yesterday to be **perfectly
+co-extensive with `pv=null`** - every one had a null `patch_verified`.
+
+> *** SO `d15a06a` REMOVED THE HEDGE FROM PRECISELY THE POPULATION LATER FOUND TO BE
+> UNSOURCED. ***
+> **Before 2026-06-15** those rows reached editors carrying `[UNVERIFIED]`, under an
+> instruction not to state their numbers. **After it** they reached editors **bare,
+> readable as confirmed fact** - and stayed that way until the 2026-07-21 flip.
+> **THE HEDGE THAT WOULD HAVE CONTAINED THE PROBLEM WAS REMOVED 36 DAYS BEFORE THE
+> PROBLEM WAS FOUND - BY A CHANGE WHOSE STATED REASON WAS THAT THE ROWS WERE
+> TRUSTWORTHY.**
+
+For **cores and implants the change was a NO-OP** - already `usePatch=false`, and
+they have no `patch_verified` column.
+
+### 4. *** THE CONDITIONAL - the core finding ***
+
+> **THE RECALIBRATION IS SOUND IF AND ONLY IF `verified = true` IS TRUSTWORTHY.
+> That premise is EXACTLY what failed.**
+
+**BOTH HALVES WERE TRUE AT ONCE, and that is the whole difficulty:**
+
+- **The over-tagging was REAL.** 92% of mods tagged **desensitizes the marker** -
+  and the desensitization was independently observed in the same session's
+  diagnostic (**4 UNVERIFIED-CITED** rows: M77, Bully SMG, Thermal Surge Battery,
+  Sonar Shot; **0 fabrication** - editors quoted unverified rows rather than
+  inventing). A marker applied to almost everything stops being read.
+- **The trustworthiness was NOT real.** So untagging inherited that unreliability
+  and **converted an over-cautious hedge into a FALSE ASSURANCE.**
+
+**The change fixed a real problem by leaning on a premise that did not hold.**
+
+> *** IT WAS STRUCTURALLY UNCATCHABLE AT THE TIME. `verified_source` did not exist
+> on ANY of these tables until 2026-07-21. The question "are these rows actually
+> confirmed?" COULD NOT BE ASKED in June - there was no column in which the answer
+> could live. ***
+>
+> **THIS IS THE ARGUMENT FOR WHY YESTERDAY'S COLUMNS MATTER.** They do not just
+> record provenance; **they make the premise CHECKABLE.** A future recalibration
+> resting on "these are trustworthy" can now be tested instead of asserted. The DDL
+> converted an unanswerable question into an answerable one - which is the actual
+> return on `49dc7e6`, larger than the 143 rows it attributed.
+
+### 5. WHY NO REVERT
+
+**The population `d15a06a` exposed is now EMPTY.** Measured read-only across all
+seven covered tables: **`verified=true AND patch_verified IS NULL` is 0 on every
+table that has the column.**
+
+- The `mod_stats` **86 were flipped** to `verified=false`.
+- The **17 survivors carry BOTH a `verified_source` AND a patch stamp.**
+
+> **Reverting would re-tag NOTHING and would re-desensitize a marker that was
+> correctly un-desensitized.** The over-tagging problem `d15a06a` solved was real
+> and remains solved. **Its own exposure is fully closed.**
+
+**A revert would be cargo-culting the verdict "the premise was false" into an action
+that addresses nothing.**
+
+### 6. THE RESIDUAL 61 ARE A DIFFERENT MECHANISM - do not attribute them here
+
+**23 `core_stats` + 38 `implant_stats` still reach editors as `CONFIRMED` with no
+source.** They do **NOT** come from `d15a06a`:
+
+- **`d15a06a` never touched those two tables** - `usePatch=false` before *and*
+  after, and they have no `patch_verified` column for the dropped clause to have
+  applied to.
+- They reach `CONFIRMED` via the **`verified === true` short-circuit on the FIRST
+  LINE of `verificationState()`** - older, separate, and already parked.
+
+**These are the C4 / source-requiring-predicate item. The predicate change is what
+addresses them; no change to the tag would.**
+
+### 7. *** OPEN FLAG RESOLVED - CLOSED ***
+
+The 2026-06-15 recalibration was carried for two days as **"still unexamined - the
+last thing that could be wrong at the root."**
+
+> **IT IS NOW EXAMINED AND EXONERATED. MARK IT CLOSED.**
+
+> *** THE ROOT-LEVEL ARC IS COMPLETE. No remaining open item can be wrong at the
+> root - only at the edges. ***
+> The cause of the flag population is established (three mechanisms: hand-written
+> SQL, the pre-ticked form default, and an unidentified June-5 batch writer). The
+> predicate that consumed it is understood. The tag change that removed its hedge is
+> examined and needs no action. What remains - the 61 unsourced rows, the
+> source-requiring predicate, the dexter write gate, form validation, the
+> `core_stats` duplicate pairs - are all **bounded, located, and downstream.**
+
+---
+
 ## 2026-07-21 - provenance-check now covers all 657 rows (`ef9a4d4`)
 
 Closes the coverage gap flagged in `49dc7e6`. **No data writes, no DDL, no CI
@@ -1231,9 +1401,10 @@ confirmed population would be **entirely** rows that carry a source.
 - **C4. Whether `verificationState()` should require a source. PARKED.** The "zero
   migration cost" basis is **void per B2**; the real cost is **204 rows**, and the
   policy for the columnless tables has **no measured basis yet**.
-- **C5. Carried forward, unchanged:** the **2026-06-15 tag recalibration** remains
-  **unexamined**; the **~81 vs 86 delta** remains **UNRESOLVED**; **in-game
-  re-verification of the 86, KEYED ON `id`**, remains outstanding.
+- **C5. Carried forward, unchanged:** ~~the **2026-06-15 tag recalibration** remains
+  **unexamined**~~ - **CLOSED 2026-07-21: examined and EXONERATED, no revert. See the
+  2026-07-21 recalibration entry.** The **~81 vs 86 delta** remains **UNRESOLVED**;
+  **in-game re-verification of the 86, KEYED ON `id`**, remains outstanding.
 
 ---
 
@@ -1548,9 +1719,17 @@ it from editor context. Flipped with the other 85. Pending in-game capture.
   > answer to a question it was not counting.
   > **Status: PARKED, basis void.** See C4 in the scope-corrections entry.
 - **The 2026-06-15 tag recalibration.** The current predicate has no `pv=null`
-  condition for `verified=true` rows, consistent with that recalibration. Whether
-  it was correct is **unexamined**, and it was made on a population measured on
+  condition for `verified=true` rows, consistent with that recalibration. ~~Whether
+  it was correct is **unexamined**~~, and it was made on a population measured on
   the column now marked misattributed.
+  > **CLOSED 2026-07-21 - EXAMINED AND EXONERATED, NO REVERT.** The suspicion here
+  > was well-founded and the answer was not the expected one: `d15a06a` was
+  > mechanically accurate and did rest on a false premise (it called the dropped
+  > rows "hand-verified"), **but the population it exposed is now empty**, so a
+  > revert would re-tag nothing and re-desensitize a marker that was correctly
+  > un-desensitized. **It was also structurally uncatchable in June** -
+  > `verified_source` did not exist on any of these tables until 2026-07-21. See
+  > the 2026-07-21 recalibration entry for the full reasoning.
 - **Re-verification of the 86 in-game. KEY ON ID.** The underlying data looks
   genuinely measured (80 distinct `effect_desc`, no zeros in `credit_value`, no
   cross-row duplicate fingerprints), so this is **confirmation work, not data
