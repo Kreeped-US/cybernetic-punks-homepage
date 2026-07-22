@@ -4,30 +4,66 @@
 // stat tables use this one classifier, so new paths (and DMZ) inherit identical
 // honest hedging and can't drift. See docs/MARATHON_VERIFICATION_DEBT.md.
 //
-// THREE STATES (Phase-1 locked model), read from the two existing flags
-// `verified` (boolean) + `patch_verified` (text patch/season stamp):
+// THREE STATES (Phase-1 locked model), read from THREE flags —
+// `verified` (boolean) + `verified_source` (text) + `patch_verified` (text
+// patch/season stamp). `verified_source` joined the predicate on 2026-07-21:
 //
-//   CONFIRMED      verified === true. A trusted human confirmed it in-game.
+//   CONFIRMED      verified === true AND verified_source is non-blank. A trusted
+//                  human confirmed it in-game AND said where.
 //                  -> state as FACT, no marker.
-//   SOURCE_AGREED  verified !== true AND patch_verified is set to a current/
-//                  recent patch (not a pre-S2 "s1" stamp). Sources concur and are
+//   SOURCE_AGREED  not CONFIRMED, AND patch_verified is set to a current/recent
+//                  patch (not a pre-S2 "s1" stamp). Sources concur and are
 //                  current, but nobody confirmed it in-game.
 //                  -> SOFT hedge: ATTRIBUTE the number ("reported as ~150 HP"),
 //                     neither assert it as fact nor throw it away.
-//   UNCHECKED      verified !== true AND patch_verified is null/empty or "s1".
-//                  Raw, unchecked ingest.
+//   UNCHECKED      not CONFIRMED, AND patch_verified is null/empty or "s1".
+//                  Raw, unchecked ingest — or a flag with nothing behind it.
 //                  -> HARD hedge: do NOT state the number; talk strategy, not figures.
 //
-// Note: a verified=true row is CONFIRMED regardless of patch_verified (the s1
-// staleness check only downgrades unverified rows). A row missing the columns
-// (verified undefined) falls to the honest default — hedge (SOURCE_AGREED if a
-// current patch stamp is present, else UNCHECKED) — never silently CONFIRMED.
+// Note: a verified=true row with NO source is no longer CONFIRMED — it falls
+// through to the patch_verified branch like any other unconfirmed row, landing
+// SOURCE_AGREED if it carries a current stamp and UNCHECKED otherwise. A row
+// missing the columns entirely (verified undefined) still falls to the honest
+// default and is never silently CONFIRMED.
 //
-// DISCIPLINE (enforced by later phases, NOT here — this module only READS flags):
-// verified=true is only ever set by trusted-human-in-game confirmation.
-
-export function verificationState(row) {
-  if (row && row.verified === true) return 'CONFIRMED';
+// DISCIPLINE — *** NOW ENFORCED HERE, 2026-07-21. ***
+// verified=true is only ever set by trusted-human-in-game confirmation. This
+// module used to say that discipline was "enforced by later phases, NOT here".
+// NO LATER PHASE EVER ENFORCED IT. The predicate short-circuited on
+// `verified === true` and never read `verified_source`, so a flag set by
+// hand-written SQL or by a pre-ticked admin checkbox reached five editors as
+// confirmed fact. CONFIRMED now requires BOTH the flag and a source.
+//
+// THREE-WAY on verified_source, because "not selected" and "empty" mean
+// different things and must not share a branch:
+//
+//   KEY ABSENT   -> BROKEN CALLER. Every table verificationState() serves now
+//                   HAS the column (DDL 2026-07-21), so an absent key can only
+//                   mean the caller's select omitted it. That is a programming
+//                   error, not a data state, and it silently downgrades every
+//                   sourced row if it passes unnoticed — so it is LOUD.
+//                   Hedge-and-shout, NOT throw: a throw here would take down a
+//                   whole cron generation run over a marker-formatting concern.
+//   BLANK        -> a legitimately unsourced row. Hedges QUIETLY. This is the
+//                   documented June-5 population (see HANDOFF 49dc7e6).
+//   NON-BLANK    -> CONFIRMED.
+//
+// `site` is optional and only decorates the error message. It is deliberately
+// NOT threaded through every call site: the branch is unreachable from a correct
+// caller, and the message is actionable without it.
+export function verificationState(row, site) {
+  if (row && row.verified === true) {
+    if (!('verified_source' in row)) {
+      console.error(
+        '[verification] BROKEN CALLER' + (site ? ' at ' + site : '') +
+        ': verified_source was not selected, so this row CANNOT be CONFIRMED and will be hedged. ' +
+        'Add verified_source to the select. This is a code defect, not a data state.'
+      );
+    } else if (String(row.verified_source || '').trim()) {
+      return 'CONFIRMED';
+    }
+  }
+  // Fall-through: unsourced, blank-sourced, or unverified rows land here.
   const pv = (row && row.patch_verified) || '';
   if (pv && !/^s1\b/i.test(pv)) return 'SOURCE_AGREED';
   return 'UNCHECKED';
