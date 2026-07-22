@@ -5,6 +5,155 @@ Newest entries on top.
 
 ---
 
+## 2026-07-22 — *** KEYWORD-FRAMING BUILD COMPLETE. LIVE, INERT, OBSERVABLE. ***
+
+**A system where editors frame article HEADLINES toward studied Mangools/KWFinder
+keywords when the topic already fits — keyword as LENS, not gate.** Shipped as eight
+commits; live in code, inert against the empty table, observable via a heartbeat.
+Seeding `keyword_targets` is the operator's next act and is the only remaining gate.
+
+### THE COMMIT CHAIN
+
+| | commit | what it did |
+|---|---|---|
+| **(a)** | `5c221e7` | delete the dead `seo_keywords` code path (provable no-op) |
+| **(b)** | `e60cabd` | extract `HEADLINE_RULES` from five byte-identical inline copies to one constant |
+| **(d1)** | `623a8a5` | unify seven slug derivations onto `entitySlugFor` (no-op) |
+| **(d2)** | `c48f4b4` | `keyword_targets` entry form + server-validated `entity_slug` |
+| **(b2)** | `78639b9` | relocate `HEADLINE_RULES` to a leaf module so the rewrite pass can import it without pulling in 107 KB of editor machinery |
+| **(e)** | `d087e62` | the matcher + two-pass rewrite |
+| **(f)** | `dd6f8ec` | the observability heartbeat |
+| — | `2df49b9` | set `KEYWORD_STALE_DAYS` 180→90 (operator sign-off) |
+
+DDL for `keyword_targets` / `keyword_match_log` was run by Justin in Supabase between
+(d2) and (e); the CHECK sets are mirrors of `lib/coverage.js` enums (`-- ALTER TOGETHER`).
+
+### THE DESIGN
+
+- **Lens, not gate.** A keyword never decides WHAT gets written, only how
+  already-warranted content is presented. The boundary is **structural, not advisory**:
+  pass 1 (`callEditor`) generates headline AND body with **no keyword in context**; a
+  second pass may rewrite the **headline only**. The keyword does not exist yet when the
+  article is written — the discipline is enforced by construction, not by instruction.
+- **Option 4 — classify once, freeze, never re-classify.** The matcher classifies the
+  **GENERATED** headline (not the RSS source title), freezes the tuple, and does **not**
+  re-derive it from the rewrite. Grading a rewrite with a classifier that reads the
+  rewrite's own output is circular; Option 4 designs the circularity **out**. So the
+  schema's `rejected_reclassify` outcome is **permanently unreachable** — kept in the
+  CHECK because the DDL shipped with it, documented as such, and surfaced as `UNKNOWN`
+  by the heartbeat if it ever appears (a drift alarm).
+- **Exact-match-or-nothing.** An article fits a keyword only when `deriveTuple` returns a
+  classified tuple AND a row matches on `(game_slug, entity_type, entity_slug, facet)`
+  with `is_active` and `match_count < 1`. No fuzzy match, no scoring — a near-match would
+  frame an article toward a term it does not answer. Most articles will NOT match, by
+  design.
+- **Length gate = 65, equal to the `HEADLINE_RULES` ceiling.** The plan said `≤60`; that
+  was drift from a superseded 60/70 rule. A code gate **stricter than the prompt** rejects
+  a headline that OBEYED the instruction it was given, logging obedience as
+  `rejected_rules` and poisoning the one signal that outcome carries. **The code ceiling
+  MUST equal the prompt ceiling.**
+- **Fail-open throughout.** Every failure — unreachable vocab, unreachable store, model
+  error, malformed output, over-length rewrite, failed log write — keeps the original
+  headline and publishes. Publication is never blocked.
+
+### THE THREE UNIFICATIONS — each a prerequisite, not housekeeping
+
+The design assumed three shared primitives that turned out to be inline or duplicated.
+**The feature could not bind honestly until each was one:**
+
+1. **`entitySlugFor` (7 → 1)** — `weaponSlug` had seven derivation sites (five named +
+   three inline). If entry-time validation and match-time derivation used different
+   slug transforms, a keyword would validate on save and silently never match. (d1).
+2. **`deriveTuple` (already 1 — a FALSE premise, recorded)** — the plan proposed an
+   "(e0)" commit to extract `deriveTuple`, believing the matcher would duplicate the
+   registry's classification. Reading the tree showed there was only ever **one**
+   `deriveTuple` (the definition + `coverageShadow.js` + the new matcher). The two calls
+   that remain are **correct by design**, not duplication: the matcher classifies the
+   ORIGINAL generated headline (drives the match); `coverageShadow` classifies the FINAL
+   headline (records the corpus). They agree on unrewritten articles and differ correctly
+   only when a rewrite fired. **(e0) was designed away.**
+3. **`HEADLINE_RULES` (5 copies → leaf)** — the rewrite pass must hold a rewritten
+   headline to the same rules the original was written under. The constant was
+   module-private in a 107 KB file importing the Anthropic SDK; (b2) moved it to
+   `lib/headlineRules.js`, a leaf that imports nothing, proven byte-identical across all
+   five editor prompts.
+
+### STATE — live, inert, observable
+
+- **Live in code.** The hook is in `processEditor` (`app/api/cron/route.js:512`), after
+  `callEditor` returns and after `resolveMediaInfo` (so a keyword containing "clip"
+  can't flip media selection — thumbnail/source_url are frozen), before the dedup gates
+  and the insert. `gatherAll` does no classification and is untouched; `callEditor` stays
+  pure (the dev sampler depends on it being write-free and keyword-free).
+- **Inert in effect.** `keyword_targets` is empty, so every article takes the
+  `no_match_no_term` path: headline byte-identical to pass 1, **zero rewrite-model
+  calls**, one cheap local `deriveTuple` per article.
+- **Observable.** The (f) heartbeat emits every run: `store=reachable(N)` /
+  `store=UNREACHABLE`, `active`/`stale`/`orphaned` counts, and an outcome summary. It is
+  a **seeding gate**: (e)'s error paths write **no** `keyword_match_log` row (the closed
+  7-value set can't express "store unreachable" without asserting a false no-match), so
+  `store=UNREACHABLE` is the **only** channel that separates a BROKEN store from a QUIET
+  one. Verified live, read-only, against the real empty table.
+
+### DETAILS WORTH KEEPING
+
+- **`unlogged=`, not `errors=`.** The heartbeat's article-vs-logged gap was going to be
+  called `errors=`. But `articles` counts every editor *attempted*, and an editor whose
+  `callEditor` fails early-returns **before** the framing hook — writing no log row
+  because it never ran the matcher. `errors=` under a `[keyword]` prefix would blame this
+  feature for a Sonnet outage. Renamed to `unlogged=`: it names the gap and claims
+  nothing about the cause. (An exact per-article error count needs a `framed` flag
+  threaded through `processEditor` — deferred.)
+- **`orphaned=N` is DERIVED, never a stored flag** (§6.6). One `loadVocabulary` per run,
+  build the valid-slug set with the shared `entitySlugFor`, then N in-memory hash lookups
+  — not N queries. Catches slug-drift-after-save AND enum-CHECK drift (a value valid per
+  the DB CHECK but gone from code). Vocab unreachable → reports `?`, never `0`.
+- **§10.1 shared threshold.** `KEYWORD_STALE_DAYS = 90` is declared **once** in
+  `lib/keywordStaleness.js` (a leaf that imports nothing, safe for the `'use client'`
+  admin bundle) and consumed via `staleCutoff`. The heartbeat imports the **function**,
+  never the number, so the reader cannot drift from the source. 90 days ≈ one
+  season/patch cycle.
+
+### DEFERRED — not blockers
+
+- **`applied_deduped` outcome** — would remove the `applied` + `feed_item_id IS NULL`
+  vs failed-backfill ambiguity in (e), but needs a CHECK-constraint `ALTER`.
+- **Exact `unlogged=`** — thread a `framed` flag through `processEditor`'s return so the
+  gap becomes a true error count.
+- **(g)** — the `stale only` admin filter (§4.5 Option 1). Optional; the shared constant
+  it needs already exists.
+- **Apostrophe transform** — strip vs hyphenate in the slug; affects zero current
+  weapons.
+
+### METHOD RULE — verify each premise at the source before shipping
+
+This build corrected **~8 premises** introduced during planning, every one caught by
+reading the real code/tree before writing anything:
+
+| premise, as planned | what the code actually said |
+|---|---|
+| the five slug sites might diverge on apostrophes | measured: zero divergence on current vocabulary |
+| the matcher duplicates `deriveTuple` → extract it as (e0) | only one `deriveTuple` existed; (e0) designed away |
+| length gate `≤60` | the prompt ceiling is 65; `≤60` rejects obedience |
+| `gatherAll` classifies the source title, reuse/avoid it | `gatherAll` does no classification at all |
+| hook in `gatherAll` | the caller with dedup + insert is `processEditor` |
+| shadow-log must MOVE for the final headline | it already sits after the hook; nothing moves |
+| the `errors=` gap is an error count | it also counts pre-hook generation failures |
+| `deriveTuple` reuse would collapse to one call | text/tokens need the final headline; only the tuple is shared |
+
+> **RULE: a plan drawn ahead of the code must be verified at the source, per premise,
+> before it is built on — not carried on confidence.** Same family as
+> *documented-is-not-enforced* and *asserted-is-not-verified*: a design written down is
+> not a design confirmed against the tree. Every one of the eight was surfaced as a
+> read-only finding and reported rather than built past.
+
+**Docs:** `docs/KEYWORD_SYSTEM_CONSOLIDATED.md` is the source of truth (corrected this
+commit to shipped state — Option 4, `≤65`, `processEditor` hook, `stale=90`). The two
+earlier drafts (`KEYWORD_FRAMING_DESIGN.md`, `KEYWORD_FRAMING_BUILD.md`) carry SUPERSEDED
+banners; their bodies are kept as design history, not reconciled.
+
+---
+
 ## 2026-07-21 - *** THE INVARIANT IS ENFORCED. ARC CLOSED. *** (`c852b9a` + `b848d23`)
 
 **`verificationState()` now requires a non-blank `verified_source` for `CONFIRMED`.**
