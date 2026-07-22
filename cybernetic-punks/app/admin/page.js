@@ -948,7 +948,7 @@ export default function AdminPage() {
     return (
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: '#fff' }}>
-          {row.name || (row.shell_name + ' -- ' + row.stat_name) || row.material_name || '--'}
+          {row.name || row.keyword || (row.shell_name && row.stat_name ? row.shell_name + ' -- ' + row.stat_name : null) || row.material_name || '--'}
         </span>
         {schema.slice(1, 4).map(f => row[f.key] !== null && row[f.key] !== undefined && row[f.key] !== '' && (
           <span key={f.key} style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted }}>
