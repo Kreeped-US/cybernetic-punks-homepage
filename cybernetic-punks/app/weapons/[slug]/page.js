@@ -33,25 +33,17 @@
 import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { entitySlugFor } from '@/lib/coverage';
 import WeaponDetailClient from './WeaponDetailClient';
 
 export const dynamic = 'force-dynamic';
-
-// Turn a weapon name into a URL slug. Shared rule, used both for matching
-// incoming URLs and for building outgoing links elsewhere.
-function nameToSlug(name) {
-  return (name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 // Fetch all weapon names + slugs once, find the one matching this URL slug.
 // Returns the exact DB name (e.g. "Magnum MC") or null.
 async function resolveWeaponName(slug) {
   var { data } = await supabase.from('weapon_stats').select('name');
   if (!data) return null;
-  var match = data.find(function(w) { return nameToSlug(w.name) === slug; });
+  var match = data.find(function(w) { return entitySlugFor('weapon', w.name) === slug; });
   return match ? match.name : null;
 }
 
@@ -152,7 +144,7 @@ export default async function WeaponDetailPage({ params }) {
       .eq('editor', 'DEXTER')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
-      .contains('tags', [nameToSlug(weaponName)])
+      .contains('tags', [entitySlugFor('weapon', weaponName)])
       .order('ce_score', { ascending: false })
       .limit(3),
 
@@ -162,7 +154,7 @@ export default async function WeaponDetailPage({ params }) {
       .select('id, headline, slug, editor, thumbnail, created_at')
       .eq('is_published', true)
       .eq('game_slug', 'marathon')
-      .contains('tags', [nameToSlug(weaponName)])
+      .contains('tags', [entitySlugFor('weapon', weaponName)])
       .in('editor', ['CIPHER', 'NEXUS', 'GHOST', 'MIRANDA'])
       .order('created_at', { ascending: false })
       .limit(6),
@@ -175,7 +167,7 @@ export default async function WeaponDetailPage({ params }) {
 
   var metaTier = metaTierRes.data;
   var uniques = (uniquesRes.data || []).map(function(u) {
-    return { ...u, slug: u.slug || nameToSlug(u.name) };
+    return { ...u, slug: u.slug || entitySlugFor('weapon', u.name) };
   });
   var dexterPicks = dexterPicksRes.data || [];
   var articles = articlesRes.data || [];
@@ -185,7 +177,7 @@ export default async function WeaponDetailPage({ params }) {
   var otherWeapons = allWeapons
     .filter(function(w) { return w.name !== weaponName && w.weapon_type === weapon.weapon_type; })
     .slice(0, 6)
-    .map(function(w) { return { name: w.name, slug: nameToSlug(w.name), weapon_type: w.weapon_type }; });
+    .map(function(w) { return { name: w.name, slug: entitySlugFor('weapon', w.name), weapon_type: w.weapon_type }; });
 
   // --- FAQ ITEMS (also feed the FAQPage JSON-LD) ----------------
   var faqItems = [];

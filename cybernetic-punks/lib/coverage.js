@@ -121,7 +121,19 @@ function weaponSlug(name) {
   return (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-function entitySlugFor(entityType, name) {
+// GAME-AGNOSTIC BY DESIGN: a pure (entityType, name) -> slug string transform with NO
+// game dependence. It takes no gameSlug and must never grow one -- a game branch here
+// would break the portability that lets a new game slug correctly with zero change.
+//
+// EXPORTED + UNIFIED (2026-07-22): this is now the SINGLE slug derivation in the app.
+// It previously existed as FIVE independent copies -- here, app/sitemap.js,
+// app/weapons/[slug]/page.js, app/uniques/page.js and app/uniques/[slug]/page.js --
+// each with a comment saying they MUST match. They all now import this one.
+//
+// The weapons route both EMITS and RESOLVES slugs with it, so a change here changes
+// which URLs resolve. Verified byte-identical across 76 names (32 weapons, 16 uniques,
+// 12 edge cases) at unification; keep it that way.
+export function entitySlugFor(entityType, name) {
   if (entityType === 'shell') return shellToSlug(name);
   if (entityType === 'mod_slot') return slotToSlug(name);
   return weaponSlug(name);

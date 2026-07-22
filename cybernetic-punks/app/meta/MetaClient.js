@@ -18,6 +18,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/useTrack';
 import { supabase } from '@/lib/supabase';
 import { secondsToNextRun } from '@/lib/cronCadence';
+import { entitySlugFor } from '@/lib/coverage';
 
 // ─── CONSTANTS ───────────────────────────────────────────────
 
@@ -914,8 +915,8 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                   {(typeKey === 'weapon' || typeKey === 'shell') ? (
                                     <Link
                                       href={typeKey === 'weapon'
-                                        ? '/weapons/' + item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-                                        : '/shells/' + item.name.toLowerCase()}
+                                        ? '/weapons/' + entitySlugFor('weapon', item.name)
+                                        : '/shells/' + entitySlugFor('shell', item.name)}
                                       className="meta-name-link"
                                       style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5, textDecoration: 'none', transition: 'color 0.1s' }}
                                     >

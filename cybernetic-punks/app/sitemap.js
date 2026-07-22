@@ -33,6 +33,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { toISOWithPTOffset } from '@/lib/formatDate';
+import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
@@ -73,14 +74,6 @@ function maxUpdatedAt(rows) {
     if (best === null || u > best) best = u;
   }
   return best;
-}
-
-// Weapon name -> URL slug. MUST match app/weapons/[slug]/page.js.
-function weaponSlug(name) {
-  return (name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 }
 
 export default async function sitemap() {
@@ -299,7 +292,7 @@ export default async function sitemap() {
       hubLastMod.weapons = maxUpdatedAt(weapons);
       if (weapons && weapons.length > 0) {
         weaponPages = weapons.map((w) => ({
-          url: baseUrl + '/weapons/' + weaponSlug(w.name),
+          url: baseUrl + '/weapons/' + entitySlugFor('weapon', w.name),
           lastModified: w.updated_at ? new Date(w.updated_at) : new Date(),
           changeFrequency: 'weekly',
           priority: 0.75,

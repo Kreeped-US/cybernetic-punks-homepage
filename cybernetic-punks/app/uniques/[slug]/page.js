@@ -15,14 +15,9 @@
 import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { entitySlugFor } from '@/lib/coverage';
 
 export const dynamic = 'force-dynamic';
-
-// Same slug rule the weapon detail route + sitemap use, so base_weapon ->
-// /weapons/<base-slug> resolves to the real weapon page.
-function nameToSlug(name) {
-  return (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
 
 var RARITY_COLORS = {
   Standard: '#888888', Enhanced: '#00ff41', Deluxe: '#00d4ff',
@@ -46,7 +41,7 @@ export async function generateMetadata({ params }) {
   var u = await fetchUnique(slug);
   if (!u) return { title: 'Unique Weapon Not Found' };
 
-  var baseSlug = nameToSlug(u.base_weapon);
+  var baseSlug = entitySlugFor('weapon', u.base_weapon);
   // OG: prefer the base weapon's art (a unique is a modified base weapon), else
   // the site default. Uniques carry no art of their own.
   var ogImage = 'https://cyberneticpunks.com/og-image.png';
@@ -106,7 +101,7 @@ export default async function UniqueDetailPage({ params }) {
   var u = await fetchUnique(slug);
   if (!u) notFound();
 
-  var baseSlug = u.base_weapon ? nameToSlug(u.base_weapon) : null;
+  var baseSlug = u.base_weapon ? entitySlugFor('weapon', u.base_weapon) : null;
 
   // Base weapon stats (the substance) + sibling uniques (internal linking), in parallel.
   var [baseRes, siblingsRes] = await Promise.all([

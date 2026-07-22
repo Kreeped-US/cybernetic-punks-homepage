@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Sep } from '@/components/Sep';
+import { entitySlugFor } from '@/lib/coverage';
 
 // Rarity accent colors — drawn from the established rarity ladder.
 // Prestige and Deluxe are the two tiers present for uniques. Contraband
@@ -182,7 +183,7 @@ export default function UniquesHubClient(props) {
                     var color = rarityColor(u.rarity);
                     var imgSrc = u.image_filename ? '/images/uniques/' + u.image_filename : null;
                     var sourceLabel = SOURCE_LABEL[u.acquisition_source] || (u.acquisition_source || '').toUpperCase();
-                    var anchor = u.slug || u.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    var anchor = u.slug || entitySlugFor('weapon', u.name);
 
                     return (
                       <div

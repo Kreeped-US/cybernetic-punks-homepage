@@ -14,6 +14,7 @@
 
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
+import { entitySlugFor } from '@/lib/coverage';
 import UniquesHubClient from './UniquesHubClient';
 
 export const dynamic = 'force-dynamic';
@@ -37,15 +38,6 @@ export const metadata = {
   alternates: { canonical: 'https://cyberneticpunks.com/uniques' },
 };
 
-// Slugify base weapon name to match the weapon detail route convention
-// (lowercase, hyphenated) so "Stryder M1T" -> "stryder-m1t".
-function weaponSlug(name) {
-  return (name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 export default async function UniquesIndexPage() {
   var uniquesRes = await supabase
     .from('unique_weapons')
@@ -57,7 +49,7 @@ export default async function UniquesIndexPage() {
 
   // Attach a base-weapon slug for linking to the existing weapon pages.
   var enriched = uniques.map(function(u) {
-    return { ...u, baseWeaponSlug: u.base_weapon ? weaponSlug(u.base_weapon) : null };
+    return { ...u, baseWeaponSlug: u.base_weapon ? entitySlugFor('weapon', u.base_weapon) : null };
   });
 
   // Stable ItemList order for JSON-LD: Prestige first, then Deluxe, then name.
@@ -100,7 +92,7 @@ export default async function UniquesIndexPage() {
               '@type': 'ListItem',
               position: i + 1,
               name: u.name + ' — Marathon ' + (u.rarity || '') + ' Unique Weapon',
-              url: 'https://cyberneticpunks.com/uniques/' + (u.slug || weaponSlug(u.name)),
+              url: 'https://cyberneticpunks.com/uniques/' + (u.slug || entitySlugFor('weapon', u.name)),
             };
           }),
         },
