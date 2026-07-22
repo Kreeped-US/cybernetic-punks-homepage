@@ -191,7 +191,7 @@ async function fetchDevRedditPosts(subreddits) {
 async function fetchShellContext() {
   try {
     const { data } = await supabase.from('shell_stats').select(
-      'name,role,difficulty,best_for,active_ability_name,active_ability_description,active_ability_cooldown_seconds,passive_ability_name,passive_ability_description,trait_1_name,trait_1_description,trait_2_name,trait_2_description,base_health,base_shield,base_speed,strengths,weaknesses,countered_by,synergizes_with,ranked_tier,ranked_tier_solo,ranked_tier_squad,ranked_notes,holotag_tier_recommendation,verified,patch_verified'
+      'name,role,difficulty,best_for,active_ability_name,active_ability_description,active_ability_cooldown_seconds,passive_ability_name,passive_ability_description,trait_1_name,trait_1_description,trait_2_name,trait_2_description,base_health,base_shield,base_speed,strengths,weaknesses,countered_by,synergizes_with,ranked_tier,ranked_tier_solo,ranked_tier_squad,ranked_notes,holotag_tier_recommendation,verified,verified_source,patch_verified'
     ).order('name');
     return data || [];
   } catch (err) {
@@ -203,7 +203,7 @@ async function fetchShellContext() {
 async function fetchWeaponContext() {
   try {
     const { data } = await supabase.from('weapon_stats').select(
-      'name,category,ammo_type,damage,fire_rate,range_rating,ranked_viable,mod_slot_types,notes,verified,patch_verified'
+      'name,category,ammo_type,damage,fire_rate,range_rating,ranked_viable,mod_slot_types,notes,verified,verified_source,patch_verified'
     ).order('category');
     return data || [];
   } catch (err) {
@@ -215,7 +215,7 @@ async function fetchWeaponContext() {
 async function fetchModContext() {
   try {
     const { data } = await supabase.from('mod_stats').select(
-      'name,slot_type,effect_summary,effect_detail,compatible_categories,ranked_impact,ranked_notes,verified,patch_verified'
+      'name,slot_type,effect_summary,effect_detail,compatible_categories,ranked_impact,ranked_notes,verified,verified_source,patch_verified'
     ).order('slot_type');
     return data || [];
   } catch (err) {

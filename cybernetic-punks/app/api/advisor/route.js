@@ -51,24 +51,25 @@ async function fetchAdvisorContext(shell) {
   const [modsRes, coresRes, implantsRes, shellRes, weaponsRes, cradleRes] = await Promise.all([
     supabase
       .from('mod_stats')
-      .select('name, slot_type, rarity, effect_desc, effect_summary, ranked_notes, stat_changes, verified, patch_verified')
+      .select('name, slot_type, rarity, effect_desc, effect_summary, ranked_notes, stat_changes, verified, verified_source, patch_verified')
       .not('effect_desc', 'is', null)
       .order('rarity', { ascending: false })
       .limit(100),
     supabase
       .from('core_stats')
-      // core_stats has `verified` but no `patch_verified` column -> select only
-      // verified (classifier treats absent patch_verified as null: true=CONFIRMED,
-      // false=UNCHECKED). Requesting the missing column would error the query.
-      .select('name, required_runner, rarity, effect_desc, ability_type, is_shell_exclusive, meta_rating, verified')
+      // core_stats has `verified` and `verified_source` but NO `patch_verified`
+      // column -> never request it here; doing so errors the whole query
+      // ("column core_stats.patch_verified does not exist"). The classifier treats
+      // an absent patch_verified as null, which is a property read, not an error.
+      .select('name, required_runner, rarity, effect_desc, ability_type, is_shell_exclusive, meta_rating, verified, verified_source')
       .or(`required_runner.is.null,required_runner.eq.${shell}`)
       .order('rarity', { ascending: false })
       .limit(80),
     supabase
       .from('implant_stats')
-      // implant_stats has `verified` but no `patch_verified` column -> select only
-      // verified (absent patch_verified treated as null by the classifier).
-      .select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, verified')
+      // implant_stats has `verified` and `verified_source` but NO `patch_verified`
+      // column -> same hazard as core_stats above; never request it.
+      .select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, verified, verified_source')
       .order('rarity', { ascending: false })
       .limit(80),
     supabase
@@ -78,12 +79,12 @@ async function fetchAdvisorContext(shell) {
       .single(),
     supabase
       .from('weapon_stats')
-      .select('name, category, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, patch_verified')
+      .select('name, category, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, verified_source, patch_verified')
       .order('name')
       .limit(60),
     supabase
       .from('cradle_nodes')
-      .select('stat_track, node_order, node_name, is_perk, cumulative_energy, effect, stat_improved, verified, patch_verified')
+      .select('stat_track, node_order, node_name, is_perk, cumulative_energy, effect, stat_improved, verified, verified_source, patch_verified')
       .eq('game_slug', 'marathon')
       .order('stat_track', { ascending: true })
       .order('node_order', { ascending: true }),
