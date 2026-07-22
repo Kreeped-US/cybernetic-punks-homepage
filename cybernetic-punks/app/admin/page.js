@@ -124,6 +124,32 @@ const SCHEMAS = {
     { key: 'image_filename',     label: 'Image Filename', type: 'text',    placeholder: 'e.g. implant-name.webp' },
   ],
 
+  // KEYWORD FRAMING store (commit d). See docs/KEYWORD_SYSTEM_CONSOLIDATED.md Part 4.
+  // entity_slug is PLAIN TEXT, validated SERVER-SIDE on save (lib/keywordEntry.js) --
+  // the renderer has no dynamic-option support, so a live entity dropdown does not
+  // exist. Validation-on-save gives the identical correctness guarantee: a wrong
+  // entity is un-SAVEABLE rather than un-PICKABLE.
+  //
+  // match_count / last_matched_at are DELIBERATELY NOT EXPOSED -- they are machine-
+  // maintained rotation state (commits e/f). A human editing them would burn or reset
+  // the cap-at-1 by hand.
+  keyword_targets: [
+    { key: 'keyword',           label: 'Keyword',            type: 'text',     required: true, placeholder: 'the studied search phrase, verbatim' },
+    { key: 'game_slug',         label: 'Game',               type: 'select',   required: true, options: ['marathon'] },
+    { key: 'entity_type',       label: 'Entity Type',        type: 'select',   options: ['', 'shell', 'weapon', 'mod_slot', 'map', 'mode', 'event'] },
+    { key: 'entity_slug',       label: 'Entity Slug',        type: 'text',     placeholder: 'e.g. vandal, twin-tap-hbr -- validated on save' },
+    { key: 'facet',             label: 'Facet',              type: 'select',   options: ['', 'counter', 'build', 'tier', 'guide', 'news', 'community', 'economy', 'lore'] },
+    { key: 'intent',            label: 'Search Intent',      type: 'select',   options: ['', 'informational', 'comparison', 'transactional', 'navigational'] },
+    { key: 'volume',            label: 'Volume (12mo avg)',  type: 'number',   placeholder: 'the OPERATIVE figure' },
+    { key: 'last_known_volume', label: 'Volume (last known)',type: 'number',   placeholder: 'kept separate -- can be a spike' },
+    { key: 'difficulty',        label: 'Difficulty (KD)',    type: 'number' },
+    { key: 'studied_at',        label: 'Studied At (date the KWFinder data was pulled)', type: 'date', required: true },
+    { key: 'source',            label: 'Source',             type: 'text',     placeholder: 'kwfinder' },
+    { key: 'priority',          label: 'Priority',           type: 'number',   placeholder: 'lower = sooner (default 100)' },
+    { key: 'is_active',         label: 'Active',             type: 'boolean' },
+    { key: 'notes',             label: 'Notes',              type: 'textarea' },
+  ],
+
   ammo_stats: [
     { key: 'name',                label: 'Name',              type: 'text',    required: true },
     { key: 'damage_type',         label: 'Damage Type',       type: 'select',  options: ['Kinetic', 'Volt'] },
@@ -337,6 +363,7 @@ const TABS = [
   { key: 'core_stats',           label: 'CORES',        color: '#ffd700' },
   { key: 'implant_stats',        label: 'IMPLANTS',     color: '#9b5de5' },
   { key: 'ammo_stats',           label: 'AMMO',         color: '#00ff88' },
+  { key: 'keyword_targets',      label: 'KEYWORDS',     color: '#ff8c00' },
   { key: 'game_maps',            label: 'MAPS',         color: '#00f5ff', group: 'world' },
   { key: 'game_zones',           label: 'ZONES',        color: '#00f5ff', group: 'world' },
   { key: 'game_bosses',          label: 'BOSSES',       color: '#00f5ff', group: 'world' },
@@ -773,7 +800,7 @@ export default function AdminPage() {
         ) : (
           <>
             <input
-              type={field.type === 'number' ? 'number' : field.type === 'datetime-local' ? 'datetime-local' : 'text'}
+              type={field.type === 'number' ? 'number' : field.type === 'datetime-local' ? 'datetime-local' : field.type === 'date' ? 'date' : 'text'}
               value={formData[field.key] ?? ''}
               onChange={e => updateField(field.key, e.target.value)}
               placeholder={field.placeholder || ''}

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { ENTRY_VALIDATORS } from '@/lib/keywordEntry';
 import { createClient } from '@supabase/supabase-js';
 import { checkLockout, recordFailure, clearFailures } from '@/lib/rateLimit';
 
@@ -40,6 +41,9 @@ const ALLOWED_TABLES = [
   'dmz_keys',
   'dmz_missions',
   'dmz_items',
+  // Keyword-framing store (commit d). Writes are validated by ENTRY_VALIDATORS
+  // below -- entity_slug must resolve against the real entities for its type.
+  'keyword_targets',
 ];
 
 // SECURITY (audit #4): admin hardening. Keeps the password mechanism (OAuth
@@ -116,12 +120,25 @@ export async function GET(req) {
   return Response.json({ data });
 }
 
+// Per-table entry validation. Runs BEFORE the write on BOTH create and edit -- a row
+// could otherwise be created clean and edited into an invalid state. Tables without a
+// registered validator are unaffected.
+async function runEntryValidation(table, row, supabase) {
+  var validate = ENTRY_VALIDATORS[table];
+  if (!validate) return null;
+  var res = await validate(supabase, row);
+  if (res && res.ok) return null;
+  return Response.json({ error: (res && res.reason) || 'validation failed' }, { status: 400 });
+}
+
 export async function POST(req) {
   var auth = authorize(req);
   if (!auth.ok) return auth.response;
   var { table, row } = await req.json();
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
   var supabase = getSupabase();
+  var invalid = await runEntryValidation(table, row, supabase);
+  if (invalid) return invalid;
   var { data, error } = await supabase.from(table).insert(row).select().single();
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });
@@ -133,6 +150,8 @@ export async function PATCH(req) {
   var { table, id, updates } = await req.json();
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
   var supabase = getSupabase();
+  var invalid = await runEntryValidation(table, updates, supabase);
+  if (invalid) return invalid;
   var { data, error } = await supabase.from(table).update(updates).eq('id', id).select().single();
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });
