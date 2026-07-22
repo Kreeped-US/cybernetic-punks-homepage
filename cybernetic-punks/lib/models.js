@@ -22,3 +22,18 @@ export const ARTICLE_MODEL = 'claude-sonnet-4-6';
 // Editor reaction comments -- Haiku (smaller/faster; the cranked comment voices
 // were verified to land on it).
 export const COMMENT_MODEL = 'claude-haiku-4-5-20251001';
+
+// Keyword-framing pass 2 (lib/keywordFraming.js): rewrite ONE headline toward a
+// studied keyword. A constrained, mechanical transformation -- it does not need a
+// frontier model, and it runs per matched article, so the cost profile matters.
+//
+// DATED SNAPSHOT, NOT AN ALIAS -- deliberately, and for a different reason than
+// ARTICLE_MODEL's alias. An alias re-pointing underneath a SCHEDULED cron is a
+// reproducibility hole: headline framing would silently change character with no
+// diff, no deploy and no signal. Pass 2 follows COMMENT_MODEL's pattern.
+//
+// SEPARATE from COMMENT_MODEL even though the string matches today. They are two
+// independent decisions -- comment voice was tuned on Haiku, headline rewriting was
+// chosen for cost. Sharing one constant would silently couple them, so that
+// re-tuning one would move the other. The duplicated string is the cheaper mistake.
+export const HEADLINE_REWRITE_MODEL = 'claude-haiku-4-5-20251001';

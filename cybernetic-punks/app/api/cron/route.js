@@ -7,6 +7,7 @@ import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
+import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
 import { topicTokens, buildIdfMap } from '@/lib/topicTokens';
 
 export const dynamic = 'force-dynamic';
@@ -494,6 +495,30 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     var media = resolveMediaInfo(result, rawData, editorName);
     console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' source=' + media.source);
 
+    // KEYWORD FRAMING -- pass 2. See lib/keywordFraming.js for the design.
+    //
+    // POSITION IS LOAD-BEARING, in both directions:
+    //   AFTER resolveMediaInfo, because isTwitchContent (:73) reads result.headline
+    //   to choose the thumbnail and source -- rewriting before it could change MEDIA
+    //   selection, and thumbnail/source_url are FROZEN.
+    //   BEFORE insertData, so headline (:498) and generateSlug (:505) pick up the
+    //   final string, and before the dedup gates (:716/:731) and the coverage shadow
+    //   log (:745), which must all see the headline that actually publishes.
+    //
+    // result.headline is REASSIGNED so every downstream consumer inherits the final
+    // string with no further edits. framing.original keeps the pass-1 headline.
+    // FAIL-OPEN: framing.headline is always a usable string, so this cannot block
+    // publication. Inert while keyword_targets is empty.
+    var framing = await frameHeadline(supabase, {
+      gameSlug: PRODUCING_GAME_SLUG,
+      headline: result.headline,
+      body: result.body,
+    });
+    if (framing.applied) {
+      console.log('[keyword] ' + editorName + ' FRAMED "' + framing.original + '" -> "' + framing.headline + '" (' + framing.keyword + ')');
+      result.headline = framing.headline;
+    }
+
     var insertData = {
       headline: result.headline,
       body: result.body,
@@ -754,6 +779,13 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     if (error) {
       return { editor: editorName, success: false, error: error.message };
     }
+
+    // POST-INSERT, and only here: burn the keyword's cap and backfill the audit
+    // row's feed_item_id. Every early return above (duplicate title :718,
+    // near-duplicate evergreen :736, insert error :755) skips this, so a term is
+    // never marked used by an article that did not publish. Fail-open; both writes
+    // are audit and the article already exists.
+    await finalizeKeywordMatch(supabase, framing, feedItem ? feedItem.id : null);
 
     if (feedItem) {
       generateArticleComments(
