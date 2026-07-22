@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import UsageStats from '@/components/UsageStats';
 import QualityMetricsPanel from '@/components/QualityMetricsPanel';
 import QualityAlertsPanel from '@/components/QualityAlertsPanel';
@@ -580,17 +580,29 @@ export default function AdminPage() {
 
   useEffect(() => { if (authed) loadTable(activeTab); }, [authed, activeTab, loadTable]);
 
+  // Bring the add/edit form INTO view when it opens, without yanking to the
+  // absolute page top. This runs in an effect, not in startAdd/startEdit, on
+  // purpose: those handlers set showAddForm/editingRow, and the form
+  // ({(showAddForm || editingRow) && ...}) is not in the DOM until React commits
+  // the re-render -- so formRef.current is still null if scrollIntoView is called
+  // synchronously in the handler. The effect fires after the commit, when the node
+  // exists. block:'nearest' means an already-visible form does not move.
+  const formRef = useRef(null);
+  useEffect(() => {
+    if (showAddForm || editingRow) {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [showAddForm, editingRow]);
+
   function startEdit(row) {
     setEditingRow(row.id);
     setFormData(rowToFormData(row, SCHEMAS[activeTab] || []));
     setShowAddForm(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function startAdd() {
     setShowAddForm(true); setEditingRow(null);
     setFormData(buildFormDefaults(activeTab, stickyValues));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function cancelForm() { setEditingRow(null); setShowAddForm(false); setFormData({}); }
@@ -1058,7 +1070,7 @@ export default function AdminPage() {
         </div>
 
         {(showAddForm || editingRow) && (
-          <div style={{ background: S.surface, border: '1px solid ' + (activeTabConfig?.color + '33'), borderRadius: 8, padding: 24, marginBottom: 24 }}>
+          <div ref={formRef} style={{ background: S.surface, border: '1px solid ' + (activeTabConfig?.color + '33'), borderRadius: 8, padding: 24, marginBottom: 24 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: activeTabConfig?.color, letterSpacing: 2, marginBottom: 20 }}>
               {showAddForm ? (isDirectives ? '+ NEW DIRECTIVE' : '+ NEW ' + activeTabConfig?.label) : 'EDITING -- ' + (formData.name || formData.faction_name || formData.shell_name || formData.editor || formData.material_name || formData.zone_name || formData.boss_name || formData.event_name || formData.mode_name || formData.slug || '')}
             </div>
