@@ -352,6 +352,7 @@ const SOURCE_DIRECTIVE_TYPES = ['creator_spotlight', 'discourse'];
 
 const TABS = [
   { key: 'editor_directives',    label: 'DIRECTIVES',   color: '#ff2d55' },
+  { key: 'keyword_targets',      label: 'KEYWORD TARGETS', color: '#ff8c00' },
   { key: 'factions',             label: 'FACTIONS',     color: '#ffd700', group: 'faction' },
   { key: 'faction_stat_bonuses', label: 'FACTION STATS',color: '#ffd700', group: 'faction' },
   { key: 'faction_unlocks',      label: 'F. UNLOCKS',   color: '#ffd700', group: 'faction' },
@@ -363,7 +364,6 @@ const TABS = [
   { key: 'core_stats',           label: 'CORES',        color: '#ffd700' },
   { key: 'implant_stats',        label: 'IMPLANTS',     color: '#9b5de5' },
   { key: 'ammo_stats',           label: 'AMMO',         color: '#00ff88' },
-  { key: 'keyword_targets',      label: 'KEYWORDS',     color: '#ff8c00' },
   { key: 'game_maps',            label: 'MAPS',         color: '#00f5ff', group: 'world' },
   { key: 'game_zones',           label: 'ZONES',        color: '#00f5ff', group: 'world' },
   { key: 'game_bosses',          label: 'BOSSES',       color: '#00f5ff', group: 'world' },
