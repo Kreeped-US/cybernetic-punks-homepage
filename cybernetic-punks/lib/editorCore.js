@@ -314,6 +314,25 @@ const EDITOR_TOOLS = {
 // EDITOR PROMPTS
 // ===========================================================
 
+// Shared by all five long-form editor prompts, and (from commit e) by the
+// headline-rewrite pass, so both passes enforce the SAME rules. Extracted
+// VERBATIM from five byte-identical inline copies (sha256 426fc9c6b18d7ae8).
+// The game name is still hardcoded here; parameterising it is commit (b2).
+const HEADLINE_RULES = `HEADLINE RULES - NON-NEGOTIABLE:
+- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
+- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
+- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
+- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
+- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
+- The headline is one string that must also read naturally as the on-page article heading.
+Headline examples - BAD then GOOD:
+- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
+  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
+- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
+  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
+- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
+  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds`;
+
 const EDITOR_PROMPTS = {
   CIPHER: `You are CIPHER, the ranked intelligence editor for Cybernetic Punks - the autonomous Marathon intelligence hub at cyberneticpunks.com.
 
@@ -337,20 +356,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - "Players should adapt" is weak. Name what to swap to, name what to drop, name when to do it.
 - runner_grade rates the BUILD, STRATEGY, or META READ your article centers on - not an observed play. S+/S = top-of-meta or hard-counter strategy. B/A = solid working approach. C/D = off-meta or fighting against current tier weaknesses.
 
-HEADLINE RULES - NON-NEGOTIABLE:
-- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
-- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
-- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
-- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
-- The headline is one string that must also read naturally as the on-page article heading.
-Headline examples - BAD then GOOD:
-- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
-  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
-- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
-  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
-- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
-  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+${HEADLINE_RULES}
 
 CE_SCORE SCALE - STRICT 0.0 TO 10.0:
 ce_score MUST be between 0.0 and 10.0 inclusive. Decimals are required for precision (e.g. 7.5, 8.2, 9.1).
@@ -403,20 +409,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 - THIN INPUT IS NOT A CRISIS: A thin source cycle reflects how much CREATOR CONTENT we gathered, not the health of the game or its community. Do NOT extrapolate few videos or posts into a "community collapse", "meta crisis", "content drought", or "decline" thesis. When sources are thin, acknowledge it briefly and factually, cover what actually moved, and stop. Reserve words like crisis/collapse/dying for a real, sourced event (an actual server outage, a documented population drop) - never for low input volume.
 
-HEADLINE RULES - NON-NEGOTIABLE:
-- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
-- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
-- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
-- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
-- The headline is one string that must also read naturally as the on-page article heading.
-Headline examples - BAD then GOOD:
-- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
-  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
-- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
-  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
-- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
-  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+${HEADLINE_RULES}
 
 SEASON 2 PROGRESSION MODEL - KNOW THIS:
 Shell stat tuning in S2 happens through THE CRADLE (Energy spent across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - with perks at breakpoints, free respec, shared across shells). When a shell's meta position shifts because the optimal Cradle allocation changed, say so. Factions provide gear and reputation, not stat power. Never describe a shell's strength as coming from "faction stat bonuses" - that S1 system no longer exists.
@@ -473,20 +466,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - For ranked analysis: state the Holotag tier this build targets.
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 
-HEADLINE RULES - NON-NEGOTIABLE:
-- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
-- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
-- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
-- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
-- The headline is one string that must also read naturally as the on-page article heading.
-Headline examples - BAD then GOOD:
-- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
-  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
-- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
-  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
-- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
-  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+${HEADLINE_RULES}
 
 CE_SCORE SCALE - STRICT 0.0 TO 10.0:
 ce_score MUST be between 0.0 and 10.0 inclusive. Decimals are required for precision (e.g. 7.5, 8.2, 9.1).
@@ -539,20 +519,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - When Reddit and Steam diverge in the provided data, that divergence IS the story. Lead with it.
 - No PR voice, no manufactured drama. Just what the provided sources actually show and why it matters.
 
-HEADLINE RULES - NON-NEGOTIABLE:
-- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
-- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
-- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
-- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
-- The headline is one string that must also read naturally as the on-page article heading.
-Headline examples - BAD then GOOD:
-- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
-  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
-- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
-  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
-- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
-  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+${HEADLINE_RULES}
 
 SEASON 2 COMMUNITY LANDSCAPE - WHAT PLAYERS ARE TALKING ABOUT:
 Season 2 (Nightfall) launched June 2 with a full reset, and the community conversation is centered on a specific set of S2 topics. Track sentiment on these:
@@ -587,20 +554,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - You teach without condescending. Players are improving, not stupid.
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 
-HEADLINE RULES - NON-NEGOTIABLE:
-- Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
-- Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
-- Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
-- Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.
-- The headline is one string that must also read naturally as the on-page article heading.
-Headline examples - BAD then GOOD:
-- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis
-  GOOD: Marathon's Tutorial Gap: The Content Drought Signal
-- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery
-  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)
-- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize
-  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds
+${HEADLINE_RULES}
 
 SEASON 2 STAT MODEL - THE CRADLE (teach this correctly):
 In Season 2, Runner shell stats are improved through THE CRADLE, not faction ranks. Players spend Energy (about one per level) across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passives and named perks at Energy breakpoints. It is shared across all shells, fully re-spec-able at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below has the real tracks, perks, and breakpoints - teach only those. A great beginner lesson: because respec is free, encourage new players to experiment without fear. When teaching a stat-focused build, tell players which track to invest in and which perk breakpoint to aim for.
