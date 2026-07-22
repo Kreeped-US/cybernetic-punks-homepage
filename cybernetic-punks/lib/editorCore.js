@@ -1150,29 +1150,6 @@ Use the publish_field_guide tool to publish your article. Name real shells, weap
 }
 
 // ===========================================================
-// SEO KEYWORD TARGETING
-// ===========================================================
-
-async function getTargetKeyword(editor, supabase) {
-  try {
-    var cutoff = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
-    var { data } = await supabase
-      .from('seo_keywords')
-      .select('id, keyword, target_shell, target_weapon')
-      .eq('target_editor', editor)
-      .or('last_targeted_at.is.null,last_targeted_at.lt.' + cutoff)
-      .order('priority', { ascending: true })
-      .order('last_targeted_at', { ascending: true, nullsFirst: true })
-      .limit(1)
-      .single();
-    if (!data) return null;
-    return data;
-  } catch (err) {
-    return null;
-  }
-}
-
-// ===========================================================
 // CALL EDITOR
 // ===========================================================
 //
@@ -1211,19 +1188,6 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
     if (gameContext) systemPrompt += gameContext;
   }
 
-  var kwData = null;
-  if (supabaseClient) {
-    kwData = await getTargetKeyword(editor, supabaseClient);
-    if (kwData) {
-      systemPrompt += '\n\n--- SEO TARGET FOR THIS ARTICLE ---\n';
-      systemPrompt += 'TARGET KEYWORD: "' + kwData.keyword + '"\n';
-      if (kwData.target_shell) systemPrompt += 'FOCUS SHELL: ' + kwData.target_shell + '\n';
-      if (kwData.target_weapon) systemPrompt += 'FOCUS WEAPON: ' + kwData.target_weapon + '\n';
-      systemPrompt += 'INSTRUCTION: Write this article so it naturally answers the search query "' + kwData.keyword + '". Include the keyword naturally in the headline and body.\n';
-      systemPrompt += '--- END SEO TARGET ---\n';
-    }
-  }
-
   var maxTokens = 2048;
   if (editor === 'NEXUS')   maxTokens = 4096;
   if (editor === 'CIPHER')  maxTokens = 2048;
@@ -1260,23 +1224,7 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
 
   var parsed = normalizeEditorOutput(editor, toolUseBlock.input);
 
-  if (kwData) {
-    parsed._seo_keyword_id = kwData.id;
-  }
-
   return parsed;
-}
-
-export async function consumeKeyword(supabase, keywordId) {
-  if (!supabase || !keywordId) return;
-  try {
-    await supabase
-      .from('seo_keywords')
-      .update({ last_targeted_at: new Date().toISOString() })
-      .eq('id', keywordId);
-  } catch (err) {
-    console.log('[editorCore] consumeKeyword error: ' + err.message);
-  }
 }
 
 // ===========================================================

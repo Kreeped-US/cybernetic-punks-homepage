@@ -1,4 +1,4 @@
-import { callEditor, buildMirandaPrompt, generateArticleComments, consumeKeyword } from '@/lib/editorCore';
+import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/editorCore';
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { createClient } from '@supabase/supabase-js';
@@ -753,13 +753,6 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
 
     if (error) {
       return { editor: editorName, success: false, error: error.message };
-    }
-
-    if (result._seo_keyword_id) {
-      consumeKeyword(supabase, result._seo_keyword_id).catch(function(e) {
-        console.log('[CRON] keyword consume failed (non-fatal): ' + e.message);
-      });
-      console.log('[CRON] ' + editorName + ' consumed keyword id=' + result._seo_keyword_id);
     }
 
     if (feedItem) {
