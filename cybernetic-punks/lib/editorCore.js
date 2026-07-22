@@ -705,7 +705,24 @@ async function fetchGameContext(config = getGameConfig()) {
       for (const core of coresRes.data) {
         const runner = core.required_runner || 'Unknown';
         if (!byRunner[runner]) byRunner[runner] = [];
-        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? ', Shell-Exclusive' : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
+        // NAME ALONE IS NOT UNIQUE HERE. core_stats is the only shell-scoped stat
+        // table: its natural key is (name, rarity, required_runner), not
+        // (name, rarity). Two Deluxe cores called "Predator" exist -- one Recon,
+        // one Assassin -- with entirely different effects, and likewise
+        // "Hunter/Killer" (Recon / Thief).
+        //
+        // The `${runner} Cores:` group header below ALREADY separates them, so
+        // context was never ambiguous. What was ambiguous is the LINE, and the
+        // line is the quotable unit: this prompt says "use exact names only", the
+        // exact name collides, and a header 28-42 lines up does not travel with a
+        // name the model repeats in an article. Naming the shell inline makes each
+        // line self-identifying. `-only` keeps the exclusivity fact the old
+        // ", Shell-Exclusive" label carried.
+        //
+        // Fallback: an exclusive core with no runner still renders
+        // ", Shell-Exclusive". Zero such rows exist (2026-07-21) but the form can
+        // still produce one, and the line must never emit ", )" or ", null".
+        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? (core.required_runner ? ', ' + core.required_runner + '-only' : ', Shell-Exclusive') : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)

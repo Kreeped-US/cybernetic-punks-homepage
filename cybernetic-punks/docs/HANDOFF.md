@@ -5,6 +5,142 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - core_stats natural key, and the editor line made self-identifying
+
+**No data writes, no DDL, no dedup.** One line changed in `lib/editorCore.js`.
+
+### 1. *** THE NATURAL KEY IS `(name, rarity, required_runner)` ***
+
+**`(name, rarity)` is NOT a natural key on `core_stats`** - measured **85 rows / 83
+distinct pairs / 2 collisions**. With `required_runner` added: **85 distinct of 85,
+0 collisions.**
+
+**`core_stats` is the ONLY shell-scoped stat table**, and the collision exists
+**nowhere else.** Checked across all seven:
+
+| table | key checked | collisions |
+|---|---|---|
+| **core_stats** | (name, rarity) | **2** |
+| implant_stats | (name, rarity) | 0 (120/120) |
+| mod_stats | (name, rarity) | 0 (203/203) |
+| weapon_stats / shell_stats / unique_weapons | (name) | 0 |
+| shell_stat_values | (shell_name, stat_name) | 0 |
+
+`implant_stats` also has `required_runner`, but its 11 duplicate names separate by
+**rarity tier** - the expected shape. `core_stats` duplicates share a rarity and
+differ by **shell**, which is why it is the one table where rarity does not suffice.
+
+> **THIS DOES NOT INVALIDATE THE `extraId: 'id'` DECISION** in
+> `scripts/provenance-check.mjs` (`ef9a4d4`). A findings label still has to identify
+> ONE row, and `id` does that unconditionally. The natural key is the right *concept*
+> and the uuid is the right *label*; they are answering different questions.
+
+### 2. THE FOUR ROWS ARE DISTINCT ITEMS - **no dedup was done and none is needed**
+
+| id | name | rarity | shell | effect |
+|---|---|---|---|---|
+| `a2ccd7de` | Predator | Deluxe | **Recon** | Tracker Drone: sprint speed + heat cooldown, longer overheat |
+| `e5be8e41` | Predator | Deluxe | **Assassin** | damage from behind grants bonus damage |
+| `12d497ca` | Hunter/Killer | Deluxe | **Recon** | Echo Pulse pings grant stacking equip/reload/stability |
+| `d1cecc89` | Hunter/Killer | Deluxe | **Thief** | melee/knife after grapple **Hacks** the target |
+
+**Entirely unrelated effects, each keyed to its own shell's kit.** All four
+`is_shell_exclusive = true`. **Shell-exclusive cores reuse names across shells** -
+that is the game's design, not a data defect.
+
+> **THE DEFECT WAS THE ASSUMPTION, NOT THE DATA.** `(name, rarity)` was treated as
+> a key because it happens to be one everywhere else.
+
+### 3. THE TWO UNSOURCED TWINS ARE PART OF THE EXISTING 61 - not a new population
+
+`e5be8e41` (Predator/Assassin) and `d1cecc89` (Hunter/Killer/Thief) both carry
+`created_at = 2026-06-05T20:25:58.006796` - **the same batch signature** as the rest
+of the June-5 population. Their Recon counterparts are March rows and were
+backfilled.
+
+**They are covered by the existing re-verification item. Do NOT track them
+separately.**
+
+### 4. THE BY-NAME PROVENANCE TRAP - recorded, not fixed
+
+> **A provenance query keyed on bare `name` returns a MISLEADING answer on this
+> table.** `SELECT verified_source FROM core_stats WHERE name = 'Predator'` returns
+> **two rows, one attested and one null** - and any check that takes the first, or
+> asks "does Predator have a source?", gets **yes** when half of what carries that
+> name does not.
+
+**No remediation. Every internal check keys on `id`** - `provenance-check.mjs`,
+the dexter resolver (`50cd7ac`), the flip and backfill SQL. **This is a hazard for a
+future MANUAL query only**, recorded so nobody trusts a by-name provenance check
+here.
+
+### 5. THE RENDER FIX - and *** TWO PREMISE CORRECTIONS, both load-bearing ***
+
+**Changed** (`lib/editorCore.js:708`, one line): when a core is exclusive **and**
+has a runner, the line now names the shell.
+
+```
+BEFORE  Predator (Deluxe, Shell-Exclusive, Ability: Passive): Gain increased sprint speed...
+AFTER   Predator (Deluxe, Recon-only, Ability: Passive):      Gain increased sprint speed...
+BEFORE  Predator (Deluxe, Shell-Exclusive):                   Dealing damage from behind...
+AFTER   Predator (Deluxe, Assassin-only):                     Dealing damage from behind...
+```
+
+`-only` keeps the exclusivity fact the old label carried. **Universal cores render
+byte-identically.** Fallback: exclusive with no runner still renders
+`, Shell-Exclusive` - **0 such rows exist**, but the form can still produce one.
+
+> *** CORRECTION 1 (caught before writing): THE GROUP HEADER ALREADY SEPARATED
+> THEM. *** The block emits `${runner} Cores:` headers, so the twins appear under
+> **`Recon Cores:`** and **`Assassin Cores:`**. Context was **never** ambiguous.
+>
+> *** CORRECTION 2 (caught by the harness, correcting the plan): THE LINES WERE
+> NEVER IDENTICALLY LABELLED. *** The plan claimed they were. They already differed
+> - Predator by `, Ability: Passive`, Hunter/Killer by `Meta: B` and
+> `Ability: Prime`. The before-state assertion **FAILED and exposed this**; it was
+> rewritten to test the real property rather than weakened to pass.
+>
+> **BOTH CORRECTIONS MOVED THE SAME WAY: the defect was SMALLER than described,
+> twice.**
+
+**THE REAL DEFECT, once both are subtracted: no line NAMED a shell.** Measured -
+**0 of 4 twin labels contained a shell name before; 4 of 4 after.** A reader could
+tell the two entries apart and still not know which shell either belonged to.
+
+**WHY IT WAS STILL WORTH DOING:** the line is the **quotable unit**. The prompt says
+*"use exact names only"*, the exact name collides, and a group header **28-42 lines
+up** does not travel with a name the model repeats in an article.
+
+> *** STATE IT PLAINLY: THIS IS HARDENING, NOT REPAIR. Declining would have been
+> defensible. *** No wrong content was established as reaching output. A future
+> reader must not record this as closing an open content hole.
+
+**Scope:** editor context only - the generation input. **Advisor and
+`/shells/[slug]` already filter on `required_runner` and separate cleanly**;
+`/builds` and `/join/intake` show both twins but are **browse surfaces, not
+generation input**, and were deliberately left alone.
+
+### 6. VERIFICATION - no row written
+
+The harness **extracts the actual template literal from `editorCore.js` and
+evaluates it**, so before and after both exercise the **shipped** template rather
+than a copy that could agree with itself.
+
+**85 lines compared: 75 changed, 10 identical, 0 malformed.** Every changed line
+carries a `<Shell>-only` label; **no universal line changed**; both twin pairs now
+name their shells.
+
+**SYNTHETIC FALLBACK EXERCISED - required, because it is unreachable from live
+data.** An in-memory row (**never inserted**) with `required_runner` as `null`, `''`
+and `undefined` all render `, Shell-Exclusive` with no `, )` or `, null`.
+**Zero live rows hit that branch, so it would otherwise have shipped untested and
+fired for the first time on a future bad row.**
+
+`Shell-Exclusive` confirmed to appear in **exactly one place in the repo**, so no
+other consumer reads this string. ESLint clean.
+
+---
+
 ## 2026-07-21 - *** THE 2026-06-15 RECALIBRATION: EXAMINED AND EXONERATED. NO REVERT. ***
 
 Read-only investigation. **No writes, no code change, no predicate change, no
