@@ -8,6 +8,7 @@ import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalCo
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
 import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
+import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { topicTokens, buildIdfMap } from '@/lib/topicTokens';
 
 export const dynamic = 'force-dynamic';
@@ -866,6 +867,11 @@ export async function GET(req) {
     process.env.SUPABASE_SERVICE_KEY
   );
 
+  // Run-start stamp, taken BEFORE any generation: the keyword heartbeat counts
+  // keyword_match_log rows written since this instant, so it reports THIS run
+  // rather than a rolling window that could straddle two.
+  const runStartedAt = new Date().toISOString();
+
   try {
     var prompts = await gatherAll(PRODUCING_GAME);
     var rawData = prompts._rawData || { youtubeVideos: [], twitchClips: [], xData: null, bungieNews: [] };
@@ -1213,10 +1219,25 @@ export async function GET(req) {
     // non-fatal, internal-only -- nothing consumes it yet -> zero output change.
     await precomputeQualityMetrics(PRODUCING_GAME, supabase);
 
+    // KEYWORD HEARTBEAT -- emitted EVERY run, including runs with zero matches.
+    // This is the ONLY channel that separates a BROKEN keyword store from a QUIET
+    // one: (e)'s error paths write no keyword_match_log row, so silence in that
+    // table is ambiguous by construction. `store=reachable(N)` proves the lookup
+    // path works; `store=UNREACHABLE` is said out loud on the run that noticed,
+    // rather than discovered months later. Seeding keyword_targets is gated on
+    // this line existing. Never throws; a heartbeat cannot fail a cron run.
+    var keywordHb = await emitKeywordHeartbeat(supabase, PRODUCING_GAME_SLUG, {
+      articles: results.length,
+      since: runStartedAt,
+    });
+
     return Response.json({
       success: true,
       timestamp: new Date().toISOString(),
       summary: succeeded + ' published, ' + (results.length - succeeded) + ' skipped',
+      // Surfaced in the response, not just the logs: Vercel shows this body in the
+      // cron invocation detail, so the heartbeat is visible without log spelunking.
+      keyword: keywordHb.line,
       directives_consumed: directivesUsed,
       patch_detected: hasPatch,
       nexus_tier_regrade: regradeContext.shouldRegrade,
