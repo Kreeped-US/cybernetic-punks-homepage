@@ -20,14 +20,12 @@
 // lib/keywordFraming.js, which imports @anthropic-ai/sdk -- doing so would drag the
 // SDK into the browser, the exact defect commit (b2) removed.
 
-// ⚠️ NEEDS OPERATOR SIGN-OFF. This number was never specified: §4.5 and §10.1
-// decide THAT there is a threshold and write it as a placeholder, and no value
-// appears anywhere in the repo or the design docs. 180 days is a starting default,
-// not a derived figure -- it is roughly the point at which a KWFinder 12-month
-// average has half-turned over. Changing it is a one-line edit HERE and both
-// readers follow. If it is wrong, it is wrong consistently, which is the property
-// this module exists to guarantee.
-export const KEYWORD_STALE_DAYS = 180;
+// 90 days ~= one season / patch cycle. Keyword research that predates the current
+// meta state should be re-pulled before it drives a match-priority decision, since
+// volume and difficulty shift as the meta does. Changing this is a one-line edit
+// HERE and both readers follow; it is wrong consistently or not at all, which is
+// the property this module exists to guarantee.
+export const KEYWORD_STALE_DAYS = 90;
 
 // The cutoff DATE (YYYY-MM-DD), for comparison against keyword_targets.studied_at,
 // which is a `date` column and not a timestamp. Returned as a plain string so both
