@@ -5,6 +5,151 @@ Newest entries on top.
 
 ---
 
+## 2026-07-21 - *** THE INVARIANT IS ENFORCED. ARC CLOSED. *** (`c852b9a` + `b848d23`)
+
+**`verificationState()` now requires a non-blank `verified_source` for `CONFIRMED`.**
+The `verified === true` short-circuit on the first line - **the last open mechanism,
+the one that let unsourced rows reach editors as fact** - is gone.
+
+**Three commits:**
+
+| | | |
+|---|---|---|
+| **`c852b9a`** | selects | 14 selects gained `verified_source`. **Proven a NO-OP** - distribution byte-identical, CONFIRMED 365 unchanged. |
+| **`b848d23`** | **the predicate** | three-way on `verified_source`. **61 rows move.** |
+| *commit 3* | `qualityMetrics` flags | **PENDING** - three stale `hasVerifiedSource` rows. |
+
+**Split deliberately:** if something had downgraded, the diff had to implicate the
+predicate unambiguously, not a missing select.
+
+### 1. THE PREDICATE
+
+```js
+export function verificationState(row, site) {
+  if (row && row.verified === true) {
+    if (!('verified_source' in row)) {
+      console.error('[verification] BROKEN CALLER' + (site ? ' at ' + site : '') + ': ...');
+    } else if (String(row.verified_source || '').trim()) {
+      return 'CONFIRMED';
+    }
+  }
+  const pv = (row && row.patch_verified) || '';
+  if (pv && !/^s1\b/i.test(pv)) return 'SOURCE_AGREED';
+  return 'UNCHECKED';
+}
+```
+
+**Hedge-and-shout, NOT throw** - a throw would take down an entire cron generation
+run over a marker-formatting concern.
+
+### 2. THE EFFECT - predicate attached, measured against a prediction recorded first
+
+**Predicate: share of rows across the 9 STAT_TABLES where `verificationState(row)`
+returns `CONFIRMED`, i.e. `verified === true` AND a non-blank `verified_source`.**
+
+- **CONFIRMED 365 -> 304.**
+- **61 rows move `CONFIRMED -> UNCHECKED`** - `core_stats` **23**, `implant_stats`
+  **38**. **Every one has a blank `verified_source`.**
+- **319 sourced rows: ZERO moved.**
+- **0 rows reach `SOURCE_AGREED`** - neither table has `patch_verified`, so the
+  fall-through lands `UNCHECKED`.
+- Seven other tables **unchanged**.
+
+**The 61 are exactly the June-5 batch** that has been the standing re-verification
+target since `49dc7e6`. **They were never a new discovery; they are the known
+population finally being treated as what it is.**
+
+> *** THIS IS A LIVE CONTENT CHANGE. The next cron cycle HEDGES these 61 rows
+> instead of stating their numbers as fact. *** Editors will describe those cores
+> and implants qualitatively and say the exact values are unconfirmed.
+
+### 3. *** THE ARC, NAMED AND CLOSED ***
+
+One unsupported flag in `mod_stats` opened this. The through-line, in one place:
+
+| # | finding | closed by |
+|---|---|---|
+| 1 | **An unsupported flag** - 86 `mod_stats` rows `verified=true` with nothing behind them | owner SQL, 2026-07-21 |
+| 2 | **The invariant `lib/verification.js` DOCUMENTED but no phase ENFORCED** | **`b848d23`** |
+| 3 | **The mechanism that manufactured it** - admin form defaulted `verified` to `true`, guarded by table-name prefix instead of field name | **`3d9d928`** |
+| 4 | **Two tables that COULD NOT record provenance** - no `verified_source` column | **`49dc7e6`** (DDL + 143 attributed) |
+| 5 | **No way to COLLECT it** - form exposed `verified` but not `verified_source` | **`25ab594`** |
+| 6 | **The auditor covered 363 of 657 rows** | **`ef9a4d4`** |
+| 7 | **The predicate ENFORCES it at read time** | **`c852b9a` + `b848d23`** |
+
+> **The comment that read *"enforced by later phases, NOT here"* now reads
+> *"NOW ENFORCED HERE."* That single line is the arc in miniature: the discipline
+> was always written down, and writing it down was mistaken for enforcing it.**
+
+**The gap is closed at every layer: DATA, MECHANISM, SCHEMA, COLLECTION, AUDIT, and
+ENFORCEMENT.** Also examined and exonerated along the way: the **2026-06-15 tag
+recalibration**, which removed the hedge from this very population 36 days before
+anyone found the problem - correct as a change, resting on a premise that was false,
+and needing no revert because the population it exposed is now empty.
+
+### 4. WHAT THE 61 NOW ARE
+
+**Still `verified = true`. No longer `CONFIRMED` to any reader**, because the
+predicate requires a source they do not have.
+
+> **Re-verifying them in-game - KEYED ON `id` - is what restores them to CONFIRMED,
+> and it is now the ONLY path back.**
+> *** THE FLAG ALONE CAN NO LONGER ASSERT CONFIRMATION. *** That is the entire
+> point. Before today, someone could restore CONFIRMED by ticking a box. Now the
+> only way through is to actually look at the item and record where you looked.
+
+### 5. THE GUARDRAIL PROPERTY - why this does not recur
+
+**A broken caller can no longer silently pass rows as CONFIRMED.** If a future
+select drops `verified_source`, the key is absent, and the predicate **logs loudly
+and hedges** rather than quietly promoting unsourced rows.
+
+> **A select regression now FAILS SAFE AND VISIBLY, instead of recreating the exact
+> gap this arc closed.**
+
+**Blank and absent are disjoint by COUNT, not by inspection:**
+
+- **blank source (legitimate data) -> hedges QUIETLY.** The 61 log nothing.
+- **absent key (a bug) -> SHOUTS.**
+
+**Verified: across three synthetic rows - broken, blank, sourced - exactly ONE log
+line was emitted.** Had the two shared a branch, the 61 legitimate rows would log an
+error every run and the alarm would be worthless within a week - **the dexter
+summary-line failure in a new costume.** They are separated on purpose.
+
+### 6. VERIFICATION
+
+**Before-state guard reproduced the defect first:** on HEAD all three synthetic rows
+returned `CONFIRMED`, **including one with no `verified_source` key at all.**
+
+**Prediction recorded BEFORE the run, matched cell for cell:** CONFIRMED 365 -> 304,
+`core_stats` 85 -> 62, `implant_stats` 119 -> 81, exactly 61 rows moving, all
+`CONFIRMED -> UNCHECKED`, 0 to `SOURCE_AGREED`.
+
+**Row-level diff over all 657 rows.** The assertion that mattered most:
+**`of 319 sourced rows, 0 changed state`** - had `c852b9a` missed a select, that
+number would have been catastrophic rather than zero.
+
+**The predicate is imported real, never reimplemented.** Existing suite 8/8, ESLint
+clean, no row written.
+
+### 7. STILL OPEN - genuinely short now
+
+- **Commit 3 (queued):** `qualityMetrics.js` `hasVerifiedSource` - **three rows
+  stale** (`implant_stats`, `core_stats` since yesterday's DDL; `shell_stat_values`
+  for longer). **CORRECT, do not delete** - it has **three live consumers** in
+  `lib/qualityMetricsCore.mjs` (`:41`, `:57`, `:59`) and deleting it would silently
+  zero `confirmed_with_source`. The schema-derived question - whether the flag
+  should be computed rather than hardcoded - is **parked for that commit**.
+- **In-game re-verification of the 61. KEY ON `id`.**
+- **Elective, all edge:** `Survivor Kit V2` (distinct item or typo'd duplicate -
+  do NOT rename blind, it would make the dexter resolver ambiguous);
+  `shield_compatible` existence question (dead column, zero readers);
+  the `requiredWhen` form-validation follow-up (needs a NEW opt-in property -
+  **never repurpose `required`**, which is inert on 37 fields across 20 tables).
+
+---
+
 ## 2026-07-21 - core_stats natural key, and the editor line made self-identifying
 
 **No data writes, no DDL, no dedup.** One line changed in `lib/editorCore.js`.
