@@ -857,6 +857,85 @@ ESLint 0, next build exit 0.
 
 ---
 
+## 2026-07-23 — GSC PHASE (2) COMPLETE, with runtime proof + the credential generator
+
+### PHASE (2) IS DONE — auth verified END-TO-END against the live property
+
+    rows fetched:          1080
+    date range returned:   2026-07-13 .. 2026-07-20
+    newest_date_returned:  2026-07-20        <- the stall-detector input
+    totals:                55 clicks, 2706 impressions, 458 distinct URLs
+
+Run from a **FRESH SHELL with no `GSC_PRIVATE_KEY` export**. That detail is the point,
+not a footnote: the loader assigns only vars not already in `process.env`, so a shell
+export silently shadows `.env.local` and a green run in an exporting terminal proves
+nothing about the file. This run proves THE FILE. That was the exact failure mode we
+could not previously rule out, and it is now ruled out.
+
+Sample rows corroborate the strategic picture the manual export produced — the leaders
+are TOOL and ENTITY pages (`/uniques/misery-disciple`, `/stats`, `/leaderboard`,
+`/modes/vault-breaker`), not articles. Consumer A's read path is aimed at the right thing.
+
+### PAGINATION PROVEN CORRECT — by full row-set equality, not by execution
+Fetched the same window twice, one request (rowLimit 25000) vs eleven (rowLimit 100):
+
+    row COUNT equal:                 true   (1080 vs 1080)
+    oldest/newest date equal:        true   (2026-07-13 / 2026-07-20)
+    rows dropped at a boundary:      0
+    rows duplicated at a boundary:   0
+    duplicate keys within paginated: 0
+    FULL row match (incl. metrics):  true
+
+**Count equality alone would have PASSED a boundary bug that duplicates one row and drops
+another** — identical totals, corrupt data. The set-and-metrics comparison is what
+actually establishes correctness. **This is what unblocks phase (3):** the historical
+backfill is ONE-SHOT, so a silent boundary defect would have been unrecoverable and
+invisible.
+
+`gsc_page_metrics`, `gsc_pull_log`, `gsc_url_inspection` asserted **still EMPTY after the
+fetches** — phase (2) writes nothing, and that is verified rather than assumed.
+
+**Window note, NOT drift:** an earlier operator figure of 705 rows came from a different
+window. 1080 is the 7-day default ending 3 days back (the `dataState=final` lag). Both are
+correct for their windows; do not read the difference as instability.
+
+### THE CREDENTIAL GENERATOR — `scripts/gsc-write-env.mjs`
+Manual pasting of `private_key` failed repeatedly, and the measured shape said exactly
+why: **89 chars, 1 REAL newline, 0 literal `\n`**. A JSON viewer renders the `\n` escapes
+as real line breaks, so the line-by-line `.env` loader captured only the FIRST PHYSICAL
+LINE — 89 chars of ~1704. No amount of care fixes that reliably by hand, so the hand-copy
+was removed from the loop entirely.
+
+The generator reads the service-account JSON directly, escapes real newlines back to
+literal `\n`, replaces the two `GSC_` lines and preserves every other byte (CRLF included),
+then ASSERTS that no unrelated line changed. It refuses on an absent or sub-1000-char
+`private_key`, and **never prints key material** — shape facts only (length, hasBEGIN,
+hasEND, literal-`\n` count), the same rule `lib/gsc/searchAnalytics.js` follows. It backs
+up `.env.local` first, because the file holds every credential the project has.
+
+Committed rather than discarded because **key rotation hits this identical problem again**,
+and the next person will otherwise re-derive the multi-line paste failure from scratch.
+
+Verified before use on the real file: three refusal guards (short key / absent key /
+missing file) all exit non-zero leaving `.env.local` untouched; the write path exercised
+against a synthetic full-length PEM with the real file snapshotted and restored
+BYTE-IDENTICAL (md5 match); and the full chain JSON -> escaped -> loader -> credential
+guards proven intact. Real key measured 1704 chars — matching the operator's own earlier
+measurement, confirming the JSON was always fine and only the PASTE was lossy.
+
+### STILL REQUIRED BEFORE PHASE (3)/(4) RUN ON THE CRON
+**`GSC_CLIENT_EMAIL` and `GSC_PRIVATE_KEY` must be set in VERCEL.** Local is fixed;
+**production has NO GSC credentials yet**, so anything scheduled will fail there until
+they are added. Either escaping form works in Vercel (literal `\n` or real newlines) —
+`readCredentials()` normalizes both. This is the one remaining setup step, and it is
+invisible from the repo, so it is recorded here rather than assumed.
+
+Housekeeping: `.env.local.bak` (written by the generator) contains the Supabase service
+key and the old truncated GSC key. It is gitignored but is a secrets file on disk —
+delete once the run is confirmed.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
