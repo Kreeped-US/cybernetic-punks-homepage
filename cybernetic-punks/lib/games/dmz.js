@@ -12,7 +12,9 @@ import { DMZ_FOREST } from '../brandColors.js';
 
 export const dmz = {
   slug: 'dmz',
-  label: 'DMZ',
+  displayName: 'DMZ',   // was `label`; unified with marathon.js's field name (the
+                        // top-level game display name). Section entries below keep
+                        // their own `label` -- a different, per-section concept.
   // Tagline for the landing hero (display copy, game's own vocabulary).
   tagline: 'Extraction intelligence for the zone',
   basePath: '/dmz',

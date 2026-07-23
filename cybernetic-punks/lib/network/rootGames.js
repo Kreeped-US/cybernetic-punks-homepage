@@ -84,7 +84,7 @@ export const ROOT_GAMES = [
   },
   {
     slug: dmzGame.slug,              // 'dmz' from the canonical config
-    label: dmzGame.label,           // 'DMZ'
+    label: dmzGame.displayName,     // 'DMZ' (config field renamed label -> displayName)
     route: dmzGame.basePath,        // '/dmz' (pre-launch hub placeholder)
     // Optional atmosphere art, rendered as a treated (scrim-masked) tile
     // background by GameRoutingTile -- BEHIND the pre-launch markers, which stay
