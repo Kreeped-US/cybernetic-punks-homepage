@@ -24,6 +24,17 @@ export const marathon = {
   slug: 'marathon',
   displayName: 'Marathon',
 
+  // Lifecycle status + launch date -- mirror of the dmz.js fields (see the
+  // three-concepts note there: status is lifecycle, distinct from any SEO/live
+  // flag). ADDITIVE; nothing reads these yet.
+  //   status 'live': Marathon is the launched, active game (-> ~Sept 2026 it moves
+  //     to 'maintenance'; change this field then).
+  //   launch_date null: Marathon is already live, so its launch date is not a
+  //     kill-clock input (the clock starts at launch only for PRE-LAUNCH games) and
+  //     is not recorded anywhere in this repo -- null rather than an invented date.
+  status: 'live',
+  launch_date: null,
+
   sources: {
     steamAppId: '3065800',
 

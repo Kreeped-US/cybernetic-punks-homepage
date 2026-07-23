@@ -35,6 +35,22 @@ export const dmz = {
   indexable: true,
   launched: false,
 
+  // THREE SEPARATE CONCEPTS -- do not merge any pair. The two flags above plus:
+  //   status: the game's LIFECYCLE (pre-launch / live / maintenance). Drives
+  //     generation behaviour, effort allocation, and the kill-clock rules per the
+  //     doctrine. This is NOT `launched` (a live-player-features flag) and NOT
+  //     `indexable` (an SEO flag): a game can be indexable while pre-launch (DMZ is,
+  //     right now), and 'maintenance' is a live-but-winding-down state neither
+  //     boolean expresses. Collapsing status into either boolean re-loses exactly
+  //     the distinction the indexable/launched split was created to keep.
+  //   launch_date: the machine value the "Oct 23 2026" comment above held in prose.
+  //     The kill-clock starts here for a PRE-LAUNCH game's pages.
+  // ADDITIVE (game_slug default-removal pattern): landed before any consumer reads
+  // them. NOTHING reads status/launch_date yet -- the GSC kill line, launch
+  // countdown, and generation/effort gating are separate later commits.
+  status: 'pre-launch',
+  launch_date: '2026-10-23',
+
   // X (official paid API) intake for VANTAGE discourse -- Stage 1 (mirrors the
   // marathon.sources.x shape). watchlist = TRUSTED seed accounts; searchQueries =
   // the games-scoped discovery door. START SMALL -- Justin drops the full vetted
