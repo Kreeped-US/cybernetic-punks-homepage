@@ -1,6 +1,19 @@
 // app/rising/page.js
-// RISING RUNNERS — small Marathon Twitch streamers discovery hub
+// RISING CREATORS — small Marathon creator (Twitch streamer) discovery hub
 // Live data via <RisingRunners /> component; SEO-optimized surface.
+//
+// Updated July 23, 2026 — RENAME "Rising Runners" -> "Rising Creators" + two-audience.
+// - 461234a (June 12) fixed only the metadata title/description/OG/Twitter for the
+//   marathon-race intent; it left the on-page H1, body copy, JSON-LD, and the live
+//   widget saying "Runners". Google read that body + structured data and matched
+//   the stemmed query "running for streamers" (642 impressions, 0% CTR). This pass
+//   removes the last rendered "Runner" from this page and its JSON-LD.
+// - The page targets "streamers"/"creators" and NEVER "runners" as a search term, so
+//   dropping the word costs brand flavor and zero traffic.
+// - Adds CREATOR intent (get featured / submit / creator spotlight) alongside the
+//   existing VIEWER intent, and a prominent GET FEATURED card.
+// - NOTE: the route (/rising), the component filename, the JS var `runners`, and the
+//   /api/rising-runners endpoint are deliberately NOT renamed (Google never reads them).
 //
 // Updated April 27, 2026:
 // - Colors aligned to design system tokens
@@ -39,25 +52,27 @@ function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.full
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Rising Marathon Game Streamers - Twitch Spotlights',
-  description: 'Discover rising Twitch streamers playing Marathon, Bungie\'s extraction shooter. Creator spotlights for small streamers grinding the game right now.',
+  title: 'Rising Marathon Creators - Twitch Streamers & Spotlights',
+  description: 'Discover rising Marathon creators: live Twitch streamers under 100 viewers plus editor spotlights for Bungie\'s extraction shooter. Make Marathon content? Get featured.',
   keywords: [
+    // Viewer intent — someone looking for a small creator to watch/support
     'Marathon streamers',
     'Marathon Twitch streamers',
-    'Marathon small streamers',
-    'small Marathon Twitch channels',
-    'rising Marathon creators',
-    'Marathon live streams',
-    'new Marathon content creators',
-    'best Marathon streamers to watch',
+    'small Marathon streamers',
     'Marathon Twitch under 100 viewers',
-    'find new Marathon streamers',
-    'support small Marathon streamers',
-    'discover Marathon Twitch',
+    'best Marathon streamers to watch',
+    'discover Marathon Twitch streamers',
+    // Creator intent — someone who makes Marathon content and wants to be featured
+    'Marathon creator spotlight',
+    'get featured Marathon streamer',
+    'submit Marathon Twitch channel',
+    'Marathon content creator',
+    'rising Marathon creators',
+    'feature my Marathon channel',
   ],
   openGraph: {
-    title: 'Rising Marathon Game Streamers - Twitch Spotlights',
-    description: 'Live small streamers playing Marathon, Bungie\'s extraction shooter. Discover the next wave before they blow up.',
+    title: 'Rising Marathon Creators - Twitch Streamers & Spotlights',
+    description: 'Live small Marathon streamers under 100 viewers, plus editor creator spotlights. Watch the next wave — or make Marathon content and get featured.',
     url: 'https://cyberneticpunks.com/rising',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -65,8 +80,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Rising Marathon Game Streamers',
-    description: 'Live small streamers playing Marathon right now. Discover the next wave.',
+    title: 'Rising Marathon Creators',
+    description: 'Live small Marathon streamers plus creator spotlights. Watch the next wave — or get featured.',
   },
   alternates: {
     canonical: 'https://cyberneticpunks.com/rising',
@@ -80,7 +95,7 @@ const BG_DEEP   = '#0e1014';
 const BORDER    = '#22252e';
 const BORDER_SUBTLE = '#1e2028';
 
-const GHOST   = '#00ff88';  // Rising Runners is GHOST-themed (community pulse editor)
+const GHOST   = '#00ff88';  // Rising Creators is GHOST-themed (community pulse editor)
 const NEXUS   = '#00d4ff';
 const DEXTER  = '#ff8800';
 const MIRANDA = '#9b5de5';
@@ -126,20 +141,24 @@ const FAQS = [
     a: "We scan Twitch in real-time for streamers playing Marathon with under 100 viewers. The feed updates every time you visit the page — these are real players streaming right now, not algorithmic recommendations or pre-curated lists. We don't accept payment to feature streamers and we don't filter by language or region. If they're live and small, they're surfaced.",
   },
   {
-    q: 'What viewer threshold makes a streamer qualify as "rising"?',
-    a: "Rising Runners surfaces streamers with under 100 concurrent viewers. The threshold is intentionally generous — a streamer with 80 viewers still benefits enormously from a single new face in chat. We focus on streamers actively building rather than already-established creators with thousands of followers. As streamers grow past 100 viewers, they graduate out of the Rising feed.",
+    q: 'What viewer threshold makes a creator qualify as "rising"?',
+    a: "Rising Creators surfaces streamers with under 100 concurrent viewers. The threshold is intentionally generous — a streamer with 80 viewers still benefits enormously from a single new face in chat. We focus on creators actively building rather than already-established channels with thousands of followers. As streamers grow past 100 viewers, they graduate out of the Rising feed.",
   },
   {
-    q: 'Can I submit my Marathon Twitch channel to Rising Runners?',
-    a: "You don't need to submit anything — if you're streaming Marathon on Twitch with under 100 viewers, you're automatically eligible. Just stream Marathon as your category and our scanner will find you. The scan runs whenever someone visits the Rising Runners page, so the feed stays current. No application, no waitlist, no curation — just stream and you're in.",
+    q: 'I make Marathon content — how do I get featured on Rising Creators?',
+    a: "You don't submit anything and there's no form or waitlist. Stream Marathon on Twitch with under 100 viewers and our live scanner surfaces you automatically the moment someone visits this page — just set Marathon as your category and you're in. Beyond the live feed, our editors hand-pick standout creators for a full Creator Spotlight. Keep making Marathon content and building your community; that's what gets our attention.",
+  },
+  {
+    q: 'How do Creator Spotlights work?',
+    a: "Creator Spotlights are full editorial features — our editors pick creators from the live feed and the wider Marathon scene, then write an in-depth piece on their story, their plays, and what they bring to the community. You can't buy a spotlight and there's no application: we surface creators worth knowing. The best way to be considered is to keep streaming Marathon and building a community around it.",
   },
   {
     q: 'When are most Marathon streamers live?',
-    a: "Marathon's streaming activity peaks in evenings across each timezone — Pacific evening rush, then European afternoon, then Asian late-night. Weekend afternoons see sustained streaming throughout the day. The Rising Runners feed updates per-visit, so refreshing during your local prime time will surface the most active small streamers in your region. Marathon is a 24/7 game and someone is always grinding.",
+    a: "Marathon's streaming activity peaks in evenings across each timezone — Pacific evening rush, then European afternoon, then Asian late-night. Weekend afternoons see sustained streaming throughout the day. The Rising Creators feed updates per-visit, so refreshing during your local prime time will surface the most active small streamers in your region. Marathon is a 24/7 game and someone is always grinding.",
   },
   {
     q: 'How is this different from Twitch\'s own discovery page?',
-    a: "Twitch's browse page sorts by viewer count by default, which means small streamers get buried beneath established channels. Even when you sort low-to-high, you still wade through inactive streams, AFK channels, and viewer count gaming. Rising Runners filters specifically for active small streamers playing Marathon right now — no AFK, no rerun chains, no manipulation. It's a discovery tool optimized for finding actual rising creators, not a browse page.",
+    a: "Twitch's browse page sorts by viewer count by default, which means small streamers get buried beneath established channels. Even when you sort low-to-high, you still wade through inactive streams, AFK channels, and viewer count gaming. Rising Creators filters specifically for active small streamers playing Marathon right now — no AFK, no rerun chains, no manipulation. It's a discovery tool optimized for finding actual rising creators, not a browse page.",
   },
 ];
 
@@ -265,7 +284,7 @@ export default async function RisingPage() {
           lineHeight: 1.1,
         }}>
           <span style={{ color: GHOST, marginRight: 12 }}>◇</span>
-          RISING <span style={{ color: GHOST }}>RUNNERS</span>
+          RISING <span style={{ color: GHOST }}>CREATORS</span>
         </h1>
 
         <p style={{
@@ -295,7 +314,7 @@ export default async function RisingPage() {
             marginBottom: 8,
             fontWeight: 700,
           }}>
-            WHY RISING RUNNERS?
+            WHY RISING CREATORS?
           </div>
           <p style={{
             fontSize: 14,
@@ -303,7 +322,35 @@ export default async function RisingPage() {
             lineHeight: 1.65,
             margin: 0,
           }}>
-            Big streamers already have their audience. These Runners are putting in the work right now — learning the game, developing strategies, building communities from scratch. One viewer can make their day. Your support matters more here than anywhere else in the Marathon ecosystem.
+            Big streamers already have their audience. These creators are putting in the work right now — learning the game, developing strategies, building communities from scratch. One viewer can make their day. Your support matters more here than anywhere else in the Marathon ecosystem.
+          </p>
+        </div>
+
+        {/* GET FEATURED card — creator-intent CTA, surfaced up top (not buried in FAQ) */}
+        <div style={{
+          background: BG_CARD,
+          border: '1px solid ' + BORDER,
+          borderLeft: '3px solid ' + NEXUS,
+          borderRadius: '0 3px 3px 0',
+          padding: '18px 22px',
+        }}>
+          <div style={{
+            fontFamily: 'monospace',
+            fontSize: 10,
+            color: NEXUS,
+            letterSpacing: 2,
+            marginBottom: 8,
+            fontWeight: 700,
+          }}>
+            MAKE MARATHON CONTENT? GET FEATURED
+          </div>
+          <p style={{
+            fontSize: 14,
+            color: 'rgba(255,255,255,0.6)',
+            lineHeight: 1.65,
+            margin: 0,
+          }}>
+            Two ways to land here — no form, no waitlist. Stream Marathon on Twitch with under 100 viewers and our live scanner surfaces you automatically the moment someone visits this page. Standout creators get hand-picked by our editors for a full Creator Spotlight. Just keep making Marathon content and building your community — we&apos;re watching for the next wave.
           </p>
         </div>
       </section>
@@ -566,7 +613,7 @@ export default async function RisingPage() {
         )}
       </section>
 
-      {/* ─── LIVE RISING RUNNERS WIDGET ──────────────── */}
+      {/* ─── LIVE RISING CREATORS WIDGET (<RisingRunners/> — name unchanged) ─── */}
       <div style={{ marginTop: 56 }}>
         <RisingRunners />
       </div>
@@ -588,7 +635,7 @@ export default async function RisingPage() {
             letterSpacing: 2,
             margin: '0 0 12px 0',
           }}>
-            HOW WE FIND RISING RUNNERS
+            HOW WE FIND RISING CREATORS
           </h3>
           <p style={{
             fontSize: 14,
@@ -621,7 +668,7 @@ export default async function RisingPage() {
             maxWidth: 720,
             margin: '0 auto',
           }}>
-            Common questions about Rising Runners, Marathon streamer discovery, and how the live feed works.
+            Common questions about Rising Creators, Marathon streamer discovery, getting featured, and how the live feed works.
           </p>
         </div>
 
@@ -739,9 +786,9 @@ export default async function RisingPage() {
         __html: JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'WebPage',
-          name: 'Rising Runners — Marathon Streamers to Watch',
+          name: 'Rising Creators — Marathon Streamers to Watch',
           url: 'https://cyberneticpunks.com/rising',
-          description: 'Discover up-and-coming Marathon streamers on Twitch. Live small streamers under 100 viewers — surfaced in real-time.',
+          description: 'Discover up-and-coming Marathon creators on Twitch. Live small streamers under 100 viewers — surfaced in real-time. Creators can get featured.',
           isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
         }),
       }} />
@@ -760,7 +807,7 @@ export default async function RisingPage() {
             {
               '@type': 'ListItem',
               position: 2,
-              name: 'Rising Runners',
+              name: 'Rising Creators',
               item: 'https://cyberneticpunks.com/rising',
             },
           ],

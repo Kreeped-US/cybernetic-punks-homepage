@@ -56,7 +56,7 @@ export default function RisingRunners() {
               gap: 10,
             }}
           >
-            <span style={{ color: '#00ff88' }}>◇</span> RISING RUNNERS
+            <span style={{ color: '#00ff88' }}>◇</span> RISING CREATORS
           </h2>
           <div
             style={{
@@ -97,7 +97,7 @@ export default function RisingRunners() {
             padding: '24px 0',
           }}
         >
-          SCANNING FOR RISING RUNNERS...
+          SCANNING FOR RISING CREATORS...
         </div>
       ) : runners.length === 0 ? (
         <div
@@ -116,7 +116,7 @@ export default function RisingRunners() {
             letterSpacing: 1,
             marginBottom: 8,
           }}>
-            NO RISING RUNNERS LIVE RIGHT NOW
+            NO RISING CREATORS LIVE RIGHT NOW
           </div>
           <div style={{
             fontFamily: 'Rajdhani, sans-serif',
@@ -250,7 +250,7 @@ export default function RisingRunners() {
                     letterSpacing: 1,
                   }}
                 >
-                  SUPPORT THIS RUNNER →
+                  SUPPORT THIS CREATOR →
                 </div>
               </div>
             </a>

@@ -166,6 +166,61 @@ verify-at-source step trims them to true size, and it has paid off five times in
 
 ---
 
+## 2026-07-23 — /rising rename: Rising Runners → Rising Creators (finishes 461234a)
+
+461234a (June 12) fixed ONLY the metadata title/description/OG/Twitter for the
+marathon-RACE intent. It left the on-page H1, the WHY/HOW copy, all FAQ bodies, both
+JSON-LD names, and the ENTIRE live widget still saying "Runners" — so metadata and page
+contradicted each other, and Google reads the body and structured data for relevance.
+Result: the stemmed query "running for streamers" pulled **642 impressions at 0% CTR**
+(~31% of site-wide impressions) from position 9.3.
+
+This pass removes every rendered "Runner" brand token and renames the section to
+**Rising Creators** (broader than "Streamers" — covers YouTube, and matches how creators
+describe themselves). The page targets "streamers"/"creators" and NEVER "runners" as a
+search term — the keyword list never contained it — so dropping the word costs brand
+flavor and ZERO traffic. That trade is the whole justification for the rename.
+
+### TWO-AUDIENCE TARGETING (new)
+The page targeted VIEWER intent only (12 keywords, all "marathon streamers" shaped).
+Added CREATOR intent alongside it: keywords rebalanced to 6 viewer + 6 creator
+(`marathon creator spotlight`, `get featured marathon streamer`, `submit marathon twitch
+channel`, `marathon content creator`, `feature my marathon channel`), a two-audience
+description, a prominent **GET FEATURED** card in the hero (not buried in the FAQ), and
+two creator-facing FAQs. The copy is HONEST: there is no submission form — the real
+mechanic is the auto Twitch scan plus editor-hand-picked spotlights, and the new copy
+says exactly that rather than inventing a funnel that does not exist.
+
+### ALSO FIXED IN THIS COMMIT (the finding)
+Three rendered "RISING RUNNERS" that 461234a and the first pass of this task both missed,
+OUTSIDE app/rising/ — `components/Footer.js` (site-wide footer link, rendered on EVERY
+page), `app/marathon/page.js` (hub link), `app/intel/[slug]/page.js` (spotlight byline).
+Two were internal ANCHOR TEXT pointing at /rising, which is arguably a stronger relevance
+signal for what /rising ranks for than the page's own body. All three renamed here. This
+is the same "the June fix missed the widget" trap one layer out: a two-file rename would
+have left the collision live site-wide.
+
+NOT renamed anywhere (Google never reads them): the route `/rising`, the component
+filename `RisingRunners`, the JS var `runners`, `/api/rising-runners`, and
+`app/api/audit/route.js:255` (an internal LLM prompt using "runner" in the correct
+IN-GAME sense — Marathon players are Runners; that vocabulary is untouched).
+
+### MEASUREMENT
+"running for streamers" should fall from 642 impressions — checkable in GSC in ~3–4 weeks
+(same recrawl floor as the prune). Note honestly: creator-intent demand is THIN pre-launch,
+so the creator targeting is POSITIONING for when Marathon ships, not an immediate traffic
+win. The effect being measured here is the removal of 642 dead impressions dragging
+site-wide CTR — not new creator traffic.
+
+### VERIFICATION
+Zero rendered "Runner" asserted site-wide against RENDERED strings, not just source (the
+widget headings were the miss last time); title stays disambiguated with no "Runners"
+reintroduced; scope = 5 files; ESLint adds zero new errors (the 2 `no-unescaped-entities`
+errors at `marathon/page.js:465` are PRE-EXISTING on HEAD, confirmed by stash-and-lint);
+next build exit 0.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

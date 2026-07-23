@@ -484,7 +484,7 @@ export default async function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00ff88', textTransform: 'uppercase', fontFamily: 'monospace' }}>Creator Spotlights</span>
                 <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-                <Link href="/rising" style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#00ff88', textDecoration: 'none', fontFamily: 'monospace' }}>RISING RUNNERS -&gt;</Link>
+                <Link href="/rising" style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#00ff88', textDecoration: 'none', fontFamily: 'monospace' }}>RISING CREATORS -&gt;</Link>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
                 {spotlights.map(function(item) {

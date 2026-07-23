@@ -809,7 +809,7 @@ function EditorLanePage({ config, items }) {
               ◇
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 8, color: '#00ff88', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace', marginBottom: 4 }}>GHOST · RISING RUNNERS</div>
+              <div style={{ fontSize: 8, color: '#00ff88', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace', marginBottom: 4 }}>GHOST · RISING CREATORS</div>
               <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 3 }}>Small Marathon streamers, live right now</div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>Discover up-and-coming creators and published spotlights before they blow up.</div>
             </div>
