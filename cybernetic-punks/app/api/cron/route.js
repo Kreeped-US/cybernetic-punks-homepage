@@ -648,6 +648,11 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
               var computedTrend = newTier == null ? null : computeTrend(newTier, oldTier);
 
               return {
+                // game_slug EXPLICIT (was relying on the meta_tiers DEFAULT 'marathon').
+                // Phase 1 of the game_slug default-removal: every insert into the 16
+                // defaulted tables now sets game_slug so the DEFAULT can be dropped and a
+                // forgotten value ERRORS instead of silently becoming Marathon.
+                game_slug: PRODUCING_GAME_SLUG,
                 name: canonicalName,
                 type: item.type,
                 tier: newTier,
@@ -1003,7 +1008,7 @@ export async function GET(req) {
 
     if (regradeContext.patchShouldTrigger) {
       try {
-        await supabase.from('site_events').insert({ event_name: 'patch_regrade', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
+        await supabase.from('site_events').insert({ game_slug: PRODUCING_GAME_SLUG, event_name: 'patch_regrade', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
         console.log('[CRON] Recorded patch_regrade marker for patch_key="' + currentPatchKey + '" -- this patch will not re-trigger regrade again');
       } catch (prErr) {
         console.log('[CRON] Failed to record patch_regrade marker (non-fatal): ' + prErr.message);
@@ -1083,7 +1088,7 @@ export async function GET(req) {
         if (priorPatchNotif && priorPatchNotif.length > 0) {
           console.log('[CRON] This patch already notified (patch_key="' + currentPatchKey + '") -- skipping Discord');
         } else {
-          await supabase.from('site_events').insert({ event_name: 'patch_discord', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
+          await supabase.from('site_events').insert({ game_slug: PRODUCING_GAME_SLUG, event_name: 'patch_discord', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
           patchNotifyClaimed = true;
           console.log('[CRON] Patch Discord marker recorded for patch_key="' + currentPatchKey + '"');
         }

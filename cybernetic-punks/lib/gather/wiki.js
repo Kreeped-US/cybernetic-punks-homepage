@@ -146,8 +146,18 @@ function parseShells(html) {
 
 async function upsert(table, records) {
   if (!records.length) return 0;
+  // game_slug is stamped 'marathon' EXPLICITLY (Phase 1 of the game_slug
+  // default-removal): weapon_stats/shell_stats are losing their DEFAULT 'marathon',
+  // so a new-row upsert that omitted game_slug would insert NULL. It is a LITERAL,
+  // not config.slug, on purpose: WIKI_URLS is hardcoded to the Marathon fandom
+  // (see the top of this file), so everything this module scrapes IS Marathon by
+  // construction. config.slug would be correct only by coincidence and would
+  // MISLABEL if a non-Marathon gather ever reached here. This becomes config.slug
+  // (and needs a per-game skip) only when WIKI_URLS goes per-game. Reason named
+  // here because this is the point of temptation.
+  const stamped = records.map((r) => ({ game_slug: 'marathon', ...r }));
   const { error } = await supabase.from(table)
-    .upsert(records, { onConflict: 'name', ignoreDuplicates: false });
+    .upsert(stamped, { onConflict: 'name', ignoreDuplicates: false });
   if (error) { console.error(`[wiki.js] ${table} upsert error:`, error.message); return 0; }
   return records.length;
 }
