@@ -43,17 +43,17 @@ import Anthropic from '@anthropic-ai/sdk';
 // verification harnesses, and bare Node ESM does not do extensionless resolution.
 // Matches lib/coverage.js, lib/topicTokens.js and the other node-testable modules.
 import { deriveTuple, loadVocabulary } from './coverage.js';
-import { HEADLINE_RULES } from './headlineRules.js';
+import { HEADLINE_RULES, HEADLINE_MAX_CHARS } from './headlineRules.js';
 import { HEADLINE_REWRITE_MODEL } from './models.js';
 
-// THE CODE CEILING MUST EQUAL THE PROMPT CEILING.
-// HEADLINE_RULES tells the model "never exceed 65". A checker set lower rejects
-// headlines that OBEY the rule they were given, and logs them as `rejected_rules`
-// -- i.e. as disobedience -- destroying the only signal that outcome carries.
-// If a tighter bar is ever wanted for rewrites, it goes in the PROMPT (a
-// rewrite-specific target the model is actually told), never here alone.
-// ALTER TOGETHER with lib/headlineRules.js.
-export const HEADLINE_MAX_CHARS = 65;
+// THE CODE CEILING IS THE PROMPT CEILING -- literally the same constant.
+// HEADLINE_MAX_CHARS is defined once in lib/headlineRules.js and imported here; the
+// code gate below can no longer drift from what the prompt tells the model. (A gate
+// set lower than the prompt would reject headlines that OBEY the rule they were
+// given, logging them as `rejected_rules` -- i.e. as disobedience -- destroying the
+// only signal that outcome carries. Sharing the constant makes that unrepresentable.)
+// Re-exported so existing importers of HEADLINE_MAX_CHARS from this module still work.
+export { HEADLINE_MAX_CHARS };
 
 // How much of the frozen body pass 2 may see. It is shown for FACTUAL FIDELITY --
 // so the rewritten headline cannot promise something the article does not deliver

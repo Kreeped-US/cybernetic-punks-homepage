@@ -22,9 +22,19 @@
 // The game name is still hardcoded ("Marathon"); parameterising it for DMZ is a
 // separate, later change and deliberately not folded in here.
 
+// THE ONE HEADLINE CEILING. Defined here and consumed everywhere -- the prose below
+// interpolates it, lib/keywordFraming.js imports it as the code gate, and the five
+// lib/editorCore.js tool-field descriptions interpolate it too. One number, one
+// source: the prompt ceiling, the tool-schema ceiling, and the code gate can never
+// disagree again. (They drifted before: the prose/gate sat at 65 while the render
+// path -- app/intel/[slug]:190, maps/[slug]:200, matchups/[shell]:81 -- already
+// treats 60 as the <title> budget, so a 61-65 headline shipped and then TRUNCATED in
+// Google. 60 closes that live contradiction; it is Gate 4, not a preference.)
+export const HEADLINE_MAX_CHARS = 60;
+
 export const HEADLINE_RULES = `HEADLINE RULES - NON-NEGOTIABLE:
 - Put the game name ("Marathon") and the primary searchable term - the season, weapon, build, map, mode, or topic name - in the first 5-6 words of the headline.
-- Target 55 characters or fewer; never exceed 65. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
+- Target 55 characters or fewer; never exceed ${HEADLINE_MAX_CHARS}. This is the WHOLE title Google shows - no site name is appended, so never write "| CyberneticPunks" or any other suffix yourself.
 - Persona voice and the specific hook go AFTER the separator (a colon or a dash), never before it.
 - Use normal sentence casing or title casing only. Never write any word in all-caps - all-caps headlines read as spam in Google results.
 - Use the audience's search vocabulary, not in-universe jargon: write "beginner", "new players", or "streamers", not "Runners" or other lore terms. Lore vocabulary belongs in the article body, not the headline.

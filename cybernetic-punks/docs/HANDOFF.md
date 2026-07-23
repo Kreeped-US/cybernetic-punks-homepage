@@ -309,6 +309,87 @@ default-removal blocker.
 
 ---
 
+## 2026-07-23 — headline ceiling 65 → 60, one source of truth (reconciles Gate 4)
+
+Aligned the headline length ceiling to **60** across all THREE places it was declared, in one
+commit, **structurally** (one constant, no duplicated literals).
+
+### THE GATE — what it did and did NOT prove
+This change was HELD until the day's cron ran, so a failure could not be confounded with Commit
+A's game_slug write-path fixes riding the same cycle. The 2026-07-23 run WAS clean (HTTP 200,
+zero error/warning/fatal entries), so the gate condition was met.
+
+BUT the FREEZE skipped every editor (NEXUS gated to patch cycles, no patch detected), so **the
+generation path this change modifies was NOT exercised**. HEADLINE_RULES is injected into editor
+prompts; no editor ran. The confounding risk the gate existed to prevent was therefore moot —
+neither change was exercised, so neither could have masked the other.
+
+This therefore landed on **STATIC verification** — one constant interpolated at all three sites,
+boundary fixture (60 passes / 61 rejects as `rejected_rules`), ESLint 0, next build exit 0 — and
+**NOT on runtime proof**. Runtime proof arrives at the first patch-cycle run that unfreezes the
+roster.
+
+WHY LAND NOW rather than wait for that cycle: a patch cycle is the first real generation in
+weeks, and it should not also be absorbing a fresh prompt edit. Landing now makes the new ceiling
+the BASELINE that cycle runs against, rather than a variable introduced into it.
+
+### WHY — a LIVE internal contradiction, not a doctrine preference
+The generation ceiling (prompt + code gate) sat at **65**, but the **render path already treats 60
+as the `<title>` budget** — `app/intel/[slug]/page.js:190` (`head.length <= 60`), `maps/[slug]:200`,
+`matchups/[shell]:81`, all commented as the "~60-char budget." So generation was sitting **above**
+the budget the render path enforces: a framed headline at 61–65 passed the gate and then
+**truncated in Google**. Moving to 60 closes that contradiction. This is Gate 4 (SERP truncation),
+already live in the render code — not a new preference.
+
+### THE THIRD SITE (the investigation's finding)
+The task scoped two ceilings; verification found a **third**: the **five `EDITOR_TOOLS` headline
+field descriptions** in `lib/editorCore.js` (191/228/244/264/281) also said "65 maximum," and the
+tool schema is forced, so they carry equal force to HEADLINE_RULES. Moving only the first two would
+have replaced the old disagreement (prose vs render) with a new one (prose 60 vs tool 65). All three
+moved together.
+
+### THE STRUCTURAL FIX — one number, cannot drift again
+`HEADLINE_MAX_CHARS = 60` is defined ONCE in `lib/headlineRules.js` (the leaf) and consumed
+everywhere: the HEADLINE_RULES prose **interpolates** it (`never exceed ${HEADLINE_MAX_CHARS}`),
+`lib/keywordFraming.js` **imports** it (re-exported for API stability — no local literal), and the
+five editorCore tool descriptions **interpolate** it. Not five literals with an ALTER-TOGETHER
+comment — that duplicated-source-of-truth shape is exactly what this session spent the day removing.
+The prompt ceiling, the tool-schema ceiling, and the code gate are now the same binding.
+
+### KEPT "target 55" — single-variable change
+The soft target stays 55 (a tighter but coherent 5-char band under a 60 hard limit). Moving only the
+hard ceiling keeps the change one variable, so a later CTR shift is attributable to the ceiling
+rather than confounded with a target change.
+
+### THE DETECTOR
+The GSC read path's **FIX line — sub-1% CTR at decent impressions** — is what will confirm this
+worked: headlines that stop truncating should recover CTR on pages that already earn impressions.
+(Subject to the same 3–4-week recrawl floor as the prune.)
+
+### VERIFICATION
+One-number asserts (headlineRules defines 60, keywordFraming re-exports the same binding, prose
+interpolates "never exceed 60", target 55 kept, no stray 65); boundary fixture (60 → applied, 61 →
+`rejected_rules`); editorCore diff is the import + 5 identical ceiling interpolations only (the 5
+editor prompts differ only in the ceiling). ESLint 0, next build exit 0.
+
+### PROVENANCE OF THIS ENTRY — reconstructed, then human-verified
+This entry is a RECONSTRUCTION, recorded so a future reader knows its origin. It was held
+uncommitted across two intervening commits via lift-and-restore. During one lift, a line-ending
+assertion (the script tested for LF; `docs/HANDOFF.md` is CRLF) fired CORRECTLY — but the
+destructive `git checkout` that followed was `;`-chained instead of `&&`-gated behind that guard,
+so it ran anyway and discarded the block before it had been written to disk. Unstaged discards
+are unrecoverable from git (never staged, no stash).
+
+The block was rebuilt verbatim from the `git diff` captured minutes earlier, verified at exactly
+49 lines — matching the original diff's 49 insertions — with every section heading and anchor
+intact, and then READ BACK IN FULL and confirmed by the operator before this commit landed. The
+content is faithful; byte-identity to the original was not provable, which is why this note
+exists rather than a silent restore. The three CODE files were never at risk (only HANDOFF.md was
+checked out). Standing lesson, now applied: a destructive step must be `&&`-gated behind its
+guard, and lift-and-restore sequences as lift → commit → merge → push → restore.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
