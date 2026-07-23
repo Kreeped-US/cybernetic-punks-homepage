@@ -61,18 +61,48 @@ the doc sequences them around it.
 
 ### Positive findings worth carrying
 Keyword system holds (all game_slug NOT NULL no-default, matcher per-game, `entitySlugFor`
-portable); `game_maps`/`game_modes`/`game_events` confirmed generic (but `weapon_stats` REFUTED —
-it has the DEFAULT hazard); `get_related_articles` is game-scoped (internal linking can't cross
-games); network-root JSON-LD is correctly game-neutral; VANTAGE self-skip is a real, consistently
-enforced precedent.
+portable); `get_related_articles` is game-scoped (internal linking can't cross games); network-root
+JSON-LD is correctly game-neutral; VANTAGE self-skip is a real, consistently enforced precedent.
+*(The earlier "`game_maps`/`game_modes`/`game_events` confirmed generic, `weapon_stats` REFUTED"
+line was WRONG — see the CORRECTION block below; all four carry `DEFAULT 'marathon'` and the
+"generic" verdict is now UNRESOLVED.)*
 
-### OPERATOR-SUPPLIED gaps outstanding (could not read)
-- **Vercel cron runtime** — no `maxDuration` set anywhere in code or `vercel.json`; actual
-  wall-clock / whether a two-game parallel batch fits the function limit lives in Vercel logs,
-  unreadable here.
-- **A DB-side `information_schema.columns` read** of actual column DEFAULT values — the REST client
-  can't run raw SQL, so the `DEFAULT 'marathon'` set is confirmed from code comments, not a direct
-  schema read. A DB-side review would complete the list.
+### ⚠️ CORRECTION 2026-07-23 (post-`3bf880c`) — the direct information_schema read landed
+The operator ran the DB-side `information_schema.columns` query the audit had marked
+OPERATOR-SUPPLIED. It **broadened and contradicted** the OpenAPI-derived findings. The audit doc
+(`docs/MULTI_GAME_READINESS_AUDIT.md`) is corrected in place; recorded here too:
+
+- **`DEFAULT 'marathon'` is on SIXTEEN tables, not the ~7 code comments implied:** `core_stats`,
+  `cradle_nodes`, `faction_armory`, `faction_upgrades`, `game_bosses`, `game_events`, `game_maps`,
+  `game_modes`, `game_zones`, `implant_stats`, `meta_tiers`, `mod_stats`, `shell_stats`,
+  `site_events`, `unique_weapons`, `weapon_stats`. **Two hazard shapes, different fixes:**
+  - **TEN NOT NULL + default** (cradle_nodes, faction_armory, faction_upgrades, game_bosses,
+    game_events, game_maps, game_modes, game_zones, meta_tiers, unique_weapons) → `DROP DEFAULT`
+    makes omission ERROR. Clean one-step silent→loud.
+  - **SIX nullable + default** (core_stats, implant_stats, mod_stats, shell_stats, weapon_stats,
+    site_events) → dropping the default alone yields NULL, still SW. Needs **backfill → SET NOT
+    NULL → DROP DEFAULT**.
+- **Positive-finding contradiction, recorded UNRESOLVED:** the first pass called
+  `game_maps`/`game_modes`/`game_events` "generic (NOT NULL no-default)" from the OpenAPI
+  `required[]`; the direct read shows they carry `DEFAULT 'marathon'` (they're in the NOT-NULL ten).
+  The two methods disagree; the OpenAPI `required[]` is not a reliable default-detector. "Generic"
+  may have measured *read*-side parameterization (`loadVocabulary` filters by game_slug — real and
+  separate) but the flat "safe" verdict is withdrawn. Direct read wins on the default question.
+- **Two findings the first pass MISSED:** `x_sources.game_slug` is **NULLABLE with NO default** — X
+  sources can carry no game attribution at all, compounding the VANTAGE positional-attribution
+  finding. `email_signups.game_slug` **DEFAULTS `'dmz'`** — the mirror hazard: a Marathon signup
+  omitting game_slug is silently tagged dmz.
+- **The NINE tables doing it RIGHT (NOT NULL, no default — direct-read ground truth):** `build`,
+  `coverage_registry`, `feed_items`, `game_profile`, `historical_context`, `keyword_match_log`,
+  `keyword_targets`, `meta_tier_snapshots`, `quality_metrics`. This is the `keyword_targets`
+  pattern — proof it works when applied, and the template for the 16-table remediation.
+
+### OPERATOR-SUPPLIED gaps — status
+- **DB-side `information_schema` read: ✅ CLOSED** (see the correction above; the real read
+  broadened the finding beyond what code comments suggested).
+- **Vercel cron runtime — STILL OUTSTANDING.** No `maxDuration` set anywhere in code or
+  `vercel.json`; actual wall-clock / whether a two-game parallel batch fits the function limit lives
+  in Vercel logs, unreadable here.
 
 ---
 

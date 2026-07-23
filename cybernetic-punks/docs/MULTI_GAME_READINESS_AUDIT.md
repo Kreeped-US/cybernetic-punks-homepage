@@ -48,7 +48,12 @@ editorial · **OPS** operations.
 | location | what breaks with a non-Marathon game | mode | due | generic? |
 |---|---|---|---|---|
 | **`maps`, `map_attribution`, `map_zones`, `map_markers`, `map_vaults`, `map_reference` — NO game column; keyed by `map_slug` only** | A DMZ map sharing a slug with a Marathon map **collides outright**. `/maps/[slug]/page.js:83-86,181` queries `maps`/`map_attribution`/`map_reference`/`map_vaults` by `slug`/`map_slug` **with no game filter** — a colliding DMZ map returns Marathon's zones/vaults/reference and vice-versa. (The *entity* layer — `game_maps`/`game_zones`/`game_bosses` — IS filtered `.eq('game_slug','marathon')` at `page.js:101,117`; the **detail** layer is not.) | **SW** | BY END OF AUG | add `game_slug` to all six + filter — closes for N at once |
-| **Stat tables `weapon_stats`, `shell_stats`, `mod_stats`, `core_stats`, `implant_stats`, `site_events`, `coverage_shadow` — `game_slug` present but with a `DEFAULT 'marathon'`** | A row inserted without an explicit `game_slug` **silently becomes Marathon**. Confirmed: `route.js:534-537` ("*Required before the column DEFAULT is dropped (batch B2) — a forgotten game_slug then errors instead*"), `admin/page.js:282` ("*the DB defaults it to marathon*"), `api/admin/stats/route.js:4` ("*site_events… default 'marathon'*"), `get_related_articles` DB fn defaults `p_game_slug` marathon (`intel/[slug]/page.js:1410`). | **SW** | BY END OF AUG | drop the DEFAULT (batch B2) → forgotten inserts ERR instead of SW, for N |
+| **`DEFAULT 'marathon'` on SIXTEEN tables — `game_slug` present but defaulted** *(CORRECTED 2026-07-23 — the direct `information_schema` read broadened this well beyond the "stat tables + site_events" the code comments suggested; see the full list + two hazard shapes immediately below)* | A row inserted without an explicit `game_slug` **silently becomes Marathon**. | **SW** | BY END OF AUG | see two shapes below |
+| ↳ **TEN are `NOT NULL + DEFAULT 'marathon'`** — `cradle_nodes`, `faction_armory`, `faction_upgrades`, `game_bosses`, `game_events`, `game_maps`, `game_modes`, `game_zones`, `meta_tiers`, `unique_weapons` | Dropping the default makes an omitted `game_slug` **ERROR** — a clean one-step silent→loud conversion. | **SW** → ERR | BY END OF AUG | `DROP DEFAULT` (one step) |
+| ↳ **SIX are `NULLABLE + DEFAULT 'marathon'`** — `core_stats`, `implant_stats`, `mod_stats`, `shell_stats`, `weapon_stats`, `site_events` | Dropping the default **alone** yields `NULL`, still silently wrong. Needs the three-step: **backfill → `SET NOT NULL` → `DROP DEFAULT`**. | **SW** | BY END OF AUG | 3-step (backfill first) |
+| Corroborating code comments (subset of the above): `route.js:534-537`, `admin/page.js:282`, `api/admin/stats/route.js:4`, `get_related_articles` fn (`intel/[slug]/page.js:1410`) | These pointed at the hazard but under-counted it — 4 signposts, 16 actual tables. | — | — | — |
+| **`x_sources.game_slug` is NULLABLE with NO default** *(MISSED by the first pass)* | X sources can carry **no game attribution at all** — compounds the VANTAGE positional-attribution finding (§I): the seed table has no game, and the pipeline assigns one by loop position. | **SW** | BY OCT 23 | add `NOT NULL` + attribution rule |
+| **`email_signups.game_slug` DEFAULTS to `'dmz'`** *(MISSED; the mirror hazard)* | A **Marathon** signup path that omits `game_slug` is silently tagged **`dmz`** — the same default hazard pointed the other way. | **SW** | POST-LAUNCH OK | resolve default direction |
 | **`editor_directives` — NO `game_slug`** | A directive is not game-partitioned; it applies to whichever game the cron runs. (Admin's `creator_game` free-text is the *creator's* context, not the directive's target.) | **SW** | BY OCT 23 | add `game_slug` |
 | **`factions`, `faction_stat_bonuses`, `faction_unlocks`, `faction_materials` — NO game column** | Marathon-only faction data unattributed. (Newer `faction_armory`, `faction_upgrades` DO carry `game_slug NOT NULL`.) Ties to §C (factions absent from ENTITY_TYPES). | **SW** | POST-LAUNCH OK (Marathon-only concept today) | add `game_slug` if DMZ ever gets factions |
 | **`article_comments` — NO game column** | Game derivable via the `feed_items` join, but not stored; any direct comment query is game-blind. | **NOP→SW** | POST-LAUNCH OK | add `game_slug` for direct scoping |
@@ -171,7 +176,10 @@ Respecting **Sep 22 Season-3 collision** (don't schedule interlocked fixes there
 ### BY END OF AUGUST — everything blocking DMZ entity-page creation (must age into authority)
 2. **Unify the two `getGameConfig` registries** into one, add `status` + `launch_date`. (SW; unblocks kill-clock, cron param.)
 3. **The six maps tables: add `game_slug` + filter** — closes the outright collision. (SW.)
-4. **Drop the `DEFAULT 'marathon'` (batch B2)** on the stat tables + `site_events` + the `get_related_articles` function — turns SW into ERR. (SW → ERR.)
+4. **Remediate the `DEFAULT 'marathon'` on 16 tables (batch B2)** — the **ten** NOT-NULL ones just
+   `DROP DEFAULT` (→ omission ERRORS, clean); the **six** nullable ones need **backfill → SET NOT
+   NULL → DROP DEFAULT** (drop alone leaves NULL, still SW). Also flip/fix `email_signups`
+   (defaults `'dmz'`) and add attribution to `x_sources` (nullable, no default). See §B. (SW → ERR.)
 5. **Extend `ENTITY_TYPES`** for both Marathon's own taxonomy (factions/uniques/cradle — a LIVE game) and DMZ's (keys/POIs/missions). (SW.)
 6. **Seed DMZ entity rows** (`game_maps`, `weapon_stats`, …) so `loadVocabulary('dmz')` populates. (Feature-dead → live.)
 7. **Sitemap segmentation** (index + per-game) so DMZ indexing is observable for launch tracking.
@@ -200,11 +208,26 @@ weeks. The interlock (registry → cron → schedule; ENTITY_TYPES → seed → 
 
 - **The keyword system holds.** `keyword_targets`/`keyword_match_log`/`coverage_registry` all
   `game_slug NOT NULL no-default`; the matcher is scoped per game; `entitySlugFor` verified
-  portable on DMZ names; `deriveTuple`/`FACETS` game-agnostic. Confirmed.
-- **`game_maps` / `game_modes` / `game_events` — the "already generic" hypothesis CONFIRMED**
-  (`game_slug NOT NULL no-default`). **But `weapon_stats` is REFUTED** — it carries a
-  `DEFAULT 'marathon'` (the hazard row above), so the "stat tables are already generic" claim is
-  only half true.
+  portable on DMZ names; `deriveTuple`/`FACETS` game-agnostic. Confirmed by the direct read.
+- **⚠️ CORRECTED 2026-07-23 — `game_maps` / `game_modes` / `game_events` "already generic" is
+  UNRESOLVED, not confirmed.** The first pass classified them `NOT NULL no-default` from the
+  PostgREST OpenAPI `required[]`; the direct `information_schema` read shows **all three (and
+  `game_zones`, `game_bosses`) carry `DEFAULT 'marathon'`** — they are in the NOT-NULL+default ten
+  above. The two methods **disagree**, and the disagreement is itself a finding: the OpenAPI
+  `required[]` is not a reliable default-detector (it evidently omitted these defaults), so any
+  "no-default / generic" verdict derived from it is untrustworthy. **What "generic" may have
+  measured that the default does not affect:** these tables ARE game-parameterized on the *read*
+  side (`loadVocabulary` filters `WHERE game_slug=…`) — that portability is real and separate from
+  the *write*-side default hazard. But the flat "generic/safe" verdict is **withdrawn and marked
+  UNRESOLVED** pending reconciliation; the authoritative `information_schema` read wins on the
+  column-default question, and it says these have the hazard. (Same class of method-error the
+  keyword build kept catching: a derived signal trusted over a direct read.)
+- **The nine tables doing it RIGHT (`NOT NULL, no default` — confirmed by the direct read):**
+  `build`, `coverage_registry`, `feed_items`, `game_profile`, `historical_context`,
+  `keyword_match_log`, `keyword_targets`, `meta_tier_snapshots`, `quality_metrics`. **This is the
+  `keyword_targets` pattern — proof it works when applied**, and the template for the 16-table
+  remediation above. (Note: the first pass over-claimed this list from the OpenAPI; these nine are
+  the direct-read ground truth.)
 - **`get_related_articles` is game-scoped** — internal related-linking cannot cross games.
 - **The network-root JSON-LD (`app/page.js`) is correctly game-neutral** (Organization = the
   network, not a game).
@@ -269,11 +292,15 @@ These have a different owner and resolution path than the seams above. Do not bu
   parallel batch fits under the function limit. Logs/dashboard are unreachable from here. Code
   exposes only structure (single-game, parallel, ≤5 `callEditor`, no explicit `maxDuration`).
   **Marked OPERATOR-SUPPLIED.**
-- **Exact column DEFAULT values** — the PostgREST OpenAPI distinguishes "NOT NULL no-default" from
-  "nullable-or-default" but not the default's value. The `DEFAULT 'marathon'` is confirmed from code
-  comments (`route.js:534-537`, `admin/page.js:282`, `api/admin/stats/route.js:4`) rather than a
-  direct `information_schema` read (raw SQL unavailable via the REST client). A DB-side
-  `information_schema.columns` review would confirm the full default list.
+- **Exact column DEFAULT values — ✅ CLOSED 2026-07-23 (operator ran the DB-side read).** The
+  first pass could only infer defaults from code comments + the PostgREST OpenAPI `required[]`; the
+  operator ran the direct `information_schema.columns` query. **The real read broadened the finding
+  well beyond what the comments suggested:** 16 tables carry `DEFAULT 'marathon'` (not the ~7 the
+  comments implied), split 10 NOT-NULL / 6 nullable (see §B); it surfaced two the first pass missed
+  (`x_sources` nullable-no-default, `email_signups` DEFAULT `'dmz'`); and it **contradicted** the
+  OpenAPI-derived "no-default/generic" verdict on `game_maps`/`game_modes`/`game_events`/
+  `game_zones`/`game_bosses` (now UNRESOLVED, §4). Lesson: the OpenAPI `required[]` is not a
+  reliable default-detector — the direct read is authoritative and should have been the source.
 
 ---
 
