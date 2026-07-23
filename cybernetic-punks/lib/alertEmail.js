@@ -18,28 +18,41 @@
 // external watchdog (separate future task).
 
 import { formatDateTime } from './formatDate';
+import { classifyCronOutcome } from './cronOutcomeDecision.mjs';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 // results: the cron's end-of-run array of { editor, success, error }.
-// Alerts on total outage (0 generated) or partial failure (any editor errored).
-// Sends nothing when every editor succeeded (no alert fatigue).
-export async function sendCronFailureAlert(results) {
+// context: { configuredRoster[], patchGated[], hasPatch, activeRoster[] } -- the freeze
+//          state, which is already in scope at the call site and is what lets a
+//          designed zero be told apart from a failed one.
+//
+// The decision itself lives in the PURE core (cronOutcomeDecision.mjs) so it is unit-
+// testable without sending mail; this function is now only I/O. See that file for the
+// decision table and for why suppression requires a POSITIVE explanation.
+export async function sendCronFailureAlert(results, context) {
   try {
     var list = Array.isArray(results) ? results : [];
-    var total = list.length;
     var succeededList = list.filter(function(r) { return r && r.success; });
     var failedList = list.filter(function(r) { return !r || !r.success; });
-    var succeeded = succeededList.length;
 
-    // All editors succeeded (and at least one ran) -> no alert.
-    if (total > 0 && failedList.length === 0) return;
+    var decision = classifyCronOutcome(results, context);
+    var total = decision.total;
+    var succeeded = decision.succeeded;
 
-    var isTotal = (total === 0 || succeeded === 0);
-    var subject = isTotal
-      ? '[CyberneticPunks] Cron: 0 articles generated'
-      : '[CyberneticPunks] Cron: ' + succeeded + '/' + total + ' editors generated';
+    if (!decision.alert) {
+      // Suppression is never silent-silent: a frozen cycle says so in the log, so
+      // "no email" is distinguishable from "the alert path stopped working".
+      if (decision.kind === 'frozen') {
+        console.log('[ALERT] suppressed: freeze explains zero articles (roster=' +
+          ((context && context.configuredRoster) || []).join(',') +
+          ', gated=' + ((context && context.patchGated) || []).join(',') +
+          ', hasPatch=false) -- no editors were attempted, so nothing failed');
+      }
+      return;
+    }
 
+    var subject = decision.subject;
     var when = formatDateTime(new Date());
     var okNames = succeededList.map(function(r) { return r.editor; }).join(', ') || '(none)';
     var failLines = failedList.map(function(r) {
@@ -48,8 +61,21 @@ export async function sendCronFailureAlert(results) {
       return '  - ' + who + ': ' + String(why).slice(0, 300);
     }).join('\n') || '  (none)';
 
+    var headline;
+    if (decision.kind === 'none_attempted') {
+      headline = 'Cron ran but attempted NO editors, and the freeze does not explain it.\n' +
+        'This is a configuration problem, not a generation failure -- check the roster.\n\n' +
+        'configuredRoster: ' + (((context && context.configuredRoster) || []).join(', ') || '(EMPTY)') + '\n' +
+        'patchGated:       ' + (((context && context.patchGated) || []).join(', ') || '(none)') + '\n' +
+        'hasPatch:         ' + String(context && context.hasPatch);
+    } else if (decision.kind === 'total_outage') {
+      headline = 'Cron generation FAILED (total outage): every attempted editor failed.';
+    } else {
+      headline = 'Cron generation partially failed.';
+    }
+
     var bodyText =
-      'Cron generation ' + (isTotal ? 'FAILED (total outage)' : 'partially failed') + '.\n\n' +
+      headline + '\n\n' +
       'Cycle: ' + when + '\n' +
       'Generated: ' + succeeded + ' / ' + total + ' editors\n\n' +
       'SUCCEEDED: ' + okNames + '\n\n' +

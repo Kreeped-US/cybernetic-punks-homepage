@@ -464,6 +464,121 @@ Drop it when the freeze lifts or an alert exists, not before.
 
 ---
 
+## 2026-07-23 — cron alert vs the freeze: suppress the DESIGNED zero, keep every other one loud
+
+### THE BUG
+`lib/alertEmail.js` decided the outage case with a single merged condition:
+
+    var isTotal = (total === 0 || succeeded === 0);
+
+That `||` conflated two different states — `total === 0` (**no editor was ever ATTEMPTED**)
+and `succeeded === 0` (**editors were attempted and every one FAILED**). Only the second is a
+failure. Under the article freeze (6aac06c) the roster is emptied when no patch is detected, so
+`results === []`, and the early-return guard at the top requires `total > 0` and therefore did
+not fire. Every frozen cycle emailed "**Cron: 0 articles generated**" — a daily false alarm that
+made a real failure indistinguishable from it. Today's run was exactly this (`results=[]`).
+
+**The axis is ATTEMPTED vs NOT ATTEMPTED, not zero vs non-zero.**
+
+### THE FIX — positive explanation, fail LOUD
+Extracted the decision into `lib/cronOutcomeDecision.mjs`: a PURE core, zero imports/IO,
+following the `entitlementsDecision.mjs` pattern. `lib/alertEmail.js` is now only I/O.
+
+Decision table (all five rows asserted in `lib/cronOutcomeDecision.test.mjs`):
+
+| total | outcome                       | kind            | alert |
+|-------|-------------------------------|-----------------|-------|
+| > 0   | every editor succeeded        | all_succeeded   | no    |
+| > 0   | some succeeded, some failed   | partial_failure | YES   |
+| > 0   | every attempted editor failed | total_outage    | YES   |
+| 0     | the freeze POSITIVELY explains| frozen          | no    |
+| 0     | unexplained                   | none_attempted  | YES   |
+
+The last two rows are the point: both are `total === 0` and are indistinguishable by count
+alone. A naive "suppress when total === 0" would have buried an empty/misconfigured roster —
+the same defect class as the admin `orderCol` default fixed in edd09fa, a failure mode that
+hides. Suppression therefore requires a POSITIVE explanation: configured roster non-empty, every
+configured editor patch-gated, and `hasPatch === false` **explicitly** (not merely falsy).
+Missing or partial context cannot explain anything, so it ALERTS. This is the deliberate
+INVERSE of the entitlements gate's fail-open posture — an alerting path must never go quiet on
+ambiguity.
+
+The freeze context needed no plumbing: `PRODUCING_GAME.editorial.editors`,
+`editorsRequiringPatch`, `activeRoster` and `hasPatch` are all already in scope at the call
+site. The subject for a real total outage was also reworded to `0/N editors generated (total
+outage)` so the SUBJECT ALONE distinguishes it — the only part visible without opening the mail.
+
+Suppression is never silent-silent: a frozen cycle logs `[ALERT] suppressed: freeze explains
+zero articles (roster=..., gated=..., hasPatch=false)`, so "no email" stays distinguishable from
+"the alert path stopped working".
+
+### PLANNED FOURTH SUPPRESSING ROW — written down NOW, not a future regression
+When the coverage design's **SELF-SKIP gate** ships, editors will be ATTEMPTED and may each
+decline with a logged reason. That is a new state (`total > 0`, `succeeded === 0`, every failure
+a self-skip) and it is a POSITIVELY EXPLAINED zero, so it SHOULD suppress. It will need a new
+kind (`all_self_skipped`), a self-skip marker on the result rows, and **it will change the
+subject-string assertions this commit adds.** Recorded here and in the module header so that
+edit is EXPECTED: the future author should not fight these assertions, and a reviewer should not
+read the change as someone quietly weakening the alert.
+
+### D3 CONFIRMED ALERTING — and why that is safe
+"All editors attempted, all output rejected by the dedup guard" (`:750` duplicate title, `:767`
+near-duplicate) continues to ALERT rather than being treated as healthy. The reasoning, so it is
+not re-litigated: **under patch-gating, editors only attempt on patch days.** So
+all-output-dedup-rejected can only occur when there IS fresh patch content — and wholesale
+duplication of the existing corpus in the presence of new patch material is genuinely anomalous
+and worth an email. Alert volume is bounded by the patch calendar, not by daily churn, so this
+cannot reintroduce fatigue. **This reasoning changes if the self-skip regime lands** — same
+future row above.
+
+### CROSS-ARC CONSEQUENCE — the keyword seed is waiting on a ROSTER DECISION, not on time
+The keyword system's first seed (`marathon assassin` → `shell` / `assassin` / `build`, priority
+100, active) is armed for a **DEXTER build article**. DEXTER is **not in the configured roster**
+(`editors` for Marathon today is NEXUS only). While the freeze holds, **that keyword cannot
+match** — not "has not matched yet". `store=reachable(1 active, 0 stale, 0 orphaned)` is a
+healthy heartbeat, and it will report exactly that for as long as the roster stands.
+
+Recorded because a months-idle feature reads as broken: without this note, someone eventually
+debugs a matcher that works correctly. The unblocking action is a ROSTER DECISION (re-adding
+DEXTER, or reseeding against a NEXUS-shaped keyword), not waiting.
+
+### TRUST DEPENDENCY — the honest cost of suppressing
+Suppression rests ENTIRELY on `hasPatch` being correct. If patch detection silently breaks, the
+alert suppresses **forever** and nothing says so: the suppressed state and the broken state are
+indistinguishable from the alert channel alone. Concretely, **Season 3 (2026-09-22) could go
+uncovered** with no email ever firing.
+
+This is a real cost of the change, accepted knowingly rather than discovered later. `hasPatch` is
+already known-narrow — the KNOWN GAP at `app/api/cron/route.js:1128` records that it is
+bungieNews filtered by `is_patch_note` ((versionRe || keywords) && fresh<=48h), i.e.
+PATCH-NOTE-SHAPED news, so a dev blog with no patch vocabulary will not open the gate.
+
+**The mitigation is Commit 2**: `cron_runs` records `hasPatch` as a column on every run, so "no
+patch detected" spanning a known patch date becomes visible IN DATA rather than invisible in a
+suppressed email. That is why the two commits belong to one arc even though they are separable.
+
+### VERIFICATION — two DISTINCT claims, not one
+1. **The DECISION** — `node --test lib/cronOutcomeDecision.test.mjs`: 14/14 pass. One case per
+   row of the zero-article cause table (A frozen, B empty roster, B′ hasPatch true, B″ ungated
+   editor present, C total outage, D3 dedup, D4 insert-error/game_slug, E partial, happy path,
+   fail-loud on missing/malformed context, count carry-through). **Subject strings asserted
+   verbatim**, so re-merging the two zero states fails the suite.
+2. **The TRANSPORT** — a green suite does NOT prove an email leaves the building. Proving Resend
+   still works after the refactor is a SEPARATE one-off live send with a synthetic failed-results
+   array against the real env. Recorded as a distinct claim so a green fixture is never read as
+   end-to-end proof.
+
+Also simulated against today's real run shape: `results=[]`, roster NEXUS, gated NEXUS,
+hasPatch=false → **NO EMAIL** (was: email). Patch-day all-fail → **EMAIL**, subject
+`0/1 editors generated (total outage)`. ESLint 0, next build exit 0.
+
+The FIRST PATCH CYCLE remains the real-world test — it is also the first runtime exercise of the
+headline ceiling (3a811d7) and three of Commit A's four write-path fixes. On that run: silence
+means success, an email means a genuine failure. The suppression log lines on the frozen days in
+between are what confirm the new path is live rather than merely untriggered.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

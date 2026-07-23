@@ -1203,11 +1203,23 @@ export async function GET(req) {
     var succeeded = results.filter(function(r) { return r.success; }).length;
     var directivesUsed = results.filter(function(r) { return r.success && directiveMap[r.editor]; }).length;
 
-    // End-of-run safety-net alert: email on total outage (0 generated) or any
-    // per-editor failure. Inert until Resend env is provisioned. Wrapped so an
-    // alert failure can never affect the generation that just completed.
+    // End-of-run safety-net alert. Inert until Resend env is provisioned. Wrapped so
+    // an alert failure can never affect the generation that just completed.
+    //
+    // The FREEZE CONTEXT is passed so a DESIGNED zero can be told apart from a FAILED
+    // one. Before this, `results === []` (the freeze emptying the roster) produced the
+    // same "0 articles generated" email as "every editor threw", so the alert fired on
+    // every frozen cycle and a real failure was indistinguishable from the daily false
+    // alarm. All four values are already in scope here -- no plumbing, just passing
+    // what the freeze block above (activeRoster/editorsRequiringPatch/hasPatch) knows.
+    // Decision table + suppression rules: lib/cronOutcomeDecision.mjs.
     try {
-      await sendCronFailureAlert(results);
+      await sendCronFailureAlert(results, {
+        configuredRoster: PRODUCING_GAME.editorial.editors,
+        patchGated: editorsRequiringPatch,
+        activeRoster: activeRoster,
+        hasPatch: hasPatch,
+      });
     } catch (alertErr) {
       console.log('[CRON] alert dispatch error (non-fatal): ' + alertErr.message);
     }
