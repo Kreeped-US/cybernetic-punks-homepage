@@ -75,8 +75,18 @@ was reconciled with the operator: their "10 (23−13 protected)" was wrong; the 
   reads live DB every request); the **live sitemap already excludes the 12** (static,
   `revalidate:false` — refreshed by the deploy the `53274fd` push triggered); the kept rook
   winner still serves no noindex. DB → page-meta → sitemap all consistent.
-- **Reverse:** `UPDATE feed_items SET noindex=false WHERE id IN (…the 12…)` — the exact id
-  list is in the apply run; per-page reversal by using a single id. Fully reversible.
+- **Reverse (full statement — no re-derivation needed):**
+  ```sql
+  UPDATE feed_items SET noindex = false WHERE id IN (
+    'b79642d5-0f75-465a-928d-c2298b99af10','60f7eb14-58fe-4006-b20a-0e8ff4fe6c58',
+    '181b7d0d-899c-415e-8922-f89d1c6c9799','79f47ec0-475f-4e4d-ae54-3f70551e170d',
+    'fe1b7414-df7b-4819-b3ba-7d0d5f595d67','c0596575-404e-4251-ad41-a959ec82c409',
+    '12d4b6ae-5848-409f-a2c9-ac03782ff27a','baa6cda2-b7aa-4588-bba3-3d17ab6ec1f0',
+    'fc9e0daa-629e-4e20-8f75-ee6ae650c6b6','b0a4faeb-76a3-437b-8664-4aedea22e407',
+    '9e80504b-a1d7-4a6f-8730-ef5c7a789677','271ade05-2ab4-48e0-8fa4-2c37481fb165'
+  );
+  ```
+  For a single page, use just its id in the `IN (…)`. Fully reversible; noindex, not delete.
 
 **Phase 2 — PARKED (operator decides).** The **532 indexed, unique, ≤1-impression** /intel
 pages (Signal 1 ∩ not-duplicate) are the edge-case tail — untouched. `docs/intel-prune-
@@ -86,8 +96,34 @@ old = likely dead), not pre-decided.
 ### STILL OPEN / NEXT
 
 - **Phase 2 /intel edge cases** (532) — operator judgment, tomorrow.
-- **Watch the first framing fire** — once an Assassin/build article publishes, confirm the
-  heartbeat logs `applied` and `match_count` increments to 1 (then the keyword caps).
+- **Eyeball the first few `applied` rows for DRIFT.** Option 4 removed the re-classification
+  guard, so the "frame, don't change the subject" guarantee is now **audit, not prevention**:
+  a rewrite that shifted the topic is *detectable* in `keyword_match_log`
+  (`original_headline` vs `final_headline`, and the frozen tuple) but is **not blocked** at
+  write time. When the first Assassin/build article fires, read the actual rows — confirm the
+  heartbeat logs `applied`, `match_count` increments to 1 (then the keyword caps), AND the
+  rewritten headline still answers the same tuple. If drift shows up, that is the signal to
+  reconsider adding a lightweight guard — the audit trail is the only thing watching for it.
+- **Align `HEADLINE_RULES` AND the length gate DOWN to 60 together** *(deferred, real)*. The
+  gate is 65 = the `HEADLINE_RULES` ceiling — internally consistent, and 65 was correct
+  *relative to the prompt* (a gate stricter than the prompt rejects obedience). BUT the
+  Operating Doctrine's **Gate 4 wants ≤60 for SERP-title truncation**, and the headline drives
+  the `<title>`, so a rewrite of **61–65 chars passes the gate and still truncates in Google**.
+  The fix is NOT to lower the code gate alone (that re-creates the reject-obedience bug the 65
+  decision fixed) — it is to move the **prompt ceiling AND the code ceiling to 60 in lockstep**
+  (`lib/headlineRules.js` text + `HEADLINE_MAX_CHARS` in `lib/keywordFraming.js`, which already
+  carries an `ALTER TOGETHER` note). One coordinated change; not yet made.
+- **MEASUREMENT CAVEAT for the impressions-rise test.** The Phase-1 noindex will not show up in
+  GSC for **3–4 weeks minimum** — Google processes noindex across recrawls, not instantly — so
+  that is the FLOOR before "did de-indexing the duplicates lift the winners" means anything.
+  Do not read the curve before then. **Strategic finding from the GSC export (3-month window):**
+  the whole site earns **~141 clicks / ~8,566 impressions**, and the click leaders are
+  **entity/tool pages, not articles** — `/leaderboard` (24), `/uniques/misery-disciple` (15),
+  `/stats` (10), `/uniques` (6), the `/intel` hub (5); only 6 of the top-20-by-clicks are
+  individual /intel articles. Queries are **entity/tool-shaped**. This is the case for the
+  keyword-framing bet (frame articles toward the entity/tool terms that actually rank) and a
+  caution that pruning low-reach *articles* is housekeeping, not a growth lever — the growth is
+  in the entity/tool surfaces.
 - Keyword deferred items unchanged (see the build entry): `applied_deduped`, exact `unlogged=`,
   the (g) stale-list filter, the apostrophe transform.
 
