@@ -38,6 +38,68 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-23 — x_sources / email_signups DDL + the x_sources severity correction
+
+Two operator-run DDL steps (rule 2 — no git trail) and one deferred decision (rule 3).
+
+### DDL, operator-run 2026-07-23, NO GIT TRAIL
+- **`email_signups.game_slug` DROP DEFAULT.** It defaulted to `'dmz'` — the **mirror** of the
+  `DEFAULT 'marathon'` hazard (an omitted `game_slug` would have been silently tagged `dmz`). Safe
+  to drop: both writers are explicit (`dmz-notify` sets `'dmz'`, `network-notify` sets `'network'`),
+  so nothing relied on it. Now an omitted value **errors** instead of silently mis-tagging.
+- **`x_sources.game_slug` SET NOT NULL.** Zero NULLs, single writer always sets it → immediately
+  safe. **This closes ONLY the "a source can carry no game at all" half of the audit finding. It
+  does NOT fix positional attribution** and is not recorded as if it did — see the correction below.
+
+### The x_sources investigation — SEVERITY CORRECTED
+The audit called positional game attribution *"the sharpest silent-misattribution point; fix before
+X goes to production."* Verified at the source; **four mitigations the audit did not account for**:
+- **The search is GAME-ANCHORED.** Marathon requires `(Marathon Bungie)`, DMZ requires
+  `(DMZ "Modern Warfare 4")` (`marathon.js`/`dmz.js` `sources.x.searchQueries`). The stamp is
+  positional in code (`x-dry-run.mjs:173` `game_slug: slug`) but **content-anchored in effect** — an
+  account tagged `marathon` got there by matching the Marathon anchor. **Correct-by-construction.**
+  New candidates enter ONLY from search mode (`x-dry-run.mjs:168` `pp.mode === 'search'`), so
+  watchlist/timeline posts never create rows.
+- **Human review exists.** pending → trusted/blocked via the admin SOURCE REVIEW. Of 25 live rows
+  only **1** is pending; the rest are operator-vetted.
+- **`game_slug` does NOT drive routing.** It is used for the composite upsert key
+  (`account_handle,game_slug`) and DISPLAY in the review list only (the dry scripts select
+  `account_handle, state` — not `game_slug`). Production discourse takes the game from an
+  **operator-set directive**, and `gen-vantage-discourse.mjs:177` **REFUSES to guess** (`exit(1)`). A
+  misattributed source lands in the wrong review list — visible and correctable — it **cannot
+  misroute published content.**
+- **X is NOT in production.** `x-dry-run` is manual, not in `vercel.json` crons, writes only the
+  pending registry, publishes nothing.
+- **Empirically clean:** 25 rows, 0 NULL, no misattributions (`charlieintel`→dmz;
+  `marathonaire`/`paultassi`→marathon). Three handles under BOTH games (`jakesucky`, `vara_dark`,
+  `pirat_nation`) are variety creators genuinely covering both — the composite key working as
+  designed, not double-registration.
+
+### THE REAL FINDING — deferred decision (rule 3), TRIGGER not a date
+Positional attribution is correct **only because** the search queries stay game-anchored, and **that
+dependency is IMPLICIT and UNENFORCED** — the documented-not-enforced pattern. If a future edit
+loosens `searchQueries` to generic terms (`extraction shooter`, `loadout`), positional stamping
+would silently misattribute with nothing to catch it. **Fix, deferred until BEFORE X is
+productionized:**
+- Comment at both stamp sites (`x-dry-run.mjs:173`, `x-stage2-dry.mjs:306`) naming the dependency,
+  so a future editor loosening the query sees what breaks.
+- Optional defensive guard: assert the candidate text contains ≥1 game-UNIQUE token for the loop's
+  game, rejecting one that matched only shared tokens (`extraction`/`exfil` appear in BOTH games'
+  relevance tokens — verified). Urgency **LOW** (four mitigations, no production exposure).
+
+### CALIBRATION NOTE — the audit's instinct runs slightly hot
+This is the **FIFTH** audit finding today to shrink under direct measurement, after: `loadVocabulary`
+was not broken (correctly parameterized, just unseeded); the KD cap does not exist in code; the two
+`getGameConfig` contract conflict was latent (zero external callers of the null one); and the maps
+collision was theoretical (no slug overlap, no DMZ detail rows). **Every one was an audit finding
+that got smaller when read at the source.** The audit is valuable — it surfaced real seams (the
+16-table `DEFAULT 'marathon'`, the game_slug arc, HEADLINE_RULES) — but its severity instinct runs
+**slightly hot**: it flags on the shape of a hazard before measuring its live surface. The
+calibration: **treat audit severities as hypotheses to measure, not facts to act on** — the
+verify-at-source step trims them to true size, and it has paid off five times in one day.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
