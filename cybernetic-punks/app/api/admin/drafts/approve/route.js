@@ -71,7 +71,12 @@ export async function POST(req) {
   var supabase = getSupabase();
   var { data, error } = await supabase
     .from('feed_items')
-    .update({ is_published: true, noindex: false })
+    // noindexed_at MUST be cleared alongside noindex. The stamp marks a de-index
+    // COHORT (the 153 pruned on 2026-07-23), and Consumer C selects on it to verify
+    // those pages leave Google's index. Flipping noindex without clearing the stamp
+    // leaves the page reading as pruned FOREVER, so every future cohort query counts
+    // it wrongly -- invisible until it produces a wrong answer.
+    .update({ is_published: true, noindex: false, noindexed_at: null })
     .eq('id', id)
     .eq('is_published', false) // ONLY ever publish a draft -- never touch a live row
     .select('id, slug, game_slug, is_published, noindex')

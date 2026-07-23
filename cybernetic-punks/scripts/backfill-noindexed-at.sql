@@ -146,11 +146,11 @@ where noindexed_at is not null;
 --    This keeps the existing recompute-and-refuse guard and adds the stamp in the
 --    SAME statement, so the two cannot half-apply.
 --
--- 2. THE REVERSE OPERATION MUST CLEAR THE STAMP. The reverse statements recorded in
---    docs/HANDOFF.md only do `SET noindex = false`. If noindexed_at survives an
---    un-prune, that page reads as pruned forever and Consumer C keeps watching a URL
---    that is back in the index. The reverse pattern should become:
+-- 2. THE REVERSE OPERATION MUST CLEAR THE STAMP -- *** CLOSED, see below. ***
+--    If noindexed_at survives an un-prune, that page reads as pruned forever and
+--    Consumer C keeps watching a URL that is back in the index. The correct pattern is:
 --        UPDATE feed_items SET noindex = false, noindexed_at = NULL WHERE id IN (...);
---    The same applies to the one code path that un-noindexes:
---    app/api/admin/drafts/approve/route.js:74 sets `noindex: false` on approval and
---    would leave a stale stamp for the same reason.
+--    FIXED at every site that sets noindex = false:
+--      * both reverse blocks in docs/HANDOFF.md (Phase 1 12-UUID, Phase 2 141-UUID)
+--      * app/api/admin/drafts/approve/route.js (the only code path that un-noindexes)
+--    Gap (1) above -- stamping inline on future prunes -- REMAINS OPEN.

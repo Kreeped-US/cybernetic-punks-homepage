@@ -1278,6 +1278,138 @@ reported rather than built, because it is a code change and belongs in its own g
 
 ---
 
+## 2026-07-23 — gap (b) CLOSED: un-pruning now clears noindexed_at
+
+### THE DEFECT
+`noindexed_at` marks the 2026-07-23 de-index cohort (153 rows), and Consumer C selects on
+it to verify those pages leave Google's index. But every un-prune path flipped
+`noindex = false` and **LEFT THE STAMP** — so an un-pruned page read as pruned FOREVER, and
+every future cohort query counted it wrongly.
+
+The shape is what made it worth fixing before phase (5) rather than after: **it is invisible
+until it produces a wrong answer**, it produces that answer inside the exact consumer the
+stamp was added for, and a wrong Consumer C verdict looks like a Google indexing fact rather
+than a data bug.
+
+### EVERY SITE THAT SETS `noindex = false` — searched, then fixed
+The search found **more than the two sites named in the brief**. Reported before fixing:
+
+| site | kind | action |
+|---|---|---|
+| `app/api/admin/drafts/approve/route.js` | the ONLY code path that un-noindexes | **FIXED** — `noindexed_at: null` added |
+| `docs/HANDOFF.md` Phase 2 reverse (141 UUIDs) | operational SQL | **FIXED** — `noindexed_at = NULL` added |
+| `docs/HANDOFF.md` Phase 1 reverse (12 UUIDs) | operational SQL | **FIXED** — `noindexed_at = NULL` added |
+| `scripts/backfill-noindexed-at.sql` gap note | a claim THIS commit falsifies | **UPDATED** — marked CLOSED |
+| `docs/outstanding-work-backlog.md:51` | prose in a COMPLETED checklist item | **left alone** — see below |
+
+**The doc IS the operation.** The two HANDOFF reverse blocks are not documentation *about* an
+undo; they are the statement an operator copy-pastes to perform it. Fixing the prose while
+leaving the SQL would have left the defect fully live.
+
+**`outstanding-work-backlog.md:51` deliberately untouched:** it is a completed to-do
+(*"Record the Phase 1 reverse-operation SQL in HANDOFF"*) that quotes the statement shape
+while describing work already done. It is a historical record, not a write path and not
+something anyone runs. Editing finished history to match present code would make the backlog
+lie about what was true at the time. Named here so a future search that hits it knows it was
+seen and judged, not missed.
+
+### GAP (a) NOT TOUCHED — deliberately not conflated
+Stamping `noindexed_at` INLINE when a prune sets `noindex = true` is a **separate change and
+REMAINS OPEN.** No site that sets `noindex = true` was modified: the two
+`gen-vantage-discourse*.mjs` draft creators (`noindex: true` as defence-in-depth until human
+approval) and every `SET noindex = true` block are untouched. Asserted from the diff — the
+only `noindex` line changed in this commit is the one adding `noindexed_at: null` beside an
+existing `noindex: false`.
+
+Until (a) lands, the standing prune pattern stays:
+
+    UPDATE feed_items SET noindex = true, noindexed_at = now()
+     WHERE id IN (...) AND noindex = false;
+
+### VERIFIED
+- **Every** site setting `noindex = false` also clears the stamp — code (1) and operational
+  SQL (2). A follow-up grep for `noindex = false` WITHOUT `noindexed_at` returns nothing in
+  either language.
+- **No `noindex = true` site touched** (gap (a) uncontaminated).
+- **The 153 stamped rows are UNAFFECTED**: still 153 stamped, all at `2026-07-23`;
+  `noindex = true` total still 821 = 153 cohort + 668 prior. This commit changes future
+  behaviour only — it does not migrate existing data.
+- ESLint 0, `next build` exit 0.
+
+### THE THIRD SITE THAT DOES NOT EXIST — why server-side enforcement was NOT built
+Closing gap (a) by enforcing the invariant in the GENERIC admin editor
+(`app/api/admin/route.js`) was proposed, so it would hold for any caller present or future.
+**It was investigated and NOT built, because the premise is false.**
+
+**`feed_items` is not in that route's `ALLOWED_TABLES`.** The allowlist holds 21 tables and
+`feed_items` is not among them; the route returns `Invalid table` (400) before reaching any
+write. The string `feed_items` appears ZERO times in that file, and `noindex` never appears
+there either. Enforcement added at that write path would be **unreachable code** — never
+firing, never testable, and advertising coverage that does not exist. It would also add a
+pre-write read to every PATCH across all 21 tables for no benefit.
+
+**There is no generic write path for `feed_items` at all.** Every write is purpose-built:
+
+| site | touches noindex? |
+|---|---|
+| `app/api/admin/drafts/approve/route.js` | **yes → false** (the un-prune path; fixed above) |
+| `app/api/admin/drafts/reject/route.js` | no (`{rejected:true}`) |
+| `app/api/cron/route.js` insert | no — omits it, relies on the column default |
+| `app/api/cron/route.js` thumbnail update | no |
+| `scripts/gen-vantage-discourse.mjs` | yes → **true** (draft defence-in-depth) |
+| `scripts/gen-vantage-discourse-auto.mjs` | yes → **true** (same) |
+| `scripts/persist-dmz-news.mjs` | insert |
+
+Seven purpose-built sites, no shared chokepoint — plus bulk SQL, which bypasses the app
+entirely.
+
+**THE CORRECT ENFORCEMENT POINT IS THE DATABASE, and that is the deferred work.** The
+instinct behind the request — server-side, not per-caller — is right; the layer was wrong.
+Since writes arrive from the app, the cron, three standalone scripts AND raw SQL, the only
+layer all of them cross is Postgres. A `BEFORE INSERT OR UPDATE` trigger on `feed_items`
+would close gap (a) **fully, including the bulk-SQL prune**, and cannot be bypassed by a new
+script or a forgotten call site:
+
+    create or replace function feed_items_stamp_noindexed_at()
+    returns trigger language plpgsql as $$
+    begin
+      if tg_op = 'INSERT' then
+        if new.noindex is true and new.noindexed_at is null then
+          new.noindexed_at := now();
+        end if;
+        return new;
+      end if;
+      -- transition to TRUE: stamp, but NEVER overwrite an existing stamp
+      if new.noindex is true and old.noindex is distinct from true then
+        if new.noindexed_at is null then new.noindexed_at := now(); end if;
+      end if;
+      -- transition to FALSE: clear
+      if new.noindex is distinct from true and old.noindex is true then
+        new.noindexed_at := null;
+      end if;
+      return new;   -- noindex untouched -> neither branch fires -> stamp passes through
+    end $$;
+
+    create trigger feed_items_noindexed_at
+    before insert or update on feed_items
+    for each row execute function feed_items_stamp_noindexed_at();
+
+It satisfies every rule the request specified — including "a write that does not touch
+noindex leaves the stamp alone" (neither branch fires) and "do not overwrite an existing
+stamp" (the `is null` guard). **Not applied: it is operator-run DDL and a separate decision.**
+
+### STATE
+Gap **(b) CLOSED** — every site that sets `noindex = false` now clears the stamp.
+Gap **(a) OPEN** — and it stays open at ALL sites, not just outside the app: no code path
+stamps on prune today, and the next bulk SQL prune must be written to stamp inline
+(`SET noindex = true, noindexed_at = now()`) until the trigger above exists.
+
+Consumer C (phase 5) can now rely on `noindexed_at` meaning what it says in the un-prune
+direction: an un-pruned page drops out of the cohort instead of haunting it. It cannot yet
+rely on a NEW cohort being stamped automatically.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
@@ -1414,8 +1546,11 @@ unique (not in any cluster), news-shaped, **>60 days old**, NOT protected.
   (structurally impossible — unique set — asserted anyway); protected overlap 0.
 
 ### REVERSE OPERATION — the only practical undo (141 UUIDs; you cannot eyeball these)
+`noindexed_at` is cleared in the SAME statement, deliberately: it marks the de-index COHORT
+and Consumer C selects on it. Un-pruning without clearing leaves the page reading as pruned
+forever and miscounts every future cohort query. Do not split these two into separate steps.
 ```sql
-UPDATE feed_items SET noindex = false WHERE id IN (
+UPDATE feed_items SET noindex = false, noindexed_at = NULL WHERE id IN (
   'f7b8c852-98c2-4acb-9682-c6bd17b7a8e1','bfc480f6-f9ea-4fe9-aabb-750edac6a469','abb9fc6f-42ec-40e9-93c5-258fd6104587',
   'eeb38f23-382e-4fb4-9738-ecf050919c24','0f19ad87-4170-4e5b-bb50-4ac6b6b43891','5b9d3c7e-acc4-40de-8799-2fdbeaeea9b3',
   '6ae60de6-7284-45cc-b966-02e5d3301358','e4ed6d2d-5269-4639-8d7d-d20e38ba2993','f9da152e-e5e6-46f4-9c4b-0e1882e9f488',
@@ -1746,9 +1881,11 @@ was reconciled with the operator: their "10 (23−13 protected)" was wrong; the 
   reads live DB every request); the **live sitemap already excludes the 12** (static,
   `revalidate:false` — refreshed by the deploy the `53274fd` push triggered); the kept rook
   winner still serves no noindex. DB → page-meta → sitemap all consistent.
-- **Reverse (full statement — no re-derivation needed):**
+- **Reverse (full statement — no re-derivation needed).** `noindexed_at` is cleared in the
+  SAME statement, deliberately — it marks the de-index COHORT that Consumer C selects on, and
+  un-pruning without clearing it leaves the page reading as pruned forever:
   ```sql
-  UPDATE feed_items SET noindex = false WHERE id IN (
+  UPDATE feed_items SET noindex = false, noindexed_at = NULL WHERE id IN (
     'b79642d5-0f75-465a-928d-c2298b99af10','60f7eb14-58fe-4006-b20a-0e8ff4fe6c58',
     '181b7d0d-899c-415e-8922-f89d1c6c9799','79f47ec0-475f-4e4d-ae54-3f70551e170d',
     'fe1b7414-df7b-4819-b3ba-7d0d5f595d67','c0596575-404e-4251-ad41-a959ec82c409',
