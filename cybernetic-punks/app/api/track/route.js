@@ -83,18 +83,27 @@ export async function POST(req) {
       process.env.SUPABASE_SERVICE_KEY
     );
 
-    // Insert WITH game_slug. If the column has not been added to site_events yet
-    // (the ALTER is a manual Supabase step -- no in-repo migrations), PostgREST
-    // rejects the unknown column; we then retry WITHOUT it so no event is ever
-    // lost. Once the column exists, the first insert succeeds and the fallback is
-    // never reached. Safe to deploy before OR after the ALTER runs.
+    // Insert WITH game_slug -- always. The pre-ALTER compatibility fallback that
+    // retried WITHOUT game_slug was REMOVED 2026-07-23: the column exists and is
+    // populated, so its purpose was over, and it had become actively harmful.
+    // A NOT NULL violation reads 'null value in column "game_slug" ... violates
+    // not-null constraint', which MATCHED the fallback's /game_slug/ regex -- so
+    // once game_slug is NOT NULL, any game_slug error would have routed into a
+    // retry that omits the column and is therefore GUARANTEED to fail, whose
+    // error was never checked, while the route still returned {ok:true}. A
+    // silent-loss path reporting success is strictly worse than the default it
+    // replaced.
+    //
+    // Tracking stays NON-FATAL by design (never break the UI for analytics), but
+    // a failed insert must not be SILENT: log it server-side so a systematic
+    // failure is visible instead of disappearing behind {ok:true}.
     var ins = await supabase.from('site_events').insert({
       event_name: event,
       event_data: data || null,
       game_slug: gameSlug,
     });
-    if (ins.error && /game_slug|schema cache|PGRST204/i.test(ins.error.message || '')) {
-      await supabase.from('site_events').insert({ event_name: event, event_data: data || null });
+    if (ins.error) {
+      console.error('[track] site_events insert failed:', ins.error.message);
     }
 
     return Response.json({ ok: true });

@@ -221,6 +221,94 @@ next build exit 0.
 
 ---
 
+## 2026-07-23 — game_slug default-removal: the DDL, and the track:97 silent-loss fallback
+
+Records the operator-run DDL for the game_slug default removal (HANDOFF-currency rule 2 —
+operator DDL has no git trail, so it rides in the next repo-touching commit), plus the one
+code change that had to land before `site_events` could take NOT NULL.
+
+### THE CODE CHANGE — deleted the track:97 fallback
+`app/api/track/route.js` retried the `site_events` insert **omitting game_slug** when the
+error matched `/game_slug|schema cache|PGRST204/`. That was a pre-ALTER compatibility shim;
+the column now exists and is populated, so its purpose was over.
+
+It had also become actively harmful. A NOT NULL violation reads `null value in column
+"game_slug" ... violates not-null constraint` — which **MATCHES that regex**. So once
+game_slug is NOT NULL, any game_slug error would route into a retry that omits the column
+and is therefore **guaranteed to fail**, whose error was **never checked**, while the route
+still returned `{ok:true}`. A silent-loss path reporting success — strictly worse than the
+default it replaced. Dormant today (the primary insert always supplies a non-null slug, as
+`gameSlug` falls back to 'marathon' for junk), but it must not ship alongside NOT NULL.
+
+Deleted. A failed primary insert now logs `[track] site_events insert failed: <message>`
+server-side and still returns `{ok:true}` — tracking stays NON-FATAL by design (analytics
+must never break the UI), but it is no longer SILENT, which was the actual defect.
+
+### DDL RUN TODAY — DROP DEFAULT on 16 tables
+Phase 0: `cradle_nodes`, `faction_armory`, `faction_upgrades`, `unique_weapons`.
+Today: `game_maps`, `game_zones`, `game_bosses`, `game_events`, `game_modes`,
+`core_stats`, `implant_stats`, `mod_stats`, `shell_stats`, `weapon_stats`.
+Plus `email_signups`.
+Also: `x_sources` SET NOT NULL, and SET NOT NULL earlier on the six formerly-nullable tables.
+
+### HELD, with reasons
+- **`meta_tiers`** — the FREEZE blocks its write path from running (NEXUS is gated to patch
+  cycles), and its failure is CONTAINED-THEREFORE-SILENT: the upsert error is only a
+  `console.log`, with no alert. The route's own comment at `app/api/cron/route.js:855`
+  records this exact failure mode having bitten before — "a week later the table is empty and
+  nothing ever alerted." Drop when the freeze lifts or an alert exists, not before.
+- **`site_events`** — held until this commit lands (it needed the track:97 deletion first).
+
+### CORRECT BY DESIGN — do not re-flag
+`dmz_items`, `dmz_keys`, `dmz_missions` default to 'dmz'. These are single-game tables by
+definition — no Marathon row belongs in `dmz_keys` — so the default cannot misattribute.
+This is unlike `email_signups`' 'dmz' default, which could, and was therefore dropped.
+
+### THE GATE WAS ONLY PARTIALLY TESTED
+Today's cron ran clean, but the FREEZE skipped NEXUS, so `metaRows` never executed; the wiki
+refresh is disabled by config; and no admin rows were added. **Only `site_events` was actually
+exercised** (19 writes, all marathon, zero NULLs). So three of Commit A's four write-path fixes
+are **statically verified but never run**. The static reading is solid — `game_slug:
+PRODUCING_GAME_SLUG` is an unconditional first property in the metaRows object literal, and
+`PRODUCING_GAME_SLUG` is module-scope from `getGameConfig()`, which throws on miss so it can
+never be silently undefined — but it is static, not runtime, proof.
+
+### THE ALERT/FREEZE CONFLICT (needs reconciliation)
+The run emailed `[ALERT] ... Cron: 0 articles generated`. Under the freeze, zero articles is
+the DESIGNED outcome, so this fires every cycle the freeze holds without a patch — which makes
+a REAL cron failure indistinguishable from the daily false alarm. Alert fatigue on a healthy
+system, and it degrades the one signal that would catch a genuine break.
+
+### COST AUDIT CONFIRMED LIVE
+`dexter-stats` sent 18 sources to Claude (Sonnet tool-use) and wrote **0 rows** across all four
+categories (shells/weapons/cores/implants) — the audit's Sonnet-vs-Haiku finding, observed in a
+real cycle rather than inferred.
+
+### STILL OPEN
+`app/api/admin/route.js:106` defaults `orderCol = 'name'` with no override for
+`keyword_targets`, which has no `name` column — producing the Jul 22 log `column
+keyword_targets.name does not exist`. This is the server-side half of the bug whose render half
+was fixed in 16c0755. The admin GET path appears still broken for the very table whose seed
+just went active (`store=reachable(1 active, 0 stale, 0 orphaned)`).
+
+### THE SIBLING SHIM — NOT the same hazard class, do not re-flag
+`app/api/admin/stats/route.js:32` carries a shim with the SAME regex plus `|column`, so a
+pattern-matching audit will surface it next to track:97. It is **not** the same hazard, and the
+difference is the whole point:
+
+- It is a **READ (SELECT) fallback, not a write.** A NOT NULL violation is an INSERT-time error;
+  it **cannot trigger a SELECT error**, so the default-removal cannot reach this path at all.
+- Its worst case is **display mislabeling**, not data loss: if it ever fired it would tag every
+  row `game_slug: 'marathon'` at `:38` for the admin dashboard. No row is written, nothing is lost.
+- `:40`'s `r.game_slug || 'marathon'` becomes a harmless no-op once NOT NULL holds.
+
+track:97 was lethal because it was a WRITE whose retry was guaranteed to fail under NOT NULL,
+whose error was unchecked, and which reported success. None of those three properties hold here.
+Left out of scope DELIBERATELY, not overlooked. Worth a separate tidy someday; not a
+default-removal blocker.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
