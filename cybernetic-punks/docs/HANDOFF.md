@@ -36,6 +36,69 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
+
+Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
+approved-shape; nothing is applied.
+
+### The audit's finding was OVERSTATED — corrected: the collision is THEORETICAL, not live
+The multi-game audit called the maps collision a live hazard. Verified against the schema: it is
+**latent**. Marathon's DETAIL layer holds **one** map (`cryo-archive` — the `maps` table's single
+row); DMZ's maps would be `al-mazrah`/`hajin` (no slug overlap with Marathon's
+perimeter/outpost/dire-marsh/night-marsh/cryo-archive), and there are **zero DMZ detail rows**.
+**Nothing to collide with today.**
+
+### The ENTITY / DETAIL split (audit hypothesis CONFIRMED)
+`game_maps` (5 rows, `game_slug NOT NULL`) is the **game-aware entity/SEO layer**; `maps` + `map_*`
+is the **game-blind detail layer**. Only the detail layer collides. `game_maps` is already N-ready
+(from the game_slug arc). Asymmetry: `game_maps` has all 5 Marathon maps, the detail layer only
+`cryo-archive` — the others are "game_maps-only for now" (`app/maps/[slug]/page.js:20`).
+
+### NO CODE WRITE PATHS — the decisive difference from the game_slug arc
+**Zero inserts/upserts/updates to any of the six** (literal or generic), and **none are in the
+admin allowlist** — they are populated **entirely via the Supabase dashboard / manual SQL**. So
+this migration needs **no write-path sweep** (the arc's hard part). Only the operator inserts, by
+hand, and would supply `game_slug`.
+
+### The LIVE collision surface is FOUR tables, not six
+Read by the `/maps` routes: **`maps`, `map_attribution`, `map_reference`, `map_vaults`**.
+- **`map_markers` (7 rows) has ZERO readers**; **`map_zones` (0 rows) is empty with zero readers.**
+  **FLAG both as ORPHANED — dead data or an abandoned feature?** Their own question, not this
+  migration's. (They get `game_slug` for family uniformity if we migrate all six, but nothing reads
+  them.)
+
+### THE SIX TABLES (schema facts driving the plan)
+All six have a **surrogate `id` PK** (map_slug is NOT the PK), so adding `game_slug` is additive to
+the PK. The 5 children carry `map_slug` with a real **FK → `maps.slug`** (they join by SLUG, not
+id), so `maps.slug` is the unique natural key that changes.
+
+### THE PLAN
+1. **DDL — operator, NO GIT TRAIL.** `ADD COLUMN game_slug text` to the six, **nullable, NO
+   DEFAULT** (do NOT repeat the `DEFAULT 'marathon'` hazard just removed). Backfill
+   `game_slug='marathon'` on existing rows (all current detail data is Marathon). Then `SET NOT
+   NULL`.
+2. **Code — ONE commit, provable no-op.** Add `.eq('game_slug','marathon')` to the 5 game-blind
+   reads: `app/maps/page.js:70` (the `maps` query) and `app/maps/[slug]/page.js:83-86` (maps /
+   attribution / reference / vaults) + `:181`. No-op because every current row is Marathon — the
+   filter changes nothing; assert by diffing fetched rows with/without the filter.
+3. **DDL — operator, NO GIT TRAIL.** Unique constraint `maps(slug)` → **`maps(game_slug, slug)`**;
+   the 5 child FKs `map_slug → maps.slug` become composite **`(game_slug, map_slug) → maps(game_slug,
+   slug)`**.
+
+### SEQUENCING NOTE — do steps 1 and 2 IN THE SAME SESSION
+The read filter is the ONLY protection against the collision. Leaving a gap where the column exists
+(step 1) but the filter does not (step 2) is exactly the window where a seeded DMZ map would leak
+into a Marathon page. Run step 1's DDL and land step 2's commit together.
+
+### TRIGGER, not a date
+This must land **BEFORE any DMZ map detail row is seeded** — not "by end of August." The trigger is
+**seeding DMZ map detail, whenever that happens**. Until then, urgency is low (no overlap, no DMZ
+detail rows).
+
+### Steps 1 and 3 are operator DDL with NO GIT TRAIL — record per rule 2 in whatever commit follows.
+
+---
+
 ## 2026-07-23 — games registry UNIFIED (single throwing getGameConfig; +status/launch_date)
 
 Closed the multi-game audit's two-registries finding. Three commits (B → A → C).
