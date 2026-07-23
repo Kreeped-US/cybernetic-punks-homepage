@@ -936,6 +936,135 @@ delete once the run is confirmed.
 
 ---
 
+## 2026-07-23 — GSC phase (3a): the storage wire, idempotence proven
+
+Wires the proven phase-(2) fetch to `gsc_page_metrics`. Run manually on the SAME 7-day
+window phase (2) validated, so the row count was a known quantity (1080) rather than a
+discovery. **The cron is NOT wired — that is phase (4).**
+
+### ONE WRITE PATH, SHARED WITH THE BACKFILL
+`lib/gsc/storage.js` is the only storage code; `scripts/gsc-pull.mjs` is one runner taking
+`--start/--end/--days/--chunk-months/--dry-run`. **3a and 3b are the same command with
+different dates.** If the backfill ever appears to need different write logic that is a
+FINDING to report, not a second code path — two storage paths is how the two diverge
+silently.
+
+### GAME ATTRIBUTION — computed at WRITE time, and two corrections to the plan's literal rule
+The plan states the rule as `url.startsWith('/dmz/')`. Two things were wrong with applying
+that verbatim, both corrected and both named rather than silently patched:
+
+1. **GSC returns ABSOLUTE urls** (`https://cyberneticpunks.com/...`). The rule is written
+   for a PATH, so applied to the raw url it would never match and would attribute EVERY
+   DMZ page to Marathon. The rule now runs against the parsed `pathname`.
+2. **`/dmz` itself** — the hub, no trailing slash — fails `startsWith('/dmz/')`. Both
+   `/dmz` and `/dmz/*` are treated as dmz.
+
+**Correction 2 was load-bearing, not hypothetical: 4 of the 17 dmz rows in this very
+window are the `/dmz` hub (11 impressions).** Under the plan's literal rule those 4 rows
+would have been written as `game_slug='marathon'` — a silent misattribution of exactly the
+kind the 17-table default-removal arc spent the day eliminating, reintroduced through the
+`else -> marathon` fallback.
+
+Attribution is computed at WRITE time and never derived at read time: tool and entity
+pages (`/leaderboard`, `/stats`, `/uniques/*`, `/shells/*`) never join `feed_items`, and
+those are the pages that actually RANK, so a join-based attribution would drop precisely
+the wrong rows.
+
+### UPSERT — and how the constraint was actually proven
+`.upsert(rows, { onConflict: 'date,page_url' })`, batched at 500. `onConflict` names the
+COLUMNS of the unique index; default `ignoreDuplicates:false` means a conflict UPDATEs.
+`fetched_at` is set EXPLICITLY on every row because a column default applies only on
+INSERT — without that a re-fetched row would keep its original timestamp and a stale
+trailing window would look fresh.
+
+**The constraint's existence is proven EMPIRICALLY, and the verbatim definition is NOT
+obtainable from this environment.** Supabase exposes only the `public` schema through
+PostgREST — `pg_constraint` and `information_schema.table_constraints` both 404
+(PGRST205), and no SQL-executing RPC exists — so the constraint NAME and its `pg_get_
+constraintdef()` text are operator-supplied (Supabase SQL editor). What WAS proven here,
+with zero writes:
+
+| probe | result |
+|-------|--------|
+| `onConflict='page_url'` (real column, no unique on it) | REJECTED — *"there is no unique or exclusion constraint matching the ON CONFLICT specification"* |
+| `onConflict='not_a_column'` | REJECTED — column does not exist |
+| `onConflict='date,page_url'` | ACCEPTED |
+| probe rows actually written by the rejected attempts | **0** |
+
+The CONTRAST is the proof: PostgREST genuinely VALIDATES the spec rather than ignoring it
+(otherwise a wrong onConflict would silently INSERT duplicates — precisely the failure the
+constraint exists to prevent), `page_url` alone has no unique, and `date,page_url` does.
+**A unique constraint on exactly (date, page_url) exists.** Doing this check BEFORE a run
+turns a failed backfill into a non-event, which is why it belongs ahead of 3b.
+
+### FAIL-OPEN, AND ABSENCE vs ZERO
+Every storage function returns `{ok, ...}` and never throws into a caller. One
+`gsc_pull_log` row is written per run on EVERY path including failure — `gsc_page_metrics`
+is naturally sparse, so a page missing on a date means "zero impressions" ONLY IF THE PULL
+RAN. Without the log, a skipped pull and a genuinely quiet day are the same shape. Every
+consumer must read the log alongside the metrics.
+
+### VERIFICATION (all assertions, run against the live tables)
+- **rows written == rows fetched: 1080 == 1080.**
+- **IDEMPOTENCE — the load-bearing one:** identical window run TWICE.
+  `gsc_page_metrics` = **1080 after run 1 and 1080 after run 2** (a broken upsert shows
+  2160). Distinct `(date,page_url)` pairs = 1080 = row count, so zero duplicate keys.
+- **IDEMPOTENCE AT THE VALUE LEVEL** (count stability is the weaker claim): snapshotted
+  every row, ran the identical window a THIRD time, then diffed. **0 keys disappeared,
+  0 keys appeared, 0 rows with drifted values** across `clicks / impressions / ctr /
+  position / game_slug / slug / data_state`; aggregate impressions 2706 -> 2706 and clicks
+  55 -> 55. A stable COUNT alongside drifting VALUES would mean the write lands but the
+  mapping is non-deterministic — same reasoning as the phase-(2) pagination equality check,
+  where identical totals could still hide a swapped row. **Verdict: value-stable.**
+- **`game_slug` non-null on EVERY row: 0 nulls.** Split: **marathon=1063, dmz=17**, no
+  unexpected values. The dmz rows are genuine (the `/dmz` hub plus three field-intel /
+  loadout canonicals) — worth naming because the brief expected near-all marathon, and
+  they are the rows that validated correction 2 above.
+- **Slug join:** 799 joined, 281 left NULL. Among `/intel/` rows specifically:
+  **786 of 787 = 99.9%**, matching the plan's ~99% prediction. The single miss is
+  `/intel/nexus` — an EDITOR LANE page, not an article, so NULL is correct rather than a
+  join failure. Un-joined rows are tool/entity pages as designed (`/stats`, `/shells/*`,
+  `/uniques/*`, `/dmz`).
+- **`gsc_pull_log` has exactly 2 rows** after two runs, both `status=ok`, both
+  `1080 / newest=2026-07-20 / final`.
+- **`feed_items` NOT mutated: 1571 before, 1571 after.**
+- Sanity: 8 distinct dates (2026-07-13..2026-07-20), 458 distinct urls, `data_state`
+  `final` on every row, 2706 impressions / 55 clicks — matching the phase-(2) dry run
+  exactly.
+
+ESLint 0. `gsc_url_inspection` untouched (phase 5).
+
+### THE 15-MONTH ROLLING RETENTION CLAMP
+GSC retains ~16 months of Search Analytics. The build plan names a **FIXED** backfill start
+of `2026-02-01`, which is correct TODAY and **silently becomes wrong later**: once that date
+falls outside retention, GSC simply returns nothing for the early part and the backfill
+UNDER-DELIVERS without failing — a short window and a quiet period are indistinguishable in
+the data, the same absence-vs-zero ambiguity `gsc_pull_log` exists to resolve, one level up.
+
+The runner now clamps any requested start to a **15-month rolling floor** (one month inside
+the limit) and **REPORTS when it clamps**, in the header and the summary. Reporting is the
+point; a silently shortened window is the failure being guarded against. Verified: a
+`--start 2024-01-01` request clamps to `2025-04-23` and says so; the plan's `2026-02-01`
+is inside retention today and is NOT clamped.
+
+*Provenance note: this was raised in review, not by me — recorded so the reasoning has an
+owner.*
+
+### HELD
+3b (the one-shot historical backfill from 2026-02-01) is NOT run. It was gated on
+idempotence proving out, which it now has — the backfill will be predicted before it is
+executed, not discovered.
+
+**Magnitude signal for 3b, gathered incidentally:** the clamped 15-month dry-run
+(`2025-04-23..2026-07-20`) fetched **3419 rows in a SINGLE request**. So the full
+`2026-02-01` backfill is bounded ABOVE by ~3419 rows and one request — far smaller than a
+naive extrapolation from the 7-day window (1080 rows/week would suggest ~26,000). The
+reason is that the site only began producing in March 2026, so most of the retention window
+is empty. 3b should be quick and single-request; that prediction gets stated and checked
+before it runs.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
