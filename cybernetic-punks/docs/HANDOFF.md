@@ -5,6 +5,37 @@ Newest entries on top.
 
 ---
 
+## HANDOFF CURRENCY — standing convention
+
+HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. The cause is
+**structural, not carelessness**:
+- **DDL the operator runs leaves NO git trail** — Phase 0's four `DROP DEFAULT`s and the `SET NOT
+  NULL` batch existed only in Supabase until a follow-up commit rescued them.
+- **Long arcs invite "record it when the arc finishes"** — a reasonable instinct that fails at six
+  steps.
+- **Decisions made in planning never touch code, so nothing prompts a write** — the 65→60 gate
+  alignment and the prune's shape-then-age refinement both existed only in conversation until
+  explicitly rescued.
+
+**THE RULE:**
+1. **A HANDOFF entry RIDES IN THE SAME COMMIT as the work it describes** — not a follow-up commit.
+   This makes it structurally impossible to land work without its record. Precedent: `8532c51`
+   carried both the admin change and the arc entry.
+2. **OPERATOR-RUN DDL has no commit to ride in**, so it is recorded in the NEXT commit that touches
+   the repo, explicitly flagged as *"DDL, operator-run, no git trail."*
+3. **A DECISION that changes a deferred item, a threshold, or an approach is recorded when made** —
+   not when built. If it only exists in a planning conversation, it does not exist.
+4. **When an arc spans several commits, each commit carries its own entry or extends the arc's
+   entry.** The arc does not wait for completion.
+
+**⚠️ OUTSTANDING DDL WITH NO GIT TRAIL (record per rule 2 in whatever commit follows it):** the
+**twelve remaining `DROP DEFAULT`s** on `game_slug`, gated on the game_slug-arc verification —
+**Phase 2:** `game_maps`, `game_zones`, `game_bosses`, `game_events`, `game_modes`, `meta_tiers`;
+**Phase 3:** `core_stats`, `implant_stats`, `mod_stats`, `shell_stats`, `weapon_stats`,
+`site_events`. When run, they MUST be recorded in the next repo-touching commit.
+
+---
+
 ## 2026-07-23 — games registry UNIFIED (single throwing getGameConfig; +status/launch_date)
 
 Closed the multi-game audit's two-registries finding. Three commits (B → A → C).
