@@ -5,6 +5,82 @@ Newest entries on top.
 
 ---
 
+## 2026-07-23 — game_slug DEFAULT removal, Phases 0–1 (the arc had no git trail; recorded now)
+
+Running since `22072c6` with nothing recorded, and the DDL steps leave **no git trail at
+all** (operator-run in Supabase). Captured here.
+
+### 1. THE HAZARD
+Sixteen tables carried `DEFAULT 'marathon'` on `game_slug` — an omitted `game_slug` on insert
+**silently became Marathon**. Two shapes: **ten NOT NULL + default** (dropping the default is a
+clean silent→loud conversion: omission then ERRORS) and **six NULLABLE + default** (dropping the
+default alone yields NULL — still silently wrong; needs backfill → SET NOT NULL → DROP DEFAULT).
+Full list + the direct `information_schema` read that found it: `docs/MULTI_GAME_READINESS_AUDIT.md`
+§B (corrected `22072c6`).
+
+### 2. PHASE 0 — DDL, operator-run, NO GIT TRAIL
+Dropped the default on **`cradle_nodes`, `faction_armory`, `faction_upgrades`, `unique_weapons`**.
+Safe immediately: the write-path audit found **NO code write path** for any of the four
+(dashboard/SQL only). All already NOT NULL, so an omitted `game_slug` now ERRORS.
+
+### 3. SET NOT NULL — DDL, operator-run, NO GIT TRAIL
+Applied to **`core_stats`, `implant_stats`, `mod_stats`, `shell_stats`, `weapon_stats`,
+`site_events`** (the six nullable).
+**WHY THE ORDERING MATTERED:** `required` in the admin form is **COSMETIC** (established in d2 —
+37 uses, one consumer, appends `' *'`, does **NOT** block submit). So a blank `game_slug` select
+becomes an **explicit NULL** via `formDataToRow`, and Postgres does **not** apply a DEFAULT when a
+column is explicitly null — the five nullable stat tables would have inserted NULL, a **NEW**
+silent-wrong worse than the default. `SET NOT NULL` closed that window **BEFORE Commit B opened
+it**. Zero-risk at the time: 0 NULLs (verified), default still fills omissions, only explicit nulls
+rejected. *(This corrected a wrong claim in the Phase-1 plan that "required forces the pick" — it
+does not.)*
+
+### 4. THE WRITE-PATH AUDIT — four paths, no fifth, and the GREP-LIES hazard
+Only **four** code write paths touch the 16: the admin generic insert, the cron `meta_tiers`
+upsert, the two cron `site_events` inserts, and the wiki gather upsert. Independent re-verify found
+no fifth.
+**METHOD NOTE — the vacuous-pass hazard in a new form:** a naive single-line grep reports **zero
+inserts for 15 of the 16 tables**, because `meta_tiers` chains `.from()`/`.upsert()` across lines,
+wiki writes through a generic `upsert(table, records)` helper, and admin uses a **variable** table
+name. **Verification must read the CONSTRUCTION SITES, not pattern-match call sites.** Same family
+as the keyword build's "0 disagree with 0 functions extracted" — a grep that finds nothing is not
+proof of nothing.
+
+### 5. COMMIT A — `7e7be2e` — three automated fixes
+`metaRows` (cron `meta_tiers`), both `site_events` cron inserts, and the wiki upsert helper now set
+`game_slug` explicitly.
+**The wiki decision:** literal `'marathon'`, **NOT `config.slug`** — `WIKI_URLS` is hardcoded to
+the Marathon fandom, so everything the module scrapes is Marathon by construction; `config.slug`
+would be correct only by coincidence and would **mislabel** a non-Marathon gather. Becomes
+`config.slug` when `WIKI_URLS` goes per-game. Reason named at the point of temptation (same pattern
+as the `game_maps.slug`-unused comment). **Flagged in the multi-game audit (§A) as a DELIBERATE
+hardcoded reference with a recorded reason**, so a future audit does not re-flag it as drift.
+
+### 6. COMMIT B — this commit — admin `game_slug` select on 10 schemas + sticky
+Added an explicit `game_slug` select (`options:['marathon']`) to the 10 admin-editable defaulted
+schemas (`weapon_stats`, `shell_stats`, `mod_stats`, `core_stats`, `implant_stats`, `game_maps`,
+`game_zones`, `game_bosses`, `game_events`, `game_modes`) + `game_slug` in `STICKY_FIELDS` for each.
+**Why (a)+sticky over (b) or (c):** **(c)** a server-side per-table default map recreates the same
+silent-wrong, relocated from DB to API; **(b)** an ambient game switcher means a forgotten switcher
+state misattributes every subsequent row — the hazard reappearing at the UI layer; **(a)** makes
+the game **explicit at the point of entry** — the `verified_source` principle (the fact and its
+attribution are one UI act). Sticky precedent: `editor_directives.editor` is already a sticky
+select. `options:['marathon']` is minimal-and-correct; it extends (registry-driven) when DMZ entity
+rows are seeded. No `buildFormDefaults` default — that would relocate the silent default into the
+UI, the exact hazard being removed.
+
+### 7. STILL PENDING — GATED on A + B deployed and verified (one clean cron cycle)
+- **Phase 2** — DROP DEFAULT on the ten NOT NULL: `game_maps`, `game_zones`, `game_bosses`,
+  `game_events`, `game_modes`, `meta_tiers` (the other four dropped in Phase 0).
+- **Phase 3** — DROP DEFAULT on the six now-NOT-NULL tables (backfill was a no-op; SET NOT NULL
+  done in step 3, so this is just the DROP DEFAULT).
+- **Out of scope, tracked separately:** `x_sources` positional attribution — `SET NOT NULL` would
+  lock in "must have *a* game" without fixing "the *right* game" (that is the VANTAGE §I design
+  fix, not a default-drop); and `email_signups`' dormant `'dmz'` default (both writers explicit
+  today, nothing relies on it).
+
+---
+
 ## 2026-07-23 — MULTI-GAME READINESS AUDIT (read-only) → `docs/MULTI_GAME_READINESS_AUDIT.md`
 
 Exhaustive read-only audit of what breaks when the network serves a second game (DMZ, Oct 23)

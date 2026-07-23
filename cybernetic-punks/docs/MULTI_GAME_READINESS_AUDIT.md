@@ -86,6 +86,7 @@ editorial · **OPS** operations.
 | `coverage.js:430` — `if (tuple.game_slug !== 'marathon') return null` | Canonical-coverage routing returns null for non-Marathon (explicit). | NOP | BY END OF AUG (extend for DMZ canonicals) | generalize the route map |
 | `ARTICLE_MODEL` (`models.js:20`) — not game-gated | No per-game model gating; fine. | ✓ | — | — |
 | **Broker / Vera Sloan editor — dormant, display-only** (`lib/editors/roster.js:88-98`, status `'incoming'`) | No `EDITOR_PROMPTS`/`EDITOR_TOOLS`/`COMMENT_VOICES` entry — NOT wired to generation. Surfaced in reader copy (`app/editors/page.js`, `Footer.js`, `about`). If a `BROKER` article ever published pre-wiring it renders **AS CIPHER** (the `EDITORS[…] || CIPHER` fallback). | NOP today | BY OCT 23 (if DMZ editorial wants Broker) | — |
+| ✅ **DELIBERATE hardcoded reference — NOT drift:** `lib/gather/wiki.js:158` stamps `game_slug: 'marathon'` (literal) on weapon_stats/shell_stats records | Added in **`7e7be2e`** (game_slug default-removal Phase 1). Literal on purpose: `WIKI_URLS` is hardcoded to the Marathon fandom, so everything this module scrapes IS Marathon by construction; `config.slug` would be correct only by coincidence and would mislabel a non-Marathon gather. Reason named in-code at the point of temptation. **Becomes `config.slug` (+ a per-game skip) only when `WIKI_URLS` goes per-game.** Recorded here so a future audit does not re-flag it as a hardcoded-Marathon seam. | (intended) | — | tied to per-game `WIKI_URLS` |
 
 ## §D2 / §I — VANTAGE (the cross-game editor)
 

@@ -16,11 +16,25 @@ const STICKY_FIELDS = {
   faction_materials:    ['faction_name'],
   shell_stat_values:    ['shell_name'],
   editor_directives:    ['editor'],
-  game_zones:           ['map_slug'],
+  // game_slug is sticky on the 10 tables that gained an explicit Game select
+  // (Phase 1 of the game_slug default-removal). Precedent: editor_directives.editor
+  // is already a sticky SELECT. Sticky, NOT a buildFormDefaults default -- a default
+  // would relocate the silent DB default into the UI, the exact hazard being removed.
+  weapon_stats:         ['game_slug'],
+  shell_stats:          ['game_slug'],
+  mod_stats:            ['game_slug'],
+  core_stats:           ['game_slug'],
+  implant_stats:        ['game_slug'],
+  game_maps:            ['game_slug'],
+  game_zones:           ['map_slug', 'game_slug'],
+  game_bosses:          ['game_slug'],
+  game_events:          ['game_slug'],
+  game_modes:           ['game_slug'],
 };
 
 const SCHEMAS = {
   weapon_stats: [
+    { key: 'game_slug',           label: 'Game',                 type: 'select',  required: true, options: ['marathon'], group: 'Identity' },
     { key: 'name',                label: 'Name',                 type: 'text',    required: true,  group: 'Identity' },
     { key: 'weapon_type',         label: 'Weapon Type',          type: 'select',  group: 'Identity', options: ['AR', 'SMG', 'Shotgun', 'Sniper Rifle', 'Precision Rifle', 'LMG', 'Pistol', 'Melee', 'Railgun', 'Hybrid'] },
     { key: 'ammo_type',           label: 'Ammo Type',            type: 'select',  group: 'Identity', options: ['Light Rounds', 'Heavy Rounds', 'MIPS', 'Volt Cells', 'Volt Battery', 'Hyphatic Gel', 'None'] },
@@ -53,6 +67,7 @@ const SCHEMAS = {
   ],
 
   shell_stats: [
+    { key: 'game_slug',                     label: 'Game',                    type: 'select',   required: true, options: ['marathon'] },
     { key: 'name',                          label: 'Name',                    type: 'text',     required: true },
     { key: 'role',                          label: 'Role',                    type: 'text' },
     { key: 'difficulty',                    label: 'Difficulty',              type: 'select',   options: ['Low', 'Medium', 'High'] },
@@ -81,6 +96,7 @@ const SCHEMAS = {
   ],
 
   mod_stats: [
+    { key: 'game_slug',      label: 'Game',               type: 'select',  required: true, options: ['marathon'] },
     { key: 'name',           label: 'Name',               type: 'text',    required: true },
     { key: 'slot_type',      label: 'Slot Type',          type: 'select',  options: ['Barrel', 'Chip', 'Optic', 'Magazine', 'Grip', 'Generator', 'Shield'] },
     { key: 'rarity',         label: 'Rarity',             type: 'select',  options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige', 'Contraband'] },
@@ -92,6 +108,7 @@ const SCHEMAS = {
   ],
 
   implant_stats: [
+    { key: 'game_slug',          label: 'Game',           type: 'select',  required: true, options: ['marathon'] },
     { key: 'name',               label: 'Name',           type: 'text',    required: true },
     { key: 'slug',               label: 'Slug',           type: 'text' },
     { key: 'slot_type',          label: 'Slot Type',      type: 'select',  required: true, options: ['Head', 'Torso', 'Legs', 'Shield'] },
@@ -159,6 +176,7 @@ const SCHEMAS = {
   ],
 
   core_stats: [
+    { key: 'game_slug',          label: 'Game',               type: 'select',  required: true, options: ['marathon'] },
     { key: 'name',               label: 'Name',               type: 'text',    required: true },
     { key: 'slug',               label: 'Slug',               type: 'text' },
     { key: 'rarity',             label: 'Rarity',             type: 'select',  required: true, options: ['Standard', 'Enhanced', 'Deluxe', 'Superior', 'Prestige'] },
@@ -234,6 +252,7 @@ const SCHEMAS = {
   ],
 
   game_maps: [
+    { key: 'game_slug',        label: 'Game',             type: 'select',   required: true, options: ['marathon'] },
     { key: 'slug',             label: 'Slug',             type: 'text',     required: true, placeholder: 'e.g. perimeter' },
     { key: 'name',             label: 'Name',             type: 'text',     required: true, placeholder: 'e.g. Perimeter' },
     { key: 'difficulty',       label: 'Difficulty',       type: 'select',   options: ['', 'Beginner', 'Intermediate', 'Advanced', 'Endgame'] },
@@ -246,6 +265,7 @@ const SCHEMAS = {
   ],
 
   game_zones: [
+    { key: 'game_slug', label: 'Game',      type: 'select',   required: true, options: ['marathon'] },
     { key: 'map_slug',  label: 'Map Slug',  type: 'text',     required: true, placeholder: 'e.g. perimeter' },
     { key: 'zone_name', label: 'Zone Name', type: 'text',     required: true, placeholder: 'e.g. North Relay' },
     { key: 'zone_type', label: 'Zone Type', type: 'text',     placeholder: 'e.g. relay hub / boss arena / connector' },
@@ -254,6 +274,7 @@ const SCHEMAS = {
   ],
 
   game_bosses: [
+    { key: 'game_slug', label: 'Game',      type: 'select',   required: true, options: ['marathon'] },
     { key: 'boss_name', label: 'Boss Name', type: 'text',     required: true, placeholder: 'e.g. Wraith Warden' },
     { key: 'map_slug',  label: 'Map Slug',  type: 'text',     placeholder: 'e.g. perimeter' },
     { key: 'summary',   label: 'Summary (editor-facing)', type: 'textarea', placeholder: 'The verified boss description editors cite.' },
@@ -261,6 +282,7 @@ const SCHEMAS = {
   ],
 
   game_events: [
+    { key: 'game_slug',   label: 'Game',        type: 'select',   required: true, options: ['marathon'] },
     { key: 'event_name',  label: 'Event Name',  type: 'text',     required: true, placeholder: 'e.g. Intercept' },
     { key: 'event_type',  label: 'Event Type',  type: 'text',     placeholder: 'e.g. profit / lockdown / convoy' },
     { key: 'available_on',label: 'Available On',type: 'text',     placeholder: 'map slug(s) or "all"' },
@@ -269,6 +291,7 @@ const SCHEMAS = {
   ],
 
   game_modes: [
+    { key: 'game_slug',      label: 'Game',         type: 'select',   required: true, options: ['marathon'] },
     { key: 'mode_name',      label: 'Mode Name',    type: 'text',     required: true, placeholder: 'e.g. Sponsored Survival' },
     { key: 'mode_type',      label: 'Mode Type',    type: 'select',   options: ['', 'core', 'experimental', 'ranked', 'endgame'] },
     { key: 'available_on',   label: 'Available On', type: 'text',     placeholder: 'map slug(s) or "all"' },
