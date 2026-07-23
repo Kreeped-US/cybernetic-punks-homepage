@@ -1190,6 +1190,94 @@ the pruned pages?" is chasing the wrong artifact.
 
 ---
 
+## 2026-07-23 — noindexed_at: the 2026-07-23 prune cohort is now QUERYABLE
+
+### DDL + DATA CHANGE — operator-run, no git trail (rule 2)
+- **`feed_items.noindexed_at` added** — `timestamptz`, **nullable, NO DEFAULT**. Nullable
+  is correct here and not an oversight: most rows were never pruned, and a default would
+  claim a prune date for every row that has none — the same silent-misattribution shape the
+  17-table default-removal arc spent the day removing.
+- **Backfill applied: 153 rows stamped `2026-07-23`** — 12 Phase-1 duplicates + 141 Phase-2
+  news-shaped. Statements committed as `scripts/backfill-noindexed-at.sql` (rule 1).
+
+### WHY IT WAS NEEDED
+`feed_items` holds **821 rows at `noindex = true`, 668 of which predate this prune**, and
+nothing separated the cohorts. The 153 existed only as two UUID lists inside `docs/HANDOFF.md`
+— **durable, but not selectable.** Consumer C's first job is verifying that exactly this
+cohort leaves Google's index, which is impossible against an undifferentiated 821.
+
+The gap was found during GSC phase (3b), when a verification wanted to assert "rows exist for
+pages noindexed on 2026-07-23" and the cohort could not be isolated. The fix was recorded as
+a prerequisite then; this closes it.
+
+**Post-backfill the split is clean: 821 noindexed = 153 (this cohort) + 668 (prior).**
+
+### SOURCE OF TRUTH
+The two reverse-operation UUID lists already in `docs/HANDOFF.md` — the Phase 1 12-UUID
+statement and the Phase 2 141-UUID statement. They were written as undo instructions, and
+that made them the only durable record of *which* pages each phase touched. Extracted
+programmatically rather than by eye, and validated before generating any SQL: **12 + 141 =
+153 distinct, 0 overlap between the lists.**
+
+### THE FILE — two guarded UPDATEs, and NO INSERT
+Both statements carry `WHERE noindex = true AND noindexed_at IS NULL`, which makes the file
+**idempotent** (a re-run is a no-op) and makes a since-reverted row **skipped rather than
+mislabelled** — a page that had been un-pruned must not acquire a stamp asserting it was
+pruned.
+
+**There is deliberately NO INSERT.** The 153 rows already exist; the backfill only sets a
+column on them. An `INSERT ... ON CONFLICT` was requested three times and is the wrong shape:
+it would attempt row creation and, on conflict, risk touching columns that must not change.
+Recorded because the request will recur and the answer should not have to be re-derived.
+
+### PRE-CHECK (read-only, before the file was generated)
+All 153 ids found in `feed_items` (0 missing); **all 153 still `noindex = true` (0 reverted)**;
+column present with 0 rows stamped. Confirming nothing had reverted mattered — a reverted row
+would have been stamped with a false claim, and the guard alone would have hidden it silently.
+
+### VERIFIED AFTER THE RUN (independently, not inherited from the report)
+    total stamped:                        153
+    contradictions (stamped, not noindexed):  0
+    distinct stamp values:                  1  -> 2026-07-23T00:00:00+00:00
+    in the HANDOFF lists but NOT stamped:     0
+    stamped but NOT in the HANDOFF lists:     0   <- over-reach check
+    EXACT MATCH:                           true
+
+The last two are the ones worth having: `distinct_stamps = 1` proves no other cohort was
+caught up (the table held 0 stamps beforehand), and the set-level cross-check proves the
+stamped set is *exactly* the intended 153 rather than merely the right count.
+
+**Type note:** `noindexed_at` is `timestamptz`, so `'2026-07-23'` stored as
+`2026-07-23 00:00:00+00`. It is a DAY-LEVEL cohort marker, not the moment the prune ran — do
+not read precision into it that is not there.
+
+### TWO GAPS RECORDED, NOT FIXED
+**(a) Future prunes should stamp `noindexed_at` INLINE at write time**, so the next cohort
+needs no archaeology. There is no prune SCRIPT in this repo — every prune has been
+operator-run SQL — so the change is to the standing pattern:
+
+    UPDATE feed_items SET noindex = true, noindexed_at = now()
+     WHERE id IN (...) AND noindex = false;
+
+This keeps the existing recompute-and-refuse guard and adds the stamp in the SAME statement,
+so the two cannot half-apply.
+
+**(b) THE REVERSE OPERATION MUST CLEAR THE STAMP — the more dangerous of the two.**
+Un-pruning a page with the reverse SQL recorded in this document flips `noindex = false` but
+**leaves `noindexed_at` set**. That page then reads as pruned FOREVER, and every future cohort
+query counts it wrongly — including the Consumer C verification this whole change exists to
+enable. The reverse pattern must become:
+
+    UPDATE feed_items SET noindex = false, noindexed_at = NULL WHERE id IN (...);
+
+The same applies to the one code path that un-noindexes:
+**`app/api/admin/drafts/approve/route.js:74`**, which does
+`.update({ is_published: true, noindex: false })` on approval and would leave a stale stamp
+for exactly the same reason. It is a one-field addition to an existing update payload;
+reported rather than built, because it is a code change and belongs in its own gated diff.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
