@@ -579,6 +579,102 @@ between are what confirm the new path is live rather than merely untriggered.
 
 ---
 
+## 2026-07-23 — cron_runs: persisted proof-of-life (the other half of the alert fix)
+
+Commit 1 (24d605e) stopped the frozen-cycle false alarm. That removed the system's only
+DAILY signal that the cron had run at all — the false alarm was, accidentally, the
+heartbeat. This restores proof-of-life as a POSITIVE, QUERYABLE fact instead of a side
+effect of a bug: one `cron_runs` row per run, on EVERY path (success, frozen, and error).
+
+### WHY A DEDICATED TABLE
+- **NOT `site_events`.** As of today `site_events.game_slug` is NOT NULL with NO DEFAULT
+  (the default-removal arc, 17 tables). A cron heartbeat is a **NETWORK-LEVEL OPERATIONAL
+  FACT, not a fact about a game**, so writing one there would force us to INVENT a game
+  attribution for a row that is not about a game. That is precisely the
+  silently-wrong-attribution hazard the multi-game audit exists to hunt — it would build
+  the bug into the fix.
+- **NOT the keyword heartbeat.** That is a LOG LINE (`keywordHeartbeat.js` console.log),
+  not a persisted row, and it answers a different question (is the keyword store
+  reachable).
+- **NOT `keyword_match_log`.** That is a closed-outcome audit table for match decisions.
+
+### SHAPE — follows the gsc_pull_log pattern
+Per `docs/gsc-integration-build-plan-v5.md:178`: one row per run with counts, status,
+started/finished and error; RLS enabled with no policies (service-role only). Same
+discipline, same reason — **without a per-run log, ABSENCE and ZERO are
+indistinguishable**, the same ambiguity `store=UNREACHABLE` vs `no_match` was built to
+resolve.
+
+### `has_patch` IS A COLUMN — the trust-dependency mitigation
+Commit 1's suppression rests ENTIRELY on `hasPatch` being correct: if patch detection
+silently breaks, the alert suppresses forever and the suppressed state is
+indistinguishable from the broken state **from the alert channel alone** (Season 3,
+2026-09-22, could go uncovered). Recording `has_patch` per run makes that visible IN DATA:
+"no patch detected" spanning a known patch date is then a query, not an absence. This is
+why the two commits are one arc even though they are separable.
+
+### `game_slug` — NULLABLE, AND DELIBERATELY NOT DECIDED HERE
+The column exists but is **nullable with no default**, and `lib/cronRunLog.js` does not
+stamp it. **FLAG FOR THE MULTI-GAME AUDIT:** when the cron goes per-game (Phase D — query
+param + its own cron entry), decide whether a multi-game run writes ONE network-level row
+or one row PER GAME. Both are defensible; picking now would bake in an assumption before
+the per-game cron exists. **Do not resolve this by stamping 'marathon' — that is the exact
+hazard this table was separated from `site_events` to avoid.**
+
+### DDL — OPERATOR-RUN, NO GIT TRAIL (rule 2)
+
+    create table public.cron_runs (
+      id                 uuid primary key default gen_random_uuid(),
+      route              text not null,
+      kind               text,
+      status             text not null,
+      has_patch          boolean,
+      editors_configured int,
+      editors_attempted  int,
+      editors_succeeded  int,
+      editors_failed     int,
+      alert_sent         boolean,
+      articles_published int,
+      error              text,
+      game_slug          text,           -- NULLABLE ON PURPOSE, no default (see above)
+      started_at         timestamptz not null,
+      finished_at        timestamptz not null default now(),
+      created_at         timestamptz not null default now()
+    );
+    alter table public.cron_runs enable row level security;
+    -- no policies: service-role only, same as gsc_pull_log
+    create index cron_runs_finished_at_idx on public.cron_runs (finished_at desc);
+
+`kind` carries the decision from `classifyCronOutcome` (`frozen`, `all_succeeded`,
+`partial_failure`, `total_outage`, `none_attempted`) or `error`. The alert returns its
+decision so the row records what the alert ACTUALLY decided — one computation, no drift
+between the email and the log.
+
+### SHIPS SAFE BEFORE THE DDL RUNS
+`recordCronRun` never throws — a heartbeat that can fail the run it measures is worse than
+no heartbeat. Verified against the not-yet-created table: it logs
+`[cron_runs] insert failed (non-fatal): Could not find the table 'public.cron_runs'` and
+returns `{ok:false}`. So the code can land before the DDL, and the missing table announces
+itself rather than passing silently. That log line is also the check that the DDL landed.
+
+### THIS DOES NOT CLOSE THE DEAD-CRON GAP — stated plainly
+**A watchdog cannot live inside the process it watches.** A cron that never executes cannot
+write its own "I did not run" row. `cron_runs` is the ENABLING step: it makes absence
+QUERYABLE. The external check — a digest asserting a `cron_runs` row within 26h — is a
+SEPARATE future task, and `cron_runs` is precisely the table it will query. Nothing here
+should be read as monitoring; it is the substrate monitoring will stand on.
+`lib/alertEmail.js:16` already carried this caveat in prose; it is now attached to a table
+that can actually answer it.
+
+### VERIFIED
+`cron_runs` insert is non-fatal against the missing table (loud, `{ok:false}`, no throw);
+Commit 1's decision fixture still 14/14 green (no regression from returning the decision);
+ESLint 0; next build exit 0. The success path and the error path each record a row — the
+frozen cycle falls through to the success path rather than returning early, so it is
+covered by the same write.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

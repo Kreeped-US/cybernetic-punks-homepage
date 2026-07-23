@@ -1,6 +1,7 @@
 import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/editorCore';
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
+import { recordCronRun } from '@/lib/cronRunLog';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
@@ -1213,8 +1214,9 @@ export async function GET(req) {
     // alarm. All four values are already in scope here -- no plumbing, just passing
     // what the freeze block above (activeRoster/editorsRequiringPatch/hasPatch) knows.
     // Decision table + suppression rules: lib/cronOutcomeDecision.mjs.
+    var alertOutcome = null;
     try {
-      await sendCronFailureAlert(results, {
+      alertOutcome = await sendCronFailureAlert(results, {
         configuredRoster: PRODUCING_GAME.editorial.editors,
         patchGated: editorsRequiringPatch,
         activeRoster: activeRoster,
@@ -1223,6 +1225,28 @@ export async function GET(req) {
     } catch (alertErr) {
       console.log('[CRON] alert dispatch error (non-fatal): ' + alertErr.message);
     }
+
+    // PERSISTED PROOF-OF-LIFE. One cron_runs row on EVERY path -- this is the
+    // success/frozen path (a frozen cycle falls through to here, it does not return
+    // early), the catch below covers the error path. Records has_patch so a patch
+    // detector that silently breaks becomes visible IN DATA: the alert now suppresses
+    // on hasPatch=false, so without this column a broken detector and a genuinely
+    // quiet week are indistinguishable. See lib/cronRunLog.js -- never throws, and
+    // does NOT close the dead-cron gap (a watchdog cannot live inside the process it
+    // watches; this only makes absence queryable).
+    await recordCronRun(supabase, {
+      route: '/api/cron',
+      kind: (alertOutcome && alertOutcome.kind) || 'unknown',
+      status: 'ok',
+      has_patch: hasPatch,
+      editors_configured: PRODUCING_GAME.editorial.editors.length,
+      editors_attempted: results.length,
+      editors_succeeded: succeeded,
+      editors_failed: results.length - succeeded,
+      alert_sent: !!(alertOutcome && alertOutcome.sent),
+      articles_published: succeeded,
+      started_at: runStartedAt,
+    });
 
     // Historical-context precompute (AI-quality roadmap #2/#3, Stage 1): refresh
     // the compressed coverage-pattern blob for this game AFTER publishing, so it
@@ -1263,6 +1287,26 @@ export async function GET(req) {
     });
 
   } catch (error) {
+    // ERROR PATH proof-of-life. A run that threw is still a run that HAPPENED, and it
+    // is the case a reader most needs recorded -- otherwise a crashing cron looks
+    // identical to a cron that never fired. `var` hoisting makes the counters readable
+    // here even when the throw happened before they were assigned (they read as
+    // undefined -> recorded as null, which is honest).
+    await recordCronRun(supabase, {
+      route: '/api/cron',
+      kind: 'error',
+      status: 'error',
+      has_patch: typeof hasPatch === 'boolean' ? hasPatch : null,
+      editors_configured: (PRODUCING_GAME && PRODUCING_GAME.editorial && PRODUCING_GAME.editorial.editors)
+        ? PRODUCING_GAME.editorial.editors.length : null,
+      editors_attempted: Array.isArray(results) ? results.length : null,
+      editors_succeeded: null,
+      editors_failed: null,
+      alert_sent: false,
+      articles_published: null,
+      error: error.message,
+      started_at: runStartedAt,
+    });
     return Response.json({ error: error.message }, { status: 500 });
   }
 }

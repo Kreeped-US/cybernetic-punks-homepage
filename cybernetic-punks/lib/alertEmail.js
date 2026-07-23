@@ -49,7 +49,7 @@ export async function sendCronFailureAlert(results, context) {
           ', gated=' + ((context && context.patchGated) || []).join(',') +
           ', hasPatch=false) -- no editors were attempted, so nothing failed');
       }
-      return;
+      return { kind: decision.kind, alert: false, sent: false };
     }
 
     var subject = decision.subject;
@@ -86,7 +86,7 @@ export async function sendCronFailureAlert(results, context) {
     var to = process.env.ALERT_EMAIL_TO;
     if (!apiKey || !to) {
       console.log('[ALERT] ' + subject + ' - email NOT sent (RESEND_API_KEY/ALERT_EMAIL_TO not set). Details:\n' + bodyText);
-      return;
+      return { kind: decision.kind, alert: true, sent: false };
     }
     var from = process.env.ALERT_EMAIL_FROM || 'Cybernetic Punks <onboarding@resend.dev>';
 
@@ -98,10 +98,12 @@ export async function sendCronFailureAlert(results, context) {
     if (!res.ok) {
       var errTxt = await res.text().catch(function() { return ''; });
       console.log('[ALERT] Resend send failed: ' + res.status + ' ' + errTxt.slice(0, 200));
-    } else {
-      console.log('[ALERT] Cron failure alert emailed to ' + to + ': ' + subject);
+      return { kind: decision.kind, alert: true, sent: false };
     }
+    console.log('[ALERT] Cron failure alert emailed to ' + to + ': ' + subject);
+    return { kind: decision.kind, alert: true, sent: true };
   } catch (err) {
     console.log('[ALERT] sendCronFailureAlert error (non-fatal): ' + (err && err.message));
+    return { kind: 'alert_error', alert: false, sent: false };
   }
 }
