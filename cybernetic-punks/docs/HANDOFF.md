@@ -3,6 +3,8 @@
 Running log of cross-session decisions, shipped changes, and parked work.
 Newest entries on top.
 
+**Planning docs (from the planning chat):** `docs/outstanding-work-backlog.md` (backlog snapshot, with a done/open status header) · `docs/gsc-integration-build-plan-v5.md` (the GSC build plan, v5 — written against the unified registry + the URL prefix rule) · `docs/multi-game-readiness-audit-brief-v3.md` (the brief that produced `MULTI_GAME_READINESS_AUDIT.md`; kept for its methodology).
+
 ---
 
 ## HANDOFF CURRENCY — standing convention
