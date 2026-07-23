@@ -770,6 +770,93 @@ path on demand: `node scripts/gsc-dry-run.mjs --row-limit 100`.
 
 ---
 
+## 2026-07-23 — .env loader: matched-quote stripping + split-once, and never log key material
+
+### THE BUG — silent corruption, surfacing far away
+`scripts/gsc-dry-run.mjs` stripped surrounding quotes on a **LEADING quote alone** and
+then did `slice(1, -1)`. For a value that opens with `"` and never closes one, that
+removed the quote **and the last real character**. The damage surfaced nowhere near its
+cause: OpenSSL reported `error:1E08010C:DECODER routines::unsupported`, which says
+nothing about a `.env` parser.
+
+**Which of the two classes the loader actually had wrong:**
+- **SPLIT-ONCE: already correct.** It used `indexOf('=')` + `slice`, not
+  `split('=')[1]`, so values containing `=` (base64 padding, connection strings, PEM
+  bodies) were already preserved. Now stated explicitly in a comment so a future
+  "tidy-up" to `split('=')` is recognisable as a regression rather than a simplification.
+- **QUOTE STRIPPING: genuinely broken.** Leading-quote-only, as above. Fixed to strip
+  ONLY when the same quote character closes the value.
+
+The fix is in the LOADER, not in `.env.local`. Quoted values are standard dotenv syntax;
+unquoting the file fixes one instance and breaks the next person who follows the
+convention. Fixing the loader closes the class.
+
+**Measured effect on the real file:** exactly ONE loaded value changed shape
+(`GSC_PRIVATE_KEY`, 88 -> 90 chars — it now retains the characters it was silently
+losing). Every other env value is byte-identical, confirming the quote handling altered
+nothing unintended.
+
+### AUTH MODULE — belt and suspenders
+`readCredentials()` now normalizes BOTH shapes, so neither delivery path can reintroduce
+the failure from the other direction:
+- `.env.local` / shell -> MATCHED surrounding quotes stripped, escaped `\n` converted
+- Vercel -> REAL newlines pass through untouched
+
+Verified against a synthetic, structurally-valid 1744-char PEM (shape only, not a key) in
+all three shapes — unquoted+real-newlines, quoted+escaped-`\n`, unquoted+escaped-`\n` —
+each reaching the JWT layer, i.e. every guard passed.
+
+### NEVER LOG THE VALUE — a rule that outlives this commit
+Every credential failure path reports **SHAPE FACTS ONLY** via `keyShapeFacts()`:
+`length`, `hasBEGIN`, `hasEND`, `realNewlines`, `literalBackslashN`. Key material is
+never interpolated into any message, including the JWT catch block — where the instinct
+is to log "what it got", which for a private key is a credential leak into Vercel's log
+retention. Asserted: the only value-derived thing any message contains is `key.length`.
+
+**Slightly beyond the literal ask, serving requirement 4's intent:** the shape guard now
+also requires the `-----END PRIVATE KEY-----` terminator and a ~1000-char minimum. A
+truncated key still contains `BEGIN`, so a BEGIN-only guard passed it through to OpenSSL
+and produced the opaque DECODER error instead of the real problem. It now fails as
+`does not END with ... -- likely a TRUNCATED paste (length=N ...)`.
+
+### "type": "module" — DELIBERATE NON-FIX
+The `MODULE_TYPELESS_PACKAGE_JSON` warning on `lib/gsc/searchAnalytics.js` is **cosmetic
+(a reparse performance hint only)** and is **deliberately NOT fixed**. Adding
+`"type": "module"` to `package.json` would reclassify EVERY `.js` file in the package as
+ESM and risks breaking CommonJS consumers. Recorded as a decision, not an oversight, so
+it is not "fixed" later by someone reading the warning as a defect.
+
+### PHASE (2) RUNTIME PROOF — reported by the operator, NOT reproducible from `.env.local`
+The operator reports a successful end-to-end run against the live property: **705 rows,
+pagination proven CORRECT BY EQUALITY** (a `--row-limit 100` run matching the default run
+on total row count and `newest_date_returned`) rather than merely executed. That
+distinction is the right one — "pagination executed" is not "pagination is correct", and
+only the equality check catches a dropped or duplicated page boundary, which is precisely
+what phase (3)'s backfill depends on.
+
+**That result is recorded here as OPERATOR-SUPPLIED, because it could not be reproduced
+from this repo's `.env.local` at commit time and therefore is not independently verified.**
+`GSC_PRIVATE_KEY` in `.env.local` is STILL the truncated paste — 89 chars against ~1700,
+opening with an unmatched `"`, with no `-----END` marker anywhere in the file — and the
+dry-run run from a clean shell at commit time failed with exactly that diagnosis.
+
+**The reconciliation, and the thing to fix:** the loader only assigns vars that are NOT
+already present (`if (!process.env[k])`), so a `GSC_PRIVATE_KEY` exported in the
+operator's own shell takes precedence over the broken `.env.local` line. A run in that
+shell succeeds; a run from any fresh shell — CI, another machine, a new terminal — still
+fails. So phase (2)'s CODE is proven, but the repo's local credential file is not yet in
+a state that reproduces it. **`.env.local` still needs the full ~1720-char single-line
+quoted key** before the proof is repeatable rather than session-bound.
+
+What this commit contributes either way: the failure now reports itself precisely and
+safely (shape facts, no material) instead of surfacing as an opaque OpenSSL error, so the
+next attempt from any shell diagnoses itself in one run.
+
+`gsc_page_metrics`, `gsc_pull_log`, `gsc_url_inspection` all asserted still EMPTY.
+ESLint 0, next build exit 0.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

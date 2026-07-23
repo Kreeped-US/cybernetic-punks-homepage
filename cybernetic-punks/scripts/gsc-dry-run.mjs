@@ -20,14 +20,34 @@
 import { readFileSync } from 'node:fs';
 import { fetchSearchAnalytics, daysAgo, FINAL_DATA_LAG_DAYS, GSC_SITE_URL } from '../lib/gsc/searchAnalytics.js';
 
+// .env.local reader. Two rules, both fixing a CLASS rather than an instance:
+//
+// 1. SPLIT ONCE. Key is everything before the FIRST '='; value is everything after,
+//    VERBATIM. A naive split('=') taking parts[1] truncates any value containing '='
+//    -- base64 padding in tokens, connection strings, PEM bodies. (indexOf+slice was
+//    already correct here; it is stated explicitly so a future "tidy-up" to split('=')
+//    is recognisably a regression.)
+//
+// 2. MATCHED QUOTES ONLY. Quoted values are standard dotenv syntax, so the loader
+//    strips them rather than asking anyone to unquote the file -- unquoting fixes one
+//    instance and breaks the next person who follows the convention. But strip ONLY
+//    when the same quote character closes the value. The previous version stripped on
+//    a LEADING quote alone and then sliced (1,-1), so a value that opened with a quote
+//    and never closed one lost its LAST REAL CHARACTER as well -- silent corruption
+//    that surfaced far away, inside OpenSSL, as DECODER routines::unsupported.
 function loadEnvLocal() {
   var raw;
   try { raw = readFileSync(new URL('../.env.local', import.meta.url), 'utf8'); } catch (e) { return; }
   raw.split('\n').forEach(function (line) {
     line = line.trim(); if (!line || line.charAt(0) === '#') return;
     var eq = line.indexOf('='); if (eq === -1) return;
-    var k = line.slice(0, eq).trim(); var v = line.slice(eq + 1).trim();
-    if (v.length >= 2 && (v.charAt(0) === '"' || v.charAt(0) === "'")) v = v.slice(1, -1);
+    var k = line.slice(0, eq).trim();
+    var v = line.slice(eq + 1).trim();
+    if (v.length >= 2) {
+      var first = v.charAt(0);
+      var last = v.charAt(v.length - 1);
+      if ((first === '"' || first === "'") && first === last) v = v.slice(1, -1);
+    }
     if (!process.env[k]) process.env[k] = v;
   });
 }

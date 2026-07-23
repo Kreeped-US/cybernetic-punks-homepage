@@ -53,18 +53,57 @@ const MAX_PAGES = 40;
 // Vercel's UI stores the key with LITERAL \n two-character sequences rather than real
 // newlines. The PEM parser needs real newlines, so normalize at READ time. Doing it
 // here (not at the call site) means every consumer gets the same treatment.
+// NEVER LOG KEY MATERIAL. Every failure path below reports SHAPE FACTS ONLY -- length,
+// has-BEGIN, has-END, newline counts. The instinct in a catch block is to log "what it
+// got"; for a private key that is a credential leak into Vercel's log retention, so the
+// rule is stated here and the describer is the ONLY way these paths produce detail.
+// This constraint outlives the commit that introduced it.
+function keyShapeFacts(key) {
+  return (
+    'length=' + key.length +
+    ' hasBEGIN=' + (key.indexOf('-----BEGIN PRIVATE KEY-----') === 0) +
+    ' hasEND=' + /-----END PRIVATE KEY-----\s*$/.test(key) +
+    ' realNewlines=' + (key.match(/\n/g) || []).length +
+    ' literalBackslashN=' + (key.match(/\\n/g) || []).length
+  );
+}
+
+// A valid 2048-bit service-account key is ~1700 chars. Well below that means a
+// TRUNCATED PASTE, which is worth naming precisely: a truncated key still contains
+// BEGIN, so a BEGIN-only guard passes it through to OpenSSL, which reports the opaque
+// `error:1E08010C:DECODER routines::unsupported` instead of the actual problem.
+const MIN_PLAUSIBLE_KEY_CHARS = 1000;
+
 function readCredentials() {
   const email = process.env.GSC_CLIENT_EMAIL;
   const rawKey = process.env.GSC_PRIVATE_KEY;
   if (!email || !rawKey) {
     return { ok: false, reason: 'GSC_CLIENT_EMAIL and/or GSC_PRIVATE_KEY not set' };
   }
-  // Handle: literal \n, and a key wrapped in quotes by a shell or .env parser.
+
+  // BELT AND SUSPENDERS. The value can arrive in more than one shape and BOTH are
+  // handled here so neither can reintroduce the failure from the other direction:
+  //   - .env.local / shell -> may keep MATCHED surrounding quotes, escaped \n
+  //   - Vercel             -> may deliver REAL newlines, usually unquoted
+  // Strip MATCHED quotes only (an unmatched leading quote must not cost the last real
+  // character -- that is the corruption this commit fixes in the loader), then convert
+  // escaped \n. Real newlines pass through untouched, so a mixed value also survives.
   let key = rawKey.trim();
-  if (key.length >= 2 && (key[0] === '"' || key[0] === "'")) key = key.slice(1, -1);
-  key = key.replace(/\\n/g, '\n');
-  if (key.indexOf('BEGIN') === -1 || key.indexOf('PRIVATE KEY') === -1) {
-    return { ok: false, reason: 'GSC_PRIVATE_KEY does not look like a PEM block (no BEGIN ... PRIVATE KEY)' };
+  if (key.length >= 2) {
+    const first = key[0];
+    const last = key[key.length - 1];
+    if ((first === '"' || first === "'") && first === last) key = key.slice(1, -1);
+  }
+  key = key.replace(/\\n/g, '\n').trim();
+
+  if (key.indexOf('-----BEGIN PRIVATE KEY-----') !== 0) {
+    return { ok: false, reason: 'GSC_PRIVATE_KEY does not START with -----BEGIN PRIVATE KEY----- (' + keyShapeFacts(key) + ')' };
+  }
+  if (!/-----END PRIVATE KEY-----\s*$/.test(key)) {
+    return { ok: false, reason: 'GSC_PRIVATE_KEY does not END with -----END PRIVATE KEY----- -- likely a TRUNCATED paste (' + keyShapeFacts(key) + ')' };
+  }
+  if (key.length < MIN_PLAUSIBLE_KEY_CHARS) {
+    return { ok: false, reason: 'GSC_PRIVATE_KEY is implausibly short for a 2048-bit key (expected ~1700) -- likely TRUNCATED (' + keyShapeFacts(key) + ')' };
   }
   return { ok: true, email: email.trim(), key };
 }
@@ -127,11 +166,12 @@ export async function fetchSearchAnalytics(options) {
     if (!token) return { ok: false, error: 'AUTH: JWT authorize returned no access_token', rows: [], rowCount: 0 };
   } catch (err) {
     // A malformed PEM lands here, NOT at the API -- worth distinguishing from a 403.
+    // SHAPE FACTS ONLY: cred.key is never interpolated into this message.
     return {
       ok: false,
       error: 'AUTH: service-account JWT failed (this is a CREDENTIAL problem, not a ' +
-        'property/permission one -- check GSC_PRIVATE_KEY newline normalization): ' +
-        (err && err.message),
+        'property/permission one -- check GSC_PRIVATE_KEY newline normalization). ' +
+        'Key shape was [' + keyShapeFacts(cred.key) + ']: ' + (err && err.message),
       rows: [], rowCount: 0,
     };
   }
