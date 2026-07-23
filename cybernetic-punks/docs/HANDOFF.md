@@ -5,6 +5,63 @@ Newest entries on top.
 
 ---
 
+## 2026-07-23 — games registry UNIFIED (single throwing getGameConfig; +status/launch_date)
+
+Closed the multi-game audit's two-registries finding. Three commits (B → A → C).
+
+### The audit's "opposite contracts will break callers" was LATENT, not live — CORRECTION
+The audit flagged **two `getGameConfig` with opposite miss-contracts** (`index.js` throws,
+`registry.js` returns null) as a caller-breaking conflict. Verified at the source: **it was not a
+live conflict.** All **14** external callers used `index.js`'s throwing version; `registry.js`'s
+null-returning `getGameConfig` had **ZERO external importers** (it was a private helper for
+`getGameSection`), and `GAME_REGISTRY` was imported by nobody (one stale comment). So unification
+was **pure deletion with a provable no-op** — **no behaviour-change commit was needed**, because
+nobody consumed the null contract. The risk was a future mis-import, not a current dependency.
+
+### B — single registry (`2e7b2d3` + `5b60c9d`)
+Deleted `lib/games/registry.js`; moved `getGameSection` into `lib/games/index.js` with a membership
+guard (`!g || !g.sections` — `marathon.js` has no `sections`, so `!g` alone would have thrown on
+`.find`). Repointed the 2 dmz route imports; fixed a stale `rootGames.js` comment. No-op proven: all
+7 dmz sections identical old-vs-new, `getGameSection('marathon', …)` → null (not throw), unknown
+game → null.
+- **STAGING INCIDENT (recorded honestly):** the commit's `git add` listed `registry.js`, already
+  `git rm`'d — git **aborted the whole `add` on the bad pathspec and staged nothing else**, so
+  `2e7b2d3` pushed with **only the deletion** (routes importing from the deleted file, `index.js`
+  without the export → main broken). Caught from the **wrong file count** ("1 file changed" for a
+  4-file change); repaired in `5b60c9d`. Vercel's keep-last-good-deploy meant **production was never
+  at risk** (a failed build is discarded, not deployed).
+- **CONVENTION IT PRODUCED:** **assert the staged file count matches the intended change BEFORE
+  push, not after.** Stage only files that exist (never a `git rm`'d path in the same `add`). Used
+  on A and C — both asserted 2/2 pre-push.
+
+### A — unify the display-name field (`b5db2bf`)
+`dmz.js` top-level `label` → `displayName` (value identical, `'DMZ'`); the single reader
+(`rootGames.js:87`) repointed. The **collision argument dominated** the reader-count tiebreaker
+(`displayName` 0 readers vs `label` 1): `dmz.js` already uses `label` for its per-section entries,
+so a top-level `label` would overload one word for two concepts in one file. No-op proven.
+
+### C — status + launch_date, additive (`d1efd61`)
+`status` (`'pre-launch' | 'live' | 'maintenance'`) + `launch_date` on both configs. **marathon:
+`live` / `null`** (no Marathon launch date is recorded in the repo; the kill clock uses launch_date
+only for pre-launch games, so a live game needs none — null over an invented value). **dmz:
+`pre-launch` / `'2026-10-23'`** (promoting the prose comment to a field). A **three-concepts** note
+extends dmz.js's do-not-re-merge reasoning: status (lifecycle) ≠ indexable (SEO) ≠ launched
+(live-player features) — a game can be indexable while pre-launch (DMZ is now), and 'maintenance' is
+a live-but-winding-down state neither boolean expresses. Zero readers (grep) → zero behaviour
+change.
+
+### STILL OPEN — consumers unwired by design
+The GSC kill line, the launch countdown, and generation/effort gating that will **read**
+`status`/`launch_date` are **separate later commits** (per the plan's constraint — no consumer
+wiring in this arc). `marathon.status='live'` is the data that fixes the current
+`config.launched === undefined` falsy-for-a-live-game bug **at the point a consumer reads it**.
+**`marathon` moves to `'maintenance'` ~Sept 2026 — change the field then.** Also still open from the
+multi-game audit: the sixteen-table hazard was Phase 0/1'd (game_slug arc); ENTITY_TYPES extension,
+DMZ vocab seeding, HEADLINE_RULES/persona parameterization, dmz.sources, and VANTAGE attribution
+remain (see `docs/MULTI_GAME_READINESS_AUDIT.md` §3).
+
+---
+
 ## 2026-07-23 — /intel prune Phase 2 APPLIED: 141 news-shaped dead pages noindexed
 
 Phase 2 of the /intel de-index prune. The **532 indexed unique low-reach** pages (the §4 edge
