@@ -38,6 +38,72 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-23 — token/cost audit of the generation pipeline (read-only; prep for the roster reopening)
+
+### THE FRAMING FINDING — there is no efficiency problem TODAY
+The editor roster is currently **`['NEXUS']`** — **ONE editor, not five** (`lib/games/marathon.js:267`).
+Recurring daily spend is **~one Sonnet article + a few Haiku calls.** At $25–30/mo that is ample
+headroom. **Every item below is PREPARATION for the 5× jump when the roster reopens**, not a
+present cost problem.
+
+### CALL SITES (every Anthropic call)
+- **Article gen** — `editorCore.js:1143`, **Sonnet**, 2048–4096 (NEXUS 4096, MIRANDA 3072, else
+  2048), 1× per active editor per cron → **1/day today, up to 5**. **Dominant cost.**
+- **dexter-stats extraction** — `dexter-stats.js:383`, **Sonnet** (`STATS_MODEL = ARTICLE_MODEL`),
+  4096, **throttled 24h + gated on missing fields** → occasional, not every run.
+- **Comments** — `editorCore.js:1381`, Haiku, 200, 2–3 per published article (`selectCommenters`).
+- **Keyword rewrite** — `keywordFraming.js:144`, Haiku, 100, ~0/day (table has 1 keyword).
+- **VANTAGE brief** — `network-editor/route.js:88`, Haiku, 600, 1/day (00:00 cron).
+- **advisor / ask-editor / audit** — Sonnet, on-demand (user-triggered), not recurring.
+- **`/api/cron/stats` makes ZERO model calls** — a Twitch/Steam poll, **token-free** (the "is it a
+  spender?" hypothesis is disproved). Non-token cost: 96 fn-invocations/day.
+
+### CACHING — NOT worth pursuing (recorded so it is not re-proposed)
+The prompt STRUCTURE is cache-friendly: static system prompt first (persona + interpolated
+HEADLINE_RULES/DATA_INTEGRITY_RULES/CANONICAL_TAG_STANDARD), dynamic content in the user message.
+**But the CADENCE defeats it:** the 5-min ephemeral TTL expires between daily runs; the five editors
+have DIFFERENT persona prefixes; they fire in PARALLEL (`Promise.allSettled`) so none warms
+another's cache; and the shared ~8–10KB is interleaved INSIDE each persona rather than being a
+common prefix. Structurally blunted — do not re-propose without a cadence/structure change.
+
+### FIVE POST-GENERATION REJECTION PATHS, NONE COUNTED
+`callEditor` (Sonnet, paid) → five paths that each discard a completed generation: validation
+(`:493`), body-too-short (`:738`), duplicate-title (`:750`), near-dup evergreen (`:767`),
+insert-error (`:786`). Each `console.log`s a SKIP but **nothing persists a tally** — the waste is
+**UNMEASURABLE**, which is the finding (same shape as "views don't exist in the DB").
+
+### THE PRE-GEN LEVER
+The **headline gates (`:750`, `:767`) CANNOT move pre-generation** — the model invents the headline,
+so collision is unknowable until it exists. But **SOURCE-LEVEL dedup CAN**: "have we already covered
+this video/patch/directive?" is knowable **before any model call**. That is the real lever for
+avoiding paid-and-discarded generations.
+
+### RETRIES — SDK default 2×, uncounted
+No `maxRetries` override anywhere (`editorCore.js:32`, `dexter-stats.js:99`, `keywordFraming.js:67`)
+→ the SDK default **`maxRetries = 2`** applies. A transient 429 on a Sonnet article can silently
+cost **2–3×**, and nothing counts retries/failures persistently.
+
+### MODEL FIT
+`dexter-stats` runs on **Sonnet** (`STATS_MODEL = ARTICLE_MODEL`) for **structured extraction via a
+forced tool** — a Haiku-shaped task. Bounded by low frequency (throttled + gated); **A/B accuracy
+before switching**. Article gen stays Sonnet (quality decision, not flagged).
+
+### RANKED PLAN
+1. **Relax the stats cron 15min → 30–60min** — non-token (fn-time only), do anytime.
+2. **BEFORE THE ROSTER REOPENS: add a reject/retry counter** — the prerequisite for sizing anything
+   else; today the waste is unmeasurable.
+3. **Then source-level pre-generation dedup**, sized by what the counter shows.
+4. **dexter-stats → Haiku** after an accuracy A/B.
+- **NOT pursuing:** prompt caching (structurally blunted, above) and the Batch API (a real
+  submit→poll→process rearchitecture; the job is not cost-constrained at 1 editor).
+
+### OPERATOR-SUPPLIED, still unknown (Anthropic console)
+Actual per-call token counts (do the article calls fill their 2048–4096 ceiling?), monthly spend
+split by model (Sonnet vs Haiku), and retry/429 frequency. All frequency/share figures above are
+**estimates from code structure + the `['NEXUS']` roster**, not measurements.
+
+---
+
 ## 2026-07-23 — x_sources / email_signups DDL + the x_sources severity correction
 
 Two operator-run DDL steps (rule 2 — no git trail) and one deferred decision (rule 3).
