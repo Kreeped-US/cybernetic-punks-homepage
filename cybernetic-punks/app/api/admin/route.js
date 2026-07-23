@@ -46,6 +46,52 @@ const ALLOWED_TABLES = [
   'keyword_targets',
 ];
 
+// ORDER COLUMN per table, as an EXPLICIT MAP.
+//
+// This replaced a bare `var orderCol = 'name'` plus a chain of per-table if-
+// overrides (2026-07-23). That shape failed OPEN in the worst way: any table
+// WITHOUT a name column returned a 500 from its own admin GET and read as an
+// empty/erroring table in the UI. keyword_targets did exactly that -- "column
+// keyword_targets.name does not exist", live from July 22 -- so the keyword
+// store could not be listed at all, on the very table whose first keyword had
+// just gone active. An audit of all 21 allowlisted tables against the live
+// schema found keyword_targets was the ONLY instance; every other table
+// (including dmz_keys/dmz_missions/dmz_items, which do have `name`) was fine.
+//
+// The fallback is 'id', verified present on all 21 allowlisted tables and the
+// Supabase PK convention. That is the CLASS fix rather than the instance fix: a
+// table added to ALLOWED_TABLES but forgotten here now sorts by id -- unhelpful
+// ordering, but a WORKING list -- instead of 500ing. Add an entry here to get a
+// sensible order; forgetting can no longer break the table outright.
+const ORDER_BY = {
+  weapon_stats:         'name',
+  shell_stats:          'name',
+  mod_stats:            'name',
+  implant_stats:        'created_at',
+  ammo_stats:           'name',
+  shell_stat_values:    'updated_at',
+  core_stats:           'created_at',
+  editor_directives:    'created_at',
+  factions:             'name',
+  faction_stat_bonuses: 'faction_name',
+  faction_unlocks:      'faction_name',
+  faction_materials:    'faction_name',
+  game_maps:            'name',
+  game_zones:           'map_slug',
+  game_bosses:          'map_slug',
+  game_events:          'event_name',
+  game_modes:           'mode_name',
+  dmz_keys:             'name',
+  dmz_missions:         'name',
+  dmz_items:            'name',
+  // keyword_targets has NO name column. 'keyword' is the natural display order:
+  // it is the same field the row label renders (fixed render-side in 16c0755),
+  // so the list reads in the order of the thing you actually see, which is what
+  // "is this keyword already tracked?" scanning needs.
+  keyword_targets:      'keyword',
+};
+const ORDER_BY_FALLBACK = 'id';
+
 // SECURITY (audit #4): admin hardening. Keeps the password mechanism (OAuth
 // migration is a separate future task) but removes the timing side-channel and
 // adds a windowed, self-clearing, per-IP lockout.
@@ -103,15 +149,7 @@ export async function GET(req) {
   var table = url.searchParams.get('table');
   if (!ALLOWED_TABLES.includes(table)) return Response.json({ error: 'Invalid table' }, { status: 400 });
 
-  var orderCol = 'name';
-  if (table === 'shell_stat_values') orderCol = 'updated_at';
-  if (table === 'core_stats' || table === 'implant_stats') orderCol = 'created_at';
-  if (table === 'editor_directives') orderCol = 'created_at';
-  if (table === 'faction_stat_bonuses' || table === 'faction_unlocks' || table === 'faction_materials') orderCol = 'faction_name';
-  if (table === 'game_maps') orderCol = 'name';
-  if (table === 'game_zones' || table === 'game_bosses') orderCol = 'map_slug';
-  if (table === 'game_events') orderCol = 'event_name';
-  if (table === 'game_modes') orderCol = 'mode_name';
+  var orderCol = ORDER_BY[table] || ORDER_BY_FALLBACK;
 
   var supabase = getSupabase();
   var { data, error } = await supabase.from(table).select('*').order(orderCol, { ascending: true }).limit(500);

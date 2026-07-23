@@ -390,6 +390,80 @@ guard, and lift-and-restore sequences as lift → commit → merge → push → 
 
 ---
 
+## 2026-07-23 — admin GET order-column CLASS fix, and site_events completes the DDL arc
+
+### THE BUG
+`app/api/admin/route.js` resolved list ordering with a bare `var orderCol = 'name'` plus a chain
+of per-table `if` overrides. Any allowlisted table WITHOUT a `name` column therefore ordered by a
+column that does not exist, PostgREST rejected it, and the route returned **500** — the table read
+as unreadable in the admin UI.
+
+`keyword_targets` has no `name` column. Confirmed live in the Jul 22 logs: `[ADMIN GET]
+keyword_targets rows: undefined error: column keyword_targets.name does not exist`. This is the
+SERVER-side half of the bug whose RENDER half was fixed in 16c0755 — and it meant the keyword
+store could not be listed at all, on the very table whose first keyword had just gone active
+(`store=reachable(1 active, 0 stale, 0 orphaned)`).
+
+### THE AUDIT — one instance, not many
+All 21 `ALLOWED_TABLES` were tested against the LIVE schema by replicating the route's orderCol
+logic verbatim and running the same ordered query. **`keyword_targets` is the ONLY broken table.**
+All 20 others resolve to a column that exists — including `dmz_keys` / `dmz_missions` /
+`dmz_items`, which are empty but DO have `name`. (An ORDER BY is validated against the schema even
+on an empty table, so "0 rows, no error" is real proof the column exists, not a false pass.)
+
+### THE FIX — class, not instance
+Replaced the default-plus-overrides with an **explicit `ORDER_BY` map** covering all 21 tables,
+plus a fallback of `'id'`.
+
+The old shape's FAILURE MODE was the actual defect: it defaulted to a column many tables may not
+have, so every future table without `name` breaks its own admin GET the same way, silently, until
+someone opens that tab. The map + `'id'` fallback changes that mode — a table added to
+ALLOWED_TABLES but forgotten in ORDER_BY now sorts by id (unhelpful ordering, but a **working
+list**) instead of 500ing. `'id'` was verified present on all 21 tables and is the Supabase PK
+convention.
+
+Two shapes considered and REJECTED, recorded so they are not re-proposed:
+- **Deriving ALLOWED_TABLES from ORDER_BY keys** would force them structurally in sync, but
+  ALLOWED_TABLES is a SECURITY allowlist and must stay one explicit, auditable decision — not a
+  side effect of display config.
+- **Fetching unordered and sorting in JS** also cannot fail, but Postgres text collation and JS
+  comparison differ, so it would have silently changed the ORDER of the 20 tables that already
+  work. The requirement was byte-identical behaviour for those.
+
+### EQUIVALENCE PROVED, NOT EYEBALLED
+Old if-chain vs new map, resolved for all 21 tables: **20 identical, 1 changed by design**
+(`keyword_targets`: name → keyword). 0 unintended diffs; 0 allowlisted tables missing a map entry.
+Both asserted by a harness that parses the map out of the real source file.
+
+### WHY `keyword_targets` ORDERS BY `keyword`
+Candidates were `keyword`, `created_at DESC`, and `priority`. Chose **`keyword` ascending**:
+- It is the field the row LABEL renders (16c0755), so the list reads in the order of the thing you
+  actually see.
+- The operator's task on this screen is "is this keyword already tracked, and how is it
+  configured?" — lookup and scanning, which wants alphabetical, not recency.
+- `priority` is 100 on every current row, so it would sort arbitrarily. `created_at DESC` suits
+  append-heavy logs (`editor_directives`) but this is a curated reference list, not a feed.
+- It needs no direction override — the route already orders ascending.
+
+### VERIFIED
+The fixed GET returns the live row ("marathon assassin", active, priority 100, shell/assassin)
+instead of an error; the order-by-id fallback confirmed working; ESLint 0; next build exit 0.
+
+### DDL — operator-run, no git trail (rule 2)
+**`site_events` game_slug DROP DEFAULT**, run AFTER `bae5de9` removed the track:97 silent-loss
+path (the retry that omitted game_slug, which under NOT NULL would have been guaranteed to fail
+while still reporting `{ok:true}`).
+
+That **COMPLETES THE ARC: SEVENTEEN tables** now have the DEFAULT dropped.
+
+**`meta_tiers` is the ONLY remaining hold.** Reason unchanged: the FREEZE blocks its write path
+from running (NEXUS gated to patch cycles), and its failure is CONTAINED-THEREFORE-SILENT — the
+upsert error is a `console.log` with no alert, and `app/api/cron/route.js:855` records this exact
+failure mode having bitten before ("a week later the table is empty and nothing ever alerted").
+Drop it when the freeze lifts or an alert exists, not before.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
