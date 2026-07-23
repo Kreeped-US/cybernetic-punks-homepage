@@ -5,11 +5,11 @@
 // game to the front door = adding ONE entry here; no component edits.
 //
 // SCOPE: this is the ROOT (presentation) layer only. It is deliberately separate
-// from the two existing, purpose-specific registries so neither has to absorb
-// front-door concerns:
-//   - lib/games/index.js   (GAMES)          -> gather/editorial backend config
-//   - lib/games/registry.js (GAME_REGISTRY) -> DMZ route-group template registry
-//     (Marathon is intentionally absent there; it runs on unprefixed routes.)
+// from the game-config registry so it does not have to absorb front-door concerns:
+//   - lib/games/index.js (GAMES) -> gather/editorial backend config + the single
+//     getGameConfig/getGameSection lookup. (The former lib/games/registry.js was
+//     merged into it; its GAME_REGISTRY had no importers and its null-returning
+//     getGameConfig duplicated this one's throwing contract.)
 // This module carries ONLY what a tile + a pulse column need to render per game.
 //
 // THEME: theme.primary maps to the design-token palette (app/globals.css). The

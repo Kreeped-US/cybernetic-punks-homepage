@@ -33,3 +33,24 @@ export function getGameConfig(slug = DEFAULT_GAME_SLUG) {
   }
   return config;
 }
+
+// Resolve a game's section by slug. Returns the section object or null.
+//
+// Moved here from the former lib/games/registry.js (deleted): that file held a
+// SECOND, null-returning getGameConfig with ZERO external callers -- a latent
+// mis-import hazard next to this file's throwing one. getGameSection was its only
+// live export, so it moves to the single registry and the duplicate is gone.
+//
+// It does NOT call the throwing getGameConfig on purpose. This is the section
+// lookup for the /dmz/[section] routes; an unknown game or a game with no sections
+// must yield null (the routes render notFound()), NOT throw. The guard checks
+// `!g.sections` as well as `!g` BECAUSE marathon.js has no `sections` field --
+// getGameSection('marathon', ...) must return null, not blow up on
+// undefined.find(). Public getGameConfig still throws (a missing game is a
+// programming error); section resolution is legitimately optional, so it is the
+// one place a null is correct.
+export function getGameSection(gameSlug, sectionSlug) {
+  const g = GAMES[gameSlug];
+  if (!g || !g.sections) return null;
+  return g.sections.find(function (s) { return s.slug === sectionSlug; }) || null;
+}

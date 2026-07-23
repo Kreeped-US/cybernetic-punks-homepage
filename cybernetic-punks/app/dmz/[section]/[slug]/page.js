@@ -28,7 +28,7 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { Exo_2 } from 'next/font/google';
-import { getGameSection } from '@/lib/games/registry';
+import { getGameSection } from '@/lib/games';
 import { DMZ_ARTICLE_SEO, dmzSectionForArticle } from '@/lib/games/dmz';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';

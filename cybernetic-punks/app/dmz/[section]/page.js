@@ -16,7 +16,7 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
-import { getGameSection } from '@/lib/games/registry';
+import { getGameSection } from '@/lib/games';
 import { dmzArticleSlugsForSection } from '@/lib/games/dmz';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
