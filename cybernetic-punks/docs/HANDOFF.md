@@ -675,6 +675,101 @@ covered by the same write.
 
 ---
 
+## 2026-07-23 — GSC phase (2): auth + fetch module (DRY-RUN ONLY, no writes)
+
+Phase (2) of `docs/gsc-integration-build-plan-v5.md`. Authenticates as the service
+account and fetches page-level search analytics. **This phase writes NOTHING** — it
+proves auth and data before storage exists in code. Storage is phase (3).
+
+### CONSOLE SETUP (operator, no git trail)
+- **Property is URL-PREFIX**, so `siteUrl = 'https://cyberneticpunks.com/'` — WITH the
+  trailing slash. There is ALSO an **UNVERIFIED Domain property** on the account holding
+  no data; it must be ignored. Do not point at `sc-domain:cyberneticpunks.com`.
+- Service account **GSC-Reader** created, JSON key downloaded, added to the VERIFIED
+  property with **Restricted** permission (sufficient — no OAuth consent flow).
+
+### DDL RUN (operator, no git trail — recorded per rule 2)
+Three tables created, **RLS enabled with no policies on all three** (cron is
+service-role):
+- **`gsc_page_metrics`** — UNIQUE on `(date, page_url)` (without it the trailing-window
+  re-fetch INSERTS DUPLICATES instead of updating), `game_slug` **NOT NULL with NO
+  DEFAULT** (a default would silently attribute DMZ rows to Marathon — the whole lesson
+  of the 17-table default-removal arc landed the same day), and a **Pacific-timezone
+  comment on the `date` column** (GSC dates are property-timezone days, a real join
+  hazard against UTC timestamps).
+- **`gsc_pull_log`** — with `newest_date_returned` for the stall detector.
+- **`gsc_url_inspection`** — append per inspection, **no unique constraint**: transitions
+  are the point, so overwrite-latest would destroy the data the table exists to hold.
+
+Verified present and empty at commit time: all three exist, 0 rows.
+
+### THE siteUrl FORM — and the TWO LOOK-ALIKE 403s
+`siteUrl` must match the property form EXACTLY. The wrong form returns a **403 that looks
+exactly like an auth failure**, which is the single most likely time-waster in this
+integration. `describeForbidden()` therefore names BOTH causes in the error text:
+
+    (a) WRONG siteUrl FORM -- URL-prefix needs the trailing slash; a Domain property
+        would be "sc-domain:...". The wrong form 403s even with valid credentials.
+    (b) SERVICE ACCOUNT NOT ADDED to the property (Settings -> Users and permissions).
+
+with an explicit "check (a) and (b) BEFORE assuming the key is bad — the credentials are
+the least likely culprit." Recorded because a future debugger will otherwise rotate a
+perfectly good key for an afternoon. A genuinely bad PEM fails EARLIER, at JWT
+authorize, and is reported as a CREDENTIAL problem specifically so the two are not
+confused.
+
+### CREDENTIALS — two separate env vars, normalized at read time
+`GSC_CLIENT_EMAIL` and `GSC_PRIVATE_KEY`, deliberately NOT a base64-stuffed JSON blob.
+Vercel's UI stores the key with LITERAL `\n` two-character sequences; the PEM parser
+needs real newlines, so normalization happens at READ time inside the module (not at the
+call site) so every future consumer gets identical treatment. The reader also strips
+surrounding quotes and shape-checks for `BEGIN ... PRIVATE KEY` before any network call.
+
+### DEPENDENCY
+`google-auth-library` **10.9.0**, pinned EXACT (auth is core; an auth-library bump must
+not land silently in a deploy — matching the `@anthropic-ai/sdk` / `@supabase/supabase-js`
+convention rather than the caret used for peripheral packages). Package is **843K**;
+node_modules 469M -> 480M. The `googleapis` meta-package was NOT installed — enormous for
+one endpoint, and it would bloat every deploy.
+
+### PAGINATION
+GSC has no next-page token: you request `rowLimit` rows from `startRow` and walk forward
+until a page comes back SHORT (fewer than `rowLimit`) or empty. A FULL page means "there
+may be more", so the loop must ask again even when the total lands exactly on a boundary.
+Cap is 25,000 rows/request (Google's default is 1,000 if unspecified, so we always pass it
+explicitly). A `MAX_PAGES` stop exists so a malformed response that never advances cannot
+loop forever.
+
+### FAIL-OPEN AND LOUD
+Never throws into a caller — phase (4) puts this on the generation cron, which a GSC
+outage must not break. Every failure returns `{ ok:false, error }` with `ok` ALWAYS
+explicit, so a caller can never confuse an error with an empty result (the error-vs-empty
+ambiguity this codebase keeps removing). `rows` is meaningful only when `ok === true`.
+
+### VERIFIED
+- **No writes are structurally possible**: neither the module nor the script imports
+  Supabase at all (asserted: 0 occurrences in both files). `gsc_page_metrics` still 0 rows.
+- Fail-open proven on every pre-network path: missing credentials -> `{ok:false}` with a
+  CREDENTIALS message; junk key -> rejected by the PEM shape guard before any request;
+  escaped-`\n` key -> passes the shape guard and reaches JWT authorize, proving
+  normalization runs (fails there on a deliberately fake PEM body, as it should).
+- Defaults: window ends 3 days back (`FINAL_DATA_LAG_DAYS`) for the final-data lag.
+- ESLint 0, next build exit 0.
+
+### NOT VERIFIED HERE — the live fetch is OPERATOR-SUPPLIED
+`GSC_CLIENT_EMAIL` / `GSC_PRIVATE_KEY` are not in `.env.local`, so **the live dry-run
+against the property has NOT been run, and auth is therefore NOT yet proven end-to-end.**
+That is the one claim this commit cannot make. The operator runs
+`node scripts/gsc-dry-run.mjs` and reports row count + date range; that output is the
+proof auth works, and it is what gates phase (3). **Whether pagination actually
+EXERCISES is also unknown until then** — the site is ~800 pages, so a 7-day
+`date+page` window will very likely return a single short page. The loop is coded and
+its terminator is deliberate, but "exercised" and "coded" are different claims and the
+script prints which one occurred (`pagination exercised: YES/NO`). To force the multi-page
+path on demand: `node scripts/gsc-dry-run.mjs --row-limit 100`.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
