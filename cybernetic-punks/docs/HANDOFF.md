@@ -5,6 +5,77 @@ Newest entries on top.
 
 ---
 
+## 2026-07-23 — MULTI-GAME READINESS AUDIT (read-only) → `docs/MULTI_GAME_READINESS_AUDIT.md`
+
+Exhaustive read-only audit of what breaks when the network serves a second game (DMZ, Oct 23)
+and beyond — **design for N games, not 2**. Verified every hypothesis at file:line or with
+DMZ-shaped data (ran `loadVocabulary('dmz')`, `entitySlugFor` on DMZ names, `deriveTuple` on DMZ
+headlines, a PostgREST OpenAPI schema dump of all 80 tables). Full seam inventory (classified by
+degradation mode / track / due bucket / depends-on / fix size / generic-for-N), dependency graph,
+dated readiness list, positive findings, doctrine-vs-code conflicts, and a separate
+Decisions-Required list live in the doc.
+
+### §E URL answer (the GSC-blocking one)
+**A URL determines its game by prefix: `startsWith('/dmz/') ? 'dmz' : 'marathon'`.** Ready to
+build the GSC schema on now. **The GSC schema MUST compute and STORE `game_slug`** from that rule
+— tool/entity pages (`/leaderboard`, `/stats`, `/shells`) never join `feed_items`, so a join
+cannot attribute them. The "else → marathon" clause bakes in root-namespace asymmetry that forces
+a decision at game three (decisions list, not a blocker).
+
+### Three SILENTLY WRONG findings (the hazards)
+1. **`DEFAULT 'marathon'`** on the stat tables (`weapon_stats`/`shell_stats`/`mod_stats`/
+   `core_stats`/`implant_stats`), `site_events`, AND the `get_related_articles` DB function — a
+   forgotten `game_slug` on insert silently becomes Marathon. Dropping it (batch B2) turns SW→ERR.
+2. **The six maps tables collide on `map_slug` with no game filter** — `/maps/[slug]/page.js:83-86`
+   queries `maps`/`map_attribution`/`map_reference`/`map_vaults` by slug only; a DMZ map sharing a
+   slug returns Marathon's zones/vaults. (Entity layer `game_maps`/`game_zones`/`game_bosses` IS
+   game-filtered; the detail layer is not.)
+3. **VANTAGE X attribution is POSITIONAL, not content-derived** — `c.game_slug = slugs[g]` from the
+   loop, guarded only by relevance tokens Marathon and DMZ SHARE (exfil/extraction/loadout/meta).
+   Sharpest silent-misattribution point; **fix before the X pipeline goes to production** (it is
+   dry-run-only today).
+
+### Registry finding (worse than hypothesized)
+**TWO `getGameConfig` functions with OPPOSITE contracts:** `lib/games/index.js` throws on miss and
+has both games; `lib/games/registry.js` returns null on miss and has DMZ only. Same name, opposite
+failure mode and game set. **No `status` enum and no machine-readable `launch_date` anywhere** —
+the doctrine's kill-clock cannot be driven from config; the launch date lives in a comment
+(`dmz.js:31`).
+
+### TWO PREMISE CORRECTIONS (same discipline as the keyword build's ~8)
+- **(a) `loadVocabulary` is NOT broken.** It is correctly game-parameterized (queries by
+  `game_slug`); `loadVocabulary('dmz')` returns empty ONLY because no DMZ entity rows are seeded
+  (verified live). The blocker is **ENTITY_TYPES extension + seeding DMZ data**, not a code fix —
+  and DMZ classification fails **graceful** (fail-open → unclassified → publish pass 1), not loud.
+- **(b) The KD cap does NOT exist in code.** `findKeywordTarget` never selects `difficulty`
+  (`keywordFraming.js:91-101`); KD is human decision-support only. It cannot fork per-game because
+  there is nothing to fork — it is operator discipline, not an enforced constant. (Corrects the
+  "per-game thresholds must not fork the KD cap" premise: no cap to fork.)
+
+### Size — honest
+~12 pre-Oct items, **6 of them real builds** (registry unify + status/launch_date; maps
+`game_slug` migration; ENTITY_TYPES extension + DMZ entity seed; HEADLINE_RULES + EDITOR_PROMPTS
+persona parameterization; `dmz.sources` + a `cod-blog` patch adapter; VANTAGE content-attribution).
+They interlock and land into the **Sep-22 Season-3 / ~Sept Marathon→maintenance squeeze** — §3 of
+the doc sequences them around it.
+
+### Positive findings worth carrying
+Keyword system holds (all game_slug NOT NULL no-default, matcher per-game, `entitySlugFor`
+portable); `game_maps`/`game_modes`/`game_events` confirmed generic (but `weapon_stats` REFUTED —
+it has the DEFAULT hazard); `get_related_articles` is game-scoped (internal linking can't cross
+games); network-root JSON-LD is correctly game-neutral; VANTAGE self-skip is a real, consistently
+enforced precedent.
+
+### OPERATOR-SUPPLIED gaps outstanding (could not read)
+- **Vercel cron runtime** — no `maxDuration` set anywhere in code or `vercel.json`; actual
+  wall-clock / whether a two-game parallel batch fits the function limit lives in Vercel logs,
+  unreadable here.
+- **A DB-side `information_schema.columns` read** of actual column DEFAULT values — the REST client
+  can't run raw SQL, so the `DEFAULT 'marathon'` set is confirmed from code comments, not a direct
+  schema read. A DB-side review would complete the list.
+
+---
+
 ## 2026-07-23 — keyword system SEEDED (no longer inert); admin discoverability; /intel prune Phase 1 LIVE
 
 Follows the 2026-07-22 keyword build entry below — **does not repeat it**. Post-`6e92fc0`
