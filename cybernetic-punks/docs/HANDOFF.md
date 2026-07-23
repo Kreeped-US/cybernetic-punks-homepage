@@ -5,6 +5,94 @@ Newest entries on top.
 
 ---
 
+## 2026-07-23 — keyword system SEEDED (no longer inert); admin discoverability; /intel prune Phase 1 LIVE
+
+Follows the 2026-07-22 keyword build entry below — **does not repeat it**. Post-`6e92fc0`
+material only: the first live keyword, the admin fixes that made it enterable/visible, and
+the /intel de-index prune (Phase 1 applied and verified end-to-end; Phase 2 parked).
+
+### 1. THE FEATURE IS SEEDED — the first keyword is live
+
+The operator seeded **one** `keyword_targets` row, so the framing pipeline is **no longer
+inert**: the next published article that classifies to this tuple will be reframed.
+
+- **`marathon assassin` → `shell / assassin / build`**, game `marathon`, volume 590, KD 30,
+  intent informational, `studied_at` 2026-07-22, `is_active=true`, `match_count=0`.
+- **The facet was chosen from real article tuples, not guessed.** Read-only pass over 90
+  published "assassin" headlines: 78 classify to `shell/assassin/*`, facet distribution
+  **build 42 (54%)** · tier 14 · guide 11 · counter 10 · news 1. `build` is the plurality,
+  so a `build`-facet keyword matches the most Assassin content.
+- **A facet-less keyword cannot match** — `deriveTuple` always emits a facet, and the matcher
+  requires exact equality on all three tuple columns; a NULL-facet row is a page-gap input,
+  never a matcher input. Recorded so future seeds carry a facet.
+- **`entitySlugFor('shell','Assassin') = 'assassin'`** (trim+lowercase) — the form validates
+  against `assassin`/`destroyer`/`recon`/`rook`/`sentinel`/`thief`/`triage`/`vandal`.
+
+### 2. ADMIN DISCOVERABILITY — three small fixes so the tab is findable and rows read right
+
+The `keyword_targets` admin surface shipped in (d2) but was unusable in practice:
+
+| commit | fix |
+|---|---|
+| `f6ca49b` | **surface the tab** — it existed (added by d2) but was labelled `KEYWORDS` and sat 13th of 21 in an `overflowX:auto` strip, clipped off-screen. Relabelled **`KEYWORD TARGETS`** and moved to position 2 (after DIRECTIVES). One existing array element moved — asserted still exactly one entry, not a duplicate. |
+| `16c0755` | **row label** — the generic list renderer was `row.name || (row.shell_name + ' -- ' + row.stat_name) || …`; for a table without those columns the concat coerced two `undefined`s to the truthy string `"undefined -- undefined"`, short-circuiting the fallback. Added `row.keyword` and guarded the concat (`shell_name && stat_name ? … : null`). General fix — stat tables byte-identical, asserted. |
+| `ebcaf9f` | **add-row scroll** — `startAdd`/`startEdit` called `window.scrollTo({top:0})`, yanking to page top. Replaced with `scrollIntoView` from a `useEffect` keyed on the form-open state (inline would no-op — the form isn't in the DOM until React commits). |
+
+*The (d2)-was-complete premise was wrong twice here — the tab existed (not missing) and the
+save path was fine (the "undefined" was display-only). Both surfaced read-only before acting.*
+
+### 3. /intel DE-INDEX PRUNE — Phase 1 applied and verified LIVE; Phase 2 parked
+
+**Zero-view is not a property this DB stores.** `feed_items` has **no** views/impressions
+column and there is no analytics table; the only traffic numbers in the repo are hand-typed
+GSC notes in comments. So "prune zero-view" cannot run from the DB — it needs the external GSC
+export. **79% of shell articles were already `noindex`** (the March–June cleanup), so the
+reversible instrument was already largely applied.
+
+**The analysis** (`docs/intel-prune-candidates.md`, committed `53274fd` — durable, so the GSC
+join need not re-run). Three signals, GSC-joined over 692 /intel rows:
+- **Signal 1 low-reach** — GSC impressions; absent-from-GSC = 0 (never surfaced). Buckets
+  ≤1 / 2–4 / 5+.
+- **Signal 2 duplicates** — **headline** token Jaccard ≥ 0.50. **Body Jaccard was calibrated
+  and REJECTED** as a signal: cross-topic baseline 0.113, within-tuple max ~0.38 — the
+  anti-dup guards work; duplication lives in headlines/queries, not bodies. (Reporting "0 body
+  dupes" at the first threshold was caught as a vacuous result and recalibrated, not forced.)
+- **Signal 3 date — CONTEXT ONLY** (revised framing): a column for judging edge cases, selects
+  nothing. Pre-gates cutoff established at **2026-04-25** (the `DATA_INTEGRITY_RULES` /
+  anti-hallucination guards) but not used as a cut.
+
+**Phase 1 — applied to the DB and verified live.** The actionable confident cut = indexed ∩
+impressions ≤1 ∩ duplicate ∩ **not protected** ∩ **not the cluster's highest-impression
+winner**. Raw 23 → **12** after removing 5 protected + 7 winners (1 overlap). **Expected count
+was reconciled with the operator: their "10 (23−13 protected)" was wrong; the verified set is
+12**, and applied only after that mismatch was surfaced rather than guessed.
+- **12 rows set `noindex=true`, one guarded batch** (recompute-and-refuse guard; total
+  noindexed 668 → **680**, delta exactly +12, no over-reach). Every affected cluster keeps its
+  indexed winner (asserted). **noindex, NOT delete** — rows + bodies intact.
+- **Verified end-to-end on production (read-only GET):** the 12 serve
+  `<meta robots="noindex, follow">` **now** (the page is SSR-per-request —
+  `intel/[slug]` has no `generateStaticParams`, no prerendered HTML — so `generateMetadata`
+  reads live DB every request); the **live sitemap already excludes the 12** (static,
+  `revalidate:false` — refreshed by the deploy the `53274fd` push triggered); the kept rook
+  winner still serves no noindex. DB → page-meta → sitemap all consistent.
+- **Reverse:** `UPDATE feed_items SET noindex=false WHERE id IN (…the 12…)` — the exact id
+  list is in the apply run; per-page reversal by using a single id. Fully reversible.
+
+**Phase 2 — PARKED (operator decides).** The **532 indexed, unique, ≤1-impression** /intel
+pages (Signal 1 ∩ not-duplicate) are the edge-case tail — untouched. `docs/intel-prune-
+candidates.md` §4 lists them with `publish_date` as the judgment aid (recent = fair chance,
+old = likely dead), not pre-decided.
+
+### STILL OPEN / NEXT
+
+- **Phase 2 /intel edge cases** (532) — operator judgment, tomorrow.
+- **Watch the first framing fire** — once an Assassin/build article publishes, confirm the
+  heartbeat logs `applied` and `match_count` increments to 1 (then the keyword caps).
+- Keyword deferred items unchanged (see the build entry): `applied_deduped`, exact `unlogged=`,
+  the (g) stale-list filter, the apostrophe transform.
+
+---
+
 ## 2026-07-22 — *** KEYWORD-FRAMING BUILD COMPLETE. LIVE, INERT, OBSERVABLE. ***
 
 **A system where editors frame article HEADLINES toward studied Mangools/KWFinder
