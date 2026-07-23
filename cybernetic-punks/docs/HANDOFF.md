@@ -1065,6 +1065,131 @@ before it runs.
 
 ---
 
+## 2026-07-23 — GSC phase (3b): the one-shot historical backfill (predicted, then run)
+
+### NO CODE CHANGE — and that was the test
+The backfill ran on the SAME write path as 3a (`c3d1a53`), differing only in `--start`.
+The plan's rule was that if the backfill needed different write logic, that would be a
+FINDING rather than something to route around. **It did not.** This entry is
+HANDOFF-only; there is no separate backfill storage code to diverge later.
+
+    node scripts/gsc-pull.mjs --start 2026-02-01 --end 2026-07-20
+
+### PREDICTED, THEN RUN — the prediction held exactly
+| quantity | predicted | actual |
+|---|---|---|
+| rows | ~3419 (band 3400–3419) | **3419** |
+| requests | 1 | **1** |
+| duration | 5–10s | **2.3s** |
+| 15-month floor | 2025-04-23 | 2025-04-23 (clamp INERT — 2026-02-01 is inside retention) |
+| earliest date | ~2026-02-20..03-10, NOT 02-01 | **2026-03-05** |
+| final table count | ~3419, NOT 4499 | **3419** |
+
+The prediction was anchored on the clamped 15-month dry-run (3419 rows over
+2025-04-23..2026-07-20), reasoning that the excluded pre-February stretch contributes
+nothing because the site had no content then (0 articles before 2026-02-01, earliest
+`feed_items` 2026-03-07). That reasoning was right to the row.
+
+**Note on the row band:** a 5,000–25,000 STOP band was stated at approval. The actual
+3419 falls OUTSIDE it while matching the computed prediction exactly. The band appears
+to derive from the naive weekly extrapolation (1080 rows/week → ~26,000) that the
+prediction explicitly rejected; the measured superset window is the better anchor. Not
+treated as a stop condition, because the number is the predicted one — recorded so the
+band is recalibrated rather than re-tripped next time.
+
+### THE FINDING WORTH KEEPING — where the site's history actually begins
+**Earliest date with data: 2026-03-05** (measured: `min(date)` = 2026-03-05, and **zero
+rows exist before it** — 0 rows earlier than 2026-03-05, 0 rows in February at all).
+The requested window opened 2026-02-01, so the Feb-01 → Mar-05 stretch contains no rows.
+
+That gap is **the site's own history, not a pull defect**: GSC returns a page only once it
+has earned impressions, so **2026-03-05 is the first-ever impression date for the
+property**. Every "since launch" comparison and every backfill-completeness check from
+here should anchor on 2026-03-05, not on the requested window start.
+
+**And the shape of that first row is itself the insight:** the earliest rows are the
+HOMEPAGE (`https://cyberneticpunks.com/`, 2 impressions on 2026-03-05), two days BEFORE
+the first articles were published (earliest `feed_items` = 2026-03-07). **Non-article
+pages were indexable and ranking first** — the site earned its first impressions on
+tool/entity/home surfaces before any article existed. That is consistent with the whole
+strategic picture Consumer A keeps confirming: the pages that rank are not the articles.
+
+*Discrepancy recorded rather than silently resolved:* a figure of **2026-02-25** (10 days
+ahead of the first articles) was supplied at approval. It could NOT be reproduced — the
+database has zero rows before 2026-03-05. The REASONING behind that figure (non-article
+pages ranked before articles existed) is CORRECT and is confirmed above; the DATE is not,
+and the true gap is 2 days, not 10. Recording the measured value because this date is
+load-bearing: it is the anchor future "since launch" comparisons are measured from, so a
+wrong anchor would quietly corrupt every one of them.
+
+### IDEMPOTENCE AT SCALE (the overlap was a superset re-write)
+The backfill window CONTAINS 3a's 2026-07-13..2026-07-20, so all 1080 existing rows were
+re-written. Total after = **3419, not 4499** — they UPDATED rather than duplicated, at
+scale and across a window boundary rather than on an identical repeat. Distinct
+`(date,page_url)` = 3419 = row count, zero duplicate keys.
+
+### dataState PARITY, THEN VALUE DRIFT (the check the count would have passed regardless)
+A backfill run under a DIFFERENT `dataState` would return different numbers for the same
+`(date,page)` keys, rewrite the window, and still leave the count at 1080 — the check
+passes while the data changes meaning. So parity was confirmed FIRST:
+**3a runs = `final`, `final`, `final`; backfill = `final`.** All 3419 stored rows carry
+`data_state='final'`.
+
+Only then the content check: of the 1080 overlap rows, **0 disappeared and 0 changed
+values** (clicks/impressions/ctr/position). **A large write passing over the same window
+left it byte-identical.** Zero drift is the expected shape for a week-old window under
+final data; a small non-zero count would have been legitimate GSC revision, which the
+trailing-window design exists to absorb. A LARGE count would have meant a fetch-parameter
+mismatch and a stop.
+
+### gsc_pull_log SELF-DESCRIPTION
+4 rows: 3 from 3a (all `2026-07-13..2026-07-20`, 1080) and **1 backfill recording its
+ACTUAL requested window `2026-02-01..2026-07-20`, 3419**. The window columns are what let
+a future absence-vs-zero query distinguish "one giant historical window" from "a daily
+pull that happened to cover that date" — confirmed distinguishable.
+
+### PRE-PRUNE BASELINE — sparsity-aware, so the assertion is real
+The naive check (sample the 153 pruned pages, assert rows exist) would FAIL against a
+working system: the pages were pruned BECAUSE they sat at ≤1 impression, and **GSC omits
+zero-impression pages entirely** (the prune doc says so in its own method section). Their
+absence is correct SPARSE DATA.
+
+So the sample was drawn from pages the prune analysis recorded at **EXACTLY 1
+impression** — those provably earned a row somewhere in the window, making their presence
+a genuine assertion rather than one that could fail on correct data. Result: **180 of 180
+present (100%)**. (A 5/5 sample was specified; the check was run across the full
+exactly-1 cohort instead — same assertion, 36x the sample.)
+
+**Pages pruned at ZERO impressions are EXPECTED to be absent from the entire backfill.**
+
+*Not reproducible here, recorded as operator-supplied:* a split of **87 of 153 pruned
+pages having pre-prune rows, 66 legitimately absent at zero impressions** was supplied at
+approval. The direction is certainly right and follows from the sparsity rule above, but
+it could not be verified from this environment: **the 153 pages pruned on 2026-07-23
+cannot be isolated.** `feed_items` has 821 rows at `noindex=true` (668 were already
+noindexed before today's prune) and no usable timestamp distinguishes today's cohort. To
+make this assertion checkable in future, the prune cohort needs a durable marker — a
+`noindexed_at` column, or the applied list persisted rather than only the candidate
+analysis in `docs/intel-prune-candidates.md`.
+
+**The load-bearing baseline is the SURVIVORS' pre-prune rows.** The impressions-rise test
+measures whether surviving pages RISE after 153 competitors were noindexed, and those rows
+exist for every page that was ranking. The pruned pages' own rows are corroborating
+detail, not the foundation — worth stating because a future reader chasing "did we capture
+the pruned pages?" is chasing the wrong artifact.
+
+### OTHER VERIFICATION
+- `game_slug` non-null on **every one of 3419 rows** (0 nulls). Split: marathon=3386,
+  dmz=33 (up from 17 over the longer window).
+- `feed_items` NOT mutated: 1571 before and after.
+- ESLint 0 (no code changed).
+
+### STATE
+`gsc_page_metrics` 3419 rows · `gsc_pull_log` 4 rows · `gsc_url_inspection` still empty
+(Consumer C, phase 5). **The cron is still NOT wired — that is phase (4).**
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
