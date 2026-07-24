@@ -1459,6 +1459,79 @@ so the in-repo hazard the document guards against is not present.
 
 ---
 
+## 2026-07-24 — GSC v8 steps 1–3: pairing enforcement, query table, and gameSlugForUrl (C4)
+
+### STEP 3 (this commit) — `gameSlugForUrl()` is now a fail-loud lookup, not an else-branch
+`lib/gsc/storage.js` — the C4 fix. The old shape returned `'marathon'` as the ELSE branch,
+which silently attributes a THIRD game's URLs to Marathon. Replaced with a route-prefix
+lookup: DMZ namespaced under `/dmz`, **Marathon's root-namespace prefixes enumerated
+explicitly** (from `app/`, every top-level route dir except `dmz`/`api`, plus `''` for the
+homepage), and **an unknown prefix returns `null` and logs loudly** — the caller drops the
+row; never a default game. Same principle as `game_slug` carrying no column default.
+
+- **Where the map lives:** `GAME_ROUTE_PREFIXES` in `lib/gsc/storage.js` (a named constant
+  map; the games registry is its eventual home per the multi-game audit).
+- **Adding a game:** add its namespace prefix. **Adding a Marathon route:** add its
+  top-level segment — until then that route's first indexed URL fails LOUDLY (null + log)
+  rather than being silently mislabelled. A named gap beats a silent wrong. This is the
+  deliberate cost of enumerating a root namespace, accepted because the alternative is the
+  exact degradation the multi-game audit hunts.
+- **Sole caller repointed:** `gameSlugForUrl` is defined once and called once
+  (`buildMetricRows`, same file), so rewriting it in place repoints it. `buildMetricRows`
+  now DROPS a row whose game resolves null, so one unknown URL cannot fail a 500-row NOT
+  NULL batch. No other URL→game derivation exists in the codebase (the other `'marathon'`
+  literals are hardcoded contexts — the track sanitizer, RPC params, mock data, link
+  construction — none parse a URL).
+
+**NO-OP PROOF:** over all **3419** live `gsc_page_metrics` URLs, new == old for every one,
+**0 diffs, 0 nulls** — every live URL is enumerated, so today's attribution is byte-identical.
+**LOUD-FAILURE ASSERTED (not just the happy path):** `/warzone/*` and `/apex/*` → `null` +
+`[gsc] ... UNKNOWN route prefix` log, never `marathon`. ESLint 0, next build exit 0.
+
+**Follow-up (reported, not built):** persisting a dropped-unknown-game COUNT into the
+`gsc_pull_log` row (the doc's "pull flagged in gsc_pull_log"). Inert today (no live URL is
+unknown); the loud per-row log is the flag until then. Do it in the runner when Consumer B's
+query-metrics write path is built, so both write paths flag uniformly.
+
+### STEP 1 DDL — operator-run, no git trail (rule 2)
+`feed_items`: trigger `feed_items_noindexed_at` (`BEFORE INSERT OR UPDATE`, one function
+branching on `TG_OP`, all four cases) + CHECK `feed_items_noindex_pairing_chk`
+(`(noindex AND noindexed_at IS NOT NULL) OR (NOT noindex AND noindexed_at IS NULL)`). Both
+confirmed present. This is the full close of gap (a): the trigger stamps on prune and clears
+on un-prune for EVERY writer — app, cron, scripts, raw SQL — and the CHECK makes the
+contradictory state unrepresentable.
+
+**Preceded by stamping the 668 pre-column noindexed rows with the sentinel `2026-01-01`.**
+Why an obviously-artificial single date: `feed_items` has no `updated_at`; `created_at`
+spreads evenly (no consolidation cluster) and overlaps the 153's date range on all 55 shared
+days, so it can neither date the prune nor separate cohorts; per-row event identity was never
+persisted (the events were "DB-only, no git artifact"); and the 668 is a UNION of ~7 dated
+consolidation events spanning 2026-07-15..21 (shell tier/meta 73, shell/build 199, corpus-dup
+179, weapon/shell clean-cuts, BR33, Vault Breaker, …). A single sentinel BEFORE the site had
+any content (first article 2026-03-07) states "pre-column, exact date unrecoverable" honestly;
+a plausible-looking date (e.g. 2026-07-22) would have been SILENTLY WRONG — a future
+"pruned on 2026-07-22?" query would return 668 rows that weren't. The pairing CHECK then added
+clean (violations = 0).
+
+### STEP 2 DDL — operator-run, no git trail (rule 2)
+`gsc_query_metrics` created: `page_url NOT NULL` (C1), `query NOT NULL`, plain column-list
+`UNIQUE (date, page_url, query)` (C2 — the COALESCE expression index was rejected because
+PostgREST's on_conflict cannot arbiter it), `game_slug NOT NULL no default` (C4, computed by
+the function above), RLS enabled no policies, PART 3 consumer comments set at creation. Both
+indexes confirmed.
+
+### THE CONSUMER CAUTION — select the cohort by DATE, never by NOT NULL
+**821 `feed_items` rows now carry a `noindexed_at` stamp — 153 real (the 2026-07-23 prune) +
+668 sentinel (`2026-01-01`).** The framing lane, and any cohort query, MUST select
+`noindexed_at = '2026-07-23'`, **NOT `noindexed_at IS NOT NULL`** — the latter sweeps the
+entire pre-column consolidation set into the cohort. This distinction is being added to the
+`gsc_query_metrics` table comment (operator-run `COMMENT ON TABLE`, recorded here per rule 2),
+which currently names the join dependency but not this trap. It is the direct consequence of
+the CHECK requiring every noindexed row to be stamped: the sentinel exists so the constraint
+can hold, and the sentinel is exactly what a `IS NOT NULL` filter would misread.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

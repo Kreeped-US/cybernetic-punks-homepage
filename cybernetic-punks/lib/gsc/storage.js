@@ -32,19 +32,60 @@ export function pathnameOf(pageUrl) {
   }
 }
 
-// ── THE PREFIX RULE -- game attribution, COMPUTED AT WRITE TIME ──────────────
+// ── THE PREFIX RULE -- game attribution, COMPUTED AT WRITE TIME (C4) ─────────
 // Never derived at read time. Tool and entity pages (/leaderboard, /stats, /uniques,
 // /uniques/misery-disciple) never join feed_items, and those are exactly the pages that
 // RANK -- so a join-based attribution would drop precisely the wrong rows.
 //
-// DEVIATION FROM THE PLAN'S LITERAL TEXT, deliberate: the plan says `startsWith('/dmz/')`,
-// which classifies the DMZ HUB ITSELF ('/dmz', no trailing slash) as marathon. Both '/dmz'
-// and '/dmz/*' are treated as dmz here. The `else -> marathon` fallback is a
-// silent-misattribution shape, so its edges are worth getting right rather than inheriting.
+// A ROUTE-PREFIX LOOKUP THAT FAILS LOUDLY (docs/gsc-editors-v8-canonical.md C4). The
+// rejected shape was `startsWith('/dmz/') ? 'dmz' : 'marathon'`: Marathon as the ELSE
+// branch silently attributes a THIRD game's URLs to Marathon -- the exact silent-wrong
+// degradation the multi-game audit exists to hunt. So Marathon owns the root namespace
+// but its prefixes are ENUMERATED EXPLICITLY, DMZ is namespaced under /dmz, and an
+// unknown prefix returns NULL and logs loudly -- the caller drops the row and the pull is
+// flagged, never a default game. Same principle as game_slug carrying no column default.
+//
+// ADDING A GAME: add its namespace prefix(es) below. A new MARATHON route also needs its
+// top-level segment added here -- until then its first indexed URL fails LOUDLY (null +
+// log) rather than being silently mislabelled. A named gap beats a silent wrong. The
+// eventual home is the games registry (per the multi-game audit); a literal map today.
+const GAME_ROUTE_PREFIXES = {
+  dmz: ['dmz'],
+  // Marathon = the root namespace, enumerated from app/ (every top-level route dir
+  // except dmz + api). '' is the homepage '/'. Verified against the live GSC URL set:
+  // every one of the 3419 stored page_urls resolves through this map (no-op proof).
+  marathon: [
+    '', 'about', 'admin', 'advisor', 'builds', 'cradle', 'creators', 'editors',
+    'factions', 'guides', 'intel', 'join', 'leaderboard', 'maps', 'marathon',
+    'matchups', 'me', 'meta', 'modes', 'mods', 'player-count', 'profile-preview',
+    'ranked', 'rising', 'shells', 'sitrep', 'stats', 'status', 'u', 'uniques',
+    'weapons', 'welcome',
+  ],
+};
+
+// Reverse index: first path segment -> game. Built once.
+const PREFIX_TO_GAME = (function () {
+  const m = new Map();
+  const games = Object.keys(GAME_ROUTE_PREFIXES);
+  for (let i = 0; i < games.length; i++) {
+    const prefixes = GAME_ROUTE_PREFIXES[games[i]];
+    for (let j = 0; j < prefixes.length; j++) m.set(prefixes[j], games[i]);
+  }
+  return m;
+})();
+
+// Returns the game slug, or NULL (logged loudly) for an unknown prefix. NEVER a default.
 export function gameSlugForUrl(pageUrl) {
   const p = pathnameOf(pageUrl);
-  if (p === '/dmz' || p === '/dmz/' || p.indexOf('/dmz/') === 0) return 'dmz';
-  return 'marathon';
+  const seg = p.split('/')[1] || ''; // '' for the homepage '/'
+  const game = PREFIX_TO_GAME.get(seg);
+  if (!game) {
+    console.error('[gsc] gameSlugForUrl: UNKNOWN route prefix "/' + seg + '" (url ' +
+      pageUrl + ') -- NOT attributing to a default game (C4). Add it to ' +
+      'GAME_ROUTE_PREFIXES; this row is dropped and the pull should be flagged.');
+    return null;
+  }
+  return game;
 }
 
 // ── URL -> CANDIDATE SLUG ────────────────────────────────────────────────────
@@ -95,11 +136,16 @@ export function buildMetricRows(gscRows, knownSlugs, dataState) {
     const date = keys[0];
     const pageUrl = keys[1];
     if (!date || !pageUrl) continue; // cannot key the row; skip rather than write junk
+    // C4: an unknown route prefix returns null (logged loudly by gameSlugForUrl). DROP
+    // the row rather than write a null into the NOT NULL game_slug column -- a single
+    // unknown URL must not fail the whole batch, and must never be a default game.
+    const gameSlug = gameSlugForUrl(pageUrl);
+    if (!gameSlug) continue;
     const cand = slugCandidate(pageUrl);
     out.push({
       date,
       page_url: pageUrl,
-      game_slug: gameSlugForUrl(pageUrl),
+      game_slug: gameSlug,
       slug: cand && knownSlugs.has(cand) ? cand : null,
       clicks: r.clicks || 0,
       impressions: r.impressions || 0,
