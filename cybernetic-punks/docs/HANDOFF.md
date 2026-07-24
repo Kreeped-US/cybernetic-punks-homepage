@@ -1957,6 +1957,78 @@ the tables actually reads, not only in HANDOFF.
 
 ---
 
+## 2026-07-24 — GSC review panel: the Accept loop fixed (refresh-key)
+
+### THE BUG
+Clicking ACCEPT prefilled the keyword_targets form correctly, but after Save the candidate
+STAYED in the review list, so re-clicking Accept re-prefilled -- the perceived loop.
+
+**Cause: the panel never reloaded after an Accept.** Decline calls `load(game)` itself and
+self-clears; Accept hands the write to the parent's keyword_targets FORM (correct -- a human
+must complete entity_type/entity_slug/facet there, which GSC cannot supply), but nothing then
+told the panel to re-fetch. `GscReviewPanel`'s reload effect depended only on `[open, game,
+load]`, none of which change when the parent saves. So `data` went stale and the accepted
+candidate remained visible. The EXCLUSION was correct all along (confirmed: the accepted
+"marathon sentinel" is excluded on a fresh load); it was simply never re-run.
+
+Compounding risk (not the cause): `keyword_targets` has NO unique constraint on
+`(keyword, game_slug)`, so a re-accept+save would have created a DUPLICATE row. No duplicates
+occurred -- the operator stopped -- but the loop was one re-click from it.
+
+### THE FIX
+A version counter `ktVersion` in `AdminPage`, bumped by `bumpKeywordTargets()` after EVERY
+keyword_targets write -- `saveNew` (add/accept), `saveEdit`, and `deleteRow` -- and passed to
+`GscReviewPanel` as `refreshKey`, which is now in its reload-effect deps. So the panel
+re-fetches the moment any keyword_targets row is written, and an accepted candidate leaves the
+list exactly the way a declined one already does.
+
+- **Bumped on ALL keyword_targets writes, not just accepts:** manual edits and deletes in the
+  table editor also change the exclusion set the panel reads, so they must refresh it too.
+- **Scoped to keyword_targets** (`bumpKeywordTargets` no-ops unless `activeTab ===
+  'keyword_targets'`): a write to any OTHER table does not bump the counter, so unrelated tab
+  activity costs the panel no wasted fetch.
+- **Reloads only when open** (`if (open) load(game)` unchanged): a bump while the panel is
+  collapsed does not fetch; it fetches on next open, which already reloads anyway.
+
+### VERIFICATION
+- **Accept self-clears:** a fresh review-list computation over the real 28-day window now
+  returns Lane 1 = 0 / Lane 2 = 0 -- both of the operator's candidates ("marathon sentinel"
+  accepted, "mw3 signal jammer" declined) are in keyword_targets and correctly excluded. That
+  fresh load is exactly what the bumped refreshKey now triggers after an accept.
+- **Decline unchanged:** it still calls `load(game)` directly; behaviour identical.
+- **Manual edit/delete refresh:** `bumpKeywordTargets()` fires in `saveEdit` and `deleteRow`,
+  so a manual keyword_targets change in the table editor also refreshes the panel.
+- **No wasted fetches on unrelated tables:** the scoping guard means a weapon_stats/etc. write
+  leaves `ktVersion` unchanged, so the panel does not re-fetch.
+- ESLint: the panel is clean; the 2 `app/admin/page.js` errors and 2 warnings are PRE-EXISTING
+  on HEAD (the `<a href="/">`, an unescaped apostrophe, an `<img>`, and a `loadTable`
+  useCallback dep) -- untouched by this additive change. next build exit 0.
+- Real state: the 2 legitimate gsc-review rows are intact; no test rows were created.
+
+### FLAGGED, NOT APPLIED -- UNIQUE (game_slug, keyword) on keyword_targets
+The exclusion join already treats keyword-per-game as unique, so the SCHEMA does not match its
+own consumer's assumption. The refresh fix removes the current PATH to duplicates but not the
+POSSIBILITY -- a manual entry, a bulk insert, or a second admin session could still write two
+rows for one keyword, and both would match the same articles under a rotation designed for one.
+DDL recorded here for the operator to run (rule 2 once run):
+
+    -- pre-check: any existing duplicates that would block the constraint (expect 0)
+    SELECT game_slug, lower(trim(keyword)) AS k, count(*)
+      FROM keyword_targets
+     GROUP BY game_slug, lower(trim(keyword))
+    HAVING count(*) > 1;
+
+    -- constraint (case/space-normalized to match the exclusion join's comparison)
+    CREATE UNIQUE INDEX keyword_targets_game_keyword_uniq
+      ON keyword_targets (game_slug, lower(trim(keyword)));
+
+Note the index normalizes `lower(trim(keyword))` to match how the exclusion join compares
+(trimmed + lowercased) -- a plain `UNIQUE (game_slug, keyword)` would allow "Marathon Sentinel"
+and "marathon sentinel" as two rows that the join then treats as one. Run the pre-check first;
+if it returns rows, dedup before adding the index.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

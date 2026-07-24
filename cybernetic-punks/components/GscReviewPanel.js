@@ -83,7 +83,7 @@ function Lane({ title, subtitle, accent, rows, onAccept, onDecline, busy }) {
   );
 }
 
-export default function GscReviewPanel({ password, onAccept }) {
+export default function GscReviewPanel({ password, onAccept, refreshKey }) {
   const [game, setGame] = useState('marathon');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -102,7 +102,10 @@ export default function GscReviewPanel({ password, onAccept }) {
     } catch (e) { setError(e.message); } finally { setLoading(false); }
   }, [password]);
 
-  useEffect(() => { if (open) load(game); }, [open, game, load]);
+  // refreshKey is bumped by the parent after any keyword_targets write (accept/edit/delete),
+  // so an accepted candidate leaves the list the moment its row saves -- the same self-clearing
+  // Decline already gets by calling load() directly. Reloads only when the panel is open.
+  useEffect(() => { if (open) load(game); }, [open, game, load, refreshKey]);
 
   // ACCEPT: hand the candidate to the parent, which switches to the keyword_targets tab and
   // prefills the entry form. No write happens here.

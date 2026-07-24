@@ -575,6 +575,13 @@ export default function AdminPage() {
   const [filterFaction, setFilterFaction] = useState('');
   const [filterRunner, setFilterRunner]   = useState('');
   const [stickyValues, setStickyValues]   = useState({});
+  // Bumped after any keyword_targets write (add/edit/delete). GscReviewPanel reads this as
+  // refreshKey and re-fetches, so an accepted candidate leaves the review list the moment its
+  // keyword_targets row saves -- the Accept path had no other way to signal the panel (the
+  // write happens in this form, out of the panel's reach). Scoped to keyword_targets so a
+  // write to any OTHER table does not cost the panel a wasted fetch.
+  const [ktVersion, setKtVersion]         = useState(0);
+  function bumpKeywordTargets() { if (activeTab === 'keyword_targets') setKtVersion(v => v + 1); }
 
   function showToast(msg, ok = true) {
     setToast({ msg, ok });
@@ -660,6 +667,7 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setRows(rows.map(r => r.id === editingRow ? json.data : r));
+      bumpKeywordTargets();
       cancelForm(); showToast('Saved successfully');
     } catch (e) { showToast(e.message, false); }
     setSaving(false);
@@ -675,6 +683,7 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setRows([json.data, ...rows]);
+      bumpKeywordTargets();
 
       const stickyKeys = STICKY_FIELDS[activeTab] || [];
       const newStickyValues = {};
@@ -703,6 +712,7 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setRows(rows.filter(r => r.id !== id));
+      bumpKeywordTargets();
       showToast('Deleted');
     } catch (e) { showToast(e.message, false); }
   }
@@ -1036,7 +1046,7 @@ export default function AdminPage() {
         <QualityAlertsPanel password={password} />
         <VantageDraftsPanel password={password} />
         <SourceReviewPanel password={password} />
-        <GscReviewPanel password={password} onAccept={acceptGscCandidate} />
+        <GscReviewPanel password={password} onAccept={acceptGscCandidate} refreshKey={ktVersion} />
       </div>
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>
