@@ -1885,6 +1885,78 @@ recurs.
 
 ---
 
+## 2026-07-24 — GSC review panel: Accept / Decline actions (v1 fast-follow) + PART 3 comments applied
+
+Closes the loop flagged when the read layer shipped read-only (`0a4de4f`): the operator now
+works the two-lane list without leaving the tab. Both actions are HUMAN-INITIATED — nothing
+writes without an explicit click — and the list SELF-CLEARS because both outcomes produce a
+`keyword_targets` row the exclusion join then matches.
+
+### ACCEPT — PREFILL, not a direct write
+Accept hands the candidate to the parent (`acceptGscCandidate` in `app/admin/page.js`), which
+switches to the KEYWORD TARGETS tab and opens the entry form PREFILLED, then the operator
+completes it and submits through the existing validated insert. **It does NOT write from the
+panel.**
+
+Why prefill and not write directly (confirmed against PART 2, argued): a matchable
+`keyword_targets` row needs `entity_type` + `entity_slug` + `facet` — the matcher requires
+facet equality — and **GSC supplies none of those.** Writing directly would create a row that
+looks accepted and is structurally INERT (can never match). Prefill routes the operator
+through the entry validator (`validateKeywordTarget`), which resolves `entity_slug` against the
+real entities, so the saved row is guaranteed matchable.
+
+What the prefill carries: `keyword` = the query verbatim, `game_slug`, `studied_at` = today,
+`source = 'gsc-review'` (provenance), and `notes` = the GSC context `[GSC review] pos=X impr=Y
+page=Z`. **Volume is left BLANK, deliberately** — GSC impressions are NOT KWFinder search
+volume, and prefilling `volume=impressions` would mislabel first-party impressions as external
+volume. Per C3, GSC candidates have no external-volume floor, so volume is optional; the
+impressions live in `notes` as provenance instead. **What the operator must still supply:**
+`entity_type`, `entity_slug`, `facet` (required to match), and optionally `intent` /
+`difficulty` / `volume`.
+
+### DECLINE — a minimal, valid, INACTIVE row, written directly (reason REQUIRED)
+Decline writes `is_active = false` + a `notes` reason straight to `keyword_targets` via the
+existing POST `/api/admin`. A declined row needs no entity, and the entry validator SHORT-
+CIRCUITS on an empty `entity_slug` (`if (!slug) return { ok: true }`), so it passes cleanly.
+
+- **notes** records BOTH a fixed GSC-context prefix AND the operator's reason:
+  `[GSC review] pos=X impr=Y page=Z — <reason>`. A decline with no reason is a row nobody can
+  interpret later, so **the reason is required** — the panel prompts for it and **writes
+  nothing on cancel/empty**.
+- **NOT NULL columns satisfied:** `game_slug`, `keyword` supplied; `studied_at` (the only NOT
+  NULL with NO default) = today; `source = 'gsc-review'` (overriding the `kwfinder` default,
+  for provenance); `is_active = false` (overriding the `true` default); `priority`,
+  `match_count`, `created_at`, `updated_at`, `id` take their defaults.
+- **entity_type / entity_slug / facet are NOT needed** for a decline — nullable per FINDING-1,
+  and omitted. `is_active = false` already keeps the row out of the matcher (its eligibility
+  rule) and out of the heartbeat's `stale=N`. A declined keyword IS a studied-and-declined
+  `keyword_targets` row; no separate rejection store.
+
+### SELF-CLEARING, GAME-SCOPED, CASE-INSENSITIVE
+Both outcomes put the query into `keyword_targets`; on the next list load the exclusion join
+(query text, trimmed + lowercased, game-scoped, regardless of `is_active`) matches it and the
+candidate disappears. Verified: a declined query in a DIFFERENT case is still excluded; a
+different query still appears (control).
+
+### VERIFICATION — 10/10, fixtures deleted
+Validator passes a decline (empty entity_slug); the decline insert satisfies every NOT NULL
+and reads back `is_active=false` / reason in notes / `source='gsc-review'` / `studied_at` set /
+defaults applied; the exclusion excludes the declined query case-insensitively while a
+different query appears; **the test row was DELETED — no fixtures left in `keyword_targets`.**
+ESLint 0 (the 2 pre-existing `app/admin/page.js` errors are on HEAD, not touched here — my page
+diff is the accept handler + the onAccept prop); next build exit 0.
+
+### PART 3 TABLE COMMENTS — APPLIED (rule 2, operator-run DDL, no git trail)
+The consumer-documentation `COMMENT ON TABLE` statements were run on **both** `gsc_query_metrics`
+and `gsc_page_metrics`. **Confirmed SET** — independently verified: PostgREST exposes table
+comments in its OpenAPI `description`, and both carry the exact emitted text (WHO READS IT /
+WHAT MUST NEVER READ IT / JOIN DEPENDENCY / the exclusion-vs-measurement distinction on
+query_metrics; the undocumented-readers list on page_metrics). **This closes the PART 3
+requirement** — the consumer contracts now live on the schema, which is what someone altering
+the tables actually reads, not only in HANDOFF.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

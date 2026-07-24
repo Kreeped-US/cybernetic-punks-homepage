@@ -631,6 +631,25 @@ export default function AdminPage() {
 
   function cancelForm() { setEditingRow(null); setShowAddForm(false); setFormData({}); }
 
+  // ACCEPT from the GSC review panel: switch to the keyword_targets tab and open the entry
+  // form PREFILLED with what GSC knows (query -> keyword, game, source, and the position/
+  // impressions/page context in notes). The operator completes entity_type / entity_slug /
+  // facet -- which GSC cannot supply and the matcher requires -- and submits through the
+  // validated insert. Nothing is written here; this only prefills.
+  function acceptGscCandidate(candidate) {
+    setActiveTab('keyword_targets');
+    setEditingRow(null);
+    setShowAddForm(true);
+    setFormData({
+      ...buildFormDefaults('keyword_targets', {}),
+      keyword: candidate.query,
+      game_slug: candidate.game_slug,
+      studied_at: new Date().toISOString().slice(0, 10),
+      source: 'gsc-review',
+      notes: candidate.note || '',
+    });
+  }
+
   async function saveEdit() {
     setSaving(true);
     try {
@@ -1017,7 +1036,7 @@ export default function AdminPage() {
         <QualityAlertsPanel password={password} />
         <VantageDraftsPanel password={password} />
         <SourceReviewPanel password={password} />
-        <GscReviewPanel password={password} />
+        <GscReviewPanel password={password} onAccept={acceptGscCandidate} />
       </div>
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 65, background: S.bg, zIndex: 99 }}>
