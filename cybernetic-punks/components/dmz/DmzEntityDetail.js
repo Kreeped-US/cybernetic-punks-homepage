@@ -11,6 +11,7 @@
 // (see the route files) so a provisional page never enters the index.
 
 import Link from 'next/link';
+import { toISOWithPTOffset } from '@/lib/formatDate';
 
 export default function DmzEntityDetail({ entity, row, siblings }) {
   var facts = entity.facts(row);
@@ -40,6 +41,13 @@ export default function DmzEntityDetail({ entity, row, siblings }) {
     url: pageUrl, mainEntity: thing,
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
   };
+  // FRESHNESS (four-entity: keys/missions/items/pois). Emit dateModified ONLY when
+  // the row carries updated_at. All four tables have updated_at NOT NULL, so this
+  // fires for every real row; the guard is both belt-and-suspenders AND load-bearing
+  // -- toISOWithPTOffset(null) returns '', which is as invalid in JSON-LD as null, so
+  // the omit must key on row presence here, never on the helper. No new Date()
+  // fallback: an undated row omits its dateModified, it never guesses "now".
+  if (row.updated_at) webPage.dateModified = toISOWithPTOffset(row.updated_at);
 
   // FAQ ONLY from real data -- no invented Q&As. Acquisition is the one honest
   // question we can answer from the columns when they are present AND verified.
@@ -80,7 +88,7 @@ export default function DmzEntityDetail({ entity, row, siblings }) {
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffb400', flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
               <strong style={{ color: '#ffb400', letterSpacing: 1, fontSize: 11 }}>UNCONFIRMED</strong>
-              {' '}Not yet verified in-game. Details below are provisional and may change. We do not present them as confirmed.
+              {' '}{entity.provisionalNote || 'Not yet verified in-game. Details below are provisional and may change. We do not present them as confirmed.'}
             </span>
           </div>
         )}
@@ -89,6 +97,15 @@ export default function DmzEntityDetail({ entity, row, siblings }) {
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
             Verified in-game{row.patch_verified ? ' - ' + row.patch_verified : ''}
           </div>
+        )}
+
+        {/* Image: rendered ONLY when the row carries one. The dmz_pois pairing CHECK
+            (image_url IS NULL OR image_alt IS NOT NULL) guarantees alt is present
+            whenever a URL is, so alt is ASSUMED present -- not defended with a `|| ''`
+            fallback. A row without an image (all keys/missions/items rows; POIs with
+            no Deep-Dive image yet) simply omits this block. */}
+        {row.image_url && (
+          <img src={row.image_url} alt={row.image_alt} style={{ display: 'block', maxWidth: '100%', height: 'auto', borderRadius: 6, border: '1px solid var(--border)', margin: '0 0 26px' }} />
         )}
 
         {row.description && (

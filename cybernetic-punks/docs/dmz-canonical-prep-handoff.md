@@ -142,6 +142,12 @@ Doctrine Gate 4, learned from the 1,343-page title-debt on Marathon:
   doctrine's 30-day indexation check running as code. If a page isn't indexed
   in ~30 days, that's the earliest thin-content signal; fix it in August, not
   October.
+  - **CANARY (deferred commitment, 2026-07-24):** when this is built, the FIRST
+    URL it enrolls is `/dmz/pois/hajin-city` — the DMZ POI vertical's canary.
+    Google's verdict on that one page gates whether the remaining eight POIs ship
+    on the same template. (Build 1's brief asked to enroll it "on publish"; Consumer
+    C did not exist yet, so it became this phase-5 designation. See HANDOFF, the
+    `/dmz/pois` Build-1 entry.)
 - **GSC page metrics** already pull daily — pre-launch DMZ pages will show
   near-zero impressions and that's expected (kill-clock exemption). The few
   pre-launch queries that DO exist ("DMZ release date," "what is DMZ MW4",

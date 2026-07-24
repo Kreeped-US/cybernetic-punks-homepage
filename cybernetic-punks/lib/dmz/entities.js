@@ -97,7 +97,43 @@ export const DMZ_ENTITIES = {
       return [ fact('Category', r.category), fact('Sell Value', r.sell_value), fact('Use', r.use) ].filter(Boolean);
     },
   },
+
+  pois: {
+    key: 'pois',
+    table: 'dmz_pois',
+    routeBase: '/dmz/pois',
+    singular: 'Location',
+    plural: 'Locations',
+    // Hub H1 carries "Hajin Map & Locations". This index does NOT chase "hajin map"
+    // (60/mo, June KWFinder) -- that is the Hajin article's and the future interactive
+    // map's lane. The hub cross-links to it and owns per-POI names instead.
+    hubH1: 'Hajin Map & Locations',
+    hubTitle: 'DMZ Hajin Map & Locations: Every POI',
+    hubDesc: 'Every point of interest in DMZ\'s Hajin Exclusion Zone -- cities, facilities and zones, with a guide to each. Verified in-game as the zone opens.',
+    hubEmpty: 'No locations are documented yet. DMZ launches October 23, 2026; verified points of interest across the Hajin Exclusion Zone land here as the zone opens.',
+    detailTitle: function (r) { return 'DMZ ' + r.name + ': Map Location & Guide'; },
+    detailDesc: function (r) {
+      return 'Where to find ' + r.name + ' in DMZ\'s Hajin Exclusion Zone'
+        + (r.poi_type ? ' (' + r.poi_type + ')' : '')
+        + ': location, notable features, and how it fits the map.';
+    },
+    // Provisional-source line shown in the UNCONFIRMED banner while verified=false
+    // (the shared DmzEntityDetail falls back to its generic text when this is absent,
+    // so keys/missions/items are unchanged). Promotion to verified=true removes it.
+    provisionalNote: 'Provisional: sourced from Bungie\'s pre-launch Deep Dive, not yet verified in the live game.',
+    // notable_features is a FLAT jsonb string array (dmz_pois.notable_features comment
+    // enforces the contract) -- read behind an Array.isArray guard, never assumed.
+    facts: function (r) {
+      var features = Array.isArray(r.notable_features) && r.notable_features.length > 0 ? r.notable_features.join('; ') : null;
+      return [ fact('Type', r.poi_type), fact('Notable Features', features) ].filter(Boolean);
+    },
+  },
 };
+
+// Mirror of dmz_pois_poi_type_chk (dmz_pois.poi_type CHECK) -- ALTER TOGETHER.
+// No validation path reads this yet (POI rows are operator-run SQL); it exists so
+// code and the DB constraint stay in sync when a POI entry/validation path is built.
+export const DMZ_POI_TYPES = ['city', 'facility', 'zone'];
 
 // The shared list the sitemap and routing read.
 export const DMZ_ENTITY_KEYS = Object.keys(DMZ_ENTITIES);

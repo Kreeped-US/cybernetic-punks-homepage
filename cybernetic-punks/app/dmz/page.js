@@ -255,9 +255,9 @@ export default async function DmzLanding() {
   // ships with it; see docs/HANDOFF.md), so it LEADS the list; the other three are
   // Deep-Dive-backed. ----
   var FAQ_ARTICLES = {
-    fob:     { href: '/dmz/field-intel/dmz-forward-operating-base-every-hub-system-detailed', label: 'the Forward Operating Base' },
+    fob:     { href: '/dmz/fob/dmz-forward-operating-base-every-hub-system-detailed', label: 'the Forward Operating Base' },
     printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
-    hajin:   { href: '/dmz/field-intel/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'the Hajin Exclusion Zone' },
+    hajin:   { href: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'the Hajin Exclusion Zone' },
   };
   // Q PHRASING follows the searcher, not our internal vocabulary: "release date" and
   // "coming back" are the live high-volume terms. The ANSWERS stay strictly inside
@@ -386,9 +386,10 @@ export default async function DmzLanding() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
         {[
-          { href: '/dmz/missions', label: 'Missions', desc: 'Objectives, factions and rewards.' },
-          { href: '/dmz/keys',     label: 'Keys',     desc: 'Locations and what they unlock.' },
-          { href: '/dmz/items',    label: 'Items',    desc: 'Values, categories and uses.' },
+          { href: '/dmz/missions', label: 'Missions',  desc: 'Objectives, factions and rewards.' },
+          { href: '/dmz/keys',     label: 'Keys',      desc: 'Locations and what they unlock.' },
+          { href: '/dmz/items',    label: 'Items',     desc: 'Values, categories and uses.' },
+          { href: '/dmz/pois',     label: 'Locations', desc: 'Hajin map, POIs and regions.' },
         ].map(function (c) {
           return (
             <Link key={c.href} href={c.href} style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '18px 20px', textDecoration: 'none' }}>

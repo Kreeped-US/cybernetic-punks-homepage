@@ -38,6 +38,64 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-24 — DMZ POI entity vertical /dmz/pois (Build 1, commit 1 of 2)
+
+First replication of the keys/missions/items entity-clone pattern to a NEW vertical, proven
+end-to-end on ONE POI before the other eight (commit 2 is the data-entry pass, taxonomy-gated per
+POI). Entry rides in the same commit as the code, per the currency convention (rule 1).
+
+- **Vertical:** `/dmz/pois` (flat), config key `'pois'`, table `dmz_pois`, cloning
+  keys/missions/items — hub + `[slug]` detail via the shared `DmzEntityHub` / `DmzEntityDetail`.
+- **Slug `'pois'` not `'locations'`:** KWFinder (June) put "hajin map" at 60/mo and BOTH
+  "locations" and "pois" at negligible volume — no search-language edge to either, so reverted to
+  codebase vocabulary consistency. "hajin map" is the Hajin article's and the future interactive
+  map's lane, NOT this index's; the hub H1 carries "Hajin Map & Locations" and cross-links, it does
+  not compete for the term.
+- **Route/table decoupling VERIFIED free-form:** `entity.table` (DB read) and `entity.routeBase`
+  (URL build) are independent config fields — `fetchDmzRow`/`fetchDmzSlugs` use `.table`,
+  `DmzEntityDetail`/sitemap use `.routeBase`, nothing derives one from the other. This is why
+  `dmz_pois` cleanly serves `/dmz/pois`.
+- **Provisional sourcing reuses the EXISTING `verified` / `verified_source` pair — no new column.**
+  The routes (noindex when `!verified`) and the sitemap (emits detail URLs only for
+  `verified===true`) already gate on `verified`, so a `source_state` column would BOTH duplicate it
+  and be inert on gating. POIs ship `verified=false` / `verified_source='Bungie pre-launch Deep
+  Dive'`; a provisional detail page is therefore noindex + withheld from the sitemap BY DESIGN (the
+  hub still emits). Launch promotion = a per-row flip to `verified=true` /
+  `verified_source='game-verified@<patch>'`, which indexes the page and adds it to the sitemap. The
+  visible provisional line rides off `!verified` via a new per-entity `provisionalNote` config field
+  (additive; keys/missions/items keep the generic banner text).
+- **`DMZ_POI_TYPES = ['city','facility','zone']`** added in `lib/dmz/entities.js` as a MIRROR RECORD
+  of `dmz_pois_poi_type_chk` — no validation path reads it yet; it exists to keep code and the DB
+  CHECK in sync (ALTER TOGETHER).
+- **`dateModified` added to the shared `DmzEntityDetail` webPage JSON-LD — a FOUR-entity change**
+  (keys/missions/items/pois). Guarded on `row.updated_at` presence because `toISOWithPTOffset(null)`
+  returns `''`, which is as invalid as null in JSON-LD; no `new Date()` fallback (an undated row
+  omits, never guesses). All four tables have `updated_at` NOT NULL and the three siblings are
+  empty, so the four-entity claim is verified by shared-code-path + schema-guarantee + inspection,
+  NOT by rendering sibling pages that do not exist.
+- **Two stale FAQ links fixed** in `app/dmz/page.js`: `hajin` and `fob` both pointed at
+  pre-relocation `/dmz/field-intel/...` URLs (working only via 308) and both feed the FAQPage
+  JSON-LD. Now `/dmz/regions/...` and `/dmz/fob/...` respectively (printer was already correct).
+- **/dmz anti-orphan:** a "Locations" card added to the hardcoded REFERENCE verticals array — the
+  internal link IS the anti-orphan guarantee; sitemap emission is not.
+- **Hajin City** is the vertical's first POI (`poi_type='city'`, `verified=false`). Its INSERT is
+  operator-run SQL with NO git trail — recorded in the NEXT commit per rule 2 (with Justin's final
+  `landmass_slug` / `notable_features` values), the same way the `dmz_pois` table + its three
+  constraints were recorded.
+- **Indexation canary (designation, not code):** Hajin City is designated the vertical's indexation
+  canary — when Consumer C (URL Inspection, phase 5) is built, `/dmz/pois/hajin-city` is the FIRST
+  URL it enrolls, and Google's verdict on it gates whether the remaining eight POIs ship on this
+  template. Also recorded under Workstream 5 in `docs/dmz-canonical-prep-handoff.md` so the
+  commitment lives where phase 5 gets built, not only here.
+- **BRIEF CORRECTION recorded:** Build 1's brief specified enrolling `/dmz/pois/hajin-city` in
+  Consumer C "on publish (this commit)." Consumer C does not exist yet — it is phase 5, unbuilt
+  (`searchAnalytics.js:11`; `gsc_url_inspection` is an empty results-append table, not a watch list;
+  no enrollment path exists in `lib/gsc/*`). So enrollment became a phase-5 designation (above)
+  rather than code. The brief asserted a capability that was not built; recording the gap so it is
+  visible rather than silently unmet.
+
+---
+
 ## 2026-07-24 — dmz_pois table + 3 constraints (operator-run this session, no git trail)
 
 Recorded per rule 2 (operator-run DDL, no commit to ride in). Verified via `pg_get_constraintdef`
