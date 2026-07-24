@@ -2,6 +2,7 @@ import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/e
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { recordCronRun } from '@/lib/cronRunLog';
+import { runDailyGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
@@ -1272,6 +1273,24 @@ export async function GET(req) {
       since: runStartedAt,
     });
 
+    // GSC PAGE-LEVEL DAILY PULL (phase 4). Placed HERE deliberately:
+    //  - OUTSIDE the freeze branch -- search-performance collection is unrelated to
+    //    editorial generation, so it runs even when the freeze skips every editor (a
+    //    frozen cycle falls through to this sequence, it does not return early).
+    //  - LATE (after generation + publish) -- a slow external pull must not delay
+    //    article generation, the cron's primary job. The tradeoff (a generation THROW
+    //    would skip that day's pull, since the catch returns early) is acceptable
+    //    because the window is a trailing ~5 days: tomorrow's overlapping pull re-covers
+    //    any skipped day, and the upsert is idempotent. A missed day self-heals.
+    //  - FAIL-OPEN, wrapped: runDailyGscPull never throws, and this try/catch contains
+    //    it a second time, so a GSC outage cannot break the generation cron.
+    var gscPull = null;
+    try {
+      gscPull = await runDailyGscPull(supabase);
+    } catch (gscErr) {
+      console.error('[gsc] daily pull dispatch error (contained, non-fatal): ' + gscErr.message);
+    }
+
     return Response.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -1279,6 +1298,12 @@ export async function GET(req) {
       // Surfaced in the response, not just the logs: Vercel shows this body in the
       // cron invocation detail, so the heartbeat is visible without log spelunking.
       keyword: keywordHb.line,
+      gsc: gscPull
+        ? (gscPull.ok
+            ? (gscPull.isReconciliation ? 'reconcile ' : '') + 'ok: ' + gscPull.rowsWritten +
+              ' rows, newest ' + gscPull.newestDateReturned + (gscPull.stalled ? ' [STALL]' : '')
+            : 'error: ' + gscPull.reason)
+        : 'dispatch-error',
       directives_consumed: directivesUsed,
       patch_detected: hasPatch,
       nexus_tier_regrade: regradeContext.shouldRegrade,

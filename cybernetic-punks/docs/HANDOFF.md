@@ -1532,6 +1532,98 @@ can hold, and the sentinel is exactly what a `IS NOT NULL` filter would misread.
 
 ---
 
+## 2026-07-24 — GSC page-level phase (4): daily pull wired into the cron
+
+Wires the proven page-level pull into `/api/cron` so it collects daily instead of only on
+manual invocation. Nothing had collected since the backfill; the 153-page prune measurement
+clock runs to ~2026-08-20, so every uncollected day was impressions lost. This establishes
+the daily schedule that v8's query-level step 4 assumes already exists.
+
+### PLACEMENT — `lib/gsc/dailyPull.js`, called from the cron end-of-run sequence
+`runDailyGscPull(supabase)` is ORCHESTRATION ONLY — it composes the same proven storage
+path (`loadKnownSlugs → fetchSearchAnalytics → buildMetricRows → upsertPageMetrics →
+writePullLog`) that phase 3 validated. No separate storage logic; a divergent second write
+path is exactly what the reuse avoids.
+
+Placed alongside `precomputeHistoricalContext` / `precomputeQualityMetrics` / the keyword
+heartbeat, which are:
+- **OUTSIDE the freeze branch** — a frozen cycle falls through to this sequence, it does not
+  return early. Search-performance collection is unrelated to editorial generation, so it
+  runs even when the freeze skips every editor. **Verified structurally** (the placement is
+  after the freeze/editor loop, in the shared tail) and the comment at the recordCronRun
+  block already documents that the frozen path reaches here.
+- **LATE (after generation + publish)** — the ordering tradeoff. Early would let a slow
+  external pull delay article generation (the cron's primary job); late means a generation
+  THROW skips that day's pull (the catch returns before reaching it). **Chose LATE**, because
+  the window is a trailing ~5 days: tomorrow's overlapping pull re-covers any skipped day and
+  the upsert is idempotent, so a missed day SELF-HEALS. A delayed generation would not.
+- **FAIL-OPEN, contained twice** — `runDailyGscPull` never throws (every path returns
+  `{ ok, ... }`), and the cron wraps the call in its own try/catch. A GSC outage cannot break
+  generation.
+
+### WINDOW
+Trailing 5 days ending at the final-data boundary (`daysAgo(3)`), `dataState=final`, upsert
+on `(date, page_url)` — the proven idempotent path.
+
+### MONTHLY RECONCILIATION — by DATA, not by calendar day
+`reconciliationDue()` queries `gsc_pull_log` for the most recent RECONCILIATION-shaped pull
+(a row whose window span ≥ ~30 days) and runs a 35-day pull only if none has happened in 30
+days. **A day-of-month check would silently skip a whole month if the cron missed that one
+day; the data-driven check self-heals.** The reconciliation kind is inferred from the window
+span in `gsc_pull_log` — no new column. First-run decision observed: the 2026-07-23 backfill
+(~170-day span) is <30 days old, so the first cron pull is a DAILY 5-day window, not a
+reconciliation — correct.
+
+### STALL DETECTOR — `checkStall()` in `lib/gsc/dailyPull.js`
+The known failure is the pipeline stalling (Google stops returning recent data), NOT slow
+revision. After each pull it compares `newest_date_returned` to `window_end`; **more than 4
+days behind → loud `console.error('[gsc][STALL] ...')`** naming the gap. Unit-checked: newest
+11 days behind → STALL; 0–3 days behind (normal final-data lag) → quiet. A pull that returns
+no dated rows also trips it. The gsc_pull_log row persists `newest_date_returned` so the
+condition is queryable after the fact, not only logged.
+
+### DURATION — measured, not assumed
+A real daily pull: **794 rows in 1.65s, one request** (5-day window, ~800 rows/window as
+predicted). No `maxDuration` is set anywhere; this is far inside any plausible cron headroom.
+The reconciliation's 35-day window is ~5× the rows but still one request and seconds.
+
+### VERIFICATION (all against the live tables)
+- **Real pull:** 794 fetched/written, 1.65s, daily window 2026-07-16..2026-07-21, newest
+  2026-07-21, no stall. `gsc_page_metrics` 3419 → 3572 (+153 genuinely new 2026-07-21 rows;
+  the other 641 upserted onto backfilled rows).
+- **Idempotence:** second identical run left `gsc_page_metrics` at 3572 — no duplication.
+- **Forced failure** (broke the GSC key): `runDailyGscPull` returned `{ok:false}`, **did NOT
+  throw**, wrote a `gsc_pull_log` row with `status=error`, and `gsc_page_metrics` was
+  unchanged. The synthetic error row was then DELETED (it was a test artifact, not a real
+  outage — inert, since reconciliation reads only `status='ok'` and the stall check is
+  per-run, but a fake outage should not sit in the operational log).
+- ESLint 0, next build exit 0, `/api/cron` compiles.
+
+### DEPLOY NOTE
+The Vercel `GSC_CLIENT_EMAIL` / `GSC_PRIVATE_KEY` env vars only reach production on the NEXT
+DEPLOY. This commit triggers one, so **the first scheduled run WITH GSC is the next daily
+cron (19:00 UTC)**. If that run predates the deploy completing, GSC is skipped fail-open that
+once and the next day self-heals via the trailing window.
+
+### OBSERVATION — corpus count
+`gsc_page_metrics` held 3419 rows before this (the 2026-03-05..2026-07-20 backfill), now 3572.
+The task brief referenced "8215 rows backfilled," which does not match the live table — likely
+a wider operator pull or a different figure. Flagged for reconciliation; phase-4 behaviour is
+correct regardless of corpus size.
+
+**RESOLVED: the "8215" is a PLANNING-LAYER RECORDING ERROR, not data loss.** Live
+`gsc_page_metrics` held **3419 before this commit and 3572 after** — the live table is
+authoritative. Phase 3's own verification confirmed rows-written == rows-fetched at the time,
+so no rows were dropped; the 8215 figure carried in the planning chat's state summary is simply
+wrong. Recorded so a future reader does NOT chase 4800 rows that were never missing.
+
+### FOLLOW-UP (still open, from v8 step 3)
+Persisting a dropped-unknown-game count into the `gsc_pull_log` row — `buildMetricRows` drops
+null-game rows loudly but the count is not yet in the log. Do it here in a later pass or when
+the query-level write path lands.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
