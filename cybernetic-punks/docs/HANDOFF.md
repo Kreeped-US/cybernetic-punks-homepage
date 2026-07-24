@@ -38,6 +38,44 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-24 — dmz_pois table + 3 constraints (operator-run this session, no git trail)
+
+Recorded per rule 2 (operator-run DDL, no commit to ride in). Verified via `pg_get_constraintdef`
+in the Supabase SQL editor, OpenAPI read-back, and behavioral probe. Table empty (0 rows) at record.
+
+**TABLE `dmz_pois` — 16 columns:**
+- `id` (bigint, PK)
+- **clone-pattern (6, all NOT NULL):** `game_slug`, `slug`, `name`, `description`, `verified`, `updated_at`
+- **POI-specific (9):** `poi_type` (NOT NULL), `landmass_slug` (NOT NULL), `map_slug` (NOT NULL),
+  `notable_features` (jsonb), `map_x` (numeric), `map_y` (numeric), `image_url`, `image_alt`, `verified_source`
+
+**`UNIQUE(game_slug, slug)`** — VERIFIED as `dmz_pois_game_slug_slug_key` via pg_get_constraintdef.
+**RLS** — operator-asserted-consistent-with-the-DMZ-entity-pattern; `pg_policies` NOT yet pulled, so
+this leg is **not independently verified** (recorded honestly as asserted, not confirmed).
+
+**CONSTRAINTS:**
+
+1. **`dmz_pois_image_alt_pairing_chk`** — `CHECK (image_url IS NULL OR image_alt IS NOT NULL)`.
+   VERIFIED **both** by behavioral probe (image_url set + null image_alt was rejected citing this
+   exact constraint) **and** by pg_get_constraintdef. → Templates, `<img>`, and JSON-LD may assume
+   alt-present-when-image-present with **NO fallback branch** — the guarantee is schema-enforced.
+
+2. **`dmz_pois_poi_type_chk`** — `CHECK (poi_type = ANY (ARRAY['city'::text, 'facility'::text, 'zone'::text]))`.
+   Value set is VERBATIM from pg_get_constraintdef. **FINDING:** `poi_type` originally shipped as
+   FREE TEXT with no check; this ALTER added the enum and validated existing rows, so its success
+   proves any inserted POIs conform. The value set was confirmed by **direct constraint definition,
+   not chat memory** — the PostgREST read-back exposed `poi_type` only as plain `text` (no enum) and
+   could not reach the CHECK values. Code constant `DMZ_POI_TYPES` does **not yet exist** in the repo
+   (grep: zero references); when created it must mirror **`['city', 'facility', 'zone']`** exactly, and
+   the two must be altered together.
+
+3. **`COMMENT ON COLUMN dmz_pois.notable_features`** — "Flat JSON array of strings (feature names);
+   no objects. Templates read with an Array.isArray guard." VERIFIED verbatim via OpenAPI. → This is
+   the contract that prevents the jsonb column drifting into ad-hoc object shapes; templates read the
+   value behind an `Array.isArray` guard.
+
+---
+
 ## 2026-07-23 — token/cost audit of the generation pipeline (read-only; prep for the roster reopening)
 
 ### THE FRAMING FINDING — there is no efficiency problem TODAY
