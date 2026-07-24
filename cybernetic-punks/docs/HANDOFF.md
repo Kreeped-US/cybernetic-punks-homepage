@@ -1817,6 +1817,74 @@ the candidate.
 
 ---
 
+## 2026-07-24 — gsc_query_metrics FULL backfill (951 rows) + the runner --query mode
+
+### THE RUNNER ADDITION — `scripts/gsc-pull.mjs --query`
+Additive: a `--query` flag switches the proven runner to the page+query dimension pair
+(`date+page+query` -> `buildQueryMetricRows` -> `upsertQueryMetrics`, on `(date,page_url,
+query)`), tags the `gsc_pull_log` row `consumer='query'`, and skips the feed_items slug load
+(the query builder needs no slug join). **Page mode's metric write is unchanged** — the
+default path still does `date+page` -> `gsc_page_metrics`, same proven write path, no second
+storage logic. The only page-mode change is its `gsc_pull_log` row now also carries
+`consumer='page'` + the drop count, matching what the cron's `runDailyGscPull` already writes
+(the ALTER that added those columns has run).
+
+### THE BACKFILL — rule-2 data change (operator-approved)
+`node scripts/gsc-pull.mjs --query --start 2026-02-01 --end 2026-07-21`
+**951 rows written == 951 fetched, 1 request, 1.2s.** Window `2026-02-01..2026-07-21`, not
+clamped (2026-02-01 is inside the 15-month roll window today). Prediction (from a dry-run:
+951 / 1 / ~1.5s) held exactly. game_slug non-null on all 951 (marathon=939, dmz=12),
+`dropped_unknown_game=0`, 84 distinct dates.
+
+### WHY THE FULL BACKFILL, NOT 28 DAYS
+The review list only aggregates the trailing 28 days, so the full history is not what makes
+the LIST work — but the asymmetry decides it anyway. **GSC's ~16-month window ROLLS**: history
+not captured now becomes permanently unrecoverable, while the trailing 28 days is always
+re-pullable. The marginal cost of the full pull over a 28-day pull was a few hundred rows and
+~1 second. So the full backfill is the only choice that loses nothing: it gives parity with
+the page-level baseline and the COMPLETE record for the doctrine's Gate-1 recalibration and
+query-shape trend analysis — its real payoff, downstream of the list.
+
+### EARLIEST DATE — 2026-03-08, three days AFTER page-level (NOT a gap)
+Query-level data begins 2026-03-08; the page-level baseline is 2026-03-05. This is
+**ATTRIBUTION LAG, not lost data**: page-level records a URL the moment it earns ANY
+impression, but the query dimension only attributes a row once a SPECIFIC query associates
+with that impression. So query history necessarily starts marginally later than raw page
+impressions. The 3-day offset is that lag; nothing is missing.
+
+### IDEMPOTENCE — by content, on the trailing slice
+Re-fetched + re-upserted the trailing 5-day slice (194 rows): `gsc_query_metrics` count
+**951 -> 951 (identical)**, and **ZERO content drift** across clicks/impressions/ctr/position/
+game_slug on the overlapping rows. The `(date,page_url,query)` unique constraint arbiters the
+upsert; the re-run updates in place, never duplicates. Same proof phase 3 used for the page
+table.
+
+### THE REVIEW LIST NOW RETURNS CANDIDATES
+Over the trailing 28-day window: **752 query rows -> Lane 1 (framing) = 2, Lane 2
+(weak-position) = 0** (was 0/0 before the backfill). The heavy filtering to 2 candidates is
+CORRECT, not a bug, for a low-traffic pre-launch site: most queries rank 1-10 (already fine),
+fall below the 5-impression floor, or hit the noindex / already-in-keyword_targets exclusions.
+A thin list is the honest output when there is little first-party demand yet.
+
+### THE MW3 FINDING — the human-in-the-loop boundary earning its keep on run one
+The top framing candidate is **"mw3 signal jammer" — 91 impressions, position 19.** That is a
+**Call of Duty MW3 query, not a Marathon one.** Mechanically it is a perfect framing candidate
+(a page competes at 11-30 for it); STRATEGICALLY it is wrong — reframing a Marathon page
+toward a CoD term is off-doctrine. **An automatic seeder would have turned this into a
+keyword_target.** This is exactly why v8 keeps the review NEVER-AUTOMATIC and a human deciding:
+on the FIRST real run the list surfaced real signal AND a candidate a human must decline. The
+lens-not-gate boundary paid for itself immediately.
+
+### FLAG FOR LATER (not now) — why does the site rank for an MW3 term at all?
+Worth understanding, not urgent. Possibly a legitimate DMZ-adjacent mention (DMZ is a CoD mode
+name too), possibly the same ACCIDENTAL-RELEVANCE shape as "running for streamers" on /rising
+(a page's tokens matching a query it cannot actually serve). **This is the SECOND instance of
+the site matching queries it structurally cannot serve.** One is a curiosity; a THIRD would be
+a pattern worth a dedicated look at what off-topic tokens the corpus leaks. Revisit if it
+recurs.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

@@ -21,7 +21,7 @@
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { fetchSearchAnalytics, daysAgo, FINAL_DATA_LAG_DAYS, GSC_SITE_URL } from '../lib/gsc/searchAnalytics.js';
-import { loadKnownSlugs, buildMetricRows, upsertPageMetrics, writePullLog } from '../lib/gsc/storage.js';
+import { loadKnownSlugs, buildMetricRows, upsertPageMetrics, buildQueryMetricRows, upsertQueryMetrics, writePullLog } from '../lib/gsc/storage.js';
 
 function loadEnvLocal() {
   var raw;
@@ -48,6 +48,7 @@ function arg(name, fallback) {
 function flag(name) { return process.argv.indexOf('--' + name) !== -1; }
 
 var DRY = flag('dry-run');
+var QUERY = flag('query'); // page+query pull into gsc_query_metrics (default: page into gsc_page_metrics)
 var dataState = arg('data-state', 'final');
 var days = parseInt(arg('days', '7'), 10);
 var endDate = arg('end', daysAgo(FINAL_DATA_LAG_DAYS));
@@ -123,15 +124,22 @@ console.log('dataState:  ' + dataState);
 console.log('chunks:     ' + wins.length + (chunkMonths ? ' (' + chunkMonths + '-month each)' : ' (single window)'));
 console.log('');
 
-var slugRes = await loadKnownSlugs(supabase);
-if (!slugRes.ok) {
-  console.error('FATAL: could not load feed_items slugs: ' + slugRes.error);
-  process.exit(1);
+// QUERY mode (--query) pulls the page+query dimension pair into gsc_query_metrics via the
+// same proven write path; PAGE mode (default) pulls date+page into gsc_page_metrics. The
+// query builder needs no feed_items slug set, so only load it in page mode.
+var slugRes = { ok: true, slugs: new Set() };
+if (!QUERY) {
+  slugRes = await loadKnownSlugs(supabase);
+  if (!slugRes.ok) {
+    console.error('FATAL: could not load feed_items slugs: ' + slugRes.error);
+    process.exit(1);
+  }
+  console.log('known feed_items slugs loaded: ' + slugRes.slugs.size);
 }
-console.log('known feed_items slugs loaded: ' + slugRes.slugs.size);
+console.log('mode:       ' + (QUERY ? 'QUERY (date+page+query -> gsc_query_metrics)' : 'PAGE (date+page -> gsc_page_metrics)'));
 console.log('');
 
-var totalFetched = 0, totalWritten = 0, totalRequests = 0;
+var totalFetched = 0, totalWritten = 0, totalRequests = 0, totalDropped = 0;
 var newestOverall = null, oldestOverall = null;
 var failure = null;
 
@@ -141,7 +149,7 @@ for (var w = 0; w < wins.length; w++) {
     startDate: win.start,
     endDate: win.end,
     dataState: dataState,
-    dimensions: ['date', 'page'],
+    dimensions: QUERY ? ['date', 'page', 'query'] : ['date', 'page'],
     rowLimit: 25000,
   });
 
@@ -156,8 +164,9 @@ for (var w = 0; w < wins.length; w++) {
   if (res.newestDateReturned && (!newestOverall || res.newestDateReturned > newestOverall)) newestOverall = res.newestDateReturned;
   if (res.oldestDateReturned && (!oldestOverall || res.oldestDateReturned < oldestOverall)) oldestOverall = res.oldestDateReturned;
 
-  var built = buildMetricRows(res.rows, slugRes.slugs, dataState);
+  var built = QUERY ? buildQueryMetricRows(res.rows) : buildMetricRows(res.rows, slugRes.slugs, dataState);
   var mapped = built.rows;
+  totalDropped += built.droppedUnknownGame;
 
   var line = '  ' + win.start + '..' + win.end +
     '  fetched=' + res.rowCount +
@@ -168,7 +177,7 @@ for (var w = 0; w < wins.length; w++) {
   if (DRY) {
     console.log(line + '  (dry run -- not written)');
   } else {
-    var up = await upsertPageMetrics(supabase, mapped);
+    var up = QUERY ? await upsertQueryMetrics(supabase, mapped) : await upsertPageMetrics(supabase, mapped);
     if (!up.ok) {
       failure = up.error;
       console.error(line + '  UPSERT FAILED: ' + up.error);
@@ -180,9 +189,10 @@ for (var w = 0; w < wins.length; w++) {
 }
 
 // ONE pull-log row per run, on EVERY path including failure -- absence must stay
-// distinguishable from zero.
+// distinguishable from zero. consumer tags which pull this was (page vs query).
 if (!DRY) {
   await writePullLog(supabase, {
+    consumer: QUERY ? 'query' : 'page',
     windowStart: startDate,
     windowEnd: endDate,
     rowsFetched: totalFetched,
@@ -190,6 +200,7 @@ if (!DRY) {
     dataState: dataState,
     status: failure ? 'error' : 'ok',
     error: failure,
+    droppedUnknownGame: totalDropped,
     startedAt: startedAt,
   });
 }
@@ -198,6 +209,7 @@ console.log('');
 console.log('--- SUMMARY ---');
 console.log('  rows fetched:          ' + totalFetched);
 console.log('  rows written:          ' + (DRY ? '(dry run)' : totalWritten));
+console.log('  dropped_unknown_game:  ' + totalDropped);
 console.log('  requests made:         ' + totalRequests);
 console.log('  date range returned:   ' + (oldestOverall || '(none)') + ' .. ' + (newestOverall || '(none)'));
 console.log('  newest_date_returned:  ' + (newestOverall || '(none)'));
