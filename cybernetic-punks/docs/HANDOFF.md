@@ -38,6 +38,31 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-24 — DMZ POI provenance bound to verified_source (drop stale Bungie literal)
+
+Fixes a display/DB contradiction on `/dmz/pois/[slug]`: the visible UNCONFIRMED banner rendered a
+HARDCODED `entity.provisionalNote` literal that still said "Bungie's pre-launch Deep Dive" (written
+in `97a1add` under the original assumption), while `dmz_pois.verified_source` had been corrected to
+"Reported by Windows Central, June 2026" in `0942d6e`. The page showed one source, the DB another;
+the visible one was the stale, wrong one. Code-only fix, `/dmz/pois/[slug]` surface — NO DB change
+(verified_source was already correct on all 9 rows).
+
+- **provisionalNote literal REMOVED** from the `pois` config (`lib/dmz/entities.js`). It was read in
+  exactly one place (`DmzEntityDetail.js`); the only other repo mentions are prior HANDOFF entries
+  (historical records of the commits that added it, left as-is).
+- **Banner (unconfirmed state) now binds to `row.verified_source`** — single source of truth. Renders
+  `UNCONFIRMED: <verified_source>. Not yet verified in the live game; details are provisional and may
+  change.` If `verified_source` is null, the static tail alone renders (fail-closed -- no invented
+  source).
+- **Badge (confirmed state): dead `row.patch_verified` read REMOVED** (never a column on `dmz_pois`;
+  always undefined). The patch is now parsed from `verified_source`: `game-verified@<patch>` ->
+  `Verified in-game (patch <patch>)`. So the launch flip (`verified_source='game-verified@<patch>'`)
+  surfaces the patch in the badge automatically, with NO schema change.
+- Net: both provenance states (unconfirmed banner + confirmed badge) now read from the SAME column,
+  `verified_source`. No hardcoded source string remains on the DMZ POI surface.
+
+---
+
 ## 2026-07-24 — DMZ POI <-> Hajin regions cross-links (both spokes)
 
 Hub-and-spoke internal linking between the POI vertical and the Hajin map/geography article. The

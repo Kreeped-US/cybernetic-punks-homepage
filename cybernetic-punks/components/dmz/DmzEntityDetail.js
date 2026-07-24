@@ -17,6 +17,11 @@ export default function DmzEntityDetail({ entity, row, siblings }) {
   var facts = entity.facts(row);
   var pageUrl = 'https://cyberneticpunks.com' + entity.routeBase + '/' + row.slug;
   var confirmed = row.verified === true;
+  // Patch label parsed from verified_source when a launch flip stamps it as
+  // 'game-verified@<patch>' (no schema column -- verified_source is the one source).
+  var vpatch = (row.verified_source && row.verified_source.indexOf('game-verified@') === 0)
+    ? row.verified_source.slice('game-verified@'.length)
+    : null;
 
   // ---- JSON-LD (real values only) ----
   var breadcrumb = {
@@ -82,20 +87,23 @@ export default function DmzEntityDetail({ entity, row, siblings }) {
           {row.name}
         </h1>
 
-        {/* HONESTY GATE: unconfirmed banner for unverified rows. */}
+        {/* HONESTY GATE: unconfirmed banner for unverified rows. Provenance is the
+            DB row's verified_source (single source of truth) followed by a static
+            provisional tail; if verified_source is null, the tail alone renders
+            (fail-closed -- no invented source). */}
         {!confirmed && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.35)', borderRadius: 3, padding: '10px 14px', marginBottom: 18 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffb400', flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
               <strong style={{ color: '#ffb400', letterSpacing: 1, fontSize: 11 }}>UNCONFIRMED</strong>
-              {' '}{entity.provisionalNote || 'Not yet verified in-game. Details below are provisional and may change. We do not present them as confirmed.'}
+              {': '}{row.verified_source ? row.verified_source + '. ' : ''}Not yet verified in the live game; details are provisional and may change.
             </span>
           </div>
         )}
         {confirmed && row.verified_source && (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px', marginBottom: 18 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
-            Verified in-game{row.patch_verified ? ' - ' + row.patch_verified : ''}
+            {'Verified in-game' + (vpatch ? ' (patch ' + vpatch + ')' : '')}
           </div>
         )}
 

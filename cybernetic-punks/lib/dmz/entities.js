@@ -117,10 +117,6 @@ export const DMZ_ENTITIES = {
         + (r.poi_type ? ' (' + r.poi_type + ')' : '')
         + ': location, notable features, and how it fits the map.';
     },
-    // Provisional-source line shown in the UNCONFIRMED banner while verified=false
-    // (the shared DmzEntityDetail falls back to its generic text when this is absent,
-    // so keys/missions/items are unchanged). Promotion to verified=true removes it.
-    provisionalNote: 'Provisional: sourced from Bungie\'s pre-launch Deep Dive, not yet verified in the live game.',
     // Cross-link every POI page back to the Hajin map/geography article (spoke 1 of
     // the POI<->regions hub-and-spoke). POI-only via this config field, so
     // keys/missions/items are unaffected. All nine POIs are in Hajin, so it applies
