@@ -127,8 +127,13 @@ export async function loadKnownSlugs(supabase) {
 // date+page dimension pair. fetched_at is set EXPLICITLY: the column default only
 // applies on INSERT, so without this a re-fetched row would keep its original
 // timestamp and the trailing window would look stale.
+// Returns { rows, droppedUnknownGame }. The drop count is the step-3 follow-up: a
+// null-game row is DROPPED here (logged loudly by gameSlugForUrl) so one unknown URL
+// cannot fail a NOT NULL batch -- but a SILENT drop is the absence-vs-zero problem the
+// pull log exists to solve, so the caller persists this count into gsc_pull_log.
 export function buildMetricRows(gscRows, knownSlugs, dataState) {
   const out = [];
+  let droppedUnknownGame = 0;
   const now = new Date().toISOString();
   for (let i = 0; i < gscRows.length; i++) {
     const r = gscRows[i];
@@ -140,7 +145,7 @@ export function buildMetricRows(gscRows, knownSlugs, dataState) {
     // the row rather than write a null into the NOT NULL game_slug column -- a single
     // unknown URL must not fail the whole batch, and must never be a default game.
     const gameSlug = gameSlugForUrl(pageUrl);
-    if (!gameSlug) continue;
+    if (!gameSlug) { droppedUnknownGame += 1; continue; }
     const cand = slugCandidate(pageUrl);
     out.push({
       date,
@@ -155,7 +160,39 @@ export function buildMetricRows(gscRows, knownSlugs, dataState) {
       fetched_at: now,
     });
   }
-  return out;
+  return { rows: out, droppedUnknownGame };
+}
+
+// ── QUERY-LEVEL ROW BUILDER (Consumer B, page+query dimension pair) ──────────
+// gscRows keys are [date, page, query]. gsc_query_metrics has NO slug/data_state
+// column (query rows do not join feed_items). Same C4 null-game drop as the page
+// builder. Returns { rows, droppedUnknownGame }.
+export function buildQueryMetricRows(gscRows) {
+  const out = [];
+  let droppedUnknownGame = 0;
+  const now = new Date().toISOString();
+  for (let i = 0; i < gscRows.length; i++) {
+    const r = gscRows[i];
+    const keys = r.keys || [];
+    const date = keys[0];
+    const pageUrl = keys[1];
+    const query = keys[2];
+    if (!date || !pageUrl || !query) continue; // all three key the row
+    const gameSlug = gameSlugForUrl(pageUrl);
+    if (!gameSlug) { droppedUnknownGame += 1; continue; }
+    out.push({
+      date,
+      page_url: pageUrl,
+      query,
+      game_slug: gameSlug,
+      clicks: r.clicks || 0,
+      impressions: r.impressions || 0,
+      ctr: r.ctr == null ? null : r.ctr,
+      position: r.position == null ? null : r.position,
+      fetched_at: now,
+    });
+  }
+  return { rows: out, droppedUnknownGame };
 }
 
 // ── UPSERT ───────────────────────────────────────────────────────────────────
@@ -185,15 +222,40 @@ export async function upsertPageMetrics(supabase, rows) {
   }
 }
 
+// Query-level upsert, arbitered on the (date, page_url, query) unique constraint (C2).
+export async function upsertQueryMetrics(supabase, rows) {
+  let written = 0;
+  try {
+    for (let i = 0; i < rows.length; i += UPSERT_BATCH) {
+      const batch = rows.slice(i, i + UPSERT_BATCH);
+      const { error } = await supabase
+        .from('gsc_query_metrics')
+        .upsert(batch, { onConflict: 'date,page_url,query' });
+      if (error) {
+        return { ok: false, written, error: error.message, failedAtBatch: i / UPSERT_BATCH };
+      }
+      written += batch.length;
+    }
+    return { ok: true, written };
+  } catch (err) {
+    return { ok: false, written, error: (err && err.message) || String(err) };
+  }
+}
+
 // ── PULL LOG ─────────────────────────────────────────────────────────────────
 // ONE row per run, on EVERY path including failure. This is what keeps ABSENCE
 // distinguishable from ZERO: gsc_page_metrics is naturally sparse, so a page missing on a
 // date means "zero impressions" ONLY IF THE PULL RAN. Without this row, a skipped pull and
 // a genuinely quiet day are the same shape -- the same ambiguity `store=UNREACHABLE` vs
 // `no_match` exists to resolve. Every consumer MUST read this alongside the metrics.
+// consumer ('page' | 'query') distinguishes the two pulls that share this log -- both
+// write identical trailing-window shapes, so the column is the only reliable
+// discriminator. dropped_unknown_game persists the C4 drop count (step-3 follow-up).
+// Both are added to the payload ONLY when provided, so a caller that omits them still
+// writes cleanly; the two columns are an operator ALTER (recorded in HANDOFF, rule 2).
 export async function writePullLog(supabase, entry) {
   try {
-    const { error } = await supabase.from('gsc_pull_log').insert({
+    const payload = {
       window_start: entry.windowStart || null,
       window_end: entry.windowEnd || null,
       rows_fetched: typeof entry.rowsFetched === 'number' ? entry.rowsFetched : null,
@@ -202,7 +264,10 @@ export async function writePullLog(supabase, entry) {
       status: entry.status || 'ok',
       error: entry.error ? String(entry.error).slice(0, 500) : null,
       started_at: entry.startedAt || new Date().toISOString(),
-    });
+    };
+    if (entry.consumer !== undefined) payload.consumer = entry.consumer;
+    if (typeof entry.droppedUnknownGame === 'number') payload.dropped_unknown_game = entry.droppedUnknownGame;
+    const { error } = await supabase.from('gsc_pull_log').insert(payload);
     if (error) {
       console.log('[gsc_pull_log] insert failed (non-fatal): ' + error.message);
       return { ok: false, error: error.message };

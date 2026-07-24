@@ -1624,6 +1624,91 @@ the query-level write path lands.
 
 ---
 
+## 2026-07-24 — GSC v8 step 4: query-level pull + Consumer B write path
+
+Adds the page+query pull to the cron, feeding `gsc_query_metrics`. It rides the same
+established pattern as the page-level pull (`33569da` / `4c3a8c3`): a `runQueryGscPull`
+orchestrator composing the proven storage primitives, placed in the cron's end-of-run tail
+OUTSIDE the freeze branch, LATE, fail-open, self-healing via the trailing window. **NOTHING
+here enters a prompt** — it feeds the keyword review surface, not the editor (lens-not-gate).
+
+### DIMENSIONS — page+query as a PAIR (C1), ONE pull
+Confirmed against PART 2: a single `['date','page','query']` pull, not a query-only pull.
+C1 established GSC returns only pairs where the site's URLs actually appeared, so a
+query-alone pull cannot surface unserved demand. **Lane 2 (weak-position, `MIN(position) >
+30`) is a VIEW over these rows, built later — no separate pull.** This commit is the WRITE
+path; the two-lane review list is the downstream read layer.
+
+### E1 — ROW MAGNITUDE: the surprise is that query-level is SMALLER, not larger
+Measured a real 5-day pull: **194 query rows vs 794 page rows for the same window (~0.2×)**,
+one request, 0.44s. The brief expected an order of magnitude MORE; the opposite holds, and
+C1 explains it — GSC only returns page+query pairs the site actually appeared for, and on a
+low-traffic pre-launch site that is few. **194 << 100k, so daily cadence stands
+unambiguously.** If traffic grows post-launch this is the number to re-watch, but there is
+no cadence question today.
+
+### game_slug, DROP COUNT, IDEMPOTENCE
+- Every mapped row has a non-null `game_slug` (188 marathon + 6 dmz); computed at write time
+  via `gameSlugForUrl` (C4). Unknown-prefix rows are DROPPED, same as the page builder.
+- **`dropped_unknown_game` = 0 today** — persisted into `gsc_pull_log` (the step-3 follow-up,
+  now due). A silent drop was exactly the absence-vs-zero problem the log exists to solve;
+  it now has a home and reads zero.
+- IDEMPOTENCE proven at the CONTENT level (not just count): upsert on `(date, page_url,
+  query)` (C2), run twice → row count stable (194→194) and 0 content drift across
+  clicks/impressions/ctr/position/game_slug.
+
+### DISTINGUISHING THE TWO PULLS — a `consumer` column
+Both pulls write identical trailing-window shapes to the SAME `gsc_pull_log`, so window
+shape cannot discriminate them. Added a **`consumer` column ('page' | 'query')** — the only
+reliable discriminator. Reconciliation cadence is now per-consumer (page and query reconcile
+independently, scoped by `consumer`).
+
+### DDL — operator-run, no git trail (rule 2). RAN BEFORE THIS DEPLOY.
+
+    ALTER TABLE gsc_pull_log ADD COLUMN consumer text;
+    ALTER TABLE gsc_pull_log ADD COLUMN dropped_unknown_game integer;
+    UPDATE gsc_pull_log SET consumer = 'page' WHERE consumer IS NULL;  -- all prior rows were page pulls
+
+**CONFIRMED: the ALTER ran before this commit deployed.** Verified against the live prod
+database — both columns are queryable, and all 6 pre-existing `gsc_pull_log` rows read
+`consumer = 'page'` with 0 null (an earlier check, taken before the operator ran it, found
+the columns absent and this entry was NOT committed until they were present — the record
+reflects the true order). A live `writePullLog(consumer='query', dropped_unknown_game=0)`
+then persisted and read back correctly; the synthetic test row was deleted.
+
+**Deploy ordering matters** (verified): pre-ALTER, `writePullLog` with `consumer` failed
+NON-FATALLY — the pull still upserts its metrics, but its `gsc_pull_log` row would not persist
+and `reconciliationDue` would fall back to a daily window. Running the ALTER first — as was
+done — avoids that dark-log window entirely. `writePullLog` includes the two columns only when
+provided, so even the failure mode is contained, not a crash.
+
+### VERIFICATION (against the live tables; write artifacts then cleaned)
+- Real query fetch: 194 rows / 0.44s / one request; E1 well under threshold.
+- game_slug non-null on all 194; drop count 0.
+- Idempotence: 194→194, 0 content drift.
+- `writePullLog` base columns write cleanly; `consumer`+`dropped` correctly report "needs
+  ALTER" pre-migration (non-fatal).
+- Forced failure (broken key): `runQueryGscPull` returned `{ok:false}`, did NOT throw. The
+  missing-column AND broken-key paths BOTH failed non-fatally — fail-open proven twice.
+- ESLint 0, next build exit 0.
+- **Cleanup:** the 194 verification-written `gsc_query_metrics` rows and one synthetic
+  `gsc_pull_log` test row were DELETED, leaving `gsc_query_metrics` empty and `gsc_pull_log`
+  at 6 with zero error rows — so the first LOGGED collection is the first post-deploy cron,
+  not an unlogged verification artifact.
+
+### DEPLOY NOTE
+Same as page-level phase 4: the production GSC env vars and this code go live on the NEXT
+DEPLOY, so the first query-level collection is the next daily cron AFTER the ALTER + deploy.
+Surfaced in the cron response as a new `gsc_query:` field alongside `gsc:`.
+
+### buildMetricRows RETURN SHAPE CHANGED
+`buildMetricRows` now returns `{ rows, droppedUnknownGame }` (was a bare array) so the page
+pull can persist ITS drop count too (the step-3 follow-up applied to both pulls). Callers
+updated: `runDailyGscPull` and `scripts/gsc-pull.mjs`. The page pull's `gsc_pull_log` row now
+also carries `consumer='page'` and its drop count.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is

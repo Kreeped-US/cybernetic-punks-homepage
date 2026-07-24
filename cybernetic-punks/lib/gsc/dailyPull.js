@@ -14,7 +14,7 @@
 // so absence stays distinguishable from zero.
 
 import { fetchSearchAnalytics, daysAgo, FINAL_DATA_LAG_DAYS } from './searchAnalytics.js';
-import { loadKnownSlugs, buildMetricRows, upsertPageMetrics, writePullLog } from './storage.js';
+import { loadKnownSlugs, buildMetricRows, upsertPageMetrics, buildQueryMetricRows, upsertQueryMetrics, writePullLog } from './storage.js';
 
 const DAILY_WINDOW_DAYS = 5;        // trailing ~5 days -- the daily catch-up window
 const RECONCILE_WINDOW_DAYS = 35;   // ~35-day monthly reconciliation
@@ -30,12 +30,13 @@ function daysBetween(aIso, bIso) {
 // skips a whole month if the cron happens to miss that one day. Instead: look at
 // gsc_pull_log for the most recent RECONCILIATION (a row whose window span is wide), and
 // run one if none has happened in RECONCILE_EVERY_DAYS. This self-heals a missed day.
-async function reconciliationDue(supabase) {
+async function reconciliationDue(supabase, consumer) {
   try {
     const { data, error } = await supabase
       .from('gsc_pull_log')
-      .select('window_start, window_end, started_at, status')
+      .select('window_start, window_end, started_at, status, consumer')
       .eq('status', 'ok')
+      .eq('consumer', consumer) // per-consumer cadence: page and query reconcile independently
       .order('started_at', { ascending: false })
       .limit(120);
     if (error) {
@@ -89,7 +90,7 @@ export async function runDailyGscPull(supabase) {
   let isReconciliation = false;
 
   try {
-    if (await reconciliationDue(supabase)) {
+    if (await reconciliationDue(supabase, 'page')) {
       windowDays = RECONCILE_WINDOW_DAYS;
       isReconciliation = true;
     }
@@ -98,7 +99,7 @@ export async function runDailyGscPull(supabase) {
     const slugRes = await loadKnownSlugs(supabase);
     if (!slugRes.ok) {
       await writePullLog(supabase, {
-        windowStart: startDate, windowEnd: endDate, rowsFetched: 0,
+        consumer: 'page', windowStart: startDate, windowEnd: endDate, rowsFetched: 0,
         newestDateReturned: null, dataState: 'final', status: 'error',
         error: 'loadKnownSlugs: ' + slugRes.error, startedAt,
       });
@@ -113,7 +114,7 @@ export async function runDailyGscPull(supabase) {
 
     if (!res.ok) {
       await writePullLog(supabase, {
-        windowStart: startDate, windowEnd: endDate, rowsFetched: 0,
+        consumer: 'page', windowStart: startDate, windowEnd: endDate, rowsFetched: 0,
         newestDateReturned: null, dataState: 'final', status: 'error',
         error: res.error, startedAt,
       });
@@ -121,15 +122,17 @@ export async function runDailyGscPull(supabase) {
       return { ok: false, reason: 'fetch', rowsWritten: 0, isReconciliation };
     }
 
-    const mapped = buildMetricRows(res.rows, slugRes.slugs, 'final');
-    const up = await upsertPageMetrics(supabase, mapped);
+    const built = buildMetricRows(res.rows, slugRes.slugs, 'final');
+    const up = await upsertPageMetrics(supabase, built.rows);
 
-    // One pull_log row, regardless of upsert outcome -- absence vs zero.
+    // One pull_log row, regardless of upsert outcome -- absence vs zero. The C4 drop
+    // count is persisted here so a silent drop cannot hide (step-3 follow-up).
     await writePullLog(supabase, {
-      windowStart: startDate, windowEnd: endDate,
+      consumer: 'page', windowStart: startDate, windowEnd: endDate,
       rowsFetched: res.rowCount, newestDateReturned: res.newestDateReturned,
       dataState: 'final', status: up.ok ? 'ok' : 'error',
-      error: up.ok ? null : ('upsert: ' + up.error), startedAt,
+      error: up.ok ? null : ('upsert: ' + up.error),
+      droppedUnknownGame: built.droppedUnknownGame, startedAt,
     });
 
     const stalled = checkStall(res.newestDateReturned, endDate);
@@ -141,9 +144,11 @@ export async function runDailyGscPull(supabase) {
 
     console.log('[gsc] daily pull ok: ' + (isReconciliation ? 'RECONCILIATION ' : '') +
       startDate + '..' + endDate + '  fetched=' + res.rowCount + ' written=' + up.written +
-      ' newest=' + res.newestDateReturned + ' requests=' + res.pagesFetched);
+      ' dropped=' + built.droppedUnknownGame + ' newest=' + res.newestDateReturned +
+      ' requests=' + res.pagesFetched);
     return {
       ok: true, isReconciliation, rowsFetched: res.rowCount, rowsWritten: up.written,
+      droppedUnknownGame: built.droppedUnknownGame,
       newestDateReturned: res.newestDateReturned, windowStart: startDate, windowEnd: endDate,
       stalled,
     };
@@ -151,12 +156,86 @@ export async function runDailyGscPull(supabase) {
     // Last-resort net: NEVER let this throw into the cron. Record what we can.
     try {
       await writePullLog(supabase, {
-        windowStart: daysAgo(FINAL_DATA_LAG_DAYS + windowDays), windowEnd: endDate,
+        consumer: 'page', windowStart: daysAgo(FINAL_DATA_LAG_DAYS + windowDays), windowEnd: endDate,
         rowsFetched: 0, newestDateReturned: null, dataState: 'final',
         status: 'error', error: 'unexpected: ' + (err && err.message), startedAt,
       });
     } catch (e2) { /* even the log failed; the console line below is the last word */ }
     console.error('[gsc] daily pull threw (contained, generation unaffected): ' + (err && err.message));
+    return { ok: false, reason: 'threw', rowsWritten: 0, isReconciliation };
+  }
+}
+
+// ── QUERY-LEVEL PULL (Consumer B, v8 step 4) ─────────────────────────────────
+// Mirrors runDailyGscPull with the page+query dimension pair. Same trailing window and
+// dataState, upsert arbitered on (date, page_url, query). Writes gsc_query_metrics and one
+// gsc_pull_log row tagged consumer='query'. Never throws. NOTHING here enters a prompt --
+// this feeds the review surface, not the editor (the lens-not-gate boundary).
+export async function runQueryGscPull(supabase) {
+  const startedAt = new Date().toISOString();
+  const endDate = daysAgo(FINAL_DATA_LAG_DAYS);
+  let windowDays = DAILY_WINDOW_DAYS;
+  let isReconciliation = false;
+
+  try {
+    if (await reconciliationDue(supabase, 'query')) {
+      windowDays = RECONCILE_WINDOW_DAYS;
+      isReconciliation = true;
+    }
+    const startDate = daysAgo(FINAL_DATA_LAG_DAYS + windowDays);
+
+    const res = await fetchSearchAnalytics({
+      startDate, endDate, dataState: 'final',
+      dimensions: ['date', 'page', 'query'], rowLimit: 25000,
+    });
+
+    if (!res.ok) {
+      await writePullLog(supabase, {
+        consumer: 'query', windowStart: startDate, windowEnd: endDate, rowsFetched: 0,
+        newestDateReturned: null, dataState: 'final', status: 'error',
+        error: res.error, startedAt,
+      });
+      console.error('[gsc] query pull FAILED (fetch): ' + res.error);
+      return { ok: false, reason: 'fetch', rowsWritten: 0, isReconciliation };
+    }
+
+    const built = buildQueryMetricRows(res.rows);
+    const up = await upsertQueryMetrics(supabase, built.rows);
+
+    await writePullLog(supabase, {
+      consumer: 'query', windowStart: startDate, windowEnd: endDate,
+      rowsFetched: res.rowCount, newestDateReturned: res.newestDateReturned,
+      dataState: 'final', status: up.ok ? 'ok' : 'error',
+      error: up.ok ? null : ('upsert: ' + up.error),
+      droppedUnknownGame: built.droppedUnknownGame, startedAt,
+    });
+
+    const stalled = checkStall(res.newestDateReturned, endDate);
+
+    if (!up.ok) {
+      console.error('[gsc] query pull FAILED (upsert): ' + up.error);
+      return { ok: false, reason: 'upsert', rowsWritten: up.written, isReconciliation, stalled };
+    }
+
+    console.log('[gsc] query pull ok: ' + (isReconciliation ? 'RECONCILIATION ' : '') +
+      startDate + '..' + endDate + '  fetched=' + res.rowCount + ' written=' + up.written +
+      ' dropped=' + built.droppedUnknownGame + ' newest=' + res.newestDateReturned +
+      ' requests=' + res.pagesFetched);
+    return {
+      ok: true, isReconciliation, rowsFetched: res.rowCount, rowsWritten: up.written,
+      droppedUnknownGame: built.droppedUnknownGame,
+      newestDateReturned: res.newestDateReturned, windowStart: startDate, windowEnd: endDate,
+      stalled,
+    };
+  } catch (err) {
+    try {
+      await writePullLog(supabase, {
+        consumer: 'query', windowStart: daysAgo(FINAL_DATA_LAG_DAYS + windowDays), windowEnd: endDate,
+        rowsFetched: 0, newestDateReturned: null, dataState: 'final',
+        status: 'error', error: 'unexpected: ' + (err && err.message), startedAt,
+      });
+    } catch (e2) { /* even the log failed */ }
+    console.error('[gsc] query pull threw (contained, generation unaffected): ' + (err && err.message));
     return { ok: false, reason: 'threw', rowsWritten: 0, isReconciliation };
   }
 }

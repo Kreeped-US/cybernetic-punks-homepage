@@ -2,7 +2,7 @@ import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/e
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { recordCronRun } from '@/lib/cronRunLog';
-import { runDailyGscPull } from '@/lib/gsc/dailyPull';
+import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
@@ -1291,6 +1291,16 @@ export async function GET(req) {
       console.error('[gsc] daily pull dispatch error (contained, non-fatal): ' + gscErr.message);
     }
 
+    // GSC QUERY-LEVEL PULL (Consumer B, v8 step 4). Same placement rationale as the
+    // page pull -- outside the freeze branch, late, fail-open, self-healing. Feeds the
+    // keyword review surface, NOT the editor (nothing here enters a prompt).
+    var gscQueryPull = null;
+    try {
+      gscQueryPull = await runQueryGscPull(supabase);
+    } catch (gscErr) {
+      console.error('[gsc] query pull dispatch error (contained, non-fatal): ' + gscErr.message);
+    }
+
     return Response.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -1303,6 +1313,12 @@ export async function GET(req) {
             ? (gscPull.isReconciliation ? 'reconcile ' : '') + 'ok: ' + gscPull.rowsWritten +
               ' rows, newest ' + gscPull.newestDateReturned + (gscPull.stalled ? ' [STALL]' : '')
             : 'error: ' + gscPull.reason)
+        : 'dispatch-error',
+      gsc_query: gscQueryPull
+        ? (gscQueryPull.ok
+            ? (gscQueryPull.isReconciliation ? 'reconcile ' : '') + 'ok: ' + gscQueryPull.rowsWritten +
+              ' rows, newest ' + gscQueryPull.newestDateReturned + (gscQueryPull.stalled ? ' [STALL]' : '')
+            : 'error: ' + gscQueryPull.reason)
         : 'dispatch-error',
       directives_consumed: directivesUsed,
       patch_detected: hasPatch,

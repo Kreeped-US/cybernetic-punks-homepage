@@ -156,12 +156,14 @@ for (var w = 0; w < wins.length; w++) {
   if (res.newestDateReturned && (!newestOverall || res.newestDateReturned > newestOverall)) newestOverall = res.newestDateReturned;
   if (res.oldestDateReturned && (!oldestOverall || res.oldestDateReturned < oldestOverall)) oldestOverall = res.oldestDateReturned;
 
-  var mapped = buildMetricRows(res.rows, slugRes.slugs, dataState);
+  var built = buildMetricRows(res.rows, slugRes.slugs, dataState);
+  var mapped = built.rows;
 
   var line = '  ' + win.start + '..' + win.end +
     '  fetched=' + res.rowCount +
     ' requests=' + res.pagesFetched +
-    ' mapped=' + mapped.length;
+    ' mapped=' + mapped.length +
+    ' dropped=' + built.droppedUnknownGame;
 
   if (DRY) {
     console.log(line + '  (dry run -- not written)');
