@@ -1410,6 +1410,55 @@ rely on a NEW cohort being stamped automatically.
 
 ---
 
+## 2026-07-24 — GSC query-level consumer: canonical v8 build document committed (build step 0)
+
+### WHAT LANDED
+`docs/gsc-editors-v8-canonical.md` (399 lines, 20,618 bytes) — the single canonical source
+for the GSC **query-level** consumer (Consumer B) build, plus the `noindex`/`noindexed_at`
+stamping trigger that closes gap (a). Committing it IS build step 0, per the document's own
+E3 amendment: the canonical file must be in the repo before any DDL runs.
+
+This is distinct from `docs/gsc-integration-build-plan-v5.md`, which is the Consumer A
+(page-level) plan phases 2–3 were built from. Both now coexist in `docs/`; v8 covers the
+query-level consumer and the trigger, v5 the page-level pull. Neither supersedes the other.
+
+### WHAT IT COVERS (by section, verified present at commit)
+- **Corrections ledger C1–C4** (operator-confirmed 2026-07-24, not re-openable without new
+  evidence): C1 Lane 2's premise was unobservable; C2 the COALESCE index would have broken
+  the upsert; C3 the doctrine DOES have a first-party position; C4 the prefix rule was a
+  silently-wrong two-game literal.
+- **Execution amendments E1–E3**: E1 row-magnitude gets a threshold not just a measurement;
+  E2 the lane label must say `weak-position` in the UI (never `page-gap`); E3 step 0 — commit
+  this file before any build step.
+- **PART 1** the stamping trigger + pairing CHECK (build first). **PART 2** Consumer B.
+  **PART 3** document the consumers. Plus doctrine position, multi-game readiness, risks,
+  build order, deferred-with-owners, review status CLOSED.
+
+### BUILD ORDER
+- **Step 0 — DONE** (this commit): canonical file in the repo.
+- **Steps 1–2 — operator DDL, no git trail** (record per rule 2 in the commit that follows):
+  step 1 the `feed_items` stamping trigger + pairing CHECK; step 2 `gsc_query_metrics`.
+- The trigger is also the full close of **gap (a)** (inline stamping on prune) — the piece the
+  prior `d11298e` commit deferred as operator-run DDL. Its INSERT branch enforces the pairing
+  in BOTH directions at birth, and a declarative CHECK makes the contradictory state
+  unrepresentable, including the one edge the trigger cannot see (a manual null of
+  `noindexed_at` on a still-pruned row). The 153 are stamped, so the CHECK adds clean.
+
+### THE FAILURE MODE THIS DOCUMENT EXISTS TO PREVENT
+Versions 3–6 were each regenerated from the planning chat's OWN previous draft rather than
+from the external reviewer's corrected version. External corrections survived only if
+consciously transcribed — so **four confirmed corrections were dropped three times**, and one
+("no doctrine position exists") was laundered into a review ledger as a settled finding. v7
+established the canonical lineage; v8 amends it DIRECTLY (E1–E3) rather than regenerating.
+The rule the file states about itself: **the planning chat reviews this file as a READER and
+does not regenerate it.** Committing it to `docs/` is what makes that enforceable — a repo
+file has one state, not one-per-regeneration.
+
+Only one `gsc-editors-*.md` exists in `docs/` — no superseded drafts were placed alongside it,
+so the in-repo hazard the document guards against is not present.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
