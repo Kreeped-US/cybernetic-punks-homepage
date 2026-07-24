@@ -2084,12 +2084,12 @@ DEMAND is real, the ENTITIES are not. **A pre-launch keys canonical can therefor
 hub about the key SYSTEM (how keys work, tiers, acquisition), never a per-key reference** — and
 the demand map should target it that way, not as [key] × N.
 
-### COUNT INCONSISTENCY — UNRESOLVED, needs operator verification
-The HANDOFF DMZ scoping entry says **"5 named POIs" then lists 7** (Fallout reactor, Prison,
-Hajin City, Military Base, casino/vault, Hunt Towers, eastern fallout zone). Before the demand
-map instantiates `[POI] guide` against either count, **the operator must verify the POI list
-against the actual June Deep Dive post — Claude Code cannot read the external blog.** Treat
-neither 5 nor 7 as authoritative until then.
+### COUNT INCONSISTENCY — RESOLVED 2026-07-24 (both counts were wrong)
+The scoping entry said **"5 named POIs" then listed 7**; both were wrong — the operator
+verified against the Deep Dive and the count is **NINE**. See the later entry
+"DMZ POI list CORRECTED" for the authoritative list (Hospital, Farmlands, Broadcast were
+missing entirely; "Hunt Towers" and "eastern fallout zone" are dropped). Do not act on the
+5-or-7 figures above.
 
 ### DDL — operator-run, no git trail (rule 2)
 The **`keyword_targets` UNIQUE index on `(game_slug, lower(trim(keyword)))`** was run by the
@@ -2098,6 +2098,65 @@ duplicate of an existing keyword was rejected by `keyword_targets_game_keyword_n
 proving the case/space-normalized form is live. This is the defense-in-depth behind the review
 panel's refresh-key fix (`5f20cc2`): duplicate keyword_targets rows are now unrepresentable at
 the DB level, matching how the exclusion join already treats keyword-per-game as unique.
+
+---
+
+## 2026-07-24 — DMZ POI list CORRECTED (operator-verified against the Deep Dive)
+
+Supersedes BOTH prior counts. The scoping entry said "5 named POIs" then listed 7; the
+brief-commit entry carried that 5-vs-7 as unresolved. **Both were wrong.** The verified count
+is **NINE.** Root cause: the earlier lists were transcribed from the ARTICLES, not the blog —
+a transcription of a transcription, which is exactly how the count drifted and how three POIs
+were dropped.
+
+### THE VERIFIED NINE POIs (authoritative)
+1. **Hajin City**
+2. **Casino**
+3. **Fallout** (irradiated reactor zone)
+4. **Hospital**   ← was MISSING entirely from prior lists
+5. **Military Base**
+6. **Farmlands**  ← was MISSING entirely
+7. **Prison**
+8. **Broadcast**  ← was MISSING entirely
+9. **Town / Dead Town**  ← naming ambiguity, see OPEN below
+
+**Three POIs were absent from every prior list: Hospital, Farmlands, Broadcast.** These are new
+[POI] guide inputs that no earlier scoping captured.
+
+### DROPPED — do NOT carry forward
+"**Hunt Towers**" and "**eastern fallout zone**" (from the prior 7-item list) do NOT appear in
+the verified Deep Dive set. Treat them as article-specific phrasing or names absorbed into
+others (e.g. "eastern fallout zone" is plausibly prose for the Fallout reactor area). **Not
+POIs for the demand map.**
+
+### OPEN — "Town / Dead Town" naming, needs operator confirmation
+One of "Town" / "Dead Town" is the canonical Deep-Dive name and the other is colloquial. **This
+decides the slug and the query term** for that POI's canonical and its `[POI] guide`
+instantiation. Needs operator confirmation of which the Deep Dive uses IN PROSE — Claude Code
+cannot read the external blog. Until then the ninth POI is provisional in NAME only (its
+existence is confirmed).
+
+### MAP-LEVEL FACTS — previously unrecorded, and NOT POI data
+Distinct from the POI list; these describe Hajin as a whole and feed DIFFERENT templates:
+- Hajin spans **THREE LANDMASSES** in a **tri-point region bordering Russia and the Korean
+  peninsula**.
+- It is **LARGER THAN AL MAZRAH**.
+- It has **hidden / secret areas accessible only via water or other traversal**.
+
+**Template consequences** (why these are not just [POI] guide fodder):
+- **`[map] extraction routes`** — traversal ACROSS three landmasses is a categorically
+  different routing problem than Al Mazrah's single mass; the extraction-route content is
+  richer here than a one-map template implies.
+- **`[mechanic] explained`** — water traversal and hidden-area access are their own mechanics.
+- **COMPARISON shapes** — "Hajin vs Al Mazrah", "how big is Hajin" are query patterns old-DMZ
+  demand data would likely surface; the map is a comparison target, not only a place.
+
+### MANGOOLS SEED SET — now ~18, and the map is multi-shape
+Updated from the earlier ~15/16: **9 POIs + ~8 mechanics + the map**. The map is NOT one seed
+— it supports several query shapes (extraction routes, size/comparison, traversal mechanics),
+so the demand map should instantiate it across those shapes rather than as a single [map]
+entry. Keys / missions / items / loadouts remain OUT of the seed set (launch- or
+transcription-gated, per the prior scoping entry).
 
 ---
 
