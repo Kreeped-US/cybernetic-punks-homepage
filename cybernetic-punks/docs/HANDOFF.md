@@ -38,6 +38,37 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-24 — hajin-city seed landed + provenance corrected to Windows Central (rule 2 follow-up)
+
+Completes the rule-2 obligation the `/dmz/pois` Build-1 entry created ("Hajin City's INSERT …
+recorded in the NEXT commit"). The row was inserted operator-run (no git trail); values read back
+from the DB below. **This is a data-provenance correction — the earlier read-only reconciliation
+that flagged the country/landmass premise as UNSOURCED is partly superseded (see below).**
+
+**hajin-city row as landed (read-back verified):** `poi_type='city'`, `landmass_slug='south-korea'`,
+`map_slug='hajin-exclusion-zone'`, `notable_features=[]` (honest empty, no fabricated sublocations),
+`map_x/map_y/image_url/image_alt` NULL, `verified=false`.
+
+- **`verified_source` corrected: `'Bungie pre-launch Deep Dive'` → `'Reported by Windows Central,
+  June 2026'`** (operator-run UPDATE; confirmed in the DB by read-back). The **nine-POI designation
+  is Windows Central's, not the Deep Dive's** — the repo's stored Deep Dive excerpt
+  (`scripts/gen-dmz-news.mjs`) names only four POIs (Fallout, Prison, Hajin City, Military Base), so
+  attributing the nine to the Deep Dive was wrong. Provenance now points at the actual source.
+- **`landmass_slug='south-korea'` is SOURCED, not a guess.** Windows Central (June 2026): Hajin is
+  *"a South Korean exclusion [zone] … makes up the majority of the map, while parts of North Korea
+  and Russia also lend themselves."* Hajin City sits in the South Korean zone → `south-korea` is the
+  sourced country placement.
+- **SUPERSEDES** the earlier reconciliation note that treated the country/three-landmass premise as
+  unsourced: the **COUNTRY placement (SK majority, NK + Russia portions) IS sourced.** What remains
+  unsourced is only any claim of **three named "landmasses" as distinct entities** — which we do NOT
+  assert. `landmass_slug` holds a COUNTRY (`south-korea`), not a landmass count; the "three
+  landmasses" inference from "tri-point" is dropped, not encoded.
+- **Provenance honesty:** the Windows-Central source text is external and Claude Code cannot read it;
+  the source ATTRIBUTION is operator-supplied. What is DB/repo-verified here is that the row's stored
+  values (`landmass_slug`, `verified_source`) match what is recorded above.
+
+---
+
 ## 2026-07-24 — DMZ POI entity vertical /dmz/pois (Build 1, commit 1 of 2)
 
 First replication of the keys/missions/items entity-clone pattern to a NEW vertical, proven
