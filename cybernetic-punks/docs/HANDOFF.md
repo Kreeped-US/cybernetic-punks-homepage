@@ -2029,6 +2029,78 @@ if it returns rows, dedup before adding the index.
 
 ---
 
+## 2026-07-24 — DMZ canonical-prep brief committed + read-only scoping inventory
+
+### THE BRIEF IS NOW IN THE REPO
+`docs/dmz-canonical-prep-handoff.md` (206 lines, 11,633 bytes) — the plan driving five weeks
+of DMZ work to an **Aug 31** internal deadline (DMZ launches **Oct 23 2026**; canonicals must
+EXIST early to age into authority before the launch search wave). It was chat-sandbox-only
+until now — the same untracked-decision failure that forked the v6 GSC canonical four times.
+Committed so it has ONE state.
+
+Covers six workstreams + a calendar table: (1) the demand map [do first — everything ranks
+from it], (2) build the canonicals [depth over count, ~15–25 built deep], (3) multi-game seams
+that block DMZ pages [verify each at source], (4) on-page SEO spec [enforced at creation],
+(5) indexing machinery [Consumer C / URL Inspection pointed at DMZ], (6) off-site authority.
+Calendar: NOW→Aug 31 build window; ~Sept Marathon → maintenance; **avoid the Sep 22 Season-3
+collision**.
+
+### SCOPING INVENTORY (read-only, from the DMZ demand-map recon)
+- **All three `dmz_*` tables are EMPTY** — `dmz_keys`, `dmz_missions`, `dmz_items` = 0 rows
+  each (columns exist; no entity rows).
+- **No DMZ rows elsewhere:** `game_maps` / `game_modes` / `game_events` / `game_zones` /
+  `game_bosses` / `factions` / `weapon_stats` all have 0 dmz rows (Marathon-only).
+- **`feed_items` dmz = 3** — the FOB, 3D-Printer, and Hajin articles (published, not
+  noindexed). **These are the only real DMZ content.**
+- **Entities exist ONLY as prose** — inside those 3 articles, `lib/dmz/articleContent.js` (the
+  bold-lead extractor), and the HANDOFF scoping entry. **Never as queryable rows.** So the
+  demand map cannot instantiate templates by SELECTing an entity table; the inputs must be
+  hand-listed from prose.
+
+### ROUTES — 4 live, 7 empty shells (the gap is CONTENT DEPTH, not routing)
+- **LIVE with content (indexed):** `/dmz` (launch-info FAQ canonical), `/dmz/regions` (Hajin),
+  `/dmz/fob` (FOB), `/dmz/loadouts` (3D Printer article).
+- **EMPTY noindexed shells** (`[section]` noindexes empty editor sections; keys/missions/items
+  are row-count-gated, auto-flip to index when rows exist): `field-intel`, `meta`, `printer`,
+  `discourse`, `keys`, `missions`, `items`.
+
+### THE TEMPLATE GAP — what has real inputs TODAY vs not
+Fillable now, from in-repo prose:
+- **`[POI] guide`** — ~7 named POIs (Hajin + Fallout reactor, Prison, Hajin City, Military
+  Base, casino/vault, Hunt Towers, eastern fallout zone).
+- **`[mechanic] explained`** — ~8 named mechanics (3D Printer, FOB + stations, Trait System,
+  threat / Lieutenants, MIA / Tourniquet, PvP / bounty, weather, secure-and-extract loop).
+- **`[map] extraction routes`** — 1 map (Hajin Exclusion Zone) + its regions.
+
+Not fillable: **keys, missions, items, loadouts** — no entity inputs exist.
+
+### THE DISTINCTION THAT MATTERS — LAUNCH-gated vs TRANSCRIPTION-gated
+Missions and items are TRANSCRIPTION-gated: entities may be in the Deep Dive, so operator
+transcription could populate them. **Keys and loadouts are LAUNCH-gated, NOT transcription-
+gated:** a June Deep Dive would not enumerate specific key NAMES or meta LOADOUTS (those are
+live-game/match-data artifacts), so **no amount of operator transcription fills them pre-
+launch.** The brief lists keys as a probable early canonical on old-DMZ demand data — the
+DEMAND is real, the ENTITIES are not. **A pre-launch keys canonical can therefore only be a
+hub about the key SYSTEM (how keys work, tiers, acquisition), never a per-key reference** — and
+the demand map should target it that way, not as [key] × N.
+
+### COUNT INCONSISTENCY — UNRESOLVED, needs operator verification
+The HANDOFF DMZ scoping entry says **"5 named POIs" then lists 7** (Fallout reactor, Prison,
+Hajin City, Military Base, casino/vault, Hunt Towers, eastern fallout zone). Before the demand
+map instantiates `[POI] guide` against either count, **the operator must verify the POI list
+against the actual June Deep Dive post — Claude Code cannot read the external blog.** Treat
+neither 5 nor 7 as authoritative until then.
+
+### DDL — operator-run, no git trail (rule 2)
+The **`keyword_targets` UNIQUE index on `(game_slug, lower(trim(keyword)))`** was run by the
+operator after a clean pre-check (0 existing duplicates). **Confirmed present** — a case-varied
+duplicate of an existing keyword was rejected by `keyword_targets_game_keyword_norm_key`,
+proving the case/space-normalized form is live. This is the defense-in-depth behind the review
+panel's refresh-key fix (`5f20cc2`): duplicate keyword_targets rows are now unrepresentable at
+the DB level, matching how the exclusion join already treats keyword-per-game as unique.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
