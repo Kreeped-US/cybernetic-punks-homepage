@@ -38,6 +38,74 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-24 — DMZ POI vertical: remaining eight seeded (Build 1, commit 2 of 2)
+
+Completes the nine-POI seed. Hajin City (id 5) landed earlier; this seeds the other **eight**:
+Casino, Fallout, Hospital, Military Base, Farmlands, Prison, Broadcast, Town. The INSERT is
+operator-run SQL (no git trail) — companion to this commit, recorded here per rule 2. The code
+change riding this commit is the `DMZ_POI_TYPES` repurpose (below).
+
+- **SOURCE:** all nine POIs are from **Windows Central, June 2026 (Cole Martin)**, attributed to
+  Infinity Ward's pre-Xbox-Showcase reveal. Every seeded row carries `verified=false` (provisional;
+  none play-verified — promotion to `verified=true` happens per-POI at launch) and
+  `verified_source='Reported by Windows Central, June 2026'`. **The Bungie Deep Dive is NOT cited:**
+  four POIs (Fallout, Prison, Hajin City, Military Base) also appear there, but the nine-POI
+  *designation* is Windows Central's — one honest source string, the reporting source.
+- **poi_type set (locked):** Casino/Hospital/Military Base/Prison/Broadcast = `facility`;
+  Fallout/Farmlands = `zone`; Town = `town`; Hajin City = `city` (already seeded). Free labels now
+  that the CHECK is dropped (below).
+- **landmass_slug = NULL for all eight.** Windows Central places Hajin at the map level only — *"a
+  South Korean exclusion [zone] … makes up the majority of the map, while parts of North Korea and
+  Russia also lend themselves"* — and gives NO per-POI country placement for the eight. Asserting
+  `'south-korea'` per-POI would invent placement the source doesn't state (and some may sit in the
+  NK/Russia portions), so the honest value is NULL. Hajin City keeps `'south-korea'` (the namesake
+  city, source-placed in the SK zone). `landmass_slug` has zero code readers, so NULL costs nothing.
+- **DESCRIPTIONS — no invention, each clause traced to a readable source.** Three trace to the
+  repo's stored Deep Dive excerpt (`scripts/gen-dmz-news.mjs:282-283`): Fallout ("irradiated Fallout
+  reactor"), Prison ("highly secured Prison complex"), Military Base ("heavily defended Military
+  Base"). The other five (Casino, Hospital, Farmlands, Broadcast, Town) get the minimal factual line
+  *"A point of interest within Hajin, the contested exclusion zone."* ("contested exclusion zone"
+  traces to `gen-dmz-news.mjs:272`) — the readable source says nothing beyond the name, so nothing
+  beyond the name is claimed. `notable_features='[]'` for all (honest empty).
+- **"Town / Dead Town" naming RESOLVED to "Town"** by the Windows Central verbatim list (slug
+  `town`, name `Town`). The earlier OPEN ambiguity is closed.
+
+### Operator-run DDL recorded here (rule 2 — no git trail)
+- **`ALTER TABLE dmz_pois DROP CONSTRAINT dmz_pois_poi_type_chk`** — `poi_type` is now FREE TEXT.
+  Confirmed by probe (a novel `poi_type` value was accepted). This is why `farmlands`→`zone` and the
+  new `town` label are storable. The invented `['city','facility','zone']` taxonomy (reviewer's
+  ALTER template, never sourced) no longer constrains anything.
+- **`ALTER TABLE dmz_pois ALTER COLUMN landmass_slug DROP NOT NULL`** — required so the eight can be
+  honestly NULL. Confirmed by probe (null-landmass insert accepted) + OpenAPI (`required[]` no longer
+  lists it).
+
+### Code change riding this commit
+- **`DMZ_POI_TYPES` repurposed** in `lib/dmz/entities.js`: `['city','facility','zone']` →
+  `['city','facility','zone','town']` (the distinct values now in use), and the comment rewritten —
+  it no longer "mirrors" the dropped CHECK and there is nothing to "alter together." It is now the
+  app's **observed, non-enforcing** poi_type vocabulary (a reference for a future entry form, not a
+  validator). No code reads it yet.
+
+### RLS gap found during render-verify + fixed (rule 2 — no git trail)
+The RLS leg the `dmz_pois` table-creation entry recorded as *"operator-asserted-consistent-with-the-
+DMZ-entity-pattern … not independently verified"* was **verified MISSING** during this commit's
+render-verify. `dmz_pois` had RLS **enabled with NO anon-SELECT policy**, while the sibling entity
+tables (`dmz_keys`/`dmz_missions`/`dmz_items`) each had one. Symptom: the anon client (what the app
+and sitemap use) read **0 rows** while the service key saw 9 — so the `/dmz/pois` hub rendered the
+empty state (noindex), every detail page 404'd, and the sitemap emitted no `/dmz/pois` URL. Confirmed
+via `pg_policies`. **Fixed by operator-run `dmz_pois_public_read`** (SELECT, public, `USING true`),
+mirroring `dmz_keys_public_read` verbatim. Post-fix render-verify (anon client) PASSED end-to-end:
+anon reads 9; hub lists all nine and is indexable; a detail page renders with the provisional line,
+`dateModified`, and correct `noindex`; the sitemap emits the hub and withholds all nine detail URLs
+(all `verified=false` — the honesty gate). Lesson: "RLS consistent with the pattern" is not verified
+until an anon-client read is actually run — a service-key read-back hides the gap.
+
+**Provenance honesty:** the Windows-Central source text is external and Claude Code cannot read it;
+the attribution is operator-supplied. What is DB/repo-verified is the schema state (CHECK dropped,
+landmass nullable, anon-SELECT policy present) and the row values (anon + service read-back, 9 rows).
+
+---
+
 ## 2026-07-24 — hajin-city seed landed + provenance corrected to Windows Central (rule 2 follow-up)
 
 Completes the rule-2 obligation the `/dmz/pois` Build-1 entry created ("Hajin City's INSERT …

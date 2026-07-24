@@ -130,10 +130,13 @@ export const DMZ_ENTITIES = {
   },
 };
 
-// Mirror of dmz_pois_poi_type_chk (dmz_pois.poi_type CHECK) -- ALTER TOGETHER.
-// No validation path reads this yet (POI rows are operator-run SQL); it exists so
-// code and the DB constraint stay in sync when a POI entry/validation path is built.
-export const DMZ_POI_TYPES = ['city', 'facility', 'zone'];
+// Observed poi_type vocabulary -- the distinct values actually in use across dmz_pois
+// today (city, facility, zone, town). NON-ENFORCING and NOT a constraint mirror: the
+// dmz_pois_poi_type_chk CHECK was DROPPED, so poi_type is now free text and there is
+// nothing to "alter together." This is a descriptive reference for the app (e.g. a
+// future entry form's options), not a validator. Keep it in step with the distinct
+// poi_type values seeded, or delete it if a real vocabulary source appears.
+export const DMZ_POI_TYPES = ['city', 'facility', 'zone', 'town'];
 
 // The shared list the sitemap and routing read.
 export const DMZ_ENTITY_KEYS = Object.keys(DMZ_ENTITIES);
