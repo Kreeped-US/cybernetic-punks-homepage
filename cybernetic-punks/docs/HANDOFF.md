@@ -1709,6 +1709,114 @@ also carries `consumer='page'` and its drop count.
 
 ---
 
+## 2026-07-24 — Consumer B READ LAYER: the two-lane GSC review list (v8 PART 2 output)
+
+The read side of Consumer B — a live-computed, per-game, two-lane ranked review list over
+`gsc_query_metrics`. **READ-ONLY v1** (accept/decline write ergonomics are a fast-follow, so
+this diff proves the query rather than mixing it with write UX). NOTHING here enters a prompt:
+it feeds the human review surface, not the editor.
+
+### SHAPE
+- **`lib/gsc/reviewList.js`** — the PURE classification core (zero I/O, so it is exhaustively
+  unit-testable; `gsc_query_metrics` is empty until the first post-deploy cron).
+- **`app/api/admin/gsc-review/route.js`** — GET, admin-password auth, does the three
+  game-scoped DB reads and calls the core. Live-computed, no persisted list state.
+- **`components/GscReviewPanel.js`** — collapsible admin panel, game selector, two lanes,
+  display 25 + show-all. Slotted into the admin panel stack.
+
+### THE TWO LANES
+- **LANE 1 — FRAMING** (`framing`): per query, `MIN(position)` in **11–30** — a page already
+  competes, so reframe its headline. Shows the best page + its position.
+- **LANE 2 — WEAK-POSITION** (`weak-position`): `MIN(position) > 30` — nothing ranks well
+  enough to reframe; entity-page candidates. Read directly from `gsc_query_metrics`, not from
+  lane 1's output — the bands are disjoint (11–30 vs >30), so a view over lane 1 would be
+  empty by construction. Position 1–10 (already ranking) falls into neither lane.
+- **The UI label is `weak-position`, NEVER `page-gap` (E2)** — coded and commented: page-gap
+  would imply UNSERVED demand, which GSC structurally cannot show (it returns only queries the
+  site already appeared for).
+
+### THE EXCLUSION-vs-MEASUREMENT DISTINCTION (recorded explicitly — the caution misled once)
+The noindex exclusion selects **`feed_items.noindexed_at IS NOT NULL`** — ALL 821 noindexed
+pages (153 real + 668 pre-column sentinel). **This is deliberately NOT the cohort date.**
+
+The cohort caution as previously written ("select `noindexed_at = '2026-07-23'`, never
+`IS NOT NULL`") is TRUE for its consumer — the impressions-rise MEASUREMENT, which needs
+exactly the 153. But it reads as universal and it **misled the planning chat into specifying
+`= '2026-07-23'` for the EXCLUSION here**, which would be wrong in the opposite direction: a
+noindexed page cannot rank regardless of which cohort noindexed it, so ALL noindexed pages
+must be excluded as framing targets. Filtering on the cohort date would leave the 668
+pre-column pruned pages eligible — **silently recommending reframes on pages we already
+de-indexed.** Two consumers, two filters:
+- **EXCLUSION (this list):** `IS NOT NULL` — a noindexed page is unrankable, cohort irrelevant.
+- **MEASUREMENT (impressions-rise test):** `= '2026-07-23'` — needs exactly the 153.
+
+The join derives the slug from `page_url` (`slugCandidate`, since `gsc_query_metrics` has no
+slug column) and LEFT-JOIN-style matches `feed_items`. A page with NO `feed_items` row (a
+tool/entity page like `/stats`, `/uniques/*`) is not in the noindexed set → KEPT — and those
+are exactly the pages that rank. Only noindexed ARTICLES are dropped.
+
+### SELF-CLEARING EXCLUSION
+Excludes any candidate whose query text (trimmed, lowercased) matches an existing
+`keyword_targets.keyword`, game-scoped, **regardless of `is_active`** — accepted (active row)
+and declined (`is_active=false` + `notes`) both drop the candidate. This is why no separate
+rejection store exists: a declined keyword IS a studied-and-declined `keyword_targets` row.
+The list self-clears as the operator works it.
+
+### RANKING, DISPLAY, GAME SCOPING
+Rank by impressions desc, then position asc. **Display 25 with show-all — a DISPLAY limit, not
+a server cap** (the route always returns the full set; a hard cap that hides a candidate is
+data loss). All three inputs are game-scoped (query metrics, the noindex set, the exclusion
+set); default `marathon`.
+
+### NAMED CONSTANTS — operator-approved 2026-07-24
+In `lib/gsc/reviewList.js`: `GSC_REVIEW_MIN_IMPRESSIONS = 5` (C3 first-party floor — low
+because the site is low-traffic; a high floor would empty the list), `GSC_REVIEW_WINDOW_DAYS
+= 28`, `FRAMING_POSITION_LOW/HIGH = 11/30`. Tunable, not architectural.
+
+**THE 28-DAY WINDOW IS A STEADY-STATE VALUE, AND THERE IS NO STEADY STATE YET.**
+`gsc_query_metrics` currently holds **ZERO history** — the query pull (v8 step 4, `2304fd0`)
+has NO backfill, unlike `gsc_page_metrics` which was backfilled to 2026-03-05. So the query
+pull only started accumulating from its first post-deploy cron, and the 28-day window has at
+most a few days to aggregate over. **The review list will be THIN until roughly mid-August**
+(28 days of daily pulls) unless a query-level backfill is run. This is EXPECTED, not broken —
+an empty or short list is correct given no history exists, not a bug in the classification.
+A `gsc_query_metrics` backfill (same shape as phase 3's page-level backfill) would fill it
+immediately; its cost is predicted separately.
+
+### PART 3 — CONSUMER DOCUMENTATION (operator DDL, rule 2, PENDING)
+The build owes table comments (the durable contract). The `gsc_query_metrics` comment was
+drafted in the step-2/step-4 work and is still pending — this list is now its actual reader, so
+run it (and the `gsc_page_metrics` treatment) alongside:
+
+    COMMENT ON TABLE gsc_query_metrics IS '... WHO READS IT: the ranked review list only ...
+      WHAT MUST NEVER READ IT: editor generation context ... JOIN DEPENDENCY: feed_items.noindexed_at,
+      guaranteed by the Part 1 trigger + CHECK ... COHORT CAUTION: select the prune cohort by
+      noindexed_at = 2026-07-23, never IS NOT NULL (that sweeps the 668 pre-column set).';
+
+### VERIFICATION — 17/17, against an empty table, then cleaned
+- PURE core, every branch (no DB): framing (indexed + tool page), weak-position, excluded
+  (ranks 1–10, noindexed-153, noindexed-668, active keyword, declined keyword, below
+  threshold), lane label = weak-position, ranked by impressions desc. All PASS.
+- DB ROUND-TRIP: real `gsc_query_metrics` fixtures + the REAL `feed_items` noindex set + a real
+  declined `keyword_targets` row. **Both a real 2026-07-23-cohort noindexed page AND a real
+  2026-01-01-sentinel page were excluded** — the exclusion-vs-measurement correction proven
+  against live data, not just the pure fixture. All PASS.
+- **Fixtures DELETED**: `gsc_query_metrics` back to 0 (empty for the first real cron), no
+  leftover `keyword_targets` fixtures. Same discipline as the phase-4 cleanup — a synthetic row
+  in an operational table poisons the signal.
+- ESLint: the 3 new files clean (0); the 2 pre-existing `app/admin/page.js` errors
+  (an `<a href="/">` and an unescaped apostrophe) are on HEAD, confirmed by stash-and-lint, not
+  introduced here (my diff to that file is +2 lines). next build exit 0; `/api/admin/gsc-review`
+  compiles.
+
+### FAST-FOLLOW
+Accept/Decline buttons on each row (accept → prefill the existing keyword_targets add; decline
+→ `is_active=false` + notes), so the operator works the list without leaving the panel. v1 ships
+read-only; a human still adds every row by hand via the KEYWORD TARGETS tab, which self-clears
+the candidate.
+
+---
+
 ## 2026-07-23 — maps-family game-collision: migration PLAN (read-only investigation; not yet built)
 
 Recorded per HANDOFF-currency rule 3 — a decision written when made, not when built. The plan is
