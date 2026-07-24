@@ -209,6 +209,60 @@ export function extractSnippet(body, maxLen) {
   return null;
 }
 
+// ── POI LINKIFY (spoke 2) ─────────────────────────────────────────────────────
+//
+// Split ONE plain-text span into segments, wrapping the first not-yet-linked
+// occurrence of each POI name in a {type:'link'} segment. PURE: returns an array of
+// {type:'text',value} and {type:'link',value,slug}; the caller renders links as
+// <Link href={'/dmz/pois/'+slug}>. The stored feed_items.body is never touched --
+// this runs at render time only.
+//
+// MATCHING RULES:
+//   - `poiEntries` MUST be sorted longest-name-first by the caller, so "Hajin City"
+//     is matched (and its chars consumed) before any shorter token -- bare "Hajin"
+//     is never linked and "Hajin Exclusion Zone" is never partially matched.
+//   - `linked` is a Set of slugs already linked IN THIS ARTICLE, shared across every
+//     span/block. Each POI links at most once per article, at its first occurrence in
+//     document order (blocks then spans are processed in order).
+//   - Whole-word boundaries: a name must be flanked by non-alphanumerics (or string
+//     edges), so "Prison" does not match inside "imprisoned".
+//
+// MISFIRE GUARD (the common-word problem: Town / Broadcast / Fallout / Prison /
+// Hospital / Casino / Farmlands are ordinary words). Matching is CASE-SENSITIVE
+// against the stored, proper-cased POI name: "Prison"/"Town"/"Fallout" (the POI, a
+// proper noun) link; "prison"/"town"/"fallout" (incidental common words, lowercase)
+// do NOT. This deliberately trades the "case-insensitive" default for correctness --
+// a missed link is cheaper than a wrong one. Only text SEGMENTS are searched, so a
+// name already inside a link segment is never re-matched, and bold spans (handled by
+// the caller before calling this) are never touched.
+export function linkifyPoiSegments(text, poiEntries, linked) {
+  var segments = [{ type: 'text', value: text == null ? '' : String(text) }];
+  if (!text || !poiEntries || poiEntries.length === 0) return segments;
+  for (var i = 0; i < poiEntries.length; i++) {
+    var e = poiEntries[i];
+    if (!e || !e.name || !e.slug || (linked && linked.has(e.slug))) continue;
+    var esc = e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Case-SENSITIVE, whole-word. No `i` flag -> proper-noun gate.
+    var re = new RegExp('(^|[^A-Za-z0-9])(' + esc + ')([^A-Za-z0-9]|$)');
+    for (var s = 0; s < segments.length; s++) {
+      if (segments[s].type !== 'text') continue;
+      var val = segments[s].value;
+      var m = re.exec(val);
+      if (!m) continue;
+      var start = m.index + m[1].length;
+      var end = start + e.name.length;
+      var repl = [];
+      if (start > 0) repl.push({ type: 'text', value: val.slice(0, start) });
+      repl.push({ type: 'link', value: val.slice(start, end), slug: e.slug });
+      if (end < val.length) repl.push({ type: 'text', value: val.slice(end) });
+      Array.prototype.splice.apply(segments, [s, 1].concat(repl));
+      if (linked) linked.add(e.slug);
+      break; // this POI is linked once; move to the next POI
+    }
+  }
+  return segments;
+}
+
 // Rough read-time label from a body (words / 200 wpm, min 1).
 export function readTime(body) {
   if (!body) return '1 min read';

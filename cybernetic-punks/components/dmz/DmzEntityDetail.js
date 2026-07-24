@@ -149,10 +149,17 @@ export default function DmzEntityDetail({ entity, row, siblings }) {
           </div>
         )}
 
-        <div style={{ marginTop: 34 }}>
+        <div style={{ marginTop: 34, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <Link href={entity.routeBase} style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 2, padding: '9px 16px' }}>
             &larr; All DMZ {entity.plural}
           </Link>
+          {/* Context link back to the map/geography article (spoke 1). Rendered only
+              when the entity config supplies it (POIs do; keys/missions/items do not). */}
+          {entity.contextLink && (
+            <Link href={entity.contextLink.href} style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 2, padding: '9px 16px' }}>
+              {entity.contextLink.label} &rarr;
+            </Link>
+          )}
         </div>
       </main>
     </>

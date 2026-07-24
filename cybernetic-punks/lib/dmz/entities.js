@@ -121,6 +121,12 @@ export const DMZ_ENTITIES = {
     // (the shared DmzEntityDetail falls back to its generic text when this is absent,
     // so keys/missions/items are unchanged). Promotion to verified=true removes it.
     provisionalNote: 'Provisional: sourced from Bungie\'s pre-launch Deep Dive, not yet verified in the live game.',
+    // Cross-link every POI page back to the Hajin map/geography article (spoke 1 of
+    // the POI<->regions hub-and-spoke). POI-only via this config field, so
+    // keys/missions/items are unaffected. All nine POIs are in Hajin, so it applies
+    // uniformly. The target is a published feed_items article at its current section
+    // URL (relocated field-intel->regions on 2026-07-16; 308 covers the old path).
+    contextLink: { href: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'Part of the Hajin Exclusion Zone - read the map overview' },
     // notable_features is a FLAT jsonb string array (dmz_pois.notable_features comment
     // enforces the contract) -- read behind an Array.isArray guard, never assumed.
     facts: function (r) {
@@ -162,4 +168,18 @@ export async function fetchDmzRows(entity) {
 export async function fetchDmzSlugs(entity) {
   var res = await supabase.from(entity.table).select('slug, updated_at, verified').eq('game_slug', 'dmz');
   return res.data || [];
+}
+
+// POI link targets for the article render-time linkifier (spoke 2): {name, slug}
+// for every live dmz_pois row, sorted LONGEST-NAME-FIRST so a multi-word name
+// ("Hajin City") is matched before any shorter token and never partially matched.
+// Driven off real rows, so the linkifier only ever links a name that HAS a page --
+// never a dead link. Never throws (errored read -> []). Public-read RLS applies.
+export async function fetchPoiLinkTargets() {
+  var res = await supabase.from('dmz_pois').select('name, slug').eq('game_slug', 'dmz');
+  var rows = res.data || [];
+  return rows
+    .filter(function (r) { return r.name && r.slug; })
+    .map(function (r) { return { name: r.name, slug: r.slug }; })
+    .sort(function (a, b) { return b.name.length - a.name.length; });
 }

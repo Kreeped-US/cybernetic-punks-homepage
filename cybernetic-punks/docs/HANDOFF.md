@@ -38,6 +38,40 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-24 — DMZ POI <-> Hajin regions cross-links (both spokes)
+
+Hub-and-spoke internal linking between the POI vertical and the Hajin map/geography article. The
+POI<->POI sibling links already existed; this adds the two missing spokes. Code-only (no DB/DDL).
+
+- **Spoke 1 — POI detail -> `/dmz/regions` context link.** Added via a per-entity `contextLink`
+  config field on `pois` (mirrors the `provisionalNote` pattern): `DmzEntityDetail` renders it when
+  present, so it applies to **all nine POIs** and is **excluded from keys/missions/items by the
+  config gate**. Target is the published Hajin article at its current section URL
+  (`/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals`).
+- **Spoke 2 — render-time POI linkifier over the DMZ article renderer.** The stored
+  `feed_items.body` is **NEVER edited** — linking is a render-time transform in
+  `ArticleBody`/`InlineBold` (new `PlainSpan` + pure `linkifyPoiSegments` in
+  `lib/dmz/articleContent.js`), so the generation pipeline can regenerate the article freely and the
+  linking still applies. Driven off **live `dmz_pois` rows** (`fetchPoiLinkTargets`, longest-name-
+  first), so it **structurally cannot produce a dead link** — it only ever links a name that has a
+  page. General (all DMZ news articles), but only the Hajin article names POIs today.
+- **THE MISFIRE GUARD (decision, recorded).** Matching is **CASE-SENSITIVE against the proper-cased
+  POI name** — a **deliberate deviation from the brief's "case-insensitive."** POI names (Town,
+  Broadcast, Fallout, Prison, Hospital, Casino, Farmlands) are common English words, and
+  case-insensitive matching would link incidental prose ("the town", "radioactive fallout"). The
+  proper-noun capitalization gate + whole-word boundaries + longest-name-first (so "Hajin City"
+  wins over bare "Hajin") + plain-text-spans-only (never inside `**bold**` or an existing link, each
+  POI linked once per article) together prevent over-linking. The brief said case-insensitive; the
+  stated goal was "a missed link is cheaper than a wrong one" — the goal won over the literal rule.
+- **Verified:** against the real `feed_items.body` AND the live render, the Hajin article links
+  **exactly four** — Fallout, Prison, Hajin City, Military Base — with **zero** incidental matches
+  (Casino/Hospital/Farmlands/Broadcast/Town absent from the body, so not linked) and no duplicates.
+- **Honesty:** the four targets are real rows; links point at `noindex,follow` provisional pages
+  (`verified=false`) — `<Link>` doesn't care about the target's robots, so equity flows, they flip
+  to index at launch, and none render broken/empty.
+
+---
+
 ## 2026-07-24 — DMZ POI vertical: remaining eight seeded (Build 1, commit 2 of 2)
 
 Completes the nine-POI seed. Hajin City (id 5) landed earlier; this seeds the other **eight**:

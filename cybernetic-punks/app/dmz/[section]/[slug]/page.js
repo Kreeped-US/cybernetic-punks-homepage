@@ -32,7 +32,8 @@ import { getGameSection } from '@/lib/games';
 import { DMZ_ARTICLE_SEO, dmzSectionForArticle } from '@/lib/games/dmz';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
-import { parseBody, extractKeyFacts, stripMarkers } from '@/lib/dmz/articleContent';
+import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments } from '@/lib/dmz/articleContent';
+import { fetchPoiLinkTargets } from '@/lib/dmz/entities';
 import DiscourseArticle from '@/components/DiscourseArticle';
 import { isDiscourseArticle } from '@/lib/discourse';
 import DmzShare from '../../DmzShare';
@@ -126,23 +127,50 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// Inline **bold** -> <strong>.
-function InlineBold({ text }) {
+// A plain (non-bold) text span: linkify POI names at render time (spoke 2), else
+// render as-is. Bold spans are handled by the caller and never passed here, so a POI
+// name inside **bold** is never linked. `poiEntries`/`linked` may be absent (no POIs
+// -> plain text).
+function PlainSpan({ text, poiEntries, linked }) {
+  if (!poiEntries || poiEntries.length === 0) return <>{text}</>;
+  var segs = linkifyPoiSegments(text, poiEntries, linked);
+  return (
+    <>
+      {segs.map(function (seg, j) {
+        if (seg.type === 'link') {
+          return (
+            <Link key={j} href={'/dmz/pois/' + seg.slug} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+              {seg.value}
+            </Link>
+          );
+        }
+        return <span key={j}>{seg.value}</span>;
+      })}
+    </>
+  );
+}
+
+// Inline **bold** -> <strong>; plain runs pass through PlainSpan (POI linkify).
+function InlineBold({ text, poiEntries, linked }) {
   var parts = text.split(/(\*\*[^*]+\*\*)/);
   return (
     <>
       {parts.map(function (part, i) {
         var m = part.match(/^\*\*([^*]+)\*\*$/);
         if (m) return <strong key={i} style={{ color: '#fff', fontWeight: 700 }}>{m[1]}</strong>;
-        return <span key={i}>{part}</span>;
+        return <PlainSpan key={i} text={part} poiEntries={poiEntries} linked={linked} />;
       })}
     </>
   );
 }
 
 // Render the parsed body blocks: real h2 / bullet list / pull-quote / paragraph.
-function ArticleBody({ body }) {
+// `poiEntries` (longest-name-first) drives the render-time POI linkifier; `linked` is
+// ONE Set per article so each POI links at most once, in document order (headers and
+// pull-quotes are intentionally NOT linkified -- body prose and list items only).
+function ArticleBody({ body, poiEntries }) {
   var blocks = parseBody(body);
+  var linked = poiEntries && poiEntries.length ? new Set() : null;
   return (
     <div>
       {blocks.map(function (b) {
@@ -163,7 +191,7 @@ function ArticleBody({ body }) {
                 return (
                   <li key={li} style={{ position: 'relative', fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.65, margin: '0 0 0.8em', paddingLeft: 22 }}>
                     <span aria-hidden="true" style={{ position: 'absolute', left: 2, top: 1, color: 'var(--green)', fontWeight: 800 }}>›</span>
-                    <InlineBold text={item} />
+                    <InlineBold text={item} poiEntries={poiEntries} linked={linked} />
                   </li>
                 );
               })}
@@ -182,7 +210,7 @@ function ArticleBody({ body }) {
         }
         return (
           <p key={b.key} style={{ fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.7, margin: '0 0 1.4em', maxWidth: '68ch' }}>
-            <InlineBold text={b.text} />
+            <InlineBold text={b.text} poiEntries={poiEntries} linked={linked} />
           </p>
         );
       })}
@@ -220,6 +248,11 @@ export default async function DmzArticlePage({ params }) {
   var pubDate = formatPublishDate(article.created_at);
   var rt = readTime(article.body);
   var tags = Array.isArray(article.tags) ? article.tags : [];
+
+  // POI linkify targets (spoke 2): live dmz_pois rows, longest-name-first. Fetched
+  // only for the news template (past the discourse early-return above). Empty/failed
+  // read -> [] -> the body renders as plain text (no links).
+  var poiEntries = await fetchPoiLinkTargets();
 
   // Authored SEO overrides (lib/games/dmz.js) preferred; fall back to the
   // render-time derivations for unmapped slugs. keyFacts null-hides as before.
@@ -354,7 +387,7 @@ export default async function DmzArticlePage({ params }) {
 
       {/* 7. Body */}
       <article style={{ marginTop: 26 }}>
-        <ArticleBody body={article.body} />
+        <ArticleBody body={article.body} poiEntries={poiEntries} />
       </article>
 
       {/* 8. Tags */}
