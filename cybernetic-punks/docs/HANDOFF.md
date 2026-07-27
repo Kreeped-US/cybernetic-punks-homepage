@@ -7,6 +7,12 @@ Newest entries on top.
 
 ---
 
+## Required reading (per doctrine A9)
+
+Before making any content-policy or content-structure decision, read docs/content-operating-doctrine.md (v3, committed 2fc753b + the v3 amendment commit). A9: a session without the doctrine in context will re-derive positions this document already holds, sometimes wrongly. See docs/doctrine-v3-amendments.md for the amendment ledger.
+
+---
+
 ## HANDOFF CURRENCY — standing convention
 
 HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. The cause is

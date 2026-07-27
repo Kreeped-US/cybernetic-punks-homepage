@@ -1,8 +1,10 @@
-# Cybernetic Punks - Content Operating Doctrine (v2)
+# Cybernetic Punks - Content Operating Doctrine (v3)
 
 **The gated, verified, demand-first system for every game vertical.**
 
 Written 2026-07-17 after the Marathon consolidation session; revised same week. This is the operating doctrine, not a one-off plan. DMZ is the first vertical to launch under it, but the method travels to every game.
+
+v3 (2026-07-27): applied amendment set A1-A10 - see commit body for the ledger.
 
 ---
 
@@ -68,10 +70,11 @@ Marathon's data was full of wrong mechanics the pipeline propagated into article
 **Pass rule:** every factual claim traces to a real source, and every page records how verified it is.
 
 - **Provenance tags from day one:** `deep-dive-provisional` (pre-launch, official material only - nothing NOT in the source gets claimed) vs `game-verified` (confirmed in-game, like the Marathon mod_stats and shell matchup passes). This is the piece Marathon lacked; without it, cleanup was archaeology.
-- **Verification decays.** Live games patch constantly; "verified" rots. Extend the tag with a **patch version** (`patch_verified`). A fact is verified *as of patch X*, not forever.
+- **Verification decays**; live games patch and "verified" rots. Mechanics: the verified + verified_source column pair IS the provenance mechanism on every entity table - never a parallel column recording the same fact (two columns answering "how verified?" is drift with a start date). Provenance values are written explicitly on every insert, never as column DEFAULTs. Promotion is per-row as entities get play-verified, with the patch version carried inside verified_source as game-verified@X.Y, never a bulk flip. A fact is verified as of its patch, not forever.
 - **On every patch, triage by what changed.** Weapon-balance patch -> re-verify weapon/loadout pages; map update -> POI pages. The provenance tags identify exactly which pages enter the **re-verification queue**. You never re-verify everything.
 - **Stale-but-flagged beats wrong-and-silent.** If you can't re-verify immediately, a visible "last verified: patch X.X" line is honest; silently serving outdated data as current fact is the Marathon disease.
 - **Dated != evergreen.** A "patch 1.1.5 breakdown" is a historical snapshot - date it and leave it. Evergreen pages get re-verified on relevant patches.
+- **Claims verify against the PRIMARY source** - never against this site's own prior articles. Pre-doctrine corpus content is not a source; confirming a claim against it re-imports the risk the provenance system exists to kill. The chain terminates at official material or in-game observation. Entity names and slugs come verbatim from the source's own naming - a "natural sounding" name the source never uses is invented data wearing a URL.
 
 **The governing rule: a false page is worse than no page.** An honest gap beats confident misinformation, every time.
 
@@ -86,10 +89,21 @@ From the 2026-07-17 audit: technically Excellent (99/100), but 1,343 pages with 
 - One H1 per page, matching the target query where natural
 - Clean, keyword-bearing slug (short, hyphenated, no dates unless genuinely dated content)
 - **Inbound internal links wired at publish** (section 5) - no orphans
+- **JSON-LD valid at creation, verified** - not merely present. A page whose structured data fails Google's validator does not publish until fixed.
+- **No FAQPage markup, on any page, any game.** Google restricted FAQ rich results to authoritative government/health sites (Aug 2023); the markup earns nothing here even when valid. Visible FAQ content is fine; the schema block is not.
+- **Structured data carries only sourced or game-verified claims.** Markup asserting model-generated prose as structured fact violates Gate 3 even when it validates. Schema inherits the provenance bar, not a lower one.
+- **The title <= 60 ceiling is THE number**, and every prompt rule and code gate touching headlines must state the same number. A prompt allowing 65 with a gate at 60 rejects obedience; a gate at 65 ships SERP truncation. When the ceiling changes, prompt and gate change in ONE commit.
 
 ### Gate 5 - GENERATION: now, and only now, write it
 
 Editors write into pre-approved, demand-validated, non-duplicative, sourced, spec-compliant slots. They no longer freewheel.
+
+### The two-lane rule
+
+Two content lanes, two keyword rules, both correct, never interchangeable:
+- Canonical/reference pages are demand-gated (Gates 1-5): keywords legitimately DECIDE what gets built.
+- Feed articles are event-triggered (verified intel worth publishing): keywords are a LENS that may reframe a finished headline and never reach the body or the trigger.
+A document governing one lane must state which lane it governs. Any text finding these two rules in contradiction has lost track of the lane it is in.
 
 ---
 
@@ -193,7 +207,7 @@ External links are slow; internal links are 100% controlled and shape how author
 The gates prevent bad content from being born; this catches pages that pass every gate and still fail. Marathon's deeper disease was **no feedback loop** - nothing measured whether a page worked, nothing killed the ones that didn't.
 
 **Per-page cadence, post-publish:**
-- **~30 days - indexation check (GSC).** Not indexed = earliest signal it's thin or duplicative. Investigate at 1 page, not 200.
+- **~30 days - indexation check (GSC).** Not indexed = earliest signal it's thin or duplicative. Investigate at 1 page, not 200. Implemented by the URL Inspection loop (Consumer C): every published page enrolls the day its URL becomes indexable - per URL, at publish, never batched. A page held at noindex for incompleteness (A3) enrolls when it flips.
 - **~90 days - performance check.** Impressions + clicks + position, three outcomes:
   - **Impressions AND clicks** -> working. Reinforce if position 5-15 (a title/content push can move it to page 1).
   - **Impressions, no clicks (sub-1% CTR)** -> it ranks but nobody picks it. Fix the title/meta snippet - cheap, high-value. The page is fine; the SERP presentation isn't.
@@ -206,6 +220,11 @@ The gates prevent bad content from being born; this catches pages that pass ever
 **Kill = consolidate or noindex** - fold into a stronger canonical where content is salvageable. Do this at a handful of pages, continuously; never again at 1,300. The Marathon consolidation was the fire; this is the smoke detector.
 
 **Close the loop back to Gate 1.** GSC's realized winners are proven demand - build more like them. The failures recalibrate the demand estimates. Over time Gate 1 picks are trained on your own results, not just Mangools projections.
+
+Once first-party data exists it is SENIOR to third-party estimates:
+- **GSC-sourced candidates are thresholded in the site's own impressions**; the Mangools volume floor never applies to them. A query already sending impressions has proven relevance at any measured volume.
+- **A page ranking position 11-30 is winnability evidence stronger than any modeled KD score** - the site is empirically competing.
+- **Third-party traffic estimates are decision-grade nowhere at this scale** (Ahrefs showed 0 on a page GSC shows earning clicks at position 5.5). Prioritization reads GSC, always.
 
 ---
 
@@ -231,6 +250,7 @@ Honest constraint: DMZ has near-zero search volume until Oct 23. "Perfect it out
 - **Map every Deep Dive entity** (Hajin + named POIs, FOB stations, 3D Printer categories, factions, mission/threat systems) -> one provisional canonical each, tagged `deep-dive-provisional`. (Sanctioned by Gate 1's pre-launch exception.)
 - **Wire the gates into the DMZ editors before they generate anything** - DMZ never repeats the Marathon freewheel.
 - **Win the pre-launch queries that exist now:** "DMZ release date," "DMZ map," "DMZ vs Warzone," "what is DMZ MW4" - real canonicals aging into authority before the wave.
+- **Provisional and incomplete are different states**; only one noindexes. A page noindexes because it is INCOMPLETE (a stub), and indexes the day it is depth-complete and spec-compliant - while still provisional, with the visible sourcing line doing the honesty work. The index gate must never key to game-verification: verification is only possible at launch, so keying to it would hold every pre-launch canonical out of the index until launch day and nullify Phase 1's aging strategy.
 
 ### Phase 2 - Launch (Oct 23+): answer the flood, accurately
 - **Game-verify:** flip `deep-dive-provisional` -> `game-verified`, correcting what the Deep Dive got wrong (there will be some; that's what the tag is for).
@@ -258,7 +278,7 @@ Onboarding a future game is a checklist:
 
 1. **Build the DMZ keyword map in Mangools** - templates + Deep Dive entities + old-DMZ proxy terms in KWFinder, filter volume + low KD, spot-check in SERPChecker, export CSVs -> Claude Code produces the ranked canonical table. The keystone; start the Mangools pulls this weekend.
 2. **Audit existing DMZ canonicals against the map** - /dmz, /dmz/fob, /dmz/regions exist; the gap list of high-demand queries without canonicals is the pre-launch build queue.
-3. **Add the provenance field to DMZ content** (`deep-dive-provisional` / `game-verified`, with patch version) so accuracy is trackable from the start.
+3. **Add the provenance field to DMZ content** (the `verified` + `verified_source` pair; patch carried inside `verified_source` as `game-verified@X.Y`) so accuracy is trackable from the start.
 4. **Wire the gate checks as hard editor pre-conditions** - demand exists, no canonical covers it, source cited, technical spec met. Connect to the coverage-registry design so Gate 2 has its enforcement mechanism.
 5. **Confirm no manual penalty** - GSC -> Security & Manual Actions, once. If clean (almost certainly), no disavow; move on.
 6. **Hard-filter every keyword pick by KD <= ~30-35** when building the canonical plan. Mandatory at DA 23, not a preference.
@@ -284,3 +304,10 @@ Onboarding a future game is a checklist:
 10. **Structured, verified data over AI prose.** The moat is data only a player can verify; AI opinion is what Google filters.
 11. **Authority is the ceiling; raise it slowly.** Earn editorial links with citable data and genuine community presence. Never disavow without a manual action.
 12. **The method travels; the data doesn't.** Gates and templates build once; entities, volumes, and verification are per-game and ongoing.
+13. **Documented is not enforced** - prefer structural enforcement at the layer that cannot be bypassed. Paired-state invariants get a trigger AND a CHECK. Closed value sets get DB CHECKs mirrored to code constants. Attribution columns are NOT NULL with no default. Mapping functions fail loudly on unknown input, never defaulting to an existing value. A rule living only in prose has not shipped.
+
+---
+
+## 12. How this doctrine changes
+
+This doctrine and every governing design document live committed in docs/ and change by EDIT with the reasoning ledgered - never by regeneration from a draft. A session that rebuilds a document from its own prior copy silently drops every correction it didn't transcribe. Corollary: this doctrine is required reading for any session making content-policy decisions.
