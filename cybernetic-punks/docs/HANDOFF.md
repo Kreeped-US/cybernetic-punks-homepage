@@ -91,7 +91,10 @@ FAQPage blocks are shaped differently, not because they're exempt.
 
 Push status at session end: merged to main and PUSHED to origin (de1be04 =
 de1be040f9b8aae90a7fc97e43e13222f9663a1e on origin/main, fast-forward, no new
-commit). Production validation on a /weapons URL still pending as of this entry.
+commit). /weapons production validation is now COMPLETE - served HTML for
+/weapons/misriah-2442 confirmed zero FAQPage, BreadcrumbList + WebPage intact,
+and the visible FAQ section still renders on-page. All three templates (uniques,
+weapons, vault-breaker) validated live in production.
 
 ---
 
