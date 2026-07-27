@@ -44,6 +44,57 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-27 - A1 FAQPage removal: Phase 1 COMPLETE (49/49 flagged URLs cleared)
+
+State: uniques + weapons + vault-breaker merged to main. All 49 audit-flagged
+URLs now FAQPage-free. Phase 2 (18 remaining compliance files) still OPEN - see
+below. Phase 1 clearing the flagged set does NOT complete the A1 doctrine work.
+
+Merged commits (linear on main, FF only):
+- 5ef995e  chore(uniques): remove FAQPage JSON-LD from unique weapon detail page
+           (A1, canary). faqItems deleted (was schema-only-fed, no visible FAQ).
+           L6 header manifest FAQPage token dropped. Live-validated: FAQPage
+           absent from served HTML, BreadcrumbList + WebPage intact.
+- 74afae5  chore(weapons): remove FAQPage JSON-LD from weapon detail page
+           (A1, phase 1). faqSchema object + script removed. faqItems KEPT - it
+           also feeds a visible FAQ rendered by WeaponDetailClient (Step 0
+           corrected the brief's wrong "schema-only-fed" assumption). Header
+           manifest FAQPage token dropped; line-182 comment parenthetical
+           trimmed. Clears 32 /weapons URLs.
+- de1be04  chore(modes): remove FAQPage JSON-LD from vault-breaker page
+           (A1, phase 1). faqSchema object + script removed. FAQ_ITEMS KEPT -
+           single const feeds both the visible FAQ and (formerly) the schema.
+           No header manifest exists on this file. FIVE inline comments that
+           referenced the FAQPage emission corrected so the code record matches:
+           the reason-clauses were fixed, not the doctrine (the "inference
+           asserted as fact to a crawler" provenance rationale is preserved
+           throughout). Clears 1 /modes/vault-breaker URL. main tip = de1be04.
+
+Pattern established for Phase 2 (per file): delete the faqSchema/FAQPage object
++ its own <script> render line; keep the feeding array wherever it also drives a
+visible FAQ (decide per file via a within-file + client-component reference
+trace, not assumed); leave BreadcrumbList + WebPage sibling scripts untouched;
+correct any file-header schema manifest AND any inline comment that asserts a
+FAQPage link so the record matches. Verify array-fate at source every time - the
+weapons brief's "schema-only-fed" assumption was wrong and Step 0 caught it.
+
+Phase 2 - OPEN. The enumeration found 21 FAQPage emission sites total; 3 done
+(above). 18 remain, all currently passing validation (so never Ahrefs-flagged)
+but banned by A1 regardless:
+builds, matchups/[shell], cradle, maps/[slug], dmz, leaderboard,
+guides/[category], status, guides/shells/[name], guides, stats, factions,
+DmzEntityDetail, rising, intel, shells/[slug], ranked/RankedClient, meta.
+Note from enumeration: stats and leaderboard were flagged as possibly zero-data
+placeholder pages (stats has an in-file comment arguing FAQPage should stay,
+which A1 overrides); verify per file. shells and maps "pass" only because their
+FAQPage blocks are shaped differently, not because they're exempt.
+
+Push status at session end: merged to main and PUSHED to origin (de1be04 =
+de1be040f9b8aae90a7fc97e43e13222f9663a1e on origin/main, fast-forward, no new
+commit). Production validation on a /weapons URL still pending as of this entry.
+
+---
+
 ## 2026-07-24 — DMZ POI provenance bound to verified_source (drop stale Bungie literal)
 
 Fixes a display/DB contradiction on `/dmz/pois/[slug]`: the visible UNCONFIRMED banner rendered a
