@@ -12,7 +12,7 @@
 // IN we fetch all weapons, derive each one's slug, and find the match.
 //
 // SEO: per-weapon title/description/canonical + BreadcrumbList, WebPage
-// (with weapon stats on mainEntity), and FAQPage JSON-LD - mirrors the
+// (with weapon stats on mainEntity) JSON-LD - mirrors the
 // shell detail page so weapons rank for "[weapon name] Marathon stats".
 //
 // UPDATED June 4, 2026 - on-page SEO audit pass:
@@ -179,7 +179,7 @@ export default async function WeaponDetailPage({ params }) {
     .slice(0, 6)
     .map(function(w) { return { name: w.name, slug: entitySlugFor('weapon', w.name), weapon_type: w.weapon_type }; });
 
-  // --- FAQ ITEMS (also feed the FAQPage JSON-LD) ----------------
+  // --- FAQ ITEMS ----------------
   var faqItems = [];
   if (metaTier) {
     faqItems.push({
@@ -271,21 +271,10 @@ export default async function WeaponDetailPage({ params }) {
     webPageSchema.dateModified = lastModified;
   }
 
-  var faqSchema = faqItems.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map(function(item) {
-      return { '@type': 'Question', name: item.q, acceptedAnswer: { '@type': 'Answer', text: item.a } };
-    }),
-  } : null;
-
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
-      {faqSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      )}
 
       <WeaponDetailClient
         weapon={weapon}
