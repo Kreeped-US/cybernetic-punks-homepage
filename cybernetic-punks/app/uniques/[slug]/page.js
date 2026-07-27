@@ -3,7 +3,7 @@
 // Unique weapon DETAIL page (Path B) - one template serving every row in
 // unique_weapons. Mirrors app/weapons/[slug]/page.js (the winning per-item
 // pattern): force-dynamic, per-unique generateMetadata + BreadcrumbList /
-// WebPage(PropertyValue) / FAQPage JSON-LD, matched Marathon named-hex design.
+// WebPage(PropertyValue) JSON-LD, matched Marathon named-hex design.
 //
 // HONESTY: a unique has almost no stats of its OWN (locked_mods 1/16, no art,
 // stats live on the base weapon). So this page is substantive by JOINING the
@@ -164,21 +164,10 @@ export default async function UniqueDetailPage({ params }) {
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
   };
 
-  // FAQ - answers are pure real data (no invented specifics).
-  var faqItems = [];
-  if (acq) faqItems.push({ q: 'How do you get the ' + u.name + ' in Marathon?', a: 'The ' + u.name + ' drops from ' + acq + '.' });
-  if (u.base_weapon) faqItems.push({ q: 'What weapon is the ' + u.name + ' based on?', a: 'The ' + u.name + ' is a ' + (u.rarity ? u.rarity + ' ' : '') + 'unique variant of the ' + u.base_weapon + (u.weapon_type ? ', a ' + u.weapon_type : '') + '.' });
-  faqItems.push({ q: 'Can you change the mods on the ' + u.name + '?', a: u.locked_mods ? ('No. Its mods are permanently locked: ' + u.locked_mods) : 'No. Like all unique weapons, its mods are permanently locked and cannot be swapped, upgraded, or removed.' });
-  var faqSchema = faqItems.length > 0 ? {
-    '@context': 'https://schema.org', '@type': 'FAQPage',
-    mainEntity: faqItems.map(function (i) { return { '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } }; }),
-  } : null;
-
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
-      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
 
       <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
         <style>{`
