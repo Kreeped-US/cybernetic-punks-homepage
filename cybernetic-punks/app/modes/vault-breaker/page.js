@@ -73,8 +73,7 @@ const CYAN = '#00d4ff';
 // ALL sources this page draws on, in ONE place. Feeds FOUR sites -- the hero
 // SOURCE block, the footer, eventSchema.citation and webPageSchema.citation --
 // so the visible text and the JSON-LD cannot list different sources. Same
-// single-definition discipline FAQ_ITEMS already uses for the FAQ section and
-// its FAQPage schema.
+// single-definition discipline FAQ_ITEMS already uses for the FAQ section.
 //
 // WHY THIS IS AN ARRAY (2026-07-21). It was a single SOURCE_* triple, and the
 // rendered text asserted "Every fact on this page comes from Bungie's Mid-Season
@@ -169,8 +168,7 @@ export const metadata = {
   },
 };
 
-// FAQ items feed BOTH the visible section and the FAQPage JSON-LD, so they can
-// never drift apart.
+// FAQ items render the visible FAQ section below.
 const FAQ_ITEMS = [
   {
     q: 'When does Marathon Vault Breaker start?',
@@ -188,7 +186,7 @@ const FAQ_ITEMS = [
     q: 'Is there a Runner Level requirement for Vault Breaker?',
     a: 'No. Vault Breaker is open at any Runner Level, and can be played Solo, Duo, or Trio, either matchmade or as a premade group.',
   },
-  // TIER 1 + TIER 2 ONLY. FAQ_ITEMS feeds the FAQPage JSON-LD, so it carries
+  // TIER 1 + TIER 2 ONLY. FAQ_ITEMS renders the visible FAQ section, so it carries
   // only what Bungie stated or what has actually been played. NOTHING from the
   // "expected, not verified" tier goes in here or in any other schema -- an
   // inference asserted as a Question/Answer pair is an inference asserted as
@@ -267,14 +265,6 @@ export default function VaultBreakerPage() {
     citation: citations,
   };
 
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: FAQ_ITEMS.map(function (item) {
-      return { '@type': 'Question', name: item.q, acceptedAnswer: { '@type': 'Answer', text: item.a } };
-    }),
-  };
-
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 60 }}>
       <style>{`
@@ -284,7 +274,6 @@ export default function VaultBreakerPage() {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* breadcrumb -- Home > Vault Breaker. No /modes crumb: that route does not exist. */}
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
@@ -483,9 +472,9 @@ export default function VaultBreakerPage() {
           The dashed border is the strongest: it reads as provisional even in a
           screenshot with the text too small to read.
 
-          TIER 3 IS EXCLUDED FROM ALL STRUCTURED DATA -- not in FAQ_ITEMS, not in
-          eventSchema, nowhere a crawler reads. An inference asserted as a
-          Question/Answer pair is an inference asserted as fact.
+          TIER 3 IS EXCLUDED FROM FAQ_ITEMS AND FROM ALL STRUCTURED DATA -- not in
+          the visible FAQ, not in eventSchema, nowhere a crawler reads. An inference
+          asserted as a Question/Answer pair is an inference asserted as fact.
 
           DELIBERATELY ABSENT: any claim that beating the Compiler in Vault
           Breaker withholds the S'Phticide shell style. Searched 100 Steam posts
@@ -629,7 +618,7 @@ export default function VaultBreakerPage() {
         </div>
       </section>
 
-      {/* FAQ -- same source as the FAQPage JSON-LD */}
+      {/* FAQ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <SectionHeader label="FAQ" color={ORANGE} />
         <div style={{ display: 'grid', gap: 8, maxWidth: 780 }}>
