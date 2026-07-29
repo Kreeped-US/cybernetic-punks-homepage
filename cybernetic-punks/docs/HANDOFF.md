@@ -44,6 +44,63 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-29 - DMZ demand map (workstream 1) COMPLETE + committed
+
+State: docs/dmz-demand-map.md committed (2125386) with backing keyword research
+under docs/research/dmz-demand-2026-07/ (6 CSVs + README). This is the ranked
+pre-launch canonical build queue - the brief's "build queue + anti-cannibalization
+map + priority order in one." Workstream 1 of the DMZ canonical-prep brief is
+done. (This entry rides in a follow-up commit, not 2125386, since it was authored
+after the demand map landed - currency-rule-1 exception, same as the Phase 1 doc.)
+
+Method: operator ran six Mangools/KWFinder research groups (old-DMZ proxy,
+launch-intent, Hajin, POIs, systems, comparison); figures transcribed verbatim
+into the CSVs (blanks preserved; blank KD = unscored, SERPCheck manually, never
+"easy"). Claude Code then verified every proposed canonical read-only against
+live routes BEFORE the doc was written - which caught that 4 of 5 proposed
+canonicals already exist in some form. That verification is why the demand map
+proposes EXTEND/FORK/REJECT, not naive BUILD-NEW that would cannibalize live pages.
+
+The pre-launch build queue (ranked, all demand-backed):
+1. EXTEND /dmz (launch-info hub) - highest demand (mw4 dmz 5400 peak). Over-cap
+   KD is a deliberate authority play. Email capture already wired. COUPLED to A1
+   Phase 2: /dmz still emits a FAQPage; its removal must ride in the same edit as
+   the extension (do not touch /dmz twice).
+2. FORK /dmz/keys into a keys SYSTEM hub - dmz key locations 12,100 peak, KD 30,
+   winnable. Launch-gated so system-hub-only, never per-key. Requires forking off
+   the shared DmzEntityHub (which must keep its empty-state-noindex honesty gate
+   for missions/items/per-key detail) - an architecture task, scoped SEPARATELY.
+3. EXTEND the Hajin article
+   (/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals) - fold
+   dmz korea map (1100/mo, uncontested, but real-world-DMZ ambiguity so
+   SERPChecker-gated, secondary term, no H1 rewrite). Sharpest cannibalization
+   risk; /dmz/regions + /dmz/pois cross-link IN, never compete.
+4. BUILD NEW gunsmith article at /dmz/loadouts - dmz gunsmith KD 20 (lowest in
+   the set), Deep-Dive-sourced. GATED on a confirmed Deep-Dive excerpt before
+   generation (no-source-no-fabrication).
+
+Rejected: a "systems-explained fold-in hub" - FOB and 3D-printer already have
+deep standalone canonicals, so it would cannibalize three live pages.
+
+Deferred with reasons (not omitted): per-POI detail pages (near-zero demand +
+unverified-pre-launch honesty gate; the /dmz/pois hub stays indexable), and
+per-key/mission/item pages (launch-gated, the June 6 Deep Dive names no such
+entities - building now would be fabrication). These populate at launch as
+entities become real and in-game verified.
+
+NEXT (four scoped build tasks off this queue, each its own gated brief):
+- Keys-fork is an architecture task (touches shared DmzEntityHub) - can regress
+  the shared honesty gate, scope carefully.
+- The /dmz extension must bundle the A1 FAQPage removal.
+- Gunsmith is blocked until a Deep-Dive excerpt is confirmed.
+- Hajin extension is a content edit; SERPChecker-gate the korea-map term first.
+Also open: the blocking maps-family seam (read-only investigation still un-run -
+sharpest silent-corruption risk before any DMZ map canonical), and workstreams
+4-6 (on-page SEO spec, indexing machinery / Consumer C, off-site authority).
+Aug 31 build-window deadline stands.
+
+---
+
 ## 2026-07-27 - A1 FAQPage removal: Phase 1 COMPLETE (49/49 flagged URLs cleared)
 
 State: uniques + weapons + vault-breaker merged to main. All 49 audit-flagged
