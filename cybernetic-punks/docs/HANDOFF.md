@@ -44,6 +44,85 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-29 - Consumer C (GSC URL Inspection) tiers a+b SHIPPED + validated; c + canary open
+
+State: Consumer C's action-driven (a) + de-index-cohort (b) tiers are built,
+merged (main 7bc8665), and VALIDATED by an observed first production run. The
+rolling sweep (c) is deferred, and the canary enrollment the spec called for is
+NOT yet satisfied (gap below). So this is "tiers a+b done + validated," NOT
+"Consumer C complete." (Entry rides in a follow-up commit, authored after the
+merge + observed run.)
+
+Build (three commits, FF-merged, A/B pulls untouched):
+- e90537d 5b: storage writer (buildInspectionRow defensive reads + null-game
+  drop; appendUrlInspection append-only fail-open) + credential-helper exports.
+- 50cfc45 5c-fetch: inspectUrl - URL Inspection API primitive, tri-state
+  (success / quotaExhausted / other-error), quota checked before the 403 branch.
+- 7bc8665 5c-loop: runUrlInspectionPull - cohort (b) then action-driven (a),
+  deduped, cross-ref latest verdict per url; per-run cap 500; stops on cap or
+  quotaExhausted with remainder -> skipped_for_quota; one consumer='inspection'
+  pull-log row; fail-open. Cron gains a 3rd contained call.
+- DDL (operator-run, verified before code): gsc_pull_log gained
+  skipped_for_quota integer (nullable). gsc_url_inspection pre-existed
+  (append-per-inspection, no url-unique, last_crawl_time nullable - all confirmed
+  by operator SELECT).
+
+The real corpus shape (confirmed by feed_items breakdown - corrects an earlier
+stale "1500 -> 500" mental model):
+- ~821 marathon articles are PRUNED (is_published, noindex=true, noindexed_at
+  set) - these are cohort (b). They still EXIST as rows (you noindex, not delete,
+  so C can watch them leave Google's index).
+- ~746 marathon + 3 dmz articles are LIVE survivors (published, not noindexed) -
+  these are source (a); C confirms they ARE indexed.
+- So the prune reduced the INDEXABLE set to ~749, by noindexing 821 - it did not
+  delete rows and the survivor set is ~746, not 500.
+
+Observed first run (throwaway runner, since deleted; main untouched):
+- ok=true, inspected=500, written=500, droppedUnknownGame=0, skippedForQuota=1069,
+  candidates=1570, quotaExhausted=false. Elapsed ~54 min.
+- All designed behavior held: cap enforced, 1069 remainder recorded (no silent
+  cap), clean attribution, fail-open on one transient Google HTTP 500.
+- First index-state signal (of the 500 inspected): 381 "Submitted and indexed"
+  (live survivors correctly in the index), 71 "Excluded by noindex tag" (prune
+  honored - the ideal confirmation), 47 "URL is unknown to Google", 1 "Crawled -
+  not indexed". Reading: the prune is landing WHERE INSPECTED, and live articles
+  are indexed where inspected - but this is 500 of 1570, NOT a completion figure.
+  The 821 cohort was NOT fully covered in run 1 (821 > one 500-cap run); the
+  remaining candidates (incl. most of the cohort and ~half the live set) are in
+  the 1069 deferred, which the scheduled cron clears ~500/run over coming days,
+  cohort re-checked first each run.
+- WATCH: candidates should SHRINK across runs as URLs get confirmed-and-dropped.
+  If it stays ~1570 after several runs, the confirm-and-drop logic isn't dropping
+  - investigate.
+
+GAP (deferred-scope consequence, not a bug): (a)+(b) select from feed_items
+ONLY. The canary /dmz/pois/hajin-city is a dmz_pois ENTITY page, not an article,
+so it was NOT inspected and CANNOT be until source (c) or a dedicated enrollment
+lands - same for all /weapons, /uniques, /leaderboard, /stats, entity/tool pages.
+The spec's "first URL enrolled = hajin-city canary, verdict gates POI rollout" is
+NOT yet satisfied; the canary is uninspected and that gate is not yet answerable.
+
+FOLLOW-UPS, ranked by what the run revealed:
+1. FIRST - JWT-per-call re-auth + no fetch timeout (one fix). inspectUrl
+   re-auths per call (2 round-trips x 500 = the ~54 min runtime on a daily cron)
+   and has no AbortController (a hung request stalls indefinitely - the silent
+   signature that took 40 min to diagnose tonight). Fix: auth once per pull,
+   thread the token, add a timeout. ~54 min -> a few, removes the hang risk.
+2. SECOND - source (c) rolling sweep. Higher priority than "background" because
+   it ALSO enrolls entity pages incl. the gating canary. Prereq: extract a
+   reusable getIndexableUrls() from sitemap.js (649-line monolith, inlined
+   enumeration - separate gated refactor) so (c) reuses one URL source of truth.
+   Loop already has the marked (c) insertion point.
+3. THIRD - latest-per-url VIEW (the cross-ref reduces the whole append table in
+   JS; fine while small, a view later).
+
+NET: the time-sensitive prune-verification tier is live, validated, and already
+showing the prune landing where inspected. The build is honest about what it does
+NOT cover (entity pages, the canary). Next session's clean first task: follow-up
+#1 (re-auth + timeout).
+
+---
+
 ## 2026-07-29 - DMZ canonical build phase CLOSED: #3 done, #2 + #4 content-gated
 
 State: demand-map item #3 (Hajin article extension) shipped. Items #2 (keys) and
