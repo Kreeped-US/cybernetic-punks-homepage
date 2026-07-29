@@ -250,9 +250,10 @@ export async function upsertQueryMetrics(supabase, rows) {
 // `no_match` exists to resolve. Every consumer MUST read this alongside the metrics.
 // consumer ('page' | 'query') distinguishes the two pulls that share this log -- both
 // write identical trailing-window shapes, so the column is the only reliable
-// discriminator. dropped_unknown_game persists the C4 drop count (step-3 follow-up).
-// Both are added to the payload ONLY when provided, so a caller that omits them still
-// writes cleanly; the two columns are an operator ALTER (recorded in HANDOFF, rule 2).
+// discriminator. dropped_unknown_game persists the C4 drop count (step-3 follow-up);
+// skipped_for_quota persists the Consumer C cap/quota remainder (no-silent-cap).
+// All are added to the payload ONLY when provided, so a caller that omits them still
+// writes cleanly; these columns are operator ALTERs (recorded in HANDOFF, rule 2).
 export async function writePullLog(supabase, entry) {
   try {
     const payload = {
@@ -267,6 +268,7 @@ export async function writePullLog(supabase, entry) {
     };
     if (entry.consumer !== undefined) payload.consumer = entry.consumer;
     if (typeof entry.droppedUnknownGame === 'number') payload.dropped_unknown_game = entry.droppedUnknownGame;
+    if (typeof entry.skippedForQuota === 'number') payload.skipped_for_quota = entry.skippedForQuota;
     const { error } = await supabase.from('gsc_pull_log').insert(payload);
     if (error) {
       console.log('[gsc_pull_log] insert failed (non-fatal): ' + error.message);

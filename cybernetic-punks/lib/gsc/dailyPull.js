@@ -14,12 +14,33 @@
 // so absence stays distinguishable from zero.
 
 import { fetchSearchAnalytics, daysAgo, FINAL_DATA_LAG_DAYS } from './searchAnalytics.js';
-import { loadKnownSlugs, buildMetricRows, upsertPageMetrics, buildQueryMetricRows, upsertQueryMetrics, writePullLog } from './storage.js';
+import { loadKnownSlugs, buildMetricRows, upsertPageMetrics, buildQueryMetricRows, upsertQueryMetrics, writePullLog, buildInspectionRow, appendUrlInspection } from './storage.js';
+import { inspectUrl } from './urlInspection.js';
+import { dmzSectionForArticle } from '../games/dmz.js';
 
 const DAILY_WINDOW_DAYS = 5;        // trailing ~5 days -- the daily catch-up window
 const RECONCILE_WINDOW_DAYS = 35;   // ~35-day monthly reconciliation
 const RECONCILE_EVERY_DAYS = 30;    // run a reconciliation if the last one is older than this
 const STALL_TOLERANCE_DAYS = 4;     // newest_date_returned this far behind window_end = stall
+
+// ── URL INSPECTION (Consumer C, 5c-loop) constants ───────────────────────────
+// Per-run cap: how many URLs one cron tick inspects. Well under the ~2000/day URL
+// Inspection quota at ~745 pages, so the corpus cycles over a few days with headroom;
+// the remainder each run is deferred and logged (skipped_for_quota -- no silent cap).
+const INSPECTION_PER_RUN_CAP = 500;
+// How many recent published rows to scan for the action-driven tier (a).
+const INSPECTION_ACTION_SCAN = 1000;
+const INSPECTION_BASE_URL = 'https://cyberneticpunks.com';
+// DEFINITIVE signals only (exact coverageState from the API, confirmed by the 5a spike).
+// A cohort URL is dropped from watching ONLY on a definite GONE signal; an action-driven
+// URL ONLY on a definite INDEXED signal -- never on the mere absence of PASS or a
+// transient error (append-per-inspection lets us keep watching cheaply).
+const INSPECTION_INDEXED_COVERAGE = 'Submitted and indexed';
+const INSPECTION_GONE_COVERAGE = new Set([
+  'URL is unknown to Google',
+  'Crawled - currently not indexed',
+  "Excluded by 'noindex' tag",
+]);
 
 function daysBetween(aIso, bIso) {
   // whole days between two YYYY-MM-DD strings (b - a)
@@ -237,5 +258,163 @@ export async function runQueryGscPull(supabase) {
     } catch (e2) { /* even the log failed */ }
     console.error('[gsc] query pull threw (contained, generation unaffected): ' + (err && err.message));
     return { ok: false, reason: 'threw', rowsWritten: 0, isReconciliation };
+  }
+}
+
+// ── URL INSPECTION PULL (Consumer C, 5c-loop) ────────────────────────────────
+// A feed_items row -> its absolute public URL. Marathon articles live at /intel/<slug>;
+// DMZ articles at /dmz/<section>/<slug> where section = dmzSectionForArticle (the
+// DMZ_ARTICLE_SECTION map or the 'discourse' tag). A DMZ row with no resolvable section,
+// or an unknown game, returns null -> the caller SKIPS it (cannot build a URL, never
+// guesses one). gameSlugForUrl re-derives the game from the path at row-build time.
+function feedItemInspectionUrl(row) {
+  if (!row || !row.slug) return null;
+  if (row.game_slug === 'marathon') return INSPECTION_BASE_URL + '/intel/' + row.slug;
+  if (row.game_slug === 'dmz') {
+    const section = dmzSectionForArticle(row);
+    return section ? INSPECTION_BASE_URL + '/dmz/' + section + '/' + row.slug : null;
+  }
+  return null;
+}
+
+// Mirrors the A/B pulls' fail-open contract and single writePullLog row, but is NOT
+// date-windowed -- no reconciliationDue, no checkStall. Cadence is per-run cap + resume:
+// each tick inspects up to INSPECTION_PER_RUN_CAP URLs and defers the rest to next run.
+//
+// SELECTION (priority order): (b) DE-INDEX COHORT first -- the decaying prune-verification
+// signal, inspected before quota can run out -- then (a) ACTION-DRIVEN. (c) the rolling
+// sweep is DEFERRED (Path 1): it slots in at the one marked point once a reusable
+// getIndexableUrls() is extracted from the sitemap (a separate gated refactor).
+//
+// NOTHING here enters a prompt; it feeds the index-state record, not the editor.
+export async function runUrlInspectionPull(supabase) {
+  const startedAt = new Date().toISOString();
+  try {
+    // CROSS-REF: latest inspection per url, reduced in JS from the whole append table.
+    // KNOWN SCALING POINT: a latest-per-url VIEW is the intended future optimization;
+    // fine now (the table is near-empty and grows ~one row per inspection). A failed read
+    // is non-fatal -- an empty map just means we may RE-inspect (safe, never wrong data).
+    const latestByUrl = new Map();
+    {
+      const { data, error } = await supabase
+        .from('gsc_url_inspection')
+        .select('url, coverage_state, inspected_at')
+        .order('inspected_at', { ascending: false });
+      if (error) console.error('[gsc] inspection cross-ref read failed (continuing, may re-inspect): ' + error.message);
+      else (data || []).forEach(function (r) { if (r.url && !latestByUrl.has(r.url)) latestByUrl.set(r.url, r); });
+    }
+    function isConfirmedIndexed(url) {
+      const r = latestByUrl.get(url);
+      return !!(r && r.coverage_state === INSPECTION_INDEXED_COVERAGE);
+    }
+    function isConfirmedGone(url) {
+      const r = latestByUrl.get(url);
+      return !!(r && INSPECTION_GONE_COVERAGE.has(r.coverage_state));
+    }
+
+    const candidates = [];
+    const seen = new Set(); // dedupe: a URL in cohort (b) is not also swept by (a)
+
+    // (b) DE-INDEX COHORT -- inspect until CONFIRMED gone (definitive coverageState only).
+    {
+      const { data, error } = await supabase
+        .from('feed_items')
+        .select('slug, game_slug, tags, noindexed_at')
+        .not('noindexed_at', 'is', null);
+      if (error) console.error('[gsc] inspection cohort read failed (continuing): ' + error.message);
+      (data || []).forEach(function (row) {
+        const url = feedItemInspectionUrl(row);
+        if (!url || seen.has(url) || isConfirmedGone(url)) return;
+        seen.add(url); candidates.push(url);
+      });
+    }
+
+    // (a) ACTION-DRIVEN -- published & indexable, not yet confirmed indexed.
+    // created_at is a publish-time PROXY (there is NO published_at column) -> COARSE
+    // recency only. The real gate is "not-yet-confirmed-indexed", not the timestamp; the
+    // created_at order just scans the freshest rows first within the scan limit.
+    {
+      const { data, error } = await supabase
+        .from('feed_items')
+        .select('slug, game_slug, tags, created_at')
+        .eq('is_published', true)
+        .eq('noindex', false)
+        .is('noindexed_at', null)
+        .order('created_at', { ascending: false })
+        .limit(INSPECTION_ACTION_SCAN);
+      if (error) console.error('[gsc] inspection action-driven read failed (continuing): ' + error.message);
+      (data || []).forEach(function (row) {
+        const url = feedItemInspectionUrl(row);
+        if (!url || seen.has(url) || isConfirmedIndexed(url)) return;
+        seen.add(url); candidates.push(url);
+      });
+    }
+
+    // (c) ROLLING SWEEP -- DEFERRED (Path 1). A third source pushes least-recently-
+    // inspected corpus URLs HERE, after a reusable getIndexableUrls() is extracted from
+    // sitemap.js. Built so this is the only insertion point.
+
+    // INSPECT up to the per-run cap; stop cleanly on the cap OR a quotaExhausted return.
+    const rows = [];
+    let inspected = 0;
+    let droppedUnknownGame = 0;
+    let quotaHit = false;
+    let i = 0;
+    for (; i < candidates.length; i++) {
+      if (inspected >= INSPECTION_PER_RUN_CAP) break;        // cap -> remainder deferred
+      const out = await inspectUrl(candidates[i]);
+      if (out.quotaExhausted) { quotaHit = true; break; }    // quota -> stop, remainder deferred
+      if (!out.ok) {                                          // other error -> skip this URL, continue
+        console.error('[gsc] inspect skipped ' + candidates[i] + ': ' + String(out.error).split('\n')[0]);
+        continue;
+      }
+      const built = buildInspectionRow(out.result, candidates[i]);
+      droppedUnknownGame += built.droppedUnknownGame;
+      if (built.row) rows.push(built.row);
+      inspected += 1;
+    }
+    // SELECTED-BUT-NOT-REACHED = the cap/quota truncation remainder (candidates from the
+    // break point on); 0 when the loop completed. Logged so a silent cap is impossible.
+    // other-error skips are NOT counted here -- those were attempted (and logged), not
+    // truncated.
+    const skippedForQuota = candidates.length - i;
+
+    const up = rows.length > 0 ? await appendUrlInspection(supabase, rows) : { ok: true, written: 0 };
+    const status = up.ok ? 'ok' : 'error';
+
+    // ONE pull_log row -- absence vs zero, same as A/B. window_*/newest/data_state stay
+    // null (inspection is not date-windowed); consumer tags it, and the three counts
+    // (inspected via rows_fetched, dropped, skipped) make truncation loud.
+    await writePullLog(supabase, {
+      consumer: 'inspection',
+      windowStart: null, windowEnd: null, rowsFetched: inspected,
+      newestDateReturned: null, dataState: null,
+      status: status, error: up.ok ? null : ('append: ' + up.error),
+      droppedUnknownGame: droppedUnknownGame,
+      skippedForQuota: skippedForQuota,
+      startedAt: startedAt,
+    });
+
+    console.log('[gsc] inspection pull ' + status + ': candidates=' + candidates.length +
+      ' inspected=' + inspected + ' written=' + up.written + ' dropped=' + droppedUnknownGame +
+      ' skipped=' + skippedForQuota + (quotaHit ? ' [QUOTA]' : '') +
+      (inspected >= INSPECTION_PER_RUN_CAP ? ' [CAP]' : ''));
+
+    return {
+      ok: up.ok, inspected: inspected, written: up.written,
+      droppedUnknownGame: droppedUnknownGame, skippedForQuota: skippedForQuota,
+      quotaExhausted: quotaHit, candidates: candidates.length,
+    };
+  } catch (err) {
+    // Last-resort net: NEVER throw into the cron. Record what we can.
+    try {
+      await writePullLog(supabase, {
+        consumer: 'inspection', windowStart: null, windowEnd: null, rowsFetched: 0,
+        newestDateReturned: null, dataState: null, status: 'error',
+        error: 'unexpected: ' + (err && err.message), startedAt: startedAt,
+      });
+    } catch (e2) { /* even the log failed */ }
+    console.error('[gsc] inspection pull threw (contained, generation unaffected): ' + (err && err.message));
+    return { ok: false, reason: 'threw', inspected: 0, written: 0 };
   }
 }
