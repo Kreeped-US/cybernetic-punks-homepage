@@ -44,6 +44,58 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-29 - Maps-family cross-game seam CLOSED (DDL + query filters)
+
+State: the maps-family game_slug seam from MULTI_GAME_READINESS_AUDIT.md is
+fixed and on main (2e64ae5). Both halves done and verified. (Entry rides in a
+follow-up commit, not 2e64ae5, authored after the fix - currency-rule-1
+exception.)
+
+The seam: the four maps-family DETAIL tables (maps, map_attribution,
+map_reference, map_vaults) had no game column, and /maps/[slug] + the maps list
+read them by bare slug with NO game filter. A future DMZ map sharing a slug with
+a Marathon map would have silently returned Marathon's zones/vaults. Risk was
+purely prospective (no DMZ map data existed).
+
+DDL (operator-run in Supabase, verified against live DB before running - all 25
+rows across the four tables confirmed game_slug-less and all one Marathon map,
+'cryo-archive', so the flat backfill was proven not assumed):
+- ADD COLUMN game_slug text (nullable) -> UPDATE SET 'marathon' -> SET NOT NULL,
+  NO default (a default silently misattributes, per the 16-table audit finding),
+  on maps / map_attribution / map_reference / map_vaults.
+- UNIQUE(game_slug, slug) on the PARENT maps only (the children are one-to-many
+  by map_slug, so a unique there would be wrong).
+- Post-verify confirmed: all four tables game_slug='marathon' at counts
+  1/2/15/7, constraint maps_game_slug_slug_key live.
+
+Code (commit 2e64ae5, FF to main): added .eq('game_slug','marathon') to the six
+detail reads (app/maps/[slug]/page.js:83,84,85,86,181 + app/maps/page.js:70) and
+aligned the generateMetadata game_maps read (page.js:175) to the fetchSeoData
+sibling (:104) that already filtered it. Literal 'marathon' is correct here -
+/maps/[slug] is Marathon's unprefixed namespace route, and every sibling read
+hardcodes it. No behavior change today (all rows marathon); the latent cross-read
+is gone. Verified the FAQPage in this file is UNTOUCHED (still a Phase 2 target).
+
+DELIBERATELY LEFT OPEN (so the next session sees them):
+- The column fix makes the TABLES safe to share, but /maps/[slug] is structurally
+  Marathon-authored: ~9 hardcoded "Marathon" strings across title/description/
+  twitter/FAQ/Place-schema/WebPage-schema/caption/contributor, plus a
+  Marathon-root breadcrumb. A real DMZ map canonical therefore needs its OWN
+  /dmz map route (or a parameterized maps template), NOT reuse of /maps/[slug].
+  This is a SEPARATE decision, deferred - and per the demand map, no DMZ map
+  canonical is even in the pre-launch (Aug 31) set, so it is genuinely later.
+- map_zones (0 rows) and map_markers (7 rows, no reader) are DEAD tables - no
+  code reads them, deliberately excluded from the game_slug fix. Retire-vs-keep
+  is an open decision; not urgent.
+- app/maps/[slug]/page.js still emits a FAQPage (A1 Phase 2 target).
+
+NEXT: unchanged from the demand-map entry - the four DMZ canonical build tasks
+(/dmz extension bundling A1 FAQPage removal; keys-fork architecture task; Hajin
+article extension, SERPCheck korea-map first; gunsmith, excerpt-gated) plus
+workstreams 4-6. Aug 31 window stands.
+
+---
+
 ## 2026-07-29 - DMZ demand map (workstream 1) COMPLETE + committed
 
 State: docs/dmz-demand-map.md committed (2125386) with backing keyword research
