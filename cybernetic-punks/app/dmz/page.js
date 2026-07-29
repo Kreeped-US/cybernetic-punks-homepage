@@ -357,6 +357,25 @@ export default async function DmzLanding() {
         <FactionsCard />
       </div>
 
+      {/* MW4 DMZ vs Warzone -- PROSE, deliberately asymmetric. Targets "dmz vs
+          warzone" (170/mo). No card grid: a two-column layout would imply a
+          DMZ/Warzone information balance we do not have. Copy is constrained to the
+          official Deep Dive (scripts/gen-dmz-news.mjs) -- no Warzone specifics beyond
+          the battle-royale category, no MW4 balance/TTK, no map-size or squad claims,
+          no 2022-mode continuity. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>MW4 DMZ vs Warzone</h2>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+      <div style={{ display: 'grid', gap: 14, maxWidth: 680 }}>
+        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
+          DMZ is Modern Warfare 4&apos;s extraction mode - you deploy into the Hajin Exclusion Zone, take on objectives and threats, and try to extract with what you have earned; Warzone is Call of Duty&apos;s battle-royale mode. Different goal, different loop.
+        </p>
+        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
+          What the official Deep Dive confirms sets DMZ apart: progression and gear that persist between runs through the FOB and Stash, a PvPvE zone where you choose when to cooperate, fight, or slip away, and infil and exfil with real stakes. The detailed, mechanic-by-mechanic comparison lands when the mode goes live on October 23, 2026 - verified from play, not guessed before launch.
+        </p>
+      </div>
+
       {/* REFERENCE -- the launch-day entity verticals (keys / missions / items).
           Linked from the /dmz hub so they are never orphaned. Hubs are noindex
           until they have rows; these links exist now so the crawl graph and the
