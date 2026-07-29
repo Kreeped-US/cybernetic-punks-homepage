@@ -278,3 +278,67 @@ export async function writePullLog(supabase, entry) {
     return { ok: false, error: (err && err.message) || String(err) };
   }
 }
+
+// ── URL INSPECTION (Consumer C, 5b) ──────────────────────────────────────────
+// The write-side primitives for the URL Inspection loop. Kept beside the A/B
+// builders/upserts on purpose -- same game-attribution rule (gameSlugForUrl),
+// same fail-open discipline. The LOOP that decides which URLs to inspect and
+// wires this into the cron is 5c; this part only builds and appends a row.
+
+// A single inspection -> one gsc_url_inspection row. inspectionResult is the API's
+// per-URL object (from the URL Inspection API, confirmed shape via the 5a spike):
+// the fields we store live under inspectionResult.indexStatusResult.
+//
+// DEFENSIVE BY REQUIREMENT. The spike proved an UNKNOWN url omits lastCrawlTime
+// entirely (and an unknown/errored inspection can omit the others), so every field
+// is read as "present -> value, absent -> null", never undefined and never an
+// empty string written into a timestamptz column. last_crawl_time takes the ISO
+// string only when truthy (an empty string would be an invalid timestamp), else null.
+//
+// game_slug is NOT NULL with NO default (confirmed schema). So an UNKNOWN route
+// prefix must NOT produce a row -- writing null would fail the insert, and a
+// fallback game is exactly the silent misattribution C4 forbids. Mirrors
+// buildMetricRows: drop the row, count it, let gameSlugForUrl do the loud log.
+// Returns { row, droppedUnknownGame } -- row is null when dropped; the count lets
+// the 5c caller persist a drop tally to gsc_pull_log the same way the A/B pulls do.
+//
+// id and inspected_at are intentionally NOT set -- the DB defaults (gen_random_uuid,
+// now()) fill them. Append-per-inspection: no url uniqueness, every call is a new row.
+export function buildInspectionRow(inspectionResult, url) {
+  const gameSlug = gameSlugForUrl(url);
+  if (!gameSlug) return { row: null, droppedUnknownGame: 1 }; // gameSlugForUrl logged loudly
+
+  const isr = (inspectionResult && inspectionResult.indexStatusResult) || {};
+  const row = {
+    url: url,
+    game_slug: gameSlug,
+    coverage_state: isr.coverageState == null ? null : isr.coverageState,
+    indexing_state: isr.indexingState == null ? null : isr.indexingState,
+    verdict: isr.verdict == null ? null : isr.verdict,
+    // Truthy-guard, not just != null: an empty string must become null, not be
+    // written into a timestamptz column.
+    last_crawl_time: isr.lastCrawlTime ? isr.lastCrawlTime : null,
+  };
+  return { row: row, droppedUnknownGame: 0 };
+}
+
+// APPEND (never upsert). The table is a per-inspection time series -- an upsert on
+// url would collapse the history the whole consumer exists to capture. Batched and
+// fail-open exactly like upsertPageMetrics; returns { ok, written, error } so the 5c
+// loop can log the outcome in gsc_pull_log. Never throws into the caller.
+export async function appendUrlInspection(supabase, rows) {
+  let written = 0;
+  try {
+    for (let i = 0; i < rows.length; i += UPSERT_BATCH) {
+      const batch = rows.slice(i, i + UPSERT_BATCH);
+      const { error } = await supabase.from('gsc_url_inspection').insert(batch);
+      if (error) {
+        return { ok: false, written, error: error.message, failedAtBatch: i / UPSERT_BATCH };
+      }
+      written += batch.length;
+    }
+    return { ok: true, written };
+  } catch (err) {
+    return { ok: false, written, error: (err && err.message) || String(err) };
+  }
+}

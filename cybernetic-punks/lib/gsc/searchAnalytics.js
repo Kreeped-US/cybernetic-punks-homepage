@@ -74,7 +74,7 @@ function keyShapeFacts(key) {
 // `error:1E08010C:DECODER routines::unsupported` instead of the actual problem.
 const MIN_PLAUSIBLE_KEY_CHARS = 1000;
 
-function readCredentials() {
+export function readCredentials() {
   const email = process.env.GSC_CLIENT_EMAIL;
   const rawKey = process.env.GSC_PRIVATE_KEY;
   if (!email || !rawKey) {
@@ -111,7 +111,7 @@ function readCredentials() {
 // Both likely failures return 403 and one is NOT a credential problem. Saying so in
 // the error message is the point: it stops a future debugger from rotating a
 // perfectly good key for an afternoon.
-function describeForbidden(bodyText) {
+export function describeForbidden(bodyText) {
   return (
     'GSC returned 403 (FORBIDDEN). The two most likely causes BOTH look like auth failure:\n' +
     '  (a) WRONG siteUrl FORM -- the property is URL-prefix, so siteUrl must be exactly\n' +
