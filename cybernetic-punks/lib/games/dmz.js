@@ -265,7 +265,7 @@ export const DMZ_ARTICLE_SEO = {
     title: 'MW4 DMZ Hajin Exclusion Zone: Setting, Loop, and Map Overview',
     description: 'Inside MW4 DMZ\'s Hajin Exclusion Zone: the setting, the secure-and-extract loop, dynamic weather, and the map\'s key regions, per the official Deep Dive.',
     keyFacts: [
-      'Hajin is a post-Modern Warfare 4 exclusion zone on the Korean peninsula.',
+      'The MW4 Hajin map is a post-Modern Warfare 4 exclusion zone on the Korean peninsula.',
       'The core loop: secure abandoned tech before rival forces, then extract.',
       'Dynamic weather -- rain, fog, overcast -- changes visibility each run.',
       'One of the largest Call of Duty environments, built for high-risk ops.',
