@@ -248,12 +248,10 @@ export default async function DmzLanding() {
     },
   };
 
-  // ---- Hub FAQ (source-backed). Four Q&As: launch date / map / mode / confirmed-so-far.
-  // Answers are VERBATIM and the SAME strings feed BOTH the visible block and the FAQPage
-  // schema below (single source -> visible text === schema, no drift). The launch DATE is
-  // now sourced (verified-official CoD MW4 announcement -- MW4 releases Oct 23 2026, DMZ
-  // ships with it; see docs/HANDOFF.md), so it LEADS the list; the other three are
-  // Deep-Dive-backed. ----
+  // ---- Hub FAQ (source-backed). Five Q&As: launch date / coming back / map / mode / confirmed-so-far.
+  // Answers are VERBATIM. The launch DATE is now sourced (verified-official CoD MW4
+  // announcement -- MW4 releases Oct 23 2026, DMZ ships with it; see docs/HANDOFF.md),
+  // so it LEADS the list; the other three are Deep-Dive-backed. ----
   var FAQ_ARTICLES = {
     fob:     { href: '/dmz/fob/dmz-forward-operating-base-every-hub-system-detailed', label: 'the Forward Operating Base' },
     printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
@@ -282,23 +280,6 @@ export default async function DmzLanding() {
   var FAQ_CONFIRMED_MID2 = ', and ';
   var FAQ_CONFIRMED_MID3 = ' (the setting)';
   var FAQ_CONFIRMED_SUF = '. More coverage follows as official details are confirmed.';
-  // Schema answer for confirmed-so-far: SAME words as the visible render, the 3 article
-  // labels wrapped in <a> (absolute URLs). Stripping the tags yields the visible text.
-  var faqConfirmedHtml = FAQ_CONFIRMED_PRE
-    + '<a href="' + HUB_BASE + FAQ_ARTICLES.fob.href + '">' + FAQ_ARTICLES.fob.label + '</a>' + FAQ_CONFIRMED_MID1
-    + '<a href="' + HUB_BASE + FAQ_ARTICLES.printer.href + '">' + FAQ_ARTICLES.printer.label + '</a>' + FAQ_CONFIRMED_MID2
-    + '<a href="' + HUB_BASE + FAQ_ARTICLES.hajin.href + '">' + FAQ_ARTICLES.hajin.label + '</a>' + FAQ_CONFIRMED_MID3
-    + FAQ_CONFIRMED_SUF;
-  var faqLd = {
-    '@context': 'https://schema.org', '@type': 'FAQPage',
-    mainEntity: [
-      { '@type': 'Question', name: FAQ_LAUNCH_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_LAUNCH_A } },
-      { '@type': 'Question', name: FAQ_BACK_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_BACK_A } },
-      { '@type': 'Question', name: FAQ_MAP_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MAP_A } },
-      { '@type': 'Question', name: FAQ_MODE_Q, acceptedAnswer: { '@type': 'Answer', text: FAQ_MODE_A } },
-      { '@type': 'Question', name: FAQ_CONFIRMED_Q, acceptedAnswer: { '@type': 'Answer', text: faqConfirmedHtml } },
-    ],
-  };
   var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
   var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
   var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };
@@ -400,10 +381,8 @@ export default async function DmzLanding() {
         })}
       </div>
 
-      {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far). The FAQPage
-          schema directly below is built from the SAME strings this block renders, so
-          visible text === schema (no drift). Launch date is now sourced (see HANDOFF). */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+      {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far).
+          Launch date is now sourced (see HANDOFF). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 18px' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Common questions</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
