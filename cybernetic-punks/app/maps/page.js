@@ -69,6 +69,7 @@ export default async function MapsIndex() {
       .order('name', { ascending: true }),
     supabase.from('maps')
       .select('slug, name, description, season, updated_at')
+      .eq('game_slug', 'marathon')
       .eq('is_published', true),
   ]);
 

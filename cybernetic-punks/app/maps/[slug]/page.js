@@ -80,10 +80,10 @@ function getServiceClient() {
 async function fetchVaultData(slug) {
   var supabase = getServiceClient();
   var [mapRes, attribRes, refRes, vaultRes] = await Promise.all([
-    supabase.from('maps').select('*').eq('slug', slug).maybeSingle(),
-    supabase.from('map_attribution').select('*').eq('map_slug', slug),
-    supabase.from('map_reference').select('*').eq('map_slug', slug).order('sort_order', { ascending: true }),
-    supabase.from('map_vaults').select('*').eq('map_slug', slug).order('sort_order', { ascending: true }),
+    supabase.from('maps').select('*').eq('slug', slug).eq('game_slug', 'marathon').maybeSingle(),
+    supabase.from('map_attribution').select('*').eq('map_slug', slug).eq('game_slug', 'marathon'),
+    supabase.from('map_reference').select('*').eq('map_slug', slug).eq('game_slug', 'marathon').order('sort_order', { ascending: true }),
+    supabase.from('map_vaults').select('*').eq('map_slug', slug).eq('game_slug', 'marathon').order('sort_order', { ascending: true }),
   ]);
   return {
     map: mapRes.data || null,
@@ -172,13 +172,13 @@ export async function generateMetadata({ params }) {
   var supabase = getServiceClient();
   var { data: gameMap } = await supabase
     .from('game_maps').select('name, summary, difficulty, style, best_for')
-    .eq('slug', slug).eq('verified', true).maybeSingle();
+    .eq('slug', slug).eq('game_slug', 'marathon').eq('verified', true).maybeSingle();
 
   var name = null, descSource = null, difficulty = null, style = null;
   if (gameMap) {
     name = gameMap.name; descSource = gameMap.summary; difficulty = gameMap.difficulty; style = gameMap.style;
   } else {
-    var { data: vaultMap } = await supabase.from('maps').select('name, description, is_published').eq('slug', slug).maybeSingle();
+    var { data: vaultMap } = await supabase.from('maps').select('name, description, is_published').eq('slug', slug).eq('game_slug', 'marathon').maybeSingle();
     if (!vaultMap || !vaultMap.is_published) return { title: 'Map Not Found | CyberneticPunks' };
     name = vaultMap.name; descSource = vaultMap.description;
   }
