@@ -44,6 +44,57 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-29 - /dmz extension COMPLETE (demand-map #1) + A1 Phase 2 now 4/21
+
+State: demand-map item #1 (EXTEND /dmz) shipped to main (5ec5b6e) as three
+sequential commits on chore/dmz-extension, FF-merged. This closes the highest-
+demand DMZ canonical AND carried the coupled A1 Phase 2 FAQPage removal in the
+same edit (the "do not touch /dmz twice" coupling the demand map flagged).
+(Entry rides in a follow-up commit, authored after merge - currency-rule-1
+exception.)
+
+The three parts (all app/dmz/page.js):
+- 4dd7edd - part 1: removed the FAQPage (faqLd object + script + the schema-only
+  faqConfirmedHtml helper). All visible-fed FAQ consts kept - the visible FAQ
+  renders identically. Three stale visible<->schema comments trimmed, and a
+  pre-existing Four/Five Q&A miscount corrected. BreadcrumbList + CollectionPage
+  JSON-LD untouched.
+- d634157 - part 2: front-loaded "MW4 DMZ" into the metadata title (now
+  "MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)", 57 chars, under
+  the 60 gate, absolute wrapper kept), mirrored to OG + Twitter titles.
+  Description and visible H1 deliberately unchanged (title carries the head
+  term; description reads clean at 145 chars; "MW4 DMZ" in a visible H1 buys
+  little SEO and reads as a keyword). Two stale metadata comments refreshed.
+- 5ec5b6e - part 3: added a prose "MW4 DMZ vs Warzone" section (Coverage ->
+  Reference slot) targeting the dmz vs warzone term (170/mo). Copy constrained
+  to Deep-Dive-sourced DMZ specifics (extraction loop, FOB/Stash persistence,
+  PvPvE, infil/exfil stakes) contrasted only against Warzone's battle-royale
+  category label. No invented mechanic comparison, no Warzone specifics, no
+  JSON-LD. States the detailed comparison lands at launch (first-party framing).
+
+On-main verification: FAQPage grep 0; JSON-LD = 2 (BreadcrumbList +
+CollectionPage); new title in metadata/OG/Twitter; vs-warzone section present.
+DmzNotifyBlock, force-dynamic, robots-inheritance untouched.
+
+A1 PHASE 2 PROGRESS: now 4 of 21 done (17 remain) - uniques, weapons,
+vault-breaker (Phase 1 proper) PLUS dmz (cleared here as a side effect of the
+extension). 17 files remain: builds, matchups/[shell], cradle, maps/[slug],
+leaderboard, guides/[category], status, guides/shells/[name], guides, stats,
+factions, DmzEntityDetail, rising, intel, shells/[slug], ranked/RankedClient,
+meta.
+
+DMZ DEMAND-MAP STATUS: #1 (/dmz extension) DONE. Still open:
+- #2 keys system hub - FORK off shared DmzEntityHub (architecture task, can
+  regress the shared honesty gate - scope carefully). dmz key locations 12,100
+  peak, KD 30.
+- #3 Hajin article extension - fold dmz korea map (SERPCheck the term first -
+  real-world-DMZ ambiguity). Content edit.
+- #4 gunsmith article at /dmz/loadouts - GATED on a confirmed Deep-Dive excerpt
+  before generation (no-source-no-fabrication). KD 20.
+Plus workstreams 4-6 and the deferred maps-route parameterization. Aug 31 window.
+
+---
+
 ## 2026-07-29 - Maps-family cross-game seam CLOSED (DDL + query filters)
 
 State: the maps-family game_slug seam from MULTI_GAME_READINESS_AUDIT.md is
