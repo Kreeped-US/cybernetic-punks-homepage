@@ -36,10 +36,11 @@ export const dynamic = 'force-dynamic';
 // <=60 / <=155).
 export const metadata = {
   // `absolute` drops the root '%s | CyberneticPunks' suffix: with it this title
-  // rendered at 71 chars, over the SERP limit. This page exists to compete for
+  // rendered at 75 chars, over the SERP limit. This page exists to compete for
   // "dmz 2 release date" (630/mo), so brand framing earns nothing here.
-  // (openGraph/twitter titles below are NOT templated -- they need no change.)
-  title: { absolute: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)' },
+  // (openGraph/twitter titles below are set explicitly, not templated -- kept in
+  // sync with this metadata title.)
+  title: { absolute: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)' },
   description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
   keywords: ['DMZ', 'DMZ Modern Warfare 4', 'MW4 DMZ', 'Call of Duty DMZ', 'DMZ extraction zone', 'DMZ Hajin', 'DMZ FOB', 'DMZ crafting', 'DMZ loadouts', 'DMZ guide'],
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
@@ -47,7 +48,7 @@ export const metadata = {
   // old "Extraction Intelligence Hub" positioning, so a search result led with the
   // release date while the social card led with brand copy. Same string, one message.
   openGraph: {
-    title: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+    title: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
     description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
     url: 'https://cyberneticpunks.com/dmz',
     siteName: 'CyberneticPunks',
@@ -57,7 +58,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+    title: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
     description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
   },
 };
