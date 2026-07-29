@@ -44,6 +44,69 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-29 - DMZ canonical build phase CLOSED: #3 done, #2 + #4 content-gated
+
+State: demand-map item #3 (Hajin article extension) shipped. Items #2 (keys) and
+#4 (gunsmith) are content-gated and DEFERRED until sources publish. This closes
+the buildable DMZ canonical work from the demand map - the next real work is
+elsewhere (workstreams 4-6, deferred maps-route parameterization). (Entry rides
+in a follow-up commit, authored after the merges.)
+
+#3 - Hajin article extension: DONE.
+- SERPCheck of "dmz korea map" (the 1,100/mo "sleeper") came back 100%
+  real-world Korean-DMZ intent (page 1 = Wikipedia DA97, Google Maps DA100,
+  Britannica DA93, Getty, CIA map) - zero gaming demand, unwinnable authority.
+  DROPPED PERMANENTLY. Do NOT re-chase it; the volume is a string-collision
+  mirage, not gaming demand.
+- Read-only scope found the article (feed_items DB body + lib/games/dmz.js SEO
+  override) already ranks for hajin exclusion zone (23 hits) and dmz hajin (13),
+  faithfully Deep-Dive-sourced. Only two target terms were missing as exact
+  bigrams: "hajin map" and "mw4 hajin".
+- Minimal fix (commit 63d76a5): reworded keyFact bullet 1 in lib/games/dmz.js to
+  "The MW4 Hajin map is a post-Modern Warfare 4 exclusion zone on the Korean
+  peninsula" - both terms folded in as setting/overview, factually unchanged.
+  DB ranking body prose deliberately UNTOUCHED (don't disturb ranking copy for
+  low-volume terms). Article emits no FAQPage (NewsArticle + BreadcrumbList
+  only) - NOT an A1 Phase 2 target.
+
+#2 - Keys system hub: DEFERRED, content-gated (NOT an architecture blocker).
+- Read-only scope confirmed the fork is low-risk and well-shaped: recommended
+  Option C (keys page renders a prose component ABOVE the reused DmzEntityHub;
+  override generateMetadata to always-index; one unavoidable sitemap
+  special-case at app/sitemap.js:543-546 which currently continues on 0 rows).
+  The per-route noindex gate (each route's own generateMetadata:16, NOT shared
+  logic) means forking keys leaves missions/items/pois untouched by construction.
+- BLOCKER is SOURCE, not code: the Deep Dive describes NO DMZ key system ("key"
+  is adjectival only; one "breaking into vaults" mention says nothing about keys/
+  tiers/acquisition). The 12,100-peak demand is old-DMZ/MW2 proxy. admin schema
+  acquisition_source hints ("HVT drop") are placeholder form text, not sourced.
+  Building from old-DMZ mechanics (path b) was REJECTED - it contradicts the
+  /dmz FAQ's own "not confirmed how it relates to the original DMZ" disclaimer
+  and edges over the no-fabrication line. Defer until key mechanics are published;
+  then it's a ~1-session Option-C build.
+
+#4 - Gunsmith article: DEFERRED, content-gated. Already gated on a confirmed
+Deep-Dive excerpt before generation (PENDING_TOPIC in gen-dmz-news.mjs, no
+sourced excerpt yet). Same shelf as #2. dmz gunsmith KD 20 when buildable.
+
+NET: 2 of 3 remaining canonicals blocked on Activision publishing mechanics
+(keys, gunsmith) - the no-fabrication moat working as designed. When either
+source lands, both are fast builds (keys = Option C fork; gunsmith = sourced
+article at /dmz/loadouts).
+
+NEXT (buildable now, off the DMZ canonical path):
+- Demand-map workstreams 4-6: on-page SEO spec (enforced at creation), indexing
+  machinery / Consumer C (URL Inspection - still unbuilt), off-site authority.
+- Deferred maps-route parameterization: /maps/[slug] hardcodes Marathon in ~9
+  copy/JSON-LD sites, so a future DMZ map needs its own route (tables are now
+  game_slug-safe after the seam fix). No DMZ map canonical is in the pre-launch
+  set anyway (per-POI/map demand near-zero), so genuinely later.
+- A1 Phase 2: 17 FAQPage files remain (4 of 21 done). Batchable maintenance.
+Aug 31 canonical window: the demand-map build set is now as complete as sources
+allow.
+
+---
+
 ## 2026-07-29 - /dmz extension COMPLETE (demand-map #1) + A1 Phase 2 now 4/21
 
 State: demand-map item #1 (EXTEND /dmz) shipped to main (5ec5b6e) as three
