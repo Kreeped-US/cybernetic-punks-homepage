@@ -17,7 +17,8 @@
 //  - TRI-STATE RETURN: searchAnalytics is binary { ok } / { ok:false, error }. The
 //    inspection loop needs a THIRD outcome -- quota-exhausted -- so it can STOP cleanly
 //    instead of hammering a spent quota. Hence the explicit `quotaExhausted` flag.
-//  - NO TIMEOUT: matches searchAnalytics (it uses a plain fetch with no AbortController).
+//  - FETCH TIMEOUT: a 30s AbortController (searchAnalytics still has none -- a known,
+//    separate follow-up, not fixed here).
 
 import { JWT } from 'google-auth-library';
 import { GSC_SITE_URL, readCredentials, describeForbidden } from './searchAnalytics.js';
@@ -31,45 +32,72 @@ const INSPECT_ENDPOINT = 'https://searchconsole.googleapis.com/v1/urlInspection/
 // Keep in step with searchAnalytics.js's constant if that ever changes.
 const GSC_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 
-// inspectUrl(inspectionUrl) -> ONE of THREE distinguishable outcomes, so the 5c loop
-// can branch cleanly. NEVER throws -- same fail-open contract as fetchSearchAnalytics.
+// Fetch timeout. A hung request must not stall the whole loop (the silent-stall risk the
+// missing timeout created); on abort the fetch throws into the existing NETWORK catch ->
+// other-error -> the loop skips this URL and continues.
+const INSPECT_TIMEOUT_MS = 30000;
+
+// authorizeToken() -> { ok, token, error }. THE ONE auth code path: readCredentials ->
+// JWT (webmasters.readonly) -> authorize -> the access-token string. No-throw, like the
+// rest of the module (failure is an { ok:false, error } result). The loop calls this ONCE
+// per pull and threads the token into every inspectUrl; inspectUrl also calls it when no
+// token is passed (standalone callers), so there is a single copy of the auth logic.
+export async function authorizeToken() {
+  const cred = readCredentials();
+  if (!cred.ok) return { ok: false, error: 'CREDENTIALS: ' + cred.reason };
+  try {
+    const jwt = new JWT({ email: cred.email, key: cred.key, scopes: [GSC_SCOPE] });
+    const authRes = await jwt.authorize();
+    const token = authRes && authRes.access_token;
+    if (!token) return { ok: false, error: 'AUTH: JWT authorize returned no access_token' };
+    return { ok: true, token: token };
+  } catch (err) {
+    // A malformed PEM lands here, not at the API -- a CREDENTIAL problem. readCredentials
+    // already validated the key shape, so this is unlikely; never interpolate key material.
+    return { ok: false, error: 'AUTH: service-account JWT failed (credential problem): ' + (err && err.message) };
+  }
+}
+
+// inspectUrl(inspectionUrl, token) -> ONE of THREE distinguishable outcomes, so the 5c
+// loop can branch cleanly. NEVER throws -- same fail-open contract as fetchSearchAnalytics.
 //
 //   SUCCESS       -> { ok: true,  result: <inspectionResult> }
 //   QUOTA         -> { ok: false, quotaExhausted: true,  status, error }   (STOP the loop)
 //   OTHER ERROR   -> { ok: false, quotaExhausted: false, error, status? }  (log, skip URL, continue)
+//
+// TOKEN (optional): when the caller passes a token (the loop authorizes ONCE per pull and
+// threads it here), auth is SKIPPED -- a run auths once, not per URL. When omitted, auth
+// happens inline via the SAME authorizeToken helper, so standalone callers work unchanged.
 //
 // QUOTA lands as a 429 with a RESOURCE_EXHAUSTED body and NO header signal (the 5a spike
 // saw no quota headers). Google can also surface quota as a 403 with a rate/quota reason,
 // so quota is detected by status 429 OR a RESOURCE_EXHAUSTED body, checked BEFORE the
 // generic 403 branch -- otherwise a quota-403 would be mis-diagnosed as a property/
 // permission problem by describeForbidden().
-export async function inspectUrl(inspectionUrl) {
-  const cred = readCredentials();
-  if (!cred.ok) {
-    return { ok: false, quotaExhausted: false, error: 'CREDENTIALS: ' + cred.reason };
+export async function inspectUrl(inspectionUrl, token) {
+  if (!token) {
+    const auth = await authorizeToken();
+    if (!auth.ok) return { ok: false, quotaExhausted: false, error: auth.error };
+    token = auth.token;
   }
 
-  let token;
-  try {
-    const jwt = new JWT({ email: cred.email, key: cred.key, scopes: [GSC_SCOPE] });
-    const authRes = await jwt.authorize();
-    token = authRes && authRes.access_token;
-    if (!token) return { ok: false, quotaExhausted: false, error: 'AUTH: JWT authorize returned no access_token' };
-  } catch (err) {
-    // A malformed PEM lands here, not at the API -- a CREDENTIAL problem. readCredentials
-    // already validated the key shape, so this is unlikely; never interpolate key material.
-    return { ok: false, quotaExhausted: false, error: 'AUTH: service-account JWT failed (credential problem): ' + (err && err.message) };
-  }
-
+  // 30s timeout: a hung request aborts and throws into the catch below (NETWORK
+  // other-error -> the loop skips this URL). Timer cleared in finally on BOTH paths
+  // (fetch resolved OR threw, including the early return in catch), so no dangling timer.
   let res;
+  const controller = new AbortController();
+  const timer = setTimeout(function () { controller.abort(); }, INSPECT_TIMEOUT_MS);
   try {
     res = await fetch(INSPECT_ENDPOINT, {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({ inspectionUrl: inspectionUrl, siteUrl: GSC_SITE_URL }),
+      signal: controller.signal,
     });
   } catch (err) {
     return { ok: false, quotaExhausted: false, error: 'NETWORK: ' + (err && err.message) };
+  } finally {
+    clearTimeout(timer);
   }
 
   if (!res.ok) {

@@ -15,7 +15,7 @@
 
 import { fetchSearchAnalytics, daysAgo, FINAL_DATA_LAG_DAYS } from './searchAnalytics.js';
 import { loadKnownSlugs, buildMetricRows, upsertPageMetrics, buildQueryMetricRows, upsertQueryMetrics, writePullLog, buildInspectionRow, appendUrlInspection } from './storage.js';
-import { inspectUrl } from './urlInspection.js';
+import { inspectUrl, authorizeToken } from './urlInspection.js';
 import { dmzSectionForArticle } from '../games/dmz.js';
 
 const DAILY_WINDOW_DAYS = 5;        // trailing ~5 days -- the daily catch-up window
@@ -354,6 +354,23 @@ export async function runUrlInspectionPull(supabase) {
     // inspected corpus URLs HERE, after a reusable getIndexableUrls() is extracted from
     // sitemap.js. Built so this is the only insertion point.
 
+    // AUTHORIZE ONCE per pull and thread the token into every inspectUrl call, so a run
+    // auths once instead of per URL (the fix for the per-call re-auth that made the first
+    // run ~54 min). One access token lives ~1hr, covering a full run; no mid-run refresh.
+    // A failed up-front auth means there is no point looping -- write the fail-open error
+    // row and return, same contract as the rest of the function.
+    const auth = await authorizeToken();
+    if (!auth.ok) {
+      await writePullLog(supabase, {
+        consumer: 'inspection', windowStart: null, windowEnd: null, rowsFetched: 0,
+        newestDateReturned: null, dataState: null, status: 'error',
+        error: 'auth: ' + auth.error, startedAt: startedAt,
+      });
+      console.error('[gsc] inspection pull ABORTED (auth failed): ' + auth.error);
+      return { ok: false, reason: 'auth', inspected: 0, written: 0 };
+    }
+    const token = auth.token;
+
     // INSPECT up to the per-run cap; stop cleanly on the cap OR a quotaExhausted return.
     const rows = [];
     let inspected = 0;
@@ -362,7 +379,7 @@ export async function runUrlInspectionPull(supabase) {
     let i = 0;
     for (; i < candidates.length; i++) {
       if (inspected >= INSPECTION_PER_RUN_CAP) break;        // cap -> remainder deferred
-      const out = await inspectUrl(candidates[i]);
+      const out = await inspectUrl(candidates[i], token);
       if (out.quotaExhausted) { quotaHit = true; break; }    // quota -> stop, remainder deferred
       if (!out.ok) {                                          // other error -> skip this URL, continue
         console.error('[gsc] inspect skipped ' + candidates[i] + ': ' + String(out.error).split('\n')[0]);
