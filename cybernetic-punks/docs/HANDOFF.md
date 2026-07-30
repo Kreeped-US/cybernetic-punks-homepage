@@ -44,6 +44,158 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-30 - Consumer C REBUILT + validated on cron; a 4-leg escalation bug-class closed; TWO recorded errors
+
+State: Consumer C (URL Inspection loop) went from a production NO-OP to durable,
+resumable, validated-on-cron. Along the way a single escalation bug-class
+("un-measured or wrong-measured read as evidence") surfaced in FOUR forms; three
+were closed at the root, the fourth (true-but-premature cohort flags) is IDENTIFIED
+and scoped, not yet built. TWO process errors are recorded honestly below - they
+matter more than the code. HANDOFF was deliberately held until the confirming fire;
+this entry rides after the fixes. Current main: c9fd530.
+
+=== THE NO-OP AND THE REBUILD ===
+The prior Consumer C (5b/5c, commits e90537d/50cfc45/7bc8665, then re-auth bf6e25b)
+was a PRODUCTION NO-OP: ~50min run (500 sequential ~6s inspect calls) against a 60s
+Vercel ceiling, with append deferred to loop-end - every scheduled fire killed at
+60s writing NOTHING. The 500 rows that existed came only from unbounded manual runs.
+The auth-once+timeout fix (bf6e25b) was correct but addressed the wrong bottleneck
+(latency is sequential inspect time, not auth - proven by netstat: searchconsole-only,
+no oauth2 churn).
+
+Rebuild (commit 23ead89, feat): dedicated */15 cron route (own maxDuration=60, own
+vercel.json entry, off the generation cron); computed chunk constant
+(floor((60 - margin - worstCall)/~6s) = ~8), sequential (concurrency 1 - frequency
+is the throughput lever, not parallelism); PER-URL incremental append (commit at the
+smallest interruption-proof unit - a killed fire loses at most the in-flight call);
+priority-ordered resumable selection (source (a) publishes before (b) prune cohort;
+never-inspected then least-recently-inspected within each); membership-predicate
+retirement (desired = NOT noindex; verdict->membership map; retire when actual==desired
+- one predicate, not two source-specific terminal lists); per-source re-check
+intervals (publish daily, cohort 3-day); graceful self-preemption to 'partial' status;
+latency telemetry (mean_latency_ms audits the ~6s chunk input every fire); no-overlap
+invariant comment where chunk + interval are defined. The publish-side 30-day
+escalation IS the doctrine A10 30-day check, implemented here (not a separate future
+task - it folds in).
+
+DDL (operator-run, all substance-verified via information_schema + pg_get_constraintdef
++ pg_class.relrowsecurity, not trusted from "the statement ran"):
+- inspection_runs (run telemetry: fired_at, urls_attempted, rows_written, budget_used,
+  backlog_remaining, mean_latency_ms, status CHECK running/ok/partial/error). RLS on.
+- gsc_pull_log.skipped_for_quota column added earlier (no-silent-cap count).
+- indexation_flags (escalation output: url, source_type CHECK
+  publish_stalled_30d/cohort_still_indexed/inspection_broken, flagged_at, detail,
+  state CHECK open/resolved/dismissed, resolved_at). RLS on. Partial unique index on
+  (url, source_type) WHERE state='open' - structural idempotency guard so the 96x/day
+  sweep can't flood duplicates.
+
+=== THE ESCALATION BUG-CLASS: "absence/wrong measurement is never evidence" ===
+The escalation logic was correct at steady state but wrong on FIRST CONTACT against a
+full 1435 backlog, FOUR times, all one root: a threshold that can't distinguish "bad
+state" from "haven't measured / measured the wrong thing." Each caught by a different
+mechanism; the invariant generalized one level up each time.
+
+LEG 1 - absent verdict read as still-indexed (commit bea9b46). The cohort sweep
+flagged 272 pruned URLs as "still indexed" off STALE/ABSENT verdict data - the
+freshness gate existed on the publish sweep but was a hand-written condition NOT
+shared, so the cohort side didn't have it. Caught by the flags_open=272 HEARTBEAT on
+run one. Fix: extracted isVerdictFresh(verdict, sourceInterval) as ONE shared
+predicate both sweeps call; absence/staleness -> false -> never flag, routes to
+inspection/starvation. Cohort inherited the freshness gate AND starvation path. +1
+assertion (never-inspected 45d cohort URL does not flag).
+
+LEG 2 - queue-position staleness read as inspection-broken (commit c9fd530, part 1).
+The starve() ceiling fired inspection_broken at verdict_age > 4x interval - but during
+the 1023-deep backlog drain a URL is stale simply because it HASN'T BEEN REACHED yet,
+not because inspection failed. Caught by REASONING AHEAD before running the DELETE.
+Fix: the ceiling's true subject is "continuously bump-eligible (escalation-aged AND
+stale, i.e. actually front-of-chunk attempted) past K hours and still not fresh" -
+not "any stale URL." Queue position asserts nothing. By construction the day-3-of-45
+cohort isn't escalation-aged, so can't ceiling regardless of queue-depth staleness.
+
+LEG 3 - pre-loop staleness read as attempts-that-happened (commit c9fd530, part 2).
+Eligibility duration derived from onset timestamps PREDATING the loop, so a URL
+aged-and-stale since before the bump loop existed read as days of "attempts" that
+never happened. Caught by Claude Code's OWN honest-note flagging it against itself.
+Fix: floor eligibleSince at loopEpoch (earliest inspection_runs.fired_at) - eligibility
+can't begin before the loop could have attempted. readLoopEpochMs fails safe to now
+(no history => nothing ceilings). Invariant comment names all three legs. 6/6
+assertions. VALIDATED in production: confirming fire showed 936 URLs bump-eligible,
+ZERO ceilinged - the floor held against real data.
+
+LEG 4 - wrong-question measurement (IDENTIFIED, fix scoped, NOT yet built). The
+confirming fire re-opened 272 cohort_still_indexed flags (fresh 18:30 batch). Ground-
+truth check (fetched 5 live pages): all 272 GENUINELY SERVE noindex (meta robots
+noindex, HTTP 200). So the flag's literal claim ("pruned page still in Google's
+index") is TRUE - Google-side lag, not a site bug. But the flag ASSERTS "noindex is
+failing," and a coverageState reading cannot evidence that CAUSAL claim: coverageState
+answers "in the index right now" (a state), not "Google recrawled after noindex shipped
+and kept it" (crawl-vs-directive ordering). Presence of the WRONG measurement is also
+not evidence - the same invariant one level up. Two underlying facts: (a) all 272 carry
+noindexed_at=2026-01-01, a PLACEHOLDER, so the "45d+" clock runs on a fabricated age;
+(b) the pipeline stores coverageState but NOT lastCrawlTime - the exact missing
+measurement. FIX (scoped, next work): capture lastCrawlTime (the fetch already returns
+it - seen in the 5a spike; small schema add), and gate cohort_still_indexed on "recent
+crawl AND still indexed" (evidence of a real noindex failure) rather than fabricated
+age. Below a recent crawl it's premature (Google hasn't looked) and must not flag.
+This makes the 2026-01-01 placeholder irrelevant. New assertion when built: a still-
+indexed pruned page whose last crawl is old/absent does NOT flag.
+
+=== TWO RECORDED ERRORS (the honest part) ===
+ERROR 1 - premature deletion of genuine signal. We saw the first 272 cohort flags,
+diagnosed them as the Leg-1 "absence-as-data" bug from the detail string, and DELETED
+them as spurious. Ground truth (Leg 4) strongly implies they were the SAME genuine
+class as the second batch - fresh still-indexed verdicts on genuinely-noindexed pages -
+i.e. real (if premature) signal, NOT the Leg-1 bug. The Leg-1 freshness fix was still
+correct (it closes a real hole), but the 272 were MIS-ATTRIBUTED to it and deleted. We
+fixed a real gate hole AND mislabeled the 272 AND discarded genuine signal - three
+things, all true.
+
+ERROR 2 - and the DISCIPLINE it teaches (the most valuable output of this arc): a
+flag's SPURIOUSNESS is itself a claim requiring measurement. We asserted "these flags
+are false" from the detail field and reasoning, then took a DESTRUCTIVE action
+(DELETE) - without the ground-truth check (does the page actually serve noindex?) that
+would have confirmed it. That is the MIRROR IMAGE of the flag's own error: the flag
+asserted a claim from insufficient evidence; we asserted the flag was wrong from
+insufficient evidence. NEW STANDING RULE: measure-before-delete. A destructive action
+premised on data being spurious MUST be preceded by the ground-truth check that
+confirms the spuriousness - the same standard we hold the system to. We had read-
+before-write for code/schema; we lacked measure-before-delete for data judged wrong.
+Learned the expensive way.
+
+=== VALIDATION STATUS ===
+LOOP: fully validated on cron. Observed fires: 50.2s and 51.9s, both clean 'partial'
+inside the 60s ceiling, 5/5 written (per-URL append proven), backlog carries forward
+(1023 -> resumable), mean_latency_ms ~6300 (confirms sizing), 936 bump-eligible / 0
+ceilinged (loopEpoch floor proven). The original no-op is SOLVED.
+ESCALATION legs 1-3: closed at root, 6/6 assertions guarding regression.
+ESCALATION leg 4: identified, fix scoped (lastCrawlTime capture + recent-crawl gate),
+NOT built.
+
+=== OPEN / NEXT (ordered) ===
+1. Leg-4 fix: capture lastCrawlTime in gsc_url_inspection; re-gate cohort_still_indexed
+   on recent-crawl-AND-still-indexed, not fabricated age. Read-first, assertion-guarded.
+   Until then the cohort escalation asserts a claim its measurement doesn't support.
+2. The currently-open 272 (18:30 batch): DO NOT DELETE. measure-before-delete now
+   binds. They are true-but-premature; the Leg-4 fix makes them not-fire or resolve.
+   Leave until the fix lands, then confirm by ground truth.
+3. noindexed_at=2026-01-01 placeholder: reconcile to real prune dates OR accept it's
+   irrelevant once Leg-4 gates on lastCrawlTime instead of age. Note some earlier op
+   stamped 2026-01-01 on the older noindex=true population (not the backfill's 07-23).
+4. latest-per-url VIEW: the selection cross-ref reduces the whole append table in JS;
+   ~15s pre-loop overhead ate the last fire's budget (did 5 of 8 chunk). A VIEW reclaims
+   it. NOW EVIDENCE-PRIORITIZED (observed cost), not speculative.
+5. Renderer for indexation_flags: no UI surfaces them; heartbeat "indexation_flags_open:N"
+   is the interim signal. A small read-only flags view is the follow-up (worth doing soon
+   - an indexation flag read with the wrong question in mind is worse than none).
+6. searchAnalytics.js still lacks a fetch timeout (documented separate follow-up).
+
+DEEP PRINCIPLE (for any future escalation path): absence OR wrong-kind of measurement
+is never evidence. Every escalation must declare which claim it makes (about a PAGE ->
+needs a fresh verdict answering that exact question; about the LOOP -> needs demonstrated
+attempt-failure, bump-fed-and-still-stale) and use the measurement that answers THAT
+question. Four legs were four instances. Any new path that skips this fails the same way.
+
 ## 2026-07-29 - Consumer C (GSC URL Inspection) tiers a+b SHIPPED + validated; c + canary open
 
 State: Consumer C's action-driven (a) + de-index-cohort (b) tiers are built,
