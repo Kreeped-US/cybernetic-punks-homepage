@@ -55,9 +55,13 @@ const RECHECK_COHORT_DAYS = 3;     // prune cohort still-indexed, slow burn
 const RECHECK_AMBIGUOUS_DAYS = 2;  // "URL unknown" pre-confirmation / "Crawled - not indexed"
 const RECHECK_DEMOTED_DAYS = 7;    // action unmet past the 30-day check -> weekly (stops eating daily budget)
 const PUBLISH_ESCALATE_DAYS = 30;  // doctrine A10 30-day indexation check
-const PUBLISH_FRESHNESS_MAX_DAYS = 2 * RECHECK_PUBLISH_DAYS; // flag only on a verdict <= 2x the daily interval; staler => loop-health fault, not a page fault
-const PUBLISH_CEILING_MAX_DAYS = 4 * RECHECK_PUBLISH_DAYS;   // verdict staler than 4x => the bump has had many fires and STILL will not freshen => inspection persistently failing => inspection_broken (stop bumping)
 const COHORT_ERROR_DAYS = 45;      // cohort STILL indexed this long after noindex -> template-bug error
+// Per-source re-check intervals feed the ONE shared freshness/ceiling maths (isVerdictFresh
+// + starve), so the invariant is parameterized by interval, never hand-copied per sweep.
+const PUBLISH_INTERVAL = RECHECK_PUBLISH_DAYS; // 1d -- publish sweep re-check cadence
+const COHORT_INTERVAL = RECHECK_COHORT_DAYS;   // 3d -- cohort sweep re-check cadence
+const FRESH_MULT = 2;   // a verdict is FRESH iff its age <= FRESH_MULT x the source interval
+const CEILING_MULT = 4; // verdict age > CEILING_MULT x interval => inspection persistently failing => inspection_broken
 const DAY_MS = 86400000;
 function ageDays(sinceMs, nowMs) { return sinceMs == null ? null : (nowMs - sinceMs) / DAY_MS; }
 
@@ -164,6 +168,43 @@ async function insertFlag(supabase, url, sourceType, detail) {
   }
 }
 
+// ── SHARED freshness invariant, living ONCE ───────────────────────────────────
+// ROOT-CAUSE FIX: this used to be two parallel HAND-WRITTEN conditions -- the publish sweep
+// embodied "only act on a verdict fresh enough to trust", the cohort sweep did NOT -- so the
+// invariant silently held on one side and not the other, false-flagging cohort URLs on stale
+// (or absent) verdicts (the 272-flag leak). Now it is ONE callable object both sweeps use, so
+// it cannot be present on one side and absent on the other. A verdict is fresh iff it EXISTS
+// AND its age <= FRESH_MULT x the source's re-check interval; absence or staleness => false.
+function isVerdictFresh(latestVerdict, sourceIntervalDays, nowMs) {
+  if (!latestVerdict || latestVerdict.at == null) return false;
+  const age = ageDays(latestVerdict.at, nowMs);
+  return age != null && age <= FRESH_MULT * sourceIntervalDays;
+}
+
+// ── SHARED starvation path, living ONCE ───────────────────────────────────────
+// Both sweeps route a past-threshold URL that FAILS isVerdictFresh here instead of
+// false-flagging or going silent. Re-inspect (priority BUMP) so the next sweep judges a fresh
+// verdict; if the verdict is persistently un-fresh past the ceiling (bumped many fires and
+// STILL will not freshen => inspection persistently failing), flag inspection_broken ONCE and
+// stop bumping. Keys off verdict age only -- no counter, no column. Returns { bump, broke }.
+async function starve(supabase, url, latestVerdict, intervalDays, nowMs, ctx) {
+  const at = latestVerdict && latestVerdict.at != null ? latestVerdict.at : null;
+  const verdictAgeD = at != null ? ageDays(at, nowMs) : null;
+  if (verdictAgeD != null && verdictAgeD > CEILING_MULT * intervalDays) {
+    // CEILING: inspection persistently failing (distinct from a page being slow / a URL waiting).
+    const detail = ctx + ' inspection broken: verdict_age_d=' + verdictAgeD.toFixed(1) +
+      ' (> ' + (CEILING_MULT * intervalDays) + 'd ceiling)';
+    const r = await insertFlag(supabase, url, 'inspection_broken', detail);
+    if (r.inserted) console.error('[inspect][INSPECTION-BROKEN] ' + ctx + ' verdict age ' + verdictAgeD.toFixed(1) +
+      'd > ' + (CEILING_MULT * intervalDays) + 'd ceiling -- inspection persistently failing; un-bumped + flagged ONCE: ' + url);
+    return { bump: null, broke: r.inserted };
+  }
+  // BUMP band (undated verdict, or <= ceiling): re-inspect. Loop-health signal, NOT a flag.
+  console.error('[inspect][LOOP-HEALTH] ' + ctx + ' past threshold with ' +
+    (verdictAgeD == null ? 'NO' : verdictAgeD.toFixed(1) + 'd-old') + ' verdict (needs fresh confirm); bumped, NOT flagged: ' + url);
+  return { bump: { url: url, verdictAtMs: at }, broke: false };
+}
+
 // ── ESCALATION -- its OWN per-fire calendar-age pass over the FULL corpus, DECOUPLED from
 // the inspection chunk. The old bug: escalation fired only on URLs that happened to land in
 // the 8-URL chunk, so a 30d-stalled URL outside the chunk was never flagged. This pass reads
@@ -171,8 +212,12 @@ async function insertFlag(supabase, url, sourceType, detail) {
 // fire regardless of auth. Sink: indexation_flags (RLS; the partial unique index dedups).
 // Reuses selection's already-fetched latest-verdict map + feed_items (one read, not two) --
 // "own query" here means an own PASS over the whole corpus, not a second DB round-trip.
-// "Non-retired" is enforced implicitly by the membership predicate on each branch (a met URL
-// -- publish indexed / cohort pruned -- fails the branch predicate and is skipped).
+//
+// BOTH sweeps share the SAME two-part shape -- freshness (the shared isVerdictFresh call,
+// parameterized by interval) is invariant; the ONLY per-source difference is what counts as
+// "bad" (publish: not-indexed; cohort: still-indexed). A past-threshold URL either gets a
+// FRESH verdict (then flag-if-bad / retire-if-good) or routes to the shared starve() path --
+// never unconfirmed-and-unwatched, never false-flagged on stale data.
 export async function runEscalation(supabase, latest, fi, nowMs) {
   const bump = []; // [{ url, verdictAtMs }] -- ordered oldest-verdict-first by the caller
   let publishFlagged = 0, cohortFlagged = 0, freshnessViolations = 0, inspectionBroken = 0;
@@ -184,63 +229,52 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
     const desired = row.noindexed_at != null ? 'out' : (row.is_published === true && row.noindex === false ? 'in' : null);
     if (desired == null) continue;
     const l = latest.get(url) || null;
-    const m = l ? membership(l.cs) : null;
-    const verdictAgeD = l && l.at != null ? ageDays(l.at, nowMs) : null;
+    const m = l ? membership(l.cs) : null; // 'in' (indexed), 'out' (not-indexed), or null (never inspected)
 
     if (desired === 'in') {
-      // PUBLISH 30d. created_at is the PROXY for publish time (feed_items has no publish_at) --
-      // a page still not-indexed 30d after creation misses doctrine A10.
+      // PUBLISH sweep. Calendar threshold: created_at (PROXY for publish time -- feed_items has
+      // no publish_at) age >= 30d. BAD state = not-indexed (membership 'out').
       const createdAgeD = ageDays(row.created_at ? Date.parse(row.created_at) : null, nowMs);
-      if (createdAgeD == null || createdAgeD <= PUBLISH_ESCALATE_DAYS) continue;
-      if (m !== 'out') continue; // "latest verdict is not-indexed"; indexed/unknown-membership => skip
-      // THREE-WAY on verdict_age (all thresholds key off verdict_age -- no counter, no column):
-      //   <= 2x  -> FRESH, trustworthy    -> flag publish_stalled_30d
-      //   2x..4x -> stale, self-healing    -> BUMP (re-inspect; do NOT flag on stale data)
-      //   >  4x  -> persistently un-fresh  -> CEILING: un-bump + flag inspection_broken once
-      if (verdictAgeD != null && verdictAgeD <= PUBLISH_FRESHNESS_MAX_DAYS) {
-        // FRESH not-indexed verdict -> the flag is trustworthy. Demote is COUPLED (realized in
-        // recheckDays at the SAME created_at>30d threshold -- no separate write; there is no
-        // per-URL recheck-tier column, the tier is computed each selection).
+      if (createdAgeD == null || createdAgeD < PUBLISH_ESCALATE_DAYS) continue;
+      if (m === 'in') continue; // last-seen indexed (GOOD) -> retire; nothing to escalate
+      // m is 'out' (BAD) or null (never inspected, UNKNOWN). Two-part: SHARED freshness gate,
+      // then per-source badness.
+      if (isVerdictFresh(l, PUBLISH_INTERVAL, nowMs) && m === 'out') {
+        // FRESH + not-indexed -> the flag is trustworthy. Demote is COUPLED (realized in
+        // recheckDays at the SAME created_at>=30d threshold -- no separate write).
         const detail = 'publish 30d: coverageState=' + normCoverage(l.cs) +
-          ' verdict_age_d=' + verdictAgeD.toFixed(1) + ' created_age_d=' + createdAgeD.toFixed(1);
+          ' verdict_age_d=' + ageDays(l.at, nowMs).toFixed(1) + ' created_age_d=' + createdAgeD.toFixed(1);
         const r = await insertFlag(supabase, url, 'publish_stalled_30d', detail);
         if (r.inserted) { publishFlagged += 1; console.warn('[inspect][A10-30d] flag OPENED -- published URL not indexed 30d after created_at (demoted to weekly): ' + url); }
-      } else if (verdictAgeD == null || verdictAgeD <= PUBLISH_CEILING_MAX_DAYS) {
-        // FRESHNESS VIOLATION (2x < verdict_age <= 4x, or an undated verdict): the daily
-        // re-check guarantee is slipping but not yet persistent. LOOP HEALTH fault, NOT a page
-        // fault: do NOT flag on stale data. Priority-bump for a fresh re-inspection; the NEXT
-        // sweep judges the freshened verdict. Re-derived from timestamps every sweep -- NO
-        // stored bump state, so a killed fire loses nothing.
-        freshnessViolations += 1;
-        bump.push({ url: url, verdictAtMs: l && l.at != null ? l.at : null });
-        console.error('[inspect][LOOP-HEALTH] daily re-check guarantee slipping -- 30d publish URL has a ' +
-          (verdictAgeD == null ? 'MISSING' : verdictAgeD.toFixed(1) + 'd-old') + ' verdict (bump band ' +
-          PUBLISH_FRESHNESS_MAX_DAYS + '-' + PUBLISH_CEILING_MAX_DAYS + 'd); bumped, NOT flagged: ' + url);
       } else {
-        // CEILING (verdict_age > 4x): the bump has had many fires and the verdict STILL will not
-        // freshen -> this URL's INSPECTION is persistently failing (distinct from the page's
-        // indexation being slow). (1) STOP bumping it (release the slot -- it falls back to the
-        // weekly selection cadence), (2) flag inspection_broken ONCE (partial index dedups),
-        // (3) error log on transition. All three key off verdict_age; no counter, no column.
-        const detail = 'inspection broken: verdict_age_d=' + verdictAgeD.toFixed(1) +
-          ' created_age_d=' + createdAgeD.toFixed(1) + ' (> ' + PUBLISH_CEILING_MAX_DAYS +
-          'd ceiling; last coverageState=' + normCoverage(l.cs) + ')';
-        const r = await insertFlag(supabase, url, 'inspection_broken', detail);
-        if (r.inserted) { inspectionBroken += 1; console.error('[inspect][INSPECTION-BROKEN] verdict age ' + verdictAgeD.toFixed(1) + 'd > ' + PUBLISH_CEILING_MAX_DAYS + 'd ceiling -- inspection persistently failing; un-bumped + flagged ONCE: ' + url); }
+        // NOT fresh (stale or absent verdict) -> SHARED starvation path (never flag on stale data).
+        const s = await starve(supabase, url, l, PUBLISH_INTERVAL, nowMs, 'publish');
+        if (s.bump) { bump.push(s.bump); freshnessViolations += 1; }
+        if (s.broke) inspectionBroken += 1;
       }
     } else {
-      // COHORT 45d. noindexed_at is the transition timestamp. Per spec NO freshness gate here
-      // (asymmetric with publish): a still-indexed verdict 45d+ after noindex is a strong
-      // template-bug signal on the slow-burn cadence even if the verdict is a few days stale.
+      // COHORT sweep -- SAME two-part shape as publish (freshness shared, badness per-source).
+      // Calendar threshold: noindexed_at age >= 45d. BAD state = still-indexed (membership 'in').
+      // The freshness gate that was ABSENT here is now the SHARED isVerdictFresh call -- so a
+      // stale (or absent) still-indexed verdict can no longer false-flag (the 272 leak).
       const noindexAgeD = ageDays(row.noindexed_at ? Date.parse(row.noindexed_at) : null, nowMs);
-      if (noindexAgeD == null || noindexAgeD <= COHORT_ERROR_DAYS) continue;
-      if (m !== 'in') continue; // "latest verdict still-indexed"; pruned => retired => skip
-      const detail = 'cohort 45d: coverageState=' + normCoverage(l.cs) +
-        ' noindex_age_d=' + noindexAgeD.toFixed(1) + (verdictAgeD != null ? ' verdict_age_d=' + verdictAgeD.toFixed(1) : '');
-      const r = await insertFlag(supabase, url, 'cohort_still_indexed', detail);
-      // SINGLE on-transition error log (NOT per-fire): only when the insert OPENED a new flag
-      // (23505 => already open => DO NOTHING => silent).
-      if (r.inserted) { cohortFlagged += 1; console.error('[inspect][COHORT-ERROR] flag OPENED -- pruned URL STILL indexed ' + COHORT_ERROR_DAYS + 'd+ after noindex (noindex likely not serving = template bug): ' + url); }
+      if (noindexAgeD == null || noindexAgeD < COHORT_ERROR_DAYS) continue;
+      if (m === 'out') continue; // last-seen pruned (GOOD) -> retire; blind-spot trade-off unchanged
+      // m is 'in' (BAD) or null (never inspected, UNKNOWN). Two-part: SHARED freshness, then badness.
+      if (isVerdictFresh(l, COHORT_INTERVAL, nowMs) && m === 'in') {
+        // FRESH + still-indexed 45d+ after noindex -> CONFIRMED template-bug. Trustworthy flag.
+        const detail = 'cohort 45d: coverageState=' + normCoverage(l.cs) +
+          ' noindex_age_d=' + noindexAgeD.toFixed(1) + ' verdict_age_d=' + ageDays(l.at, nowMs).toFixed(1);
+        const r = await insertFlag(supabase, url, 'cohort_still_indexed', detail);
+        // SINGLE on-transition error log (NOT per-fire): only when the insert OPENED a new flag.
+        if (r.inserted) { cohortFlagged += 1; console.error('[inspect][COHORT-ERROR] flag OPENED -- pruned URL STILL indexed ' + COHORT_ERROR_DAYS + 'd+ after noindex (noindex likely not serving = template bug): ' + url); }
+      } else {
+        // NOT fresh (stale still-indexed, or NEVER inspected) -> SHARED starvation path: re-inspect
+        // to CONFIRM before flagging. This is the exact 272 leak, closed: no false flag, no silence.
+        const s = await starve(supabase, url, l, COHORT_INTERVAL, nowMs, 'cohort');
+        if (s.bump) { bump.push(s.bump); freshnessViolations += 1; }
+        if (s.broke) inspectionBroken += 1;
+      }
     }
   }
   return { bump: bump, publishFlagged: publishFlagged, cohortFlagged: cohortFlagged, freshnessViolations: freshnessViolations, inspectionBroken: inspectionBroken };

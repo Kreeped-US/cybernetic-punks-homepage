@@ -16,6 +16,11 @@ function publishItem(slug, createdAgeDays) {
   return { slug: slug, game_slug: 'marathon', tags: [], is_published: true, noindex: false, noindexed_at: null, created_at: iso(Date.now() - createdAgeDays * DAY) };
 }
 
+// A noindexed (desired=OUT) cohort marathon feed_item noindexed `noindexAgeDays` ago.
+function cohortItem(slug, noindexAgeDays) {
+  return { slug: slug, game_slug: 'marathon', tags: [], is_published: true, noindex: true, noindexed_at: iso(Date.now() - noindexAgeDays * DAY), created_at: iso(Date.now() - 200 * DAY) };
+}
+
 // Fake Supabase supporting exactly the call chains selectInspectionCandidates / runEscalation
 // / runInspectionChunk use. indexation_flags.insert EMULATES the partial unique index on
 // (url, source_type) WHERE state='open' -- a duplicate open flag returns Postgres 23505.
@@ -127,4 +132,36 @@ test('ceiling: >4x-stale URL is un-bumped and flagged inspection_broken exactly 
   assert.ok(!s2.bump.some((b) => b.url === url), 'ceiling URL still not bumped on sweep2');
   assert.equal(state.flags.filter((f) => f.source_type === 'inspection_broken' && f.url === url).length, 1, 'EXACTLY once across both sweeps');
   assert.equal(errs.filter((m) => m.includes('[inspect][INSPECTION-BROKEN]')).length, 1, 'the ceiling error logs exactly once (on transition)');
+}));
+
+// ── ASSERTION 3 (the 272-flag bug, asserted against) ─────────────────────────
+// The cohort sweep must run the SAME shared freshness gate as publish. A never-inspected
+// cohort URL past 45d must NOT open a cohort_still_indexed flag -- it routes to starvation
+// (keeps inspecting). A stale still-indexed verdict likewise must not false-flag. Only a
+// FRESH still-indexed verdict flags (positive control -- the fix must not break real flags).
+test('cohort freshness: never-inspected + stale-verdict past 45d do NOT false-flag; fresh does', captureLogs(async () => {
+  const now = Date.now();
+  const uNever = intelUrl('cohort-never'); // never inspected
+  const uStale = intelUrl('cohort-stale'); // still-indexed verdict, but 10d old (stale: > 2x*3d)
+  const uFresh = intelUrl('cohort-fresh'); // still-indexed verdict, 2d old (fresh: <= 2x*3d)
+  const feedItems = [cohortItem('cohort-never', 50), cohortItem('cohort-stale', 50), cohortItem('cohort-fresh', 50)];
+  const latest = new Map([
+    [uStale, { cs: 'Submitted and indexed', at: now - 10 * DAY }],
+    [uFresh, { cs: 'Submitted and indexed', at: now - 2 * DAY }],
+    // uNever: absent from the map (never inspected)
+  ]);
+  const state = { latestRows: [], feedItems: feedItems, flags: [], runs: [] };
+  const supa = makeFakeSupabase(state);
+
+  const r = await runEscalation(supa, latest, feedItems, now);
+
+  // The 272 bug: NEITHER the never-inspected NOR the stale-verdict URL may open cohort_still_indexed.
+  assert.equal(state.flags.filter((f) => f.source_type === 'cohort_still_indexed' && f.url === uNever).length, 0, 'never-inspected does NOT false-flag cohort_still_indexed');
+  assert.equal(state.flags.filter((f) => f.source_type === 'cohort_still_indexed' && f.url === uStale).length, 0, 'stale verdict does NOT false-flag cohort_still_indexed');
+  // Both unconfirmed URLs route to starvation (keeps inspecting), not silence.
+  assert.ok(r.bump.some((b) => b.url === uNever), 'never-inspected routes to the bump (keeps inspecting)');
+  assert.ok(r.bump.some((b) => b.url === uStale), 'stale verdict routes to the bump (re-inspect to confirm)');
+  // Positive control: a FRESH still-indexed verdict past 45d still flags (the fix is a gate, not a mute).
+  assert.equal(state.flags.filter((f) => f.source_type === 'cohort_still_indexed' && f.url === uFresh).length, 1, 'fresh still-indexed verdict DOES flag cohort_still_indexed');
+  assert.equal(r.cohortFlagged, 1, 'exactly one cohort flag opened (the fresh one only)');
 }));
