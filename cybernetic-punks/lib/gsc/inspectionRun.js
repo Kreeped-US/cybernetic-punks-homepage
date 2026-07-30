@@ -61,7 +61,15 @@ const COHORT_ERROR_DAYS = 45;      // cohort STILL indexed this long after noind
 const PUBLISH_INTERVAL = RECHECK_PUBLISH_DAYS; // 1d -- publish sweep re-check cadence
 const COHORT_INTERVAL = RECHECK_COHORT_DAYS;   // 3d -- cohort sweep re-check cadence
 const FRESH_MULT = 2;   // a verdict is FRESH iff its age <= FRESH_MULT x the source interval
-const CEILING_MULT = 4; // verdict age > CEILING_MULT x interval => inspection persistently failing => inspection_broken
+// Loop-health ceiling. inspection_broken fires ONLY after a URL has been CONTINUOUSLY
+// bump-eligible (escalation-aged AND stale -> prepended/attempted front-of-chunk every fire)
+// for longer than this and STILL has not freshened -- "the loop tried and cannot". At the
+// 15-min cron cadence 6h is ~24 fires of guaranteed front-of-chunk attempts (oldest-verdict-
+// first), long enough that any genuinely inspectable URL would have freshened. NOT keyed off
+// raw verdict age: a URL stale only because it sits behind the backlog, unreached, has not
+// been attempted and must never flag (queue position is not evidence). Tunable; a few hours.
+const CEILING_BUMP_ELIGIBLE_HOURS = 6;
+const HOUR_MS = 3600000;
 const DAY_MS = 86400000;
 function ageDays(sinceMs, nowMs) { return sinceMs == null ? null : (nowMs - sinceMs) / DAY_MS; }
 
@@ -181,28 +189,69 @@ function isVerdictFresh(latestVerdict, sourceIntervalDays, nowMs) {
   return age != null && age <= FRESH_MULT * sourceIntervalDays;
 }
 
+// ── ESCALATION-MODULE INVARIANT -- absence of measurement is never evidence ───
+// A claim about a PAGE ("is it indexed?") requires a FRESH verdict -- isVerdictFresh, already
+// structural in both sweeps. A claim about the LOOP ("is inspection broken?") requires
+// demonstrated ATTEMPT-FAILURE -- the URL was bump-fed (escalation-aged AND stale, so it was
+// prepended/attempted front-of-chunk) for longer than the ceiling and STILL did not freshen.
+// Three ways a URL can look stale WITHOUT having been measured -- none may produce a loop
+// flag: (1) absent verdict (never inspected); (2) queue position (stale only because it sits
+// behind the backlog, unreached); (3) PRE-LOOP staleness (aged-and-stale since before the bump
+// loop existed -- those "attempts" never happened). Eligibility time therefore counts ONLY
+// from when the loop could actually attempt: floored at loopEpoch (the loop's first-ever fire).
+// Both flag kinds demand a positive measurement.
+
 // ── SHARED starvation path, living ONCE ───────────────────────────────────────
 // Both sweeps route a past-threshold URL that FAILS isVerdictFresh here instead of
 // false-flagging or going silent. Re-inspect (priority BUMP) so the next sweep judges a fresh
-// verdict; if the verdict is persistently un-fresh past the ceiling (bumped many fires and
-// STILL will not freshen => inspection persistently failing), flag inspection_broken ONCE and
-// stop bumping. Keys off verdict age only -- no counter, no column. Returns { bump, broke }.
-async function starve(supabase, url, latestVerdict, intervalDays, nowMs, ctx) {
+// verdict. The CEILING (inspection_broken) fires ONLY once the URL has been continuously
+// bump-ELIGIBLE for more than CEILING_BUMP_ELIGIBLE_HOURS -- i.e. actually escalation-aged AND
+// stale AND within the loop's lifetime that whole time, so it was front-of-chunk attempted
+// every fire and STILL did not freshen ("the loop tried and cannot"). Eligibility onset is
+// DERIVED from durable timestamps, no counter/attempt-log: eligible since
+// max(escalationOnset, stalenessOnset, loopEpoch), where stalenessOnset = verdict_ts +
+// FRESH_MULT*interval (or -Infinity for an absent verdict), and loopEpoch = the earliest
+// inspection_runs.fired_at. A URL stale purely from queue depth is NOT escalation-aged (its
+// caller-side threshold gate skipped it); a URL stale since before the loop existed is floored
+// at loopEpoch -- neither reaches this ceiling without K hours of REAL attempts. Returns
+// { bump, broke }.
+async function starve(supabase, url, latestVerdict, intervalDays, nowMs, ctx, escalationOnsetMs, loopEpochMs) {
   const at = latestVerdict && latestVerdict.at != null ? latestVerdict.at : null;
-  const verdictAgeD = at != null ? ageDays(at, nowMs) : null;
-  if (verdictAgeD != null && verdictAgeD > CEILING_MULT * intervalDays) {
-    // CEILING: inspection persistently failing (distinct from a page being slow / a URL waiting).
-    const detail = ctx + ' inspection broken: verdict_age_d=' + verdictAgeD.toFixed(1) +
-      ' (> ' + (CEILING_MULT * intervalDays) + 'd ceiling)';
+  const stalenessOnsetMs = at != null ? at + FRESH_MULT * intervalDays * DAY_MS : Number.NEGATIVE_INFINITY;
+  // Eligibility cannot begin before the bump loop could have ATTEMPTED the URL. Floor at
+  // loopEpochMs (the loop's first-ever fire): a URL escalation-aged-and-stale since before the
+  // loop existed accrued ZERO real attempts in that pre-loop window -- counting it would claim
+  // "the loop tried and cannot" when no loop existed (the deploy-boundary leak). The floor
+  // gives it K hours of ACTUAL post-loop-start attempts before it can ceiling.
+  const eligibleSinceMs = Math.max(escalationOnsetMs, stalenessOnsetMs, loopEpochMs);
+  const eligibleHours = (nowMs - eligibleSinceMs) / HOUR_MS;
+  if (eligibleHours > CEILING_BUMP_ELIGIBLE_HOURS) {
+    // CEILING: bump-fed (front-of-chunk) for > K hours and STILL not freshened -> the loop
+    // tried and cannot. This is the ONLY thing inspection_broken claims.
+    const detail = ctx + ' inspection broken: bump_eligible_h=' + eligibleHours.toFixed(1) +
+      ' (> ' + CEILING_BUMP_ELIGIBLE_HOURS + 'h continuously bump-eligible and still not freshened)';
     const r = await insertFlag(supabase, url, 'inspection_broken', detail);
-    if (r.inserted) console.error('[inspect][INSPECTION-BROKEN] ' + ctx + ' verdict age ' + verdictAgeD.toFixed(1) +
-      'd > ' + (CEILING_MULT * intervalDays) + 'd ceiling -- inspection persistently failing; un-bumped + flagged ONCE: ' + url);
+    if (r.inserted) console.error('[inspect][INSPECTION-BROKEN] ' + ctx + ' bump-eligible ' + eligibleHours.toFixed(1) +
+      'h > ' + CEILING_BUMP_ELIGIBLE_HOURS + 'h -- inspection tried and cannot; un-bumped + flagged ONCE: ' + url);
     return { bump: null, broke: r.inserted };
   }
-  // BUMP band (undated verdict, or <= ceiling): re-inspect. Loop-health signal, NOT a flag.
-  console.error('[inspect][LOOP-HEALTH] ' + ctx + ' past threshold with ' +
-    (verdictAgeD == null ? 'NO' : verdictAgeD.toFixed(1) + 'd-old') + ' verdict (needs fresh confirm); bumped, NOT flagged: ' + url);
+  // BUMP: escalation-aged + stale but not yet bump-eligible past K -> keep re-inspecting. Loop-
+  // health signal, NOT a flag. (Includes the just-crossed-threshold and just-went-stale cases.)
+  console.error('[inspect][LOOP-HEALTH] ' + ctx + ' bump-eligible ' + Math.max(0, eligibleHours).toFixed(1) +
+    'h (< ' + CEILING_BUMP_ELIGIBLE_HOURS + 'h ceiling); bumped for fresh confirm, NOT flagged: ' + url);
   return { bump: { url: url, verdictAtMs: at }, broke: false };
+}
+
+// loopEpoch source: the earliest inspection_runs.fired_at. That row is written at every
+// fire-start (runInspectionChunk), so on the very first fire it equals ~now (nothing can
+// ceiling yet); on later fires it is the fixed deploy-boundary moment. Read-only, fail-safe.
+async function readLoopEpochMs(supabase, nowMs) {
+  try {
+    const { data, error } = await supabase.from('inspection_runs').select('fired_at').order('fired_at', { ascending: true }).limit(1);
+    if (error || !data || !data.length || !data[0].fired_at) return nowMs;
+    const ms = Date.parse(data[0].fired_at);
+    return Number.isFinite(ms) ? ms : nowMs;
+  } catch (e) { console.error('[inspect] loopEpoch read failed (defaulting to now; no ceiling this sweep): ' + (e && e.message)); return nowMs; }
 }
 
 // ── ESCALATION -- its OWN per-fire calendar-age pass over the FULL corpus, DECOUPLED from
@@ -222,6 +271,12 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
   const bump = []; // [{ url, verdictAtMs }] -- ordered oldest-verdict-first by the caller
   let publishFlagged = 0, cohortFlagged = 0, freshnessViolations = 0, inspectionBroken = 0;
 
+  // loopEpoch = earliest inspection_runs.fired_at = the first moment any URL could have been
+  // bump-attempted. The ceiling floors eligibility here so pre-loop staleness cannot masquerade
+  // as attempt-time (deploy-boundary). Queried ONCE per sweep. On failure/empty -> nowMs
+  // (conservative: nothing can ceiling this sweep -- no loop history is not evidence of failure).
+  const loopEpochMs = await readLoopEpochMs(supabase, nowMs);
+
   for (let i = 0; i < fi.length; i++) {
     const row = fi[i];
     const url = feedUrl(row);
@@ -234,9 +289,12 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
     if (desired === 'in') {
       // PUBLISH sweep. Calendar threshold: created_at (PROXY for publish time -- feed_items has
       // no publish_at) age >= 30d. BAD state = not-indexed (membership 'out').
-      const createdAgeD = ageDays(row.created_at ? Date.parse(row.created_at) : null, nowMs);
+      const createdAtMs = row.created_at ? Date.parse(row.created_at) : null;
+      const createdAgeD = ageDays(createdAtMs, nowMs);
       if (createdAgeD == null || createdAgeD < PUBLISH_ESCALATE_DAYS) continue;
       if (m === 'in') continue; // last-seen indexed (GOOD) -> retire; nothing to escalate
+      // escalation-onset = when this URL crossed the 30d threshold (feeds the shared ceiling).
+      const escalationOnsetMs = createdAtMs + PUBLISH_ESCALATE_DAYS * DAY_MS;
       // m is 'out' (BAD) or null (never inspected, UNKNOWN). Two-part: SHARED freshness gate,
       // then per-source badness.
       if (isVerdictFresh(l, PUBLISH_INTERVAL, nowMs) && m === 'out') {
@@ -248,7 +306,7 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
         if (r.inserted) { publishFlagged += 1; console.warn('[inspect][A10-30d] flag OPENED -- published URL not indexed 30d after created_at (demoted to weekly): ' + url); }
       } else {
         // NOT fresh (stale or absent verdict) -> SHARED starvation path (never flag on stale data).
-        const s = await starve(supabase, url, l, PUBLISH_INTERVAL, nowMs, 'publish');
+        const s = await starve(supabase, url, l, PUBLISH_INTERVAL, nowMs, 'publish', escalationOnsetMs, loopEpochMs);
         if (s.bump) { bump.push(s.bump); freshnessViolations += 1; }
         if (s.broke) inspectionBroken += 1;
       }
@@ -257,9 +315,12 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
       // Calendar threshold: noindexed_at age >= 45d. BAD state = still-indexed (membership 'in').
       // The freshness gate that was ABSENT here is now the SHARED isVerdictFresh call -- so a
       // stale (or absent) still-indexed verdict can no longer false-flag (the 272 leak).
-      const noindexAgeD = ageDays(row.noindexed_at ? Date.parse(row.noindexed_at) : null, nowMs);
+      const noindexedAtMs = row.noindexed_at ? Date.parse(row.noindexed_at) : null;
+      const noindexAgeD = ageDays(noindexedAtMs, nowMs);
       if (noindexAgeD == null || noindexAgeD < COHORT_ERROR_DAYS) continue;
       if (m === 'out') continue; // last-seen pruned (GOOD) -> retire; blind-spot trade-off unchanged
+      // escalation-onset = when this URL crossed the 45d threshold (feeds the shared ceiling).
+      const escalationOnsetMs = noindexedAtMs + COHORT_ERROR_DAYS * DAY_MS;
       // m is 'in' (BAD) or null (never inspected, UNKNOWN). Two-part: SHARED freshness, then badness.
       if (isVerdictFresh(l, COHORT_INTERVAL, nowMs) && m === 'in') {
         // FRESH + still-indexed 45d+ after noindex -> CONFIRMED template-bug. Trustworthy flag.
@@ -271,7 +332,7 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
       } else {
         // NOT fresh (stale still-indexed, or NEVER inspected) -> SHARED starvation path: re-inspect
         // to CONFIRM before flagging. This is the exact 272 leak, closed: no false flag, no silence.
-        const s = await starve(supabase, url, l, COHORT_INTERVAL, nowMs, 'cohort');
+        const s = await starve(supabase, url, l, COHORT_INTERVAL, nowMs, 'cohort', escalationOnsetMs, loopEpochMs);
         if (s.bump) { bump.push(s.bump); freshnessViolations += 1; }
         if (s.broke) inspectionBroken += 1;
       }
