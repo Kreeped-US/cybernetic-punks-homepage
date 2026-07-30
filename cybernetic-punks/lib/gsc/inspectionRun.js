@@ -69,6 +69,15 @@ const FRESH_MULT = 2;   // a verdict is FRESH iff its age <= FRESH_MULT x the so
 // raw verdict age: a URL stale only because it sits behind the backlog, unreached, has not
 // been attempted and must never flag (queue position is not evidence). Tunable; a few hours.
 const CEILING_BUMP_ELIGIBLE_HOURS = 6;
+// Crawl-recency gate for cohort_still_indexed (Leg 4). The flag CLAIMS "noindex is failing";
+// that requires Google to have crawled the (noindex-serving) page RECENTLY and STILL kept it
+// indexed -- continued indexing after a recent crawl cannot be recrawl lag. Measured from the
+// 272's own crawl-age data: Google recrawls these low-priority pages ~monthly (median ~30d,
+// ceiling ~45d, NOTHING < 7d at the time of the fix). 7 days is the threshold where "still
+// indexed" becomes evidence of failure rather than "Google has not looked yet". A wider window
+// (e.g. 30d) would re-admit lag-explained pages -- that is the Leg-4 bug. Keyed off Google's
+// last_crawl_time vs now; the unreliable noindexed_at ship date is never consulted.
+const RECENT_CRAWL_DAYS = 7;
 const HOUR_MS = 3600000;
 const DAY_MS = 86400000;
 function ageDays(sinceMs, nowMs) { return sinceMs == null ? null : (nowMs - sinceMs) / DAY_MS; }
@@ -102,9 +111,11 @@ export async function selectInspectionCandidates(supabase, nowMs) {
   // latest-per-url VIEW is the future optimization). A failed read is non-fatal.
   const latest = new Map();
   {
-    const { data, error } = await supabase.from('gsc_url_inspection').select('url, coverage_state, inspected_at').order('inspected_at', { ascending: false });
+    const { data, error } = await supabase.from('gsc_url_inspection').select('url, coverage_state, inspected_at, last_crawl_time').order('inspected_at', { ascending: false });
     if (error) console.error('[inspect] cross-ref read failed (continuing, may re-inspect): ' + error.message);
-    else (data || []).forEach(function (r) { if (r.url && !latest.has(r.url)) latest.set(r.url, { cs: r.coverage_state, at: r.inspected_at ? Date.parse(r.inspected_at) : null }); });
+    // lct = Google's last_crawl_time (ms) -- distinct from `at` (when WE inspected). The cohort
+    // crawl-recency gate (Leg 4) reads lct; the freshness gate reads at.
+    else (data || []).forEach(function (r) { if (r.url && !latest.has(r.url)) latest.set(r.url, { cs: r.coverage_state, at: r.inspected_at ? Date.parse(r.inspected_at) : null, lct: r.last_crawl_time ? Date.parse(r.last_crawl_time) : null }); });
   }
   // feed_items (paginate past PostgREST's 1000 cap).
   const fi = []; let from = 0;
@@ -189,6 +200,16 @@ function isVerdictFresh(latestVerdict, sourceIntervalDays, nowMs) {
   return age != null && age <= FRESH_MULT * sourceIntervalDays;
 }
 
+// ── Crawl-recency (Leg 4) -- a DIFFERENT measurement from isVerdictFresh ───────
+// isVerdictFresh answers "how recently did WE inspect" (our loop's currency). isCrawlRecent
+// answers "how recently did GOOGLE crawl" (lct = last_crawl_time). cohort_still_indexed needs
+// BOTH: a current inspection (so the state is trustworthy) AND a recent Google crawl (so
+// "still indexed" cannot be recrawl lag). Absent/old crawl => false => not evidence of failure.
+function isCrawlRecent(latestVerdict, nowMs) {
+  if (!latestVerdict || latestVerdict.lct == null) return false;
+  return (nowMs - latestVerdict.lct) <= RECENT_CRAWL_DAYS * DAY_MS;
+}
+
 // ── ESCALATION-MODULE INVARIANT -- absence of measurement is never evidence ───
 // A claim about a PAGE ("is it indexed?") requires a FRESH verdict -- isVerdictFresh, already
 // structural in both sweeps. A claim about the LOOP ("is inspection broken?") requires
@@ -269,7 +290,7 @@ async function readLoopEpochMs(supabase, nowMs) {
 // never unconfirmed-and-unwatched, never false-flagged on stale data.
 export async function runEscalation(supabase, latest, fi, nowMs) {
   const bump = []; // [{ url, verdictAtMs }] -- ordered oldest-verdict-first by the caller
-  let publishFlagged = 0, cohortFlagged = 0, freshnessViolations = 0, inspectionBroken = 0;
+  let publishFlagged = 0, cohortFlagged = 0, freshnessViolations = 0, inspectionBroken = 0, cohortPremature = 0;
 
   // loopEpoch = earliest inspection_runs.fired_at = the first moment any URL could have been
   // bump-attempted. The ceiling floors eligibility here so pre-loop staleness cannot masquerade
@@ -321,14 +342,28 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
       if (m === 'out') continue; // last-seen pruned (GOOD) -> retire; blind-spot trade-off unchanged
       // escalation-onset = when this URL crossed the 45d threshold (feeds the shared ceiling).
       const escalationOnsetMs = noindexedAtMs + COHORT_ERROR_DAYS * DAY_MS;
-      // m is 'in' (BAD) or null (never inspected, UNKNOWN). Two-part: SHARED freshness, then badness.
+      // m is 'in' (BAD) or null (never inspected, UNKNOWN). THREE outcomes (not two): the Leg-4
+      // crawl-recency gate splits the fresh-still-indexed case into flag vs premature-skip.
       if (isVerdictFresh(l, COHORT_INTERVAL, nowMs) && m === 'in') {
-        // FRESH + still-indexed 45d+ after noindex -> CONFIRMED template-bug. Trustworthy flag.
-        const detail = 'cohort 45d: coverageState=' + normCoverage(l.cs) +
-          ' noindex_age_d=' + noindexAgeD.toFixed(1) + ' verdict_age_d=' + ageDays(l.at, nowMs).toFixed(1);
-        const r = await insertFlag(supabase, url, 'cohort_still_indexed', detail);
-        // SINGLE on-transition error log (NOT per-fire): only when the insert OPENED a new flag.
-        if (r.inserted) { cohortFlagged += 1; console.error('[inspect][COHORT-ERROR] flag OPENED -- pruned URL STILL indexed ' + COHORT_ERROR_DAYS + 'd+ after noindex (noindex likely not serving = template bug): ' + url); }
+        if (isCrawlRecent(l, nowMs)) {
+          // Fresh inspection + recent GOOGLE crawl + STILL indexed -> continued indexing cannot be
+          // recrawl lag -> CONFIRMED noindex failure. Trustworthy flag.
+          const detail = 'cohort 45d: coverageState=' + normCoverage(l.cs) +
+            ' noindex_age_d=' + noindexAgeD.toFixed(1) + ' verdict_age_d=' + ageDays(l.at, nowMs).toFixed(1) +
+            ' crawl_age_d=' + ageDays(l.lct, nowMs).toFixed(1);
+          const r = await insertFlag(supabase, url, 'cohort_still_indexed', detail);
+          // SINGLE on-transition error log (NOT per-fire): only when the insert OPENED a new flag.
+          if (r.inserted) { cohortFlagged += 1; console.error('[inspect][COHORT-ERROR] flag OPENED -- pruned URL STILL indexed ' + COHORT_ERROR_DAYS + 'd+ after noindex, crawled within ' + RECENT_CRAWL_DAYS + 'd (noindex failing): ' + url); }
+        } else {
+          // PREMATURE: fresh verdict but Google's last crawl is OLD/absent -> Google has not
+          // reprocessed the noindex yet. Do NOT flag AND do NOT starve -- the verdict is already
+          // fresh, and re-inspecting cannot refresh GOOGLE's crawl (starving here would bump-loop
+          // forever). Normal selection re-checks on the cohort cadence; when Google recrawls (lct
+          // goes recent) the flag fires then. Counted for the heartbeat, not logged per-URL.
+          // Steady-state expectation: few/zero cohort flags -- quiet-because-nothing-is-wrong is
+          // the gate WORKING. (At RECENT_CRAWL_DAYS=7 the whole current 272 flag ZERO, correctly.)
+          cohortPremature += 1;
+        }
       } else {
         // NOT fresh (stale still-indexed, or NEVER inspected) -> SHARED starvation path: re-inspect
         // to CONFIRM before flagging. This is the exact 272 leak, closed: no false flag, no silence.
@@ -338,7 +373,7 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
       }
     }
   }
-  return { bump: bump, publishFlagged: publishFlagged, cohortFlagged: cohortFlagged, freshnessViolations: freshnessViolations, inspectionBroken: inspectionBroken };
+  return { bump: bump, publishFlagged: publishFlagged, cohortFlagged: cohortFlagged, freshnessViolations: freshnessViolations, inspectionBroken: inspectionBroken, cohortPremature: cohortPremature };
 }
 
 // Heartbeat helper: count of currently-OPEN flags (interim visibility -- there is no flags UI
@@ -391,7 +426,7 @@ export async function runInspectionChunk(supabase, deps) {
     // Independently try/caught: an escalation fault must not kill the inspection loop (and
     // vice versa). Shares the fire-start preemption clock (startedMs), so its cost eats into
     // the loop's budget rather than risking the 60s ceiling; bounded by the small stalled set.
-    let esc = { bump: [], publishFlagged: 0, cohortFlagged: 0, freshnessViolations: 0, inspectionBroken: 0 };
+    let esc = { bump: [], publishFlagged: 0, cohortFlagged: 0, freshnessViolations: 0, inspectionBroken: 0, cohortPremature: 0 };
     try { esc = await runEscalation(supabase, sel.latest, sel.fi, nowMs); }
     catch (e) { console.error('[inspect] escalation pass threw (contained, inspection continues): ' + (e && e.message)); }
     if (esc.bump.length) {
@@ -464,7 +499,7 @@ export async function runInspectionChunk(supabase, deps) {
     await updateRun(supabase, runId, { status: status, urls_attempted: attempted, rows_written: written, budget_used: budgetUsed, backlog_remaining: sel.backlog, mean_latency_ms: meanLatency });
     console.log('[inspect] fire ' + status + ': attempted=' + attempted + ' written=' + written + ' backlog=' + sel.backlog +
       ' mean_ms=' + meanLatency + ' chunk=' + CHUNK + ' flags_opened(p/c/ib)=' + esc.publishFlagged + '/' + esc.cohortFlagged + '/' + esc.inspectionBroken +
-      ' bumped=' + esc.freshnessViolations + ' flags_open=' + openFlags);
+      ' bumped=' + esc.freshnessViolations + ' cohort_premature=' + esc.cohortPremature + ' flags_open=' + openFlags);
     return { ok: status !== 'error', status: status, attempted: attempted, written: written, backlog: sel.backlog, meanLatencyMs: meanLatency, openFlags: openFlags };
   } catch (err) {
     await updateRun(supabase, runId, { status: 'error' });

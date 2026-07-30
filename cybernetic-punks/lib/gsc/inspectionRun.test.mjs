@@ -4,7 +4,7 @@
 // drive the loop with no Google/network. Run: node --test lib/gsc/inspectionRun.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runEscalation, runInspectionChunk } from './inspectionRun.js';
+import { runEscalation, runInspectionChunk, selectInspectionCandidates } from './inspectionRun.js';
 
 const DAY = 86400000;
 const HOUR = 3600000;
@@ -39,7 +39,12 @@ function makeFakeSupabase(state) {
     then(resolve, reject) { return Promise.resolve().then(() => this._run()).then(resolve, reject); }
     _run() {
       const s = state;
-      if (this.table === 'gsc_url_inspection' && this.verb === 'select') return { data: s.latestRows, error: null };
+      if (this.table === 'gsc_url_inspection' && this.verb === 'select') {
+        // Mirror the real query's .order('inspected_at', {ascending:false}) so the latest-per-url
+        // reduction (first-seen-wins) is exercised faithfully, not left to input array order.
+        const sorted = s.latestRows.slice().sort((a, b) => Date.parse(b.inspected_at) - Date.parse(a.inspected_at));
+        return { data: sorted, error: null };
+      }
       if (this.table === 'feed_items' && this.verb === 'select') {
         const a = this.rangeArgs ? this.rangeArgs[0] : 0, b = this.rangeArgs ? this.rangeArgs[1] : 999;
         return { data: s.feedItems.slice(a, b + 1), error: null };
@@ -161,7 +166,7 @@ test('cohort freshness: never-inspected + stale-verdict past 45d do NOT false-fl
   const feedItems = [cohortItem('cohort-never', 45 + 1 / 24), cohortItem('cohort-stale', 50), cohortItem('cohort-fresh', 50)];
   const latest = new Map([
     [uStale, { cs: 'Submitted and indexed', at: now - (6 * DAY + 1 * HOUR) }], // stale (>6d) but only ~1h past staleness onset
-    [uFresh, { cs: 'Submitted and indexed', at: now - 2 * DAY }],
+    [uFresh, { cs: 'Submitted and indexed', at: now - 2 * DAY, lct: now - 1 * DAY }], // fresh verdict AND recent Google crawl -> flags
     // uNever: absent from the map (never inspected)
   ]);
   const state = { latestRows: [], feedItems: feedItems, flags: [], runs: [] };
@@ -244,4 +249,67 @@ test('deploy-boundary: aged-and-stale-since-before-loopEpoch does NOT flag on th
   const r = await runEscalation(supa, latest, feedItems, now);
   assert.equal(state.flags.filter((f) => f.source_type === 'inspection_broken' && f.url === url).length, 0, 'NO inspection_broken -- pre-loop staleness is not attempt-time');
   assert.ok(r.bump.some((b) => b.url === url), 'routes to the bump until K hours of real post-loop attempts elapse');
+}));
+
+// ── ASSERTION 7 (Leg 4 -- crawl-recency gate on cohort_still_indexed) ─────────
+// The flag CLAIMS "noindex is failing", which needs Google to have crawled RECENTLY and still
+// indexed. A still-indexed pruned page (fresh verdict, 45d+ noindex) whose last_crawl_time is
+// OLD (> RECENT_CRAWL_DAYS) or ABSENT must NOT flag -- Google has not reprocessed (the 272's
+// exact situation). It also must NOT bump (re-inspecting cannot refresh Google's crawl). Only a
+// fresh verdict + RECENT crawl + still-indexed flags (positive control).
+test('cohort crawl-recency: old/absent crawl does NOT flag or bump; recent crawl does flag', captureLogs(async () => {
+  const now = Date.now();
+  const uRecent = intelUrl('crawl-recent'); // fresh verdict, still-indexed, crawled 1d ago -> FLAG
+  const uOld = intelUrl('crawl-old');       // fresh verdict, still-indexed, crawled 20d ago -> premature
+  const uNull = intelUrl('crawl-null');     // fresh verdict, still-indexed, no crawl time -> premature
+  const feedItems = [cohortItem('crawl-recent', 50), cohortItem('crawl-old', 50), cohortItem('crawl-null', 50)];
+  const latest = new Map([
+    [uRecent, { cs: 'Submitted and indexed', at: now - 2 * DAY, lct: now - 1 * DAY }],
+    [uOld, { cs: 'Submitted and indexed', at: now - 2 * DAY, lct: now - 20 * DAY }],
+    [uNull, { cs: 'Submitted and indexed', at: now - 2 * DAY, lct: null }],
+  ]);
+  const state = { latestRows: [], feedItems: feedItems, flags: [], runs: [] };
+  const supa = makeFakeSupabase(state);
+
+  const r = await runEscalation(supa, latest, feedItems, now);
+
+  // Old / absent crawl: the 272 situation. No flag, and NOT bumped (no perpetual re-inspect).
+  assert.equal(state.flags.filter((f) => f.source_type === 'cohort_still_indexed' && f.url === uOld).length, 0, 'old crawl does NOT flag (Google has not reprocessed)');
+  assert.equal(state.flags.filter((f) => f.source_type === 'cohort_still_indexed' && f.url === uNull).length, 0, 'absent crawl does NOT flag');
+  assert.ok(!r.bump.some((b) => b.url === uOld), 'old crawl does NOT bump (verdict already fresh; re-inspect cannot refresh Google crawl)');
+  assert.ok(!r.bump.some((b) => b.url === uNull), 'absent crawl does NOT bump');
+  assert.equal(r.cohortPremature, 2, 'both premature URLs counted (heartbeat visibility)');
+  // Positive control: fresh verdict + RECENT crawl + still-indexed -> genuine failure -> flag.
+  assert.equal(state.flags.filter((f) => f.source_type === 'cohort_still_indexed' && f.url === uRecent).length, 1, 'recent crawl + still-indexed DOES flag');
+  assert.equal(r.cohortFlagged, 1, 'exactly one cohort flag (the recent-crawl one only)');
+  assert.equal(state.flags.filter((f) => f.source_type === 'inspection_broken').length, 0, 'no inspection_broken anywhere');
+}));
+
+// ── ASSERTION 8 (latest-per-url: the gate reads the NEWEST inspection's crawl) ─
+// append-per-inspection means a URL has multiple gsc_url_inspection rows. The gate MUST read
+// last_crawl_time from the row with max(inspected_at). This exercises the FULL path through
+// selectInspectionCandidates (the reduction), not a hand-built map: a URL with an OLD inspection
+// that had a recent-ish crawl AND a NEW inspection that has an OLD crawl must read the NEW one.
+test('latest-per-url: crawl-recency reads the newest inspection row, not an older one', captureLogs(async () => {
+  const now = Date.now();
+  const slug = 'multirow-1', url = intelUrl(slug);
+  const latestRows = [
+    { url: url, coverage_state: 'Submitted and indexed', inspected_at: iso(now - 10 * DAY), last_crawl_time: iso(now - 2 * DAY) },  // OLD inspection, recent-ish crawl (~2d)
+    { url: url, coverage_state: 'Submitted and indexed', inspected_at: iso(now - 1 * DAY), last_crawl_time: iso(now - 25 * DAY) },   // NEW inspection, OLD crawl (~25d)
+  ];
+  const feedItems = [cohortItem(slug, 50)];
+  const state = { latestRows: latestRows, feedItems: feedItems, flags: [], runs: [] };
+  const supa = makeFakeSupabase(state);
+
+  // Reduction: build the latest map through the real selection code.
+  const sel = await selectInspectionCandidates(supa, now);
+  const l = sel.latest.get(url);
+  assert.ok(l && l.lct != null, 'url present in latest map with a crawl time');
+  const crawlAgeD = (now - l.lct) / DAY;
+  assert.ok(crawlAgeD > 20, 'reduction read the NEW inspection crawl (~25d), NOT the older row (~2d): got ' + crawlAgeD.toFixed(1) + 'd');
+
+  // Gate: with the newest (old) crawl, it must NOT flag (had it read the older recent-ish crawl, it would).
+  const r = await runEscalation(supa, sel.latest, sel.fi, now);
+  assert.equal(state.flags.filter((f) => f.source_type === 'cohort_still_indexed' && f.url === url).length, 0, 'no flag -- gate read the newest (old) crawl -> premature');
+  assert.equal(r.cohortPremature, 1, 'counted premature (a stale-row read would have wrongly flagged)');
 }));
