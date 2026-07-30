@@ -44,6 +44,73 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-30 (cont.) - Level 1 near-miss signal SHIPPED (read-only, no UI); GSC pull is STALE (top blocker)
+
+The editor-benefit pipeline's Level 1 (near-miss page-improvement signal) is built
+and merged (152658a). A read-only query/runner over gsc_query_metrics: live pages
+ranking position 8-20 on relevant queries with impressions (28-day window),
+page-primary, scored by summed relevant impressions (A7 - first-party impressions
+as currency).
+
+Three files (+310):
+- lib/gsc/franchiseMarkers.js: FRANCHISE_MARKERS, the cross-game exclusion
+  vocabulary, whole-word/phrase matcher. Kept SEPARATE from the identity/relevance
+  vocab (A8 decision - the identity vocab has other consumers, so extending it in
+  place would have silently changed display/classification).
+- lib/gsc/nearMiss.js: pure classification core - 28-day per-(page x query)
+  rollup, impression-weighted position, marker + entity exclusion, near-miss
+  admission [8,20] with impression floor 10, soft-visible affinity flag, page
+  scoring. (Note: a literal NUL byte in the rollup-key separator flagged the file
+  binary at commit; fixed to a space separator - URLs are space-free - re-verified
+  identical output, amended before merge. File is proper text.)
+- scripts/gsc-near-miss.mjs: read-only runner - prints ranked pages + the
+  marker-exclusion proof.
+
+FRANCHISE_MARKERS (Fable-ruled): CoD - dmz, cod, call of duty, modern warfare,
+mw2, mw3, mw4, warzone, activision. Marathon - marathon, bungie. Admission rule
+for future tokens: "a proper noun a searcher uses to name the franchise - title,
+mode, installment abbreviation, or publisher; gameplay/world nouns ride the entity
+layer." Entity-name affinity is a SOFT visible flag, NOT a hard filter (aliases
+thin -> hard containment would false-negative on natural-language queries).
+
+Verified in production (both directions): mw3 signal jammer dropped by the mw3
+marker (3 pages), no over-exclusion of marker substrings, unmatched queries kept
+visible, floor grounded in the impression distribution. Firewall untouched -
+operator-facing, never enters generation.
+
+DESIGN LINEAGE (Fable-reviewed): source-first architecture - demand ORDERS the
+sourceable set, never authorizes it (already enforced structurally by the existing
+generation firewall: gen-*.mjs never reads the keyword/review store). Two signal
+kinds kept distinct: near-miss ranking (this, Level 1) vs raw volume (Level 2).
+
+=== BLOCKER / TOP NEXT PRIORITY - GSC PULL IS STALE ===
+The production GSC_PRIVATE_KEY is malformed and the daily GSC pull has been
+failing ~daily, so gsc_query_metrics is STALE. This means Level 1 (just shipped)
+AND Consumer B's review pipeline are BOTH reading frozen data - the logic is
+correct but the table underneath stopped updating when the key broke. A stale
+table still returns rows and looks fine (silent failure - the same shape as the
+Consumer C no-op and the 272). Worse: GSC query/position data is only available
+in the present within Google's retention window - every day the key is broken may
+be permanently uncapturable (like Consumer C's index-state). FIX THIS FIRST next
+session: repair GSC_PRIVATE_KEY, confirm the daily pull runs clean, assess data
+lost during the outage. This is ABOVE the demand-map / canonical work, because
+ALL GSC-dependent tooling (Level 1, Consumer B) is untrustworthy until the pull
+is current.
+
+=== NOT DONE / DEFERRED ===
+- Level 1 has NO UI SURFACE: the runner is the interface. A read-only admin view
+  (like the Consumer B review panel) is the follow-up to make it operator-usable.
+- Level 2 (demand orders new-article priority) deferred: needs an enumerable
+  "sourceable set" which does NOT exist as a queryable structure today (implicit
+  in each generator). That enumeration is Level 2's prerequisite.
+- Level 1's real debut is DMZ launch week: on Marathon's thin data it surfaces
+  little; the cross-game filter and near-miss band become load-bearing when CoD
+  demand arrives.
+
+=== THEN (deadline work that also aged this week) ===
+DMZ demand map (Mangools) + August canonicals - no substitute, has a deadline,
+did not move this week (which went entirely to measurement/tooling infrastructure).
+
 ## 2026-07-30 (cont.) - Consumer C Leg 4 CLOSED; 272 resolved by measurement
 
 Leg 4 (the true-but-premature cohort flags) fixed and confirmed. The
