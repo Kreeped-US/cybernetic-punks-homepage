@@ -44,6 +44,31 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-30 (cont.) - Consumer C Leg 4 CLOSED; 272 resolved by measurement
+
+Leg 4 (the true-but-premature cohort flags) fixed and confirmed. The
+cohort_still_indexed gate now composes three conditions: fresh inspection
+(isVerdictFresh) AND still-indexed AND Google's last_crawl_time within
+RECENT_CRAWL_DAYS=7, read from the latest inspection per URL (commit e02bde4,
+8 assertions incl. a latest-per-url stale-vs-fresh guard). Window set from data:
+Google recrawls these ~monthly (median 30d, ceiling 45d, nothing <7d), so a 7-day
+window is the threshold where still-indexed-despite-recent-crawl evidences a real
+noindex failure rather than recrawl lag. No DDL (last_crawl_time already existed
+and was populated).
+
+Confirming fire (e02bde4): flags_opened(c)=0, cohort_premature=272 - the gate
+evaluated all 272 previously-flagging URLs and correctly classified every one as
+premature (crawled >7d ago) rather than flagging. inspection_broken=0, clean
+partial 51.3s. All four legs of the measurement bug-class now closed and
+confirmed in production.
+
+The 272 open flags were then DELETED - licensed by the fire (fixed gate live +
+demonstrated zero new flags), the measure-before-delete discipline applied
+correctly (contrast the earlier premature deletion recorded above). Post-delete
+count confirmed 0. Steady-state cohort flags now expected near zero; any future
+one is a genuine recent-crawl-and-still-indexed signal. Consumer C complete:
+no-op rebuilt, validated on cron, measurement bug-class closed end to end.
+
 ## 2026-07-30 - Consumer C REBUILT + validated on cron; a 4-leg escalation bug-class closed; TWO recorded errors
 
 State: Consumer C (URL Inspection loop) went from a production NO-OP to durable,
