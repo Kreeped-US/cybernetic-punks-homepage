@@ -2,7 +2,7 @@ import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/e
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { recordCronRun } from '@/lib/cronRunLog';
-import { runDailyGscPull, runQueryGscPull, runUrlInspectionPull } from '@/lib/gsc/dailyPull';
+import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { getGameConfig } from '@/lib/games';
@@ -1301,15 +1301,9 @@ export async function GET(req) {
       console.error('[gsc] query pull dispatch error (contained, non-fatal): ' + gscErr.message);
     }
 
-    // GSC URL INSPECTION PULL (Consumer C, 5c-loop). Same tail placement + fail-open
-    // discipline as the page/query pulls -- outside the freeze branch, contained twice.
-    // Answers "are we INDEXED"; feeds the index-state record, nothing enters a prompt.
-    var gscInspection = null;
-    try {
-      gscInspection = await runUrlInspectionPull(supabase);
-    } catch (gscErr) {
-      console.error('[gsc] inspection pull dispatch error (contained, non-fatal): ' + gscErr.message);
-    }
+    // GSC URL Inspection (Consumer C) moved OFF the generation cron to its own dedicated
+    // route (app/api/cron/inspect) -- its chunked fire fits a 60s ceiling; the old ~50-min
+    // pull here was killed at 60s and wrote nothing. See lib/gsc/inspectionRun.js.
 
     return Response.json({
       success: true,
@@ -1329,13 +1323,6 @@ export async function GET(req) {
             ? (gscQueryPull.isReconciliation ? 'reconcile ' : '') + 'ok: ' + gscQueryPull.rowsWritten +
               ' rows, newest ' + gscQueryPull.newestDateReturned + (gscQueryPull.stalled ? ' [STALL]' : '')
             : 'error: ' + gscQueryPull.reason)
-        : 'dispatch-error',
-      gsc_inspection: gscInspection
-        ? (gscInspection.ok
-            ? 'ok: ' + gscInspection.inspected + ' inspected, ' + gscInspection.written +
-              ' written, ' + gscInspection.skippedForQuota + ' skipped' +
-              (gscInspection.quotaExhausted ? ' [QUOTA]' : '')
-            : 'error: ' + (gscInspection.reason || 'append'))
         : 'dispatch-error',
       directives_consumed: directivesUsed,
       patch_detected: hasPatch,

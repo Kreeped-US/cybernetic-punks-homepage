@@ -9,6 +9,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/inspect",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/network-editor",
       "schedule": "0 0 * * *"
     },
