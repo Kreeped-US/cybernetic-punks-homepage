@@ -14,8 +14,10 @@ only in chat and would have been lost._
 > - ✅ **Games registry unification** — complete (`2e7b2d3`+`5b60c9d`, `b5db2bf`, `d1efd61`,
 >   `b5c8bdf`): one throwing `getGameConfig`, unified `displayName`, `status`/`launch_date` fields.
 > - ✅ **HANDOFF currency** — now a standing convention at the top of HANDOFF (`f876a62`).
-> - ✅ **game_slug default removal, Phase 1 code** (`7e7be2e`, `8532c51`) — 4 tables fully hardened,
->   6 `SET NOT NULL`, **12 `DROP DEFAULT`s pending the cron verification** (in HANDOFF).
+> - ✅ **game_slug default removal — COMPLETE (2026-07-31).** All game_slug DEFAULT 'marathon'
+>   tables have had the default dropped (`meta_tiers` was the last, dropped 2026-07-31); ZERO tables
+>   default to 'marathon'. The four dmz_* tables correctly default to 'dmz' (single-game, benign).
+>   See the HANDOFF completion entry "game_slug DROP-DEFAULT arc COMPLETE (meta_tiers dropped)".
 > - ✅ The §0 durability gaps (commit the prune-candidates doc; save the GSC plan) — done; note the
 >   GSC plan is now **v5** (`docs/gsc-integration-build-plan-v5.md`), superseding the v4 this file
 >   names.

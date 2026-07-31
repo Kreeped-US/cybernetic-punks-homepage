@@ -36,11 +36,12 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 4. **When an arc spans several commits, each commit carries its own entry or extends the arc's
    entry.** The arc does not wait for completion.
 
-**⚠️ OUTSTANDING DDL WITH NO GIT TRAIL (record per rule 2 in whatever commit follows it):** the
-**twelve remaining `DROP DEFAULT`s** on `game_slug`, gated on the game_slug-arc verification —
-**Phase 2:** `game_maps`, `game_zones`, `game_bosses`, `game_events`, `game_modes`, `meta_tiers`;
-**Phase 3:** `core_stats`, `implant_stats`, `mod_stats`, `shell_stats`, `weapon_stats`,
-`site_events`. When run, they MUST be recorded in the next repo-touching commit.
+**✅ game_slug DROP-DEFAULT arc COMPLETE (2026-07-31).** All game_slug DEFAULT 'marathon'
+tables have had the default dropped; `meta_tiers` was the last, dropped 2026-07-31 (operator-run,
+confirmed via information_schema). ZERO tables now default to 'marathon'; the four dmz_* tables
+correctly default to 'dmz' (single-game, benign). See the completion entry in the dated log below
+("game_slug DROP-DEFAULT arc COMPLETE (meta_tiers dropped)"). No pending game_slug DROP DEFAULTs
+remain.
 
 ---
 
