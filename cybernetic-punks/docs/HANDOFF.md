@@ -44,6 +44,107 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-31 - Session summary: GSC key fixed, Consumer C recovered, escalation spiral fixed, seam pass (foundation solid)
+
+A long session. Net state: the GSC pipeline and Consumer C are healthy in
+production again; the escalation death-spiral is fixed at the root; the DMZ
+foundation is confirmed solid; the DMZ canonical push is source-gated on
+Activision (not build-capacity-gated). One process note recorded honestly at the
+end. Current main: 6302138.
+
+=== GSC KEY (fixed, confirmed) ===
+The production GSC_PRIVATE_KEY was malformed (wrong/partial value - no PEM header,
+~128 chars vs ~1700). Diagnosed to the failure SHAPE without either party handling
+the secret (hasBEGIN/hasEND false, literalBackslashN=0 -> wrong-value, not an
+encoding bug). Justin re-pasted the valid key from .env.local into Vercel (quotes
+stripped) and redeployed. CONFIRMED WORKING in production: post-deploy inspect
+fires finalize partial with rows written (auth succeeded), fresh gsc_url_inspection
+success rows. A local pull also recovered gsc_query_metrics through 2026-07-28.
+
+=== CONSUMER C DEATH SPIRAL (fixed, deployed, recovered) ===
+Found: the deployed inspect cron fired every 15 min as running/attempted=0, never
+finalizing - killed at 60s BEFORE inspecting. Cause: the broken key made every
+fire fail auth -> never inspect -> escalation (DB-only, pre-auth) flagged
+inspection_broken off bump-eligibility DURATION for every stale URL -> accumulated
+566 flags -> each fire re-inserted all 566 (deduped no-ops, but 566 round-trips)
+-> ~60s pre-auth -> never inspected -> self-sustaining.
+
+Root fix (commit d8651ae, 12 assertions): inspection_broken now requires N=3
+RECORDED FAILED ATTEMPTS + still-stale, NOT elapsed time (the proxy that decoupled
+when auth-down drove attempts to zero - "time is evidence of nothing"). Failed
+inspections write a sentinel ATTEMPT_FAILED row, counted as an attempt but EXCLUDED
+from freshness via a SPLIT accessor (freshness from latest SUCCESS only; attempt-
+count from all rows). Escalation now RETIRES open-flagged URLs (no re-eval, no
+round-trip - kills the 566 amplification). A loop-level loop_auth_broken flag
+replaces per-URL flags when the last M=3 fires died at auth. The gsc_url_inspection
+read is paginated (was silently capped at 1000 over 1017 rows). Escalation stays
+DB-only pre-auth (world-flags must fire during outages).
+
+DDL run + verified: indexation_flags source_type CHECK extended to include
+loop_auth_broken (all four values confirmed via pg_get_constraintdef).
+
+RECOVERY CONFIRMED in production: fires flipped from running/attempted=0 to
+finalizing partial/attempted=7 around 18:15-18:31 UTC (deploy boundary);
+inspection_broken count FLAT at 566 (retirement working - not growing); backlog
+draining ~7/fire; zero ATTEMPT_FAILED and zero loop_auth_broken (correct - no
+failures, auth healthy). The new machinery is present and dormant because nothing
+is wrong.
+
+=== THE 566 inspection_broken FLAGS (cleanup licensed, not yet done) ===
+Still 566 open inspection_broken flags - spiral artifacts of the broken key, NOT
+per-URL signal (same category as the earlier 272 cohort flags). measure-before-
+delete is now SATISFIED (fixed loop demonstrably not reproducing them - count flat,
+fires finalizing). Cleanup is LICENSED but deliberately not yet run (let recovery
+harden). When cleared, record the disposition with its systemic cause (broken-
+credential spiral). They're retired (inert) meanwhile.
+
+=== DMZ SEAM PASS (foundation SOLID) ===
+Ran the Workstream-3 multi-game seam pass to de-risk the DMZ canonical push.
+Result: foundation solid.
+- Games registry: single source of truth, both games correct.
+- game_slug: the prior else->marathon silent-default is GONE (fail-loud now).
+- ENTITY_TYPES enum + dmz_* CHECKs: aligned.
+- Studio provenance: ALREADY CORRECT (no bug - see process note). Site-publisher
+  CyberneticPunks + correct sourced Activision; grep found zero wrong-studio
+  literals.
+- loadVocabulary DMZ branch: thin-pending-source (expected defer, not a bug).
+Two minor real follow-ups (non-blockers): game_slug DROP-DEFAULT arc (~12 tables,
+do BEFORE bulk DMZ inserts); sitemap section-noindex inconsistency.
+Optional backlog: registry-publisher hardening (derive-not-hardcode future-proofing
+of already-correct attribution - NOT a fix).
+
+=== PROCESS NOTE (recorded honestly) ===
+Mid-session the planning chat (Claude) asserted a "wrong-studio bug" and drafted a
+fix commit + HANDOFF entry for it - but the grep evidence showed NO wrong-studio
+literals existed. Claude Code caught it by checking repo ground-truth against the
+claim and refused to commit the fiction; nothing false reached the repo. Cause:
+pattern-matching "seam pass + studio + last session's banner bug" into an expected
+bug and mis-reading the grep as confirming it. Same failure class as the earlier
+premature-272 deletion: a claim asserted ahead of the measurement that contradicts
+it. Lesson: read the substance, not the expected label. Recorded because the source
+of truth must be true even about our own errors.
+
+=== THE BINDING CONSTRAINT (the strategic finding) ===
+The DMZ canonical push is FOUNDATION-READY and NOT build-capacity-gated. It is
+SOURCE-gated on Activision publishing more DMZ material. Published DMZ source
+(already ingested) does NOT cover the high-demand terms (keys, missions, per-key,
+gunsmith) - all deferred awaiting Deep-Dive excerpts. Canonical #2 (keys) was
+DEFERRED this session: zero Deep-Dive keys facts exist, so it can't be built
+without fabrication. The MW4 BETA is MULTIPLAYER only, NOT DMZ - not a DMZ source.
+Deadline lever (Aug 31 canonicals must age before Oct 23 launch): INGEST DMZ SOURCE
+FAST when Activision publishes. Meanwhile the honestly-buildable work is small
+(korea/Hajin touch-up, Hajin IS sourced) or foundational (the two seam follow-ups).
+
+=== NEXT (ordered) ===
+1. Clear the 566 inspection_broken flags (licensed, after recovery hardens).
+2. The two seam follow-ups: game_slug DROP-DEFAULT (before any bulk DMZ inserts)
+   and the sitemap noindex inconsistency.
+3. korea/Hajin touch-up (small, honestly buildable now).
+4. When Activision publishes DMZ source: ingest fast, build the canonical queue -
+   this is the deadline path.
+Earlier deferred (still open): Level 1 near-miss UI surface; Level 2 sourceable-set
+enumeration; latest-per-url VIEW; searchAnalytics.js timeout.
+
 ## 2026-07-31 (cont.) - Workstream-3 seam pass: foundation SOLID; studio provenance already correct (no bug); one vocab defer
 
 Read-only seam-status pass for the DMZ multi-game foundation, ahead of the canonical
