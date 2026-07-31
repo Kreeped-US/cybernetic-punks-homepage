@@ -45,6 +45,35 @@ remain.
 
 ---
 
+## 2026-07-31 (cont.) - Sitemap/noindex drift FIXED (47e7241); seam-pass follow-ups COMPLETE
+
+The last real seam follow-up is done. The sitemap and the noindex/meta-robots tag
+computed section indexability INDEPENDENTLY and had drifted: 4 empty DMZ shells
+(/dmz/field-intel, /dmz/meta, /dmz/printer, /dmz/discourse) were noindexed but
+still listed in the sitemap - a mixed signal to Google. Fixed (47e7241) by
+extracting the noindex tag's existing content check as a shared sectionHasContent
+predicate (data section -> false; editor section -> true iff a published DMZ
+feed_item resolves to it); both the sitemap and generateMetadata now call it (the
+local copy was deleted). A section is in the sitemap IFF indexable IFF has-content
+- one predicate, no drift, and a shell->live flip updates all three together by
+construction (correct DMZ-canonical discovery built in, not by accident of
+over-listing). Guarded by a 6-test mapping regression test (fake supabase, real
+slug map). Verified in the built sitemap: 4 shells absent, 3 live sections
+(fob/loadouts/regions) retained.
+
+SEAM-PASS STATUS: all follow-ups COMPLETE.
+- game_slug DROP-DEFAULT arc: complete (meta_tiers dropped, no marathon default
+  anywhere).
+- Sitemap/noindex drift: fixed (this entry).
+- Studio provenance: was already correct (no fix - the mid-session "bug" was a
+  false premise, recorded).
+- loadVocabulary DMZ branch: thin-pending-source (expected defer, fills in with
+  source - not a bug).
+The DMZ foundation is fully hardened. The canonical push is FOUNDATION-READY and
+gated ONLY on Activision publishing DMZ source material (keys/missions/gunsmith/
+per-key excerpts) - not on build capacity or foundation. The MW4 beta is
+multiplayer, not a DMZ source.
+
 ## 2026-07-31 (cont.) - game_slug DROP-DEFAULT arc COMPLETE (meta_tiers dropped)
 
 The game_slug DROP-DEFAULT prerequisite (flagged "before any bulk DMZ inserts") is
