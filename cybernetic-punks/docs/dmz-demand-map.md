@@ -1,7 +1,10 @@
 # DMZ Demand Map (Workstream 1 output)
 
-**Status:** DRAFT for review (2026-07-29). The ranked pre-launch canonical
-build queue, reconciled against live routes before commit.
+**Status:** REVIEWED - ACTIVE (promoted 2026-07-31; drafted 2026-07-29). The
+ranked pre-launch canonical build queue, reconciled against live routes before
+commit. This is the source of truth for the DMZ canonical build; canonicals are
+built from its ranking. (Canonical #1 /dmz extend shipped 2026-07-29; canonical
+#2 /dmz/keys fork in progress 2026-07-31.)
 **Owner input:** the query set and demand figures are the operator's completed
 Mangools/KWFinder research (six groups). Route/cannibalization verification is
 Claude Code's (read-only, against `app/dmz/**`, `lib/dmz/entities.js`, the
@@ -60,9 +63,9 @@ with email capture already wired - leads.
 | 1 | mw4 dmz release date | 480 | 40 | 49 | check (over cap) | /dmz | extend | no | live |
 | 1 | dmz mw4 release date | 0 |  |  | check (no volume) | /dmz | extend | no | live |
 | 1 | dmz vs warzone (section) | 170 | 40 |  | check (KD unscored) | /dmz | extend | no | live |
-| 2 | dmz key locations | 12100 | 20 | 30 | y | /dmz/keys | fork | yes | to-build (fork existing route) |
-| 2 | dmz best keys | 720 | 10 | 34 | y | /dmz/keys | fork | yes | to-build (fork existing route) |
-| 2 | dmz how to get keys | 70 |  | 37 | check (over cap) | /dmz/keys | fork | yes | to-build (fork existing route) |
+| 2 | dmz key locations | 12100 | 20 | 30 | y | /dmz/keys | fork | yes | DEFERRED (no Deep-Dive keys source; build when a verbatim keys excerpt is supplied) |
+| 2 | dmz best keys | 720 | 10 | 34 | y | /dmz/keys | fork | yes | DEFERRED (no Deep-Dive keys source; build when a verbatim keys excerpt is supplied) |
+| 2 | dmz how to get keys | 70 |  | 37 | check (over cap) | /dmz/keys | fork | yes | DEFERRED (no Deep-Dive keys source; build when a verbatim keys excerpt is supplied) |
 | 3 | dmz korea map | 1600 | 1100 |  | check (KD unscored; uncontested) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live |
 | 3 | hajin map | 110 | 10 | 40 | check (over cap) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live |
 | 3 | mw4 hajin | 40 | 10 | 30 | y (SERPChecker-gated) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live |
@@ -100,16 +103,25 @@ the head-term authority `/dmz` is already accruing.
   `/dmz` is extended, the FAQPage removal should ride IN THE SAME edit. Flagged
   here so the two land together; no action in the demand-map commit.
 
-### 2. Keys system hub -> target `/dmz/keys` (FORK required)
-`/dmz/keys` exists but is the shared `DmzEntityHub` entity index; `dmz_keys` = 0
-rows -> noindexed (row-count gate). The demand (`dmz key locations` 12,100 peak,
-KD 30) is real, but keys are launch-gated: pre-launch this can only be a SYSTEM
-hub (how keys work, tiers, acquisition), never a per-key reference.
-- **Implementation is SCOPED SEPARATELY** (this doc records what/why, not how):
-  the shared `DmzEntityHub` renders only an H1 + one-line desc + entity grid /
-  empty-state, and noindexes while empty. Converting `/dmz/keys` into a
-  prose + indexable system page therefore means **forking keys off the shared
-  template into a bespoke page**, so the shared template's
+### 2. Keys system hub -> target `/dmz/keys` (DEFERRED - no source)
+**DEFERRED (2026-07-31), same launch-gated / no-source disposition as the deferred
+per-key/mission/item clusters below.** A Step-0 source-floor audit (2026-07-31)
+found ZERO Deep-Dive facts about DMZ keys: the June 6 2026 Deep Dive excerpts (the
+only sanctioned pre-launch source, in `scripts/gen-dmz-news.mjs` TOPICS) and all
+three live DMZ articles contain no statement about locked doors, key locations,
+what keys unlock, key tiers, or acquisition. Keys are not in TOPICS and not even in
+PENDING_TOPICS. The demand is real (`dmz key locations` 12,100 peak, KD 30) but the
+premise that a SYSTEM hub ("how keys work, tiers, acquisition") is buildable does
+NOT survive the audit - that content would have to be invented or imported from old
+DMZ (MW2 2022), which is a demand forecast, NOT a factual source for MW4 (Gate 3 /
+no-source-no-fabrication). A thin honest page targeting "key locations" with none
+to show is worse than none. **Build trigger:** the operator supplies a verbatim
+Deep-Dive keys excerpt (or key mechanics surface pre-launch); at that point it is a
+normal sourced build.
+- **Fork mechanics (unchanged, for whenever it unblocks):** `/dmz/keys` is today
+  the shared `DmzEntityHub`, row-count-gated to noindex while `dmz_keys` = 0.
+  Converting it to a prose + indexable system page means **forking keys off the
+  shared template into a bespoke page**, so the shared template's
   empty-state-noindex honesty gate is preserved for missions, items, and all
   per-key detail pages. Do not weaken the shared gate to make keys indexable.
 
