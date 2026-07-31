@@ -44,6 +44,132 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-31 - Consumer C escalation DEATH SPIRAL: scoped + Fable-vetted fix, READY TO BUILD (not built)
+
+Status: fully scoped, Step-0-confirmed, Fable-reviewed. NOT built - deliberately
+held for a fresh-head build because the fix touches the freshness accessor that
+all four prior escalation legs depend on (subtle-wrong = silently reopens closed
+bugs). No urgency: the spiral is NON-corrupting (idempotency index dedups to
+no-ops), Consumer C is internal, the GSC pull is separately fixed by the Vercel
+key update. Main at 02eb2e2.
+
+=== THE SPIRAL (production, found 2026-07-31) ===
+The deployed inspect cron (*/15) fires every 15 min showing status=running,
+attempted=0, NEVER finalizing - killed at the 60s ceiling BEFORE inspecting any
+URL or reaching auth. Root: a key-seeded death spiral.
+1. Broken deployed GSC_PRIVATE_KEY -> every fire failed auth -> never inspected ->
+   no prod URL ever got a fresh verdict.
+2. Escalation runs DB-only BEFORE auth (correct design). It saw every escalation-
+   aged URL with stale/absent verdict, floored at a loopEpoch now ~22h old -> all
+   bump-eligible past the 6h ceiling -> each fired insertFlag('inspection_broken').
+3. Accumulated 566 open inspection_broken flags.
+4. Every fire now re-evaluates those 566, re-hits the ceiling branch, does 566
+   sequential insertFlag round-trips (deduped to no-ops by the partial unique
+   index, but still 566 network round-trips). On Vercel latency (~100-150ms each)
+   = ~57-85s -> killed at 60s mid-escalation, before auth.
+5. Never inspects -> verdicts never freshen -> 566 stay ceiling-eligible ->
+   re-inserted next fire -> self-sustaining. Can't climb out.
+inspection_runs history confirms: early fires status=error (reached auth, failed
+fast, pre-accumulation); later fires status=running/attempted=0 (die pre-auth once
+the 566 writes ballooned past 60s). The error->running transition tracks the flag
+count growing.
+
+=== THE ROOT (Fable's diagnosis - the fifth leg, sharpened) ===
+NOT "Leg 3 in a new costume." It's Leg 4's lesson recurring because the ceiling
+used a PROXY for evidence and the proxy DECOUPLED. Last night the ceiling was
+scoped to bump-eligibility DURATION, justified as "front-of-chunk placement makes
+duration ~= guaranteed attempts." That's time proxying for attempts - valid only
+while fires actually reach inspection. Auth-down severed the proxy: duration kept
+accruing while attempts were ZERO everywhere, and the ceiling kept honoring the
+proxy. FIX = demand the evidence itself, not its correlate: inspection_broken
+requires RECORDED FAILED ATTEMPTS on that URL, not elapsed time. Zero attempts ->
+no per-URL claim is expressible -> the spiral is structurally UNREPRESENTABLE, not
+merely guarded. Doctrine line for the ledger: "a claim about a PAGE needs fresh
+measurement of the page; a claim about the LOOP needs recorded attempts by the
+loop; TIME is evidence of nothing."
+
+=== STEP 0 FINDINGS (both reshape the build) ===
+1. FAILED INSPECTIONS WRITE NOTHING TODAY. On failure the loop logs, bumps a
+   counter, and continues - only SUCCESS writes a gsc_url_inspection row
+   (inspectionRun.js:481-496). This is WHY the ceiling used a duration proxy -
+   there was no attempt evidence to count. So attempt-recording is a NEW ADDITION,
+   the foundation the rest sits on.
+2. THE ACCESSOR-SPLIT HAZARD (Claude Code caught this unprompted - load-bearing):
+   an error-attempt row carries inspected_at = attempt time. The freshness
+   accessor reads at = inspected_at, so isVerdictFresh would treat a recent FAILED
+   attempt as a FRESH verdict -> poisons the freshness gate ALL FOUR LEGS depend
+   on. The accessor MUST SPLIT: freshness (at) comes ONLY from the latest SUCCESS
+   verdict; attempt-count comes from ALL rows (success+failure) in the window.
+   This is the most delicate part of the fix - it touches the freshness system
+   that took four legs to get right; subtle-wrong silently reopens Leg 1-4.
+3. inspectUrl failure returns {ok:false} with NO result (auth/network/quota/403/
+   parse variants) - so buildInspectionRow is never called on failure and no
+   error-row exists in any form today. coverage_state is nullable text, so an
+   error-attempt row is storable with a SENTINEL coverage_state. Build synthesizes it.
+4. The gsc_url_inspection read is a SINGLE CAPPED select (1000-row PostgREST cap
+   over 1017 rows -> silently drops 17, growing every publish). feed_items in the
+   SAME function is already read paginated (range loop); pageAll exists but only
+   in app/api/admin/gsc-review/route.js:27 (extract-to-shared or replicate).
+5. runEscalation calls insertFlag UNCONDITIONALLY in every branch - no skip-if-
+   already-open-flag. This is the 566-round-trip amplification.
+
+=== THE FIX (Fable-vetted, ONE diff, all six pieces) ===
+A. ATTEMPT-EVIDENCE ROOT: inspection_broken fires only on N recorded FAILED
+   attempts on that URL within the window AND still-stale - NOT elapsed duration.
+   Failed inspection calls now WRITE an attempt-row (sentinel coverage_state, e.g.
+   'attempt_failed'), counted as an attempt, IGNORED for freshness. Zero attempts
+   -> no claim. PROPOSED N=3 (3 failures ~= 3 front-of-chunk fires ~45min - distinguishes
+   real failure from a one-off network/quota blip; tunable).
+B. SPLIT THE ACCESSOR (the delicate part): freshness = latest SUCCESS verdict
+   only; attempt-count = all rows in window. Must not let a failed-attempt row
+   register as fresh. This protects Legs 1-4.
+C. LOOP-LEVEL AUTH FLAG: when the last M fires all finalized status='error' at
+   auth (visible in inspection_runs), raise ONE loop-level "auth broken" flag, not
+   per-URL accusations. Blame the loop with loop evidence. PROPOSED M=3.
+D. ESCALATION RETIREMENT (Fix 2, ALL flag types): a URL with an open flag of type
+   T is EXCLUDED from T's sweep until resolved - no re-evaluation, no round-trip.
+   Kills the 566-amplification. Fix 1 (skip inspection_broken) is its special case.
+   Applies to inspection_broken, cohort_still_indexed, publish_stalled_30d.
+E. PAGINATED READ (same diff, NOT a footnote - Fable was firm): replace the capped
+   1000-row select with paginated read so latest-per-url is COMPLETE. Silent
+   incorrectness today. "Escalation reads must be correct" is part of "escalation
+   must be evidence-based."
+F. Fix 3 (move escalation behind auth) REJECTED: escalation running DB-only pre-
+   auth is CORRECT - world-flags (cohort/publish) evaluate DB evidence and must
+   fire during outages when the DB is the only truth. Gating behind auth would
+   silence true positives exactly when they matter. Do NOT relocate escalation.
+
+=== REQUIRED ASSERTIONS ===
+- AUTH-DOWN/ZERO-ATTEMPTS (THE assertion - reproduces the exact spiral): escalation-
+  aged URLs, bump-eligible-past-K by DURATION, ZERO recorded attempts -> ZERO
+  inspection_broken emitted. Proves the spiral is unrepresentable.
+- FRESHNESS-NOT-CONTAMINATED (guards the accessor split): a URL with a recent
+  FAILED attempt row and an OLD success verdict reads as STALE (freshness from the
+  old success, not the recent failure). Design this assertion carefully - a weak
+  one passes a broken accessor.
+- ATTEMPT-EVIDENCE POSITIVE: N recorded failed attempts + still-stale DOES flag.
+- RETIREMENT: an open-flagged URL is not re-evaluated/re-inserted next sweep.
+- LOOP-AUTH-FLAG: M auth-death fires raise ONE auth flag, not per-URL.
+- PAGINATION: latest-per-url map includes URLs beyond row 1000.
+- All 8 existing assertions still pass.
+
+=== THE 566 FLAGS (cleanup AFTER fix is live + measured) ===
+Same category as last night's 272 cohort flags: systemic artifacts of a broken
+credential, NOT per-URL signal. Clear them AFTER the fix ships AND the first
+healthy fires (auth green, attempts recording, bump set draining, flags_open
+holding at evidenced-problems-only) prove the fix. measure-before-delete. Record
+the disposition WITH its systemic cause (distinct from "false-positive," distinct
+from the 272's "premature" - keep the taxonomy). Flags re-derive from durable
+data, so cleanup can't destroy truth, only tidy claims.
+
+=== SEQUENCE ===
+1. Confirm the Vercel GSC_PRIVATE_KEY fix held (read gsc_pull_log after tonight's
+   19:00 UTC daily pull -> status=ok + fresh date proves the deployed key auths).
+2. Build this escalation fix (fresh head - touches the freshness accessor).
+3. After it ships, let healthy fires run, THEN clear the 566.
+NOTE: fixing the key ALONE does NOT recover Consumer C - the fire dies in
+escalation before reaching auth. Both are needed.
+
 ## 2026-07-30 (cont.) - Level 1 near-miss signal SHIPPED (read-only, no UI); GSC pull is STALE (top blocker)
 
 The editor-benefit pipeline's Level 1 (near-miss page-improvement signal) is built
