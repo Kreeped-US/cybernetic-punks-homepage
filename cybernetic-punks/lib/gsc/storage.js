@@ -324,6 +324,25 @@ export function buildInspectionRow(inspectionResult, url) {
   return { row: row, droppedUnknownGame: 0 };
 }
 
+// SENTINEL coverage_state for a FAILED inspection ATTEMPT (auth-independent URL-level failure:
+// network, HTTP error, malformed response). It is NOT a GSC verdict -- it records "the loop
+// tried this URL and the call failed", so the escalation ceiling can count REAL attempts
+// instead of a time proxy. The ONLY reader of coverage_state (selectInspectionCandidates'
+// reduction) classifies this value as a FAILURE row: it is counted toward failedAttempts and
+// NEVER used for freshness/membership (which read the latest SUCCESS row only). No real GSC
+// coverageState equals this string; membership() would also map it to null defensively.
+export const ATTEMPT_FAILED_STATE = 'ATTEMPT_FAILED';
+
+// One FAILED-ATTEMPT row. Same shape/dropped-unknown-game discipline as buildInspectionRow, but
+// carries the sentinel coverage_state and NO verdict/crawl fields (there was no verdict -- the
+// call failed). inspected_at defaults to now() (the attempt time). This is the evidence the
+// ATTEMPT-EVIDENCE ceiling counts; a fire that never reaches inspection writes NONE of these.
+export function buildFailedAttemptRow(url) {
+  const gameSlug = gameSlugForUrl(url);
+  if (!gameSlug) return { row: null, droppedUnknownGame: 1 }; // gameSlugForUrl logged loudly
+  return { row: { url: url, game_slug: gameSlug, coverage_state: ATTEMPT_FAILED_STATE, indexing_state: null, verdict: null, last_crawl_time: null }, droppedUnknownGame: 0 };
+}
+
 // APPEND (never upsert). The table is a per-inspection time series -- an upsert on
 // url would collapse the history the whole consumer exists to capture. Batched and
 // fail-open exactly like upsertPageMetrics; returns { ok, written, error } so the 5c

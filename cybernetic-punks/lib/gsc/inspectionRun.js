@@ -13,7 +13,7 @@
 // inspection_runs row from fire-start so a killed fire leaves evidence.
 
 import { inspectUrl, authorizeToken } from './urlInspection.js';
-import { buildInspectionRow, appendUrlInspection } from './storage.js';
+import { buildInspectionRow, buildFailedAttemptRow, appendUrlInspection, ATTEMPT_FAILED_STATE } from './storage.js';
 import { dmzSectionForArticle } from '../games/dmz.js';
 
 // ── FIRE SIZING (fits the DEFAULT 60s maxDuration; NO ceiling raise) ──────────
@@ -61,14 +61,26 @@ const COHORT_ERROR_DAYS = 45;      // cohort STILL indexed this long after noind
 const PUBLISH_INTERVAL = RECHECK_PUBLISH_DAYS; // 1d -- publish sweep re-check cadence
 const COHORT_INTERVAL = RECHECK_COHORT_DAYS;   // 3d -- cohort sweep re-check cadence
 const FRESH_MULT = 2;   // a verdict is FRESH iff its age <= FRESH_MULT x the source interval
-// Loop-health ceiling. inspection_broken fires ONLY after a URL has been CONTINUOUSLY
-// bump-eligible (escalation-aged AND stale -> prepended/attempted front-of-chunk every fire)
-// for longer than this and STILL has not freshened -- "the loop tried and cannot". At the
-// 15-min cron cadence 6h is ~24 fires of guaranteed front-of-chunk attempts (oldest-verdict-
-// first), long enough that any genuinely inspectable URL would have freshened. NOT keyed off
-// raw verdict age: a URL stale only because it sits behind the backlog, unreached, has not
-// been attempted and must never flag (queue position is not evidence). Tunable; a few hours.
-const CEILING_BUMP_ELIGIBLE_HOURS = 6;
+// Loop-health ceiling -- ATTEMPT EVIDENCE, not time. inspection_broken fires ONLY after N
+// RECORDED FAILED ATTEMPTS on that URL within the window AND it is still not fresh -- "the loop
+// tried N times and cannot". This REPLACES the old bump-eligible-DURATION proxy: duration was
+// "time proxying for attempts", valid only while fires actually reach inspection. An auth-down
+// (or any pre-inspection kill) makes duration accrue while attempts are ZERO -- the proxy
+// decouples and the ceiling false-fires (the 566-flag death spiral). Counting real attempts
+// makes zero-attempt claims UNREPRESENTABLE. N=3: ~3 front-of-chunk fires (~45min at */15) --
+// enough to distinguish a real failure from a one-off network/quota blip. Tunable.
+const ATTEMPT_FAIL_CEILING = 3;
+// Window for counting failed-attempt rows. Recent failures only, so a cleared flag (or an old
+// burst that later succeeded) does not immediately re-flag; long enough that N genuine failures
+// always fit (a bump-fed URL fails every ~15min, so 3 accrue in under an hour). Tunable.
+const ATTEMPT_WINDOW_DAYS = 2;
+// Loop-level auth flag: M consecutive fires finalizing status='error' at auth (visible in
+// inspection_runs) is a loop-credential outage -- blame the LOOP with loop evidence (ONE flag),
+// not the pages (which never got attempted). M=3: three straight auth-death fires, not a fluke.
+const LOOP_AUTH_FAIL_STREAK = 3;
+// The loop-level flag is not about any one URL, so it uses a fixed sentinel "url" -- the partial
+// unique index (url, source_type) WHERE state='open' then holds exactly one open loop_auth_broken.
+const LOOP_AUTH_FLAG_URL = 'loop:consumer-c';
 // Crawl-recency gate for cohort_still_indexed (Leg 4). The flag CLAIMS "noindex is failing";
 // that requires Google to have crawled the (noindex-serving) page RECENTLY and STILL kept it
 // indexed -- continued indexing after a recent crawl cannot be recrawl lag. Measured from the
@@ -78,7 +90,6 @@ const CEILING_BUMP_ELIGIBLE_HOURS = 6;
 // (e.g. 30d) would re-admit lag-explained pages -- that is the Leg-4 bug. Keyed off Google's
 // last_crawl_time vs now; the unreliable noindexed_at ship date is never consulted.
 const RECENT_CRAWL_DAYS = 7;
-const HOUR_MS = 3600000;
 const DAY_MS = 86400000;
 function ageDays(sinceMs, nowMs) { return sinceMs == null ? null : (nowMs - sinceMs) / DAY_MS; }
 
@@ -109,13 +120,29 @@ function recheckDays(cand, nowMs) {
 export async function selectInspectionCandidates(supabase, nowMs) {
   // latest verdict per url (append log reduced in JS -- known scaling point; a
   // latest-per-url VIEW is the future optimization). A failed read is non-fatal.
+  // PAGINATED (fix E): the old single select capped at PostgREST's 1000 rows and silently
+  // dropped the rest (1000 of 1017, growing) -- an escalation read must be COMPLETE.
+  // SPLIT ACCESSOR (fix B): per url, freshness (cs/at/lct) comes ONLY from the latest SUCCESS
+  // verdict; failedAttempts counts sentinel FAILURE rows in the window. A failed attempt is
+  // evidence the loop TRIED, never evidence the page is fresh -- so it never sets cs/at/lct.
   const latest = new Map();
-  {
-    const { data, error } = await supabase.from('gsc_url_inspection').select('url, coverage_state, inspected_at, last_crawl_time').order('inspected_at', { ascending: false });
-    if (error) console.error('[inspect] cross-ref read failed (continuing, may re-inspect): ' + error.message);
-    // lct = Google's last_crawl_time (ms) -- distinct from `at` (when WE inspected). The cohort
-    // crawl-recency gate (Leg 4) reads lct; the freshness gate reads at.
-    else (data || []).forEach(function (r) { if (r.url && !latest.has(r.url)) latest.set(r.url, { cs: r.coverage_state, at: r.inspected_at ? Date.parse(r.inspected_at) : null, lct: r.last_crawl_time ? Date.parse(r.last_crawl_time) : null }); });
+  const attemptWindowStartMs = nowMs - ATTEMPT_WINDOW_DAYS * DAY_MS;
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from('gsc_url_inspection').select('url, coverage_state, inspected_at, last_crawl_time').order('inspected_at', { ascending: false }).range(from, from + 999);
+    if (error) { console.error('[inspect] cross-ref read failed (continuing, may re-inspect): ' + error.message); break; }
+    if (!data || data.length === 0) break;
+    for (let i = 0; i < data.length; i++) {
+      const r = data[i]; if (!r.url) continue;
+      let e = latest.get(r.url);
+      if (!e) { e = { cs: null, at: null, lct: null, failedAttempts: 0, successSeen: false }; latest.set(r.url, e); }
+      const insAt = r.inspected_at ? Date.parse(r.inspected_at) : null;
+      if (r.coverage_state === ATTEMPT_FAILED_STATE) {
+        if (insAt != null && insAt >= attemptWindowStartMs) e.failedAttempts += 1; // FAILURE row: counted, NEVER freshness
+      } else if (!e.successSeen) {
+        e.cs = r.coverage_state; e.at = insAt; e.lct = r.last_crawl_time ? Date.parse(r.last_crawl_time) : null; e.successSeen = true; // latest SUCCESS (rows are inspected_at DESC)
+      }
+    }
+    if (data.length < 1000) break;
   }
   // feed_items (paginate past PostgREST's 1000 cap).
   const fi = []; let from = 0;
@@ -187,6 +214,31 @@ async function insertFlag(supabase, url, sourceType, detail) {
   }
 }
 
+// ── LOOP-LEVEL auth flag (fix C) -- blame the LOOP, with LOOP evidence ─────────
+// When a credential outage kills every fire at auth, NO url is ever inspected, so the per-URL
+// inspection_broken ceiling is (correctly) unreachable -- but the operator still needs ONE loud
+// signal. The evidence is inspection_runs itself: the last M finalized fires all status='error'.
+// If so, raise exactly ONE loop_auth_broken flag on the fixed sentinel url (the partial unique
+// index dedups, so it opens once and stays quiet). Fewer than M error rows (a recovery, a blip)
+// raises nothing. Fail-open: any read error just skips the flag (never blocks the fire).
+// NOTE: loop_auth_broken must be in the indexation_flags source_type CHECK constraint; until the
+// operator adds it the insert fails-open (logged, no throw) -- code ships safely ahead of the DDL.
+async function maybeRaiseLoopAuthFlag(supabase) {
+  try {
+    // Latest M FINALIZED fires (exclude the still-'running' current row via .neq('status','running')).
+    const { data, error } = await supabase.from('inspection_runs')
+      .select('status').neq('status', 'running')
+      .order('fired_at', { ascending: false }).limit(LOOP_AUTH_FAIL_STREAK);
+    if (error) { console.error('[inspect] loop-auth streak read failed (skipping flag): ' + error.message); return; }
+    const rows = data || [];
+    if (rows.length < LOOP_AUTH_FAIL_STREAK) return; // not enough history to claim a streak
+    for (let i = 0; i < rows.length; i++) { if (rows[i].status !== 'error') return; } // a non-error breaks the streak
+    const detail = 'loop auth broken: last ' + LOOP_AUTH_FAIL_STREAK + ' finalized fires all status=error (credential outage; no url inspected)';
+    const r = await insertFlag(supabase, LOOP_AUTH_FLAG_URL, 'loop_auth_broken', detail);
+    if (r.inserted) console.error('[inspect][LOOP-AUTH-BROKEN] ' + LOOP_AUTH_FAIL_STREAK + ' consecutive auth-death fires -- loop credential outage flagged ONCE (fix the deployed GSC key)');
+  } catch (e) { console.error('[inspect] loop-auth flag threw (skipping): ' + (e && e.message)); }
+}
+
 // ── SHARED freshness invariant, living ONCE ───────────────────────────────────
 // ROOT-CAUSE FIX: this used to be two parallel HAND-WRITTEN conditions -- the publish sweep
 // embodied "only act on a verdict fresh enough to trust", the cohort sweep did NOT -- so the
@@ -211,68 +263,57 @@ function isCrawlRecent(latestVerdict, nowMs) {
 }
 
 // ── ESCALATION-MODULE INVARIANT -- absence of measurement is never evidence ───
-// A claim about a PAGE ("is it indexed?") requires a FRESH verdict -- isVerdictFresh, already
-// structural in both sweeps. A claim about the LOOP ("is inspection broken?") requires
-// demonstrated ATTEMPT-FAILURE -- the URL was bump-fed (escalation-aged AND stale, so it was
-// prepended/attempted front-of-chunk) for longer than the ceiling and STILL did not freshen.
-// Three ways a URL can look stale WITHOUT having been measured -- none may produce a loop
-// flag: (1) absent verdict (never inspected); (2) queue position (stale only because it sits
-// behind the backlog, unreached); (3) PRE-LOOP staleness (aged-and-stale since before the bump
-// loop existed -- those "attempts" never happened). Eligibility time therefore counts ONLY
-// from when the loop could actually attempt: floored at loopEpoch (the loop's first-ever fire).
-// Both flag kinds demand a positive measurement.
+// A claim about a PAGE ("is it indexed?") requires a FRESH MEASUREMENT OF THE PAGE -- the latest
+// SUCCESS verdict (isVerdictFresh, structural in both sweeps). A claim about the LOOP ("is
+// inspection broken?") requires RECORDED ATTEMPTS BY THE LOOP -- N failed inspection rows on that
+// URL. TIME IS EVIDENCE OF NOTHING: the old ceiling counted elapsed bump-eligible DURATION as a
+// proxy for attempts; when fires stop reaching inspection (auth down, or killed pre-loop),
+// duration keeps accruing while attempts are ZERO, the proxy decouples, and the ceiling
+// false-fires everywhere (the 566-flag death spiral). Counting real attempt-rows makes a
+// zero-attempt loop-claim UNREPRESENTABLE, not merely guarded. A failed attempt is evidence the
+// loop TRIED; it is NEVER evidence the page is fresh (the accessor split keeps failure rows out
+// of freshness). Both flag kinds demand a positive measurement of their own subject.
 
 // ── SHARED starvation path, living ONCE ───────────────────────────────────────
-// Both sweeps route a past-threshold URL that FAILS isVerdictFresh here instead of
-// false-flagging or going silent. Re-inspect (priority BUMP) so the next sweep judges a fresh
-// verdict. The CEILING (inspection_broken) fires ONLY once the URL has been continuously
-// bump-ELIGIBLE for more than CEILING_BUMP_ELIGIBLE_HOURS -- i.e. actually escalation-aged AND
-// stale AND within the loop's lifetime that whole time, so it was front-of-chunk attempted
-// every fire and STILL did not freshen ("the loop tried and cannot"). Eligibility onset is
-// DERIVED from durable timestamps, no counter/attempt-log: eligible since
-// max(escalationOnset, stalenessOnset, loopEpoch), where stalenessOnset = verdict_ts +
-// FRESH_MULT*interval (or -Infinity for an absent verdict), and loopEpoch = the earliest
-// inspection_runs.fired_at. A URL stale purely from queue depth is NOT escalation-aged (its
-// caller-side threshold gate skipped it); a URL stale since before the loop existed is floored
-// at loopEpoch -- neither reaches this ceiling without K hours of REAL attempts. Returns
-// { bump, broke }.
-async function starve(supabase, url, latestVerdict, intervalDays, nowMs, ctx, escalationOnsetMs, loopEpochMs) {
+// Both sweeps route a past-threshold URL that FAILS isVerdictFresh here instead of false-flagging
+// or going silent. Re-inspect (priority BUMP) so a later sweep judges a fresh verdict. The CEILING
+// (inspection_broken) fires ONLY when the URL has >= ATTEMPT_FAIL_CEILING RECORDED FAILED ATTEMPTS
+// in the window (latestVerdict.failedAttempts, from the selection reduction) and is still not
+// fresh -- demonstrated attempt-failure, not elapsed time. ZERO recorded attempts (auth down /
+// never reached, the spiral) makes this branch UNREACHABLE. Returns { bump, broke }.
+async function starve(supabase, url, latestVerdict, ctx) {
   const at = latestVerdict && latestVerdict.at != null ? latestVerdict.at : null;
-  const stalenessOnsetMs = at != null ? at + FRESH_MULT * intervalDays * DAY_MS : Number.NEGATIVE_INFINITY;
-  // Eligibility cannot begin before the bump loop could have ATTEMPTED the URL. Floor at
-  // loopEpochMs (the loop's first-ever fire): a URL escalation-aged-and-stale since before the
-  // loop existed accrued ZERO real attempts in that pre-loop window -- counting it would claim
-  // "the loop tried and cannot" when no loop existed (the deploy-boundary leak). The floor
-  // gives it K hours of ACTUAL post-loop-start attempts before it can ceiling.
-  const eligibleSinceMs = Math.max(escalationOnsetMs, stalenessOnsetMs, loopEpochMs);
-  const eligibleHours = (nowMs - eligibleSinceMs) / HOUR_MS;
-  if (eligibleHours > CEILING_BUMP_ELIGIBLE_HOURS) {
-    // CEILING: bump-fed (front-of-chunk) for > K hours and STILL not freshened -> the loop
-    // tried and cannot. This is the ONLY thing inspection_broken claims.
-    const detail = ctx + ' inspection broken: bump_eligible_h=' + eligibleHours.toFixed(1) +
-      ' (> ' + CEILING_BUMP_ELIGIBLE_HOURS + 'h continuously bump-eligible and still not freshened)';
+  const failed = latestVerdict && latestVerdict.failedAttempts ? latestVerdict.failedAttempts : 0;
+  if (failed >= ATTEMPT_FAIL_CEILING) {
+    // CEILING = recorded attempt-failure. N failed inspection rows on this URL in the window AND
+    // still no fresh verdict -> the loop demonstrably tried and cannot. Unreachable at zero attempts.
+    const detail = ctx + ' inspection broken: failed_attempts=' + failed + ' (>= ' + ATTEMPT_FAIL_CEILING +
+      ' recorded failures in ' + ATTEMPT_WINDOW_DAYS + 'd, still not freshened)';
     const r = await insertFlag(supabase, url, 'inspection_broken', detail);
-    if (r.inserted) console.error('[inspect][INSPECTION-BROKEN] ' + ctx + ' bump-eligible ' + eligibleHours.toFixed(1) +
-      'h > ' + CEILING_BUMP_ELIGIBLE_HOURS + 'h -- inspection tried and cannot; un-bumped + flagged ONCE: ' + url);
+    if (r.inserted) console.error('[inspect][INSPECTION-BROKEN] ' + ctx + ' ' + failed +
+      ' recorded failed attempts -- inspection tried and cannot; flagged ONCE: ' + url);
     return { bump: null, broke: r.inserted };
   }
-  // BUMP: escalation-aged + stale but not yet bump-eligible past K -> keep re-inspecting. Loop-
-  // health signal, NOT a flag. (Includes the just-crossed-threshold and just-went-stale cases.)
-  console.error('[inspect][LOOP-HEALTH] ' + ctx + ' bump-eligible ' + Math.max(0, eligibleHours).toFixed(1) +
-    'h (< ' + CEILING_BUMP_ELIGIBLE_HOURS + 'h ceiling); bumped for fresh confirm, NOT flagged: ' + url);
+  // BUMP: fewer than N recorded failures -> keep re-inspecting (front of chunk). Each failed
+  // attempt writes an evidence row; after N the ceiling above fires on real evidence.
+  console.error('[inspect][LOOP-HEALTH] ' + ctx + ' ' + failed + '/' + ATTEMPT_FAIL_CEILING +
+    ' recorded failed attempts; bumped for another attempt, NOT flagged: ' + url);
   return { bump: { url: url, verdictAtMs: at }, broke: false };
 }
 
-// loopEpoch source: the earliest inspection_runs.fired_at. That row is written at every
-// fire-start (runInspectionChunk), so on the very first fire it equals ~now (nothing can
-// ceiling yet); on later fires it is the fixed deploy-boundary moment. Read-only, fail-safe.
-async function readLoopEpochMs(supabase, nowMs) {
+// RETIREMENT (fix D): the set of urls with an OPEN indexation_flags row, so runEscalation can SKIP
+// any already-flagged url -- no re-evaluation, no wasted insertFlag round-trip. This is what kills
+// the 566-round-trips-per-fire amplification (every already-open flag was re-inserted -> 23505
+// dedup, but still a network round-trip; 566 of them blew the 60s budget). ONE read replaces N
+// writes. Fail-open: on error return an empty set (re-evaluate rather than wrongly retire a url).
+async function readOpenFlagUrls(supabase) {
+  const set = new Set();
   try {
-    const { data, error } = await supabase.from('inspection_runs').select('fired_at').order('fired_at', { ascending: true }).limit(1);
-    if (error || !data || !data.length || !data[0].fired_at) return nowMs;
-    const ms = Date.parse(data[0].fired_at);
-    return Number.isFinite(ms) ? ms : nowMs;
-  } catch (e) { console.error('[inspect] loopEpoch read failed (defaulting to now; no ceiling this sweep): ' + (e && e.message)); return nowMs; }
+    const { data, error } = await supabase.from('indexation_flags').select('url').eq('state', 'open');
+    if (error) { console.error('[inspect] open-flag-urls read failed (continuing, may re-evaluate): ' + error.message); return set; }
+    (data || []).forEach(function (r) { if (r.url) set.add(r.url); });
+  } catch (e) { console.error('[inspect] open-flag-urls read threw (continuing): ' + (e && e.message)); }
+  return set;
 }
 
 // ── ESCALATION -- its OWN per-fire calendar-age pass over the FULL corpus, DECOUPLED from
@@ -292,16 +333,15 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
   const bump = []; // [{ url, verdictAtMs }] -- ordered oldest-verdict-first by the caller
   let publishFlagged = 0, cohortFlagged = 0, freshnessViolations = 0, inspectionBroken = 0, cohortPremature = 0;
 
-  // loopEpoch = earliest inspection_runs.fired_at = the first moment any URL could have been
-  // bump-attempted. The ceiling floors eligibility here so pre-loop staleness cannot masquerade
-  // as attempt-time (deploy-boundary). Queried ONCE per sweep. On failure/empty -> nowMs
-  // (conservative: nothing can ceiling this sweep -- no loop history is not evidence of failure).
-  const loopEpochMs = await readLoopEpochMs(supabase, nowMs);
+  // RETIREMENT set (fix D): urls with an OPEN flag are skipped -- no re-evaluation, no round-trip.
+  // ONE read per sweep replaces the N per-fire re-inserts that amplified into the 60s timeout.
+  const flaggedUrls = await readOpenFlagUrls(supabase);
 
   for (let i = 0; i < fi.length; i++) {
     const row = fi[i];
     const url = feedUrl(row);
     if (!url) continue;
+    if (flaggedUrls.has(url)) continue; // RETIRED: already has an open flag -> do not re-evaluate/re-insert
     const desired = row.noindexed_at != null ? 'out' : (row.is_published === true && row.noindex === false ? 'in' : null);
     if (desired == null) continue;
     const l = latest.get(url) || null;
@@ -314,8 +354,6 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
       const createdAgeD = ageDays(createdAtMs, nowMs);
       if (createdAgeD == null || createdAgeD < PUBLISH_ESCALATE_DAYS) continue;
       if (m === 'in') continue; // last-seen indexed (GOOD) -> retire; nothing to escalate
-      // escalation-onset = when this URL crossed the 30d threshold (feeds the shared ceiling).
-      const escalationOnsetMs = createdAtMs + PUBLISH_ESCALATE_DAYS * DAY_MS;
       // m is 'out' (BAD) or null (never inspected, UNKNOWN). Two-part: SHARED freshness gate,
       // then per-source badness.
       if (isVerdictFresh(l, PUBLISH_INTERVAL, nowMs) && m === 'out') {
@@ -327,7 +365,7 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
         if (r.inserted) { publishFlagged += 1; console.warn('[inspect][A10-30d] flag OPENED -- published URL not indexed 30d after created_at (demoted to weekly): ' + url); }
       } else {
         // NOT fresh (stale or absent verdict) -> SHARED starvation path (never flag on stale data).
-        const s = await starve(supabase, url, l, PUBLISH_INTERVAL, nowMs, 'publish', escalationOnsetMs, loopEpochMs);
+        const s = await starve(supabase, url, l, 'publish');
         if (s.bump) { bump.push(s.bump); freshnessViolations += 1; }
         if (s.broke) inspectionBroken += 1;
       }
@@ -340,8 +378,6 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
       const noindexAgeD = ageDays(noindexedAtMs, nowMs);
       if (noindexAgeD == null || noindexAgeD < COHORT_ERROR_DAYS) continue;
       if (m === 'out') continue; // last-seen pruned (GOOD) -> retire; blind-spot trade-off unchanged
-      // escalation-onset = when this URL crossed the 45d threshold (feeds the shared ceiling).
-      const escalationOnsetMs = noindexedAtMs + COHORT_ERROR_DAYS * DAY_MS;
       // m is 'in' (BAD) or null (never inspected, UNKNOWN). THREE outcomes (not two): the Leg-4
       // crawl-recency gate splits the fresh-still-indexed case into flag vs premature-skip.
       if (isVerdictFresh(l, COHORT_INTERVAL, nowMs) && m === 'in') {
@@ -367,7 +403,7 @@ export async function runEscalation(supabase, latest, fi, nowMs) {
       } else {
         // NOT fresh (stale still-indexed, or NEVER inspected) -> SHARED starvation path: re-inspect
         // to CONFIRM before flagging. This is the exact 272 leak, closed: no false flag, no silence.
-        const s = await starve(supabase, url, l, COHORT_INTERVAL, nowMs, 'cohort', escalationOnsetMs, loopEpochMs);
+        const s = await starve(supabase, url, l, 'cohort');
         if (s.bump) { bump.push(s.bump); freshnessViolations += 1; }
         if (s.broke) inspectionBroken += 1;
       }
@@ -403,6 +439,7 @@ export async function runInspectionChunk(supabase, deps) {
   const _inspectUrl = deps.inspectUrl || inspectUrl;
   const _authorizeToken = deps.authorizeToken || authorizeToken;
   const _buildInspectionRow = deps.buildInspectionRow || buildInspectionRow;
+  const _buildFailedAttemptRow = deps.buildFailedAttemptRow || buildFailedAttemptRow;
   const _appendUrlInspection = deps.appendUrlInspection || appendUrlInspection;
 
   const nowMs = Date.now();
@@ -454,6 +491,10 @@ export async function runInspectionChunk(supabase, deps) {
     const auth = await _authorizeToken();
     if (!auth.ok) {
       await updateRun(supabase, runId, { status: 'error' });
+      // LOOP-LEVEL auth flag (fix C): M consecutive auth-death fires -> ONE loop flag, not per-URL.
+      // Note: auth failing means NO url is inspected -> NO attempt-rows are written this fire, so
+      // per-URL inspection_broken stays unreachable (the spiral) -- the loop is blamed, not the pages.
+      await maybeRaiseLoopAuthFlag(supabase);
       console.error('[inspect] fire ABORTED (auth failed): ' + auth.error);
       return { ok: false, reason: 'auth', status: 'error', attempted: 0, written: 0, backlog: sel.backlog, meanLatencyMs: null, openFlags: openFlags };
     }
@@ -478,8 +519,16 @@ export async function runInspectionChunk(supabase, deps) {
         console.error('[inspect] QUOTA EXHAUSTED (unexpected at 38% of cap): ' + String(out.error).split('\n')[0]);
         break;
       }
-      if (!out.ok) { // other error -> skip this URL, keep going
+      if (!out.ok) { // other error -> RECORD the failed attempt (fix A), then skip this URL, keep going
+        // ATTEMPT EVIDENCE: a per-URL inspection failure that is NOT auth/quota (the loop reached
+        // Google and the call failed for THIS url) is the ONLY thing that can make inspection_broken
+        // reachable. Write a sentinel FAILURE row (coverage_state=ATTEMPT_FAILED) -- counted as an
+        // attempt in the window, NEVER read as freshness (the split accessor keeps it out of cs/at).
+        // Auth-down never reaches here (it aborts pre-loop), so a credential outage records ZERO
+        // attempts -> the ceiling stays unreachable -> no spiral.
         console.error('[inspect] skipped ' + cand.url + ': ' + String(out.error).split('\n')[0]);
+        const fr = _buildFailedAttemptRow(cand.url);
+        if (fr.row) { const ap = await _appendUrlInspection(supabase, [fr.row]); if (!ap.ok) console.error('[inspect] attempt-row append failed ' + cand.url + ': ' + ap.error); }
         await updateRun(supabase, runId, { urls_attempted: attempted, budget_used: budgetUsed, rows_written: written });
         continue;
       }
