@@ -36,6 +36,7 @@ import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
+import { sectionHasContent } from '@/lib/dmz/sections';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug, MATCHUP_VERIFIED_DATE } from '@/lib/matchups';
 import { hasShellGuide } from '@/lib/shellGuides';
@@ -215,6 +216,7 @@ export default async function sitemap() {
   let dynamicPages = [];
   let dmzArticlePages = [];
   let dmzEntityPages = [];
+  let dmzSectionPages = [];
   let activeGuideCategories = [];
   // Newest updated_at per entity HUB, collected from the SAME rows the detail
   // URLs are built from (see maxUpdatedAt). Stays null for any hub whose query
@@ -573,6 +575,28 @@ export default async function sitemap() {
       } catch (err) {
         console.error('[sitemap] dmz entity fetch threw:', err);
       }
+
+      // DMZ SECTION HUBS -- gated on the SAME sectionHasContent predicate the
+      // section route's noindex tag uses (lib/dmz/sections.js), so the sitemap and
+      // the meta-robots tag CANNOT drift: a /dmz/<section> is listed here IFF it is
+      // indexable. Empty shells (data sections + editor sections with no published
+      // article) are noindexed by the route and therefore excluded here too. A shell
+      // flips to indexed AND listed together the moment it gains content -- the
+      // DMZ-push discovery-by-construction property. Mirrors the entity-hub gate above.
+      try {
+        for (const sec of dmz.sections) {
+          if (!(await sectionHasContent(sec))) continue; // noindexed shell -> not advertised
+          dmzSectionPages.push({
+            url: baseUrl + '/dmz/' + sec.slug,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+          });
+        }
+        console.log('[sitemap] dmz section pages:', dmzSectionPages.length);
+      } catch (err) {
+        console.error('[sitemap] dmz section gate threw:', err);
+      }
     }
   } catch (err) {
     console.error('[sitemap] Supabase init failed at build time, using static fallback:', err);
@@ -618,18 +642,14 @@ export default async function sitemap() {
   // DMZ network section, gated on dmz.indexable (SEO exposure) -- NOT dmz.launched.
   // While indexable is false, emit NOTHING (pre-launch thin content, noindex via
   // app/dmz/layout.js) so the sitemap never advertises thin URLs. When indexable is
-  // true, emit the /dmz hub, the section pages, AND the article URLs (fetched above,
-  // each mapped to its section via DMZ_ARTICLE_SECTION -- the /dmz/[section]/[slug]
-  // detail route exists now), in lock-step with robots becoming indexable.
+  // true, emit the /dmz hub, the CONTENT-GATED section hubs (dmzSectionPages, built
+  // above via the shared sectionHasContent predicate so noindexed shells are NOT
+  // listed), the article URLs, and the entity pages -- every DMZ URL here is one the
+  // route serves as indexable, in lock-step with the meta-robots tag.
   const dmzPages = dmz.indexable
     ? [
         { url: baseUrl + '/dmz', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-        ...dmz.sections.map((sec) => ({
-          url: baseUrl + '/dmz/' + sec.slug,
-          lastModified: new Date(),
-          changeFrequency: 'weekly',
-          priority: 0.8,
-        })),
+        ...dmzSectionPages,
         ...dmzArticlePages,
         ...dmzEntityPages,
       ]
