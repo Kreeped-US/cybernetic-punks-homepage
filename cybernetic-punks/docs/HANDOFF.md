@@ -44,6 +44,73 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-31 (cont.) - Consumer C escalation death-spiral FIX shipped (d8651ae); recovery still pending 2 things
+
+The scoped death-spiral fix is BUILT and MERGED (d8651ae, 12/12 assertions incl.
+the auth-down zero-flag spiral proof and the three-case accessor split, verified
+correct at every edge from the actual code). BUT Consumer C is NOT yet recovered
+in production - two things still gate it (below).
+
+THE FIX (all six pieces, d8651ae):
+- inspection_broken now fires on N=3 recorded FAILED attempts + still-stale, NOT
+  elapsed bump-eligibility duration (the proxy that decoupled when auth-down drove
+  attempts to zero). Root: "time is evidence of nothing" - a loop-claim needs
+  recorded attempts.
+- Failed inspections write a sentinel ATTEMPT_FAILED row (storage.js). Counted as
+  an attempt, EXCLUDED from freshness via a SPLIT accessor: freshness (cs/at/lct)
+  comes only from the latest SUCCESS row; attempt-count from all rows in window.
+  The two read paths are disjoint (branch on coverage_state===ATTEMPT_FAILED).
+  Verified: recent-failure+old-success reads stale-from-success; sentinel-only
+  reads freshness-absent; success-older-than-failure-but-in-window reads fresh
+  from success + counts the failure. Protects Legs 1-4.
+- Escalation retirement: a URL with an open flag of type T is skipped by T's sweep
+  (one open-flag read replaces the 566 per-fire re-inserts - kills the
+  amplification that was the 60s timeout).
+- loop_auth_broken: when the last M=3 fires all died at auth, ONE loop-level flag,
+  not per-URL. Blame the loop with loop evidence.
+- Paginated gsc_url_inspection read (was silently capped at 1000 over 1017 rows).
+- Escalation stays DB-only pre-auth (world-flags must fire during outages - Fix 3
+  rejected).
+
+DDL RUN (operator, confirmed 2026-07-31, no git trail per rule 2): indexation_flags
+source_type CHECK extended to include loop_auth_broken - now CHECK (source_type IN
+('publish_stalled_30d','cohort_still_indexed','inspection_broken','loop_auth_broken')).
+Fix C's loop-level flag can now insert (it fails open before this, so nothing broke
+pre-DDL).
+
+=== NOT DONE - Consumer C recovery needs BOTH of these ===
+1. CONFIRM THE VERCEL KEY FIX HELD: Justin updated GSC_PRIVATE_KEY in Vercel +
+   redeployed, but this is UNCONFIRMED for the deployed env - the daily pull
+   hadn't re-run (scheduled 19:00 UTC). Check gsc_pull_log after tonight's 19:00
+   pull: status=ok + fresh newest_date proves the deployed key auths. (Local pull
+   already recovered gsc_query_metrics through 2026-07-28 - Consumer B data is
+   current; this is specifically about the DEPLOYED key.)
+2. This escalation fix must DEPLOY: the fix is merged but Consumer C recovery
+   requires the deployed inspect cron to run the new code AND the key to work.
+   Fixing the key alone does NOT recover Consumer C (fire died in escalation before
+   auth - now fixed); fixing escalation alone does NOT help if the key's still bad
+   (no successful inspections). BOTH needed. After both are live, watch inspection_runs
+   for fires finalizing ok/partial (not running/attempted=0) - that's recovery.
+
+=== THE 566 inspection_broken FLAGS - cleanup AFTER recovery, NOT before ===
+Still 566 open inspection_broken flags (spiral artifacts of the broken key, NOT
+per-URL signal - same category as the 272 cohort flags and the earlier premature
+deletion). Do NOT delete yet. measure-before-delete: clear them ONLY after healthy
+fires (auth green, attempts recording, fires finalizing ok/partial, bump set
+draining) prove the fixed loop doesn't reproduce them. The fixed escalation will
+now RETIRE them from re-evaluation (so they stop causing the timeout immediately),
+but they remain OPEN until cleared - clearing is the post-recovery tidy, gated on
+measurement. Record the disposition with its systemic cause (broken-credential
+spiral - distinct from false-positive, distinct from the 272's premature).
+
+=== PRIORITY (unchanged, now 2 sessions overdue) ===
+This session + last went to measurement/tooling infrastructure. The DMZ demand map
+(Mangools) + August canonicals - deadline, no substitute - have NOT moved. Those
+age; this tooling does not. Next session priority is DMZ canonical/demand-map work
+once Consumer C recovery is confirmed.
+
+---
+
 ## 2026-07-31 - Consumer C escalation DEATH SPIRAL: scoped + Fable-vetted fix, READY TO BUILD (not built)
 
 Status: fully scoped, Step-0-confirmed, Fable-reviewed. NOT built - deliberately
