@@ -44,6 +44,57 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-31 (cont.) - Workstream-3 seam pass: foundation SOLID; studio provenance already correct (no bug); one vocab defer
+
+Read-only seam-status pass for the DMZ multi-game foundation, ahead of the canonical
+push. Outcome: the foundation is solid. NO CODE WAS CHANGED this pass. A suspected
+wrong-studio structured-data bug (framed as the same class as last session's POI banner
+fix) was investigated exhaustively and DISPROVEN - it does not exist. Correcting the
+record here so it is not carried forward as real.
+
+STUDIO PROVENANCE - ALREADY CORRECT (no bug found). An exhaustive grep of EVERY DMZ
+emission surface (JSON-LD, sitemap, meta, OG, banner) found ZERO wrong-studio literals.
+DMZ pages emit the site-publisher "CyberneticPunks" (correct and game-independent - the
+site publishes the page, same convention Marathon uses) plus exactly one correct sourced
+"Activision" (in the visible FAQ prose). The visible disclaimer already says Activision
+(fixed last session). Nothing on any DMZ page emits "Bungie" - the only Bungie strings in
+DMZ paths are code comments. The registry has no studio field, so there was never an
+accessor emitting a wrong value. The "banner-fixed-but-structured-data-missed" premise did
+not hold: the banner was the ONLY surface that ever carried the wrong-studio text.
+
+OPTIONAL ENHANCEMENT (not a bug - provenance is already correct): studio attribution is
+currently correct on all DMZ/Marathon pages (site-publisher CyberneticPunks + one correct
+sourced Activision; no wrong-studio literals - grep-verified). The registry has no studio
+field. Optional future hardening: add a publisher field to the registry (marathon -> Bungie,
+dmz -> Activision, both sourced; omit developer/Infinity Ward - unsourced in-repo), plus a
+shared accessor and a registry-derived VideoGame/publisher JSON-LD node, so studio
+attribution derives from one source and can't drift. This is derive-not-hardcode
+future-proofing, NOT a fix - nothing is wrong today.
+
+REAL SEAM FINDINGS (the accurate outcome):
+- loadVocabulary DMZ branch: the one substantive finding. Structurally PRESENT and correct
+  (game-parameterized, filters shared entity tables by game_slug, correct empty
+  shells/modSlots for non-Marathon); THIN only because weapon_stats/game_maps/game_modes/
+  game_events have zero DMZ rows yet. Expected source-gated defer, NOT broken.
+- Registry + game_slug discipline: SOLID. Single code registry (lib/games/index.js, both
+  games registered); game_slug present with ZERO nulls across every cross-game table;
+  gameSlugForUrl returns null, never a default (the else->marathon prefix bug is already
+  fixed and documented as rejected).
+- Two real MINOR follow-ups (not blockers, flagged for before the bulk canonical push):
+  (1) game_slug DROP DEFAULT arc - about 12 tables still carry DEFAULT 'marathon' (per
+  MULTI_GAME_READINESS_AUDIT + the standing HANDOFF note); finish before bulk DMZ inserts so
+  an omitted game_slug cannot silently become Marathon. (2) sitemap section-noindex
+  inconsistency - app/sitemap.js emits every dmz.sections URL unconditionally, but
+  app/dmz/[section]/page.js noindexes sections without content; gate the sitemap emission on
+  sectionHasContent (mirror the entity-hub row-count gate).
+
+DMZ CANONICAL PUSH - SOURCE-GATED. #1 /dmz shipped (2026-07-29). #2 keys DEFERRED (no
+Deep-Dive keys source - see the demand-map correction). #3 Hajin "korea map" fold-in is
+source-clean but intent-gated on an operator SERP check (the 1,100/mo volume is likely
+real-world Korea-geography intent, not game intent). #4 gunsmith is thin/pending a dedicated
+excerpt. Net: the build is source-limited, not effort-limited - unblock it with a verbatim
+Deep-Dive keys or gunsmith excerpt, or run the #3 SERP check.
+
 ## 2026-07-31 (cont.) - Consumer C escalation death-spiral FIX shipped (d8651ae); recovery still pending 2 things
 
 The scoped death-spiral fix is BUILT and MERGED (d8651ae, 12/12 assertions incl.
