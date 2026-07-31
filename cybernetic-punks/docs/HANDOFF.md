@@ -44,6 +44,27 @@ HANDOFF drifted twice on 2026-07-23 and needed retroactive catch-up both times. 
 
 ---
 
+## 2026-07-31 (cont.) - game_slug DROP-DEFAULT arc COMPLETE (meta_tiers dropped)
+
+The game_slug DROP-DEFAULT prerequisite (flagged "before any bulk DMZ inserts") is
+DONE. meta_tiers was the last table still carrying DEFAULT 'marathon'; its default
+was dropped (operator-run, confirmed via information_schema: meta_tiers game_slug
+column_default now null). Its sole write path passes game_slug explicitly
+(route.js:680), and it's NOT NULL, so any future regression that omits game_slug
+fails LOUD (null violation) rather than silently mislabeling cross-game content
+as Marathon.
+
+Full verified state across all 42 tables: ZERO tables default to 'marathon' (the
+silent cross-game hazard is eliminated). The four dmz_* tables correctly default
+to 'dmz' (single-game, cannot misattribute - benign by design). All other tables
+are null (explicit-or-nothing). Data check earlier confirmed CLEAN - no existing
+rows were mislabeled by any default (cross-game tables site_events/email_signups
+carry correctly-attributed dmz rows, proving their inserts pass game_slug).
+
+Prerequisite satisfied: bulk DMZ inserts can now proceed without inheriting a
+wrong-game default. One seam follow-up remains (sitemap section-noindex
+inconsistency); the studio-provenance item was already-correct (no fix needed).
+
 ## 2026-07-31 - Session summary: GSC key fixed, Consumer C recovered, escalation spiral fixed, seam pass (foundation solid)
 
 A long session. Net state: the GSC pipeline and Consumer C are healthy in
