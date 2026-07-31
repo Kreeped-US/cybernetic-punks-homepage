@@ -45,6 +45,43 @@ remain.
 
 ---
 
+## 2026-07-31 (cont.) - 566 inspection_broken flags cleared; first GENUINE escalation flag surfaced (A10 working both directions)
+
+CLEANUP DONE: the 566 spiral-artifact inspection_broken flags are cleared.
+Pre-delete gate re-confirmed by CURRENT measurement (not hours-old belief):
+recovery sustained (~10 straight partial fires over 2+ hours, backlog draining
+monotonically ~7/fire), count flat at exactly 566, ZERO new inspection_broken
+post-deploy (newest was 06:16 UTC, ~12h before the delete - all spiral-window).
+Deleted scoped to source_type='inspection_broken' AND state='open' AND flagged_at
+< 18:31 UTC (the recovery boundary as an extra guard so no post-fix flag could be
+caught). Count-checked 566 immediately before; after-read confirmed zero
+inspection_broken remain.
+
+GENUINE FLAG FOUND (the after-read caught it - NOT cleanup, do NOT delete): one
+open publish_stalled_30d flag on /intel/marathon-solo-extraction-strategy-map-
+zones-and-early-exit-timing-zwah. It is REAL, every check passes: the feed_item is
+135.9 days old, published, indexable (noindex=false, noindexed_at=null); the
+verdict is FRESH (inspected 21:01 UTC, ~2.5h POST-recovery, verdict_age=0);
+flagged 21:15 UTC through the LEGITIMATE path (isVerdictFresh AND membership=out
+AND created_age>30d) - completely different provenance from the 566 spiral
+artifacts. Google's verdict: "Crawled - currently not indexed" (last crawl
+2026-06-19) - Google crawled the page and is CHOOSING not to index it = the
+doctrine's earliest thin-content signal (thin/low-diff/cannibalization).
+
+WHY THIS MATTERS BEYOND THE ONE PAGE: this is the first proof the fixed escalation
+loop works in BOTH directions. All night we proved it won't fire FALSELY (spiral
+fix, 4 legs, auth-down assertion) - but a loop that went silent would have passed
+all those too. This flag proves it still fires TRULY: on fresh healthy data, it
+correctly generated a real flag from genuine evidence. Not just quiet - correct.
+
+DISPOSITION: leave the flag OPEN (it's doing its job by staying visible). It's a
+GENUINE finding but MODEST value - Marathon is low-demand/entering-maintenance, so
+improving one 4.5-month-old strategy article's indexation is real but small. Worth
+an editorial look IF/WHEN doing Marathon content work (why won't it index - thin
+content? cannibalization with another zones/extraction article?); not worth
+interrupting current work. Do NOT delete - resolves naturally when the page is
+improved-and-reindexed or consciously dismissed.
+
 ## 2026-07-31 (cont.) - Sitemap/noindex drift FIXED (47e7241); seam-pass follow-ups COMPLETE
 
 The last real seam follow-up is done. The sitemap and the noindex/meta-robots tag
