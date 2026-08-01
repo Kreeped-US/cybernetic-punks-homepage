@@ -45,6 +45,47 @@ remain.
 
 ---
 
+## 2026-08-01 - BANKED: Cannibalization detector (L3-class review lane) - build with L1 UI, after the demand map
+
+BANKED, scoped, Fable-designed. A computed view over gsc_query_metrics (no DDL, no
+new subsystem, no aging property - hence banked, not urgent). Fills a PERMANENT
+structural gap: generation guards (dedup, coverage registry, Gate 2) prevent
+same-tuple duplication but CANNOT see query-level competition - two pages with
+different tuples competing for one query is invisible at generation by construction
+(Google assigns queries after the fact). Only observable in measurement. (Surfaced
+by the 2026-07-31 GSC non-indexation diagnosis: the discovered-not-indexed cluster
+was a Season-2 news cannibalization cluster the current tooling does not catch.)
+
+DESIGN (Fable):
+- DEFINITION: query-overlap is THE definition, not a proxy (title/body similarity
+  are proxies - "this codebase paid five production bugs for the proxy lesson").
+  Primary = shared queries weighted by shared impressions, QUALIFIED BY FLAPPING:
+  stable dual ranking (hub at 3 + detail at 8) is healthy DOMINANCE, not
+  cannibalization; the true signature is Google ALTERNATING which URL it ranks
+  across days (daily-grain data detects this). Flapping is the high-precision
+  qualifier that separates self-competition from healthy dominance.
+- TWO OUTPUT CLASSES, reported separately (different actions):
+  * RANK-SPLITTING: both indexed, flapping -> rank-recovery case
+  * DUPLICATE-SUPPRESSED: Google refused to index the copies -> crawl-hygiene case
+    (the Season-2 shape; the discovered-not-indexed cluster IS this output class)
+- SURVIVOR (advisory, mechanical from doctrine): canonical/entity > news article
+  (Gate 2 strengthen-the-canonical as a sort), then indexed > not-indexed, then
+  impressions, then depth. Signal briefs, never decides.
+- OUTPUT per cluster: pages, shared queries + impressions, class, recommended
+  survivor + reason, disposition options (merge-redirect / noindex / strengthen-
+  survivor) reusing prune machinery.
+- FIREWALL: read-only, gen-* never touches it, findings route to operator
+  disposition; policy implications flow to Gate 2 THROUGH the human, never a prompt.
+- GAME-SCOPING: game-blind by construction (gsc_query_metrics + game_slug); DMZ
+  inherits when its query rows exist. REQUIRED: apply FRANCHISE_MARKERS exclusion
+  to the query set FIRST - cross-game collision queries (mw3 signal jammer on both
+  a Marathon and DMZ page) are NOT cannibalization; within-game overlap is the
+  entire signal. Same exclusion, same reason as near-miss.
+- BUILD WITH: Level 1 UI surface (fourth review lane) - shares surface, game-
+  scoping, marker exclusion. Together the review queue covers the full disposition
+  set: win what's close (near-miss), fix what's stalled (Consumer C), stop
+  competing with yourself (this).
+
 ## 2026-07-31 (cont.) - Multi-game sitemap upgrade SHIPPED (08d287c); DMZ bet instrumented
 
 Replaced the flat single sitemap with a hand-rolled sitemap INDEX at /sitemap.xml
