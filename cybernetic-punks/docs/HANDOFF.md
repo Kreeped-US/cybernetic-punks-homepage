@@ -45,6 +45,50 @@ remain.
 
 ---
 
+## 2026-08-01 (cont.) - Season-2 cannibalization cleanup EXECUTED (28 pruned/merged + 2 redirects)
+
+The GSC non-indexation diagnosis found the discovered-not-indexed / crawled-not-
+indexed buckets were entirely Marathon /intel/ Season-2 news near-duplicates (zero
+entities, zero DMZ - durable content indexes cleanly; the churn was all in the news
+lane, and Google correctly declining to index near-dup ephemeral news). Fable's
+call: this found-and-finite cluster is a manual prune job (NOT the standing
+cannibalization detector - that's banked separately for post-demand-map). Executed:
+
+PRUNED (26 noindexed + stamped): all ephemeral Season-2 reaction pieces -
+sub-cluster A (8 economy-nerf), sub-cluster B (6 faction-armory-priority),
+sub-cluster D (3 Sponsored Survival - a LIMITED-TIME mode now gone, so the farming
+guides are obsolete), the railgun near-dup pair, and the misc ephemeral list
+(price-tag crisis, server-apocalypse, cradle-reset/evolution, energy-economy,
+BR33 victory lap). ~0 impressions each, past events, no durable/evergreen intent.
+
+MERGED (1 survivor, 2 redirected): sub-cluster C, the "which faction to level first"
+guides. Survivor = marathon-faction-system-complete-guide-smart-progression-strategy
+-for--aa39 (deepest, indexed, guide-shaped). The 2 near-dup guides noindex-stamped
+(part of the 28) AND 308-redirected to the survivor (60d1bd7) so indexed authority
+transfers, not lost.
+
+KEPT (untouched): signal-jammer-purchase-guide (imp=94, the winner, seed of a future
+armory-items reference); solo-players-first-week-survival-guide (broad guide, not a
+faction dup).
+
+MECHANISM (kept the system consistent): noindex=true AND noindexed_at=now() in one
+statement (the canonical backfill-noindexed-at pattern, AND noindex=false idempotency
+guard). The noindexed_at stamp is load-bearing - it flips desired 'in'->'out' so
+Consumer C moves them from the publish sweep (can't be publish_stalled_30d-flagged)
+to the cohort sweep (retire when Google drops them). Count-checked 28 before the
+UPDATE, verified 28 stamped after. Zero open flags on the 26 (no cleanup needed).
+Sitemap self-drops them via the predicate (~1h ISR). Self-consistent by construction.
+
+RESULT: cleans up the discovered-not-indexed cluster Google flagged, stops crawl
+budget waste on near-duplicates, and makes sitemap-marathon-intel.xml's indexed-ratio
+(the maintenance health meter) meaningful. Right-sized crawl-hygiene on a winding-down
+vertical.
+
+OPTIONAL TAIL (yours whenever, low stakes): fold the 2 merge-away guides' unique bits
+(new-player per-faction first-pick reasoning; shell-type->faction mapping) into the
+survivor. The survivor is already comprehensive (has shell-type priorities + advanced
+progression) and the merge-aways had ~0 impressions, so likely skippable.
+
 ## 2026-08-01 - BANKED: Cannibalization detector (L3-class review lane) - build with L1 UI, after the demand map
 
 BANKED, scoped, Fable-designed. A computed view over gsc_query_metrics (no DDL, no
