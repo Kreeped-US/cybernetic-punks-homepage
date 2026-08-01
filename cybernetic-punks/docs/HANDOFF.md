@@ -45,6 +45,73 @@ remain.
 
 ---
 
+## 2026-07-31 (cont.) - Multi-game sitemap upgrade SHIPPED (08d287c); DMZ bet instrumented
+
+Replaced the flat single sitemap with a hand-rolled sitemap INDEX at /sitemap.xml
+pointing to three children scoped by "one child per distinct measurement question":
+sitemap-dmz.xml, sitemap-marathon-entities.xml, sitemap-marathon-intel.xml.
+Fable-designed and Fable-reviewed. Shipped 08d287c (8 files, +508/-670).
+
+WHY THREE CHILDREN (not two): per-game alone under-serves - Marathon's ~752 intel
+URLs would drown the ~127 entity pages' indexed-ratio signal. Splitting intel out
+means: (a) sitemap-dmz.xml indexed-ratio instruments the DMZ growth bet; (b)
+sitemap-marathon-entities.xml ratio should run ~100% -> any dip is a free alarm
+(template break / noindex leak); (c) sitemap-marathon-intel.xml ratio is the
+maintenance-mode health meter. Counts: dmz 8, marathon-intel 747, marathon-entities
+127 = 882.
+
+ARCHITECTURE (correct-by-construction):
+- Children are FILTERS over ONE computed eligible set (computeEligible() ->
+  {url,game,type,lastmod,changeFrequency,priority}), never separate queries.
+- RUNTIME partition assertion inside computeEligible(): union==eligible-set AND
+  pairwise-disjoint, throws on violation (set-identity + disjointness on real URLs,
+  not count arithmetic). Runs per ISR revalidation (~24x/day, microseconds). A
+  throwing regeneration FREEZES the sitemap at last-known-good with a loud log
+  error - never serves a wrong partition, never 500s Googlebot. 8 unit tests too.
+- Hourly fixed ISR (revalidate=3600) on all four routes - NOT event-driven
+  revalidatePath (which would re-create per-caller drift across feed_items' 7 write
+  sites; same lesson as the sectionHasContent unification).
+- Hand-rolled (not generateSitemaps): Next 16.1.6 has NO native sitemapindex
+  emission (verified in installed source) and generateSitemaps would be the
+  forbidden hybrid + break /sitemap.xml. Route Handlers empirically confirmed to
+  own /sitemap.xml (curl 200 application/xml) - no next.config rewrite, no GSC
+  resubmission.
+- Real content-derived lastmod preserved (omit-when-null, never new Date()).
+- Documented transient cross-file snapshot skew as harmless-by-design (each file
+  internally consistent, self-heals within one interval); monitoring must reconcile
+  against the LIVE set, never across fetched files; a shared cache would trade this
+  non-problem for a real one - do NOT build one.
+
+FIXES A LIVE DEFECT: the old static sitemap only refreshed on redeploy, drifting
+from live noindex prunes (was listing 752, live-eligible 747 = 5 stale pruned URLs
+advertised). Worsened as Marathon maintenance drops deploy cadence. Hourly ISR +
+live-eligible-set now reflects live state; the 5 stale URLs are gone.
+
+NEXT (GSC): submit the /sitemap.xml index in Search Console once so the per-child
+history starts accumulating - the DMZ child's indexed-ratio is the pre-launch bet
+instrument, valuable to start recording now while there's calendar to act on it.
+
+=== DEFERRED FOLLOW-UP: feed_items.updated_at for honest recrawl signals (Gap 3) ===
+The sitemap's intel/DMZ-article lastmod uses created_at because feed_items has NO
+updated_at column (discovered this session - the updated_at query errored and
+emptied the intel set; reverted to created_at, no regression, did NOT fake it).
+Worth building - NOT because intel is static (it is NOT going forward) but because
+maintenance mode IS an editing program (fix/reinforce lines, the L1 near-miss
+"improve this page" output, the 65->60 title batch), and every such edit exists to
+make Google re-evaluate the page = exactly what a lastmod bump signals. Recrawl
+signal is load-bearing for an editing program.
+DESIGN CONSTRAINTS (Fable):
+- A BEFORE UPDATE TRIGGER, never per-caller code (feed_items has 7 write sites;
+  per-caller stamping drifts like sitemap-inclusion and noindexed_at did - one
+  chokepoint).
+- Fires ONLY when CONTENT columns change (headline, body - enumerated), NOT on
+  operational flips (noindex, flags) - operational changes must not masquerade as
+  content freshness.
+- Backfill updated_at = created_at ("no known edit since creation" is true, not
+  faked).
+With the trigger in place, the sitemap's Gap 3 becomes the originally-scoped
+one-liner (intel/article lastmod -> updated_at).
+
 ## 2026-07-31 (cont.) - 566 inspection_broken flags cleared; first GENUINE escalation flag surfaced (A10 working both directions)
 
 CLEANUP DONE: the 566 spiral-artifact inspection_broken flags are cleared.
