@@ -45,6 +45,74 @@ remain.
 
 ---
 
+## 2026-08-01 (cont.) - verified_source provenance capture SHIPPED (select-resolve-audit); daily origin-loss stopped
+
+Found a systemic moat gap: feed_items recorded the TRIGGER as source (source:
+media.source at route.js:529), so patch articles whose facts came from Bungie's
+notes were stamped source=YOUTUBE (159 live instances, cross-lane REDDIT/GUIDE/
+INTEL too). The 1.1.5 sibling got source=BUNGIE only by accident (Bungie note was
+the trigger that time). Trust-chain pointed at the weaker link.
+
+FIX (Fable-designed select-resolve-audit, shipped bc460ac): the principle - origin
+is recordable only as it happens; retroactively it's unknowable; correctness is
+verifiable forever, provenance is never written backwards. The LLM cannot honestly
+ORIGINATE provenance (free self-report confabulates - one of the best-documented
+LLM failure modes; writing that into a hard-provenance column would repeat the very
+sin being fixed) but CAN honestly SELECT from tagged context.
+- Schema: feed_items.verified_source + verified_source_url (both text, nullable,
+  null=honest-unknown - the 159 stay null, origin not written backwards).
+- Block tagging: context blocks carry stable source-typed ids [BN{n}]/[YT{n}] via
+  a SHARED blockId(source,index) (lib/gather/blockId.js) - the lynchpin, called by
+  BOTH the formatters and the write-site resolver so ids can't drift (proven end-
+  to-end: real formatter emits BN1 -> resolver resolves BN1 -> BUNGIE + item URL,
+  aligned).
+- Editor: cited_blocks:[ids] on all 5 tool schemas; selection prompt rule ("cite
+  the blocks whose facts you used; cite nothing rather than guessing; never write
+  a URL").
+- Write-site: resolves verified_source/url MECHANICALLY from cited blocks' rawData
+  metadata (LLM never authors a URL/source); closed-set validation (unknown ids
+  rejected, mirroring the meta_update handler); empty/all-rejected -> null-flagged;
+  BUNGIE outranks YOUTUBE. source (trigger) unchanged.
+Every trust-chain field authored by the party that knew it: pipeline tags what was
+present, editor selects what it used, write-site resolves mechanically.
+
+OPERATOR PREREQUISITE (DDL, no git trail per rule 2): the two columns must exist
+before the capture can write them (PostgREST rejects an insert with unknown
+columns). ALTER TABLE feed_items ADD COLUMN verified_source text; ALTER TABLE
+feed_items ADD COLUMN verified_source_url text; -- run before/with the deploy.
+
+SCOPE THIS PASS: NEXUS/DEXTER/GHOST tagged (where the video/patch mismatch lives -
+1.1.5.1 is NEXUS, now resolves BUNGIE when the editor cites BN1). CIPHER/MIRANDA
+use separate formatters (gatherCipher, buildMirandaPrompt) not yet tagged ->
+resolve honest-null (not a regression - null is truthful). game-DB blocks not
+tagged (their provenance is the entity rows' own verified_source).
+
+WHY SHIP NOW (cost-of-delay asymmetry, Fable): going-forward capture loses origin
+DAILY for every un-captured generation; the backfill/corroboration has NO cost of
+delay (persistent store, forever-repeatable). So capture shipped now (live before
+Season 3's Sep 22 patch burst by months); the rest banked.
+
+BANKED FOLLOW-ONS (no cost of delay, sequence after the demand map):
+- Tag CIPHER + MIRANDA formatters (gatherCipher, buildMirandaPrompt) -> they
+  capture instead of resolving null.
+- Corroboration batch: body-scan an article's extractable claims against its cited
+  blocks (and the closed entity-vocab, L1's matcher); claims not in cited blocks
+  are FINDINGS (the YouTuber-own-testing class), surfaced not papered. Present-
+  tense "corroborated-against-store" is honest where blanket-BUNGIE-backfill would
+  be fabrication. NO retroactive origin stamping on the 159 (unknowable) - they
+  stay honest-null.
+- Display: visible sourcing line (extend the A3/POI pattern, "Facts: Bungie patch
+  notes ->" + URL), RENDER ONLY WHEN PRESENT (null renders nothing - no "source
+  unknown" scarlet letter; silence about the unknown is itself honest).
+- JSON-LD isBasedOn/citation to the primary URL - the GOOD structured data by A1's
+  standard (verifiable relation to a primary source, opposite of the banned
+  FAQPage prose); rides the queued structured-data builder work.
+
+DOCTRINE (Fable's ledger line, A4/A5's missing sibling): "trigger is not source;
+origin is recordable only as it happens; correctness is verifiable forever;
+provenance is never written backwards." Worth an amendment (documents a rule the
+fix already enforces).
+
 ## 2026-08-01 (cont.) - Season-2 cannibalization cleanup EXECUTED (28 pruned/merged + 2 redirects)
 
 The GSC non-indexation diagnosis found the discovered-not-indexed / crawled-not-
