@@ -8,6 +8,8 @@
 // UNWIRED in B1 (nothing imports this yet). Cleaning is NOT here -- it is
 // per-source and lives in the adapters (Steam JSON = BBCode, RSS = HTML).
 
+import { blockId, BLOCK_CAP } from '../blockId.js';
+
 // Merge per-source articles (prefer the fuller version on title collision),
 // sort newest-first, then tag is_patch_note from per-game detection rules.
 // `now` is injectable (default Date.now()) so the freshness gate is
@@ -81,8 +83,11 @@ export function mergeAndDetect(articles, rules, now = Date.now()) {
 // the original header "OFFICIAL BUNGIE NEWS" + footer "END BUNGIE NEWS".
 export function formatForEditor(articles, label) {
   if (!articles || articles.length === 0) return '';
-  const recent = articles.slice(0, 6);
-  const lines = recent.map((a) => {
+  const recent = articles.slice(0, BLOCK_CAP.bungie);
+  const lines = recent.map((a, i) => {
+    // Stable citable id (verified_source capture) -- the SAME [BN{n}] the write-site
+    // resolver reconstructs from rawData.bungieNews via blockId(). See lib/gather/blockId.js.
+    const bid = blockId('bungie', i + 1);
     const lab = a.is_patch_note ? 'PATCH NOTE' : 'DEV NEWS';
     // Completeness signal (Gap 1): tell the editor whether it has the full
     // official notes or only a blurb, so a partial ingest produces an honest
@@ -90,7 +95,7 @@ export function formatForEditor(articles, label) {
     const completeness = a.notes_complete === true
       ? 'COMPLETENESS: FULL official notes ingested below.'
       : 'COMPLETENESS: PARTIAL -- only a short blurb was ingested this cycle, NOT the full notes. Do NOT state specific values, numbers, or change lists as confirmed; report only what this blurb explicitly says and note that the full notes were not available.';
-    return `[${lab}] ${a.title}\n  Date: ${new Date(a.date).toLocaleDateString()}\n  ${completeness}\n  ${a.contents || '(No preview available)'}\n  URL: ${a.url}`;
+    return `[${bid}] [${lab}] ${a.title}\n  Date: ${new Date(a.date).toLocaleDateString()}\n  ${completeness}\n  ${a.contents || '(No preview available)'}\n  URL: ${a.url}`;
   }).join('\n\n');
   return `\n\n--- OFFICIAL ${label} (most recent first) ---\n${lines}\n--- END ${label} ---`;
 }

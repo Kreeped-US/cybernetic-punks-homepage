@@ -5,6 +5,7 @@ import { recordCronRun } from '@/lib/cronRunLog';
 import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
+import { buildBlockRegistry, resolveCitedBlocks } from '@/lib/gather/blockId';
 import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
@@ -594,6 +595,28 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
         }
         // else: leave whatever the per-editor branch set (e.g. REDDIT for GHOST)
       }
+    }
+
+    // ── VERIFIED-SOURCE CAPTURE (select-resolve-audit) ─────────────────────────
+    // `source`/`source_url` above are the TRIGGER (unchanged). verified_source records
+    // where the FACTS came from: the editor SELECTED context-block ids (result.cited_blocks)
+    // from a closed set; here we reconstruct the id -> {source, url} registry from rawData
+    // via the SHARED blockId helper (so ids line up with what the formatters emitted) and
+    // resolve MECHANICALLY -- the label and URL come from pipeline metadata, NEVER from LLM
+    // output. Unknown ids are rejected + logged (mirrors the meta_update handler below);
+    // empty or all-rejected -> null, FLAGGED as honest-unknown. Fail-open: any error -> null.
+    try {
+      var vsRegistry = buildBlockRegistry(rawData);
+      var vs = resolveCitedBlocks(result.cited_blocks, vsRegistry);
+      insertData.verified_source = vs.verified_source;         // null when nothing resolvable
+      insertData.verified_source_url = vs.verified_source_url; // null; never invented
+      if (vs.rejected.length) console.log('[CRON] ' + editorName + ' cited_blocks: REJECTED unknown id(s) ' + JSON.stringify(vs.rejected));
+      if (vs.verified_source) console.log('[CRON][provenance] ' + editorName + ' verified_source=' + vs.verified_source + (vs.verified_source_url ? ' url=set' : ' url=null') + ' cited=' + vs.resolved.map(function(r){ return r.id; }).join(','));
+      else console.log('[CRON][provenance] ' + editorName + ' verified_source=NULL (no fact-source cited/resolved) -- honest-unknown FLAG');
+    } catch (e) {
+      console.error('[CRON] verified_source capture threw (continuing, null): ' + (e && e.message));
+      insertData.verified_source = null;
+      insertData.verified_source_url = null;
     }
 
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {

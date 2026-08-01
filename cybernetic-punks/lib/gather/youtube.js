@@ -2,6 +2,10 @@
 // Fetches latest Marathon-related videos from YouTube Data API v3
 // Includes auto-generated transcript fetching for CIPHER analysis
 //
+// BLOCK IDS (verified_source capture): each video summary is prefixed with a stable
+// citable [YT{n}] id from lib/gather/blockId.js -- the SAME helper + cap the write-site
+// resolver uses, so a cited id resolves back to this exact item. See blockId.js.
+//
 // Updated April 27, 2026: JSON output specs removed from formatForEditor.
 // Tool-use structured output (deployed in editorCore.js) enforces format
 // via per-editor tool schemas. Embedded JSON specs were drifting from the
@@ -12,6 +16,7 @@
 import { fetchTranscripts } from './transcript.js';
 import { getGameConfig } from '../games/index.js';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from '../promptSafety';
+import { blockId, BLOCK_CAP } from './blockId.js';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
@@ -232,8 +237,8 @@ export function formatForEditor(videos, editor) {
   // The assembled videoSummaries are wrapped in <untrusted_source> tags + a
   // treat-as-data clause below, so a crafted title/description can't break out or
   // issue instructions. Tool-forced output (per-editor schema) stays the limiter.
-  const videoSummaries = videos.slice(0, 5).map(function(v, i) {
-    let summary = `${i + 1}. "${sanitizeUgc(v.title, 200)}" by ${sanitizeUgc(v.channel, 60)}
+  const videoSummaries = videos.slice(0, BLOCK_CAP.youtube).map(function(v, i) {
+    let summary = `[${blockId('youtube', i + 1)}] "${sanitizeUgc(v.title, 200)}" by ${sanitizeUgc(v.channel, 60)}
    Views: ${safeNum(v.view_count).toLocaleString()} | Likes: ${safeNum(v.like_count).toLocaleString()} | Comments: ${safeNum(v.comment_count).toLocaleString()}
    Duration: ${sanitizeUgc(v.duration, 12)}
    Description: ${sanitizeUgc(v.description, 800)}

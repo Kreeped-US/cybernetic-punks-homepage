@@ -64,6 +64,7 @@ DATA INTEGRITY RULES - CRITICAL:
 - If you are not certain of a stat, unlock requirement, or Cradle breakpoint, OMIT it from the article rather than guess.
 - "+5% weapon handling" or "approximately 1500 credits" are HALLUCINATIONS unless those exact values appear in the database below.
 - It is better to write a shorter article with verified facts than a longer article with invented details.
+- SOURCE CITATION: in cited_blocks, list the bracketed ids (e.g. BN1, YT2) of the context blocks whose FACTS you actually used. Select only ids that appear in your context; cite nothing rather than guessing. Never write a URL - the id alone; the system resolves the source and link.
 
 COMMUNITY & SENTIMENT - CRITICAL:
 - You may ONLY quote, paraphrase, or attribute a statement to a community member, Reddit user, Steam reviewer, or streamer when that exact text is provided to you in the source material in this prompt.
@@ -182,6 +183,17 @@ const SHARED_TAG_SCHEMA = {
   maxItems: 8,
 };
 
+// SOURCE CITATION (verified_source capture): the editor SELECTS the ids of the context
+// blocks whose FACTS it used, from the closed set of [BN{n}]/[YT{n}] ids shown in its
+// prompt. The write-site validates every id against a registry (unknown -> rejected)
+// and resolves the label + URL from PIPELINE metadata -- the model never writes a URL
+// or names an absent source. Not required: cite nothing rather than guess -> null.
+const CITED_BLOCKS_SCHEMA = {
+  type: 'array',
+  description: 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context (e.g. "BN1", "YT2"). Cite ONLY ids that appear in your context; cite nothing rather than guessing. Never write a URL here -- the id alone.',
+  items: { type: 'string' },
+};
+
 const CIPHER_TOOL = {
   name: 'publish_play_analysis',
   description: 'Publish a ranked intelligence article with a Runner Grade.',
@@ -193,6 +205,7 @@ const CIPHER_TOOL = {
       runner_grade: { type: 'string', enum: ['D', 'C', 'B', 'A', 'S', 'S+'] },
       ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 5.0 (average), 7.5 (solid pick), 8.5 (top of meta), 9.2 (S-tier). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the strength of the build, strategy, or meta read centered in this article.' },
       tags: SHARED_TAG_SCHEMA,
+      cited_blocks: CITED_BLOCKS_SCHEMA,
       source_video_id: { type: ['string', 'null'], description: 'Always null. CIPHER no longer references external videos.' },
       source_type: { type: ['string', 'null'], enum: ['youtube', 'twitch', null], description: 'Always null. CIPHER is internal synthesis.' },
       promo_tweet: { type: 'string', description: 'Under 220 chars - promotional tweet for this article.' },
@@ -229,6 +242,7 @@ const NEXUS_TOOL = {
       body: { type: 'string', description: '400-600 word meta analysis with **HEADER TEXT** section breaks.' },
       grid_pulse: { type: 'number' },
       tags: SHARED_TAG_SCHEMA,
+      cited_blocks: CITED_BLOCKS_SCHEMA,
       promo_tweet: { type: 'string' },
     },
     required: ['meta_update', 'headline', 'body', 'grid_pulse', 'tags'],
@@ -249,6 +263,7 @@ const DEXTER_TOOL = {
       ranked_viable: { type: 'boolean' },
       holotag_target: { type: ['string', 'null'] },
       tags: SHARED_TAG_SCHEMA,
+      cited_blocks: CITED_BLOCKS_SCHEMA,
       promo_tweet: { type: 'string' },
     },
     required: ['headline', 'body', 'loadout_grade', 'ce_score', 'tags'],
@@ -266,6 +281,7 @@ const GHOST_TOOL = {
       mood_score: { type: 'number', description: '0-10. 0=outrage, 5=neutral, 10=hype.' },
       sentiment: { type: 'string', enum: ['hype', 'positive', 'mixed', 'concerned', 'angry'] },
       tags: SHARED_TAG_SCHEMA,
+      cited_blocks: CITED_BLOCKS_SCHEMA,
       promo_tweet: { type: 'string' },
     },
     required: ['headline', 'body', 'mood_score', 'sentiment', 'tags'],
@@ -296,6 +312,7 @@ const MIRANDA_TOOL = {
       difficulty_rating: { type: 'string', enum: ['Beginner', 'Intermediate', 'Advanced'] },
       ranked_relevant: { type: 'boolean' },
       tags: SHARED_TAG_SCHEMA,
+      cited_blocks: CITED_BLOCKS_SCHEMA,
       ce_score: { type: 'number', description: 'Number from 0 to 10 (decimals allowed, e.g. 7.5). Rates the guide\'s utility for its target audience. 0 = unhelpful. 5 = average. 8+ = essential reference. NEVER use the 0-100 scale.' },
       promo_tweet: { type: 'string' },
     },
