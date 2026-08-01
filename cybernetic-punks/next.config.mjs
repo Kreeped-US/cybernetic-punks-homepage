@@ -52,6 +52,22 @@ const nextConfig = {
         destination: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals',
         permanent: true,
       },
+      // Season-2 faction-guide consolidation (2026-08-01): two near-duplicate
+      // "which faction to level first" articles were merged into the canonical
+      // faction guide (feed_items.noindex stamped on both, part of the 28-slug
+      // prune/merge). These 308s transfer their indexed authority to the survivor;
+      // fixed-path, slugs differ (not a section move). Survivor slug keeps its
+      // double hyphen (...strategy-for--aa39) exactly as stored in feed_items.
+      {
+        source: '/intel/new-players-first-faction-choice-which-marathon-faction-to-level-first-halv',
+        destination: '/intel/marathon-faction-system-complete-guide-smart-progression-strategy-for--aa39',
+        permanent: true,
+      },
+      {
+        source: '/intel/complete-beginners-faction-guide-which-faction-to-level-first-5kpk',
+        destination: '/intel/marathon-faction-system-complete-guide-smart-progression-strategy-for--aa39',
+        permanent: true,
+      },
     ];
   },
 };
