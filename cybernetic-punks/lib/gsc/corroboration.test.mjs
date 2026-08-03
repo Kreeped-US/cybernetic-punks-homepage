@@ -128,4 +128,38 @@ test('a bare entity mention with no checkable claim yields nothing', () => {
   assert.strictEqual(r.findings.length, 0, 'no schema triple -> no finding');
 });
 
+// ── locked_mods: store PROSE vs article BARE LIST corroborates (the BR33 false-positive fix) ──────
+test('locked_mods store prose wrapper matches an article bare list (BR33 case)', () => {
+  const uq = { type: 'unique', name: 'BR33 Victory Lap', aliases: ['Victory Lap'], verified: true, patch_verified: '1.1.0',
+    fields: { locked_mods: 'Locked loadout (4): Trigger Discipline chip, Hi-Zoom Optic, Tru-Shot Barrel, Feather Mag. Mods permanently locked.' } };
+  const art = { slug: 'br33', editor: 'MIRANDA', created_at: '2026-04-19',
+    body: 'The BR33 Victory Lap comes pre-equipped with four high-tier modifications: Trigger Discipline chip, Hi-Zoom Optic, Tru-Shot Barrel, and Feather Mag.' };
+  const r = classifyCorroboration([art], { entities: [uq] }, { runDate: '2026-08-03' });
+  assert.strictEqual(r.findings.filter((f) => f.field === 'locked_mods').length, 0, 'no CONTRADICTED finding (was the false positive)');
+  const stamp = r.corroborations.find((c) => c.field === 'locked_mods' && c.entity === 'BR33 Victory Lap');
+  assert.ok(stamp, 'emits a corroborated-against-store stamp instead');
+});
+
+// ── locked_mods: store TIER-ANNOTATED vs article without tiers corroborates (misery-disciple case) ─
+test('locked_mods store tier annotations match an article without tiers (misery-disciple case)', () => {
+  const uq = { type: 'unique', name: 'Misery Disciple', aliases: [], verified: true, patch_verified: '1.1.0',
+    fields: { locked_mods: 'Locked loadout (4): Sucker Punch (Superior chip), Compartmental Mag I (Enhanced), Snapshot Grip (Enhanced), Pinpoint Barrel (Deluxe). Mods permanently locked.' } };
+  const art = { slug: 'md', editor: 'MIRANDA', created_at: '2026-05-01',
+    body: 'The Misery Disciple comes pre-equipped with four mods: Sucker Punch, Compartmental Mag I, Snapshot Grip, and Pinpoint Barrel.' };
+  const r = classifyCorroboration([art], { entities: [uq] }, { runDate: '2026-08-03' });
+  assert.strictEqual(r.findings.filter((f) => f.field === 'locked_mods').length, 0, 'tier annotations stripped -> no false contradiction');
+  assert.ok(r.corroborations.find((c) => c.field === 'locked_mods'), 'corroborated stamp emitted');
+});
+
+// ── locked_mods: an article naming a mod the store LACKS still CONTRADICTS (containment guard) ─────
+test('locked_mods still contradicts when an article names a mod not in the store', () => {
+  const uq = { type: 'unique', name: 'Guard Gun', aliases: [], verified: true, patch_verified: '1.1.0',
+    fields: { locked_mods: 'Locked loadout (4): Alpha Chip, Beta Optic, Gamma Barrel, Delta Mag. Mods permanently locked.' } };
+  const art = { slug: 'g', editor: 'NEXUS', created_at: '2026-05-01',
+    body: 'The Guard Gun comes with mods: Alpha Chip, Beta Optic, and Wrong Mod.' };
+  const r = classifyCorroboration([art], { entities: [uq] }, {});
+  const f = r.findings.find((x) => x.field === 'locked_mods');
+  assert.ok(f && f.class === 'CONTRADICTED', 'a mod not in the store still contradicts (not laundered by containment)');
+});
+
 console.log('\n' + passed + ' passed');

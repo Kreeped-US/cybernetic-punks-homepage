@@ -60,9 +60,26 @@ function acqCategory(text) {
   return null;
 }
 
-function normList(s) {
-  return String(s || '').toLowerCase().split(/,|\band\b/).map((x) => x.replace(/[^a-z0-9 ]/g, '').trim())
-    .filter(Boolean).sort().join(' | ');
+// locked_mods normalization -> a sorted, de-duped, pipe-joined set of BARE mod-name tokens.
+// Reduces the two stored shapes (a prose value "Locked loadout (4): A, B (Enhanced), C. Mods
+// permanently locked." AND an article's bare list "A, B, and C") to the same token set by stripping
+// the "Locked loadout (N):" prefix, the "... permanently locked" suffix, and parenthetical tier
+// annotations ("(Superior chip)", "(Enhanced)"). locked_mods-ONLY -- grep-confirmed nothing else
+// calls this, so acquisition and the numeric fields are untouched. Applied to BOTH sides; a no-op
+// on the article's bare list (idempotent).
+function normModList(s) {
+  return String(s || '')
+    .replace(/locked loadout\s*\([^)]*\)\s*:?/i, '')   // "Locked loadout (4):" prefix
+    .replace(/locked loadout\s*:?/i, '')               // "Locked loadout:" prefix (no count)
+    .replace(/mods?\s+permanently\s+locked/i, '')      // "... Mods permanently locked" suffix
+    .replace(/\([^)]*\)/g, ' ')                        // parenthetical tier annotations
+    .toLowerCase()
+    .split(/,|\band\b/)
+    .map((x) => x.replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .filter((x, i, a) => a.indexOf(x) === i)           // de-dupe
+    .sort()
+    .join(' | ');
 }
 
 // ── field extractors (the claim grammar, one per checkable store field) ───────────────────────────
@@ -101,10 +118,17 @@ const EXTRACTORS = [
       if (!m) return null;
       const items = m[1].split(/,|\band\b/).map((x) => x.trim()).filter(Boolean);
       if (items.length < 2) return null;              // a real list, not a single passing mention
-      return { value: normList(m[1]), display: m[1].trim() };
+      return { value: normModList(m[1]), display: m[1].trim() };
     },
-    storeValue(f) { const v = f.locked_mods; return { value: v == null || v === '' ? null : normList(v), display: v || null }; },
-    compare(a, b) { if (a == null || b == null) return 'uncomparable'; return a === b ? 'match' : 'contradict'; },
+    storeValue(f) { const v = f.locked_mods; const t = v == null || v === '' ? '' : normModList(v); return { value: t || null, display: v || null }; },
+    // CONTAINMENT, not exact-equality: the article's cited mods must all be present in the store's
+    // set (article-subset-of-store). An article naming a subset of the locked mods still corroborates;
+    // an article naming a mod the store lacks contradicts.
+    compare(a, b) {
+      if (a == null || b == null || a === '' || b === '') return 'uncomparable';
+      const store = new Set(String(b).split(' | '));
+      return String(a).split(' | ').every((x) => store.has(x)) ? 'match' : 'contradict';
+    },
   },
   // Numeric weapon facts (weapon_stats). High-precision patterns; the entity must be named in the sentence.
   numericField('damage', ['weapon'], /(\d+)\s+damage\b/i, 'damage'),
