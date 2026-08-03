@@ -68,6 +68,34 @@ const nextConfig = {
         destination: '/intel/marathon-faction-system-complete-guide-smart-progression-strategy-for--aa39',
         permanent: true,
       },
+      // BR33 Victory Lap cannibalization consolidation (2026-08-03): the detector
+      // flagged "br 33 victory lap" (flip 0.36) -- the /uniques/br33-victory-lap
+      // entity page splitting rank with 4 near-dup /intel articles. All 4 are now
+      // noindexed (3 prior, 1 this session); these 308s transfer their authority to
+      // the canonical entity survivor (entity > news per the doctrine sort). Cross-
+      // namespace (/intel -> /uniques), fixed-path. No content merged: the MIRANDA
+      // guide's unlock claims contradict the entity page's verified Showcase-drop
+      // acquisition, so it is redirected, not merged.
+      {
+        source: '/intel/br33-victory-lap-the-new-mid-season-precision-meta-contender-jpc2',
+        destination: '/uniques/br33-victory-lap',
+        permanent: true,
+      },
+      {
+        source: '/intel/br33-victory-lap-unique-mid-season-precision-rifle-meta-revolution-adsn',
+        destination: '/uniques/br33-victory-lap',
+        permanent: true,
+      },
+      {
+        source: '/intel/br33-victory-lap-unique-shows-mid-season-meta-shift-to-mobility-rifles-3an0',
+        destination: '/uniques/br33-victory-lap',
+        permanent: true,
+      },
+      {
+        source: '/intel/br33-victory-lap-unique-weapon-guide-complete-unlock-and-build-analysi-spks',
+        destination: '/uniques/br33-victory-lap',
+        permanent: true,
+      },
     ];
   },
 };
