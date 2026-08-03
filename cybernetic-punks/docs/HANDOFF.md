@@ -45,6 +45,35 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - In-game verification: shell base_health, Impact HAR, BR33 mods (store filled first-party)
+
+Acted on the corroboration batch's UNCORROBORATED queue via in-game verification
+(operator, first-party). Notable finding: the articles were almost entirely WRONG.
+- ALL 8 shells base_health = 120 (uniform, verified in-game, incl. Sentinel/Rook/
+  Triage which had no findings because no article discussed their health). The
+  articles claimed FIVE DIFFERENT wrong values (Assassin 100, Vandal 150, Recon 125,
+  Destroyer 175, Thief 90/110) - none said 120. The store being null was correct;
+  the truth was never in the articles. Filled all 8 (not just the 5 with findings)
+  since the value is uniform. Stamped patch_verified=S2, verified_source appended
+  with owner-verified-in-game note.
+- Impact HAR damage: store 24 (stale) AND article claim 41 both WRONG; actual
+  in-game = 18. Corrected store to 18, verified_source replaced with in-game inspect
+  stamp (superseded the 1.1.0 patch-notes value).
+- BR33 Victory Lap locked_mods: articles CORRECT (Trigger Discipline chip, Hi-Zoom
+  Optic, Tru-Shot Barrel, Feather Mag). Filled in the misery-disciple prose format.
+
+CONSEQUENCE for next corroboration run: the shell-health findings flip UNCORROBORATED
+-> CONTRADICTED (store 120 vs articles' wrong values) - the wrong articles become
+actionable. Impact HAR's 41-claim article flips to CONTRADICTED vs store 18. BR33
+locked_mods flips to corroborated. The loop: batch flags gap -> in-game verify (found
+articles mostly wrong) -> store filled first-party -> next run surfaces the wrong
+articles for disposition.
+
+RULE HELD: store filled ONLY from first-party in-game verification, NEVER from
+articles - which is exactly why the wrong article values didn't propagate.
+
+---
+
 ## 2026-08-03 (cont.) - Cannibalization detector /modes /mods /factions canonical-tier fix (f587a4b)
 
 Closed the banked detector refinement Cluster 1 exposed. ENTITY_SEGMENTS (the
