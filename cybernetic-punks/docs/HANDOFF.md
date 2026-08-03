@@ -45,10 +45,52 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - The 2 detector-flagged clusters consolidated (light; 3 adjudication catches)
+
+Acted on the 2 clusters the RANK-SPLITTING detector flagged. Detector survivors are
+ADVISORY - human adjudication found the real dispositions and caught 3 things the
+raw detector output got wrong:
+
+CLUSTER 2 "br 33 victory lap" (REAL, consolidated 87542f6): survivor /uniques/br33-
+victory-lap (entity>news, detector correct). The 1 still-live cannibalizer (CIPHER
+br33-...-mobility-rifles-3an0) noindex-stamped this session (noindexed_at
+2026-08-03 15:12); all 4 /intel dupes now 308-redirect to the entity page (87542f6).
+NO content merged: the MIRANDA guide (...build-analysis-spks) had the build depth
+the entity page lacks BUT its unlock claim (Armory ~5000cr, self-flagged unconfirmed,
+verified_source null) CONTRADICTS the entity page's verified acquisition (Showcase-
+drop at Perimeter/Dire Marsh, verified_source "In-game Showcase data"). Merging would
+corrupt verified first-party data with contradicting creator speculation. Redirected,
+not merged.
+
+CLUSTER 1 "marathon vault breaker" (mostly FALSE cluster, NO action): only 2 of 5
+URLs genuinely about VB. The 2 cryo-archive articles are a DIFFERENT ENTITY (Cryo
+Archive map) co-ranking on "before vault breaker lands" title framing (imp 3-4) -
+excluded, left live. SURVIVOR CORRECTED: the detector advised the /intel mid-season-
+shift article, but /modes/vault-breaker (canonical mode page) is the correct
+survivor - the detector missed /modes as canonical-tier (fell through to type
+'other'). Mode page already out-ranks (imp 97 vs 41) + is canonical, so NO action
+needed (the "keep + internal link" idea was dropped: feed-item bodies have no link
+mechanism for /modes, and the mode page already dominates). loot-nerf already
+noindexed (Season-2).
+
+3 ADJUDICATION CATCHES (detector-proposes-human-adjudicates working): survivor
+mis-rank (mode page not the advised article), different-entity false-inclusion (Cryo
+Archive), data-corrupting merge (MIRANDA's contradicting unlock claim). The detector
+correctly FOUND real rank-splits; adjudication kept dispositions honest.
+
+BANKED: add /modes (likely /factions, /guides) to ENTITY_SEGMENTS in lib/gsc/
+cannibalization.js so the survivor sort ranks canonical mode/faction pages above
+news - Cluster 1 exposed the gap. (locked_mods data task for br33-victory-lap
+already banked elsewhere with its circularity guard.)
+
+---
+
 ## 2026-08-03 - Cannibalization detector SHIPPED (RANK-SPLITTING); DUPLICATE-SUPPRESSED is a one-time tuple-audit
 
-Built the standing cannibalization detector (RANK-SPLITTING class) 23945ab. Fable-
-designed, Step-0 data-verified. Over gsc_query_metrics: queries with >=2 competing
+Built the standing cannibalization detector (RANK-SPLITTING class) 6ba1f05. Fable-
+designed, Step-0 data-verified. (Shipped 23945ab; 2 stray NUL bytes in the group-key
+separator stripped in 6ba1f05 (git flagged binary; tests passed because a NUL is a
+valid separator - the file-binary flag was the only tell).) Over gsc_query_metrics: queries with >=2 competing
 indexed URLs (both-having-rows proves both indexed - self-carrying indexation
 evidence, no inspection join, covers entity pages the inspection loop can't),
 weighted by shared impressions, qualified by FLIP-RATE (alternation frequency, not
@@ -66,6 +108,8 @@ predicted Friday):
   BR33 /intel articles. Survivor: the entity page (canonical > news).
 These are the next manual consolidation targets (same shape as the Season-2 cleanup:
 prune the near-dup /intel, redirect to survivor).
+[superseded - see consolidation entry: survivor corrected to /modes/vault-breaker;
+both clusters resolved]
 
 CAVEAT: n=4 scoreable clusters, Marathon-only (DMZ has 1 overlap pre-launch). The
 threshold + detector revisit as DMZ traffic grows post-launch (game-blind by
@@ -202,6 +246,9 @@ survivor. The survivor is already comprehensive (has shell-type priorities + adv
 progression) and the merge-aways had ~0 impressions, so likely skippable.
 
 ## 2026-08-01 - BANKED: Cannibalization detector (L3-class review lane) - build with L1 UI, after the demand map
+
+[UPDATE 2026-08-03: shipped headless (6ba1f05), not gated behind the demand map; the
+L1-UI shared-surface integration remains a future option, not how it shipped]
 
 BANKED, scoped, Fable-designed. A computed view over gsc_query_metrics (no DDL, no
 new subsystem, no aging property - hence banked, not urgent). Fills a PERMANENT
