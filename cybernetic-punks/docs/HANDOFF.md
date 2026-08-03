@@ -47,7 +47,7 @@ remain.
 
 ## 2026-08-03 (cont.) - Game-DB corroboration batch SHIPPED (read-only, headless)
 
-Built the corroboration batch (this commit): the game-DB-entity form of the Friday-banked
+Built the corroboration batch f1e54a6: the game-DB-entity form of the Friday-banked
 corroboration follow-on (the one that acts on the FROZEN corpus now, vs the cited-
 blocks form which needs resumed generation + cited_blocks persistence). Scans the
 1563-article body corpus for checkable claims and compares each to the verified
