@@ -45,6 +45,50 @@ remain.
 
 ---
 
+## 2026-08-03 - Cannibalization detector SHIPPED (RANK-SPLITTING); DUPLICATE-SUPPRESSED is a one-time tuple-audit
+
+Built the standing cannibalization detector (RANK-SPLITTING class) 23945ab. Fable-
+designed, Step-0 data-verified. Over gsc_query_metrics: queries with >=2 competing
+indexed URLs (both-having-rows proves both indexed - self-carrying indexation
+evidence, no inspection join, covers entity pages the inspection loop can't),
+weighted by shared impressions, qualified by FLIP-RATE (alternation frequency, not
+boolean winner-changed). Threshold 0.25 from the real empty band (healthy 0.05-0.06,
+gap, real 0.36-0.40). Hub-child pairs (URL path-containment, structural) presumed
+healthy, rebuttable at flip>=0.60. FRANCHISE_MARKERS excludes cross-game collisions
+first (reused from near-miss). Advisory survivor (entity>news>impressions>depth),
+never auto-acts. Read-only, headless, firewall intact. 7/7.
+
+TWO CLUSTERS FLAGGED (actionable audit targets - the Vault Breaker cluster Step 0
+predicted Friday):
+- "marathon vault breaker" (flip 0.40): /modes/vault-breaker + 4 near-dup VB/mid-
+  season /intel articles. Survivor: the mid-season-shift article.
+- "br 33 victory lap" (flip 0.36): /uniques/br33-victory-lap (entity) + 4 near-dup
+  BR33 /intel articles. Survivor: the entity page (canonical > news).
+These are the next manual consolidation targets (same shape as the Season-2 cleanup:
+prune the near-dup /intel, redirect to survivor).
+
+CAVEAT: n=4 scoreable clusters, Marathon-only (DMZ has 1 overlap pre-launch). The
+threshold + detector revisit as DMZ traffic grows post-launch (game-blind by
+construction, DMZ inherits automatically).
+
+BANKED (Fable-designed, NOT a detector - a one-time audit): DUPLICATE-SUPPRESSED.
+Suppressed copies have no query rows (never ranked), so query-overlap can't see
+them - but deriveTuple (the system's exact topic identity, the SAME instrument the
+dedup guard uses to prevent new duplicates) groups them: cluster the crawled-not-
+indexed intel set by tuple, pre-suggest same-tuple-indexed survivor, human
+adjudicates with the prune playbook. NOT a standing detector because the class is
+EXTINCTION-BOUND: the dedup guard makes new same-tuple duplicates impossible at
+generation, Marathon is frozen, DMZ runs the guard from day one - so it's a one-
+time legacy backlog audit that never needs to run again. "An afternoon with the
+prune playbook."
+
+ARCHITECTURE (Fable's frame): prevention at generation (dedup guard), detection in
+measurement (RANK-SPLITTING view), and the same exact-match identity (tuple) doing
+both jobs - grouping the legacy suppressed backlog for one-time cleanup, then
+guaranteeing its own extinction.
+
+---
+
 ## 2026-08-01 (cont.) - verified_source provenance capture SHIPPED (select-resolve-audit); daily origin-loss stopped
 
 Found a systemic moat gap: feed_items recorded the TRIGGER as source (source:
