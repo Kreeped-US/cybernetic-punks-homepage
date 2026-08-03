@@ -156,14 +156,15 @@ export async function computeEligible() {
 
   // ── INTEL articles (the maintenance health meter; type='intel') + guide cats ─
   // Rule (unchanged): published, indexable (noindex=false), marathon. Paginated.
-  // lastmod = created_at: feed_items has NO updated_at column (verified against the
-  // live schema), so Gap 3 (edits-signal-recrawl) is NOT achievable here without a
-  // DDL to add + maintain feed_items.updated_at -- flagged as a follow-up, NOT faked.
+  // lastmod = updated_at (Gap 3, now live): feed_items.updated_at is maintained by a
+  // BEFORE-UPDATE content-column trigger (headline/body/thumbnail/tags), so an EDITED
+  // article now signals recrawl. created_at is the fallback (updated_at is backfilled +
+  // column-defaulted, so it should never be null).
   try {
     let rows = [], from = 0;
     for (;;) {
       const { data: batch, error } = await supabase.from('feed_items')
-        .select('slug, created_at, tags')
+        .select('slug, created_at, updated_at, tags')
         .eq('is_published', true).eq('game_slug', M).eq('noindex', false)
         .order('created_at', { ascending: false }).range(from, from + 999);
       if (error) { console.error('[sitemap] feed_items batch error:', error.message); break; }
@@ -171,7 +172,7 @@ export async function computeEligible() {
       if (!batch || batch.length < 1000) break;
       from += 1000;
     }
-    rows.forEach((r) => add(BASE + '/intel/' + r.slug, M, 'intel', lm(r.created_at), 'monthly', 0.6));
+    rows.forEach((r) => add(BASE + '/intel/' + r.slug, M, 'intel', lm(r.updated_at || r.created_at), 'monthly', 0.6));
     // guide categories with >=1 tagged article (type='guide'; lastmod OMITTED --
     // a category page's content changes when articles are (re)tagged, no honest date).
     const withContent = new Set();
@@ -188,14 +189,14 @@ export async function computeEligible() {
 
   // ── DMZ (game='dmz'), gated on dmz.indexable, all content-gated ────────────
   if (dmz.indexable) {
-    // DMZ articles (type='dmz-article'; lastmod = created_at -- feed_items has no
-    // updated_at column, same Gap-3 limitation as the intel articles above).
+    // DMZ articles (type='dmz-article'; lastmod = updated_at, created_at fallback --
+    // same Gap-3 recrawl signal as the intel articles above, now that the column is live).
     try {
       const { data: dmzRows } = await supabase.from('feed_items')
-        .select('slug, created_at, tags').eq('game_slug', D).eq('is_published', true)
+        .select('slug, created_at, updated_at, tags').eq('game_slug', D).eq('is_published', true)
         .order('created_at', { ascending: false });
       (dmzRows || []).map((r) => ({ r, section: dmzSectionForArticle(r) })).filter((x) => x.section)
-        .forEach((x) => add(BASE + '/dmz/' + x.section + '/' + x.r.slug, D, 'dmz-article', lm(x.r.created_at), 'monthly', 0.6));
+        .forEach((x) => add(BASE + '/dmz/' + x.section + '/' + x.r.slug, D, 'dmz-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
     } catch (err) { console.error('[sitemap] dmz feed fetch threw:', err); }
 
     // DMZ entity hubs + verified detail pages (type='dmz-entity'), row-count gated.
