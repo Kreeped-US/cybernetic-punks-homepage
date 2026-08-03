@@ -90,7 +90,10 @@ the SERP manually before committing (never treated as easy). A blank
 
 ## Per-canonical detail and route reconciliation
 
-### 1. Launch-info hub -> EXTEND `/dmz` (no new route)
+### 1. Launch-info hub -> EXTEND `/dmz` (SHIPPED 2026-07-29)
+**SHIPPED 2026-07-29:** the extend landed (mw4 dmz front-loaded into title/social
+metadata, a sourced "DMZ vs Warzone" section added, and the A1 Phase-2 FAQPage
+JSON-LD removed in the same arc). The detail below is retained as the build record.
 `/dmz` already IS this canonical (title "DMZ Release Date: October 23, 2026
 (Modern Warfare 4)", MW4 DMZ keywords, a source-backed FAQ, and email capture
 via `DmzNotifyBlock`; `dmz.indexable = true`). A separate launch hub would split
@@ -134,11 +137,13 @@ surfaces touch Hajin and must cross-link into it, never compete:
 - `/dmz/pois` (hub H1 "Hajin Map & Locations") already, by design, does NOT
   chase "hajin map" - `lib/dmz/entities.js` cedes that lane to this article and
   owns per-POI names instead.
-- **Extend:** fold `dmz korea map` (1100/mo, blank KD, uncontested) in as a
-  SECONDARY term. Do NOT rewrite the H1 around "Korea map" - real-world-DMZ
-  (demilitarized-zone / Korea) ambiguity makes it SERPChecker-gated; confirm the
-  SERP is game-intent before leaning on it. `/dmz/regions` and `/dmz/pois`
-  cross-link into this article.
+- **`dmz korea map` fold-in: DEAD (2026-08-01).** The SERP-intent check resolved
+  the term as real-world Korea-geography (demilitarized-zone) intent, NOT COD game
+  intent - so the fold-in was abandoned; leaning on "Korea map" would draw off-topic
+  traffic. The Hajin ARTICLE itself is shipped/live and unaffected; only this one
+  term is dead. (The A2 title over-cap on the article was fixed separately, c65483b.)
+  The other Hajin terms (hajin map / mw4 hajin / hajin exclusion zone) are already
+  served by the live article; `/dmz/regions` and `/dmz/pois` cross-link into it.
 
 ### 4. Gunsmith system hub -> BUILD NEW at `/dmz/loadouts`
 No gunsmith page exists; Gunsmith appears only as a station inside the FOB
