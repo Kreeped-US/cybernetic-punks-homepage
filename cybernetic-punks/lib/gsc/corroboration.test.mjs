@@ -89,6 +89,35 @@ test('calendar-resolved seniority: article predating store patch is fix-article'
   assert.strictEqual(f.suggested_disposition, 'fix-article');
 });
 
+// ── seniority recency: a freshly-verified row (updated_at newer than patch) reads store-fresher ────
+test('seniority MAX: updated_at newer than patch makes a recent article store-fresher', () => {
+  // store verified in-game 2026-08-03 but tagged an old patch; an article from 2026-07-03 must read
+  // store-fresher (the Surprise-3 fix) because updated_at (08-03) is the later evidence.
+  const uq = { type: 'unique', name: 'Fresh Gun', verified: true, patch_verified: '1.1.0',
+    fields: { acquisition_source: 'Armory purchase', updated_at: '2026-08-03T00:00:00+00' } };
+  const art = { slug: 'fresh', editor: 'NEXUS', created_at: '2026-07-03', body: 'The Fresh Gun is found in the Showcase encounter.' };
+  const r = classifyCorroboration([art], { entities: [uq] }, {}); // PATCH_DATES has 1.1.0 -> 2026-06-02
+  const f = r.findings.find((x) => x.field === 'acquisition' && x.class === 'CONTRADICTED');
+  assert.ok(f, 'contradiction present');
+  assert.strictEqual(f.seniority_basis, 'updated_at', 'updated_at (08-03) beats patch (06-02)');
+  assert.strictEqual(f.seniority, 'store-fresher');
+  assert.strictEqual(f.suggested_disposition, 'fix-article');
+});
+
+// ── seniority recency: a stale updated_at older than the patch does NOT mislabel (MAX picks patch) ──
+test('seniority MAX: stale updated_at older than patch still uses the later patch date', () => {
+  // updated_at 2026-06-02 (last physical edit) is older than the 1.1.5 patch (2026-07-21); an article
+  // from 2026-07-10 (post-06-02, pre-07-21) must still read store-fresher via the patch date, not
+  // article-fresher via the stale updated_at (the naive-prefer-updated_at failure mode).
+  const uq = { type: 'unique', name: 'Stale Gun', verified: true, patch_verified: '1.1.5',
+    fields: { acquisition_source: 'Armory purchase', updated_at: '2026-06-02T00:00:00+00' } };
+  const art = { slug: 'stale', editor: 'NEXUS', created_at: '2026-07-10', body: 'The Stale Gun is found in the Showcase encounter.' };
+  const r = classifyCorroboration([art], { entities: [uq] }, {}); // 1.1.5 -> 2026-07-21
+  const f = r.findings.find((x) => x.field === 'acquisition' && x.class === 'CONTRADICTED');
+  assert.strictEqual(f.seniority_basis, 'patch', 'patch (07-21) beats stale updated_at (06-02)');
+  assert.strictEqual(f.seniority, 'store-fresher');
+});
+
 // ── ambiguous binding -> skip, never a finding ───────────────────────────────────────────────────
 test('two applicable entities in one sentence -> skipped, not a finding', () => {
   const a = { type: 'unique', name: 'Gun Alpha', fields: { acquisition_source: 'Armory purchase' }, verified: true, patch_verified: '1.1.0' };

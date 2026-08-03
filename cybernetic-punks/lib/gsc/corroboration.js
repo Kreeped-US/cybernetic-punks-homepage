@@ -149,11 +149,23 @@ function sentencesOf(body) {
     .filter(Boolean);
 }
 
-function resolveSeniority(articleCreatedAt, storePatch, patchDates) {
-  const storeDate = storePatch ? patchDates[storePatch] : undefined;
+// The store value is "current as of" the LATER of two dates: when we last verified/touched the row
+// (updated_at, maintained by the entity-table BEFORE-UPDATE trigger) and the patch it was verified
+// against (patch_verified -> PATCH_DATES). We take the MAX, not "prefer updated_at", because both
+// signals are lossy alone: a stale import-date updated_at can predate the patch (e.g. a 1.1.5-tagged
+// row last physically edited 2026-06-02 would wrongly read older than a July article), and a
+// patch-only view misses a fresh in-game re-verification (the Surprise-3 case: a row verified today
+// but tagged to an old patch wrongly read article-fresher). MAX(updated_at, patch) is right in both.
+function resolveSeniority(articleCreatedAt, storeUpdatedAt, storePatch, patchDates) {
+  const updDate = storeUpdatedAt ? String(storeUpdatedAt).slice(0, 10) : null;
+  const patchDate = storePatch ? (patchDates[storePatch] || null) : null;
+  let storeDate = null, basis = null;
+  if (updDate && patchDate) { const upWins = updDate >= patchDate; storeDate = upWins ? updDate : patchDate; basis = upWins ? 'updated_at' : 'patch'; }
+  else if (updDate) { storeDate = updDate; basis = 'updated_at'; }
+  else if (patchDate) { storeDate = patchDate; basis = 'patch'; }
   const artDate = articleCreatedAt ? String(articleCreatedAt).slice(0, 10) : null;
-  if (!storeDate || !artDate) return { seniority: 'indeterminate', storeDate: storeDate || null };
-  return { seniority: artDate > storeDate ? 'article-fresher' : 'store-fresher', storeDate };
+  if (!storeDate || !artDate) return { seniority: 'indeterminate', storeDate, basis };
+  return { seniority: artDate > storeDate ? 'article-fresher' : 'store-fresher', storeDate, basis };
 }
 
 // articles: [{ slug, editor, created_at, body }]  (already game-filtered by the caller)
@@ -227,13 +239,14 @@ export function classifyCorroboration(articles, store, opts) {
         store_verified: c.entity.verified === true,
         store_verified_source: c.entity.verified_source || null,
         store_patch: c.entity.patch_verified || null,
+        store_updated_at: (c.entity.fields && c.entity.fields.updated_at) ? String(c.entity.fields.updated_at).slice(0, 10) : null,
         _entity: c.entity, affected: [], _seen: new Set(),
       };
       groups.set(key, g);
     }
     // per-article seniority (only meaningful for CONTRADICTED)
     let seniority = null, storeDate = null;
-    if (cls === 'CONTRADICTED') { const r = resolveSeniority(c.art.created_at, g.store_patch, patchDates); seniority = r.seniority; storeDate = r.storeDate; g._storeDate = storeDate; }
+    if (cls === 'CONTRADICTED') { const r = resolveSeniority(c.art.created_at, g.store_updated_at, g.store_patch, patchDates); seniority = r.seniority; storeDate = r.storeDate; g._storeDate = storeDate; g._basis = r.basis; }
     const dedupKey = c.art.slug + ' ' + c.sentence;
     if (!g._seen.has(dedupKey)) {
       g._seen.add(dedupKey);
@@ -263,7 +276,9 @@ export function classifyCorroboration(articles, store, opts) {
       class: g.class, claimed_value: g.claimed_value,
       store_display: g.store_display,
       store_verified: g.store_verified, store_verified_source: g.store_verified_source,
-      store_patch: g.store_patch, store_patch_date: g._storeDate || null,
+      store_patch: g.store_patch, store_patch_date: g.store_patch ? (patchDates[g.store_patch] || null) : null,
+      store_updated_at: g.store_updated_at || null,
+      store_recency_date: g._storeDate || null, seniority_basis: g._basis || null,
       seniority, suggested_disposition: disposition,
       evidence_note,
       affected: g.affected,
