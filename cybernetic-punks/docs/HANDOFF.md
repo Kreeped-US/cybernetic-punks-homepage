@@ -45,6 +45,35 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - S2 date added; corroboration findings fully dispositioned (resolvable set closed)
+
+Added the S2 patch date (2026-06-02, verified via Bungie press room - same day as
+1.1.0) to PATCH_DATES (7bdcde7), reworded the now-stale patch-calendar comment.
+Resolved the 3 previously-indeterminate S2 findings: 1 genuine (Repeater HPR
+fire_rate 82->86, a real 4-RPM patch delta) and 2 extraction-noise (WSTR fire_rate/
+damage - the same large-gap outliers, resolved-but-noise, NOT acted on; the
+classification did not launder the noise flag).
+
+Repeater HPR disposition (4 articles, all citing pre-S2 "82" from a shared source =
+blast radius not corroboration): noindexed 44kx (thin April reaction-news, stale on
+multiple axes); LEFT 53b1 + 9lcw (substantive May guides - the 4-RPM delta + mildly-
+dated framing is too trivial to noindex a substantive on-topic guide, same Tier-3
+principle); 32o9 already noindexed. One noindex, count-checked + verified.
+
+RESOLVABLE CORROBORATION FINDINGS NOW FULLY DISPOSITIONED. Remaining are non-
+resolvable-from-planning: (a) 17 unverified-store findings (Knife, tauceti.gg) = a
+store-data-quality backlog, the STORE is the uncertain side; (b) UNCORROBORATED
+verification tasks (BR33 locked_mods, shell base_health with Destroyer/Thief article-
+vs-article disagreement) = in-game verification queue (operator, fills store ->
+flips to corroborated next run); (c) extraction-noise outliers = dismissed. No S1
+date established, so any S1-tagged findings stay indeterminate until dated.
+
+The corroboration batch is now a STANDING re-runnable audit: re-run anytime, it
+re-derives findings against the current store (a store fix flips dependents next
+run), and clean results emit the dated corroborated-against-store provenance stamp.
+
+---
+
 ## 2026-08-03 (cont.) - Corroboration batch's first findings dispositioned (14 stale articles noindexed; triage kept 13 valuable ones)
 
 Acted on the corroboration batch's first run (44 findings). Added the 1.1.0 patch
