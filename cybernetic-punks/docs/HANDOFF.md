@@ -45,6 +45,57 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - Game-DB corroboration batch SHIPPED (read-only, headless)
+
+Built the corroboration batch (this commit): the game-DB-entity form of the Friday-banked
+corroboration follow-on (the one that acts on the FROZEN corpus now, vs the cited-
+blocks form which needs resumed generation + cited_blocks persistence). Scans the
+1563-article body corpus for checkable claims and compares each to the verified
+entity store (unique_weapons/shell_stats/weapon_stats).
+
+DESIGN (Fable, Step-0 verified): a checkable claim = a TRIPLE (closed-vocab whole-word
+entity x store-schema FIELD x parseable value, one sentence). The store schema IS the
+grammar - extraction can't invent a claim category the store lacks columns for. Two
+independent classes: CONTRADICTED (store V, article W) and UNCORROBORATED (store null,
+article asserts). Store is the SOLE comparator - articles never corroborate articles
+(circularity structural); repetition = blast radius, never credibility. Precision-
+over-recall; every finding carries its verbatim sentence + the store row's verified/
+verified_source/patch state (findings vs UNVERIFIED store rows marked weaker).
+Findings grouped by claim (1 claim, N affected). Human disposes from a closed set;
+batch NEVER writes the store. A CORROBORATED result is the dated provenance stamp
+(this batch is also the honest-backfill instrument from the verified_source design).
+
+CALENDAR-GATED SENIORITY (the Step-0 make-or-break, resolved): the CONTRADICTED
+seniority flip needs a patch calendar, which does NOT exist as data (no patches table;
+store patch_verified is a mixed vocab S1/1.1.0/1.1.5/S2; articles carry only
+created_at). Built as a supplied PATCH_DATES map, seeded with the one known fact
+(1.1.5 -> 2026-07-21, marathon.js:242). Where a store value's patch resolves: article-
+postdates-store -> re-verify-store, else store-fresher -> fix-article. Where it can't
+resolve (~most today): seniority "indeterminate" - surfaces BOTH dates, defaults to
+re-verify-store candidacy, NEVER silently store-senior.
+
+FIRST REAL RUN (1563 articles, read-only): 44 findings (36 CONTRADICTED, 8
+UNCORROBORATED), 1223 corroboration stamps, 124 skipped-ambiguous. Proof points: the
+BR33 locked_mods gap auto-detected (4 articles, store null -> verification-task,
+matches the banked "OPEN -- locked_mods" finding); Twin Tap HBR damage 19 articles say
+22, store 24 verified by 1.1.5 notes, articles predate -> store-fresher -> fix-article
+(the calendar flip computing on real data); BRRT SMG magazine 20 articles = 1 finding
+(blast-radius grouping). 9/9 tests incl. the BR33 two-findings/two-classes fixture.
+
+BANKED FOLLOW-ONS (two recall/coverage levers, no cost of delay):
+- ALIAS CURATION (recall lever): the runner matches CANONICAL entity names only, so
+  it under-reports articles using short forms (it caught a full-name BR33 acquisition
+  contradiction but missed the MIRANDA "Victory Lap" short-form sentence). The core
+  already supports a per-entity aliases[] (the fixture uses it); curating a safe alias
+  set per entity is the recall lever. Precision-first was the deliberate ship default
+  (a missed claim is silence; an invented one erodes trust).
+- PATCH_DATES CALENDAR EXTENSION (seniority-flip lever): only 1.1.5 -> 2026-07-21 is
+  seeded, so ~30 of 36 CONTRADICTED findings are seniority-indeterminate. Establishing
+  dates for S1/1.1.0/S2 (and future patches) lights up the flip incrementally - each
+  added date reclassifies its indeterminate findings into fix-article/re-verify-store.
+
+---
+
 ## 2026-08-03 (cont.) - The 2 detector-flagged clusters consolidated (light; 3 adjudication catches)
 
 Acted on the 2 clusters the RANK-SPLITTING detector flagged. Detector survivors are
