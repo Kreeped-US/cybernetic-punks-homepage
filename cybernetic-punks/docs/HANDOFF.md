@@ -45,6 +45,31 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - Corroboration R1 shipped (locked_mods prose-comparison fix); R2 gated on timestamp decision
+
+R1 (locked_mods false-positive) SHIPPED b46d205. The comparison used exact equality
+on token sets, so the store's prose format never matched an article's bare list -
+BR33 flagged CONTRADICTED despite correct mods. Fixed: normModList strips the
+"Locked loadout (N):" wrapper + "permanently locked" suffix + parenthetical tiers,
+compares as article-subset-of-store containment. Format-tolerant, doesn't launder
+errors (a mod not in the store still contradicts). locked_mods-only, zero blast
+radius. Before/after batch diff: exactly the BR33 false-positive flipped to 4
+corroborated stamps, every other finding byte-identical. 12/12 tests.
+
+R2 (seniority verification-recency) NOT BUILT - gated on a timestamp decision. Step 0
+found NO usable recency signal exists: updated_at is present-but-DEAD on all 3 entity
+tables (didn't move when rows were edited today - no BEFORE-UPDATE trigger, same class
+as feed_items Gap 3); verified_source dates are sparse (18%) and ambiguous (matchup
+date, not field-verification date). The seniority code change is a trivial one-liner,
+but it needs a real maintained timestamp first. DECISION (recommended): Option B - add
+a BEFORE-UPDATE updated_at trigger to shell_stats/weapon_stats/unique_weapons, reusing
+the banked Gap 3 trigger design (this MERGES R2's prerequisite with Gap 3 for the
+entity tables). Then the seniority edit rides on top. Value is frozen-gated (only
+matters during active in-game verification vs fresh articles). Deferred as a
+deliberate schema task, not a blind edit.
+
+---
+
 ## 2026-08-03 (cont.) - Impact HAR correction (18 was a misread, restored to 24) + 2 corroboration batch refinements banked
 
 CORRECTION: the earlier in-game verification set Impact HAR damage to 18, but a
