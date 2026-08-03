@@ -45,6 +45,40 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - updated_at trigger shipped: Gap 3 closed + R2 closed (one design, two banked items)
+
+Shipped the updated_at BEFORE-UPDATE trigger across feed_items + the 3 entity tables
+(shell_stats/weapon_stats/unique_weapons) - one shared set_updated_at() function, 4
+triggers, reviving a dead updated_at column. This closed TWO banked items:
+
+GAP 3 (feed_items recrawl signal, Fable-designed Friday):
+- Added feed_items.updated_at (backfilled 1573/1573 from created_at), content-column
+  trigger (WHEN headline/body/thumbnail/tags change - noindex flips excluded so
+  operational changes don't fake content-freshness; coexists with the existing
+  feed_items_noindexed_at trigger, disjoint columns).
+- JSON-LD dateModified now reads updated_at (1575273) + sitemap article lastmod reads
+  updated_at (5ac4086) - the recrawl signal now reaches Google end-to-end.
+
+R2 (corroboration seniority-recency, the second batch refinement):
+- Entity tables got the any-change trigger (WHEN NEW IS DISTINCT FROM OLD - every
+  edit is a re-verification) + a ONE-TIME SEED of the rows verified this session
+  (8 shells, Impact HAR, BR33 -> updated_at 2026-08-03, their true verification date).
+- resolveSeniority now uses MAX(updated_at date, patch date) recency (52ea958),
+  NOT patch_verified alone. MAX is correct both ways: freshly-verified rows (Aug 3 >
+  patch) read store-fresher (fixing Surprise 3 where they mislabeled article-fresher),
+  while un-reverified 1.1.5 rows (patch July 21 > stale June updated_at) keep the
+  patch date (avoiding a naive prefer-updated_at regression). Destroyer 175 + Impact
+  HAR 41 now correctly store-fresher/fix-article. 14/14 tests. Closes R2.
+
+Both corroboration refinements now shipped: R1 (locked_mods compare, b46d205) + R2
+(seniority recency, 52ea958).
+
+NOTE: un-reverified entity rows keep their stale import-date updated_at until next
+edited (the trigger only fires forward); the one-time seed handled today's verified
+rows. Future in-game verifications self-stamp via the trigger.
+
+---
+
 ## 2026-08-03 (cont.) - Corroboration R1 shipped (locked_mods prose-comparison fix); R2 gated on timestamp decision
 
 R1 (locked_mods false-positive) SHIPPED b46d205. The comparison used exact equality
@@ -66,7 +100,7 @@ a BEFORE-UPDATE updated_at trigger to shell_stats/weapon_stats/unique_weapons, r
 the banked Gap 3 trigger design (this MERGES R2's prerequisite with Gap 3 for the
 entity tables). Then the seniority edit rides on top. Value is frozen-gated (only
 matters during active in-game verification vs fresh articles). Deferred as a
-deliberate schema task, not a blind edit.
+deliberate schema task, not a blind edit. [superseded 2026-08-03: shipped via the updated_at trigger - see the trigger entry]
 
 ---
 
@@ -573,6 +607,7 @@ history starts accumulating - the DMZ child's indexed-ratio is the pre-launch be
 instrument, valuable to start recording now while there's calendar to act on it.
 
 === DEFERRED FOLLOW-UP: feed_items.updated_at for honest recrawl signals (Gap 3) ===
+[superseded 2026-08-03: shipped via the updated_at trigger - see the trigger entry]
 The sitemap's intel/DMZ-article lastmod uses created_at because feed_items has NO
 updated_at column (discovered this session - the updated_at query errored and
 emptied the intel set; reverted to created_at, no regression, did NOT fake it).
