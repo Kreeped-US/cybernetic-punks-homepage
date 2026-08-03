@@ -45,6 +45,47 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - Impact HAR correction (18 was a misread, restored to 24) + 2 corroboration batch refinements banked
+
+CORRECTION: the earlier in-game verification set Impact HAR damage to 18, but a
+re-check (prompted by the corroboration batch flagging a ~53-article contradiction)
+confirmed the actual base damage is 24. The 18 was a misread; the store was
+CORRECT all along (24 = Bungie 1.1.0 patch notes, corroborated by 53 articles).
+Restored: damage=24, patch_verified=1.1.0, verified_source noted re-confirmed.
+The 53-article "contradiction" was an ARTIFACT of the wrong store value, not a
+cleanup queue - those articles were right; they re-corroborate on the next run.
+The 41-claim and 16-claim articles remain genuinely CONTRADICTED vs 24 (both wrong).
+
+LESSON (the important one): when a fresh first-party reading contradicts a heavily-
+corroborated documented value, RE-CHECK the reading before writing it - the reading
+can be wrong too. The store (24, patch-notes-sourced, 53-article-corroborated) was
+right; the error was writing a single first reading over it without the "this
+contradicts everything, re-verify first" gate. The corroboration batch surfaced the
+tension (the 53-article contradiction was the alarm), the re-check found the store
+was right. This VALIDATES the batch in both directions: it catches wrong ARTICLES
+(the shell-health case) AND wrong STORE values (this case, an operator edit) -
+"flag disagreement, human finds the truth, truth can be on either side."
+
+STILL VALID (not affected): shells base_health=120 (re-confirmed uniform, articles
+genuinely wrong), BR33 locked_mods (correct). Only Impact HAR 18 was a misread.
+
+BANKED - 2 corroboration batch refinements surfaced by the re-run:
+1. locked_mods FALSE-POSITIVE: BR33 flagged CONTRADICTED despite correct mods,
+   because the store value is prose ("Locked loadout (4): ... Mods permanently
+   locked.") and the token-normalizer doesn't strip the wrapper, so store tokens !=
+   article's bare list. Fix: strip the wrapper prose on both sides before comparing
+   (or store the mod list structured, render the prose). Data is right; comparison
+   too naive.
+2. SENIORITY uses patch-date, not verification-recency: patch_verified answers
+   "which patch does this value belong to" (S2/1.1.0 = 2026-06-02), NOT "when was
+   it verified" (2026-08-03 in-game). So a post-06-02 article reads as "article-
+   fresher" even when the store was verified 2 months later - mislabeling just-
+   verified values as re-verify-store when they're really fix-article (hit Destroyer
+   175, Impact HAR). Fix: prefer a verification-recency signal (a verified_at/
+   updated_at timestamp) over patch-date for the seniority flip.
+
+---
+
 ## 2026-08-03 (cont.) - In-game verification: shell base_health, Impact HAR, BR33 mods (store filled first-party)
 
 Acted on the corroboration batch's UNCORROBORATED queue via in-game verification
