@@ -45,6 +45,47 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - Corroboration batch's first findings dispositioned (14 stale articles noindexed; triage kept 13 valuable ones)
+
+Acted on the corroboration batch's first run (44 findings). Added the 1.1.0 patch
+date (2026-06-02) to PATCH_DATES (38353fe), which reclassified 10 indeterminate
+findings - the 2 highest-blast-radius (BRRT SMG magazine 20-article, Magnum MC
+damage 11-article) resolved to store-fresher/fix-article (all affected articles
+predate 2026-06-02).
+
+DISPOSITION (triaged, NOT bulk-noindexed - the mechanical set overcounted ~2x):
+Of 27 live articles with clean Group-A stale findings, only 14 warranted noindex:
+- NOINDEXED (14): Tier 1 precision-rifle cluster (5 - near-dup, thin, carrying the
+  anomalous Twin Tap "13 damage" wrong-stat block) + Tier 2 aging pre-1.1.0 pieces
+  (9). noindex=true + noindexed_at stamped this session. Count-checked 14, verified
+  14. No redirects (stale content leaving the index, no survivor to merge into).
+- KEPT (13, Tier 3): recent (Jun 23-Jul 11), large (5-6.4k char), CURRENT shell/
+  build/ranked guides each off by ONE trivial stat (mostly Twin Tap 22->24, a
+  2-point drift from 1.1.5 landing days after publication). Noindexing current
+  valuable content over a 2-point stat would be wrong - left live. The batch
+  re-flags if it matters.
+
+EXCLUDED FROM ACTION (correctly): extraction-noise outliers (KKV 200->1200, BRRT
+fire_rate 0->1000, >=3x gaps = parse errors, flagged for verbatim review not action);
+17 unverified-store findings (Knife no-source, tauceti.gg third-party - the STORE is
+the uncertain side, a store-data-quality backlog, never article-fix drivers).
+
+STANDING QUEUE (banked, disposition when convenient): re-verify-store candidate
+(Impact HAR damage, post-1.1.0 article disagrees with store); UNCORROBORATED
+verification tasks (BR33 locked_mods across 4 articles, shell base_health with
+article-vs-article disagreement on Destroyer/Thief - filling the store adjudicates
+both); S2-dated findings (resolve when the S2 date is established, the next
+PATCH_DATES lever). Plus: reword the now-stale PATCH_DATES comment ("the one patch-
+calendar fact" -> two entries now) next time the file's touched.
+
+KEY LESSON: the corroboration batch's value isn't 44 auto-fixes - it's that triage
+distinguished genuinely-stale-and-duplicative (noindex) from current-guide-off-by-
+one-stat (keep). Bulk-acting on the mechanical set would have deindexed 13 valuable
+current guides. "Store contradicts article" is a finding to adjudicate, not an
+auto-prune signal.
+
+---
+
 ## 2026-08-03 (cont.) - Game-DB corroboration batch SHIPPED (read-only, headless)
 
 Built the corroboration batch f1e54a6: the game-DB-entity form of the Friday-banked
