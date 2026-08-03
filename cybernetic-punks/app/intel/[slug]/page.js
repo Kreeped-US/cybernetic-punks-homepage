@@ -1080,7 +1080,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
     author: { '@type': 'Organization', name: item.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/intel/' + item.editor.toLowerCase() },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
-    datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.created_at),
+    datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.updated_at || item.created_at),
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',
   };
