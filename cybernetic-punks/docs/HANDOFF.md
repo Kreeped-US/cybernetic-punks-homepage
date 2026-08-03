@@ -45,6 +45,27 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - Cannibalization detector /modes /mods /factions canonical-tier fix (f587a4b)
+
+Closed the banked detector refinement Cluster 1 exposed. ENTITY_SEGMENTS (the
+survivor-sort canonical tier) only had uniques/weapons/shells/maps, so /modes,
+/mods, /factions pages fell through to type 'other' and lost the advisory survivor
+sort to news. Added all three (Step 0 confirmed each is genuinely canonical + GSC-
+ranking: /modes per-mode pages, /mods/[slot] store-backed from mod_stats = same
+class as weapons/shells and a latent gap in the original set, /factions canonical
+reference). EXCLUDED /guides (the banked note guessed it, but Step 0 found it's the
+editorial "Field Guides" hub - content ABOUT entities, so /guides vs /intel is
+news-vs-news not canonical-vs-news) and /matchups (marginal, 1 GSC row).
+
+Verified surgical: typeRank is survivor-ranking + display only, NOT in the flagging
+path - re-run showed 0 verdict/structural/flip-rate changes, 67->67 clusters, exactly
+6 survivor flips all on newly-canonical clusters (5 vault-breaker -> /modes/vault-
+breaker fixing the exact gap; 1 -> /mods/magazine validating the mods add hit a real
+case). 8/8 tests. The detector now advises canonical mode/mod/faction survivors
+correctly without needing human correction.
+
+---
+
 ## 2026-08-03 (cont.) - S2 date added; corroboration findings fully dispositioned (resolvable set closed)
 
 Added the S2 patch date (2026-06-02, verified via Bungie press room - same day as
