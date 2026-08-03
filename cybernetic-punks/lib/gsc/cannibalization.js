@@ -47,10 +47,15 @@ export const CANNIBAL_MIN_CO_DATES = 5;
 // Shared-impressions floor over the window. Low -- the site is low-traffic (mirrors near-miss).
 export const CANNIBAL_MIN_SHARED_IMPRESSIONS = 5;
 
-// SURVIVOR advisory: entity/canonical routes outrank news. The exact list Fable scoped
-// (/uniques,/weapons,/shells,/maps = the canonical entity namespaces; /intel = news). Anything
-// else is 'other' and sorts last -- it is only a tie-break brief for the human, never a gate.
-const ENTITY_SEGMENTS = new Set(['uniques', 'weapons', 'shells', 'maps']);
+// SURVIVOR advisory: entity/canonical routes outrank news. Canonical GAME-ENTITY namespaces:
+// /uniques,/weapons,/shells,/maps (store-backed per-item pages), /modes (per-mode canonical, e.g.
+// /modes/vault-breaker), /mods (/mods/[slot] from mod_stats, same class as weapons/shells), and
+// /factions (the canonical faction reference). /intel = news. Anything else is 'other' and sorts
+// last -- a tie-break brief for the human, never a gate. NOT included: /guides (editorial "Field
+// Guides" hub -- content ABOUT entities, so /guides vs /intel is news-vs-news) and /matchups
+// (marginal, 1 GSC row). typeRank is used ONLY by the survivor sort + display type, never in the
+// flagging path -- adding a segment cannot change any cluster's verdict.
+const ENTITY_SEGMENTS = new Set(['uniques', 'weapons', 'shells', 'maps', 'modes', 'mods', 'factions']);
 const NEWS_SEGMENTS = new Set(['intel']);
 
 function firstSegment(url) {

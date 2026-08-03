@@ -132,4 +132,30 @@ test('single-URL query yields no cluster', () => {
   assert.strictEqual(findCluster(res, 'solo query'), undefined);
 });
 
+// 8. CANONICAL TIER: /modes, /mods, /factions rank as canonical (type 'entity') above /intel news,
+//    even with far lower impressions -- the fix for the vault-breaker Cluster 1 gap.
+test('modes/mods/factions rank as canonical survivor over news', () => {
+  const cases = [
+    { seg: '/modes/vault-breaker', q: 'vault breaker' },
+    { seg: '/mods/magazine', q: 'magazine mod' },
+    { seg: '/factions', q: 'faction guide' },
+  ];
+  for (const cs of cases) {
+    const canon = B + cs.seg;
+    const news = B + '/intel/' + cs.q.replace(/ /g, '-') + '-1234';
+    const series = {};
+    for (let d = 1; d <= 20; d++) {
+      const day = String(d).padStart(2, '0');
+      series['2026-07-' + day] = d % 2 === 0 ? { [canon]: 4, [news]: 6 } : { [canon]: 6, [news]: 4 };
+    }
+    // news gets far MORE impressions; canonical must still win the survivor sort on type-rank.
+    const r = rows(cs.q, series).map((x) => x.page_url === news ? Object.assign({}, x, { impressions: 100 }) : x);
+    const res = classifyCannibalization(r);
+    const c = findCluster(res, cs.q);
+    assert.ok(c, 'cluster exists for ' + cs.q);
+    assert.strictEqual(c.survivor.url, canon, cs.seg + ' must be the canonical survivor over news');
+    assert.strictEqual(c.survivor.type, 'entity', cs.seg + ' must read as entity type');
+  }
+});
+
 console.log('\n' + passed + ' passed');
