@@ -11,6 +11,8 @@ import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalCo
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
 import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
+import { classifyCorroboration } from '@/lib/gsc/corroboration';
+import { loadMarathonStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { topicTokens, buildIdfMap } from '@/lib/topicTokens';
 
@@ -521,6 +523,54 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     if (framing.applied) {
       console.log('[keyword] ' + editorName + ' FRAMED "' + framing.original + '" -> "' + framing.headline + '" (' + framing.keyword + ')');
       result.headline = framing.headline;
+    }
+
+    // ── PRE-PUBLISH CORROBORATION GATE -- PHASE 1: MARATHON, LOG-ONLY ───────────
+    // Runs the game-DB corroboration classifier (lib/gsc/corroboration.js) against
+    // THIS draft before it publishes -- the same instrument the headless batch runs
+    // over published articles, here pointed at a length-1 [draft] array via the SHARED
+    // store loader, so the gate and the batch compare against a byte-identical store.
+    //
+    // THIS PHASE NEVER HOLDS. It LOGS what it would flag (CONTRADICTED / UNCORROBORATED
+    // counts + each entity/field/draft-value/store-value) and publishes REGARDLESS. The
+    // point is to watch the extractor's behaviour on real drafts before Phase 2 (a
+    // held-state column) arms any holding. No feed_items write, no early return, no
+    // insertData touch here.
+    //
+    // SCOPE: Marathon only, guarded on the PRODUCING GAME (not the editor) so the whole
+    // DMZ vertical is excluded in one test -- the EXTRACTORS are Marathon-field-specific
+    // and the DMZ claim grammar is Phase 3.
+    //
+    // FAIL-OPEN: a loader/classifier throw is logged and swallowed; publication proceeds.
+    // Matches the keyword hook's posture above -- a validation-only gate must never block
+    // a publish it cannot evaluate.
+    if (PRODUCING_GAME_SLUG === 'marathon') {
+      try {
+        var gateStore = await loadMarathonStore(supabase, PRODUCING_GAME_SLUG);
+        var gateDraftSlug = generateSlug(result.headline);
+        var gateOut = classifyCorroboration(
+          [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }],
+          { entities: gateStore.entities },
+          { runDate: new Date().toISOString().slice(0, 10) }
+        );
+        var gateContra = gateOut.findings.filter(function (f) { return f.class === 'CONTRADICTED'; });
+        var gateUncorr = gateOut.findings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
+        console.log('[gate] ' + editorName + ' draft "' + gateDraftSlug + '" vs store (unique=' + gateStore.counts.unique
+          + ' shell=' + gateStore.counts.shell + ' weapon=' + gateStore.counts.weapon + '): '
+          + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
+          + gateOut.corroborations.length + ' corroborated -- LOG-ONLY, publishing regardless');
+        gateContra.forEach(function (f) {
+          console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field
+            + '  draft=' + JSON.stringify(f.claimed_value)
+            + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
+        });
+        gateUncorr.forEach(function (f) {
+          console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field
+            + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
+        });
+      } catch (e) {
+        console.error('[gate] corroboration gate threw (LOG-ONLY, publishing): ' + (e && e.message));
+      }
     }
 
     var insertData = {

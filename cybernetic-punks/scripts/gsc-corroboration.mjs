@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { classifyCorroboration, PATCH_DATES } from '../lib/gsc/corroboration.js';
+import { loadMarathonStore } from '../lib/gsc/storeLoader.js';
 
 function loadEnvLocal() {
   let raw; try { raw = readFileSync(new URL('../.env.local', import.meta.url), 'utf8'); } catch (e) { return; }
@@ -27,25 +28,16 @@ async function pageAll(table, sel, filter) {
   const out = []; for (let from = 0; ; from += 1000) { let q = supa.from(table).select(sel); if (filter) q = filter(q); const { data, error } = await q.range(from, from + 999); if (error) { console.error(table + ' read err: ' + error.message); break; } if (!data || !data.length) break; out.push(...data); if (data.length < 1000) break; } return out;
 }
 
-// STORE: the three verified entity tables. aliases are CANONICAL-ONLY here (precision-first): the
-// runner matches full entity names, so it under-reports articles that use short forms (a missed
-// claim is silence, never a false finding). Alias curation is the recall lever, banked as a follow-on.
-const [uniques, shells, weapons] = await Promise.all([
-  pageAll('unique_weapons', '*', (q) => q.eq('game_slug', GAME)),
-  pageAll('shell_stats', '*', (q) => q.eq('game_slug', GAME)),
-  pageAll('weapon_stats', '*', (q) => q.eq('game_slug', GAME)),
-]);
-const entities = []
-  .concat(uniques.map((r) => ({ type: 'unique', name: r.name, aliases: [], fields: r, verified: r.verified, verified_source: r.verified_source, patch_verified: r.patch_verified })))
-  .concat(shells.map((r) => ({ type: 'shell', name: r.name, aliases: [], fields: r, verified: r.verified, verified_source: r.verified_source, patch_verified: r.patch_verified })))
-  .concat(weapons.map((r) => ({ type: 'weapon', name: r.name, aliases: [], fields: r, verified: r.verified, verified_source: r.verified_source, patch_verified: r.patch_verified })))
-  .filter((e) => e.name);
+// STORE: the three verified entity tables, loaded via the SHARED loader so this batch and the
+// pre-publish gate (app/api/cron/route.js) audit against a byte-identical store. counts are the
+// per-table row totals, only for the run banner below.
+const { entities, counts } = await loadMarathonStore(supa, GAME);
 
 const articles = await pageAll('feed_items', 'slug, editor, created_at, body, is_published, game_slug',
   (q) => q.eq('game_slug', GAME).eq('is_published', true).not('body', 'is', null));
 
 const runDate = new Date().toISOString().slice(0, 10);
-console.log('corroboration run ' + runDate + '  articles=' + articles.length + '  store entities: unique=' + uniques.length + ' shell=' + shells.length + ' weapon=' + weapons.length);
+console.log('corroboration run ' + runDate + '  articles=' + articles.length + '  store entities: unique=' + counts.unique + ' shell=' + counts.shell + ' weapon=' + counts.weapon);
 console.log('PATCH_DATES calendar: ' + JSON.stringify(PATCH_DATES) + '  (store patches not in the map -> seniority indeterminate)');
 
 const { findings, corroborations, skippedAmbiguous } = classifyCorroboration(articles, { entities }, { runDate });
