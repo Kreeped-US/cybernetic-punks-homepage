@@ -26,6 +26,12 @@ Claude Code's (read-only, against `app/dmz/**`, `lib/dmz/entities.js`, the
   So a SMALL pre-launch buildable set is correct by design, not a shortfall.
   The large clusters (per-key, per-mission, per-item, per-loadout) are deferred
   with reasons, not skipped by omission.
+  [Amended 2026-08-04, Mangools:] Two large clusters are the UN-GATED exceptions to
+  this - launch/release-intent (mw4 dmz, ramping now) and map/setting (dmz korea map,
+  1000-1600/mo steady) are ownable pre-launch and are the current LEADS. The 'small
+  pre-launch set' still holds for entity content (recipes/bosses/missions - genuinely
+  launch-gated), but the launch-hub + map/setting content is buildable now and is where
+  the pre-launch leverage actually is.
 
 ## Provenance note on the numbers (read before trusting a cell)
 
@@ -54,6 +60,27 @@ outrank everything on raw volume (12,100 peak) but are launch-gated to a system
 hub, so the launch-info hub - the one head term fully answerable pre-launch,
 with email capture already wired - leads.
 
+**DEMAND RECONCILIATION (2026-08-04, Mangools analysis; full data in HANDOFF 44d6167).**
+Fresh keyword volume + 2026 trend revised the pre-launch priority. The two LEAD clusters,
+both ownable now and both climbing to the Oct 23 launch:
+- **Launch/release-intent (lead, TIME-SENSITIVE):** `mw4 dmz` is ramping hard - Jan 50 ->
+  Apr 140 -> May 1600 -> Jun 5400 (35x Apr->Jun, the June 7 interview igniting it);
+  `modern warfare 4 dmz` May 880 -> Jun 1600; `is dmz coming back` 250-480. This is the #1
+  launch-hub row below, confirmed and accelerating - the 2023_peak column understates it;
+  the live 2026 ramp is the real signal.
+- **Map/setting (elevated to lead):** `dmz korea map` + `dmz map` 1000-1600/mo steady all
+  year; Hajin sub-terms just igniting. This OVERTURNS the "korea map DEAD" call (section 3).
+  Served by the live Hajin article + the 9 verified POIs.
+- **Recipes/keys DEMOTED to winnable low-KD long-tail:** the round-3 "recipes-as-keys FIRST"
+  hypothesis did NOT hold - keys are small (`dmz keys` 30, `dmz key locations` 20, ~60 total)
+  and crafting similar (`dmz barter recipes` 100 the standout, ~150 total), both LOW-KD
+  (28-31, winnable) but FLAT (no launch ramp), an order of magnitude below the leads. The
+  dmz_recipes/ingredients/lieutenants schema (built 2026-08-04) is still correct - just a
+  cheap-to-own long-tail, not the launch lead.
+Head terms (`dmz cod` 4200, `call of duty dmz` 4000) noted but high-KD/generic/low-entity-
+intent - not a primary target. A Fable pass on the revised order is banked before committing
+the content sequence.
+
 | # | query | 2023_peak | current_vol | KD | winnable | target_canonical | build/extend/merge | launch-gated | status |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | mw4 dmz | 5400 | 630 | 48 | check (over cap; authority play) | /dmz | extend | no | live |
@@ -66,7 +93,7 @@ with email capture already wired - leads.
 | 2 | dmz key locations | 12100 | 20 | 30 | y | /dmz/keys | fork | yes | DEFERRED (no Deep-Dive keys source; build when a verbatim keys excerpt is supplied) |
 | 2 | dmz best keys | 720 | 10 | 34 | y | /dmz/keys | fork | yes | DEFERRED (no Deep-Dive keys source; build when a verbatim keys excerpt is supplied) |
 | 2 | dmz how to get keys | 70 |  | 37 | check (over cap) | /dmz/keys | fork | yes | DEFERRED (no Deep-Dive keys source; build when a verbatim keys excerpt is supplied) |
-| 3 | dmz korea map | 1600 | 1100 |  | check (KD unscored; uncontested) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live |
+| 3 | dmz korea map | 1600 | 1100 |  | check (KD unscored; uncontested) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live - LEAD (see 2026-08-04 reconciliation note) |
 | 3 | hajin map | 110 | 10 | 40 | check (over cap) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live |
 | 3 | mw4 hajin | 40 | 10 | 30 | y (SERPChecker-gated) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live |
 | 3 | hajin exclusion zone | 90 | 10 |  | check (KD unscored) | /dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals | extend | no | live |
@@ -137,13 +164,17 @@ surfaces touch Hajin and must cross-link into it, never compete:
 - `/dmz/pois` (hub H1 "Hajin Map & Locations") already, by design, does NOT
   chase "hajin map" - `lib/dmz/entities.js` cedes that lane to this article and
   owns per-POI names instead.
-- **`dmz korea map` fold-in: DEAD (2026-08-01).** The SERP-intent check resolved
-  the term as real-world Korea-geography (demilitarized-zone) intent, NOT COD game
-  intent - so the fold-in was abandoned; leaning on "Korea map" would draw off-topic
-  traffic. The Hajin ARTICLE itself is shipped/live and unaffected; only this one
-  term is dead. (The A2 title over-cap on the article was fixed separately, c65483b.)
-  The other Hajin terms (hajin map / mw4 hajin / hajin exclusion zone) are already
-  served by the live article; `/dmz/regions` and `/dmz/pois` cross-link into it.
+- **`dmz korea map`: OVERTURNED to REAL game demand (2026-08-04, Mangools + A7).** The
+  2026-08-01 DEAD call read the term as real-world Korea-geography (demilitarized-zone)
+  intent, NOT COD game intent. That is now overturned: MW4 DMZ is FIRST-PARTY-CONFIRMED
+  set on the Korean Peninsula (North Korean invasion), so `dmz korea map` IS game intent
+  - and the data backs it: `dmz korea map` + `dmz map` run 1000-1600/mo steady all year
+  (the opposite of dead). Per A7, first-party setting + this volume overturn the earlier
+  SERP-intent check. This is a LEAD map/setting cluster - served by the live Hajin article
+  + the 9 verified POIs. (The A2 title over-cap on the article was fixed separately,
+  c65483b.) The other Hajin terms (hajin map / mw4 hajin / hajin exclusion zone) - just
+  igniting (hajin map 0->110, hajin exclusion zone 0->90) - are served by the live
+  article; `/dmz/regions` and `/dmz/pois` cross-link into it.
 
 ### 4. Gunsmith system hub -> BUILD NEW at `/dmz/loadouts`
 No gunsmith page exists; Gunsmith appears only as a station inside the FOB
