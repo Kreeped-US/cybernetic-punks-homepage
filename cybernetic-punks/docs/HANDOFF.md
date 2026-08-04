@@ -45,6 +45,96 @@ remain.
 
 ---
 
+## 2026-08-03 (cont.) - DMZ schema + pipeline design CLOSED (Fable round 3) - ready to build
+
+1. prints_type = CHECK constraint NOT lookup table: "blocks inserts until altered" IS
+   the Marathon lesson (unknown category fails loudly). CHECK makes category expansion
+   a reviewed DDL moment; a lookup table's unblock is an invisible data change. Same
+   posture as poi_type.
+2. Pre-publish gate = NO launch bypass; ramp is THROUGHPUT not permeability. Gate holds
+   only uncorroborated HARD-STAT claims (not all articles). Editors write toward the
+   verified frontier (store in context). Bypass would disable the gate when
+   misinformation density peaks. Attribution-hedging rejected. AUTO-RELEASE (build
+   req): when a store row updates, held drafts referencing that entity re-evaluate and
+   publish the moment they corroborate. Held-queue = the demand-weighted verification
+   worklist. Launch loop: play -> verify -> store fills -> pages AND held articles
+   release together. Marathon = log-only; DMZ = fail-closed (gate infra-failure also
+   HOLDS, loudly - the gate IS the moat enforcement).
+3. Lieutenant seasons: REVERSAL of round-2 jsonb -> dmz_lieutenant_seasons JOIN TABLE.
+   The Boss Board page IS a cross-boss season query (primary render path); jsonb
+   contents are unconstrainable (typo'd season = silent membership failure).
+   (game_slug, lieutenant_slug, season_slug), unique triple, same composite-FK-CASCADE
+   as the recipe join. Derived-active unchanged (membership row for CURRENT_SEASON,
+   zero flip-day maintenance).
+4. game_slug immutability: ENFORCE via trigger (A8), don't just document. Per-parent
+   BEFORE UPDATE: IF OLD.game_slug IS DISTINCT FROM NEW.game_slug THEN RAISE. Makes the
+   catastrophic cascade unrepresentable; CASCADE reasoning stops depending on
+   discipline.
+FK pattern (both joins): composite (game_slug, slug) FKs, ON UPDATE CASCADE (pre-
+release renames propagate automatically - names-not-final stops being a schema risk) /
+ON DELETE RESTRICT. Seeding waits for release-official names.
+
+BUILD SESSION (Aug 4, no open judgment calls): DDL = dmz_recipes + dmz_ingredients +
+dmz_recipe_ingredients join + dmz_lieutenants + dmz_lieutenant_seasons join +
+immutability triggers + CHECK'd prints_type. Then the pre-publish gate (draft claim-
+extraction vs store, fail-closed DMZ / log-only Marathon, auto-release on store
+update). Parallel: Mangools demand session (verify recipes-as-keys). Populate "today"
+store rows (150 health etc., verified_source = interview URL).
+
+---
+
+## 2026-08-03 (cont.) - DMZ schema + pipeline - Fable ruling round 2
+
+Entity-vs-explainer (test: fixed + named + searched-by-name): Lieutenants -> ENTITY
+(w/ seasonal lifecycle); Recipes -> ENTITY; Dynamic Ops -> EXPLAINER (procedural, the
+system is the entity); Story/Side missions -> ENTITY; Gunsmith -> DATA not pages;
+mechanics -> explainers (several populatable NOW, e.g. 150 health, verified_source =
+the interview URL).
+Launch demand order (grounded in old-DMZ proxy): recipes/ingredients FIRST (analog to
+old-DMZ KEYS - dominant cluster, "where to find X" shape, store-answerable) ->
+Lieutenants (days 2-14 "how to beat X") -> story missions -> mechanics/beginner ->
+gunsmith data. Write beginner/system explainers PRE-LAUNCH (head terms need aging).
+VERIFY recipes-as-keys in Mangools vs old-DMZ key volume.
+Store-is-content (the reframe): "populate first-party before editors write" isn't a
+phase, it's the pipeline shape - entity page renders FROM the row; a page goes live
+when its row is verified; an article publishes only when the store corroborates it.
+Piecemeal data -> pages go live piecemeal, honest at publish. Community intake ->
+verification-task leads, NEVER store writes. Structured-citation capture MUST be live
+before Oct 23.
+Schema: recipe<->ingredient is the codebase's first true M:N (dmz_recipes,
+dmz_ingredients, dmz_recipe_ingredients join). Defer trait trees (unproven demand).
+
+---
+
+## 2026-08-03 (cont.) - DMZ content-model intel processed (official June 7 Xbox Wire interview)
+
+Source: https://news.xbox.com/en-us/2026/06/07/dmz-new-intel-call-of-duty-extraction-shooter-xbox-games-showcase-2026/
+(Official Activision/Infinity Ward, Xbox Games Showcase 2026; Cecot/Reynolds
+interview.) First-party = primary-source-grade, citable verified_source. Public, NOT
+source-gated - usable for planning NOW. Purpose: design DMZ entity tables + content
+verticals correctly from day one, applying every Marathon lesson (provenance-from-
+generation, corroboration-from-day-one, store-populated-first-party-before-articles,
+dedup guard + cannibalization detector live at launch, no FAQPage, updated_at trigger,
+verification-recency seniority). Marathon = training set; DMZ launches clean.
+
+CONFIRMED SYSTEMS: 3D Printer (find ingredients -> print gear; find recipes that
+upgrade the printer); FOB + upgradeable Stations; cash-driven Gunsmith (attachment
+cost escalates per attachment, some cost more: suppressors/drum mags/thermal/long-
+range optics); Boss Board + Lieutenants (named AI, drop dog tags -> seasonal board;
+buy intel at FOB or climb Lieutenant Hunt Towers); Active Duty persistent characters
+(backpack/loadout/trait tree) + Exfil Streaks; 3 mission types (Dynamic Ops procedural,
+Side Ops side quests, Story Missions structured); survival (max 150 health, regen,
+tourniquet self-up-wounded, med kit/bandage); stealth meter (white->yellow->orange);
+proximity chat (falloff/directional/reverb); living-world star escalation (higher-tier
+AI, road-chasing vehicles, attack choppers).
+CONFIRMED POIs (validate the 9 live): Hajin (primary map; police-station underwater
+armory); Casino (vault objective); Fallout (NE, irradiated, gas-mask/hazmat, exclusive
+loot); repairable UAV trucks; Crossfire (A-10 killstreak). SETTING: Korean Peninsula
+(North Korean invasion) - REVISIT the demand-map "korea-map DEAD" entry (A7: first-
+party overturns the earlier check).
+
+---
+
 ## 2026-08-03 (cont.) - updated_at trigger shipped: Gap 3 closed + R2 closed (one design, two banked items)
 
 Shipped the updated_at BEFORE-UPDATE trigger across feed_items + the 3 entity tables
