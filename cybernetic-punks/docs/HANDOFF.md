@@ -45,6 +45,23 @@ remain.
 
 ---
 
+## 2026-08-04 - Launch-hub optimization (step 1 of confirmed build order) - /dmz hub strengthened
+
+Executed step 1 (strengthen existing /dmz head canonicals vs ramping launch-intent
+queries). Audit found the hub already ~80% optimized - Fable's "mostly already exists"
+confirmed: several flagged gaps were already done (coming-back answered in FAQ, titles
+already lead with mw4 dmz / mw4 dmz release date, no FAQPage, under A2 cap, /dmz/pois
+->/dmz interlink already present via DmzEntityHub). Edits (ef4d109): h1 DMZ -> MW4 DMZ
+(the 5400/mo term into the h1); "Is DMZ coming back?" (250-480/mo) promoted from FAQ
+Q&A to a dedicated prose h2 section (titled target, no standalone page = no
+cannibalization, no FAQPage = A1). dmz 2026 left to co-occurrence. Surgical polish,
+not a build.
+Next: (2) map/setting (Korea/Hajin - partially built, durable 1000-1600/mo, korea-map
+revived); then Lieutenants/bosses + missions (novel-systems hedge: re-rank at launch-
+week GSC); recipes ready-but-not-lead; mechanics/beginner.
+
+---
+
 ## 2026-08-04 - Fable confirms revised demand priority + resolves launch-hub provenance + novel-systems hedge
 
 Fable pass on the Mangools-revised priority order (recipes-first -> launch-intent +
