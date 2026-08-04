@@ -45,6 +45,49 @@ remain.
 
 ---
 
+## 2026-08-04 - Build-generator overhaul Phase 1 designed + Fable-blessed (the highest-leverage DMZ-vs-rush tool)
+
+Diagnosed + designed the build-generator overhaul. FINDING (GSC data): tools massively
+out-earn articles per-page; the article corpus is a long dead tail (over-production
+diluted - confirms the "too many articles" read). The build generator (playstyle+weapon
++goal -> verified-data build) is a GOOD, store-wired tool that earned near-nothing
+because it's PURE CLIENT-STATE - one orphaned page, builds invisible to search, near-
+zero internal links. Diagnosis: DISCOVERY failure, not a bad tool or absent demand.
+
+STRATEGY: fix the tool's discovery on Marathon (validate the fix on the training-set
+vertical), then translate to DMZ with discovery baked in. A verified-data build engine
+is exactly what the mass-AI DMZ article flood CANNOT replicate - and tools beat articles
+both per-page and against the rush. This inverts Marathon's article-volume-first mistake:
+DMZ should be TOOLS-AND-ENTITY-FIRST, articles sparingly + gated.
+
+PHASE 1 DESIGN (Fable-blessed, ready to build):
+- PER-BUILD PERMALINKS: each build -> a stable indexable URL (/tools/build/[shell]/
+  [weapon]/[playstyle]), turning one dead page into a build-page engine ranking for the
+  long tail of "[shell] [weapon] [playstyle] build" queries. Templated SEO per page,
+  state<->URL hydration, sitemap the valid set.
+- DEMAND-BOUNDED combinations (Fable sharpening): index only combinations with plausible
+  SEARCH INTENT (GSC signal + reasonable expansion), NOT every mechanical permutation -
+  the thin-content guardrail (avoids the article-over-production mistake in tool form).
+- STATIC + REGENERATION (Fable, moat-critical): static for crawlability + regenerate
+  when the store updated_at changes (this session's trigger = the freshness signal).
+  Crawlable AND never stale - serving stale verified stats would be a moat violation.
+  Built correctly on frozen Marathon so DMZ's live-data build pages inherit it.
+- GATING-AWARE, GATE-NOTHING-NOW: acquisition/conversion split - base build page FREE-
+  FOREVER (the SEO engine), depth/personalization/data (save-history, advanced tuning,
+  popularity rankings, recommendations) built feature-flaggable/gate-able-later via the
+  existing inert enforcement engine (override_all_free=true). Fable: DISCOVERY-DRIVERS
+  (share/export = inbound-link generators) stay FREE (acquisition, not conversion).
+  Everything ships open; seams exist so future gating needs no rebuild.
+
+BANKED for Phase 5-6: build-POPULARITY system (capture generation/landing/share signal
+per permalink -> in-tool "popular builds" ranking + discovery prioritization of existing
+verified pages + editorial input on which builds to deepen). GUARDRAIL: popularity ranks
+VERIFIED builds + informs human decisions; NEVER creates content or bypasses verification
+(popularity != correctness; verified-not-hyped). Requires the permalink foundation first.
+
+NEXT: build Phase 1 from this reviewed spec (permalinks + demand-bounds + static/
+regeneration + gating-aware). Design doc at docs/build-generator-overhaul-phase1.md.
+
 ## 2026-08-04 - GSC/Mangools pipeline audit + fixes: ingest healthy, editor-path dormant-by-design, 2 flags closed
 
 Audited the GSC + Mangools -> editor data pipeline (is it functioning?). Findings:
