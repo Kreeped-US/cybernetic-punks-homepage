@@ -654,6 +654,11 @@ export default function AdminPage() {
       studied_at: new Date().toISOString().slice(0, 10),
       source: 'gsc-review',
       notes: candidate.note || '',
+      // Land INACTIVE until classified: GSC cannot supply the tuple, and an active
+      // null-tuple row is permanently unmatchable (validated against by
+      // validateKeywordTarget + the active_needs_full_tuple CHECK). The operator
+      // completes entity_type/entity_slug/facet, THEN flips Active on.
+      is_active: false,
     });
   }
 

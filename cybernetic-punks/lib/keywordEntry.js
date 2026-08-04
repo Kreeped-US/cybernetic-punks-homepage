@@ -90,6 +90,21 @@ export async function validateKeywordTarget(supabase, row) {
   var r = row || {};
   var slug = r.entity_slug === undefined || r.entity_slug === null ? '' : String(r.entity_slug).trim();
 
+  // ACTIVE ROWS MUST BE MATCHABLE. frameHeadline (lib/keywordFraming.js) matches on the FULL
+  // tuple -- entity_type + entity_slug + facet -- so an is_active row missing any of the three
+  // is a permanently-unmatchable target (the dead-row state this guard prevents). Page-gap rows
+  // (no or partial tuple) stay first-class citizens but must be is_active=false. The DB CHECK
+  // active_needs_full_tuple also forbids this; this early return exists so the operator gets a
+  // readable reason instead of a raw constraint-violation string (same pattern as slug_needs_type).
+  var isActive = r.is_active === true || r.is_active === 'true';
+  if (isActive) {
+    var etActive = r.entity_type === undefined || r.entity_type === null ? '' : String(r.entity_type).trim();
+    var fcActive = r.facet === undefined || r.facet === null ? '' : String(r.facet).trim();
+    if (!etActive || !slug || !fcActive) {
+      return { ok: false, reason: 'an active keyword target needs a complete tuple (entity_type, entity_slug, facet) -- a page-gap row with no or partial tuple must be is_active=false' };
+    }
+  }
+
   // ABSENT -> allowed. A row with no entity is a PAGE-GAP candidate and is a
   // first-class citizen of this table, not a degenerate case. Distinct branch from
   // the reject below on purpose: collapsing them would either block every page-gap
