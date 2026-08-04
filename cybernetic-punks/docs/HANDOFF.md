@@ -45,6 +45,35 @@ remain.
 
 ---
 
+## 2026-08-04 - Pre-publish gate PHASE 1 shipped: Marathon log-only (validates the mechanism)
+
+Shipped Phase 1 of the pre-publish gate (ae5ada4) - the extractor-on-draft mechanism,
+Marathon log-only, zero holding. At the keyword-hook slot (post-generation, pre-insert),
+Marathon editors run classifyCorroboration on the draft body vs the Marathon store and
+LOG findings (CONTRADICTED/UNCORROBORATED + per-finding entity.field draft-vs-store);
+publish regardless. Log-only BY CONSTRUCTION (no return/mutation/write, only console.log
+- falls through to the is_published insert on every path incl. exception/fail-open). DMZ
+editors skip (DMZ extractors are phase 3). Extracted the row->entities loader to
+lib/gsc/storeLoader.js (batch + gate share one byte-identical loader). Reuses
+classifyCorroboration as-is on a length-1 draft array. 3 files, +101/-14.
+PURPOSE: watch what the gate flags on real Marathon drafts over the next generation
+cycles BEFORE phase 2 arms holding - prove the classifier before it can block.
+
+GATE BUILD PLAN (Step-0-scoped, must be live before Oct 23):
+- Phase 1 (DONE, ae5ada4): Marathon log-only, zero new schema, reuses extractor+store.
+- Phase 2: held-state (feed_items gate_status column) + gate function (publish/hold on
+  CONTRADICTED); Marathon stays log-only, holding armed only for DMZ.
+- Phase 3: DMZ field extractors + DMZ store loader (the DMZ claim grammar - "schema IS
+  the grammar"; Marathon extractors don't cover DMZ fields).
+- Phase 4: auto-release cron (re-run extractor on held drafts when their store row
+  updates -> publish on corroborate; updated_at trigger = the efficiency signal).
+- Verification-task table: DEFERRED (held-queue filtered by gate_status IS the worklist
+  per design; normalized table is later).
+Sequencing rationale: the risky pieces (fail-closed holding, auto-release) validate
+against Marathon logs before they can block a DMZ publish. Phase 2 should wait for log
+data from real generation cycles - the logs prove the classifier's judgment before
+holding is armed.
+
 ## 2026-08-04 - Map/setting (step 2) - dmz korea map captured on the Hajin canonical
 
 Executed step 2 (map/setting cluster). Audit found the cluster MORE built than the hub:
