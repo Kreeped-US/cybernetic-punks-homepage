@@ -15,10 +15,34 @@ import { getLiveStreamers } from '@/lib/gather/twitch';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req) {
+  // FAIL-SAFE cron auth guard, mirrored from /api/cron and /api/cron/inspect: inert until
+  // CRON_SECRET is set (so deploying before the env var does not lock out Vercel's scheduled
+  // job), then requires the Bearer header Vercel Cron sends automatically.
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.warn('[stats] CRON_SECRET not set -- route is UNGUARDED. Set CRON_SECRET in Vercel env to arm the guard.');
+  } else {
+    const auth = req && req.headers ? req.headers.get('authorization') : null;
+    if (auth !== 'Bearer ' + cronSecret) {
+      console.warn('[stats] Rejected request: missing/invalid Authorization Bearer.');
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
+  // SERVICE KEY REQUIRED -- NO ANON FALLBACK. live_stats is RLS-enabled with a public SELECT
+  // policy (confirmed: anon can read). Writes must go through the service key regardless of
+  // policy; the anon client cannot be relied on to UPSERT, so drop the fallback and fail LOUDLY,
+  // matching /api/cron and /api/cron/inspect.
+  if (!process.env.SUPABASE_SERVICE_KEY) {
+    console.error('[stats] ABORT: SUPABASE_SERVICE_KEY is not set. Refusing to run on the anon key -- ' +
+      'RLS-protected writes would be silently rejected. Set SUPABASE_SERVICE_KEY in the Vercel env.');
+    return Response.json({ error: 'SUPABASE_SERVICE_KEY not configured' }, { status: 500 });
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    process.env.SUPABASE_SERVICE_KEY
   );
 
   var results = { steam: null, twitch: null, errors: [] };
