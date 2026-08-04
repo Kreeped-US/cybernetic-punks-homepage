@@ -45,6 +45,56 @@ remain.
 
 ---
 
+## 2026-08-04 - Mangools demand analysis: recipes-as-keys hypothesis TESTED, priority order REVISED on data
+
+Ran the DMZ keyword demand analysis (Mangools/kwfinder exports, old-DMZ 2022-23 as
+the MW4-DMZ proxy per Fable's method). Purpose: verify the round-3 "recipes-as-keys"
+launch-priority hypothesis against real volume before building content/gate around it.
+FINDING: the hypothesis is directionally WRONG on the lead item; data revises the
+priority order.
+
+RECIPES-AS-KEYS: TESTED, does NOT hold as the launch priority.
+- Keys cluster is SMALL: dmz keys 30, dmz key locations 20, dmz stadium key 10 (~60
+  total). Crafting similar: dmz barter recipes 100 (the standout), dmz recipes 30, dmz
+  crafting 10 (~150, concentrated in one term). Both are LOW-KD (28-31, winnable) but
+  FLAT (no launch ramp) and an order of magnitude smaller than the real demand centers.
+- Verdict: recipes/keys = a cheap-to-own low-KD long-tail, NOT the launch headline.
+  The schema built today (dmz_recipes/ingredients/lieutenants) is still correct and
+  worth having - just demoted from "first" to "winnable long-tail."
+
+THE ACTUAL DEMAND (proxy, volume-ranked, with 2026 trend):
+1. LAUNCH/RELEASE-INTENT - the priority, and TIME-SENSITIVE: mw4 dmz is RAMPING HARD -
+   Jan 50 -> Apr 140 -> May 1600 -> Jun 5400 (35x Apr->Jun, almost certainly the
+   June 7 interview igniting it). modern warfare 4 dmz May 880 -> Jun 1600. is dmz
+   coming back 250-480. dmz 2026 130-260. mw4 dmz release date -> Jun 480. This is
+   ownable NOW pre-launch and ages into the Oct 23 surge. NOT an entity-table vertical -
+   it's launch-hub/release content. Publish now.
+2. MAP/SETTING - big, durable, MW4-specific: dmz korea map + dmz map steady 1000-1600/mo
+   all year; Hajin sub-terms just igniting (hajin map 0->110, hajin exclusion zone
+   0->90, mw4 hajin 0->40). Served by the 9 verified POIs + Hajin content.
+   >>> This DECISIVELY OVERTURNS the "korea-map DEAD" demand-map entry. dmz korea map
+   at 1000-1600/mo is the opposite of dead. The A7 first-party-Korean-setting call was
+   right; data confirms. Update docs/dmz-demand-map.md.
+3. BOSSES/LIEUTENANTS + MISSIONS - modest, real, the "how to beat X" long-tail (dmz
+   bosses 30, dmz missions 20 + named-faction mission long-tail). Entity verticals,
+   day 2-14 per Fable.
+4. RECIPES/INGREDIENTS/CRAFTING - winnable low-KD long-tail, small/flat (see above).
+   Demoted to cheap-to-own, not launch lead.
+5. MECHANICS/BEGINNER - evergreen, write pre-launch for aging (dmz how to play, dmz
+   gunsmith KD 20, dmz 3d printer, etc.).
+
+REVISION vs round-3: round-3 ruled "recipes/ingredients FIRST." Data says LAUNCH-INTENT
++ MAP/SETTING first (both bigger, both ramping, both ownable pre-launch), recipes
+demoted to long-tail. Head terms (dmz cod 4200, call of duty dmz 4000) noted but high-
+KD/generic/low-entity-intent - not a primary target. Worth a Fable pass on the revised
+order before committing content sequence.
+
+NEXT: reconcile docs/dmz-demand-map.md (overturn korea-map DEAD; record the launch-
+intent ramp + map/setting as the lead clusters); consider pre-launch launch-hub +
+Korea/Hajin map content as the highest-leverage time-sensitive work.
+
+---
+
 ## 2026-08-04 - DMZ schema BUILT (5 tables, M:N graph, secured) - first DMZ entity foundation
 
 Built and verified the DMZ crafting + boss schema (operator DDL in Supabase), per the
