@@ -51,7 +51,10 @@ The valid set is therefore:
 1. **DEMAND SPINE (always indexable): the 8 `[shell]` build canonicals.** Every shell has
    plausible "marathon [shell] build" intent; low risk, full coverage. These anchor the
    engine even before GSC data accrues. Their `goal` defaults to the shell's meta-primary
-   goal; other goals are variants (below), not separate spine pages.
+   goal; other goals are variants (below), not separate spine pages. In the built schema a
+   spine row is a `build_pages` row with `is_indexable = true` and `weapon_slug = NULL`
+   (NULL weapon = canonical; the tool picks the best weapon). [The per-shell primary-goal
+   VALUES are an OPEN decision -- see "OPEN: canonical goal mapping -- for Fable" at the end.]
 
 2. **DEMAND-CONFIRMED VARIANTS (goal- and weapon-qualified): only where a real query maps
    to the combination.** Determined by a `build_demand` derivation:
@@ -152,11 +155,17 @@ generation and in-game verification are live. Do not skip it.
 
 ### A6. Sitemap
 
-- Persist the valid set in `build_pages` (`slug, shell, goal, weapon_slug, build_json,
-  source_updated_at, status='published', updated_at`).
+- Persist the valid set in `build_pages` (built + verified): `slug, shell, goal,
+  weapon_slug (NULLABLE -- NULL = canonical page), build_json, source_updated_at,
+  is_indexable, updated_at`. The demand/publish gate is the **`is_indexable` boolean**,
+  chosen over a `status` / `demand_basis` enum per the poi_type lesson (no CHECK'd enum on
+  still-evolving values). There is NO `status` enum, NO `demand_basis` enum, and NO
+  `published_needs_build` CHECK -- the serving condition below carries publish state
+  instead. (`goal` keeps a CHECK: its 4 values are a closed, code-defined enum.)
 - New sitemap child `/sitemap-marathon-builds.xml` (extend `computeEligible` /
-  `partitionEligible`) emits ONLY `status='published'` rows, `lastmod = updated_at` — the
-  DB-driven eligible-set pattern the entity sitemap already uses. The raw permutation
+  `partitionEligible`) emits ONLY rows where **`is_indexable = true AND build_json IS NOT
+  NULL`** (the serving query -- "in the demand set AND generated"), `lastmod = updated_at`
+  — the DB-driven eligible-set pattern the entity sitemap already uses. The raw permutation
   space never enters the sitemap; a 404'd combo cannot leak in.
 
 ---
@@ -253,3 +262,48 @@ Honest caveat to size against: Marathon build demand is tiny (45 impr / 5 months
 1 on Marathon is a cheap proving ground for the pattern (demand-bounding + store-keyed
 freshness + free discovery layer), NOT a traffic windfall. Build it lean and portable so
 DMZ reuses `build_pages` + `build_demand` + the SSR/ISR-with-revalidation route at launch.
+
+---
+
+## OPEN: canonical goal mapping -- for Fable
+
+FRAMING ONLY -- this states the decision, it does not make it. Raised while seeding A1's 8
+shell canonicals (`build_pages` built + verified, empty; the seed is blocked here on
+purpose rather than baking in an invented mapping).
+
+THE QUESTION. Should the 8 shell canonicals be:
+- GOAL-PINNED -- one page per shell at its meta-primary goal: `(shell, primary-goal,
+  weapon_slug=NULL)`, URL `/tools/build/[shell]/[primary-goal]` (the current doc A2.1
+  design); OR
+- GOAL-NEUTRAL -- the shell's build HUB, goal chosen by the user in-tool, URL
+  `/tools/build/[shell]` (needs a schema/route tweak: a nullable `goal` or a `default`/`hub`
+  goal value, plus a bare-`[shell]` route).
+
+WHY IT CAME UP (the evidence). The doc specifies the CONCEPT ("meta-primary goal") but not
+the per-shell VALUES, and the store does not encode them cleanly: `role` and
+`recommended_playstyle` are FREE TEXT that do not map 1:1 to the 4-goal enum
+(aggressive / extraction / survival / mobility). Only 2 of 8 are unambiguous. Recon (Intel,
+"information gathering") fits NO goal cleanly. Vandal (the mobility shell, but its playstyle
+reads "aggressive entry") SPLITS mobility/aggressive. Forcing the map yields a lopsided
+survival x4 cluster -- the signature of a content decision, not a mechanical derivation.
+
+IF PINNED -- proposed starting mapping (from the seed Step 0; confidence noted, NOT decided):
+
+| shell | store signal | proposed goal | confidence |
+|---|---|---|---|
+| destroyer | Combat, "front-line aggression" | aggressive | HIGH |
+| thief | Stealth, "hit-and-run extraction" | extraction | HIGH |
+| sentinel | Combat, "anchor / hold ground / defend exfils" | survival | HIGH |
+| triage | Support, "enable squad survival" | survival | MED |
+| assassin | Stealth, "high-value target elimination" | aggressive | MED (or extraction) |
+| rook | Scavenger, "farm not fight" (not ranked-selectable) | survival | MED (or extraction) |
+| recon | Intel, "information gathering" | survival | LOW -- fits no goal cleanly |
+| vandal | Combat, "aggressive entry + vertical movement" | mobility | LOW -- splits with aggressive |
+
+WHY IT MATTERS. These slugs become PERMANENT public URLs (`recon-survival`,
+`vandal-mobility`, ...). A wrong seed = wrong canonical URLs, and a canonical URL is
+expensive to change once it indexes and accrues links. Get the mapping (or the
+goal-neutral decision) right BEFORE the seed.
+
+DECISION OWNER: Fable pass next session -> decision -> then the grounded 8-row seed, then
+the SSR/ISR route + `build_json` generation + the regeneration hook.
