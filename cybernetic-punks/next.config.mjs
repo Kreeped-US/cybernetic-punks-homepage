@@ -96,6 +96,16 @@ const nextConfig = {
         destination: '/uniques/br33-victory-lap',
         permanent: true,
       },
+      // Rook survivalist-build consolidation (2026-08-04): the DUPLICATE-SUPPRESSED
+      // tuple-audit found ...-solo-survivalist-guide...dlcf crawled-not-indexed, a
+      // near-dup of the more complete survivor (same survivalist-Rook build: Signal
+      // Mask + Recuperation, avoid-fights accumulation). Source noindexed; this 308
+      // transfers its authority to the survivor. Fixed-path, /intel -> /intel.
+      {
+        source: '/intel/marathon-rook-build-the-solo-survivalist-guide-for-season-2-dlcf',
+        destination: '/intel/marathon-rook-build-the-underrated-solo-survivor-loadout-z5m0',
+        permanent: true,
+      },
     ];
   },
 };
