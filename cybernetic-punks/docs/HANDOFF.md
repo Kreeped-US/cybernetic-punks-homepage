@@ -45,6 +45,31 @@ remain.
 
 ---
 
+## 2026-08-04 - build_pages seeded: 8 goal-neutral shell hubs (A1 foundation complete with data)
+
+Seeded the 8 goal-neutral shell canonicals into the corrected build_pages schema (INSERT
+reported 8 rows, verified: 8 rows present with the right values). Each row: slug='[shell]'
+(assassin/destroyer/recon/rook/sentinel/thief/triage/vandal), goal=NULL (goal-neutral per
+Fable's ruling - no forced 4-goal mapping, so Recon/Vandal's unmappable-goal problem never
+arises), weapon_slug=NULL (canonical, no pinned weapon), is_indexable=true (each shell has
+bare "[shell] build" search demand), game_slug='marathon'. The UNIQUE(game_slug, slug)
+guard means these 8 canonicals can't duplicate. build_json + source_updated_at are NULL
+(the builds are GENERATED in the next slice - each canonical from the shell's
+recommended_playstyle free-text via the advisor engine).
+
+A1 FOUNDATION now COMPLETE with data: correct 10-column schema (fully catalog-verified -
+columns, UNIQUE, goal CHECK passing NULL, PK, set_updated_at trigger, RLS + public-read),
+seeded with the 8 goal-neutral shell hubs.
+
+NEXT (A1 continued): (1) doc-sync A1/A2/A6 to goal-neutral (canonical = /tools/build/
+[shell] goal-neutral, weapon is the one variant page-axis, goal/rank/experience are in-
+tool refinements, uniform goal ordering in the hub UI to avoid reintroducing the primary-
+goal fiction via presentation, register /tools/build/ in gameSlugForUrl). (2) The SSR/ISR
+route /tools/build/[shell] rendering from build_pages + generation (canonical build_json
+from recommended_playstyle, source_updated_at = MAX store updated_at) + the store-updated_at
+regeneration hook. (3) Then A2 (weapon-variant long-tail, demand-promoted per GSC evidence).
+Design doc: docs/build-generator-overhaul-phase1.md.
+
 ## 2026-08-04 - build_pages schema CORRECTED (earlier "verified" claim was inaccurate) + goal-neutral ruling applied
 
 The earlier A1 entry claimed build_pages was "built + verified, matches the DMZ-schema
