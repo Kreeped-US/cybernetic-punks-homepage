@@ -45,6 +45,44 @@ remain.
 
 ---
 
+## 2026-08-04 - DMZ schema BUILT (5 tables, M:N graph, secured) - first DMZ entity foundation
+
+Built and verified the DMZ crafting + boss schema (operator DDL in Supabase), per the
+Fable-round-3-CLOSED design. All structural pieces confirmed via pg_constraint /
+pg_trigger / pg_policies:
+- 5 TABLES: dmz_recipes, dmz_ingredients, dmz_lieutenants (entity parents) +
+  dmz_recipe_ingredients, dmz_lieutenant_seasons (M:N joins). Clone base matches
+  dmz_pois EXACTLY: bigint GENERATED ALWAYS AS IDENTITY, game_slug/slug/name/
+  description/verified/verified_source/updated_at, UNIQUE(game_slug, slug). NO
+  created_at, NO patch_verified (DMZ entity shape differs from Marathon - confirmed
+  vs dmz_pois, not assumed).
+- M:N (codebase's first true many-to-many): 3 composite (game_slug, slug) FKs,
+  ON UPDATE CASCADE / ON DELETE RESTRICT. recipe_ingredients->recipes +
+  ->ingredients; lieutenant_seasons->lieutenants. CASCADE = pre-release renames
+  propagate automatically (names-not-final stops being a schema risk). Reverse
+  indexes for bidirectional "used in" / by-season rendering.
+- 8 TRIGGERS: set_updated_at on the 3 parents (reuses yesterday's shared function);
+  dmz_guard_game_slug (RAISE on game_slug change) on all 5 - game_slug immutability
+  ENFORCED structurally (A8), not just documented, so the CASCADE reasoning can't be
+  undermined.
+- RLS: all 5 ENABLED + public-read policy, matching dmz_pois exactly (anon reads /
+  pages render, service-role writes only). NOTE: the original table DDL omitted RLS;
+  Justin caught it before running - tables built secured from creation, no retrofit.
+- prints_type: PROVISIONAL FREE TEXT, no CHECK. The poi_type lesson (Step 0 traced:
+  poi_type's CHECK was dropped because its values were INVENTED, never sourced, and
+  real first-party data overran them). The June 7 interview gives print outputs only
+  ILLUSTRATIVELY (plate carriers, killstreaks), not a sourced taxonomy - so a CHECK
+  now would repeat poi_type exactly. Tighten to a CHECK once Oct 23 gameplay grounds
+  the category set. This REVISED the round-3 CHECK ruling on Step-0 evidence round-3
+  didn't have.
+
+Tables are EMPTY (structure only). Next: seed release-official names when available
+(CASCADE makes early seeding safe regardless); the pre-publish gate; populate "today"
+store rows (150 health etc., verified_source = the interview URL); Mangools demand
+session.
+
+---
+
 ## 2026-08-03 (cont.) - DMZ schema + pipeline design CLOSED (Fable round 3) - ready to build
 
 1. prints_type = CHECK constraint NOT lookup table: "blocks inserts until altered" IS
