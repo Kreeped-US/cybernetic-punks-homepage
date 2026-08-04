@@ -45,6 +45,39 @@ remain.
 
 ---
 
+## 2026-08-04 - Build-generator A1 started: build_pages schema built + verified; seed BLOCKED on a goal-mapping design decision
+
+Started A1 of the build-generator overhaul (permalinks foundation). SHIPPED: the
+build_pages table, built + fully verified (operator DDL). Schema: bigint IDENTITY PK,
+permalink identity (shell_slug/weapon_slug/playstyle - note weapon_slug NULLABLE in the
+finalized DDL = canonical/no-pinned-weapon representation, NOT the pre-final all-NOT-NULL
+draft), is_indexable boolean (demand-bound flag, boolean per the poi_type lesson - not a
+CHECK'd enum), updated_at + set_updated_at trigger, RLS ENABLE + public-read policy
+(crawlable pages, anon-readable confirmed). SEO generated-at-render, not stored (lean
+schema). Verified: columns, PK, UNIQUE(identity), trigger, RLS+policy - all confirmed via
+catalog. Matches the DMZ-schema house pattern.
+
+SEED BLOCKED (correctly, caught with an empty table) on a real design decision:
+- The 8 shell canonicals map to (shell, primary-goal, weapon_slug=NULL) per doc A2.1.
+  But the doc specifies the CONCEPT (meta-primary goal) not the per-shell VALUES, and the
+  store doesn't encode them cleanly: role/recommended_playstyle are FREE TEXT that don't
+  map 1:1 to the 4-goal enum (aggressive/extraction/survival/mobility). Only 2 of 8 are
+  unambiguous (destroyer->aggressive, thief->extraction); Recon fits NO goal cleanly;
+  Vandal splits mobility/aggressive; forcing the mapping gives a lopsided survival x4
+  cluster - a sign it's a content decision, not a mechanical derivation.
+- DEEPER QUESTION (option b): should the shell canonical be GOAL-PINNED at all, or
+  GOAL-NEUTRAL (the shell's build hub, goal user-chosen)? Recon-fits-nothing and Vandal-
+  splits suggest goal-neutral might be right - but that's an enum/route design tweak.
+- These slugs become PERMANENT URLs (recon-survival etc.), so getting the goal mapping
+  right BEFORE seeding matters - a wrong seed = wrong canonical URLs.
+
+NEXT SESSION (A1 continued): (1) resolve the goal-mapping design decision - likely a
+Fable pass on "goal-pinned vs goal-neutral canonicals, and if pinned, each shell's
+primary goal given the store free-text doesn't map cleanly to the 4-goal enum"; (2) then
+the grounded 8-row seed; (3) then the SSR/ISR route (/tools/build/[shell]/[goal]) +
+build_json generation (source_updated_at = MAX store updated_at) + the regeneration hook.
+Design doc: docs/build-generator-overhaul-phase1.md. build_pages schema is live + verified.
+
 ## 2026-08-04 - Build-generator overhaul Phase 1 designed + Fable-blessed (the highest-leverage DMZ-vs-rush tool)
 
 Diagnosed + designed the build-generator overhaul. FINDING (GSC data): tools massively
