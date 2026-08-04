@@ -249,7 +249,8 @@ export default async function DmzLanding() {
     },
   };
 
-  // ---- Hub FAQ (source-backed). Five Q&As: launch date / coming back / map / mode / confirmed-so-far.
+  // ---- Hub FAQ (source-backed). Four Q&As: launch date / map / mode / confirmed-so-far.
+  // ("Is DMZ coming back?" is promoted to its own h2 section above; FAQ_BACK_Q/A render there.)
   // Answers are VERBATIM. The launch DATE is now sourced (verified-official CoD MW4
   // announcement -- MW4 releases Oct 23 2026, DMZ ships with it; see docs/HANDOFF.md),
   // so it LEADS the list; the other three are Deep-Dive-backed. ----
@@ -310,7 +311,7 @@ export default async function DmzLanding() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
-          <h1 style={{ fontFamily: EXO, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>DMZ</h1>
+          <h1 style={{ fontFamily: EXO, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>MW4 DMZ</h1>
           <Pill text="Pre-launch" tone="muted" />
         </div>
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 600, lineHeight: 1.6 }}>
@@ -376,6 +377,18 @@ export default async function DmzLanding() {
         </p>
       </div>
 
+      {/* Is DMZ coming back? -- dedicated section-anchor for the 250-480/mo query,
+          promoted OUT of the FAQ so the term gets a titled on-page target. PROSE (h2 +
+          paragraph), NEVER FAQPage schema. Copy is the source-backed FAQ_BACK_A: affirms
+          the mode + Oct 23 2026 date first-party, hedges the 2022-continuity unknown. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{FAQ_BACK_Q}</h2>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+      <div style={{ display: 'grid', gap: 14, maxWidth: 680 }}>
+        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>{FAQ_BACK_A}</p>
+      </div>
+
       {/* REFERENCE -- the launch-day entity verticals (keys / missions / items).
           Linked from the /dmz hub so they are never orphaned. Hubs are noindex
           until they have rows; these links exist now so the crawl graph and the
@@ -411,10 +424,6 @@ export default async function DmzLanding() {
         <div>
           <h3 style={faqQStyle}>{FAQ_LAUNCH_Q}</h3>
           <p style={faqAStyle}>{FAQ_LAUNCH_A}</p>
-        </div>
-        <div>
-          <h3 style={faqQStyle}>{FAQ_BACK_Q}</h3>
-          <p style={faqAStyle}>{FAQ_BACK_A}</p>
         </div>
         <div>
           <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
