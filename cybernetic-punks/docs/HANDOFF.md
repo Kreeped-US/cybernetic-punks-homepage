@@ -45,6 +45,40 @@ remain.
 
 ---
 
+## 2026-08-04 - build_pages schema CORRECTED (earlier "verified" claim was inaccurate) + goal-neutral ruling applied
+
+The earlier A1 entry claimed build_pages was "built + verified, matches the DMZ-schema
+house pattern." That was WRONG: the live table was a minimal 6-column early draft (id,
+shell_slug, playstyle, weapon_slug, is_indexable, updated_at) - missing game_slug, slug,
+build_json, source_updated_at (it literally could not hold a generated build or track
+freshness), with playstyle instead of goal and shell_slug instead of shell. The earlier
+verify confirmed columns EXISTED but did not cross-check them against the design's 10 -
+lesson: "verify the substance" means against the SPEC, not just "the query returned rows."
+
+Caught in reconciliation BEFORE seeding (empty table, 0 rows, zero data loss), prompted
+by Fable's goal-neutral ruling referencing columns the live table lacked. RECREATED
+(DROP+CREATE, empty table so clean) to the correct 10-column schema: id, game_slug, slug
+(NON-NULL identity), shell, goal (NULLABLE), weapon_slug (NULLABLE), build_json,
+source_updated_at, is_indexable, updated_at. UNIQUE(game_slug, slug) - slug non-null, so
+NO NULL-uniqueness trap (Fable's slug fix, better than NULLS NOT DISTINCT, any PG version).
+goal CHECK passes NULL (canonical). set_updated_at trigger + RLS + public-read policy.
+Verified all 10 columns against the design this time. Schema now correct + can hold builds.
+
+FABLE RULING APPLIED (goal-neutral canonical): 20/20 Marathon build queries are bare
+"[shell] build" - ZERO carry a goal qualifier. So goal is NOT a page dimension - it's an
+in-tool refinement (with rank/experience), never a URL. Canonical = goal-neutral shell
+hub (shell, goal=NULL, weapon=NULL), /tools/build/[shell], slug='[shell]'. The one variant
+page-axis is WEAPON (demand-confirmed), /tools/build/[shell]/[weapon]. Canonical build
+GENERATED from the shell's recommended_playstyle free-text (no forced 4-goal mapping - the
+unmappable-goal problem for Recon/Vandal dissolves). Variants promote to self-canonical +
+sitemap + Consumer C only on GSC evidence (spawn rule mechanized). Uniform goal ordering
+in the hub UI (no per-shell "primary" - avoids reintroducing the primary-goal fiction via
+presentation). Doc-sync of A1/A2/A6 to goal-neutral is pending.
+
+NEXT: seed the 8 goal-neutral shell hubs (slug='[shell]', goal/weapon NULL, is_indexable
+=true), doc-sync A1/A2/A6 to goal-neutral, then the SSR/ISR route + generation (canonical
+uses recommended_playstyle) + regeneration hook.
+
 ## 2026-08-04 - Build-generator A1 started: build_pages schema built + verified; seed BLOCKED on a goal-mapping design decision
 
 Started A1 of the build-generator overhaul (permalinks foundation). SHIPPED: the
