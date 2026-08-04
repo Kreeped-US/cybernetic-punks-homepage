@@ -45,6 +45,44 @@ remain.
 
 ---
 
+## 2026-08-04 - Corroboration shell-health disposition closed + R2 validated full-run
+
+Ran a fresh corroboration baseline on shell base_health now that R2 (52ea958) + the
+updated_at trigger/seed shipped this session. R2 VALIDATED across the full set: all 7
+CONTRADICTED base_health findings (16 articles) read store-fresher -> fix-article,
+store_verified=true (the Aug-3 seed's updated_at correctly wins over all articles via
+MAX(updated_at, patch)) - the full-run confirmation, not just the one before/after.
+
+Of 16 shell-health articles: 15 already noindexed (2 freshly Aug-3 at 21:27:04, 13
+long-standing crawl-hygiene at the 2026-01-01 placeholder). The gap HANDOFF left open
+(were the 2 prior shell-health noindexes applied?) is CLOSED - yes, confirmed via
+noindexed_at stamps. Net-new actionable: ONE live article - how-to-beat-thief...ba3j
+(CIPHER).
+
+DISPOSITION: NOINDEXED (not patched), noindexed_at 2026-08-04T19:19:25. Judgment call
+recorded: the article's THESIS ("Thief sacrifices durability, 90 HP fragile") is
+FALSIFIED by verified data (all 8 shells uniform 120 base_health - Thief isn't HP-
+fragile). Step 0 also caught that a naive "110->120" patch would break the article
+(110 = the composite HP+shield total, not base_health; the base claim is "90 HP", and
+store verifies base_health=120 only, shield still null). The wrong stat is LOAD-BEARING
+to the premise, so this FAILS the Tier-3 "trivial stat in a valuable guide" test (which
+kept 13 guides this morning) - the opposite case: a guide on a now-false premise. A
+number-patch would have left a coherently-wrong article (false thesis + unverified
+shield/total), optimizing for the checker over truth. Noindex is the honest call - also
+a counter-guide in the cannibalization cluster (low loss). is_published stays true; the
+noindex flip did NOT bump updated_at (operational, excluded from the content trigger -
+Gap 3 separation confirmed live).
+
+LESSON (for the DMZ gate): the corroboration system flags a NUMBER, but the honest
+disposition depends on whether the number is TRIVIAL (fix, keep guide) or LOAD-BEARING
+to a now-false thesis (the guide itself is wrong -> noindex/rewrite). The gate flags
+mechanically; a human judges trivial-vs-load-bearing. Directly informs the pre-publish
+gate's CONTRADICTED handling - the gate holds, a human dispositions.
+
+Corroboration cleanup CLOSED: shell-health resolved (1 noindex), R2 validated full-run,
+BR33 corroborates (R1), 17 unverified-store findings remain the in-game backlog,
+extraction noise dismissed.
+
 ## 2026-08-04 - Pre-publish gate PHASE 1 shipped: Marathon log-only (validates the mechanism)
 
 Shipped Phase 1 of the pre-publish gate (ae5ada4) - the extractor-on-draft mechanism,
