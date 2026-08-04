@@ -45,6 +45,42 @@ remain.
 
 ---
 
+## 2026-08-04 - DUPLICATE-SUPPRESSED tuple-audit CLOSED (extinction-bound, one-time)
+
+Ran the banked Fable-designed DUPLICATE-SUPPRESSED tuple-audit (one-time, extinction-
+bound - the dedup guard makes new same-tuple dups impossible at generation, Marathon
+frozen, DMZ runs the guard day-one; NOT a standing detector). Right-sized to the data:
+target set was 8 URLs (GSC crawled-not-indexed, gsc_url_inspection.coverage_state,
+latest-per-URL) - a hand-disposition via a read-only survey, NOT a subsystem. Zero
+literal GSC "Duplicate" verdicts (confirmed the label = the crawled-not-indexed
+cluster, per design). Content-read each candidate before dispositioning.
+
+DISPOSITION (all 8):
+- #1 Thief salvage-hunter (fquc): already noindexed (prior).
+- SET A - 6 noindex (DB UPDATE, noindexed_at 19:56:29): #6 Assassin active-camo (WSTR-
+  SHOTGUN build vs the survivor's KNIFE build - different weapon system, no faithful
+  merge target), #8 Vandal amplify-engine (advanced ranked engine vs the survivor's
+  beginner fundamentals - different depth/audience), #5 wstr-shotgun-news (no survivor),
+  #2 solo-extraction (thin/stale), #3 S2-nerfs (dated news), #4 destiny-2-death-throws
+  (ephemeral news).
+- SET B - 1 merge-redirect (4023dea + source-noindex dlcf, noindexed_at 19:58:48):
+  #7 Rook survivalist - TRUE near-dup (same survivalist build: Signal Mask +
+  Recuperation, avoid-fights accumulation), 308-redirect into survivor z5m0 + source
+  noindex, matching the BR33 convention.
+
+KEY LESSON: the tuple clusters by entity+facet, NOT specific build - so 2 of 3
+mechanical "merge candidates" (#6, #8) were DIFFERENT builds sharing shell+facet.
+Reading the content caught it; a mechanical tuple-follow would have wrongly redirected
+readers to different-build guides. THIRD confirmation today (Thief stat trivial-vs-load-
+bearing, Assassin different-weapon, Vandal different-audience) that detectors flag
+CANDIDATES but humans read content and DECIDE ("signal briefs, never decides") - the
+core lesson for the DMZ pre-publish gate's CONTRADICTED handling: the gate holds, a
+human dispositions.
+
+Audit CLOSED - extinction-bound, never recurs. Marathon legacy dup backlog fully
+dispositioned. Option A (Marathon cleanup) complete: corroboration disposition (R2
+validated full-run, 1 shell-health noindex) + this tuple-audit both done.
+
 ## 2026-08-04 - Corroboration shell-health disposition closed + R2 validated full-run
 
 Ran a fresh corroboration baseline on shell base_health now that R2 (52ea958) + the
