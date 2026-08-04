@@ -262,8 +262,8 @@ export const DMZ_ARTICLE_SEO = {
     ],
   },
   'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals': {
-    title: 'MW4 DMZ Hajin Exclusion Zone: Setting, Loop, and Map',
-    description: 'Inside MW4 DMZ\'s Hajin Exclusion Zone: the setting, the secure-and-extract loop, dynamic weather, and the map\'s key regions, per the official Deep Dive.',
+    title: 'MW4 DMZ Korea Map: Hajin Exclusion Zone Guide',
+    description: 'MW4 DMZ\'s Korea map, the Hajin Exclusion Zone: the setting, the secure-and-extract loop, dynamic weather, and the map\'s key regions, per the Deep Dive.',
     keyFacts: [
       'The MW4 Hajin map is a post-Modern Warfare 4 exclusion zone on the Korean peninsula.',
       'The core loop: secure abandoned tech before rival forces, then extract.',
