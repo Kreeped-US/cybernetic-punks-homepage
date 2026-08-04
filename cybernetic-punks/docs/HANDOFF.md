@@ -45,6 +45,55 @@ remain.
 
 ---
 
+## 2026-08-04 - Fable confirms revised demand priority + resolves launch-hub provenance + novel-systems hedge
+
+Fable pass on the Mangools-revised priority order (recipes-first -> launch-intent +
+map/setting first). CONFIRMED the revision, with two sharpenings that change the build:
+
+1. "LAUNCH-INTENT FIRST" REFRAMED - not a news operation, an optimization of EXISTING
+   head canonicals. The trap (rumor-beat news chasing speculation, losing to IGN/
+   CharlieIntel on authority, evaporating post-launch) is a content SHAPE the order
+   does NOT require. The launch-intent cluster is served by the small evergreen head
+   set that MOSTLY ALREADY EXISTS - the /dmz hub, live+aging since July; the doctrine's
+   original Phase 1 named these exact queries. So "first" = complete + strengthen the
+   live hub vs the ramping query list: add the "is DMZ coming back" page (250-480/mo,
+   answerable ENTIRELY first-party from the interview), tighten titles to the ramping
+   phrasings (mw4 dmz etc.), interlink hard. Days of work on existing pages catching
+   the biggest wave on the board, during the window big outlets are quiet (they
+   saturate announcement + launch week; the long middle is thin - the aging play).
+   Timing is arithmetic: 5400/mo climbing = every un-optimized week is the largest
+   forfeited demand in reach.
+
+2. NEWS-VS-MOAT TENSION RESOLVED - launch-hub content is OFFICIALLY-ANNOUNCED FACTS,
+   not speculation. Release date, platforms, what DMZ is, how systems work = first-
+   party statements with citable URLs. RULE: launch-hub carries only officially-
+   announced facts, gated by structured citation (every claim traces to an official
+   context item, A5 chain); speculation/leaks/rumor EXCLUDED outright (not hedged, not
+   attributed, not published). Two verifiers under one provenance model: entity content
+   = store-corroborated (pre-publish gate); launch/system canonicals = official-source-
+   cited (citation system); content qualifying for neither doesn't ship. The moat's
+   promise was never "only game-verified stats" - it's "every claim traces to a source
+   that could actually know," and Activision announcing its own release date qualifies.
+
+3. NOVEL-SYSTEMS HEDGE (the important qualifier on the demotion) - the proxy is
+   STRUCTURALLY BLIND to novel systems. Old DMZ had barter, no 3D printer, no Boss
+   Board, no Lieutenant hunt - the proxy CANNOT see launch demand for systems the 2022
+   game didn't have. So recipes + Lieutenants may OUT-DEMAND their proxy numbers at
+   launch (exactly the systems Activision promotes hardest first-party). The demotion
+   is to POSITION not unreadiness: canonical-ready-but-not-lead, with an EXPLICIT
+   RE-RANK against launch-week GSC when first-party query data takes over (A7 - real
+   queries grade the forecast). Schema built-and-waiting is the right posture for
+   demand the proxy couldn't measure.
+
+CONFIRMED BUILD ORDER: (1) strengthen existing /dmz head canonicals vs ramping launch-
+intent query list [officially-cited] -> (2) map/setting (Korea/Hajin, partially built,
+durable, korea-map revived) -> (3) Lieutenants/bosses + missions [novel-systems hedge:
+re-rank at launch] -> (4) recipes ready-but-not-lead -> (5) mechanics/beginner evergreen.
+Third closed-ruling-revised-on-data this week (prints_type, priority order, now
+confirmed-with-hedge) - the recalibration clause running at the planning layer.
+
+---
+
 ## 2026-08-04 - Mangools demand analysis: recipes-as-keys hypothesis TESTED, priority order REVISED on data
 
 Ran the DMZ keyword demand analysis (Mangools/kwfinder exports, old-DMZ 2022-23 as
