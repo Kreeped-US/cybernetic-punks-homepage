@@ -45,6 +45,34 @@ remain.
 
 ---
 
+## 2026-08-04 - Map/setting (step 2) - dmz korea map captured on the Hajin canonical
+
+Executed step 2 (map/setting cluster). Audit found the cluster MORE built than the hub:
+indexed Hajin article + indexed POIs hub, all under A2 cap, A1-clean; Hajin/exclusion-
+zone/mw4-hajin terms already covered. The ONE gap: dmz korea map (1000-1100/mo) had no
+title target - "Korea" was in body prose only, uncaptured because the term was believed
+DEAD until overturned this session. Fixed (50f5674): Hajin article title -> "MW4 DMZ
+Korea Map: Hajin Exclusion Zone Guide" (captures the overturned term near-exact, keeps
+all igniting Hajin terms + MW4 DMZ, drops only non-ranking framing, 45 ch) + description
+front-loads "Korea map" (151 ch). Body already carried "Korean peninsula" (no change).
+No headline change (DB, site-wide ripples, marginal). The direct payoff of the korea-map
+overturn: first-party evidence overturned DEAD -> demand map reconciled -> term captured,
+one session.
+
+POI-name queries (dmz casino etc.) correctly DEFERRED: 9 POI detail pages built but
+noindexed (verified=false honesty gate) - launch-week verify->index play, schema ready-
+and-waiting, not pre-launch work. Lower-value remainder: the bare "dmz map" ownership
+question (split Hajin article/POIs hub) - optional later.
+
+BUILD ORDER STATE: steps 1 (launch-intent) + 2 (map/setting) DONE - the two ungated
+ownable-now clusters captured. Steps 3-5 correctly launch-gated/deferred: Lieutenants/
+missions (novel-systems hedge, re-rank at launch-week GSC), recipes (ready-but-not-lead,
+schema built), mechanics (evergreen, lower priority). Pre-launch buildable content work
+essentially COMPLETE - as Fable predicted: mostly-already-built + surgical polish (two
+edits: hub h1/section ef4d109, korea-map title 50f5674).
+
+---
+
 ## 2026-08-04 - Launch-hub optimization (step 1 of confirmed build order) - /dmz hub strengthened
 
 Executed step 1 (strengthen existing /dmz head canonicals vs ramping launch-intent
