@@ -45,6 +45,42 @@ remain.
 
 ---
 
+## 2026-08-04 - GSC/Mangools pipeline audit + fixes: ingest healthy, editor-path dormant-by-design, 2 flags closed
+
+Audited the GSC + Mangools -> editor data pipeline (is it functioning?). Findings:
+- GSC INGEST: healthy. All 3 tables (gsc_query_metrics, gsc_page_metrics,
+  gsc_url_inspection) populating; pulls ran today (status:ok); the "08-01 max date" is
+  GSC's inherent ~3-day lag, not staleness. 5 months continuous.
+- GSC -> EDITOR: wired + closed loop (GSC -> review list -> Accept prefills
+  keyword_targets -> frameHeadline reads at generation), but COLD (0 reframes ever) -
+  DORMANT BY DESIGN: generation is frozen (NEXUS patch-only, tier-facet), so the
+  enrichment path is starved and the one target was facet-mismatched. NOT broken - it's
+  DMZ-launch infrastructure that warms up when DMZ generation is live. For frozen
+  Marathon the real GSC->content loop is HUMAN (review -> operator optimizes canonicals
+  by hand - exercised today: launch-hub + korea-map optimizations).
+- MANGOOLS: not a pipeline - manual by design (CSV export -> hand analysis -> demand
+  map doc -> human steering; zero code references). Correct for occasional demand
+  research; automating not warranted now.
+
+FIXES (2 genuine flags):
+- FLAG 1 (dead-active-row invariant, 7bb86c8 + operator DDL): an accepted candidate
+  could be is_active=true with a null tuple (permanently unmatchable dead weight; page-
+  gap null-tuple rows are intentionally allowed but shouldn't be active). Fixed 3 ways:
+  active_needs_full_tuple CHECK (DDL), validator readable-reason mirror (slug_needs_type
+  pattern), prefill is_active:false on accept. Deactivated the one bad row (marathon
+  sentinel - bare-entity query pos 13/8 impr, wants the entity page not a reframe ->
+  dropped). Page-gap rows stay first-class but inactive.
+- FLAG 4 (stats cron parity, 594b879): /api/cron/stats lacked the CRON_SECRET guard +
+  used the SERVICE_KEY||ANON_KEY fallback its siblings dropped. Confirmed live_stats is
+  RLS-on with ONLY a public SELECT policy (no anon write policy) -> the fallback was a
+  LATENT silent-write-failure, masked only by prod having the service key set. Brought
+  to sibling parity (GET(req) + CRON_SECRET guard + service-key-only, abort on missing).
+
+BANKED (not built, per scope): FLAG 5 - GSC pull failures (quota/API/consumer bug) are
+fully silent (Resend alert covers generation only; inspection auth-streak detector is a
+table flag not an email). Add a heartbeat on gsc_pull_log status:error before DMZ launch
+(when GSC matters more). Moot now (pulls status:ok).
+
 ## 2026-08-04 - DUPLICATE-SUPPRESSED tuple-audit CLOSED (extinction-bound, one-time)
 
 Ran the banked Fable-designed DUPLICATE-SUPPRESSED tuple-audit (one-time, extinction-
