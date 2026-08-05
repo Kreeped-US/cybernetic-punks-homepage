@@ -160,7 +160,7 @@ State -> URL:
   free/premium seam — see B2.)
 - Fixes the Step 0 bug: "copy link" copies the per-build permalink, not generic `/advisor`.
 
-### A5. Rendering + freshness — static WITH a store-keyed regeneration hook (Fable sharpening 2, moat-critical)
+### A5. Rendering + freshness — static WITH a store-keyed regeneration POLLER (Fable sharpening 2 + A5 ruling 2026-08-05, moat-critical)
 
 Static generation for crawlability is correct ONLY WITH a regeneration hook keyed to the
 store's `updated_at`. Serving stale verified stats is a moat violation — the build pages'
@@ -174,26 +174,61 @@ Mechanism:
   `revalidate` window serves stale VERIFIED stats after a patch until the timer expires — a
   moat violation, since the pages' whole value is carrying current verified data; and (2)
   it WASTES paid advisor calls regenerating builds whose store inputs never changed.
-- **Store-change snapshot.** Each persisted build row carries `source_updated_at` = the
-  MAX(`updated_at`) of the `shell_stats` / `weapon_stats` / (and mods/cores/implants/
-  cradle rows) it was built from. This is the same MAX-recency pattern as the
-  corroboration R2 seniority work.
-- **On-demand revalidation triggered by store change.** A store-change detector (a
-  Supabase DB webhook on the entity tables, or a step in the existing cron) finds entity
-  rows whose `updated_at` moved since the last build refresh. For each affected combo it
-  (a) re-runs the pre-generation (re-calls the advisor engine -> fresh `build_json`,
-  new `source_updated_at`), then (b) calls Next.js on-demand revalidation
-  (`revalidatePath('/tools/build/...')` / `revalidateTag`) so the static page rebuilds
-  with fresh data. The updated_at trigger shipped this session is exactly the signal this
-  hook consumes.
+- **Store-change snapshot.** Each build row carries `source_updated_at` = MAX(`updated_at`)
+  over the FIVE timestamped context tables it was built from: `shell_stats`, `weapon_stats`,
+  `mod_stats`, `core_stats`, `implant_stats`. (`cradle_nodes` has no `updated_at` column ->
+  excluded; `meta_tiers` is NOT a context table -- `generateBuild` never reads it, so tier
+  changes never make a build stale.) Same MAX-recency pattern as the corroboration R2
+  seniority work.
+- **POLLER, not a write-hook (Fable A5 ruling, 2026-08-05).** Store writes come from TWO
+  sources: the app (the DEXTER gather pipeline, `lib/gather/dexter-stats.js`, updates
+  shell/weapon/core/implant rows) AND operator-run SQL (e.g. the 1.1.5.2 `weapon_stats`
+  writes). Operator-SQL has NO app code path, so a write-triggered hook CANNOT catch it --
+  a poller is the only UNIVERSAL mechanism. A cron re-runs `fetchAdvisorContext(shell)`
+  (which already returns the current `sourceUpdatedAt` = MAX over that shell's actually
+  -loaded rows), compares it to the stored `source_updated_at`, and for each stale build:
+  re-runs `generateBuild` (the shared core) -> writes fresh `build_json` +
+  `source_updated_at` + `used_sources` (below) -> calls `revalidatePath('/tools/build/[shell]')`
+  so Next serves the fresh static page. This is the FIRST `revalidatePath` use in the
+  codebase; on-demand revalidation busts the `revalidate:false` static cache regardless of
+  the revalidate setting. The cron mirrors the fail-safe `CRON_SECRET` Bearer guard the
+  other crons use (`app/api/cron/stats/route.js`).
+- **REGENERATE-ALL stale, not precise-per-row (Fable A5 ruling).** `source_updated_at` is
+  MAX over the WHOLE loaded context, so any store change marks every build sharing that
+  context stale -> regenerate all stale builds. Deliberately SIMPLE over precise:
+  simple-and-EXERCISED beats precise-and-DORMANT. Marathon is frozen, so a precise
+  "which build cites which row" regen path would be untested-BY-CONSTRUCTION -- its bugs
+  would first surface at DMZ launch under load. 8 cheap regen calls on a rare Marathon patch
+  keeps the running pattern exercised. (Precise per-row staleness is the DMZ-scale follow-on;
+  the `used_sources` capture below is exactly the data it will consume.)
+- **CAPTURE USED-SOURCES AT GENERATION -- the origin rule, MANDATORY now (Fable A5 ruling,
+  2026-08-05).** Derivation facts are recordable ONLY at derivation: `generateBuild` knows
+  its exact input rows ONLY while reading them. Not captured = permanently unknowable inputs,
+  recoverable only by a paid regeneration -- the 159-null origin-loss trap in tool form (3rd
+  appearance of the rule: capture-at-origin or lose it forever). So `generateBuild` records
+  not just the MAX of its input set but the set's IDENTITIES: `build_pages.used_sources` =
+  a jsonb array of CLOSED-SHAPE `(entity_type, slug)` tuples, the shape documented in a
+  COLUMN COMMENT (the `notable_features` contract pattern). `generateBuild` already iterates
+  the exact rows to compute MAX(updated_at) -- write the set's identities on the same pass.
+- **Three consumers of `used_sources` (two immediate, one eventual).** (1) ON-PAGE
+  VERIFICATION STAMPS -- "derived from N verified rows, current as of patch X": the moat
+  rendered AS UI. (2) BLAST-RADIUS QUERIES -- a corrected store row -> which builds cite it
+  (corroboration-fix propagation, now answerable). (3) DMZ PRECISE STALENESS -- mark stale
+  only builds citing a changed row, the cost control regenerate-all trades away at Marathon
+  scale. jsonb NOW; promotion to a join table is a mechanical migration when DMZ makes it
+  query-load-bearing -- and the data already exists, because it was captured at origin.
 - **Baseline `revalidate: false`** — freshness comes from the store hook, not a clock. A
   deliberately LONG fallback window is acceptable only as a dead-hook backstop, never as
   the freshness mechanism (a short window would reintroduce both failure modes above). The
   route ships its revalidate strategy shaped for on-demand FROM DAY ONE, even though the A5
   store-`updated_at` hook itself lands as a follow-on slice.
-- **Staleness query.** The refresh job selects builds where any source entity's
-  `updated_at` > `build.source_updated_at` -> that build is stale -> regen. Derive-don't-
-  store: a store fix propagates to its dependent build pages on the next refresh pass.
+- **Cost-gated + relaxed cadence.** Regeneration is a paid Claude call per build, so the
+  poller regenerates ONLY builds where `source_updated_at < current MAX` -- the check itself
+  is cheap DB reads (ZERO Claude calls when nothing changed), so it runs often at near-zero
+  idle cost and pays only on real staleness. Cadence is tunable and relaxed (frozen Marathon
+  rarely fires it): a daily step in the existing cron, a dedicated few-hourly cron, or tied
+  to the cron's patch-detection so builds refresh right after a patch lands. Derive-don't-
+  store: a store fix propagates to its dependent build pages on the next poll.
 
 For frozen Marathon this is moot (the store is not changing), but the mechanism must be
 built correctly now because it is what makes DMZ's live-data build pages correct once DMZ
