@@ -41,7 +41,7 @@ import { containsWholeWord } from './franchiseMarkers.js';
 // 1.1.5 = 2026-07-21, marathon.js:242). The map extends as more patch/season dates are established;
 // the seniority flip lights up incrementally. Store patch_verified values not in the map ->
 // seniority indeterminate.
-export const PATCH_DATES = { '1.1.0': '2026-06-02', 'S2': '2026-06-02', '1.1.5': '2026-07-21' };
+export const PATCH_DATES = { '1.1.0': '2026-06-02', 'S2': '2026-06-02', '1.1.5': '2026-07-21', '1.1.5.2': '2026-08-04' };
 
 // The CLOSED disposition set. The human picks; the batch only SUGGESTS one of these (never 'dismiss'
 // -- dismissal is a human judgement, not a machine suggestion).
