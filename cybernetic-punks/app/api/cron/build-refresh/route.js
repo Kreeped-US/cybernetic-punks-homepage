@@ -81,8 +81,8 @@ export async function GET(req) {
   }
 
   const { data: builds, error: qErr } = await supabase.from('build_pages')
-    .select('slug, source_updated_at')
-    .eq('game_slug', GAME).is('goal', null).is('weapon_slug', null).eq('is_indexable', true)
+    .select('slug, shell, weapon_slug, source_updated_at')
+    .eq('game_slug', GAME).is('goal', null).eq('is_indexable', true)   // canonicals AND weapon variants (A2)
     .order('slug');
   if (qErr) {
     console.error('[build-refresh] build_pages query failed: ' + qErr.message);
@@ -112,9 +112,11 @@ export async function GET(req) {
         errors.push({ slug: b.slug, reason: res.reason });
         continue;
       }
-      revalidatePath('/tools/build/' + b.slug);   // on-demand -> busts the revalidate:false static cache
+      // canonical URL = /tools/build/[shell]; weapon variant = /tools/build/[shell]/[weapon_slug].
+      const path = b.weapon_slug ? '/tools/build/' + b.shell + '/' + b.weapon_slug : '/tools/build/' + b.shell;
+      revalidatePath(path);   // on-demand -> busts the revalidate:false static cache
       console.log('[build-refresh] refreshed ' + b.slug + ' (used_sources='
-        + (Array.isArray(res.usedSources) ? res.usedSources.length : '?') + ') + revalidated /tools/build/' + b.slug);
+        + (Array.isArray(res.usedSources) ? res.usedSources.length : '?') + ') + revalidated ' + path);
       refreshed.push(b.slug);
     } catch (e) {
       console.error('[build-refresh] ' + b.slug + ' threw: ' + (e && e.message));

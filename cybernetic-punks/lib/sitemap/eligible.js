@@ -136,9 +136,13 @@ export async function computeEligible() {
   // lastmod = updated_at -- the freshness stamp the A5 regeneration hook bumps on regen.
   try {
     const { data: builds } = await supabase.from('build_pages')
-      .select('slug, updated_at').eq('game_slug', M).is('goal', null).is('weapon_slug', null)
+      .select('slug, shell, weapon_slug, updated_at').eq('game_slug', M).is('goal', null)
       .eq('is_indexable', true).not('build_json', 'is', null).order('slug');
-    (builds || []).forEach((b) => add(BASE + '/tools/build/' + b.slug, M, 'build', lm(b.updated_at), 'weekly', 0.8));
+    // Canonical hub -> /tools/build/[shell]; weapon variant (A2) -> /tools/build/[shell]/[weapon].
+    (builds || []).forEach((b) => {
+      const url = b.weapon_slug ? BASE + '/tools/build/' + b.shell + '/' + b.weapon_slug : BASE + '/tools/build/' + b.shell;
+      add(url, M, 'build', lm(b.updated_at), 'weekly', 0.8);
+    });
   } catch (err) { console.error('[sitemap] build_pages fetch threw:', err); }
 
   // ── MAPS (verified marathon only; type='map') ──────────────────────────────
