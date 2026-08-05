@@ -244,6 +244,44 @@ crawlable discovery — is gate-able later:
 
 ---
 
+## DMZ Premium Tier — Candidate Features (evaluate from usage; do NOT build yet)
+
+STATUS: Everything is FREE now (`override_all_free=true`). This section banks candidate
+premium features to EVALUATE from real usage data later (Phase 5-6, alongside the
+popularity system) — NOT a committed spec, NOT to build now. The free tool must prove
+itself first.
+
+GUARDRAILS (non-negotiable, protect the moat):
+- **Free stays GENUINELY EXCELLENT.** Premium adds depth/personalization that is real
+  ADDITIONAL value — never basics artificially withheld from free. Crippling free to sell
+  premium would tank SEO (the base pages must rank), trust ("no hype, just intel"), and
+  the acquisition flywheel.
+- **The base build pages (the SEO engine) stay free-forever-crawlable regardless.**
+- **Premium ranks/uses VERIFIED builds; it never bypasses verification** (popularity !=
+  correctness).
+- **Design premium FROM usage data** (what people actually use/want), not speculation.
+
+CANDIDATE features (to evaluate, not commit):
+- **Personalization/persistence:** save/track builds (loadout library), build
+  history/evolution, personalized recommendations from saved builds + playstyle.
+- **Depth/interactivity:** advanced tuning (fine-grained mod optimization beyond the
+  canonical), multi-build comparison (side-by-side), live regeneration with the user's
+  constraints (the existing `advisor_generate` paid call).
+- **Data/intelligence (the DMZ-specific moat premium):** popularity/meta intelligence
+  ("X% at your rank run this", trends), and the STANDOUT — **PATCH-IMPACT-ON-YOUR-BUILDS**
+  ("the latest patch changed these weapons in your saved builds"). This last one uses the
+  verified store + patch-tracking (`patch_verified`, e.g. today's 1.1.5.2 work) + the
+  user's saved builds — three things the mass-AI content flood fundamentally cannot
+  replicate. Strong defensible premium candidate.
+
+WHY LATER: premature gating kills the free flywheel; the premium spec should crystallize
+from real usage + the popularity system (Phase 5-6), not be guessed now. "Improve the DMZ
+free version" and "build toward premium" are the SAME work now — premium is "more of the
+good thing," so making the free tool genuinely excellent IS the path to a compelling
+premium tier.
+
+---
+
 ## PART C — scope
 
 In-place EVOLUTION, not a rebuild. The engine (`/api/advisor` — verified-store context,
