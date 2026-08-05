@@ -45,6 +45,45 @@ remain.
 
 ---
 
+## 2026-08-05 - A2 reframed as demand-EXPERIMENT + cradle-strengthen + variant infra shipped
+
+A2 (weapon-variant build pages) - the Step 0 found ~nil weapon-variant GSC demand on
+Marathon, but the operator correctly identified the CONFOUND: no pages ever existed (the
+tool was orphaned), so no-pages -> no-impressions != no-demand (measurement-absence, not
+demand-absence). So A2 was reframed (Fable-ruled) from speculative build to a demand-
+EXPERIMENT: build the instrument, index it, read it.
+
+FABLE RULING (doc 7ee0e1b): INDEX the test set (indexing IS the measurement instrument;
+noindex-until-demand is circular). PRE-REGISTERED both directions (what makes it a test
+not a ratchet): Consumer C enrollment at publish (30-day indexation), promotion threshold
+set BEFORE data (reuse the house constant NEAR_MISS_IMPRESSION_FLOOR=10 / 28-day window),
+and a PRE-COMMITTED SUNSET (fail-threshold variant reverts to canonical-tagged-to-hub,
+reversible; exits 30/90/180-day). SIX variants signal-ranked across 6 shells (test the
+axis not a shell), each distinctness-checked vs its hub. FLOOR VALUE: even demand-null
+ships the validated variant infra = the DMZ blueprint. The 8 hubs are demand SENSORS
+(sense the ~200 unseeded combos). CRADLE BUILD = strengthen the canonical (biggest real
+signal ~8impr), NOT a weapon variant.
+
+SHIPPED:
+- WS2 cradle-strengthen (463335d): the ~8-impr "cradle build" signal gets an on-canonical
+  target - all 8 hubs carry a real "{Shell} Cradle Build - Season 2 Stat Plan" H2 + #cradle
+  anchor, internal-linked from /advisor + /cradle. Zero new pages.
+- WS1a variant infra (47b1e4d): the DMZ blueprint - nested /tools/build/[shell]/[weapon]
+  route, poller/sitemap/regenerateCanonical widened to weapon_slug rows ADDITIVELY
+  (canonicals verified unbroken). Zero variants seeded - pure infra, testable empty. Clean
+  reversible slug identity ([shell]-[weapon_slug]). A2 title <=60 (longest 46).
+
+THE 6 VARIANTS (operator-decided, game-knowledge over confounded GSC): assassin-knife,
+destroyer-v85-circuit-breaker, sentinel-kkv-9sd, vandal-v22-volt-thrower, thief-brrt-smg,
+recon-longshot. First 3 signal/affinity-backed, meta 3 operator's call. Each subject to
+the distinctness check at generation (drop/replace any that come out ~= its hub).
+
+NEXT: WS1b (seed + generate the 6, distinctness-checked, dry-run first), WS1d (index +
+Consumer C + the pre-registered >=10/28d promotion + 180-day sunset machinery). Then slice
+B (live-refinement). The A2 experiment is: build the instrument (done - infra), seed a
+disciplined test set (WS1b), read real first-party demand (the confound resolved by pages
+that can finally accrue impressions).
+
 ## 2026-08-05 - A5 COMPLETE + validated: build-page freshness (provenance capture + poller), both paths proven
 
 A5 (on-demand freshness for the build pages) is complete and validated end-to-end.
