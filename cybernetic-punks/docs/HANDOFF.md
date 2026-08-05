@@ -45,6 +45,21 @@ remain.
 
 ---
 
+## 2026-08-05 - A5 piece 1 (cited used_sources capture) shipped; backfill + poller remain
+
+A5 (on-demand freshness for the build pages). Piece 1 done: generateBuild captures CITED
+used_sources ({type,name} tuples build_json references) at generation - the origin rule
+(derivation facts recordable only at derivation; loaded set = 225 breaks all 3 consumers,
+cited ~16 is correct). Cross-check caught + fixed a 7-of-16 silent under-capture (rarity-
+suffix normalization). used_sources jsonb column + real cited-set COMMENT contract set
+(operator DDL). POST 192/192 preserved. Committed fd73ea6.
+REMAINING: (2) backfill regen the 8 existing builds to capture their cited used_sources
+(8 paid calls - they're currently null); (3) verify populated; (4) the poller cron (stale-
+detect via source_updated_at < MAX context updated_at -> regenerate-all-stale -> revalidatePath,
+cost-gated, relaxed cadence). Doc still says {entity_type,slug}/loaded - fold {type,name}/
+cited on next doc touch. Design: regenerate-all behavior (simple+exercised beats precise+
+dormant); precision is a future mechanical migration on the cited data.
+
 ## 2026-08-05 - Build-generator A1 route slice SHIPPED: the tool is now DISCOVERABLE (the overhaul's core payoff)
 
 Shipped the A1 route slice (a74b3e1) - the 8 stored goal-neutral canonical builds are now
