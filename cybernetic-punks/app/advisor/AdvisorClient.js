@@ -175,7 +175,7 @@ function SectionHeader({ num, label, sub }) {
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
-export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
+export default function AdvisorClient({ urlShell, profilePrefill, shells, initialBuild }) {
   // Shells are DB-driven via prop; fall back to the static list if empty.
   var SHELLS = (shells && shells.length) ? shells : FALLBACK_SHELLS;
 
@@ -200,8 +200,12 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells }) {
   var [teamSize, setTeamSize] = useState('Solo');
   var [priority, setPriority] = useState('combat');
   var [experienceLevel, setExperienceLevel] = useState('learning');
-  var [phase, setPhase] = useState('input');
-  var [build, setBuild] = useState(null);
+  // initialBuild (route slice A): seed the result view with a STORED build so a canonical
+  // page renders server-side with NO advisor call. Default (undefined) -> input phase, i.e.
+  // the /advisor tool is byte-identical to before. Refinement wiring is slice B; this only
+  // holds the initial build. Nothing auto-generates on mount either way.
+  var [phase, setPhase] = useState(initialBuild ? 'result' : 'input');
+  var [build, setBuild] = useState(initialBuild || null);
   var [error, setError] = useState(null);
   var [scanStep, setScanStep] = useState(0);
   var [scanProgress, setScanProgress] = useState(0);

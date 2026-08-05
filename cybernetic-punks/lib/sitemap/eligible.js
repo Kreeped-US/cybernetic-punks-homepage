@@ -128,6 +128,19 @@ export async function computeEligible() {
     (uniques || []).filter((u) => u.slug).forEach((u) => add(BASE + '/uniques/' + u.slug, M, 'unique', lm(u.updated_at), 'weekly', 0.75));
   } catch (err) { console.error('[sitemap] unique fetch threw:', err); }
 
+  // ── BUILD PAGES (goal-neutral canonicals; type='build') ─────────────────────
+  // The /tools/build/[shell] canonical build pages (route slice A1). Only INDEXABLE +
+  // GENERATED rows (is_indexable=true AND build_json present) -- the same serving predicate
+  // the route 404s on. type='build' is marathon non-intel, so it lands in the entities
+  // child automatically (partition keys on intel-vs-not; no partition change needed).
+  // lastmod = updated_at -- the freshness stamp the A5 regeneration hook bumps on regen.
+  try {
+    const { data: builds } = await supabase.from('build_pages')
+      .select('slug, updated_at').eq('game_slug', M).is('goal', null).is('weapon_slug', null)
+      .eq('is_indexable', true).not('build_json', 'is', null).order('slug');
+    (builds || []).forEach((b) => add(BASE + '/tools/build/' + b.slug, M, 'build', lm(b.updated_at), 'weekly', 0.8));
+  } catch (err) { console.error('[sitemap] build_pages fetch threw:', err); }
+
   // ── MAPS (verified marathon only; type='map') ──────────────────────────────
   try {
     const { data: maps } = await supabase.from('game_maps').select('slug, updated_at').eq('game_slug', M).eq('verified', true).order('slug');

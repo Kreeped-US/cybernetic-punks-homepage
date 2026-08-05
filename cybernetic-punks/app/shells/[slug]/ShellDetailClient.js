@@ -185,13 +185,24 @@ export default function ShellDetailClient({
 
               {/* Primary CTAs */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link href={'/advisor?shell=' + slug} style={{
+                {/* Canonical build page (route slice A1) -- the primary CTA + the internal
+                    link that makes /tools/build/[shell] discoverable, not orphaned. */}
+                <Link href={'/tools/build/' + slug} style={{
                   padding: '11px 20px',
                   background: color, color: color === '#ffd700' || color === '#00d4ff' || color === '#ff8800' || color === '#00ff88' ? '#000' : '#fff',
                   fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2,
                   textDecoration: 'none',
                 }}>
-                  BUILD A {shellName.toUpperCase()} LOADOUT →
+                  BEST {shellName.toUpperCase()} BUILD →
+                </Link>
+                <Link href={'/advisor?shell=' + slug} style={{
+                  padding: '11px 20px',
+                  background: 'transparent', border: '1px solid #22252e',
+                  color: 'rgba(255,255,255,0.5)',
+                  fontSize: 11, fontWeight: 700, letterSpacing: 1, borderRadius: 2,
+                  textDecoration: 'none',
+                }}>
+                  CUSTOM BUILD →
                 </Link>
                 <Link href="/meta" style={{
                   padding: '11px 20px',

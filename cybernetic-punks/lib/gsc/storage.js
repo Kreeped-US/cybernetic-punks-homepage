@@ -58,9 +58,11 @@ const GAME_ROUTE_PREFIXES = {
     '', 'about', 'admin', 'advisor', 'builds', 'cradle', 'creators', 'editors',
     'factions', 'guides', 'intel', 'join', 'leaderboard', 'maps', 'marathon',
     'matchups', 'me', 'meta', 'modes', 'mods', 'player-count', 'profile-preview',
-    'ranked', 'rising', 'shells', 'sitrep', 'stats', 'status', 'u', 'uniques',
+    'ranked', 'rising', 'shells', 'sitrep', 'stats', 'status', 'tools', 'u', 'uniques',
     'weapons', 'welcome',
   ],
+  // 'tools' = the /tools/build/[shell] build pages (route slice A1). Marathon today; a DMZ
+  // build tool would namespace under /dmz to keep this first-segment scheme unambiguous.
 };
 
 // Reverse index: first path segment -> game. Built once.

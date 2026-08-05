@@ -824,8 +824,13 @@ export default async function BuildsPage() {
                         )}
                       </div>
 
+                      {/* Canonical build page (route slice A1). Every shell has one, so this
+                          is unconditional -- the nav -> /builds -> canonical discovery path. */}
+                      <Link href={'/tools/build/' + shell.name.toLowerCase()} style={{ display: 'block', marginTop: 10, paddingTop: 8, borderTop: '1px solid ' + BORDER, fontFamily: 'monospace', fontSize: 9, color: color, letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
+                        BEST {shell.name.toUpperCase()} BUILD →
+                      </Link>
                       {articleCount > 0 && (
-                        <Link href={'#builds-' + shell.name.toLowerCase()} style={{ display: 'inline-block', marginTop: 10, paddingTop: 8, borderTop: '1px solid ' + BORDER, fontFamily: 'monospace', fontSize: 8, color: ORANGE, letterSpacing: 1, textDecoration: 'none', fontWeight: 700, width: '100%' }}>
+                        <Link href={'#builds-' + shell.name.toLowerCase()} style={{ display: 'inline-block', marginTop: 8, fontFamily: 'monospace', fontSize: 8, color: ORANGE, letterSpacing: 1, textDecoration: 'none', fontWeight: 700, width: '100%' }}>
                           {articleCount} BUILD GUIDE{articleCount !== 1 ? 'S' : ''} →
                         </Link>
                       )}
