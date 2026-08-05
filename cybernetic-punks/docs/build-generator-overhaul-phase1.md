@@ -64,6 +64,37 @@ combination** — the indexable set is tied to real query demand, not mechanical
 Possibility-bounding (ranked_viable + fit matrix + top-K) would still mint ~110-130
 pages, most with no searcher; that is thin-content dilution wearing a quality mask.
 
+**A2-AS-EXPERIMENT RULING (Fable, 2026-08-05) — the GSC no-demand signal is CONFOUNDED.**
+The A2 Step-0 GSC pull found near-zero weapon-variant demand (knife / melee / sxs at 1
+impression each; the biggest qualifier, "cradle build" ~8, is a TOPIC not a weapon). But
+that is MEASUREMENT-ABSENCE, not demand-absence: no variant page has ever existed, so none
+could earn an impression -- absence of the instrument, not of the demand. So A2 is a
+DEMAND-TEST, not a speculative build: construct the instrument (variant infra + a small
+seed) and READ it. This REFINES "demand-bounded": it means "index WITH a measurement plan
+and an exit," NOT "index nothing unproven."
+- **INDEX THE TEST SET (the crux).** Indexing IS the measurement instrument. noindex-until-
+  demand is CIRCULAR -- a page that cannot rank cannot earn the evidence that would justify
+  indexing it. The seed is NOT thin by construction: each is a verified-data build that
+  passes the Phase-1 distinctness rule vs its hub. `is_indexable = true` on the test set.
+- **PRE-REGISTERED BOTH DIRECTIONS (what makes it a test, not a ratchet).** Enroll each
+  variant in Consumer C at publish (30-day indexation check). The PROMOTION threshold is set
+  BEFORE the data and REUSES the house constant -- `NEAR_MISS_IMPRESSION_FLOOR = 10` over
+  `NEAR_MISS_WINDOW_DAYS = 28` (lib/gsc/nearMiss.js): >=10 impressions over the trailing 28
+  days -> kept/promoted. And a PRE-COMMITTED SUNSET: a variant that fails reverts to
+  canonical-tagged-to-hub (`rel=canonical` -> `/tools/build/[shell]`); the URL stays
+  resolvable, fully reversible. Exits: 30-day indexation, 90-day review, 180-day sunset for
+  ~zero-impression variants.
+- **SIX VARIANTS, signal-ranked** (existing GSC whisper > meta-prominence > Mangools
+  tiebreaker), SPREAD across 3-4+ shells (testing the AXIS, not one shell), each passing the
+  Phase-1 distinctness rule vs its hub.
+- **FLOOR VALUE.** Even a demand-null result ships the validated variant INFRASTRUCTURE
+  (nested route, poller/sitemap widening, promotion + sunset machinery) = the DMZ blueprint.
+  Marathon answers "does the pattern work"; demand data is upside.
+- **THE HUBS ARE DEMAND SENSORS.** A hub ranking weakly for an unseeded combo ("knife build"
+  landing on `/tools/build/assassin`) whose query crosses the constant is spawn evidence for
+  THAT variant -- the 8 hubs sense the other ~200 combos WITHOUT seeding them. The
+  self-expanding derivation reads the hubs, never a speculative permutation.
+
 The valid set is therefore:
 
 1. **DEMAND SPINE (always indexable): the 8 goal-neutral `[shell]` build canonicals.**
@@ -112,6 +143,15 @@ only with proven intent.
 **DMZ note.** DMZ has no pre-launch GSC history, so seed `build_demand` from the Mangools
 demand map (the recipes/loadout demand analysis) plus launch-week GSC — same mechanism,
 different seed.
+
+**CRADLE BUILD = STRENGTHEN THE CANONICAL, NOT A VARIANT (separate workstream, Fable
+2026-08-05).** The ~8-impression "cradle build" signal is a TOPIC the canonical already
+covers (every hub renders a Cradle Stat Plan). The fix is ON-CANONICAL, ZERO new pages:
+surface the query language in a real H2, add an anchor target on the Cradle Stat Plan
+section, and internal-link from `/advisor`'s Cradle Stat Plan + `/cradle`. A2's page-axis
+stays WEAPON-ONLY. WATCH (the flapping-detector case): "cradle build" is shell-agnostic
+demand landing on 8 hubs; if strengthen-in-place cannot rank AND the demand persists,
+escalate to ONE dedicated Cradle topic canonical LATER (outside A2) — never a weapon variant.
 
 Hub-and-spoke: each canonical links to its demand-confirmed weapon spokes (internal-link
 density + crawl paths); variants are self-canonical, cross-linked to siblings + parent.
