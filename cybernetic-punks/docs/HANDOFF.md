@@ -45,6 +45,48 @@ remain.
 
 ---
 
+## 2026-08-05 - Patch 1.1.5.2 store update + the gate's first live test (a systematic blind spot)
+
+Yesterday's Nexus article on patch 1.1.5.2 triggered a store-freshness check that became
+the pre-publish gate's FIRST live test - and it found a systematic blind spot, exactly
+what Phase-1 log-only exists to surface.
+
+THE GATE'S FIRST LIVE DATAPOINT (important, shapes Phase 2): the log-only gate ran on the
+1.1.5.2 article and logged 0 findings - but that was BLINDNESS, not agreement. It
+extracted ZERO checkable claims because the extractor grammar can't parse PATCH-DELTA
+phrasing ("damage rebase to 9", "magazine bump from 23 to 28", "from X to Y"), decimals
+(12.6/14.4 vs integer regex), or velocity/precision/tier (no extractor/column). So the
+most freshness-critical article type - patch notes - is the classifier's systematic blind
+spot, and it produced a FALSE ALL-CLEAR over a genuinely stale store. R2 is exonerated
+(it never fired because nothing was extracted; traced manually it would have ruled
+correctly). PHASE 2 PREREQUISITE (now known): patch-delta extractor grammar (from-X-to-Y,
+decimals, velocity/precision extractors, tier awareness) must land before holding is
+armed - the log-only proving ground did its job.
+
+PRIMARY-SOURCE VERIFICATION (the moat discipline working): the Nexus article MIS-ATTRIBUTED
+several 1.1.5 changes to 1.1.5.2. Checking Bungie's actual notes (bungie.net, browser-
+rendered) split the claims: only TWO stats are genuinely new in 1.1.5.2 - V22 damage
+(12.6->14.4) and KKV magazine (23->28). The velocity/acq-delay/KKV-damage/KKV-precision
+changes were all 1.1.5, and the store already held them correctly - updating from the
+article would have MIS-STAMPED provenance on correct values. Bonus: the primary check
+surfaced a stale V22 fire_rate (507->540, 1.1.5) the article didn't mention.
+
+STORE UPDATES (primary-source-verified, operator-run):
+- weapon_stats.damage widened integer->numeric (ALTER) so 14.4 doesn't truncate.
+- V22 Volt Thrower: damage 18->14.4 (1.1.5.2), fire_rate 507->540 (1.1.5), patch_verified
+  ->1.1.5.2, verified STAYS false (only 2 fields Bungie-confirmed; verified_source states
+  exactly which, rest is unverified March tauceti import - A5 honesty, no over-claim).
+- KKV-9SD: magazine_size 23->28 (1.1.5.2), patch_verified ->1.1.5.2; damage(9)/precision
+  (1.29) untouched (already correct from 1.1.5).
+- meta_tiers: V22 B->A, KKV B->A (trend=up) - EDITORIAL ratify (my call, not a Bungie
+  stat; patch justifies the analysis, tier is our layer).
+- PATCH_DATES: added '1.1.5.2':'2026-08-04' (71c4652) so R2 resolves the new tag.
+
+LESSON: verify against the PRIMARY source, not the generated article - the article
+conflated two patches; reading Bungie's notes kept correct provenance intact and caught
+a bonus stale field. And the gate's blind spot (patch-delta phrasing) is now Phase 2's
+known prerequisite.
+
 ## 2026-08-04 - build_pages seeded: 8 goal-neutral shell hubs (A1 foundation complete with data)
 
 Seeded the 8 goal-neutral shell canonicals into the corrected build_pages schema (INSERT
