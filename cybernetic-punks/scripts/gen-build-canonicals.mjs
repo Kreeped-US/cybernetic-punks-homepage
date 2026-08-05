@@ -77,7 +77,7 @@ for (const row of rows) {
   if (!playstyle) { console.log('  SKIP ' + shellName + ': shell_stats.recommended_playstyle is empty'); failed++; continue; }
 
   try {
-    const { build, sourceUpdatedAt } = await generateBuild({
+    const { build, sourceUpdatedAt, usedSources } = await generateBuild({
       shell: shellName,
       playstyle,                 // FULL trusted store text, control-char-stripped, no length cap
       priority: 'balanced',      // GOAL-NEUTRAL -- no pinned goal bucket (Fable's ruling)
@@ -89,7 +89,8 @@ for (const row of rows) {
 
     const prim = build && build.primary_weapon ? build.primary_weapon.name : '?';
     console.log('\n  [' + shellName + '] "' + (build.build_name || '?') + '"  grade=' + (build.loadout_grade || '?')
-      + '  primary=' + prim + '  source_updated_at=' + sourceUpdatedAt);
+      + '  primary=' + prim + '  source_updated_at=' + sourceUpdatedAt
+      + '  used_sources=' + (Array.isArray(usedSources) ? usedSources.length : 'null'));
 
     if (DRY) {
       // Verbose review dump (--dry only): full picks so the operator can vet each build
@@ -111,7 +112,7 @@ for (const row of rows) {
     }
 
     const { error: wErr } = await supa.from('build_pages')
-      .update({ build_json: build, source_updated_at: sourceUpdatedAt })   // jsonb -> pass object, no stringify
+      .update({ build_json: build, source_updated_at: sourceUpdatedAt, used_sources: usedSources })   // jsonb -> pass objects, no stringify
       .eq('game_slug', GAME).eq('slug', row.slug);
     if (wErr) { console.log('    WRITE FAIL ' + row.slug + ': ' + wErr.message); failed++; }
     else { console.log('    WROTE ' + row.slug); ok++; }

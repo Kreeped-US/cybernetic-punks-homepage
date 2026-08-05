@@ -53,6 +53,55 @@ function maxUpdatedAt(...rowGroups) {
   return maxIso;
 }
 
+// LOADED CANDIDATE set (A5): the { type, name } identities of every row loaded into the
+// context -- the same set maxUpdatedAt takes the MAX over (five timestamped tables;
+// cradle_nodes excluded). This is the CANDIDATE pool; generateBuild narrows it to the CITED
+// rows via citedSources() before persisting. Closed-shape { type, name } tuples, de-duped;
+// `name` is the stable key these tables share and the value build_json cites.
+function collectLoadedSources(groups) {
+  const out = [];
+  const seen = new Set();
+  for (const g of groups) {
+    for (const r of (g.rows || [])) {
+      const name = r && r.name;
+      if (!name) continue;
+      const key = g.type + '|' + name;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ type: g.type, name: name });
+    }
+  }
+  return out;
+}
+
+// CITED set (A5 origin capture -- the persisted `used_sources`): of the loaded candidate
+// rows, keep ONLY those the resulting build_json actually references -- the rows the build
+// DERIVES FROM, which is what all three consumers need (verification stamp "derived from N
+// rows", blast-radius "which builds cite a corrected row", DMZ precise-staleness). The
+// post-generation intersection: match loaded rows by { type, name } against the entities
+// build_json names (shell, primary/secondary weapon, mods, cores, implants). A build_json
+// name that is NOT a loaded row (a hallucinated / mismatched name) is dropped -- only
+// genuinely-loaded, cited store rows survive.
+export function citedSources(loadedSources, build) {
+  // build_json appends a rarity parenthetical to mod/implant names ("Cloudborn (Standard)",
+  // "Energy Harvesting V4 (Superior)") that the store `name` column lacks ("Cloudborn"),
+  // because the context renders "<name> (<rarity>)". Strip ONE trailing "(...)" so the
+  // intersection matches the canonical store name. No-op for names without it (weapons,
+  // cores, shell already emit bare), applied to BOTH sides for symmetry.
+  const norm = (s) => String(s || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+  const cited = new Set();
+  const add = (type, name) => { const n = norm(name); if (n) cited.add(type + '|' + n); };
+  if (build) {
+    add('shell', build.shell);
+    if (build.primary_weapon) add('weapon', build.primary_weapon.name);
+    if (build.secondary_weapon) add('weapon', build.secondary_weapon.name);
+    (build.mods || []).forEach((m) => add('mod', m && m.name));
+    (build.cores || []).forEach((c) => add('core', c && c.name));
+    (build.implants || []).forEach((i) => add('implant', i && i.name));
+  }
+  return (loadedSources || []).filter((s) => cited.has(s.type + '|' + norm(s.name)));
+}
+
 // Returns { context, sourceUpdatedAt }. The `context` string is byte-identical to the
 // pre-extraction builder (the added `updated_at` selects are never rendered into it); it
 // only powers the freshness stamp.
@@ -227,15 +276,18 @@ export async function fetchAdvisorContext(shell) {
 
   // Freshness stamp: MAX(updated_at) over the loaded rows from the five timestamped tables.
   // cradle_nodes is deliberately absent (no updated_at column -- see maxUpdatedAt note).
-  const sourceUpdatedAt = maxUpdatedAt(
-    shellRes.data ? [shellRes.data] : [],
-    modsRes.data,
-    coresRes.data,
-    implantsRes.data,
-    weaponsRes.data
-  );
+  const sourceGroups = [
+    { type: 'shell', rows: shellRes.data ? [shellRes.data] : [] },
+    { type: 'mod', rows: modsRes.data },
+    { type: 'core', rows: coresRes.data },
+    { type: 'implant', rows: implantsRes.data },
+    { type: 'weapon', rows: weaponsRes.data },
+  ];
+  const sourceUpdatedAt = maxUpdatedAt(...sourceGroups.map((g) => g.rows));
+  // The loaded CANDIDATE identities; generateBuild narrows to the CITED rows (A5 origin rule).
+  const loadedSources = collectLoadedSources(sourceGroups);
 
-  return { context, sourceUpdatedAt };
+  return { context, sourceUpdatedAt, loadedSources };
 }
 
 export function buildAdvisorPrompt(shell, playstyle, rankTarget, weaponPreference, teamSize, priority, experienceLevel, context) {
@@ -340,7 +392,7 @@ Return ONLY valid JSON — no markdown, no explanation:
 // propagates. Callers own defaulting and sanitization -- this forwards inputs as given.
 export async function generateBuild(opts) {
   const o = opts || {};
-  const { context, sourceUpdatedAt } = await fetchAdvisorContext(o.shell);
+  const { context, sourceUpdatedAt, loadedSources } = await fetchAdvisorContext(o.shell);
   const prompt = buildAdvisorPrompt(
     o.shell,
     o.playstyle,
@@ -373,5 +425,7 @@ export async function generateBuild(opts) {
     throw e;
   }
 
-  return { build, sourceUpdatedAt };
+  // CITED capture: of the loaded candidate rows, keep only those this build_json references.
+  const usedSources = citedSources(loadedSources, build);
+  return { build, sourceUpdatedAt, usedSources };
 }
