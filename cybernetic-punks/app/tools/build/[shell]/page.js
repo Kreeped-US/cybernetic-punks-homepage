@@ -8,7 +8,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import BuildView from './BuildView';
+import BuildRefiner from './BuildRefiner';
 
 export const revalidate = false;      // static; on-demand revalidation is the A5 slice
 export const dynamicParams = false;   // unknown [shell] -> 404 (only generateStaticParams shells)
@@ -146,7 +146,10 @@ export default async function BuildPage({ params }) {
         </div>
       </section>
 
-      <BuildView build={build} accent={accent} />
+      {/* Slice B: BuildRefiner mounts over the SSR canonical. On first paint it renders
+          BuildView with the canonical build_json (crawlable); it fires ZERO advisor calls on
+          load -- refinement is gesture-bound only. */}
+      <BuildRefiner canonicalBuild={build} accent={accent} />
     </>
   );
 }

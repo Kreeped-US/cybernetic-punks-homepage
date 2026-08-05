@@ -1,10 +1,16 @@
+'use client';
 // app/tools/build/[shell]/BuildView.js
-// STATIC build-view (Fable route ruling, render/generate separation). A SERVER component
-// -- no 'use client', no state, no fetch -- so it STRUCTURALLY cannot fire the paid advisor
-// call. It renders a stored `build_json` (the shape the advisor engine returns) as a clean,
-// complete, crawlable presentation. Crawlers and first-paint read persisted data only; the
-// live advisor is never touched here. The interactive refinement layer (AdvisorClient with
-// initialBuild) is a separate slice; this component is the free-forever crawlable surface.
+// PRESENTATIONAL build-view (Fable route ruling, render/generate separation). A pure display
+// component -- NO state, NO fetch, NO effect, NO paid-call code path -- that renders a
+// `build_json` (the shape the advisor engine returns) as a clean, crawlable presentation.
+//
+// 'use client' (Slice B): so the SAME renderer can display BOTH the SSR canonical build AND a
+// client-side REFINED build (BuildRefiner swaps its `build` prop). This does NOT weaken the
+// crawlability or no-paid-call guarantees:
+//   - CRAWLABLE: a client component still SERVER-renders on first paint, so the canonical
+//     build_json is in the initial HTML for crawlers (BuildRefiner seeds it with the SSR build).
+//   - NO PAID CALL: this component has no fetch/effect -- it cannot reach the advisor. The
+//     ONLY paid path is BuildRefiner.refine(), bound to an explicit click (never on mount).
 
 import Link from 'next/link';
 

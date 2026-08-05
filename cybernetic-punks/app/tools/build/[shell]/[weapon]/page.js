@@ -13,7 +13,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import BuildView from '../BuildView';
+import BuildRefiner from '../BuildRefiner';
 import { weaponNameForSlug } from '@/lib/advisor/regenerateCanonical';
 
 export const revalidate = false;      // static; the A5 poller does on-demand freshness
@@ -162,7 +162,10 @@ export default async function VariantBuildPage({ params }) {
         </div>
       </section>
 
-      <BuildView build={build} accent={accent} />
+      {/* Slice B: BuildRefiner mounts over the SSR canonical variant. First paint renders
+          BuildView with the stored build_json (crawlable); ZERO advisor calls on load --
+          refinement is gesture-bound only. */}
+      <BuildRefiner canonicalBuild={build} accent={accent} />
     </>
   );
 }
