@@ -45,6 +45,44 @@ remain.
 
 ---
 
+## 2026-08-05 - Build-generator A1 route slice SHIPPED: the tool is now DISCOVERABLE (the overhaul's core payoff)
+
+Shipped the A1 route slice (a74b3e1) - the 8 stored goal-neutral canonical builds are now
+DISCOVERABLE INDEXABLE PAGES at /tools/build/[shell], closing the orphaning problem the
+whole overhaul exists to fix (the original tool earned near-nothing because it was
+client-state, invisible to search, near-zero internal links).
+
+BUILT (per Fable's route rulings): a static build-view component SSRs the stored
+build_json - ZERO paid API calls, structurally (crawlers cannot fire the advisor; the SSR
+component has no path to the generate logic). AdvisorClient refactored to accept
+initialBuild without auto-generating (the live /advisor flow preserved - verified). Route
+/tools/build/[shell]: generateStaticParams (8 shells), 404 unknown/non-indexable,
+generateMetadata leading with the "[shell] build" RANKING TERM (title = "[Shell] Build —
+Marathon Season 2"; all 8 titles 30-35 chars, comfortably A2 <=60 - NO over-cap occurred;
+build_name is NOT in the title, it lives in the BUILD REPORT card, so the title stays
+ranking-term-led; H1 = "Best Marathon [Shell] Build — Season 2 Loadout"), A1 clean
+(BreadcrumbList + WebPage only, no FAQPage). gameSlugForUrl registered for /tools/build/
+(unknown-prefix-fails-loudly). Sitemap child + internal links from the 8 shell pages + the
+/builds hub - so the pages ship DISCOVERABLE, not orphaned (the whole point). Static +
+revalidate:false (on-demand freshness = the A5 hook, follow-on).
+
+END-TO-END VERIFIED (served the prod build, not just compiled): assassin/vandal/recon
+serve 200 with the build name, primary/secondary weapons, mods/cores/cradle, and
+dexter_analysis all server-rendered + the A2 title in <head>; /tools/build/nonexistent
+returns a real HTTP 404 (dynamicParams:false, not a soft 200); a shell page's "BEST
+[SHELL] BUILD ->" link clicks through and lands on the right canonical.
+
+Fable's three route rulings (recorded bedbfed): render/generate separation (no-paid-call-
+on-SSR), on-demand NOT time-based revalidation (time-based serves stale verified stats
+post-patch = moat violation + wastes paid calls), refinement-boundary = the free/premium
+seam (free canonical SSR pages; premium-later = unlimited live refinement).
+
+A1 STATE: schema -> seed -> doc-sync -> generation -> ROUTE (this slice) all DONE. The
+tool is LIVE and DISCOVERABLE. STILL OPEN: A5 on-demand regen hook (freshness; moot while
+Marathon frozen, mandatory before DMZ live data), slice B (live-refinement interactivity),
+then A2 (weapon-variant long-tail). The Marathon fix VALIDATES the pattern for the DMZ
+build tool (the real target - discovery baked in from day one).
+
 ## 2026-08-05 - Build-generator A1 generation slice COMPLETE: 8 goal-neutral canonicals generated + written
 
 Completed the A1 generation slice. Extracted the advisor generative core to
