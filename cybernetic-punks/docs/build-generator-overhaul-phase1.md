@@ -2,6 +2,10 @@
 
 Status: DESIGN, reviewed by Fable. Ready to build on approval. Do not build ahead of the operator's go.
 
+**Updated 2026-08-04:** incorporates Fable's goal-neutral canonical ruling and the recreated
+10-column `build_pages` schema (see A1 / A2 / A6 and the RESOLVED section at the end). A1's 8
+goal-neutral shell hubs are seeded; canonical `build_json` generation + the SSR/ISR route are next.
+
 ## Why (Step 0 findings, condensed)
 
 The `/advisor` build generator is store-wired and high quality (verified `shell_stats` /
@@ -24,20 +28,34 @@ reused as-is. This is an in-place evolution, not a rebuild.
 
 ## PART A — per-build permalinks
 
-### A1. URL structure — two tiers; rank/experience are NOT segments
+### A1. URL structure — goal-neutral canonical; goal/rank/experience are NOT segments
+
+**Goal-neutral ruling (Fable, 2026-08-04): goal is NOT a page dimension.** 20/20 Marathon
+build queries are bare "[shell] build" — ZERO carry a goal qualifier — so goal joins
+rank/experience as an in-tool refinement, never a URL.
 
 ```
-/tools/build/[shell]/[goal]                 CANONICAL spine
-/tools/build/[shell]/[goal]/[weapon]        weapon long-tail (demand-gated, see A2)
+/tools/build/[shell]                        CANONICAL — goal-neutral shell hub
+/tools/build/[shell]/[weapon]               weapon long-tail (demand-promoted, see A2)
 ```
 
-- `goal` slug = friendly label over the `priority` enum: `aggressive` (combat) /
-  `extraction` / `survival` / `mobility` (speed). Internal slug<->enum map.
-- **`rankTarget` (7) and `experienceLevel` (4) are refinements, NOT URL segments.** They
-  ride as query params (`?rank=gold&exp=veteran`) that trigger a live regen and
-  `rel=canonical` back to the base page. Without this, the space is 8x4x7x4 = 896
-  near-duplicate pages — the article-over-production mistake. With it, rank/experience
-  never mint indexable URLs.
+- The canonical is the shell's build HUB: one page per shell, `(shell, goal=NULL,
+  weapon_slug=NULL)`, `slug = '[shell]'`. Its build is GENERATED from the shell's
+  `recommended_playstyle` free-text — no forced 4-goal mapping (so Recon's fits-no-goal
+  and Vandal's mobility/aggressive split dissolve).
+- **The ONE variant page-axis is WEAPON** (`/tools/build/[shell]/[weapon]`), promoted to
+  its own indexable page only on GSC demand evidence (A2).
+- **`goal` (4), `rankTarget` (7) and `experienceLevel` (4) are in-tool refinements, NOT
+  URL segments.** They ride as query params (`?goal=aggressive&rank=gold&exp=veteran`)
+  that trigger a live regen and `rel=canonical` back to the base page. Without this the
+  space is 8x4x7x4 = 896 near-duplicate pages — the article-over-production mistake. With
+  it, none of the three ever mint indexable URLs.
+- **Register `/tools/build/` in `gameSlugForUrl`** — the unknown-prefix-fails-loudly rule:
+  a new URL prefix must be registered or resolution errors rather than silently
+  mis-attributing the game.
+- **Uniform goal ordering in the hub UI** — the in-tool goal selector shows the same goal
+  order for every shell (no per-shell "primary"), so the primary-goal fiction is not
+  reintroduced through presentation.
 
 ### A2. Combination bounds — DEMAND-BOUNDED, not possibility-bounded (Fable sharpening 1)
 
@@ -48,46 +66,48 @@ pages, most with no searcher; that is thin-content dilution wearing a quality ma
 
 The valid set is therefore:
 
-1. **DEMAND SPINE (always indexable): the 8 `[shell]` build canonicals.** Every shell has
-   plausible "marathon [shell] build" intent; low risk, full coverage. These anchor the
-   engine even before GSC data accrues. Their `goal` defaults to the shell's meta-primary
-   goal; other goals are variants (below), not separate spine pages. In the built schema a
-   spine row is a `build_pages` row with `is_indexable = true` and `weapon_slug = NULL`
-   (NULL weapon = canonical; the tool picks the best weapon). [The per-shell primary-goal
-   VALUES are an OPEN decision -- see "OPEN: canonical goal mapping -- for Fable" at the end.]
+1. **DEMAND SPINE (always indexable): the 8 goal-neutral `[shell]` build canonicals.**
+   Every shell has plausible "marathon [shell] build" intent; low risk, full coverage.
+   These anchor the engine even before GSC data accrues. A spine row is a `build_pages`
+   row with `slug = '[shell]'`, `goal = NULL`, `weapon_slug = NULL` (NULL goal = the hub,
+   goal chosen in-tool; NULL weapon = canonical, the tool picks the best weapon) and
+   `is_indexable = true`. **Seeded 2026-08-04: all 8 rows present** (assassin, destroyer,
+   recon, rook, sentinel, thief, triage, vandal); `build_json` / `source_updated_at` are
+   NULL pending the canonical generation slice.
 
-2. **DEMAND-CONFIRMED VARIANTS (goal- and weapon-qualified): only where a real query maps
-   to the combination.** Determined by a `build_demand` derivation:
+2. **DEMAND-CONFIRMED VARIANTS (WEAPON-qualified): only where a real query maps to the
+   (shell, weapon) combination.** Goal is no longer a page axis — the one variant axis is
+   weapon. Determined by a `build_demand` derivation:
    - **Primary signal — existing GSC query data.** Read `gsc_query_metrics`, filter
      build-intent queries (the `/\bbuild|loadout\b/` family already surfaced: "marathon
      vandal build", "marathon sentinel build", "rook loadout", "vandal cradle build",
-     ...). Parse each into a `(shell, goal?, weapon?)` tuple: reuse `deriveTuple` + vocab
-     for the shell entity + `build` facet, add weapon-name matching against `weapon_stats`
-     for the weapon token, and map any goal words to the enum. A combo with >=1 matching
-     query = demand-confirmed -> indexable.
+     ...). Parse each into a `(shell, weapon?)` tuple: reuse `deriveTuple` + vocab for the
+     shell entity + `build` facet, add weapon-name matching against `weapon_stats` for the
+     weapon token. (Any goal words map to the in-tool refinement, never a page.) A query
+     naming a shell + weapon = demand-confirmed -> that weapon promotes to its own
+     indexable page.
    - **Bounded expansion (because frozen-Marathon GSC demand is tiny).** Pure GSC would
-     yield only a handful today. Expand CONSERVATIVELY and mechanically: a
-     goal/weapon variant is also admitted if it is meta-prominent in the store (weapon is
-     `ranked_viable` AND S/A-tier in `meta_tiers`, or the goal is the shell's
-     ranked-primary) AND it passes the fit filter below. This is a small, store-grounded
-     halo around confirmed demand — never the full permutation space.
+     yield only a handful today. Expand CONSERVATIVELY and mechanically: a weapon variant
+     is also admitted if the weapon is meta-prominent in the store (`ranked_viable` AND
+     S/A-tier in `meta_tiers`) AND it passes the fit filter below. This is a small,
+     store-grounded halo around confirmed demand — never the full permutation space.
    - **Quality filter (applies on top of demand, never instead of it).** A demand-
-     confirmed or expansion combo must ALSO be mechanically sane: `weapon.ranked_viable =
-     true`; the weapon fits the goal's range/ammo profile (aggressive -> close-mid
-     high-DPS; survival -> mid-long; mobility -> compact fast-handling; extraction ->
-     balanced mid); not contradictory with the shell kit. Demand gates; fit prunes.
-   - **Thin guard.** Never pad. If a (shell, goal) has no confirmed/expansion weapon, it
-     ships as the canonical page only, with no weapon spokes.
+     confirmed or expansion weapon must ALSO be mechanically sane for the shell:
+     `weapon.ranked_viable = true`; the weapon fits the shell's `recommended_playstyle`
+     profile (range / ammo / handling); not contradictory with the shell kit. Demand
+     gates; fit prunes.
+   - **Thin guard.** Never pad. A shell hub with no confirmed/expansion weapon ships as the
+     goal-neutral canonical page only, with no weapon spokes.
 
-3. **Everything else 404s** (or 301s to the canonical `/tools/build/[shell]/[goal]`). A
-   combination not in the pre-computed demand set does not exist as a page — same
+3. **Everything else 404s** (or 301s to the goal-neutral canonical `/tools/build/[shell]`).
+   A combination not in the pre-computed demand set does not exist as a page — same
    discipline as the DUPLICATE-SUPPRESSED audit.
 
 **Self-expanding by construction.** The `build_demand` derivation re-runs on a schedule
-(cron): as GSC accrues new build queries, the demand set grows and new pages generate;
-combinations that never attract intent never get a page. Today's Marathon set is small
-(8 canonicals + roughly a dozen-to-few-dozen demand-confirmed variants) and grows only
-with proven intent.
+(cron): as GSC accrues new build queries, the demand set grows and new weapon-variant pages
+generate; combinations that never attract intent never get a page. Today's Marathon set is
+small (8 goal-neutral canonicals + a handful of demand-confirmed weapon variants) and grows
+only with proven intent.
 
 **DMZ note.** DMZ has no pre-launch GSC history, so seed `build_demand` from the Mangools
 demand map (the recipes/loadout demand analysis) plus launch-week GSC — same mechanism,
@@ -98,14 +118,13 @@ density + crawl paths); variants are self-canonical, cross-linked to siblings + 
 
 ### A3. SEO per build page (templated from combo + persisted build)
 
-- **Title (A2, <=60):** `"[Shell] [Goal] Build — Marathon"` (e.g. "Assassin Aggressive
-  Build — Marathon", 36 chars). Variant: `"[Shell] [Weapon] Build — Marathon"`; if the
-  weapon name pushes over 60, drop the goal word (the weapon is the higher-intent token).
-  Length-guarded template.
+- **Title (A2, <=60):** canonical `"[Shell] Build — Marathon"` (e.g. "Assassin Build —
+  Marathon", 25 chars). Variant: `"[Shell] [Weapon] Build — Marathon"`. Length-guarded
+  template. No goal word — goal is not a page dimension.
 - **Description (~150):** filled from the persisted build — "The best Marathon [Shell]
-  [goal] loadout: [primary weapon], top mods and cores, a Cradle stat plan, and ranked
-  notes — built on verified in-game stats."
-- **H1:** `"[Shell] [Goal] Build"` + weapon subtitle.
+  loadout: [primary weapon], top mods and cores, a Cradle stat plan, and ranked notes —
+  built on verified in-game stats."
+- **H1:** `"[Shell] Build"` + weapon subtitle on variant pages.
 - **Body = the persisted build, server-rendered** (weapons / mods / cores / implants /
   cradle / `dexter_analysis`) — real crawlable content matching the query.
 - **A1:** no FAQPage schema. **A5:** surface the verified-source chain the build carries
@@ -113,11 +132,12 @@ density + crawl paths); variants are self-canonical, cross-linked to siblings + 
 
 ### A4. State -> URL
 
-- **Selecting inputs navigates** — picking shell+goal(+weapon) router-pushes to the
-  permalink. Using the tool lands you on a real, shareable, indexable URL.
+- **Selecting inputs navigates** — picking a shell (and, on demand-promoted combos, a
+  weapon) router-pushes to the permalink. Using the tool lands you on a real, shareable,
+  indexable URL.
 - **Landing on a permalink hydrates** — server SSRs the persisted build (crawlable); the
   client hydrates `AdvisorClient` to that build's state.
-- **Refinements** (rank/experience/free-text) -> query params -> live regen (authed
+- **Refinements** (goal/rank/experience/free-text) -> query params -> live regen (authed
   layer), `rel=canonical` to the base page. Base = static/indexable; refinements =
   dynamic/non-indexed.
 - Fixes the Step 0 bug: "copy link" copies the per-build permalink, not generic `/advisor`.
@@ -155,13 +175,17 @@ generation and in-game verification are live. Do not skip it.
 
 ### A6. Sitemap
 
-- Persist the valid set in `build_pages` (built + verified): `slug, shell, goal,
-  weapon_slug (NULLABLE -- NULL = canonical page), build_json, source_updated_at,
-  is_indexable, updated_at`. The demand/publish gate is the **`is_indexable` boolean**,
-  chosen over a `status` / `demand_basis` enum per the poi_type lesson (no CHECK'd enum on
-  still-evolving values). There is NO `status` enum, NO `demand_basis` enum, and NO
-  `published_needs_build` CHECK -- the serving condition below carries publish state
-  instead. (`goal` keeps a CHECK: its 4 values are a closed, code-defined enum.)
+- Persist the valid set in `build_pages` (recreated + catalog-verified 2026-08-04) — the
+  actual 10 columns: `id, game_slug, slug (NON-NULL identity), shell, goal (NULLABLE),
+  weapon_slug (NULLABLE), build_json, source_updated_at, is_indexable, updated_at`, with
+  **`UNIQUE(game_slug, slug)`** (slug non-null -> no NULL-uniqueness trap; preferred over
+  `NULLS NOT DISTINCT`, works on any PG version). `goal = NULL` = goal-neutral canonical;
+  `weapon_slug = NULL` = the tool picks the best weapon. The demand/publish gate is the
+  **`is_indexable` boolean**, chosen over a `status` / `demand_basis` enum per the poi_type
+  lesson (no CHECK'd enum on still-evolving values). There is NO `status` enum, NO
+  `demand_basis` enum, and NO `published_needs_build` CHECK — the serving condition below
+  carries publish state instead. (`goal` keeps a CHECK, but it **passes NULL** plus the 4
+  closed enum values, so the goal-neutral hub is representable.)
 - New sitemap child `/sitemap-marathon-builds.xml` (extend `computeEligible` /
   `partitionEligible`) emits ONLY rows where **`is_indexable = true AND build_json IS NOT
   NULL`** (the serving query -- "in the demand set AND generated"), `lastmod = updated_at`
@@ -230,12 +254,15 @@ New pieces (additive):
 
 1. `build_pages` table + RLS (public-read / service-write) — DDL, operator-run.
 2. `build_demand` derivation (GSC query parse + bounded store expansion) — pure, testable.
-3. Validity/fit-filter module (ranked_viable + goal-fit) — pure, testable, over store data.
+3. Validity/fit-filter module (ranked_viable + playstyle-fit against `recommended_playstyle`)
+   — pure, testable, over store data.
 4. Pre-generation script/cron — iterate the demand set -> existing engine -> persist
    `build_json` + `source_updated_at`; refresh on store change (A5) and on new demand.
 5. Store-change -> on-demand-revalidation hook (A5).
-6. Dynamic route `/tools/build/[shell]/[goal]/[[...weapon]]/page.js` — SSR/ISR from
-   `build_pages`, templated metadata, 404 for out-of-set combos, hydrate the client.
+6. Dynamic route `/tools/build/[shell]/[[...weapon]]/page.js` — goal-neutral base
+   (`/tools/build/[shell]`) + optional demand-promoted weapon segment; SSR/ISR from
+   `build_pages`, templated metadata, 404 for out-of-set combos, hydrate the client. Also
+   register `/tools/build/` in `gameSlugForUrl` (unknown-prefix-fails-loudly).
 7. Builds sitemap child.
 8. Internal-link fixes — link the shell canonicals from the winner pages that currently
    do NOT (`/uniques/*`, `/leaderboard`, `/stats`) + shells/weapons/hub.
@@ -253,10 +280,10 @@ Ship together or separately:
 
 - **A and B ship together** — B is a design constraint + the existing seam, near-zero
   incremental code; honoring it during A costs nothing and avoids a retrofit.
-- **Phase A internally in two steps:** A1 = the 8 shell canonicals + their demand-
-  confirmed spine (highest value, simplest); A2 = the goal/weapon long-tail via the full
-  `build_demand` derivation. Ship A1, confirm it indexes and the freshness hook works,
-  then A2.
+- **Phase A internally in two steps:** A1 = the 8 goal-neutral shell canonicals (highest
+  value, simplest; seeded 2026-08-04, canonical generation + route next); A2 = the
+  WEAPON-variant long-tail via the full `build_demand` derivation. Ship A1, confirm it
+  indexes and the freshness hook works, then A2.
 
 Honest caveat to size against: Marathon build demand is tiny (45 impr / 5 months). Phase
 1 on Marathon is a cheap proving ground for the pattern (demand-bounding + store-keyed
@@ -265,31 +292,33 @@ DMZ reuses `build_pages` + `build_demand` + the SSR/ISR-with-revalidation route 
 
 ---
 
-## OPEN: canonical goal mapping -- for Fable
+## RESOLVED: canonical goal mapping -> goal-neutral (Fable, 2026-08-04)
 
-FRAMING ONLY -- this states the decision, it does not make it. Raised while seeding A1's 8
-shell canonicals (`build_pages` built + verified, empty; the seed is blocked here on
-purpose rather than baking in an invented mapping).
+DECIDED. The question below (goal-PINNED vs goal-NEUTRAL shell canonicals) is CLOSED:
+**goal-neutral.** goal is NOT a page dimension — it is an in-tool refinement (with
+rank/experience), never a URL. The canonical is the goal-neutral shell hub `(shell,
+goal=NULL, weapon_slug=NULL)`, URL `/tools/build/[shell]`, `slug='[shell]'`; the one variant
+page-axis is WEAPON (demand-promoted per GSC evidence). The canonical build is generated
+from the shell's `recommended_playstyle` free-text — no forced 4-goal mapping. This design
+is reflected in A1 / A2 / A3 / A4 / A6 above; the 8 goal-neutral hubs were seeded 2026-08-04.
 
-THE QUESTION. Should the 8 shell canonicals be:
-- GOAL-PINNED -- one page per shell at its meta-primary goal: `(shell, primary-goal,
-  weapon_slug=NULL)`, URL `/tools/build/[shell]/[primary-goal]` (the current doc A2.1
-  design); OR
-- GOAL-NEUTRAL -- the shell's build HUB, goal chosen by the user in-tool, URL
-  `/tools/build/[shell]` (needs a schema/route tweak: a nullable `goal` or a `default`/`hub`
-  goal value, plus a bare-`[shell]` route).
+WHY (the evidence that decided it):
+- **20/20 Marathon build queries are bare "[shell] build"** — ZERO carry a goal qualifier.
+  Goal has no page-level search demand; pinning it would mint URLs no one searches.
+- **The store does not encode a per-shell primary goal cleanly.** `role` /
+  `recommended_playstyle` are FREE TEXT that do not map 1:1 to the 4-goal enum. Only 2 of 8
+  were unambiguous; **Recon fit NO goal cleanly** and **Vandal split mobility/aggressive**.
+  Forcing the map produced a lopsided survival x4 cluster — the signature of a content
+  decision, not a mechanical derivation. Goal-neutral dissolves the whole problem.
+- **Presentation guard:** the hub UI uses **uniform goal ordering** (no per-shell
+  "primary"), so the primary-goal fiction is not reintroduced through the interface.
 
-WHY IT CAME UP (the evidence). The doc specifies the CONCEPT ("meta-primary goal") but not
-the per-shell VALUES, and the store does not encode them cleanly: `role` and
-`recommended_playstyle` are FREE TEXT that do not map 1:1 to the 4-goal enum
-(aggressive / extraction / survival / mobility). Only 2 of 8 are unambiguous. Recon (Intel,
-"information gathering") fits NO goal cleanly. Vandal (the mobility shell, but its playstyle
-reads "aggressive entry") SPLITS mobility/aggressive. Forcing the map yields a lopsided
-survival x4 cluster -- the signature of a content decision, not a mechanical derivation.
+REJECTED ALTERNATIVE (kept for the record): goal-PINNED canonicals at
+`/tools/build/[shell]/[primary-goal]`, which would have needed a per-shell goal mapping. The
+starting mapping considered was exactly the lopsided, low-confidence table that argued FOR
+goal-neutral:
 
-IF PINNED -- proposed starting mapping (from the seed Step 0; confidence noted, NOT decided):
-
-| shell | store signal | proposed goal | confidence |
+| shell | store signal | would-be goal | confidence |
 |---|---|---|---|
 | destroyer | Combat, "front-line aggression" | aggressive | HIGH |
 | thief | Stealth, "hit-and-run extraction" | extraction | HIGH |
@@ -300,10 +329,5 @@ IF PINNED -- proposed starting mapping (from the seed Step 0; confidence noted, 
 | recon | Intel, "information gathering" | survival | LOW -- fits no goal cleanly |
 | vandal | Combat, "aggressive entry + vertical movement" | mobility | LOW -- splits with aggressive |
 
-WHY IT MATTERS. These slugs become PERMANENT public URLs (`recon-survival`,
-`vandal-mobility`, ...). A wrong seed = wrong canonical URLs, and a canonical URL is
-expensive to change once it indexes and accrues links. Get the mapping (or the
-goal-neutral decision) right BEFORE the seed.
-
-DECISION OWNER: Fable pass next session -> decision -> then the grounded 8-row seed, then
-the SSR/ISR route + `build_json` generation + the regeneration hook.
+These slugs would have become PERMANENT public URLs (`recon-survival`, `vandal-mobility`) —
+expensive to change once indexed — which is why the decision was made BEFORE the seed.
