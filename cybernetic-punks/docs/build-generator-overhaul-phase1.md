@@ -95,6 +95,35 @@ and an exit," NOT "index nothing unproven."
   THAT variant -- the 8 hubs sense the other ~200 combos WITHOUT seeding them. The
   self-expanding derivation reads the hubs, never a speculative permutation.
 
+**WS1d PRE-REGISTRATION (recorded 2026-08-05, BEFORE any variant data -- this timestamp is
+what makes it honest pre-registration, not a post-hoc rationalization of whatever the data
+shows).** The 6 seeded variants (assassin-knife, destroyer-v85-circuit-breaker,
+sentinel-kkv-9sd, vandal-v22-volt-thrower, thief-brrt-smg, recon-longshot) are committed to
+the following exits, BOTH directions fixed before the data exists:
+- **t0 = 2026-08-05** (the WS1b deploy -- the clock origin for every window below). Recoverable
+  from this record + each variant's first GSC impression, so NO new timestamp column is needed
+  now; the 180-day clock has a documented start.
+- **PROMOTE (keep self-canonical, mark demand-confirmed): >=10 impressions over the trailing
+  28 days**, reusing the existing house constant `NEAR_MISS_IMPRESSION_FLOOR = 10` /
+  `NEAR_MISS_WINDOW_DAYS = 28` (lib/gsc/nearMiss.js), measured per variant `page_url` from
+  `gsc_query_metrics`. The variant is ALREADY self-canonical + indexed, so "promote" is a
+  STATUS transition (exempt it from sunset), not a page change -- the asymmetry is the point:
+  promotion is the default-keep, sunset is the only real state change.
+- **SUNSET (fail): ~zero impressions at 180 days -> revert self-canonical to hub-canonical**
+  (`rel=canonical` -> `/tools/build/[shell]`); the URL stays resolvable, fully reversible.
+- **CHECKPOINTS: 30-day indexation check** (is it indexed at all? -- Consumer C / URL
+  Inspection, the zero-impression disambiguator), **90-day human review**, **180-day sunset**.
+- **MEASUREMENT ALREADY LIVE:** `gsc_query_metrics` captures page-level impressions on the
+  daily 19:00 pull (`runQueryGscPull`), so the evidence for all three windows is accruing NOW
+  with zero additional work -- the instrument's raw data is not lost while the action logic waits.
+- **DEFERRED to near-cadence (precise-and-dormant avoidance, per the poller ruling):** the
+  promote/sunset FLIP logic (cannot fire for 28 / 180 days -> building it now = untested-until-
+  it-fires) AND the Consumer C build-page enrollment (a NEW candidate source in the inspection
+  cron -- NOT a poller-style `weapon_slug` widening: Consumer C reads `feed_items` only via
+  `feedUrl()`, which emits only `/intel/*` + `/dmz/*/*`; a soft ~30-day deadline whose primary
+  indexation signal is already covered by any `impression > 0`). Both are built deliberately
+  before their windows mature, not now. Nothing must be SET now for them to fire later.
+
 The valid set is therefore:
 
 1. **DEMAND SPINE (always indexable): the 8 goal-neutral `[shell]` build canonicals.**

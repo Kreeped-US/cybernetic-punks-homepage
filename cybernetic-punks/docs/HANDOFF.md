@@ -45,6 +45,59 @@ remain.
 
 ---
 
+## 2026-08-05 - WS1d Step-0 settled: pre-registration RECORDED now; enrollment + action-logic deferred
+
+WS1d = making the 6 live A2 variants a MEASURED experiment. Step-0 scoping (2 Explore agents
+over the GSC machinery) split the work; only the time-sensitive part is done now, the rest is
+deliberately deferred.
+
+BUILT NOW (the only time-sensitive item): PRE-REGISTRATION of the 6 variants' thresholds,
+recorded in docs/build-generator-overhaul-phase1.md (A2, "WS1d PRE-REGISTRATION" block) BEFORE
+any data exists -- t0=2026-08-05, PROMOTE >=10 impr/28d (the existing NEAR_MISS_IMPRESSION_FLOOR
+=10 / NEAR_MISS_WINDOW_DAYS=28 constant), SUNSET ~zero impr at 180d -> self-canonical reverts to
+hub-canonical (reversible), checkpoints 30d-index / 90d-review / 180d-sunset. Recording it now
+(pre-data) is what makes it honest pre-registration; doc + the existing constant is sufficient
+(no column/config needed for the commitment itself). ZERO code, ZERO DDL, ZERO live behavior
+change.
+
+CONSUMER C ENROLLMENT -- RECLASSIFIED + HELD. Q1 assumed it was a poller-style weapon_slug
+widening. Step-0 found it is NOT: Consumer C (/api/cron/inspect, every 15 min) reads feed_items
+ONLY, builds URLs via feedUrl() which emits only /intel/* + /dmz/*/*, and its whole selection +
+escalation pipeline keys on feed_items row shape (is_published/noindex/noindexed_at/created_at)
+-- fields build_pages rows lack. Enrolling the 6 is a NEW candidate source in a delicate live
+cron (new feedUrl branch + a build_pages query + threading through runEscalation), not a
+one-liner, and it changes live behavior immediately. It is also a SOFT ~30-day deadline whose
+primary signal (indexation) is already proven by any impression>0 in gsc_query_metrics. So it is
+HELD as a near-cadence follow-up, built deliberately before day 30 -- NOT rushed in now under a
+mistaken "widening" premise.
+
+ACTION LOGIC -- DEFERRED (confirmed, precise-and-dormant avoidance). The promote flip (>=28d) and
+sunset flip (180d, self-canonical -> hub-canonical) cannot fire for 28/180 days; building them now
+= untested-until-fires. Nothing must be SET now: the 180d clock origin (t0=2026-08-05) is
+documented + recoverable from first GSC impression, so no timestamp column is needed yet. When
+built: 2 build_pages columns (canonical_to_hub + a stable clock ts) + extend the A5 build-refresh
+poller (it already loops the exact variant rows) + variant route reads the flag. Sunset is the
+only real state machine; promotion is "not sunset". NOTE: sunset CANNOT reuse is_indexable=false
+(that 404s the page via dynamicParams:false) -- it needs a distinct resolvable-but-hub-canonical
+state.
+
+WHAT ALREADY GENERALIZES (WS1d-now is nearly nothing, and that is the good outcome): the two
+build_pages-AWARE systems -- the A5 build-refresh poller and the sitemap eligible-set -- were
+widened in WS1b (dropped their weapon_slug-IS-NULL filter), so the 6 variants are ALREADY
+covered there: they refresh on staleness and emit in the sitemap with zero WS1d work. The ONLY
+build-page-blind system is Consumer C (GSC URL Inspection), and that is by a DIFFERENT design
+(feed_items-based), not a missing filter. So "enrollment" at the machinery level is already
+done; the residual is the one GSC-inspection integration (deferred) + the pre-registration
+record (done).
+
+NET WS1d-now: pre-registration only (doc). Held for review. Remaining: Consumer C enrollment
+(~30d, a new inspection candidate source), action-logic + columns (28-180d), slice B, fetch*
+consistency follow-up.
+
+Main clean at 20ae2d0.
+
+---
+
 ## 2026-08-05 - Finding-1 silent-catch FIXED (f092695) + verified clean in production
 
 Finding-1 (from the WS1b entry below) is CLOSED end-to-end. The build-page generation path
