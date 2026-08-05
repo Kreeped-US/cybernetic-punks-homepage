@@ -45,6 +45,45 @@ remain.
 
 ---
 
+## 2026-08-05 - Finding-1 silent-catch FIXED (f092695) + verified clean in production
+
+Finding-1 (from the WS1b entry below) is CLOSED end-to-end. The build-page generation path
+silently swallowed DB read errors (catch->[] / data-only destructure), so a transient build-
+time DB blip shipped a build with 0 build pages (all 404) instead of failing. FIX: every
+build_pages read now distinguishes read-ERROR from legitimate-EMPTY, keyed on the Supabase
+{error} object (NOT data.length) - error set -> throw (build fails loud, broken build doesn't
+deploy); error null + data [] -> return [] (build succeeds - the legit pre-seeding case).
+
+SITES FIXED (3, all from the Step-0 scoping): generateStaticParams in app/tools/build/[shell]/
+page.js + app/tools/build/[shell]/[weapon]/page.js, and the build_pages block in lib/sitemap/
+eligible.js (a silent sitemap truncation is SEO damage - fixed too). The poller (build-refresh
+cron) + gen-build-canonicals.mjs were already correct (check error -> 500 / exit 1); no change.
+
+VERIFIED: error-vs-empty unit harness 4/4 (error->throw, empty->[]/success, populated->maps,
+network-reject->throw); clean next build 77/77 exit 0, all 14 pages generate (8 canonical + 6
+variant); ESLint green, NUL-clean. Merged f092695 (FF to main, pushed). PRODUCTION verified:
+static assets Last-Modified ~3min post-push (fresh build landed), all 14 build pages serve 200,
+sitemap emits 14. The stricter build path deploys clean - a healthy read builds fine; a future
+transient blip now fails the build loudly instead of silently 404-ing every build page.
+
+A2 EXPERIMENT: LIVE (6 distinct indexed variant pages in production) + now PROTECTED (no silent
+broken-deploy). Data accrues from here.
+
+REMAINING (all next-session, no urgency):
+- WS1d - Consumer C enrollment + the pre-registered thresholds (>=10/28d promotion, 180-day
+  sunset). Operates on a 30/90/180-day cadence; first indexation check is at 30 days, so it
+  CANNOT act yet. Clean next-session opener once data exists.
+- slice B (live-refinement) - parked.
+- fetch*-per-page consistency follow-up: fetchCanonical / fetchVariant still use the data-only
+  swallow (return data||null -> notFound). Left unfixed by design (build-time-only under
+  dynamicParams:false, and generateStaticParams now fails first on the same DB, so a broad blip
+  never reaches them; narrower per-page failure mode; a naive throw would risk a request-time
+  500 if dynamicParams ever flips to true). Optional consistency cleanup, not a Finding-1 gap.
+
+Main clean at f092695.
+
+---
+
 ## 2026-08-05 - WS1b: 6 A2 weapon-variant pages LIVE + verified; two findings flagged
 
 WS1b complete - the 6 A2 weapon-variant experiment pages are generated, verified, and
