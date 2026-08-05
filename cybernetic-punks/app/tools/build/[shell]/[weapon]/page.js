@@ -29,10 +29,21 @@ const SHELL_ACCENT = {
 };
 
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // ACTIONABLE build-time diagnostic. This route reads build_pages in generateStaticParams,
+  // which runs at BUILD ("Collecting page data"). If NEXT_PUBLIC_SUPABASE_URL is absent from
+  // the BUILD env, createClient throws the OPAQUE "supabaseUrl is required". Surface the ROOT
+  // CAUSE instead so it is fixable at a glance. Still FAILS the build (never a silent [] --
+  // the URL genuinely must be present at build for these pages to prerender); the Finding-1
+  // read-error throw below is unaffected.
+  if (!url) {
+    throw new Error(
+      'NEXT_PUBLIC_SUPABASE_URL is not set at BUILD time. /tools/build/[shell]/[weapon] reads ' +
+      'build_pages in generateStaticParams (build phase), so this var must be in the Vercel ' +
+      'Production BUILD environment, not runtime-only. Set it there to unblock the build.'
+    );
+  }
+  return createClient(url, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
 
 function titleCase(slug) {
