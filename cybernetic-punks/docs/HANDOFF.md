@@ -45,6 +45,49 @@ remain.
 
 ---
 
+## 2026-08-05 - A5 COMPLETE + validated: build-page freshness (provenance capture + poller), both paths proven
+
+A5 (on-demand freshness for the build pages) is complete and validated end-to-end.
+
+PIECE 1 (fd73ea6) - cited used_sources capture at generation: generateBuild records the
+{type, name} tuples build_json actually references (shell + weapons + slotted mods/cores/
+implants) - the origin rule (derivation facts recordable only at derivation). CITED (~13-15
+per build), not loaded (225 pool) - required by all 3 consumers. Cross-check caught + fixed
+a 7-of-16 silent under-capture (rarity-suffix normalization). used_sources jsonb column +
+cited-set COMMENT contract (operator DDL). POST 192/192 preserved.
+
+PIECE 2 - backfill: regenerated the 8 existing builds to capture their cited used_sources
+(were null). Verified on the rows: all 8 populated, 13-15 {type,name} tuples each, right shape.
+
+PIECE 3 (f28c13e) - the poller cron (app/api/cron/build-refresh): stale-detect (build's
+source_updated_at < current MAX over the 5 timestamped context tables - shell/weapon/mod/
+core/implant_stats; cradle excluded no updated_at; meta_tiers excluded, never read) ->
+regenerate-all-stale via the shared regenerateCanonical helper (generateBuild + write
+build_json/source_updated_at/used_sources) -> revalidatePath. Regenerate-all (simple+
+exercised; used_sources enables precise-regen as a future mechanical migration). CRON_SECRET
+Bearer guard + service-key-only (no anon fallback). Daily cadence. Shared helper = one
+regen path for cron + backfill script.
+
+VALIDATED BOTH PATHS (live, against the production build):
+- NO-OP: correct Bearer -> {refreshed:0, checked:8}, ZERO generateBuild calls (early return
+  before the loop - structurally free). Auth guard: 401 on missing/wrong Bearer, 200 on
+  correct.
+- ACTIVE: set thief stale (fixture) -> {refreshed:1, shells:[thief]}. Regenerated ONLY thief
+  (fresh build_json/used_sources, source_updated_at back to contextMax, revalidated); the
+  other 7 BYTE-IDENTICAL (build_json hashes unchanged) - cost-gate scopes correctly to only
+  the stale build. Store self-healed (all 8 fresh again).
+
+A5 makes "verified data stays current" STRUCTURAL: store change -> affected builds
+regenerate on-demand -> revalidatePath serves fresh; nothing changed -> zero cost. DMZ-
+forward (scales to many builds; precise-regen a mechanical migration on the used_sources
+data). Doc reconciled to {type,name}/cited this commit.
+
+A1 BUILD-GENERATOR STATE: schema -> seed -> doc-sync -> generation -> route (live,
+discoverable, serve-verified) -> A5 (freshness, validated) all DONE. Remaining: slice B
+(live-refinement interactivity), A2 (weapon-variant long-tail). The Marathon build tool is
+COMPLETE as a verified-data, discoverable, self-freshening engine - the proven blueprint
+for the DMZ build tool.
+
 ## 2026-08-05 - A5 piece 1 (cited used_sources capture) shipped; backfill + poller remain
 
 A5 (on-demand freshness for the build pages). Piece 1 done: generateBuild captures CITED

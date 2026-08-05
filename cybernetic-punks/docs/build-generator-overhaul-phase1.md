@@ -202,14 +202,23 @@ Mechanism:
   keeps the running pattern exercised. (Precise per-row staleness is the DMZ-scale follow-on;
   the `used_sources` capture below is exactly the data it will consume.)
 - **CAPTURE USED-SOURCES AT GENERATION -- the origin rule, MANDATORY now (Fable A5 ruling,
-  2026-08-05).** Derivation facts are recordable ONLY at derivation: `generateBuild` knows
-  its exact input rows ONLY while reading them. Not captured = permanently unknowable inputs,
-  recoverable only by a paid regeneration -- the 159-null origin-loss trap in tool form (3rd
-  appearance of the rule: capture-at-origin or lose it forever). So `generateBuild` records
-  not just the MAX of its input set but the set's IDENTITIES: `build_pages.used_sources` =
-  a jsonb array of CLOSED-SHAPE `(entity_type, slug)` tuples, the shape documented in a
-  COLUMN COMMENT (the `notable_features` contract pattern). `generateBuild` already iterates
-  the exact rows to compute MAX(updated_at) -- write the set's identities on the same pass.
+  2026-08-05; SHIPPED fd73ea6).** Derivation facts are recordable ONLY at derivation: a
+  build's provenance -- which verified store rows it was derived from -- is captured while
+  generating or lost (recoverable only by a paid regeneration; the 159-null origin-loss trap
+  in tool form, 3rd appearance of the rule: capture-at-origin or lose it forever).
+  `build_pages.used_sources` = a jsonb array of CLOSED-SHAPE `{type, name}` tuples, the shape
+  documented in a COLUMN COMMENT (the `notable_features` contract pattern).
+  - SHIPPED SHAPE (settled during the build, reconciled from the earlier `{entity_type,
+    slug}` sketch): `type` is a closed vocabulary of the entity KIND -- `shell | weapon | mod
+    | core | implant` (NOT the table name); `name` is the canonical store `name`.
+  - CITED, not loaded. The set is the rows `build_json` ACTUALLY references (shell,
+    primary/secondary weapon, slotted mods/cores/implants) intersected against the loaded
+    context -- NOT the ~225-row loaded candidate pool. All three consumers below need the
+    rows the build USES: the loaded pool is near-identical across builds and flags every
+    build on any change (useless for blast-radius / precise-staleness). ~13-15 tuples/build.
+  - NORMALIZED. A `build_json` rarity suffix ("Cloudborn (Standard)") is stripped to match
+    the store `name` ("Cloudborn") -- a cross-check caught a 7-of-16 silent under-capture
+    (all mods + implants dropped) without it.
 - **Three consumers of `used_sources` (two immediate, one eventual).** (1) ON-PAGE
   VERIFICATION STAMPS -- "derived from N verified rows, current as of patch X": the moat
   rendered AS UI. (2) BLAST-RADIUS QUERIES -- a corrected store row -> which builds cite it
