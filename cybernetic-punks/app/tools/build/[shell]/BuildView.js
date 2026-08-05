@@ -25,6 +25,7 @@ function trackColor(track) {
 export default function BuildView({ build, accent }) {
   if (!build) return null;
   const accentColor = accent || '#ff8800';
+  const shellName = build.shell || 'Runner';
   const grade = build.loadout_grade || 'A';
   const gradeColor = GRADE_COLORS[grade] || '#ff8800';
   const darkGrade = gradeColor === '#ffd700' || gradeColor === '#ff8800' || gradeColor === '#00d4ff' || gradeColor === '#00ff41';
@@ -131,11 +132,14 @@ export default function BuildView({ build, accent }) {
 
           {/* Cradle allocation */}
           {build.cradle && (build.cradle.summary || (build.cradle.tracks && build.cradle.tracks.length > 0)) && (
-            <div style={{ borderTop: '1px solid #22252e', padding: '18px 20px', background: '#16181e' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace' }}>◇ Cradle Stat Plan</div>
-                <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>SEASON 2 · FREE RESPEC</div>
-              </div>
+            <div id="cradle" style={{ borderTop: '1px solid #22252e', padding: '18px 20px', background: '#16181e', scrollMarginTop: 60 }}>
+              {/* WS2 cradle-strengthen: a real H2 carrying the "[shell] cradle build" query
+                  language (the ~8-impr "cradle build" demand is a topic the canonical already
+                  covers) + a #cradle anchor target for internal links from /advisor and /cradle. */}
+              <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#00d4ff', letterSpacing: 0.5, margin: '0 0 4px', lineHeight: 1.2 }}>
+                ◇ {shellName} Cradle Build — Season 2 Stat Plan
+              </h2>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700, marginBottom: 12, textTransform: 'uppercase' }}>Free respec · resets each season</div>
               {build.cradle.summary && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: 14 }}>{build.cradle.summary}</div>}
               {build.cradle.tracks && build.cradle.tracks.length > 0 && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>

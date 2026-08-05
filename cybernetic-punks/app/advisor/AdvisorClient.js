@@ -961,10 +961,15 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                       })}
                     </div>
                   )}
-                  <div style={{ marginTop: 12 }}>
+                  <div style={{ marginTop: 12, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                     <Link href="/cradle" style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>
                       OPEN THE CRADLE PLANNER →
                     </Link>
+                    {build.shell && (
+                      <Link href={'/tools/build/' + build.shell.toLowerCase() + '#cradle'} style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>
+                        {build.shell.toUpperCase()} CRADLE BUILD →
+                      </Link>
+                    )}
                   </div>
                 </div>
               )}

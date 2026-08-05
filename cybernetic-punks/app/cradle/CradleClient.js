@@ -277,6 +277,18 @@ export default function CradleClient({ nodes }) {
         <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 12, lineHeight: 1.5 }}>
           Free respec in-game means you can rebuild anytime - experiment freely here, then mirror it on your shells.
         </div>
+        {/* WS2 cradle-strengthen: internal links to each shell's Cradle Build section on its
+            canonical build page (#cradle) -- feeds the "[shell] cradle build" query. */}
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1.5, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>Cradle builds by shell</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {['assassin', 'destroyer', 'recon', 'rook', 'sentinel', 'thief', 'triage', 'vandal'].map(function (s) {
+              return (
+                <Link key={s} href={'/tools/build/' + s + '#cradle'} style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.25)', borderRadius: 2, padding: '3px 8px', letterSpacing: 0.5, fontWeight: 700, textDecoration: 'none', textTransform: 'capitalize' }}>{s} cradle build</Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* ── NOTE ON DATA ─────────────────────────────────── */}
