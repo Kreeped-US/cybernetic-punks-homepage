@@ -45,6 +45,42 @@ remain.
 
 ---
 
+## 2026-08-05 - Build-generator A1 generation slice COMPLETE: 8 goal-neutral canonicals generated + written
+
+Completed the A1 generation slice. Extracted the advisor generative core to
+lib/advisor/generateBuild.js (fetchAdvisorContext, buildAdvisorPrompt, generateBuild ->
+{build, sourceUpdatedAt}); repointed the POST route at it, verified BEHAVIOR-IDENTICAL
+across 192 priority x rank x experience x playstyle inputs (a refactor, not a rewrite).
+Added the goal-neutral 'balanced' priority branch (playstyle-driven, no pinned goal -
+Fable's ruling) so canonicals derive from each shell's recommended_playstyle. Code at
+ca7e9aa (rebased clean onto bd2aa08, FF-merged, pushed).
+
+GENERATION (scripts/gen-build-canonicals.mjs, operator-run, 8 Claude calls): DRY RUN
+first validated the decisive test - goal-neutral generation works IN THE OUTPUT, not
+just the prompt: Recon reads intel ("you are not a fighter, a walking tactical display"),
+Rook scavenger ("not a build that fights, a build that profits"), Thief hit-and-run -
+playstyle-distinct, not generic combat. LIVE PASS: 8 ok, 0 failed. Verified 8/8
+build_pages rows have build_json populated + source_updated_at = 2026-08-05 (baking in
+the current store incl. today's 1.1.5.2 V22/KKV values - Sentinel's build cites the KKV,
+proof it's current). All 8 goal=NULL/weapon_slug=NULL/is_indexable=true. Distinct
+build_names, grade A.
+
+source_updated_at computed as MAX(updated_at) over the 5 timestamped context tables
+(cradle_nodes excluded - no updated_at column, noted). Full trusted recommended_playstyle
+passed (no 60-char cap - that's an untrusted-input defense). The freshness stamps are now
+in place for the A5 regeneration hook to consume.
+
+A1 STATE: schema (recreated, verified) -> seed (8 goal-neutral hubs) -> doc-sync (goal-
+neutral) -> GENERATION (this slice) all DONE. The 8 canonical builds exist, fresh, indexable.
+STILL OPEN in A1 (separate slices): the SSR/ISR route /tools/build/[shell] rendering these
+rows + gameSlugForUrl registration + the builds sitemap child + internal-link fixes, then
+the A5 store-updated_at regeneration hook. Then A2 (weapon-variant long-tail).
+
+Two noted-not-fixed: build_name collision risk (display-only, slug is the routing key;
+didn't recur this run) and primary-weapon homogeneity (honest - Impact HAR is the best
+balanced-solo primary; weapon variety is an A2 variant-page feature, not an A1 canonical
+requirement - forcing it would be invented differentiation).
+
 ## 2026-08-05 - Patch 1.1.5.2 store update + the gate's first live test (a systematic blind spot)
 
 Yesterday's Nexus article on patch 1.1.5.2 triggered a store-freshness check that became
