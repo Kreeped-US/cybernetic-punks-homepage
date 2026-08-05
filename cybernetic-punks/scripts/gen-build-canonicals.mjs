@@ -19,6 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { generateBuild, SHELLS } from '../lib/advisor/generateBuild.js';
+import { regenerateCanonical } from '../lib/advisor/regenerateCanonical.js';
 
 // Load .env.local BEFORE any generateBuild call. The Anthropic client in generateBuild.js
 // is a lazy singleton (built on first use), so setting env here in the module body -- which
@@ -73,28 +74,24 @@ let ok = 0, failed = 0;
 for (const row of rows) {
   const shellName = shellNameForSlug(row.slug);
   if (!shellName) { console.log('  SKIP ' + row.slug + ': no matching Shell name in SHELLS'); failed++; continue; }
-  const playstyle = stripControl(playstyleByName.get(shellName));
-  if (!playstyle) { console.log('  SKIP ' + shellName + ': shell_stats.recommended_playstyle is empty'); failed++; continue; }
-
-  try {
-    const { build, sourceUpdatedAt, usedSources } = await generateBuild({
-      shell: shellName,
-      playstyle,                 // FULL trusted store text, control-char-stripped, no length cap
-      priority: 'balanced',      // GOAL-NEUTRAL -- no pinned goal bucket (Fable's ruling)
-      rankTarget: 'unranked',
-      experienceLevel: 'experienced',
-      weaponPreference: '',
-      teamSize: 'Solo',
-    });
-
-    const prim = build && build.primary_weapon ? build.primary_weapon.name : '?';
-    console.log('\n  [' + shellName + '] "' + (build.build_name || '?') + '"  grade=' + (build.loadout_grade || '?')
-      + '  primary=' + prim + '  source_updated_at=' + sourceUpdatedAt
-      + '  used_sources=' + (Array.isArray(usedSources) ? usedSources.length : 'null'));
-
-    if (DRY) {
-      // Verbose review dump (--dry only): full picks so the operator can vet each build
-      // BEFORE any write. Generation + write logic below is unchanged.
+  if (DRY) {
+    // DRY: generate only + verbose print, NO write (review the plan before any paid run).
+    const playstyle = stripControl(playstyleByName.get(shellName));
+    if (!playstyle) { console.log('  SKIP ' + shellName + ': shell_stats.recommended_playstyle is empty'); failed++; continue; }
+    try {
+      const { build, sourceUpdatedAt, usedSources } = await generateBuild({
+        shell: shellName,
+        playstyle,                 // FULL trusted store text, control-char-stripped, no length cap
+        priority: 'balanced',      // GOAL-NEUTRAL -- no pinned goal bucket (Fable's ruling)
+        rankTarget: 'unranked',
+        experienceLevel: 'experienced',
+        weaponPreference: '',
+        teamSize: 'Solo',
+      });
+      const prim = build && build.primary_weapon ? build.primary_weapon.name : '?';
+      console.log('\n  [' + shellName + '] "' + (build.build_name || '?') + '"  grade=' + (build.loadout_grade || '?')
+        + '  primary=' + prim + '  source_updated_at=' + sourceUpdatedAt
+        + '  used_sources=' + (Array.isArray(usedSources) ? usedSources.length : 'null'));
       const sec = build.secondary_weapon ? build.secondary_weapon.name : '?';
       const mods = (build.mods || []).map((m) => (m.slot ? m.slot + ':' : '') + m.name).join(', ') || '(none)';
       const cores = (build.cores || []).map((c) => c.name + (c.ability_type ? ' (' + c.ability_type + ')' : '')).join(', ') || '(none)';
@@ -108,18 +105,24 @@ for (const row of rows) {
       console.log('      summary   : ' + (build.playstyle_summary || ''));
       console.log('      dexter    : ' + (build.dexter_analysis || ''));
       ok++;
-      continue;
+    } catch (e) {
+      console.log('  GEN FAIL ' + shellName + ': ' + (e && (e.code || e.message)));
+      failed++;
     }
-
-    const { error: wErr } = await supa.from('build_pages')
-      .update({ build_json: build, source_updated_at: sourceUpdatedAt, used_sources: usedSources })   // jsonb -> pass objects, no stringify
-      .eq('game_slug', GAME).eq('slug', row.slug);
-    if (wErr) { console.log('    WRITE FAIL ' + row.slug + ': ' + wErr.message); failed++; }
-    else { console.log('    WROTE ' + row.slug); ok++; }
-  } catch (e) {
-    console.log('  GEN FAIL ' + shellName + ': ' + (e && (e.code || e.message)));
-    failed++;
+    continue;
   }
+
+  // LIVE: the SHARED regenerateCanonical helper -- byte-identical generate + write to the
+  // A5 poller cron (app/api/cron/build-refresh). One source of truth for how a canonical
+  // is (re)generated and persisted.
+  const res = await regenerateCanonical(supa, row.slug);
+  if (!res.ok) { console.log('  FAIL ' + row.slug + ': ' + res.reason); failed++; continue; }
+  const prim = res.build && res.build.primary_weapon ? res.build.primary_weapon.name : '?';
+  console.log('\n  [' + res.shell + '] "' + (res.build.build_name || '?') + '"  grade=' + (res.build.loadout_grade || '?')
+    + '  primary=' + prim + '  source_updated_at=' + res.sourceUpdatedAt
+    + '  used_sources=' + (Array.isArray(res.usedSources) ? res.usedSources.length : 'null'));
+  console.log('    WROTE ' + row.slug);
+  ok++;
 }
 
 console.log('\n=== done: ' + ok + ' ok, ' + failed + ' failed' + (DRY ? '  (DRY -- nothing written)' : '') + ' ===');
