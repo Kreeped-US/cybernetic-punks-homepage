@@ -45,6 +45,50 @@ remain.
 
 ---
 
+## 2026-08-05 - WS1b: 6 A2 weapon-variant pages LIVE + verified; two findings flagged
+
+WS1b complete - the 6 A2 weapon-variant experiment pages are generated, verified, and
+serve-confirmed. The A2 demand-experiment instrument is live.
+
+SEEDED + GENERATED (operator-run): 6 variant build_pages rows (assassin-knife, destroyer-
+v85-circuit-breaker, sentinel-kkv-9sd, vandal-v22-volt-thrower, thief-brrt-smg, recon-
+longshot), slug=[shell]-[weapon_slug], goal=NULL, is_indexable=true. DISTINCTNESS DRY-RUN
+first (6 paid calls, no write): all 6 DISTINCT - every variant led with its pinned weapon,
+loadout overlap 38-64% (below the ~70% near-dup line). The flagged Sentinel+KKV risk
+CLEARED for a real reason: the hub leads Impact HAR (not KKV, despite the playstyle text),
+so pinning KKV genuinely changes the build. LIVE PASS (6 paid calls): 6 ok, all rows have
+build_json + source_updated_at + cited used_sources (13-14 each), pinned weapon = primary
+on every one.
+
+SERVE-VERIFIED (clean rebuild): 77/77 static pages (8 canonicals + 6 variants), all 200,
+non-seeded 404, pinned weapon = primary (checked assassin/knife, destroyer/v85, sentinel/
+kkv - all distinct from hubs), A2 titles, A1-clean JSON-LD, sitemap emits all 14.
+
+FINDING 1 (real, PRE-EXISTING, follow-up): the generateStaticParams / computeEligible
+catch(_){return []} SILENTLY SWALLOWS DB read errors - a transient build-time DB failure
+produces a build with 0 build pages (all 404) that DEPLOYS rather than failing loudly.
+Surfaced when a rebuild hit a network blip -> 63/63 (missing all 8 canonicals + 6 variants),
+404s. NOT variant-specific (affects canonicals too). FIX (separate task, fresh): distinguish
+"genuinely empty" from "read failed" and fail the build on read-failure so a broken build
+doesn't ship. Latent risk (only bites on transient build failure), so flagged not fixed.
+
+FINDING 2 (minor): variantTitle() is <=60 (longest 46) but the root layout appends
+" | CyberneticPunks" -> rendered head title 66 for destroyer/v85. Google truncates the
+suffix not the meaningful part; consistent with every page on the site. Note vs the "<=60
+in head" spec.
+
+NEXT: WS1d - Consumer C enrollment + the pre-registered thresholds (>=10/28d promotion,
+180-day sunset). NOTE: WS1d operates on a 30/90/180-day cadence - it can't act until the
+pages accrue data (first indexation check at 30 days), so no urgency; next-session work.
+The A2 experiment: instrument LIVE (6 distinct indexed variant pages, deployed = data
+starts accruing); measurement wiring (WS1d) + the silent-catch fix are the follow-ups.
+Also parked: slice B (live-refinement).
+
+Main clean at a57ff12 - no code changed this session (the 6 variants were generated in the
+DB; the verification pass was report-only).
+
+---
+
 ## 2026-08-05 - A2 reframed as demand-EXPERIMENT + cradle-strengthen + variant infra shipped
 
 A2 (weapon-variant build pages) - the Step 0 found ~nil weapon-variant GSC demand on
