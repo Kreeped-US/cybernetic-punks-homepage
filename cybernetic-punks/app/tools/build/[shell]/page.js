@@ -48,17 +48,20 @@ function titleCase(slug) {
 }
 
 export async function generateStaticParams() {
-  try {
-    const supabase = getSupabase();
-    const { data } = await supabase
-      .from('build_pages')
-      .select('slug')
-      .eq('game_slug', GAME).is('goal', null).is('weapon_slug', null)
-      .eq('is_indexable', true).not('build_json', 'is', null);
-    return (data || []).map((r) => ({ shell: r.slug }));
-  } catch (_) {
-    return [];
-  }
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('build_pages')
+    .select('slug')
+    .eq('game_slug', GAME).is('goal', null).is('weapon_slug', null)
+    .eq('is_indexable', true).not('build_json', 'is', null);
+  // Read FAILED (error set) -> THROW so `next build` fails LOUDLY instead of shipping a
+  // build with 0 static pages (all 404). A network-level reject propagates for the same
+  // reason (no try/catch to swallow it). A GENUINE empty result (error null, data []) is
+  // returned as [] and the build succeeds -- the legitimate case (e.g. pre-seeding). The
+  // distinction is error-vs-empty, NOT zero-vs-nonzero. Build-time-only read (static route,
+  // revalidate:false, dynamicParams:false), so a throw fails the build -- never a live 500.
+  if (error) throw new Error('build_pages generateStaticParams read failed: ' + error.message);
+  return (data || []).map((r) => ({ shell: r.slug }));
 }
 
 export async function generateMetadata({ params }) {

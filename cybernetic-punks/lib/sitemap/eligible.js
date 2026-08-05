@@ -134,16 +134,21 @@ export async function computeEligible() {
   // the route 404s on. type='build' is marathon non-intel, so it lands in the entities
   // child automatically (partition keys on intel-vs-not; no partition change needed).
   // lastmod = updated_at -- the freshness stamp the A5 regeneration hook bumps on regen.
-  try {
-    const { data: builds } = await supabase.from('build_pages')
-      .select('slug, shell, weapon_slug, updated_at').eq('game_slug', M).is('goal', null)
-      .eq('is_indexable', true).not('build_json', 'is', null).order('slug');
-    // Canonical hub -> /tools/build/[shell]; weapon variant (A2) -> /tools/build/[shell]/[weapon].
-    (builds || []).forEach((b) => {
-      const url = b.weapon_slug ? BASE + '/tools/build/' + b.shell + '/' + b.weapon_slug : BASE + '/tools/build/' + b.shell;
-      add(url, M, 'build', lm(b.updated_at), 'weekly', 0.8);
-    });
-  } catch (err) { console.error('[sitemap] build_pages fetch threw:', err); }
+  // Read FAILED (error set, or a network reject) -> THROW. A silent build-URL truncation is
+  // SEO damage: a deployed sitemap missing indexable pages. Throwing fails the sitemap at
+  // BUILD-time (loud, so a broken sitemap never ships); at REQUEST-time revalidation
+  // (revalidate:3600) Next serves the last-good cached sitemap -- the exact posture the
+  // assertPartition throw below already relies on. A GENUINE empty result (error null, data
+  // []) simply emits no build URLs, which is fine. error-vs-empty, NOT zero-vs-nonzero.
+  const { data: builds, error: buildsErr } = await supabase.from('build_pages')
+    .select('slug, shell, weapon_slug, updated_at').eq('game_slug', M).is('goal', null)
+    .eq('is_indexable', true).not('build_json', 'is', null).order('slug');
+  if (buildsErr) throw new Error('[sitemap] build_pages read failed: ' + buildsErr.message);
+  // Canonical hub -> /tools/build/[shell]; weapon variant (A2) -> /tools/build/[shell]/[weapon].
+  (builds || []).forEach((b) => {
+    const url = b.weapon_slug ? BASE + '/tools/build/' + b.shell + '/' + b.weapon_slug : BASE + '/tools/build/' + b.shell;
+    add(url, M, 'build', lm(b.updated_at), 'weekly', 0.8);
+  });
 
   // ── MAPS (verified marathon only; type='map') ──────────────────────────────
   try {

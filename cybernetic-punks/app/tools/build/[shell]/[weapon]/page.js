@@ -52,17 +52,21 @@ async function fetchVariant(shellSlug, weaponSlug) {
 }
 
 export async function generateStaticParams() {
-  try {
-    const supabase = getSupabase();
-    const { data } = await supabase
-      .from('build_pages')
-      .select('shell, weapon_slug')
-      .eq('game_slug', GAME).is('goal', null).not('weapon_slug', 'is', null)
-      .eq('is_indexable', true).not('build_json', 'is', null);
-    return (data || []).map((r) => ({ shell: r.shell, weapon: r.weapon_slug }));
-  } catch (_) {
-    return [];
-  }
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('build_pages')
+    .select('shell, weapon_slug')
+    .eq('game_slug', GAME).is('goal', null).not('weapon_slug', 'is', null)
+    .eq('is_indexable', true).not('build_json', 'is', null);
+  // Read FAILED (error set) -> THROW so `next build` fails LOUDLY instead of shipping 0
+  // variant pages (all 404). A network-level reject propagates for the same reason (no
+  // try/catch to swallow it). A GENUINE empty result (error null, data []) returns [] and
+  // the build succeeds -- the legitimate no-variants / pre-seeding case (this route was
+  // correctly empty before WS1b seeded the 6). error-vs-empty, NOT zero-vs-nonzero.
+  // Build-time-only read (static, revalidate:false, dynamicParams:false) -- throw fails the
+  // build, never a live 500.
+  if (error) throw new Error('build_pages variant generateStaticParams read failed: ' + error.message);
+  return (data || []).map((r) => ({ shell: r.shell, weapon: r.weapon_slug }));
 }
 
 // Title <=60 (A2 cap). "[Shell] [Weapon] Build — Marathon". Longest of the seeded 6 is
