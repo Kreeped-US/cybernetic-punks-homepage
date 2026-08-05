@@ -130,16 +130,34 @@ density + crawl paths); variants are self-canonical, cross-linked to siblings + 
 - **A1:** no FAQPage schema. **A5:** surface the verified-source chain the build carries
   ("verified in-game" provenance). JSON-LD: BreadcrumbList + WebPage only.
 
-### A4. State -> URL
+### A4. State -> URL, and RENDER vs GENERATE separation (Fable route ruling, 2026-08-05)
 
+**RENDER/GENERATE SEPARATION (structural — moat- and cost-critical).** Rendering a stored
+build and generating a new one are SEPARATE paths that must never be conflated:
+- **A static build-view component SSRs the stored `build_json`.** Crawlers and first-paint
+  read persisted data and fire ZERO paid advisor calls. The SSR path *structurally cannot*
+  reach the paid API — it has no code path to it — so a bot crawl or a cold visit costs
+  nothing.
+- **`AdvisorClient` is refactored to accept `initialBuild` and NOT auto-generate on mount.**
+  Seeded with the stored build, it renders the result view immediately (server-side, then
+  hydrates). It calls the live advisor engine ONLY on a user-initiated refinement (below).
+- **Forward-compatible:** the same static-view + `initialBuild` structure serves the A2
+  weapon-variant pages and any future premium surface with no rework.
+
+State -> URL:
 - **Selecting inputs navigates** — picking a shell (and, on demand-promoted combos, a
   weapon) router-pushes to the permalink. Using the tool lands you on a real, shareable,
   indexable URL.
-- **Landing on a permalink hydrates** — server SSRs the persisted build (crawlable); the
-  client hydrates `AdvisorClient` to that build's state.
-- **Refinements** (goal/rank/experience/free-text) -> query params -> live regen (authed
-  layer), `rel=canonical` to the base page. Base = static/indexable; refinements =
-  dynamic/non-indexed.
+- **Landing on a permalink hydrates** — the server SSRs the persisted build (crawlable) via
+  the static view; the client hydrates `AdvisorClient` to that build's state WITHOUT
+  regenerating.
+- **REFINEMENT BOUNDARY (goal-neutral — Fable route ruling).** goal/rank/experience
+  refinements stay **client-only and mint NO new URLs** — only demand-promoted WEAPON
+  variants get their own URL (A2). A refinement re-runs the live advisor (the authed, paid
+  call) and updates the view in place; it may reflect in query params for shareability, but
+  every such variant `rel=canonical`s to the bare `/tools/build/[shell]`. Base =
+  static/indexable/free; refinement = dynamic/non-indexed/paid. (This boundary is also the
+  free/premium seam — see B2.)
 - Fixes the Step 0 bug: "copy link" copies the per-build permalink, not generic `/advisor`.
 
 ### A5. Rendering + freshness — static WITH a store-keyed regeneration hook (Fable sharpening 2, moat-critical)
@@ -150,7 +168,12 @@ whole value is that they carry verified in-game data.
 
 Mechanism:
 
-- **Statically generated (ISR)** for crawlability + speed.
+- **Statically generated + ON-DEMAND revalidated — NOT time-based ISR (Fable route ruling,
+  2026-08-05).** Static pre-rendering gives crawlability + speed, but revalidation must be
+  keyed to the STORE, not a clock. Time-based ISR is wrong on two counts: (1) a fixed
+  `revalidate` window serves stale VERIFIED stats after a patch until the timer expires — a
+  moat violation, since the pages' whole value is carrying current verified data; and (2)
+  it WASTES paid advisor calls regenerating builds whose store inputs never changed.
 - **Store-change snapshot.** Each persisted build row carries `source_updated_at` = the
   MAX(`updated_at`) of the `shell_stats` / `weapon_stats` / (and mods/cores/implants/
   cradle rows) it was built from. This is the same MAX-recency pattern as the
@@ -163,8 +186,11 @@ Mechanism:
   (`revalidatePath('/tools/build/...')` / `revalidateTag`) so the static page rebuilds
   with fresh data. The updated_at trigger shipped this session is exactly the signal this
   hook consumes.
-- **ISR fallback.** A moderate `revalidate` (e.g. daily) so a missed webhook can never
-  leave a page more than a day stale. Belt-and-suspenders.
+- **Baseline `revalidate: false`** — freshness comes from the store hook, not a clock. A
+  deliberately LONG fallback window is acceptable only as a dead-hook backstop, never as
+  the freshness mechanism (a short window would reintroduce both failure modes above). The
+  route ships its revalidate strategy shaped for on-demand FROM DAY ONE, even though the A5
+  store-`updated_at` hook itself lands as a follow-on slice.
 - **Staleness query.** The refresh job selects builds where any source entity's
   `updated_at` > `build.source_updated_at` -> that build is stale -> regen. Derive-don't-
   store: a store fix propagates to its dependent build pages on the next refresh pass.
@@ -219,8 +245,12 @@ Only depth, personalization, and per-user data — none of which creates inbound
 crawlable discovery — is gate-able later:
 
 - **Save / track builds to an account** (a "my builds" library) — personalization.
-- **Advanced tuning / live custom regenerate** (rank/experience knobs, free-text) — the
-  paid Claude call; depth + compute.
+- **Live refinement / advanced tuning** (goal/rank/experience knobs, free-text) — the paid
+  Claude call; depth + compute. **This is the render/generate boundary from A4, and it IS
+  the free/premium seam (Fable route ruling, 2026-08-05):** free = the stored canonical SSR
+  pages (unlimited, crawlable, zero paid calls); premium-later = unlimited live refinement.
+  The seam is structural — already present in the render/generate split — so future gating
+  is a data flip on the live-refine endpoint, never a rebuild.
 - **Multi-build comparison** (side-by-side) — depth.
 - **Popularity DATA / personalized analytics** behind the public trending page —
   per-user/compute data (the public page itself is free, B1).
