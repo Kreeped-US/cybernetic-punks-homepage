@@ -138,3 +138,53 @@ test('DMZ classify: an UNCOVERED weapon claim -> UNPARSEABLE-held (safe default,
   assert.equal(det.unparseable[0].class, 'UNPARSEABLE');
   assert.equal(det.gap.gap, 1, 'the uncovered claim is a measured gap, not silence');
 });
+
+// ── VERIFIED-ONLY EVERYWHERE (Fable's ruling / 3a amendment) -- CLASSIFIER DEMOTION (approach B) ──
+// The gate passes classifyCorroboration(..., { verifiedOnly: true }). An UNVERIFIED store row stays
+// in the store (RECOGNIZED) but is demoted: it can neither corroborate (echo) nor contradict (no
+// verified value). Both match and mismatch collapse to UNCORROBORATED -> hold-class for DMZ. This
+// delivers Fable's stated outcome AND preserves recognition (the entity is never dropped to silence,
+// so the fail-closed gate is never blinded). The verified=true path is unchanged. Same entity, same
+// draft; the ONLY lever is the row's verified flag + the verifiedOnly opt.
+const VONLY = { runDate: '2026-10-24', verifiedOnly: true };
+const DRAFT_24 = [{ slug: 'd', editor: 'x', created_at: '2026-10-24', body: 'The PLACEHOLDER Rifle deals 24 damage.' }];
+const DRAFT_99 = [{ slug: 'd', editor: 'x', created_at: '2026-10-24', body: 'The PLACEHOLDER Rifle deals 99 damage.' }];
+const WEAPON_UNVERIFIED = { type: 'dmz-weapon', name: 'PLACEHOLDER Rifle', aliases: [], fields: { name: 'PLACEHOLDER Rifle', stats: { damage: 24 } }, verified: false, verified_source: null };
+const WEAPON_VERIFIED   = { type: 'dmz-weapon', name: 'PLACEHOLDER Rifle', aliases: [], fields: { name: 'PLACEHOLDER Rifle', stats: { damage: 24 } }, verified: true, verified_source: 'official' };
+
+test('verified-only demotion: a MATCHING claim vs a verified=FALSE row -> UNCORROBORATED-held, NOT echo-corroborated', () => {
+  const out = classifyCorroboration(DRAFT_24, { entities: [WEAPON_UNVERIFIED] }, VONLY);
+  assert.equal(out.corroborations.length, 0, 'no echo: an unverified row cannot corroborate');
+  const unc = out.findings.filter((f) => f.class === 'UNCORROBORATED');
+  assert.equal(unc.length, 1, 'the provisional claim HOLDS (hold-class for DMZ)');
+  assert.equal(unc[0].store_verified, false);
+  assert.ok(unc[0].evidence_note && /UNVERIFIED/.test(unc[0].evidence_note), 'the finding is stamped as unverified-store evidence');
+});
+
+test('verified-only demotion: a MISMATCHING claim vs a verified=FALSE row -> UNCORROBORATED (NOT CONTRADICTED -- no verified value to contradict)', () => {
+  const out = classifyCorroboration(DRAFT_99, { entities: [WEAPON_UNVERIFIED] }, VONLY);
+  assert.equal(out.findings.filter((f) => f.class === 'CONTRADICTED').length, 0, 'cannot contradict against an unverified value');
+  assert.equal(out.findings.filter((f) => f.class === 'UNCORROBORATED').length, 1, 'held as UNCORROBORATED');
+});
+
+test('verified-only demotion: RECOGNITION PRESERVED -- the unverified entity still yields a hold-class finding (NOT silent-publish, unlike row-exclusion)', () => {
+  const out = classifyCorroboration(DRAFT_24, { entities: [WEAPON_UNVERIFIED] }, VONLY);
+  assert.ok(out.findings.length >= 1, 'the entity is recognized -> the gate HOLDS, it is not blinded to silence');
+});
+
+test('verified-only demotion: FLIP the row verified=TRUE -> the SAME matching claim corroborates (the legitimate pass)', () => {
+  const out = classifyCorroboration(DRAFT_24, { entities: [WEAPON_VERIFIED] }, VONLY);
+  assert.equal(out.findings.length, 0, 'no finding');
+  assert.equal(out.corroborations.length, 1, 'a verified row corroborates');
+});
+
+test('verified-only demotion: verified=TRUE + a MISMATCH still CONTRADICTS (verified authority is unchanged)', () => {
+  const out = classifyCorroboration(DRAFT_99, { entities: [WEAPON_VERIFIED] }, VONLY);
+  assert.equal(out.findings.filter((f) => f.class === 'CONTRADICTED').length, 1, 'a verified row can contradict');
+});
+
+test('verified-only is OPT-IN: DEFAULT (no verifiedOnly) keeps prior behavior -- an unverified match still corroborates (batch/other callers unchanged)', () => {
+  const out = classifyCorroboration(DRAFT_24, { entities: [WEAPON_UNVERIFIED] }, { runDate: '2026-10-24' });
+  assert.equal(out.corroborations.length, 1, 'default: any row corroborates (the pre-amendment behavior, for the batch)');
+  assert.equal(out.findings.length, 0);
+});

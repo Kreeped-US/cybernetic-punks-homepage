@@ -556,10 +556,17 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       // (fail-closed, throws on a read error -> caught below -> gateThrew -> HOLD). DMZ holding is
       // now REAL: the DMZ store loads its entities, the exemplar extractors check what they cover,
       // and everything else falls to UNPARSEABLE (2b) and holds -- safe by default.
+      // The store loads FULL (verified + unverified) so every entity stays RECOGNIZED -- the
+      // verified-only bar is applied in the CLASSIFIER (verifiedOnly:true below), not by dropping
+      // rows (which would blind the gate: an unrecognized entity's claim silent-publishes).
       var gateStore = await loadGateStore(supabase, PRODUCING_GAME_SLUG);
       var gateDraftSlug = generateSlug(result.headline);
       var gateDraft = [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }];
-      var gateOut = classifyCorroboration(gateDraft, { entities: gateStore.entities }, { runDate: new Date().toISOString().slice(0, 10) });
+      // VERIFIED-ONLY (Fable's verified-only-everywhere ruling / 3a amendment): corroboration is
+      // measured ONLY against VERIFIED rows, so a claim matching only a verified=false (provisional)
+      // row is UNCORROBORATED -> held (DMZ), never echo-corroborated. Same bar the release gate uses
+      // (one-gate-one-bar). Marathon (log-only) is unaffected in outcome -- it never holds regardless.
+      var gateOut = classifyCorroboration(gateDraft, { entities: gateStore.entities }, { runDate: new Date().toISOString().slice(0, 10), verifiedOnly: true });
       gateFindings = gateOut.findings || [];
       var det = detectUnparseable(gateDraft, { entities: gateStore.entities });
       gateUnparse = det.unparseable;

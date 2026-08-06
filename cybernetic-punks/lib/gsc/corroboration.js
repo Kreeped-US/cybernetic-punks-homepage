@@ -241,12 +241,19 @@ function resolveSeniority(articleCreatedAt, storeUpdatedAt, storePatch, patchDat
 
 // articles: [{ slug, editor, created_at, body }]  (already game-filtered by the caller)
 // store:    { entities: [{ type, name, aliases?, fields, verified, verified_source, patch_verified }] }
-// opts:     { patchDates, runDate }
+// opts:     { patchDates, runDate, verifiedOnly } -- verifiedOnly (the gate) demotes unverified rows
 // returns { findings, corroborations, skippedAmbiguous }
 export function classifyCorroboration(articles, store, opts) {
   const o = opts || {};
   const patchDates = o.patchDates || PATCH_DATES;
   const runDate = o.runDate || null;
+  // VERIFIED-ONLY (Fable's verified-only-everywhere ruling / 3a amendment). The GATE passes
+  // verifiedOnly:true so corroboration is measured ONLY against VERIFIED store rows -- an unverified
+  // row is demoted to a non-authority (see the classify loop below). Default (batch/other callers)
+  // is falsy -> prior behavior (any row can corroborate/contradict). Note this is a CLASSIFIER gate,
+  // NOT a store filter: unverified entities stay in the store and stay RECOGNIZED, so the gate is
+  // never blinded -- it holds the claim (UNCORROBORATED) instead of dropping it to silent-publish.
+  const verifiedOnly = o.verifiedOnly === true;
   const entities = (store && store.entities) || [];
 
   // terms per entity (canonical name + curated aliases), for whole-word presence tests.
@@ -277,7 +284,15 @@ export function classifyCorroboration(articles, store, opts) {
   for (let i = 0; i < rawClaims.length; i++) {
     const c = rawClaims[i];
     let cls;
-    if (c.storeValue.value == null || c.storeValue.value === '') {
+    // VERIFIED-ONLY DEMOTION (Fable's 3a amendment): when verifiedOnly is set (the gate), an
+    // UNVERIFIED store row (verified!==true) is NOT an authority -- it can neither CORROBORATE the
+    // claim (echo: two unverified assertions agreeing) nor CONTRADICT it (no verified value to
+    // contradict against). Both match and mismatch collapse to UNCORROBORATED -> hold-class for DMZ
+    // (fail-closed), routed to a verification task / the citation lane. The entity is STILL recognized
+    // (it stays in the store), so a provisional claim is HELD, not dropped to silent-publish -- the
+    // one-gate-one-bar the insert + release gates share. Default (verifiedOnly off) is unchanged.
+    const storeUnverified = verifiedOnly && c.entity.verified !== true;
+    if (storeUnverified || c.storeValue.value == null || c.storeValue.value === '') {
       cls = 'UNCORROBORATED';
     } else {
       const cmp = c.ext.compare(c.claimedValue, c.storeValue.value);
