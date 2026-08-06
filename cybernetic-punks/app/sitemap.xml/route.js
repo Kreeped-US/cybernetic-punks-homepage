@@ -25,9 +25,10 @@ export const revalidate = 3600;
 const BASE = 'https://cyberneticpunks.com';
 
 export async function GET() {
-  const { dmz, intel, entities } = partitionEligible(await computeEligible());
+  const { dmz, dmzBuilds, intel, entities } = partitionEligible(await computeEligible());
   const body = sitemapIndexXml([
     { loc: BASE + '/sitemap-dmz.xml', lastmod: newestLastmod(dmz) },
+    { loc: BASE + '/sitemap-dmz-builds.xml', lastmod: newestLastmod(dmzBuilds) },
     { loc: BASE + '/sitemap-marathon-intel.xml', lastmod: newestLastmod(intel) },
     { loc: BASE + '/sitemap-marathon-entities.xml', lastmod: newestLastmod(entities) },
   ]);

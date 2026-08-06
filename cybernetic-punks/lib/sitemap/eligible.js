@@ -25,6 +25,7 @@ import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
+import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { sectionHasContent } from '@/lib/dmz/sections';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug, MATCHUP_VERIFIED_DATE } from '@/lib/matchups';
@@ -244,6 +245,16 @@ export async function computeEligible() {
 
     // The /dmz hub itself (indexable while dmz.indexable; DB-driven -> no lastmod).
     add(BASE + '/dmz', D, 'dmz-section', undefined, 'daily', 0.9);
+
+    // DMZ WEAPON BUILDS (type='dmz-build'; its OWN sitemap child sitemap-dmz-builds.xml, so
+    // "is the DMZ build engine indexing?" is a measurable signal in isolation -- Fable SEO
+    // ruling). Emits /dmz/builds/[weapon] ONLY for builds whose DERIVED is_indexable is true:
+    // fetchIndexableBuildEntries reuses the SAME isBuildIndexable the route uses (one gate,
+    // two callers). ERROR-VS-EMPTY (the build_pages posture, NOT the entity catch-continue):
+    // a read error THROWS and propagates out of computeEligible (Next serves the last-good
+    // cached sitemap); a legitimate empty yields 0 URLs. Deliberately NOT wrapped in try/catch.
+    const buildEntries = await fetchIndexableBuildEntries();
+    buildEntries.forEach((b) => add(BASE + '/dmz/builds/' + b.weaponSlug, D, 'dmz-build', lm(b.updatedAt), 'weekly', 0.7));
   }
 
   // RUNTIME PARTITION INVARIANT (Change 1): assert union==eligible-set AND pairwise

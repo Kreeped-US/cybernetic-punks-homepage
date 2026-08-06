@@ -92,3 +92,64 @@ export function isBuildIndexable(resolved) {
   }
   return true;
 }
+
+// For the SITEMAP (B2). Returns { weaponSlug, updatedAt } for every FOB build whose DERIVED
+// is_indexable is true -- REUSING isBuildIndexable (one gate, two callers: the route and this
+// sitemap block; NEVER a reimplementation of the predicate). Batch-resolves in 3 reads total
+// (builds + weapons + attachments) regardless of build count.
+//
+// ERROR-VS-EMPTY (the build_pages posture, NOT the entity catch-continue swallow): THROWS on
+// ANY DB read error -- the throw propagates out of computeEligible so Next serves the last-good
+// cached sitemap -- and returns [] on a legitimate EMPTY result (empty tables -> 0 build URLs,
+// the sitemap builds fine).
+export async function fetchIndexableBuildEntries() {
+  const { data: builds, error: bErr } = await supabase
+    .from('dmz_weapon_builds')
+    .select('slug, weapon_slug, build_json, updated_at')
+    .eq('game_slug', GAME).eq('build_context', 'fob');
+  if (bErr) throw new Error('dmz_weapon_builds sitemap read failed: ' + bErr.message);
+  if (!builds || builds.length === 0) return []; // legitimate empty -> 0 URLs
+
+  // Collect every weapon + attachment slug the builds reference (for the batch resolve).
+  const weaponSlugs = new Set();
+  const attachSlugs = new Set();
+  for (const b of builds) {
+    const bj = b.build_json || {};
+    weaponSlugs.add((bj.weapon && bj.weapon.slug) || b.weapon_slug);
+    (bj.standard_attachments || []).forEach((a) => { if (a.attachment_slug) attachSlugs.add(a.attachment_slug); });
+    if (bj.apex_attachment && bj.apex_attachment.attachment_slug) attachSlugs.add(bj.apex_attachment.attachment_slug);
+  }
+
+  // 2 batch resolves -- only slug + verified are needed for the gate.
+  const { data: weapons, error: wErr } = await supabase
+    .from('dmz_weapons').select('slug, verified')
+    .eq('game_slug', GAME).in('slug', [...weaponSlugs]);
+  if (wErr) throw new Error('dmz_weapons sitemap resolve failed: ' + wErr.message);
+
+  let attachments = [];
+  if (attachSlugs.size > 0) {
+    const { data, error: aErr } = await supabase
+      .from('dmz_attachments').select('slug, verified')
+      .eq('game_slug', GAME).in('slug', [...attachSlugs]);
+    if (aErr) throw new Error('dmz_attachments sitemap resolve failed: ' + aErr.message);
+    attachments = data || [];
+  }
+
+  const weaponBySlug = {};
+  (weapons || []).forEach((r) => { weaponBySlug[r.slug] = r; });
+  const attachmentsBySlug = {};
+  attachments.forEach((r) => { attachmentsBySlug[r.slug] = r; });
+
+  // Apply the SAME isBuildIndexable per build (the reuse -- one gate). The global lookup is
+  // fine: the predicate only indexes into it by the slugs each build actually cites.
+  const out = [];
+  for (const b of builds) {
+    const bj = b.build_json || {};
+    const weaponRef = (bj.weapon && bj.weapon.slug) || b.weapon_slug;
+    const resolved = { build: b, build_json: bj, weapon: weaponBySlug[weaponRef] || null, attachmentsBySlug };
+    if (isBuildIndexable(resolved)) {
+      out.push({ weaponSlug: weaponRef, updatedAt: b.updated_at });
+    }
+  }
+  return out;
+}

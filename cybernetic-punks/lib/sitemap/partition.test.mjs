@@ -16,6 +16,7 @@ const SET = [
   { url: 'https://x/dmz/fob', game: 'dmz', type: 'dmz-section' },
   { url: 'https://x/dmz/fob/a', game: 'dmz', type: 'dmz-article', lastmod: '2026-07-10T00:00:00-07:00' },
   { url: 'https://x/dmz/pois', game: 'dmz', type: 'dmz-entity' },
+  { url: 'https://x/dmz/builds/kastov', game: 'dmz', type: 'dmz-build', lastmod: '2026-08-06T00:00:00-07:00' },
   { url: 'https://x/intel/one', game: 'marathon', type: 'intel', lastmod: '2026-06-01T00:00:00-07:00' },
   { url: 'https://x/intel/two', game: 'marathon', type: 'intel', lastmod: '2026-08-01T00:00:00-07:00' },
   { url: 'https://x/weapons/w', game: 'marathon', type: 'weapon', lastmod: '2026-05-01T00:00:00-07:00' },
@@ -29,8 +30,8 @@ const SET = [
 ];
 
 test('partition is a genuine partition: union == input AND pairwise disjoint', () => {
-  const { dmz, intel, entities } = partitionEligible(SET);
-  const all = [...dmz, ...intel, ...entities];
+  const { dmz, dmzBuilds, intel, entities } = partitionEligible(SET);
+  const all = [...dmz, ...dmzBuilds, ...intel, ...entities];
   // union == input (same size, same URL set)
   assert.equal(all.length, SET.length, 'union size == eligible size');
   const inUrls = new Set(SET.map((e) => e.url));
@@ -42,14 +43,26 @@ test('partition is a genuine partition: union == input AND pairwise disjoint', (
   for (const e of all) { assert.ok(!seen.has(e.url), 'URL in exactly one child: ' + e.url); seen.add(e.url); }
 });
 
-test('children route by (game, type==intel): dmz->dmz, intel-articles->intel, rest->entities', () => {
-  const { dmz, intel, entities } = partitionEligible(SET);
-  assert.ok(dmz.every((e) => e.game === 'dmz'), 'dmz child is all game=dmz');
-  assert.equal(dmz.length, 4, 'the 4 dmz URLs');
+test('children route by (game, type): dmz-build->dmzBuilds, other dmz->dmz, intel->intel, rest->entities', () => {
+  const { dmz, dmzBuilds, intel, entities } = partitionEligible(SET);
+  assert.ok(dmz.every((e) => e.game === 'dmz' && e.type !== 'dmz-build'), 'dmz child is game=dmz, NON-build only');
+  assert.equal(dmz.length, 4, 'the 4 non-build dmz URLs');
+  assert.ok(dmzBuilds.every((e) => e.game === 'dmz' && e.type === 'dmz-build'), 'dmzBuilds child is dmz + dmz-build only');
+  assert.equal(dmzBuilds.length, 1, 'the 1 dmz-build URL');
   assert.ok(intel.every((e) => e.game === 'marathon' && e.type === 'intel'), 'intel child is marathon+intel only');
   assert.equal(intel.length, 2, 'the 2 intel articles');
   assert.ok(entities.every((e) => e.game === 'marathon' && e.type !== 'intel'), 'entities is marathon non-intel');
   assert.equal(entities.length, 8, 'the 8 non-intel marathon URLs');
+});
+
+test('a dmz-build URL routes to dmzBuilds, NOT the dmz catch-all (its own sitemap child)', () => {
+  const { dmz, dmzBuilds } = partitionEligible([
+    { url: 'https://x/dmz/pois/hajin-city', game: 'dmz', type: 'dmz-entity' },
+    { url: 'https://x/dmz/builds/kastov', game: 'dmz', type: 'dmz-build' },
+  ]);
+  assert.equal(dmzBuilds.length, 1, 'the build goes to dmzBuilds');
+  assert.equal(dmzBuilds[0].url, 'https://x/dmz/builds/kastov');
+  assert.ok(dmz.every((e) => e.type !== 'dmz-build'), 'the dmz catch-all does NOT absorb dmz-build');
 });
 
 test('an unassignable URL (new game/type) THROWS -- drift fails loud, never silent-drop', () => {
