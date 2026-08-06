@@ -24,6 +24,11 @@ export const marathon = {
   slug: 'marathon',
   displayName: 'Marathon',
 
+  // Pre-publish corroboration gate mode (lib/gsc/prePublishGate.js). 'log-only' = fail-OPEN:
+  // the gate logs findings but NEVER holds -- a frozen, retrofit game tolerates Season-lag, so
+  // Marathon publishes regardless (identical to the Phase 1 probe).
+  prePublishGate: 'log-only',
+
   // Lifecycle status + launch date -- mirror of the dmz.js fields (see the
   // three-concepts note there: status is lifecycle, distinct from any SEO/live
   // flag). ADDITIVE; nothing reads these yet.

@@ -71,10 +71,15 @@ export async function GET(req) {
   // included WHEN it exists, without 400-ing before Justin runs the ALTER. The panel
   // filters rejected drafts out client-side (undefined -> shown), so this stays correct
   // both before and after the migration.
+  // Exclude PRE-PUBLISH GATE holds (gate_status='held'): those are the corroboration
+  // verification worklist with their OWN release path (Ruling 5 -- per-article logged operator
+  // release), NOT VANTAGE review drafts. Keeping them out of this list is what makes gate_status
+  // a DISTINCT state -- a VANTAGE approve-flow can never accidentally publish a gate-held article.
   var { data, error } = await supabase
     .from('feed_items')
     .select('*')
     .eq('is_published', false)
+    .neq('gate_status', 'held')
     .order('created_at', { ascending: false })
     .limit(100);
 

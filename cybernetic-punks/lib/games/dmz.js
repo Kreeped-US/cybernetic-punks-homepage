@@ -35,6 +35,13 @@ export const dmz = {
   indexable: true,
   launched: false,
 
+  // Pre-publish corroboration gate mode (lib/gsc/prePublishGate.js). 'fail-closed' = the moat:
+  // a hold-class finding OR a gate-infra throw HOLDS the draft (is_published=false,
+  // gate_status='held'); gate-down = hold + alert, NOT publish. The deliberate divergence from
+  // the house fail-open posture -- for DMZ the gate IS moat enforcement. (Inert until the DMZ
+  // store loader + extractors land in Phase 3; the hold PLUMBING + fall-through sever are 2a.)
+  prePublishGate: 'fail-closed',
+
   // THREE SEPARATE CONCEPTS -- do not merge any pair. The two flags above plus:
   //   status: the game's LIFECYCLE (pre-launch / live / maintenance). Drives
   //     generation behaviour, effort allocation, and the kill-clock rules per the

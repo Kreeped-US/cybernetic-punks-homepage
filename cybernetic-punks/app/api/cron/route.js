@@ -12,6 +12,7 @@ import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
 import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
 import { classifyCorroboration } from '@/lib/gsc/corroboration';
+import { decideGate } from '@/lib/gsc/prePublishGate';
 import { loadMarathonStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { topicTokens, buildIdfMap } from '@/lib/topicTokens';
@@ -525,52 +526,65 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       result.headline = framing.headline;
     }
 
-    // ── PRE-PUBLISH CORROBORATION GATE -- PHASE 1: MARATHON, LOG-ONLY ───────────
-    // Runs the game-DB corroboration classifier (lib/gsc/corroboration.js) against
-    // THIS draft before it publishes -- the same instrument the headless batch runs
-    // over published articles, here pointed at a length-1 [draft] array via the SHARED
-    // store loader, so the gate and the batch compare against a byte-identical store.
+    // ── PRE-PUBLISH CORROBORATION GATE (Phase 2a) -- per-game mode ──────────────
+    // Runs classifyCorroboration on THIS draft vs the game store, then decideGate (pure)
+    // decides publish-vs-hold by the PRODUCING GAME's mode (lib/games/<game>.prePublishGate):
+    //   Marathon 'log-only'   -> fail-OPEN: logs, NEVER holds, publishes regardless (Phase 1).
+    //   DMZ      'fail-closed' -> the moat: a hold-class finding OR a gate-infra THROW HOLDS
+    //                            (is_published=false, gate_status='held'); gate-down = hold+alert.
     //
-    // THIS PHASE NEVER HOLDS. It LOGS what it would flag (CONTRADICTED / UNCORROBORATED
-    // counts + each entity/field/draft-value/store-value) and publishes REGARDLESS. The
-    // point is to watch the extractor's behaviour on real drafts before Phase 2 (a
-    // held-state column) arms any holding. No feed_items write, no early return, no
-    // insertData touch here.
+    // THE SEVER: there is NO path where the gate mode is 'fail-closed' and the draft reaches
+    // is_published:true without a clean decideGate pass. A loader/classifier throw sets
+    // gateThrew=true (NOT swallowed-then-publish) -> decideGate holds it. The single source of
+    // is_published / gate_status / gate_findings for the insert is gateDecision (below).
     //
-    // SCOPE: Marathon only, guarded on the PRODUCING GAME (not the editor) so the whole
-    // DMZ vertical is excluded in one test -- the EXTRACTORS are Marathon-field-specific
-    // and the DMZ claim grammar is Phase 3.
-    //
-    // FAIL-OPEN: a loader/classifier throw is logged and swallowed; publication proceeds.
-    // Matches the keyword hook's posture above -- a validation-only gate must never block
-    // a publish it cannot evaluate.
-    if (PRODUCING_GAME_SLUG === 'marathon') {
-      try {
-        var gateStore = await loadMarathonStore(supabase, PRODUCING_GAME_SLUG);
-        var gateDraftSlug = generateSlug(result.headline);
-        var gateOut = classifyCorroboration(
-          [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }],
-          { entities: gateStore.entities },
-          { runDate: new Date().toISOString().slice(0, 10) }
-        );
-        var gateContra = gateOut.findings.filter(function (f) { return f.class === 'CONTRADICTED'; });
-        var gateUncorr = gateOut.findings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
-        console.log('[gate] ' + editorName + ' draft "' + gateDraftSlug + '" vs store (unique=' + gateStore.counts.unique
-          + ' shell=' + gateStore.counts.shell + ' weapon=' + gateStore.counts.weapon + '): '
-          + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
-          + gateOut.corroborations.length + ' corroborated -- LOG-ONLY, publishing regardless');
-        gateContra.forEach(function (f) {
-          console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field
-            + '  draft=' + JSON.stringify(f.claimed_value)
-            + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
-        });
-        gateUncorr.forEach(function (f) {
-          console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field
-            + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
-        });
-      } catch (e) {
-        console.error('[gate] corroboration gate threw (LOG-ONLY, publishing): ' + (e && e.message));
-      }
+    // Phase 2a: the DMZ store is EMPTY (loadDMZStore + DMZ extractors are Phase 3) so a real DMZ
+    // hold via findings is inert until then; the hold PLUMBING + the throw-holds sever are live.
+    var gateMode = PRODUCING_GAME.prePublishGate || 'off';
+    var gateFindings = [];
+    var gateThrew = false;
+    try {
+      // Marathon store today; DMZ store loader is Phase 3 -> empty store until then (0 entities
+      // -> classifier finds nothing, so DMZ findings-holds are inert; throw-holds still fire).
+      var gateStore = (PRODUCING_GAME_SLUG === 'marathon')
+        ? await loadMarathonStore(supabase, PRODUCING_GAME_SLUG)
+        : { entities: [], counts: {} };
+      var gateDraftSlug = generateSlug(result.headline);
+      var gateOut = classifyCorroboration(
+        [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }],
+        { entities: gateStore.entities },
+        { runDate: new Date().toISOString().slice(0, 10) }
+      );
+      gateFindings = gateOut.findings || [];
+      var gateContra = gateFindings.filter(function (f) { return f.class === 'CONTRADICTED'; });
+      var gateUncorr = gateFindings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
+      console.log('[gate] ' + editorName + ' (' + PRODUCING_GAME_SLUG + '/' + gateMode + ') draft "' + gateDraftSlug + '": '
+        + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
+        + (gateOut.corroborations || []).length + ' corroborated');
+      gateContra.forEach(function (f) {
+        console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field
+          + '  draft=' + JSON.stringify(f.claimed_value)
+          + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
+      });
+      gateUncorr.forEach(function (f) {
+        console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field
+          + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
+      });
+    } catch (e) {
+      // FAIL-CLOSED (DMZ): a throw does NOT fall through to publish -- it sets gateThrew so
+      // decideGate holds. FAIL-OPEN (Marathon): decideGate ignores the throw and publishes.
+      gateThrew = true;
+      console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): ' + (e && e.message));
+    }
+
+    // DECIDE (pure). The ONLY producer of the insert's is_published / gate_status / gate_findings.
+    var gateDecision = decideGate(gateFindings, gateMode, gateThrew);
+    if (gateDecision.hold) {
+      // LOUD -- a fail-closed hold is a moat event (alert-worthy; sendCronFailureAlert hook is a
+      // 2b/launch follow-up). Records WHY (gate_findings) on the row for the verification worklist.
+      console.error('[gate][HOLD] ' + PRODUCING_GAME_SLUG + ' HELD (gate_status=held) -- '
+        + (gateThrew ? 'GATE-INFRA FAILURE (fail-closed hold)' : (gateDecision.gate_findings.length + ' hold-class finding(s)'))
+        + ' -- editor=' + editorName + ' headline="' + result.headline + '"');
     }
 
     var insertData = {
@@ -580,7 +594,12 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       source: media.source,
       tags: result.tags || [],
       ce_score: 0,
-      is_published: true,
+      // Pre-publish gate (Phase 2a) is the SOLE source of these three. Marathon log-only ->
+      // is_published:true / 'clear' always; DMZ fail-closed -> false / 'held' on a hold-class
+      // finding OR a gate throw. No DMZ path reaches is_published:true without decideGate.
+      is_published: gateDecision.is_published,
+      gate_status: gateDecision.gate_status,
+      gate_findings: gateDecision.gate_findings,
       slug: generateSlug(result.headline),
       thumbnail: media.thumbnail,
       source_url: media.source_url,
