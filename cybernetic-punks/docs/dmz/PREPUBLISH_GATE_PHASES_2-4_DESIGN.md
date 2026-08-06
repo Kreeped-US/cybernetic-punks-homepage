@@ -1,12 +1,16 @@
 # DMZ Pre-Publish Gate -- Phases 2-4 Build Spec (Fable-ruled)
 
-STATUS: DESIGN -- SAFETY-RULED, build spec. Written 2026-08-06 (Fable ruling folded in).
-Doc-only; NO code. LAUNCH-CRITICAL: all of Phase 2-4 must be live + placeholder-tested BEFORE
-the DMZ launch (Oct 23 2026) -- a fail-open window is a moat breach at peak traffic.
+STATUS: DESIGN -- SAFETY-RULED, build spec. Written 2026-08-06 (safety ruling folded in);
+Phase 2b ARMING ruling folded in 2026-08-06 (edit-in-place, A9 -- the "PHASE 2b BUILD SPEC"
+section below). Doc-only; NO code. LAUNCH-CRITICAL: all of Phase 2-4 must be live +
+placeholder-tested BEFORE the DMZ launch (Oct 23 2026) -- a fail-open window is a moat breach
+at peak traffic.
 
-Phase 1 (Marathon log-only probe) shipped ae5ada4. This spec covers Phases 2-4: arming the
-gate for DMZ (fail-closed holding), the DMZ claim grammar, and auto-release. Step-0 mechanics
-report informed this; the 5 rulings below are the safety contract.
+Phase 1 (Marathon log-only probe) shipped ae5ada4. Phase 2a (hold plumbing + DMZ fall-through
+sever) shipped ad0bdd8. This spec covers Phases 2-4: arming the gate for DMZ (fail-closed
+holding), the two-stage blindness detector (Phase 2b, arming-ruled below), the DMZ claim
+grammar, and auto-release. Step-0 mechanics reports informed this; the rulings are the safety
+contract.
 
 ---
 
@@ -156,6 +160,112 @@ BUILDABLE NOW vs LAUNCH-GATED:
   needs sample DMZ drafts (placeholder / hand-crafted), like the build engine's placeholders.
 - Phase 4: buildable NOW; test against a placeholder held draft + a placeholder store-row flip.
 All launch-critical: a fail-open window at launch = published fabrication = moat breach.
+
+---
+
+## PHASE 2b BUILD SPEC -- the two-stage detector + arming (Fable-ruled 2026-08-06)
+
+2b is where the real safety lives: making the gate's BLINDNESS loud (Ruling 2), and refusing to
+trust fail-closed until the blindness is MEASURED-low. 2a shipped the hold plumbing; 2b extends
+2a's HOLD_CLASSES + feeds decideGate more finding classes -- the hold plumbing (decideGate, the
+cron sever, gate_status/gate_findings) is UNCHANGED. The decideGate change is one line: the
+HOLD_CLASSES constant grows to CONTRADICTED + UNCORROBORATED + UNPARSEABLE.
+
+### BLINDNESS IS 3 MODES (the taxonomy -- the two instruments are NON-REDUNDANT)
+
+- MODE 1 -- MISSES (delta phrasing "damage increased from 23 to 28"; the field word precedes the
+  number so the integer regex never binds). Caught by UNPARSEABLE (Stage-1 hits, Stage-2 does not
+  parse) -> the GAP METRIC.
+- MODE 2 -- NO-EXTRACTOR categories (tier / velocity / precision: the checked store has no column,
+  so no extractor triggers). Also caught by UNPARSEABLE -> the GAP METRIC.
+- MODE 3 -- MIS-PARSES (decimals: "12.6 damage" -> the integer regex skips "12.6" and matches
+  "6 damage" -> extracts 6). Stage 2 PARSED it (wrongly), so UNPARSEABLE does NOT fire. ONLY the
+  golden corpus's VALUE-assertions catch mode 3 (assert "12.6 damage" -> {damage: 12.6}, which
+  fails today).
+- SO: gap metric = modes 1-2; corpus value-assertions = mode 3. Neither instrument substitutes
+  for the other. A gate with only the gap metric is blind to mis-parses; a corpus without value
+  assertions is blind to mis-parses too. Both, always.
+
+### RULING 1 (2b): STAGE-1 VOCAB -- err BROAD (decisive)
+
+Too-broad costs BOUNDED triage-work, paid pre-arming, on Marathon log-only (breadth over-holds
+NOTHING there -- it only inflates the gap, which is triage). Too-narrow costs SIGHT: a
+never-flagged stat sentence is silent-blind with no badge -- the exact failure the framing
+principle names ("absence of findings is never evidence"). So when in doubt, FLAG. Signal set:
+known entity/alias + ANY of:
+- a bare NUMBER, or DELTA language ("from X to Y", buffed/nerfed/increased/decreased/raised/
+  reduced/bumped, up/down to), or a PERCENT, or STAT-FIELD vocab (damage, fire rate, rpm, mag/
+  magazine, health, range, handling, recoil, velocity, precision, tier), PLUS
+- UNIT tokens (ms, m/s, seconds, zoom multipliers like "1.5x"), AND
+- COMPARATIVE / SUPERLATIVE stat language ("higher velocity than", "fastest ADS", "hits harder
+  than") -- these assert a checkable relation even with no number, and are pure mode-1/2 blindness
+  if unflagged.
+
+### RULING 2 (2b): ARMING = 3 conditions, ALL required, certified by a REVIEWED COMMIT
+
+DMZ fail-closed HOLDING on UNPARSEABLE is trusted ONLY when:
+- (a) the golden corpus is 100% GREEN -- including the DMZ section AND the expected-UNPARSEABLE
+  fixtures (the loud-path wiring itself under test);
+- (b) the GAP RATE <= ~10% over >= 20 Stage-1-bearing articles OR 4 weeks, whichever is LATER
+  (both a volume floor and a time floor -- a quiet week cannot certify);
+- (c) EVERY gap sentence is TRIAGED (fixed / turned into a fixture / classified a false-positive).
+  An untriaged gap is measured-and-IGNORED, which is NOT measured-low.
+MECHANISM: arming is a REVIEWED COMMIT that flips the per-game gate-mode constant to trust
+UNPARSEABLE-holding, with the gap report + the corpus run pasted in the PR body = the arming
+CERTIFICATE. Arming is NOT a runtime/dashboard toggle -- and neither is DISARMING (both are
+evidence-bearing commits, symmetric). No env flip can arm or disarm the moat.
+
+### RULING 3 (2b): GOLDEN CORPUS SEED (~25-35 fixtures, VALUES asserted)
+
+Each fixture: { sentence, real-or-synthetic label, expected Stage-1 verdict, expected-triples-
+WITH-VALUES OR expected-UNPARSEABLE }. Seed set:
+- The Phase-1 patch sentences VERBATIM (#1-5).
+- DECIMALS-with-values ("12.6 damage" -> {damage: 12.6}) -- the mode-3 exhibit.
+- ABSOLUTES ("180 health"), PERCENTAGES, RANGES ("40-60 falloff"), NEGATIONS ("no longer
+  one-shots", "removed from the loot pool"), COMPARATIVES, a MULTI-CLAIM sentence (2 triples on
+  one line), UNIT-bearing values, an ALIAS-form entity reference.
+- EXPECTED-UNPARSEABLE fixtures: tier / velocity / precision asserted to produce UNPARSEABLE
+  findings, NOT silence -- the loud path is under test, not assumed.
+- NEGATIVE cases (must NOT flag): "Season 3 begins September 22", "$70", "top 5 loadouts",
+  "patch 1.1.5.1", "9 POIs" -- the entity-count borderline that FORCES the false-positive policy
+  decision now (does "9 POIs" flag? the corpus pins the answer).
+- A DMZ-labeled section: interview + old-DMZ phrasing (printer costs, star levels) so the DMZ
+  grammar has fixtures before DMZ data exists.
+GROWTH RULE: every future blindness incident adds its sentence to the corpus SAME-DAY.
+
+### RULING 4 (2b): FIX the decimal regexes IN 2b (not optional)
+
+The corpus cannot be green with the "12.6" fixture failing, and arming (a) requires green -- so
+the mode-3 catch AND the fix land in the SAME commit (the decimal-aware regex + its regression
+fixture together). Make the integer numeric extractors decimal-aware.
+
+### RULING 5 (2b): PER-REASON hold metrics (not blended)
+
+UNPARSEABLE mostly RELABELS holds: a sparse-store hard-stat claim holds either way -- UNCORROB if
+parsed, UNPARSEABLE if not -- so it does not add much hold VOLUME. But the two reasons resolve
+through DIFFERENT pipelines, so their durations must be split:
+- UNCORROBORATED resolves via VERIFICATION THROUGHPUT (store-filling; play -> verify -> store).
+- UNPARSEABLE resolves via GRAMMAR WORK (fix + fixture).
+Build median-hold-duration PER REASON, never blended. UNCORROB trending down = the launch plan is
+executing; UNPARSEABLE spiking = extractor debt announcing itself. A blended metric hides which
+pipeline is lagging.
+
+### 2b SCOPE (files)
+
+- lib/gsc/corroboration.js -- refactor the per-sentence extractor loop into an exported
+  extractTriples() (behavior-identical Stage 2) + make the numeric regexes DECIMAL-AWARE (Ruling 4).
+- lib/gsc/hardStatDetector.js (NEW) -- Stage 1 isHardStatSentence (the broad vocab, Ruling 1) +
+  the combiner that emits UNPARSEABLE (Stage-1 hit AND extractTriples()==[]) + the gap counts.
+- lib/gsc/prePublishGate.js -- HOLD_CLASSES += 'UNCORROBORATED', 'UNPARSEABLE' (the ONLY
+  decideGate change; plumbing untouched). NOTE: UNPARSEABLE-holding is trusted only post-arming
+  (Ruling 2) -- the constant grows now; the per-game arming commit certifies reliance.
+- app/api/cron/route.js -- run the combiner (both modes), feed its findings to decideGate, LOG the
+  gap metric (stage1_hits / stage2_parsed / gap + the verbatim unparseable sentences).
+- lib/gsc/corroboration.golden.test.mjs (NEW) -- the golden corpus + runner (values asserted).
+- lib/gsc/hardStatDetector.test.mjs (NEW) -- Stage-1 recall + UNPARSEABLE unit tests.
+Effort: medium -- the wiring is small; the real work is Stage-1 recall tuning + the corpus
+(Ruling 3) + the decimal fix (Ruling 4). Marathon stays log-only throughout (the gap accrues
+safely, holding nothing) until the arming commit.
 
 ---
 
