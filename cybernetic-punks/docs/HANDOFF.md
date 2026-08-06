@@ -45,6 +45,46 @@ remain.
 
 ---
 
+## 2026-08-06 - DMZ weapon-build ENGINE live: route/render (B1) + own sitemap child (B2)
+
+The DMZ build-generator's route/render + indexation layer is live on the 5-table schema (built
+earlier today). Two slices, both verified against placeholder rows.
+
+B1 - ROUTE/RENDER (/dmz/builds/[weapon], f4a07ea): force-dynamic (request-time, NO build-time DB
+-- matches the DMZ entity verticals, avoids the Marathon build-env scar). fetchWeaponBuild
+resolves build_json's SLUG refs (weapon + standard attachments by slot + apex) against the store
+by slug -- the greenfield cross-table assembly (no existing DMZ page did this). Renders via
+DmzBuildView. DERIVED is_indexable gate (isBuildIndexable -- strict AND: every cited component
+verified=true AND the depth floor weapon+>=1 standard): robots noindex until all verified,
+auto-indexes on flip, no stored flag. error-vs-empty (throw on DB error, notFound on empty --
+not the fetchDmzRows swallow). A1-clean JSON-LD (BreadcrumbList + WebPage). Verified live vs the
+placeholders: slug-resolve renders (weapon + 2 standard-by-slot + apex), page NOINDEXED (all
+components verified=false).
+
+B2 - OWN SITEMAP CHILD (sitemap-dmz-builds.xml, 795c204): a dmzBuilds partition bucket + child
+so "is the DMZ build engine indexing?" is a measurable signal in isolation (Fable SEO ruling).
+fetchIndexableBuildEntries batch-resolves (3 reads total) + applies the SAME isBuildIndexable --
+one gate, TWO callers (route + sitemap can't drift). error-vs-empty (throws out of computeEligible
+on a read error -> Next serves last-good cached; NOT the entity catch-continue). dmzBuilds branch
+BEFORE the dmz catch-all. partition.test.mjs 9/9 (incl. the new dmz-build routing case).
+Placeholders (verified=false) excluded: sitemap-dmz-builds.xml = 0 URLs, absent from sitemap-dmz.xml
+too, index lists the child. robots.txt unchanged (points at the index).
+
+THE MOAT MECHANISM (scaffold-now, flip-day-one): placeholder rows verified=false -> route
+noindexed + absent from the sitemap. At launch, flip components verified=true -> the build
+AUTO-indexes (route) + AUTO-appears (sitemap), no manual flag sweep. ONE derived gate drives both
+surfaces. And the honesty held at the reference level all the way through: the 9 slots seeded
+verified=false (no clean official enumeration), placeholders unmistakably fake -- nothing false
+ever indexable.
+
+LAUNCH-GATED (Oct 23): real weapon/attachment DATA + the generateBuild LOGIC. The engine is built
++ tested against placeholders; it goes live automatically as verified data lands. Placeholder rows
+remain (verified=false -> invisible); delete via the cleanup SQL or keep as the sitemap-exclusion
+fixture. NEXT (optional/launch): the generateBuild logic (launch), a /dmz/builds hub, client
+refinement (the Slice-B analog). Design doc: docs/dmz/WEAPON_BUILD_SCHEMA_DESIGN.md.
+
+---
+
 ## 2026-08-06 - DMZ weapon-build schema LIVE (5 tables, Fable-ruled, Gen-2 conventions)
 
 The DMZ build-generator foundation is live + verified. Designed from the MW4 Gunsmith reveal
