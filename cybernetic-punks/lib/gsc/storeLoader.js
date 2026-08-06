@@ -43,3 +43,68 @@ export async function loadMarathonStore(client, gameSlug) {
     .filter((e) => e.name);
   return { entities, counts: { unique: uniques.length, shell: shells.length, weapon: weapons.length } };
 }
+
+// Like pageAll but THROWS on a read error (error-vs-empty, the build_pages/sitemap posture, NOT
+// the swallow). loadDMZStore uses this so a DMZ store read error PROPAGATES -> the fail-closed
+// gate holds (a partial/failed store never silently passes). Marathon (log-only/fail-open) keeps
+// pageAll (swallow-to-partial) -- a Marathon store error just means fewer entities, still publishes.
+async function pageAllStrict(client, table, sel, filter) {
+  const out = [];
+  for (let from = 0; ; from += 1000) {
+    let q = client.from(table).select(sel);
+    if (filter) q = filter(q);
+    const { data, error } = await q.range(from, from + 999);
+    if (error) throw new Error('[storeLoader] ' + table + ' read failed: ' + error.message);
+    if (!data || !data.length) break;
+    out.push(...data);
+    if (data.length < 1000) break;
+  }
+  return out;
+}
+
+// Load the DMZ entity STORE as classifyCorroboration's { entities } shape (Phase 3a). Mirrors
+// loadMarathonStore over the checkable DMZ tables. DMZ tables have NO patch_verified (no patch
+// calendar pre-launch) -> patch_verified: null (seniority degrades to indeterminate, handled).
+// NOT loaded: dmz_weapon_builds (a generated artifact, not a verified fact) or dmz_pois (a
+// location, no hard stat). ERROR-VS-EMPTY: throws on a read error (pageAllStrict); [] on empty.
+export async function loadDMZStore(client, gameSlug) {
+  const game = gameSlug || 'dmz';
+  const [recipes, ingredients, lieutenants, weapons, attachments, recipeIngredients] = await Promise.all([
+    pageAllStrict(client, 'dmz_recipes', '*', (q) => q.eq('game_slug', game)),
+    pageAllStrict(client, 'dmz_ingredients', '*', (q) => q.eq('game_slug', game)),
+    pageAllStrict(client, 'dmz_lieutenants', '*', (q) => q.eq('game_slug', game)),
+    pageAllStrict(client, 'dmz_weapons', '*', (q) => q.eq('game_slug', game)),
+    pageAllStrict(client, 'dmz_attachments', '*', (q) => q.eq('game_slug', game)),
+    pageAllStrict(client, 'dmz_recipe_ingredients', '*', (q) => q.eq('game_slug', game)),
+  ]);
+  // Recipe -> ingredient NAMES (via the M:N join) -> a locked_mods-style checkable list, attached
+  // to the recipe entity's fields for a Phase-3b list extractor (loaded now; no exemplar uses it yet).
+  const ingBySlug = {};
+  ingredients.forEach((r) => { if (r.slug) ingBySlug[r.slug] = r.name; });
+  const ingredientsFor = (recipeSlug) => recipeIngredients
+    .filter((ri) => ri.recipe_slug === recipeSlug)
+    .map((ri) => ingBySlug[ri.ingredient_slug] || ri.ingredient_slug)
+    .filter(Boolean);
+
+  const ent = (type, rows, mapFields) => rows.map((r) => ({
+    type, name: r.name, aliases: [],
+    fields: mapFields ? mapFields(r) : r,
+    verified: r.verified, verified_source: r.verified_source, patch_verified: null,
+  }));
+  const entities = []
+    .concat(ent('dmz-recipe', recipes, (r) => ({ ...r, ingredients: ingredientsFor(r.slug) })))
+    .concat(ent('dmz-ingredient', ingredients))
+    .concat(ent('dmz-lieutenant', lieutenants))
+    .concat(ent('dmz-weapon', weapons))
+    .concat(ent('dmz-attachment', attachments))
+    .filter((e) => e.name);
+  return { entities, counts: { recipe: recipes.length, ingredient: ingredients.length, lieutenant: lieutenants.length, weapon: weapons.length, attachment: attachments.length } };
+}
+
+// Per-game gate store dispatch (the cron gate calls this). Marathon -> loadMarathonStore
+// (fail-open, swallow); DMZ -> loadDMZStore (fail-closed, throw-on-error); other -> empty store.
+export async function loadGateStore(client, gameSlug) {
+  if (gameSlug === 'marathon') return loadMarathonStore(client, gameSlug);
+  if (gameSlug === 'dmz') return loadDMZStore(client, gameSlug);
+  return { entities: [], counts: {} };
+}

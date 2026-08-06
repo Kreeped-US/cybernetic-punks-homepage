@@ -20,7 +20,7 @@ import { containsWholeWord } from './franchiseMarkers.js';
 import { extractTriples, sentencesOf } from './corroboration.js';
 
 // Stat-field vocab that has an extractor (needs a co-present NUMBER to be a stat claim).
-const STAT_FIELD_VOCAB = /\b(damage|fire ?rate|rpm|rounds per minute|magazine|mag|health|range|handling|recoil|falloff|ads|reload|accuracy|mobility|stability)\b/i;
+const STAT_FIELD_VOCAB = /\b(damage|fire ?rate|rpm|rounds per minute|magazine|mag|health|range|handling|recoil|falloff|ads|reload|accuracy|mobility|stability|cost|credits?|cash)\b/i;
 // NO-EXTRACTOR categories: the store has no column, so Stage 2 can NEVER parse these -> a mention
 // with an entity is a hard-stat claim on its own (mode 2 blindness). Flag on vocab alone.
 const NO_EXTRACTOR_VOCAB = /\b(tier|velocity|precision)\b/i;

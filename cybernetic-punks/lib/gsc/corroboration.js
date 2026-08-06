@@ -99,6 +99,20 @@ function numericField(field, entityTypes, re, storeCol) {
   };
 }
 
+// jsonb-NESTED numeric field (Phase 3a). Same as numericField, but the store value is read from a
+// jsonb column's key -- fields[jsonbCol][key] (e.g. dmz_weapons.stats.damage), not a top-level
+// column. A missing jsonbCol/key -> null store value -> UNCORROBORATED (the store lacks it), never
+// a crash. If the launch jsonb uses a different key, that store read is null -> the claim holds as
+// UNCORROBORATED/UNPARSEABLE (safe) until the key is corrected (a corpus-driven fix).
+function jsonbNumericField(field, entityTypes, re, jsonbCol, key) {
+  return {
+    field, entityTypes, triggers: re,
+    extract(sentence) { const m = sentence.match(re); if (!m) return null; const n = parseFloat(m[1]); return isNaN(n) ? null : { value: n, display: m[0].trim() }; },
+    storeValue(f) { const j = f && f[jsonbCol]; const v = (j && j[key] != null) ? j[key] : null; return { value: (v == null || v === '') ? null : Number(v), display: (v == null || v === '') ? null : String(v) }; },
+    compare(a, b) { if (a == null || b == null) return 'uncomparable'; return a === b ? 'match' : 'contradict'; },
+  };
+}
+
 const EXTRACTORS = [
   // ACQUISITION (unique_weapons.acquisition_source [+ _detail for display]).
   {
@@ -143,6 +157,28 @@ const EXTRACTORS = [
   numericField('magazine_size', ['weapon'], /(?<![-\d.])(\d+(?:\.\d+)?)[- ]round (?:magazine|mag)\b/i, 'magazine_size'),
   // Numeric shell fact (shell_stats).
   numericField('base_health', ['shell'], /(?<![-\d.])(\d+(?:\.\d+)?)\s+(?:base )?health\b/i, 'base_health'),
+
+  // ── DMZ EXEMPLAR extractors (Phase 3a) ──────────────────────────────────────────────────────
+  // ENTITY-TYPE-SEPARATED: a Marathon entity (weapon/shell/unique) NEVER matches these (dmz-* types),
+  // and a DMZ entity never matches the Marathon extractors above -- so Marathon classification is
+  // byte-identical and the games can't cross-fire. The FULL DMZ set + exact jsonb keys + DMZ-specific
+  // phrasings = Phase 3b (launch-week, corpus-driven). ANY DMZ hard-stat claim these do NOT cover
+  // falls to UNPARSEABLE (2b) and HOLDS -- safe by default, never a silent pass.
+  //
+  // DMZ acquisition (recipes/ingredients/lieutenants). DMZ has a SINGLE `acquisition` column (not
+  // Marathon's source/detail pair), so its own storeValue; the trigger + acqCategory bucket are shared.
+  {
+    field: 'acquisition', entityTypes: ['dmz-recipe', 'dmz-ingredient', 'dmz-lieutenant'],
+    triggers: /\b(unlock|unlocked|acquire|acquired|obtain|available|purchase|buy|bought|drops?|dropped|found|earn|earned|craft)\b/i,
+    extract(sentence) { const c = acqCategory(sentence); return c ? { value: c, display: sentence } : null; },
+    storeValue(f) { const src = f && f.acquisition; if (!src) return { value: null, display: null }; return { value: acqCategory(src), display: src }; },
+    compare(a, b) { if (a == null || b == null) return 'uncomparable'; return a === b ? 'match' : 'contradict'; },
+  },
+  // DMZ weapon numeric stats -- jsonb `stats` (CoD phrasing mirrors Marathon: "deals X damage", "X rpm").
+  jsonbNumericField('damage', ['dmz-weapon'], /(?<![-\d.])(\d+(?:\.\d+)?)\s+damage\b/i, 'stats', 'damage'),
+  jsonbNumericField('fire_rate', ['dmz-weapon'], /(?<![-\d.])(\d+(?:\.\d+)?)\s*(?:rpm|rounds per minute)\b/i, 'stats', 'fire_rate'),
+  // DMZ attachment cost -- top-level int `cost`, the cash Gunsmith ("costs X credits/cash").
+  numericField('cost', ['dmz-attachment'], /(?<![-\d.])(\d+(?:\.\d+)?)\s*(?:credits?|cash)\b/i, 'cost'),
 ];
 
 // Split a body into candidate sentences. Bold markers dropped; split on paragraph breaks and

@@ -14,7 +14,7 @@ import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
 import { classifyCorroboration } from '@/lib/gsc/corroboration';
 import { detectUnparseable } from '@/lib/gsc/hardStatDetector';
 import { decideGate } from '@/lib/gsc/prePublishGate';
-import { loadMarathonStore } from '@/lib/gsc/storeLoader';
+import { loadGateStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { topicTokens, buildIdfMap } from '@/lib/topicTokens';
 
@@ -552,11 +552,11 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     var gateGap = null;
     var gateThrew = false;
     try {
-      // Marathon store today; DMZ store loader is Phase 3 -> empty store until then (0 entities
-      // -> classifier + detector find nothing, so DMZ findings-holds are inert; throw-holds fire).
-      var gateStore = (PRODUCING_GAME_SLUG === 'marathon')
-        ? await loadMarathonStore(supabase, PRODUCING_GAME_SLUG)
-        : { entities: [], counts: {} };
+      // Per-game store (Phase 3a): Marathon -> loadMarathonStore (fail-open); DMZ -> loadDMZStore
+      // (fail-closed, throws on a read error -> caught below -> gateThrew -> HOLD). DMZ holding is
+      // now REAL: the DMZ store loads its entities, the exemplar extractors check what they cover,
+      // and everything else falls to UNPARSEABLE (2b) and holds -- safe by default.
+      var gateStore = await loadGateStore(supabase, PRODUCING_GAME_SLUG);
       var gateDraftSlug = generateSlug(result.headline);
       var gateDraft = [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }];
       var gateOut = classifyCorroboration(gateDraft, { entities: gateStore.entities }, { runDate: new Date().toISOString().slice(0, 10) });

@@ -9,7 +9,7 @@
 // sentences once pulled from the real 1.1.5.2 article/logs -- the growth rule covers this.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractTriples } from './corroboration.js';
+import { extractTriples, classifyCorroboration } from './corroboration.js';
 import { isHardStatSentence, detectUnparseable } from './hardStatDetector.js';
 import { containsWholeWord } from './franchiseMarkers.js';
 
@@ -17,11 +17,16 @@ import { containsWholeWord } from './franchiseMarkers.js';
 const WEAPON = { type: 'weapon', name: 'Twin Tap HBR', aliases: [], fields: { name: 'Twin Tap HBR', damage: 24, fire_rate: 600, magazine_size: 30 } };
 const SHELL  = { type: 'shell',  name: 'Sentinel',    aliases: [], fields: { name: 'Sentinel', base_health: 180 } };
 const UNIQUE = { type: 'unique', name: 'Cloudborn',   aliases: ['Cloudborn (Standard)'], fields: { acquisition_source: 'Armory', acquisition_detail: 'purchase', locked_mods: 'Locked loadout (2): Steady Barrel, Oracle Lens. Mods permanently locked.' } };
-// DMZ entities have NO extractor yet (Phase 3), so a DMZ hard-stat claim is UNPARSEABLE by design.
+// DMZ entities. Phase 3a added EXEMPLAR extractors: dmz-weapon stats (jsonb), dmz-attachment cost,
+// dmz-* acquisition. Uncovered DMZ fields (recipe/lieutenant hard stats) still fall to UNPARSEABLE.
 const DMZ_RECIPE = { type: 'dmz-recipe', name: '3D Printer', aliases: [], fields: {} };
 const DMZ_LT     = { type: 'dmz-lieutenant', name: 'Bombmaker', aliases: [], fields: {} };
-const M = [WEAPON, SHELL, UNIQUE];               // Marathon store
-const D = [DMZ_RECIPE, DMZ_LT];                  // DMZ store (no extractors)
+const DMZ_WEAPON = { type: 'dmz-weapon', name: 'PLACEHOLDER Rifle', aliases: [], fields: { name: 'PLACEHOLDER Rifle', stats: { damage: 24, fire_rate: 600 } } };
+const DMZ_ATTACH = { type: 'dmz-attachment', name: 'PLACEHOLDER Suppressor', aliases: [], fields: { name: 'PLACEHOLDER Suppressor', cost: 3000 } };
+const DMZ_RECIPE_A = { type: 'dmz-recipe', name: 'PLACEHOLDER Breaching Charge', aliases: [], fields: { name: 'PLACEHOLDER Breaching Charge', acquisition: 'Armory purchase' } };
+const M = [WEAPON, SHELL, UNIQUE];                                   // Marathon store
+const D = [DMZ_RECIPE, DMZ_LT];                                      // DMZ store (recipe/lt: no stat extractor)
+const DW = [DMZ_WEAPON, DMZ_ATTACH, DMZ_RECIPE_A, DMZ_RECIPE, DMZ_LT]; // DMZ store with the exemplar-covered entities
 
 function present(sentence, entities) {
   return entities.filter((e) => [e.name].concat(e.aliases || []).some((t) => containsWholeWord(t, sentence)));
@@ -55,9 +60,16 @@ const CORPUS = [
   { s: 'The Twin Tap HBR has higher damage than the Copperhead.', label: 'UNPARSEABLE/COMPARATIVE', ents: M, stage1: true, expect: 'UNPARSEABLE' },
   { s: 'The Twin Tap HBR no longer one-shots to the body.', label: 'UNPARSEABLE/NEGATION', ents: M, stage1: true, expect: 'UNPARSEABLE' },
 
-  // ── DMZ section (no DMZ extractor yet -> DMZ hard-stat claims are UNPARSEABLE) ─
-  { s: 'The 3D Printer output deals 45 damage per hit at tier 3.', label: 'DMZ/UNPARSEABLE (no dmz extractor)', ents: D, stage1: true, expect: 'UNPARSEABLE' },
-  { s: 'The Bombmaker has higher armor than other lieutenants at tier 5.', label: 'DMZ/UNPARSEABLE (tier + comparative)', ents: D, stage1: true, expect: 'UNPARSEABLE' },
+  // ── DMZ section -- EXEMPLAR-COVERED fields now PARSE (Phase 3a) ──────────────
+  { s: 'The PLACEHOLDER Rifle deals 99 damage.', label: 'DMZ/value damage via jsonb stats.damage', ents: DW, stage1: true, expect: [{ field: 'damage', value: 99 }] },
+  { s: 'The PLACEHOLDER Rifle now deals 12.6 damage.', label: 'DMZ/value DECIMAL damage (jsonb)', ents: DW, stage1: true, expect: [{ field: 'damage', value: 12.6 }] },
+  { s: 'The PLACEHOLDER Rifle fires at 800 rpm.', label: 'DMZ/value fire_rate (jsonb)', ents: DW, stage1: true, expect: [{ field: 'fire_rate', value: 800 }] },
+  { s: 'The PLACEHOLDER Suppressor costs 5000 credits.', label: 'DMZ/value cost', ents: DW, stage1: true, expect: [{ field: 'cost', value: 5000 }] },
+  { s: 'The PLACEHOLDER Breaching Charge is unlocked via crafting.', label: 'DMZ/acquisition (categorical, Stage-1 false)', ents: DW, stage1: false, expect: [{ field: 'acquisition', value: 'crafting' }] },
+  // ── DMZ UNCOVERED (recipe/lieutenant hard stats, uncovered weapon fields) -> still UNPARSEABLE (safe) ─
+  { s: 'The 3D Printer output deals 45 damage per hit at tier 3.', label: 'DMZ/UNPARSEABLE recipe-damage (recipe is not a weapon)', ents: DW, stage1: true, expect: 'UNPARSEABLE' },
+  { s: 'The Bombmaker has higher armor than other lieutenants at tier 5.', label: 'DMZ/UNPARSEABLE lieutenant (no stat extractor)', ents: DW, stage1: true, expect: 'UNPARSEABLE' },
+  { s: 'The PLACEHOLDER Rifle has higher recoil control now.', label: 'DMZ/UNPARSEABLE uncovered-weapon-field (safe default)', ents: DW, stage1: true, expect: 'UNPARSEABLE' },
 
   // ── NEGATIVE cases (must NOT flag: no entity, or no stat context) ────────────
   { s: 'Season 3 begins September 22.', label: 'NEG/date (no entity)', ents: M, stage1: false, expect: 'NONE' },
@@ -91,3 +103,38 @@ for (const fx of CORPUS) {
     }
   });
 }
+
+// ── DMZ full-classification (Phase 3a): DMZ holding becomes REAL end-to-end ──────────────────────
+test('DMZ classify: jsonb weapon-stat CONTRADICTION (draft 99 vs store stats.damage 24) -> CONTRADICTED', () => {
+  const out = classifyCorroboration(
+    [{ slug: 'd', editor: 'x', created_at: '2026-10-24', body: 'The PLACEHOLDER Rifle deals 99 damage.' }],
+    { entities: [DMZ_WEAPON] }, { runDate: '2026-10-24' });
+  const c = out.findings.filter((f) => f.class === 'CONTRADICTED');
+  assert.equal(c.length, 1, 'one CONTRADICTED finding');
+  assert.equal(c[0].field, 'damage');
+  assert.equal(c[0].claimed_value, 99);
+  assert.equal(c[0].store_display, '24', 'read from jsonb stats.damage');
+});
+
+test('DMZ classify: a matching claim (draft 24 vs store 24) -> corroborated (provenance stamp, not a finding)', () => {
+  const out = classifyCorroboration(
+    [{ slug: 'd', editor: 'x', created_at: '2026-10-24', body: 'The PLACEHOLDER Rifle deals 24 damage.' }],
+    { entities: [DMZ_WEAPON] }, { runDate: '2026-10-24' });
+  assert.equal(out.findings.length, 0);
+  assert.equal(out.corroborations.length, 1);
+});
+
+test('DMZ classify: an UNCORROBORATED jsonb field (store lacks the key) -> UNCORROBORATED (hold-class in 2b)', () => {
+  const noStat = { type: 'dmz-weapon', name: 'PLACEHOLDER Rifle', aliases: [], fields: { name: 'PLACEHOLDER Rifle', stats: {} } };
+  const out = classifyCorroboration(
+    [{ slug: 'd', editor: 'x', created_at: '2026-10-24', body: 'The PLACEHOLDER Rifle deals 99 damage.' }],
+    { entities: [noStat] }, { runDate: '2026-10-24' });
+  assert.equal(out.findings.filter((f) => f.class === 'UNCORROBORATED').length, 1);
+});
+
+test('DMZ classify: an UNCOVERED weapon claim -> UNPARSEABLE-held (safe default, LOUD not silent)', () => {
+  const det = detectUnparseable([{ slug: 'd', body: 'The PLACEHOLDER Rifle has higher recoil control now.' }], { entities: [DMZ_WEAPON] });
+  assert.equal(det.unparseable.length, 1);
+  assert.equal(det.unparseable[0].class, 'UNPARSEABLE');
+  assert.equal(det.gap.gap, 1, 'the uncovered claim is a measured gap, not silence');
+});
