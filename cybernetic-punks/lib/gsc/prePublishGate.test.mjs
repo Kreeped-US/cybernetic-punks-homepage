@@ -26,12 +26,27 @@ test('fail-closed: a THROW HOLDS even with NO findings (gate-down = hold) + reco
   assert.equal(d.gate_findings[0].class, 'GATE_INFRA_FAILURE', 'the throw records why the row held');
 });
 
-test('fail-closed: NO hold-class findings + NO throw -> PUBLISHES (clear)', () => {
-  const d = decideGate([UNCORR], 'fail-closed', false); // UNCORROBORATED is NOT a hold-class in 2a
+test('fail-closed: NO findings + NO throw -> PUBLISHES (clear)', () => {
+  const d = decideGate([], 'fail-closed', false);
   assert.equal(d.hold, false);
   assert.equal(d.is_published, true);
   assert.equal(d.gate_status, 'clear');
   assert.equal(d.gate_findings, null);
+});
+
+test('fail-closed (2b): UNCORROBORATED now HOLDS (hard-stat by construction)', () => {
+  const d = decideGate([UNCORR], 'fail-closed', false);
+  assert.equal(d.hold, true);
+  assert.equal(d.gate_status, 'held');
+  assert.deepEqual(d.gate_findings, [UNCORR]);
+});
+
+test('fail-closed (2b): UNPARSEABLE HOLDS (unverifiable-by-instrument)', () => {
+  const UNPARSE = { class: 'UNPARSEABLE', entity: 'Test Rifle', field: null, verbatim: 'moved to S tier' };
+  const d = decideGate([UNPARSE], 'fail-closed', false);
+  assert.equal(d.hold, true);
+  assert.equal(d.gate_status, 'held');
+  assert.deepEqual(d.gate_findings, [UNPARSE]);
 });
 
 test('log-only (Marathon): a CONTRADICTED finding NEVER holds -- publishes regardless (fail-open, unchanged)', () => {
@@ -52,7 +67,6 @@ test('unknown/absent mode: PUBLISHES (house fail-open default; a game without th
   assert.equal(decideGate([CONTRA], 'off', true).is_published, true);
 });
 
-test('2a hold-class set is CONTRADICTED only (2b widens it); UNCORROBORATED is NOT yet a hold-class', () => {
-  assert.deepEqual(HOLD_CLASSES, ['CONTRADICTED']);
-  assert.equal(decideGate([UNCORR], 'fail-closed', false).hold, false, 'UNCORROBORATED alone does not hold in 2a');
+test('2b hold-class set = CONTRADICTED + UNCORROBORATED + UNPARSEABLE (decideGate logic unchanged)', () => {
+  assert.deepEqual(HOLD_CLASSES, ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE']);
 });

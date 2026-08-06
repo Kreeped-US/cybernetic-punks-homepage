@@ -89,7 +89,11 @@ function normModList(s) {
 function numericField(field, entityTypes, re, storeCol) {
   return {
     field, entityTypes, triggers: re,
-    extract(sentence) { const m = sentence.match(re); if (!m) return null; const n = parseInt(m[1], 10); return isNaN(n) ? null : { value: n, display: m[0].trim() }; },
+    // DECIMAL-AWARE (Phase 2b, Ruling 4): parseFloat + a decimal-capturing regex (below), so
+    // "12.6 damage" parses 12.6 -- not the old integer-regex mis-parse to 6 (blindness mode 3).
+    // Integers are unaffected: parseFloat('24') === 24 === parseInt('24'), so Stage-2 output on
+    // existing integer inputs is byte-identical (the behavior-identical guarantee).
+    extract(sentence) { const m = sentence.match(re); if (!m) return null; const n = parseFloat(m[1]); return isNaN(n) ? null : { value: n, display: m[0].trim() }; },
     storeValue(f) { const v = f[storeCol]; return { value: (v == null || v === '') ? null : Number(v), display: (v == null || v === '') ? null : String(v) }; },
     compare(a, b) { if (a == null || b == null) return 'uncomparable'; return a === b ? 'match' : 'contradict'; },
   };
@@ -130,23 +134,54 @@ const EXTRACTORS = [
       return String(a).split(' | ').every((x) => store.has(x)) ? 'match' : 'contradict';
     },
   },
-  // Numeric weapon facts (weapon_stats). High-precision patterns; the entity must be named in the sentence.
-  numericField('damage', ['weapon'], /(\d+)\s+damage\b/i, 'damage'),
-  numericField('fire_rate', ['weapon'], /(\d+)\s*(?:rpm|rounds per minute)\b/i, 'fire_rate'),
-  numericField('magazine_size', ['weapon'], /(\d+)[- ]round (?:magazine|mag)\b/i, 'magazine_size'),
+  // Numeric weapon facts (weapon_stats). High-precision patterns; the entity must be named in the
+  // sentence. DECIMAL-AWARE capture (\d+(?:\.\d+)?) (Ruling 4) with a leading (?<![-\d.]) guard so a
+  // RANGE ("40-60 damage") or a partial ("...024") does NOT mis-parse to an endpoint -- the range
+  // then falls to Stage-1/UNPARSEABLE (honest) instead of a wrong single value.
+  numericField('damage', ['weapon'], /(?<![-\d.])(\d+(?:\.\d+)?)\s+damage\b/i, 'damage'),
+  numericField('fire_rate', ['weapon'], /(?<![-\d.])(\d+(?:\.\d+)?)\s*(?:rpm|rounds per minute)\b/i, 'fire_rate'),
+  numericField('magazine_size', ['weapon'], /(?<![-\d.])(\d+(?:\.\d+)?)[- ]round (?:magazine|mag)\b/i, 'magazine_size'),
   // Numeric shell fact (shell_stats).
-  numericField('base_health', ['shell'], /(\d+)\s+(?:base )?health\b/i, 'base_health'),
+  numericField('base_health', ['shell'], /(?<![-\d.])(\d+(?:\.\d+)?)\s+(?:base )?health\b/i, 'base_health'),
 ];
 
 // Split a body into candidate sentences. Bold markers dropped; split on paragraph breaks and
 // sentence terminators. Precision does not depend on perfect segmentation -- a claim needs entity +
 // trigger + value co-present in one chunk, so over-splitting only loses recall, never adds a claim.
-function sentencesOf(body) {
+export function sentencesOf(body) {
   if (!body) return [];
   return String(body).replace(/\*\*/g, ' ')
     .split(/\n+|(?<=[.!?])\s+/)
     .map((s) => s.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
+}
+
+// STAGE 2 (the high-precision claim grammar), one sentence. Extracted from classifyCorroboration
+// (Phase 2b) so it is reused, byte-identical, by BOTH the classifier AND the Stage-1 combiner
+// (hardStatDetector) -- one grammar, two callers. Returns { triples, ambiguous }:
+//   triples:   [{ entity, ext, field, claimedValue, claimedDisplay, sentence, storeValue }]
+//   ambiguous: [{ field, entities:[names], sentence }]  (>=2 applicable entities -> skipped)
+// PURE. `presentEntities` = the store entities named in this sentence (whole-word), computed by
+// the caller. Extractor order is preserved, so the output order is identical to the old inline loop.
+export function extractTriples(sentence, presentEntities) {
+  const triples = [];
+  const ambiguous = [];
+  for (let xi = 0; xi < EXTRACTORS.length; xi++) {
+    const ext = EXTRACTORS[xi];
+    const applicable = presentEntities.filter((e) => ext.entityTypes.indexOf(e.type) !== -1);
+    if (applicable.length === 0) continue;
+    if (!ext.triggers.test(sentence)) continue;
+    const claimed = ext.extract(sentence);
+    if (!claimed) continue;
+    if (applicable.length > 1) { // AMBIGUOUS binding -> skip (record it)
+      ambiguous.push({ field: ext.field, entities: applicable.map((e) => e.name), sentence });
+      continue;
+    }
+    const entity = applicable[0];
+    const sv = ext.storeValue(entity.fields || {});
+    triples.push({ entity, ext, field: ext.field, claimedValue: claimed.value, claimedDisplay: claimed.display, sentence, storeValue: sv });
+  }
+  return { triples, ambiguous };
 }
 
 // The store value is "current as of" the LATER of two dates: when we last verified/touched the row
@@ -194,21 +229,10 @@ export function classifyCorroboration(articles, store, opts) {
       const present = withTerms.filter((wt) => wt.terms.some((t) => containsWholeWord(t, sentence))).map((wt) => wt.e);
       if (present.length === 0) continue;
 
-      for (let xi = 0; xi < EXTRACTORS.length; xi++) {
-        const ext = EXTRACTORS[xi];
-        const applicable = present.filter((e) => ext.entityTypes.indexOf(e.type) !== -1);
-        if (applicable.length === 0) continue;
-        if (!ext.triggers.test(sentence)) continue;
-        const claimed = ext.extract(sentence);
-        if (!claimed) continue;
-        if (applicable.length > 1) {                 // AMBIGUOUS binding -> skip (record it)
-          skippedAmbiguous.push({ slug: art.slug, field: ext.field, entities: applicable.map((e) => e.name), sentence });
-          continue;
-        }
-        const entity = applicable[0];
-        const sv = ext.storeValue(entity.fields || {});
-        rawClaims.push({ art, entity, ext, field: ext.field, claimedValue: claimed.value, claimedDisplay: claimed.display, sentence, storeValue: sv });
-      }
+      // STAGE 2 via the shared extractor (behavior-identical to the old inline loop).
+      const ex = extractTriples(sentence, present);
+      for (const a of ex.ambiguous) skippedAmbiguous.push({ slug: art.slug, field: a.field, entities: a.entities, sentence: a.sentence });
+      for (const t of ex.triples) rawClaims.push({ art, entity: t.entity, ext: t.ext, field: t.field, claimedValue: t.claimedValue, claimedDisplay: t.claimedDisplay, sentence: t.sentence, storeValue: t.storeValue });
     }
   }
 

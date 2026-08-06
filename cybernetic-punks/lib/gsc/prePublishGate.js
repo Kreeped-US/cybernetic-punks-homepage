@@ -16,9 +16,13 @@
 // findings via the two-stage detector; the decision logic below does NOT change between 2a/2b --
 // only HOLD_CLASSES grows.
 
-// The finding classes that HOLD a fail-closed draft. 2b appends 'UNCORROBORATED' (hard-stat) and
-// 'UNPARSEABLE'. This constant is the ONLY 2a->2b change in this file.
-export const HOLD_CLASSES = ['CONTRADICTED'];
+// The finding classes that HOLD a fail-closed draft. Phase 2b added UNCORROBORATED (every
+// UNCORROBORATED finding is hard-stat by construction -- the grammar only checks store hard
+// fields) and UNPARSEABLE (a Stage-1 hard-stat sentence Stage-2 cannot parse -- unverifiable-by-
+// instrument). This constant is the ONLY 2a->2b change in this file; decideGate's logic is
+// unchanged. (Reliance on UNPARSEABLE-holding for real DMZ articles is armed SEPARATELY by an
+// evidence-bearing commit once the gap metric is measured-low -- Ruling 2; the constant grows now.)
+export const HOLD_CLASSES = ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE'];
 
 function holdClassFindings(findings) {
   return (findings || []).filter((f) => HOLD_CLASSES.indexOf(f.class) !== -1);

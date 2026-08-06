@@ -12,6 +12,7 @@ import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
 import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
 import { classifyCorroboration } from '@/lib/gsc/corroboration';
+import { detectUnparseable } from '@/lib/gsc/hardStatDetector';
 import { decideGate } from '@/lib/gsc/prePublishGate';
 import { loadMarathonStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
@@ -540,35 +541,45 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     //
     // Phase 2a: the DMZ store is EMPTY (loadDMZStore + DMZ extractors are Phase 3) so a real DMZ
     // hold via findings is inert until then; the hold PLUMBING + the throw-holds sever are live.
+    // Phase 2b: TWO-STAGE detector. classifyCorroboration = Stage 2 (precise triples ->
+    // CONTRADICTED/UNCORROBORATED). detectUnparseable = Stage 1 (high-recall hard-stat sentences)
+    // minus Stage 2 -> UNPARSEABLE findings + the GAP METRIC (the gate's live blindness measure).
+    // All findings feed decideGate; its HOLD_CLASSES now = CONTRADICTED + UNCORROBORATED +
+    // UNPARSEABLE. The hold plumbing (decideGate, the sever, gate_status) is UNCHANGED.
     var gateMode = PRODUCING_GAME.prePublishGate || 'off';
-    var gateFindings = [];
+    var gateFindings = [];   // classifier: CONTRADICTED / UNCORROBORATED
+    var gateUnparse = [];    // detector: UNPARSEABLE
+    var gateGap = null;
     var gateThrew = false;
     try {
       // Marathon store today; DMZ store loader is Phase 3 -> empty store until then (0 entities
-      // -> classifier finds nothing, so DMZ findings-holds are inert; throw-holds still fire).
+      // -> classifier + detector find nothing, so DMZ findings-holds are inert; throw-holds fire).
       var gateStore = (PRODUCING_GAME_SLUG === 'marathon')
         ? await loadMarathonStore(supabase, PRODUCING_GAME_SLUG)
         : { entities: [], counts: {} };
       var gateDraftSlug = generateSlug(result.headline);
-      var gateOut = classifyCorroboration(
-        [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }],
-        { entities: gateStore.entities },
-        { runDate: new Date().toISOString().slice(0, 10) }
-      );
+      var gateDraft = [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }];
+      var gateOut = classifyCorroboration(gateDraft, { entities: gateStore.entities }, { runDate: new Date().toISOString().slice(0, 10) });
       gateFindings = gateOut.findings || [];
+      var det = detectUnparseable(gateDraft, { entities: gateStore.entities });
+      gateUnparse = det.unparseable;
+      gateGap = det.gap;
       var gateContra = gateFindings.filter(function (f) { return f.class === 'CONTRADICTED'; });
       var gateUncorr = gateFindings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
+      // GAP METRIC in the [gate] line (Ruling 2): the live blindness measure on Marathon log-only.
       console.log('[gate] ' + editorName + ' (' + PRODUCING_GAME_SLUG + '/' + gateMode + ') draft "' + gateDraftSlug + '": '
         + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
-        + (gateOut.corroborations || []).length + ' corroborated');
+        + (gateOut.corroborations || []).length + ' corroborated | stage1=' + gateGap.stage1_hits
+        + ' stage2_parsed=' + gateGap.stage2_parsed + ' GAP=' + gateGap.gap + ' unparseable');
       gateContra.forEach(function (f) {
-        console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field
-          + '  draft=' + JSON.stringify(f.claimed_value)
+        console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value)
           + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
       });
       gateUncorr.forEach(function (f) {
-        console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field
-          + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
+        console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
+      });
+      gateUnparse.forEach(function (f) {
+        console.log('[gate]   UNPARSEABLE  ' + f.entity + '  signal=' + f.signal + '  "' + f.verbatim + '"  (Stage-1 hit, Stage-2 could not parse -> golden-corpus/extractor to-do)');
       });
     } catch (e) {
       // FAIL-CLOSED (DMZ): a throw does NOT fall through to publish -- it sets gateThrew so
@@ -577,13 +588,19 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): ' + (e && e.message));
     }
 
-    // DECIDE (pure). The ONLY producer of the insert's is_published / gate_status / gate_findings.
-    var gateDecision = decideGate(gateFindings, gateMode, gateThrew);
+    // DECIDE (pure). ALL findings (classifier + detector) feed decideGate -- the ONLY producer of
+    // the insert's is_published / gate_status / gate_findings. Plumbing unchanged from 2a.
+    var gateAllFindings = gateFindings.concat(gateUnparse);
+    var gateDecision = decideGate(gateAllFindings, gateMode, gateThrew);
     if (gateDecision.hold) {
-      // LOUD -- a fail-closed hold is a moat event (alert-worthy; sendCronFailureAlert hook is a
-      // 2b/launch follow-up). Records WHY (gate_findings) on the row for the verification worklist.
+      // PER-REASON breakdown (Ruling 5): UNCORROB resolves via verification throughput, UNPARSEABLE
+      // via grammar work -- split so a lagging pipeline is visible (metrics query gate_findings).
+      var hc = gateDecision.gate_findings || [];
+      var nC = hc.filter(function (f) { return f.class === 'CONTRADICTED'; }).length;
+      var nU = hc.filter(function (f) { return f.class === 'UNCORROBORATED'; }).length;
+      var nP = hc.filter(function (f) { return f.class === 'UNPARSEABLE'; }).length;
       console.error('[gate][HOLD] ' + PRODUCING_GAME_SLUG + ' HELD (gate_status=held) -- '
-        + (gateThrew ? 'GATE-INFRA FAILURE (fail-closed hold)' : (gateDecision.gate_findings.length + ' hold-class finding(s)'))
+        + (gateThrew ? 'GATE-INFRA FAILURE (fail-closed hold)' : ('by-reason: ' + nC + ' CONTRADICTED, ' + nU + ' UNCORROBORATED, ' + nP + ' UNPARSEABLE'))
         + ' -- editor=' + editorName + ' headline="' + result.headline + '"');
     }
 
