@@ -1,10 +1,24 @@
 # DMZ Weapon-Build Schema -- Design (Step 0)
 
-STATUS: FABLE-RULED -- DDL-READY. Written 2026-08-06 against the known MW4 DMZ Gunsmith
-structure; Fable ruling folded in 2026-08-06 (edit-in-place, A9). Doc-only; NO DDL run yet.
-The ruling collapsed Apex into one attachments table, made is_indexable DERIVED, added cost
-columns + slug-integrity riders + three scar-checks, sharpened the 5+1-vs-8 and the 5 open
-questions, and added the SEO plan. Section 8 records the resolved rulings.
+STATUS: LIVE -- operator-run 2026-08-06, verified. Written 2026-08-06 against the known MW4 DMZ
+Gunsmith structure; Fable ruling folded in 2026-08-06 (edit-in-place, A9); DDL run + verified
+2026-08-06. The ruling collapsed Apex into one attachments table, made is_indexable DERIVED,
+added cost columns + slug-integrity riders + three scar-checks, sharpened the 5+1-vs-8 and the
+5 open questions, and added the SEO plan. Section 8 records the resolved rulings.
+
+PRE-FLIGHT CORRECTIONS APPLIED AT RUN TIME (read-before-write caught 3):
+- game_slug is `text NOT NULL` with NO default -- the Gen-2 convention (recipes/ingredients/
+  lieutenants), per the game_slug-default-removal doctrine (forgotten value ERRORS, never
+  silently becomes the wrong game). NOT the older `dmz_pois` `DEFAULT 'dmz'`.
+- Triggers REUSE the two EXISTING functions `dmz_guard_game_slug()` (confirmed body, the
+  immutability guard) and `set_updated_at()` (confirmed body, NEW.updated_at = now()). NO new
+  functions were created -- an earlier draft's `dmz_touch_updated_at` would have been redundant.
+- Trigger names follow the recipe convention: `[table]_guard_game_slug` + `[table]_set_updated_at`.
+- SLOT-SEED HONESTY (Lean A): the 9 slots seeded `verified = false` (not true) with an honest
+  evidence label -- there is no clean official 9-slot enumeration yet (creator-UI-backed, not
+  officially citable), so the honesty gate noindexes them until an official source or launch.
+
+DATA + generateBuild logic remain LAUNCH-GATED (Oct 23 2026). Next: the route/render layer.
 
 The DMZ weapon-build tool is the build-generator groundwork for DMZ: the render-from-verified-
 row analog of Marathon's `/tools/build/[shell]`, keyed on WEAPON. This doc designs the schema

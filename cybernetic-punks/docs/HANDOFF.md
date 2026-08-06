@@ -45,6 +45,46 @@ remain.
 
 ---
 
+## 2026-08-06 - DMZ weapon-build schema LIVE (5 tables, Fable-ruled, Gen-2 conventions)
+
+The DMZ build-generator foundation is live + verified. Designed from the MW4 Gunsmith reveal
+(5 standard + 1 Apex, 9-slot taxonomy, class-shared attachments, FOB cash-Gunsmith), Fable-
+reviewed, built to the existing Gen-2 dmz_* conventions.
+
+5 TABLES (operator-run, verified): dmz_weapon_classes, dmz_weapons (slug + class_slug composite
+FK, stats jsonb), dmz_attachment_slots (reference table), dmz_attachments (ONE table - Fable
+collapsed Apex in: is_apex discriminator + nullable weapon_slug + the apex_shape CHECK; class+
+slot scoped for standard, weapon-scoped for apex; cost/cost_tier for the cash Gunsmith),
+dmz_weapon_builds (the artifact: weapon axis, build_context NOT NULL CHECK'd, build_json,
+used_sources, source_updated_at, NO stored is_indexable - DERIVED per Fable, the <=8 ceiling
+CHECK). All composite FKs ON UPDATE CASCADE ON DELETE RESTRICT, UNIQUE(game_slug,slug), 10
+triggers (guard + set_updated_at, both REUSED not recreated), RLS public-read.
+
+IMPROVES ON MARATHON (each traced to a real scar): slug-based build_json/used_sources refs
+(kills the "Cloudborn (Standard)" rarity-suffix bug class - joins by slug, name display-only);
+provenance (used_sources) designed-IN not A5-bolted-on; single class-join compat (vs mod_stats'
+3 overlapping columns); no goal column (goal-neutral ruling); derived is_indexable (automatic
+launch, no manual flip sweep); updated_at trigger designed-in.
+
+SLOT SEED - HONESTY DECISION (Lean A): the 9 slots (optic/barrel/muzzle/underbarrel/magazine/
+ammunition/rear-grip/stock/laser) seeded verified=FALSE, not true - because there is NO clean
+official MW4 9-slot enumeration (COD POD Ep. 11 doesn't cover Gunsmith; the 9 are evidence-
+backed via creator UI first-look walkthroughs Jun-Jul 2026, but not officially citable). The
+verified_source honestly says "creator coverage, official pending - flip at launch." The slots
+exist (FK targets) + honesty-gated (verified=false -> noindexed) until an official source
+confirms or the game ships. The moat working at the reference level: checked the source, found
+it wasn't clean, seeded honestly rather than falsely.
+
+PRE-FLIGHT CORRECTIONS (read-before-write caught 3): game_slug NO-default (Gen-2 doctrine, not
+the older pois DEFAULT 'dmz'); REUSE set_updated_at (existing convention) not a new dmz_touch_
+updated_at (would've been a redundant function); reuse dmz_guard_game_slug (confirmed body).
+
+DATA + generateBuild logic remain LAUNCH-GATED (Oct 23). NEXT: the route/render layer (the
+/dmz build route from the row, behind derived-indexability, route-code lessons - error-vs-empty,
+own sitemap child, JSON-LD). Design doc: docs/dmz/WEAPON_BUILD_SCHEMA_DESIGN.md (STATUS: LIVE).
+
+---
+
 ## 2026-08-05 - WS1d Step-0 settled: pre-registration RECORDED now; enrollment + action-logic deferred
 
 WS1d = making the 6 live A2 variants a MEASURED experiment. Step-0 scoping (2 Explore agents
