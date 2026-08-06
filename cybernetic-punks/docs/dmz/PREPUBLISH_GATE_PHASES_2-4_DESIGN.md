@@ -3,16 +3,20 @@
 STATUS: DESIGN -- SAFETY-RULED, build spec. Written 2026-08-06 (safety ruling folded in);
 Phase 2b ARMING ruling folded in 2026-08-06 (edit-in-place, A9 -- the "PHASE 2b BUILD SPEC"
 section below); Phase 4 AUTO-RELEASE ruling folded in 2026-08-06 (edit-in-place, A9 -- the
-"PHASE 4 BUILD SPEC" section below, which AMENDS Phase 3a to verified-only). Doc-only; NO code.
-LAUNCH-CRITICAL: all of Phase 2-4 must be live + placeholder-tested BEFORE the DMZ launch
-(Oct 23 2026) -- a fail-open window is a moat breach at peak traffic.
+"PHASE 4 BUILD SPEC" section below). 3a VERIFIED-ONLY amendment SHIPPED 2026-08-06 and its spec
+correction folded in (edit-in-place, A9): the verified-only bar is classifyCorroboration's
+`verifiedOnly` opt (recognition-preserving demotion), NOT a store-loader row-filter (which blinds
+the gate) -- see P4 Ruling 1 + the 3a AMENDMENT note. LAUNCH-CRITICAL: all of Phase 2-4 must be
+live + placeholder-tested BEFORE the DMZ launch (Oct 23 2026) -- a fail-open window is a moat
+breach at peak traffic.
 
 Phase 1 (Marathon log-only probe) shipped ae5ada4. Phase 2a (hold plumbing + DMZ fall-through
 sever) shipped ad0bdd8. Phase 2b (two-stage detector) shipped 60fde58. Phase 3a (DMZ store
-loader + extractor framework) shipped da654fa. This spec covers Phases 2-4: arming the gate for
-DMZ (fail-closed holding), the two-stage blindness detector (Phase 2b, arming-ruled below), the
-DMZ claim grammar, and auto-release (Phase 4, ruled below). Step-0 mechanics reports informed
-this; the rulings are the safety contract.
+loader + extractor framework) shipped da654fa; the 3a verified-only amendment (classifier opt)
+shipped after it. This spec covers Phases 2-4: arming the gate for DMZ (fail-closed holding), the
+two-stage blindness detector (Phase 2b, arming-ruled below), the DMZ claim grammar, and
+auto-release (Phase 4, ruled below). Step-0 mechanics reports informed this; the rulings are the
+safety contract.
 
 ---
 
@@ -282,10 +286,18 @@ verification event, zero manual flip-days.
 ### RULING 1 (P4): VERIFIED-ONLY EVERYWHERE -- not just the release re-pass
 
 An article claim "corroborated" by a verified=FALSE store row is ECHO (two unverified assertions
-agreeing), NOT corroboration. One-gate-one-bar therefore requires the INITIAL gate (3a) to load
-VERIFIED-ONLY too -- not only the release re-pass. Otherwise the SAME article publishes via the
-insert gate but holds via the release gate: one bar, two answers. SO: the initial gate's
-loadGateStore must be verified-only as well (see the 3a AMENDMENT note at the end).
+agreeing), NOT corroboration. One-gate-one-bar therefore requires the INITIAL gate (3a) to apply
+the VERIFIED-ONLY bar too -- not only the release re-pass. Otherwise the SAME article publishes via
+the insert gate but holds via the release gate: one bar, two answers.
+
+MECHANISM (corrected -- see the 3a AMENDMENT note at the end, which SHIPPED this): the verified-only
+bar is a CLASSIFIER opt (classifyCorroboration's `verifiedOnly`), NOT a store-loader row-filter. The
+opt DEMOTES an unverified row to a non-authority -- it can neither corroborate (echo) nor contradict
+(no verified value) -> UNCORROBORATED-held -- while the entity STAYS in the store (RECOGNIZED). A
+store-loader row-filter was the original wording and is WRONG: dropping verified=false rows makes a
+provisional-only entity VANISH -> unrecognized -> the claim silent-publishes (contradictions too),
+which INVERTS the ruling (absence-is-not-evidence). Both the insert gate and the release re-pass
+pass the SAME classifier opt -- that is where one-gate-one-bar actually lives.
 
 Provisional-data nuance, routed correctly: a pre-launch provisional row (verified=false,
 interview-sourced) means an article ASSERTING it HOLDS -- which is CORRECT. The escape for
@@ -345,23 +357,48 @@ grammar was deployed at release time.
 - lib/gsc/prePublishGate.js (or a gateRunner module) -- EXTRACT `runGate(store, draft)` (mode
   DERIVED from draft.game_slug); deep-equal no-op proof.
 - app/api/cron/route.js -- the insert path calls runGate (behavior-identical).
-- lib/gsc/storeLoader.js -- loadGateStore gains verifiedOnly (verified=true filter), paginated;
-  used by BOTH the initial gate (3a amendment) and the release re-pass.
-- app/api/cron/gate-release/route.js (NEW) -- auth guard + service key; load the verified store;
-  scan gate_status='held'; re-pass each via runGate; ATOMIC release of the clean ones (is_published
-  =true, gate_status='released', gate_findings cleared) with the freeing-rows + gate-version log;
-  per-reason release counts. Re-check-all (Ruling 2).
+- lib/gsc/corroboration.js -- classifyCorroboration's `verifiedOnly` opt (SHIPPED in the 3a
+  amendment): demotes unverified rows to non-corroborating AND non-contradicting -> UNCORROBORATED,
+  entity stays recognized. runGate passes it for BOTH the initial gate and the release re-pass.
+  (The store loads FULL -- verified + unverified -- for recognition; the bar is in the classifier,
+  NOT a store-loader row-filter, which would blind the gate. See the 3a AMENDMENT note.)
+- app/api/cron/gate-release/route.js (NEW) -- auth guard + service key; load the FULL store
+  (recognition); scan gate_status='held'; re-pass each via runGate (verifiedOnly:true); ATOMIC
+  release of the clean ones (is_published=true, gate_status='released', gate_findings cleared) with
+  the freeing-rows + gate-version log; per-reason release counts. Re-check-all (Ruling 2).
 - vercel.json -- a cron entry (hourly; the re-pass is cheap).
 Effort: medium -- runGate extraction (careful, deep-equal-proven) is the structural core; the
-cron + verified-only loader mirror build-refresh + loadGateStore.
+cron mirrors build-refresh + loadGateStore. The verified-only bar itself already shipped (3a amend).
 
-### 3a AMENDMENT (flagged -- spec correction)
+### 3a AMENDMENT (SHIPPED -- and the mechanism correction it forced)
 
-Phase 3a shipped with a FULL-store initial gate (loadGateStore loads verified + unverified). The
-VERIFIED-ONLY-EVERYWHERE ruling (P4 Ruling 1) means 3a's loadGateStore call must take the
-verifiedOnly fix -- else the insert bar and the release bar disagree. Fold this into the Phase 4
-build (the verifiedOnly loader lands once, used by both paths) OR a small standalone 3a-amendment
-commit. Either way: after P4, both the insert gate and the release gate load verified-only.
+Phase 3a shipped with a FULL-store initial gate that corroborated against verified + unverified
+rows alike (the echo). The verified-only amendment landed as a standalone commit. The build SUPERSEDED
+this ruling's original mechanism -- worth recording WHY, because the wrong mechanism inverts the
+ruling:
+
+ORIGINAL WORDING (wrong): "fix loadGateStore to verified-only" -- i.e. a store-loader ROW-FILTER
+that drops verified=false rows before the classifier sees them.
+
+WHY IT IS WRONG: the classifier and the two-stage detector are ENTITY-GATED -- a sentence with no
+RECOGNIZED store entity is skipped (no finding). UNCORROBORATED fires only when the entity IS in the
+store but the value is absent. So dropping the rows of a provisional-ONLY entity makes it VANISH ->
+unrecognized -> its claims are INVISIBLE -> the draft PUBLISHES. Worse, a CONTRADICTING claim that
+the full-store gate HELD (CONTRADICTED) also goes silent -> publishes. Pre-launch the DMZ store is
+largely verified=false (placeholders), so a verified-only ROW-FILTER would leave the fail-closed DMZ
+gate recognizing almost nothing -> publish-everything. Row-exclusion INVERTS the ruling it was meant
+to enforce (absence-of-findings is not evidence -- the gate's own core principle).
+
+SHIPPED MECHANISM (right): the verified-only bar is classifyCorroboration's `verifiedOnly` opt. The
+store still loads FULL (every entity RECOGNIZED); the opt DEMOTES an unverified row to a non-authority
+-- it can neither corroborate (echo) nor contradict (no verified value to contradict against), so
+BOTH match and mismatch collapse to UNCORROBORATED-held (hold-class for DMZ, routed to a verification
+task / the citation lane). Recognition-preserving demotion delivers the verified-only INTENT (no echo)
+AND preserves fail-closed (an all-provisional store still recognizes every entity and HOLDS every
+claim). The opt is off by default -> the batch/other callers are byte-identical.
+
+ONE-GATE-ONE-BAR: the insert gate passes `verifiedOnly:true` today; Phase 4's release re-pass passes
+the SAME opt through runGate. One classifier, one bar -- held-by = freed-by, measured identically.
 
 ### P4 TEST (mirrors the earlier phases -- unit + placeholder)
 
