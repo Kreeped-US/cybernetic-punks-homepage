@@ -2,15 +2,17 @@
 
 STATUS: DESIGN -- SAFETY-RULED, build spec. Written 2026-08-06 (safety ruling folded in);
 Phase 2b ARMING ruling folded in 2026-08-06 (edit-in-place, A9 -- the "PHASE 2b BUILD SPEC"
-section below). Doc-only; NO code. LAUNCH-CRITICAL: all of Phase 2-4 must be live +
-placeholder-tested BEFORE the DMZ launch (Oct 23 2026) -- a fail-open window is a moat breach
-at peak traffic.
+section below); Phase 4 AUTO-RELEASE ruling folded in 2026-08-06 (edit-in-place, A9 -- the
+"PHASE 4 BUILD SPEC" section below, which AMENDS Phase 3a to verified-only). Doc-only; NO code.
+LAUNCH-CRITICAL: all of Phase 2-4 must be live + placeholder-tested BEFORE the DMZ launch
+(Oct 23 2026) -- a fail-open window is a moat breach at peak traffic.
 
 Phase 1 (Marathon log-only probe) shipped ae5ada4. Phase 2a (hold plumbing + DMZ fall-through
-sever) shipped ad0bdd8. This spec covers Phases 2-4: arming the gate for DMZ (fail-closed
-holding), the two-stage blindness detector (Phase 2b, arming-ruled below), the DMZ claim
-grammar, and auto-release. Step-0 mechanics reports informed this; the rulings are the safety
-contract.
+sever) shipped ad0bdd8. Phase 2b (two-stage detector) shipped 60fde58. Phase 3a (DMZ store
+loader + extractor framework) shipped da654fa. This spec covers Phases 2-4: arming the gate for
+DMZ (fail-closed holding), the two-stage blindness detector (Phase 2b, arming-ruled below), the
+DMZ claim grammar, and auto-release (Phase 4, ruled below). Step-0 mechanics reports informed
+this; the rulings are the safety contract.
 
 ---
 
@@ -266,6 +268,112 @@ pipeline is lagging.
 Effort: medium -- the wiring is small; the real work is Stage-1 recall tuning + the corpus
 (Ruling 3) + the decimal fix (Ruling 4). Marathon stays log-only throughout (the gap accrues
 safely, holding nothing) until the arming commit.
+
+---
+
+## PHASE 4 BUILD SPEC -- the auto-release cron (Fable-ruled 2026-08-06)
+
+Phase 4 closes the loop: a held draft AUTO-RELEASES when its blocking claim now corroborates
+against the verified store -- re-run the FULL gate, publish ONLY on a clean re-pass. Auto-release
+wrongly = publishing fabrication, so it is as safety-critical as holding. The launch loop then
+closes: play -> verify store -> entity pages index AND held articles release together, one
+verification event, zero manual flip-days.
+
+### RULING 1 (P4): VERIFIED-ONLY EVERYWHERE -- not just the release re-pass
+
+An article claim "corroborated" by a verified=FALSE store row is ECHO (two unverified assertions
+agreeing), NOT corroboration. One-gate-one-bar therefore requires the INITIAL gate (3a) to load
+VERIFIED-ONLY too -- not only the release re-pass. Otherwise the SAME article publishes via the
+insert gate but holds via the release gate: one bar, two answers. SO: the initial gate's
+loadGateStore must be verified-only as well (see the 3a AMENDMENT note at the end).
+
+Provisional-data nuance, routed correctly: a pre-launch provisional row (verified=false,
+interview-sourced) means an article ASSERTING it HOLDS -- which is CORRECT. The escape for
+officially-announced facts is the CITATION LANE (official-fact content citation-gated against
+official source blocks), NEVER a looser store filter. Citations-as-a-second-corroborator is a
+future DESIGNED extension with its own review -- never a verified=false pass-through.
+
+### RULING 2 (P4): RE-CHECK-ALL each run -- not updated_at-gated
+
+The re-pass is PURE (zero-I/O, the article body is in hand, one store load per run); the held
+queue is dozens-to-hundreds at milliseconds each. So RE-CHECK ALL held rows every run:
+- updated_at-gating STRANDS grammar-change releases: an UNPARSEABLE hold freed by a NEW EXTRACTOR
+  (a deploy) has NO store update -> updated_at-gating never re-checks it -> it never releases.
+- a stored version-stamp patch (re-check on store-change OR grammar-version-change) is
+  stored-derived-state with a HUMAN dependency: forget to bump the version -> releases silently
+  stop. The exact stored-derived-state trap the gate avoids elsewhere.
+Re-check-all = current article vs current store vs current grammar, no cache to distrust. A
+version-stamp is a recorded LATER optimization IF the queue ever hits thousands (YAGNI now).
+
+### RULING 3 (P4): runGate + THREE fabrication-path additions
+
+EXTRACT `runGate(store, draft)` -- the shared gate (classifier + two-stage detector + decideGate),
+called by BOTH the insert path and the release cron (one gate, held-by = freed-by). A
+behavior-identical refactor, PROVEN by a deep-equal no-op proof (same inputs pre/post-refactor ->
+byte-identical decisions), the same discipline as the extractTriples extraction.
+
+Three fabrication-path hardenings (each closes a way a wrong release could ship):
+- (a) MODE IS NOT A PARAMETER (the footgun). runGate DERIVES the mode from `draft.game_slug` via
+  the per-game config -- it is NOT passed in. Passing mode means ONE wrong call site (the release
+  cron passing 'log-only' for a DMZ draft) silently releases EVERYTHING held. Deriving it makes
+  that misconfiguration class UNREPRESENTABLE.
+- (b) the verified-store load PAGINATES regardless (pageAllStrict, no silent cap). A silent
+  row-cap can only under-release (safe) BUT it MISCLASSIFIES a CONTRADICTED claim as UNCORROBORATED
+  (the capped store row is absent -> null store value -> UNCORROBORATED), corrupting the
+  verification-task stream. So: paginate fully, never cap.
+- (c) held -> released is ATOMIC: `UPDATE ... SET is_published=true, gate_status='released' WHERE
+  id=... AND gate_status='held'` so two overlapping cron runs cannot double-release the same row
+  (one WHERE clause closes the race).
+
+FAIL-CLOSED (confirmed): a store-load throw -> ABORT the run (0 releases -- a broken store frees
+nothing); a per-draft re-pass throw -> runGate threw -> decideGate holds -> not released. A broken
+re-pass NEVER releases. The clean-pass bar = the initial-publish bar (decideGate reuse), NEVER
+"the row changed".
+
+### RULING 4 (P4): RELEASE LOGGING -- the certificate carries gate identity
+
+On release, LOG the freeing store rows ({entity, field, verified value, verified_source}) +
+set gate_status='released' (DISTINCT from 'clear', so published-after-hold stays queryable --
+releases/day is the verification-throughput instrument, Ruling 1b). AND record the GATE
+VERSION / COMMIT alongside the freeing rows: the release certificate parallels the arming
+certificate. An audited release then shows WHAT freed it (the verified rows) AND WHICH GATE
+agreed (the grammar version) -- so wrong-release forensics never depend on reconstructing which
+grammar was deployed at release time.
+
+### P4 SCOPE (files)
+
+- lib/gsc/prePublishGate.js (or a gateRunner module) -- EXTRACT `runGate(store, draft)` (mode
+  DERIVED from draft.game_slug); deep-equal no-op proof.
+- app/api/cron/route.js -- the insert path calls runGate (behavior-identical).
+- lib/gsc/storeLoader.js -- loadGateStore gains verifiedOnly (verified=true filter), paginated;
+  used by BOTH the initial gate (3a amendment) and the release re-pass.
+- app/api/cron/gate-release/route.js (NEW) -- auth guard + service key; load the verified store;
+  scan gate_status='held'; re-pass each via runGate; ATOMIC release of the clean ones (is_published
+  =true, gate_status='released', gate_findings cleared) with the freeing-rows + gate-version log;
+  per-reason release counts. Re-check-all (Ruling 2).
+- vercel.json -- a cron entry (hourly; the re-pass is cheap).
+Effort: medium -- runGate extraction (careful, deep-equal-proven) is the structural core; the
+cron + verified-only loader mirror build-refresh + loadGateStore.
+
+### 3a AMENDMENT (flagged -- spec correction)
+
+Phase 3a shipped with a FULL-store initial gate (loadGateStore loads verified + unverified). The
+VERIFIED-ONLY-EVERYWHERE ruling (P4 Ruling 1) means 3a's loadGateStore call must take the
+verifiedOnly fix -- else the insert bar and the release bar disagree. Fold this into the Phase 4
+build (the verifiedOnly loader lands once, used by both paths) OR a small standalone 3a-amendment
+commit. Either way: after P4, both the insert gate and the release gate load verified-only.
+
+### P4 TEST (mirrors the earlier phases -- unit + placeholder)
+
+- RELEASES: a held placeholder draft (gate_status='held', body contradicts a store row) + flip the
+  blocking store row verified=true WITH the matching value -> re-pass -> RELEASES (is_published
+  =true, gate_status='released', freeing rows + gate version logged).
+- STAYS HELD (wrong value): flip to a still-contradicting value -> CONTRADICTED -> held.
+- STAYS HELD (verified=false anchor, Ruling 1): the correct value but verified=false -> verified-only
+  store excludes it -> UNCORROBORATED -> held (never releases on echo).
+- STAYS HELD (error, fail-closed): re-pass/store-load throws -> held (run aborts / draft skipped).
+- runGate deep-equal no-op proof (insert-path decisions byte-identical pre/post-extraction);
+  runGate mode-derivation unit test (a DMZ draft derives fail-closed, never log-only).
 
 ---
 
