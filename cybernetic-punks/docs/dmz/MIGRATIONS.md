@@ -6,6 +6,68 @@ In-repo record of production schema changes applied for the DMZ multi-game refac
 
 ---
 
+## saved_build -- thin per-account build bookmarks (PENDING operator run, 2026-08-07)
+
+The premium substrate (docs/MONETIZATION_AND_IDENTITY_STRATEGY.md), the last launch-critical
+identity item. A saved build is a THIN bookmark of a canonical build by `weapon_slug` -- keyed on
+`(account_id, game_slug, build_ref)`, NOT a `game_profile` row, NOT a custom loadout/payload, NO
+premium logic. Game-agnostic (a `game_slug` column) though DMZ is the only writer today.
+`saved_source_version` snapshots the build's `source_updated_at` at save time so a future premium
+desk can re-resolve `build_ref` and detect "your saved build changed since you saved it" -- without
+any premium code existing now. RLS service-role-only (private saves; anon reads 0, same posture as
+`network_account`). This also sets RLS explicitly from row zero, closing the audit's "verify
+`build`/`game_profile`/`subscription` RLS before they hold data" for this new table.
+
+**STATUS: NOT YET RUN -- operator (Justin) runs this in the Supabase SQL editor. The app code
+(app/api/dmz/saved-builds, SaveBuildButton, /dmz/builds/saved) is built + held for review; it goes
+live once this table exists.**
+
+```sql
+-- saved_build: thin per-account build bookmarks (the premium substrate).
+CREATE TABLE public.saved_build (
+  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id            uuid NOT NULL REFERENCES public.network_account(id) ON DELETE CASCADE,
+  game_slug             text NOT NULL,
+  build_ref             text NOT NULL,                 -- the weapon_slug (re-resolvable canonical build)
+  saved_at              timestamptz NOT NULL DEFAULT now(),
+  saved_source_version  timestamptz,                   -- snapshot of dmz_weapon_builds.source_updated_at at save time
+  UNIQUE (account_id, game_slug, build_ref)            -- no dup saves; POST is idempotent on this
+);
+
+CREATE INDEX saved_build_account_game_idx ON public.saved_build (account_id, game_slug);
+
+COMMENT ON TABLE public.saved_build IS
+  'Thin per-account build bookmarks (the premium substrate). (account_id, game_slug, build_ref=weapon_slug); NOT a game_profile row and NOT a custom loadout. RLS service-role-only (private). Free with a server-enforced cap (100/account/game).';
+COMMENT ON COLUMN public.saved_build.saved_source_version IS
+  'Snapshot of dmz_weapon_builds.source_updated_at at save time. Substrate for premium change-detection: re-resolve build_ref and compare to detect that a saved build changed. No premium logic today.';
+
+-- RLS: service-role-only. The app reads/writes with the SERVICE key (session-derived account_id in
+-- the WHERE -> IDOR-safe). No anon/authenticated policy -> the anon (browser) key reads 0 rows.
+-- (service_role bypasses RLS; the explicit policy documents intent.)
+ALTER TABLE public.saved_build ENABLE ROW LEVEL SECURITY;
+CREATE POLICY saved_build_service_all ON public.saved_build
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+```
+
+**Verify SELECTs (run after):**
+```sql
+-- columns
+SELECT column_name, data_type, is_nullable, column_default
+  FROM information_schema.columns WHERE table_name = 'saved_build' ORDER BY ordinal_position;
+-- unique + index
+SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'saved_build';
+-- RLS on (expect relrowsecurity = true)
+SELECT relname, relrowsecurity FROM pg_class WHERE relname = 'saved_build';
+-- policies (expect the service-role policy)
+SELECT policyname, roles, cmd FROM pg_policies WHERE tablename = 'saved_build';
+-- table comment
+SELECT obj_description('public.saved_build'::regclass) AS table_comment;
+-- anon-read must be 0: run this with the ANON key (not service) after inserting a test row ->
+-- expect 0 rows (RLS blocks anon). (Same check the auth audit ran on the identity tables.)
+```
+
+---
+
 ## Step 2 — `feed_items.game_slug` (applied 2026-06-15, Supabase SQL editor)
 
 Adds the game discriminator to `feed_items` and backfills all existing rows to

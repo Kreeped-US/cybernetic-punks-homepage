@@ -161,6 +161,9 @@ export default function AccountMenu({ align, variant, onResolved }) {
         {(data.handle || data.hasMarathonProfile) && (
           <Link href={data.handle ? '/u/' + data.handle : '/me'} style={M_ROW}>Profile</Link>
         )}
+        {data.handle && (
+          <Link href="/dmz/builds/saved" style={M_ROW}>Saved builds</Link>
+        )}
         <form method="POST" action="/api/auth/signout" style={{ margin: 0 }}>
           <button type="submit" style={M_ROW_BUTTON}>Sign out</button>
         </form>
@@ -230,6 +233,18 @@ export default function AccountMenu({ align, variant, onResolved }) {
               onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
             >
               Profile
+            </Link>
+          )}
+          {data && data.handle && (
+            <Link
+              href="/dmz/builds/saved"
+              role="menuitem"
+              onClick={function() { setOpen(false); }}
+              style={ITEM_LINK}
+              onMouseEnter={function(e) { e.currentTarget.style.background = '#1e2228'; }}
+              onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
+            >
+              Saved builds
             </Link>
           )}
           <form method="POST" action="/api/auth/signout" style={{ margin: 0 }}>

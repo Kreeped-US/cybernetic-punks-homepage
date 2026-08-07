@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { isBuildIndexable } from '@/lib/dmz/weaponBuilds';
 import DmzNotifyStrip from './DmzNotifyStrip';
+import SaveBuildButton from './SaveBuildButton';
 
 const GRADE_COLORS = { S: '#ffd700', A: '#00ff41', B: '#00d4ff', C: '#ff8800', D: '#ff2222' };
 const ACCENT = '#ff8800';
@@ -44,6 +45,12 @@ export default async function DmzBuildView({ resolved, weaponName, weaponSlug })
         <h1 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 14px' }}>
           Best MW4 DMZ {weaponName} Build - FOB Gunsmith Loadout
         </h1>
+
+        {/* Save-build toggle (thin saves). CLIENT component -- fetches its own isSaved, so this
+            server render stays session-independent (SEO/cache-safe). Logged-out -> Sign in to save. */}
+        <div style={{ marginBottom: 16 }}>
+          <SaveBuildButton weaponSlug={weaponSlug} />
+        </div>
 
         {/* UNCONFIRMED banner when the derived gate is false (a component is unverified) */}
         {!confirmed && (

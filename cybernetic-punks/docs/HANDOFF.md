@@ -149,9 +149,56 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
   below. The capture machinery already existed (dmz-notify route + DmzNotifyStrip + email_signups
   game_slug='dmz'); this added COVERAGE on the ranking browse pages (build + entity, source-tagged)
   and folded in F2 (per-IP rate limit) + F3 (uniform {ok:true}) on both notify routes in one pass.
-- **THIN DMZ SAVES (launch-critical because cheap).** Saved builds are the premium substrate; every
-  launch user who cannot save is substrate that never accumulates. Just (account, game_slug) on the
-  build row -- NO game_profile row, no premium logic yet (game_profile stays schema-only by design).
+- ~~**THIN DMZ SAVES (launch-critical because cheap).**~~ BUILT + HELD 2026-08-07 (DDL pending the
+  operator run) -- see the "thin DMZ saves" entry below. A NEW game-agnostic `saved_build` table
+  (bookmark a canonical build by weapon_slug; (account_id, game_slug, build_ref); NO game_profile,
+  NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
+  launch-critical identity item. THIN but substrate-shaped (saved_source_version). Operator runs the
+  DDL (docs/dmz/MIGRATIONS.md) before it goes live.
+
+---
+
+## 2026-08-07 - Thin DMZ saves BUILT (held) -- the last launch-critical identity item, the premium substrate
+
+Saved builds = the premium substrate (docs/MONETIZATION_AND_IDENTITY_STRATEGY.md): FREE with a
+generous cap, they are what the premium desk later synthesizes over. Built THIN + HELD for review;
+the DDL is operator-run (docs/dmz/MIGRATIONS.md, PENDING).
+
+THE DECISION (locked): a NEW game-agnostic `saved_build` table -- NOT overloading the existing
+`build` table (which is game_profile_id-NOT-NULL-coupled + name/payload-shaped for a FUTURE custom
+loadout). A save is a BOOKMARK of a canonical build by weapon_slug (there is no custom-loadout
+builder -- DmzBuildView is presentational), keyed (account_id, game_slug, build_ref). NO game_profile,
+NO payload, NO premium logic. `saved_source_version` (snapshot of the build's source_updated_at at
+save time) is the ONLY forward hook: premium can re-resolve build_ref + compare to detect change.
+
+BUILT (held):
+- DDL (operator-run, PENDING): `saved_build` (id, account_id FK network_account ON DELETE CASCADE,
+  game_slug, build_ref, saved_at, saved_source_version), UNIQUE(account_id, game_slug, build_ref),
+  index (account_id, game_slug), RLS service-role-only (anon reads 0 -- private saves; closes the
+  audit's "verify RLS before it holds data" for this table), table+column comments (the substrate
+  contract). In MIGRATIONS.md + a verify SELECT.
+- lib/dmz/savedBuilds.js (pure: cap 100 + build_ref validation) + 5/5 unit tests.
+- app/api/dmz/saved-builds (POST save / DELETE unsave / GET ?weapon isSaved): accountId from
+  resolveSession (session-derived, IDOR-safe -- NEVER from the body), service key. Cap-gated
+  server-side (idempotent re-save does not count). Dup -> idempotent. Logged out -> 401.
+- components/dmz/SaveBuildButton.js (client): fetches its OWN isSaved (GET ?weapon) -> the SEO build
+  page's SERVER render stays session-independent (cache-safe). Logged out (401) -> "Sign in to save"
+  -> /join. Logged in -> save/saved toggle. Wired into DmzBuildView (after the H1).
+- app/dmz/builds/saved (server, noindex): session-gated on ACCOUNTID (not hasMarathonProfile --
+  Discord-only users reach it), lists the account's saves, re-resolves each weapon_slug to a card,
+  empty-state. + a "Saved builds" AccountMenu link (gated on handle = account holders).
+
+CONFIRMED: thin (a reference + timestamps, no game_profile/payload/premium); substrate-shaped
+(build_ref re-resolvable + saved_at + saved_source_version); IDOR-safe (accountId session-derived);
+cap server-side; RLS service-role-only (anon 0); SEO build page server render session-independent
+(button hydrates client-side); /dmz/builds/saved Discord-reachable (accountId-gated); logged-out ->
+/join / 401. Live-verified (logged-out): build page shows "Sign in to save" -> /join; API 401 on
+GET/POST/DELETE; /dmz/builds/saved -> /join. Logged-in flow covered by 5/5 unit tests + build (needs
+the table + a real session to live-test, post-DDL). ESLint 0, build compiles.
+
+This is the LAST launch-critical identity item. After the operator runs the DDL + this merges, the
+three launch-critical identity items (de-Marathoning, launch-notify, thin saves) are all DONE; the
+premium tier itself remains the winter fast-follow.
 
 ---
 
