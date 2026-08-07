@@ -135,17 +135,52 @@ The premium tier itself is a winter fast-follow, but three IDENTITY items are la
 protect the audience/substrate the premium model later monetizes). Full rationale:
 docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
 
-- **DE-MARATHONING the hasMarathonProfile gates (the critical one).** A bug for 100% of the DMZ
-  growth audience: DMZ-only (Discord) users are gated OUT of features they are entitled to because
-  surfaces branch on hasMarathonProfile (a Marathon-row flag). FIX: gate on ACCOUNT, and render /me
-  game-agnostic (per-game sections when rows exist, absent otherwise, NO Marathon-row requirement).
-  Path A ungated the AccountMenu Profile link; this is the rest of the sweep. Days of work.
+- **DE-MARATHONING the hasMarathonProfile gates (the critical one) -- the DEAD-END is now CLOSED
+  (2026-08-07).** A bug for 100% of the DMZ growth audience: DMZ-only (Discord) users were gated
+  OUT of their own profile. DONE: Path A ungated the AccountMenu Profile link; the /me hand-off
+  (Option B) now sends a DMZ/Discord session to /u/[handle] instead of the dead-end bounce (see the
+  "De-Marathoning: /me hand-off" entry below). The Step-0 sweep confirmed the COACH gates (ask-editor/
+  audit/advisor/intake/welcome/api-profile/shells/playsMarathon badge) are CORRECTLY Marathon-specific
+  -- LEAVE them. REMAINING (winter fast-follow, NOT launch-critical): the game-agnostic /me HUB
+  (account base + per-game sections) once saves + the premium desk give it content to show.
 - **EMAIL / LAUNCH-NOTIFY CAPTURE.** The launch surge is a ONE-TIME acquisition event -- an
   un-captured visitor is permanently gone. The ONLY premium-path piece with a HARD deadline. A form
   + a table. (The network-notify plumbing exists; this is the DMZ-launch capture surface + placement.)
 - **THIN DMZ SAVES (launch-critical because cheap).** Saved builds are the premium substrate; every
   launch user who cannot save is substrate that never accumulates. Just (account, game_slug) on the
   build row -- NO game_profile row, no premium logic yet (game_profile stays schema-only by design).
+
+---
+
+## 2026-08-07 - De-Marathoning: /me hand-off (Option B) -- the DMZ-user dead-end fixed
+
+The launch-critical de-Marathoning bug's headline case is fixed. /me is the MARATHON dashboard
+(needs a player_profiles row); a DMZ/Discord-only session (accountId, null playerProfileId) hit
+eq('id', null).single() -> !player -> redirect /join -> /join bounced them to /u/[handle]. So a DMZ
+user's own "My Profile" dead-ended in a bounce. Option B (graceful hand-off, per the Step 0 + the
+strategy doc's build-the-system-when-a-feature-needs-it): reuse /u/[handle] now; the game-agnostic
+/me HUB is the WINTER fast-follow (when saves + the premium desk give it content to show).
+
+THE FIX:
+- lib/auth/meDestination.js (NEW, pure): meDestination(session, handle) -> { render:true } (Marathon
+  dashboard, UNCHANGED) OR { redirect } . No session -> /join; playerProfileId -> render; accountId
+  + handle (DMZ/Discord) -> /u/[handle]; account with no handle -> /join (defensive). Extracted pure
+  so the branch table is unit-tested (7/7) without the server component.
+- app/me/page.js: computes the handle ONLY for the no-Marathon case (network_account by
+  session.accountId -- session-derived, IDOR-safe), calls meDestination, acts on it. The Marathon
+  query runs ONLY when render (playerProfileId present) -> NO eq('id', null).single() for a
+  no-Marathon session. Marathon users: byte-identical behavior (dashboard, /join/setup if not
+  onboarded).
+
+CONFIRMED: Marathon /me UNCHANGED; DMZ/Discord /me -> /u/[handle] (not /join, no bounce, no throw);
+no eq('id',null).single() for a no-Marathon session; handle is session-derived (IDOR-safe); LOOP-SAFE
+(/me -> /u/[handle], a public page that never redirects). The COACH gates (ask-editor/audit/advisor/
+intake/welcome/complete/api-profile/playsMarathon badge/shells) are UNTOUCHED -- correctly Marathon-
+specific. Tests 7/7, ESLint 0, build compiles, logged-out /me -> /join live-verified.
+
+REMAINING de-Marathoning: the game-agnostic /me HUB (account base + per-game sections) is the winter
+fast-follow; the onboarding gap (Discord users skip /welcome) is separate (Path B). AccountMenu was
+done in Path A. So the launch-critical de-Marathoning bug (the dead-end) is now CLOSED.
 
 ---
 
