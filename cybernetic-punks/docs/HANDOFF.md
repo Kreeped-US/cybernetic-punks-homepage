@@ -124,6 +124,8 @@ PENDING HARDENING (ranked):
   them). Do before launch traffic hits the notify forms.
 - **F3 (LOW) -- newsletter enumeration.** network-notify returns `duplicate:true`, revealing whether
   an email is already subscribed. Return a uniform `{ ok:true }`.
+- *(F2 + F3 note: fold BOTH into the launch-notify-capture work -- same notify endpoints, one pass.
+  See the LAUNCH-CRITICAL IDENTITY > EMAIL/LAUNCH-NOTIFY CAPTURE item.)*
 - **F4 (LOW) -- CSRF posture.** Confirm signout is POST not GET (a GET signout is logout-CSRF-able);
   consider sameSite=strict on the session cookie.
 - **F5 / F6 (INFO, acceptable):** no PKCE (fine for confidential clients with a server secret);
@@ -146,6 +148,9 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
 - **EMAIL / LAUNCH-NOTIFY CAPTURE.** The launch surge is a ONE-TIME acquisition event -- an
   un-captured visitor is permanently gone. The ONLY premium-path piece with a HARD deadline. A form
   + a table. (The network-notify plumbing exists; this is the DMZ-launch capture surface + placement.)
+  WHEN BUILDING: fold in auth F2 (rate-limit the notify endpoints) + F3 (uniform response, drop the
+  `duplicate:true` enumeration) -- SAME network-notify/dmz-notify endpoints, efficient in one pass.
+  See the AUTH SECURITY AUDIT block above.
 - **THIN DMZ SAVES (launch-critical because cheap).** Saved builds are the premium substrate; every
   launch user who cannot save is substrate that never accumulates. Just (account, game_slug) on the
   build row -- NO game_profile row, no premium logic yet (game_profile stays schema-only by design).

@@ -86,11 +86,15 @@ per-user cost OR genuine added depth:
 
 ## LAUNCH-CRITICAL vs FAST-FOLLOW (the practical payoff)
 
-LAUNCH-CRITICAL (before Oct 23):
-- DE-MARATHONING (the critical one -- a bug for 100% of the DMZ growth audience). Flip the
-  `hasMarathonProfile` gates to gate on ACCOUNT instead: DMZ-only users are currently walled out of
-  features they are entitled to. `/me` must render game-agnostic -- per-game sections when the rows
-  exist, absent otherwise, with NO Marathon-row requirement. Days of work.
+LAUNCH-CRITICAL (before Oct 23) -- TWO remaining (de-Marathoning DONE 2026-08-07):
+- DE-MARATHONING the dead-end -- DONE (2026-08-07). A bug for 100% of the DMZ growth audience:
+  DMZ-only (Discord) users were walled out of their own profile. Fixed: Path A (a6a4f69 --
+  game-agnostic /join + the AccountMenu Profile link gate); the /me hand-off (099eb09, Option B --
+  a DMZ/Discord session routes to /u/[handle] instead of the dead-end bounce). The Coach gates
+  (ask-editor/audit/advisor/intake/welcome/api-profile/shells/playsMarathon badge) are confirmed
+  CORRECTLY Marathon-specific and left as-is. The deeper game-agnostic /me HUB (account base +
+  per-game sections) is NOT launch-critical -- it is a WINTER FAST-FOLLOW (see below), activating
+  when saves + the premium desk give it content to show; Option B was the launch-critical fix.
 - EMAIL / LAUNCH-NOTIFY CAPTURE. The launch surge is a ONE-TIME acquisition event; an un-captured
   visitor is permanently gone. This is the ONLY premium-path piece with a hard deadline. A form +
   a table.
@@ -100,8 +104,10 @@ LAUNCH-CRITICAL (before Oct 23):
 - (The free library at full strength + registration [Path A, done] are already in place.)
 
 FAST-FOLLOW (winter, post-traction): the premium tier itself (the desk), billing, tiers,
-`game_profile` wiring, AI grades, and COD-stats (LAST, demand-validated). The business model ships
-in winter, on top of an audience the launch kept.
+`game_profile` wiring, AI grades, COD-stats (LAST, demand-validated), and the game-agnostic /me HUB
+(account base + per-game sections -- reclassified here from launch-critical once Option B shipped the
+dead-end fix; it needs saves + the desk to have content to show). The business model ships in winter,
+on top of an audience the launch kept.
 
 ---
 
