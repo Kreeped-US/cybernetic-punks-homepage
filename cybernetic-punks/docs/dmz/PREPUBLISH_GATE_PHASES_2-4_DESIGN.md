@@ -1,21 +1,26 @@
 # DMZ Pre-Publish Gate -- Phases 2-4 Build Spec (Fable-ruled)
 
-STATUS: DESIGN -- SAFETY-RULED, build spec. Written 2026-08-06 (safety ruling folded in);
-Phase 2b ARMING ruling folded in 2026-08-06 (edit-in-place, A9 -- the "PHASE 2b BUILD SPEC"
-section below); Phase 4 AUTO-RELEASE ruling folded in 2026-08-06 (edit-in-place, A9 -- the
-"PHASE 4 BUILD SPEC" section below). 3a VERIFIED-ONLY amendment SHIPPED 2026-08-06 and its spec
-correction folded in (edit-in-place, A9): the verified-only bar is classifyCorroboration's
-`verifiedOnly` opt (recognition-preserving demotion), NOT a store-loader row-filter (which blinds
-the gate) -- see P4 Ruling 1 + the 3a AMENDMENT note. LAUNCH-CRITICAL: all of Phase 2-4 must be
-live + placeholder-tested BEFORE the DMZ launch (Oct 23 2026) -- a fail-open window is a moat
-breach at peak traffic.
+STATUS: BUILT + LIVE -- the gate MECHANISM is COMPLETE (hold -> auto-release). Phases 2a/2b/3a/4
+are all SHIPPED; only 3b (full extractor set) + the ARMING commit remain (launch-week, spec-only
+below). This was written as a build spec (safety-ruled by Fable) and now records what shipped.
+Written 2026-08-06; Phase 2b ARMING ruling + Phase 4 AUTO-RELEASE ruling folded in 2026-08-06
+(edit-in-place, A9 -- the "PHASE 2b/4 BUILD SPEC" sections below). 3a VERIFIED-ONLY amendment
+SHIPPED 2026-08-06 and its spec correction folded in (edit-in-place, A9): the verified-only bar is
+classifyCorroboration's `verifiedOnly` opt (recognition-preserving demotion), NOT a store-loader
+row-filter (which blinds the gate) -- see P4 Ruling 1 + the 3a AMENDMENT note. LAUNCH-CRITICAL: the
+gate is built + placeholder-tested; 3b + arming must land BEFORE the DMZ launch (Oct 23 2026) -- a
+fail-open window is a moat breach at peak traffic. DMZ is NOT armed yet (holding real but broad --
+safe-by-default).
 
-Phase 1 (Marathon log-only probe) shipped ae5ada4. Phase 2a (hold plumbing + DMZ fall-through
-sever) shipped ad0bdd8. Phase 2b (two-stage detector) shipped 60fde58. Phase 3a (DMZ store
-loader + extractor framework) shipped da654fa; the 3a verified-only amendment (classifier opt)
-shipped after it. This spec covers Phases 2-4: arming the gate for DMZ (fail-closed holding), the
-two-stage blindness detector (Phase 2b, arming-ruled below), the DMZ claim grammar, and
-auto-release (Phase 4, ruled below). Step-0 mechanics reports informed this; the rulings are the
+SHIPPED: Phase 1 (Marathon log-only probe) ae5ada4. Phase 2a (hold plumbing + DMZ fall-through
+sever) ad0bdd8. Phase 2b (two-stage detector) 60fde58. Phase 3a (DMZ store loader + extractor
+framework) da654fa; the 3a verified-only amendment (classifier opt) 1ad48cb. Phase 4 (auto-release
+cron -- runGate shared/mode-derived, recognition-preserving release, atomic, fail-closed, release
+certificate) 4310636. REMAINING (spec-only below): Phase 3b (full DMZ extractor set + real jsonb
+keys) + the ARMING commit (flip DMZ fail-closed on a measured-low gap). This spec covers Phases
+2-4: arming the gate for DMZ (fail-closed holding), the two-stage blindness detector (Phase 2b),
+the DMZ claim grammar, and auto-release (Phase 4, SHIPPED). Step-0 mechanics reports informed this;
+the rulings are the
 safety contract.
 
 ---

@@ -45,6 +45,100 @@ remain.
 
 ---
 
+## PENDING / BACKLOG (standing - not yet done; keep visible)
+
+Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
+Newest-first within the block; move an item to the dated log when it ships.
+
+- **GATE-RELEASE ENV CONFIRM (pre-launch, launch-critical).** `/api/cron/gate-release` (Phase 4,
+  4310636) needs `CRON_SECRET` + `SUPABASE_SERVICE_KEY` set on the **v2 production project** to run
+  guarded AND to write `is_published`. Same two vars `/api/cron/build-refresh` already uses (so
+  likely already set) -- but CONFIRM on v2 before DMZ launch. Failure mode is SILENT: missing
+  `CRON_SECRET` -> the cron 401s; missing `SUPABASE_SERVICE_KEY` -> it aborts (can't write) -> held
+  articles NEVER auto-release. Verify both are present on v2.
+
+- **fetchDmzRows SILENT-CATCH LATENT BUG.** The existing `/dmz/{keys,pois,items,missions}/[slug]`
+  entity helpers still use the pre-Finding-1 swallow (`return data ?? []`, never throws). A transient
+  DB read error silently drops entity pages -- the SAME bug class Finding-1 (f092695) fixed for the
+  build engine. Contained fix: apply error-vs-empty (throw on a read error) to `fetchDmzRows`. Not
+  urgent, but real. (The DMZ build engine already avoids this -- it throws on DB error, notFound on
+  empty -- so the pattern to copy is in-repo.)
+
+- **SYNTHETIC-PATCH-FIXTURES -> VERBATIM swap.** The gate golden corpus uses labeled-synthetic
+  patch-shape fixtures (deltas / decimals / tiers) in `lib/gsc/corroboration.golden.test.mjs`. Swap
+  them for the VERBATIM 5 (the real 1.1.5.2 article text) once pulled from the article/logs. TODO
+  currently lives only in that test file (the growth-rule covers it, but it is not otherwise tracked).
+
+- **3b + ARMING (launch-week gate work).** Phase 3b = the FULL DMZ extractor set + real jsonb stat
+  keys (corpus-driven, replacing the 3a exemplars). The ARMING commit = flip DMZ from safe-by-default
+  to trusted-fail-closed once the Marathon gap metric reads measured-low -- an evidence-bearing commit
+  carrying the gap report + a corpus run in the PR body (symmetric with disarming; no runtime toggle).
+  Both are spec'd in docs/dmz/PREPUBLISH_GATE_PHASES_2-4_DESIGN.md; DMZ is NOT armed today (holding
+  real but broad, safe).
+
+- **DMZ placeholder rows in the DB.** The weapon-build placeholder rows (verified=false -> invisible)
+  remain; delete via the cleanup SQL or keep as the sitemap-exclusion fixture. (Also noted in the
+  2026-08-06 build-engine entry below.)
+
+---
+
+## 2026-08-06 - Pre-publish gate MECHANISM COMPLETE (2a->2b->3a->4) + Slice B recorded
+
+Recorded 2026-08-07 (doc-audit catch-up: the gate build arc + Slice B shipped 08-05/08-06 but the
+HANDOFF was never updated -- flaky tooling that session. The Phase-1 entry lower in this log, and
+the "slice B parked" lines, are SUPERSEDED by this entry). Fable ruled every safety decision; the
+build spec is docs/dmz/PREPUBLISH_GATE_PHASES_2-4_DESIGN.md.
+
+THE MECHANISM IS COMPLETE: a DMZ article draft is HELD on an unverifiable/contradicted hard-stat
+claim and AUTO-RELEASED when the store later verifies it -- hold -> release, one gate, one bar, zero
+manual flip-days. Shipped in order:
+
+- **Phase 2a - hold plumbing + DMZ fall-through sever (ad0bdd8).** feed_items gains gate_status
+  ('clear'/'held'/'released') + gate_findings; decideGate(findings, mode, threw) is the SOLE producer
+  of is_published/gate_status. Two per-game modes: Marathon 'log-only' (fail-OPEN, never holds) vs
+  DMZ 'fail-closed' (holds on a hold-class finding OR a gate-infra throw -- gate-down = hold). The
+  sever: no DMZ draft reaches is_published:true without a clean decideGate pass.
+
+- **Phase 2b - the two-stage detector, blindness made LOUD (60fde58).** Stage 1 (isHardStatSentence,
+  high-recall) + Stage 2 (extractTriples, high-precision); a Stage-1 hit Stage-2 cannot parse =
+  UNPARSEABLE (a hold-class -- unverifiable-by-instrument, not silence). Plus the golden corpus (each
+  fixture asserts a VALUE, catching mis-parses too) + the GAP metric (stage1_hits - stage2_parsed =
+  the gate's live blindness measure). Core principle: absence of findings is never evidence.
+
+- **Phase 3a - loadDMZStore + extractor framework -> DMZ holding REAL (da654fa).** The DMZ store loads
+  its entities (recipes/ingredients/lieutenants/weapons/attachments), exemplar extractors check what
+  they cover (jsonb weapon stats, attachment cost, acquisition), everything else falls to UNPARSEABLE
+  and holds. Error-vs-empty (pageAllStrict throws -> fail-closed hold, never a silent partial).
+
+- **3a recognition-preserving AMENDMENT (1ad48cb).** Fable's verified-only-everywhere ruling: a claim
+  "corroborated" by a verified=false row is ECHO, not corroboration. The FIX is a CLASSIFIER opt
+  (classifyCorroboration's verifiedOnly) that DEMOTES an unverified row to non-corroborating AND
+  non-contradicting -> UNCORROBORATED-held, entity STAYS recognized. NOT a store-loader row-filter:
+  row-exclusion would make a provisional-only entity VANISH -> unrecognized -> silent-publish (incl.
+  contradictions the full-store gate held) -- which INVERTS the ruling. Caught by test, held for
+  review, fixed to approach B. The insert gate and the release re-pass use the SAME opt (one bar).
+
+- **Phase 4 - the auto-release cron, the release valve (4310636).** runGate(store, draft) = the SHARED
+  gate (classify + two-stage detect + decideGate), extracted from the inline insert path; mode +
+  verifiedOnly are DERIVED from draft.game_slug, never passed (the misconfiguration class -- a call
+  site releasing everything -- is unrepresentable). Behavior-identical to the former inline gate
+  (deep-equal no-op proof 4/4). releaseHeldDrafts (/api/cron/gate-release, hourly): scan gate_status=
+  'held', re-pass each via runGate against the FULL store (recognition-preserving), ATOMIC release of
+  clean-re-pass rows (UPDATE ... WHERE gate_status='held' -> closes the double-release race), release
+  certificate logged (freeing rows + gate version). FAIL-CLOSED: store-load throw aborts the run (0
+  releases), re-pass throw holds, unknown game_slug holds (surfaced with a loud warn). 95/95 tests.
+
+STILL AHEAD (launch-week, see the PENDING block above): Phase 3b (full extractor set) + the ARMING
+commit (flip DMZ fail-closed on a measured-low gap). DMZ is NOT armed today -- safe-by-default.
+
+SLICE B - build-page client refinement (a93579d, 2026-08-05). Marathon build pages gained client-
+state live-refinement: the reader adjusts inputs and the build re-derives in the browser. No paid
+call on load (pure client-state, invisible to search, near-zero internal links -- the deliberate
+posture); a single refine() choke point. This is the MARATHON slice; the DMZ analog is a launch-time
+follow-on. (Supersedes the "slice B parked" lines lower in this log.)
+
+---
+
 ## 2026-08-06 - DMZ weapon-build ENGINE live: route/render (B1) + own sitemap child (B2)
 
 The DMZ build-generator's route/render + indexation layer is live on the 5-table schema (built
@@ -206,7 +300,8 @@ REMAINING (all next-session, no urgency):
 - WS1d - Consumer C enrollment + the pre-registered thresholds (>=10/28d promotion, 180-day
   sunset). Operates on a 30/90/180-day cadence; first indexation check is at 30 days, so it
   CANNOT act yet. Clean next-session opener once data exists.
-- slice B (live-refinement) - parked.
+- slice B (live-refinement) - SHIPPED 2026-08-05 (a93579d); no longer parked. See the 2026-08-06
+  "MECHANISM COMPLETE + Slice B recorded" entry at the top of this log.
 - fetch*-per-page consistency follow-up: fetchCanonical / fetchVariant still use the data-only
   swallow (return data||null -> notFound). Left unfixed by design (build-time-only under
   dynamicParams:false, and generateStaticParams now fails first on the same DB, so a broad blip
@@ -254,7 +349,8 @@ NEXT: WS1d - Consumer C enrollment + the pre-registered thresholds (>=10/28d pro
 pages accrue data (first indexation check at 30 days), so no urgency; next-session work.
 The A2 experiment: instrument LIVE (6 distinct indexed variant pages, deployed = data
 starts accruing); measurement wiring (WS1d) + the silent-catch fix are the follow-ups.
-Also parked: slice B (live-refinement).
+Also parked: slice B (live-refinement). [UPDATE 2026-08-07: slice B SHIPPED 2026-08-05, a93579d --
+see the 2026-08-06 "MECHANISM COMPLETE + Slice B recorded" entry at the top of this log.]
 
 Main clean at a57ff12 - no code changed this session (the 6 variants were generated in the
 DB; the verification pass was report-only).
@@ -720,6 +816,11 @@ BR33 corroborates (R1), 17 unverified-store findings remain the in-game backlog,
 extraction noise dismissed.
 
 ## 2026-08-04 - Pre-publish gate PHASE 1 shipped: Marathon log-only (validates the mechanism)
+
+> **SUPERSEDED (2026-08-07): the "GATE BUILD PLAN" below framed Phases 2-4 as FUTURE. They have
+> since ALL SHIPPED** (2a ad0bdd8, 2b 60fde58, 3a da654fa + amendment 1ad48cb, 4 4310636) -- see the
+> 2026-08-06 "Pre-publish gate MECHANISM COMPLETE" entry at the top of this log. This Phase-1 entry
+> is kept for history; do NOT read its forward-plan as current (only 3b + arming remain).
 
 Shipped Phase 1 of the pre-publish gate (ae5ada4) - the extractor-on-draft mechanism,
 Marathon log-only, zero holding. At the keyword-hook slot (post-generation, pre-insert),
