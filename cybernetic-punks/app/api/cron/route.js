@@ -11,8 +11,7 @@ import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalCo
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
 import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
-import { classifyCorroboration } from '@/lib/gsc/corroboration';
-import { detectUnparseable } from '@/lib/gsc/hardStatDetector';
+import { runGate } from '@/lib/gsc/runGate';
 import { decideGate } from '@/lib/gsc/prePublishGate';
 import { loadGateStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
@@ -547,58 +546,58 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // All findings feed decideGate; its HOLD_CLASSES now = CONTRADICTED + UNCORROBORATED +
     // UNPARSEABLE. The hold plumbing (decideGate, the sever, gate_status) is UNCHANGED.
     var gateMode = PRODUCING_GAME.prePublishGate || 'off';
-    var gateFindings = [];   // classifier: CONTRADICTED / UNCORROBORATED
-    var gateUnparse = [];    // detector: UNPARSEABLE
-    var gateGap = null;
-    var gateThrew = false;
+    var gateDraftSlug = generateSlug(result.headline);
+    // SHARED GATE (Phase 4): the classify + two-stage detect + decideGate that used to be inline
+    // here is now runGate(store, draft) -- the SAME gate the release cron calls (held-by = freed-by).
+    // MODE + verifiedOnly are DERIVED inside runGate (from draft.game_slug), never passed. The store
+    // loads FULL (recognition-preserving); the verified-only bar is the classifier demotion, not a
+    // row-filter (3a amendment). This block is behavior-identical to the former inline gate -- proven
+    // by runGate's deep-equal no-op proof (lib/gsc/runGate.test.mjs).
+    var gateDraftObj = { slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body, game_slug: PRODUCING_GAME_SLUG };
+    var gateDecision;
+    var gateStore = null;
+    var gateStoreThrew = false;
     try {
       // Per-game store (Phase 3a): Marathon -> loadMarathonStore (fail-open); DMZ -> loadDMZStore
-      // (fail-closed, throws on a read error -> caught below -> gateThrew -> HOLD). DMZ holding is
-      // now REAL: the DMZ store loads its entities, the exemplar extractors check what they cover,
-      // and everything else falls to UNPARSEABLE (2b) and holds -- safe by default.
-      // The store loads FULL (verified + unverified) so every entity stays RECOGNIZED -- the
-      // verified-only bar is applied in the CLASSIFIER (verifiedOnly:true below), not by dropping
-      // rows (which would blind the gate: an unrecognized entity's claim silent-publishes).
-      var gateStore = await loadGateStore(supabase, PRODUCING_GAME_SLUG);
-      var gateDraftSlug = generateSlug(result.headline);
-      var gateDraft = [{ slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body }];
-      // VERIFIED-ONLY (Fable's verified-only-everywhere ruling / 3a amendment): corroboration is
-      // measured ONLY against VERIFIED rows, so a claim matching only a verified=false (provisional)
-      // row is UNCORROBORATED -> held (DMZ), never echo-corroborated. Same bar the release gate uses
-      // (one-gate-one-bar). Marathon (log-only) is unaffected in outcome -- it never holds regardless.
-      var gateOut = classifyCorroboration(gateDraft, { entities: gateStore.entities }, { runDate: new Date().toISOString().slice(0, 10), verifiedOnly: true });
-      gateFindings = gateOut.findings || [];
-      var det = detectUnparseable(gateDraft, { entities: gateStore.entities });
-      gateUnparse = det.unparseable;
-      gateGap = det.gap;
-      var gateContra = gateFindings.filter(function (f) { return f.class === 'CONTRADICTED'; });
-      var gateUncorr = gateFindings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
-      // GAP METRIC in the [gate] line (Ruling 2): the live blindness measure on Marathon log-only.
-      console.log('[gate] ' + editorName + ' (' + PRODUCING_GAME_SLUG + '/' + gateMode + ') draft "' + gateDraftSlug + '": '
-        + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
-        + (gateOut.corroborations || []).length + ' corroborated | stage1=' + gateGap.stage1_hits
-        + ' stage2_parsed=' + gateGap.stage2_parsed + ' GAP=' + gateGap.gap + ' unparseable');
-      gateContra.forEach(function (f) {
-        console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value)
-          + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
-      });
-      gateUncorr.forEach(function (f) {
-        console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
-      });
-      gateUnparse.forEach(function (f) {
-        console.log('[gate]   UNPARSEABLE  ' + f.entity + '  signal=' + f.signal + '  "' + f.verbatim + '"  (Stage-1 hit, Stage-2 could not parse -> golden-corpus/extractor to-do)');
-      });
+      // (fail-closed, throws on a read error -> HOLD below). A store-load throw is a run-level failure
+      // (the store never loaded), handled here; runGate handles per-draft classifier/detector throws.
+      gateStore = await loadGateStore(supabase, PRODUCING_GAME_SLUG);
     } catch (e) {
-      // FAIL-CLOSED (DMZ): a throw does NOT fall through to publish -- it sets gateThrew so
-      // decideGate holds. FAIL-OPEN (Marathon): decideGate ignores the throw and publishes.
-      gateThrew = true;
+      gateStoreThrew = true;
       console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): ' + (e && e.message));
     }
 
-    // DECIDE (pure). ALL findings (classifier + detector) feed decideGate -- the ONLY producer of
-    // the insert's is_published / gate_status / gate_findings. Plumbing unchanged from 2a.
-    var gateAllFindings = gateFindings.concat(gateUnparse);
-    var gateDecision = decideGate(gateAllFindings, gateMode, gateThrew);
+    if (!gateStoreThrew) {
+      var gateRes = runGate({ entities: gateStore.entities }, gateDraftObj, { runDate: new Date().toISOString().slice(0, 10) });
+      gateDecision = gateRes.decision;
+      if (gateRes.threw) {
+        // FAIL-CLOSED (DMZ): a classifier/detector throw inside runGate -> held (Marathon publishes).
+        console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): classifier/detector error');
+      } else {
+        var gateContra = gateRes.findings.filter(function (f) { return f.class === 'CONTRADICTED'; });
+        var gateUncorr = gateRes.findings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
+        // GAP METRIC in the [gate] line (Ruling 2): the live blindness measure on Marathon log-only.
+        console.log('[gate] ' + editorName + ' (' + PRODUCING_GAME_SLUG + '/' + gateMode + ') draft "' + gateDraftSlug + '": '
+          + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
+          + gateRes.corroborations.length + ' corroborated | stage1=' + gateRes.gap.stage1_hits
+          + ' stage2_parsed=' + gateRes.gap.stage2_parsed + ' GAP=' + gateRes.gap.gap + ' unparseable');
+        gateContra.forEach(function (f) {
+          console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value)
+            + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
+        });
+        gateUncorr.forEach(function (f) {
+          console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
+        });
+        gateRes.unparseable.forEach(function (f) {
+          console.log('[gate]   UNPARSEABLE  ' + f.entity + '  signal=' + f.signal + '  "' + f.verbatim + '"  (Stage-1 hit, Stage-2 could not parse -> golden-corpus/extractor to-do)');
+        });
+      }
+    } else {
+      // Store-load throw -> fail-closed HOLD (Marathon log-only still publishes via decideGate).
+      // decideGate is the ONLY producer of the insert's is_published / gate_status / gate_findings.
+      gateDecision = decideGate([], gateMode, true);
+    }
+
     if (gateDecision.hold) {
       // PER-REASON breakdown (Ruling 5): UNCORROB resolves via verification throughput, UNPARSEABLE
       // via grammar work -- split so a lagging pipeline is visible (metrics query gate_findings).
@@ -606,8 +605,11 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       var nC = hc.filter(function (f) { return f.class === 'CONTRADICTED'; }).length;
       var nU = hc.filter(function (f) { return f.class === 'UNCORROBORATED'; }).length;
       var nP = hc.filter(function (f) { return f.class === 'UNPARSEABLE'; }).length;
+      // Infra failure (store-load or classifier/detector throw) -> decideGate records a
+      // GATE_INFRA_FAILURE marker instead of hold-class findings; report it as such.
+      var gateInfra = hc.some(function (f) { return f.class === 'GATE_INFRA_FAILURE'; });
       console.error('[gate][HOLD] ' + PRODUCING_GAME_SLUG + ' HELD (gate_status=held) -- '
-        + (gateThrew ? 'GATE-INFRA FAILURE (fail-closed hold)' : ('by-reason: ' + nC + ' CONTRADICTED, ' + nU + ' UNCORROBORATED, ' + nP + ' UNPARSEABLE'))
+        + (gateInfra ? 'GATE-INFRA FAILURE (fail-closed hold)' : ('by-reason: ' + nC + ' CONTRADICTED, ' + nU + ' UNCORROBORATED, ' + nP + ' UNPARSEABLE'))
         + ' -- editor=' + editorName + ' headline="' + result.headline + '"');
     }
 
