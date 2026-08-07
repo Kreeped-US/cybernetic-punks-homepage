@@ -15,6 +15,7 @@
 // Raw DB errors are logged server-side only; the client gets a generic shape.
 
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,27 @@ export const dynamic = 'force-dynamic';
 var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 var EMAIL_MAX = 254;
 
+// F2 (fold-in): per-IP rate limit on this unauthenticated public endpoint (load-bearing at launch).
+// checkRateLimit is IN-MEMORY per serverless INSTANCE, NOT global -- it blunts a single-IP flood
+// hitting one instance, not a distributed one; good-enough launch spam protection, not a hard cap.
+// Lenient so it never blocks a legit shared-NAT burst at launch (a real user signs up once):
+// 10 requests / 60s / IP. The check is FIRST, so a flood is throttled before any parse/DB work.
+var NOTIFY_LIMIT = 10;
+var NOTIFY_WINDOW_MS = 60 * 1000;
+
+function clientIp(req) {
+  var xff = req.headers.get('x-forwarded-for') || '';
+  return xff.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
+}
+
 export async function POST(req) {
+  var rl = checkRateLimit('dmz-notify:' + clientIp(req), NOTIFY_LIMIT, NOTIFY_WINDOW_MS);
+  if (!rl.ok) {
+    return Response.json(
+      { ok: false, error: 'Too many requests. Please try again shortly.' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+    );
+  }
   try {
     var body = await req.json().catch(function () { return {}; });
     var email = typeof body.email === 'string' ? body.email.trim() : '';
@@ -59,7 +80,9 @@ export async function POST(req) {
       var code = ins.error.code || '';
       var msg = ins.error.message || '';
       if (code === '23505' || /duplicate key|already exists/i.test(msg)) {
-        return Response.json({ ok: true, duplicate: true });
+        // F3 (fold-in): uniform { ok:true } -- do NOT leak `duplicate:true` (email enumeration).
+        // Idempotent signup either way; the form only reads res.ok.
+        return Response.json({ ok: true });
       }
       // Any other DB error: log server-side, return generic failure (no leak).
       console.error('[dmz-notify] insert error:', msg);

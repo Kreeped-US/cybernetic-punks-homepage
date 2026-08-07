@@ -11,9 +11,14 @@
 // (see the route files) so a provisional page never enters the index.
 
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { toISOWithPTOffset } from '@/lib/formatDate';
+import DmzNotifyStrip from './DmzNotifyStrip';
 
-export default function DmzEntityDetail({ entity, row, siblings }) {
+// async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
+// same as the article page). Entity detail pages are force-dynamic, so the cookie read is fine.
+export default async function DmzEntityDetail({ entity, row, siblings }) {
+  var notifyDismissed = ((await cookies()).get('dmz_notify_dismissed') || {}).value === '1';
   var facts = entity.facts(row);
   var pageUrl = 'https://cyberneticpunks.com' + entity.routeBase + '/' + row.slug;
   var confirmed = row.verified === true;
@@ -169,6 +174,9 @@ export default function DmzEntityDetail({ entity, row, siblings }) {
             </Link>
           )}
         </div>
+
+        {/* Launch-notify capture (source-tagged, server-gated on the dismiss cookie -- no flash). */}
+        {!notifyDismissed && <div style={{ marginTop: 30 }}><DmzNotifyStrip source="dmz-entity" /></div>}
       </main>
     </>
   );

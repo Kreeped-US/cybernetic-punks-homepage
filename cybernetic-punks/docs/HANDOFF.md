@@ -124,8 +124,8 @@ PENDING HARDENING (ranked):
   them). Do before launch traffic hits the notify forms.
 - **F3 (LOW) -- newsletter enumeration.** network-notify returns `duplicate:true`, revealing whether
   an email is already subscribed. Return a uniform `{ ok:true }`.
-- *(F2 + F3 note: fold BOTH into the launch-notify-capture work -- same notify endpoints, one pass.
-  See the LAUNCH-CRITICAL IDENTITY > EMAIL/LAUNCH-NOTIFY CAPTURE item.)*
+- *(F2 + F3: DONE 2026-08-07 -- folded into the launch-notify-capture work as planned (both
+  notify routes rate-limited + uniform {ok:true}). See the "DMZ launch-notify capture" dated entry.)*
 - **F4 (LOW) -- CSRF posture.** Confirm signout is POST not GET (a GET signout is logout-CSRF-able);
   consider sameSite=strict on the session cookie.
 - **F5 / F6 (INFO, acceptable):** no PKCE (fine for confidential clients with a server secret);
@@ -145,15 +145,49 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
   audit/advisor/intake/welcome/api-profile/shells/playsMarathon badge) are CORRECTLY Marathon-specific
   -- LEAVE them. REMAINING (winter fast-follow, NOT launch-critical): the game-agnostic /me HUB
   (account base + per-game sections) once saves + the premium desk give it content to show.
-- **EMAIL / LAUNCH-NOTIFY CAPTURE.** The launch surge is a ONE-TIME acquisition event -- an
-  un-captured visitor is permanently gone. The ONLY premium-path piece with a HARD deadline. A form
-  + a table. (The network-notify plumbing exists; this is the DMZ-launch capture surface + placement.)
-  WHEN BUILDING: fold in auth F2 (rate-limit the notify endpoints) + F3 (uniform response, drop the
-  `duplicate:true` enumeration) -- SAME network-notify/dmz-notify endpoints, efficient in one pass.
-  See the AUTH SECURITY AUDIT block above.
+- ~~**EMAIL / LAUNCH-NOTIFY CAPTURE.**~~ DONE 2026-08-07 -- see the "DMZ launch-notify capture" entry
+  below. The capture machinery already existed (dmz-notify route + DmzNotifyStrip + email_signups
+  game_slug='dmz'); this added COVERAGE on the ranking browse pages (build + entity, source-tagged)
+  and folded in F2 (per-IP rate limit) + F3 (uniform {ok:true}) on both notify routes in one pass.
 - **THIN DMZ SAVES (launch-critical because cheap).** Saved builds are the premium substrate; every
   launch user who cannot save is substrate that never accumulates. Just (account, game_slug) on the
   build row -- NO game_profile row, no premium logic yet (game_profile stays schema-only by design).
+
+---
+
+## 2026-08-07 - DMZ launch-notify capture: coverage on the ranking pages + F2/F3 hardening
+
+Launch-critical: the launch surge is a ONE-TIME acquisition event, un-captured visitors are gone.
+The capture MACHINERY already existed (dmz-notify route -> email_signups game_slug='dmz', DmzNotify
+Form/Strip). The gap was COVERAGE: the ranking browse pages that catch launch-surge SEARCH traffic
+(the build engine + the entity verticals) had NO capture. Fixed via placement (A) shared-components,
+plus the F2/F3 notify hardening folded in.
+
+COVERAGE (reuse DmzNotifyStrip, source-tagged, server-gated on the dmz_notify_dismissed cookie so no
+flash and dismiss persists across surfaces):
+- DmzNotifyStrip gained a `source` prop (default 'article-strip' -> articles UNCHANGED).
+- DmzEntityHub (async): strip source='dmz-entity' -- covers /dmz/{keys,pois,items,missions} hubs AND
+  /dmz/builds (which reuses it). DmzEntityDetail (async): 'dmz-entity' (entity detail pages).
+  DmzBuildView (async): 'dmz-build' (build detail). All three made async to read the dismiss cookie.
+- NO double-render: /dmz uses DmzNotifyBlock (source 'landing') and articles use DmzNotifyStrip
+  ('article-strip') DIRECTLY, not the shared components -- untouched. Live-verified: /dmz/builds and
+  /dmz/keys each show ONE strip (dmz-entity); /dmz shows the block (landing); a DMZ article shows the
+  strip (article-strip) -- one each, no doubles.
+
+F2/F3 HARDENING (both /api/dmz-notify + /api/network-notify, one pass):
+- F2 per-IP rate limit (checkRateLimit, keyed on x-forwarded-for first hop): 10 / 60s / IP, checked
+  FIRST (before parse/DB). CAVEAT (commented in code): checkRateLimit is IN-MEMORY per serverless
+  INSTANCE, NOT global -- blunts a single-IP-single-instance flood, not a distributed one; and lenient
+  enough not to block a legit shared-NAT burst. Live-verified: 11th request in a minute -> 429
+  Retry-After=60 (the first 10 were invalid-email 400s -> zero DB writes).
+- F3 uniform { ok:true } on a duplicate (dropped `duplicate:true`) -> no email enumeration. Safe: the
+  forms only read res.ok.
+
+Segmentable: game_slug='dmz' + source (dmz-build / dmz-entity / landing / article-strip) -> the launch
+list segments by surface. Email-only; no new route/table/component. ESLint 0, build compiles.
+
+The PENDING launch-notify item + the AUTH F2/F3 items are marked DONE. REMAINING launch-critical
+identity: thin DMZ saves (the last of the three).
 
 ---
 

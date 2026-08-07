@@ -8,13 +8,18 @@
 // noindex when the gate is false; this component makes the provisional state visible to a human.
 
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { isBuildIndexable } from '@/lib/dmz/weaponBuilds';
+import DmzNotifyStrip from './DmzNotifyStrip';
 
 const GRADE_COLORS = { S: '#ffd700', A: '#00ff41', B: '#00d4ff', C: '#ff8800', D: '#ff2222' };
 const ACCENT = '#ff8800';
 
-export default function DmzBuildView({ resolved, weaponName, weaponSlug }) {
+// async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
+// same as the article page). The build detail page is force-dynamic, so the cookie read is fine.
+export default async function DmzBuildView({ resolved, weaponName, weaponSlug }) {
   if (!resolved || !resolved.build_json) return null;
+  const notifyDismissed = ((await cookies()).get('dmz_notify_dismissed') || {}).value === '1';
   const bj = resolved.build_json;
   const attach = resolved.attachmentsBySlug || {};
   const confirmed = isBuildIndexable(resolved);
@@ -116,6 +121,9 @@ export default function DmzBuildView({ resolved, weaponName, weaponSlug }) {
           </div>
         ) : null}
       </div>
+
+      {/* Launch-notify capture (source-tagged, server-gated on the dismiss cookie -- no flash). */}
+      {!notifyDismissed && <div style={{ maxWidth: 780, margin: '28px auto 0', padding: '0 16px' }}><DmzNotifyStrip source="dmz-build" /></div>}
     </div>
   );
 }

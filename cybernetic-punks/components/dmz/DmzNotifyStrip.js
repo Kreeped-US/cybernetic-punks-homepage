@@ -28,7 +28,10 @@ function persistDismissed() {
   }
 }
 
-export default function DmzNotifyStrip() {
+// source (optional): the signup source tag, so the launch list is segmentable by surface
+// ('article-strip' [default, DMZ articles] | 'dmz-entity' [entity/build hubs + entity details] |
+// 'dmz-build' [build detail]). Reused as-is across surfaces; only the tag differs.
+export default function DmzNotifyStrip({ source }) {
   var [hidden, setHidden] = useState(false);
   if (hidden) return null;
 
@@ -61,7 +64,7 @@ export default function DmzNotifyStrip() {
         Get DMZ coverage the day it lands -- one launch email, nothing else.
       </span>
       <div style={{ flex: '1 1 250px', minWidth: 0 }}>
-        <DmzNotifyForm source="article-strip" layout="strip" onSuccess={handleSuccess} />
+        <DmzNotifyForm source={source || 'article-strip'} layout="strip" onSuccess={handleSuccess} />
       </div>
       <button
         type="button"

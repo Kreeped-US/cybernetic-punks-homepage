@@ -5,8 +5,14 @@
 // Row-count-gated indexing lives in the route's generateMetadata, not here.
 
 import Link from 'next/link';
+import { cookies } from 'next/headers';
+import DmzNotifyStrip from './DmzNotifyStrip';
 
-export default function DmzEntityHub({ entity, rows }) {
+// async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (same
+// no-flash pattern the article page uses). Only rendered in force-dynamic DMZ pages, so the
+// per-request cookie read is fine. Covers the entity hubs AND the /dmz/builds hub (which reuses this).
+export default async function DmzEntityHub({ entity, rows }) {
+  var notifyDismissed = ((await cookies()).get('dmz_notify_dismissed') || {}).value === '1';
   var hubUrl = 'https://cyberneticpunks.com' + entity.routeBase;
 
   // ItemList only over rows that exist; empty ItemList is omitted (no empty claim).
@@ -39,6 +45,10 @@ export default function DmzEntityHub({ entity, rows }) {
           {entity.hubH1}
         </h1>
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 640, margin: '0 0 30px' }}>{entity.hubDesc}</p>
+
+        {/* Launch-notify capture (source-tagged) -- these are ranking browse pages that catch
+            launch-surge search traffic. Server-gated on the dismiss cookie (no flash). */}
+        {!notifyDismissed && <DmzNotifyStrip source="dmz-entity" />}
 
         {rows.length === 0 ? (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '40px 28px', textAlign: 'center' }}>
