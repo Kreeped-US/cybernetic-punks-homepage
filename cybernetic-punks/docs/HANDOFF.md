@@ -129,6 +129,50 @@ PENDING HARDENING (ranked):
 - **F5 / F6 (INFO, acceptable):** no PKCE (fine for confidential clients with a server secret);
   redirect_uri trusts the Host header (not exploitable behind Vercel's exact-match redirect allowlist).
 
+### LAUNCH-CRITICAL IDENTITY (before Oct 23 -- from the monetization/identity ruling, 2026-08-07)
+
+The premium tier itself is a winter fast-follow, but three IDENTITY items are launch-critical (they
+protect the audience/substrate the premium model later monetizes). Full rationale:
+docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
+
+- **DE-MARATHONING the hasMarathonProfile gates (the critical one).** A bug for 100% of the DMZ
+  growth audience: DMZ-only (Discord) users are gated OUT of features they are entitled to because
+  surfaces branch on hasMarathonProfile (a Marathon-row flag). FIX: gate on ACCOUNT, and render /me
+  game-agnostic (per-game sections when rows exist, absent otherwise, NO Marathon-row requirement).
+  Path A ungated the AccountMenu Profile link; this is the rest of the sweep. Days of work.
+- **EMAIL / LAUNCH-NOTIFY CAPTURE.** The launch surge is a ONE-TIME acquisition event -- an
+  un-captured visitor is permanently gone. The ONLY premium-path piece with a HARD deadline. A form
+  + a table. (The network-notify plumbing exists; this is the DMZ-launch capture surface + placement.)
+- **THIN DMZ SAVES (launch-critical because cheap).** Saved builds are the premium substrate; every
+  launch user who cannot save is substrate that never accumulates. Just (account, game_slug) on the
+  build row -- NO game_profile row, no premium logic yet (game_profile stays schema-only by design).
+
+---
+
+## 2026-08-07 - MONETIZATION + IDENTITY STRATEGY ruled (Fable) -- new strategy doc
+
+Fable ruled the free/premium split + the identity architecture it implies. Recorded durably in
+docs/MONETIZATION_AND_IDENTITY_STRATEGY.md (it was only-in-chat -- foundational product strategy
+that must not evaporate; read it before any monetization/paywall/tier/identity-schema decision).
+
+CORE: free/premium splits on ADDRESSABILITY, not depth. Content addressed to EVERYONE (public,
+indexable) = FREE forever, all of it (no indexed page ever moves behind the wall); content addressed
+to YOU (computed over your saved state) = PREMIUM. "Free is the library; premium is the desk working
+for you." Addressability is STRUCTURAL (no judgment calls, no drift, no gated-library perception),
+vs gating depth which drifts under revenue pressure, cannibalizes the SEO engine, and inverts the
+brand. NEVER gate depth -- public depth is the quality proof that makes people want premium.
+
+PREMIUM = the personalized "desk" (patch-impact briefs on YOUR saved builds, loadout reviews vs your
+profile): un-indexable (zero SEO cost to gate), un-replicable (verified store x your state x trusted
+voice), per-user cost. Placements: saved builds basic-FREE (the substrate), COD live-stats PREMIUM
+(labeled add-on, sequenced LAST, demand-validated), AI grades PREMIUM. ONE tier to start;
+network-level flag on network_account; game_profile stays schema-only (activates additively later).
+
+LAUNCH-CRITICAL identity work (tracked in the PENDING block above): de-Marathoning the
+hasMarathonProfile gates (100%-of-DMZ-audience bug), launch-notify capture (hard deadline), thin DMZ
+saves. The premium tier itself (billing, tiers, game_profile wiring, AI grades, COD-stats) is a
+WINTER fast-follow -- the business model ships on top of an audience the launch kept.
+
 ---
 
 ## 2026-08-07 - Path A: registration front door made usable + game-agnostic
