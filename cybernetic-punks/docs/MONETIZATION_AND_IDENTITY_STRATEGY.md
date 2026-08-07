@@ -86,7 +86,8 @@ per-user cost OR genuine added depth:
 
 ## LAUNCH-CRITICAL vs FAST-FOLLOW (the practical payoff)
 
-LAUNCH-CRITICAL (before Oct 23) -- TWO remaining (de-Marathoning DONE 2026-08-07):
+LAUNCH-CRITICAL (before Oct 23) -- COMPLETE: all three done 2026-08-07 (de-Marathoning + notify
+capture + thin saves). Launch-critical identity is finished; the items below are the shipped record.
 - DE-MARATHONING the dead-end -- DONE (2026-08-07). A bug for 100% of the DMZ growth audience:
   DMZ-only (Discord) users were walled out of their own profile. Fixed: Path A (a6a4f69 --
   game-agnostic /join + the AccountMenu Profile link gate); the /me hand-off (099eb09, Option B --
@@ -95,12 +96,13 @@ LAUNCH-CRITICAL (before Oct 23) -- TWO remaining (de-Marathoning DONE 2026-08-07
   CORRECTLY Marathon-specific and left as-is. The deeper game-agnostic /me HUB (account base +
   per-game sections) is NOT launch-critical -- it is a WINTER FAST-FOLLOW (see below), activating
   when saves + the premium desk give it content to show; Option B was the launch-critical fix.
-- EMAIL / LAUNCH-NOTIFY CAPTURE. The launch surge is a ONE-TIME acquisition event; an un-captured
-  visitor is permanently gone. This is the ONLY premium-path piece with a hard deadline. A form +
-  a table.
-- THIN DMZ SAVES (launch-critical BECAUSE cheap). Saved builds are the premium substrate; every
-  launch user who cannot save is substrate that never accumulates. Just `(account, game_slug)` on
-  the build row -- no game_profile, no premium logic yet.
+- EMAIL / LAUNCH-NOTIFY CAPTURE -- DONE (2026-08-07, 9cb1f16). The launch surge is a ONE-TIME
+  acquisition event; an un-captured visitor is permanently gone. Shipped: capture coverage on the
+  ranking DMZ browse pages (build + entity, source-tagged) + F2/F3 hardening on the notify routes.
+- THIN DMZ SAVES -- DONE (2026-08-07, 6f1f89d). Saved builds are the premium substrate. Shipped: a
+  thin `saved_build` table (bookmark by weapon_slug; `(account, game_slug, build_ref)`; NO
+  game_profile, NO payload, NO premium logic) + save/unsave API + button + /dmz/builds/saved.
+  `saved_source_version` is the forward hook for premium change-detection.
 - (The free library at full strength + registration [Path A, done] are already in place.)
 
 FAST-FOLLOW (winter, post-traction): the premium tier itself (the desk), billing, tiers,

@@ -109,7 +109,8 @@ RESOLVED / CLEARED (this audit):
   IDOR-safe writes (account/profile updates .eq('id', session.accountId), never a client id); no
   id-leakage on /api/account/me or public /u/[handle].
 
-PENDING HARDENING (ranked):
+PENDING HARDENING (ranked) -- F1 is the ONLY remaining actionable audit item (F2/F3/F4 done 2026-08-07,
+F5/F6 accepted-info):
 - **F1 (HIGH, not urgent) -- opaque signed session token.** The session token IS the raw DB PK
   (cp_account = network_account.id, cp_player_id = player_profiles.id), unsigned, non-rotating,
   30-day. Safe ONLY because RLS blocks anon UUID harvest -- a fragile SINGLE-POINT dependency: any
@@ -118,14 +119,12 @@ PENDING HARDENING (ranked):
   (HMAC secret, or a `sessions` table) so a leaked UUID is never a valid session AND sessions become
   revocable. Do BEFORE DMZ launch drives signups (cheaper with few accounts). A contained project --
   its own slice.
-- **F2 (MEDIUM) -- rate-limit the OAuth callbacks + notify endpoints.** network-notify / dmz-notify
-  allow UNBOUNDED inserts (email spam, arbitrary-third-party-email signup, no double-opt-in); the
-  OAuth callbacks have none either. lib/rateLimit primitives already exist (the admin gate uses
-  them). Do before launch traffic hits the notify forms.
-- **F3 (LOW) -- newsletter enumeration.** network-notify returns `duplicate:true`, revealing whether
-  an email is already subscribed. Return a uniform `{ ok:true }`.
-- *(F2 + F3: DONE 2026-08-07 -- folded into the launch-notify-capture work as planned (both
-  notify routes rate-limited + uniform {ok:true}). See the "DMZ launch-notify capture" dated entry.)*
+- ~~**F2 (MEDIUM) -- rate-limit the OAuth callbacks + notify endpoints.**~~ DONE 2026-08-07 (folded
+  into the launch-notify-capture work): both network-notify + dmz-notify are per-IP rate-limited
+  (10/60s, in-memory-per-instance caveat commented). (The OAuth callbacks remain un-rate-limited --
+  state-gated + lower-value; not tracked as open.)
+- ~~**F3 (LOW) -- newsletter enumeration.**~~ DONE 2026-08-07: both notify routes return a uniform
+  `{ ok:true }` (dropped `duplicate:true`) -- no enumeration. See the "DMZ launch-notify capture" entry.
 - **F4 (LOW) -- CSRF posture. RESOLVED 2026-08-07** (see the "F4 auth hardening" entry below).
   - F4a DONE: signout is now POST-ONLY (removed the GET handler in app/api/auth/signout -- a GET
     signout was the trivial <img>/link logout-CSRF vector; GET now 405s, the AccountMenu POST forms
@@ -141,11 +140,12 @@ PENDING HARDENING (ranked):
 - **F5 / F6 (INFO, acceptable):** no PKCE (fine for confidential clients with a server secret);
   redirect_uri trusts the Host header (not exploitable behind Vercel's exact-match redirect allowlist).
 
-### LAUNCH-CRITICAL IDENTITY (before Oct 23 -- from the monetization/identity ruling, 2026-08-07)
+### LAUNCH-CRITICAL IDENTITY -- COMPLETE (all three done 2026-08-07)
 
-The premium tier itself is a winter fast-follow, but three IDENTITY items are launch-critical (they
-protect the audience/substrate the premium model later monetizes). Full rationale:
-docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
+All THREE launch-critical identity items shipped 2026-08-07: de-Marathoning (the dead-end),
+launch-notify capture, and thin DMZ saves. They protect the audience/substrate the premium model
+later monetizes; the premium tier itself remains the winter fast-follow. Full rationale:
+docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, struck-through.)
 
 - **DE-MARATHONING the hasMarathonProfile gates (the critical one) -- the DEAD-END is now CLOSED
   (2026-08-07).** A bug for 100% of the DMZ growth audience: DMZ-only (Discord) users were gated
@@ -159,12 +159,12 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
   below. The capture machinery already existed (dmz-notify route + DmzNotifyStrip + email_signups
   game_slug='dmz'); this added COVERAGE on the ranking browse pages (build + entity, source-tagged)
   and folded in F2 (per-IP rate limit) + F3 (uniform {ok:true}) on both notify routes in one pass.
-- ~~**THIN DMZ SAVES (launch-critical because cheap).**~~ BUILT + HELD 2026-08-07 (DDL pending the
-  operator run) -- see the "thin DMZ saves" entry below. A NEW game-agnostic `saved_build` table
+- ~~**THIN DMZ SAVES (launch-critical because cheap).**~~ DONE 2026-08-07 (merged 6f1f89d; DDL run +
+  verified-private) -- see the "thin DMZ saves" entry below. A NEW game-agnostic `saved_build` table
   (bookmark a canonical build by weapon_slug; (account_id, game_slug, build_ref); NO game_profile,
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
-  launch-critical identity item. THIN but substrate-shaped (saved_source_version). Operator runs the
-  DDL (docs/dmz/MIGRATIONS.md) before it goes live.
+  launch-critical identity item. THIN but substrate-shaped (saved_source_version). DDL applied +
+  verified private (RLS on, anon reads 0) -- see docs/dmz/MIGRATIONS.md.
 
 ---
 

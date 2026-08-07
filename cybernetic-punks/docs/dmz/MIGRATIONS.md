@@ -6,7 +6,7 @@ In-repo record of production schema changes applied for the DMZ multi-game refac
 
 ---
 
-## saved_build -- thin per-account build bookmarks (PENDING operator run, 2026-08-07)
+## saved_build -- thin per-account build bookmarks (APPLIED 2026-08-07, Supabase SQL editor)
 
 The premium substrate (docs/MONETIZATION_AND_IDENTITY_STRATEGY.md), the last launch-critical
 identity item. A saved build is a THIN bookmark of a canonical build by `weapon_slug` -- keyed on
@@ -18,9 +18,15 @@ any premium code existing now. RLS service-role-only (private saves; anon reads 
 `network_account`). This also sets RLS explicitly from row zero, closing the audit's "verify
 `build`/`game_profile`/`subscription` RLS before they hold data" for this new table.
 
-**STATUS: NOT YET RUN -- operator (Justin) runs this in the Supabase SQL editor. The app code
-(app/api/dmz/saved-builds, SaveBuildButton, /dmz/builds/saved) is built + held for review; it goes
-live once this table exists.**
+**STATUS: APPLIED 2026-08-07 (operator-run, Supabase SQL editor). Feature merged (6f1f89d):
+app/api/dmz/saved-builds, SaveBuildButton, /dmz/builds/saved -- live.**
+
+**VERIFIED PRIVATE (RLS):** `relrowsecurity = true`; the only policy is `saved_build_service_all`
+(FOR ALL, role `service_role`, no anon/authenticated policy); the ANON role reads 0 rows
+(`SET ROLE anon` -> count 0); both COMMENTs (table + `saved_source_version`) landed. So `saved_build`
+is service-role-only by construction from row zero -- this closes the auth audit's "verify
+`build`/`game_profile`/`subscription` RLS before they hold data" for THIS table. (The other three
+empty identity tables still merit the same check before they hold data -- unchanged.)
 
 ```sql
 -- saved_build: thin per-account build bookmarks (the premium substrate).
