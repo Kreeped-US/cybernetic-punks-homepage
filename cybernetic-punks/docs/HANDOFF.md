@@ -88,6 +88,47 @@ Newest-first within the block; move an item to the dated log when it ships.
   remain; delete via the cleanup SQL or keep as the sitemap-exclusion fixture. (Also noted in the
   2026-08-06 build-engine entry below.)
 
+### AUTH SECURITY AUDIT (2026-08-07) -- login + OAuth deep-dive
+
+Full read-only audit of the auth stack (custom hand-rolled OAuth: Discord open, Bungie allowlist-
+closed to one ID; sessions = cookies carrying the raw account/player UUID). RLS exposure was
+verified LIVE (anon-key vs service-key reads).
+
+RESOLVED / CLEARED (this audit):
+- **RLS is CORRECTLY ENABLED on all identity/account tables** -- network_account, linked_identity,
+  player_profiles, game_profile, build, build_grade, subscription: all RLS-on, service-role-only, no
+  anon-SELECT. Verified: the ANON key reads 0 rows on the populated ones (network_account service=3/
+  anon=0, linked_identity 4/0, player_profiles 1/0, email_signups 1/0; no error -> RLS filters). The
+  scary-looking "subscription relrowsecurity=false" some tools report is Supabase's INTERNAL
+  `realtime.subscription`, NOT `public.subscription` (which is RLS-on). NO live account-takeover
+  hole; NO pre-launch RLS gap. (The shells favorite-shell pick-rate counts player_profiles via the
+  ANON client -> silently returns 0 -> that feature is inert, NOT a leak.)
+- **Solid, no action:** no committed secrets (.env gitignored, no hardcoded keys); correct anon/
+  service key separation (service key server-only, in-handler, never client); CSRF state on BOTH
+  OAuth callbacks; hardened admin gate (SHA-256 constant-time + per-IP lockout + fail-closed);
+  IDOR-safe writes (account/profile updates .eq('id', session.accountId), never a client id); no
+  id-leakage on /api/account/me or public /u/[handle].
+
+PENDING HARDENING (ranked):
+- **F1 (HIGH, not urgent) -- opaque signed session token.** The session token IS the raw DB PK
+  (cp_account = network_account.id, cp_player_id = player_profiles.id), unsigned, non-rotating,
+  30-day. Safe ONLY because RLS blocks anon UUID harvest -- a fragile SINGLE-POINT dependency: any
+  future anon-readable identity query, id-returning endpoint, or verbose error reopens account-
+  takeover, and sessions can't be revoked without deleting the account. FIX: an opaque signed token
+  (HMAC secret, or a `sessions` table) so a leaked UUID is never a valid session AND sessions become
+  revocable. Do BEFORE DMZ launch drives signups (cheaper with few accounts). A contained project --
+  its own slice.
+- **F2 (MEDIUM) -- rate-limit the OAuth callbacks + notify endpoints.** network-notify / dmz-notify
+  allow UNBOUNDED inserts (email spam, arbitrary-third-party-email signup, no double-opt-in); the
+  OAuth callbacks have none either. lib/rateLimit primitives already exist (the admin gate uses
+  them). Do before launch traffic hits the notify forms.
+- **F3 (LOW) -- newsletter enumeration.** network-notify returns `duplicate:true`, revealing whether
+  an email is already subscribed. Return a uniform `{ ok:true }`.
+- **F4 (LOW) -- CSRF posture.** Confirm signout is POST not GET (a GET signout is logout-CSRF-able);
+  consider sameSite=strict on the session cookie.
+- **F5 / F6 (INFO, acceptable):** no PKCE (fine for confidential clients with a server secret);
+  redirect_uri trusts the Host header (not exploitable behind Vercel's exact-match redirect allowlist).
+
 ---
 
 ## 2026-08-07 - /dmz/builds hub live: the DMZ build-engine browse surface is complete
