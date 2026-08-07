@@ -254,6 +254,13 @@ export async function computeEligible() {
     // a read error THROWS and propagates out of computeEligible (Next serves the last-good
     // cached sitemap); a legitimate empty yields 0 URLs. Deliberately NOT wrapped in try/catch.
     const buildEntries = await fetchIndexableBuildEntries();
+    // The HUB itself (/dmz/builds), row-count gated like the entity hubs: emitted ONLY when >= 1
+    // indexable build exists (0 -> the hub is noindexed + absent here, consistent). type='dmz-build'
+    // so the type-field partition drops it in sitemap-dmz-builds.xml (no matcher change). lastmod =
+    // the newest build's updatedAt.
+    if (buildEntries.length > 0) {
+      add(BASE + '/dmz/builds', D, 'dmz-build', lm(maxUpdatedAt(buildEntries.map((b) => ({ updated_at: b.updatedAt })))), 'weekly', 0.8);
+    }
     buildEntries.forEach((b) => add(BASE + '/dmz/builds/' + b.weaponSlug, D, 'dmz-build', lm(b.updatedAt), 'weekly', 0.7));
   }
 

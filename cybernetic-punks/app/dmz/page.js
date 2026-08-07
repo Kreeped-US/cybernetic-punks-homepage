@@ -401,6 +401,7 @@ export default async function DmzLanding() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
         {[
           { href: '/dmz/missions', label: 'Missions',  desc: 'Objectives, factions and rewards.' },
+          { href: '/dmz/builds',   label: 'Builds',    desc: 'The best FOB Gunsmith loadout per weapon.' },
           { href: '/dmz/keys',     label: 'Keys',      desc: 'Locations and what they unlock.' },
           { href: '/dmz/items',    label: 'Items',     desc: 'Values, categories and uses.' },
           { href: '/dmz/pois',     label: 'Locations', desc: 'Hajin map, POIs and regions.' },

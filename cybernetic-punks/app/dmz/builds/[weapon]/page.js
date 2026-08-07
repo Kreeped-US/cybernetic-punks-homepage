@@ -73,7 +73,8 @@ export default async function DmzWeaponBuildPage({ params }) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
       { '@type': 'ListItem', position: 2, name: 'DMZ', item: BASE + '/dmz' },
-      { '@type': 'ListItem', position: 3, name: weaponName + ' Build', item: url },
+      { '@type': 'ListItem', position: 3, name: 'Builds', item: BASE + '/dmz/builds' },
+      { '@type': 'ListItem', position: 4, name: weaponName + ' Build', item: url },
     ],
   };
   const webPage = {

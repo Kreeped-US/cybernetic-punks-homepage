@@ -90,6 +90,45 @@ Newest-first within the block; move an item to the dated log when it ships.
 
 ---
 
+## 2026-08-07 - /dmz/builds hub live: the DMZ build-engine browse surface is complete
+
+The build engine's hub/index. The B1 detail pages (/dmz/builds/[weapon]) existed but were
+unreachable by browse -- no hub listed them. This closes that: /dmz/builds is the index.
+
+ONE GATE, THREE CALLERS: the hub lists the INDEXABLE build set via fetchIndexableBuildEntries ->
+isBuildIndexable -- the SAME predicate the detail route (B1, noindex-until-verified) and the sitemap
+(B2, sitemap-dmz-builds.xml) use. Never a reimplementation. INDEXABLE-ONLY: a build is a composite
+recommendation, so all-or-nothing verified (strict isBuildIndexable) -- no partial/amber cards, so
+DmzEntityHub's "Unconfirmed" branch never fires on this hub. fetchIndexableBuildEntries gained a
+weaponName field (the card label); it is INERT for the sitemap caller (reads only weaponSlug +
+updatedAt) -- still one function, one query set, B2 unaffected (verified).
+
+THE PATTERN (extends the entity hubs, keys/pois/etc.): force-dynamic route (app/dmz/builds/page.js)
++ the shared DmzEntityHub + a STANDALONE builds config kept OUT of DMZ_ENTITIES (builds is a derived
+artifact, not an entity vertical -- adding it would wrongly pull it into DMZ_ENTITY_KEYS routing +
+the dmz-entity sitemap block). Row-count HONESTY GATE (buildHubRobots): 0 indexable -> noindex,follow
+(thin/pre-launch); >= 1 -> index. Same derived mechanism as the entity hubs + the detail pages -- no
+stored flag. Pure row-shaping + robots (lib/dmz/buildsHub.js) unit-tested (the dataOrThrow pattern).
+
+SELF-ACTIVATING (scaffold-now, flip-day-one): pre-launch (all placeholders verified=false) -> 0
+indexable -> the hub renders the empty-state (AWAITING LAUNCH) + noindex, and is ABSENT from
+sitemap-dmz-builds.xml. At launch, verified builds appear as cards, the hub indexes, and the hub URL
+enters the sitemap (eligible.js emits /dmz/builds type=dmz-build when >= 1 indexable; the type-field
+partition lands it in the builds child, no matcher change) -- no manual flip. Error-vs-empty
+inherited from fetchIndexableBuildEntries (read error -> the force-dynamic route 500s; legit-empty ->
+empty-state). REACHABLE: a Builds card on the /dmz hub (not orphaned) + a Builds breadcrumb level
+(Home -> DMZ -> Builds -> [Weapon], JSON-LD + visible).
+
+LIVE-VERIFIED (dev server vs the placeholder DB): /dmz/builds -> empty-state + robots noindex,follow
++ canonical /dmz/builds; sitemap-dmz-builds.xml = 0 URLs (hub absent); /dmz links the hub. Tests:
+132/132 lib suite + buildsHub 7/7 + the partition hub-URL case; ESLint 0, build compiles.
+
+NOTE (perf, deferred): generateMetadata + the page each call fetchIndexableBuildEntries (3 reads
+each = 6/request) -- matches the entity-hub double-read pattern. Left as-is for v1; optimize all DMZ
+hubs together (a shared cached read) IF traffic warrants, not piecemeal.
+
+---
+
 ## 2026-08-07 - DMZ entity-read silent-catch FIXED (the last one) - error-vs-empty on fetchDmz*
 
 The last pre-Finding-1 silent-catch in the DMZ codebase is closed. The `/dmz/{keys,pois,items,

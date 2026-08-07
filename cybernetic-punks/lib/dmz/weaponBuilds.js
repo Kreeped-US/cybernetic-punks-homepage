@@ -120,9 +120,11 @@ export async function fetchIndexableBuildEntries() {
     if (bj.apex_attachment && bj.apex_attachment.attachment_slug) attachSlugs.add(bj.apex_attachment.attachment_slug);
   }
 
-  // 2 batch resolves -- only slug + verified are needed for the gate.
+  // 2 batch resolves -- slug + verified for the gate, plus name for the /dmz/builds HUB card label
+  // (the hub reuses THIS one function: the extra `name` column is inert for the sitemap caller,
+  // which only reads weaponSlug + updatedAt -- still one function, one query set).
   const { data: weapons, error: wErr } = await supabase
-    .from('dmz_weapons').select('slug, verified')
+    .from('dmz_weapons').select('slug, name, verified')
     .eq('game_slug', GAME).in('slug', [...weaponSlugs]);
   if (wErr) throw new Error('dmz_weapons sitemap resolve failed: ' + wErr.message);
 
@@ -148,7 +150,9 @@ export async function fetchIndexableBuildEntries() {
     const weaponRef = (bj.weapon && bj.weapon.slug) || b.weapon_slug;
     const resolved = { build: b, build_json: bj, weapon: weaponBySlug[weaponRef] || null, attachmentsBySlug };
     if (isBuildIndexable(resolved)) {
-      out.push({ weaponSlug: weaponRef, updatedAt: b.updated_at });
+      // weaponName for the hub card (indexable => the weapon row is verified+present, so name is set;
+      // null-guarded anyway). The sitemap caller ignores weaponName.
+      out.push({ weaponSlug: weaponRef, weaponName: (resolved.weapon && resolved.weapon.name) || null, updatedAt: b.updated_at });
     }
   }
   return out;

@@ -65,6 +65,22 @@ test('a dmz-build URL routes to dmzBuilds, NOT the dmz catch-all (its own sitema
   assert.ok(dmz.every((e) => e.type !== 'dmz-build'), 'the dmz catch-all does NOT absorb dmz-build');
 });
 
+test('the bare /dmz/builds HUB URL (type=dmz-build) routes to dmzBuilds, alongside the detail URLs', () => {
+  // The hub is tagged type='dmz-build' (eligible.js), so the TYPE-FIELD split lands it in
+  // sitemap-dmz-builds.xml with the detail pages -- no URL-matcher change, and NOT absorbed by the
+  // dmz catch-all. Guards the /dmz/builds hub-in-sitemap wiring.
+  const { dmz, dmzBuilds } = partitionEligible([
+    { url: 'https://x/dmz/builds', game: 'dmz', type: 'dmz-build', lastmod: '2026-08-07T00:00:00-07:00' },
+    { url: 'https://x/dmz/builds/kastov', game: 'dmz', type: 'dmz-build' },
+    { url: 'https://x/dmz/pois', game: 'dmz', type: 'dmz-entity' },
+  ]);
+  assert.equal(dmzBuilds.length, 2, 'the hub URL + the detail URL both land in dmzBuilds');
+  const urls = dmzBuilds.map((e) => e.url);
+  assert.ok(urls.includes('https://x/dmz/builds'), 'the bare hub URL is in dmzBuilds');
+  assert.ok(urls.includes('https://x/dmz/builds/kastov'), 'the detail URL is in dmzBuilds');
+  assert.ok(dmz.every((e) => e.url !== 'https://x/dmz/builds'), 'the dmz catch-all does NOT absorb the hub URL');
+});
+
 test('an unassignable URL (new game/type) THROWS -- drift fails loud, never silent-drop', () => {
   assert.throws(() => partitionEligible([{ url: 'https://x/z', game: 'valorant', type: 'agent' }]),
     /belongs to no child/, 'unknown game must throw, not vanish from the sitemap');

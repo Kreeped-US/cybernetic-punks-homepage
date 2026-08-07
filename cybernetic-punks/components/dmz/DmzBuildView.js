@@ -33,6 +33,7 @@ export default function DmzBuildView({ resolved, weaponName, weaponSlug }) {
         {/* breadcrumb + H1 */}
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 12, fontFamily: 'monospace', letterSpacing: 1 }}>
           <Link href="/dmz" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>DMZ</Link>
+          {' / '}<Link href="/dmz/builds" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>Builds</Link>
           {' / '}<span style={{ color: ACCENT }}>{weaponName} Build</span>
         </div>
         <h1 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 14px' }}>
