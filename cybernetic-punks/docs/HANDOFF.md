@@ -50,12 +50,22 @@ remain.
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
 
-- **GATE-RELEASE ENV CONFIRM (pre-launch, launch-critical).** `/api/cron/gate-release` (Phase 4,
-  4310636) needs `CRON_SECRET` + `SUPABASE_SERVICE_KEY` set on the **v2 production project** to run
-  guarded AND to write `is_published`. Same two vars `/api/cron/build-refresh` already uses (so
-  likely already set) -- but CONFIRM on v2 before DMZ launch. Failure mode is SILENT: missing
+- **GATE-RELEASE ENV CONFIRM (pre-launch, launch-critical) -- PARTIALLY RESOLVED 2026-08-07.**
+  `/api/cron/gate-release` (Phase 4, 4310636) needs `CRON_SECRET` + `SUPABASE_SERVICE_KEY` on the
+  **v2 production project** to run guarded AND write `is_published`. Failure mode is SILENT: missing
   `CRON_SECRET` -> the cron 401s; missing `SUPABASE_SERVICE_KEY` -> it aborts (can't write) -> held
-  articles NEVER auto-release. Verify both are present on v2.
+  articles NEVER auto-release.
+  - RESOLVED (code-side, 2026-08-07): gate-release references the IDENTICAL required vars
+    `/api/cron/build-refresh` already uses -- `CRON_SECRET` + `SUPABASE_SERVICE_KEY` +
+    `NEXT_PUBLIC_SUPABASE_URL`, no new var, no rename (byte-for-byte the same guard + service-client
+    pattern). build-refresh is a WORKING prod cron, so these are set on v2 BY PROXY. (The fourth ref,
+    `VERCEL_GIT_COMMIT_SHA` for the release certificate, has a `'dev'` fallback and is Vercel-auto-
+    injected -- not a dashboard var, never a blocker.)
+  - REMAINING (operator dashboard eyeball, pre-launch): (a) confirm the two vars are scoped to the
+    **Production** environment (not just Preview/Development) -- gate-release runs as a production
+    cron; (b) confirm v2 is on Vercel **PRO** -- the gate-release cron is HOURLY (`0 * * * *`), and
+    the Hobby tier only runs daily-granularity crons, so an hourly cron needs Pro (else the release
+    valve UNDER-FIRES at launch). Likely Pro already (prior context), but confirm.
 
 - **fetchDmzRows SILENT-CATCH LATENT BUG.** The existing `/dmz/{keys,pois,items,missions}/[slug]`
   entity helpers still use the pre-Finding-1 swallow (`return data ?? []`, never throws). A transient
