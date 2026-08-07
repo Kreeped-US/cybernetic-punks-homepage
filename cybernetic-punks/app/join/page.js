@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 
 export const metadata = {
   // Manual suffix REMOVED - was double-appended by the root layout template.
-  title: 'Create Account',
-  description: 'Connect your Bungie account and claim your player profile.',
+  title: 'Join the Network',
+  description: 'Sign in to claim your handle and profile.',
 };
 
 function getSupabase() {
@@ -72,11 +72,11 @@ export default async function JoinPage({ searchParams }) {
           </div>
 
           <h1 style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 12px', color: '#fff' }}>
-            Create your<br />player profile.
+            Join the<br />network.
           </h1>
 
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: '0 0 28px' }}>
-            Connect your Bungie account to claim your profile, earn Early Adopter status, and get priority access when new tools launch.
+            Sign in to claim your handle, save your profile, and get first access as new tools and games launch.
           </p>
 
           {error && (
@@ -85,24 +85,16 @@ export default async function JoinPage({ searchParams }) {
             </div>
           )}
 
-          <a
-            href="/api/auth/bungie"
-            style={{
-              display: 'block',
-              textAlign: 'center',
-              padding: '13px 24px',
-              background: '#00ff41',
-              color: '#000',
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: '1px',
-              borderRadius: 2,
-              textDecoration: 'none',
-              marginBottom: 12,
-            }}
-          >
+          {/* BUNGIE BUTTON HIDDEN (Path A): Bungie sign-in is allowlist-closed
+              (COACH_OPEN=false in app/api/auth/bungie/callback), so it dead-ends in
+              ?error=closed_beta for every non-allowlisted user. A public front door must
+              not present a button that fails for 100% of new users. The /api/auth/bungie
+              ROUTE is preserved (Justin's account + future Coach launch) -- only the
+              button is hidden. Restore this block when COACH_OPEN flips true.
+          <a href="/api/auth/bungie" style={{ display: 'block', textAlign: 'center', padding: '13px 24px', background: '#00ff41', color: '#000', fontSize: 12, fontWeight: 800, letterSpacing: '1px', borderRadius: 2, textDecoration: 'none', marginBottom: 12 }}>
             CONNECT BUNGIE ACCOUNT
           </a>
+          */}
 
           <a
             href="/api/auth/discord"
@@ -124,14 +116,14 @@ export default async function JoinPage({ searchParams }) {
           </a>
 
           <div style={{ textAlign: 'center', fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: 2, fontFamily: 'monospace' }}>
-            SECURE · NO PASSWORD STORED · BUNGIE OAUTH 2.0
+            SECURE · NO PASSWORD STORED · OAUTH 2.0
           </div>
         </div>
 
         {/* Value props */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: '#1e2028' }}>
           {[
-            { icon: '⬡', color: '#00ff41',  label: 'PLAYER PROFILE',   desc: 'Your shell, playstyle and platform badge' },
+            { icon: '⬡', color: '#00ff41',  label: 'PROFILE',          desc: 'Your handle, avatar and bio' },
             { icon: '◈', color: '#ff2222',   label: 'EARLY ADOPTER',    desc: 'Permanent status for founding members' },
             { icon: '◎', color: '#9b5de5',   label: 'PRIORITY ACCESS',  desc: 'First in line when new tools launch' },
           ].map(function(item) {
@@ -147,7 +139,7 @@ export default async function JoinPage({ searchParams }) {
 
         {/* Already have an account */}
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <a href="/api/auth/bungie" style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 1, fontFamily: 'monospace' }}>
+          <a href="/api/auth/discord" style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 1, fontFamily: 'monospace' }}>
             Already registered? Sign in →
           </a>
         </div>

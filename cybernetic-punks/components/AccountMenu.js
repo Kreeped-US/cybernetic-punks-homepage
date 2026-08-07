@@ -158,8 +158,8 @@ export default function AccountMenu({ align, variant, onResolved }) {
           )}
           <span style={M_NAME}>{mName}</span>
         </div>
-        {data.hasMarathonProfile && (
-          <Link href="/me" style={M_ROW}>Profile</Link>
+        {(data.handle || data.hasMarathonProfile) && (
+          <Link href={data.handle ? '/u/' + data.handle : '/me'} style={M_ROW}>Profile</Link>
         )}
         <form method="POST" action="/api/auth/signout" style={{ margin: 0 }}>
           <button type="submit" style={M_ROW_BUTTON}>Sign out</button>
@@ -220,9 +220,9 @@ export default function AccountMenu({ align, variant, onResolved }) {
 
       {open && (
         <div role="menu" style={Object.assign({}, DROPDOWN, alignRight ? { right: 0 } : { left: 0 })}>
-          {data && data.hasMarathonProfile && (
+          {data && (data.handle || data.hasMarathonProfile) && (
             <Link
-              href="/me"
+              href={data.handle ? '/u/' + data.handle : '/me'}
               role="menuitem"
               onClick={function() { setOpen(false); }}
               style={ITEM_LINK}

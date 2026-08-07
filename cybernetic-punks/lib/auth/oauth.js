@@ -53,10 +53,20 @@ function sessionCookieOptions() {
 // app/api/auth/bungie/route.js, plus redirect_uri + scope (which Discord requires
 // and Bungie configures server-side).
 export function startOAuth(provider, request) {
+  // GUARD: an unset client id would flow into the authorize URL as the literal string
+  // "undefined" -> the provider rejects it on ITS OWN error page (off-site, confusing). Fail
+  // on-site cleanly instead. Vars ARE set today (confirmed by real logins); this is regression
+  // insurance so a future env miss surfaces as /join?error=oauth_unconfigured, not a Discord error.
+  const clientId = process.env[provider.clientIdEnv];
+  if (!clientId) {
+    console.error('[oauth:' + provider.name + '] ' + provider.clientIdEnv + ' is not set -- cannot start OAuth.');
+    return NextResponse.redirect(new URL('/join?error=oauth_unconfigured', request.url));
+  }
+
   const state = crypto.randomUUID();
 
   const params = new URLSearchParams({
-    client_id: process.env[provider.clientIdEnv],
+    client_id: clientId,
     response_type: 'code',
     redirect_uri: callbackUri(provider, request),
     scope: (provider.scopes || []).join(' '),

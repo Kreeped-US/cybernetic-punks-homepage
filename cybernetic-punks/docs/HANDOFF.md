@@ -131,6 +131,42 @@ PENDING HARDENING (ranked):
 
 ---
 
+## 2026-08-07 - Path A: registration front door made usable + game-agnostic
+
+The auth deep-dive found registration WORKS (Discord, 3 real logins) but the front door was
+unusable for a non-Marathon user: /join steered everyone at the dead Bungie button (allowlist-
+closed -> ?error=closed_beta for 100% of new users), the copy was Bungie/Marathon-framed, and
+Discord-only users had no way to reach their profile. Path A fixes the FRONT DOOR (not the deeper
+DMZ-profile wiring -- that is Path B, gated on game_profile). Three independent edits:
+
+- app/join/page.js -- REFRAMED game-agnostic + Discord-primary. Title "Join the Network"; H1 "Join
+  the network."; body "Sign in to claim your handle, save your profile, and get first access as new
+  tools and games launch." The BUNGIE BUTTON IS HIDDEN (commented, the /api/auth/bungie ROUTE
+  preserved for Justin + a future Coach launch -- restore when COACH_OPEN flips); Discord is now the
+  SINGLE primary CTA. Value prop #1 "PROFILE -- Your handle, avatar and bio" (was shell/playstyle/
+  platform); footer "...OAUTH 2.0" (dropped BUNGIE); "Already registered? Sign in" -> /api/auth/
+  discord (was the dead Bungie route). Marathon-green accent LEFT as-is (cosmetic, for the visual
+  redesign later). Live-verified: /join shows one Discord CTA, zero bungie links on the page.
+
+- components/AccountMenu.js -- UNGATED the Profile link (both mobile + desktop). Was gated on
+  hasMarathonProfile (false for Discord users) and pointed at /me (Marathon). Now: any logged-in user
+  with a handle -> /u/[handle]; un-bridged Bungie (handle null) -> /me. handle is already in
+  /api/account/me, so no extra fetch. Every logged-in user now gets a Profile link.
+
+- lib/auth/oauth.js -- startOAuth client_id GUARD: an unset client id would flow into the authorize
+  URL as "undefined" -> an off-site provider error page. Now -> /join?error=oauth_unconfigured
+  (on-site, clean). Regression insurance; the vars ARE set today (confirmed by the 3 real logins).
+
+Marathon/bridged users unaffected (still reach /me, still bridge). Gates: ESLint 0 (2 pre-existing
+img warnings), NUL/em-dash clean, next build compiles.
+
+DEFERRED to Path B (Marathon assumptions Path A does NOT fix -- the real DMZ-profile work): /me is
+Marathon-only; game_profile/build/build_grade are schema-only (no DMZ profile slice, no saved DMZ
+builds); /u/[handle] has a playsMarathon badge but no DMZ dimension; Discord users skip the /welcome
+onboarding (the Discord callback hard-redirects to '/', unlike the Bungie resolvePostAuthRedirect).
+
+---
+
 ## 2026-08-07 - /dmz/builds hub live: the DMZ build-engine browse surface is complete
 
 The build engine's hub/index. The B1 detail pages (/dmz/builds/[weapon]) existed but were
