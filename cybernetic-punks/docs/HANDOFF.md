@@ -126,8 +126,18 @@ PENDING HARDENING (ranked):
   an email is already subscribed. Return a uniform `{ ok:true }`.
 - *(F2 + F3: DONE 2026-08-07 -- folded into the launch-notify-capture work as planned (both
   notify routes rate-limited + uniform {ok:true}). See the "DMZ launch-notify capture" dated entry.)*
-- **F4 (LOW) -- CSRF posture.** Confirm signout is POST not GET (a GET signout is logout-CSRF-able);
-  consider sameSite=strict on the session cookie.
+- **F4 (LOW) -- CSRF posture. RESOLVED 2026-08-07** (see the "F4 auth hardening" entry below).
+  - F4a DONE: signout is now POST-ONLY (removed the GET handler in app/api/auth/signout -- a GET
+    signout was the trivial <img>/link logout-CSRF vector; GET now 405s, the AccountMenu POST forms
+    are unaffected). RESIDUAL (accepted, LOW): a deliberate cross-site auto-submitting POST form could
+    still trigger logout (logout clears cookies, does not need the cookie SENT); fully closing needs a
+    CSRF token on the signout form -- disproportionate for a logout-annoyance. So F4a is
+    closed-to-severity, NOT a full CSRF close.
+  - F4b DELIBERATE-LAX (no change): session cookies stay sameSite=lax. strict would withhold the
+    cookie on top-level cross-site navigations (Google/social/shared-link inbound = the SEO traffic
+    model), landing every inbound visitor logged-OUT until they click an internal link. lax already
+    blocks the CSRF that matters (cookie not sent on cross-site POST/fetch/img). lax is the correct
+    call for a content/SEO site.
 - **F5 / F6 (INFO, acceptable):** no PKCE (fine for confidential clients with a server secret);
   redirect_uri trusts the Host header (not exploitable behind Vercel's exact-match redirect allowlist).
 
@@ -155,6 +165,34 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md.
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
   launch-critical identity item. THIN but substrate-shaped (saved_source_version). Operator runs the
   DDL (docs/dmz/MIGRATIONS.md) before it goes live.
+
+---
+
+## 2026-08-07 - F4 auth hardening: signout POST-only (F4a); sameSite=lax kept deliberately (F4b)
+
+The auth audit's F4 (LOW, CSRF posture), closed to its severity. Two parts, only one needed action.
+
+F4a -- SIGNOUT POST-ONLY (fixed). app/api/auth/signout exported BOTH POST and GET; the GET ran the
+same logout. A GET signout is a trivial logout-CSRF vector: a cross-site <img src="/api/auth/signout">
+or link fires the request and the response's Set-Cookie (maxAge=0) clears the session -> the user is
+silently logged out (an annoyance, not a breach). REMOVED the GET handler (kept POST). Grep confirmed
+nothing links to it via GET -- only the two AccountMenu <form method="POST"> (mobile + desktop),
+which are unaffected. Live-verified: GET /api/auth/signout -> 405; POST -> 303 redirect (still works).
+RESIDUAL (accepted, LOW): a deliberate cross-site auto-submitting POST form could still trigger logout
+(logout clears cookies, does not need the cookie SENT). Fully closing that needs a CSRF token on the
+signout form -- disproportionate for a logout-annoyance. So F4a is closed-to-SEVERITY, not a full
+CSRF close (recorded honestly, not falsely "fully closed").
+
+F4b -- sameSite=lax KEPT (deliberate, no code change). Session cookies (cp_account, cp_player_id)
+stay sameSite=lax. strict would withhold the cookie on top-level cross-site navigations -- i.e.
+Google/social/shared-link inbound, which IS the SEO traffic model -- landing every inbound visitor
+logged-OUT on their first page (AccountMenu "JOIN FREE", SaveBuildButton "Sign in to save") until
+they click an internal link. A constant, real UX cost for a marginal gain: lax already blocks the
+CSRF that matters (the cookie is not sent on cross-site POST/fetch/img). lax is the correct call for
+a content/SEO site; strict is the wrong trade here.
+
+Gates: ESLint 0, byte-gates 0, build compiles. The AUTH SECURITY AUDIT block above is updated (F4
+RESOLVED). One-file code change (the GET removal); F4b is doc-only.
 
 ---
 

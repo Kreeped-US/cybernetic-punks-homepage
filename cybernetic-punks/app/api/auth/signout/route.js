@@ -3,9 +3,14 @@ import { NextResponse } from 'next/server';
 // app/api/auth/signout/route.js
 // Clears the session cookies (cp_player_id AND cp_account) and redirects home.
 //
-// Accepts both POST (preferred — CSRF-resistant; called from a <form> in the
-// nav) and GET (fallback — supports direct URL navigation for testing or
-// emergency logout via address bar).
+// POST-ONLY (auth audit F4a). Called from the AccountMenu <form method="POST">. The GET handler was
+// removed: a GET signout is a trivial logout-CSRF vector -- a cross-site <img src="/api/auth/signout">
+// or link issues the request, and the response's Set-Cookie (maxAge=0) clears the session, silently
+// logging the user out (an annoyance, not a breach). Nothing links to it via GET, so a direct
+// address-bar navigation now 405s -- that path WAS the hole. Residual (accepted, LOW): a deliberate
+// cross-site auto-submitting POST form could still trigger logout (logout clears cookies; it does not
+// need the cookie SENT), so POST-only is closed-to-severity, not a full CSRF close -- a CSRF token on
+// the signout form would fully close it but is disproportionate for a logout-annoyance.
 //
 // We don't invalidate the Bungie access token here. The Bungie token is
 // stored in our backend (not currently — but if we later add it to
@@ -61,9 +66,5 @@ function buildSignoutResponse(request) {
 }
 
 export async function POST(request) {
-  return buildSignoutResponse(request);
-}
-
-export async function GET(request) {
   return buildSignoutResponse(request);
 }
