@@ -18,6 +18,7 @@
 // key is a live page immediately (force-dynamic, no rebuild).
 
 import { supabase } from '../supabase';
+import { dataOrThrow } from './dataOrThrow';
 
 // A "fact row" is a { label, value } pair rendered on the detail page and emitted
 // as a schema PropertyValue -- but ONLY when value is present (no empty claims).
@@ -147,32 +148,50 @@ export function getDmzEntity(key) {
   return DMZ_ENTITIES[key] || null;
 }
 
-// One row by slug (detail page). game_slug scoped, like every entity read.
+// ERROR-VS-EMPTY (Finding-1 class): the fetchDmz* reads route their { data, error } through
+// dataOrThrow (lib/dmz/dataOrThrow.js) -- THROW on a genuine read error (loud 500 / logged sitemap-
+// degrade), fallback ([]/null) on a legitimate empty. The split keys on res.error, NEVER row count.
+
+// One row by slug (detail page). game_slug scoped, like every entity read. THROWS on a read error
+// (-> the route 500s, loud); a legitimate missing row -> null -> the route's notFound().
 export async function fetchDmzRow(entity, slug) {
   var res = await supabase.from(entity.table).select('*').eq('game_slug', 'dmz').eq('slug', slug).maybeSingle();
-  return res.data || null;
+  return dataOrThrow(res, entity.table + ' row (slug=' + slug + ')', null);
 }
 
-// All rows for a vertical (hub + sitemap). Verified first, then alphabetical, so
-// confirmed entries lead. Never throws -- an errored read yields [].
+// All rows for a vertical (hub + detail siblings). Verified first, then alphabetical, so confirmed
+// entries lead. THROWS on a read error (-> the hub/detail route 500s, loud); a legitimately empty
+// table -> [] -> the hub renders its empty state (unchanged).
 export async function fetchDmzRows(entity) {
   var res = await supabase.from(entity.table).select('*').eq('game_slug', 'dmz').order('verified', { ascending: false }).order('name');
-  return res.data || [];
+  return dataOrThrow(res, entity.table + ' rows', []);
 }
 
-// Lightweight slugs-only read for the sitemap (detail URL emission).
+// Lightweight slugs-only read for the sitemap (detail URL emission). THROWS on a read error -- the
+// sitemap (lib/sitemap/eligible.js) wraps this in its per-block try/catch, so a throw is LOGGED and
+// the DMZ-entity block degrades gracefully (the rest of the sitemap still emits), vs the old silent
+// [] that was indistinguishable from a legitimately empty table.
 export async function fetchDmzSlugs(entity) {
   var res = await supabase.from(entity.table).select('slug, updated_at, verified').eq('game_slug', 'dmz');
-  return res.data || [];
+  return dataOrThrow(res, entity.table + ' slugs', []);
 }
 
 // POI link targets for the article render-time linkifier (spoke 2): {name, slug}
 // for every live dmz_pois row, sorted LONGEST-NAME-FIRST so a multi-word name
 // ("Hajin City") is matched before any shorter token and never partially matched.
 // Driven off real rows, so the linkifier only ever links a name that HAS a page --
-// never a dead link. Never throws (errored read -> []). Public-read RLS applies.
+// never a dead link. Public-read RLS applies.
+//
+// BEST-EFFORT, NOT page-existence: this enhances an article body (POI cross-links); the article
+// renders fine without it. So a read error does NOT throw (that would 500 an otherwise-valid
+// article for a non-essential enhancement) -- it LOGS and degrades to [] (plain-text body). Unlike
+// the old code it is no longer SILENT: a genuine read error is surfaced in the logs.
 export async function fetchPoiLinkTargets() {
   var res = await supabase.from('dmz_pois').select('name, slug').eq('game_slug', 'dmz');
+  if (res && res.error) {
+    console.error('[dmz] fetchPoiLinkTargets read failed (best-effort -> degrading to no links): ' + res.error.message);
+    return [];
+  }
   var rows = res.data || [];
   return rows
     .filter(function (r) { return r.name && r.slug; })

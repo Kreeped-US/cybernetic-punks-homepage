@@ -67,12 +67,10 @@ Newest-first within the block; move an item to the dated log when it ships.
     the Hobby tier only runs daily-granularity crons, so an hourly cron needs Pro (else the release
     valve UNDER-FIRES at launch). Likely Pro already (prior context), but confirm.
 
-- **fetchDmzRows SILENT-CATCH LATENT BUG.** The existing `/dmz/{keys,pois,items,missions}/[slug]`
-  entity helpers still use the pre-Finding-1 swallow (`return data ?? []`, never throws). A transient
-  DB read error silently drops entity pages -- the SAME bug class Finding-1 (f092695) fixed for the
-  build engine. Contained fix: apply error-vs-empty (throw on a read error) to `fetchDmzRows`. Not
-  urgent, but real. (The DMZ build engine already avoids this -- it throws on DB error, notFound on
-  empty -- so the pattern to copy is in-repo.)
+- ~~**fetchDmzRows SILENT-CATCH LATENT BUG.**~~ RESOLVED 2026-08-07 -- see the "DMZ entity-read
+  silent-catch FIXED" entry below. fetchDmzRow/fetchDmzRows/fetchDmzSlugs now split error-vs-empty
+  (throw on a read error via dataOrThrow); fetchPoiLinkTargets logs + degrades (best-effort). The
+  last silent-catch instance in the DMZ codebase is closed.
 
 - **SYNTHETIC-PATCH-FIXTURES -> VERBATIM swap.** The gate golden corpus uses labeled-synthetic
   patch-shape fixtures (deltas / decimals / tiers) in `lib/gsc/corroboration.golden.test.mjs`. Swap
@@ -89,6 +87,37 @@ Newest-first within the block; move an item to the dated log when it ships.
 - **DMZ placeholder rows in the DB.** The weapon-build placeholder rows (verified=false -> invisible)
   remain; delete via the cleanup SQL or keep as the sitemap-exclusion fixture. (Also noted in the
   2026-08-06 build-engine entry below.)
+
+---
+
+## 2026-08-07 - DMZ entity-read silent-catch FIXED (the last one) - error-vs-empty on fetchDmz*
+
+The last pre-Finding-1 silent-catch in the DMZ codebase is closed. The `/dmz/{keys,pois,items,
+missions}` entity reads swallowed a Supabase READ ERROR into the SAME empty result as a legitimately
+empty table (`return res.data || []`), so a transient DB failure silently 404'd a page / dropped it
+from the sitemap -- looking exactly like the pre-launch "no data yet" state. Same class Finding-1
+(f092695) fixed for the build engine.
+
+THE FIX (error-vs-empty, keyed on the ERROR OBJECT, never row count):
+- Extracted `dataOrThrow(res, label, fallback)` to lib/dmz/dataOrThrow.js (import-free -> unit-
+  testable without the supabase singleton, the storeLoader/corroboration pattern). THROWS on a
+  genuine read error; returns the fallback ([]/null) on a legitimate empty.
+- fetchDmzRow / fetchDmzRows / fetchDmzSlugs (lib/dmz/entities.js) route through it. Behavior change
+  is ONLY: a transient read error goes silent-404 -> loud-500 (correct). A legitimate empty (no
+  error, zero rows -- the sparse pre-launch tables) STILL returns []/null -> hub empty-state /
+  notFound, NOT a 500.
+- BLAST RADIUS confirmed: fetchDmzRow/Rows are called only by the 8 entity routes (4 hubs + 4
+  [slug] details), where a read error SHOULD 500. fetchDmzSlugs is called only by the sitemap
+  (lib/sitemap/eligible.js), which wraps it in a per-block try/catch -> a throw is now LOGGED and the
+  DMZ-entity block degrades gracefully (the rest of the sitemap still emits), vs the old silent skip.
+- fetchPoiLinkTargets (the article-body POI linkifier) is DIFFERENT -- best-effort enhancement, not
+  page-existence. Throwing there would 500 an otherwise-fine article, so it LOGS + degrades to []
+  (plain-text body). It was silent before (no log); now the failure is surfaced. Deliberate split.
+
+Tests: lib/dmz/entities.test.mjs (dataOrThrow) 7/7 -- read error THROWS (both callers), legitimate
+empty -> []/null (no throw), rows pass through, and the split keys on res.error even when data is
+non-null. ESLint clean, next build compiles (all 8 entity routes force-dynamic). Doc-only risk:
+none -- the only runtime change is transient-read-error becomes loud instead of a silent 404.
 
 ---
 
