@@ -173,6 +173,51 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Assignment gate INCREMENT 1 built (HELD) - LOG-ONLY, Option A (queue-driven alongside self-select)
+
+Build-order step 1 from docs/CONTENT_PIPELINE_ARCHITECTURE.md, first increment. LOG-ONLY: the gate
+runs the checks over seeded candidates and LOGS what it WOULD decide (pass / would-reinforce /
+would-gap); it blocks nothing, alters nothing, and does NOT touch how NEXUS self-selects topics. The
+roster freeze stays the live brake. Ships log-only first exactly like the pre-publish gate did.
+
+WHAT LANDED (held on branch feat/assignment-gate-inc1; DDL held for operator to run):
+- **DDL (held):** `content_candidate` -- ONE table, status-discriminated (queue = status 'queued';
+  gap ledger = status 'gap'; same row shape). candidate = (game_slug, entity, facet); warrant_source
+  ('substance_floor'|'event_trigger'|'seed_reinforce'); disposition ('new'|'reinforce'|'verify');
+  demand columns (priority/target_phrase/keyword_ref) COMMENTed as annotate/rank-only (the firewall:
+  demand never creates a row, never vetoes). RLS service-role-only (anon reads 0), CHECK-guarded
+  enums, UNIQUE(game_slug,entity,facet), pick index (game_slug,status,priority DESC). Recorded in
+  docs/content/MIGRATIONS.md with verify SELECTs + the SET ROLE anon -> count 0 proof.
+- **Check (a) SUBSTANCE FLOOR** -- lib/content/substanceFloor.js. facet->store-table map (weapon/
+  shell/mod/core/implant/cradle/armory + game-world tables), entity->row match (ilike), COUNT
+  verified=true (+ patch_verified for stat facets), vs a per-facet threshold. Thresholds in
+  marathon.js editorial.contentGate (CONSERVATIVE + flagged TUNABLE). Pure parts unit-tested.
+- **Check (b) NOVELTY, network-wide** -- lib/content/novelty.js. Promotes the MIRANDA-only
+  findDuplicateEvergreen: drops the editor filter (compares ALL editors' published rows) + tokenizes
+  a CANDIDATE-TOPIC string (entity+facet), not a headline. Dup -> disposition 'reinforce' + owning
+  slug (a LOGGED MARKER; the reinforce-writer is a LATER increment). Jaccard core shared via
+  lib/topicTokens.js (topicJaccard EXTRACTED there from the cron so the two can't drift). Thresholds
+  reused as-is; FLAGGED they may need retune for short candidate strings (NOT pre-tuned). Pure parts
+  unit-tested.
+- **Check (c) CANNIBALIZATION -- STUBBED/deferred** (returns ran:false). Next increment.
+- **The gate** -- lib/content/assignmentGate.js: runAssignmentGate(candidate,supabase,config) runs
+  (a)+(b), returns {decision:'pass'|'reinforce'|'gap', substance, novelty, cannibalization, logged}.
+  Precedence: reinforce (dup owns it) > gap (novel but thin) > pass. LOG-ONLY: caller acts on nothing.
+- **The log pass** -- lib/content/gateLogPass.js: reads QUEUED content_candidate rows, runs the gate,
+  emits a structured greppable [GATE-LOG] line per candidate. Wired into app/api/cron/route.js AFTER
+  editors settle, fully guarded (can never break the cron), summary surfaced in the cron JSON
+  (assignment_gate). Table-absent read -> graceful no-op (so it is safe to merge BEFORE the DDL runs).
+- **Seed** -- scripts/seed-content-candidates.mjs: 4 test candidates chosen to exercise all outcomes
+  (Destroyer/Vandal shells -> reinforce; Overclock/cradle -> pass-or-gap; Nonexistent Widget -> gap).
+
+DELIBERATELY DEFERRED (named so they are not mistaken for gaps): (c) cannibalization; the
+reinforce-WRITER (editing existing pages -- increment 1 only MARKS reinforce); and QUEUE-DRIVEN
+ASSIGNMENT (feeding a queued candidate into callEditor instead of self-select) -- that is the NEXT
+increment, and it is where the gate stops being log-only. Gates: 13 unit tests pass, ESLint clean,
+next build clean, byte-clean (0 control bytes / em-dash / curly). HELD for review.
+
+---
+
 ## 2026-08-10 - CONTENT PIPELINE ARCHITECTURE ruled (Fable) - the demand-informed assignment gate
 
 CONTENT PIPELINE ARCHITECTURE ruled (Fable) - see docs/CONTENT_PIPELINE_ARCHITECTURE.md. Two-session

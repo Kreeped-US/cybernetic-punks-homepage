@@ -280,6 +280,22 @@ export const marathon = {
     // 07-16 freeze, and the 07-19 trigger was a staff-departure story. Do NOT
     // rely on this gate alone as a pause. See docs/HANDOFF.md.
     editorsRequiringPatch: ['CIPHER', 'NEXUS', 'DEXTER'],
+
+    // ── ASSIGNMENT GATE (content pipeline, increment 1: LOG-ONLY) ────────────
+    // Per-game thresholds for the pre-generation gate's SUBSTANCE FLOOR (check a).
+    // These OVERRIDE lib/content/substanceFloor.js DEFAULT_SUBSTANCE_THRESHOLDS
+    // (min VERIFIED store rows for an entity+facet to warrant a non-thin article).
+    // CONSERVATIVE START -- TUNABLE against the [GATE-LOG] counts. The gate is
+    // log-only, so nothing breaks while these are dialed in. See
+    // docs/CONTENT_PIPELINE_ARCHITECTURE.md build-order step 1.
+    contentGate: {
+      substanceFloor: {
+        thresholds: {
+          weapon: 1, shell: 1, mod: 1, core: 1, implant: 1,
+          cradle: 3, armory: 3, map: 1, zone: 1, boss: 1, event: 1, mode: 1,
+        },
+      },
+    },
   },
 
   // Historical-context layer (AI-quality roadmap #2/#3). Drives the precompute

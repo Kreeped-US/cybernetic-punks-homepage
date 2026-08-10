@@ -121,6 +121,29 @@ export function buildBigramIdfMap(headlines) {
   return buildMap(headlines, topicBigrams);
 }
 
+// Subject-weighted Jaccard over two token sets: idf-sum of shared tokens divided
+// by idf-sum of the union. `shared` is the RAW shared-token count (a min-shared
+// floor is about overlap EXISTING at all, not its weight).
+//
+// EXTRACTED 2026-08-10 from the inline copy in app/api/cron/route.js
+// (findDuplicateEvergreen) so the cron's MIRANDA guard AND the network-wide
+// novelty check (lib/content/novelty.js) share ONE scorer and cannot drift --
+// the exact reason topicTokens/buildIdfMap already live here. Behaviour is
+// byte-identical to the route.js original; the 0.7 threshold stays calibrated.
+export function topicJaccard(tokensA, tokensB, idf) {
+  if (!tokensA.length || !tokensB.length) return { score: 0, shared: 0 };
+  function w(t) { return idf[t] || idf._max; }
+  var setA = {};
+  for (var i = 0; i < tokensA.length; i++) setA[tokensA[i]] = 1;
+  var shared = 0, sharedW = 0, unionW = 0;
+  for (var j = 0; j < tokensA.length; j++) unionW += w(tokensA[j]);
+  for (var k = 0; k < tokensB.length; k++) {
+    if (setA[tokensB[k]]) { shared++; sharedW += w(tokensB[k]); }
+    else unionW += w(tokensB[k]);
+  }
+  return { score: unionW ? sharedW / unionW : 0, shared: shared };
+}
+
 // The idf value corresponding to "appears in at most `ratio` of the corpus".
 //
 // WHY THIS EXISTS (2026-07-21): the rarity bar was the literal 5.0, and this

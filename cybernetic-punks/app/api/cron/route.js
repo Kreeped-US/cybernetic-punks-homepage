@@ -15,7 +15,8 @@ import { runGate } from '@/lib/gsc/runGate';
 import { decideGate } from '@/lib/gsc/prePublishGate';
 import { loadGateStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
-import { topicTokens, buildIdfMap } from '@/lib/topicTokens';
+import { topicTokens, buildIdfMap, topicJaccard } from '@/lib/topicTokens';
+import { runGateLogPass } from '@/lib/content/gateLogPass';
 
 export const dynamic = 'force-dynamic';
 
@@ -234,29 +235,13 @@ var DUP_JACCARD_THRESHOLD = 0.7;
 var DUP_MIN_SHARED_TOKENS = 3;
 var DUP_HISTORY_LIMIT = 500;
 
-// topicTokens + buildIdfMap now live in lib/topicTokens.js (imported at the top
-// of this file). They were EXTRACTED so this guard and the cross-editor
-// rare-token duplicate check in lib/coverageShadow.js share ONE tokeniser --
-// two copies would drift and their scores would stop being comparable.
+// topicTokens + buildIdfMap + topicJaccard now live in lib/topicTokens.js
+// (imported at the top of this file). They were EXTRACTED so this guard, the
+// cross-editor rare-token duplicate check in lib/coverageShadow.js, AND the
+// network-wide novelty check in lib/content/novelty.js share ONE tokeniser +
+// scorer -- copies would drift and their scores would stop being comparable.
 // Behaviour is unchanged; the 0.7 threshold below is still calibrated against
 // the same transform.
-
-// Subject-weighted Jaccard: idf-sum of shared tokens / idf-sum of the union.
-// `shared` stays the RAW shared-token count (the DUP_MIN_SHARED_TOKENS floor is
-// about real overlap existing at all, not its weight).
-function topicJaccard(tokensA, tokensB, idf) {
-  if (!tokensA.length || !tokensB.length) return { score: 0, shared: 0 };
-  function w(t) { return idf[t] || idf._max; }
-  var setA = {};
-  for (var i = 0; i < tokensA.length; i++) setA[tokensA[i]] = 1;
-  var shared = 0, sharedW = 0, unionW = 0;
-  for (var j = 0; j < tokensA.length; j++) unionW += w(tokensA[j]);
-  for (var k = 0; k < tokensB.length; k++) {
-    if (setA[tokensB[k]]) { shared++; sharedW += w(tokensB[k]); }
-    else unionW += w(tokensB[k]);
-  }
-  return { score: unionW ? sharedW / unionW : 0, shared: shared };
-}
 
 // Read-only: return the closest published article by this editor+game whose
 // topic crosses the near-duplicate threshold, or null. Never touches existing
@@ -1294,6 +1279,20 @@ export async function GET(req) {
       }
     }
 
+    // ── ASSIGNMENT GATE -- LOG-ONLY PASS (content pipeline, increment 1) ──────
+    // Reads QUEUED content_candidate rows and LOGS what the pre-generation gate
+    // WOULD decide (pass / would-reinforce / would-gap). It writes NOTHING and
+    // feeds NOTHING into generation -- it runs ALONGSIDE the untouched NEXUS
+    // self-select path above, exactly like the pre-publish gate shipped log-only
+    // first. Fully guarded: it can never break the cron. See
+    // docs/CONTENT_PIPELINE_ARCHITECTURE.md build-order step 1.
+    var gateLogSummary = null;
+    try {
+      gateLogSummary = await runGateLogPass(supabase, PRODUCING_GAME);
+    } catch (gateLogErr) {
+      console.log('[CRON] assignment-gate log pass failed (non-fatal): ' + (gateLogErr && gateLogErr.message));
+    }
+
     // ── DUPLICATE-THUMBNAIL DEDUP (post-settle) ──────────────────
     // Two articles may legitimately share one source video on a thin cycle,
     // but they must not display the IDENTICAL thumbnail. resolveMediaInfo can
@@ -1445,6 +1444,9 @@ export async function GET(req) {
       directives_consumed: directivesUsed,
       patch_detected: hasPatch,
       nexus_tier_regrade: regradeContext.shouldRegrade,
+      // Assignment-gate LOG-ONLY pass summary (increment 1): what the gate WOULD
+      // decide over queued candidates. Nothing was acted on. See runGateLogPass.
+      assignment_gate: gateLogSummary,
       results: results,
       tweet: 'Auto-posting disabled -- post manually via @Cybernetic87250',
     });
