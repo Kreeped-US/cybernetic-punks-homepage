@@ -50,6 +50,18 @@ remain.
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
 
+- **EDITORIAL OPINION LANE (FUTURE STRATEGIC CONVERSATION -- not current work; likely a Fable ruling).**
+  Raised 2026-08-10 during the queue-driven-assignment work. A verified-substance-ONLY pipeline risks
+  starving editors of things to write (and reads sterile). Idea: allow editors a LABELED opinion/
+  speculation/theorycraft lane -- "what I (Cipher) think the meta is heading" / a theorized build / an
+  opinion on whether a weapon is undertuned -- CLEARLY FLAGGED as opinion, DISTINCT from verified-fact
+  content, so it adds voice + content volume WITHOUT diluting the "no hype, just intel" verified moat.
+  Open questions for its own session: which editors opine; how opinion is labeled/separated from
+  verified fact (UI + schema); whether opinion content goes through the gate differently (it is not a
+  verified-fact claim); SEO treatment; the moat risk (readers conflating opinion with verified intel)
+  and how labeling prevents it. This is the "how to add editorial opinion without diluting the
+  verified-fact moat" question -- park it, it deserves its own conversation.
+
 - **CONTENT PIPELINE: the assignment gate + warranted-candidate queue (2026-08-10, Fable-ruled)** -
   see docs/CONTENT_PIPELINE_ARCHITECTURE.md. Build order: (1) assignment gate + queue [3 DB checks +
   a table], (2) seeding import + gap ledger, (3) unfreeze Marathon [live rehearsal], (4) DMZ online.
@@ -170,6 +182,16 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
   launch-critical identity item. THIN but substrate-shaped (saved_source_version). DDL applied +
   verified private (RLS on, anon reads 0) -- see docs/dmz/MIGRATIONS.md.
+
+---
+
+## 2026-08-10 - Parked a FUTURE strategic item: editorial opinion lane (doc-only)
+
+Doc-only. Parked a future strategic question in PENDING/BACKLOG (not current work): an EDITORIAL
+OPINION LANE -- a labeled opinion/speculation/theorycraft lane for editors, distinct from verified-
+fact content, to add voice + volume without diluting the "no hype, just intel" verified moat. Raised
+during the queue-driven-assignment work; deserves its own session (likely a Fable ruling). Full note +
+open questions in the PENDING block above. No code change.
 
 ---
 
