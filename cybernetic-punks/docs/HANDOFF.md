@@ -50,6 +50,11 @@ remain.
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
 
+- **CONTENT PIPELINE: the assignment gate + warranted-candidate queue (2026-08-10, Fable-ruled)** -
+  see docs/CONTENT_PIPELINE_ARCHITECTURE.md. Build order: (1) assignment gate + queue [3 DB checks +
+  a table], (2) seeding import + gap ledger, (3) unfreeze Marathon [live rehearsal], (4) DMZ online.
+  Distinct from the per-store-row citation upgrade (separate, non-launch-critical residual).
+
 - **GATE-RELEASE ENV CONFIRM (pre-launch, launch-critical) -- PARTIALLY RESOLVED 2026-08-07.**
   `/api/cron/gate-release` (Phase 4, 4310636) needs `CRON_SECRET` + `SUPABASE_SERVICE_KEY` on the
   **v2 production project** to run guarded AND write `is_published`. Failure mode is SILENT: missing
@@ -165,6 +170,18 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
   launch-critical identity item. THIN but substrate-shaped (saved_source_version). DDL applied +
   verified private (RLS on, anon reads 0) -- see docs/dmz/MIGRATIONS.md.
+
+---
+
+## 2026-08-10 - CONTENT PIPELINE ARCHITECTURE ruled (Fable) - the demand-informed assignment gate
+
+CONTENT PIPELINE ARCHITECTURE ruled (Fable) - see docs/CONTENT_PIPELINE_ARCHITECTURE.md. Two-session
+code-verified mapping proved grounding + provenance + gate ARE built (correcting the 2026-08-07
+grounding-priority ruling); the real gap = the demand->assignment + GSC->assignment feedback loops.
+Fix: ONE pre-generation assignment gate (substance-floor + novelty + cannibalization) + a
+warranted-candidate queue demand RANKS and ANNOTATES but never manufactures or vetoes + a gap ledger.
+Retires the manual roster-freeze (restraint becomes structural); unifies Marathon-unfreeze +
+DMZ-online. Build order: gate+queue -> seeding import -> unfreeze Marathon (rehearsal) -> DMZ online.
 
 ---
 
