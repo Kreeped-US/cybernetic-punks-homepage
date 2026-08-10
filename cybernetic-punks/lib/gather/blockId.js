@@ -114,3 +114,37 @@ export function makeStoreMinter() {
     },
   };
 }
+
+// The store-aware cited_blocks tool-field description. The tool-field description is
+// the LEVER the model reads to decide what goes in cited_blocks (mechanism finding,
+// docs/VERIFIED_GROUNDED_REASONING.md), so it must (1) name store ids and (2) for
+// STEP 2, instruct citing the PREMISES of a build recommendation (the shell + the
+// specific cores/components it rests on). callEditor swaps this in per-call only when
+// the master flag is ON (via toolWithStoreCites); OFF -> the tool is unchanged.
+export const CITED_BLOCKS_SCHEMA_STORE_DESC = 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context. TWO kinds: external sources ("BN1", "YT2") AND verified store rows ("WS3" weapon, "SH6" shell, "CS2" core, "MS4" mod, "IS9" implant) -- you MUST cite the store-row id for every verified stat, ability, kit, or perk fact you took from a tagged database row. AND when you make a BUILD or LOADOUT RECOMMENDATION (e.g. pairing a shell with specific cores/implants/mods), cite EVERY premise the recommendation rests on: the shell id AND each specific core/component id you recommend -- "run core X on shell Y because [interaction]" must include BOTH ids. A recommendation is grounded only when the rows under it are cited. Cite ONLY ids that appear in your context; cite nothing rather than guessing. Never write a URL here -- the id alone.';
+
+// Return a tool CLONE whose cited_blocks description is the store-aware one. Targeted
+// clone (no shared-const mutation); returns the tool unchanged if it has no cited_blocks.
+export function toolWithStoreCites(tool) {
+  const props = tool && tool.input_schema && tool.input_schema.properties;
+  if (!props || !props.cited_blocks) return tool;
+  return {
+    ...tool,
+    input_schema: {
+      ...tool.input_schema,
+      properties: {
+        ...props,
+        cited_blocks: { ...props.cited_blocks, description: CITED_BLOCKS_SCHEMA_STORE_DESC },
+      },
+    },
+  };
+}
+
+// STORE ADJACENCY (step 2): render a verified relation array (countered_by /
+// synergizes_with / counter_items) as a one-hop neighborhood line -- ONLY when
+// enabled (the master flag). When disabled, or the array is empty/not-an-array,
+// returns '' so the shell block is byte-identical to pre-adjacency.
+export function renderRelationLine(label, arr, enabled) {
+  if (!enabled || !Array.isArray(arr) || arr.length === 0) return '';
+  return '    ' + label + ': ' + arr.filter(Boolean).join(', ');
+}

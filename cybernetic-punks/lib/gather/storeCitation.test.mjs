@@ -8,7 +8,43 @@ import assert from 'node:assert/strict';
 import {
   makeStoreMinter, resolveCitedBlocks, buildBlockRegistry,
   STORE_PREFIX, STORE_SOURCE_PRIORITY, storeRowCitationEnabled,
+  toolWithStoreCites, renderRelationLine, CITED_BLOCKS_SCHEMA_STORE_DESC,
 } from './blockId.js';
+
+// ── STORE ADJACENCY (step 2) ─────────────────────────────────────────────────
+test('renderRelationLine: OFF (disabled) -> "" so the shell block is byte-identical', () => {
+  assert.equal(renderRelationLine('Countered by', ['Vandal', 'Thief'], false), '');
+});
+
+test('renderRelationLine: ON -> the labelled neighborhood line', () => {
+  assert.equal(renderRelationLine('Countered by', ['Vandal', 'Thief', 'Assassin'], true), '    Countered by: Vandal, Thief, Assassin');
+  assert.equal(renderRelationLine('Counter items', ['Signal Jammers'], true), '    Counter items: Signal Jammers');
+});
+
+test('renderRelationLine: ON but empty / non-array -> "" (no dangling label)', () => {
+  assert.equal(renderRelationLine('Synergizes with', [], true), '');
+  assert.equal(renderRelationLine('Synergizes with', null, true), '');
+  assert.equal(renderRelationLine('Synergizes with', undefined, true), '');
+  assert.equal(renderRelationLine('Synergizes with', ['a', null, 'b'], true), '    Synergizes with: a, b', 'drops falsy entries');
+});
+
+test('toolWithStoreCites: swaps the cited_blocks description to the recommendation-aware store desc', () => {
+  const tool = { name: 't', input_schema: { type: 'object', properties: { headline: { type: 'string' }, cited_blocks: { type: 'array', description: 'ORIGINAL' } } } };
+  const out = toolWithStoreCites(tool);
+  assert.equal(out.input_schema.properties.cited_blocks.description, CITED_BLOCKS_SCHEMA_STORE_DESC);
+  // the store desc instructs citing recommendation premises (the step-2 lever)
+  assert.match(CITED_BLOCKS_SCHEMA_STORE_DESC, /RECOMMENDATION/);
+  assert.match(CITED_BLOCKS_SCHEMA_STORE_DESC, /premise/);
+  // original tool is NOT mutated (per-call clone)
+  assert.equal(tool.input_schema.properties.cited_blocks.description, 'ORIGINAL');
+  // other properties are preserved
+  assert.ok(out.input_schema.properties.headline);
+});
+
+test('toolWithStoreCites: a tool with no cited_blocks is returned unchanged', () => {
+  const tool = { name: 't', input_schema: { type: 'object', properties: { headline: { type: 'string' } } } };
+  assert.equal(toolWithStoreCites(tool), tool);
+});
 
 test('MASTER FLAG storeRowCitationEnabled: OFF by default / unset / anything!=="true"', () => {
   const prev = process.env.STORE_ROW_CITATION_ENABLED;

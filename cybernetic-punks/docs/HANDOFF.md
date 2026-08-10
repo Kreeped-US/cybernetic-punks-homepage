@@ -206,6 +206,45 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - STORE ADJACENCY step 2 (core) built + STAGED OFF (HELD) - reason-and-cite across the neighborhood
+
+Build-order STEP 2 of docs/VERIFIED_GROUNDED_REASONING.md (the "queryable neighborhood"). Step 0 found
+the primary build relation (shell<->cores) is ALREADY modeled/verified/surfaced/citable (core_stats.
+required_runner, grouped byRunner, [CS#] from step 1). So this build makes the editor REASON ACROSS the
+one-hop neighborhood and CITE the cores a recommendation rests on -- not just name them as prose. Same
+master flag STORE_ROW_CITATION_ENABLED, per-call gated, STAGED OFF -> live NEXUS byte-identical. NO new
+tables, NO insert/publish change. Built on a clean branch off main c117b7f. DRY-RUN PROVEN.
+
+- **NEIGHBORHOOD SURFACING (fetchGameContext, gated):** added countered_by / synergizes_with /
+  counter_items to the shell_stats select and, when citeStore is ON, emits them per shell via
+  renderRelationLine (the shell's one-hop verified neighborhood -- its cores are already grouped under
+  "<Shell> Cores:" with [CS#] ids). OFF -> renderRelationLine returns '' -> byte-identical (the extra
+  columns are fetched but never emitted).
+- **TOOL-SCHEMA REASON-AND-CITE (the lever, gated per-call):** extended CITED_BLOCKS_SCHEMA_STORE_DESC
+  so that a BUILD/LOADOUT RECOMMENDATION must cite EVERY premise -- the shell id AND the specific
+  core/component ids it recommends ("run core X on shell Y because [interaction]" cites BOTH). This is
+  the step-1 -> step-2 delta (cite the premises the RECOMMENDATION stands on, not just facts mentioned).
+- **Refactor:** moved toolWithStoreCites + CITED_BLOCKS_SCHEMA_STORE_DESC + the new renderRelationLine
+  into lib/gather/blockId.js (pure, node-testable) -- callEditor/fetchGameContext import them. callEditor
+  still applies toolWithStoreCites ONLY when the flag is ON.
+- NO gate-extension (that is step 3 -- validating the premises RESOLVE). NO insert/publish-path change.
+
+DRY-RUN PROOF (Sentinel, flag ON): cited_blocks = ["SH8","CS29","CS72","CS51","WS3","WS5","WS8","WS9",
+"SH2","SH7","SH4"] -- now includes THREE [CS#] CORE ids (was zero in step 1). The editor reasoned a
+build across Sentinel's cores (Eminent Domain / Wellness Beacon / Reversal) and cited them, and used the
+surfaced counters (Vandal/Thief/Assassin, Signal Jammers). verified_source NON-NULL (shell, tier 0).
+EXPECTED CAVEAT: the CS# cites resolve to null provenance (CS29->null) -- Sentinel's 3 cores are among
+the 19 verified cores lacking verified_source; that ~19-row populate is the DEFERRED step-2 data gap
+(out of scope, correctly bounded). The recommendation is still grounded (cores cited to verified rows);
+only their per-core provenance string is null. Gates: 21 unit tests (renderRelationLine off/on,
+toolWithStoreCites swap), ESLint clean, build clean, byte-clean. HELD for review.
+
+DEFERRED (as scoped): the ~19-row core verified_source populate (provenance quality) + the mod<->weapon
+data build (mods 17/203 verified, compatible_weapons 0/203 -- the unverified-rows backlog). NEXT: step 3
+gate extension (premise-validation), then step 4 publish.
+
+---
+
 ## 2026-08-10 - STORE-ROW CITATION built + STAGED OFF (HELD) - content-model precondition, dry-run-proven
 
 Build-order STEP 1 of docs/VERIFIED_GROUNDED_REASONING.md: verified store rows can become first-class

@@ -5,7 +5,7 @@ import { availableOnMap } from './availability';
 import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
 import { HEADLINE_RULES, HEADLINE_MAX_CHARS } from './headlineRules';
-import { makeStoreMinter, storeRowCitationEnabled } from './gather/blockId';
+import { makeStoreMinter, storeRowCitationEnabled, toolWithStoreCites, renderRelationLine } from './gather/blockId';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -195,30 +195,11 @@ const CITED_BLOCKS_SCHEMA = {
   items: { type: 'string' },
 };
 
-// STORE-ROW CITATION (gated): when the master flag is ON, callEditor swaps the
-// tool's cited_blocks description for this store-aware one -- the tool-field
-// description is the lever the model reads to decide what goes in cited_blocks, so
-// it must name store ids for the model to cite them. When OFF the tool is used
-// UNCHANGED (byte-identical to pre-store-citation). This suffix is applied per-call,
-// via toolWithStoreCites, never mutating the shared EDITOR_TOOLS consts.
-const CITED_BLOCKS_SCHEMA_STORE_DESC = 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context. TWO kinds: external sources ("BN1", "YT2") AND verified store rows ("WS3" weapon, "SH6" shell, "CS2" core, "MS4" mod, "IS9" implant) -- you MUST cite the store-row id for every verified stat, ability, kit, or perk fact you took from a tagged database row. Cite ONLY ids that appear in your context; cite nothing rather than guessing. Never write a URL here -- the id alone.';
-
-// Return a tool CLONE whose cited_blocks description is the store-aware one. Targeted
-// clone (no shared-const mutation); returns the tool unchanged if it has no cited_blocks.
-function toolWithStoreCites(tool) {
-  var props = tool && tool.input_schema && tool.input_schema.properties;
-  if (!props || !props.cited_blocks) return tool;
-  return {
-    ...tool,
-    input_schema: {
-      ...tool.input_schema,
-      properties: {
-        ...props,
-        cited_blocks: { ...props.cited_blocks, description: CITED_BLOCKS_SCHEMA_STORE_DESC },
-      },
-    },
-  };
-}
+// STORE-ROW CITATION tool swap (gated) + the store-aware cited_blocks description +
+// the neighborhood relation-line renderer now live in lib/gather/blockId.js (pure,
+// node-testable, alongside the other store-citation helpers). callEditor applies
+// toolWithStoreCites only when the master flag is ON (byte-identical when off);
+// fetchGameContext uses renderRelationLine for the gated one-hop neighborhood.
 
 const CIPHER_TOOL = {
   name: 'publish_play_analysis',
@@ -638,7 +619,7 @@ async function fetchGameContext(config = getGameConfig()) {
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type, verified, verified_source').order('rarity', { ascending: false }).limit(100),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source, verified, verified_source').order('rarity', { ascending: false }).limit(60),
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, verified_source, patch_verified').order('name').limit(30),
-      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, verified, verified_source, patch_verified').limit(10),
+      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, countered_by, synergizes_with, counter_items, verified, verified_source, patch_verified').limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
       supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved, verified, verified_source, patch_verified').eq('game_slug', config.slug).order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
       supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', config.slug).eq('verified', true),
@@ -680,7 +661,8 @@ async function fetchGameContext(config = getGameConfig()) {
       output += '\n\n=== SOURCE CITATION -- STORE ROWS (REQUIRED) ===\n' +
         'The verified database rows below are EACH tagged with a bracketed id: [WS#] weapons, [SH#] shells, [CS#] cores, [MS#] mods, [IS#] implants. ' +
         'For EVERY verified stat, ability, kit, or perk fact you state that comes from a tagged row, you MUST copy that row\'s id into the cited_blocks array, exactly as shown (e.g. "SH3", "WS10"). ' +
-        'Cite the id of every tagged row whose facts you used -- this is how the system records that your claims are verified. Rows shown WITHOUT a bracketed id are unverified: do not cite them.';
+        'Cite the id of every tagged row whose facts you used -- this is how the system records that your claims are verified. Rows shown WITHOUT a bracketed id are unverified: do not cite them.\n' +
+        'REASONING ACROSS THE NEIGHBORHOOD: a shell\'s viable cores are listed under its "<Shell> Cores:" group with their own [CS#] ids, and each shell block lists its verified Synergizes-with / Countered-by / Counter-items. When you make a BUILD or LOADOUT RECOMMENDATION, cite EVERY premise it rests on: the shell id ([SH#]) AND the specific core/component ids ([CS#]/[IS#]/[MS#]) you recommend pairing -- e.g. "run Eminent Domain on Sentinel because it neutralizes grenades via Defender System" must cite BOTH the Sentinel [SH#] and the Eminent Domain [CS#]. A recommendation whose cores you cannot cite is not grounded: recommend only pairings whose rows are tagged.';
     }
 
     if (modsRes.data?.length) {
@@ -783,6 +765,9 @@ async function fetchGameContext(config = getGameConfig()) {
         if (!name) return '';
         return '    ' + label + ': ' + name + (desc ? ' - ' + desc : ' - (effect not yet revealed; do not invent it)');
       };
+      // STORE ADJACENCY (step 2, gated): renderRelationLine surfaces the shell's
+      // one-hop verified neighborhood (synergies / counters) ONLY when citeStore is
+      // on; returns '' when off so the shell block is byte-identical to pre-adjacency.
       const shellLines = shellsRes.data.map(function(s) {
         return [
           '  ' + tagRow('shell_stats', s) + s.name + (s.role ? ' [' + s.role + ']' : '') + verificationTag(s),
@@ -792,6 +777,9 @@ async function fetchGameContext(config = getGameConfig()) {
           fmtAbility('Trait', s.trait_1_name, s.trait_1_description),
           fmtAbility('Trait', s.trait_2_name, s.trait_2_description),
           (s.ranked_tier_solo || s.ranked_tier_squad) ? '    Ranked: Solo=' + (s.ranked_tier_solo || '?') + ' Squad=' + (s.ranked_tier_squad || '?') + (s.ranked_notes ? ' - ' + s.ranked_notes : '') : '',
+          renderRelationLine('Synergizes with', s.synergizes_with, citeStore),
+          renderRelationLine('Countered by', s.countered_by, citeStore),
+          renderRelationLine('Counter items', s.counter_items, citeStore),
         ].filter(Boolean).join('\n');
       }).join('\n\n');
       output += '\n\n--- SHELL ABILITIES DATABASE (S2 four-part kit: Prime / Tactical / two Traits. Use ONLY these ability names and effects. If a slot says "not yet revealed," say so - do not invent the ability.) ---\n' + shellLines + '\n--- END SHELLS ---';
