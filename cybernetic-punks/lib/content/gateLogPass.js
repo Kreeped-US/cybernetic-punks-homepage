@@ -11,12 +11,13 @@ import { runAssignmentGate } from './assignmentGate.js';
 // pass is fine (the rest are picked up next cycle when this becomes real).
 export var GATE_LOG_PASS_LIMIT = 50;
 
-// PURE formatter for the novelty portion of the log line (increment 1b + 1c).
+// PURE formatter for the novelty portion of the log line (increment 1b + 1c + 1d-observe).
 // Three shapes, decision-neutral (this only renders what checkNovelty returned):
 //   dup crosses threshold      -> 'dup:<slug>@<jaccard>'
-//   new WITH a near-miss       -> 'new(near:<slug>@<jaccard>,cov=<coverage>,shared=<n>)'
-//                                 jaccard = symmetric score; cov = asymmetric containment (1c).
-//                                 cov=1.00 means the candidate is FULLY covered by that page.
+//   new WITH a near-miss       -> 'new(near:<slug>@<jaccard>,cov=<coverage>,phrase=<yes|no|na>,shared=<n>)'
+//                                 jaccard = symmetric score; cov = asymmetric containment (1c);
+//                                 phrase = does the candidate bigram appear contiguously in the page
+//                                 (1d-observe): yes|no, or na when the candidate has no bigram.
 //   new with nothing to compare-> 'new'   (too-few-tokens / empty corpus)
 export function formatNovelty(nov) {
   if (nov && nov.isDup) {
@@ -24,7 +25,9 @@ export function formatNovelty(nov) {
   }
   if (nov && nov.nearSlug && typeof nov.nearScore === 'number') {
     var cov = typeof nov.nearCoverage === 'number' ? nov.nearCoverage.toFixed(2) : '?';
-    return 'new(near:' + nov.nearSlug + '@' + nov.nearScore.toFixed(2) + ',cov=' + cov + ',shared=' + nov.nearShared + ')';
+    var phrase = nov.nearPhrase === true ? 'yes' : (nov.nearPhrase === false ? 'no' : 'na');
+    return 'new(near:' + nov.nearSlug + '@' + nov.nearScore.toFixed(2) +
+      ',cov=' + cov + ',phrase=' + phrase + ',shared=' + nov.nearShared + ')';
   }
   return 'new';
 }

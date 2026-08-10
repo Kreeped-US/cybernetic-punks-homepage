@@ -24,7 +24,7 @@
 // supabase is INJECTED; the pure core (candidateTopicString / closestDuplicate) is
 // node-testable without a DB.
 
-import { topicTokens, buildIdfMap, topicJaccard } from '../topicTokens.js';
+import { topicTokens, topicBigrams, buildIdfMap, topicJaccard } from '../topicTokens.js';
 
 export var DUP_JACCARD_THRESHOLD = 0.7;
 export var DUP_MIN_SHARED_TOKENS = 3;         // headline-path floor (calibrated on headlines)
@@ -74,6 +74,25 @@ export function coverageScore(shared, candidateTokenCount) {
   return shared / candidateTokenCount;
 }
 
+// PURE PHRASE-CONTAINMENT (increment 1d-observe): does the CANDIDATE's bigram
+// (adjacent-token phrase, e.g. "destroyer_shell") appear CONTIGUOUSLY in the
+// headline? This is the signal that cleanly separates a true reinforce (the
+// candidate is the page's subject: "Recon Shell: ...") from a coverage false-
+// positive (scattered generic tokens: "Squad Support ... Ranked"), which neither
+// coverage, Jaccard, nor token-rarity distinguished. Uses the existing topicBigrams.
+// Returns true (phrase present), false (phrase absent), or null (candidate has NO
+// bigram -- a 1-token/empty candidate cannot form a phrase; the guarded edge).
+// LOG-ONLY in 1d-observe -- computed + surfaced, NOT wired into any decision.
+export function phraseContained(candidateTopic, headline) {
+  var cbg = topicBigrams(candidateTopic || '');
+  if (!cbg.length) return null;
+  var hbg = topicBigrams(headline || '');
+  for (var i = 0; i < cbg.length; i++) {
+    if (hbg.indexOf(cbg[i]) !== -1) return true;
+  }
+  return false;
+}
+
 // PURE observability core (increment 1b): the single HIGHEST-scoring row
 // (by Jaccard) regardless of the dup threshold, or null. Same per-row minShared
 // floor as closestDuplicate (a row sharing fewer than minShared tokens is not a
@@ -107,9 +126,10 @@ export function closestMatch(candTokens, corpus, idf, opts) {
 // fabricate a reinforce. Returns on the dup path:
 //   { isDup:true, dupSlug, dupHeadline, dupEditor, score, shared, disposition, reason }
 // and on the no-dup path, ALSO the closest sub-threshold match for OBSERVABILITY
-// (increment 1b + 1c coverage, decision-neutral):
+// (increment 1b + 1c coverage + 1d-observe phrase, decision-neutral):
 //   { isDup:false, disposition:'new', nearSlug, nearHeadline, nearScore (jaccard),
-//     nearCoverage (asymmetric containment, 1c), nearShared, reason }
+//     nearCoverage (asymmetric containment, 1c), nearPhrase (bigram containment,
+//     1d-observe: true|false|null), nearShared, reason }
 export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
   var candTokens = topicTokens(candidateTopic);
   // Candidate-topic path uses the shorter CANDIDATE_MIN_SHARED_TOKENS floor (an
@@ -152,7 +172,8 @@ export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
       return {
         isDup: false, disposition: 'new',
         nearSlug: near.slug, nearHeadline: near.headline, nearScore: near.score,
-        nearCoverage: near.coverage, nearShared: near.shared,
+        nearCoverage: near.coverage, nearPhrase: phraseContained(candidateTopic, near.headline),
+        nearShared: near.shared,
         reason: null,
       };
     }

@@ -173,6 +173,34 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Assignment gate INCREMENT 1d-observe (HELD) - log PHRASE (bigram) containment (NO decision change)
+
+OBSERVABILITY ONLY, still log-only. A richer 10-candidate seed set (validated against the real
+recent-500 feed_items window) proved COVERAGE is UNSAFE as a reinforce signal: the cov=1.00 bucket
+holds 4 TRUE reinforces (Destroyer/Vandal/Recon/Assassin shell -> their real shell pages) AND 2
+FALSE-POSITIVES (Squad/ranked -> unrelated Triage page; Extraction/build -> unrelated Thief page).
+Jaccard overlaps fully (true 0.25-0.33, false 0.27-0.31); a rarity anchor also FAILS (Extraction
+idf 4.04 is rarer than every shell name 2.65-2.90). What separates 100% on all 7 near-matches:
+PHRASE/BIGRAM CONTAINMENT -- the true candidates' bigram (destroyer_shell) appears CONTIGUOUSLY in
+the near page; the false-positives' (squad_ranked) are scattered.
+
+- **novelty.js:** added `phraseContained(candidateTopic, headline)` (pure) using the existing
+  topicBigrams -- true (phrase present) / false (absent) / null (candidate has no bigram: the guarded
+  1-token edge). checkNovelty's no-dup return carries `nearPhrase` beside nearScore/nearCoverage.
+  isDup/reinforce logic UNCHANGED (still jaccard>=0.7); phrase drives NOTHING.
+- **gateLogPass.js formatNovelty:** near line now shows
+  `new(near:slug@0.33,cov=1.00,phrase=yes,shared=2)` (phrase=yes|no|na).
+- NO decision change: pass/gap/reinforce byte-identical to 1c. Log-only, no writes, no arming,
+  NEXUS/callEditor/live-MIRANDA-guard untouched. 1-token edge guarded (phrase=na).
+
+Gates: 33 unit tests pass (phraseContained contiguous/scattered/1-token/order + formatNovelty phrase
+shapes), ESLint clean, build clean, byte-clean. Re-trigger on the same 10 seeds to confirm phrase=yes
+on the 4 true shells + phrase=no on the 2 false-positives. NEXT (1d-arm): wire phrase=yes (with
+substance ok) -> reinforce -- the first increment where a decision actually changes. (c)
+cannibalization + reinforce-writer + queue-driven assignment remain deferred. HELD for review.
+
+---
+
 ## 2026-08-10 - Assignment gate INCREMENT 1c (HELD) - log asymmetric COVERAGE metric beside jaccard (NO decision change)
 
 OBSERVABILITY ONLY, still log-only. 1b's near-scores proved it is a METRIC problem, not a threshold

@@ -12,6 +12,7 @@ import {
   closestDuplicate,
   closestMatch,
   coverageScore,
+  phraseContained,
   DUP_MIN_SHARED_TOKENS,
   CANDIDATE_MIN_SHARED_TOKENS,
 } from './novelty.js';
@@ -147,4 +148,39 @@ test('1c closestMatch: attaches coverage=shared/candidateTokens (Jaccard diluted
   assert.equal(near.shared, 2);
   assert.ok(near.score < 0.5, 'symmetric Jaccard is diluted by the headline tail');
   assert.equal(near.coverage, 1, 'coverage cleanly reads full containment');
+});
+
+// ── increment 1d-observe: phrase (bigram) containment separates true vs false ─
+test('1d phraseContained: a CONTIGUOUS candidate phrase in the page -> true (true reinforce)', () => {
+  // "Destroyer shell" bigram destroyer_shell appears contiguously in the page title.
+  assert.equal(
+    phraseContained('Destroyer shell', 'Marathon Destroyer Shell: Squad Dominance and Ranked Guide'),
+    true
+  );
+  assert.equal(phraseContained('Recon shell', 'Marathon Recon Shell: Map Control and Ranked Squad Guide'), true);
+});
+
+test('1d phraseContained: SCATTERED tokens (cov=1.00 false-positive) -> false', () => {
+  // "Squad ranked" fully covers this page by tokens, but squad_ranked is NOT contiguous
+  // ("Squad Support Engine for Ranked") -> the discriminator that coverage/jaccard miss.
+  assert.equal(
+    phraseContained('Squad ranked', 'Marathon Triage Build: The Squad Support Engine for Ranked'),
+    false
+  );
+  assert.equal(
+    phraseContained('Extraction build', 'Marathon Thief Build: Solo Ranked Holotag Extraction Guide'),
+    false
+  );
+});
+
+test('1d phraseContained: a 1-token (or empty) candidate has no bigram -> null (guarded edge)', () => {
+  assert.equal(phraseContained('Destroyer', 'Marathon Destroyer Shell: guide'), null);
+  assert.equal(phraseContained('', 'anything'), null);
+  assert.equal(phraseContained(null, 'anything'), null);
+});
+
+test('1d phraseContained: order matters (a reversed phrase is not contiguous) + null headline safe', () => {
+  // candidate bigram destroyer_shell; page has "shell destroyer" (reversed) -> no match.
+  assert.equal(phraseContained('Destroyer shell', 'The shell destroyer walkthrough'), false);
+  assert.equal(phraseContained('Destroyer shell', null), false);
 });

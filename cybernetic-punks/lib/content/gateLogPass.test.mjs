@@ -13,22 +13,28 @@ test('formatNovelty: a real dup renders dup:slug@score', () => {
   );
 });
 
-test('formatNovelty: a new WITH a near-miss renders jaccard + coverage side by side [1c]', () => {
+test('formatNovelty: a near-miss renders jaccard + coverage + phrase side by side [1c+1d]', () => {
+  // phrase=yes (true reinforce shape)
   assert.equal(
-    formatNovelty({ isDup: false, nearSlug: 'destroyer-guide', nearScore: 0.33, nearCoverage: 1, nearShared: 2 }),
-    'new(near:destroyer-guide@0.33,cov=1.00,shared=2)'
+    formatNovelty({ isDup: false, nearSlug: 'destroyer-guide', nearScore: 0.33, nearCoverage: 1, nearPhrase: true, nearShared: 2 }),
+    'new(near:destroyer-guide@0.33,cov=1.00,phrase=yes,shared=2)'
   );
-  // partial coverage renders too
+  // phrase=no (the cov=1.00 false-positive shape)
   assert.equal(
-    formatNovelty({ isDup: false, nearSlug: 'x', nearScore: 0.25, nearCoverage: 0.5, nearShared: 1 }),
-    'new(near:x@0.25,cov=0.50,shared=1)'
+    formatNovelty({ isDup: false, nearSlug: 'triage-x', nearScore: 0.27, nearCoverage: 1, nearPhrase: false, nearShared: 2 }),
+    'new(near:triage-x@0.27,cov=1.00,phrase=no,shared=2)'
   );
 });
 
-test('formatNovelty: a near-miss with missing coverage degrades to cov=? (never throws)', () => {
+test('formatNovelty: phrase=na when the candidate had no bigram (null nearPhrase)', () => {
+  assert.equal(
+    formatNovelty({ isDup: false, nearSlug: 'x', nearScore: 0.25, nearCoverage: 0.5, nearPhrase: null, nearShared: 1 }),
+    'new(near:x@0.25,cov=0.50,phrase=na,shared=1)'
+  );
+  // missing nearPhrase entirely -> also na
   assert.equal(
     formatNovelty({ isDup: false, nearSlug: 'x', nearScore: 0.4, nearShared: 2 }),
-    'new(near:x@0.40,cov=?,shared=2)'
+    'new(near:x@0.40,cov=?,phrase=na,shared=2)'
   );
 });
 
