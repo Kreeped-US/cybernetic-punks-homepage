@@ -206,6 +206,25 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Branch cleanup: salvaged 2 fixes to main, deleted 3 spent branches
+
+Audited the three leftover branches; salvaged the two with unique value, deleted all three (SHAs
+recorded for reflog recovery).
+
+- SALVAGED (cherry-picked to main): the richer 10-candidate content_candidate seed set
+  (scripts/seed-content-candidates.mjs, from chore/seed-coverage-observation 950dbf0) -> 9c5bac9; AND
+  the actionable build-time env error (app/tools/build/[shell] + [shell]/[weapon] pages: getSupabase
+  throws a clear "set NEXT_PUBLIC_SUPABASE_URL in the Vercel BUILD env" instead of the opaque
+  "supabaseUrl is required", from fix/build-supabase-actionable-env-error 27137a6) -> fe433cd. Both
+  byte-clean, ESLint 0, build green. The build fix is behavior-identical when the env var is present
+  (only the missing-var error message changes; still fails the build, never silent []).
+- DELETED (spent): feat/dry-run-candidate (d9993f5 -- deleted-2-arm code + the old non-faithful dry-run,
+  superseded x2; 2-arm design already recorded in VERIFIED_GROUNDED_REASONING.md); chore/seed-coverage-
+  observation (950dbf0 -- salvaged above); fix/build-supabase-actionable-env-error (27137a6 -- salvaged
+  above). All recoverable from reflog by SHA.
+
+---
+
 ## 2026-08-10 - STORE ADJACENCY step 2 (core) built + STAGED OFF (HELD) - reason-and-cite across the neighborhood
 
 Build-order STEP 2 of docs/VERIFIED_GROUNDED_REASONING.md (the "queryable neighborhood"). Step 0 found
