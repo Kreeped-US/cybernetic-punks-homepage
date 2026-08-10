@@ -102,6 +102,15 @@ So the order is not "publish now, improve later." It is BUILD THE CAPABILITY, TH
 4. THEN PUBLISH - only once the reasoning capability exists does candidate-driven generation publish
    to the launch audience.
 
+## Mechanism finding: tool-schema field descriptions drive editor behavior (steps 2-3)
+
+MECHANISM FINDING (store-row citation, 2026-08-10): the lever for what the editor cites is the
+TOOL-SCHEMA cited_blocks FIELD DESCRIPTION, not the system-prompt note -- reverting the schema stopped
+citation entirely even with the system-prompt note present; adding a store-aware tool-field
+description restored it. Implication for steps 2-3 (adjacency, the recommendations field): content-
+model behavior is driven by tool-schema field descriptions, and each extension must be gated per-call
+(clone the tool when the flag is on) to keep the staged-OFF state byte-identical.
+
 ## Implementation note: the held-for-review mechanism for step 4 (designed + proven, 2026-08-10)
 
 Step 4 requires candidate-generated articles to land UNPUBLISHED for human review before going live.
