@@ -50,7 +50,25 @@ remain.
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
 
-- **EDITORIAL OPINION LANE (FUTURE STRATEGIC CONVERSATION -- not current work; likely a Fable ruling).**
+- **VERIFIED-GROUNDED REASONING = the editor content model (2026-08-10, Fable-ruled) - LAUNCH-CRITICAL.**
+  See docs/VERIFIED_GROUNDED_REASONING.md. The editor may assert any JUDGMENT it can build a verified
+  cited factual STAIRCASE to: gate the PREMISES (every load-bearing fact cites a verified block),
+  release the JUDGMENT (reasoned recommendation). This REPRIORITIZES store-row citation from a
+  non-launch-critical residual to a CONTENT-MODEL PRECONDITION, and rules BUILD-CAPABILITY-BEFORE-
+  PUBLISH. Build order: (1) STORE-ROW CITATION - make verified rows first-class citable blocks; (2)
+  STORE ADJACENCY/RICHNESS - model the entity's verified neighborhood (entity + compatible cores/mods +
+  stats + interactions) as addressable citable blocks ("unmodeled adjacency is the boundary of
+  legitimate reasoning"); (3) GATE EXTENSION - validate each factual premise resolves to a cited block;
+  (4) THEN publish. DO NOT publish decent-general hedged content in the meantime: it is the exact
+  profile of the AI filler the moat exists to defeat, and shipping it at DMZ-launch trains the acquired
+  audience that the site is undifferentiated. The reasoning capability is the product and must exist
+  BEFORE the product is shown. Evidence: the Sentinel faithful dry-run (decent/general/hedged, null
+  verified_source) proved store-rows-not-citable is the lever. Supersedes the parked opinion-lane note.
+
+- **~~EDITORIAL OPINION LANE~~ SUPERSEDED 2026-08-10 by docs/VERIFIED_GROUNDED_REASONING.md.** The
+  answer is NOT an opinion lane: it is verified-grounded reasoning (opinion is not a labeled space; it
+  is the reasoned conclusion a fully cited factual staircase EARNS). Original note kept below for the
+  record.
   Raised 2026-08-10 during the queue-driven-assignment work. A verified-substance-ONLY pipeline risks
   starving editors of things to write (and reads sterile). Idea: allow editors a LABELED opinion/
   speculation/theorycraft lane -- "what I (Cipher) think the meta is heading" / a theorized build / an
@@ -65,7 +83,10 @@ Newest-first within the block; move an item to the dated log when it ships.
 - **CONTENT PIPELINE: the assignment gate + warranted-candidate queue (2026-08-10, Fable-ruled)** -
   see docs/CONTENT_PIPELINE_ARCHITECTURE.md. Build order: (1) assignment gate + queue [3 DB checks +
   a table], (2) seeding import + gap ledger, (3) unfreeze Marathon [live rehearsal], (4) DMZ online.
-  Distinct from the per-store-row citation upgrade (separate, non-launch-critical residual).
+  NOTE (2026-08-10): per-store-row citation is NO LONGER a separate non-launch-critical residual -- it
+  is now the CONTENT-MODEL PRECONDITION (see the verified-grounded-reasoning item above,
+  docs/VERIFIED_GROUNDED_REASONING.md). Candidate-driven PUBLISH (this pipeline's step 4) waits on the
+  reasoning capability being built.
 
 - **GATE-RELEASE ENV CONFIRM (pre-launch, launch-critical) -- PARTIALLY RESOLVED 2026-08-07.**
   `/api/cron/gate-release` (Phase 4, 4310636) needs `CRON_SECRET` + `SUPABASE_SERVICE_KEY` on the
@@ -182,6 +203,33 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
   launch-critical identity item. THIN but substrate-shaped (saved_source_version). DDL applied +
   verified private (RLS on, anon reads 0) -- see docs/dmz/MIGRATIONS.md.
+
+---
+
+## 2026-08-10 - VERIFIED-GROUNDED REASONING ruled (Fable) - the editor content model (doc-only)
+
+Recorded the foundational editor CONTENT MODEL: docs/VERIFIED_GROUNDED_REASONING.md.
+
+THE PRINCIPLE ("the premise-cited claim"): an editor may assert any JUDGMENT it can build a verified
+cited factual STAIRCASE to. Gate the PREMISES (every load-bearing fact cites a verified block), release
+the JUDGMENT (the recommendation is the editor's, marked reasoned). Analysis = a recommendation whose
+factual links all cite; hype = a claim with no verified staircase (can't be built -> can't publish).
+"Opinion is not a lane; it is a privilege the verified data grants" -- this SUPERSEDES the parked
+opinion-lane note. Three claim types: verified facts (cite a block, gated) / reasoned judgments (the
+judgment publishes, its premises are gated) / connective prose (no citation). The gate's job for a
+judgment is not "is it true" but "does every factual premise resolve to a cited block."
+
+THE REPRIORITIZATION: store-row citation moves from non-launch-critical RESIDUAL to CONTENT-MODEL
+PRECONDITION -- without citable rows a build rec (a claim about how verified rows interact) can only be
+general/hedged (null verified_source) or uncited (hype). And BUILD-CAPABILITY-BEFORE-PUBLISH: decent
+general hedged content is the exact AI-filler profile the moat exists to defeat, so it must NOT ship to
+the launch audience before the reasoning capability exists. The capability is LAUNCH-CRITICAL.
+
+BUILD ORDER: (1) store-row citation, (2) store adjacency/richness ("unmodeled adjacency is the boundary
+of legitimate reasoning"), (3) gate extension (premise-validation), (4) then publish. EVIDENCE: the
+Sentinel faithful dry-run (decent/general/hedged, verified_source null, reached for uncited tier
+standing) proved store-rows-not-citable is the lever. PENDING promoted + opinion-lane note marked
+superseded. Doc-only, byte-clean.
 
 ---
 
