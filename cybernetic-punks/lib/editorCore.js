@@ -5,6 +5,7 @@ import { availableOnMap } from './availability';
 import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
 import { HEADLINE_RULES, HEADLINE_MAX_CHARS } from './headlineRules';
+import { makeStoreMinter, storeRowCitationEnabled } from './gather/blockId';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -47,7 +48,7 @@ const client = new Proxy({}, {
 // Per-game (keyed on config.slug) so a DMZ editor is never served Marathon's
 // cached context, and vice versa. With one game it behaves identically to the
 // old single-value cache. Same 5-min time-based TTL.
-const _gameContextCache = new Map(); // slug -> { context, time }
+const _gameContextCache = new Map(); // slug -> { context, storeRegistry, time }
 const GAME_CONTEXT_TTL_MS = 5 * 60 * 1000;
 
 // ===========================================================
@@ -193,6 +194,31 @@ const CITED_BLOCKS_SCHEMA = {
   description: 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context (e.g. "BN1", "YT2"). Cite ONLY ids that appear in your context; cite nothing rather than guessing. Never write a URL here -- the id alone.',
   items: { type: 'string' },
 };
+
+// STORE-ROW CITATION (gated): when the master flag is ON, callEditor swaps the
+// tool's cited_blocks description for this store-aware one -- the tool-field
+// description is the lever the model reads to decide what goes in cited_blocks, so
+// it must name store ids for the model to cite them. When OFF the tool is used
+// UNCHANGED (byte-identical to pre-store-citation). This suffix is applied per-call,
+// via toolWithStoreCites, never mutating the shared EDITOR_TOOLS consts.
+const CITED_BLOCKS_SCHEMA_STORE_DESC = 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context. TWO kinds: external sources ("BN1", "YT2") AND verified store rows ("WS3" weapon, "SH6" shell, "CS2" core, "MS4" mod, "IS9" implant) -- you MUST cite the store-row id for every verified stat, ability, kit, or perk fact you took from a tagged database row. Cite ONLY ids that appear in your context; cite nothing rather than guessing. Never write a URL here -- the id alone.';
+
+// Return a tool CLONE whose cited_blocks description is the store-aware one. Targeted
+// clone (no shared-const mutation); returns the tool unchanged if it has no cited_blocks.
+function toolWithStoreCites(tool) {
+  var props = tool && tool.input_schema && tool.input_schema.properties;
+  if (!props || !props.cited_blocks) return tool;
+  return {
+    ...tool,
+    input_schema: {
+      ...tool.input_schema,
+      properties: {
+        ...props,
+        cited_blocks: { ...props.cited_blocks, description: CITED_BLOCKS_SCHEMA_STORE_DESC },
+      },
+    },
+  };
+}
 
 const CIPHER_TOOL = {
   name: 'publish_play_analysis',
@@ -636,8 +662,26 @@ async function fetchGameContext(config = getGameConfig()) {
 
     let output = '';
 
+    // STORE-ROW CITATION (content-model precondition), gated by the MASTER FLAG
+    // STORE_ROW_CITATION_ENABLED (default OFF -> byte-identical to pre-store-citation).
+    // When ON: a single-pass minter tags each VERIFIED stat row below with a citable
+    // id ([WS#]/[SH#]/[CS#]/[MS#]/[IS#]) and accumulates a registry (id -> provenance);
+    // the id the editor sees IS the id the write-site resolver looks up (via
+    // getStoreRegistry) -- one pass, no drift. When OFF: `tagRow` returns '' so every
+    // row renders exactly as before (no ids), the registry stays empty, and the
+    // cite-instruction note below is suppressed.
+    const citeStore = storeRowCitationEnabled();
+    const storeMinter = makeStoreMinter();
+    const tagRow = citeStore ? (table, row) => storeMinter.tag(table, row) : () => '';
+
     // Shared verification note (once, ahead of all data sections - not per persona).
     output += VERIFICATION_NOTE;
+    if (citeStore) {
+      output += '\n\n=== SOURCE CITATION -- STORE ROWS (REQUIRED) ===\n' +
+        'The verified database rows below are EACH tagged with a bracketed id: [WS#] weapons, [SH#] shells, [CS#] cores, [MS#] mods, [IS#] implants. ' +
+        'For EVERY verified stat, ability, kit, or perk fact you state that comes from a tagged row, you MUST copy that row\'s id into the cited_blocks array, exactly as shown (e.g. "SH3", "WS10"). ' +
+        'Cite the id of every tagged row whose facts you used -- this is how the system records that your claims are verified. Rows shown WITHOUT a bracketed id are unverified: do not cite them.';
+    }
 
     if (modsRes.data?.length) {
       const bySlot = {};
@@ -650,7 +694,7 @@ async function fetchGameContext(config = getGameConfig()) {
           var statPairs = Object.entries(mod.stat_changes).map(function(e) { return e[0] + ' ' + e[1]; });
           if (statPairs.length > 0) statTag = ' [' + statPairs.join(', ') + ']';
         }
-        bySlot[slot].push(`${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${verificationTag(mod)}`);
+        bySlot[slot].push(`${tagRow('mod_stats', mod)}${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${verificationTag(mod)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
@@ -680,7 +724,7 @@ async function fetchGameContext(config = getGameConfig()) {
         // Fallback: an exclusive core with no runner still renders
         // ", Shell-Exclusive". Zero such rows exist (2026-07-21) but the form can
         // still produce one, and the line must never emit ", )" or ", null".
-        byRunner[runner].push(`${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? (core.required_runner ? ', ' + core.required_runner + '-only' : ', Shell-Exclusive') : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
+        byRunner[runner].push(`${tagRow('core_stats', core)}${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? (core.required_runner ? ', ' + core.required_runner + '-only' : ', Shell-Exclusive') : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
@@ -701,7 +745,7 @@ async function fetchGameContext(config = getGameConfig()) {
           imp.stat_5_label && imp.stat_5_value ? `${imp.stat_5_label}: ${imp.stat_5_value}` : null,
         ].filter(Boolean).join(', ');
         var factionTag = imp.faction_source ? ' [' + imp.faction_source + ' Armory unlock]' : '';
-        bySlot[slot].push(`${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${verificationTag(imp)}`);
+        bySlot[slot].push(`${tagRow('implant_stats', imp)}${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${verificationTag(imp)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
@@ -720,7 +764,7 @@ async function fetchGameContext(config = getGameConfig()) {
           w.range_rating ? 'RANGE:' + w.range_rating : '',
           w.ranked_viable === false ? '[RANKED-AVOID]' : '',
         ].filter(Boolean).join(' | ');
-        return '  ' + w.name + (parts ? ' - ' + parts : '') + verificationTag(w);
+        return '  ' + tagRow('weapon_stats', w) + w.name + (parts ? ' - ' + parts : '') + verificationTag(w);
       }).join('\n');
       output += '\n\n--- WEAPON STATS DATABASE ---\n' + weaponLines + '\n--- END WEAPONS ---';
     }
@@ -741,7 +785,7 @@ async function fetchGameContext(config = getGameConfig()) {
       };
       const shellLines = shellsRes.data.map(function(s) {
         return [
-          '  ' + s.name + (s.role ? ' [' + s.role + ']' : '') + verificationTag(s),
+          '  ' + tagRow('shell_stats', s) + s.name + (s.role ? ' [' + s.role + ']' : '') + verificationTag(s),
           s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : '',
           fmtAbility('Prime', s.prime_ability_name, s.prime_ability_description),
           fmtAbility('Tactical', s.tactical_ability_name, s.tactical_ability_description),
@@ -902,12 +946,26 @@ async function fetchGameContext(config = getGameConfig()) {
       output += '--- END GAME WORLD ---';
     }
 
-    _gameContextCache.set(config.slug, { context: output, time: Date.now() });
+    // Cache the store-row registry ALONGSIDE the context string, keyed on the same
+    // slug. getStoreRegistry() reads it at the write site to resolve store-row ids
+    // the editor cited -- the plumbing that carries provenance from prompt-build to
+    // resolve WITHOUT changing callEditor's signature or re-fetching (no id drift).
+    _gameContextCache.set(config.slug, { context: output, storeRegistry: storeMinter.registry, time: Date.now() });
     return output;
   } catch (err) {
     console.error('[editorCore] fetchGameContext error:', err.message);
     return '';
   }
+}
+
+// Read the store-row registry built by the most recent fetchGameContext for this
+// game (cached alongside the context). Returns a Map(id -> { source, url, priority })
+// for the verified store rows, or an empty Map if none was built. The write-site
+// resolver merges this with buildBlockRegistry(rawData) so a cited store-row id
+// resolves to the row's verified_source. Read-only; never re-fetches.
+export function getStoreRegistry(config = getGameConfig()) {
+  const cached = _gameContextCache.get(config.slug);
+  return (cached && cached.storeRegistry) ? cached.storeRegistry : new Map();
 }
 
 // ===========================================================
@@ -1154,6 +1212,9 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
 
   var tool = EDITOR_TOOLS[editor];
   if (!tool) throw new Error('No tool defined for editor: ' + editor);
+  // STORE-ROW CITATION (gated): ON -> swap in the store-aware cited_blocks
+  // description so the model cites [WS#]/[SH#]/... store ids. OFF -> tool unchanged.
+  if (storeRowCitationEnabled()) tool = toolWithStoreCites(tool);
 
   var message;
   try {

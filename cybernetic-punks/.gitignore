@@ -42,3 +42,6 @@ next-env.d.ts
 
 # claude code local dev artifacts (launch.json for the preview server, etc.)
 .claude/
+
+# dry-run captures (throwaway generated articles, not committed)
+scripts/out/

@@ -206,6 +206,50 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - STORE-ROW CITATION built + STAGED OFF (HELD) - content-model precondition, dry-run-proven
+
+Build-order STEP 1 of docs/VERIFIED_GROUNDED_REASONING.md: verified store rows can become first-class
+CITABLE blocks (parallel to [BN]/[YT]), so an editor grounds a stat/ability fact on the row it came
+from. STAGED behind a master flag (default OFF) per build-before-publish: live NEXUS is BYTE-IDENTICAL
+to pre-store-citation until the content model reaches step 3 and we arm deliberately. Built on a clean
+branch off main 0fcca62 (b8e765b does not exist in the repo). DRY-RUN PROVEN (flag forced on).
+
+- **MASTER FLAG (blockId.js) storeRowCitationEnabled()** = process.env.STORE_ROW_CITATION_ENABLED ===
+  'true' (read at CALL time). ONE switch gates the WHOLE behavior -- no half-state (never
+  cites-without-resolving). OFF: rows are prose (no ids), no cite instruction, no store-aware tool
+  schema, no registry merge -> live byte-identical. ON: the proven capability. The dry-run forces ON.
+- **blockId.js:** STORE_PREFIX {weapon_stats:WS, shell_stats:SH, core_stats:CS, mod_stats:MS,
+  implant_stats:IS}; makeStoreMinter() -- single-pass minter tagging VERIFIED rows only with [PREFIX n]
+  and registering id -> {source: verified_source, url: null, priority:0} in ONE pass (no id drift).
+  resolveCitedBlocks carries+prefers `priority` (store = tier 0), falls back to SOURCE_PRIORITY for
+  [BN]/[YT] (byte-unchanged for external-only).
+- **fetchGameContext (editorCore.js):** when ON, `tagRow` prefixes each verified row in the 5 stat
+  sections + adds the cite note + caches the storeRegistry; getStoreRegistry(config) reads it. When
+  OFF, tagRow returns '' (rows render as before), the note is suppressed, registry empty. No callEditor
+  signature change, no re-fetch (plumbing is the per-game cache).
+- **callEditor tool schema (the citation LEVER):** when ON, toolWithStoreCites() swaps the cited_blocks
+  field description for a store-aware one (a per-call CLONE, never mutating EDITOR_TOOLS) -- this is what
+  makes the model actually cite store ids (proven: with only a system-prompt note it did NOT cite; with
+  the store-aware tool description it cites 7). When OFF, the tool is unchanged. The STATIC SOURCE
+  CITATION clause + CITED_BLOCKS_SCHEMA const are byte-identical to main (reverted) so OFF stays clean.
+- **route.js:691 (resolve site):** merges getStoreRegistry(PRODUCING_GAME) ONLY when the flag is ON;
+  OFF skips it entirely. is_published / gate / what-publishes untouched in both states (grep-confirmed).
+- **Dry-run (rebuilt):** scripts/dry-run-candidate.mjs (forces the flag ON) + the resolve hook. Real
+  callEditor, resolve against the store registry, NO insert / processEditor write.
+
+DRY-RUN PROOF (Sentinel/weapon, flag ON): cited_blocks = ["SH8","WS3","WS8","SH7","SH6","SH3","SH4"]
+(the editor cited the shell + weapon rows it used), all 7 resolved (0 rejected), 180 verified rows
+citable, verified_source resolved NON-NULL = "Bungie Update 1.1.0 patch notes; matchup data
+owner-verified in-game (S2, 2026-07-17)...". Flag OFF: tagRow returns '' (registry 0) -> no store ids,
+no merge -> byte-identical to main. Gates: 16 unit tests (incl. the flag default-OFF), ESLint clean,
+build clean, byte-clean. HELD for review.
+
+ARM LATER: set env STORE_ROW_CITATION_ENABLED=true once the content model reaches step 3. NEXT: step 2
+store adjacency/richness, step 3 gate extension (premise-validation), step 4 publish (reuses the
+recorded held-for-review design).
+
+---
+
 ## 2026-08-10 - Branch cleanup: captured the held-for-review finding, deleted two spent branches
 
 Deleted feat/faithful-dry-run (the dry-run script's reusable technique -- call real callEditor, skip

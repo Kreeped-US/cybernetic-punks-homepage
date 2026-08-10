@@ -18,6 +18,31 @@ const LABEL = { bungie: 'BUNGIE', youtube: 'YOUTUBE' };
 // Bungie notes outrank creator (YouTube) coverage as the fact-source of record.
 const SOURCE_PRIORITY = { BUNGIE: 0, YOUTUBE: 1 };
 
+// STORE-ROW CITATION (2026-08-10, content-model precondition -- see
+// docs/VERIFIED_GROUNDED_REASONING.md). Verified store rows become first-class
+// citable blocks, parallel to [BN]/[YT]. Prefix per stat table; only the 5 stat
+// tables that carry verified rows (weapon/shell/core/mod/implant) mint ids here.
+export const STORE_PREFIX = {
+  weapon_stats: 'WS', shell_stats: 'SH', core_stats: 'CS', mod_stats: 'MS', implant_stats: 'IS',
+};
+// A verified store row is the SOURCE OF RECORD for the stat fact it grounds, so it
+// ranks at the top tier when an article cites both a store row and an external
+// block. Carried on the registry entry as `priority` (resolveCitedBlocks prefers it).
+export const STORE_SOURCE_PRIORITY = 0;
+
+// MASTER FLAG (default OFF): gates the WHOLE store-row-citation behavior as ONE
+// switch, so there is never a half-state (cites-without-resolving). OFF (staged, the
+// current production state) -> fetchGameContext presents rows as PROSE (no ids, no
+// cite instruction) AND the write-site does not merge the store registry: live NEXUS
+// is byte-identical to pre-store-citation. ON -> rows are tagged citable blocks, the
+// editor is told to cite them, and store ids resolve to provenance. Read at CALL time
+// (not import) so the dry-run can force it on via env before invoking callEditor.
+// Armed deliberately (env STORE_ROW_CITATION_ENABLED=true) once the content model
+// reaches step 3, per docs/VERIFIED_GROUNDED_REASONING.md build-before-publish.
+export function storeRowCitationEnabled() {
+  return process.env.STORE_ROW_CITATION_ENABLED === 'true';
+}
+
 // 1-based index -> stable id. blockId('bungie', 1) === 'BN1'; blockId('youtube', 2) === 'YT2'.
 export function blockId(source, index1) {
   const p = PREFIX[source];
@@ -52,16 +77,40 @@ export function resolveCitedBlocks(citedBlocks, registry) {
   const ids = Array.isArray(citedBlocks) ? citedBlocks : [];
   for (const id of ids) {
     const hit = registry.get(id);
-    if (hit) resolved.push({ id: id, source: hit.source, url: hit.url });
+    // priority is carried through so store-row entries (which set an explicit
+    // priority) can outrank label-keyed entries; [BN]/[YT] entries have no
+    // priority field and fall back to SOURCE_PRIORITY[source] -- byte-unchanged.
+    if (hit) resolved.push({ id: id, source: hit.source, url: hit.url, priority: hit.priority });
     else rejected.push(id);
   }
   if (resolved.length === 0) {
     return { verified_source: null, verified_source_url: null, resolved: resolved, rejected: rejected };
   }
-  resolved.sort((a, b) => {
-    const pa = SOURCE_PRIORITY[a.source]; const pb = SOURCE_PRIORITY[b.source];
-    return (pa == null ? 99 : pa) - (pb == null ? 99 : pb);
-  });
+  const prio = (r) => (r.priority != null ? r.priority : (SOURCE_PRIORITY[r.source] != null ? SOURCE_PRIORITY[r.source] : 99));
+  resolved.sort((a, b) => prio(a) - prio(b));
   const primary = resolved[0];
   return { verified_source: primary.source, verified_source_url: primary.url, resolved: resolved, rejected: rejected };
+}
+
+// STORE-ROW MINTER (content-model precondition). A single-pass minter used by
+// fetchGameContext: as it renders each store row it calls tag(table, row), which
+// -- for a VERIFIED row of a known stat table ONLY -- mints the next [PREFIX n] id,
+// registers id -> { source: row.verified_source, url: null, priority }, and returns
+// '[ID] ' to prefix the rendered line. Emit + register happen in ONE pass so the id
+// the editor SEES and the id the resolver looks up cannot drift. Unverified rows (or
+// unknown tables) return '' and are NOT citable -- a citation must MEAN verified.
+export function makeStoreMinter() {
+  const registry = new Map();
+  const counters = {};
+  return {
+    registry,
+    tag(table, row) {
+      const prefix = STORE_PREFIX[table];
+      if (!prefix || !row || row.verified !== true) return '';
+      counters[prefix] = (counters[prefix] || 0) + 1;
+      const id = prefix + counters[prefix];
+      registry.set(id, { source: row.verified_source || null, url: null, priority: STORE_SOURCE_PRIORITY });
+      return '[' + id + '] ';
+    },
+  };
 }

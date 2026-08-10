@@ -1,11 +1,11 @@
-import { callEditor, buildMirandaPrompt, generateArticleComments } from '@/lib/editorCore';
+import { callEditor, buildMirandaPrompt, generateArticleComments, getStoreRegistry } from '@/lib/editorCore';
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { recordCronRun } from '@/lib/cronRunLog';
 import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
-import { buildBlockRegistry, resolveCitedBlocks } from '@/lib/gather/blockId';
+import { buildBlockRegistry, resolveCitedBlocks, storeRowCitationEnabled } from '@/lib/gather/blockId';
 import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
@@ -689,6 +689,16 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // empty or all-rejected -> null, FLAGGED as honest-unknown. Fail-open: any error -> null.
     try {
       var vsRegistry = buildBlockRegistry(rawData);
+      // STORE-ROW CITATION (gated by the master flag): when ON, merge the verified
+      // store-row registry (built by fetchGameContext, cached per-game) so a cited
+      // [WS#]/[SH#]/... resolves to the row's verified_source. When OFF (default),
+      // this is skipped entirely -- resolution is byte-identical to pre-store-citation
+      // (and fetchGameContext emitted no store ids to cite anyway, so no half-state).
+      // External [BN]/[YT] resolution is unchanged in both states.
+      if (storeRowCitationEnabled()) {
+        var storeReg = getStoreRegistry(PRODUCING_GAME);
+        storeReg.forEach(function(v, k) { vsRegistry.set(k, v); });
+      }
       var vs = resolveCitedBlocks(result.cited_blocks, vsRegistry);
       insertData.verified_source = vs.verified_source;         // null when nothing resolvable
       insertData.verified_source_url = vs.verified_source_url; // null; never invented
