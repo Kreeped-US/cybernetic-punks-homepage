@@ -173,6 +173,37 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Assignment gate INCREMENT 1d-arm (HELD) - reinforce fires on PHRASE containment (first decision change; STILL log-only)
+
+The FIRST decision-changing increment -- but still LOG-ONLY OVERALL: it only changes which decision
+is COMPUTED + LOGGED. The reinforce-WRITER (editing existing pages) does NOT exist and is NOT built
+here; nothing reads the reinforce disposition to act. 1d-observe proved PHRASE (bigram) containment
+separates 100% on the 10-seed adversarial set (phrase=yes on the 4 true shells; phrase=no on the 2
+cov=1.00 false-positives Squad/ranked + Extraction/build, and the partial). Coverage and Jaccard both
+fail to separate (both false-positives read cov=1.00). So the reinforce signal is phrase=yes ALONE.
+
+- **assignmentGate.js:** reinforce now fires on `novelty.nearPhrase===true` (phrase containment) OR
+  `novelty.isDup===true` (a real Jaccard>=0.7 dup, kept). Substance does NOT gate reinforce (you are
+  not writing new -- reinforce takes precedence over the substance/gap check). Added
+  `reinforceTarget` (dupSlug || nearSlug) to the return for the future writer. Precedence:
+  reinforce (phrase OR isDup) > gap (novel, under substance) > pass (novel, grounded).
+- NO coverage gate on reinforce (coverage failed to separate); NO substance gate on reinforce.
+- STILL LOG-ONLY: gateLogPass only logs the decision; no writes, no arming of enforcement,
+  NEXUS/callEditor/live-MIRANDA-guard untouched. On current data isDup is dormant (max Jaccard 0.33);
+  phrase is the live signal.
+
+Gates: 39 unit tests pass (new assignmentGate.test.mjs: reinforce on phrase=yes; substance does NOT
+gate reinforce; cov=1.00 false-positive stays gap; pass/gap paths; isDup path kept), ESLint clean,
+build clean, byte-clean. Re-trigger on the 10 seeds: expect the 4 shells -> decision=reinforce
+(reinforce=4), the 2 false-positives + partial stay gap, the 3 genuine-new stay gap/pass.
+
+REMAINING STEPS (named): the reinforce-WRITER (actually editing/extending an existing page -- the
+disposition is currently a logged marker); QUEUE-DRIVEN ASSIGNMENT (feeding a queued candidate into
+callEditor instead of self-select); (c) CANNIBALIZATION (still stubbed); and ENFORCEMENT-ARMING (the
+gate blocking/altering generation instead of only logging). HELD for review.
+
+---
+
 ## 2026-08-10 - Assignment gate INCREMENT 1d-observe (HELD) - log PHRASE (bigram) containment (NO decision change)
 
 OBSERVABILITY ONLY, still log-only. A richer 10-candidate seed set (validated against the real
