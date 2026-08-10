@@ -7,6 +7,81 @@ Newest entries on top.
 
 ---
 
+## 2026-08-10 - CURRENT STATE / re-orientation snapshot (READ FIRST)
+
+Where everything stands + the next move, so next session starts here instead of reconstructing it
+from the incremental entries below.
+
+### CONTENT MODEL (docs/VERIFIED_GROUNDED_REASONING.md) -- the day's main arc
+
+The verified-grounded-reasoning ruling (Fable): gate the PREMISES (each factual premise resolves to a
+cited verified block), release the JUDGMENT (the recommendation). Build order: (1) store-row citation
+-> (2) store adjacency -> (3) gate premise-validation -> (4) publish. BUILD-CAPABILITY-BEFORE-PUBLISH:
+the reasoning capability IS the launch-critical differentiator; do NOT publish decent-general content
+in the meantime. The content model arms as a WHOLE (after step 3), not piece-by-piece.
+
+STATUS: steps 1 + 2 BUILT, PROVEN, STAGED OFF, MERGED, PUSHED. Step 3 fully MAPPED (Step 0 done). Step
+4 not started.
+- Step 1 (store-row citation): editor cites verified store rows. Proven on the Sentinel dry-run
+  (verified_source null -> 7 cited store rows).
+- Step 2 (store adjacency): editor reasons across the shell<->core neighborhood + cites the cores a
+  build recommendation rests on. Proven on Sentinel (the [CS#] delta: +CS29/CS72/CS51).
+- Step 3 (gate premise-validation) MAPPED: add a `recommendations` field {claim_text,
+  supporting_block_ids[]} (gated per-call via toolWithStoreCites); a pure validateRecommendations
+  reusing resolveCitedBlocks' resolve/reject machinery; a new UNSUPPORTED-RECOMMENDATION hold-class,
+  LOG-ONLY on Marathon first. KEY RULE: validate verified=true (registry membership == verified by
+  construction, since the minter only mints verified rows), NOT non-null provenance-string -- so
+  Sentinel's verified-but-provenance-null cores PASS. Never grades inference quality. Wiring note:
+  build the merged registry BEFORE the gate. Bounded extension.
+- ALL staged behind STORE_ROW_CITATION_ENABLED (unset on Vercel -> flag OFF -> live NEXUS byte-
+  identical; the gated pieces suppress; is_published/gate/publish untouched).
+
+MECHANISM FINDING (recorded, reusable): the citation lever is the TOOL-SCHEMA field description, not
+the system prompt (reverting the schema stopped citation entirely even with the prompt note present).
+Steps 3+ extend tool-schema field descriptions, gated per-call, to keep staged-OFF byte-identical.
+
+### ASSIGNMENT GATE (separate track, from this morning)
+
+BUILT + empirically validated + LOG-ONLY, observing. Substance floor (verified-existence gate) +
+novelty (phrase-containment reinforce, derived by killing 3 wrong metrics -- coverage, jaccard,
+rarity -- with data). NOT armed; the roster freeze is still the brake. Next: watch real cycles -> tune
+-> arm. See docs/CONTENT_PIPELINE_ARCHITECTURE.md.
+
+### DEFERRED / BACKLOG (noted so they are not lost)
+
+- ~19-row core-provenance populate: Sentinel's cores are verified=true but verified_source=null. This
+  is DISPLAY quality (relevant to a step-3 "Based on:" UI), NOT a validity blocker -- step 3 validates
+  verified=true, so those cores PASS.
+- mod<->weapon adjacency: unmodeled/unverified (mods 17/203 verified, compatible_weapons 0/203) -- a
+  real DATA build, correctly bounded out by "unmodeled adjacency is the boundary of legitimate
+  reasoning."
+- held-for-review CORRECTION (a claim that keeps resurfacing -- resolved by code, do not restate it
+  wrong): it does NOT already exist on main. There is NO insertGeneratedItem function, NO isPublished
+  param, and NO lib/editorial/publish.js. The feed_items insert is INLINE in processEditor
+  (app/api/cron/route.js:613) and is_published comes from the gate (is_published:
+  gateDecision.is_published). The held mechanism was BUILT + tested on the 2-arm branch (now DELETED)
+  as a heldCandidate param forcing is_published=false at the inline insert; the DESIGN is recorded in
+  VERIFIED_GROUNDED_REASONING.md (held = is_published=false + gate_status='clear' = the admin-drafts
+  DRAFT state, published only via /api/admin/drafts/approve; NOT gate_status='held', which auto-
+  releases). So step 4 REBUILDS the small wiring -- the design is proven, but the CODE was deleted.
+- The parked opinion-lane note is SUPERSEDED by the verified-grounded-reasoning doc.
+
+### THE NEXT MOVE (unambiguous)
+
+BUILD STEP 3 from its Step 0 map (in the step-3 dated entry below): the `recommendations` field +
+validateRecommendations + the LOG-ONLY UNSUPPORTED-RECOMMENDATION hold-class, gated/staged behind
+STORE_ROW_CITATION_ENABLED, dry-run-verified on Sentinel (editor emits recommendations with [CS#]
+premises; the gate logs premises-resolve verified=true even when provenance-null). It is the meatiest
+remaining step -- it touches the publish gate, so LOG-ONLY-FIRST like every gate we have shipped.
+
+### GIT STATE
+
+main clean; the ONLY branch is main (3 spent branches cleaned this session; the richer seed script +
+the actionable build-env-error fix were salvaged to main first). main is ahead of origin (about to
+push this snapshot + the cleanup commits together).
+
+---
+
 ## Required reading (per doctrine A9)
 
 Before making any content-policy or content-structure decision, read docs/content-operating-doctrine.md (v3, committed 2fc753b + the v3 amendment commit). A9: a session without the doctrine in context will re-derive positions this document already holds, sometimes wrongly. See docs/doctrine-v3-amendments.md for the amendment ledger.
