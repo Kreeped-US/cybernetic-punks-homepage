@@ -10,6 +10,7 @@ import { topicTokens } from '../topicTokens.js';
 import {
   candidateTopicString,
   closestDuplicate,
+  closestMatch,
   DUP_MIN_SHARED_TOKENS,
   CANDIDATE_MIN_SHARED_TOKENS,
 } from './novelty.js';
@@ -89,4 +90,39 @@ test('closestDuplicate: skips corpus rows with no headline', () => {
   ];
   const best = closestDuplicate(cand, corpus, FLAT_IDF);
   assert.equal(best.slug, 'ok');
+});
+
+// ── increment 1b: closestMatch (observability, sub-threshold top score) ──────
+test('1b closestMatch: returns the top SUB-threshold row that closestDuplicate drops', () => {
+  const cand = topicTokens('Destroyer shell');                  // 2 tokens
+  // 'Destroyer shell build guide' -> shared 2, union 4 -> 0.5 (below 0.7).
+  const corpus = [{ headline: 'Destroyer shell build guide', slug: 'ds-guide', editor: 'DEXTER' }];
+  // closestDuplicate finds nothing (0.5 < 0.7)...
+  assert.equal(closestDuplicate(cand, corpus, FLAT_IDF, { minShared: 2 }), null);
+  // ...but closestMatch surfaces it for the log.
+  const near = closestMatch(cand, corpus, FLAT_IDF, { minShared: 2 });
+  assert.ok(near, 'closestMatch returns the sub-threshold row');
+  assert.equal(near.slug, 'ds-guide');
+  assert.equal(near.shared, 2);
+  assert.equal(near.score, 0.5);
+});
+
+test('1b closestMatch: picks the HIGHEST sub-threshold score among several', () => {
+  const cand = topicTokens('Destroyer shell');
+  const corpus = [
+    { headline: 'Destroyer shell build guide', slug: 'lower', editor: 'A' },  // 2/4 = 0.50
+    { headline: 'Destroyer shell build',       slug: 'higher', editor: 'B' }, // 2/3 = 0.667
+  ];
+  const near = closestMatch(cand, corpus, FLAT_IDF, { minShared: 2 });
+  assert.equal(near.slug, 'higher');
+  assert.ok(Math.abs(near.score - 2 / 3) < 1e-9);
+});
+
+test('1b closestMatch: respects the minShared floor (short cand / no qualifying row -> null)', () => {
+  // candidate too short for the floor
+  assert.equal(closestMatch(topicTokens('Destroyer'), [{ headline: 'Destroyer shell', slug: 'x' }], FLAT_IDF, { minShared: 2 }), null);
+  // no corpus row shares >= minShared tokens with the candidate
+  const cand = topicTokens('Destroyer shell');
+  const corpus = [{ headline: 'Vandal weapon tier list', slug: 'y', editor: 'N' }];
+  assert.equal(closestMatch(cand, corpus, FLAT_IDF, { minShared: 2 }), null);
 });

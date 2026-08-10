@@ -62,10 +62,38 @@ export function closestDuplicate(candTokens, corpus, idf, opts) {
   return best;
 }
 
+// PURE observability core (increment 1b): the single HIGHEST-scoring row
+// regardless of the dup threshold, or null. Same per-row minShared floor as
+// closestDuplicate (a row sharing fewer than minShared tokens is not a meaningful
+// comparison), but NO threshold gate -- so a sub-0.7 near-miss is still returned,
+// for LOGGING ONLY. This NEVER affects a decision: checkNovelty reads it only when
+// isDup is already false, and the value is surfaced in the log line, not acted on.
+export function closestMatch(candTokens, corpus, idf, opts) {
+  var minShared = opts && typeof opts.minShared === 'number' ? opts.minShared : DUP_MIN_SHARED_TOKENS;
+  if (!candTokens || candTokens.length < minShared) return null;
+  var best = null;
+  for (var i = 0; i < corpus.length; i++) {
+    var row = corpus[i];
+    if (!row || !row.headline) continue;
+    var cmp = topicJaccard(candTokens, topicTokens(row.headline), idf);
+    if (cmp.shared < minShared) continue;
+    if (!best || cmp.score > best.score) {
+      best = {
+        headline: row.headline, slug: row.slug, editor: row.editor,
+        created_at: row.created_at, score: cmp.score, shared: cmp.shared,
+      };
+    }
+  }
+  return best;
+}
+
 // The query. Network-wide (no editor filter). FAIL-OPEN (a lookup error -> no dup
 // -> disposition 'new'), mirroring the cron guard: a transient DB blip must not
-// fabricate a reinforce. Returns:
-//   { isDup, dupSlug, dupHeadline, dupEditor, score, shared, disposition, reason }
+// fabricate a reinforce. Returns on the dup path:
+//   { isDup:true, dupSlug, dupHeadline, dupEditor, score, shared, disposition, reason }
+// and on the no-dup path, ALSO the closest sub-threshold match for OBSERVABILITY
+// (increment 1b, decision-neutral):
+//   { isDup:false, disposition:'new', nearSlug, nearHeadline, nearScore, nearShared, reason }
 export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
   var candTokens = topicTokens(candidateTopic);
   // Candidate-topic path uses the shorter CANDIDATE_MIN_SHARED_TOKENS floor (an
@@ -97,6 +125,18 @@ export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
       return {
         isDup: true, dupSlug: best.slug, dupHeadline: best.headline, dupEditor: best.editor,
         score: best.score, shared: best.shared, disposition: 'reinforce', reason: null,
+      };
+    }
+    // No dup crossed the threshold -> decision is 'new' (UNCHANGED). Additionally
+    // surface the closest sub-threshold match for OBSERVABILITY (1b): this reveals
+    // whether a 'new' is a near-miss (threshold question) or far-off (metric
+    // question). Decision-neutral -- nothing reads near* to decide.
+    var near = closestMatch(candTokens, data, idf, effectiveOpts);
+    if (near) {
+      return {
+        isDup: false, disposition: 'new',
+        nearSlug: near.slug, nearHeadline: near.headline, nearScore: near.score, nearShared: near.shared,
+        reason: null,
       };
     }
     return { isDup: false, disposition: 'new', reason: null };

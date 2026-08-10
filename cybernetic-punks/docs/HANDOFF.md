@@ -173,6 +173,34 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Assignment gate INCREMENT 1b (HELD) - surface near-miss novelty scores (observability, NO decision change)
+
+OBSERVABILITY ONLY. 1b does not change a single decision (pass/gap/reinforce unchanged; a dup is
+still isDup>=0.7). It makes the sub-threshold novelty score VISIBLE so we can see the real
+distribution before any threshold/metric decision. Context: 1a let 2-token candidates compare, but
+they all logged bare novelty=new -- short candidate strings structurally under-score against longer
+headlines under symmetric Jaccard (2-token cand vs 7-token headline: shared=2 but union inflated ->
+well below 0.7 even when the headline IS about that entity), and the log only printed a score when a
+dup CROSSED 0.7. So we could not SEE the scores. 1b fixes the visibility.
+
+- **novelty.js:** added `closestMatch` (pure) -- the single highest-scoring corpus row regardless of
+  threshold (same per-row minShared floor as closestDuplicate, NO threshold gate). checkNovelty's
+  no-dup return now ALSO carries { nearSlug, nearHeadline, nearScore, nearShared }. isDup logic is
+  UNCHANGED (a dup is still closestDuplicate >=0.7); near* is read only when isDup is already false.
+- **gateLogPass.js:** extracted `formatNovelty` (pure). The line now renders:
+  dup -> `dup:slug@score`; new-with-near -> `new(near:slug@0.XX,shared=N)`; new-with-nothing ->
+  `new`. Decision-neutral rendering.
+- NO threshold tuned, NO metric changed -- deliberately (observe first). Still log-only, no writes,
+  no arming, NEXUS/callEditor/live-MIRANDA-guard untouched.
+
+Gates: 26 unit tests pass (closestMatch top-sub-threshold + formatNovelty shapes), ESLint clean,
+build clean, byte-clean. Re-trigger after merge to read the near-scores -- they will show whether
+Destroyer/Vandal are near-misses (a threshold question) or far-off (a metric question: symmetric
+Jaccard may be wrong for asymmetric candidate-vs-headline). (c) cannibalization, the reinforce-writer,
+and queue-driven assignment remain deferred. HELD for review.
+
+---
+
 ## 2026-08-10 - Assignment gate INCREMENT 1a (HELD) - fixes the two issues the first log-only run surfaced
 
 Still LOG-ONLY (corrects the gate's CHECKS only; nothing arms, nothing blocks, NEXUS/callEditor

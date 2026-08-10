@@ -11,6 +11,21 @@ import { runAssignmentGate } from './assignmentGate.js';
 // pass is fine (the rest are picked up next cycle when this becomes real).
 export var GATE_LOG_PASS_LIMIT = 50;
 
+// PURE formatter for the novelty portion of the log line (increment 1b). Three
+// shapes, decision-neutral (this only renders what checkNovelty already decided):
+//   dup crosses threshold      -> 'dup:<slug>@<score>'
+//   new WITH a near-miss       -> 'new(near:<slug>@<score>,shared=<n>)'   (1b observability)
+//   new with nothing to compare-> 'new'   (too-few-tokens / empty corpus)
+export function formatNovelty(nov) {
+  if (nov && nov.isDup) {
+    return 'dup:' + nov.dupSlug + '@' + (typeof nov.score === 'number' ? nov.score.toFixed(2) : '?');
+  }
+  if (nov && nov.nearSlug && typeof nov.nearScore === 'number') {
+    return 'new(near:' + nov.nearSlug + '@' + nov.nearScore.toFixed(2) + ',shared=' + nov.nearShared + ')';
+  }
+  return 'new';
+}
+
 // Guarded + side-effect-free (no writes). Never throws into the cron (its own
 // try/catch; the caller also wraps it). Returns a small summary for the cron JSON.
 export async function runGateLogPass(supabase, config) {
@@ -47,10 +62,9 @@ export async function runGateLogPass(supabase, config) {
         else if (res.decision === 'gap') summary.gap++;
 
         // Structured, greppable, LOG-ONLY line -- the whole product of increment 1:
-        // what the gate WOULD decide, acting on nothing.
-        var nov = res.novelty && res.novelty.isDup
-          ? 'dup:' + res.novelty.dupSlug + '@' + (typeof res.novelty.score === 'number' ? res.novelty.score.toFixed(2) : '?')
-          : 'new';
+        // what the gate WOULD decide, acting on nothing. novelty rendering (incl.
+        // the 1b near-miss score) is factored into formatNovelty for testability.
+        var nov = formatNovelty(res.novelty);
         console.log('[GATE-LOG] ' +
           'game=' + cand.game_slug +
           ' entity="' + cand.entity + '"' +
