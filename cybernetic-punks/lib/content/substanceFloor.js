@@ -14,23 +14,32 @@
 // async substanceFloor() is exercised by the cron log pass.
 
 // facet -> store table. Columns/semantics lifted from fetchGameContext
-// (lib/editorCore.js): every table below carries a `verified` boolean; the stat
-// tables also carry `patch_verified`. `gameScoped` tables filter on game_slug (the
-// marathon-implicit tables -- weapon/shell/mod/core/implant -- do not have one).
-// `matchCol` is the column an `entity` string is matched against (case-insensitive).
+// (lib/editorCore.js): every table below carries a `verified` boolean. `gameScoped`
+// tables filter on game_slug (the marathon-implicit tables -- weapon/shell/mod/core/
+// implant -- do not have one). `matchCol` is the column an `entity` string is matched
+// against (case-insensitive).
+//
+// NOTE ON patch_verified (increment 1a fix, DECISION = Option 1): the stat tables
+// ALSO carry a `patch_verified` column, but it is a SEASON STRING ('S2'), NOT a
+// boolean. The first log-only run filtered `.eq('patch_verified', true)`, which
+// compares a text column to boolean true, matched NOTHING, and undercounted every
+// stat facet to 0 (Destroyer/Vandal/Overclock all wrongly read substance=0).
+// RESOLVED: verified IS verified -- a row counts as substance when verified=true,
+// regardless of season. patch_verified is FRESHNESS metadata, never a substance
+// filter. Do NOT re-add a patch_verified filter to the count query.
 export const FACET_TABLE_MAP = {
-  weapon:  { table: 'weapon_stats',    matchCol: 'name',         gameScoped: false, patchVerified: true  },
-  shell:   { table: 'shell_stats',     matchCol: 'name',         gameScoped: false, patchVerified: true  },
-  mod:     { table: 'mod_stats',       matchCol: 'name',         gameScoped: false, patchVerified: true  },
-  core:    { table: 'core_stats',      matchCol: 'name',         gameScoped: false, patchVerified: false },
-  implant: { table: 'implant_stats',   matchCol: 'name',         gameScoped: false, patchVerified: false },
-  cradle:  { table: 'cradle_nodes',    matchCol: 'stat_track',   gameScoped: true,  patchVerified: true  },
-  armory:  { table: 'faction_armory',  matchCol: 'faction_slug', gameScoped: true,  patchVerified: false },
-  map:     { table: 'game_maps',       matchCol: 'name',         gameScoped: true,  patchVerified: false },
-  zone:    { table: 'game_zones',      matchCol: 'zone_name',    gameScoped: true,  patchVerified: false },
-  boss:    { table: 'game_bosses',     matchCol: 'boss_name',    gameScoped: true,  patchVerified: false },
-  event:   { table: 'game_events',     matchCol: 'event_name',   gameScoped: true,  patchVerified: false },
-  mode:    { table: 'game_modes',      matchCol: 'mode_name',    gameScoped: true,  patchVerified: false },
+  weapon:  { table: 'weapon_stats',    matchCol: 'name',         gameScoped: false },
+  shell:   { table: 'shell_stats',     matchCol: 'name',         gameScoped: false },
+  mod:     { table: 'mod_stats',       matchCol: 'name',         gameScoped: false },
+  core:    { table: 'core_stats',      matchCol: 'name',         gameScoped: false },
+  implant: { table: 'implant_stats',   matchCol: 'name',         gameScoped: false },
+  cradle:  { table: 'cradle_nodes',    matchCol: 'stat_track',   gameScoped: true  },
+  armory:  { table: 'faction_armory',  matchCol: 'faction_slug', gameScoped: true  },
+  map:     { table: 'game_maps',       matchCol: 'name',         gameScoped: true  },
+  zone:    { table: 'game_zones',      matchCol: 'zone_name',    gameScoped: true  },
+  boss:    { table: 'game_bosses',     matchCol: 'boss_name',    gameScoped: true  },
+  event:   { table: 'game_events',     matchCol: 'event_name',   gameScoped: true  },
+  mode:    { table: 'game_modes',      matchCol: 'mode_name',    gameScoped: true  },
 };
 
 // Conservative default thresholds (min VERIFIED rows) per facet. Single-entity
@@ -67,7 +76,8 @@ export function passesFloor(verifiedCount, threshold) {
 
 // The query. Returns { table, count, verifiedCount, threshold, passes, reason }.
 //   count         = rows matching the entity (verified + not) -- context for the log
-//   verifiedCount = rows matching AND verified=true (+ patch_verified for stat facets)
+//   verifiedCount = rows matching AND verified=true (season-agnostic; see the
+//                   patch_verified note on FACET_TABLE_MAP -- NOT a substance filter)
 // FAIL-SAFE (harmless because the caller only logs): an unknown facet or a query
 // error returns passes:false with a `reason`.
 export async function substanceFloor(supabase, gameSlug, entity, facet, config) {
@@ -84,12 +94,12 @@ export async function substanceFloor(supabase, gameSlug, entity, facet, config) 
     if (entry.gameScoped) totalQ = totalQ.eq('game_slug', gameSlug);
     var totalRes = await totalQ;
 
-    // verified matching rows: verified=true (+ patch_verified for stat facets).
+    // verified matching rows: verified=true. Season-agnostic -- patch_verified is
+    // a season string, NOT a boolean substance gate (see FACET_TABLE_MAP note).
     var verQ = supabase.from(entry.table)
       .select(entry.matchCol, { count: 'exact', head: true })
       .ilike(entry.matchCol, entity)
       .eq('verified', true);
-    if (entry.patchVerified) verQ = verQ.eq('patch_verified', true);
     if (entry.gameScoped) verQ = verQ.eq('game_slug', gameSlug);
     var verRes = await verQ;
 

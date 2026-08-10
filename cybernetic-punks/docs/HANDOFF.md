@@ -173,6 +173,35 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Assignment gate INCREMENT 1a (HELD) - fixes the two issues the first log-only run surfaced
+
+Still LOG-ONLY (corrects the gate's CHECKS only; nothing arms, nothing blocks, NEXUS/callEditor
+untouched, no writes). The first [GATE-LOG] run (non-patch, log-only) worked end-to-end but decided
+gap=4 with substance=0 for known entities -- surfacing two bugs, which is exactly what log-only is
+for. Both fixed on branch fix/assignment-gate-inc1a:
+
+- **(A) substanceFloor patch_verified bug [DECISION = Option 1: verified-is-verified].** The store's
+  `patch_verified` column holds a SEASON STRING ('S2'), not a boolean; the count filtered
+  `.eq('patch_verified', true)`, matched nothing, and undercounted every stat facet to 0
+  (Destroyer/Vandal verified=true,patch_verified='S2' both read 0). FIX: removed the patch_verified
+  filter entirely + removed the now-unused `patchVerified` flag from FACET_TABLE_MAP. A row counts as
+  substance when verified=true, any season. patch_verified is freshness metadata, never a substance
+  gate. Comment records the decision so it is not re-added. Tests: a fake supabase asserts the count
+  filters verified=true and NEVER patch_verified.
+- **(B) novelty short-circuit on 2-token candidates.** "Destroyer shell" tokenizes to 2 tokens <
+  DUP_MIN_SHARED_TOKENS(3), so checkNovelty returned 'new' WITHOUT comparing. FIX: added
+  CANDIDATE_MIN_SHARED_TOKENS=2 for the candidate-topic path (threaded into closestDuplicate's per-row
+  floor); 2-token candidates now compare and PRODUCE a score to tune from. The 0.7 JACCARD threshold
+  is DELIBERATELY UNCHANGED (observe scores first). The headline-path floor (3) AND the live cron
+  MIRANDA guard (findDuplicateEvergreen, its own DUP_MIN_SHARED_TOKENS=3) are UNTOUCHED. Tests cover
+  the 2-token compare + the contrast that the old floor(3) still short-circuits.
+
+Gates: 18 unit tests pass, ESLint clean, next build clean, byte-clean. Seeds persist (no re-seed
+needed) -- re-trigger the cron after merge to see corrected decisions. HELD for review. (c)
+cannibalization, the reinforce-writer, and queue-driven assignment remain deferred as before.
+
+---
+
 ## 2026-08-10 - Assignment gate INCREMENT 1 built (HELD) - LOG-ONLY, Option A (queue-driven alongside self-select)
 
 Build-order step 1 from docs/CONTENT_PIPELINE_ARCHITECTURE.md, first increment. LOG-ONLY: the gate

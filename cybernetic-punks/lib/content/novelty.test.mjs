@@ -11,6 +11,7 @@ import {
   candidateTopicString,
   closestDuplicate,
   DUP_MIN_SHARED_TOKENS,
+  CANDIDATE_MIN_SHARED_TOKENS,
 } from './novelty.js';
 
 // flat idf: every token weight = _max = 1, so topicJaccard == |shared| / |union|.
@@ -49,6 +50,24 @@ test('closestDuplicate: fewer than the min shared tokens -> null (guard)', () =>
   const corpus = [{ headline: 'Destroyer shell build guide', slug: 'x', editor: 'DEXTER' }];
   assert.equal(closestDuplicate(cand, corpus, FLAT_IDF), null);
   assert.ok(DUP_MIN_SHARED_TOKENS >= 3);
+});
+
+test('1a floors: candidate path is 2, headline path stays 3 (MIRANDA guard untouched)', () => {
+  assert.equal(CANDIDATE_MIN_SHARED_TOKENS, 2);
+  assert.equal(DUP_MIN_SHARED_TOKENS, 3, 'headline-path floor must stay 3');
+});
+
+test('1a: a 2-token candidate COMPARES (does not short-circuit) with minShared=2', () => {
+  const cand = topicTokens('Destroyer shell');                  // [destroyer, shell] = 2 tokens
+  // exact topic match -> shared 2, union 2 -> score 1.0 >= 0.7 -> a dup, PRODUCING a score.
+  const corpus = [{ headline: 'Destroyer shell', slug: 'destroyer-shell', editor: 'DEXTER' }];
+  const best = closestDuplicate(cand, corpus, FLAT_IDF, { minShared: CANDIDATE_MIN_SHARED_TOKENS });
+  assert.ok(best, '2-token candidate should now compare, not short-circuit');
+  assert.equal(best.slug, 'destroyer-shell');
+  assert.equal(best.shared, 2);
+  assert.equal(best.score, 1);
+  // and under the OLD headline floor (3), the same 2-token candidate short-circuits to null
+  assert.equal(closestDuplicate(cand, corpus, FLAT_IDF, { minShared: 3 }), null);
 });
 
 test('closestDuplicate: picks the HIGHEST-scoring dup among several', () => {

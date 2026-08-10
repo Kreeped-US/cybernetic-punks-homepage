@@ -11,10 +11,15 @@
 // The Jaccard core is REUSED AS-IS (lib/topicTokens.js topicJaccard) so scores stay
 // comparable with the live cron guard. See docs/CONTENT_PIPELINE_ARCHITECTURE.md (b).
 //
-// THRESHOLDS: same constants as the cron guard. FLAG: they were calibrated on
-// HEADLINES; a candidate-topic string is much shorter, so these MAY need retune.
-// Increment 1 does NOT pre-tune -- it logs, so the real dup/no-dup distribution can
-// be observed first.
+// THRESHOLDS: FLAG (increment 1a): the shared-token floor was calibrated on
+// HEADLINES (DUP_MIN_SHARED_TOKENS=3). A candidate-topic string is much shorter --
+// "Destroyer shell" is only 2 tokens -- so the first log run short-circuited to
+// 'new' WITHOUT ever comparing against published headlines. RESOLVED for the
+// candidate path only: CANDIDATE_MIN_SHARED_TOKENS=2 lets 2-token candidates
+// actually compare and PRODUCE a score, so the next log run yields real dup scores
+// to tune from. The 0.7 DUP_JACCARD_THRESHOLD is DELIBERATELY UNCHANGED -- observe
+// the scores first, tune later, still log-only. The headline path (and the live
+// MIRANDA guard's own DUP_MIN_SHARED_TOKENS=3 in the cron) is UNTOUCHED.
 //
 // supabase is INJECTED; the pure core (candidateTopicString / closestDuplicate) is
 // node-testable without a DB.
@@ -22,7 +27,8 @@
 import { topicTokens, buildIdfMap, topicJaccard } from '../topicTokens.js';
 
 export var DUP_JACCARD_THRESHOLD = 0.7;
-export var DUP_MIN_SHARED_TOKENS = 3;
+export var DUP_MIN_SHARED_TOKENS = 3;         // headline-path floor (calibrated on headlines)
+export var CANDIDATE_MIN_SHARED_TOKENS = 2;   // candidate-topic-path floor (short entity+facet strings)
 export var DUP_HISTORY_LIMIT = 500;
 
 // The candidate topic string the novelty check tokenizes. `entity` carries the
@@ -62,10 +68,15 @@ export function closestDuplicate(candTokens, corpus, idf, opts) {
 //   { isDup, dupSlug, dupHeadline, dupEditor, score, shared, disposition, reason }
 export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
   var candTokens = topicTokens(candidateTopic);
-  var minShared = opts && typeof opts.minShared === 'number' ? opts.minShared : DUP_MIN_SHARED_TOKENS;
+  // Candidate-topic path uses the shorter CANDIDATE_MIN_SHARED_TOKENS floor (an
+  // explicit opts.minShared still wins), so 2-token entity+facet strings compare
+  // instead of short-circuiting. This floor is threaded into closestDuplicate below
+  // so the per-row shared-token gate uses the SAME value.
+  var minShared = opts && typeof opts.minShared === 'number' ? opts.minShared : CANDIDATE_MIN_SHARED_TOKENS;
   if (candTokens.length < minShared) {
     return { isDup: false, disposition: 'new', reason: 'too-few-candidate-tokens' };
   }
+  var effectiveOpts = { threshold: opts && typeof opts.threshold === 'number' ? opts.threshold : DUP_JACCARD_THRESHOLD, minShared: minShared };
   try {
     var { data, error } = await supabase
       .from('feed_items')
@@ -81,7 +92,7 @@ export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
     // boilerplate common across headlines -> low weight; the distinguishing
     // subject rare -> high weight.
     var idf = buildIdfMap(data.map(function (r) { return r.headline || ''; }));
-    var best = closestDuplicate(candTokens, data, idf, opts);
+    var best = closestDuplicate(candTokens, data, idf, effectiveOpts);
     if (best) {
       return {
         isDup: true, dupSlug: best.slug, dupHeadline: best.headline, dupEditor: best.editor,
