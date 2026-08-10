@@ -102,6 +102,36 @@ So the order is not "publish now, improve later." It is BUILD THE CAPABILITY, TH
 4. THEN PUBLISH - only once the reasoning capability exists does candidate-driven generation publish
    to the launch audience.
 
+## Implementation note: the held-for-review mechanism for step 4 (designed + proven, 2026-08-10)
+
+Step 4 requires candidate-generated articles to land UNPUBLISHED for human review before going live.
+Recording the DESIGN here so the knowledge survives the deletion of the feat/queue-assign-2arm branch
+(deleted 2026-08-10 as premature per build-capability-before-publish).
+
+ACCURACY CORRECTION (a claim that kept resurfacing, resolved by code): held-for-review does NOT
+"already exist" on main, and there is NO insertGeneratedItem function and NO isPublished parameter.
+On main, the feed_items insert is INLINE in processEditor (app/api/cron/route.js) and is_published
+comes from the pre-publish gate: `is_published: gateDecision.is_published` (gate-driven; true on
+Marathon log-only). There is no held override on main.
+
+What was BUILT + TESTED on the (now-deleted) 2-arm branch, and what step 4 rebuilds:
+- THE OVERRIDE: processEditor took a `heldCandidate` param; when set it forced
+  `insertData.is_published = false` at the inline insert, and suppressed comment-generation + Discord
+  notify. Small wiring on the inline insert -- NOT a separate insertGeneratedItem(article,{isPublished}).
+- THE STATE (the load-bearing part): held = is_published=false + gate_status='clear'. That is the
+  VANTAGE-discourse DRAFT state -- it appears in GET /api/admin/drafts (which lists is_published=false
+  AND gate_status != 'held') and is published ONLY by a human via POST /api/admin/drafts/approve.
+- DELIBERATELY NOT gate_status='held': 'held' is the corroboration worklist that AUTO-RELEASES via
+  /api/cron/gate-release (lib/gsc/releaseHeld.js flips is_published=true on a clean gate re-pass) AND
+  is hidden from the admin drafts list -- using it would auto-publish the draft and hide it from
+  review. A custom gate_status='candidate_held' was REJECTED by the DB CHECK constraint
+  feed_items_gate_status_check (verified by probe). So the correct reuse is is_published=false +
+  gate_status='clear'.
+- SO step 4 does not need to INVENT a held mechanism -- the design is proven and recorded here -- but
+  it DOES need to REBUILD the small wiring (the is_published=false override at the insert + hooking the
+  queue-driven path to a review/publish surface, reusing the admin-drafts approve path), because the
+  branch code is deleted.
+
 ## The concrete evidence (the Sentinel dry-run, 2026-08-10)
 
 A faithful dry-run generated NEXUS's real article for a thin-substance candidate (Sentinel, one

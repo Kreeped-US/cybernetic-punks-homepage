@@ -206,6 +206,25 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Branch cleanup: captured the held-for-review finding, deleted two spent branches
+
+Deleted feat/faithful-dry-run (the dry-run script's reusable technique -- call real callEditor, skip
+the insert -- is a fresh ~15-line script, not worth keeping the branch) and feat/queue-assign-2arm
+(the queue-driven PUBLISH wiring; premature per build-capability-before-publish, rebuildable at step 4).
+
+FINDING PRESERVED FIRST (so no knowledge lost) in docs/VERIFIED_GROUNDED_REASONING.md ("Implementation
+note: the held-for-review mechanism for step 4"), WITH a correction: held-for-review does NOT already
+exist on main. There is NO insertGeneratedItem function and NO isPublished param -- the feed_items
+insert is INLINE in processEditor and is_published comes from the gate (is_published:
+gateDecision.is_published). The held mechanism was built+tested on the 2-arm branch as a heldCandidate
+param forcing is_published=false at the inline insert; the load-bearing design (held = is_published=
+false + gate_status='clear' = the admin-drafts DRAFT state, published only via /api/admin/drafts/
+approve; NOT gate_status='held' which auto-releases) is recorded. Step 4 rebuilds the small wiring.
+
+Doc-only. Both branches gone; main clean.
+
+---
+
 ## 2026-08-10 - VERIFIED-GROUNDED REASONING ruled (Fable) - the editor content model (doc-only)
 
 Recorded the foundational editor CONTENT MODEL: docs/VERIFIED_GROUNDED_REASONING.md.
