@@ -173,6 +173,42 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Queue-driven assignment INCREMENT 2-observe (HELD) - log the would-be candidate assignment (NO generation, NO writes)
+
+Build-order STEP 2 (docs/CONTENT_PIPELINE_ARCHITECTURE.md), Option A (queue-preferred, self-select
+fallback) -- the OBSERVE half of the pivotal step that connects the gate to real generation. 2-observe
+BUILDS + LOGS the exact candidate-directive prompt the top queued candidate WOULD produce + its gate
+decision, WITHOUT calling callEditor on it, WITHOUT writing to content_candidate, WITHOUT publishing.
+NEXUS's live self-select/directive path is byte-untouched. This is the last safe look before 2-arm
+(the first increment that actually generates + publishes a real article from a candidate).
+
+- **NEW lib/content/candidateAssignment.js:** buildCandidateDirective(candidate) (PURE) formats
+  (entity, facet, target_phrase) into a directive-shaped ASSIGNMENT block, mirroring the
+  buildDirectiveBlock language ("this overrides your normal content selection; ASSIGNMENT: Write about
+  the <entity> <facet>" + optional FRAMING from target_phrase) so a candidate rides in on the SAME
+  seam a human directive does. selectQueuedCandidate(supabase, gameSlug) reads the top-priority
+  status='queued' row (read-only).
+- **app/api/cron/route.js at the NEXUS seam (~1156):** a guarded block selects the top queued
+  candidate, runs runAssignmentGate on it, builds the candidate-directive, and LOGS [QUEUE-ASSIGN-LOG]
+  (entity/facet/priority/decision/would-assign + the exact assignment block). It NEVER assigns to
+  prompts.NEXUS -- the self-select branch above is byte-identical (verified: zero prompts.NEXUS code
+  changed). would-assign=YES only when decision==='pass' (Option A: only a pass would drive 2-arm
+  generation; gap/reinforce fall back to self-select). Summary surfaced in the cron JSON as
+  queue_assign_observe, beside assignment_gate. Try/catch so it can never break the cron.
+
+CONFIRM: no callEditor on a candidate; no content_candidate writes (still read-only); nothing
+published; NEXUS self-select byte-identical. Gates: 43 unit tests pass (buildCandidateDirective exact
+string, with/without target_phrase), ESLint clean, build clean, byte-clean.
+
+NEXT (2-arm -- THE FIRST PUBLISHING INCREMENT): feed a passing candidate to callEditor for real
+(subject = the candidate-directive), + the FIRST content_candidate status writes (queued->assigned->
+done on success; gap stays queued; reinforce parked). A queue-driven pass produces a REAL PUBLISHED
+ARTICLE (generation->publish is live even though the GATE was log-only) -- and NEXUS runs only on
+patch cycles, so first live generation needs a NEXUS-eligible cycle or a deliberate single-candidate
+test. Remaining after: the reinforce-writer, (c) cannibalization, enforcement-arming. HELD for review.
+
+---
+
 ## 2026-08-10 - Assignment gate INCREMENT 1d-arm (HELD) - reinforce fires on PHRASE containment (first decision change; STILL log-only)
 
 The FIRST decision-changing increment -- but still LOG-ONLY OVERALL: it only changes which decision

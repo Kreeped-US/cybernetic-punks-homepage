@@ -17,6 +17,8 @@ import { loadGateStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { topicTokens, buildIdfMap, topicJaccard } from '@/lib/topicTokens';
 import { runGateLogPass } from '@/lib/content/gateLogPass';
+import { runAssignmentGate } from '@/lib/content/assignmentGate';
+import { buildCandidateDirective, selectQueuedCandidate } from '@/lib/content/candidateAssignment';
 
 export const dynamic = 'force-dynamic';
 
@@ -1154,6 +1156,42 @@ export async function GET(req) {
       prompts.NEXUS += historicalBlock;
     }
 
+    // ── QUEUE-DRIVEN ASSIGNMENT -- 2-OBSERVE (log-only; content pipeline step 2) ──
+    // Selects the top-priority queued content_candidate and LOGS the exact
+    // candidate-directive prompt it WOULD produce + the gate decision -- WITHOUT
+    // generating on it and WITHOUT writing to content_candidate. NEXUS's real
+    // self-select/directive path ABOVE is byte-untouched (this block only reads +
+    // logs; it never assigns to prompts.NEXUS). This is the last safe look before
+    // 2-arm actually generates. Fully guarded: can never break the cron. Option A
+    // (queue-preferred) means only a PASS would drive generation in 2-arm; gap/
+    // reinforce would fall back to self-select. See
+    // docs/CONTENT_PIPELINE_ARCHITECTURE.md step 2.
+    var queueAssignObserve = null;
+    try {
+      var topCandidate = await selectQueuedCandidate(supabase, PRODUCING_GAME_SLUG);
+      if (!topCandidate) {
+        console.log('[QUEUE-ASSIGN-LOG] no queued candidate for ' + PRODUCING_GAME_SLUG + ' -- nothing to observe');
+      } else {
+        var qGate = await runAssignmentGate(
+          { game_slug: topCandidate.game_slug, entity: topCandidate.entity, facet: topCandidate.facet },
+          supabase, PRODUCING_GAME
+        );
+        var wouldAssign = qGate.decision === 'pass';
+        var candBlock = buildCandidateDirective(topCandidate);
+        console.log('[QUEUE-ASSIGN-LOG] candidate entity="' + topCandidate.entity + '" facet=' +
+          topCandidate.facet + ' priority=' + topCandidate.priority + ' decision=' + qGate.decision +
+          ' would-assign=' + (wouldAssign ? 'YES' : 'no') + ' [2-OBSERVE: NOT generated, NOT written, self-select untouched]');
+        console.log('[QUEUE-ASSIGN-LOG] would-be assignment block for "' + topCandidate.entity + ' ' +
+          topCandidate.facet + '":' + candBlock);
+        queueAssignObserve = {
+          entity: topCandidate.entity, facet: topCandidate.facet, priority: topCandidate.priority,
+          decision: qGate.decision, wouldAssign: wouldAssign,
+        };
+      }
+    } catch (qErr) {
+      console.log('[QUEUE-ASSIGN-LOG] observe pass failed (non-fatal): ' + (qErr && qErr.message));
+    }
+
     if (typeof prompts.DEXTER === 'string') {
       if (directiveMap['DEXTER']) prompts.DEXTER += buildDirectiveBlock(directiveMap['DEXTER']);
       else {
@@ -1447,6 +1485,10 @@ export async function GET(req) {
       // Assignment-gate LOG-ONLY pass summary (increment 1): what the gate WOULD
       // decide over queued candidates. Nothing was acted on. See runGateLogPass.
       assignment_gate: gateLogSummary,
+      // Queue-driven assignment 2-OBSERVE (step 2, log-only): the top queued
+      // candidate + what it WOULD assign/decide. Nothing generated or written. See
+      // the [QUEUE-ASSIGN-LOG] lines. NEXUS self-select ran unchanged.
+      queue_assign_observe: queueAssignObserve,
       results: results,
       tweet: 'Auto-posting disabled -- post manually via @Cybernetic87250',
     });
