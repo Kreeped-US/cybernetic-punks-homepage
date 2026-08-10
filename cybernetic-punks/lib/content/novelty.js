@@ -62,12 +62,26 @@ export function closestDuplicate(candTokens, corpus, idf, opts) {
   return best;
 }
 
+// Asymmetric CONTAINMENT / COVERAGE (increment 1c): what fraction of the
+// CANDIDATE's tokens appear in the matched headline. coverage = shared /
+// candidate_token_count. 1.0 = the candidate is FULLY covered by an existing page
+// (the "reinforce" signal that symmetric Jaccard dilutes when the headline has a
+// long descriptive tail: "destroyer shell" is 2/2=1.0 covered by
+// "destroyer shell squad dominance ranked guide" but scores jaccard ~0.33).
+// LOG-ONLY in 1c -- computed + surfaced, NOT wired into any decision.
+export function coverageScore(shared, candidateTokenCount) {
+  if (!candidateTokenCount || candidateTokenCount <= 0) return 0;
+  return shared / candidateTokenCount;
+}
+
 // PURE observability core (increment 1b): the single HIGHEST-scoring row
-// regardless of the dup threshold, or null. Same per-row minShared floor as
-// closestDuplicate (a row sharing fewer than minShared tokens is not a meaningful
-// comparison), but NO threshold gate -- so a sub-0.7 near-miss is still returned,
-// for LOGGING ONLY. This NEVER affects a decision: checkNovelty reads it only when
-// isDup is already false, and the value is surfaced in the log line, not acted on.
+// (by Jaccard) regardless of the dup threshold, or null. Same per-row minShared
+// floor as closestDuplicate (a row sharing fewer than minShared tokens is not a
+// meaningful comparison), but NO threshold gate -- so a sub-0.7 near-miss is still
+// returned, for LOGGING ONLY. This NEVER affects a decision: checkNovelty reads it
+// only when isDup is already false, and the value is surfaced in the log line, not
+// acted on. 1c ALSO attaches `coverage` (asymmetric containment) to the row --
+// still selection-by-Jaccard, coverage is a reported attribute, not a selector.
 export function closestMatch(candTokens, corpus, idf, opts) {
   var minShared = opts && typeof opts.minShared === 'number' ? opts.minShared : DUP_MIN_SHARED_TOKENS;
   if (!candTokens || candTokens.length < minShared) return null;
@@ -81,6 +95,7 @@ export function closestMatch(candTokens, corpus, idf, opts) {
       best = {
         headline: row.headline, slug: row.slug, editor: row.editor,
         created_at: row.created_at, score: cmp.score, shared: cmp.shared,
+        coverage: coverageScore(cmp.shared, candTokens.length),
       };
     }
   }
@@ -92,8 +107,9 @@ export function closestMatch(candTokens, corpus, idf, opts) {
 // fabricate a reinforce. Returns on the dup path:
 //   { isDup:true, dupSlug, dupHeadline, dupEditor, score, shared, disposition, reason }
 // and on the no-dup path, ALSO the closest sub-threshold match for OBSERVABILITY
-// (increment 1b, decision-neutral):
-//   { isDup:false, disposition:'new', nearSlug, nearHeadline, nearScore, nearShared, reason }
+// (increment 1b + 1c coverage, decision-neutral):
+//   { isDup:false, disposition:'new', nearSlug, nearHeadline, nearScore (jaccard),
+//     nearCoverage (asymmetric containment, 1c), nearShared, reason }
 export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
   var candTokens = topicTokens(candidateTopic);
   // Candidate-topic path uses the shorter CANDIDATE_MIN_SHARED_TOKENS floor (an
@@ -135,7 +151,8 @@ export async function checkNovelty(supabase, gameSlug, candidateTopic, opts) {
     if (near) {
       return {
         isDup: false, disposition: 'new',
-        nearSlug: near.slug, nearHeadline: near.headline, nearScore: near.score, nearShared: near.shared,
+        nearSlug: near.slug, nearHeadline: near.headline, nearScore: near.score,
+        nearCoverage: near.coverage, nearShared: near.shared,
         reason: null,
       };
     }

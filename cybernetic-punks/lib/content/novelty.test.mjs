@@ -11,6 +11,7 @@ import {
   candidateTopicString,
   closestDuplicate,
   closestMatch,
+  coverageScore,
   DUP_MIN_SHARED_TOKENS,
   CANDIDATE_MIN_SHARED_TOKENS,
 } from './novelty.js';
@@ -125,4 +126,25 @@ test('1b closestMatch: respects the minShared floor (short cand / no qualifying 
   const cand = topicTokens('Destroyer shell');
   const corpus = [{ headline: 'Vandal weapon tier list', slug: 'y', editor: 'N' }];
   assert.equal(closestMatch(cand, corpus, FLAT_IDF, { minShared: 2 }), null);
+});
+
+// ── increment 1c: asymmetric coverage (containment) metric ───────────────────
+test('1c coverageScore: full containment=1.0, partial, zero, guarded denominator', () => {
+  assert.equal(coverageScore(2, 2), 1, 'both candidate tokens covered -> 1.0');
+  assert.equal(coverageScore(1, 2), 0.5, 'half the candidate covered');
+  assert.equal(coverageScore(0, 3), 0, 'nothing covered');
+  assert.equal(coverageScore(3, 3), 1);
+  assert.equal(coverageScore(2, 0), 0, 'zero-length candidate -> 0 (no divide-by-zero)');
+  assert.equal(coverageScore(1, undefined), 0, 'missing denominator -> 0');
+});
+
+test('1c closestMatch: attaches coverage=shared/candidateTokens (Jaccard diluted, coverage clean)', () => {
+  const cand = topicTokens('Destroyer shell');                  // 2 tokens
+  // a long headline that FULLY contains the candidate but has a descriptive tail:
+  // shared 2, union 6 -> jaccard 0.33, but coverage 2/2 = 1.00 (the 1c point).
+  const corpus = [{ headline: 'Destroyer shell squad dominance ranked guide', slug: 'ds', editor: 'NEXUS' }];
+  const near = closestMatch(cand, corpus, FLAT_IDF, { minShared: 2 });
+  assert.equal(near.shared, 2);
+  assert.ok(near.score < 0.5, 'symmetric Jaccard is diluted by the headline tail');
+  assert.equal(near.coverage, 1, 'coverage cleanly reads full containment');
 });

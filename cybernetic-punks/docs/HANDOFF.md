@@ -173,6 +173,34 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-10 - Assignment gate INCREMENT 1c (HELD) - log asymmetric COVERAGE metric beside jaccard (NO decision change)
+
+OBSERVABILITY ONLY, still log-only. 1b's near-scores proved it is a METRIC problem, not a threshold
+one: Destroyer ("destroyer shell") vs its clearly-matching page
+(marathon-destroyer-shell-squad-dominance-and-ranked-guide) scored jaccard@0.33, shared=2 -- the
+candidate's 2 tokens are FULLY contained in the 7-token headline, but symmetric Jaccard (shared/union)
+is diluted by the headline's descriptive tail. The right metric for the asymmetric candidate->headline
+direction is CONTAINMENT: coverage = shared / candidate_token_count (Destroyer 2/2 = 1.00). 1c COMPUTES
++ LOGS coverage beside jaccard so we can see its distribution BEFORE it drives anything.
+
+- **novelty.js:** added `coverageScore(shared, candidateTokenCount)` (pure; guarded denominator ->
+  0). closestMatch now attaches `coverage` to the selected row (selection is STILL by Jaccard --
+  coverage is a reported attribute, not a selector). checkNovelty's no-dup return carries
+  `nearCoverage` alongside `nearScore` (the jaccard).
+- **gateLogPass.js formatNovelty:** near line now shows BOTH:
+  `new(near:slug@0.33,cov=1.00,shared=2)`.
+- NO decision change: the isDup/reinforce logic is still Jaccard>=0.7; coverage drives NOTHING in 1c.
+  pass/gap/reinforce byte-identical to 1b. No writes, no arming, NEXUS/callEditor/live-MIRANDA-guard
+  untouched.
+
+Gates: 29 unit tests pass (coverageScore full/partial/zero + closestMatch attaches coverage +
+formatNovelty cov shape), ESLint clean, build clean, byte-clean. NEXT INCREMENT (1d, after observing
+the coverage distribution): wire a coverage threshold into the reinforce decision -- the first
+increment where a decision actually changes, so it gets its own observe-then-arm treatment. (c)
+cannibalization + the reinforce-writer + queue-driven assignment remain deferred. HELD for review.
+
+---
+
 ## 2026-08-10 - Assignment gate INCREMENT 1b (HELD) - surface near-miss novelty scores (observability, NO decision change)
 
 OBSERVABILITY ONLY. 1b does not change a single decision (pass/gap/reinforce unchanged; a dup is
