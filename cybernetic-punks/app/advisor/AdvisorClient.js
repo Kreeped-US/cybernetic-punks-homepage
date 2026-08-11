@@ -212,6 +212,18 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   var [stickyVisible, setStickyVisible] = useState(false);
 
   var scanRef = useRef(null);
+
+  // Funnel: "started using it" (engaged) -- fires ONCE on the first meaningful
+  // interaction with the config controls, distinct from land (page_view) and
+  // complete (advisor_generate). Ref-guarded so it fires once per session, not
+  // per click. See the article->advisor CTA instrumentation.
+  var engagedRef = useRef(false);
+  function markEngaged() {
+    if (engagedRef.current) return;
+    engagedRef.current = true;
+    track('advisor_engaged', { shell: selectedShell || null });
+  }
+
   var isMobile = useIsMobile(640);
   var monetizationOn = isMonetizationEnabled();
   var isPrefilled = !!profilePrefill?.shell;
@@ -264,6 +276,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
     var cfg = overrides || {};
     var shellToUse = cfg.shell || selectedShell;
     if (!shellToUse) return;
+    markEngaged(); // completion implies engagement (covers prefilled-shell -> generate + surprise)
     var body = {
       shell:            shellToUse,
       playstyle:        cfg.playstyle || playstyle,
@@ -429,7 +442,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
               {SHELLS.map(function(shell) {
                 var isSel = selectedShell === shell.name;
                 return (
-                  <div key={shell.name} className="advisor-shell" onClick={function() { setSelectedShell(shell.name); }}
+                  <div key={shell.name} className="advisor-shell" onClick={function() { setSelectedShell(shell.name); markEngaged(); }}
                     style={{
                       background:   isSel ? shell.color + '12' : '#1a1d24',
                       border:       '1px solid ' + (isSel ? shell.color + '50' : '#22252e'),
@@ -513,7 +526,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 {PLAYSTYLES.map(function(p) {
                   var isSel = playstyle === p.id;
                   return (
-                    <div key={p.id} className="advisor-option" onClick={function() { setPlaystyle(p.id); }}
+                    <div key={p.id} className="advisor-option" onClick={function() { setPlaystyle(p.id); markEngaged(); }}
                       style={{
                         background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
                         border:       '1px solid ' + (isSel ? 'rgba(255,136,0,0.35)' : '#22252e'),
@@ -538,7 +551,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 {PRIORITIES.map(function(p) {
                   var isSel = priority === p.id;
                   return (
-                    <div key={p.id} className="advisor-option" onClick={function() { setPriority(p.id); }}
+                    <div key={p.id} className="advisor-option" onClick={function() { setPriority(p.id); markEngaged(); }}
                       style={{
                         background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
                         border:       '1px solid ' + (isSel ? 'rgba(255,136,0,0.35)' : '#22252e'),
@@ -563,7 +576,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 {RANK_TARGETS.map(function(r) {
                   var isSel = rankTarget === r.id;
                   return (
-                    <div key={r.id} className="advisor-option" onClick={function() { setRankTarget(r.id); }}
+                    <div key={r.id} className="advisor-option" onClick={function() { setRankTarget(r.id); markEngaged(); }}
                       style={{
                         background:   isSel ? r.color + '15' : '#1a1d24',
                         border:       '1px solid ' + (isSel ? r.color + '40' : '#22252e'),
@@ -591,7 +604,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 {EXPERIENCE_LEVELS.map(function(e) {
                   var isSel = experienceLevel === e.id;
                   return (
-                    <div key={e.id} className="advisor-option" onClick={function() { setExperienceLevel(e.id); }}
+                    <div key={e.id} className="advisor-option" onClick={function() { setExperienceLevel(e.id); markEngaged(); }}
                       style={{
                         background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
                         border:       '1px solid ' + (isSel ? 'rgba(255,136,0,0.35)' : '#22252e'),
@@ -619,7 +632,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 {WEAPON_PREFS.map(function(w) {
                   var isSel = weaponPref === w.id;
                   return (
-                    <button key={w.id} className="advisor-weapon-pref" onClick={function() { setWeaponPref(w.id); }}
+                    <button key={w.id} className="advisor-weapon-pref" onClick={function() { setWeaponPref(w.id); markEngaged(); }}
                       style={{
                         padding:      '8px 12px',
                         background:   isSel ? 'rgba(255,136,0,0.1)' : '#1a1d24',
@@ -647,7 +660,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 {['Solo', 'Squad'].map(function(size) {
                   var isSel = teamSize === size;
                   return (
-                    <button key={size} onClick={function() { setTeamSize(size); }}
+                    <button key={size} onClick={function() { setTeamSize(size); markEngaged(); }}
                       style={{
                         flex:         1,
                         padding:      '14px',

@@ -33,6 +33,7 @@ import { DMZ_ARTICLE_SEO, dmzSectionForArticle } from '@/lib/games/dmz';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments } from '@/lib/dmz/articleContent';
+import ToolCTA from '@/components/ToolCTA';
 import { fetchPoiLinkTargets } from '@/lib/dmz/entities';
 import DiscourseArticle from '@/components/DiscourseArticle';
 import { isDiscourseArticle } from '@/lib/discourse';
@@ -389,6 +390,10 @@ export default async function DmzArticlePage({ params }) {
       <article style={{ marginTop: 26 }}>
         <ArticleBody body={article.body} poiEntries={poiEntries} />
       </article>
+
+      {/* Game-agnostic build-tool CTA. dmz.buildToolCta is null today -> renders
+          nothing; auto-lights when DMZ gets a tool + entities (config edit only). */}
+      <ToolCTA article={article} />
 
       {/* 8. Tags */}
       {tags.length > 0 && (

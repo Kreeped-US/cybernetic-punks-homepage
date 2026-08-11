@@ -172,6 +172,12 @@ export const dmz = {
     // render via the game-neutral components/DiscourseArticle renderer.
     { slug: 'discourse',   label: 'Discourse',     source: 'editor', contentFilter: { table: 'feed_items', byTag: 'discourse' }, description: 'Network-desk coverage of the conversations shaping DMZ -- what creators and the community are saying, and what is actually at stake.' },
   ],
+
+  // ARTICLE -> BUILD ADVISOR CTA: DMZ has NO interactive build tool yet (only static
+  // /dmz/builds reference pages) and no structured entities. null -> ToolCTA renders
+  // NOTHING on DMZ articles. Fill at launch when DMZ has a tool + entities to detect
+  // (route + deep-link + entities + copy) -- a config edit, not a component change.
+  buildToolCta: null,
 };
 
 // DMZ ARTICLE -> SECTION ASSIGNMENT (config-driven section scoping).

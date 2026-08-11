@@ -19,6 +19,13 @@ const ALLOWED_EVENTS = [
   'meta_view',
   'tierlist_share',
   'advisor_share',
+  // Build-advisor FUNNEL instrumentation (measurement-first): first meaningful
+  // interaction with the advisor (distinct from land=page_view and complete=
+  // advisor_generate), and a click on an article->advisor CTA (the upstream entry).
+  // Full funnel: advisor_cta_click -> page_view(slug=advisor) -> advisor_engaged ->
+  // advisor_generate.
+  'advisor_engaged',
+  'advisor_cta_click',
   // /welcome intent-card selection (build|meta|intel|skip). The flow always
   // emitted this but it was missing from the allowlist (stale drift) -> dropped.
   // Added so the intent/bounce funnel is recorded as a time series (the latest

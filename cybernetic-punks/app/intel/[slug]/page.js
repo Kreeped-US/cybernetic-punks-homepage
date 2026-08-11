@@ -12,6 +12,7 @@ import ViewTracker from '@/components/ViewTracker';
 import DiscourseArticle from '@/components/DiscourseArticle';
 import { isDiscourseArticle } from '@/lib/discourse';
 import { stripCitationTags } from '@/lib/gather/blockId';
+import ToolCTA from '@/components/ToolCTA';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -1246,11 +1247,10 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
               <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700, fontFamily: 'monospace' }}>← MORE FROM {edTag(item.editor)}</Link>
             </div>
 
-            <div style={{ marginTop: 20, padding: '12px 16px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0' }}>
-              <Link href="/advisor" style={{ fontSize: 11, color: '#ff8800', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>
-                ⬢ Want a build based on this intel? Open the Build Advisor →
-              </Link>
-            </div>
+            {/* Game-agnostic, contextual build-tool CTA (replaces the old hardcoded
+                generic /advisor link). Shell-detected articles deep-link prefilled;
+                build-relevant articles get the generic link; unrelated -> nothing. */}
+            <ToolCTA article={item} />
 
             <CoachCTA variant="compact" />
 

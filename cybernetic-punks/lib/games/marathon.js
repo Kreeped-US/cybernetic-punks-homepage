@@ -338,6 +338,22 @@ export const marathon = {
       ],
     },
   },
+
+  // ARTICLE -> BUILD ADVISOR CTA (render-layer, game-agnostic). resolveBuildToolCta
+  // in components/ToolCTA.js reads this per game: entities drive the CONTEXTUAL,
+  // shell-prefilled deep-link; relevanceKeywords drive the GENERIC fallback; an
+  // article that matches neither gets NO CTA. A game with buildToolCta:null (DMZ
+  // today) renders nothing. Functions stay server-side (resolver runs in the server
+  // component), so nothing here bundles into the client.
+  buildToolCta: {
+    entities: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Sentinel', 'Thief', 'Triage', 'Vandal'],
+    relevanceKeywords: ['build', 'loadout', 'shell', 'runner', 'weapon', 'mod', 'core', 'implant', 'cradle'],
+    href: function (slug) { return '/advisor?shell=' + slug; },
+    copy: function (name) { return 'Plan your ' + name + ' build →'; },
+    genericHref: '/advisor',
+    genericCopy: 'Want a build based on this intel? Open the Build Advisor →',
+    accent: '#ff8800',
+  },
 };
 
 export default marathon;

@@ -327,6 +327,57 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-11 - ARTICLE -> BUILD-ADVISOR CTA, game-agnostic + measurement-first (HELD)
+
+Branch `feat/article-tool-cta` off main 7efe4a8. The discovery lever from the advisor-funnel
+investigation: article readers (3,771 views, +159% WoW) had only a generic hardcoded /advisor link and
+NO way to measure whether it converts. Two pieces, measurement FIRST.
+
+CONTEXT CORRECTION carried in: the earlier "0 articles link to /advisor" was BODY-prose only -- the
+intel template already rendered a generic /advisor CTA on every article (+ shell/build pages link too),
+and it still yielded 34 lifetime builds. So this is NOT "add links" -- it is make the existing CTA
+CONTEXTUAL + MEASURABLE.
+
+PIECE 1 -- FUNNEL INSTRUMENTATION (built first, so the CTA is measurable):
+- LAND: ViewTracker on app/advisor/page.js (slug=advisor, type=tool) -> page_view. Advisor arrivals
+  were previously UNMEASURABLE (0 page_views on /advisor); now queryable as page_view where slug=advisor.
+- ENGAGED: new `advisor_engaged` event in AdvisorClient -- ref-guarded markEngaged() fires ONCE on the
+  first config interaction (all 7 option controls) + at generateBuild start (so complete implies
+  engaged). Distinct from land and from complete.
+- Allowlisted `advisor_engaged` + `advisor_cta_click` in app/api/track/route.js.
+
+PIECE 2 -- GAME-AGNOSTIC CONTEXTUAL CTA:
+- `lib/buildToolCta.js` (pure, node-tested): resolveBuildToolCta(article) reads getGameConfig(game_slug)
+  .buildToolCta -> CONTEXTUAL (names an entity -> prefilled deep-link) / GENERIC (build-relevant, no
+  entity) / NOTHING (news-lore OR game config null). Relative import so it runs under node --test.
+- `components/ToolCTA.js` (SERVER component): resolves server-side (config functions never bundle to the
+  client, strings only cross) + delegates the clickable render to `components/ToolCTAClient.js` ('use
+  client') which fires `advisor_cta_click` {source, shell} on click.
+- Per-game config `buildToolCta` in lib/games/marathon.js (entities=8 shells, href=/advisor?shell=slug,
+  copy="Plan your <Shell> build", generic fallback, accent) and lib/games/dmz.js (`null` STUB -> renders
+  nothing; DMZ has no tool/entities yet -- fill at launch, config-only).
+- Wired into BOTH templates: replaced the hardcoded CTA in app/intel/[slug]/page.js with <ToolCTA
+  article={item}/>; added <ToolCTA article={article}/> to app/dmz/[section]/[slug]/page.js (renders
+  nothing today). Render-layer only -- no article-content/pipeline change.
+
+RELEVANCE RULE (verified against live data, 1,000 marathon articles): 411 CONTEXTUAL (shell deep-link)
+/ 283 GENERIC (build-relevant, no shell) / 306 NOTHING (news/lore). Deep-link is case-insensitive to
+shell name (AdvisorClient already supported ?shell=).
+
+FULL FUNNEL now measurable: advisor_cta_click -> page_view(slug=advisor) -> advisor_engaged ->
+advisor_generate.
+
+VERIFY: node --test lib/buildToolCta.test.mjs 6/6 pass; eslint 0 errors on all new files (the 5 errors
+in AdvisorClient/advisor-page are pre-existing, untouched lines); next build OK. IN-BROWSER (public
+intel article, no auth): the Assassin article renders "⬢ Plan your Assassin build →" -> /advisor?shell=
+assassin; the deep-link loads /advisor with Assassin present; clicking the CTA fires advisor_cta_click
+(0->1, nav prevented); /advisor mount fires page_view; first config click fires advisor_engaged (1->2,
+once). All three new signals confirmed firing 200 OK through /api/track.
+
+STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+
+---
+
 ## 2026-08-11 - SITE-USAGE section: real-signal tiles + capped-window fix (HELD)
 
 Branch `fix/site-usage-real-signal` off main 92d4315. The admin "SITE USAGE - PER GAME" panel

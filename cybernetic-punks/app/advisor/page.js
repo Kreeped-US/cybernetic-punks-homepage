@@ -29,6 +29,7 @@
 import { resolveSession } from '@/lib/auth/resolveSession';
 import { createClient } from '@supabase/supabase-js';
 import AdvisorClient from './AdvisorClient';
+import ViewTracker from '@/components/ViewTracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -208,6 +209,9 @@ export default async function AdvisorPage({ searchParams }) {
 
   return (
     <>
+      {/* Funnel: "arrived at the advisor" (land). Session-debounced page_view via the
+          shared ViewTracker, slug=advisor -> queryable as advisor lands. */}
+      <ViewTracker slug="advisor" type="tool" gameSlug="marathon" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }} />
 
