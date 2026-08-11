@@ -6,6 +6,7 @@ import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { buildBlockRegistry, resolveCitedBlocks, storeRowCitationEnabled, validateRecommendations } from '@/lib/gather/blockId';
+import { heldForReviewApplies, heldPublishState } from '@/lib/content/heldForReview';
 import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
@@ -649,6 +650,20 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       game_slug: PRODUCING_GAME_SLUG,
     };
 
+    // STEP 4 HELD-FOR-REVIEW: when the content model is ARMED (STORE_ROW_CITATION_ENABLED
+    // on) the reasoning editor's (NEXUS) articles land UNPUBLISHED for human review
+    // instead of auto-publishing. held = is_published=false + gate_status='clear' (the
+    // admin-drafts DRAFT state: shown in GET /api/admin/drafts, published ONLY via POST
+    // /api/admin/drafts/approve; NOT gate_status='held', which auto-releases). Overrides
+    // the gate-driven values above. Flag OFF -> heldForReview false -> no override ->
+    // byte-identical. See lib/content/heldForReview.js.
+    var heldForReview = heldForReviewApplies(editorName, storeRowCitationEnabled());
+    if (heldForReview) {
+      var hp = heldPublishState();
+      insertData.is_published = hp.is_published;
+      insertData.gate_status = hp.gate_status;
+    }
+
     if (editorName === 'CIPHER') {
       insertData.source = 'INTEL';
       insertData.ce_score = result.ce_score || 0;
@@ -926,7 +941,10 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // are audit and the article already exists.
     await finalizeKeywordMatch(supabase, framing, feedItem ? feedItem.id : null);
 
-    if (feedItem) {
+    // A HELD-FOR-REVIEW article is unpublished + awaiting human approval: do NOT
+    // generate comments and do NOT broadcast it to Discord -- both would surface an
+    // article no one has approved yet. They run only for the normal (published) path.
+    if (feedItem && !heldForReview) {
       generateArticleComments(
         { id: feedItem.id, headline: feedItem.headline, body: feedItem.body, directive_type: insertData.directive_type || 'standard' },
         editorName,
@@ -937,11 +955,16 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       });
     }
 
-    if (feedItem) {
+    if (feedItem && !heldForReview) {
       if (editorName === 'MIRANDA') {
         notifyIntelFeed(feedItem, editorName).catch(function(e) { console.log('[DISCORD] intel notify error: ' + e.message); });
       }
       notifyRankedIntel(feedItem, editorName).catch(function(e) { console.log('[DISCORD] ranked notify error: ' + e.message); });
+    }
+
+    if (heldForReview && feedItem) {
+      console.log('[HELD-FOR-REVIEW] ' + editorName + ' feed_item ' + feedItem.id + ' "' + result.headline +
+        '" -> is_published=false, gate_status=clear (admin-drafts DRAFT; approve at POST /api/admin/drafts/approve) -- comments + Discord suppressed, NOT auto-released');
     }
 
     return {
@@ -951,6 +974,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       has_thumbnail: !!media.thumbnail,
       thumbnail: media.thumbnail,
       id: feedItem ? feedItem.id : null,
+      heldForReview: !!heldForReview,
     };
 
   } catch (err) {

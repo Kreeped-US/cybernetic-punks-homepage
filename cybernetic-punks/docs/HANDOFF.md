@@ -20,8 +20,9 @@ cited verified block), release the JUDGMENT (the recommendation). Build order: (
 the reasoning capability IS the launch-critical differentiator; do NOT publish decent-general content
 in the meantime. The content model arms as a WHOLE (after step 3), not piece-by-piece.
 
-STATUS: steps 1 + 2 + 3 BUILT, PROVEN, STAGED OFF, MERGED, PUSHED. Step 4 (publish) not started -- the
-LAST step.
+STATUS: steps 1 + 2 + 3 + 4 ALL BUILT, PROVEN, STAGED OFF, MERGED. The content model is COMPLETE (all
+four capability steps in code, inert behind the flag). Step 4 (held-for-review) both-verified (write-
+free + a real held-insert end-to-end, then cleaned up). NEXT = ARM (see THE NEXT MOVE).
 - Step 1 (store-row citation): editor cites verified store rows. Proven on the Sentinel dry-run
   (verified_source null -> 7 cited store rows).
 - Step 2 (store adjacency): editor reasons across the shell<->core neighborhood + cites the cores a
@@ -70,18 +71,21 @@ rarity -- with data). NOT armed; the roster freeze is still the brake. Next: wat
 
 ### THE NEXT MOVE (unambiguous)
 
-BUILD STEP 4 (publish) -- the LAST content-model step. Once it lands, the whole model arms together
-(flip STORE_ROW_CITATION_ENABLED to true). Step 4 = candidate-driven generation actually publishes,
-and it must land articles HELD-FOR-REVIEW first (unpublished draft, human-approved), not auto-publish.
-IMPORTANT: the held-for-review mechanism does NOT exist in code -- it was built on the 2-arm branch
-(now DELETED). There is NO insertGeneratedItem and NO isPublished param; the feed_items insert is
-INLINE in processEditor (app/api/cron/route.js) with is_published = gateDecision.is_published. So step 4
-REBUILDS the small wiring from the RECORDED design (see "Implementation note: the held-for-review
-mechanism" in docs/VERIFIED_GROUNDED_REASONING.md): held = is_published=false + gate_status='clear' =
-the admin-drafts DRAFT state (shown in GET /api/admin/drafts, published only via POST
-/api/admin/drafts/approve; NOT gate_status='held', which auto-releases). Also rebuild the queue-driven
-assignment wiring (feed a passing candidate into callEditor). Do it LOG-ONLY / held-for-review first,
-same discipline as every prior step.
+ARM the content model. The four capability steps are built + staged OFF behind STORE_ROW_CITATION_
+ENABLED (unset on Vercel). To arm: set STORE_ROW_CITATION_ENABLED=true in the Vercel Production env
+when ready. That flips ON, together: store-row citation (step 1) + store adjacency (step 2) + gate
+premise-validation (step 3, LOG-ONLY on Marathon -- observed, never holds) + held-for-review (step 4).
+Effect: the first reasoned/cited NEXUS article (next PATCH cycle -- the roster freeze still gates
+cadence) lands as a DRAFT (is_published=false, gate_status='clear') in the admin drafts panel for you
+to APPROVE (POST /api/admin/drafts/approve), NOT auto-published. Review the first few, then decide
+whether to keep held-for-review or narrow it. Arming is a Vercel env change + a redeploy -- no code
+change needed. Recommended: watch one armed patch cycle's [gate]/[HELD-FOR-REVIEW] logs before trusting
+it broadly.
+
+DEFERRED (post-arm, as scoped -- none blocks arming): queue-driven assignment (rebuild -- feed a
+passing candidate into callEditor instead of NEXUS self-select); the ~19-row core-provenance populate
+(display quality); the mod<->weapon data build (unmodeled adjacency); the recommendations-only held
+narrowing (auto-publish non-recommendation NEXUS articles once the review flow is trusted).
 
 ### GIT STATE
 
@@ -287,6 +291,45 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
   launch-critical identity item. THIN but substrate-shaped (saved_source_version). DDL applied +
   verified private (RLS on, anon reads 0) -- see docs/dmz/MIGRATIONS.md.
+
+---
+
+## 2026-08-11 - STEP 4 held-for-review wiring built + STAGED OFF (HELD) - both verifies passed
+
+Build-order STEP 4 (the LAST content-model step) of docs/VERIFIED_GROUNDED_REASONING.md. Rebuilt the
+held-for-review wiring from the RECORDED design (the 2-arm code was deleted; NO insertGeneratedItem /
+isPublished existed -- built fresh). ARMS the content model on NEXUS's existing self-select path: when
+STORE_ROW_CITATION_ENABLED is ON, NEXUS articles generate HELD-FOR-REVIEW (unpublished draft, human-
+approved) instead of auto-publishing. Same flag, per-call gated -> live NEXUS byte-identical when OFF.
+NO queue-driven assignment (deferred). Built on a clean branch off main 3ebb2bd. BOTH verifies passed.
+
+- **lib/content/heldForReview.js (pure, node-testable):** heldForReviewApplies(editorName, flagOn) =
+  flagOn && editorName==='NEXUS' (HELD_EDITORS=['NEXUS'], the only active producer; recommendations-only
+  narrowing deferred); heldPublishState() = {is_published:false, gate_status:'clear'}.
+- **processEditor (route.js):** after insertData is assembled, if heldForReviewApplies -> override
+  is_published=false + gate_status='clear' (the admin-drafts DRAFT state, NOT 'held' which auto-
+  releases); SUPPRESS comment-generation + Discord notify; log [HELD-FOR-REVIEW]; return heldForReview.
+  Flag OFF -> no override, comments/notify normal -> byte-identical (re-ground confirmed NO drift: the
+  admin drafts list .eq(is_published,false).neq(gate_status,'held'), the approve route flips false->
+  true, releaseHeld scans gate_status='held' only).
+
+VERIFY A (WRITE-FREE, the dry-run): flag on + NEXUS -> heldForReviewApplies true -> insertData would be
+is_published=false, gate_status='clear', comments/Discord SUPPRESSED. (Full chain still works: cited
+store rows, verified_source non-null, 2 recommendations both resolving.) No DB write.
+VERIFY B (REAL held-insert end-to-end, then cleaned up -- test row id f31ca230... now DELETED): inserted
+one held row (is_published=false, gate_status='clear') -> (i) APPEARS in admin drafts
+(is_published=false AND gate_status!='held'); (ii) NOT live (is_published=false); (iii) NOT auto-
+released (gate_status='clear' is not in releaseHeld's gate_status='held' scan); (iv) approve UPDATE
+flipped is_published=true. Full loop confirmed, then the test row deleted.
+
+Gates: 38 unit tests (heldForReviewApplies off->false / on+NEXUS->true / on+other->false; heldPublish
+State gate_status never 'held'; the override shape), ESLint clean, build clean, byte-clean. HELD for review.
+
+CONTENT MODEL COMPLETE (steps 1-4 built; 1-3 merged/pushed, 4 held). ARMING = flip STORE_ROW_CITATION_
+ENABLED=true on Vercel AFTER this merges + you're ready: that turns ON store-citation + adjacency +
+premise-validation (log-only) + held-for-review together, so the first reasoned/cited NEXUS article
+(next patch cycle) lands as a draft for you to approve. DEFERRED: queue-driven assignment (rebuild),
+the ~19-row core-provenance populate, mod<->weapon data build, recommendations-only held narrowing.
 
 ---
 

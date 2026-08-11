@@ -22,6 +22,7 @@ import { createClient } from '@supabase/supabase-js';
 import { callEditor, getStoreRegistry } from '../lib/editorCore.js';
 import { getGameConfig } from '../lib/games/index.js';
 import { buildBlockRegistry, resolveCitedBlocks, validateRecommendations } from '../lib/gather/blockId.js';
+import { heldForReviewApplies, heldPublishState } from '../lib/content/heldForReview.js';
 import { buildCandidateDirective } from '../lib/content/candidateAssignment.js';
 import { runAssignmentGate } from '../lib/content/assignmentGate.js';
 
@@ -107,5 +108,19 @@ console.log('recommendations count: ' + recs.length);
 recs.forEach((r, i) => console.log('  [' + (i + 1) + '] premises=' + JSON.stringify(r.supporting_block_ids) + '  "' + (r.claim_text || '').slice(0, 90) + '"'));
 console.log('recommendation_findings (UNSUPPORTED-RECOMMENDATION): ' + JSON.stringify(recFindings) +
   (recFindings.length === 0 ? '  <-- ALL premises resolve (verified=true; provenance-null passes)' : '  <-- log-only on Marathon (never holds)'));
+// STEP 4 (write-free): the held-for-review override that processEditor WOULD apply to
+// insertData for this article (NEXUS + flag on), shown WITHOUT any DB write.
+const flagOn = process.env.STORE_ROW_CITATION_ENABLED === 'true';
+const held = heldForReviewApplies('NEXUS', flagOn);
+console.log('\n-- STEP 4: HELD-FOR-REVIEW (the insertData that WOULD be written; no DB write) --');
+console.log('flag on            : ' + flagOn + '  |  editor: NEXUS  |  heldForReviewApplies: ' + held);
+if (held) {
+  const hp = heldPublishState();
+  console.log('insertData override: is_published=' + hp.is_published + ', gate_status=' + JSON.stringify(hp.gate_status) + '  (DRAFT -- admin-drafts, human approve; NOT auto-released)');
+  console.log('comments + Discord : SUPPRESSED (nothing surfaces before approval)');
+} else {
+  console.log('insertData         : is_published=<gate-driven> gate_status=<gate-driven>  (byte-identical to today)');
+}
+
 console.log('\ncaptured to: scripts/out/dry-run-' + safe + '.json');
 console.log('\n[DRY-RUN COMPLETE] No feed_items.insert; no processEditor write; no feed_item; live feed + NEXUS untouched.');
