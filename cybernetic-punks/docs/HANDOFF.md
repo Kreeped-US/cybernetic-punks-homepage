@@ -294,6 +294,48 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-11 - ADMIN directives list filtered to pending+recent + count summary (HELD) - cosmetic, no deletion
+
+Branch `fix/admin-directives-filtered-view` off main 5f7c58b. First admin-modernization increment.
+COSMETIC VIEW-ONLY change to `app/admin/page.js` (the single admin page). No schema change, NO row
+deletion, NO change to how generation reads the queue.
+
+WHAT / WHY: the DIRECTIVES tab (default landing tab) rendered EVERY `editor_directives` row via the
+unfiltered `GET /api/admin?table=editor_directives` (select *, order created_at, no filters) -- a wall
+of stale fully-consumed rows (live: 23 rows, all consumed, newest 2026-07-06). Turned it into a
+monitoring readout: default view now shows active + recent only; full history one click away.
+
+THE CHANGE (client-side derived state + render only):
+- Default view keeps every NON-consumed directive (the live queue) PLUS anything consumed within the
+  last RECENT_DIRECTIVE_DAYS (14). Predicate: `r.status !== 'consumed' || isRecentDirective(r)`. Applied
+  to a new `displayed` array; `filtered` (search/faction/runner) is unchanged and feeds into it.
+- Summary chip: `<pending> PENDING . <consumedRecent> CONSUMED (14D) . <total> TOTAL`, computed from
+  the full `rows` set (always truthful regardless of view).
+- SHOW ALL / SHOW ACTIVE toggle (`showAllDirectives`, default false) -- reveals full history; only
+  rendered when there are hidden rows. Nothing deleted; the rows stay in the table.
+- Empty-state copy when the default view is empty but history exists: "NO ACTIVE OR RECENT DIRECTIVES
+  -- USE SHOW ALL FOR HISTORY".
+
+SAFETY (confirmed before building): editor_directives QUEUE rows only -- NOT feed_items/articles (the
+directives tab never touches feed_items; no directive_id FK from feed_items). Display is READ-ONLY;
+the cron reads editor_directives directly, not this component. Filtering the VIEW is purely cosmetic,
+zero functional impact on generation or published content.
+
+VERIFY: (1) lint parity -- main's page.js and the branch both report the identical 4 problems (2 pre-
+existing errors + 2 warnings); ZERO new issues. (2) no forbidden chars (em-dash/smart-quotes) in added
+lines; `--` and `.` used. (3) dev server: /admin compiles + mounts (auth gate renders), zero console
+errors. (4) BEHAVIORAL proof of the predicate against live data (now 2026-08-11, cutoff 2026-07-28):
+default view shows 0/23 (all 23 stale consumed hidden), 0 non-consumed ever hidden, a simulated OLD
+pending row (2026-06-01) SURVIVES the default view (pending never hidden by age), SHOW ALL shows 23/23.
+
+NOTE (data discrepancy, carried from the scoping report): live DB shows 23 consumed + 0 pending, not
+the "74 consumed + 1 pending" in the brief. The filter is correct regardless -- IF/when a pending
+directive exists it stays visible (proven by simulation). No pending DMZ row is present to bury today.
+
+STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+
+---
+
 ## 2026-08-11 - STEP 4 held-for-review wiring built + STAGED OFF (HELD) - both verifies passed
 
 Build-order STEP 4 (the LAST content-model step) of docs/VERIFIED_GROUNDED_REASONING.md. Rebuilt the

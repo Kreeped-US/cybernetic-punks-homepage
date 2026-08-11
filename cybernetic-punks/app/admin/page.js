@@ -574,6 +574,9 @@ export default function AdminPage() {
   const [search, setSearch]               = useState('');
   const [filterFaction, setFilterFaction] = useState('');
   const [filterRunner, setFilterRunner]   = useState('');
+  // DIRECTIVES view toggle: default false = show active + recent only (hide the
+  // wall of old consumed rows). Cosmetic only -- the rows stay in the table.
+  const [showAllDirectives, setShowAllDirectives] = useState(false);
   const [stickyValues, setStickyValues]   = useState({});
   // Bumped after any keyword_targets write (add/edit/delete). GscReviewPanel reads this as
   // refreshKey and re-fetches, so an accepted candidate leaves the review list the moment its
@@ -767,6 +770,28 @@ export default function AdminPage() {
       || r.shell_name === filterRunner;
     return matchSearch && matchFaction && matchRunner;
   });
+
+  // DIRECTIVES VIEW FILTER + SUMMARY (cosmetic; touches neither the table nor the
+  // generation path -- the cron reads editor_directives directly, not this display).
+  // Default view keeps every non-consumed directive (the live queue) plus anything
+  // consumed within the last RECENT_DIRECTIVE_DAYS, so the stale consumed backlog
+  // drops out of view while nothing active is ever hidden. "Show all" reveals the
+  // full history; no row is deleted.
+  var RECENT_DIRECTIVE_DAYS = 14;
+  var directiveRecentCutoff = Date.now() - RECENT_DIRECTIVE_DAYS * 86400000;
+  function isRecentDirective(r) {
+    var t = r.created_at ? new Date(r.created_at).getTime() : NaN;
+    return !isNaN(t) && t >= directiveRecentCutoff;
+  }
+  var directiveSummary = isDirectives ? {
+    pending: rows.filter(function (r) { return r.status !== 'consumed'; }).length,
+    consumedRecent: rows.filter(function (r) { return r.status === 'consumed' && isRecentDirective(r); }).length,
+    total: rows.length,
+  } : null;
+  var displayed = filtered;
+  if (isDirectives && !showAllDirectives) {
+    displayed = filtered.filter(function (r) { return r.status !== 'consumed' || isRecentDirective(r); });
+  }
 
   if (!authed) {
     return (
@@ -1101,9 +1126,16 @@ export default function AdminPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700, color: activeTabConfig?.color }}>{activeTabConfig?.label}</div>
-            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted }}>{filtered.length} / {rows.length} ROWS</div>
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: S.muted }}>{displayed.length} / {rows.length} ROWS</div>
             {isDirectives && pendingCount > 0 && (
               <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#ff2d55', background: 'rgba(255,45,85,0.1)', border: '1px solid rgba(255,45,85,0.3)', borderRadius: 3, padding: '2px 8px', letterSpacing: 1 }}>{pendingCount} PENDING</div>
+            )}
+            {isDirectives && directiveSummary && (
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: S.muted, letterSpacing: 1 }}>
+                <span style={{ color: '#ff2d55' }}>{directiveSummary.pending}</span> PENDING
+                {' · '}<span style={{ color: '#00ff88' }}>{directiveSummary.consumedRecent}</span> CONSUMED (14D)
+                {' · '}<span style={{ color: 'rgba(255,255,255,0.6)' }}>{directiveSummary.total}</span> TOTAL
+              </div>
             )}
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1120,6 +1152,9 @@ export default function AdminPage() {
                 <option value="Universal">Universal</option>
                 {SHELL_NAMES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
+            )}
+            {isDirectives && directiveSummary && directiveSummary.total > directiveSummary.pending + directiveSummary.consumedRecent && (
+              <button onClick={() => setShowAllDirectives(v => !v)} style={{ padding: '8px 14px', background: showAllDirectives ? 'rgba(255,45,85,0.12)' : 'transparent', border: '1px solid ' + (showAllDirectives ? '#ff2d55' : S.border), borderRadius: 4, color: showAllDirectives ? '#ff2d55' : S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1, whiteSpace: 'nowrap' }}>{showAllDirectives ? 'SHOW ACTIVE' : 'SHOW ALL'}</button>
             )}
             <button onClick={() => loadTable(activeTab)} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid ' + S.border, borderRadius: 4, color: S.muted, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer' }}>REFRESH</button>
             <button onClick={startAdd} style={{ padding: '8px 18px', background: activeTabConfig?.color, border: 'none', borderRadius: 4, color: isDirectives ? '#fff' : '#000', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -1161,13 +1196,13 @@ export default function AdminPage() {
 
         {loading ? (
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>LOADING...</div>
-        ) : filtered.length === 0 ? (
+        ) : displayed.length === 0 ? (
           <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: S.muted, letterSpacing: 2, padding: '60px 0', textAlign: 'center' }}>
-            {isFactionTab ? 'NO DATA YET -- ADD YOUR FIRST ROW ABOVE' : isDirectives ? 'NO DIRECTIVES QUEUED' : isWorldTab ? 'NO ROWS YET -- ADD ABOVE' : 'NO ROWS FOUND'}
+            {isFactionTab ? 'NO DATA YET -- ADD YOUR FIRST ROW ABOVE' : isDirectives ? (rows.length > 0 && !showAllDirectives ? 'NO ACTIVE OR RECENT DIRECTIVES -- USE SHOW ALL FOR HISTORY' : 'NO DIRECTIVES QUEUED') : isWorldTab ? 'NO ROWS YET -- ADD ABOVE' : 'NO ROWS FOUND'}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {filtered.map(row => {
+            {displayed.map(row => {
               var rowAccent = isDirectives
                 ? (row.status === 'pending' ? '#ff2d55' : '#00ff88')
                 : isFactionTab
