@@ -317,6 +317,44 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-11 - SITE-USAGE section: real-signal tiles + capped-window fix (HELD)
+
+Branch `fix/site-usage-real-signal` off main 92d4315. The admin "SITE USAGE - PER GAME" panel
+(components/UsageStats.js + /api/admin/stats) led with 4 near-dead action tiles and undercounted them.
+Audit (exact counts, Marathon): page_view 3,771 (+159% WoW), meta_view 252, advisor_generate 34,
+advisor_share 7, tierlist_share 6 -- i.e. passive page-views are ~all the engagement; on-site actions
+are near-nil (honest pre-launch).
+
+TWO fixes:
+1. CAPPED-WINDOW BUG (accuracy): /api/admin/stats built its totals from loadEvents() whose .limit(5000)
+   is TRUNCATED to 1000 by PostgREST -- so window-derived totals silently undercounted anything older
+   than the last ~1000 events (page_view volume pushes the rest out). The panel was showing 0/0/4/0 for
+   metrics whose true values are 34/7/252/6. FIX: added `out[g].counts` + `out[g].pageViews` computed
+   with EXACT count() queries per game (same discipline as the Bridge). `exactCount` RETRIES once then
+   THROWS on a persistent error -- never swallows to 0 (a silent 0 would make the headline tile lie;
+   the heavy Marathon count intermittently blips, so this matters).
+2. TILE SET (honesty): the section now LEADS with PAGE VIEWS (from page_view -- the one signal with
+   real volume + movement), per game, with a WoW arrow. The near-dead action metrics fold into ONE
+   secondary "ACTIVITY (LOW)" line (meta page-loads / builds generated / builds shared / tier-list
+   shares) -- visible for honesty, not headline tiles.
+
+DECISION NOTE (brief said "relabel meta_view -> Page Views"): meta_view is NOT the page-views signal
+-- it counts ONLY /meta page loads (252, raw mounts), vs page_view (3,771, all pages, session-
+debounced, +159% WoW). Relabeling meta_view "Page Views" would be a fresh mislabel, so the primary
+reads from page_view; meta_view stays visible as the secondary "meta page-loads". (User did not answer
+the fork question; built the recommended page_view version, flagged for review.)
+
+PER-GAME intact: Marathon PAGE VIEWS 3,771 (+159%, 1,267 this week); DMZ 20 (1 this week) -- DMZ climbs
+from ~zero as it gets traffic. topShells/topPlaystyles/articleViews left as-is (secondary, out of scope).
+
+VERIFY: eslint clean; next build OK; exact-count logic replicated against live data -> the panel now
+shows true per-game values (was 0/0/4/0, now 3,771 + accurate activity line). Authed render not
+clicked through (admin password never entered); verified by build + route-logic replication + review.
+
+STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+
+---
+
 ## 2026-08-11 - CITE-DISCIPLINE + RENDER TAG-STRIP (HELD) - hardening BEFORE arming the content model
 
 Branch `fix/cite-discipline-and-tag-strip` off main 4150e45. Two hardening fixes requested after the

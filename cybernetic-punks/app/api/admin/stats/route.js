@@ -120,6 +120,42 @@ export async function GET(req) {
       };
     });
 
+    // ── EXACT per-game headline counts (fixes the capped-window undercount) ──────
+    // The event buckets above are built from loadEvents(), whose .limit(5000) is
+    // TRUNCATED to 1000 by PostgREST -- so window-derived totals silently undercount
+    // any event older than the most-recent ~1000 rows (page_view volume pushes the
+    // rest out). These count() queries are the TRUE totals regardless of table size
+    // (same discipline the Bridge uses). Powers the honest "Site Usage" tiles:
+    // Page Views (the one signal with volume) + a secondary low-activity line.
+    // Retry once, then THROW on a persistent error -- never swallow to 0. A silent 0
+    // on a transient count error would make the headline "Page Views" tile lie (show
+    // 0 when the true value is thousands); a thrown error surfaces as the panel's
+    // error state instead, which is honest. A real 0 (no error, count 0) passes through.
+    async function exactCount(eventName, gameSlug, sinceISO, untilISO) {
+      for (var attempt = 1; attempt <= 2; attempt++) {
+        var q = supabase.from('site_events').select('*', { count: 'exact', head: true })
+          .eq('event_name', eventName).eq('game_slug', gameSlug);
+        if (sinceISO) q = q.gte('created_at', sinceISO);
+        if (untilISO) q = q.lt('created_at', untilISO);
+        var res = await q;
+        if (!res.error) return res.count || 0;
+        if (attempt === 2) throw new Error('site_events count(' + eventName + '/' + gameSlug + '): ' + res.error.message);
+      }
+    }
+    var HEADLINE_EVENTS = ['page_view', 'meta_view', 'advisor_generate', 'advisor_share', 'tierlist_share'];
+    for (var gi = 0; gi < games.length; gi++) {
+      var gs = games[gi];
+      if (!out[gs]) continue;
+      var counts = {};
+      for (var ei = 0; ei < HEADLINE_EVENTS.length; ei++) {
+        counts[HEADLINE_EVENTS[ei]] = await exactCount(HEADLINE_EVENTS[ei], gs);
+      }
+      var pv7 = await exactCount('page_view', gs, new Date(now - week).toISOString());
+      var pvPrev7 = await exactCount('page_view', gs, new Date(now - 2 * week).toISOString(), new Date(now - week).toISOString());
+      out[gs].counts = counts;
+      out[gs].pageViews = { total: counts.page_view, last7d: pv7, prev7d: pvPrev7 };
+    }
+
     var recent = rows.slice(0, 20).map(function (r) {
       return { event_name: r.event_name, event_data: r.event_data, created_at: r.created_at, game_slug: r.game_slug };
     });

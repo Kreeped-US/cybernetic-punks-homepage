@@ -96,15 +96,20 @@ export default function UsageStats({ password }) {
 
       {games.map(function (game) {
         var g = byGame[game] || { events: {}, topShells: [], topPlaystyles: [] };
-        var ev = g.events || {};
-        var advisorTotal = (ev.advisor_generate && ev.advisor_generate.total) || 0;
-        var advisorToday = (ev.advisor_generate && ev.advisor_generate.last24h) || 0;
-        var advisorWeek = (ev.advisor_generate && ev.advisor_generate.last7d) || 0;
-        var shareTotal = (ev.advisor_share && ev.advisor_share.total) || 0;
-        var metaTotal = (ev.meta_view && ev.meta_view.total) || 0;
-        var tierShare = (ev.tierlist_share && ev.tierlist_share.total) || 0;
+        // EXACT counts (route computes these with count() -- true totals, not the
+        // capped-window sample). page_view is the one signal with real volume, so it
+        // leads; meta_view + the near-dead action events fold into a secondary line.
+        var c = g.counts || {};
+        var pv = g.pageViews || { total: 0, last7d: 0, prev7d: 0 };
+        var metaLoads = c.meta_view || 0;
+        var buildsGen = c.advisor_generate || 0;
+        var buildsShared = c.advisor_share || 0;
+        var tierShares = c.tierlist_share || 0;
+        var pvTrend = (pv.prev7d && pv.prev7d > 0)
+          ? { up: pv.last7d >= pv.prev7d, pct: Math.abs(Math.round(((pv.last7d - pv.prev7d) / pv.prev7d) * 100)) }
+          : null;
         var accent = GAME_ACCENT[game] || '#8b95a7';
-        var isEmpty = advisorTotal === 0 && shareTotal === 0 && metaTotal === 0 && tierShare === 0;
+        var isEmpty = (pv.total || 0) === 0 && metaLoads === 0;
 
         return (
           <div key={game} style={{ marginBottom: 26 }}>
@@ -116,22 +121,33 @@ export default function UsageStats({ password }) {
               {isEmpty && <span style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>NO EVENTS YET</span>}
             </div>
 
-            {/* Top-line stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8, marginBottom: 14 }}>
-              {[
-                { val: advisorTotal, label: 'BUILDS GENERATED', color: '#ff8800', sub: advisorToday + ' TODAY · ' + advisorWeek + ' THIS WEEK' },
-                { val: shareTotal, label: 'BUILDS SHARED', color: '#ff8800', sub: 'CARDS DOWNLOADED' },
-                { val: metaTotal, label: 'META VIEWS', color: '#00f5ff', sub: 'TIER LIST LOADS' },
-                { val: tierShare, label: 'TIER LIST SHARED', color: '#00f5ff', sub: 'SHARE ACTIONS' },
-              ].map(function (stat, i) {
-                return (
-                  <div key={i} style={{ background: '#0a0a0a', border: '1px solid ' + stat.color + '20', borderTop: '2px solid ' + stat.color + '66', borderRadius: 6, padding: '12px 14px' }}>
-                    <div style={{ fontFamily: heading, fontSize: 20, fontWeight: 900, color: stat.color, lineHeight: 1, marginBottom: 4 }}>{stat.val.toLocaleString()}</div>
-                    <div style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 4 }}>{stat.label}</div>
-                    <div style={{ fontFamily: mono, fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: 1 }}>{stat.sub}</div>
-                  </div>
-                );
-              })}
+            {/* PRIMARY: page views -- the one signal with real volume (passive page
+                loads, session-debounced). Leads the section. */}
+            <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 240px', minWidth: 220, background: '#0a0a0a', border: '1px solid #00f5ff22', borderTop: '2px solid #00f5ff66', borderRadius: 6, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <div style={{ fontFamily: heading, fontSize: 26, fontWeight: 900, color: '#00f5ff', lineHeight: 1 }}>{(pv.total || 0).toLocaleString()}</div>
+                  {pvTrend && (
+                    <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 700, color: pvTrend.up ? '#00ff88' : '#ff5470' }}>
+                      {pvTrend.up ? '↑' : '↓'} {pvTrend.pct}%
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: 2, marginTop: 6 }}>PAGE VIEWS</div>
+                <div style={{ fontFamily: mono, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, marginTop: 3 }}>
+                  {(pv.last7d || 0).toLocaleString()} THIS WEEK · PASSIVE PAGE LOADS
+                </div>
+              </div>
+            </div>
+
+            {/* SECONDARY: on-page + on-site actions. Kept visible for honesty but
+                clearly not headline -- these are near-nil pre-launch. */}
+            <div style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, lineHeight: 1.6, marginBottom: 14 }}>
+              <span style={{ color: 'rgba(255,255,255,0.2)' }}>ACTIVITY (LOW) &middot; </span>
+              meta page-loads <span style={{ color: 'rgba(255,255,255,0.55)' }}>{metaLoads.toLocaleString()}</span>
+              {' · '}builds generated <span style={{ color: 'rgba(255,255,255,0.55)' }}>{buildsGen.toLocaleString()}</span>
+              {' · '}builds shared <span style={{ color: 'rgba(255,255,255,0.55)' }}>{buildsShared.toLocaleString()}</span>
+              {' · '}tier-list shares <span style={{ color: 'rgba(255,255,255,0.55)' }}>{tierShares.toLocaleString()}</span>
             </div>
 
             {/* Top shells (per game) */}
