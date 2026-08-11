@@ -43,6 +43,14 @@ MECHANISM FINDING (recorded, reusable): the citation lever is the TOOL-SCHEMA fi
 the system prompt (reverting the schema stopped citation entirely even with the prompt note present).
 Steps 3+ extend tool-schema field descriptions, gated per-call, to keep staged-OFF byte-identical.
 
+### ADMIN BRIDGE (2026-08-11 session -- separate from the content model; does NOT change the next move)
+
+The admin panel was modernized into a one-stop "Bridge" (shell + dashboard home + nav consolidation).
+DONE + MERGED + PUSHED (f1b34e2). Admin-facing only; public routes byte-identical; the content-model
+flag was untouched. See the dated "ADMIN PANEL MODERNIZED INTO A 'BRIDGE'" entry below for the arc.
+This did NOT touch the content model -- THE NEXT MOVE is still ARM (below), now with a real admin home
+(the Bridge) to watch drafts + vitals from once armed.
+
 ### ASSIGNMENT GATE (separate track, from this morning)
 
 BUILT + empirically validated + LOG-ONLY, observing. Substance floor (verified-existence gate) +
@@ -137,6 +145,21 @@ remain.
 
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
+
+- **ADMIN BRIDGE v2 signals (2026-08-11) - turn the bridge from "shows the gist" into "warns when
+  something is wrong."** The v1 Bridge (merged f1b34e2) shows drafts/directives + discovery/engagement
+  vitals; these three add ALARMS. None blocks anything.
+  - CRON HEARTBEAT signal ("is generation running / when did it last succeed") -> a real NEEDS-ATTENTION
+    alarm. The data exists: `cron_runs` has one row per run (route/kind/status/articles_published/
+    started_at, via lib/cronRunLog.js). v1 deliberately did NOT wire it (noted as a placeholder in
+    app/admin/page.js). External dead-cron watchdog is a further step (a cron cannot write its own
+    "I did not run" row).
+  - DAILY VIEW-SNAPSHOT -> on-site view WoW trend ("climbing this week"). site_events are timestamped so
+    a rolling 7d-vs-prior-7d IS computable live today (the Bridge already does this for views); a small
+    daily snapshot table would make long-range view trends cheap without scanning raw events.
+  - INDEXATION-DELTA signal ("did pages fall out of the index") -> a discovery-health alarm. Needs the
+    GSC Index-Coverage / URL-Inspection API (NOT pulled today); gsc_page_metrics only holds pages that
+    already received impressions, so distinct-page count is a proxy, not true indexation.
 
 - **VERIFIED-GROUNDED REASONING = the editor content model (2026-08-10, Fable-ruled) - LAUNCH-CRITICAL.**
   See docs/VERIFIED_GROUNDED_REASONING.md. The editor may assert any JUDGMENT it can build a verified
@@ -294,6 +317,51 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-11 - ADMIN PANEL MODERNIZED INTO A "BRIDGE" (session arc; DONE + MERGED + PUSHED f1b34e2)
+
+The admin panel was a single sprawling CRUD page with no shared shell and the public site chrome
+bleeding onto it. Reframed as a one-stop "steer the ship" Bridge. Three merged increments (this is the
+arc summary; the granular per-increment entries are below):
+
+- **Directives list (5bf3303):** filtered to pending + recent (14d) + a count summary + a "show all"
+  toggle. Cosmetic VIEW filter only -- no rows deleted, generation untouched (the cron reads
+  editor_directives directly, not this display).
+- **Nav consolidation (f1b34e2): 1 admin nav, from the layout.** The public `<Nav/>` + `<LivePulseStrip/>`
+  (rendered site-wide by root app/layout.js) now RETURN NULL on /admin + /admin/* via a precise
+  path-segment guard (public routes byte-identical, no flash -- both were ALREADY client components
+  using usePathname; only the boolean was extended). The admin shell nav (app/admin/layout.js, driven
+  by ADMIN_NAV in adminShell.js) is now the ONE nav on every admin page.
+- **The Bridge (app/admin/page.js, the admin home) (3356ca2 + f1b34e2):** three sections --
+  NEEDS ATTENTION (drafts-waiting + pending-directive-age; actionable, linked, conditional; "all clear"
+  when empty); SHIP VITALS (per-game toggle Marathon/DMZ/All: DISCOVERY = GSC impressions/clicks/avg-
+  position WoW from a single gsc_page_metrics query; ENGAGEMENT = views/actions/articles-published from
+  site_events + feed_items); GO TO (launcher grid to every admin surface). Shared shell = adminShell.js
+  + layout.js with sessionStorage-persisted auth (mechanism unchanged: password -> x-admin-password ->
+  ADMIN_PASSWORD, real gate + lockout stays server-side). The CRUD editor MOVED to
+  app/admin/content/page.js (git mv; /admin is now the Bridge).
+
+RECORD CORRECTIONS (re-verified against the repo this session; earlier briefs asserted otherwise --
+recorded so a future session does NOT design against these phantoms):
+- **No `site_stats` table exists** (confirmed 3x). The one "exists" reading was a PostgREST HEAD-request
+  artifact (null count, no body); a real SELECT errors "Could not find table public.site_stats", and
+  ZERO code writes it. The Bridge reads engagement LIVE from site_events + feed_items (cheap exact-count
+  windows) and discovery from a single gsc_page_metrics query -- NO aggregation table, NO rebuilt
+  aggregation.
+- **`/api/cron/stats` writes `live_stats`, NOT `site_stats`.** Every 15 min it polls Steam player count
+  + Twitch viewers/streams and upserts TWO rows in `live_stats` (source='steam'/'twitch'). It computes
+  no rollups, no per-game, no time-buckets -- it is a live-pulse, not an analytics store. (Any earlier
+  note implying cron/stats produces site_stats rollups is wrong.)
+- **There was no `AdminNav` component and there were not "10 admin pages."** grep -rln AdminNav -> nothing;
+  the only Nav is components/Nav.js (the PUBLIC site nav). Main had exactly ONE admin page
+  (app/admin/page.js); this session split it into two (/admin Bridge + /admin/content CRUD). The "one
+  admin nav" is the NEW layout's shared nav -- there was no pre-existing admin nav to adopt, and no
+  in-page admin-nav instances to remove.
+
+v2 admin-bridge follow-ons (turn "shows the gist" -> "warns when wrong") are in PENDING/BACKLOG: cron
+heartbeat alarm (cron_runs), daily view-snapshot for long-range view WoW, GSC indexation-delta alarm.
+
+---
+
 ## 2026-08-11 - ADMIN BRIDGE v1: shell + dashboard home (HELD) - needs-attention + ship-vitals + nav
 
 Branch `feat/admin-bridge-v1` off main 5bf3303. The admin-modernization centrepiece: a shared shell
@@ -363,7 +431,7 @@ v2 (NOTED, NOT built): cron heartbeat tile from `cron_runs` ("daily generation l
 daily view-snapshot table for long-range view trends; true GSC indexation-coverage delta; optionally
 scheduling the manual GSC pull; suppressing the public Nav on /admin.
 
-STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+STATUS: MERGED to main + pushed (part of f1b34e2; see the session-arc entry above). [historical: was HELD for review at time of writing.]
 
 ---
 
@@ -405,7 +473,7 @@ NOTE (data discrepancy, carried from the scoping report): live DB shows 23 consu
 the "74 consumed + 1 pending" in the brief. The filter is correct regardless -- IF/when a pending
 directive exists it stays visible (proven by simulation). No pending DMZ row is present to bury today.
 
-STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+STATUS: MERGED to main + pushed (part of f1b34e2; see the session-arc entry above). [historical: was HELD for review at time of writing.]
 
 ---
 
