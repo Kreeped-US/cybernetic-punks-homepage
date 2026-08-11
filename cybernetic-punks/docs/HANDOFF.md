@@ -294,6 +294,64 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-11 - ADMIN BRIDGE v1: shell + dashboard home (HELD) - needs-attention + ship-vitals + nav
+
+Branch `feat/admin-bridge-v1` off main 5bf3303. The admin-modernization centrepiece: a shared shell
+wrapping all admin pages + a Bridge home to "steer the ship." Mostly a READ/DISPLAY layer -- surfaces
+existing tables, rebuilds NO aggregation.
+
+NEW FILES:
+- `app/admin/adminShell.js` -- shared primitives: `S`/`FONTS` theme, `ADMIN_NAV` (the one nav-surface
+  list, used by both the shell nav AND the Bridge launcher), and the AUTH context. `AdminAuthProvider`
+  + `useAdminAuth` + `AdminGate`. Auth MECHANISM UNCHANGED (password -> x-admin-password header ->
+  ADMIN_PASSWORD, the real gate + per-IP lockout stays in app/api/admin/route.js); the only change is
+  persistence: one provider instance, validated password cached in sessionStorage so nav between admin
+  pages does not re-prompt (re-validated on mount; a wrong cached value still 401s).
+- `app/admin/layout.js` -- the shell: AuthProvider + AdminGate + a slim sticky top-nav from ADMIN_NAV
+  (+ SIGN OUT, BACK TO SITE). Presentational + auth only; wraps, never replaces a page body.
+- `app/admin/page.js` -- THE BRIDGE (home). 3 sections: (1) NEEDS ATTENTION -- only actionable, linked:
+  drafts-waiting (>0) -> [Review]; each pending directive with age -> [View]; quiet "All clear" if none;
+  warning accent when present. (2) SHIP VITALS, per-game toggle Marathon|DMZ|All: DISCOVERY (GSC
+  impressions/clicks/avg-position, 7d vs prior-7d, up/down arrows; position lower=better inverts colour)
+  + ENGAGEMENT (article views w/ WoW, builds created, articles published -- this week). GSC freshness
+  stamp. (3) GO TO -- launcher grid from ADMIN_NAV.
+- `app/api/admin/bridge/route.js` -- Bridge data (x-admin-password gated). Attention counts + per-game
+  vitals. Per-game split via the `game_slug` column (already write-time computed), NOT a read-time URL
+  parse. GSC sums PAGINATED (PostgREST 1000-row cap would undercount). Engagement = cheap exact-count
+  windows over site_events/feed_items. `gscThrough` = max(date) freshness stamp.
+
+MOVED: `app/admin/page.js` -> `app/admin/content/page.js` (git mv, history preserved) -- the CRUD editor
+is now a sub-route; the Bridge takes /admin. Its auth swapped to `useAdminAuth()` (own gate/login/state
+removed; layout owns them; `const password = auth.password` keeps the 1150-line body untouched). Added
+`?tab=` deep-link support (shell/launcher jump straight to Directives/Keywords). Removed its now-
+redundant "DATA ADMIN" header; tab-bar sticky top 65->49 to sit under the shell nav.
+
+DATA NOTE (brief premise corrected): there is NO `site_stats` table and cron/stats does NOT pre-compute
+rollups -- it only writes live_stats (Steam/Twitch). Confirmed twice ("Could not find table
+public.site_stats"). So the bridge reads engagement LIVE from site_events/feed_items (cheap counts) and
+discovery from gsc_page_metrics. Views WoW IS possible today (events are timestamped -- the earlier
+"totals-only" was a presentation artifact); no snapshot table needed for v1.
+
+AUTH/SHELL NOTE: the public site `<Nav/>` (root app/layout.js) still renders above the admin nav on
+/admin pages -- pre-existing global behaviour, left alone (suppressing it touches a shared component;
+follow-up). No middleware; /admin was never edge-gated.
+
+VERIFY: eslint -- all 4 new files CLEAN (0 errors); content/page.js down from 2 pre-existing errors to
+1 (removed the old `<a href="/">` header; the remaining unescaped-apostrophe is pre-existing, matches
+main). `next build` PASSED -- /admin, /admin/content, /api/admin/bridge all in the manifest. Dev server:
+/admin + /admin/content serve 200 + render the shared gate; bridge API returns 401 without/with-wrong
+password (gating intact); zero app console errors (only HMR-websocket preview noise). The authed
+dashboard render was verified by build + lint + code review, NOT by logging in (admin password is never
+entered).
+
+v2 (NOTED, NOT built): cron heartbeat tile from `cron_runs` ("daily generation last ran Xh ago");
+daily view-snapshot table for long-range view trends; true GSC indexation-coverage delta; optionally
+scheduling the manual GSC pull; suppressing the public Nav on /admin.
+
+STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+
+---
+
 ## 2026-08-11 - ADMIN directives list filtered to pending+recent + count summary (HELD) - cosmetic, no deletion
 
 Branch `fix/admin-directives-filtered-view` off main 5f7c58b. First admin-modernization increment.
