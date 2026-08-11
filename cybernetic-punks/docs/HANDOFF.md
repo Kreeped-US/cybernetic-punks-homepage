@@ -374,7 +374,24 @@ assassin; the deep-link loads /advisor with Assassin present; clicking the CTA f
 (0->1, nav prevented); /advisor mount fires page_view; first config click fires advisor_engaged (1->2,
 once). All three new signals confirmed firing 200 OK through /api/track.
 
-STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+RENDER-SAFETY re-verified before merge (it is on all 1,000 published articles' template): CONTEXTUAL
+shell detection correct across Vandal/Rook/Recon/Sentinel (right shell + slug); GENERIC -> /advisor
+shell=null; NOTHING article renders 0 CTA / 0 empty boxes (clean absence, no layout gap); DMZ null-
+config renders nothing without error; old hardcoded CTA fully gone (0 in intel template); EXACTLY one
+<ToolCTA> per template -> one-or-zero CTA per article, never doubled; no console/runtime errors.
+
+FOLLOW-UPS (noted, not blocking):
+- (a) SHELL DETECTION is substring-based (text.indexOf(shellName)) -> a rare article with a shell name
+  embedded in another word (e.g. "recon" in "reconnaissance", "rook" in "rookie") could mis-detect.
+  Worst case = a slightly-off shell PRE-FILL, never a broken render. One-line word-boundary regex
+  refinement in lib/buildToolCta.js is the fix when desired.
+- (b) DMZ buildToolCta is a NULL STUB (renders nothing today). DMZ LAUNCH-PREP task: fill it in
+  lib/games/dmz.js (entities + href + copy) once DMZ has a real tool (the FOB progression/optimizer,
+  currently unbuilt) + structured weapon/system entities to detect. Config edit only -- no component
+  or template change (the game-agnostic design already routes DMZ articles through <ToolCTA>).
+
+STATUS: MERGED to main (FF), branch deleted. Push pending (user will trigger). Render-safety verified;
+follow-ups (a)/(b) tracked above.
 
 ---
 
