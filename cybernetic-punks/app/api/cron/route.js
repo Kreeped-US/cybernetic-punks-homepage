@@ -5,7 +5,7 @@ import { recordCronRun } from '@/lib/cronRunLog';
 import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
-import { buildBlockRegistry, resolveCitedBlocks, storeRowCitationEnabled } from '@/lib/gather/blockId';
+import { buildBlockRegistry, resolveCitedBlocks, storeRowCitationEnabled, validateRecommendations } from '@/lib/gather/blockId';
 import { getGameConfig } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
@@ -541,6 +541,22 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // row-filter (3a amendment). This block is behavior-identical to the former inline gate -- proven
     // by runGate's deep-equal no-op proof (lib/gsc/runGate.test.mjs).
     var gateDraftObj = { slug: gateDraftSlug, editor: editorName, created_at: new Date().toISOString(), body: result.body, game_slug: PRODUCING_GAME_SLUG };
+
+    // ── MERGED CITATION REGISTRY, built ONCE here (BEFORE the gate) ──────────────
+    // Step 3 needs the registry to validate recommendation premises, and the gate needs
+    // the rec-findings -- so build the registry up here and reuse it at the verified_source
+    // resolve below (identical registry, no rebuild, no change to cited_blocks resolution).
+    // The store-row merge stays flag-gated (step 1); when OFF the registry is just the
+    // [BN]/[YT] blocks and validateRecommendations sees no recommendations field -> [].
+    var vsRegistry = buildBlockRegistry(rawData);
+    if (storeRowCitationEnabled()) {
+      getStoreRegistry(PRODUCING_GAME).forEach(function (v, k) { vsRegistry.set(k, v); });
+    }
+    // STEP 3 (gate premise-validation): each declared recommendation's premises must
+    // RESOLVE in the registry (== verified by construction; provenance-null still passes).
+    // [] when the flag is OFF (no recommendations field) -> gate byte-identical.
+    var recFindings = validateRecommendations(result.recommendations, vsRegistry);
+
     var gateDecision;
     var gateStore = null;
     var gateStoreThrew = false;
@@ -556,7 +572,15 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
 
     if (!gateStoreThrew) {
       var gateRes = runGate({ entities: gateStore.entities }, gateDraftObj, { runDate: new Date().toISOString().slice(0, 10) });
-      gateDecision = gateRes.decision;
+      // STEP 3: fold the recommendation-premise findings into the gate decision. On
+      // Marathon (log-only) decideGate publishes regardless (never holds) -- so this only
+      // LOGS + records the finding; on DMZ (fail-closed) an UNSUPPORTED-RECOMMENDATION would
+      // hold. recFindings is [] when the flag is off -> gateDecision == gateRes.decision.
+      gateDecision = decideGate((gateRes.findings || []).concat(recFindings), gateMode, gateRes.threw);
+      recFindings.forEach(function (f) {
+        console.log('[gate]   UNSUPPORTED-RECOMMENDATION  "' + (f.claim_text || '') + '"  premises=' +
+          JSON.stringify(f.supporting_block_ids) + '  ' + f.reason + '  (log-only on Marathon -- publishes)');
+      });
       if (gateRes.threw) {
         // FAIL-CLOSED (DMZ): a classifier/detector throw inside runGate -> held (Marathon publishes).
         console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): classifier/detector error');
@@ -582,7 +606,8 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     } else {
       // Store-load throw -> fail-closed HOLD (Marathon log-only still publishes via decideGate).
       // decideGate is the ONLY producer of the insert's is_published / gate_status / gate_findings.
-      gateDecision = decideGate([], gateMode, true);
+      // recFindings still folds in (independent of the gate store; [] when the flag is off).
+      gateDecision = decideGate(recFindings, gateMode, true);
     }
 
     if (gateDecision.hold) {
@@ -688,17 +713,8 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // output. Unknown ids are rejected + logged (mirrors the meta_update handler below);
     // empty or all-rejected -> null, FLAGGED as honest-unknown. Fail-open: any error -> null.
     try {
-      var vsRegistry = buildBlockRegistry(rawData);
-      // STORE-ROW CITATION (gated by the master flag): when ON, merge the verified
-      // store-row registry (built by fetchGameContext, cached per-game) so a cited
-      // [WS#]/[SH#]/... resolves to the row's verified_source. When OFF (default),
-      // this is skipped entirely -- resolution is byte-identical to pre-store-citation
-      // (and fetchGameContext emitted no store ids to cite anyway, so no half-state).
-      // External [BN]/[YT] resolution is unchanged in both states.
-      if (storeRowCitationEnabled()) {
-        var storeReg = getStoreRegistry(PRODUCING_GAME);
-        storeReg.forEach(function(v, k) { vsRegistry.set(k, v); });
-      }
+      // Reuse the merged registry built BEFORE the gate (identical map -- store rows
+      // merged there only when the flag is on; [BN]/[YT] resolution unchanged either way).
       var vs = resolveCitedBlocks(result.cited_blocks, vsRegistry);
       insertData.verified_source = vs.verified_source;         // null when nothing resolvable
       insertData.verified_source_url = vs.verified_source_url; // null; never invented

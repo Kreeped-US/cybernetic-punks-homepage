@@ -22,7 +22,14 @@
 // instrument). This constant is the ONLY 2a->2b change in this file; decideGate's logic is
 // unchanged. (Reliance on UNPARSEABLE-holding for real DMZ articles is armed SEPARATELY by an
 // evidence-bearing commit once the gap metric is measured-low -- Ruling 2; the constant grows now.)
-export const HOLD_CLASSES = ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE'];
+// STEP 3 (content model, 2026-08-10): UNSUPPORTED-RECOMMENDATION -- a reasoned build
+// recommendation whose cited premises do not all resolve to verified blocks (see
+// lib/gather/blockId.js validateRecommendations, docs/VERIFIED_GROUNDED_REASONING.md).
+// Joins the hold-classes so a fail-closed (DMZ) draft holds on it; Marathon is log-only
+// (decideGate never holds), so it is OBSERVED first -- same observe-then-arm pattern as
+// UNCORROBORATED/UNPARSEABLE. And it only ever fires when STORE_ROW_CITATION_ENABLED is
+// on (the recommendations field is flag-gated), so staged-OFF the class is inert.
+export const HOLD_CLASSES = ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE', 'UNSUPPORTED-RECOMMENDATION'];
 
 function holdClassFindings(findings) {
   return (findings || []).filter((f) => HOLD_CLASSES.indexOf(f.class) !== -1);

@@ -67,6 +67,23 @@ test('unknown/absent mode: PUBLISHES (house fail-open default; a game without th
   assert.equal(decideGate([CONTRA], 'off', true).is_published, true);
 });
 
-test('2b hold-class set = CONTRADICTED + UNCORROBORATED + UNPARSEABLE (decideGate logic unchanged)', () => {
-  assert.deepEqual(HOLD_CLASSES, ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE']);
+test('hold-class set = CONTRADICTED + UNCORROBORATED + UNPARSEABLE + UNSUPPORTED-RECOMMENDATION (decideGate logic unchanged)', () => {
+  assert.deepEqual(HOLD_CLASSES, ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE', 'UNSUPPORTED-RECOMMENDATION']);
+});
+
+// STEP 3 (content model): UNSUPPORTED-RECOMMENDATION follows the same observe-then-arm pattern.
+const UNSUPPORTED = { class: 'UNSUPPORTED-RECOMMENDATION', claim_text: 'run X on Y', supporting_block_ids: ['CS99'], unresolved: ['CS99'], reason: 'unresolved id(s): CS99' };
+
+test('step 3: fail-closed HOLDS on an UNSUPPORTED-RECOMMENDATION (armed later, e.g. DMZ)', () => {
+  const d = decideGate([UNSUPPORTED], 'fail-closed', false);
+  assert.equal(d.hold, true);
+  assert.equal(d.gate_status, 'held');
+  assert.deepEqual(d.gate_findings, [UNSUPPORTED]);
+});
+
+test('step 3: log-only (Marathon) PUBLISHES on an UNSUPPORTED-RECOMMENDATION -- observed, never held', () => {
+  const d = decideGate([UNSUPPORTED], 'log-only', false);
+  assert.equal(d.hold, false);
+  assert.equal(d.is_published, true);
+  assert.equal(d.gate_status, 'clear');
 });

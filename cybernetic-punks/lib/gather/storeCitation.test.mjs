@@ -9,7 +9,55 @@ import {
   makeStoreMinter, resolveCitedBlocks, buildBlockRegistry,
   STORE_PREFIX, STORE_SOURCE_PRIORITY, storeRowCitationEnabled,
   toolWithStoreCites, renderRelationLine, CITED_BLOCKS_SCHEMA_STORE_DESC,
+  validateRecommendations, RECOMMENDATIONS_SCHEMA,
 } from './blockId.js';
+
+// ── STEP 3: gate premise-validation ─────────────────────────────────────────
+test('toolWithStoreCites: the clone GAINS the recommendations field (step 3)', () => {
+  const tool = { name: 't', input_schema: { type: 'object', properties: { cited_blocks: { type: 'array', description: 'x' } } } };
+  const out = toolWithStoreCites(tool);
+  assert.equal(out.input_schema.properties.recommendations, RECOMMENDATIONS_SCHEMA);
+  // original untouched (per-call clone) -> OFF is byte-identical
+  assert.equal(tool.input_schema.properties.recommendations, undefined);
+});
+
+test('validateRecommendations: all premises resolve -> NO finding (incl. a provenance-null verified row)', () => {
+  const m = makeStoreMinter();
+  m.tag('shell_stats', { verified: true, verified_source: 'in-game S2 shell screen' }); // SH1 (has provenance)
+  m.tag('core_stats',  { verified: true, verified_source: null });                       // CS1 (verified, provenance-null)
+  const recs = [{ claim_text: 'run CS1 on SH1 because ...', supporting_block_ids: ['SH1', 'CS1'] }];
+  assert.deepEqual(validateRecommendations(recs, m.registry), [], 'CS1 is verified-but-provenance-null -> membership==verified -> PASS');
+});
+
+test('validateRecommendations: a recommendation with NO supporting_block_ids -> UNSUPPORTED-RECOMMENDATION', () => {
+  const m = makeStoreMinter();
+  const findings = validateRecommendations([{ claim_text: 'trust me', supporting_block_ids: [] }], m.registry);
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].class, 'UNSUPPORTED-RECOMMENDATION');
+  assert.match(findings[0].reason, /no supporting_block_ids/);
+});
+
+test('validateRecommendations: an UNRESOLVED id -> UNSUPPORTED-RECOMMENDATION (unknown/unverified = not in registry)', () => {
+  const m = makeStoreMinter();
+  m.tag('shell_stats', { verified: true, verified_source: 'x' }); // SH1 exists
+  const findings = validateRecommendations([{ claim_text: 'c', supporting_block_ids: ['SH1', 'CS99'] }], m.registry); // CS99 never minted
+  assert.equal(findings.length, 1);
+  assert.deepEqual(findings[0].unresolved, ['CS99']);
+});
+
+test('validateRecommendations: NEVER grades reasoning (a wild claim with resolving premises PASSES)', () => {
+  const m = makeStoreMinter();
+  m.tag('shell_stats', { verified: true, verified_source: 'x' }); // SH1
+  // an absurd recommendation -- but its premise resolves, so the gate does NOT judge it
+  assert.deepEqual(validateRecommendations([{ claim_text: 'Sentinel is the best shell in every mode by far', supporting_block_ids: ['SH1'] }], m.registry), []);
+});
+
+test('validateRecommendations: no recommendations (undefined / non-array / flag-off) -> [] (gate byte-identical)', () => {
+  assert.deepEqual(validateRecommendations(undefined, new Map()), []);
+  assert.deepEqual(validateRecommendations(null, new Map()), []);
+  assert.deepEqual(validateRecommendations('nope', new Map()), []);
+  assert.deepEqual(validateRecommendations([], new Map()), []);
+});
 
 // ── STORE ADJACENCY (step 2) ─────────────────────────────────────────────────
 test('renderRelationLine: OFF (disabled) -> "" so the shell block is byte-identical', () => {

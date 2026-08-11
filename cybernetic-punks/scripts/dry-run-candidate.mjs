@@ -21,7 +21,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { callEditor, getStoreRegistry } from '../lib/editorCore.js';
 import { getGameConfig } from '../lib/games/index.js';
-import { buildBlockRegistry, resolveCitedBlocks } from '../lib/gather/blockId.js';
+import { buildBlockRegistry, resolveCitedBlocks, validateRecommendations } from '../lib/gather/blockId.js';
 import { buildCandidateDirective } from '../lib/content/candidateAssignment.js';
 import { runAssignmentGate } from '../lib/content/assignmentGate.js';
 
@@ -73,6 +73,11 @@ const storeReg = getStoreRegistry(config);
 storeReg.forEach((v, k) => vsRegistry.set(k, v));
 const vs = resolveCitedBlocks(article.cited_blocks || [], vsRegistry);
 
+// 3b. STEP 3: validate the editor's declared recommendations' premises resolve in the
+//     same merged registry (== verified by construction; provenance-null passes). Findings
+//     shaped like the gate's; on Marathon this is log-only (never holds).
+const recFindings = validateRecommendations(article.recommendations, vsRegistry);
+
 // 4. CAPTURE + print. DISCARD.
 mkdirSync(new URL('./out/', import.meta.url), { recursive: true });
 const safe = (entity + '-' + facet).toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -84,6 +89,8 @@ writeFileSync(outUrl, JSON.stringify({
   article,
   store_registry_size: storeReg.size,
   resolved: { verified_source: vs.verified_source, verified_source_url: vs.verified_source_url, resolved: vs.resolved, rejected: vs.rejected },
+  recommendations: article.recommendations || null,
+  recommendation_findings: recFindings,
 }, null, 2));
 
 console.log('\n================= GENERATED ARTICLE (dry-run, NOT published) =================');
@@ -94,5 +101,11 @@ console.log('cited_blocks        : ' + JSON.stringify(article.cited_blocks));
 console.log('resolved cites      : ' + JSON.stringify(vs.resolved.map((r) => r.id + '->' + (r.source ? String(r.source).slice(0, 48) : 'null'))));
 if (vs.rejected.length) console.log('rejected ids        : ' + JSON.stringify(vs.rejected));
 console.log('verified_source     : ' + JSON.stringify(vs.verified_source) + (vs.verified_source ? '  <-- NON-NULL (was null before store-row citation)' : '  (null)'));
+console.log('\n-- STEP 3: RECOMMENDATIONS (declared reasoning chain) --');
+const recs = article.recommendations || [];
+console.log('recommendations count: ' + recs.length);
+recs.forEach((r, i) => console.log('  [' + (i + 1) + '] premises=' + JSON.stringify(r.supporting_block_ids) + '  "' + (r.claim_text || '').slice(0, 90) + '"'));
+console.log('recommendation_findings (UNSUPPORTED-RECOMMENDATION): ' + JSON.stringify(recFindings) +
+  (recFindings.length === 0 ? '  <-- ALL premises resolve (verified=true; provenance-null passes)' : '  <-- log-only on Marathon (never holds)'));
 console.log('\ncaptured to: scripts/out/dry-run-' + safe + '.json');
 console.log('\n[DRY-RUN COMPLETE] No feed_items.insert; no processEditor write; no feed_item; live feed + NEXUS untouched.');

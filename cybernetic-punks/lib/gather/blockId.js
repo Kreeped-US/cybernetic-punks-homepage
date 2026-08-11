@@ -123,8 +123,28 @@ export function makeStoreMinter() {
 // the master flag is ON (via toolWithStoreCites); OFF -> the tool is unchanged.
 export const CITED_BLOCKS_SCHEMA_STORE_DESC = 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context. TWO kinds: external sources ("BN1", "YT2") AND verified store rows ("WS3" weapon, "SH6" shell, "CS2" core, "MS4" mod, "IS9" implant) -- you MUST cite the store-row id for every verified stat, ability, kit, or perk fact you took from a tagged database row. AND when you make a BUILD or LOADOUT RECOMMENDATION (e.g. pairing a shell with specific cores/implants/mods), cite EVERY premise the recommendation rests on: the shell id AND each specific core/component id you recommend -- "run core X on shell Y because [interaction]" must include BOTH ids. A recommendation is grounded only when the rows under it are cited. Cite ONLY ids that appear in your context; cite nothing rather than guessing. Never write a URL here -- the id alone.';
 
-// Return a tool CLONE whose cited_blocks description is the store-aware one. Targeted
-// clone (no shared-const mutation); returns the tool unchanged if it has no cited_blocks.
+// STEP 3 (gate premise-validation): the OPTIONAL recommendations field. The editor
+// DECLARES its reasoning chain -- each build/loadout recommendation with the block ids
+// its factual premises rest on, SELECTED from the enumerated cited ids (point, never
+// invent). The field description is the LEVER (mechanism finding). Added to the tool
+// clone ONLY when the flag is ON (via toolWithStoreCites), so OFF -> no field ->
+// byte-identical. The gate then validates each recommendation's premises resolve.
+export const RECOMMENDATIONS_SCHEMA = {
+  type: 'array',
+  description: 'OPTIONAL. For EACH build or loadout RECOMMENDATION you make (e.g. pairing a shell with specific cores/implants/mods), declare it here with the store/source block ids its factual premises rest on -- SELECTED from the bracketed ids shown in your context, never invented. An article with no build recommendation emits none. This is how the system records that your recommendation stands on verified rows.',
+  items: {
+    type: 'object',
+    properties: {
+      claim_text: { type: 'string', description: 'the recommendation in one sentence, e.g. "run Eminent Domain on Sentinel because it neutralizes grenades via Defender System".' },
+      supporting_block_ids: { type: 'array', items: { type: 'string' }, description: 'the bracketed ids whose verified facts this recommendation rests on, e.g. ["SH8","CS29"] -- copied exactly from the ids shown in your context; select ONLY ids that appear there, never invent one.' },
+    },
+    required: ['claim_text', 'supporting_block_ids'],
+  },
+};
+
+// Return a tool CLONE whose cited_blocks description is the store-aware one AND which
+// gains the recommendations field (step 3). Targeted clone (no shared-const mutation);
+// returns the tool unchanged if it has no cited_blocks.
 export function toolWithStoreCites(tool) {
   const props = tool && tool.input_schema && tool.input_schema.properties;
   if (!props || !props.cited_blocks) return tool;
@@ -135,9 +155,41 @@ export function toolWithStoreCites(tool) {
       properties: {
         ...props,
         cited_blocks: { ...props.cited_blocks, description: CITED_BLOCKS_SCHEMA_STORE_DESC },
+        recommendations: RECOMMENDATIONS_SCHEMA,
       },
     },
   };
+}
+
+// STEP 3 (gate premise-validation): validate that each declared recommendation's
+// premises RESOLVE in the merged registry. A recommendation is UNSUPPORTED if it has
+// NO supporting_block_ids OR ANY id that does not resolve (unknown / not-in-registry).
+// Registry membership == verified BY CONSTRUCTION (makeStoreMinter mints ONLY
+// verified=true rows; external [BN]/[YT] are valid sources), so this validates
+// verified=true WITHOUT requiring a non-null provenance string -- a verified-but-
+// provenance-null store row (e.g. Sentinel's cores) PASSES. It NEVER grades reasoning
+// quality: it checks only that the SUPPORT exists / resolves / is-verified. Uses the
+// SAME closed-set membership as resolveCitedBlocks (registry.get/has). Returns findings
+// shaped like the gate's (.class = 'UNSUPPORTED-RECOMMENDATION') for decideGate + logs.
+export function validateRecommendations(recommendations, registry) {
+  const findings = [];
+  const recs = Array.isArray(recommendations) ? recommendations : [];
+  const reg = registry instanceof Map ? registry : new Map();
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i] || {};
+    const ids = Array.isArray(rec.supporting_block_ids) ? rec.supporting_block_ids : [];
+    const unresolved = ids.filter((id) => !reg.has(id));
+    if (ids.length === 0 || unresolved.length > 0) {
+      findings.push({
+        class: 'UNSUPPORTED-RECOMMENDATION',
+        claim_text: rec.claim_text || null,
+        supporting_block_ids: ids,
+        unresolved: unresolved,
+        reason: ids.length === 0 ? 'no supporting_block_ids' : 'unresolved id(s): ' + unresolved.join(','),
+      });
+    }
+  }
+  return findings;
 }
 
 // STORE ADJACENCY (step 2): render a verified relation array (countered_by /

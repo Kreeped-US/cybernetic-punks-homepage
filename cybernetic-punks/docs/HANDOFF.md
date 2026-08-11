@@ -20,19 +20,21 @@ cited verified block), release the JUDGMENT (the recommendation). Build order: (
 the reasoning capability IS the launch-critical differentiator; do NOT publish decent-general content
 in the meantime. The content model arms as a WHOLE (after step 3), not piece-by-piece.
 
-STATUS: steps 1 + 2 BUILT, PROVEN, STAGED OFF, MERGED, PUSHED. Step 3 fully MAPPED (Step 0 done). Step
-4 not started.
+STATUS: steps 1 + 2 + 3 BUILT, PROVEN, STAGED OFF, MERGED, PUSHED. Step 4 (publish) not started -- the
+LAST step.
 - Step 1 (store-row citation): editor cites verified store rows. Proven on the Sentinel dry-run
   (verified_source null -> 7 cited store rows).
 - Step 2 (store adjacency): editor reasons across the shell<->core neighborhood + cites the cores a
   build recommendation rests on. Proven on Sentinel (the [CS#] delta: +CS29/CS72/CS51).
-- Step 3 (gate premise-validation) MAPPED: add a `recommendations` field {claim_text,
-  supporting_block_ids[]} (gated per-call via toolWithStoreCites); a pure validateRecommendations
-  reusing resolveCitedBlocks' resolve/reject machinery; a new UNSUPPORTED-RECOMMENDATION hold-class,
-  LOG-ONLY on Marathon first. KEY RULE: validate verified=true (registry membership == verified by
-  construction, since the minter only mints verified rows), NOT non-null provenance-string -- so
-  Sentinel's verified-but-provenance-null cores PASS. Never grades inference quality. Wiring note:
-  build the merged registry BEFORE the gate. Bounded extension.
+- Step 3 (gate premise-validation) BUILT/PROVEN/STAGED-OFF/MERGED: the pre-publish gate validates that
+  a reasoned recommendation's cited PREMISES resolve to verified blocks. A `recommendations` field
+  {claim_text, supporting_block_ids[]} rides toolWithStoreCites (gated per-call); validateRecommendations
+  (pure) reuses resolveCitedBlocks' closed-set membership; UNSUPPORTED-RECOMMENDATION joins HOLD_CLASSES,
+  LOG-ONLY on Marathon (never holds -- observed first). KEY RULE (proven): validate verified=true
+  (registry membership == verified by construction), NOT non-null provenance-string -- Sentinel's
+  verified-but-provenance-null core CS29 PASSED in the dry-run. Never grades inference. The merged
+  registry is built BEFORE the gate + reused at the resolve. No publish-path change (is_published =
+  gateDecision.is_published). Two safety layers: flag-off (no field) AND log-only (never holds when on).
 - ALL staged behind STORE_ROW_CITATION_ENABLED (unset on Vercel -> flag OFF -> live NEXUS byte-
   identical; the gated pieces suppress; is_published/gate/publish untouched).
 
@@ -68,11 +70,18 @@ rarity -- with data). NOT armed; the roster freeze is still the brake. Next: wat
 
 ### THE NEXT MOVE (unambiguous)
 
-BUILD STEP 3 from its Step 0 map (in the step-3 dated entry below): the `recommendations` field +
-validateRecommendations + the LOG-ONLY UNSUPPORTED-RECOMMENDATION hold-class, gated/staged behind
-STORE_ROW_CITATION_ENABLED, dry-run-verified on Sentinel (editor emits recommendations with [CS#]
-premises; the gate logs premises-resolve verified=true even when provenance-null). It is the meatiest
-remaining step -- it touches the publish gate, so LOG-ONLY-FIRST like every gate we have shipped.
+BUILD STEP 4 (publish) -- the LAST content-model step. Once it lands, the whole model arms together
+(flip STORE_ROW_CITATION_ENABLED to true). Step 4 = candidate-driven generation actually publishes,
+and it must land articles HELD-FOR-REVIEW first (unpublished draft, human-approved), not auto-publish.
+IMPORTANT: the held-for-review mechanism does NOT exist in code -- it was built on the 2-arm branch
+(now DELETED). There is NO insertGeneratedItem and NO isPublished param; the feed_items insert is
+INLINE in processEditor (app/api/cron/route.js) with is_published = gateDecision.is_published. So step 4
+REBUILDS the small wiring from the RECORDED design (see "Implementation note: the held-for-review
+mechanism" in docs/VERIFIED_GROUNDED_REASONING.md): held = is_published=false + gate_status='clear' =
+the admin-drafts DRAFT state (shown in GET /api/admin/drafts, published only via POST
+/api/admin/drafts/approve; NOT gate_status='held', which auto-releases). Also rebuild the queue-driven
+assignment wiring (feed a passing candidate into callEditor). Do it LOG-ONLY / held-for-review first,
+same discipline as every prior step.
 
 ### GIT STATE
 
@@ -278,6 +287,49 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
   launch-critical identity item. THIN but substrate-shaped (saved_source_version). DDL applied +
   verified private (RLS on, anon reads 0) -- see docs/dmz/MIGRATIONS.md.
+
+---
+
+## 2026-08-11 - STEP 3 gate premise-validation built + STAGED OFF (HELD) - dry-run-proven
+
+Build-order STEP 3 of docs/VERIFIED_GROUNDED_REASONING.md: the pre-publish gate now validates that a
+reasoned recommendation's cited PREMISES resolve to verified blocks (gate the premises, release the
+judgment). Same flag STORE_ROW_CITATION_ENABLED, per-call gated, LOG-ONLY on Marathon -> live NEXUS
+byte-identical when off AND never-holds even when on. NO publish-path change (is_published still =
+gateDecision.is_published). Built on a clean branch off main 1b5269a. DRY-RUN PROVEN.
+
+- **recommendations FIELD (blockId.js RECOMMENDATIONS_SCHEMA, rides toolWithStoreCites):** the tool
+  clone now ALSO gains an OPTIONAL recommendations array {claim_text, supporting_block_ids[]} -- ONLY
+  when the flag is ON (same clone as the cited_blocks swap), so OFF -> no field -> byte-identical. The
+  field description is the LEVER: declare each build rec with the block ids its premises rest on,
+  SELECTED from the enumerated ids (point, never invent).
+- **validateRecommendations(recs, registry) (blockId.js, PURE):** each rec's supporting_block_ids must
+  RESOLVE in the merged registry (reuses resolveCitedBlocks' closed-set membership). UNSUPPORTED-
+  RECOMMENDATION finding if NO ids OR any unresolved id. Registry membership == verified BY
+  CONSTRUCTION (minter mints only verified rows), so it validates verified=true WITHOUT a non-null
+  provenance string -- Sentinel's provenance-null cores PASS. NEVER grades reasoning quality.
+- **HOLD_CLASSES += 'UNSUPPORTED-RECOMMENDATION' (prePublishGate.js):** LOG-ONLY on Marathon
+  (decideGate never holds -> logs + publishes); fail-closed (DMZ) holds -> armed later. Two safety
+  layers: flag-off (no field -> no findings) AND log-only (never holds even when on).
+- **WIRING (route.js, the ordering fix):** the merged registry (buildBlockRegistry + gated
+  getStoreRegistry) is now built ONCE BEFORE the gate; recFindings = validateRecommendations folds into
+  decideGate in both gate branches ([] when off -> gateDecision unchanged); the verified_source resolve
+  below REUSES the same registry (no rebuild -> cited_blocks resolution byte-identical).
+
+DRY-RUN PROOF (Sentinel, flag ON): the editor emitted recommendations=[{claim_text:"Run Eminent Domain
+on Sentinel's Defender System to convert neutralized grenades into loot", supporting_block_ids:
+["SH8","CS29"]}]; recommendation_findings=[] -- ALL premises resolve, and CS29 (a verified-but-
+provenance-null Sentinel core) PASSED, validating the caveat rule. cited_blocks ["SH8","CS29","CS51",
+"CS72"], verified_source non-null. No insert/publish/processEditor write. Gates: 38 unit tests
+(validateRecommendations resolves-pass incl provenance-null / no-ids / unresolved-id / never-grades /
+flag-off=[]; the tool clone gains recommendations; decideGate log-only vs fail-closed on the new class),
+ESLint clean, build clean, byte-clean. HELD for review.
+
+CONTENT MODEL NOW: steps 1+2+3 built (1+2 merged/pushed; 3 held). NEXT = step 4 (publish) -- the LAST
+step; reuses the recorded held-for-review DESIGN (which must be REBUILT -- the 2-arm code was deleted;
+NO insertGeneratedItem/isPublished exists). Arm the whole content model (flip STORE_ROW_CITATION_
+ENABLED) only after step 4. Deferred still: the ~19-row core-provenance populate (display quality, NOT
+a step-3 blocker -- provenance-null cores pass) + the mod<->weapon data build.
 
 ---
 
