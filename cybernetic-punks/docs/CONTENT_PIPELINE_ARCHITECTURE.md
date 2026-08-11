@@ -4,6 +4,11 @@
 actual pipeline. This document supersedes the pipeline-upgrade direction from the 2026-08-07 session
 (see "Supersession" below).
 
+**Amended 2026-08-11** with the pre-launch demand lifecycle ruling (demand ranks the verification
+queue pre-launch, shapes framing post-launch, never manufactures content) - see "AMENDMENT" at the
+end. That ruling corrected an in-flight direction (a dmz_keyword_research content-planning table/view)
+before it was built.
+
 **Reading note:** the CURRENT STATE section is verified against code (main @ f11d9ff). The
 ARCHITECTURE section is the ruling - designed, not yet built. Build order is at the end.
 
@@ -125,3 +130,52 @@ citation (store rows are typed but not in the cited_blocks id scheme) is a real 
 The network scales by making verified substance the warrant, demand the prioritizer-and-shaper, and
 the anti-glut discipline STRUCTURAL - one pre-generation gate that lets editors run without the manual
 roster freeze. Demand is finally connected to generation, through a gate, on purpose.
+
+---
+
+## AMENDMENT - Fable ruling: pre-launch demand and the verification queue (2026-08-11)
+
+Recorded after a code-and-data-verified ground-truth pull on the DMZ pre-launch state (empty dmz_*
+store, 66-keyword Mangools research across six heterogeneous CSVs, launch Oct 23 2026). This ruling
+EXTENDS the one-line principle above into a full lifecycle, and CORRECTS an in-flight direction (a
+dmz_keyword_research content-planning table + view) before it was built.
+
+### The correction
+
+Demand research is a STRATEGY INPUT, not content data. It must NOT be modeled as first-class content-
+adjacent data that a content-planning process consumes - that risks demand MANUFACTURING the content
+plan (the thin-content failure the moat exists to defeat), just relocated to the planning layer.
+
+The firewall (generation context) is NOT the relevant pre-launch constraint; "demand prioritizes and
+shapes, neither manufactures nor vetoes" IS. Pre-launch, the manufactures-risk is at PLANNING, not
+generation - the store is empty, so there is nothing to generate from and the generation firewall is
+moot; the live risk is a demand-built launch plan standing in for verified substance.
+
+### THE LIFECYCLE PRINCIPLE (governs every game launch)
+
+- PRE-LAUNCH: demand prioritizes VERIFICATION EFFORT. It ranks WHICH entities to go make verified-real
+  first - the highest-demand POIs / weapons / missions get structured into the game's tables first,
+  because that is where the launch audience will be. Demand ranks the verification QUEUE, not the
+  content plan.
+- POST-LAUNCH: verified substance AUTHORIZES content; demand SHAPES its framing / emphasis. This is the
+  established Marathon pattern - warrant, then rank, then frame.
+- NEVER: demand manufactures content, at any stage. Pre-launch it ranks what to VERIFY; post-launch it
+  shapes what to EMPHASIZE; it never authorizes a page that lacks verified substance.
+
+### Consequence for DMZ
+
+The demand research's job is to rank the pre-launch VERIFICATION queue - which dmz_* entities to
+structure into verified rows first - NOT to produce a "launch content plan." The consumer to build is a
+verification-PRIORITIZATION view (what to verify first), not a content-planning view. This supersedes
+the prepared dmz_keyword_research content-planning table/view direction; the import artifacts under
+docs/research/dmz-demand-2026-07/ remain as raw research evidence, not as a committed content-data
+store, unless/until re-scoped as verification-queue ranking.
+
+### Why this is consistent with the architecture above
+
+Section 2 already routes a keyword WITHOUT warrant to the GAP LEDGER ("visible demand awaiting
+substance ... structurally CANNOT trigger generation"; "for DMZ literally the pre-written launch-day
+queue"). This ruling names what that ledger IS pre-launch: a VERIFICATION queue. The gap ledger is not
+passive - pre-launch it is READ to decide verification ORDER (highest demand verified first). Demand
+still never crosses into authorship; it only orders the work of making substance real. Warrant remains
+the sole authorizer of a page, at every stage.
