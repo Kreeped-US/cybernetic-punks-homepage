@@ -327,6 +327,45 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-11 - ADMIN DRAFT PREVIEW (option c, inline formatted) + Bridge drafts-count fix (HELD)
+
+Branch `feat/admin-draft-preview` off main ec5bc0e. Read-before-approve for the drafts panel, built the
+SAFE way (public route untouched), + the Bridge drafts-count one-liner.
+
+PIECE A -- DRAFT PREVIEW (option c: inline formatted render, ADMIN-ONLY BY CONSTRUCTION):
+- Extracted the article body PARSER (parseBody + isWholeQuote) VERBATIM from app/intel/[slug]/page.js
+  into `lib/articleBody.js` (relative import of stripCitationTags so it is node-testable; same output
+  incl. tag-strip). The intel route now imports parseBody and KEEPS all its render JSX (ParagraphWith-
+  Cards, editorColor, element map) -> byte-identical render (verified in-browser: a real intel article
+  still renders 4 parsed headers + paragraphs + the ToolCTA, unchanged).
+- VantageDraftsPanel: the READ BODY toggle now renders a FORMATTED `<DraftPreview>` (shared parseBody ->
+  headers/quotes/paragraphs + **bold**) instead of the raw <pre>, PLUS the exact contextual CTA the
+  article will show (resolveBuildToolCta -> ToolCTAClient). Client-side, uses the panel's existing admin
+  auth (drafts GET already returns body). The intel-only inline item-mention CARDS are out of scope
+  (they need allItems); the preview shows formatted text + CTA, which is what you judge before approving.
+- PUBLIC ROUTE UNTOUCHED (explicit): app/intel/[slug]/page.js still gates every fetch on
+  .eq('is_published', true) (4 occurrences) + notFound() -> a held draft can NEVER render at its public
+  URL. The preview only renders a draft the auth-gated /api/admin/drafts already returned. No new API, no
+  auth change, no public-gate change -> zero leak path by construction.
+
+PIECE B -- BRIDGE drafts-count fix (one-liner): app/api/admin/bridge/route.js draftsWaiting now adds
+`.neq('rejected', true)` so it matches the drafts panel's real waiting set (a rejected draft is not
+awaiting a decision). Confirmed: OLD query counts 2 (the 2 stale rejected March rows), NEW counts 0
+(true waiting; the armed NEXUS draft was approved separately, so 0 now).
+
+VERIFY: node --test 13/13 (7 new articleBody + 6 buildToolCta regression); eslint 0 new errors; next
+build OK; in-browser the intel article renders identically (parser extraction is byte-clean). Draft-
+preview render is verified by build + the shared parser proven on the public article + ToolCTAClient
+already proven (the admin panel itself is password-gated, not clicked through).
+
+HOW THE EXTRACTED PARSER KEEPS INTEL IDENTICAL: parseBody is a VERBATIM move (cut from intel, pasted to
+lib/articleBody.js, imported back) -- same function, same descriptors; intel's render JSX is unchanged,
+so output is identical by construction (empirically confirmed by the in-browser render).
+
+STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+
+---
+
 ## 2026-08-11 - ARTICLE -> BUILD-ADVISOR CTA, game-agnostic + measurement-first (HELD)
 
 Branch `feat/article-tool-cta` off main 7efe4a8. The discovery lever from the advisor-funnel

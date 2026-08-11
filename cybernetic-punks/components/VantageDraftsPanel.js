@@ -7,6 +7,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { parseBody } from '@/lib/articleBody';
+import { resolveBuildToolCta } from '@/lib/buildToolCta';
+import ToolCTAClient from '@/components/ToolCTAClient';
 
 var mono = 'Share Tech Mono, monospace';
 var heading = 'Orbitron, monospace';
@@ -18,6 +21,63 @@ function when(ts) {
   } catch (e) {
     return '';
   }
+}
+
+// Paragraph with **inline bold** (mirrors the intel route's ParagraphContent; the item-
+// mention cards are intel-only and out of scope for the read-before-approve preview).
+function InlineText({ text }) {
+  var parts = String(text || '').split(/(\*\*[^*]+\*\*)/);
+  return (
+    <>
+      {parts.map(function (part, i) {
+        var b = part.match(/^\*\*([^*]+)\*\*$/);
+        if (b) return <strong key={i} style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700 }}>{b[1]}</strong>;
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
+// Formatted draft preview: the SAME parseBody the public article uses (headers/quotes/
+// paragraphs) rendered admin-side, plus the exact contextual CTA the article will show.
+// ADMIN-ONLY BY CONSTRUCTION: this renders a draft the panel already fetched via the
+// auth-gated /api/admin/drafts; it does NOT touch the public route, whose is_published
+// gate is unchanged -> held drafts can never render at their public URL.
+function DraftPreview({ draft }) {
+  var els = parseBody(draft.body);
+  var cta = resolveBuildToolCta(draft);
+  return (
+    <div style={{ margin: '12px 0 0', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+      {els.map(function (el) {
+        if (el.type === 'header') {
+          return (
+            <div key={el.key} style={{ margin: '20px 0 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 3, height: 14, background: '#00f5ff', borderRadius: 1, flexShrink: 0 }} />
+              <div style={{ fontFamily: heading, fontSize: 11, fontWeight: 800, color: '#00f5ff', letterSpacing: 2, textTransform: 'uppercase' }}>{el.content}</div>
+            </div>
+          );
+        }
+        if (el.type === 'quote') {
+          return (
+            <blockquote key={el.key} style={{ margin: '16px 0', padding: '2px 0 2px 16px', borderLeft: '3px solid #00f5ff', fontFamily: heading, fontSize: 16, fontWeight: 700, lineHeight: 1.4, color: 'rgba(255,255,255,0.9)' }}>
+              &ldquo;{el.content}&rdquo;
+            </blockquote>
+          );
+        }
+        return (
+          <p key={el.key} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65, margin: '0 0 1em', maxWidth: '72ch' }}>
+            <InlineText text={el.content} />
+          </p>
+        );
+      })}
+      {cta.show && (
+        <div>
+          <div style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.28)', letterSpacing: 2, margin: '6px 0 2px' }}>CTA PREVIEW (renders on the live article):</div>
+          <ToolCTAClient href={cta.href} copy={cta.copy} shell={cta.shell} game={cta.game} sourceSlug={draft.slug} accent={cta.accent} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function VantageDraftsPanel({ password }) {
@@ -144,9 +204,7 @@ export default function VantageDraftsPanel({ password }) {
                   <button onClick={function () { reject(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#ff4444', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'REJECT'}</button>
                   <button onClick={function () { approve(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : 'APPROVE + PUBLISH'}</button>
                 </div>
-                {isOpen && (
-                  <pre style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: '12px 0 0', padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>{d.body}</pre>
-                )}
+                {isOpen && <DraftPreview draft={d} />}
               </div>
             );
           })}

@@ -89,8 +89,12 @@ export async function GET(req) {
     const prevToT = tISO(nowMs - 7 * DAY);
 
     // ── NEEDS ATTENTION ──
+    // .neq('rejected', true) matches the drafts panel's real "waiting" set: a
+    // rejected draft (is_published=false, gate_status='clear', rejected=true) is NOT
+    // awaiting a decision, so it must not inflate the count (it did -- showed 3 when
+    // 1 was genuinely waiting: 2 stale rejected March rows were being counted).
     const draftsWaiting = await countRows(
-      supabase.from('feed_items').select('*', { count: 'exact', head: true }).eq('is_published', false).eq('gate_status', 'clear')
+      supabase.from('feed_items').select('*', { count: 'exact', head: true }).eq('is_published', false).eq('gate_status', 'clear').neq('rejected', true)
     );
     const { data: pend, error: pendErr } = await supabase
       .from('editor_directives')

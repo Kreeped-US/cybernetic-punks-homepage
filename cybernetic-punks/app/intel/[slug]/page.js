@@ -13,6 +13,7 @@ import DiscourseArticle from '@/components/DiscourseArticle';
 import { isDiscourseArticle } from '@/lib/discourse';
 import { stripCitationTags } from '@/lib/gather/blockId';
 import ToolCTA from '@/components/ToolCTA';
+import { parseBody } from '@/lib/articleBody';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -156,57 +157,8 @@ function creatorSocialLinks(info) {
 //     it's short (<=60 chars) and contains no sentence punctuation — so
 //     mid-sentence emphasis like "**Arachne Rank 25**" is NOT mistaken for one.
 //  4. Otherwise -> paragraph (inline **bold** preserved downstream).
-function isWholeQuote(s) {
-  // starts and ends with a double-quote and contains exactly one pair
-  return s.length > 2 && s.charAt(0) === '"' && s.charAt(s.length - 1) === '"'
-    && (s.match(/"/g) || []).length === 2;
-}
-
-function parseBody(body) {
-  if (!body) return [];
-  body = stripCitationTags(body); // render-only: drop any leaked [WS#]/[SH#]/[BN#]... citation tags from prose
-  var elements = [];
-  var paragraphs = body.split(/\n{2,}/);
-
-  paragraphs.forEach(function(rawPara, paraIdx) {
-    var para = rawPara.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!para) return;
-
-    // Rule 1: whole-paragraph bold header
-    var fullHeader = para.match(/^\*\*\s*([^*]+?)\s*\*\*$/);
-    if (fullHeader && fullHeader[1].length <= 120) {
-      elements.push({ type: 'header', content: fullHeader[1].trim(), key: 'h-' + paraIdx });
-      return;
-    }
-
-    // Rule 2: standalone pull-quote
-    if (isWholeQuote(para)) {
-      elements.push({ type: 'quote', content: para.slice(1, -1).trim(), key: 'q-' + paraIdx });
-      return;
-    }
-
-    // Rule 3: leading **Header** fused to body text
-    var lead = para.match(/^\*\*\s*([^*]+?)\s*\*\*\s+(.+)$/);
-    if (lead) {
-      var head = lead[1].trim();
-      var rest = lead[2].trim();
-      if (head.length <= 60 && !/[.!?]/.test(head)) {
-        elements.push({ type: 'header', content: head, key: 'h-' + paraIdx });
-        if (isWholeQuote(rest)) {
-          elements.push({ type: 'quote', content: rest.slice(1, -1).trim(), key: 'q-' + paraIdx + 'b' });
-        } else {
-          elements.push({ type: 'para', content: rest, key: 'p-' + paraIdx + 'b' });
-        }
-        return;
-      }
-    }
-
-    // Rule 4: default paragraph
-    elements.push({ type: 'para', content: para, key: 'p-' + paraIdx });
-  });
-
-  return elements;
-}
+// parseBody + isWholeQuote moved to lib/articleBody.js (shared VERBATIM with the admin
+// drafts preview). Same parser -> the render below is byte-identical to before.
 
 // Renders a paragraph with **inline bold** support
 function ParagraphContent({ text }) {
