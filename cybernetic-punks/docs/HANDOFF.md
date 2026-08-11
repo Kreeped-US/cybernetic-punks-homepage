@@ -146,6 +146,16 @@ remain.
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
 
+- **PRODUCT OBSERVATION (2026-08-11): on-site ACTIONS are near-nil while readership grows.** From the
+  site-usage exact-count audit: page_view 3,771 (+159% WoW, ~99% article reads) -- healthy, GROWING
+  discovery traffic -- but deliberate on-site actions are structurally low: advisor_generate 34
+  (dormant, 0 in 30d), advisor_share 7, tierlist_share 6. This is a PRODUCT signal, NOT a traffic
+  problem or a dashboard bug: people are reading the content but not using the build/share tools. Open
+  question for later: are the build advisor + share features discoverable / compelling, or is the
+  current (article-read) traffic mix simply not action-oriented yet? Do NOT act now -- watch whether
+  actions move as the funnel matures. (The capped-window bug that once made ALL engagement look near-nil
+  is fixed; do not re-trust windowed .limit reads -- use exact count().)
+
 - **ADMIN BRIDGE v2 signals (2026-08-11) - turn the bridge from "shows the gist" into "warns when
   something is wrong."** The v1 Bridge (merged f1b34e2) shows drafts/directives + discovery/engagement
   vitals; these three add ALARMS. None blocks anything.
@@ -347,11 +357,25 @@ the fork question; built the recommended page_view version, flagged for review.)
 PER-GAME intact: Marathon PAGE VIEWS 3,771 (+159%, 1,267 this week); DMZ 20 (1 this week) -- DMZ climbs
 from ~zero as it gets traffic. topShells/topPlaystyles/articleViews left as-is (secondary, out of scope).
 
+RECONCILIATION (a caution to carry forward -- do NOT re-trust capped numbers): an interim read that
+"engagement is near-nil / ~231 events, ~all meta_view" was WRONG -- it was the CAPPED-WINDOW artifact
+(a windowed .limit undercounting), NOT reality. page_view was never invisible or in another table; it
+was always the largest event (3,791 total), 15x meta_view. The TRUE picture: real, GROWING traffic --
+page_view 3,771 (+159% WoW), and ~99% of it is ARTICLE reads (last 1,000 marathon page_views: 991
+article / 9 tool). meta_view (252) is just the /meta page's own raw-mount counter (the /meta page fires
+BOTH a page_view and a meta_view). So: readership is healthy + climbing (discovery/SEO working); only
+the deliberate on-site ACTIONS are low -- advisor_generate 34 (dormant, 0 in 30d), advisor_share 7,
+tierlist_share 6 -- which is a PRODUCT signal (are build/share features discoverable/compelling yet?),
+NOT a traffic problem and NOT a dashboard bug. LESSON: any metric sourced from a windowed .limit read
+is suspect; use exact count() (as this fix + the Bridge do).
+
 VERIFY: eslint clean; next build OK; exact-count logic replicated against live data -> the panel now
 shows true per-game values (was 0/0/4/0, now 3,771 + accurate activity line). Authed render not
 clicked through (admin password never entered); verified by build + route-logic replication + review.
 
-STATUS: HELD on the branch for review. NOT merged, NOT pushed. Merge = FF to main on say-so.
+STATUS: MERGED to main (Option 1, as-is) + pushed pending. Reconciled with the user: the capped read
+was the bug; page_view (3,771, +159% WoW) is the true primary. On-site-action near-nil is a product
+signal, tracked as a backlog observation (below), not something to act on now.
 
 ---
 
