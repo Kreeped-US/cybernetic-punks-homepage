@@ -54,6 +54,7 @@ function EditorAvatar({ name, color, size }) {
   );
 }
 import { toISOWithPTOffset } from '@/lib/formatDate';
+import { stripCitationTags } from '@/lib/gather/blockId';
 
 // Display rename (editor rework Step 3): pills + bylines show the editor's tag
 // (proper case), not the raw uppercase codename. Null-safe -> raw key fallback.
@@ -423,7 +424,7 @@ export default async function IntelHubPage({ searchParams }) {
                     </h3>
 
                     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {(item.body || '').replace(/\*\*/g, '')}
+                      {stripCitationTags(item.body || '').replace(/\*\*/g, '')}
                     </p>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>

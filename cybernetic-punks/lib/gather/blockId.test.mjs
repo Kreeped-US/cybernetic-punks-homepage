@@ -5,7 +5,7 @@
 // LLM-authored URL. Run: node --test lib/gather/blockId.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { blockId, BLOCK_CAP, buildBlockRegistry, resolveCitedBlocks } from './blockId.js';
+import { blockId, BLOCK_CAP, buildBlockRegistry, resolveCitedBlocks, stripCitationTags, STORE_PREFIX } from './blockId.js';
 
 // A fake rawData shaped like prompts._rawData (bungieNews + youtubeVideos [filtered]).
 function fakeRawData() {
@@ -101,4 +101,34 @@ test('registry respects the per-source caps (BN<=6, YT<=5)', () => {
   assert.ok(!reg.has(blockId('bungie', BLOCK_CAP.bungie + 1)), 'BN' + (BLOCK_CAP.bungie + 1) + ' absent (past cap)');
   assert.ok(reg.has(blockId('youtube', BLOCK_CAP.youtube)), 'YT' + BLOCK_CAP.youtube + ' present');
   assert.ok(!reg.has(blockId('youtube', BLOCK_CAP.youtube + 1)), 'YT past cap absent');
+});
+
+// ── stripCitationTags (render-only display strip) ────────────────────────────
+test('stripCitationTags: removes every store + external tag prefix from prose', () => {
+  const s = stripCitationTags('The V75 Scar [WS5] pairs with the Recon core [CS3] and mod [MS2], shell [SH6], implant [IS9], per [BN1] and [YT2].');
+  assert.equal(/\[(WS|SH|CS|MS|IS|BN|YT)\d+\]/.test(s), false, 'no citation tag remains');
+  assert.ok(s.includes('V75 Scar') && s.includes('Recon core'), 'prose words intact');
+});
+
+test('stripCitationTags: prefix set is DERIVED from STORE_PREFIX (no drift)', () => {
+  // every configured store prefix must be stripped
+  Object.values(STORE_PREFIX).forEach((p) => {
+    assert.equal(stripCitationTags('x [' + p + '12] y'), 'x y', p + ' stripped');
+  });
+});
+
+test('stripCitationTags: TRUE no-op on clean text (byte-identical, incl. legit brackets)', () => {
+  const clean = 'A normal sentence with [a bracketed aside] and a [link](http://x) and 2  spaces.';
+  assert.equal(stripCitationTags(clean), clean, 'clean prose returned unchanged');
+  assert.equal(stripCitationTags(''), '', 'empty passes through');
+  assert.equal(stripCitationTags(null), null, 'null passes through');
+});
+
+test('stripCitationTags: does NOT match non-citation brackets like [1] or [note]', () => {
+  assert.equal(stripCitationTags('cite [1] and [note] and [WSX]'), 'cite [1] and [note] and [WSX]', 'only PREFIX+digits tags strip');
+});
+
+test('stripCitationTags: tidies whitespace left by a removed tag', () => {
+  assert.equal(stripCitationTags('24 damage [WS5] at range.'), '24 damage at range.', 'doubled space collapsed');
+  assert.equal(stripCitationTags('the shell [SH6].'), 'the shell.', 'space-before-period fixed');
 });

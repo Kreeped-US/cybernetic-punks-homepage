@@ -317,6 +317,54 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-11 - CITE-DISCIPLINE + RENDER TAG-STRIP (HELD) - hardening BEFORE arming the content model
+
+Branch `fix/cite-discipline-and-tag-strip` off main 4150e45. Two hardening fixes requested after the
+local armed NEXUS dry-runs, staged before arming STORE_ROW_CITATION_ENABLED.
+
+PREMISE CORRECTIONS (verified read-only before building -- the fix brief asserted otherwise; recorded
+so the record is accurate):
+- The reported symptoms were NOT reproduced in either local capture. Both dry-runs (Impact HAR, Sentinel)
+  had ALL cited blocks resolve (0 rejected), findings=[], and CLEAN bodies (no inline tags). Neither cited
+  WS1/CS30. 0 of 400 published bodies carry any citation tag.
+- There is NO pre-existing [BN#]/[YT#] render-strip to "extend" -- bodies are clean because the EDITOR
+  authors them clean (cites go in the cited_blocks FIELD), not because anything strips them. So FIX 2 is
+  a NEW display-layer strip, added as defense-in-depth (a no-op on today's clean content).
+Both fixes are still correct + harmless as PREVENTION, so they were built as belt-and-suspenders.
+
+FIX 1 (prompt/schema discipline -- cite ONLY offered ids), all GATED (only active when the flag is on):
+- Strengthened CITED_BLOCKS_SCHEMA_STORE_DESC + RECOMMENDATIONS_SCHEMA.supporting_block_ids (in
+  toolWithStoreCites, lib/gather/blockId.js) + the store cite-instruction note (lib/editorCore.js, inside
+  `if (citeStore)`): emphatic "copy ids CHARACTER-FOR-CHARACTER; ids are arbitrary, NOT sequential/
+  guessable; NEVER invent/guess/construct/renumber (e.g. do not assume WS1/CS30 exists); leave a claim
+  uncited rather than fabricate an id." Resolve/reject logic UNCHANGED (it already rejects invented ids
+  correctly -- that is the backstop). Flag OFF -> toolWithStoreCites not applied + note suppressed ->
+  byte-identical.
+
+FIX 2 (render-only tag strip -- store tags never reach prose):
+- NEW `stripCitationTags(text)` in lib/gather/blockId.js. Prefix set DERIVED from STORE_PREFIX (+ external
+  BN/YT) so it can never drift from the minter. TRUE no-op when no tag present (returns input unchanged ->
+  every clean body renders byte-identical); only when a tag is found does it strip + tidy the whitespace.
+  Touches DISPLAY TEXT only -- cited_blocks + verified_source resolution untouched.
+- Applied at the intel render path (where NEXUS articles show): app/intel/[slug]/page.js parseBody +
+  buildMetaDescription + featured excerpt; app/intel/page.js feed preview. (The DMZ/discourse render path
+  is separate + never gets store cites -- out of scope.)
+- Unit-tested (5 cases in lib/gather/blockId.test.mjs): strips every prefix, derived-from-STORE_PREFIX,
+  no-op on clean/legit brackets, ignores [1]/[note], tidies whitespace.
+
+VERIFY: node --test -> 12/12 pass. eslint -> 0 errors (pre-existing <img> warnings only). next build ->
+OK (79/79 static pages generated THROUGH the new strip). LOCAL ARMED RE-RUN (BR33 Volley Rifle, flag on
+for the run, capture-and-discard, NO production write): 9 cited blocks ALL resolve (0 rejected), 3
+recommendations all premises resolve, recommendation_findings=[] (no UNSUPPORTED-RECOMMENDATION), raw body
+CLEAN (no inline tags; stripCitationTags byte-identical on it). FIX 2 proven on a synthetic leaked body:
+tags removed from prose, cited_blocks metadata intact. Nothing inserted/published; only a local gitignored
+JSON capture.
+
+STATUS: HELD on the branch for review. NOT merged, NOT pushed. Do NOT arm production until reviewed +
+merged. Merge = FF to main on say-so.
+
+---
+
 ## 2026-08-11 - ADMIN PANEL MODERNIZED INTO A "BRIDGE" (session arc; DONE + MERGED + PUSHED f1b34e2)
 
 The admin panel was a single sprawling CRUD page with no shared shell and the public site chrome

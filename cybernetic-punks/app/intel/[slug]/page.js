@@ -11,6 +11,7 @@ import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import ViewTracker from '@/components/ViewTracker';
 import DiscourseArticle from '@/components/DiscourseArticle';
 import { isDiscourseArticle } from '@/lib/discourse';
+import { stripCitationTags } from '@/lib/gather/blockId';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -162,6 +163,7 @@ function isWholeQuote(s) {
 
 function parseBody(body) {
   if (!body) return [];
+  body = stripCitationTags(body); // render-only: drop any leaked [WS#]/[SH#]/[BN#]... citation tags from prose
   var elements = [];
   var paragraphs = body.split(/\n{2,}/);
 
@@ -231,7 +233,7 @@ function ParagraphContent({ text }) {
 // Falls back to the provided headline when the body is empty or strips to empty.
 function buildMetaDescription(body, fallback) {
   if (!body) return fallback;
-  var text = body
+  var text = stripCitationTags(body)
     .replace(/`([^`]*)`/g, '$1')              // inline `code` -> text
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')  // [text](url) -> text
     .replace(/\*\*([^*]+)\*\*/g, '$1')        // **bold/header** -> text
@@ -748,7 +750,7 @@ function EditorLanePage({ config, items }) {
                         </div>
                         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', lineHeight: 1.3, margin: '0 0 10px' }}>{featured.headline}</h2>
                         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: 0 }}>
-                          {(featured.body || '').replace(/\*\*/g, '').slice(0, 200)}{featured.body && featured.body.length > 200 ? '...' : ''}
+                          {stripCitationTags(featured.body || '').replace(/\*\*/g, '').slice(0, 200)}{featured.body && featured.body.length > 200 ? '...' : ''}
                         </p>
                       </div>
                       <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 12 }}>

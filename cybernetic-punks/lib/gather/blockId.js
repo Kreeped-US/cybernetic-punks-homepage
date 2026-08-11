@@ -30,6 +30,31 @@ export const STORE_PREFIX = {
 // block. Carried on the registry entry as `priority` (resolveCitedBlocks prefers it).
 export const STORE_SOURCE_PRIORITY = 0;
 
+// ── RENDER-ONLY CITATION-TAG STRIP ───────────────────────────────────────────
+// Citations live in the cited_blocks FIELD; a bracketed id ([WS3]/[SH6]/[BN1]/...) is
+// context/metadata, never article prose. The editor is instructed not to inline them
+// (and 0/400 historical bodies do) -- this is the DISPLAY-LAYER safety net so a store
+// tag that ever slips into the body is removed before a reader sees it, exactly as an
+// external [BN#]/[YT#] tag would be. Strips from the RENDERED TEXT only; the
+// cited_blocks array + verified_source resolution are untouched. The prefix set is
+// DERIVED from STORE_PREFIX (+ the external BN/YT) so it can never drift from the minter.
+const CITATION_TAG_PREFIXES = Object.values(STORE_PREFIX).concat(['BN', 'YT']);
+const CITATION_TAG_RE = new RegExp('\\[(?:' + CITATION_TAG_PREFIXES.join('|') + ')\\d+\\]', 'g');
+const CITATION_TAG_TEST = new RegExp('\\[(?:' + CITATION_TAG_PREFIXES.join('|') + ')\\d+\\]');
+
+// True NO-OP when the text carries no citation tag (returns the input unchanged), so
+// every clean body renders byte-identical. Only when a tag is present does it strip +
+// tidy the whitespace the removed tag left behind (doubled spaces, space-before-
+// punctuation, trailing space before newline).
+export function stripCitationTags(text) {
+  if (!text || typeof text !== 'string' || !CITATION_TAG_TEST.test(text)) return text;
+  return text
+    .replace(CITATION_TAG_RE, '')
+    .replace(/ {2,}/g, ' ')
+    .replace(/ +([.,;:!?])/g, '$1')
+    .replace(/ +\n/g, '\n');
+}
+
 // MASTER FLAG (default OFF): gates the WHOLE store-row-citation behavior as ONE
 // switch, so there is never a half-state (cites-without-resolving). OFF (staged, the
 // current production state) -> fetchGameContext presents rows as PROSE (no ids, no
@@ -121,7 +146,7 @@ export function makeStoreMinter() {
 // STEP 2, instruct citing the PREMISES of a build recommendation (the shell + the
 // specific cores/components it rests on). callEditor swaps this in per-call only when
 // the master flag is ON (via toolWithStoreCites); OFF -> the tool is unchanged.
-export const CITED_BLOCKS_SCHEMA_STORE_DESC = 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context. TWO kinds: external sources ("BN1", "YT2") AND verified store rows ("WS3" weapon, "SH6" shell, "CS2" core, "MS4" mod, "IS9" implant) -- you MUST cite the store-row id for every verified stat, ability, kit, or perk fact you took from a tagged database row. AND when you make a BUILD or LOADOUT RECOMMENDATION (e.g. pairing a shell with specific cores/implants/mods), cite EVERY premise the recommendation rests on: the shell id AND each specific core/component id you recommend -- "run core X on shell Y because [interaction]" must include BOTH ids. A recommendation is grounded only when the rows under it are cited. Cite ONLY ids that appear in your context; cite nothing rather than guessing. Never write a URL here -- the id alone.';
+export const CITED_BLOCKS_SCHEMA_STORE_DESC = 'IDs of the context blocks whose FACTS you actually used, copied exactly from the bracketed ids shown in your context. TWO kinds: external sources ("BN1", "YT2") AND verified store rows ("WS3" weapon, "SH6" shell, "CS2" core, "MS4" mod, "IS9" implant) -- you MUST cite the store-row id for every verified stat, ability, kit, or perk fact you took from a tagged database row. AND when you make a BUILD or LOADOUT RECOMMENDATION (e.g. pairing a shell with specific cores/implants/mods), cite EVERY premise the recommendation rests on: the shell id AND each specific core/component id you recommend -- "run core X on shell Y because [interaction]" must include BOTH ids. A recommendation is grounded only when the rows under it are cited. CITE ONLY IDS THAT LITERALLY APPEAR AS BRACKETED TAGS IN YOUR CONTEXT ABOVE -- copy each id character-for-character from the tag shown next to the row. The ids are arbitrary labels, NOT sequential and NOT guessable: NEVER invent, guess, construct, infer, or renumber an id (do not assume "WS1" or "CS30" exists just because it looks plausible). If no offered block supports a claim, leave that claim UNCITED rather than citing an id you did not see. An invented id is rejected and flags the article. Never write a URL here -- the id alone.';
 
 // STEP 3 (gate premise-validation): the OPTIONAL recommendations field. The editor
 // DECLARES its reasoning chain -- each build/loadout recommendation with the block ids
@@ -136,7 +161,7 @@ export const RECOMMENDATIONS_SCHEMA = {
     type: 'object',
     properties: {
       claim_text: { type: 'string', description: 'the recommendation in one sentence, e.g. "run Eminent Domain on Sentinel because it neutralizes grenades via Defender System".' },
-      supporting_block_ids: { type: 'array', items: { type: 'string' }, description: 'the bracketed ids whose verified facts this recommendation rests on, e.g. ["SH8","CS29"] -- copied exactly from the ids shown in your context; select ONLY ids that appear there, never invent one.' },
+      supporting_block_ids: { type: 'array', items: { type: 'string' }, description: 'the bracketed ids whose verified facts this recommendation rests on, e.g. ["SH8","CS29"] -- copied CHARACTER-FOR-CHARACTER from the tags shown in your context. Select ONLY ids that literally appear there. NEVER invent, guess, or construct an id (they are arbitrary, not sequential). If you cannot cite a real offered id for a premise, do NOT make that recommendation -- an unsupported premise flags the article.' },
     },
     required: ['claim_text', 'supporting_block_ids'],
   },
