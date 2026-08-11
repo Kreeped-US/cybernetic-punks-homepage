@@ -326,15 +326,27 @@ removed; layout owns them; `const password = auth.password` keeps the 1150-line 
 `?tab=` deep-link support (shell/launcher jump straight to Directives/Keywords). Removed its now-
 redundant "DATA ADMIN" header; tab-bar sticky top 65->49 to sit under the shell nav.
 
-DATA NOTE (brief premise corrected): there is NO `site_stats` table and cron/stats does NOT pre-compute
-rollups -- it only writes live_stats (Steam/Twitch). Confirmed twice ("Could not find table
-public.site_stats"). So the bridge reads engagement LIVE from site_events/feed_items (cheap counts) and
-discovery from gsc_page_metrics. Views WoW IS possible today (events are timestamped -- the earlier
-"totals-only" was a presentation artifact); no snapshot table needed for v1.
+PREMISES CORRECTED (re-verified against the repo before the follow-up build; two briefs asserted these):
+  - NO `AdminNav` component exists (grep -rln AdminNav -> nothing). The only Nav is components/Nav.js =
+    the PUBLIC site nav. So the shell's ONE nav is the layout's ADMIN_NAV; there was nothing to "adopt/
+    consolidate from" -- the single-admin-nav goal is met by the layout, not by extending a phantom.
+  - NOT 10 admin pages (4 with a nav / 6 without). Main has exactly ONE admin page (app/admin/page.js);
+    this branch made it two. The "surfaces" are TABS + PANELS inside the single CRUD page, not routes.
+  - NO `site_stats` table (confirmed 3x). The "exists" reading was a PostgREST HEAD-request artifact
+    (null count, no body); a real SELECT errors "Could not find table public.site_stats", and zero code
+    writes it. cron/stats only writes live_stats (Steam/Twitch). So the bridge reads engagement LIVE
+    from site_events/feed_items (cheap counts) + discovery from gsc_page_metrics. Views WoW IS possible
+    today (events are timestamped -- the earlier "totals-only" was a presentation artifact).
 
-AUTH/SHELL NOTE: the public site `<Nav/>` (root app/layout.js) still renders above the admin nav on
-/admin pages -- pre-existing global behaviour, left alone (suppressing it touches a shared component;
-follow-up). No middleware; /admin was never edge-gated.
+NAV CONSOLIDATION (the approved follow-up -- ONE admin chrome): the public site `<Nav/>` AND
+`<LivePulseStrip/>` (both rendered site-wide by root app/layout.js) now RETURN NULL on /admin routes, so
+the ONLY chrome on admin pages is the shell nav (app/admin/layout.js). Done by extending each
+component's EXISTING "declared after all hooks" pathname guard:
+  - components/Nav.js (Nav(), after all hooks): added `pathname === '/admin' || startsWith('/admin/')`.
+  - components/LivePulseGate.js (the client gate behind LivePulseStrip): same clause.
+PRECISE path-segment check (/admin and /admin/* only -- never a public route that merely starts with
+the letters "admin"). Public routes are BYTE-IDENTICAL (the clause is purely additive; /meta etc. match
+no suppress branch). No middleware; /admin was never edge-gated.
 
 VERIFY: eslint -- all 4 new files CLEAN (0 errors); content/page.js down from 2 pre-existing errors to
 1 (removed the old `<a href="/">` header; the remaining unescaped-apostrophe is pre-existing, matches
@@ -342,7 +354,10 @@ main). `next build` PASSED -- /admin, /admin/content, /api/admin/bridge all in t
 /admin + /admin/content serve 200 + render the shared gate; bridge API returns 401 without/with-wrong
 password (gating intact); zero app console errors (only HMR-websocket preview noise). The authed
 dashboard render was verified by build + lint + code review, NOT by logging in (admin password is never
-entered).
+entered). NAV CONSOLIDATION verified in-browser: on /admin AND /admin/content the public nav +
+LivePulseStrip are ABSENT (body shows only the admin gate; JS probe hasLiveStrip=false,
+publicNavPresent=false); on /meta the public nav renders in full + hasLiveStrip=true (public routes
+byte-identical). eslint clean on Nav.js + LivePulseGate.js.
 
 v2 (NOTED, NOT built): cron heartbeat tile from `cron_runs` ("daily generation last ran Xh ago");
 daily view-snapshot table for long-range view trends; true GSC indexation-coverage delta; optionally

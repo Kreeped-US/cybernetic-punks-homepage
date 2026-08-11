@@ -221,9 +221,12 @@ export default function Nav() {
   // (GAME_TEMPLATE.md D4); network-level pages (e.g. /profile-preview) aren't
   // Marathon pages either. The neutral root ('/') is the network front door and
   // renders its own brand banner, so Marathon's global nav is suppressed there
-  // too. Declared after all hooks so hook order stays stable. Marathon's other
-  // unprefixed routes are unaffected.
-  if (pathname === '/' || (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview')))) return null;
+  // too. The /admin section has its own shell nav (app/admin/layout.js), so the
+  // public nav is suppressed there for a single admin chrome -- precise path-
+  // segment check (/admin and /admin/*, never a public route that merely starts
+  // with the letters "admin"). Declared after all hooks so hook order stays
+  // stable. Marathon's other unprefixed routes are unaffected.
+  if (pathname === '/' || (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/')))) return null;
 
   return (
     <nav style={{

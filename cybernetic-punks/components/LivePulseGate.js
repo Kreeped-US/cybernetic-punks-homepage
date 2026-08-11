@@ -17,8 +17,11 @@ export default function LivePulseGate({ stats }) {
   if (pathname === '/' || pathname === '/marathon') return null;
   // DMZ route group has its own shell (GAME_TEMPLATE.md D4) and network-level
   // pages (e.g. /profile-preview) aren't Marathon pages -- Marathon-specific
-  // live stats don't apply on either. Marathon routes are unaffected.
-  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview'))) return null;
+  // live stats don't apply on either. The /admin section runs its own shell
+  // (app/admin/layout.js) -- no public chrome there. Precise path-segment check
+  // (/admin and /admin/*, not any public route starting with "admin"). Marathon
+  // routes are unaffected.
+  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/'))) return null;
 
   var hasSteam = !!(stats && stats.steam);
   var hasTwitch = !!(stats && stats.twitch);
