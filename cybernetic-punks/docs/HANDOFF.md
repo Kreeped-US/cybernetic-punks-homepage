@@ -20,9 +20,16 @@ cited verified block), release the JUDGMENT (the recommendation). Build order: (
 the reasoning capability IS the launch-critical differentiator; do NOT publish decent-general content
 in the meantime. The content model arms as a WHOLE (after step 3), not piece-by-piece.
 
-STATUS: steps 1 + 2 + 3 + 4 ALL BUILT, PROVEN, STAGED OFF, MERGED. The content model is COMPLETE (all
-four capability steps in code, inert behind the flag). Step 4 (held-for-review) both-verified (write-
-free + a real held-insert end-to-end, then cleaned up). NEXT = ARM (see THE NEXT MOVE).
+STATUS (2026-08-11): ARMED + PRODUCING. STORE_ROW_CITATION_ENABLED=true in Vercel Production -- the four
+capability steps are LIVE. The FIRST armed NEXUS article generated HELD, was reviewed + APPROVED by the
+operator, and is now LIVE (the "Marathon Update 1.1.5.3" maintenance-patch summary, feed_item
+e7292f91). Held-for-review CONFIRMED end-to-end: generated held (is_published=false, gate_status=clear)
+-> human approved -> published; NOTHING auto-published (an UNARMED NEXUS article would have auto-
+published, so the HELD state is itself the proof the flag is live in the running deployment). That
+article cited BUNGIE patch notes (external), NOT store rows -- correct for a maintenance summary with no
+stat claims; store [SH#]/[CS#] citations will appear on stat-heavy build/meta articles. Two armed-run
+seam fixes are live: cite-only-offered-ids (prompt/schema discipline) + stripCitationTags render-strip.
+NEXT = a DMZ keyword-planning view (see THE NEXT MOVE) -- the content model no longer needs action.
 - Step 1 (store-row citation): editor cites verified store rows. Proven on the Sentinel dry-run
   (verified_source null -> 7 cited store rows).
 - Step 2 (store adjacency): editor reasons across the shell<->core neighborhood + cites the cores a
@@ -46,10 +53,12 @@ Steps 3+ extend tool-schema field descriptions, gated per-call, to keep staged-O
 ### ADMIN BRIDGE (2026-08-11 session -- separate from the content model; does NOT change the next move)
 
 The admin panel was modernized into a one-stop "Bridge" (shell + dashboard home + nav consolidation).
-DONE + MERGED + PUSHED (f1b34e2). Admin-facing only; public routes byte-identical; the content-model
-flag was untouched. See the dated "ADMIN PANEL MODERNIZED INTO A 'BRIDGE'" entry below for the arc.
-This did NOT touch the content model -- THE NEXT MOVE is still ARM (below), now with a real admin home
-(the Bridge) to watch drafts + vitals from once armed.
+DONE + MERGED + PUSHED (f1b34e2). Admin-facing only; public routes byte-identical. Since then (2026-08-
+11): the drafts panel gained an inline FORMATTED draft-preview (read a draft before approving; shared
+lib/articleBody.js parseBody; public is_published gate untouched) and the Bridge draftsWaiting count was
+fixed to exclude rejected drafts -- both merged 6fd5434. The content model is now ARMED (above); the
+Bridge is the admin home to watch drafts + vitals from, and the draft-preview is what the operator used
+to read + approve the first armed article.
 
 ### ASSIGNMENT GATE (separate track, from this morning)
 
@@ -79,20 +88,22 @@ rarity -- with data). NOT armed; the roster freeze is still the brake. Next: wat
 
 ### THE NEXT MOVE (unambiguous)
 
-ARM the content model. The four capability steps are built + staged OFF behind STORE_ROW_CITATION_
-ENABLED (unset on Vercel). To arm: set STORE_ROW_CITATION_ENABLED=true in the Vercel Production env
-when ready. That flips ON, together: store-row citation (step 1) + store adjacency (step 2) + gate
-premise-validation (step 3, LOG-ONLY on Marathon -- observed, never holds) + held-for-review (step 4).
-Effect: the first reasoned/cited NEXUS article (next PATCH cycle -- the roster freeze still gates
-cadence) lands as a DRAFT (is_published=false, gate_status='clear') in the admin drafts panel for you
-to APPROVE (POST /api/admin/drafts/approve), NOT auto-published. Review the first few, then decide
-whether to keep held-for-review or narrow it. Arming is a Vercel env change + a redeploy -- no code
-change needed. Recommended: watch one armed patch cycle's [gate]/[HELD-FOR-REVIEW] logs before trusting
-it broadly.
+Build a lightweight DMZ KEYWORD-PLANNING VIEW (Option A): a READ-ONLY admin view over the uploaded DMZ
+demand research, sorted by winnable demand (volume vs difficulty), so the operator can eyeball + aim
+launch content. (The content model is ARMED + producing -- no longer the next move.)
 
-DEFERRED (post-arm, as scoped -- none blocks arming): queue-driven assignment (rebuild -- feed a
+*** CRITICAL PRE-FLIGHT CORRECTION (verified 2026-08-11, prevents building the view against a phantom):
+the DMZ keyword data is NOT in keyword_targets. keyword_targets = 7 rows, ALL game_slug='marathon',
+ZERO DMZ. The DMZ Mangools/KWFinder research lives ENTIRELY in DOCS: docs/dmz-demand-map.md (the ranked
+build queue, "REVIEWED - ACTIVE") + docs/research/dmz-demand-2026-07/ (six CSVs: vol_known, kd) + volume
+COMMENTS in lib/dmz/entities.js. NO code reads any of it. So Option A cannot "read the uploaded DMZ
+keyword_targets" -- there are none. The view must either (i) FIRST import the DMZ demand rows into
+keyword_targets (game_slug='dmz', from the CSVs), then read them, OR (ii) read the demand-map/CSVs
+directly. Decide the source before building. ***
+
+Content-model DEFERRED (post-arm, none blocks anything): queue-driven assignment (rebuild -- feed a
 passing candidate into callEditor instead of NEXUS self-select); the ~19-row core-provenance populate
-(display quality); the mod<->weapon data build (unmodeled adjacency); the recommendations-only held
+(display quality); the mod<->weapon data build (unmodeled adjacency); recommendations-only held
 narrowing (auto-publish non-recommendation NEXUS articles once the review flow is trusted).
 
 ### GIT STATE
@@ -145,6 +156,16 @@ remain.
 
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
+
+- **NEXT UP (chosen 2026-08-11): DMZ keyword-planning VIEW (Option A).** A read-only admin view over the
+  DMZ demand research, sorted by winnable demand (volume vs difficulty), so the operator can eyeball +
+  aim launch content. *** PRE-FLIGHT: the DMZ data is NOT in keyword_targets (0 DMZ rows; all 7 are
+  marathon) -- it lives in docs/dmz-demand-map.md + docs/research/dmz-demand-2026-07/ (six CSVs) +
+  lib/dmz/entities.js comments, and NO code reads it. So Option A must first decide its SOURCE: (i)
+  import the DMZ rows into keyword_targets (game_slug='dmz') from the CSVs, then read them, OR (ii) read
+  the demand-map/CSVs directly. *** Bigger options DEFERRED: (B) gap-analysis to-write list (needs a DMZ
+  content inventory). This is the DMZ half of the keyword loop -- the input exists (as docs), the output
+  layer (keyword -> content plan) was never built (see the GSC/MANGOOLS reconciliation entry below).
 
 - **PRODUCT OBSERVATION (2026-08-11): on-site ACTIONS are near-nil while readership grows.** From the
   site-usage exact-count audit: page_view 3,771 (+159% WoW, ~99% article reads) -- healthy, GROWING
@@ -324,6 +345,68 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
   NO payload, NO premium logic) + save/unsave API + SaveBuildButton + /dmz/builds/saved. The last
   launch-critical identity item. THIN but substrate-shaped (saved_source_version). DDL applied +
   verified private (RLS on, anon reads 0) -- see docs/dmz/MIGRATIONS.md.
+
+---
+
+## 2026-08-11 - SESSION RECONCILIATION: content model ARMED + first article live; metric + GSC/Mangools corrections
+
+End-of-session reconciliation so the next session starts from the true state (several earlier facts were
+wrong; corrected here).
+
+1. CONTENT MODEL ARMED + FIRST ARTICLE LIVE. STORE_ROW_CITATION_ENABLED=true (Vercel Production). The
+   first armed NEXUS article generated HELD, the operator reviewed + APPROVED it, and it is LIVE (feed_item
+   e7292f91 "Marathon Update 1.1.5.3"). Held-for-review CONFIRMED end-to-end (generated held -> human
+   approve -> published; nothing auto-published -- the held state proves the flag is live, since an
+   unarmed article auto-publishes). It cited BUNGIE patch notes (external), NOT store rows -- correct for
+   a maintenance summary with no stat claims; [SH#]/[CS#] store citations will show on stat-heavy build/
+   meta articles. Two armed-run seam fixes live: cite-only-offered-ids + stripCitationTags render-strip.
+
+2. ADMIN DRAFT PREVIEW + BRIDGE COUNT FIX (merged 6fd5434) -- see the dated entry below.
+
+3. METRIC/DASHBOARD CORRECTIONS (durable cautions -- these were QUERY-CAP artifacts, not reality):
+   (a) The "231 events / engagement near-nil" read was a WINDOWED .limit UNDERCOUNT. TRUE: page_view =
+       3,771 (+159% WoW); builds (advisor_generate) = 34, not ~2. CAUTION: use exact count(); NEVER re-
+       trust a windowed .limit read (the stats route capped .limit(5000) -> 1000).
+   (b) The site-usage admin section now LEADS with page_view (the real signal); meta_view (252) demoted
+       to a /meta subset; near-dead action metrics (builds/shares) folded into one secondary line.
+   (c) There is NO site_stats table (confirmed). Engagement reads LIVE from site_events + feed_items.
+
+4. ARTICLE -> TOOL CTA (merged ec5bc0e, LIVE + user-visible). 411 shell articles now deep-link
+   /advisor?shell=[slug] ("Plan your [Shell] build"), 283 generic, 306 none, DMZ null-stub. Full funnel
+   measurable: advisor_cta_click -> page_view(advisor) -> advisor_engaged -> advisor_generate. DIAGNOSIS
+   that drove it: the advisor's low use was DISCOVERY (1,000 articles, 0 body-linked to the tool -- though
+   the template already showed a generic CTA), NOT tool quality (works for those who reach it) and NOT
+   naming (already SEO'd; build-search volume is tiny -- 108 impressions all-time). The tool upgrade AND a
+   rename were both NOT the lever; article->tool linking + measurement were. Follow-ups: shell detection
+   is substring-based (word-boundary refinement noted); DMZ CTA config-stub fill at launch.
+
+5. GSC / MANGOOLS LOOP -- the ACCURATE picture (corrects earlier wrong facts):
+   - GSC ingestion is AUTOMATED (runDailyGscPull/runQueryGscPull inside /api/cron, fail-open) -> gsc_page_
+     metrics / gsc_query_metrics (fresh to ~3-day GSC lag). scripts/gsc-pull.mjs = manual backfill only.
+   - keyword_targets IS populated + the review->store path IS wired (earlier "near-empty/broken" was
+     wrong): 7 rows -- 1 ACTIVE (source=KWfinder/Mangools, "marathon assassin", vol 590) + 6 dormant gsc-
+     review accepts (is_active=false, no entity tuple). Accept PRE-FILLS the keyword_targets form; a human
+     completes entity_type/slug/facet + activates + saves (the firewall: GSC can't auto-create a row).
+   - CONSUMERS of keyword_targets: keywordFraming (rewrites the HEADLINE post-generation, exact-tuple
+     match, one-shot cap) + keywordHeartbeat (health monitor) + gsc-review (exclusion set). It is a
+     HEADLINE-FRAMING lookup, NOT a planning/coverage view.
+   - FIREWALL (by design): keyword_targets NEVER feeds editor GENERATION. callEditor writes body+headline
+     keyword-free; framing rewrites the headline only, after the body is frozen. Demand informs strategy/
+     what-to-build (a human gate), never the editor's context.
+   - MANGOOLS: NO automated import (manual admin entry, source=kwfinder). Marathon: GSC covers it. DMZ
+     (pre-launch, GSC-blind): Mangools is the forward-looking demand tool, and the DMZ research IS DONE +
+     benchmarked vs the prior DMZ/MW2 launch.
+   - *** THE DMZ GAP (CORRECTED -- the actionable finding): the DMZ keyword data is NOT in keyword_targets
+     (0 DMZ rows). It lives in docs/dmz-demand-map.md ("REVIEWED - ACTIVE" ranked build queue) + docs/
+     research/dmz-demand-2026-07/ (six CSVs) + lib/dmz/entities.js volume COMMENTS, and NO CODE READS ANY
+     OF IT. It drives the DMZ canonical build MANUALLY (a human reads the demand-map). So the DMZ half of
+     the loop (keyword -> content plan) was never built as a wired layer: the INPUT exists (as docs, used
+     by hand), the automated OUTPUT layer does not. This is why the loop felt confusing. ***
+
+6. NEXT = DMZ keyword-planning view (Option A), with the pre-flight above (source decision: import to
+   keyword_targets, or read the demand-map/CSVs). See PENDING/BACKLOG. Standing: DMZ launch-prep (dmz_*
+   tables empty, entities as prose, ~9 Hajin POIs, Oct 23 launch, CTA config-stub fill); Bridge v2 signals
+   (cron heartbeat, daily view-snapshot for view-WoW, GSC indexation delta).
 
 ---
 
