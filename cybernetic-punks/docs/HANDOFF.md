@@ -157,15 +157,15 @@ remain.
 Recorded 2026-08-07 from a doc audit (these were previously only in chat history -> would be lost).
 Newest-first within the block; move an item to the dated log when it ships.
 
-- **NEXT UP (chosen 2026-08-11): DMZ keyword-planning VIEW (Option A).** A read-only admin view over the
-  DMZ demand research, sorted by winnable demand (volume vs difficulty), so the operator can eyeball +
-  aim launch content. *** PRE-FLIGHT: the DMZ data is NOT in keyword_targets (0 DMZ rows; all 7 are
-  marathon) -- it lives in docs/dmz-demand-map.md + docs/research/dmz-demand-2026-07/ (six CSVs) +
-  lib/dmz/entities.js comments, and NO code reads it. So Option A must first decide its SOURCE: (i)
-  import the DMZ rows into keyword_targets (game_slug='dmz') from the CSVs, then read them, OR (ii) read
-  the demand-map/CSVs directly. *** Bigger options DEFERRED: (B) gap-analysis to-write list (needs a DMZ
-  content inventory). This is the DMZ half of the keyword loop -- the input exists (as docs), the output
-  layer (keyword -> content plan) was never built (see the GSC/MANGOOLS reconciliation entry below).
+- **DMZ launch-prep: verification queue recorded at docs/dmz-verification-queue.md; populate dmz_* in
+  that order.** (Ranked 2026-08-11 by human judgment: POIs by strategic centrality, weapons by
+  transferable demand, generic demand held as a content-type signal.) SUPERSEDES the earlier "DMZ
+  keyword-planning VIEW (Option A)" direction: the Fable pre-launch-demand ruling (2026-08-11,
+  docs/CONTENT_PIPELINE_ARCHITECTURE.md AMENDMENT) established that pre-launch demand ranks the
+  VERIFICATION queue (which dmz_* entities to make verified-real first), NOT a content plan. The
+  dmz_keyword_research content-planning table/view was ABANDONED; the 6 demand CSVs stay raw research
+  evidence, and the docs/research/dmz-demand-2026-07/*.sql import artifacts are uncommitted prep
+  evidence, not a committed store.
 
 - **PRODUCT OBSERVATION (2026-08-11): on-site ACTIONS are near-nil while readership grows.** From the
   site-usage exact-count audit: page_view 3,771 (+159% WoW, ~99% article reads) -- healthy, GROWING
