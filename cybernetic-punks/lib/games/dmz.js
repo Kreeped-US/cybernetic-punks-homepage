@@ -223,6 +223,8 @@ export const DMZ_ARTICLE_SECTION = {
   'dmz-forward-operating-base-every-hub-system-detailed': 'fob',
   // Craftable gear/equipment (NVGs, vests, backpacks, killstreaks) -> Loadouts.
   'dmz-3d-printer-crafting-system-every-category-detailed': 'loadouts',
+  // DMZ vs Warzone comparison canonical -> Field Intel (the empty catch-all).
+  'dmz-vs-warzone': 'field-intel',
 };
 
 // Slugs assigned to a given DMZ section (empty array if none -> empty state).
@@ -283,5 +285,10 @@ export const DMZ_ARTICLE_SEO = {
       'Dynamic weather -- rain, fog, overcast -- changes visibility each run.',
       'One of the largest Call of Duty environments, built for high-risk ops.',
     ],
+  },
+  'dmz-vs-warzone': {
+    title: 'DMZ vs Warzone: Differences and the MW4 Hajin Return',
+    description: 'How DMZ differs from Warzone -- win condition, gear persistence, threat model -- plus what MW4 announced for DMZ\'s Oct 23, 2026 return on Hajin.',
+    keyFacts: [],
   },
 };

@@ -287,6 +287,10 @@ const TOPICS = [
       'water, and other operational risks. Players willing to push deeper into the',
       'unknown can uncover hidden mysteries, pursue high-value gear, and engage in',
       'increasingly dangerous missions with greater risks and rewards.',
+      '',
+      'The blog also describes free-roam and Dynamic Ops moments such as',
+      'commandeering a derelict casino while attempting to break into the vault',
+      '-- naming a derelict casino among the zone\'s locations.',
     ].join('\n'),
   },
 ];

@@ -188,6 +188,55 @@ var ARTICLES = [
       'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
     ].join('\n'),
   },
+  // NEW (staged 2026-08-12, NOT yet persisted): the DMZ-vs-Warzone comparison
+  // canonical. Two explicit provenance layers -- Layer A (shipped Warzone / DMZ
+  // 2022) stated plainly as general knowledge, NOT attributed to the Deep Dive;
+  // Layer B (MW4 Hajin) framed "announced, not verified" and drawn ONLY from the
+  // sanctioned Deep-Dive excerpt (gen-dmz-news TOPICS). Explicit slug forces
+  // 'dmz-vs-warzone' (the map above honors a.slug). Section mapped to
+  // 'field-intel' in lib/games/dmz.js DMZ_ARTICLE_SECTION.
+  {
+    headline: 'DMZ vs Warzone: Differences and the MW4 Hajin Return',
+    slug: 'dmz-vs-warzone',
+    tags: ['dmz', 'warzone', 'modern warfare 4', 'dmz vs warzone', 'pre-launch'],
+    body: [
+      '**Two Modes, Opposite Goals**',
+      '',
+      'DMZ and Warzone share the Call of Duty franchise, but in the shipped games they are built around opposite objectives. Warzone is about being the last squad standing. DMZ is about getting in, taking what you can, and getting out alive.',
+      '',
+      '**Warzone, in the shipped games**',
+      '',
+      'Warzone is a battle royale. Large lobbies drop into one map, a collapsing circle forces everyone together, and the last team alive wins. Along the way you use buy stations, take on contracts, and -- if you die -- fight for a second chance in the Gulag. Nothing you find carries over once the match ends; the run is the match.',
+      '',
+      '**The original DMZ, in the shipped games**',
+      '',
+      'The original DMZ (Modern Warfare II, 2022) was an extraction mode, not a battle royale. Runs were mission- and objective-driven, there was no respawn -- you either extracted or lost what you were carrying -- and gear persisted between runs, including insured and contraband weapon slots. Threats came from both AI combatants and other players, making it PvPvE rather than pure PvP.',
+      '',
+      '**The core differences**',
+      '',
+      '- Win condition: Warzone is last-team-standing; DMZ is complete your objectives and extract.',
+      '- Gear persistence: in Warzone nothing carries out; in DMZ you keep what you extract.',
+      '- Threat model: Warzone is player-versus-player; DMZ mixes players and AI (PvPvE).',
+      '- Pacing: Warzone is timed by a shrinking circle; DMZ lets you choose when to push and when to leave.',
+      '',
+      '**What MW4 has announced for DMZ**',
+      '',
+      'According to Call of Duty\'s official Deep Dive, published June 6, 2026, DMZ returns in Modern Warfare 4 in a new setting: the Hajin Exclusion Zone, a Korean-peninsula region the blog describes as scarred by radiation and evacuation. None of the following has been played -- it is what the developers have announced, not verified in-game.',
+      '',
+      '- The extraction loop returns. As a shadow CIA asset you secure abandoned technology before rival forces, with Rogue Operators and enemy combatants both active -- PvPvE, as announced.',
+      '- A Forward Operating Base anchors preparation, with a Gunsmith (weapons and attachments bought with cash, where more effective gear costs more, up to five attachments plus an Apex, and eight-attachment weapons revealed for Hajin), a Weapon Vendor, a persistent Stash, a cash Wallet, and a 3D Printer that crafts gear from recovered resources -- though not Primary, Secondary, or Melee weapons.',
+      '- Active Duty Operators are managed and recovered after failed exfils, each carrying a persistent loadout and Trait Tree.',
+      '- Hostile Lieutenants are hunted via the Boss Board and Hunt Towers, and dynamic weather -- rain, fog, overcast -- shifts each run.',
+      '',
+      'The Deep Dive does not detail the weapon roster, any tuning or numbers, or the map\'s points of interest beyond five named locations: the Fallout reactor, the Prison complex, Hajin City, the Military Base, and a derelict casino.',
+      '',
+      '**Get notified at launch**',
+      '',
+      'The shape is familiar -- extraction, not battle royale -- but everything MW4-specific stays announced, not verified, until the mode is live. If you want to know the moment DMZ returns, sign up to get notified at launch.',
+      '',
+      'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
+    ].join('\n'),
+  },
 ];
 
 async function main() {
@@ -212,7 +261,10 @@ async function main() {
       ce_score: 0,
       is_published: true,
       thumbnail: null,
-      slug: slugify(a.headline),
+      // Explicit a.slug wins (e.g. the DMZ-vs-Warzone comparison forces
+      // 'dmz-vs-warzone'); the 3 frozen articles have no slug field and keep
+      // their slugify(headline) derivation unchanged.
+      slug: a.slug || slugify(a.headline),
       game_slug: 'dmz',
     };
   });
