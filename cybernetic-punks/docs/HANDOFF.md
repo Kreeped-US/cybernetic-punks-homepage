@@ -368,6 +368,69 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-12 PM - DMZ-vs-Warzone article (first pre-launch anticipation piece; HELD on a branch, row NOT persisted)
+
+Prior main: 3babd21. This commit: d53db11 (on branch `feat/dmz-vs-warzone-article`, ahead of
+main by 1; this HANDOFF entry is a 2nd commit on the same branch). First pre-launch DMZ
+anticipation article, hand-authored, staged across 3 code files. The `feed_items` row is NOT
+yet persisted (operator step). Nothing was auto-generated; the armed cron remains Marathon-only.
+
+### Shipped in d53db11 (code only)
+Article: "DMZ vs Warzone: Differences and the MW4 Hajin Return" -> route
+`/dmz/field-intel/dmz-vs-warzone`, slug forced 'dmz-vs-warzone', editor NEXUS, source 'DEEP DIVE'.
+Two-layer comparison: Layer A = shipped-game facts (Warzone BR, original DMZ 2022 extraction)
+stated plainly as "in the shipped games"; Layer B = MW4 Hajin systems framed "announced, not
+verified" and sourced to the official Deep Dive.
+Files:
+- `lib/games/dmz.js`: DMZ_ARTICLE_SECTION 'dmz-vs-warzone' -> 'field-intel' (field-intel was the
+  empty catch-all; this is now its anchor member); DMZ_ARTICLE_SEO entry, title 52 chars,
+  description 144 chars, Oct 23 NOT attributed to the Deep Dive.
+- `scripts/gen-dmz-news.mjs`: casino/vault line added to the sanctioned Hajin excerpt
+  (self-documents the five-POI claim from primary source).
+- `scripts/persist-dmz-news.mjs`: slug-override map line (slug: a.slug || slugify(a.headline);
+  the 3 frozen articles have no slug field, unchanged) + the new ARTICLES entry.
+
+### Decisions + rationale
+- Hand-authored, NOT via gen-dmz-news: its SYSTEM_PROMPT is strictly single-source (rules 3b/5)
+  and cannot carry Layer A shipped-game facts without dropping them or mislabeling them as
+  Deep-Dive-sourced. Did NOT weaken the shared generator's honesty contract for one piece; a
+  comparison genre would get a separate dual-source generator, not a loosened Deep-Dive one.
+- Section field-intel (no dedicated compare section for n=1). Forced clean slug = the head query
+  (page-gap thesis). Indexed (depth-complete, provisional != noindex per A3); not an entity row
+  so no UNCONFIRMED banner -- Layer B carries inline "announced, not verified" instead.
+
+### Primary-source audit (PLANNING-SIDE web_fetch of the actual Deep Dive -- operator-supplied, NOT repo-verifiable)
+These findings came from a planning-side fetch of the live callofduty.com Deep Dive, not from
+anything checkable in the repo; recorded as operator-supplied primary-source results.
+- Publish date verified June 6, 2026 (verbatim on callofduty.com, twice). Earlier "June 7" was
+  wrong. Existing 3 DMZ articles say "June 6, 2026" = CORRECT, left untouched.
+- Casino confirmed as a fifth named POI (derelict casino with a vault, free-roam section). Closing
+  POI sentence now names five: Fallout reactor, Prison, Hajin City, Military Base, derelict casino.
+- Omission hook held: 150-HP, "three mission types", star-escalation dropped -- none exist in
+  source. eight-attachment weapons, 5+Apex Gunsmith, 3D Printer (excl. Primary/Secondary/Melee),
+  Boss Board/Hunt Towers/Lieutenants, Active Duty + Trait Tree, dynamic weather,
+  shadow-CIA-asset/Rogue-Operators PvPvE -- all excerpt-supported.
+- Oct 23 2026 IS in the full Deep Dive (the in-repo excerpt was partial); the SEO reword is harmless.
+
+### PENDING - operator actions, NOT done
+1. `node scripts/persist-dmz-news.mjs --dry` (preview the row).
+2. FF-merge `feat/dmz-vs-warzone-article` -> main + deploy (Vercel) BEFORE persist, so the
+   field-intel mapping + SEO are live when the row lands. Safe direction: dmzArticleSlugsForSection
+   filters to published slugs, so no orphan card pre-row.
+3. `node scripts/persist-dmz-news.mjs` (insert the `feed_items` row).
+4. Verify `/dmz/field-intel/dmz-vs-warzone` resolves, renders under Field Intel, shows the
+   DmzNotifyStrip CTA, "announced not verified" framing intact.
+5. Consumer C (A10): URL-inspection / 30-day indexation check once live -- the indexed acquisition
+   piece, don't let it slip.
+
+### Next moves (deferred, no decision needed)
+- Content cadence: a systems explainer (Gunsmith or FOB economy) via the same manual path + same
+  audit discipline.
+- Growth: drive the built email capture (`email_signups`, game_slug='dmz').
+- 3 SQL artifacts in `docs/research/dmz-demand-2026-07/` remain untracked (Fable ruling: do NOT commit).
+
+---
+
 ## 2026-08-11 - SESSION RECONCILIATION: content model ARMED + first article live; metric + GSC/Mangools corrections
 
 End-of-session reconciliation so the next session starts from the true state (several earlier facts were
