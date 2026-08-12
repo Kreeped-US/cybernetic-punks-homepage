@@ -368,6 +368,39 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-12 PM - DMZ-vs-Warzone SHIPPED (supersedes the pre-ship entry below)
+
+Supersedes the earlier 2026-08-12 PM entry, which recorded the pre-ship staged state. The article is
+now LIVE. main = dba54e8 (no code change since; this is a doc-only follow-up commit).
+
+### Shipped
+- Phase 1: FF-merged `feat/dmz-vs-warzone-article` -> main (3babd21 -> dba54e8), branch deleted,
+  pushed, Vercel deploy Ready.
+- Phase 2: `feed_items` row persisted by operator (`node persist-dmz-news.mjs` from cybernetic-punks/).
+  Inserted id c46cb6e3-a6fe-49c9-858a-77cc67e4886e, is_published=true. Existing 3 DMZ rows
+  idempotent-skipped. Coverage shadow logged unclassified / covered=false (expected: a comparison
+  piece maps to no vocabulary entity), would_block=false.
+- Phase 3: live-verified. `/dmz/field-intel/dmz-vs-warzone` = HTTP 200 (was 404 pre-persist). Renders
+  under Field Intel (hub card moved 0 -> 1 report). CTA (DmzNotifyStrip), "announced not verified"
+  framing, June 6 2026 date, and the five-POI line all present. The POI linkifier auto-cross-linked
+  recognized POI names in-body (8 anchors to live /dmz/pois/ pages, no dead links). No noindex
+  (published feed_items, not an entity row) -> indexed per A3.
+
+### Open follow-up
+- Consumer C / A10: 30-day URL-inspection / indexation check on /dmz/field-intel/dmz-vs-warzone (the
+  indexed acquisition piece). Clock starts 2026-08-12; check ~2026-09-11 in GSC. Calendar item, not
+  blocking.
+
+### Next moves (deferred, no decision needed)
+- Content cadence: another systems explainer (Gunsmith or FOB economy) via the same manual
+  gen-dmz-news -> persist path + primary-source audit discipline.
+- Growth: drive the built email capture (`email_signups`, game_slug='dmz').
+- Consumer C existence in-repo still unconfirmed (this morning's contradiction) -- a one-line
+  read-only grep resolves it if/when you build the loop.
+- 3 SQL artifacts in `docs/research/dmz-demand-2026-07/` remain untracked (Fable ruling: do NOT commit).
+
+---
+
 ## 2026-08-12 PM - DMZ-vs-Warzone article (first pre-launch anticipation piece; HELD on a branch, row NOT persisted)
 
 Prior main: 3babd21. This commit: d53db11 (on branch `feat/dmz-vs-warzone-article`, ahead of
