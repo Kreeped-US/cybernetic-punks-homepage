@@ -167,6 +167,26 @@ Newest-first within the block; move an item to the dated log when it ships.
   evidence, and the docs/research/dmz-demand-2026-07/*.sql import artifacts are uncommitted prep
   evidence, not a committed store.
 
+- **POI DATA - DEFERRED TO LAUNCH (2026-08-12).** The 9 Hajin POIs already live in the dmz_pois TABLE
+  (seeded, verified=false), and the live POI pages (app/dmz/pois/*) already read that table via
+  fetchDmzRows -- rendering fine with correct provisional/UNCONFIRMED provenance. There is NO code-file
+  -> table migration: lib/dmz/entities.js holds only the POI vertical's CONFIG, not data -- an
+  entities.js -> dmz_pois migration was scoped and found to be a NON-TASK (POIs already in the table;
+  pages already read it; nothing in the code file to move). The remaining POI work is CONTENT ENRICHMENT
+  of the existing rows (fill description / poi_type / notable_features + verified_source for the 4
+  Deep-Dive-sourced POIs: Hajin City, Military Base, Fallout Reactor, Prison), and it is DEFERRED to
+  launch: the natural time is AT LAUNCH, bundled with in-game verification (the provisional -> verified
+  flip), so each row is touched ONCE, not twice. Leave the POI rows as-is pre-launch; enrich + verify
+  them together at launch when there is real game data to verify against.
+
+- **HONEST DMZ PRE-LAUNCH SCOPE (2026-08-12).** keys/missions/items are BLOCKED till launch: the reveal
+  (MW4 DMZ Deep Dive) detailed the map/setting/systems + 4 POIs, NOT granular key/mission/item names --
+  the source-floor audit found ZERO Deep-Dive facts for keys, and missions/items are the same no-source
+  disposition (names do not exist publicly until Oct 23 2026). POIs are already structured (dmz_pois) +
+  rendering. So DMZ DATA population is largely BLOCKED pre-launch; the doable pre-launch DMZ work is
+  DESIGN / GROWTH -- build-tool scoping, pre-launch content/social -- NOT data population. Data
+  population resumes at launch (POI enrich + verify; keys/missions/items become sourceable).
+
 - **PRODUCT OBSERVATION (2026-08-11): on-site ACTIONS are near-nil while readership grows.** From the
   site-usage exact-count audit: page_view 3,771 (+159% WoW, ~99% article reads) -- healthy, GROWING
   discovery traffic -- but deliberate on-site actions are structurally low: advisor_generate 34
