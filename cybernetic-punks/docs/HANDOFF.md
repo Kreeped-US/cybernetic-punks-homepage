@@ -368,6 +368,63 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-13 PM - source_url remediation COMPLETE (647 nulled)
+
+main = 532ff13 + this doc commit. The 732-row source_url remediation (Brief 2,
+the second half of the Fable ruling) is DONE. Executed by operator in Supabase;
+Claude Code produced the gated SQL and read-only preflight only.
+
+### What ran
+Ratified split under Fable's mechanical test (ruling B on the one edge case):
+keep source_url IFF host is a verified first-party post
+(x.com/(MarathonTheGame|MarathonDevTeam)/status/..., official Steam
+announcements via steamstore-a.akamaihd.net/.../steam_community_announcements,
+bungie.net) OR editor='VANTAGE' (transcript-verified path); else NULL.
+- Preflight (read-only, server-side count, uncapped): to-null 647, keep 85,
+  verified_source baseline 4. All matched before the write.
+- UPDATE feed_items SET source_url = NULL on the to-null set (source_url only;
+  idempotent via source_url IS NOT NULL guard). Result: UPDATE 647.
+- Post-write verification: (a) 85 rows retain non-null source_url, (b) 0 to-null
+  rows still carry a source_url, (c) verified_source NOT null count = 4,
+  UNCHANGED from baseline. Provenance untouched; only false source links removed.
+
+### Ruling B (the edge case, for the record)
+The bare x.com/MarathonDevTeam PROFILE link (1 row, MIRANDA, no /status/) was
+NULLED, not kept: a profile link verifies no specific claim, so the keep-set's
+X clause requires a specific post path (/status/). Official handle, but a
+homepage is not a content-verified primary source. This restored the ratified
+85/647 split (the literal handle-only predicate would have kept it at 86/646).
+
+### Corrections logged during the pass (both caught by guards)
+- PostgREST 1000-row cap bit the first preflight (unfiltered fetch gave a bogus
+  412/49); re-run with a source_url-filtered / server-side count() gave the true
+  732 -> 647/85. All job counts are now server-side count(), cap-safe.
+- verified_source baseline is 4 corpus-wide (the earlier "2" was only the
+  to-null subset). Post-write confirmed still 4.
+
+### Net state of the source_url provenance work (both halves live)
+- Go-forward: media strip SHIPPED this morning at 79a89d6 (resolveMediaInfo
+  attaches no media; source/source_url/thumbnail null on new rows).
+- Historical: 647 false source_url values nulled; 85 first-party survivors kept.
+- source_url now means "content-verified primary source, or null" corpus-wide,
+  per the Fable ruling. verified_source (the real chain) untouched throughout.
+
+### Still open (carried from the 08-13 AM entry)
+1. THUMBNAIL DECISION - still un-called. Imageless is live by DEFAULT now (media
+   strip nulled thumbnail on new rows), so new Marathon cards already render
+   without images. Options unchanged: (1) imageless text-first [current default],
+   (2) editor-identity image [cheap fast-follow], (3) entity-derived render from
+   game DB [honest+rich build], (4) generated OG-style card [doubles as social
+   share]. Decision still needed.
+2. A12 doctrine line into the pending v10 apply - "Linked sources are claims.
+   Metadata similarity, positional assignment, and game-level filtering never
+   attach a source; a source link is attached only by a path that verified the
+   content it links." NOT yet applied - decide standalone vs fold into v10 apply.
+3. Inert-code cleanup chore (route.js: recentVideoIds + youtubeIdFromUrl + 3
+   stale comments left by the media strip). No runtime cost.
+
+---
+
 ## 2026-08-13 AM - source_url provenance ruling + media strip SHIPPED
 
 main = 79a89d6 (media-strip fix merged + live). Fable ruling delivered; remediation
