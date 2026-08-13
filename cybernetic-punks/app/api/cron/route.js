@@ -82,15 +82,6 @@ function patchKey(patchItems) {
   return title || null;
 }
 
-function isTwitchContent(result) {
-  if (result.source_type === 'twitch') return true;
-  var tags = (result.tags || []).map(function(t) { return t.toLowerCase(); });
-  if (tags.some(function(t) { return t.includes('twitch') || t.includes('clip'); })) return true;
-  var headline = (result.headline || '').toLowerCase();
-  if (headline.includes('clip') || headline.includes('twitch')) return true;
-  return false;
-}
-
 // Extract the YouTube id from a watch/embed/youtu.be URL -- mirrors the article
 // template's extractYouTubeId. Used to compare a pool clip against an editor's
 // recently-used source videos for the cross-cycle no-repeat.
@@ -100,69 +91,23 @@ function youtubeIdFromUrl(url) {
   return m ? m[1] : null;
 }
 
-function resolveMediaInfo(result, rawData, editorName) {
-  var videoId = result.source_video_id || null;
-  var isTwitch = isTwitchContent(result);
-
-  if (isTwitch && rawData.twitchClips && rawData.twitchClips.length > 0) {
-    if (videoId) {
-      var exactMatch = rawData.twitchClips.find(function(c) { return c.id === videoId; });
-      if (exactMatch) return { thumbnail: exactMatch.thumbnail, source_url: exactMatch.clip_url, source: 'TWITCH' };
-      var partialMatch = rawData.twitchClips.find(function(c) {
-        return c.id.includes(videoId) || videoId.includes(c.id);
-      });
-      if (partialMatch) return { thumbnail: partialMatch.thumbnail, source_url: partialMatch.clip_url, source: 'TWITCH' };
-    }
-    var topClip = rawData.twitchClips[0];
-    return { thumbnail: topClip.thumbnail, source_url: topClip.clip_url, source: 'TWITCH' };
-  }
-
-  if (videoId && !isTwitch && videoId.length >= 8) {
-    return {
-      thumbnail: 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg',
-      source_url: 'https://www.youtube.com/watch?v=' + videoId,
-      source: 'YOUTUBE',
-    };
-  }
-
-  // Pool fallback for the two editors that attach a trending clip when their
-  // article did not center on a specific video. Give each a DIFFERENT pool slot
-  // so two SAME-CYCLE fallbacks stop landing on the identical top clip (the
-  // incidental-clustering root cause): NEXUS -> [0], DEXTER -> [1]. When the pool
-  // holds only one entry, DEXTER degrades to [0] (unavoidable on a thin cycle).
-  // Only these two editors reach this branch -- CIPHER/GHOST null source_url
-  // downstream and MIRANDA carries its own source_url. An editor whose result
-  // named a specific video already returned above (source_video_id branch), so
-  // this only diversifies the no-specific-video DEFAULT; every article that got a
-  // clip still gets one, and the emitted source_url shape is unchanged (the
-  // article template's extractYouTubeId keeps parsing it).
-  var POOL_SLOT = { NEXUS: 0, DEXTER: 1 };
-  if (POOL_SLOT[editorName] !== undefined && rawData.youtubeVideos && rawData.youtubeVideos.length > 0) {
-    var pool = rawData.youtubeVideos;
-    var slot = Math.min(POOL_SLOT[editorName], pool.length - 1);
-    var poolVideo = pool[slot];
-    // Cross-cycle no-repeat: from this editor's slot FORWARD, prefer the first
-    // pool clip it did NOT use in its recent window (rawData.recentVideoIds), so a
-    // clip that stays top-of-pool for days stops recurring across daily cycles.
-    // Scanning from `slot` (not 0) preserves the same-cycle separation -- DEXTER
-    // still starts at [1], never reaching for NEXUS's [0]. If every clip from the
-    // slot onward was recently used (or there is no history), keep the slot clip:
-    // a repeat beats no clip. Per-editor history only, so this stays race-free
-    // across the parallel editors.
-    var recentIds = (rawData.recentVideoIds && rawData.recentVideoIds[editorName]) || [];
-    if (recentIds.length > 0) {
-      for (var k = slot; k < pool.length; k++) {
-        if (recentIds.indexOf(pool[k].youtube_id) === -1) { poolVideo = pool[k]; break; }
-      }
-    }
-    return {
-      thumbnail: poolVideo.thumbnail || 'https://img.youtube.com/vi/' + poolVideo.youtube_id + '/hqdefault.jpg',
-      source_url: 'https://www.youtube.com/watch?v=' + poolVideo.youtube_id,
-      source: 'YOUTUBE',
-    };
-  }
-
-  return { thumbnail: null, source_url: null, source: 'YOUTUBE' };
+// MEDIA ATTACHMENT REMOVED (Fable ruling: source_url must be a content-verified
+// primary source, or null). The editor is shown only video/clip METADATA (title,
+// channel, short description; "you did NOT watch it"), so neither an editor-named
+// pick nor a positional pool clip is verification. Every unverified-embed attachment
+// is removed:
+//   - path 3, the YouTube POOL_SLOT positional fallback (NEXUS->[0]/DEXTER->[1]) +
+//     its cross-cycle no-repeat scan -- attached a trending pool clip with NO relation
+//     to the article subject.
+//   - path 2, the editor-named source_video_id -> youtube.com/watch URL -- a
+//     metadata pick, not verification.
+//   - the Twitch branch -- clip_url is an attention-signal COMMUNITY clip, the same
+//     unverified-embed class (the editor never watched it either).
+// The hardcoded 'YOUTUBE' source label is gone: with no verified media, source,
+// source_url, and thumbnail are ALL null. verified_source (the cited-blocks provenance
+// chain, resolved separately below) is the ONLY source of truth and is untouched.
+function resolveMediaInfo() {
+  return { thumbnail: null, source_url: null, source: null };
 }
 
 function buildNoRepeatBlock(headlines) {
@@ -487,18 +432,16 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       return { editor: editorName, success: false, error: reason };
     }
 
-    var media = resolveMediaInfo(result, rawData, editorName);
+    var media = resolveMediaInfo();
     console.log('[CRON] ' + editorName + ' media: thumbnail=' + (media.thumbnail ? 'YES' : 'NULL') + ' source=' + media.source);
 
     // KEYWORD FRAMING -- pass 2. See lib/keywordFraming.js for the design.
     //
-    // POSITION IS LOAD-BEARING, in both directions:
-    //   AFTER resolveMediaInfo, because isTwitchContent (:73) reads result.headline
-    //   to choose the thumbnail and source -- rewriting before it could change MEDIA
-    //   selection, and thumbnail/source_url are FROZEN.
-    //   BEFORE insertData, so headline (:498) and generateSlug (:505) pick up the
-    //   final string, and before the dedup gates (:716/:731) and the coverage shadow
-    //   log (:745), which must all see the headline that actually publishes.
+    // POSITION: BEFORE insertData, so headline and generateSlug pick up the final
+    // string, and before the dedup gates and the coverage shadow log, which must all
+    // see the headline that actually publishes. (resolveMediaInfo no longer reads the
+    // headline -- media attachment was removed -- so the old "after resolveMediaInfo"
+    // ordering constraint no longer applies.)
     //
     // result.headline is REASSIGNED so every downstream consumer inherits the final
     // string with no further edits. framing.original keeps the pass-1 headline.
