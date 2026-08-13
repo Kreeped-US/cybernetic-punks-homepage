@@ -368,6 +368,60 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-13 PM - Marathon intel prune (325 noindexed, performance-based)
+
+Performance-based deindex of dead intel articles. Executed by operator in
+Supabase; Claude Code produced gated SQL + read-only classification, planning
+chat did the GSC join. NO hard deletes - noindex only (reversible).
+
+### Method (numbers-backed, not word-count)
+Kill signal = GSC performance over a 6-month window (2026-03-05 launch to
+2026-08-13), not word count. Cut rule ratified with Justin:
+- Grace window: created_at >= 2026-06-18 => TOO-NEW, held, never cut (8 weeks).
+- CUT-TIER-1: zero GSC impressions in 6 months (absent from the export).
+- CUT-TIER-2: <= 2 impressions AND 0 clicks.
+- Protected FIX-DONT-CUT: >= 20 impressions, 0 clicks = ranks but doesn't
+  convert -> title fix, NOT cut.
+- Any row with >= 1 click => KEEP.
+
+### Corpus reconciliation (repo read 08-13)
+Live intel corpus = 1572 (larger than the ~896 July figure; cron accretion).
+Prior prune had already noindexed 875. Indexable (noindex=false) = 697; of those
+145 too-new. Cut-eligible indexable set = 552. GSC join of the 552:
+Tier-1 197, Tier-2 128, FIX 21, KEEP 206. New cut = Tier-1 + Tier-2 = 325.
+
+### Executed (operator, Supabase)
+UPDATE feed_items SET noindex = true, noindexed_at = now() on the 325 resolved
+ids (all were noindex=false, created_at < 2026-06-18). is_published kept TRUE
+(pages return 200 + noindex meta so Google recrawls and drops them).
+Post-write verified: noindex=true 875 -> 1200 (+325 exact); is_published still
+true on all 325; spot-checks render noindex meta + absent from sitemap; prior
+875 unchanged. Render + sitemap key off the noindex BOOLEAN (noindexed_at is the
+paired audit stamp only) - confirmed before the write.
+
+### Net state
+1200 of 1572 intel articles noindexed (76%); ~372 remain indexed (227 eligible
+survivors + 145 indexable too-new + the 21 fix-dont-cut). Sitewide CTR drag from
+dead pages lifted.
+
+### Open follow-ups (not done)
+1. TWO-WEEK WATCH: re-pull GSC ~2026-08-27, confirm zero click loss on the 325
+   (guaranteed for the 197 zero-impr; near-certain for the 128 at <=2). Then the
+   hard-delete decision.
+2. HARD-DELETE (bigger lever, irreversible): the accumulated noindexed pile
+   (1200 rows) still lives in the DB/render/cron. Deleting it is what actually
+   shrinks the corpus - deliberate call AFTER the watch, with a DB export first.
+   Not scoped yet.
+3. FIX-DONT-CUT: 21 indexed-but-not-converting articles = title-fix candidates
+   (signal-jammer guide 144 impr/pos 23, mod-mastery, faction, best-rook-S2).
+   Acquisition lever, separate pass.
+4. THROTTLE THE CRON (root cause): generation outpaces ranking, so this prune
+   recurs in ~8 weeks unless generation volume is capped. Own decision.
+5. Carried from earlier 08-13 entries: A12 doctrine into v10 apply; thumbnail
+   decision (imageless live default); source_url arc CLOSED.
+
+---
+
 ## 2026-08-13 PM - source_url remediation COMPLETE (647 nulled)
 
 main = 532ff13 + this doc commit. The 732-row source_url remediation (Brief 2,
