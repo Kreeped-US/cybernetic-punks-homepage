@@ -82,15 +82,6 @@ function patchKey(patchItems) {
   return title || null;
 }
 
-// Extract the YouTube id from a watch/embed/youtu.be URL -- mirrors the article
-// template's extractYouTubeId. Used to compare a pool clip against an editor's
-// recently-used source videos for the cross-cycle no-repeat.
-function youtubeIdFromUrl(url) {
-  if (!url) return null;
-  var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
-
 // MEDIA ATTACHMENT REMOVED (Fable ruling: source_url must be a content-verified
 // primary source, or null). The editor is shown only video/clip METADATA (title,
 // channel, short description; "you did NOT watch it"), so neither an editor-named
@@ -1004,15 +995,15 @@ export async function GET(req) {
       console.log('[CRON] Directive fetch failed (non-fatal): ' + dirErr.message);
     }
 
-    // Recent per-editor rows (last 8) feed TWO no-repeat mechanisms off ONE read:
-    // the angle no-repeat (headline -> buildNoRepeatBlock) and the cross-cycle
-    // SOURCE-VIDEO no-repeat (source_url -> resolveMediaInfo). source_url is added
-    // to the same query so there is no extra round-trip.
+    // Recent per-editor headlines (last 8) feed the angle no-repeat (headline ->
+    // buildNoRepeatBlock) and the persist-time exact-title guard. The cross-cycle
+    // source-video no-repeat that also read this query was removed with the media
+    // strip (79a89d6), so the select now pulls only headline.
     var headlineResults = await Promise.all([
-      supabase.from('feed_items').select('headline, source_url').eq('editor', 'CIPHER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline, source_url').eq('editor', 'NEXUS').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline, source_url').eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
-      supabase.from('feed_items').select('headline, source_url').eq('editor', 'GHOST').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'CIPHER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'NEXUS').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'DEXTER').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
+      supabase.from('feed_items').select('headline').eq('editor', 'GHOST').eq('is_published', true).eq('game_slug', PRODUCING_GAME_SLUG).order('created_at', { ascending: false }).limit(8),
     ]);
 
     var recentHeadlines = {
@@ -1026,14 +1017,6 @@ export async function GET(req) {
     // guard (CIPHER/NEXUS/DEXTER/GHOST). MIRANDA is absent here on purpose -- it
     // carries its own last-12 titles on prompt.recentHeadlines (gatherMirandaData).
     rawData.recentHeadlines = recentHeadlines;
-
-    // Recent source videos for the ONLY two editors that attach a pool clip
-    // (NEXUS/DEXTER). resolveMediaInfo reads this off rawData to skip a clip the
-    // editor used recently. Non-fallback editors need no entry.
-    rawData.recentVideoIds = {
-      NEXUS:  (headlineResults[1].data || []).map(function(r) { return youtubeIdFromUrl(r.source_url); }).filter(Boolean),
-      DEXTER: (headlineResults[2].data || []).map(function(r) { return youtubeIdFromUrl(r.source_url); }).filter(Boolean),
-    };
 
     var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
     var hasPatch = patchItems.length > 0;
@@ -1325,14 +1308,12 @@ export async function GET(req) {
     }
 
     // ── DUPLICATE-THUMBNAIL DEDUP (post-settle) ──────────────────
-    // Two articles may legitimately share one source video on a thin cycle,
-    // but they must not display the IDENTICAL thumbnail. resolveMediaInfo can
-    // yield the same image via either the claimed-id path or the [0] fallback,
-    // so we compare the FINAL resolved thumbnail string here. `results` is in
-    // the declared editors order (CIPHER, NEXUS, DEXTER, GHOST, MIRANDA) -
-    // Promise.allSettled preserves input order, not completion order - so the
-    // FIRST editor in that order keeps the image and each later editor sharing
-    // it is repointed to its own portrait. Distinct thumbnails => no UPDATEs.
+    // NOW INERT after the media strip (79a89d6): resolveMediaInfo returns
+    // thumbnail:null for every row, so the "if (!dr.thumbnail) continue" guard
+    // below skips all rows and this loop never fires. It historically repointed a
+    // later editor to its own portrait when two articles shared one video
+    // thumbnail; with no thumbnails attached now, there is nothing to dedupe.
+    // Dead code pending removal -- left in place this pass (not in the listed scope).
     var seenThumbnails = {};
     for (var d = 0; d < results.length; d++) {
       var dr = results[d];
