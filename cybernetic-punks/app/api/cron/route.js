@@ -1307,30 +1307,6 @@ export async function GET(req) {
       console.log('[CRON] assignment-gate log pass failed (non-fatal): ' + (gateLogErr && gateLogErr.message));
     }
 
-    // ── DUPLICATE-THUMBNAIL DEDUP (post-settle) ──────────────────
-    // NOW INERT after the media strip (79a89d6): resolveMediaInfo returns
-    // thumbnail:null for every row, so the "if (!dr.thumbnail) continue" guard
-    // below skips all rows and this loop never fires. It historically repointed a
-    // later editor to its own portrait when two articles shared one video
-    // thumbnail; with no thumbnails attached now, there is nothing to dedupe.
-    // Dead code pending removal -- left in place this pass (not in the listed scope).
-    var seenThumbnails = {};
-    for (var d = 0; d < results.length; d++) {
-      var dr = results[d];
-      if (!dr.success || !dr.thumbnail || !dr.id) continue;
-      if (!seenThumbnails[dr.thumbnail]) {
-        seenThumbnails[dr.thumbnail] = true;
-        continue;
-      }
-      var portrait = '/images/editors/' + dr.editor.toLowerCase() + '.jpg';
-      try {
-        await supabase.from('feed_items').update({ thumbnail: portrait }).eq('id', dr.id);
-        console.log('[CRON] Duplicate thumbnail for ' + dr.editor + ' -> repointed to portrait ' + portrait);
-      } catch (dupErr) {
-        console.log('[CRON] Duplicate-thumbnail update failed for ' + dr.editor + ': ' + dupErr.message);
-      }
-    }
-
     var succeeded = results.filter(function(r) { return r.success; }).length;
     var directivesUsed = results.filter(function(r) { return r.success && directiveMap[r.editor]; }).length;
 
