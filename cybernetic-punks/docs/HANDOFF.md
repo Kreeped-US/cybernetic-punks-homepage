@@ -368,6 +368,93 @@ docs/MONETIZATION_AND_IDENTITY_STRATEGY.md. (Kept here as the shipped record, st
 
 ---
 
+## 2026-08-13 AM - source_url provenance ruling + media strip SHIPPED
+
+main = 79a89d6 (media-strip fix merged + live). Fable ruling delivered; remediation
++ doctrine + thumbnail decision pending.
+
+### What this session established
+Investigated why Marathon articles carry YouTube source_url values that do not
+correlate to the article. Read-only traces (ground truth):
+- The armed cron (app/api/cron/route.js -> resolveMediaInfo) attached source_url
+  two ways: (2) editor-NAMED video, chosen from title/channel/description ONLY
+  (editor never watches, barred from describing content), and (3) POSITIONAL
+  pool[slot] fallback (NEXUS->pool[0], DEXTER->pool[1]), ordinal + dedup, NO
+  article-topic comparison. Plus a Twitch community-clip branch (same
+  unverified-embed class). source:'YOUTUBE' was a hardcoded default applied even
+  when nothing resolved (Bungie-patch rows rendered source:YOUTUBE / url:null).
+- Only relevance guard on the cron path = filterGameVideos (game-token level),
+  never article-topic.
+- Scale: 732 published Marathon rows have non-null source_url; 593 (81%) share a
+  URL; a clear subset is one video stamped across up to 8 topically-unrelated
+  articles (six weapons, one clip).
+- verified_source (BUNGIE, patch notes) UNAFFECTED - the trigger/fact-source
+  split worked; what broke was decoration wearing the chain's clothes.
+
+### Guardrail reconciliation (Justin recalled building guards - confirmed airtight)
+Guards WERE designed (June 8-11) and ~3 shipped ~July 6: relevance filter
+(lib/gather/relevance.js), eligibility gate (transcript or 300+ char desc),
+VANTAGE self-skip - but into the VANTAGE auto-discourse path
+(gen-vantage-discourse-auto.mjs), NOT the armed cron. History read confirms
+resolveMediaInfo has been positional-only since inception (media logic 2026-03-05;
+POOL_SLOT added 2026-07-03, 522409a); NO article-topic check ever existed or was
+removed (no regression). Only shared guard between paths = the game-token filter.
+
+### Fable ruling (delivered, full)
+1. RATIFIED (sharpened): source_url carries a content-verified primary source, or
+   null. Game-token filtering, positional assignment, metadata-naming are NOT
+   verification and never attach a source. Falsifies the old "source_url = trigger
+   embed" reading - positional means it was not even reliably the trigger.
+2. RATIFIED incl. product call: no related-video surface. The right amount of
+   unverified media on an article is none.
+3. RATIFIED (A4/A8): source is null when nothing verified resolves; kill the
+   hardcoded 'YOUTUBE'.
+4. AMENDED: reject topic-divergence as the remediation rule (it would grandfather
+   coincidentally-coherent unwatched clips into a column that now means verified).
+   MECHANICAL TEST instead: keep source_url iff its domain is a verified primary
+   source (A5 chain: Bungie, official blogs) OR the generating path
+   content-verified the media (VANTAGE transcript gate); else NULL - all
+   cron-attached rows, coherent or not. NULL, not relabel.
+Doctrine: A12 into the pending v10 apply - "Linked sources are claims. Metadata
+similarity, positional assignment, and game-level filtering never attach a source;
+a source link is attached only by a path that verified the content it links."
+
+### SHIPPED (main 79a89d6, +23/-80 route.js, FF-merged from chore/cron-media-provenance)
+resolveMediaInfo rewritten to attach no media: removed path 2 (editor-named),
+path 3 (POOL_SLOT positional + no-repeat scan), and the Twitch community-clip
+branch; removed the now-dead isTwitchContent helper; updated call site + obsolete
+comment. Sole return { thumbnail:null, source_url:null, source:null }.
+verified_source / cited_blocks chain confirmed UNTOUCHED. node --check OK, eslint
+exit 0, byte-clean. This is the Fable-directed interim guard (the fix's first half).
+
+### Consequences (flagged)
+- Thumbnails now NULL on new Marathon rows (thumbnail rode the unverified embed).
+  Existing rows keep stored thumbnails. DECISION OPEN (PENDING 1).
+- Inert code left behind (not in scope): rawData.recentVideoIds (~route.js 1033)
+  and youtubeIdFromUrl fed only the removed no-repeat scan; 3 stale comments
+  (~1009, 1031, 1329). Follow-up chore to delete them + drop source_url from that
+  select + fix comments. No runtime cost.
+
+### PENDING
+1. THUMBNAIL DECISION (open). Video thumbnail is OFF the table (it is the
+   unverified embed). Options: (1) imageless text-first cards [lean: accept now];
+   (2) editor-identity image (roster avatar / per-editor color card) - cheap
+   fast-follow; (3) entity-derived image (weapon/shell render from game DB keyed
+   to article entity) - honest + rich, real build; (4) generated OG-style card -
+   doubles as social share image, bigger build.
+2. REMEDIATION of the 732 rows under the mechanical test (Brief 2). Read-only half
+   FIRST: compute survivor/null split (domain in A5 primary-source set OR
+   path-verified; else null), report counts for review, THEN a gated Supabase
+   update Justin runs. Log nulled count in HANDOFF.
+3. A12 doctrine line folded into the pending v10 apply (Brief 3).
+4. Inert-code cleanup chore (recentVideoIds + youtubeIdFromUrl + stale comments).
+
+### Untouched / out of scope
+verified_source and the citation chain (the moat held). VANTAGE pipeline. DMZ
+vertical (dmz-vs-warzone live at /dmz/field-intel/dmz-vs-warzone, unaffected).
+
+---
+
 ## 2026-08-12 PM - DMZ-vs-Warzone SHIPPED (supersedes the pre-ship entry below)
 
 Supersedes the earlier 2026-08-12 PM entry, which recorded the pre-ship staged state. The article is
