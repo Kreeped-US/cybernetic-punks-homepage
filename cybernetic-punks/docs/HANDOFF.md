@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-08-14 AM - DMZ Gunsmith explainer SHIPPED (2nd DMZ systems piece)
+
+Live: /dmz/field-intel/dmz-gunsmith, feed_items id
+301421ea-82fa-4608-96db-2ec80b4ee6d5, is_published=true, noindex=false,
+source_url = the official Deep-Dive blog (verified on the live row). Field Intel
+now 2 reports (gunsmith + dmz-vs-warzone).
+
+### What shipped
+Dedicated Gunsmith systems canonical, single-source Deep-Dive content. Routing:
+DMZ_ARTICLE_SECTION 'dmz-gunsmith' -> field-intel + DMZ_ARTICLE_SEO (title 56
+chars). Body covers: cash-economy Gunsmith, more-effective-costs-more (NO
+numbers), five-Attachments-plus-Apex cap, eight-Attachment weapons "exist within
+Hajin", Weapon Manuals unlock direct purchase, cross-mode weapon progression,
+Wallet as cash source, Gunsmith as unlockable FOB station. All traced to the
+sanctioned excerpt; announced-not-verified framing.
+
+### Excerpt patch (committed before generation)
+Added two verbatim lines to the sanctioned Deep-Dive excerpt (Weapon Manuals
+progression + "Weapon Progression tracks across Multiplayer and DMZ") so the
+fuller claims are self-documented. Deliberately did NOT add the third-party
+"eight-attachment = findable loot" framing - blog says only they "exist within
+Hajin".
+
+### PROCESS LESSONS (apply to all future DMZ systems pieces)
+1. gen-dmz-news CAN draft single-source DMZ content (unlike the two-layer
+   comparison, which needed hand-authoring), BUT its first --dry FABRICATED cash
+   figures the Deep-Dive never states. => For DMZ, gen-dmz-news is a
+   DRAFT-THEN-MANDATORY-QA path, NEVER generate-and-persist. Every draft gets
+   line-by-line provenance QA against the excerpt before persist. The --dry gate
+   caught the invented number before it hit a live page.
+2. ORDERING: persist ran while the routing wiring was still on an unmerged
+   branch -> the row existed but /dmz-gunsmith 404'd (unassigned=hidden). Fix was
+   to FF-merge the routing, then it resolved. RULE: merge + deploy the routing
+   (dmz.js DMZ_ARTICLE_SECTION/SEO) BEFORE persisting, the way dmz-vs-warzone was
+   sequenced. Persist only after the section mapping is live.
+3. source_url arc confirmed end-to-end: first DMZ article persisted after the
+   08-13 overhaul carries a real primary-source URL (not null, not a mislabeled
+   video). The field now means what the masthead claims.
+
+### Open (unchanged, carried)
+Aug 27 deindex watch -> hard-delete decision; 21 title-fix candidates; cron
+throttle (root cause); A12 doctrine into v10; thumbnail decision. Next DMZ
+systems candidates: Lieutenants/bounty economy, Active Duty trait trees.
+
+---
+
 ## 2026-08-10 - CURRENT STATE / re-orientation snapshot (READ FIRST)
 
 Where everything stands + the next move, so next session starts here instead of reconstructing it
