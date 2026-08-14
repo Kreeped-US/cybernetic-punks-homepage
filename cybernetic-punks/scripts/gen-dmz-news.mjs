@@ -296,6 +296,30 @@ const TOPICS = [
       '-- naming a derelict casino among the zone\'s locations.',
     ].join('\n'),
   },
+  {
+    slug: 'gunsmith',
+    name: 'The Gunsmith: buying and building weapons at the FOB',
+    source: [
+      'The Wallet holds in-game cash used primarily for weapons and Gunsmithing',
+      'attachments, rescuing MIA operators, and paying for Lieutenant Intel. Completing',
+      'Missions and Ops is the primary source of cash, wired directly to the Wallet.',
+      '',
+      'The Gunsmith lets players purchase weapons and attachments with cash; more',
+      'effective gear costs more, and each weapon supports up to five Attachments plus an',
+      'Apex Attachment, though eight-Attachment weapons have been confirmed within Hajin.',
+      'Weapon progression tracks across Multiplayer and DMZ.',
+      '',
+      'As you progress through Mission Orders and extract Weapon Manuals from Hajin, the option of purchasing the weapons directly becomes available, but initially you\'ll have to rely on weapons scavenged during deployments.',
+      'Weapon Progression tracks across Multiplayer and DMZ.',
+      '',
+      'The Weapon Vendor offers a limited, rotating selection of specialized weaponry',
+      'purchasable with cash, refreshing periodically.',
+      '',
+      'The 3D Printer manufactures functional equipment and support gear but excludes',
+      'Primary, Secondary, and Melee weapons; those come from the Gunsmith and Weapon',
+      'Vendor, keeping crafting and buying as separate lanes.',
+    ].join('\n'),
+  },
 ];
 
 // Remaining scoped topics for later batches -- intentionally NO source here. They
