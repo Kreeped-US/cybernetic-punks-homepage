@@ -237,6 +237,49 @@ var ARTICLES = [
       'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
     ].join('\n'),
   },
+  // NEW (staged, NOT yet persisted): the DMZ Gunsmith explainer. Single-source
+  // Deep-Dive content (gen-dmz-news dry-run, reviewed). Body verbatim from the
+  // approved --dry draft: no cash figures, eight-Attachment = "exists within
+  // Hajin" (no loot framing), all mechanics traced to the sanctioned excerpt,
+  // announced-not-verified throughout. Explicit slug forces 'dmz-gunsmith';
+  // section mapped to 'field-intel' in lib/games/dmz.js DMZ_ARTICLE_SECTION.
+  {
+    headline: 'DMZ Gunsmith and FOB weapon systems detailed for MW4',
+    slug: 'dmz-gunsmith',
+    tags: ['dmz', 'modern warfare 4', 'gunsmith', 'fob', 'weapon vendor', '3d printer'],
+    body: [
+      '**How the Wallet Connects to Everything**',
+      '',
+      'Call of Duty\'s official blog published a DMZ Deep Dive on June 6, 2026, laying out how players will acquire and build weapons at the FOB before deploying into Hajin. The central currency is the Wallet, which holds in-game cash used across several FOB functions: purchasing weapons and Gunsmith attachments, rescuing MIA operators, and paying for Lieutenant Intel. According to the Deep Dive, completing Missions and Ops is the primary source of that cash, wired directly to the Wallet.',
+      '',
+      '**The Gunsmith: Attachments and Unlock Conditions**',
+      '',
+      'The Gunsmith is the main weapon-building station. Players spend cash here on weapons and individual attachments, with the blog noting that more effective gear costs more. Each weapon supports up to five Attachments plus an additional Apex Attachment slot. Notably, the Deep Dive confirms that eight-Attachment weapons exist within Hajin, though the blog does not specify how or where those configurations are obtained.',
+      '',
+      'Access to purchasing specific weapons is not immediate. Initially, players must rely on weapons scavenged during deployments. As players progress through Mission Orders and extract Weapon Manuals from Hajin, direct purchase options for those weapons unlock over time. The blog does not detail which weapons require Manuals or how many Manuals are tied to any given unlock.',
+      '',
+      'One cross-mode detail the Deep Dive highlights: Weapon Progression tracks across both Multiplayer and DMZ, so advancement in either mode carries over.',
+      '',
+      '**The Weapon Vendor and 3D Printer: Two Separate Lanes**',
+      '',
+      'Beyond the Gunsmith, two other FOB systems interact with weapon acquisition. The Weapon Vendor offers a limited, rotating selection of specialized weaponry purchasable with cash. The blog states this selection refreshes periodically but does not specify the refresh interval or what "specialized" encompasses.',
+      '',
+      'The 3D Printer occupies a clearly separate lane. It manufactures functional equipment and support gear, but the Deep Dive explicitly states it excludes Primary, Secondary, and Melee weapons. Those categories belong solely to the Gunsmith and Weapon Vendor. The blog frames this as a deliberate structural split between crafting and buying.',
+      '',
+      '**What the Blog Has Not Yet Specified**',
+      '',
+      'Several natural follow-up questions remain open based on this excerpt alone:',
+      '',
+      '- The Weapon Vendor\'s refresh timing and the full scope of its rotating inventory',
+      '- Which specific weapons or categories require Weapon Manuals extracted from Hajin',
+      '- How the eight-Attachment configurations found in Hajin relate to the Gunsmith\'s standard five-plus-Apex cap',
+      '- What the 3D Printer can manufacture, beyond the confirmed exclusion of weapons',
+      '',
+      'The DMZ Deep Dive presents these systems as structurally distinct -- cash economy feeding the Gunsmith and Vendor, crafting sitting in its own lane through the 3D Printer -- but the full scope of each station\'s inventory has not been detailed in this source.',
+      '',
+      'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
+    ].join('\n'),
+  },
 ];
 
 async function main() {

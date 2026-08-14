@@ -225,6 +225,8 @@ export const DMZ_ARTICLE_SECTION = {
   'dmz-3d-printer-crafting-system-every-category-detailed': 'loadouts',
   // DMZ vs Warzone comparison canonical -> Field Intel (the empty catch-all).
   'dmz-vs-warzone': 'field-intel',
+  // DMZ Gunsmith weapon-systems explainer -> Field Intel.
+  'dmz-gunsmith': 'field-intel',
 };
 
 // Slugs assigned to a given DMZ section (empty array if none -> empty state).
@@ -290,5 +292,15 @@ export const DMZ_ARTICLE_SEO = {
     title: 'DMZ vs Warzone: Differences and the MW4 Hajin Return',
     description: 'How DMZ differs from Warzone -- win condition, gear persistence, threat model -- plus what MW4 announced for DMZ\'s Oct 23, 2026 return on Hajin.',
     keyFacts: [],
+  },
+  'dmz-gunsmith': {
+    title: 'MW4 DMZ Gunsmith: Buying and Building Weapons at the FOB',
+    description: 'How the MW4 DMZ Gunsmith works: cash weapon and attachment purchases, the five-plus-Apex cap, Weapon Manual unlocks, and the split from the 3D Printer.',
+    keyFacts: [
+      'The Gunsmith sells weapons and attachments for cash; more effective gear costs more.',
+      'Weapons take up to five Attachments plus an Apex; eight-Attachment weapons exist within Hajin.',
+      'Weapon purchases unlock via Weapon Manuals extracted through Mission Orders; initially you scavenge.',
+      'Weapon progression tracks across Multiplayer and DMZ.',
+    ],
   },
 };
