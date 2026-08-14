@@ -7,6 +7,27 @@ Newest entries on top.
 
 ---
 
+## 2026-08-14 AM - source:YOUTUBE label: investigated, NOT a bug (closed)
+
+The 08-13 concern that cron stamps source='YOUTUBE' on Bungie-grounded rows was
+investigated and closed as NOT a bug. Findings (read-only):
+- `source` is an EDITORIAL-LANE / content-type field, not a provenance claim.
+  Distribution: YOUTUBE 702, GUIDE 385, REDDIT 302, INTEL 177, BUNGIE 2, X 2,
+  TWITCH 1, NULL 0 (of 1572). These are article categories (creator-discourse /
+  how-to / community-sentiment / news), not fact-sources.
+- Real provenance lives in verified_source (only 4 rows populated - field only
+  started 08-01). source and verified_source are DIFFERENT axes.
+- Render (app/intel/[slug]/page.js:1112, app/intel/page.js:412): a BARE
+  uppercase category pill {item.source} - no "Source:" prefix, no verb, no
+  attribution phrasing. Reads as a taxonomy chip inline with editor + timestamp.
+- The only attribution-phrased renderer (DiscourseArticle "Sourced from... on
+  YouTube") is NOT reached by the 702 stranded rows.
+=> No data fix, no remediation. "Inherit verified_source" idea rejected: it would
+blank the tag on 1568 rows (verified_source near-empty). Optional future polish
+(not needed): rename lane badge to a clearly-taxonomic label. Closed.
+
+---
+
 ## 2026-08-14 AM - DMZ Gunsmith explainer SHIPPED (2nd DMZ systems piece)
 
 Live: /dmz/field-intel/dmz-gunsmith, feed_items id
