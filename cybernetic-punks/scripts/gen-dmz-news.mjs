@@ -340,6 +340,29 @@ const TOPICS = [
       'Story Missions, Dynamic Operations, and Side Ops are all excellent methods of obtaining XP.',
     ].join('\n'),
   },
+  {
+    slug: 'survival',
+    name: 'Survival and recovery: downed state, the Tourniquet, and the MIA system',
+    // VERBATIM official-blog lines (callofduty.com MW4 DMZ Deep Dive). Qualitative
+    // only, NO health numbers -- the blog says "you won't last long"; the specific
+    // "reduces max health by 50 points" figure is from COD POD Ep. 11 (podcast),
+    // NOT the blog, and is kept out.
+    // Excluded as reported-not-official: drag/revive-mid-move, grabbing downed
+    // enemies, proximity-chat screams, melee interrupting a Tourniquet (First Look
+    // trailer / codcentral); plea-system removal, helmet-cam spectating,
+    // assimilation-in-trios (creator reports, unconfirmed even by the source);
+    // named threat tiers (Juggernauts, drone swarms, Deathstalkers -- mw4.gg,
+    // gamingtrend).
+    source: [
+      'When an Operator is downed, they may be rescued, left to fend for themselves, or become lost in action.',
+      '',
+      'Tourniquet: A new survival mechanic is the Tourniquet, allowing you to heal to a wounded state if you don\'t have self-revive equipped. You won\'t last long after a Tourniquet application, so you\'ll need to apply additional medical items to reach full health.',
+      '',
+      'MIA System: For those lost in action, the new MIA system allows players to expend in-game cash at the FOB and deploy rescue teams to recover them and continue their progression without starting from scratch.',
+      '',
+      'DMZ is designed to preserve the tension and high-stakes risk that define extraction shooter gameplay while remaining a little more forgiving than traditional extraction experiences.',
+    ].join('\n'),
+  },
 ];
 
 // Remaining scoped topics for later batches -- intentionally NO source here. They
