@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-08-17 AM - DMZ Missions/Dynamic Ops SHIPPED (3rd DMZ systems piece)
+
+Live: /dmz/field-intel/dmz-missions, feed_items id
+be8b17f2-a164-49c4-929e-7134504f40b9, is_published=true, source_url = the
+official Deep-Dive blog (verified live). Field Intel now 3 reports (missions +
+gunsmith + dmz-vs-warzone).
+
+### Routing decision (after two rejects)
+Scoped 3 candidates; rejected two for FOB-cannibalization: the FOB article is a
+comprehensive hub-tour that already spends every station's passage at excerpt
+depth, so Lieutenants/Boss-Board (FOB covers it in 5 sentences) and
+Operators/Trait-Trees (FOB covers in 9 sentences + FOB explicitly flags the
+Trait-Tree structural gap; also parked in gen-dmz-news PENDING_TOPICS) would both
+be near-duplicates. Missions/Dynamic-Ops is the CLEAN gap: it's an activity
+layer, not an FOB station, so FOB only touches the Orders desk and Hajin only
+name-checks it. LESSON: FOB's comprehensiveness cannibalizes per-station
+explainers - future DMZ pages must target systems OUTSIDE the FOB hub-tour.
+
+### Excerpt patch + provenance boundary
+'missions/contracts structure' was parked in PENDING_TOPICS (no-source block).
+Patched the sanctioned excerpt with VERBATIM official-blog text (Story Missions,
+the 4 Dynamic Ops example types, Side Ops as XP, the three-focus choice), then
+un-parked the topic (deliberate: source now supplied). Held OUT of the excerpt as
+reported-not-official: the "steps are now randomized" detail (Infinity Ward
+reveal PRESENTATION, GameSpot/GamesBeat - NOT the blog); enumerated Side Ops
+(mw4.gg); story-mission matchmaking (GamesBeat interview).
+
+### Both Gunsmith lessons VALIDATED this run
+1. gen-dmz-news --dry came back with NOTHING to fabrication-strip (Gunsmith's
+   first --dry invented cash figures). The tightly-bounded patched excerpt gave
+   the model no room to drift; it even flagged "randomized steps" as an
+   unspecified gap rather than stating it. => patch-excerpt-then-generate is the
+   working pattern. Still QA'd line-by-line (draft-then-mandatory-QA holds).
+2. Routing merged + deployed BEFORE persist -> rendered 200 on first load, no
+   404 (Gunsmith 404'd from persist-before-routing). Ordering fix works.
+One mechanical fix in draft: a duplicated "Side Ops and XP" section (streaming
+artifact) removed before persist; verified single on live page.
+
+### DMZ content state
+3 field-intel systems canonicals live (dmz-vs-warzone, gunsmith, missions), all
+primary-source-audited, real source_url, notify CTA. Next candidates must avoid
+FOB overlap: Missions is done; remaining clean-gap options = survival mechanics
+(Tourniquet/threat escalation - mixed official/third-party), or a deeper Hajin
+POI piece. Operators + Lieutenants stay folded in FOB (do not re-attempt as
+standalone).
+
+### Open (carried, unchanged)
+Aug 27 deindex watch -> hard-delete; A12 doctrine into v10; thumbnail decision;
+READ-FIRST snapshot refresh (now stale). source:YOUTUBE closed (not a bug).
+Title-fix task closed (no lever). Cron frozen (no throttle needed).
+
+---
+
 ## 2026-08-14 AM - source:YOUTUBE label: investigated, NOT a bug (closed)
 
 The 08-13 concern that cron stamps source='YOUTUBE' on Bungie-grounded rows was
