@@ -323,9 +323,9 @@ const TOPICS = [
   {
     slug: 'missions',
     name: 'Missions and Dynamic Operations: the DMZ activity layer',
-    // VERBATIM official-blog lines (callofduty.com MW4 DMZ Deep Dive). The Story
-    // Missions attributes (narrative-driven / replayable / squad-based / specific
-    // Hajin POIs) are NOT included: no verbatim wording on hand -- do not fabricate.
+    // VERBATIM official-blog lines (callofduty.com MW4 DMZ Deep Dive). The
+    // "set-piece scenarios at specific Hajin POIs" phrasing is NOT included: it
+    // was a paraphrase, not a verbatim blog line -- do not fabricate.
     // Excluded as reported-not-official: "steps are now randomized" (Infinity Ward
     // reveal presentation), the enumerated Side Ops examples (mw4.gg), and the
     // story-mission matchmaking detail (GamesBeat interview).
@@ -335,6 +335,7 @@ const TOPICS = [
       'Dynamic Operations are multi-step objectives generated for each match and designed to create focused tasks, from neutralizing abandoned weapons programs and securing critical assets to high-risk rescue operations and assaults against hostile forces.',
       '',
       'A collection of Story Missions expands the narrative of Modern Warfare 4, and features unique objectives.',
+      'Continue the Modern Warfare 4 story through narrative-driven Story Missions built for replayability, squad-based action, and evolving storytelling.',
       '',
       'Story Missions, Dynamic Operations, and Side Ops are all excellent methods of obtaining XP.',
     ].join('\n'),
