@@ -229,6 +229,8 @@ export const DMZ_ARTICLE_SECTION = {
   'dmz-gunsmith': 'field-intel',
   // DMZ Missions / Dynamic Operations activity-layer explainer -> Field Intel.
   'dmz-missions': 'field-intel',
+  // DMZ survival & recovery explainer (Tourniquet / downed state / MIA) -> Field Intel.
+  'dmz-survival': 'field-intel',
 };
 
 // Slugs assigned to a given DMZ section (empty array if none -> empty state).
@@ -313,6 +315,16 @@ export const DMZ_ARTICLE_SEO = {
       'Dynamic Operations are multi-step objectives generated for each match: rescues, asset grabs, and assaults on hostile forces.',
       'Story Missions continue the Modern Warfare 4 narrative and are built for replayability and squad-based action.',
       'Story Missions, Dynamic Operations, and Side Ops all award XP.',
+    ],
+  },
+  'dmz-survival': {
+    title: 'MW4 DMZ Survival: Tourniquet, Downed State and MIA',
+    description: 'How MW4 DMZ handles going down: the rescued / left / lost-in-action outcomes, the Tourniquet wounded state, and the MIA cash-rescue system at the FOB.',
+    keyFacts: [
+      'A downed Operator can be rescued, left to fend for themselves, or become lost in action.',
+      'The Tourniquet heals you to a wounded state without self-revive; you must apply more medical items to reach full health.',
+      'The MIA system lets you spend FOB cash to deploy rescue teams and recover lost Operators without losing their progression.',
+      'DMZ aims to be more forgiving than traditional extraction shooters while keeping the high-stakes risk.',
     ],
   },
 };

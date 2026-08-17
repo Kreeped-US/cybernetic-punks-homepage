@@ -321,6 +321,36 @@ var ARTICLES = [
       'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
     ].join('\n'),
   },
+  // DMZ survival & recovery explainer (Tourniquet / downed state / MIA). Body is
+  // the operator-APPROVED --dry draft, staged VERBATIM (no dupe, no HP number --
+  // qualitative only). slug forced to 'dmz-survival'. Staged, NOT persisted --
+  // the operator runs persist after review.
+  {
+    headline: 'DMZ downed state, Tourniquet, and MIA system detailed',
+    slug: 'dmz-survival',
+    tags: ['dmz', 'modern warfare 4', 'tourniquet', 'mia system', 'survival', 'extraction shooter'],
+    body: [
+      '**What Happens When an Operator Goes Down**',
+      '',
+      'Call of Duty\'s official blog, the DMZ Deep Dive published June 6 2026, has detailed how Modern Warfare 4\'s DMZ mode handles downed Operators. According to the Deep Dive, when an Operator is downed, three outcomes are possible: rescue by teammates, being left to fend for themselves, or becoming lost in action. The blog does not specify the exact mechanical conditions that determine which of these paths is taken.',
+      '',
+      '**The Tourniquet: A New Survival Option**',
+      '',
+      'The Deep Dive introduces the Tourniquet as a new survival mechanic. Applying a Tourniquet allows a downed player to heal to a "wounded state" when a self-revive item is not equipped. The blog is direct about the limitation: a Tourniquet application alone is not enough to restore full health. Players will need to follow up with additional medical items to reach that threshold. The blog does not specify which medical items qualify, how many are required, or how long the wounded state lasts before an Operator is lost.',
+      '',
+      'The Tourniquet sits alongside, rather than replacing, the self-revive item -- the Deep Dive frames it specifically as the option available when self-revive is not equipped, placing the two in a clear either/or relationship depending on a player\'s loadout going into a match.',
+      '',
+      '**The MIA System: Recovering Lost Operators**',
+      '',
+      'For Operators who do become lost in action, the Deep Dive outlines the MIA system. Players can spend in-game cash at the FOB to deploy rescue teams, which recover lost Operators and allow them to continue their progression rather than starting from scratch. The blog does not specify the cash cost, how rescue teams operate on the map, or the timeline for a recovery.',
+      '',
+      'The connection between the two announced systems is structural: the Tourniquet is a tool available during a match to avoid the lost-in-action outcome; the MIA system is the recourse once that outcome has already occurred. Together, according to the Deep Dive, they sit within a design intent the blog describes as preserving "tension and high-stakes risk" while making DMZ "a little more forgiving than traditional extraction experiences." That framing comes directly from the announcement -- the blog does not elaborate further on what "traditional extraction experiences" refers to for comparison.',
+      '',
+      'Several details across both systems remain unspecified in this excerpt: Tourniquet item availability and slot cost, MIA cash amounts, rescue team mechanics, and whether the MIA system has any per-match or per-session limits.',
+      '',
+      'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
+    ].join('\n'),
+  },
 ];
 
 async function main() {
