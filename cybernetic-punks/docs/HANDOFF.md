@@ -7,6 +7,56 @@ Newest entries on top.
 
 ---
 
+## 2026-08-17 PM - DMZ Survival/Recovery SHIPPED (4th DMZ systems piece)
+
+Live: /dmz/field-intel/dmz-survival, feed_items id
+18f04b28-71c0-4603-b5a5-1fed5c9e05b7, is_published=true, source_url = the
+official Deep-Dive blog (verified live). Field Intel now 4 reports.
+
+### The piece
+Survival & recovery explainer: downed-state outcomes (rescued / left / lost in
+action), Tourniquet wounded-state, self-revive contrast, MIA cash-rescue at FOB,
+the "more forgiving" design intent. Cleanest routing gap of all four - the
+in-match survival loop was completely unspent across the corpus (MIA appeared
+only as a cash-sink name-check; "recovery" only as between-runs roster). Not an
+FOB station, so no cannibalization.
+
+### Provenance: the most third-party-contaminated topic, held clean
+Excerpt patched with VERBATIM official callofduty.com text only (Tourniquet,
+MIA, downed-options, forgiveness framing - all qualitative). Held OUT and
+documented in-code as excluded:
+- The "Tourniquet reduces max health by 50 points" figure - from COD POD Ep. 11
+  (podcast), NOT the blog. Official text is qualitative ("you won't last long").
+  This was the piece's fabrication trap (Gunsmith's cash-figure equivalent).
+- First Look trailer mechanics (drag-revive, grab downed enemies, proximity-chat
+  screams, melee-interrupt-tourniquet); plea-system removal, helmet-cam
+  spectating, trio assimilation (creator reports, unconfirmed even by source);
+  named threat tiers (Juggernauts/drone swarms - mw4.gg/gamingtrend).
+
+### The pattern held under pressure
+gen-dmz-news --dry came back CLEAN - no 50-HP number, no dupe, nothing to strip.
+The tightly-bounded verbatim excerpt gave the model no room; it flagged
+wounded-state duration as an unspecified gap rather than filling it with the
+podcast figure. Routing-before-persist held (200 first load, no 404). Verified
+live against RENDERED <main> text (not curl-sed, which false-positived a CSS
+50%): zero HP numbers in the visible body. => patch-then-generate is proven
+across 4 pieces including the hardest-to-source one.
+
+### DMZ content state - core pre-launch systems now covered
+4 field-intel canonicals live, all primary-source-audited, real source_url,
+notify CTA: dmz-vs-warzone (comparison), dmz-gunsmith (weapon economy),
+dmz-missions (activity loop), dmz-survival (downed/recovery). This covers the
+core systems a pre-launch searcher wants. Remaining single-source-viable topics
+(per PENDING_TOPICS + FOB-overlap rule): the vendor, extraction/stash
+(what carries over), pricing/package. Operators + Lieutenants stay folded in FOB.
+
+### Open (carried, unchanged)
+Aug 27 deindex watch -> hard-delete; A12 doctrine into v10; thumbnail decision;
+READ-FIRST snapshot refresh (now stale). Closed: source:YOUTUBE (not a bug),
+title-fixes (no lever), cron throttle (already frozen).
+
+---
+
 ## 2026-08-17 AM - DMZ Missions/Dynamic Ops SHIPPED (3rd DMZ systems piece)
 
 Live: /dmz/field-intel/dmz-missions, feed_items id
