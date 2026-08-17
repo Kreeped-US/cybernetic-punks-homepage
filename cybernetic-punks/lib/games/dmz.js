@@ -227,6 +227,8 @@ export const DMZ_ARTICLE_SECTION = {
   'dmz-vs-warzone': 'field-intel',
   // DMZ Gunsmith weapon-systems explainer -> Field Intel.
   'dmz-gunsmith': 'field-intel',
+  // DMZ Missions / Dynamic Operations activity-layer explainer -> Field Intel.
+  'dmz-missions': 'field-intel',
 };
 
 // Slugs assigned to a given DMZ section (empty array if none -> empty state).
@@ -301,6 +303,16 @@ export const DMZ_ARTICLE_SEO = {
       'Weapons take up to five Attachments plus an Apex; eight-Attachment weapons exist within Hajin.',
       'Weapon purchases unlock via Weapon Manuals extracted through Mission Orders; initially you scavenge.',
       'Weapon progression tracks across Multiplayer and DMZ.',
+    ],
+  },
+  'dmz-missions': {
+    title: 'MW4 DMZ Missions and Dynamic Operations Explained',
+    description: 'How MW4 DMZ structures objectives: narrative Story Missions, per-match Dynamic Operations, and Side Ops -- and how all three award XP.',
+    keyFacts: [
+      'DMZ objectives split into Story Missions, Dynamic Operations, and free exploration across Hajin.',
+      'Dynamic Operations are multi-step objectives generated for each match: rescues, asset grabs, and assaults on hostile forces.',
+      'Story Missions continue the Modern Warfare 4 narrative and are built for replayability and squad-based action.',
+      'Story Missions, Dynamic Operations, and Side Ops all award XP.',
     ],
   },
 };

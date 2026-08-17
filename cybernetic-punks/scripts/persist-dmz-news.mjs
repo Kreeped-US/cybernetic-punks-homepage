@@ -280,6 +280,47 @@ var ARTICLES = [
       'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
     ].join('\n'),
   },
+  // DMZ Missions / Dynamic Operations activity-layer explainer. Body is the
+  // operator-APPROVED --dry draft, staged VERBATIM (duplicated "Side Ops and XP"
+  // section removed, single copy kept). slug forced to 'dmz-missions'. Staged,
+  // NOT persisted -- the operator runs persist after review.
+  {
+    headline: 'DMZ missions and Dynamic Operations detailed in Deep Dive',
+    slug: 'dmz-missions',
+    tags: ['dmz', 'modern warfare 4', 'missions', 'dynamic operations', 'story missions', 'side ops'],
+    body: [
+      '**Three Activity Layers Defined Before You Drop**',
+      '',
+      'Call of Duty\'s official blog, the DMZ Deep Dive published June 6 2026, lays out three distinct activity layers that players can pursue in DMZ: Story Missions, Dynamic Operations, and free exploration across the map of Hajin. The Deep Dive frames all three as pre-deployment objectives -- goals you can identify before a match begins -- while also noting plainly that "no plan is guaranteed to last." The blog does not specify what form that disruption takes, leaving that an open question for launch.',
+      '',
+      '**Dynamic Operations: Match-Generated, Multi-Step**',
+      '',
+      'According to the Deep Dive, Dynamic Operations are multi-step objectives generated fresh for each match. The blog describes a range of task types under this system:',
+      '',
+      '- Neutralizing abandoned weapons programs',
+      '- Securing critical assets',
+      '- High-risk rescue operations',
+      '- Assaults against hostile forces',
+      '',
+      'The key structural detail here is that these objectives are generated per match rather than being static or persistent across sessions. The blog does not specify the process by which they are generated or how many steps a typical operation contains.',
+      '',
+      '**Story Missions: Narrative, Replayability, Squad Play**',
+      '',
+      'The Deep Dive describes Story Missions as a collection of objectives that "expands the narrative of Modern Warfare 4" and features unique objectives distinct from the Dynamic Operations layer. Three design properties are named explicitly: the missions are built for replayability, squad-based action, and evolving storytelling. The blog does not detail specific mission titles, story beats, or how many Story Missions are included at launch.',
+      '',
+      'The connection to the broader Modern Warfare 4 campaign is stated directly -- these missions "continue the Modern Warfare 4 story" -- but the Deep Dive does not elaborate on how DMZ\'s narrative relates to the main campaign structurally.',
+      '',
+      '**Side Ops and XP**',
+      '',
+      'The Deep Dive also names a third category, Side Ops, without detailing what they contain. What the blog does specify is that Story Missions, Dynamic Operations, and Side Ops are all described as "excellent methods of obtaining XP." That places all three activity types within the same progression economy, though the blog does not break down XP values or rates for any of them.',
+      '',
+      '**What the Blog Has and Has Not Addressed**',
+      '',
+      'The Deep Dive establishes the names and top-level design intentions of each activity layer and confirms they share an XP economy. It does not yet detail: the number of Story Missions at launch, how Dynamic Operations interact with other players in a match, what Side Ops specifically involve, or how any of these systems connect to the FOB or other announced DMZ features. Those specifics remain unaddressed by this source.',
+      '',
+      'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
+    ].join('\n'),
+  },
 ];
 
 async function main() {
