@@ -320,6 +320,25 @@ const TOPICS = [
       'Vendor, keeping crafting and buying as separate lanes.',
     ].join('\n'),
   },
+  {
+    slug: 'missions',
+    name: 'Missions and Dynamic Operations: the DMZ activity layer',
+    // VERBATIM official-blog lines (callofduty.com MW4 DMZ Deep Dive). The Story
+    // Missions attributes (narrative-driven / replayable / squad-based / specific
+    // Hajin POIs) are NOT included: no verbatim wording on hand -- do not fabricate.
+    // Excluded as reported-not-official: "steps are now randomized" (Infinity Ward
+    // reveal presentation), the enumerated Side Ops examples (mw4.gg), and the
+    // story-mission matchmaking detail (GamesBeat interview).
+    source: [
+      'Before deployment, your objectives in DMZ are clearly defined: a focus on Story Missions, engaging in Dynamic Operations, and free explorations across Hajin. But no plan is guaranteed to last.',
+      '',
+      'Dynamic Operations are multi-step objectives generated for each match and designed to create focused tasks, from neutralizing abandoned weapons programs and securing critical assets to high-risk rescue operations and assaults against hostile forces.',
+      '',
+      'A collection of Story Missions expands the narrative of Modern Warfare 4, and features unique objectives.',
+      '',
+      'Story Missions, Dynamic Operations, and Side Ops are all excellent methods of obtaining XP.',
+    ].join('\n'),
+  },
 ];
 
 // Remaining scoped topics for later batches -- intentionally NO source here. They
@@ -329,7 +348,6 @@ const PENDING_TOPICS = [
   'the vendor (buying/selling at the FOB)',
   'the gunsmith (weapon building at the FOB)',
   'Operator progression and DMZ rank',
-  'missions / contracts structure',
   'extraction and the stash (what carries over)',
   'pricing / package (part of the $70 MW4, not free-to-play)',
 ];
