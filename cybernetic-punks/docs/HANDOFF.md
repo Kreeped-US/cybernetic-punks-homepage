@@ -180,7 +180,7 @@ systems candidates: Lieutenants/bounty economy, Active Duty trait trees.
 ## 2026-08-18 - CURRENT STATE / re-orientation snapshot (READ FIRST)
 
 Where things stand as of 2026-08-18. Detail lives in the dated entries below;
-this is orientation only. main = 5b64de4, in sync, tree clean.
+this is orientation only. Repo in sync with origin, tree clean.
 
 ### The active workstream: DMZ pre-launch content
 DMZ launches 2026-10-23; acquisition is the bottleneck; Marathon is winding
@@ -233,7 +233,7 @@ Closed this cycle: source:YOUTUBE (not a bug), title-fixes (no lever), cron
 throttle (already frozen).
 
 ### Git
-main = 5b64de4, in sync with origin, tree clean, only branch = main.
+In sync with origin, tree clean, only branch = main. (Current HEAD is this entry's own commit - check git log, not a hash pinned here.)
 
 ---
 
