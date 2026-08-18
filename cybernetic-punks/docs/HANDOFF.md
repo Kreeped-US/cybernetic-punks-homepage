@@ -177,110 +177,63 @@ systems candidates: Lieutenants/bounty economy, Active Duty trait trees.
 
 ---
 
-## 2026-08-10 - CURRENT STATE / re-orientation snapshot (READ FIRST)
+## 2026-08-18 - CURRENT STATE / re-orientation snapshot (READ FIRST)
 
-Where everything stands + the next move, so next session starts here instead of reconstructing it
-from the incremental entries below.
+Where things stand as of 2026-08-18. Detail lives in the dated entries below;
+this is orientation only. main = 5b64de4, in sync, tree clean.
 
-### CONTENT MODEL (docs/VERIFIED_GROUNDED_REASONING.md) -- the day's main arc
+### The active workstream: DMZ pre-launch content
+DMZ launches 2026-10-23; acquisition is the bottleneck; Marathon is winding
+down. The work is hand-sourced DMZ systems explainers via the manual
+gen-dmz-news -> QA -> operator-persist path. FOUR field-intel canonicals shipped,
+all primary-source-audited (official callofduty.com Deep-Dive), real source_url,
+notify CTA: dmz-vs-warzone (08-12), dmz-gunsmith (08-14), dmz-missions (08-17),
+dmz-survival (08-17). Plus 3 older June-30 DMZ pages (fob / loadouts / regions).
+7 DMZ rows total.
 
-The verified-grounded-reasoning ruling (Fable): gate the PREMISES (each factual premise resolves to a
-cited verified block), release the JUDGMENT (the recommendation). Build order: (1) store-row citation
--> (2) store adjacency -> (3) gate premise-validation -> (4) publish. BUILD-CAPABILITY-BEFORE-PUBLISH:
-the reasoning capability IS the launch-critical differentiator; do NOT publish decent-general content
-in the meantime. The content model arms as a WHOLE (after step 3), not piece-by-piece.
+### The proven DMZ authoring pattern (4x, use for the next piece)
+1. Ground in the primary source (fetch the actual Deep-Dive passage; do NOT
+   write from memory). 2. Routing read: confirm it's a CLEAN gap - the FOB
+   article is a comprehensive hub-tour that already spends every FOB-STATION's
+   passage, so per-station topics (Lieutenants, Operators) are near-duplicates.
+   Target systems OUTSIDE the FOB hub-tour. 3. Patch the sanctioned excerpt with
+   VERBATIM official-blog text only (gated commit); exclude third-party/reveal-
+   presentation detail, documented in-code. 4. gen-dmz-news --dry -> MANDATORY
+   line-by-line provenance QA (the script CAN fabricate specifics - it invented
+   cash figures once; the QA gate catches it). 5. Stage routing + persist entry;
+   MERGE + DEPLOY routing BEFORE operator persist (persist-before-routing 404s).
+   6. Operator runs persist; live-verify.
+Next single-source-viable DMZ topics (PENDING_TOPICS, avoid FOB overlap): the
+vendor, extraction/stash (what carries over), pricing/package. Operators +
+Lieutenants stay folded in FOB - do not re-attempt standalone.
 
-STATUS (2026-08-11): ARMED + PRODUCING. STORE_ROW_CITATION_ENABLED=true in Vercel Production -- the four
-capability steps are LIVE. The FIRST armed NEXUS article generated HELD, was reviewed + APPROVED by the
-operator, and is now LIVE (the "Marathon Update 1.1.5.3" maintenance-patch summary, feed_item
-e7292f91). Held-for-review CONFIRMED end-to-end: generated held (is_published=false, gate_status=clear)
--> human approved -> published; NOTHING auto-published (an UNARMED NEXUS article would have auto-
-published, so the HELD state is itself the proof the flag is live in the running deployment). That
-article cited BUNGIE patch notes (external), NOT store rows -- correct for a maintenance summary with no
-stat claims; store [SH#]/[CS#] citations will appear on stat-heavy build/meta articles. Two armed-run
-seam fixes are live: cite-only-offered-ids (prompt/schema discipline) + stripCitationTags render-strip.
-NEXT = a DMZ keyword-planning view (see THE NEXT MOVE) -- the content model no longer needs action.
-- Step 1 (store-row citation): editor cites verified store rows. Proven on the Sentinel dry-run
-  (verified_source null -> 7 cited store rows).
-- Step 2 (store adjacency): editor reasons across the shell<->core neighborhood + cites the cores a
-  build recommendation rests on. Proven on Sentinel (the [CS#] delta: +CS29/CS72/CS51).
-- Step 3 (gate premise-validation) BUILT/PROVEN/STAGED-OFF/MERGED: the pre-publish gate validates that
-  a reasoned recommendation's cited PREMISES resolve to verified blocks. A `recommendations` field
-  {claim_text, supporting_block_ids[]} rides toolWithStoreCites (gated per-call); validateRecommendations
-  (pure) reuses resolveCitedBlocks' closed-set membership; UNSUPPORTED-RECOMMENDATION joins HOLD_CLASSES,
-  LOG-ONLY on Marathon (never holds -- observed first). KEY RULE (proven): validate verified=true
-  (registry membership == verified by construction), NOT non-null provenance-string -- Sentinel's
-  verified-but-provenance-null core CS29 PASSED in the dry-run. Never grades inference. The merged
-  registry is built BEFORE the gate + reused at the resolve. No publish-path change (is_published =
-  gateDecision.is_published). Two safety layers: flag-off (no field) AND log-only (never holds when on).
-- ALL staged behind STORE_ROW_CITATION_ENABLED (unset on Vercel -> flag OFF -> live NEXUS byte-
-  identical; the gated pieces suppress; is_published/gate/publish untouched).
+### Provenance model (settled 08-13, Fable)
+source_url = a content-verified primary source, or null - never a metadata/
+positional/game-filtered attachment. Cron media attachment removed; render +
+sitemap key off the noindex BOOLEAN (noindexed_at is the paired audit stamp).
+verified_source is the real provenance chain (separate axis from `source`, which
+is an editorial-lane tag, not attribution - the source:YOUTUBE "bug" was that
+misread, closed not-a-bug). Historical: 647 mislabeled source_urls nulled.
 
-MECHANISM FINDING (recorded, reusable): the citation lever is the TOOL-SCHEMA field description, not
-the system prompt (reverting the schema stopped citation entirely even with the prompt note present).
-Steps 3+ extend tool-schema field descriptions, gated per-call, to keep staged-OFF byte-identical.
+### Marathon: frozen + pruned
+Autonomous generation FROZEN since mid-to-late July (07-16 -> 07-21) via a
+ROSTER FILTER (marathon.js: editors ['NEXUS'] + editorsRequiringPatch), NOT a
+dated kill-switch. Effect: patch days -> NEXUS only; non-patch days -> zero.
+~6 rows/21d. No "throttle" needed - it's already frozen. Corpus pruned 08-13:
+1200 of 1572 intel articles noindexed (performance-based, one-time backlog
+cleanup, NOT recurring). is_published stays true on noindexed rows (200 + noindex
+meta so Google recrawls + drops).
 
-### ADMIN BRIDGE (2026-08-11 session -- separate from the content model; does NOT change the next move)
+### Open (time-gated / decisions)
+- Aug 27: deindex watch (re-pull GSC, confirm no click loss on the 1200) ->
+  then the HARD-DELETE decision (irreversible, DB export first). One-time.
+- A12 doctrine line into the pending v10 apply.
+- Thumbnail decision (imageless is the live default since the media strip).
+Closed this cycle: source:YOUTUBE (not a bug), title-fixes (no lever), cron
+throttle (already frozen).
 
-The admin panel was modernized into a one-stop "Bridge" (shell + dashboard home + nav consolidation).
-DONE + MERGED + PUSHED (f1b34e2). Admin-facing only; public routes byte-identical. Since then (2026-08-
-11): the drafts panel gained an inline FORMATTED draft-preview (read a draft before approving; shared
-lib/articleBody.js parseBody; public is_published gate untouched) and the Bridge draftsWaiting count was
-fixed to exclude rejected drafts -- both merged 6fd5434. The content model is now ARMED (above); the
-Bridge is the admin home to watch drafts + vitals from, and the draft-preview is what the operator used
-to read + approve the first armed article.
-
-### ASSIGNMENT GATE (separate track, from this morning)
-
-BUILT + empirically validated + LOG-ONLY, observing. Substance floor (verified-existence gate) +
-novelty (phrase-containment reinforce, derived by killing 3 wrong metrics -- coverage, jaccard,
-rarity -- with data). NOT armed; the roster freeze is still the brake. Next: watch real cycles -> tune
--> arm. See docs/CONTENT_PIPELINE_ARCHITECTURE.md.
-
-### DEFERRED / BACKLOG (noted so they are not lost)
-
-- ~19-row core-provenance populate: Sentinel's cores are verified=true but verified_source=null. This
-  is DISPLAY quality (relevant to a step-3 "Based on:" UI), NOT a validity blocker -- step 3 validates
-  verified=true, so those cores PASS.
-- mod<->weapon adjacency: unmodeled/unverified (mods 17/203 verified, compatible_weapons 0/203) -- a
-  real DATA build, correctly bounded out by "unmodeled adjacency is the boundary of legitimate
-  reasoning."
-- held-for-review CORRECTION (a claim that keeps resurfacing -- resolved by code, do not restate it
-  wrong): it does NOT already exist on main. There is NO insertGeneratedItem function, NO isPublished
-  param, and NO lib/editorial/publish.js. The feed_items insert is INLINE in processEditor
-  (app/api/cron/route.js:613) and is_published comes from the gate (is_published:
-  gateDecision.is_published). The held mechanism was BUILT + tested on the 2-arm branch (now DELETED)
-  as a heldCandidate param forcing is_published=false at the inline insert; the DESIGN is recorded in
-  VERIFIED_GROUNDED_REASONING.md (held = is_published=false + gate_status='clear' = the admin-drafts
-  DRAFT state, published only via /api/admin/drafts/approve; NOT gate_status='held', which auto-
-  releases). So step 4 REBUILDS the small wiring -- the design is proven, but the CODE was deleted.
-- The parked opinion-lane note is SUPERSEDED by the verified-grounded-reasoning doc.
-
-### THE NEXT MOVE (unambiguous)
-
-Build a lightweight DMZ KEYWORD-PLANNING VIEW (Option A): a READ-ONLY admin view over the uploaded DMZ
-demand research, sorted by winnable demand (volume vs difficulty), so the operator can eyeball + aim
-launch content. (The content model is ARMED + producing -- no longer the next move.)
-
-*** CRITICAL PRE-FLIGHT CORRECTION (verified 2026-08-11, prevents building the view against a phantom):
-the DMZ keyword data is NOT in keyword_targets. keyword_targets = 7 rows, ALL game_slug='marathon',
-ZERO DMZ. The DMZ Mangools/KWFinder research lives ENTIRELY in DOCS: docs/dmz-demand-map.md (the ranked
-build queue, "REVIEWED - ACTIVE") + docs/research/dmz-demand-2026-07/ (six CSVs: vol_known, kd) + volume
-COMMENTS in lib/dmz/entities.js. NO code reads any of it. So Option A cannot "read the uploaded DMZ
-keyword_targets" -- there are none. The view must either (i) FIRST import the DMZ demand rows into
-keyword_targets (game_slug='dmz', from the CSVs), then read them, OR (ii) read the demand-map/CSVs
-directly. Decide the source before building. ***
-
-Content-model DEFERRED (post-arm, none blocks anything): queue-driven assignment (rebuild -- feed a
-passing candidate into callEditor instead of NEXUS self-select); the ~19-row core-provenance populate
-(display quality); the mod<->weapon data build (unmodeled adjacency); recommendations-only held
-narrowing (auto-publish non-recommendation NEXUS articles once the review flow is trusted).
-
-### GIT STATE
-
-main clean; the ONLY branch is main (3 spent branches cleaned this session; the richer seed script +
-the actionable build-env-error fix were salvaged to main first). main is ahead of origin (about to
-push this snapshot + the cleanup commits together).
+### Git
+main = 5b64de4, in sync with origin, tree clean, only branch = main.
 
 ---
 
