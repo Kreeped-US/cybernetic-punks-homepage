@@ -347,3 +347,118 @@ STATUS: DDL-READY. All rulings folded in. The schema, the derived is_indexable, 
 slug-integrity riders, the scar-checks, and the SEO plan are settled; DDL can be authored from
 this doc. Remaining pre-DDL confirmation: the exact 9 slot slugs (question 5, the only
 pre-launch seed).
+
+---
+
+## Risk/Reward Advisor layer (Slice B) - design note 2026-08-18
+
+### What this is
+A proposed definition for the OPEN "optimal" slot in generateBuild. The schema
+doc explicitly defers this: "what 'optimal' means needs real stats + launch meta".
+This note proposes that definition, plus a differentiating advisor layer on top
+of the base generator. DESIGN NOTE ONLY - nothing built by it; it proposes in-tool
+(Slice B) logic and records positioning/architecture requirements from a
+2026-08-18 planning session so the launch build inherits them.
+
+### The core reframe (the differentiator)
+The base tool is a one-way generator: weapon -> generated build (goal-neutral,
+per the Fable ruling; builds stay goal-neutral at the SCHEMA level). Every
+competitor builds this same thing ("best loadout"). The differentiator is a
+Slice-B in-tool layer that answers a different question:
+
+  Not "what is the BEST loadout?" (maximize power - what 50 sites do)
+  but "what is the RIGHT loadout for THIS run?" (accomplish the goal at minimum
+  risk/cost - the extraction-shooter insight nobody frames)
+
+The signature output is the "could I risk less?" check: given a goal and
+solo/squad, show the risk-appropriate loadout tier and flag what the player is
+OVER-bringing (risk taken for no marginal benefit toward the goal).
+
+This lives in-tool (Slice B - "refinements stay in-tool, never schema"), as a
+GOAL-aware advisory layer OVER the goal-neutral generated build. It does not
+reintroduce a goal schema column; goal is a runtime input to the advisor, not
+stored on the build artifact.
+
+### Two-phase build order (critical - do not conflate)
+The risk/reward layer splits by data dependency. Phase 1 is buildable at launch
+on STRUCTURE alone; Phase 2 needs NUMBERS and must not be faked.
+
+#### Phase 1 - Qualitative risk-tiering (rules-based, NO numbers needed)
+Classify gear by loss-consequence tier and match to goal + solo/squad via
+explicit, authored rules. Example logic shape:
+  - goal = cash/XP extraction, solo -> recommend minimal/expendable loadout;
+    flag high-value/insured gear as unnecessary risk for this goal.
+  - goal = Lieutenant/boss hunt, squad -> commit the real kit; squad revive is
+    the safety net that changes the risk math.
+  - solo vs squad = a risk multiplier (solo: skew "risk less"; squad: can commit).
+MOAT-SAFE: every recommendation must trace to a stated, sourced game rule -
+deterministic rules engine, NOT a model that reasons/invents. The moment the
+advisor REASONS instead of LOOKS UP, it can fabricate; that breaks the moat.
+(If a model is used at all, only for phrasing output, never for deciding it.)
+Buildable at launch on structure; no cash figures required.
+
+#### Phase 2 - Quantitative cost-optimization (needs the numbers; launch-gated+)
+The actual cash math: "this loadout costs X; a lighter one meeting the same goal
+costs Y; break-even on insuring is Z." CONSUMES ALREADY-PLANNED DATA:
+dmz_attachments.cost + cost_tier (nullable, populated-at-launch, flagged MOAT
+content in the schema doc). No schema change needed.
+HARD RULE: blocked until real cost values are sourced. Until then the module
+exists in the frame but shows "cost math pending confirmed values" - NEVER
+invented figures. The official blog is qualitative on costs ("more expensive," "a
+period of real-time"); inventing numbers to light up the optimizer is the
+cardinal moat violation. This is the same wall every DMZ article hit this summer.
+
+### Positioning
+- The base loadout/build GENERATOR is the MARKETABLE FRONT DOOR: people already
+  search "dmz loadout / dmz best build / dmz weapon build" (recorded demand,
+  dmz-verification-queue.md: "dmz weapon case" 5,400, "dmz best loadout" 480 -
+  generic, not named-weapon). It's the acquisition hook because demand pre-exists.
+- The RISK/REWARD advisor is the DIFFERENTIATOR / retention hook: nobody searches
+  for it yet (category doesn't exist), but it's the "wait, this one thinks
+  differently" reaction and the shareable angle - "the only DMZ tool that tells
+  you what NOT to bring."
+- Front door drives traffic; differentiator drives word-of-mouth + return visits.
+
+### Monetization + paywall seam
+- KEEP THE TOOL FREE. The COD tool ecosystem is entirely free/ad-supported
+  (tracker.gg, wzstats, sym.gg); a paywall on an unproven pre-launch site kills
+  the acquisition flywheel that is the entire point. Monetize the AUDIENCE the
+  tool builds (email list via the notify CTA -> ads/affiliate/sponsorship later),
+  never the tool's core value.
+- BUT build the paywall SEAM now, dormant: every gateable capability flows
+  through a real server-side entitlement check that currently returns
+  free/allowed for everyone. If growth explodes, a future "pro" tier (saved
+  builds, no ads, early access - convenience/cosmetic, NOT the core value) is a
+  config/flag change, not a re-architecture. The gate must be REAL (server-side,
+  not hidden UI = not bypassable) but DEFAULT FULLY OPEN.
+
+### Discoverability requirements (the Marathon advisor scars - do NOT repeat)
+The Marathon Build Advisor was invisible for months. Root causes, now fixed, must
+be designed IN from the DMZ tool's first commit:
+1. SSR THE INDEXABLE CONTENT. Marathon's generated builds were client-only =
+   empty shell to Googlebot; it ranked on nothing until a crawlable server-
+   rendered intro (h1 + prose + JSON-LD) was added above the client tool. The DMZ
+   route is already scoped SSR/ISR - keep it that way; the interactive generator
+   may be client-side but must NEVER be the only content.
+2. SEARCHER-FIRST title/h1/description. Marathon originally led with "DEXTER Build
+   Advisor" (internal AI persona nobody searches) + "AI-engineered" (to an
+   AI-skeptical audience). Fixed to "Marathon Build Advisor / loadout generator."
+   DMZ: lead with "DMZ loadout / best build / weapon build" - never a tool or
+   persona name; keep front-facing AI framing out of the snippet (schema only).
+3. CROSS-LINK FROM RANKING CONTENT day one. Marathon had ~1,000 articles, none
+   body-linked to the tool (only a generic template CTA); adding article
+   body-prose links was a late lever. DMZ: the field-intel canonicals must
+   body-link to the tool, with prefilled deep-links from weapon/loadout pages,
+   from launch.
+4. INDEXING-FIRST INSTRUMENTATION. Keep the planned dedicated
+   sitemap-dmz-builds.xml + computed indexability so "is the build engine being
+   indexed?" is answerable from launch day (it IS the launch question).
+
+### What is NOT being done now
+Nothing is built by this note. The tool is launch-gated by the existing design
+(dmz_weapon_builds tables not yet created; "template-after-DMZ"; generateBuild
+"optimal" needs launch meta). Pre-launch effort stays on content (the discovery
+funnel per scar #3) and being ready for CoD NEXT (2026-08-21) as fresh official
+source material. This note ensures the session's new thinking - the risk/reward
+"optimal" definition, the two-phase split, positioning, the paywall seam - is
+recorded against the launch build, not lost.
