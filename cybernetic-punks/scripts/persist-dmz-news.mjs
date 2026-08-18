@@ -351,6 +351,44 @@ var ARTICLES = [
       'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
     ].join('\n'),
   },
+  // DMZ Weapon Vendor explainer (buy pre-built specialized weapons at the FOB).
+  // Body is the operator-APPROVED --dry draft with the "at a Glance" intro
+  // prepended, staged VERBATIM (purchase-only, NO sell mechanic, NO numbers).
+  // slug forced to 'dmz-weapon-vendor'. Staged, NOT persisted -- operator runs
+  // persist after review.
+  {
+    headline: 'DMZ Weapon Vendor: buy specialized pre-built guns at the FOB',
+    slug: 'dmz-weapon-vendor',
+    tags: ['dmz', 'modern warfare 4', 'weapon vendor', 'fob', 'loadout', 'pre-launch'],
+    body: [
+      '**The Weapon Vendor at a Glance**',
+      '',
+      'The Weapon Vendor is one of the Forward Operating Base services detailed in the official Call of Duty DMZ Deep Dive. According to the blog, Operators with enough in-game cash can purchase specialized pre-built weaponry from the FOB\'s military supplier, with those weapons added directly to their Stash. The Deep Dive frames it as a distinct path from the Gunsmith: rather than building or modifying a weapon yourself, the Vendor lets you buy a finished, professionally built firearm outright.',
+      '',
+      '**Selection, Rotation, and Availability**',
+      '',
+      'The Deep Dive specifies that the Weapon Vendor\'s inventory is limited in size and rotates on a real-time timer. The selection refreshes after a period of real-time has elapsed, meaning the available stock is not fixed from session to session. The blog does not specify how many weapons appear in the vendor\'s pool at any given time, nor does it detail the exact refresh interval.',
+      '',
+      '**How Vendor Weapons Fit Into the Broader Loadout Systems**',
+      '',
+      'The Deep Dive positions the Weapon Vendor as one of several paths to acquiring a ready-to-use firearm in DMZ. Alongside extracting weapons from the field, purchasing and modifying a weapon, or building one through the Gunsmith, the Vendor offers a fourth route -- one aimed at players who want a professionally built armament without spending time on modification. The blog explicitly notes this option is for Operators who do not have the time to extract or purchase a gun and modify it, or use the Gunsmith.',
+      '',
+      'Notably, the Deep Dive also confirms that weapons purchased through the Vendor are fully adjustable after acquisition, just as scavenged or purchased weapons are. They can be modified like any other firearm in a player\'s possession. The blog further states that Vendor firearms do not negatively affect looting or progression, connecting this system directly to those broader DMZ advancement structures.',
+      '',
+      '**What the Deep Dive Has Not Yet Specified**',
+      '',
+      'A few natural questions about the Weapon Vendor remain open based on this source alone. The DMZ Deep Dive does not specify:',
+      '',
+      '- The exact cash prices for Vendor weapons',
+      '- How many weapon slots appear in the rotating selection',
+      '- The precise real-time duration of each refresh cycle',
+      '- Which weapon categories or archetypes are eligible to appear in the Vendor pool',
+      '',
+      'These details may be addressed in future announcements closer to launch.',
+      '',
+      'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
+    ].join('\n'),
+  },
 ];
 
 async function main() {

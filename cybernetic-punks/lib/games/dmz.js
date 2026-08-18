@@ -231,6 +231,8 @@ export const DMZ_ARTICLE_SECTION = {
   'dmz-missions': 'field-intel',
   // DMZ survival & recovery explainer (Tourniquet / downed state / MIA) -> Field Intel.
   'dmz-survival': 'field-intel',
+  // DMZ Weapon Vendor explainer (buy pre-built specialized weapons) -> Field Intel.
+  'dmz-weapon-vendor': 'field-intel',
 };
 
 // Slugs assigned to a given DMZ section (empty array if none -> empty state).
@@ -325,6 +327,16 @@ export const DMZ_ARTICLE_SEO = {
       'The Tourniquet heals you to a wounded state without self-revive; you must apply more medical items to reach full health.',
       'The MIA system lets you spend FOB cash to deploy rescue teams and recover lost Operators without losing their progression.',
       'DMZ aims to be more forgiving than traditional extraction shooters while keeping the high-stakes risk.',
+    ],
+  },
+  'dmz-weapon-vendor': {
+    title: 'MW4 DMZ Weapon Vendor: Buy Pre-Built Guns at the FOB',
+    description: 'How the MW4 DMZ Weapon Vendor works: buy pre-built specialized weapons for cash, added to your Stash, from a limited rotating stock -- the Gunsmith alternative.',
+    keyFacts: [
+      'You purchase pre-built specialized weapons from the Weapon Vendor for in-game cash, added straight to your Stash.',
+      'Its stock is limited and rotating, refreshing after a period of real-time.',
+      'It is a distinct path from the Gunsmith: buy a finished weapon instead of building or modifying one.',
+      'Vendor weapons can be adjusted like any other and do not penalize your looting or progression.',
     ],
   },
 };
