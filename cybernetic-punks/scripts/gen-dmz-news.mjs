@@ -363,13 +363,35 @@ const TOPICS = [
       'DMZ is designed to preserve the tension and high-stakes risk that define extraction shooter gameplay while remaining a little more forgiving than traditional extraction experiences.',
     ].join('\n'),
   },
+  {
+    slug: 'vendor',
+    name: 'The Weapon Vendor: buying pre-built specialized weapons at the FOB',
+    // VERBATIM official-blog lines (callofduty.com MW4 DMZ Deep Dive). Qualitative
+    // only, NO numbers -- no refresh minutes, stock size, or prices (the blog says
+    // "limited" and "a period of real-time").
+    // Excluded as WRONG-GAME: any MW2 (2022) / Warzone Buy Station content --
+    // selling gold bars or looted items, the barter system, in-match Buy Stations,
+    // "sell your backpack for cash." The MW4 Weapon Vendor is a FOB station,
+    // PURCHASE-ONLY, pre-built, real-time-refresh; the blog states no selling
+    // mechanic. Buy Station / sell / barter is a different game and stays out.
+    source: [
+      'Weapon Vendor: DMZ Operators with enough in-game cash can purchase additional specialized weaponry from the FOB\'s military supplier.',
+      '',
+      'These weapons are added directly to your Stash.',
+      '',
+      'The selection is limited and rotating, refreshing after a period of real-time has occurred.',
+      '',
+      'If you\'re after a professionally built armament and don\'t have the time to extract or purchase a gun and modify it, or use the Gunsmith, then this is an excellent option.',
+      '',
+      'Weapon Vendor firearms can be adjusted just like scavenged or purchased weapons, and don\'t negatively affect your looting or progression.',
+    ].join('\n'),
+  },
 ];
 
 // Remaining scoped topics for later batches -- intentionally NO source here. They
 // are NOT generated until the owner supplies/confirms the verbatim excerpt for each
 // (no source => no fabrication).
 const PENDING_TOPICS = [
-  'the vendor (buying/selling at the FOB)',
   'the gunsmith (weapon building at the FOB)',
   'Operator progression and DMZ rank',
   'extraction and the stash (what carries over)',
