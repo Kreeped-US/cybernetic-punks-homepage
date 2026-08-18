@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-08-18 PM - DMZ SEO/email audit + two fixes shipped; further-cut assessed (no action)
+
+Audited the 5 DMZ canonicals' SEO + the notify-email capture, shipped two fixes,
+and assessed a further Marathon prune. Main = 35ea139.
+
+### Audit findings
+- Email/notify capture WORKS: DmzNotifyStrip -> DmzNotifyForm -> /api/dmz-notify
+  -> email_signups (game_slug='dmz'), owned list, no double-opt-in (manual launch
+  send by design). Solid validation, honeypot, rate-limit, idempotent dedupe
+  (23505->ok). Separate Bungie-OAuth account system exists (player_profiles),
+  unrelated to the notify list.
+- SEO on the 5 canonicals is STRONG: all titles searcher-first <=60, real
+  descriptions, NewsArticle + BreadcrumbList JSON-LD server-rendered, robots
+  correct, all in sitemap. Marathon-advisor scars NOT repeated.
+- Two real gaps found: (1) email_signups was write-only in-app - no retrieval/
+  export UI (operational blind spot on the launch asset); (2) no article<->article
+  in-prose cross-links (partial Marathon scar - discovery was hub-and-spoke only).
+
+### Fix 1: email-signups admin view (a55b13f)
+New /admin/email-signups: read-only GET endpoint (app/api/admin/email-signups/
+route.js) gated by the shared authorizeAdmin, returns total/byGame/last7/30-day
+buckets/paginated rows + ?format=csv export (email,source,game_slug,created_at -
+no user_agent, PII-min). Page reuses StatCards + sparkline + table. Added to
+ADMIN_NAV. NOTE: brief said lift authorize() into lib/adminAuth.js, but it ALREADY
+existed (exported authorizeAdmin, used by /metrics + /quality-alerts); Claude Code
+caught the overwrite, restored the file byte-for-byte, and migrated the CRUD
+route's inline duplicate to the existing helper (single source of truth). Endpoint
+is GET-only, no write path to email_signups. Verified live: email view shows the
+captured rows. Current capture: ~2 signups since 07-09 - LOW, worth noting the
+notify funnel is barely converting (likely upstream traffic, since pages are new).
+
+### Fix 2: DMZ article in-prose cross-links (35ea139)
+Render-time linkifyArticleSegments (twin of the POI linkifier) in the DMZ news
+template - NO feed_items.body edits, no re-persist. A system-name->article map,
+self-skip (an article never links its own system), longest-first/whole-word
+matching, first-mention-only, collision-safe with the POI pass. Auto-covers all
+8 DMZ articles incl. the FOB hub FORWARD-linking every station (the high-value
+node). Verified live: cross-links render (gunsmith<->vendor bidirectional, fob->
+stations). Directly addresses the traffic side of the low-signup finding.
+
+### Further Marathon cut: ASSESSED, NO ACTION
+Justin asked about cutting "300+ more" Marathon articles. Sized the pool (DB
+counts, 08-18): total 1572, noindex=true 1200, indexed (noindex=false) 372; of
+the 372, eligible-to-judge (created<2026-06-23) = 248, grace/too-new = 124.
+=> A 300-cut is arithmetically impossible (pool is 248), AND the 248 are the
+already-trimmed survivors of the 08-13 performance prune - by construction the
+indexed set is the performers. NO fresh survivor-by-survivor GSC join was run
+this session (the "all survivors earning" result is from the 08-13 prune, not
+re-verified today). Conclusion: the indexed corpus is already at its performers;
+there is no meaningful further noindex cut. The real glut-clear remains the
+Aug 27 HARD-DELETE of the 1200 already-noindexed. Do not re-raise a "cut 300 more"
+target - the data can't support it.
+
+### Open
+- MOBILE render check on DMZ articles/hub/notify form - the one remaining audit
+  item, deferred to next session (CSS is responsive: flexWrap/clamp/max-width; no
+  desktop issues seen; verification not yet run at mobile width).
+- Aug 27 deindex watch -> hard-delete (the real Marathon glut-clear).
+- CoD NEXT Thu 2026-08-21 (fresh official DMZ source; leak/Zodiac material = rumor,
+  do not use).
+- A12 doctrine into v10; thumbnail decision.
+
+---
+
 ## 2026-08-18 - DMZ Weapon Vendor SHIPPED (5th DMZ systems piece)
 
 Live: /dmz/field-intel/dmz-weapon-vendor, feed_items id
