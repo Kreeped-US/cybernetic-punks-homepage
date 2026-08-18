@@ -263,6 +263,46 @@ export function linkifyPoiSegments(text, poiEntries, linked) {
   return segments;
 }
 
+// Article cross-link linkifier -- render-time, in-prose. SAME matching contract as
+// linkifyPoiSegments (caller sorts `entries` longest-name-first; case-SENSITIVE
+// whole-word; first occurrence only; only TEXT segments are searched, so a term
+// already inside a link segment is never re-wrapped), differing only in output:
+//   - each entry carries a full `href` (/dmz/<section>/<slug>) and its target `slug`;
+//   - dedupe is by `e.slug` (the TARGET article) via `linked`, so two names for the
+//     same article (e.g. "Forward Operating Base" + "FOB", "Story Missions" +
+//     "Dynamic Operations") link that article AT MOST ONCE -- no double-linking;
+//   - matched runs are typed 'alink' so the caller renders them distinctly from POI
+//     'link' segments.
+// SELF-SKIP is the CALLER's responsibility: it must exclude the current article's own
+// system(s) from `entries` BEFORE calling, so an article never links its own system.
+export function linkifyArticleSegments(text, entries, linked) {
+  var segments = [{ type: 'text', value: text == null ? '' : String(text) }];
+  if (!text || !entries || entries.length === 0) return segments;
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    if (!e || !e.name || !e.href || !e.slug || (linked && linked.has(e.slug))) continue;
+    var esc = e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Case-SENSITIVE, whole-word (proper-noun gate, same as the POI linkifier).
+    var re = new RegExp('(^|[^A-Za-z0-9])(' + esc + ')([^A-Za-z0-9]|$)');
+    for (var s = 0; s < segments.length; s++) {
+      if (segments[s].type !== 'text') continue;
+      var val = segments[s].value;
+      var m = re.exec(val);
+      if (!m) continue;
+      var start = m.index + m[1].length;
+      var end = start + e.name.length;
+      var repl = [];
+      if (start > 0) repl.push({ type: 'text', value: val.slice(0, start) });
+      repl.push({ type: 'alink', value: val.slice(start, end), href: e.href, slug: e.slug });
+      if (end < val.length) repl.push({ type: 'text', value: val.slice(end) });
+      Array.prototype.splice.apply(segments, [s, 1].concat(repl));
+      if (linked) linked.add(e.slug);
+      break; // this target article is linked once; move to the next entry
+    }
+  }
+  return segments;
+}
+
 // Rough read-time label from a body (words / 200 wpm, min 1).
 export function readTime(body) {
   if (!body) return '1 min read';

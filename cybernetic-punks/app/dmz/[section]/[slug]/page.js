@@ -32,7 +32,7 @@ import { getGameSection } from '@/lib/games';
 import { DMZ_ARTICLE_SEO, dmzSectionForArticle } from '@/lib/games/dmz';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
-import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments } from '@/lib/dmz/articleContent';
+import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
 import ToolCTA from '@/components/ToolCTA';
 import { fetchPoiLinkTargets } from '@/lib/dmz/entities';
 import DiscourseArticle from '@/components/DiscourseArticle';
@@ -128,13 +128,59 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// A plain (non-bold) text span: linkify POI names at render time (spoke 2), else
-// render as-is. Bold spans are handled by the caller and never passed here, so a POI
-// name inside **bold** is never linked. `poiEntries`/`linked` may be absent (no POIs
-// -> plain text).
-function PlainSpan({ text, poiEntries, linked }) {
-  if (!poiEntries || poiEntries.length === 0) return <>{text}</>;
-  var segs = linkifyPoiSegments(text, poiEntries, linked);
+// Canonical DMZ system -> its explainer article. Drives the render-time in-prose
+// cross-linker (linkifyArticleSegments), a parallel pass to the POI linkifier. Names
+// are matched longest-first, whole-word, case-sensitive, first-mention-only; an
+// article NEVER links its own system (SELF-SKIP in articleLinkEntries). Two names may
+// map to the same article ("Forward Operating Base"/"FOB", "Story Missions"/"Dynamic
+// Operations") -- dedupe is by target slug, so that article links at most once.
+// section + slug MUST match DMZ_ARTICLE_SECTION (lib/games/dmz.js).
+var DMZ_SYSTEM_LINKS = [
+  { name: 'Forward Operating Base', section: 'fob',         slug: 'dmz-forward-operating-base-every-hub-system-detailed' },
+  { name: 'Weapon Vendor',          section: 'field-intel', slug: 'dmz-weapon-vendor' },
+  { name: 'Dynamic Operations',     section: 'field-intel', slug: 'dmz-missions' },
+  { name: 'Story Missions',         section: 'field-intel', slug: 'dmz-missions' },
+  { name: '3D Printer',             section: 'loadouts',    slug: 'dmz-3d-printer-crafting-system-every-category-detailed' },
+  { name: 'Tourniquet',             section: 'field-intel', slug: 'dmz-survival' },
+  { name: 'Gunsmith',               section: 'field-intel', slug: 'dmz-gunsmith' },
+  { name: 'Hajin',                  section: 'regions',     slug: 'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals' },
+  { name: 'FOB',                    section: 'fob',         slug: 'dmz-forward-operating-base-every-hub-system-detailed' },
+  { name: 'MIA',                    section: 'field-intel', slug: 'dmz-survival' },
+];
+
+// Build the cross-link entries for ONE article: SELF-SKIP (drop any entry whose target
+// is this very article -- so the Gunsmith article never linkifies "Gunsmith"), attach
+// the route, and sort LONGEST-NAME-FIRST so "Forward Operating Base" is matched before
+// "FOB" and "Weapon Vendor" is never partially caught.
+function articleLinkEntries(currentSlug) {
+  return DMZ_SYSTEM_LINKS
+    .filter(function (e) { return e.slug !== currentSlug; })
+    .map(function (e) { return { name: e.name, slug: e.slug, href: '/dmz/' + e.section + '/' + e.slug }; })
+    .sort(function (a, b) { return b.name.length - a.name.length; });
+}
+
+// A plain (non-bold) text span. Two render-time linkify passes over the same text:
+//   1. POI names  -> /dmz/pois/<slug>        (linkifyPoiSegments)
+//   2. DMZ systems -> /dmz/<section>/<slug>   (linkifyArticleSegments)
+// Pass 2 runs ONLY on the TEXT segments left by pass 1, so a term already POI-linked is
+// never re-wrapped (no collision). Bold spans are handled by the caller and never
+// passed here, so a name inside **bold** is never linked. Any/all of poiEntries/
+// articleEntries may be absent. Headers and pull-quotes never reach this (prose + list
+// items only).
+function PlainSpan({ text, poiEntries, linked, articleEntries, articleLinked }) {
+  var hasPoi = poiEntries && poiEntries.length > 0;
+  var hasArticle = articleEntries && articleEntries.length > 0;
+  if (!hasPoi && !hasArticle) return <>{text}</>;
+
+  var poiSegs = hasPoi ? linkifyPoiSegments(text, poiEntries, linked) : [{ type: 'text', value: text == null ? '' : String(text) }];
+  var segs = [];
+  for (var i = 0; i < poiSegs.length; i++) {
+    var ps = poiSegs[i];
+    if (ps.type !== 'text' || !hasArticle) { segs.push(ps); continue; }
+    var aSegs = linkifyArticleSegments(ps.value, articleEntries, articleLinked);
+    for (var k = 0; k < aSegs.length; k++) segs.push(aSegs[k]);
+  }
+
   return (
     <>
       {segs.map(function (seg, j) {
@@ -145,33 +191,43 @@ function PlainSpan({ text, poiEntries, linked }) {
             </Link>
           );
         }
+        if (seg.type === 'alink') {
+          return (
+            <Link key={j} href={seg.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+              {seg.value}
+            </Link>
+          );
+        }
         return <span key={j}>{seg.value}</span>;
       })}
     </>
   );
 }
 
-// Inline **bold** -> <strong>; plain runs pass through PlainSpan (POI linkify).
-function InlineBold({ text, poiEntries, linked }) {
+// Inline **bold** -> <strong>; plain runs pass through PlainSpan (POI + article linkify).
+function InlineBold({ text, poiEntries, linked, articleEntries, articleLinked }) {
   var parts = text.split(/(\*\*[^*]+\*\*)/);
   return (
     <>
       {parts.map(function (part, i) {
         var m = part.match(/^\*\*([^*]+)\*\*$/);
         if (m) return <strong key={i} style={{ color: '#fff', fontWeight: 700 }}>{m[1]}</strong>;
-        return <PlainSpan key={i} text={part} poiEntries={poiEntries} linked={linked} />;
+        return <PlainSpan key={i} text={part} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />;
       })}
     </>
   );
 }
 
 // Render the parsed body blocks: real h2 / bullet list / pull-quote / paragraph.
-// `poiEntries` (longest-name-first) drives the render-time POI linkifier; `linked` is
-// ONE Set per article so each POI links at most once, in document order (headers and
-// pull-quotes are intentionally NOT linkified -- body prose and list items only).
-function ArticleBody({ body, poiEntries }) {
+// `poiEntries` (longest-name-first) drives the POI linkifier; `articleEntries`
+// (longest-name-first, self-skipped) drives the article cross-linker. `linked` /
+// `articleLinked` are ONE Set each per article so each POI and each target article
+// link at most once, in document order. Headers and pull-quotes are intentionally NOT
+// linkified -- body prose and list items only.
+function ArticleBody({ body, poiEntries, articleEntries }) {
   var blocks = parseBody(body);
   var linked = poiEntries && poiEntries.length ? new Set() : null;
+  var articleLinked = articleEntries && articleEntries.length ? new Set() : null;
   return (
     <div>
       {blocks.map(function (b) {
@@ -192,7 +248,7 @@ function ArticleBody({ body, poiEntries }) {
                 return (
                   <li key={li} style={{ position: 'relative', fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.65, margin: '0 0 0.8em', paddingLeft: 22 }}>
                     <span aria-hidden="true" style={{ position: 'absolute', left: 2, top: 1, color: 'var(--green)', fontWeight: 800 }}>›</span>
-                    <InlineBold text={item} poiEntries={poiEntries} linked={linked} />
+                    <InlineBold text={item} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />
                   </li>
                 );
               })}
@@ -211,7 +267,7 @@ function ArticleBody({ body, poiEntries }) {
         }
         return (
           <p key={b.key} style={{ fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.7, margin: '0 0 1.4em', maxWidth: '68ch' }}>
-            <InlineBold text={b.text} poiEntries={poiEntries} linked={linked} />
+            <InlineBold text={b.text} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />
           </p>
         );
       })}
@@ -388,7 +444,7 @@ export default async function DmzArticlePage({ params }) {
 
       {/* 7. Body */}
       <article style={{ marginTop: 26 }}>
-        <ArticleBody body={article.body} poiEntries={poiEntries} />
+        <ArticleBody body={article.body} poiEntries={poiEntries} articleEntries={articleLinkEntries(article.slug)} />
       </article>
 
       {/* Game-agnostic build-tool CTA. dmz.buildToolCta is null today -> renders
