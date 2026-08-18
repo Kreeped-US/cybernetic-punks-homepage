@@ -7,6 +7,60 @@ Newest entries on top.
 
 ---
 
+## 2026-08-18 - DMZ Weapon Vendor SHIPPED (5th DMZ systems piece)
+
+Live: /dmz/field-intel/dmz-weapon-vendor, feed_items id
+415c730c-3ba0-47cd-970b-439ace7f8ca8, is_published=true, source_url = the
+official Deep-Dive blog (verified live). Field Intel now 5 reports.
+
+### The piece + routing
+Weapon Vendor explainer: buy pre-built specialized weapons for cash from the FOB
+supplier, added straight to Stash, limited rotating stock refreshing on a
+real-time timer, fully adjustable / no looting-progression penalty, framed as the
+Gunsmith alternative. Routing was CONDITIONAL, not a clean gap: Gunsmith and
+Vendor ARE distinct systems (Gunsmith builds/modifies; Vendor sells pre-built),
+but the dmz-gunsmith article's "Two Separate Lanes" section had already spent the
+compact Vendor line. GO was justified because the official blog has Vendor
+mechanics BEYOND that line (to-Stash, real-time refresh, pre-built framing,
+adjustable/no-penalty) - the page explains the Vendor's own mechanics, not the
+distinction. This completes the FOB acquisition economy as 3 distinct pages:
+Gunsmith (build), Weapon Vendor (buy pre-built), 3D-Printer (craft).
+
+### Provenance trap: wrong-GAME, not just reported-not-official
+The Vendor's trap was uniquely sneaky: "sell your loot at the vendor" is real
+DMZ knowledge - from MW2 (2022) Buy Stations - and FALSE for MW4, where the
+Vendor is PURCHASE-ONLY. Excluded and documented in-code: MW2/Warzone Buy
+Station content (selling gold bars/items, barter system, in-match Buy Stations),
+plus all numbers (prices, stock size, refresh interval - blog is qualitative).
+The --dry draft came back clean (no sell mechanic, no numbers); Claude Code also
+self-caught a "sells" in a keyFact draft and fixed it to "purchase." Verified on
+the live rendered <main> by regex: zero sell/barter/buy-station terms, zero
+stated numbers. 5th consecutive clean generation; pattern holds.
+
+### NEAR-TERM CONTENT TRIGGER: Call of Duty NEXT, Thursday 2026-08-21
+CoD NEXT streams 08-21 (this Thursday), explicitly slated to reveal more
+gameplay detail (Gunsmith, map design) with DMZ in the beta window (Early Access
+08-21 to 08-25, Open Beta 08-28 to 09-01). This is the next wave of OFFICIAL
+primary-source DMZ fuel and likely generates new topics worth covering. NOTE:
+the "Zodiac map / DMZ 2.0 / alignment events" material circulating now is
+LEAK/RUMOR (contradicts the official Hajin map) - do NOT use it; wait for
+official NEXT coverage.
+
+### DMZ content state
+5 field-intel canonicals live, all primary-source-audited, real source_url,
+notify CTA: dmz-vs-warzone, dmz-gunsmith, dmz-missions, dmz-survival,
+dmz-weapon-vendor. FOB acquisition economy now complete (3 lanes). Remaining
+single-source topics thin/risky: extraction/stash (weak official source - mostly
+2022-game + third-party; do NOT attempt single-source), pricing/package
+(news-shaped, facts change). Best next fuel is CoD NEXT (08-21). Operators +
+Lieutenants stay folded in FOB.
+
+### Open (carried, unchanged)
+Aug 27 deindex watch -> hard-delete; A12 doctrine into v10; thumbnail decision.
+Closed: source:YOUTUBE, title-fixes, cron throttle.
+
+---
+
 ## 2026-08-17 PM - DMZ Survival/Recovery SHIPPED (4th DMZ systems piece)
 
 Live: /dmz/field-intel/dmz-survival, feed_items id
