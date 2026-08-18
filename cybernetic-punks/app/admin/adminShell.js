@@ -49,6 +49,7 @@ export const ADMIN_NAV = [
   { key: 'drafts',     label: 'Drafts',        href: '/admin/content',                       desc: 'Held drafts -- review + approve (panel)', color: '#00ff88' },
   { key: 'gsc',        label: 'GSC Review',    href: '/admin/content',                       desc: 'Search-console keyword candidates (panel)', color: '#00f5ff' },
   { key: 'stats',      label: 'Stats',         href: '/admin/content',                       desc: 'Usage analytics (panel)', color: '#ffd700' },
+  { key: 'emails',     label: 'Email Signups', href: '/admin/email-signups',                 desc: 'Launch-email capture -- view + CSV export (read-only)', color: '#00ff88' },
 ];
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
