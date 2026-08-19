@@ -522,7 +522,45 @@ export default async function DmzLanding() {
         <h2 style={{ fontFamily: EXO, fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3, letterSpacing: 0.2 }}>Written, cross-checked, sourced</h2>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Every briefing is traced to primary material - the official Deep Dive, patch notes, first-party reveals - before it publishes.</p>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Coverage is produced by an AI-assisted editorial desk and verified against primary sources. Nothing is invented; where the record is unconfirmed, we say so. The desk carries distinct roles - meta, analysis, builds, community, field guide - and signs its work.</p>
-        <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginTop: 2 }}>Bylines: NEXUS &middot; CIPHER &middot; DEXTER &middot; GHOST &middot; MIRANDA</div>
+        {/* Editorial desk roster -- name-leads bylines per the LOCKED doctrine
+            (docs/network/editorial-staff-model.md + lib/editors/roster.js): full name
+            first, accent-colored tag follows (Miranda's name IS her tag). The five
+            PRODUCING editors; VANTAGE excluded (network editor, not per-game). Broker is
+            a redacted "incoming" slot -- a true roster fact (status: incoming), dramatized
+            on-theme, no invented lore. Editor accent colors are their locked identity
+            colors (roster.js), not DMZ tokens. */}
+        <div style={{ marginTop: 6 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9.5, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 13 }}>
+            The desk - &ldquo;We don&apos;t agree, and we don&apos;t guess.&rdquo;
+          </div>
+          <div style={{ display: 'grid', gap: 9 }}>
+            {[
+              { name: 'Marcus Vane', tag: 'Cipher', role: 'Analysis', color: '#ff2222' },
+              { name: 'Remi Okafor', tag: 'Nexus', role: 'Meta & News', color: '#00d4ff' },
+              { name: 'Felix Andersen', tag: 'Dexter', role: 'Builds', color: '#ff8800' },
+              { name: 'Tariq Webb', tag: 'Ghost', role: 'Community', color: '#00ff88' },
+              { name: 'Miranda Malini', tag: null, role: 'Field Guide', color: '#9b5de5' },
+            ].map(function (e) {
+              return (
+                <div key={e.name} style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: e.color, flexShrink: 0, alignSelf: 'center' }} />
+                  <span style={{ fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {e.name}{e.tag ? <span style={{ color: e.color, fontWeight: 700 }}> / {e.tag}</span> : null}
+                  </span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{e.role}</span>
+                </div>
+              );
+            })}
+            {/* Broker -- CLASSIFIED / incoming (status 'incoming' per roster.js; not producing). */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', border: '1px solid var(--text-tertiary)', flexShrink: 0 }} />
+              <span aria-label="Classified" style={{ display: 'inline-block', width: 96, height: 12, background: 'var(--text-tertiary)', opacity: 0.4, borderRadius: 2 }} />
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>[Classified]</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Economy &amp; Market</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '1px 7px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Deploying with the zone</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* MW4 DMZ vs Warzone -- PROSE, deliberately asymmetric. Targets "dmz vs
