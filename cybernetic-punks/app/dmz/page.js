@@ -124,6 +124,18 @@ var cardBase = {
   borderRadius: 6, textDecoration: 'none', minHeight: 132, overflow: 'hidden',
 };
 
+// Operations Deck (Stage 4) -- NET-NEW, non-ranking "coming at launch" tool cards.
+// Non-linking pre-launch (the tools are launch-gated). Orange primary accent.
+var opsCard = { display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: '2px solid var(--accent)', borderRadius: 6, padding: '16px 18px', minHeight: 200 };
+var opsHead = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 };
+var opsName = { fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 900, color: 'var(--accent)', letterSpacing: 0.5, lineHeight: 1 };
+// "Live at launch" -- a TRUE status label (bordered orange-dim), not a dimmed card.
+var liveAtLaunch = { flexShrink: 0, fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '2px 7px', whiteSpace: 'nowrap' };
+var opsTagline = { fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.4 };
+var opsPreview = { fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 };
+var opsQuote = { fontFamily: EXO, fontSize: 13, fontWeight: 600, color: '#fff', borderLeft: '2px solid var(--accent)', paddingLeft: 10, lineHeight: 1.4 };
+var opsFooter = { marginTop: 'auto', paddingTop: 10, borderTop: '1px solid var(--border)', fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' };
+
 function CardShell({ children, href }) {
   if (href) return <Link href={href} className="dmz-dossier" style={cardBase}>{children}</Link>;
   return <div style={cardBase}>{children}</div>;
@@ -428,6 +440,89 @@ export default async function DmzLanding() {
         })}
         {/* Factions: informational only, not a section/route. */}
         <FactionsCard code={'FA-' + String(dmz.sections.length + 1).padStart(2, '0')} />
+      </div>
+
+      {/* ══ 02 OPERATIONS DECK -- NET-NEW, non-ranking. Pre-launch "coming at launch"
+          tool cards; previews are ILLUSTRATIVE placeholders ([weapon], sample rows),
+          NOT real data -- the "Live at launch" badge keeps that honest. Card NAMES are
+          from committed demand (dmz gunsmith / best loadout / best weapon). Non-linking
+          pre-launch (the tools are launch-gated -- no route to 404 into). Does NOT
+          replace Coverage above. ══ */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+          <span style={{ color: 'var(--accent)', marginRight: 8 }}>02</span>Operations Deck
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Tools go live with the zone</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+        {/* 1. DMZ Gunsmith -- the risk/reward differentiator */}
+        <div style={opsCard}>
+          <div style={opsHead}>
+            <span style={opsName}>DMZ Gunsmith</span>
+            <span style={liveAtLaunch}>Live at launch</span>
+          </div>
+          <span style={opsTagline}>Loadout builder + run advisor</span>
+          <p style={opsPreview}>Tell it your goal and solo/squad. It returns the loadout that fits the run - and flags what you&apos;re over-bringing.</p>
+          <div style={opsQuote}>&ldquo;Could I risk less and still extract?&rdquo;</div>
+          <div style={opsFooter}>Risk / reward engine</div>
+        </div>
+        {/* 2. Best Loadouts */}
+        <div style={opsCard}>
+          <div style={opsHead}>
+            <span style={opsName}>Best Loadouts</span>
+            <span style={liveAtLaunch}>Live at launch</span>
+          </div>
+          <span style={opsTagline}>Community + desk-vetted loadouts</span>
+          <p style={opsPreview}>Save, share, and browse working loadouts by goal - deep-linked from every weapon briefing.</p>
+          <div style={{ flex: 1 }} />
+          <div style={opsFooter}>Saved builds</div>
+        </div>
+        {/* 3. Best Weapons -- alive + shareable. Tier preview is ILLUSTRATIVE (placeholders). */}
+        <div style={opsCard}>
+          <div style={opsHead}>
+            <span style={opsName}>Best Weapons</span>
+            <span style={liveAtLaunch}>Live at launch</span>
+          </div>
+          <span style={opsTagline}>Live rankings, moved by the desk</span>
+          <div aria-hidden="true" style={{ display: 'flex', flexDirection: 'column', gap: 4, margin: '2px 0' }}>
+            {[['S', 'up'], ['S', 'same'], ['A', 'down']].map(function (row, i) {
+              var mark = row[1] === 'up' ? '▲' : row[1] === 'down' ? '▼' : '-';
+              var mc = row[1] === 'up' ? 'var(--green)' : row[1] === 'down' ? 'var(--red)' : 'var(--text-tertiary)';
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', background: 'var(--bg-nav)', border: '1px solid var(--border)', borderRadius: 3 }}>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 900, color: 'var(--accent)', width: 14 }}>{row[0]}</span>
+                  <span style={{ flex: 1, fontFamily: 'monospace', fontSize: 10, color: 'var(--text-secondary)' }}>[weapon]</span>
+                  <span style={{ fontSize: 9, color: mc }}>{mark}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9, color: 'var(--text-tertiary)', letterSpacing: 0.5 }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+            Updated Nh ago &middot; N changes this week
+          </div>
+          <div style={{ ...opsFooter, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Live tier rankings</span>
+            <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Share</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ 03 THE DESK -- how the intel is made. Function-forward; editors as bylines,
+          not a persona lineup. NET-NEW, non-ranking. AI-assisted stated plainly. ══ */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+          <span style={{ color: 'var(--accent)', marginRight: 8 }}>03</span>How the Intel Is Made
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Method</span>
+      </div>
+      <div style={{ display: 'grid', gap: 14, maxWidth: 680 }}>
+        <h2 style={{ fontFamily: EXO, fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3, letterSpacing: 0.2 }}>Written, cross-checked, sourced</h2>
+        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Every briefing is traced to primary material - the official Deep Dive, patch notes, first-party reveals - before it publishes.</p>
+        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Coverage is produced by an AI-assisted editorial desk and verified against primary sources. Nothing is invented; where the record is unconfirmed, we say so. The desk carries distinct roles - meta, analysis, builds, community, field guide - and signs its work.</p>
+        <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginTop: 2 }}>Bylines: NEXUS &middot; CIPHER &middot; DEXTER &middot; GHOST &middot; MIRANDA</div>
       </div>
 
       {/* MW4 DMZ vs Warzone -- PROSE, deliberately asymmetric. Targets "dmz vs
