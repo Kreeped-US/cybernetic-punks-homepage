@@ -15,7 +15,6 @@ import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { dmz, dmzArticleSlugsForSection } from '@/lib/games/dmz';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
-import DmzFrame from '@/components/dmz/DmzFrame';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -430,13 +429,6 @@ export default async function DmzLanding() {
         </p>
       </div>
 
-      {/* Hero -> Coverage field banner -- credited image frame, ships EMPTY
-          (placeholder) until a cleared asset lands. Additive/decorative; below the
-          fold so loading="lazy" keeps LCP clean. Touches no ranking element. */}
-      <div style={{ marginBottom: 34 }}>
-        <DmzFrame height={220} label="Hero banner" />
-      </div>
-
       {/* Coverage */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coverage</h2>
@@ -599,13 +591,6 @@ export default async function DmzLanding() {
         </p>
       </div>
 
-      {/* vs-Warzone visual frame -- credited image frame, ships EMPTY (placeholder)
-          until a cleared asset lands. Additive/decorative; sits below the prose
-          panel and touches none of its copy. */}
-      <div style={{ marginTop: 14 }}>
-        <DmzFrame height={200} label="DMZ vs Warzone" />
-      </div>
-
       {/* Is DMZ coming back? -- dedicated section-anchor for the 250-480/mo query,
           promoted OUT of the FAQ so the term gets a titled on-page target. PROSE (h2 +
           paragraph), NEVER FAQPage schema. Copy is the source-backed FAQ_BACK_A: affirms
@@ -617,13 +602,6 @@ export default async function DmzLanding() {
       </div>
       <div style={prosePanel}>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>{FAQ_BACK_A}</p>
-      </div>
-
-      {/* "Coming back" visual frame -- credited image frame, ships EMPTY
-          (placeholder) until a cleared asset lands. Additive/decorative; sits below
-          the prose panel and touches none of its copy. */}
-      <div style={{ marginTop: 14 }}>
-        <DmzFrame height={200} label="Operation Hajin" />
       </div>
 
       {/* REFERENCE -- the launch-day entity verticals (keys / missions / items).
