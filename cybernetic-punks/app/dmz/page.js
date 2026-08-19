@@ -99,15 +99,15 @@ async function discourseCount() {
 }
 
 function Pill({ text, tone }) {
-  // tone: 'live' (forest) | 'soon' | 'muted'
+  // tone: 'live' (functional green go-signal) | 'soon' | 'muted'. Small status flag.
   var color = tone === 'live' ? 'var(--green)' : 'var(--text-tertiary)';
   var border = tone === 'live' ? 'var(--green)' : 'var(--border)';
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      fontFamily: EXO, fontSize: 9, fontWeight: 800, letterSpacing: 1.5,
+      fontFamily: 'monospace', fontSize: 8.5, fontWeight: 800, letterSpacing: 1.5,
       textTransform: 'uppercase', color: color,
-      border: '1px solid ' + border, borderRadius: 999, padding: '2px 9px',
+      border: '1px solid ' + border, borderRadius: 2, padding: '2px 8px',
     }}>
       {tone === 'live' && <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />}
       {text}
@@ -115,16 +115,32 @@ function Pill({ text, tone }) {
   );
 }
 
+// Dossier card: tactical near-black panel; orange border on hover (LINK cards only,
+// via the .dmz-dossier rule in the page <style>). No padding here -- DossierHead +
+// CardBody supply their own.
 var cardBase = {
-  display: 'flex', flexDirection: 'column', gap: 10,
+  display: 'flex', flexDirection: 'column',
   background: 'var(--bg-card)', border: '1px solid var(--border)',
-  borderRadius: 8, padding: '18px 20px', textDecoration: 'none',
-  minHeight: 132,
+  borderRadius: 6, textDecoration: 'none', minHeight: 132, overflow: 'hidden',
 };
 
 function CardShell({ children, href }) {
-  if (href) return <Link href={href} style={cardBase}>{children}</Link>;
+  if (href) return <Link href={href} className="dmz-dossier" style={cardBase}>{children}</Link>;
   return <div style={cardBase}>{children}</div>;
+}
+
+// File-code + status-flag header strip (e.g. FI-01 / ... / LIVE).
+function DossierHead({ code, children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 14px', background: 'var(--bg-nav)', borderBottom: '1px solid var(--border)' }}>
+      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)' }}>{code}</span>
+      {children}
+    </div>
+  );
+}
+
+function CardBody({ children }) {
+  return <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>{children}</div>;
 }
 
 function CardTitle({ children }) {
@@ -136,34 +152,34 @@ function CardDesc({ children }) {
 
 // Editor-fed section with REAL article count. count>0 -> LIVE + "{n} report(s)";
 // count===0 -> neutral "Publishing soon" (never claims LIVE with nothing there).
-function CountCard({ section, count }) {
+function CountCard({ section, count, code }) {
   var live = count > 0;
   return (
     <CardShell href={'/dmz/' + section.slug}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <DossierHead code={code}><Pill text={live ? 'Live' : 'Soon'} tone={live ? 'live' : 'muted'} /></DossierHead>
+      <CardBody>
         <CardTitle>{section.label}</CardTitle>
-        <Pill text={live ? 'Live' : 'Soon'} tone={live ? 'live' : 'muted'} />
-      </div>
-      <CardDesc>{section.description}</CardDesc>
-      <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: live ? 'var(--green)' : 'var(--text-tertiary)' }}>
-        {live ? (count + (count === 1 ? ' report' : ' reports')) : 'Publishing soon'}
-      </span>
+        <CardDesc>{section.description}</CardDesc>
+        <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: live ? 'var(--green)' : 'var(--text-tertiary)' }}>
+          {live ? (count + (count === 1 ? ' report' : ' reports')) : 'Publishing soon'}
+        </span>
+      </CardBody>
     </CardShell>
   );
 }
 
 // Data-fed "coming soon" shell card (3D Printer / FOB / Hajin Regions).
-function SoonCard({ section }) {
+function SoonCard({ section, code }) {
   return (
     <CardShell href={'/dmz/' + section.slug}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <DossierHead code={code}><Pill text="Soon" tone="muted" /></DossierHead>
+      <CardBody>
         <CardTitle>{section.label}</CardTitle>
-        <Pill text="Soon" tone="muted" />
-      </div>
-      <CardDesc>{section.description}</CardDesc>
-      <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-tertiary)' }}>
-        Launches with the zone
-      </span>
+        <CardDesc>{section.description}</CardDesc>
+        <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-tertiary)' }}>
+          Launches with the zone
+        </span>
+      </CardBody>
     </CardShell>
   );
 }
@@ -172,48 +188,48 @@ function SoonCard({ section }) {
 // table previewing the product shape (# / Weapon / Tier / Score). The rows are
 // INTENTIONALLY non-functional placeholders -- NOT a data binding, nothing to wire.
 // Real meta data only exists once DMZ ships and matches are played.
-function MetaCard({ section }) {
+function MetaCard({ section, code }) {
   var cols = ['#', 'Weapon', 'Tier', 'Score'];
   var rows = [0, 1, 2, 3];
   return (
     <CardShell href={'/dmz/' + section.slug}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <DossierHead code={code}><Pill text="Activates at launch" tone="muted" /></DossierHead>
+      <CardBody>
         <CardTitle>{section.label}</CardTitle>
-        <Pill text="Activates at launch" tone="muted" />
-      </div>
-      <CardDesc>{section.description}</CardDesc>
-      {/* DECORATIVE skeleton -- static placeholder UI, no data. Do not "fix" or wire. */}
-      <div aria-hidden="true" style={{ marginTop: 4, border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '22px 1fr 38px 42px', gap: 8, padding: '7px 10px', background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border)' }}>
-          {cols.map(function (c) {
-            return <span key={c} style={{ fontFamily: EXO, fontSize: 8.5, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{c}</span>;
+        <CardDesc>{section.description}</CardDesc>
+        {/* DECORATIVE skeleton -- static placeholder UI, no data. Do not "fix" or wire. */}
+        <div aria-hidden="true" style={{ marginTop: 4, border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '22px 1fr 38px 42px', gap: 8, padding: '7px 10px', background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border)' }}>
+            {cols.map(function (c) {
+              return <span key={c} style={{ fontFamily: EXO, fontSize: 8.5, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{c}</span>;
+            })}
+          </div>
+          {rows.map(function (r) {
+            return (
+              <div key={r} style={{ display: 'grid', gridTemplateColumns: '22px 1fr 38px 42px', gap: 8, alignItems: 'center', padding: '7px 10px', borderBottom: r === rows.length - 1 ? 'none' : '1px solid var(--border-subtle)' }}>
+                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)' }} />
+                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)', width: (78 - r * 12) + '%' }} />
+                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,106,31,0.18)' }} />
+                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.05)' }} />
+              </div>
+            );
           })}
         </div>
-        {rows.map(function (r) {
-          return (
-            <div key={r} style={{ display: 'grid', gridTemplateColumns: '22px 1fr 38px 42px', gap: 8, alignItems: 'center', padding: '7px 10px', borderBottom: r === rows.length - 1 ? 'none' : '1px solid var(--border-subtle)' }}>
-              <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)' }} />
-              <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)', width: (78 - r * 12) + '%' }} />
-              <span style={{ height: 7, borderRadius: 2, background: 'rgba(63,125,68,0.18)' }} />
-              <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.05)' }} />
-            </div>
-          );
-        })}
-      </div>
+      </CardBody>
     </CardShell>
   );
 }
 
 // FACTIONS -- NOT a config section / route (so this is a static, non-linking card,
 // never a 404 link). Honest "unconfirmed" state.
-function FactionsCard() {
+function FactionsCard({ code }) {
   return (
     <CardShell>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <DossierHead code={code}><Pill text="TBD" tone="muted" /></DossierHead>
+      <CardBody>
         <CardTitle>Factions</CardTitle>
-        <Pill text="TBD" tone="muted" />
-      </div>
-      <CardDesc>Whether DMZ supports a faction system is still unconfirmed.</CardDesc>
+        <CardDesc>Whether DMZ supports a faction system is still unconfirmed.</CardDesc>
+      </CardBody>
     </CardShell>
   );
 }
@@ -296,6 +312,12 @@ export default async function DmzLanding() {
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubBreadcrumbLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubCollectionLd) }} />
+      {/* Dossier card hover -- orange border + elevated bg on the LINK cards only. SSR-safe
+          (a static <style>, same pattern as /marathon). Non-link cards (Factions) never get it. */}
+      <style>{`
+        .dmz-dossier { transition: border-color .14s ease, background .14s ease; }
+        .dmz-dossier:hover { border-color: var(--accent); background: var(--bg-card-hover); }
+      `}</style>
       {/* Breadcrumb: Network / DMZ -- mirrors the BreadcrumbList JSON-LD above and the
           section pages' visible breadcrumb style. DMZ is the current page (styled as
           current, not a link). */}
@@ -394,15 +416,18 @@ export default async function DmzLanding() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
-        {dmz.sections.map(function (sec) {
-          if (sec.slug === 'meta') return <MetaCard key={sec.slug} section={sec} />;
+        {dmz.sections.map(function (sec, i) {
+          // Dossier file-code: 2-letter slug prefix + zero-padded position. PRESENTATION
+          // ONLY -- the href ('/dmz/' + sec.slug) and the counts below are unchanged.
+          var code = sec.slug.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
+          if (sec.slug === 'meta') return <MetaCard key={sec.slug} section={sec} code={code} />;
           // Discourse: tag-based count (not the per-slug map).
-          if (sec.contentFilter && sec.contentFilter.byTag === 'discourse') return <CountCard key={sec.slug} section={sec} count={dCount} />;
-          if (sec.source === 'editor') return <CountCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} />;
-          return <SoonCard key={sec.slug} section={sec} />;
+          if (sec.contentFilter && sec.contentFilter.byTag === 'discourse') return <CountCard key={sec.slug} section={sec} count={dCount} code={code} />;
+          if (sec.source === 'editor') return <CountCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} code={code} />;
+          return <SoonCard key={sec.slug} section={sec} code={code} />;
         })}
         {/* Factions: informational only, not a section/route. */}
-        <FactionsCard />
+        <FactionsCard code={'FA-' + String(dmz.sections.length + 1).padStart(2, '0')} />
       </div>
 
       {/* MW4 DMZ vs Warzone -- PROSE, deliberately asymmetric. Targets "dmz vs
