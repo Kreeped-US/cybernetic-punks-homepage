@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-08-19 PM - /dmz redesign polish follow-ups (completed)
+
+Four small gated commits closing the polish items flagged in the redesign entry
+above. All display/style only, zero functional or ranking-content change; each
+gated, verified, merged. Main = 20f0c17.
+
+- Coverage card hover (0353207): coverage dossier card TITLES now go orange
+  (var(--accent)) on hover, white at rest, LINKING cards only (FactionsCard
+  excluded - non-linking, stays white). SSR via the existing static-<style> rule.
+  Closes the interaction inconsistency (coverage now matches the page's orange-
+  on-hover pattern) while keeping the hierarchy (products orange at rest).
+- Miranda tag -> "Litigator" (3e7ccf5): canonical-source-first. Her ROLE stays
+  Field Guide (still produces field guides); only her tag/side-name is set. Edited
+  the SOURCE (lib/editors/roster.js), reconciled the LOCKED staff-model doc (both
+  her roster line AND the byline rule on line 84 that asserted "no tag"), and the
+  /dmz desk inherits it - shows "Miranda Malini / Litigator", purple, role Field
+  Guide. editorByline needed no logic change (data-driven; the tag flips her to
+  the shared name/tag branch). No desync. (The roster lock was provisional pending
+  her official name; this resolves it. Too small for a Fable ask - operator call.)
+- Notify copy (0d5de00): DmzNotifyBlock (LANDING ONLY) heading -> "Notify on
+  Deployment" (matches the clock header above it) + reworded sub-text, intel
+  register, launch date preserved. Shared DmzNotifyForm placeholder ->
+  "operator@email.com". Button/success/error strings and the capture pipeline
+  UNCHANGED. Closes the last visible tonal seam, on the conversion element.
+- CTA orange (20f0c17): DmzNotifyForm submit button green -> orange
+  (var(--accent)), text -> #000 (contrast ~10:1, matches the sitewide filled-CTA
+  convention). Shared, so orange on landing + article strips. Success-message
+  green (status go-signal) PRESERVED. Completes the color logic: orange =
+  brand/action, green = live/status.
+
+Redesign arc now complete + polished. Remaining (optional, non-blocking, no
+visible seams): credited image frames (must not touch Coverage links/counts),
+Reference-section harmonize. Next substantive work: CoD NEXT Thu 08-21 (fresh
+official DMZ source). Aug 27 deindex watch -> hard-delete still pending.
+
+---
+
 ## 2026-08-19 - /dmz REDESIGN shipped (5 stages) + desk reconciled to locked roster
 
 Full visual redesign of /dmz to a tactical "intel terminal / pre-deployment
