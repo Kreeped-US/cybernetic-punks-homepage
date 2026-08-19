@@ -7,6 +7,76 @@ Newest entries on top.
 
 ---
 
+## 2026-08-19 - /dmz REDESIGN shipped (5 stages) + desk reconciled to locked roster
+
+Full visual redesign of /dmz to a tactical "intel terminal / pre-deployment
+briefing" concept. Groundbreaking-without-SEO-risk delivered: every ranking
+element preserved verbatim across all 5 stages (metadata, JSON-LD, headings,
+honesty-copy, links, counts, robots-inheritance, SSR). Countdown confirmed in
+view-source (SSR). All 5 stages + desk fix merged and live.
+
+### The 5 stages (gated, verified, merged)
+1. Tokens (d76ed60): .dmz-theme palette - near-black base, MW orange --accent
+   primary, --green kept as functional live-signal. Cross-app DMZ brand (roster/
+   OG/footer) deliberately left green - orange is /dmz-only for now.
+2. Hero + countdown (94fa096): SSR operation-clock centerpiece (days-to-Oct-23
+   server-side, in initial HTML), reused DmzNotifyBlock. Live-tick skipped. No
+   new fonts (Orbitron for the number).
+3. Dossier coverage (a6a2ccc): Coverage cards restyled (file-code headers, status
+   flags, orange hover via SSR static-<style>). Every /dmz/<section> href +
+   "N reports" count preserved.
+4. Ops deck + desk (6ee3ac4): NET-NEW additive. Three demand-named product cards
+   (DMZ Gunsmith / Best Loadouts / Best Weapons - per dmz-demand-map.md, Fable/A7;
+   NO meta/tier/advisor names), "Live at launch" honest-status, non-linking
+   (launch-gated). Function-forward desk.
+5. Prose/FAQ (feat/dmz-redesign-s5-prose): vs-Warzone/coming-back/FAQ to tactical
+   panels. All copy verbatim, FAQ links preserved, NO FAQPage schema, NO robots key.
+
+### Fable review (3 rulings, applied)
+1. Product naming = A7 for nouns: names verbatim from dmz-demand-map.md,
+   differentiator in tagline. Launch-gated cards OK with true "Live at launch"
+   label (presence isn't the risk, implied function is).
+2. Imagery/IP: affiliation implied by LAYOUT not footers - no full-bleed key-art
+   hero (reproduces Activision's page grammar), imagery in site-framed credited
+   containers. Hero is countdown-only. Image frames deferred.
+3. Hype vs "No hype": no tension - masthead governs CLAIMS not production value.
+   Test: every dramatic element = a true fact dramatized (countdown passes).
+   "groundbreaking" never on the page.
+
+### Desk reconciled to LOCKED roster (2dc8681)
+Stage-4 desk copy was written from memory + mismatched the LOCKED doctrine
+(docs/network/editorial-staff-model.md + lib/editors/roster.js). Fixed: 5
+producing editors name-first per locked byline spec (Marcus Vane/Cipher-Analysis,
+Remi Okafor/Nexus-Meta & News, Felix Andersen/Dexter-Builds, Tariq Webb/Ghost-
+Community, Miranda Malini-Field Guide), identity-color dots, VANTAGE excluded.
+BROKER (Vera Sloan, Economy & Market, incoming) = redacted "[Classified] -
+Deploying with the zone" slot - honest, on-theme, no invented lore. Locked
+tagline "We don't agree, and we don't guess." LESSON: check committed docs before
+writing persona/roster copy - locked doctrine beats memory.
+
+### Two-phase design
+Countdown hero -> telemetry hero post-launch; coverage cards -> product cards;
+desk populates when DMZ has editor activity. Same structure, swappable content -
+no second redesign at launch. Mockups v1/v2/v3 iterated; v3 = shipped target.
+
+### Open / follow-ups (non-blocking)
+- Notify-form copy still generic ("Get notified when DMZ coverage goes live") vs
+  intel register - small copy pass on DmzNotifyBlock (shared component).
+- "Notify me" CTA button green not orange - color call.
+- Image frames (credited press-kit slots) deferred from Stage 5 - standalone
+  follow-up, must not touch Coverage links/counts.
+- Reference section not restyled (still Orbitron cards) - optional harmonize.
+- Post-launch: BROKER redaction lifts when economy content starts; cross-app DMZ
+  brand orange-flip is a separate lib/brandColors.js decision.
+- CoD NEXT Thursday 08-21; Aug 27 deindex watch -> hard-delete.
+
+### Products (design note)
+Product cards are pre-launch "coming at launch" - non-linking, illustrative
+previews. Post-launch wire to real routes (/dmz/builds exists; /dmz/meta,
+/dmz/loadouts via dynamic [section]). Named per committed demand.
+
+---
+
 ## 2026-08-18 PM - DMZ SEO/email audit + two fixes shipped; further-cut assessed (no action)
 
 Audited the 5 DMZ canonicals' SEO + the notify-email capture, shipped two fixes,
