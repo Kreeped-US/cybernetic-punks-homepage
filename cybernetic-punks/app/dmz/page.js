@@ -221,6 +221,12 @@ function FactionsCard() {
 export default async function DmzLanding() {
   var [published, dCount] = await Promise.all([publishedDmzSlugs(), discourseCount()]);
 
+  // Countdown to launch -- computed SERVER-SIDE. The page is force-dynamic, so this
+  // evaluates per request and the day number lands in the initial HTML (crawlable,
+  // renders with JS disabled). No client tick -- the SSR day count is the truth.
+  var daysToLaunch = Math.ceil((Date.UTC(2026, 9, 23) - Date.now()) / 86400000);
+  var briefingCount = published.size; // published DMZ articles = live briefings
+
   // Source-independent structured data for the hub. BreadcrumbList: Network -> DMZ
   // (DMZ is the current page, so it is the leaf with no `item`). The visible
   // Network / DMZ breadcrumb at the top of <main> mirrors this exactly (same labels,
@@ -304,7 +310,7 @@ export default async function DmzLanding() {
           <span style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1,
-            color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 6, padding: '3px 7px',
+            color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 6, padding: '3px 7px',
           }}>CNP</span>
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
             Cybernetic Punks Network
@@ -317,28 +323,69 @@ export default async function DmzLanding() {
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 600, lineHeight: 1.6 }}>
           {dmz.tagline}. Confirmed coverage of Modern Warfare 4&apos;s extraction mode &mdash; setting, systems, and field intel &mdash; with structured tools landing as the zone goes live.
         </p>
-        {/* Launch-date callout */}
+
+        {/* ══ OPERATION CLOCK -- the countdown centerpiece. Orange (--accent) is the
+            brand accent; the green "Countdown Active" dot + "Live" are FUNCTIONAL
+            go-signals. daysToLaunch is server-computed (SSR). The launch-date callout
+            copy and the naming line below are PRESERVED VERBATIM, re-parented here. */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-          background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--green)',
-          borderRadius: 6, padding: '14px 18px',
+          background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)',
+          borderRadius: 8, padding: '20px 22px',
         }}>
-          <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>DMZ launches October 23, 2026</span>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>&mdash; the hub is already standing by.</span>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--accent)', textTransform: 'uppercase' }}>Operation Hajin</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Countdown Active</span>
+            </span>
+          </div>
+          {/* T-minus + meta */}
+          <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ flexShrink: 0 }}>
+              <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToLaunch}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 210 }}>
+              {[['Drop Date', '23 OCT 2026'], ['Zone', 'Hajin Exclusion'], ['Mode', 'Extraction']].map(function (r) {
+                return (
+                  <div key={r[0]} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>{r[0]}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{r[1]}</span>
+                  </div>
+                );
+              })}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>Intel</span>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <span style={{ color: 'var(--green)', fontWeight: 700 }}>Live</span> &middot; {briefingCount} {briefingCount === 1 ? 'Briefing' : 'Briefings'}
+                </span>
+              </div>
+            </div>
+          </div>
+          {/* Launch-date callout -- COPY PRESERVED VERBATIM, re-parented into the clock. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+            <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>DMZ launches October 23, 2026</span>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>&mdash; the hub is already standing by.</span>
+          </div>
+          {/* Notify on Deployment -- the payoff. REUSES the existing DmzNotifyBlock (not rebuilt). */}
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 10 }}>Notify on Deployment</div>
+            <DmzNotifyBlock />
+          </div>
         </div>
+
         {/* NAMING LINE. Uses the searcher's term ("DMZ 2", the highest-volume live
             query) in visible body copy and corrects it in the same sentence, so the
             page ranks for the phrase without asserting a name that is not official.
             Held as a constant so the copy has one source, like the FAQ strings. */}
-        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0', maxWidth: 600, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '14px 0 0', maxWidth: 600, lineHeight: 1.6 }}>
           {DMZ_NAMING_LINE}
         </p>
       </div>
-
-      {/* Launch-email capture (owned list). Landing gets the dedicated BLOCK; the
-          dismissible strip runs on ARTICLE pages only (see placement note). Placed
-          directly after the hero so the pre-launch visitor sees it above the fold. */}
-      <DmzNotifyBlock />
 
       {/* Coverage */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
