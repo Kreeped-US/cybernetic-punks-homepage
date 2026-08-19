@@ -319,6 +319,12 @@ export default async function DmzLanding() {
   var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
   var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
   var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };
+  // Stage 5: tactical panel wrapper for each FAQ Q&A (restyle only -- copy unchanged).
+  var faqPanel = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, padding: '16px 18px' };
+  // Section-label orange marker bar (Stage 5 tactical accent; sits before the h2, no text change).
+  var sectionMark = { width: 3, height: 13, background: 'var(--accent)', borderRadius: 1, flexShrink: 0 };
+  // Prose "briefing panel" wrapper (tactical, orange left-edge). Copy re-parented, unchanged.
+  var prosePanel = { display: 'grid', gap: 14, maxWidth: 680, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 8, padding: '20px 22px' };
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
@@ -570,10 +576,11 @@ export default async function DmzLanding() {
           the battle-royale category, no MW4 balance/TTK, no map-size or squad claims,
           no 2022-mode continuity. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
+        <span style={sectionMark} />
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>MW4 DMZ vs Warzone</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
-      <div style={{ display: 'grid', gap: 14, maxWidth: 680 }}>
+      <div style={prosePanel}>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
           DMZ is Modern Warfare 4&apos;s extraction mode - you deploy into the Hajin Exclusion Zone, take on objectives and threats, and try to extract with what you have earned; Warzone is Call of Duty&apos;s battle-royale mode. Different goal, different loop.
         </p>
@@ -587,10 +594,11 @@ export default async function DmzLanding() {
           paragraph), NEVER FAQPage schema. Copy is the source-backed FAQ_BACK_A: affirms
           the mode + Oct 23 2026 date first-party, hedges the 2022-continuity unknown. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
+        <span style={sectionMark} />
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{FAQ_BACK_Q}</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
-      <div style={{ display: 'grid', gap: 14, maxWidth: 680 }}>
+      <div style={prosePanel}>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>{FAQ_BACK_A}</p>
       </div>
 
@@ -623,23 +631,24 @@ export default async function DmzLanding() {
       {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far).
           Launch date is now sourced (see HANDOFF). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 18px' }}>
+        <span style={sectionMark} />
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Common questions</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
-      <div style={{ display: 'grid', gap: 20 }}>
-        <div>
+      <div style={{ display: 'grid', gap: 12 }}>
+        <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_LAUNCH_Q}</h3>
           <p style={faqAStyle}>{FAQ_LAUNCH_A}</p>
         </div>
-        <div>
+        <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
           <p style={faqAStyle}>{FAQ_MAP_A}</p>
         </div>
-        <div>
+        <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_MODE_Q}</h3>
           <p style={faqAStyle}>{FAQ_MODE_A}</p>
         </div>
-        <div>
+        <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_CONFIRMED_Q}</h3>
           <p style={faqAStyle}>
             {FAQ_CONFIRMED_PRE}
