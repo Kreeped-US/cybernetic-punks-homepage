@@ -76,9 +76,10 @@ export const EDITORS = {
     key:      'miranda',
     status:   'live',
     fullName: 'Miranda Malini',
-    // Miranda has NO tag: her name IS her tag (senior enough to need no handle).
-    // Consumers must handle tag === null (render the name alone, no "/ tag").
-    tag:      null,
+    // Litigator -- her side-name / tag, resolved 2026-08 (the roster was
+    // provisionally name-only pending her handle). ROLE is unchanged (Field
+    // Guide); only the tag/side-name is now set, so she formats like the others.
+    tag:      'Litigator',
     role:     'Field Guide',
     color:    '#9b5de5', // purple (existing)
     symbol:   '◎',  // ◎ (existing)
@@ -153,7 +154,8 @@ export function editorHasPortrait(key) {
 }
 
 // How to render the byline name from a display entry (helper, not yet wired):
-// Miranda -> "Miranda Malini"; everyone else -> "Marcus Vane / Cipher".
+// tagged entries -> "Marcus Vane / Cipher"; a tagless entry -> the name alone.
+// (Miranda now has a tag -- "Litigator" -- so she formats like the others.)
 export function editorByline(key) {
   var e = getEditorDisplay(key);
   if (!e) return null;

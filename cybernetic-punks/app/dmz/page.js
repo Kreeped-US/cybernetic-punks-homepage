@@ -532,7 +532,7 @@ export default async function DmzLanding() {
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Coverage is produced by an AI-assisted editorial desk and verified against primary sources. Nothing is invented; where the record is unconfirmed, we say so. The desk carries distinct roles - meta, analysis, builds, community, field guide - and signs its work.</p>
         {/* Editorial desk roster -- name-leads bylines per the LOCKED doctrine
             (docs/network/editorial-staff-model.md + lib/editors/roster.js): full name
-            first, accent-colored tag follows (Miranda's name IS her tag). The five
+            first, accent-colored tag follows (Miranda's tag is now Litigator). The five
             PRODUCING editors; VANTAGE excluded (network editor, not per-game). Broker is
             a redacted "incoming" slot -- a true roster fact (status: incoming), dramatized
             on-theme, no invented lore. Editor accent colors are their locked identity
@@ -547,7 +547,7 @@ export default async function DmzLanding() {
               { name: 'Remi Okafor', tag: 'Nexus', role: 'Meta & News', color: '#00d4ff' },
               { name: 'Felix Andersen', tag: 'Dexter', role: 'Builds', color: '#ff8800' },
               { name: 'Tariq Webb', tag: 'Ghost', role: 'Community', color: '#00ff88' },
-              { name: 'Miranda Malini', tag: null, role: 'Field Guide', color: '#9b5de5' },
+              { name: 'Miranda Malini', tag: 'Litigator', role: 'Field Guide', color: '#9b5de5' },
             ].map(function (e) {
               return (
                 <div key={e.name} style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>

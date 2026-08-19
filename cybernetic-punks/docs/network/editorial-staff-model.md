@@ -28,7 +28,7 @@ Six editors. Real full names + persistent codename/tags (approach C: human names
 2. **Remi Okafor** — tag **Nexus** — META / NEWS. Restless, already living in next week; aggressive early calls, owns the misses. Bored by settled consensus. Cost: wrong more often, but first. Authority from currency.
 3. **Felix Andersen** — tag **Dexter** — BUILDS. Compulsive optimizer; cannot call a loadout "done," always hunts the 2%. "Good enough" is an insult. Cost: over-engineers, misses forest for the min-maxed tree. Authority from craft.
 4. **Tariq Webb** — tag **Ghost** — COMMUNITY. In-the-trenches insider (not a detached cynic); trusts the lobby/lived player reality over authority, populist streak. Cost: can mistake the loud minority for the whole. Authority from below.
-5. **Miranda Malini** — known simply as **Miranda** (senior enough to need no handle; her name IS her tag — a character feature) — FIELD-GUIDE / GUIDES. The formidable oracle; devastating long memory, rarely issues a verdict but it lands hard. Cost: certainty can calcify into dogma — can be wrong with total confidence about genuine novelty. Authority from above.
+5. **Miranda Malini** — tag **Litigator** — FIELD-GUIDE / GUIDES. The formidable oracle; devastating long memory, rarely issues a verdict but it lands hard. Cost: certainty can calcify into dogma — can be wrong with total confidence about genuine novelty. Authority from above. (Tag resolved 2026-08: the roster was provisionally name-only pending her handle; ROLE is unchanged — Field Guide — only her side-name/tag is now set.)
 6. **Vera Sloan** — tag **Broker** — ECONOMY / MARKET (new 6th lane). Ruthlessly unsentimental EV accountant; the game is a ledger and a set of deals, doesn't care how fun/cool something is — only whether it pays. Calls beloved metas value-traps. Cost: misses that people play for joy, not just EV. Authority from the ledger.
 
 ### Friction map (why "where the editors disagree" writes itself)
@@ -81,7 +81,7 @@ Tone: present them like a REAL PUBLICATION's staff (restrained, credible) — NO
 
 ### Byline (on every article)
 Full name + tag + role + time. Format: "Remi Okafor / Nexus" (name leads, accent-colored tag), with "Meta & News · 8h ago" beneath; small avatar. Newspaper-style; the colored tag keeps the recognizable codename alive. High-frequency expression — its restraint sets the sitewide tone.
-- Miranda shows as just "Miranda Malini" (no "/ tag") — her name IS her tag. Should read as intentional, not missing.
+- Miranda now carries a tag like the others: **Miranda Malini / Litigator** (tag resolved 2026-08; her line was provisionally name-only). ROLE is unchanged — Field Guide.
 
 ### "Our editors" staff card (the dedicated staff page)
 Portrait + name + tag + role + a short bio WRITTEN IN CHARACTER. This is the RIGHT place to let personality show — where the imaging + character pay off. Restraint elsewhere buys this.
