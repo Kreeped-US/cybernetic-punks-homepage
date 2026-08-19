@@ -82,10 +82,10 @@ export default function DmzNotifyForm({ source, layout, onSuccess }) {
 
   var buttonStyle = {
     flex: strip ? '0 0 auto' : '0 0 auto',
-    background: 'var(--green)',
-    border: '1px solid var(--green)',
+    background: 'var(--accent)',
+    border: '1px solid var(--accent)',
     borderRadius: 6,
-    color: '#fff',
+    color: '#000',
     fontWeight: 700,
     fontSize: strip ? 12.5 : 13.5,
     letterSpacing: 0.5,
