@@ -125,7 +125,7 @@ export default function DmzNotifyForm({ source, layout, onSuccess }) {
           required
           value={email}
           onChange={function (e) { setEmail(e.target.value); }}
-          placeholder="you@example.com"
+          placeholder="operator@email.com"
           autoComplete="email"
           disabled={submitting}
           style={inputStyle}

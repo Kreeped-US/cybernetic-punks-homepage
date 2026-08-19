@@ -29,10 +29,10 @@ export default function DmzNotifyBlock() {
         id="dmz-notify-heading"
         style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, letterSpacing: 0.3, color: '#fff', margin: '0 0 8px' }}
       >
-        Get notified when DMZ coverage goes live
+        Notify on Deployment
       </h2>
       <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 560 }}>
-        One email when our DMZ meta, loadout tools, and region guides go live on October 23, 2026. Nothing else -- we will not share your address.
+        One briefing when DMZ coverage goes live on October 23, 2026. Nothing else, and we will not share your address.
       </p>
       <div style={{ maxWidth: 460 }}>
         <DmzNotifyForm source="landing" layout="block" />
