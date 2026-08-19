@@ -156,7 +156,7 @@ function CardBody({ children }) {
 }
 
 function CardTitle({ children }) {
-  return <span style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{children}</span>;
+  return <span className="dmz-card-title" style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{children}</span>;
 }
 function CardDesc({ children }) {
   return <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{children}</span>;
@@ -335,6 +335,8 @@ export default async function DmzLanding() {
       <style>{`
         .dmz-dossier { transition: border-color .14s ease, background .14s ease; }
         .dmz-dossier:hover { border-color: var(--accent); background: var(--bg-card-hover); }
+        .dmz-dossier .dmz-card-title { transition: color .14s ease; }
+        .dmz-dossier:hover .dmz-card-title { color: var(--accent) !important; }
       `}</style>
       {/* Breadcrumb: Network / DMZ -- mirrors the BreadcrumbList JSON-LD above and the
           section pages' visible breadcrumb style. DMZ is the current page (styled as
