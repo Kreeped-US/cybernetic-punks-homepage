@@ -41,26 +41,37 @@
    The /dmz route group wraps its subtree in .dmz-theme, which REDEFINES the
    same design tokens with DMZ values — so any token-driven component renders
    in DMZ colors under /dmz while Marathon (:root) is untouched.
-   ROUGH tokens, approximating the locked DMZ direction (forest green / cold grey-blue
-   / irradiated red-orange). NOT final — tuned at the launch-polish pass.
-   Keep in sync with the `theme` block in lib/games/dmz.js. */
+   FINALIZED palette (DMZ redesign Stage 1, 2026-08): near-black tactical base +
+   a Modern Warfare orange PRIMARY accent (--accent). A functional green (--green)
+   is retained for live/confirmed go-signals ONLY. Token NAMES are preserved so
+   every existing var() consumer keeps resolving; orange is wired into page markup
+   in a later stage (page.js still reads var(--green) for its accent for now, so the
+   page renders green until then). Keep in sync with the `theme` block in
+   lib/games/dmz.js. */
 .dmz-theme {
-  --bg-page:       #0b0e11; /* cold grey-blue base */
-  --bg-card:       #11151a;
-  --bg-card-hover: #161b22;
-  --bg-input:      #11151a;
-  --bg-nav:        #0c1014;
+  --bg-page:       #07090c; /* near-black tactical void */
+  --bg-card:       #10151b;
+  --bg-card-hover: #141b22;
+  --bg-input:      #10151b;
+  --bg-nav:        #0c1015;
 
-  --border:        #2b3640;
-  --border-subtle: #1c242b;
+  --border:        #242f3a;
+  --border-subtle: #1b232c;
 
-  --green:         #3f7d44; /* forest green primary (rough) */
-  --red:           #e0563a; /* irradiated red-orange hazard (rough) */
+  /* PRIMARY accent -- Modern Warfare orange (the redesign's single accent). */
+  --accent:      #ff6a1f;
+  --accent-dim:  #c14e18;
+  --accent-glow: rgba(255,106,31,0.14);
 
-  --text-primary:   rgba(255,255,255,0.88);
-  --text-secondary: rgba(255,255,255,0.45);
-  --text-tertiary:  rgba(255,255,255,0.25);
-  --text-disabled:  rgba(255,255,255,0.12);
+  /* Functional green -- live / confirmed go-signals ONLY (secondary). Kept under
+     the --green name so existing var(--green) consumers still resolve. */
+  --green:         #4a9d5b;
+  --red:           #e0563a; /* hazard red-orange (unchanged this stage) */
+
+  --text-primary:   rgba(255,255,255,0.94);
+  --text-secondary: rgba(255,255,255,0.52);
+  --text-tertiary:  rgba(255,255,255,0.30);
+  --text-disabled:  rgba(255,255,255,0.14);
 }
 
 /* ── BASE ───────────────────────────────────────────────────── */

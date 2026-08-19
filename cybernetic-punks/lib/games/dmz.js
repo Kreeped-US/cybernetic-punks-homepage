@@ -125,11 +125,18 @@ export const dmz = {
   // globals.css; these values are recorded here for reference / future
   // programmatic theming and MUST be kept in sync with that block.
   theme: {
-    primary: DMZ_FOREST, // forest green
-    bgPage:  '#0b0e11', // cold grey-blue base
-    bgCard:  '#11151a',
-    border:  '#2b3640',
-    hazard:  '#e0563a', // irradiated red-orange
+    // Stage 1 (2026-08): the .dmz-theme CSS PRIMARY accent moved to Modern Warfare
+    // orange (`accent` below). `primary` still feeds the NETWORK ROOT's DMZ tile /
+    // pulse accent (via game.theme.primary) and mirrors brandColors DMZ_FOREST
+    // (-> OG images / Footer link / profile-preview), so it is left GREEN this stage
+    // to avoid recoloring those non-/dmz surfaces. The cross-surface brand flip to
+    // orange is a separate later decision (would touch lib/brandColors.js).
+    primary: DMZ_FOREST,   // brand/functional green (network-root DMZ accent)
+    accent:  '#ff6a1f',    // Modern Warfare orange -- the /dmz redesign primary accent
+    bgPage:  '#07090c',    // near-black tactical void
+    bgCard:  '#10151b',
+    border:  '#242f3a',
+    hazard:  '#e0563a',    // hazard red-orange
   },
 
   // THIN section descriptors (D1): { slug, label, source, contentFilter }.
