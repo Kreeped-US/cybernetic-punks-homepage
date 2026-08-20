@@ -79,7 +79,7 @@ export const ROOT_GAMES = [
       feed: { gameSlug: 'marathon' }, // feed_items scope for this game's column
       // Article URL builder for a pulse row (config-level, so the column stays
       // game-agnostic). Marathon articles live at unprefixed /intel/<slug>.
-      articleHref: function (slug) { return '/intel/' + slug; },
+      articleHref: function (slug) { return '/marathon/intel/' + slug; },
     },
   },
   {

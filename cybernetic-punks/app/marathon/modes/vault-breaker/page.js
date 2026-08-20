@@ -548,7 +548,7 @@ export default function VaultBreakerPage() {
             This comes from playing the base-game encounter, not from Bungie. Bungie has published no
             description of the Compiler fight, and no article on this site that mentions the Compiler
             cites bungie.net. Our own{' '}
-            <Link href="/intel/marathon-cryo-archive-guide-first-steps-into-the-endgame-2urw" style={{ color: CYAN, textDecoration: 'underline' }}>
+            <Link href="/marathon/intel/marathon-cryo-archive-guide-first-steps-into-the-endgame-2urw" style={{ color: CYAN, textDecoration: 'underline' }}>
               Cryo Archive endgame guide
             </Link>
             {' '}describes the same encounter, but that is our coverage rather than a source, so it is
@@ -649,7 +649,7 @@ export default function VaultBreakerPage() {
             <Link href="/marathon/shells" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
               Shells
             </Link>
-            <Link href="/intel" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+            <Link href="/marathon/intel" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
               Latest Intel
             </Link>
           </div>

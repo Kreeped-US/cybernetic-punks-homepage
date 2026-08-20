@@ -95,7 +95,7 @@ function ageDays(sinceMs, nowMs) { return sinceMs == null ? null : (nowMs - sinc
 
 function feedUrl(row) {
   if (!row.slug) return null;
-  if (row.game_slug === 'marathon') return BASE + '/intel/' + row.slug;
+  if (row.game_slug === 'marathon') return BASE + '/marathon/intel/' + row.slug;
   if (row.game_slug === 'dmz') { const s = dmzSectionForArticle(row); return s ? BASE + '/dmz/' + s + '/' + row.slug : null; }
   return null;
 }

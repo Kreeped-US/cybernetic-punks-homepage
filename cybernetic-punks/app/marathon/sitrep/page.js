@@ -423,7 +423,7 @@ export default async function SitrepPage() {
               var symbol = EDITOR_SYMBOLS[article.editor] || '·';
               var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               return (
-                <Link key={article.id} href={'/intel/' + article.slug} className="s-card" style={{ display: 'block', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
+                <Link key={article.id} href={'/marathon/intel/' + article.slug} className="s-card" style={{ display: 'block', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
                   {article.thumbnail && (
                     <div style={{ height: 100, overflow: 'hidden', position: 'relative' }}>
                       <img src={article.thumbnail} alt={article.headline} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -621,7 +621,7 @@ export default async function SitrepPage() {
 
                 {article ? (
                   <>
-                    <Link href={'/intel/' + article.slug} style={{ textDecoration: 'none' }}>
+                    <Link href={'/marathon/intel/' + article.slug} style={{ textDecoration: 'none' }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', margin: '0 0 6px', lineHeight: 1.4 }}>
                         {article.headline}
                       </p>
@@ -631,7 +631,7 @@ export default async function SitrepPage() {
                         {parseBrief(article.body)}...
                       </p>
                     )}
-                    <Link href={'/intel/' + article.slug} style={{ fontFamily: 'monospace', fontSize: 9, color: color, textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>
+                    <Link href={'/marathon/intel/' + article.slug} style={{ fontFamily: 'monospace', fontSize: 9, color: color, textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>
                       READ →
                     </Link>
                   </>
@@ -667,7 +667,7 @@ export default async function SitrepPage() {
                 {parseBrief(latestPerEditor['GHOST'].body)}...
               </p>
             )}
-            <Link href={'/intel/' + latestPerEditor['GHOST'].slug} style={{ fontFamily: 'monospace', fontSize: 10, color: '#00ff88', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
+            <Link href={'/marathon/intel/' + latestPerEditor['GHOST'].slug} style={{ fontFamily: 'monospace', fontSize: 10, color: '#00ff88', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
               FULL PULSE REPORT →
             </Link>
           </div>
@@ -692,7 +692,7 @@ export default async function SitrepPage() {
               { label: '⬢ BUILD ADVISOR',   href: '/marathon/advisor',  color: '#ff8800', desc: 'Get your ranked loadout' },
               { label: 'RANKED GUIDE',       href: '/marathon/ranked',   color: '#ffd700', desc: 'Season 2 intel' },
               { label: 'FACTION INTEL',      href: '/marathon/factions', color: '#ffd700', desc: 'All 6 factions' },
-              { label: 'ALL INTEL',          href: '/intel',    color: '#9b5de5', desc: 'Every article archived' },
+              { label: 'ALL INTEL',          href: '/marathon/intel',    color: '#9b5de5', desc: 'Every article archived' },
             ].map(function(link) {
               return (
                 <Link key={link.href} href={link.href} className="s-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + link.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>

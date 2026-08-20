@@ -136,7 +136,7 @@ export default async function HomeEditorReactions() {
       {/* FEATURED PANEL - one article, all reactions stacked */}
       {featured && (
         <Link
-          href={'/intel/' + featured.article.slug + '#editor-reactions'}
+          href={'/marathon/intel/' + featured.article.slug + '#editor-reactions'}
           className="her-featured-wrap"
           style={{
             display: 'block',
@@ -230,7 +230,7 @@ export default async function HomeEditorReactions() {
               return (
                 <Link
                   key={comment.id}
-                  href={'/intel/' + comment.article.slug + '#editor-reactions'}
+                  href={'/marathon/intel/' + comment.article.slug + '#editor-reactions'}
                   className="her-card"
                   style={{
                     display: 'block',

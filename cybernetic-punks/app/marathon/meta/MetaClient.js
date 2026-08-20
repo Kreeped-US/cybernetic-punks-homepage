@@ -992,13 +992,13 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>Intelligence Briefing</span>
                 <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-                <Link href="/intel/nexus" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', letterSpacing: 1, fontWeight: 700, letterSpacing: 2, fontFamily: 'monospace' }}>VIEW FULL SITREP →</Link>
+                <Link href="/marathon/intel/nexus" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', letterSpacing: 1, fontWeight: 700, letterSpacing: 2, fontFamily: 'monospace' }}>VIEW FULL SITREP →</Link>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {recentPosts.map((post, i) => {
                   const editorColor = post.editor === 'CIPHER' ? '#ff2222' : '#00d4ff';
                   return (
-                    <Link key={i} href={'/intel/' + post.slug} style={{
+                    <Link key={i} href={'/marathon/intel/' + post.slug} style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '12px 16px',
                       background: '#1a1d24', border: '1px solid #22252e',

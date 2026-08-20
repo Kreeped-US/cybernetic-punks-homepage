@@ -675,7 +675,7 @@ export default function RankedClient({ data }) {
               var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               var thumb = article.thumbnail;
               return (
-                <Link key={article.id} href={'/intel/' + article.slug} className="r-card" style={{
+                <Link key={article.id} href={'/marathon/intel/' + article.slug} className="r-card" style={{
                   background: '#1a1d24',
                   border: '1px solid #22252e',
                   borderLeft: '2px solid ' + color,
@@ -714,7 +714,7 @@ export default function RankedClient({ data }) {
 
           {data.rankedArticles.length > 8 && (
             <div style={{ marginTop: 10, textAlign: 'center' }}>
-              <Link href="/intel?tag=ranked" style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, fontWeight: 700, textDecoration: 'none' }}>
+              <Link href="/marathon/intel?tag=ranked" style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, fontWeight: 700, textDecoration: 'none' }}>
                 VIEW ALL {data.rankedArticles.length} RANKED ARTICLES →
               </Link>
             </div>
@@ -801,8 +801,8 @@ export default function RankedClient({ data }) {
             {[
               { href: '/marathon/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated daily by our meta AI' },
               { href: '/marathon/advisor',     color: '#ff8800', label: '⬢ BUILD ADVISOR',          desc: 'Ranked-viable loadouts' },
-              { href: '/intel/nexus', color: '#00d4ff', label: '⬡ META ANALYSIS',    desc: 'Deep ranked breakdowns' },
-              { href: '/intel/cipher', color: '#ff2222', label: '◈ PLAY ANALYSIS',   desc: 'Grade the best ranked plays' },
+              { href: '/marathon/intel/nexus', color: '#00d4ff', label: '⬡ META ANALYSIS',    desc: 'Deep ranked breakdowns' },
+              { href: '/marathon/intel/cipher', color: '#ff2222', label: '◈ PLAY ANALYSIS',   desc: 'Grade the best ranked plays' },
             ].map(function(l) {
               return (
                 <Link key={l.href} href={l.href} className="r-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + l.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>

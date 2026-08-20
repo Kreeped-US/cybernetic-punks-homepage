@@ -684,7 +684,7 @@ export default function StatsPage() {
           }}>
             META TIER LIST →
           </Link>
-          <Link href="/intel/dexter" style={{
+          <Link href="/marathon/intel/dexter" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,

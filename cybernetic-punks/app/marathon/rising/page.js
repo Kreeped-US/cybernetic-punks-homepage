@@ -527,7 +527,7 @@ export default async function RisingPage() {
                     </div>
 
                     {/* creator name (links to article) */}
-                    <Link href={'/intel/' + item.slug} style={{
+                    <Link href={'/marathon/intel/' + item.slug} style={{
                       textDecoration: 'none',
                       display: 'block',
                     }}>
@@ -592,7 +592,7 @@ export default async function RisingPage() {
                             </a>
                           );
                         })}
-                        <Link href={'/intel/' + item.slug} style={{
+                        <Link href={'/marathon/intel/' + item.slug} style={{
                           fontSize: 9,
                           color: 'rgba(255,255,255,0.4)',
                           marginLeft: 'auto',
@@ -709,7 +709,7 @@ export default async function RisingPage() {
       {/* ─── CROSS-LINKS ─────────────────────────────── */}
       <section style={{ maxWidth: 800, margin: '0 auto 32px', padding: '0 24px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <Link href="/intel/ghost" style={{
+          <Link href="/marathon/intel/ghost" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -735,7 +735,7 @@ export default async function RisingPage() {
           }}>
             EDITORS →
           </Link>
-          <Link href="/intel" style={{
+          <Link href="/marathon/intel" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -844,7 +844,7 @@ export default async function RisingPage() {
               return {
                 '@type': 'ListItem',
                 position: i + 1,
-                url: 'https://cyberneticpunks.com/intel/' + item.slug,
+                url: 'https://cyberneticpunks.com/marathon/intel/' + item.slug,
                 name: item.headline,
               };
             }),

@@ -480,14 +480,14 @@ export default async function ShellGuidePage({ params }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>⬢ BUILD AI</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
-            <Link href="/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL BUILDS →</Link>
+            <Link href="/marathon/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL BUILDS →</Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 6 }}>
             {dexterBuilds.map(function(build) {
               var grade = build.ce_score >= 9 ? 'S' : build.ce_score >= 7 ? 'A' : build.ce_score >= 5 ? 'B' : 'C';
               var gradeColor = TIER_COLORS[grade] || ORANGE;
               return (
-                <Link key={build.id} href={'/intel/' + build.slug} className="sg-card" style={{ display: 'flex', gap: 12, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + ORANGE, borderRadius: '0 2px 2px 0', padding: 12, textDecoration: 'none' }}>
+                <Link key={build.id} href={'/marathon/intel/' + build.slug} className="sg-card" style={{ display: 'flex', gap: 12, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + ORANGE, borderRadius: '0 2px 2px 0', padding: 12, textDecoration: 'none' }}>
                   <div style={{ textAlign: 'center', flexShrink: 0 }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{grade}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: 6, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>CE</div>
@@ -509,13 +509,13 @@ export default async function ShellGuidePage({ params }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: PURPLE }}>◎ FIELD-GUIDE AI</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
-            <Link href="/intel/miranda" style={{ fontFamily: 'monospace', fontSize: 9, color: PURPLE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL GUIDES →</Link>
+            <Link href="/marathon/intel/miranda" style={{ fontFamily: 'monospace', fontSize: 9, color: PURPLE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL GUIDES →</Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 6 }}>
             {mirandaArticles.slice(0, 6).map(function(article) {
               var bodyPreview = (article.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, 110);
               return (
-                <Link key={article.id} href={'/intel/' + article.slug} className="sg-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
+                <Link key={article.id} href={'/marathon/intel/' + article.slug} className="sg-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
                   {article.thumbnail && (
                     <div style={{ height: 100, overflow: 'hidden', position: 'relative' }}>
                       <img src={article.thumbnail} alt={article.headline} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

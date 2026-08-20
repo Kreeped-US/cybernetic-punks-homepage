@@ -342,7 +342,7 @@ export default function ShellDetailClient({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <span style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬡ Meta AI's Take</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <Link href="/intel/nexus" style={{ fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL META INTEL →</Link>
+              <Link href="/marathon/intel/nexus" style={{ fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL META INTEL →</Link>
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 600 }}>
               Latest meta intel for {shellName}, updated as the meta shifts.
@@ -352,7 +352,7 @@ export default function ShellDetailClient({
               {nexusArticles.map(function(article) {
                 var bodyPreview = (article.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, 160);
                 return (
-                  <Link key={article.id} href={'/intel/' + article.slug} className="nx-take-card" style={{
+                  <Link key={article.id} href={'/marathon/intel/' + article.slug} className="nx-take-card" style={{
                     display: 'block',
                     background: '#1a1d24', border: '1px solid #22252e',
                     borderLeft: '3px solid #00d4ff',
@@ -674,7 +674,7 @@ export default function ShellDetailClient({
                 var gradeColors = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#666' };
                 var gradeColor = gradeColors[grade];
                 return (
-                  <Link key={build.id} href={'/intel/' + build.slug} className="dx-pick-card" style={{
+                  <Link key={build.id} href={'/marathon/intel/' + build.slug} className="dx-pick-card" style={{
                     display: 'flex', gap: 12,
                     background: '#1a1d24', border: '1px solid #22252e',
                     borderLeft: '3px solid #ff8800',
@@ -713,7 +713,7 @@ export default function ShellDetailClient({
               {articles.map(function(article) {
                 var ec = EDITOR_COLORS[article.editor] || '#888';
                 return (
-                  <Link key={article.id} href={'/intel/' + article.slug} className="article-row" style={{
+                  <Link key={article.id} href={'/marathon/intel/' + article.slug} className="article-row" style={{
                     display: 'flex', gap: 10, background: '#1a1d24', border: '1px solid #22252e',
                     borderLeft: '3px solid ' + ec + '66', borderRadius: '0 3px 3px 0',
                     padding: '12px', textDecoration: 'none', overflow: 'hidden',

@@ -209,9 +209,9 @@ export async function generateMetadata({ params }) {
     return {
       title: editorConfig.metaTitle,
       description: editorConfig.metaDesc,
-      openGraph: { title: editorConfig.metaTitle + ' — CyberneticPunks', description: editorConfig.metaDesc, url: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase(), siteName: 'CyberneticPunks', type: 'website' },
+      openGraph: { title: editorConfig.metaTitle + ' — CyberneticPunks', description: editorConfig.metaDesc, url: 'https://cyberneticpunks.com/marathon/intel/' + slug.toLowerCase(), siteName: 'CyberneticPunks', type: 'website' },
       twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: editorConfig.metaTitle, description: editorConfig.metaDesc },
-      alternates: { canonical: 'https://cyberneticpunks.com/intel/' + slug.toLowerCase() },
+      alternates: { canonical: 'https://cyberneticpunks.com/marathon/intel/' + slug.toLowerCase() },
     };
   }
   var { data: item } = await supabase.from('feed_items').select('*').eq('slug', slug).eq('game_slug', 'marathon').eq('is_published', true).maybeSingle();
@@ -225,9 +225,9 @@ export async function generateMetadata({ params }) {
     // the homepage and non-keyword hubs keep the suffix.
     title: { absolute: item.headline },
     description: desc,
-    openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at },
+    openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/marathon/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: item.headline, description: desc },
-    alternates: { canonical: 'https://cyberneticpunks.com/intel/' + item.slug },
+    alternates: { canonical: 'https://cyberneticpunks.com/marathon/intel/' + item.slug },
     // SEO prune: de-index flagged articles. follow:true so outbound link equity
     // still flows. Row stays intact (historical-context reads it regardless).
     robots: item.noindex ? { index: false, follow: true } : undefined,
@@ -624,7 +624,7 @@ function EditorLanePage({ config, items }) {
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '40px 24px 36px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-            <Link href="/intel" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>INTEL</Link>
+            <Link href="/marathon/intel" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>INTEL</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
             <span style={{ color: config.color }}>{edTag(config.name)}</span>
           </div>
@@ -690,7 +690,7 @@ function EditorLanePage({ config, items }) {
                   <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
                 </div>
 
-                <Link href={'/intel/' + featured.slug} className="lane-row" style={{ textDecoration: 'none', display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + config.color, borderRadius: '0 0 3px 3px', overflow: 'hidden', marginBottom: 8, transition: 'background 0.1s' }}>
+                <Link href={'/marathon/intel/' + featured.slug} className="lane-row" style={{ textDecoration: 'none', display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + config.color, borderRadius: '0 0 3px 3px', overflow: 'hidden', marginBottom: 8, transition: 'background 0.1s' }}>
                   <div className="latest-intel-card" style={{ display: 'grid', gridTemplateColumns: featured.thumbnail ? '1fr 280px' : '1fr', minHeight: 150 }}>
                     <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
@@ -731,7 +731,7 @@ function EditorLanePage({ config, items }) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 6, marginBottom: 8 }}>
                   {rest.map(function(item, i) {
                     return (
-                      <Link key={i} href={'/intel/' + item.slug} className="lane-row" style={{ textDecoration: 'none', display: 'flex', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + config.color + '55', borderRadius: '0 3px 3px 0', overflow: 'hidden', transition: 'background 0.1s' }}>
+                      <Link key={i} href={'/marathon/intel/' + item.slug} className="lane-row" style={{ textDecoration: 'none', display: 'flex', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + config.color + '55', borderRadius: '0 3px 3px 0', overflow: 'hidden', transition: 'background 0.1s' }}>
                         {item.thumbnail && (
                           <div style={{ width: 80, flexShrink: 0, backgroundImage: 'url(' + item.thumbnail + ')', backgroundSize: 'cover', backgroundPosition: 'center' }} />
                         )}
@@ -780,7 +780,7 @@ function EditorLanePage({ config, items }) {
           {OTHER_EDITORS.map(function(slug) {
             var e = OTHER_EDITOR_CONFIG[slug];
             return (
-              <Link key={slug} href={'/intel/' + slug} className="lane-row" style={{
+              <Link key={slug} href={'/marathon/intel/' + slug} className="lane-row" style={{
                 display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none',
                 background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + e.color + '70',
                 borderRadius: '0 0 3px 3px', padding: '10px 14px',
@@ -986,7 +986,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
     else if (surl.includes('x.com') || surl.includes('twitter.com')) sourceLinkLabel = 'X';
     else if (surl.includes('reddit.com')) sourceLinkLabel = 'REDDIT';
   }
-  var articleUrl = 'https://cyberneticpunks.com/intel/' + item.slug;
+  var articleUrl = 'https://cyberneticpunks.com/marathon/intel/' + item.slug;
   var rt = readTime(item.body);
 
   var bodyLower = (item.body || '').toLowerCase();
@@ -1033,7 +1033,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
-    author: { '@type': 'Organization', name: item.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/intel/' + item.editor.toLowerCase() },
+    author: { '@type': 'Organization', name: item.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/marathon/intel/' + item.editor.toLowerCase() },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.updated_at || item.created_at),
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
@@ -1058,7 +1058,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Intel', item: 'https://cyberneticpunks.com/intel' },
+      { '@type': 'ListItem', position: 2, name: 'Intel', item: 'https://cyberneticpunks.com/marathon/intel' },
       { '@type': 'ListItem', position: 3, name: item.headline, item: articleUrl },
     ],
   };
@@ -1102,7 +1102,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '36px 24px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
-            <Link href={'/intel/' + item.editor.toLowerCase()} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '4px 10px', textDecoration: 'none' }}>
+            <Link href={'/marathon/intel/' + item.editor.toLowerCase()} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '4px 10px', textDecoration: 'none' }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '50', background: '#0e1014' }}>
                 <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={edTag(item.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
               </div>
@@ -1196,7 +1196,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
             </div>
 
             <div style={{ marginTop: 18 }}>
-              <Link href={'/intel/' + item.editor.toLowerCase()} style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700, fontFamily: 'monospace' }}>← MORE FROM {edTag(item.editor)}</Link>
+              <Link href={'/marathon/intel/' + item.editor.toLowerCase()} style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700, fontFamily: 'monospace' }}>← MORE FROM {edTag(item.editor)}</Link>
             </div>
 
             {/* Game-agnostic, contextual build-tool CTA (replaces the old hardcoded
@@ -1245,7 +1245,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
               {related.map(function(rel, i) {
                 var relEditor = EDITOR_STYLES[rel.editor] || EDITOR_STYLES.CIPHER;
                 return (
-                  <Link key={i} href={'/intel/' + rel.slug} className="article-related" style={{
+                  <Link key={i} href={'/marathon/intel/' + rel.slug} className="article-related" style={{
                     textDecoration: 'none', display: 'block',
                     background: '#1a1d24', border: '1px solid #22252e',
                     borderTop: '2px solid ' + relEditor.color + '70',
@@ -1323,7 +1323,7 @@ export default async function IntelPage({ params }) {
   // /intel/<slug> for a marathon-subject discourse piece. Skips the comments /
   // avatar / related fetches below (they assume Marathon editorial).
   if (isDiscourseArticle(itemResult.data)) {
-    return <DiscourseArticle item={itemResult.data} ogImageUrl={'https://cyberneticpunks.com/intel/' + itemResult.data.slug + '/opengraph-image'} />;
+    return <DiscourseArticle item={itemResult.data} ogImageUrl={'https://cyberneticpunks.com/marathon/intel/' + itemResult.data.slug + '/opengraph-image'} />;
   }
 
   var comments = [];

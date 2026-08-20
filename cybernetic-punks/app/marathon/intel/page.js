@@ -70,8 +70,8 @@ export async function generateMetadata({ searchParams }) {
   var page = Math.max(1, parseInt(sp.page || '1', 10) || 1);
   var suffix = page > 1 ? ' (Page ' + page + ')' : '';
   var canonical = page > 1
-    ? 'https://cyberneticpunks.com/intel?page=' + page
-    : 'https://cyberneticpunks.com/intel';
+    ? 'https://cyberneticpunks.com/marathon/intel?page=' + page
+    : 'https://cyberneticpunks.com/marathon/intel';
   return {
     title: 'Marathon News & Updates — Builds, Meta & Patches' + suffix,
     description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction — refreshed throughout the day.',
@@ -114,7 +114,7 @@ function pageWindow(cur, total) {
 }
 
 // Page-1 href stays /intel (clean canonical); deeper pages add ?page=N.
-function pageHref(p) { return p <= 1 ? '/intel' : '/intel?page=' + p; }
+function pageHref(p) { return p <= 1 ? '/marathon/intel' : '/marathon/intel?page=' + p; }
 
 var EDITOR_INFO = {
   CIPHER:  { symbol: '◈', color: '#ff2222', role: 'Play Analyst' },
@@ -215,7 +215,7 @@ export default async function IntelHubPage({ searchParams }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',       item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Intel Feed', item: 'https://cyberneticpunks.com/intel' },
+      { '@type': 'ListItem', position: 2, name: 'Intel Feed', item: 'https://cyberneticpunks.com/marathon/intel' },
     ],
   };
 
@@ -224,7 +224,7 @@ export default async function IntelHubPage({ searchParams }) {
     '@type': 'CollectionPage',
     name: 'Marathon News & Latest Updates',
     description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. Updated throughout the day.',
-    url: 'https://cyberneticpunks.com/intel',
+    url: 'https://cyberneticpunks.com/marathon/intel',
     dateModified: toISOWithPTOffset(lastArticleDate),
     publisher: {
       '@type': 'Organization',
@@ -248,7 +248,7 @@ export default async function IntelHubPage({ searchParams }) {
         item: {
           '@type': 'Article',
           name:           item.headline,
-          url:            'https://cyberneticpunks.com/intel/' + item.slug,
+          url:            'https://cyberneticpunks.com/marathon/intel/' + item.slug,
           datePublished:  toISOWithPTOffset(item.created_at),
           author: {
             '@type': 'Person',
@@ -346,7 +346,7 @@ export default async function IntelHubPage({ searchParams }) {
             var info = EDITOR_INFO[editorName];
             var count = editorCounts[editorName] || 0;
             return (
-              <Link key={editorName} href={'/intel/' + editorName.toLowerCase()}
+              <Link key={editorName} href={'/marathon/intel/' + editorName.toLowerCase()}
                 className="intel-editor-pill"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
@@ -387,7 +387,7 @@ export default async function IntelHubPage({ searchParams }) {
             {items.map(function(item) {
               var editor = EDITOR_INFO[item.editor] || EDITOR_INFO.CIPHER;
               return (
-                <Link key={item.id} href={'/intel/' + item.slug} className="intel-row" style={{
+                <Link key={item.id} href={'/marathon/intel/' + item.slug} className="intel-row" style={{
                   display: 'flex', gap: 14,
                   background: '#1a1d24',
                   border: '1px solid #22252e',

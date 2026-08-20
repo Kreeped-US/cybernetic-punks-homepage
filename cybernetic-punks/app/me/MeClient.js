@@ -552,7 +552,7 @@ export default function MeClient({ player }) {
         {/* ── LATEST INTEL ─────────────────────────────────── */}
         <div style={{ background: '#121418', border: '1px solid #22252e', borderRadius: 3, padding: '14px 20px', marginBottom: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase' }}>Latest Intel</span>
-          <Link href="/intel" style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>VIEW ALL →</Link>
+          <Link href="/marathon/intel" style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>VIEW ALL →</Link>
         </div>
 
         {/* ── PERSONAL COACH — PREMIUM LOCKED ─────────────── */}

@@ -48,3 +48,4 @@ scripts/out/
 
 # DMZ import-prep SQL artifacts -- raw research evidence, keep on disk, never commit (Fable ruling)
 docs/research/dmz-demand-2026-07/*.sql
+backups/

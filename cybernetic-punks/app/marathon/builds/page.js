@@ -532,7 +532,7 @@ export default async function BuildsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: ORANGE }}>TOP RATED BUILDS</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
-            <Link href="/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL BUILDS →</Link>
+            <Link href="/marathon/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL BUILDS →</Link>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
@@ -544,7 +544,7 @@ export default async function BuildsPage() {
               var gradeColor = TIER_COLORS[grade] || ORANGE;
 
               return (
-                <Link key={article.id} href={'/intel/' + article.slug} className="b-card" style={{ display: 'flex', gap: 12, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + shellColor, borderRadius: '0 2px 2px 0', padding: 14, textDecoration: 'none' }}>
+                <Link key={article.id} href={'/marathon/intel/' + article.slug} className="b-card" style={{ display: 'flex', gap: 12, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + shellColor, borderRadius: '0 2px 2px 0', padding: 14, textDecoration: 'none' }}>
                   <div style={{ textAlign: 'center', flexShrink: 0 }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 26, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{grade}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 3, fontWeight: 700 }}>GRADE</div>
@@ -979,7 +979,7 @@ export default async function BuildsPage() {
                 var grade = article.ce_score >= 9 ? 'S' : article.ce_score >= 7 ? 'A' : article.ce_score >= 5 ? 'B' : 'C';
                 var gradeColor = TIER_COLORS[grade] || ORANGE;
                 return (
-                  <Link key={article.id} href={'/intel/' + article.slug} className="b-card" style={{ display: 'flex', gap: 12, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', padding: 12, textDecoration: 'none' }}>
+                  <Link key={article.id} href={'/marathon/intel/' + article.slug} className="b-card" style={{ display: 'flex', gap: 12, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', padding: 12, textDecoration: 'none' }}>
                     <div style={{ textAlign: 'center', flexShrink: 0 }}>
                       <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{grade}</div>
                       <div style={{ fontFamily: 'monospace', fontSize: 6, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>CE</div>

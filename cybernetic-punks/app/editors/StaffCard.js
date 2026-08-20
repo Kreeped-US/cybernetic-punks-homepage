@@ -108,7 +108,7 @@ export default function StaffCard({ editor }) {
   // a non-live editor.
   if (editor.status === 'live') {
     return (
-      <Link href={'/intel/' + editor.key} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+      <Link href={'/marathon/intel/' + editor.key} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
         <CardBody editor={editor} />
       </Link>
     );

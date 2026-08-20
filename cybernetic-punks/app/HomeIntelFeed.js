@@ -118,7 +118,7 @@ export default function HomeIntelFeed(props) {
               return (
                 <Link
                   key={article.id}
-                  href={'/intel/' + article.slug}
+                  href={'/marathon/intel/' + article.slug}
                   className="intel-feed-card"
                   style={{
                     display: 'flex', flexDirection: 'column',
@@ -183,7 +183,7 @@ export default function HomeIntelFeed(props) {
 
         {/* Bottom bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 20, flexWrap: 'wrap' }}>
-          <Link href="/intel" style={{
+          <Link href="/marathon/intel" style={{
             padding: '10px 20px',
             background: '#00ff41',
             color: '#000',

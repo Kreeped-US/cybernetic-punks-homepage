@@ -60,12 +60,12 @@ const nextConfig = {
       // double hyphen (...strategy-for--aa39) exactly as stored in feed_items.
       {
         source: '/intel/new-players-first-faction-choice-which-marathon-faction-to-level-first-halv',
-        destination: '/intel/marathon-faction-system-complete-guide-smart-progression-strategy-for--aa39',
+        destination: '/marathon/intel/marathon-faction-system-complete-guide-smart-progression-strategy-for--aa39',
         permanent: true,
       },
       {
         source: '/intel/complete-beginners-faction-guide-which-faction-to-level-first-5kpk',
-        destination: '/intel/marathon-faction-system-complete-guide-smart-progression-strategy-for--aa39',
+        destination: '/marathon/intel/marathon-faction-system-complete-guide-smart-progression-strategy-for--aa39',
         permanent: true,
       },
       // BR33 Victory Lap cannibalization consolidation (2026-08-03): the detector
@@ -103,7 +103,7 @@ const nextConfig = {
       // transfers its authority to the survivor. Fixed-path, /intel -> /intel.
       {
         source: '/intel/marathon-rook-build-the-solo-survivalist-guide-for-season-2-dlcf',
-        destination: '/intel/marathon-rook-build-the-underrated-solo-survivor-loadout-z5m0',
+        destination: '/marathon/intel/marathon-rook-build-the-underrated-solo-survivor-loadout-z5m0',
         permanent: true,
       },
       // V85 / 1.1.5.4 patch-article consolidation (2026-08-20): two near-duplicate
@@ -113,7 +113,7 @@ const nextConfig = {
       // /intel, slugs differ. Retired row unpublished + noindexed in feed_items.
       {
         source: '/intel/marathon-update-1154-ordnance-heist-and-the-v85-ceiling-cut-l574',
-        destination: '/intel/marathon-update-1154-ordnance-heist-and-the-v85-nerf-5gcc',
+        destination: '/marathon/intel/marathon-update-1154-ordnance-heist-and-the-v85-nerf-5gcc',
         permanent: true,
       },
       // Root-route migration STAGE 1 (2026-08-20): game-scope Marathon routes under
@@ -178,6 +178,12 @@ const nextConfig = {
       // network identity + /tools/build (deferred) + /intel (separate project).
       { source: '/uniques/:path*', destination: '/marathon/uniques/:path*', permanent: true },
       { source: '/leaderboard/:path*', destination: '/marathon/leaderboard/:path*', permanent: true },
+      // /intel migration (2026-08-20): the last Marathon namespace -> /marathon/intel
+      // (Ruling 2). Flat namespace, so ONE wildcard covers the hub + every /intel/[slug]
+      // article + the 5 editor lanes (cipher/nexus/dexter/ghost/miranda). Placed LAST so the
+      // specific /intel/<old-slug> consolidation rules above (faction/BR33/Rook/V85) still
+      // match first; their destinations were repointed to /marathon/* to stay one-hop.
+      { source: '/intel/:path*', destination: '/marathon/intel/:path*', permanent: true },
     ];
   },
 };

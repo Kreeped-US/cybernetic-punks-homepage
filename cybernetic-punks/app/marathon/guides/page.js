@@ -184,7 +184,7 @@ function GuideCard({ guide }) {
   var bodyPreview = (guide.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, 110);
 
   return (
-    <Link href={'/intel/' + guide.slug} className="g-card" style={{ textDecoration: 'none', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <Link href={'/marathon/intel/' + guide.slug} className="g-card" style={{ textDecoration: 'none', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {guide.thumbnail && (
         <div style={{ position: 'relative', height: 110, overflow: 'hidden', flexShrink: 0 }}>
           <img src={guide.thumbnail} alt={guide.headline} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -373,7 +373,7 @@ export default async function GuidesPage({ searchParams }) {
       return {
         '@type': 'ListItem',
         position: i + 1,
-        url: 'https://cyberneticpunks.com/intel/' + g.slug,
+        url: 'https://cyberneticpunks.com/marathon/intel/' + g.slug,
         name: g.headline,
       };
     }),
@@ -548,7 +548,7 @@ export default async function GuidesPage({ searchParams }) {
       {featured && (
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <SectionHeader label="FEATURED GUIDE" color="#9b5de5" />
-          <Link href={'/intel/' + featured.slug} className="g-card" style={{ textDecoration: 'none', display: 'block' }}>
+          <Link href={'/marathon/intel/' + featured.slug} className="g-card" style={{ textDecoration: 'none', display: 'block' }}>
             <div style={{ position: 'relative', background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '3px solid #9b5de5', borderRadius: '0 0 2px 2px', overflow: 'hidden', display: 'grid', gridTemplateColumns: featured.thumbnail ? 'minmax(0, 1fr) 320px' : '1fr', minHeight: 220 }}>
               <div style={{ padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(135deg, rgba(155,93,229,0.06), transparent 60%)' }}>
                 <div>
@@ -608,12 +608,12 @@ export default async function GuidesPage({ searchParams }) {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', letterSpacing: 2, fontWeight: 700 }}>⬢ BUILD AI</span>
-                  <Link href="/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 8, color: '#ff8800', textDecoration: 'none', letterSpacing: 1, marginLeft: 'auto', fontWeight: 700 }}>ALL BUILDS →</Link>
+                  <Link href="/marathon/intel/dexter" style={{ fontFamily: 'monospace', fontSize: 8, color: '#ff8800', textDecoration: 'none', letterSpacing: 1, marginLeft: 'auto', fontWeight: 700 }}>ALL BUILDS →</Link>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {dexterBuilds.map(function(b) {
                     return (
-                      <Link key={b.id} href={'/intel/' + b.slug} className="g-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+                      <Link key={b.id} href={'/marathon/intel/' + b.slug} className="g-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                         <div style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.35, minWidth: 0 }}>{b.headline}</div>
                         {b.ce_score > 0 && <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', background: 'rgba(255,136,0,0.14)', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, padding: '1px 6px', fontWeight: 800 }}>{b.ce_score}</span>}
                       </Link>
@@ -627,12 +627,12 @@ export default async function GuidesPage({ searchParams }) {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700 }}>⬡ META AI</span>
-                  <Link href="/intel/nexus" style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', textDecoration: 'none', letterSpacing: 1, marginLeft: 'auto', fontWeight: 700 }}>ALL META →</Link>
+                  <Link href="/marathon/intel/nexus" style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', textDecoration: 'none', letterSpacing: 1, marginLeft: 'auto', fontWeight: 700 }}>ALL META →</Link>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {nexusMeta.map(function(m) {
                     return (
-                      <Link key={m.id} href={'/intel/' + m.slug} className="g-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+                      <Link key={m.id} href={'/marathon/intel/' + m.slug} className="g-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                         <div style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.35, minWidth: 0 }}>{m.headline}</div>
                         {m.ce_score > 0 && <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.14)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '1px 6px', fontWeight: 800 }}>{m.ce_score}</span>}
                       </Link>
@@ -679,7 +679,7 @@ export default async function GuidesPage({ searchParams }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { href: '/intel/miranda', label: '◎ ALL FIELD GUIDES',  sub: 'Full guide archive',       color: '#9b5de5' },
+              { href: '/marathon/intel/miranda', label: '◎ ALL FIELD GUIDES',  sub: 'Full guide archive',       color: '#9b5de5' },
               { href: '/marathon/advisor',       label: '⬢ BUILD ADVISOR',       sub: 'Get your ranked loadout',  color: '#ff8800' },
               { href: '/marathon/shells',        label: 'SHELL DATABASE',        sub: 'Full ability breakdowns',  color: '#00d4ff' },
               { href: '/marathon/ranked',        label: 'RANKED MODE',           sub: 'Tiers, Holotags, rewards', color: '#ffd700' },

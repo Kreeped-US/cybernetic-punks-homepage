@@ -22,12 +22,12 @@ export function isDiscourseArticle(item) {
 export function discourseHref(item) {
   if (!item || !item.slug) return null;
   if (item.game_slug === 'dmz') return '/dmz/discourse/' + item.slug;
-  if (item.game_slug === 'marathon') return '/intel/' + item.slug;
+  if (item.game_slug === 'marathon') return '/marathon/intel/' + item.slug;
   return null;
 }
 
 // Breadcrumb "home" ({ href, label }) for the article's subject-game hub.
 export function discourseHome(gameSlug) {
   if (gameSlug === 'dmz') return { href: '/dmz', label: 'DMZ' };
-  return { href: '/intel', label: 'Intel' }; // marathon (default)
+  return { href: '/marathon/intel', label: 'Intel' }; // marathon (default)
 }

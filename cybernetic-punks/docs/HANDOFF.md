@@ -7,6 +7,68 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - /intel migration -> /marathon/intel (root migration FULLY COMPLETE) [HELD]
+
+The last Marathon namespace moved: /intel -> /marathon/intel (Ruling 2). Flat namespace,
+so ONE /intel/:path* wildcard covers the hub + all /intel/[slug] articles + the 5 editor
+lanes (cipher/nexus/dexter/ghost/miranda). Post-hard-delete corpus: 373 live articles + hub
++ 5 lanes. One atomic commit. HELD for operator FF-merge + verification gate.
+
+### Change-set
+- Moved app/intel/ -> app/marathon/intel/ (git renames; flat, no layout.js, no relative
+  imports to fix - all @/).
+- Canonicals/OG/JSON-LD in the moved pages -> /marathon/intel.
+- Sitemap (eligible.js): hub + 5 lanes + the article loop -> /marathon/intel (373 article
+  URLs confirmed in sitemap-marathon-intel.xml; hub+lanes ride the entities child).
+- Internal links: 92 anchored replacements across ~27 files -> /marathon/intel.
+- Redirect (308): ONE /intel/:path* -> /marathon/intel/:path*, placed LAST.
+- feed_items article BODIES: re-confirmed ZERO /intel/ links post-hard-delete -> NO DB
+  body rewrite.
+- backups/ (the hard-delete snapshots) added to .gitignore (a git add -A had staged the
+  5MB file; now excluded so it cannot be committed accidentally).
+
+### EDIT-LIST COMPLETENESS CATCH (process lesson)
+The scoping-read Part-2a list UNDER-COUNTED the inbound links. The first anchored pass (70
+replacements) left old /intel links in files the scoping grep missed: app/marathon/{rising,
+shells,sitrep,stats,weapons}, app/me, lib/discord, and the DMZ article page (author URL).
+The post-move verification grep caught them; a second pass (22 more) cleared them. LESSON:
+do not trust a pre-move scoping link-list as complete - the authoritative check is the
+post-move grep for zero remaining old-path functional links, which is what gated this.
+
+### THE TWO GSC TOUCHPOINTS (build-silent if missed) - both handled
+(a) inspectionRun.js feedUrl(): BASE + '/intel/' + slug -> BASE + '/marathon/intel/' + slug,
+    so Consumer C inspects the NEW URLs, not the old redirecting ones.
+(b) cannibalization.js firstSegment(): made GAME-PREFIX AWARE - when the first path segment
+    is marathon or dmz, classify on parts[2]. This fixes /marathon/intel -> news AND
+    incidentally REPAIRS the ENTITY_SEGMENTS classification (/marathon/uniques,/weapons,...)
+    that Stages 1-4 had silently broken (all moved entity routes were reading first-segment
+    'marathon' -> 'other'). NEWS_SEGMENTS/ENTITY_SEGMENTS sets unchanged (still the bare
+    segment names); only the extractor learned the game prefix. Bare pre-migration URLs in
+    older GSC rows still classify via the else branch during redirect age-out.
+GSC MAP (storage.js GAME_ROUTE_PREFIXES): unchanged - marathon already enumerated; old
+'intel' segment KEPT so redirected old URLs still attribute, age out later.
+
+### REDIRECT-CHAIN prevention (S4 lesson applied)
+4 pre-existing consolidation redirects had DESTINATIONS at /intel/<survivor> (faction x2 ->
+...-aa39, Rook -> ...-z5m0, V85 -> ...-v85-nerf-5gcc); repointed to /marathon/intel/<survivor>
+so they stay one-hop. Verified by curl: /intel/...-v85-ceiling-cut-l574 -> 308 -> DIRECTLY
+/marathon/intel/...-v85-nerf-5gcc. BR33 destinations already -> /marathon/uniques (S4).
+
+### Verification (pre-merge)
+next build exit 0, zero import/module errors. curl: /marathon/intel + /marathon/intel/<slug>
++ /marathon/intel/cipher (lane) -> 200; old /intel(/slug)(/cipher) -> 308 -> new; the
+consolidation sources one-hop. Sitemap: 373 /marathon/intel articles, zero old /intel. Grep:
+zero old-path /intel functional links, no /marathon/marathon, no @/lib/marathon corruption.
+byte-clean (only pre-existing display glyphs on touched lines). HELD for operator FF-merge.
+
+### ROOT-ROUTE MIGRATION FULLY COMPLETE
+All Marathon content is now under /marathon/* (21 route stages + /intel). Root holds ONLY
+network identity/accounts (/, /about, /editors, /join, /me, /u, /welcome, /profile-preview,
+/admin) + /tools/build (deferred) + /dmz (own namespace). DMZ launched into the game-scoped
+structure from day one; the network root is free for network identity + future games.
+
+---
+
 ## 2026-08-20 - Root-route migration STAGE 4 (2 routes -> /marathon/*) + chain fix [HELD]
 
 Stage 4 of 4, the FINAL in-scope stage: the two highest-authority routes, held for

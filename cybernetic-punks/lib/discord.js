@@ -41,7 +41,7 @@ export async function notifyIntelFeed(feedItem, editorName) {
 
   var symbol = EDITOR_SYMBOLS[editorName] || '◈';
   var color  = EDITOR_COLORS[editorName]  || 0xffffff;
-  var articleUrl = 'https://cyberneticpunks.com/intel/' + feedItem.slug;
+  var articleUrl = 'https://cyberneticpunks.com/marathon/intel/' + feedItem.slug;
   var bodyPreview = (feedItem.body || '').replace(/\*\*/g, '').slice(0, 200);
   if (bodyPreview.length === 200) bodyPreview += '...';
 
@@ -50,7 +50,7 @@ export async function notifyIntelFeed(feedItem, editorName) {
       color,
       author: {
         name: symbol + ' ' + editorName + ' — CyberneticPunks',
-        url: 'https://cyberneticpunks.com/intel/' + editorName.toLowerCase(),
+        url: 'https://cyberneticpunks.com/marathon/intel/' + editorName.toLowerCase(),
       },
       title: feedItem.headline,
       url: articleUrl,
@@ -168,7 +168,7 @@ export async function notifyRankedIntel(feedItem, editorName) {
 
   var symbol = EDITOR_SYMBOLS[editorName] || '◈';
   var color  = EDITOR_COLORS[editorName]  || 0xffffff;
-  var articleUrl = 'https://cyberneticpunks.com/intel/' + feedItem.slug;
+  var articleUrl = 'https://cyberneticpunks.com/marathon/intel/' + feedItem.slug;
   var bodyPreview = (feedItem.body || '').replace(/\*\*/g, '').slice(0, 220);
   if (bodyPreview.length === 220) bodyPreview += '...';
 

@@ -285,7 +285,7 @@ export default function WeaponDetailClient({
                 var grade = score >= 9 ? 'S' : score >= 7 ? 'A' : score >= 5 ? 'B' : 'C';
                 var gradeColors = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#666' };
                 return (
-                  <Link key={build.id} href={'/intel/' + build.slug} className="wpn-card" style={{
+                  <Link key={build.id} href={'/marathon/intel/' + build.slug} className="wpn-card" style={{
                     display: 'flex', gap: 12, background: '#1a1d24', border: '1px solid #22252e',
                     borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0',
                     padding: '12px 14px', textDecoration: 'none', transition: 'background 0.1s',
@@ -318,7 +318,7 @@ export default function WeaponDetailClient({
               {articles.map(function(article) {
                 var ec = EDITOR_COLORS[article.editor] || '#888';
                 return (
-                  <Link key={article.id} href={'/intel/' + article.slug} className="wpn-row" style={{
+                  <Link key={article.id} href={'/marathon/intel/' + article.slug} className="wpn-row" style={{
                     display: 'flex', gap: 10, background: '#1a1d24', border: '1px solid #22252e',
                     borderLeft: '3px solid ' + ec + '66', borderRadius: '0 3px 3px 0',
                     padding: '12px', textDecoration: 'none', overflow: 'hidden', transition: 'background 0.1s',

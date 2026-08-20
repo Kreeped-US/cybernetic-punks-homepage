@@ -273,7 +273,7 @@ export default function FactionClient({ data }) {
               var symbol = EDITOR_SYMBOLS[article.editor] || '·';
               var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               return (
-                <Link key={article.id} href={'/intel/' + article.slug} className="f-card"
+                <Link key={article.id} href={'/marathon/intel/' + article.slug} className="f-card"
                   style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
                   {article.thumbnail && (
                     <div style={{ height: 90, background: '#0e1014', overflow: 'hidden', position: 'relative' }}>

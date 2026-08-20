@@ -71,7 +71,7 @@ export async function computeEligible() {
     [BASE + '/marathon/ranked', undefined, 'daily', 0.9],
     [BASE + '/marathon/advisor', undefined, 'daily', 0.9],
     [BASE + '/marathon/cradle', undefined, 'daily', 0.9],
-    [BASE + '/intel', undefined, 'hourly', 0.9],
+    [BASE + '/marathon/intel', undefined, 'hourly', 0.9],
     [BASE + '/marathon/matchups', mvd, 'weekly', 0.85],
     [BASE + '/marathon/modes/vault-breaker', facts, 'daily', 0.9],
     [BASE + '/marathon/rising', undefined, 'daily', 0.8],
@@ -80,11 +80,11 @@ export async function computeEligible() {
     [BASE + '/marathon/status', undefined, 'hourly', 0.7],
     [BASE + '/marathon/player-count', undefined, 'hourly', 0.8],
     [BASE + '/editors', EDITORS_UPDATED, 'weekly', 0.7],
-    [BASE + '/intel/cipher', undefined, 'daily', 0.7],
-    [BASE + '/intel/nexus', undefined, 'daily', 0.7],
-    [BASE + '/intel/dexter', undefined, 'daily', 0.7],
-    [BASE + '/intel/ghost', undefined, 'daily', 0.7],
-    [BASE + '/intel/miranda', undefined, 'daily', 0.7],
+    [BASE + '/marathon/intel/cipher', undefined, 'daily', 0.7],
+    [BASE + '/marathon/intel/nexus', undefined, 'daily', 0.7],
+    [BASE + '/marathon/intel/dexter', undefined, 'daily', 0.7],
+    [BASE + '/marathon/intel/ghost', undefined, 'daily', 0.7],
+    [BASE + '/marathon/intel/miranda', undefined, 'daily', 0.7],
     [BASE + '/marathon/guides', undefined, 'weekly', 0.65],
     [BASE + '/join', JOIN_UPDATED, 'monthly', 0.5],
   ];
@@ -195,7 +195,7 @@ export async function computeEligible() {
       if (!batch || batch.length < 1000) break;
       from += 1000;
     }
-    rows.forEach((r) => add(BASE + '/intel/' + r.slug, M, 'intel', lm(r.updated_at || r.created_at), 'monthly', 0.6));
+    rows.forEach((r) => add(BASE + '/marathon/intel/' + r.slug, M, 'intel', lm(r.updated_at || r.created_at), 'monthly', 0.6));
     // guide categories with >=1 tagged article (type='guide'; lastmod OMITTED --
     // a category page's content changes when articles are (re)tagged, no honest date).
     const withContent = new Set();

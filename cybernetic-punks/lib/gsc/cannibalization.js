@@ -60,6 +60,12 @@ const NEWS_SEGMENTS = new Set(['intel']);
 
 function firstSegment(url) {
   const parts = pathnameOf(url).split('/');
+  // GAME-PREFIX AWARE (2026-08 root-route migration): all Marathon content is now
+  // namespaced under /marathon/<segment> (and DMZ under /dmz/<segment>). Classify on the
+  // route segment AFTER the game prefix so ENTITY_SEGMENTS (/marathon/uniques, /weapons,
+  // ...) and NEWS_SEGMENTS (/marathon/intel) still type correctly. Bare pre-migration URLs
+  // (still in older GSC rows during the redirect age-out) keep working via the else branch.
+  if (parts[1] === 'marathon' || parts[1] === 'dmz') return parts[2] || '';
   return parts[1] || '';
 }
 // 0 = entity/canonical (best survivor), 1 = news, 2 = other. Lower wins the survivor sort.

@@ -124,7 +124,7 @@ const CATEGORIES = {
     h1: 'MARATHON EXTRACTION STRATEGY',
     subhead: 'Escape routes, timing windows, loot prioritization, and exfil tactics. Learn to survive the most dangerous part of every Marathon match - the last 60 seconds.',
     related: [
-      { href: '/intel/ghost', label: 'COMMUNITY INTEL',      desc: 'Community patterns',     color: '#00ff88' },
+      { href: '/marathon/intel/ghost', label: 'COMMUNITY INTEL',      desc: 'Community patterns',     color: '#00ff88' },
       { href: '/marathon/ranked',      label: 'RANKED HUB',       desc: 'Queue extraction intel', color: '#ffd700' },
       { href: '/marathon/guides/shells/thief', label: 'THIEF GUIDE', desc: 'The exfil specialist', color: '#ffd700' },
     ],
@@ -188,7 +188,7 @@ const CATEGORIES = {
     subhead: 'Zone-by-zone knowledge. POIs, extraction points, loot hotspots, and rotation patterns. The difference between a lost run and a clean exfil is knowing the map better than the enemy.',
     related: [
       { href: '/marathon/guides/extraction', label: 'EXTRACTION STRATEGY', desc: 'Exfil-specific tactics', color: '#00d4ff' },
-      { href: '/intel/ghost',       label: 'COMMUNITY INTEL',        desc: 'Community map tips',    color: '#00ff88' },
+      { href: '/marathon/intel/ghost',       label: 'COMMUNITY INTEL',        desc: 'Community map tips',    color: '#00ff88' },
       { href: '/marathon/ranked',            label: 'RANKED HUB',         desc: 'Zone rotations',        color: '#ffd700' },
     ],
     faqs: [
@@ -469,7 +469,7 @@ function GuideCard({ guide, cat, featured }) {
   }
 
   return (
-    <Link href={'/intel/' + guide.slug} className="gc-card" style={cardStyle}>
+    <Link href={'/marathon/intel/' + guide.slug} className="gc-card" style={cardStyle}>
       {featured && (
         <div style={{
           position: 'absolute',
@@ -624,7 +624,7 @@ export default async function CategoryPage({ params }) {
     description: cat.description,
     numberOfItems: allGuides.length,
     itemListElement: allGuides.slice(0, 10).map(function(g, i) {
-      return { '@type': 'ListItem', position: i + 1, url: 'https://cyberneticpunks.com/intel/' + g.slug, name: g.headline };
+      return { '@type': 'ListItem', position: i + 1, url: 'https://cyberneticpunks.com/marathon/intel/' + g.slug, name: g.headline };
     }),
   };
 
@@ -752,7 +752,7 @@ export default async function CategoryPage({ params }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {dexterBuilds.map(function(b) {
                     return (
-                      <Link key={b.id} href={'/intel/' + b.slug} className="gc-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+                      <Link key={b.id} href={'/marathon/intel/' + b.slug} className="gc-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                         <div style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.35 }}>{b.headline}</div>
                         {b.ce_score > 0 && <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', background: 'rgba(255,136,0,0.14)', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, padding: '1px 6px', fontWeight: 800 }}>{b.ce_score}</span>}
                       </Link>
@@ -770,7 +770,7 @@ export default async function CategoryPage({ params }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {nexusMeta.map(function(m) {
                     return (
-                      <Link key={m.id} href={'/intel/' + m.slug} className="gc-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+                      <Link key={m.id} href={'/marathon/intel/' + m.slug} className="gc-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                         <div style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.35 }}>{m.headline}</div>
                         {m.ce_score > 0 && <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.14)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '1px 6px', fontWeight: 800 }}>{m.ce_score}</span>}
                       </Link>

@@ -495,7 +495,7 @@ export default async function Home() {
                   var login = twitchLoginFromUrl(info.twitch);
                   var avatarUrl = login && spotlightAvatars[login] ? spotlightAvatars[login] : null;
                   return (
-                    <Link key={item.slug} href={'/intel/' + item.slug} className="product-panel" style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + ec, borderRadius: '0 3px 3px 0', padding: '12px 14px', textDecoration: 'none' }}>
+                    <Link key={item.slug} href={'/marathon/intel/' + item.slug} className="product-panel" style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + ec, borderRadius: '0 3px 3px 0', padding: '12px 14px', textDecoration: 'none' }}>
                       <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: '50%', background: '#0e1014', border: '1px solid ' + ec + '50', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: ec }}>
                         {avatarUrl ? (
                           <img src={avatarUrl} alt={creatorName} width={40} height={40} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
