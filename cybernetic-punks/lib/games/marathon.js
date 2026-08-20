@@ -348,9 +348,9 @@ export const marathon = {
   buildToolCta: {
     entities: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Sentinel', 'Thief', 'Triage', 'Vandal'],
     relevanceKeywords: ['build', 'loadout', 'shell', 'runner', 'weapon', 'mod', 'core', 'implant', 'cradle'],
-    href: function (slug) { return '/advisor?shell=' + slug; },
+    href: function (slug) { return '/marathon/advisor?shell=' + slug; },
     copy: function (name) { return 'Plan your ' + name + ' build →'; },
-    genericHref: '/advisor',
+    genericHref: '/marathon/advisor',
     genericCopy: 'Want a build based on this intel? Open the Build Advisor →',
     accent: '#ff8800',
   },

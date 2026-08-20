@@ -90,7 +90,7 @@ export default function FactionAdvisorCallout({ shells }) {
             Marathon's six factions gate the strongest gear behind rank progression. The Faction Advisor maps your shell choice to the optimal grind path — so you know which faction to invest in first.
           </p>
 
-          <Link href="/factions" style={{
+          <Link href="/marathon/factions" style={{
             display:        'inline-flex',
             alignItems:     'center',
             gap:            8,
@@ -123,7 +123,7 @@ export default function FactionAdvisorCallout({ shells }) {
               return (
                 <Link
                   key={s.name}
-                  href="/factions#shell-faction-advisor"
+                  href="/marathon/factions#shell-faction-advisor"
                   title={s.name + ' — find best factions'}
                   style={{
                     display:        'flex',

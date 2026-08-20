@@ -73,7 +73,7 @@ export const metadata = {
   openGraph: {
     title: 'Rising Marathon Creators - Twitch Streamers & Spotlights',
     description: 'Live small Marathon streamers under 100 viewers, plus editor creator spotlights. Watch the next wave — or make Marathon content and get featured.',
-    url: 'https://cyberneticpunks.com/rising',
+    url: 'https://cyberneticpunks.com/marathon/rising',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -84,7 +84,7 @@ export const metadata = {
     description: 'Live small Marathon streamers plus creator spotlights. Watch the next wave — or get featured.',
   },
   alternates: {
-    canonical: 'https://cyberneticpunks.com/rising',
+    canonical: 'https://cyberneticpunks.com/marathon/rising',
   },
 };
 
@@ -748,7 +748,7 @@ export default async function RisingPage() {
           }}>
             ALL INTEL →
           </Link>
-          <Link href="/meta" style={{
+          <Link href="/marathon/meta" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -787,7 +787,7 @@ export default async function RisingPage() {
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           name: 'Rising Creators — Marathon Streamers to Watch',
-          url: 'https://cyberneticpunks.com/rising',
+          url: 'https://cyberneticpunks.com/marathon/rising',
           description: 'Discover up-and-coming Marathon creators on Twitch. Live small streamers under 100 viewers — surfaced in real-time. Creators can get featured.',
           isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
         }),
@@ -808,7 +808,7 @@ export default async function RisingPage() {
               '@type': 'ListItem',
               position: 2,
               name: 'Rising Creators',
-              item: 'https://cyberneticpunks.com/rising',
+              item: 'https://cyberneticpunks.com/marathon/rising',
             },
           ],
         }),

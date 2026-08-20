@@ -29,7 +29,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Server Status & Player Activity (Live) | CyberneticPunks',
     description: 'Live Marathon player count and review sentiment, weekly reset tracker, ranked rotation, and a complete error code reference.',
-    url: 'https://cyberneticpunks.com/status',
+    url: 'https://cyberneticpunks.com/marathon/status',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -39,7 +39,7 @@ export const metadata = {
     title: 'Marathon Server Status & Player Activity (Live) | CyberneticPunks',
     description: 'Live player activity, weekly reset tracker, and error code reference.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/status' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/status' },
 };
 
 // ─── CONSTANTS ──────────────────────────────────────────────
@@ -208,7 +208,7 @@ export default async function StatusPage() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Status', item: 'https://cyberneticpunks.com/status' },
+      { '@type': 'ListItem', position: 2, name: 'Status', item: 'https://cyberneticpunks.com/marathon/status' },
     ],
   };
 
@@ -216,7 +216,7 @@ export default async function StatusPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: 'Is Marathon down right now?', acceptedAnswer: { '@type': 'Answer', text: 'Check cyberneticpunks.com/status for real-time Marathon server status across Steam, PlayStation 5, and Xbox Series X|S. Our status page aggregates live platform availability and current incidents.' } },
+      { '@type': 'Question', name: 'Is Marathon down right now?', acceptedAnswer: { '@type': 'Answer', text: 'Check cyberneticpunks.com/marathon/status for real-time Marathon server status across Steam, PlayStation 5, and Xbox Series X|S. Our status page aggregates live platform availability and current incidents.' } },
       { '@type': 'Question', name: 'When does Marathon weekly reset happen?', acceptedAnswer: { '@type': 'Answer', text: 'Marathon resets every Tuesday at 10 AM PT / 1 PM ET / 6 PM GMT. This includes ranked zone rotations, faction contracts, and Armory stock refreshes.' } },
       { '@type': 'Question', name: 'What does WEASEL error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'WEASEL means you lost connection to Bungie servers. This is often a server-side issue during high traffic or maintenance windows. Check server status before assuming it\'s a local issue.' } },
       { '@type': 'Question', name: 'What does BROCCOLI error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'BROCCOLI means your GPU cannot be detected, usually caused by a driver crash. Update your OS and GPU drivers and ensure your graphics card is properly installed and recognized by your system.' } },
@@ -311,7 +311,7 @@ export default async function StatusPage() {
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4, marginTop: 8, paddingTop: 8, borderTop: '1px solid ' + BORDER }}>
               {queueSub}
             </div>
-            <Link href="/ranked" style={{ fontFamily: 'monospace', fontSize: 9, color: YELLOW, marginTop: 8, display: 'inline-block', letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
+            <Link href="/marathon/ranked" style={{ fontFamily: 'monospace', fontSize: 9, color: YELLOW, marginTop: 8, display: 'inline-block', letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
               RANKED GUIDE →
             </Link>
           </div>
@@ -478,7 +478,7 @@ export default async function StatusPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               { href: '/marathon/sitrep',                                       label: 'LIVE SITREP',      sub: 'Meta + system snapshot',      color: CYAN    },
-              { href: '/ranked',                                       label: 'RANKED GUIDE',     sub: 'Queue schedule + tier list',  color: YELLOW  },
+              { href: '/marathon/ranked',                                       label: 'RANKED GUIDE',     sub: 'Queue schedule + tier list',  color: YELLOW  },
               { href: 'https://discord.gg/PnhbdRYh3w',                 label: 'DISCORD',          sub: 'Outage chatter + community',  color: '#5865f2', external: true },
               { href: 'https://x.com/BungieHelp',                      label: '@BUNGIEHELP',      sub: 'Official Bungie support',     color: '#1da1f2', external: true },
               { href: 'https://help.bungie.net',                       label: 'BUNGIE HELP',      sub: 'Official knowledge base',     color: '#888',    external: true },

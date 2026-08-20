@@ -295,12 +295,12 @@ export default function LeaderboardPage() {
             margin: '0 auto 18px', maxWidth: 560,
           }}>
             What we do have now: live Steam concurrent players on{' '}
-            <Link href="/player-count" style={{ color: '#00d4ff', textDecoration: 'none' }}>
+            <Link href="/marathon/player-count" style={{ color: '#00d4ff', textDecoration: 'none' }}>
               player count
             </Link>{' '}
             (1,010 tracked snapshots since March 2026), and current shell and
             weapon tiers on{' '}
-            <Link href="/meta" style={{ color: '#00d4ff', textDecoration: 'none' }}>
+            <Link href="/marathon/meta" style={{ color: '#00d4ff', textDecoration: 'none' }}>
               the meta report
             </Link>.
           </p>
@@ -458,7 +458,7 @@ export default function LeaderboardPage() {
             }}>
               JOIN DISCORD
             </a>
-            <Link href="/stats" style={{
+            <Link href="/marathon/stats" style={{
               fontFamily: 'Orbitron, monospace',
               fontSize: 12,
               fontWeight: 700,
@@ -622,7 +622,7 @@ export default function LeaderboardPage() {
         textAlign: 'center',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <Link href="/stats" style={{
+          <Link href="/marathon/stats" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -635,7 +635,7 @@ export default function LeaderboardPage() {
           }}>
             ← STATS TRACKER
           </Link>
-          <Link href="/builds" style={{
+          <Link href="/marathon/builds" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -648,7 +648,7 @@ export default function LeaderboardPage() {
           }}>
             BUILDS & LOADOUTS →
           </Link>
-          <Link href="/meta" style={{
+          <Link href="/marathon/meta" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -661,7 +661,7 @@ export default function LeaderboardPage() {
           }}>
             META TIER LIST →
           </Link>
-          <Link href="/ranked" style={{
+          <Link href="/marathon/ranked" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,

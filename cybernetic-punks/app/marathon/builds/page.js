@@ -31,7 +31,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Builds & Loadouts — Best Shells & Weapons | CyberneticPunks',
     description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides.',
-    url: 'https://cyberneticpunks.com/builds',
+    url: 'https://cyberneticpunks.com/marathon/builds',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -42,7 +42,7 @@ export const metadata = {
     description: 'Best Marathon builds, weapon stats, shell rankings, and loadout guides. Refreshed throughout the day.',
   },
   alternates: {
-    canonical: 'https://cyberneticpunks.com/builds',
+    canonical: 'https://cyberneticpunks.com/marathon/builds',
   },
 };
 
@@ -169,7 +169,7 @@ function FactionBadge({ faction }) {
   if (!faction) return null;
   var color = FACTION_COLORS[faction] || '#888';
   return (
-    <Link href="/factions" style={{ fontFamily: 'monospace', fontSize: 7, fontWeight: 700, color: color, background: color + '14', border: '1px solid ' + color + '30', borderRadius: 2, padding: '1px 5px', letterSpacing: 1, flexShrink: 0, textDecoration: 'none' }}>
+    <Link href="/marathon/factions" style={{ fontFamily: 'monospace', fontSize: 7, fontWeight: 700, color: color, background: color + '14', border: '1px solid ' + color + '30', borderRadius: 2, padding: '1px 5px', letterSpacing: 1, flexShrink: 0, textDecoration: 'none' }}>
       {faction.toUpperCase()}
     </Link>
   );
@@ -358,7 +358,7 @@ export default async function BuildsPage() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',              item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Builds & Loadouts', item: 'https://cyberneticpunks.com/builds' },
+      { '@type': 'ListItem', position: 2, name: 'Builds & Loadouts', item: 'https://cyberneticpunks.com/marathon/builds' },
     ],
   };
 
@@ -367,7 +367,7 @@ export default async function BuildsPage() {
     '@type': 'CollectionPage',
     name: 'Marathon Builds & Loadouts',
     description: 'Best Marathon builds and loadouts for every Runner Shell. Live weapon stats, shell rankings, implant meta, mod analysis, and ranked-viable loadout guides.',
-    url: 'https://cyberneticpunks.com/builds',
+    url: 'https://cyberneticpunks.com/marathon/builds',
     // dateModified attached below, only when a real date exists.
     publisher: {
       '@type': 'Organization',
@@ -447,10 +447,10 @@ export default async function BuildsPage() {
         </p>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-          <Link href="/advisor" style={{ padding: '11px 22px', background: ORANGE, color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+          <Link href="/marathon/advisor" style={{ padding: '11px 22px', background: ORANGE, color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
             GET YOUR BUILD →
           </Link>
-          <Link href="/meta" style={{ padding: '11px 22px', background: CARD_BG, border: '1px solid ' + BORDER, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+          <Link href="/marathon/meta" style={{ padding: '11px 22px', background: CARD_BG, border: '1px solid ' + BORDER, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
             VIEW META →
           </Link>
         </div>
@@ -484,7 +484,7 @@ export default async function BuildsPage() {
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>
               {lastMetaUpdate ? 'UPDATED ' + timeAgo(lastMetaUpdate).toUpperCase() : 'LIVE'}
             </span>
-            <Link href="/meta" style={{ fontFamily: 'monospace', fontSize: 9, color: CYAN, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>FULL TIER LIST →</Link>
+            <Link href="/marathon/meta" style={{ fontFamily: 'monospace', fontSize: 9, color: CYAN, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>FULL TIER LIST →</Link>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 10 }}>
@@ -1031,7 +1031,7 @@ export default async function BuildsPage() {
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 540, margin: '0 auto 20px' }}>
             Tell our build AI your shell and playstyle — get a complete loadout with weapons, mods, cores, and implants in seconds. Faction-aware. Ranked-viability flagged.
           </p>
-          <Link href="/advisor" style={{ display: 'inline-block', padding: '12px 28px', background: ORANGE, color: '#000', fontFamily: 'monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
+          <Link href="/marathon/advisor" style={{ display: 'inline-block', padding: '12px 28px', background: ORANGE, color: '#000', fontFamily: 'monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
             LAUNCH BUILD ADVISOR →
           </Link>
         </div>

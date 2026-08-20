@@ -564,7 +564,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     setGeneratedImage(null);
     setShareUrl('');
     setSharedList(null);
-    if (searchParams.get('list')) router.replace('/meta');
+    if (searchParams.get('list')) router.replace('/marathon/meta');
   }
 
   function onDragStart(e, itemId, sourceZone) {
@@ -630,14 +630,14 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   }
 
   function handleShareX() {
-    const text = `My Marathon weapon tier list 🎯\n\nCreate your own → cyberneticpunks.com/meta\n\n#Marathon #MarathonGame #MarathonTierList`;
-    const url = shareUrl || 'https://cyberneticpunks.com/meta';
+    const text = `My Marathon weapon tier list 🎯\n\nCreate your own → cyberneticpunks.com/marathon/meta\n\n#Marathon #MarathonGame #MarathonTierList`;
+    const url = shareUrl || 'https://cyberneticpunks.com/marathon/meta';
     window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
   }
 
   function handleShareReddit() {
     const title = `My Marathon Tier List — Made with CyberneticPunks`;
-    const url = shareUrl || 'https://cyberneticpunks.com/meta';
+    const url = shareUrl || 'https://cyberneticpunks.com/marathon/meta';
     window.open(`https://www.reddit.com/r/Marathon/submit?title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
   }
 
@@ -746,9 +746,9 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, fontFamily: 'monospace', marginRight: 4 }}>SHARE</span>
           {[
-            { label: 'X',       action: () => window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('Marathon meta tier list updated — check what weapons and shells are winning') + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta') + '&hashtags=Marathon,MarathonGame', '_blank') },
-            { label: 'REDDIT',  action: () => window.open('https://www.reddit.com/r/Marathon/submit?title=' + encodeURIComponent('CyberneticPunks Marathon Meta Tier List — Updated ' + (lastUpdated ? hoursAgo(lastUpdated) : 'now')) + '&url=' + encodeURIComponent('https://cyberneticpunks.com/meta'), '_blank') },
-            { label: 'COPY',    action: () => { navigator.clipboard.writeText('https://cyberneticpunks.com/meta').catch(() => {}); } },
+            { label: 'X',       action: () => window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('Marathon meta tier list updated — check what weapons and shells are winning') + '&url=' + encodeURIComponent('https://cyberneticpunks.com/marathon/meta') + '&hashtags=Marathon,MarathonGame', '_blank') },
+            { label: 'REDDIT',  action: () => window.open('https://www.reddit.com/r/Marathon/submit?title=' + encodeURIComponent('CyberneticPunks Marathon Meta Tier List — Updated ' + (lastUpdated ? hoursAgo(lastUpdated) : 'now')) + '&url=' + encodeURIComponent('https://cyberneticpunks.com/marathon/meta'), '_blank') },
+            { label: 'COPY',    action: () => { navigator.clipboard.writeText('https://cyberneticpunks.com/marathon/meta').catch(() => {}); } },
           ].map(btn => (
             <button key={btn.label} className="meta-share-btn" onClick={btn.action} style={{
               fontSize: 9, fontWeight: 700, letterSpacing: 1,
@@ -1041,7 +1041,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                 Our build AI engineers a complete loadout in seconds — shell, weapons, mods, cores, and implants tuned to your playstyle.
               </div>
             </div>
-            <Link href="/advisor" style={{
+            <Link href="/marathon/advisor" style={{
               padding: '11px 22px', background: '#ff8800', color: '#000',
               fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2,
               textDecoration: 'none', flexShrink: 0,

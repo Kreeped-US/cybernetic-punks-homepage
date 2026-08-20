@@ -261,10 +261,10 @@ export default function RankedClient({ data }) {
             </p>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Link href="/advisor" style={{ padding: '11px 22px', background: '#00ff41', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+              <Link href="/marathon/advisor" style={{ padding: '11px 22px', background: '#00ff41', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
                 GET RANKED BUILD →
               </Link>
-              <Link href="/meta" style={{ padding: '11px 22px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+              <Link href="/marathon/meta" style={{ padding: '11px 22px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
                 VIEW META →
               </Link>
             </div>
@@ -380,7 +380,7 @@ export default function RankedClient({ data }) {
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, margin: 0 }}>
               No tier movement since the last regrade. Shells and weapons are holding their
               positions. The current standings are on the{' '}
-              <Link href="/meta" style={{ color: '#00d4ff', textDecoration: 'none' }}>meta tier list</Link>.
+              <Link href="/marathon/meta" style={{ color: '#00d4ff', textDecoration: 'none' }}>meta tier list</Link>.
             </p>
           </div>
         </section>
@@ -650,7 +650,7 @@ export default function RankedClient({ data }) {
         </div>
 
         <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Link href="/advisor" style={{ padding: '10px 20px', background: '#ff8800', color: '#000', fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
+          <Link href="/marathon/advisor" style={{ padding: '10px 20px', background: '#ff8800', color: '#000', fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
             GET YOUR RANKED BUILD →
           </Link>
           <Link href="/shells" style={{ padding: '10px 20px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
@@ -799,8 +799,8 @@ export default function RankedClient({ data }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { href: '/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated daily by our meta AI' },
-              { href: '/advisor',     color: '#ff8800', label: '⬢ BUILD ADVISOR',          desc: 'Ranked-viable loadouts' },
+              { href: '/marathon/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated daily by our meta AI' },
+              { href: '/marathon/advisor',     color: '#ff8800', label: '⬢ BUILD ADVISOR',          desc: 'Ranked-viable loadouts' },
               { href: '/intel/nexus', color: '#00d4ff', label: '⬡ META ANALYSIS',    desc: 'Deep ranked breakdowns' },
               { href: '/intel/cipher', color: '#ff2222', label: '◈ PLAY ANALYSIS',   desc: 'Grade the best ranked plays' },
             ].map(function(l) {

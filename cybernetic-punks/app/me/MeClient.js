@@ -65,12 +65,12 @@ var PLAYSTYLES = [
 ];
 
 var TOOLS = [
-  { href: '/meta',     icon: '⬡', color: '#00ff41', label: 'Meta Tier List',  desc: 'Live weapon & shell rankings',    tag: 'LIVE' },
-  { href: '/advisor',  icon: '⬢', color: '#ff8800', label: 'Build Advisor',   desc: 'AI-engineered loadouts',          tag: 'FREE' },
-  { href: '/builds',   icon: '⬢', color: '#ff8800', label: 'Build Lab',       desc: 'Full loadout browser',            tag: null },
+  { href: '/marathon/meta',     icon: '⬡', color: '#00ff41', label: 'Meta Tier List',  desc: 'Live weapon & shell rankings',    tag: 'LIVE' },
+  { href: '/marathon/advisor',  icon: '⬢', color: '#ff8800', label: 'Build Advisor',   desc: 'AI-engineered loadouts',          tag: 'FREE' },
+  { href: '/marathon/builds',   icon: '⬢', color: '#ff8800', label: 'Build Lab',       desc: 'Full loadout browser',            tag: null },
   { href: '/shells',   icon: '◎', color: '#00d4ff', label: 'Shell Guide',     desc: 'Abilities, stats, tiers',         tag: null },
-  { href: '/ranked',   icon: '◈', color: '#ffd700', label: 'Ranked Guide',    desc: 'Holotags, tiers, how to climb',   tag: null },
-  { href: '/factions', icon: '◇', color: '#9b5de5', label: 'Factions',        desc: 'Unlocks & investment guide',      tag: null },
+  { href: '/marathon/ranked',   icon: '◈', color: '#ffd700', label: 'Ranked Guide',    desc: 'Holotags, tiers, how to climb',   tag: null },
+  { href: '/marathon/factions', icon: '◇', color: '#9b5de5', label: 'Factions',        desc: 'Unlocks & investment guide',      tag: null },
 ];
 
 function platformLabel(p) {

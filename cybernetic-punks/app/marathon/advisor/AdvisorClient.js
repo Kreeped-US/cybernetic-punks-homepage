@@ -350,7 +350,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   }
 
   function shareToX() {
-    var text = 'Just got my ' + (build?.shell || '') + ' build engineered by DEXTER at CyberneticPunks\n\n"' + (build?.build_name || '') + '" — Grade: ' + (build?.loadout_grade || '') + '\n' + (build?.primary_weapon?.name || '') + ' + ' + (build?.secondary_weapon?.name || '') + '\n\ncyberneticpunks.com/advisor #Marathon #MarathonGame';
+    var text = 'Just got my ' + (build?.shell || '') + ' build engineered by DEXTER at CyberneticPunks\n\n"' + (build?.build_name || '') + '" — Grade: ' + (build?.loadout_grade || '') + '\n' + (build?.primary_weapon?.name || '') + ' + ' + (build?.secondary_weapon?.name || '') + '\n\ncyberneticpunks.com/marathon/advisor #Marathon #MarathonGame';
     window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
   }
 
@@ -1103,7 +1103,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                   style={{ padding: '12px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.1s' }}>
                   POST TO X
                 </button>
-                <button className="share-btn" onClick={function() { navigator.clipboard.writeText('https://cyberneticpunks.com/advisor').catch(function() {}); }}
+                <button className="share-btn" onClick={function() { navigator.clipboard.writeText('https://cyberneticpunks.com/marathon/advisor').catch(function() {}); }}
                   style={{ padding: '12px 14px', background: 'transparent', border: '1px solid rgba(88,101,242,0.35)', borderRadius: 2, color: '#5865f2', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.1s' }}>
                   COPY FOR DISCORD
                 </button>

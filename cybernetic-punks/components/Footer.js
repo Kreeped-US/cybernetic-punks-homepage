@@ -24,23 +24,23 @@ const EDITORS = getAllEditors()
 // Primary site navigation — the editorial + tools surface
 const EXPLORE_LINKS = [
   { label: 'INTEL FEED',    href: '/intel'   },
-  { label: 'META TIER LIST',href: '/meta'    },
-  { label: 'BUILD ADVISOR', href: '/advisor' },
+  { label: 'META TIER LIST',href: '/marathon/meta'    },
+  { label: 'BUILD ADVISOR', href: '/marathon/advisor' },
   { label: 'SHELLS',        href: '/shells'  },
   { label: 'FIELD GUIDES',  href: '/guides'  },
-  { label: 'RANKED GUIDE',  href: '/ranked'  },
+  { label: 'RANKED GUIDE',  href: '/marathon/ranked'  },
   { label: 'EDITORS',       href: '/editors' },
   { label: 'ABOUT',         href: '/about'   },
 ];
 
 // Discovery pages — community + tracker tools, often missed from main nav
 const DISCOVER_LINKS = [
-  { label: 'RISING CREATORS', href: '/rising'     },
+  { label: 'RISING CREATORS', href: '/marathon/rising'     },
   { label: 'LEADERBOARD',    href: '/leaderboard' },
-  { label: 'STATS TRACKER',  href: '/stats'       },
-  { label: 'FACTIONS',       href: '/factions'    },
+  { label: 'STATS TRACKER',  href: '/marathon/stats'       },
+  { label: 'FACTIONS',       href: '/marathon/factions'    },
   { label: 'SITREP',         href: '/marathon/sitrep'      },
-  { label: 'SERVER STATUS',  href: '/status'      },
+  { label: 'SERVER STATUS',  href: '/marathon/status'      },
 ];
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────

@@ -543,7 +543,7 @@ export default async function ShellGuidePage({ params }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.25)' }}>RANKED-VIABLE WEAPONS</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
-            <Link href="/builds" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>BUILDS & LOADOUTS →</Link>
+            <Link href="/marathon/builds" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>BUILDS & LOADOUTS →</Link>
           </div>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 12, maxWidth: 680 }}>
             Top ranked-viable weapons by Firepower Score. Pair with {shell.name}\'s playstyle for optimal results. For full weapon analysis, visit the Build Lab.
@@ -613,7 +613,7 @@ export default async function ShellGuidePage({ params }) {
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <Link href={'/advisor?shell=' + shell.name} className="sg-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + ORANGE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+            <Link href={'/marathon/advisor?shell=' + shell.name} className="sg-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + ORANGE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
               <div>
                 <div style={{ fontFamily: 'monospace', fontSize: 10, color: ORANGE, letterSpacing: 1, fontWeight: 700 }}>⬢ BUILD ADVISOR</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>Get your {shell.name} loadout</div>

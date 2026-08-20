@@ -322,10 +322,10 @@ export default async function SitrepPage() {
               Everything you need to know before you drop in. Synthesized from the full newsroom, live meta data, ranked queue status, and community signals.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Link href="/meta" style={{ padding: '11px 22px', background: '#00d4ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+              <Link href="/marathon/meta" style={{ padding: '11px 22px', background: '#00d4ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
                 FULL META →
               </Link>
-              <Link href="/advisor" style={{ padding: '11px 22px', background: CARD_BG, border: '1px solid ' + BORDER, color: '#ff8800', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+              <Link href="/marathon/advisor" style={{ padding: '11px 22px', background: CARD_BG, border: '1px solid ' + BORDER, color: '#ff8800', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
                 ⬢ GET BUILD →
               </Link>
             </div>
@@ -456,7 +456,7 @@ export default async function SitrepPage() {
           <SectionHeader
             label="LIVE META SNAPSHOT"
             color="rgba(255,255,255,0.25)"
-            rightLink={<Link href="/meta" style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>FULL LIST →</Link>}
+            rightLink={<Link href="/marathon/meta" style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>FULL LIST →</Link>}
           />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10 }}>
 
@@ -564,7 +564,7 @@ export default async function SitrepPage() {
             label="FACTION ACTIVITY"
             color="rgba(255,255,255,0.25)"
             count={activeFactions.length + ' ACTIVE'}
-            rightLink={<Link href="/factions" style={{ fontFamily: 'monospace', fontSize: 9, color: '#ffd700', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>FACTION INTEL →</Link>}
+            rightLink={<Link href="/marathon/factions" style={{ fontFamily: 'monospace', fontSize: 9, color: '#ffd700', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>FACTION INTEL →</Link>}
           />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 5 }}>
@@ -574,7 +574,7 @@ export default async function SitrepPage() {
               var displayName = fname.charAt(0).toUpperCase() + fname.slice(1);
               var color = FACTION_COLORS[displayName] || '#888';
               return (
-                <Link key={fname} href="/factions" className="s-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', padding: '10px 14px', textDecoration: 'none' }}>
+                <Link key={fname} href="/marathon/factions" className="s-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', padding: '10px 14px', textDecoration: 'none' }}>
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1 }}>{displayName.toUpperCase()}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>
@@ -688,10 +688,10 @@ export default async function SitrepPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { label: '⬡ META TIER LIST',  href: '/meta',     color: '#00d4ff', desc: 'Full tier rankings' },
-              { label: '⬢ BUILD ADVISOR',   href: '/advisor',  color: '#ff8800', desc: 'Get your ranked loadout' },
-              { label: 'RANKED GUIDE',       href: '/ranked',   color: '#ffd700', desc: 'Season 2 intel' },
-              { label: 'FACTION INTEL',      href: '/factions', color: '#ffd700', desc: 'All 6 factions' },
+              { label: '⬡ META TIER LIST',  href: '/marathon/meta',     color: '#00d4ff', desc: 'Full tier rankings' },
+              { label: '⬢ BUILD ADVISOR',   href: '/marathon/advisor',  color: '#ff8800', desc: 'Get your ranked loadout' },
+              { label: 'RANKED GUIDE',       href: '/marathon/ranked',   color: '#ffd700', desc: 'Season 2 intel' },
+              { label: 'FACTION INTEL',      href: '/marathon/factions', color: '#ffd700', desc: 'All 6 factions' },
               { label: 'ALL INTEL',          href: '/intel',    color: '#9b5de5', desc: 'Every article archived' },
             ].map(function(link) {
               return (

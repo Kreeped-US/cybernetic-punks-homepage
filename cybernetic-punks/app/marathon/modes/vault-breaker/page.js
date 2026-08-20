@@ -126,7 +126,7 @@ const SOURCES = [
 // ambiguity between those two meanings is a known defect pending a split into
 // source_verified_at / play_verified_at.
 
-const PAGE_URL = 'https://cyberneticpunks.com/modes/vault-breaker';
+const PAGE_URL = 'https://cyberneticpunks.com/marathon/modes/vault-breaker';
 
 // Shaped like a game_modes row so a future DB read drops straight in.
 const VAULT_BREAKER = {

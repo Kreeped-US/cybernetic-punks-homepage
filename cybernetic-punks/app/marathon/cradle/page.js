@@ -203,7 +203,7 @@ export default async function CradlePage() {
               In Season 1, Runner Shell stat upgrades came from grinding faction reputation across six separate upgrade trees. Season 2 moved those core stat upgrades into the Cradle - one unified, freely respec-able system shared across all shells.
             </p>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
-              Factions still matter for contracts, reputation, unique gear and implant access, Sponsored Kits, and unlocking Cryo Archive - but they no longer gate your core stats. See the <Link href="/factions" style={{ color: '#00f5ff', textDecoration: 'none' }}>faction guide</Link> for what each organization offers in Season 2.
+              Factions still matter for contracts, reputation, unique gear and implant access, Sponsored Kits, and unlocking Cryo Archive - but they no longer gate your core stats. See the <Link href="/marathon/factions" style={{ color: '#00f5ff', textDecoration: 'none' }}>faction guide</Link> for what each organization offers in Season 2.
             </p>
           </div>
         </section>

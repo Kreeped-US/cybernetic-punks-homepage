@@ -501,7 +501,7 @@ export default async function IntelHubPage({ searchParams }) {
           <Link href="/" style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', padding: '8px 18px', border: '1px solid #22252e', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
             ← BACK TO HOME
           </Link>
-          <Link href="/meta" style={{ fontSize: 10, color: '#00ff41', padding: '8px 18px', border: '1px solid rgba(0,255,65,0.3)', background: 'rgba(0,255,65,0.08)', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
+          <Link href="/marathon/meta" style={{ fontSize: 10, color: '#00ff41', padding: '8px 18px', border: '1px solid rgba(0,255,65,0.3)', background: 'rgba(0,255,65,0.08)', borderRadius: 2, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>
             LIVE TIER LIST →
           </Link>
         </div>

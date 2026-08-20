@@ -417,10 +417,10 @@ export default async function NetworkRoot() {
             <h2 id="nr-tools-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Tools &amp; references</h2>
             <div className="nr-tools nr-stagger">
               {[
-                { href: '/meta',        glyph: '◈', label: 'Tier list',     sub: 'Weapons & shells ranked' },
+                { href: '/marathon/meta',        glyph: '◈', label: 'Tier list',     sub: 'Weapons & shells ranked' },
                 { href: '/leaderboard', glyph: '▲', label: 'Leaderboard',   sub: 'Top runners tracked' },
-                { href: '/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
-                { href: '/player-count',glyph: '◱', label: 'Player count',   sub: 'Live Steam concurrents' },
+                { href: '/marathon/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
+                { href: '/marathon/player-count',glyph: '◱', label: 'Player count',   sub: 'Live Steam concurrents' },
                 { href: '/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },
                 { href: '/mods',        glyph: '⬡', label: 'Mods',           sub: 'Every mod, every slot' },
               ].map(function(t) {

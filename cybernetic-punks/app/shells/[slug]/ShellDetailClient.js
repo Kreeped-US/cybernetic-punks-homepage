@@ -195,7 +195,7 @@ export default function ShellDetailClient({
                 }}>
                   BEST {shellName.toUpperCase()} BUILD →
                 </Link>
-                <Link href={'/advisor?shell=' + slug} style={{
+                <Link href={'/marathon/advisor?shell=' + slug} style={{
                   padding: '11px 20px',
                   background: 'transparent', border: '1px solid #22252e',
                   color: 'rgba(255,255,255,0.5)',
@@ -204,7 +204,7 @@ export default function ShellDetailClient({
                 }}>
                   CUSTOM BUILD →
                 </Link>
-                <Link href="/meta" style={{
+                <Link href="/marathon/meta" style={{
                   padding: '11px 20px',
                   background: 'transparent', border: '1px solid #22252e',
                   color: 'rgba(255,255,255,0.5)',
@@ -661,7 +661,7 @@ export default function ShellDetailClient({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ Build AI's Picks</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <Link href={'/advisor?shell=' + slug} style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
+              <Link href={'/marathon/advisor?shell=' + slug} style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 600 }}>
               Top {shellName} builds engineered by our build AI, sorted by Combat Effectiveness score.
@@ -827,7 +827,7 @@ export default function ShellDetailClient({
           transition: 'bottom 0.3s ease',
           maxWidth: 'calc(100vw - 32px)',
         }}>
-          <Link href={'/advisor?shell=' + slug} style={{
+          <Link href={'/marathon/advisor?shell=' + slug} style={{
             display: 'flex', alignItems: 'center', gap: 14,
             padding: '12px 18px',
             background: '#0e1014',

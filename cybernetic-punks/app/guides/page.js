@@ -448,10 +448,10 @@ export default async function GuidesPage({ searchParams }) {
               Built from verified game data across <strong style={{ color: '#fff' }}>{shellCount} shells</strong>, <strong style={{ color: '#fff' }}>{weaponCount} weapons</strong>, and <strong style={{ color: '#fff' }}>{modCount} mods</strong>. Auto-updated by our field-guide AI throughout the day.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Link href="/advisor" style={{ padding: '11px 22px', background: '#ff8800', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+              <Link href="/marathon/advisor" style={{ padding: '11px 22px', background: '#ff8800', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
                 ⬢ GET YOUR BUILD →
               </Link>
-              <Link href="/ranked" style={{ padding: '11px 22px', background: CARD_BG, border: '1px solid ' + BORDER, color: '#ffd700', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+              <Link href="/marathon/ranked" style={{ padding: '11px 22px', background: CARD_BG, border: '1px solid ' + BORDER, color: '#ffd700', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
                 RANKED GUIDE →
               </Link>
             </div>
@@ -680,9 +680,9 @@ export default async function GuidesPage({ searchParams }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               { href: '/intel/miranda', label: '◎ ALL FIELD GUIDES',  sub: 'Full guide archive',       color: '#9b5de5' },
-              { href: '/advisor',       label: '⬢ BUILD ADVISOR',       sub: 'Get your ranked loadout',  color: '#ff8800' },
+              { href: '/marathon/advisor',       label: '⬢ BUILD ADVISOR',       sub: 'Get your ranked loadout',  color: '#ff8800' },
               { href: '/shells',        label: 'SHELL DATABASE',        sub: 'Full ability breakdowns',  color: '#00d4ff' },
-              { href: '/ranked',        label: 'RANKED MODE',           sub: 'Tiers, Holotags, rewards', color: '#ffd700' },
+              { href: '/marathon/ranked',        label: 'RANKED MODE',           sub: 'Tiers, Holotags, rewards', color: '#ffd700' },
             ].map(function(item) {
               return (
                 <Link key={item.href} href={item.href} className="g-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + item.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>

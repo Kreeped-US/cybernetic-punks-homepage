@@ -147,6 +147,21 @@ const nextConfig = {
         destination: '/marathon/matchups/:path*',
         permanent: true,
       },
+      // Root-route migration STAGE 2 (2026-08-20): the remaining single-page Marathon
+      // routes + /modes/vault-breaker, game-scoped under /marathon/* (Ruling 2). Same
+      // atomic-commit pattern as Stage 1 (move + redirect + links + sitemap + canonicals).
+      // Stage 1 proved /<route>/:path* catches the bare path too, so ONE wildcard rule
+      // per route (not exact + wildcard).
+      { source: '/ranked/:path*', destination: '/marathon/ranked/:path*', permanent: true },
+      { source: '/status/:path*', destination: '/marathon/status/:path*', permanent: true },
+      { source: '/builds/:path*', destination: '/marathon/builds/:path*', permanent: true },
+      { source: '/player-count/:path*', destination: '/marathon/player-count/:path*', permanent: true },
+      { source: '/factions/:path*', destination: '/marathon/factions/:path*', permanent: true },
+      { source: '/meta/:path*', destination: '/marathon/meta/:path*', permanent: true },
+      { source: '/stats/:path*', destination: '/marathon/stats/:path*', permanent: true },
+      { source: '/rising/:path*', destination: '/marathon/rising/:path*', permanent: true },
+      { source: '/advisor/:path*', destination: '/marathon/advisor/:path*', permanent: true },
+      { source: '/modes/vault-breaker/:path*', destination: '/marathon/modes/vault-breaker/:path*', permanent: true },
     ];
   },
 };

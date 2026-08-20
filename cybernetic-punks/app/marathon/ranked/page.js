@@ -18,7 +18,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Ranked — Tiers, Skill Rating & Rank Push | CyberneticPunks',
     description: 'Ranked mode intel for Marathon Season 2. Six tiers, three subdivisions each. New single combined queue, live shell tier list, AI meta tracking, flagged weapons, and recent ranked intelligence. Returns June 14.',
-    url: 'https://cyberneticpunks.com/ranked',
+    url: 'https://cyberneticpunks.com/marathon/ranked',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -29,7 +29,7 @@ export const metadata = {
     description: 'Tier breakdowns, Holotag rules, shell picks, and season rewards for Marathon Ranked. Season 2 returns June 14.',
   },
   alternates: {
-    canonical: 'https://cyberneticpunks.com/ranked',
+    canonical: 'https://cyberneticpunks.com/marathon/ranked',
   },
 };
 
@@ -131,7 +131,7 @@ export default async function RankedPage() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Ranked', item: 'https://cyberneticpunks.com/ranked' },
+          { '@type': 'ListItem', position: 2, name: 'Ranked', item: 'https://cyberneticpunks.com/marathon/ranked' },
         ],
       }) }} />
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>

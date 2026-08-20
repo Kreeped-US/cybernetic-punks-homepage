@@ -36,7 +36,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Meta Tier List — Best Weapons & Shells (Live) | CyberneticPunks',
     description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
-    url: 'https://cyberneticpunks.com/meta',
+    url: 'https://cyberneticpunks.com/marathon/meta',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -46,7 +46,7 @@ export const metadata = {
     title: 'Marathon Meta Tier List — Best Weapons & Shells (Live) | CyberneticPunks',
     description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/meta' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/meta' },
 };
 
 export default async function MetaPage() {
@@ -134,7 +134,7 @@ export default async function MetaPage() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Meta Tier List', item: 'https://cyberneticpunks.com/meta' },
+      { '@type': 'ListItem', position: 2, name: 'Meta Tier List', item: 'https://cyberneticpunks.com/marathon/meta' },
     ],
   };
 
@@ -143,7 +143,7 @@ export default async function MetaPage() {
     '@type': 'WebPage',
     name: 'Marathon Meta Tier List',
     description: 'Live Marathon tier list ranking weapons, shells, and loadouts. Updated throughout the day by AI editors analyzing gameplay, community sentiment, and patch impacts.',
-    url: 'https://cyberneticpunks.com/meta',
+    url: 'https://cyberneticpunks.com/marathon/meta',
     // dateModified attached below, only when a real date exists.
     publisher: {
       '@type': 'Organization',

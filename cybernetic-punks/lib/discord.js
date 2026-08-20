@@ -111,13 +111,13 @@ export async function notifyMetaUpdate(metaRows) {
       color: 0x00f5ff,
       author: {
         name: '⬡ NEXUS — Meta Shift Detected',
-        url: 'https://cyberneticpunks.com/meta',
+        url: 'https://cyberneticpunks.com/marathon/meta',
       },
       title: 'Marathon Meta Tier Shifts',
-      url: 'https://cyberneticpunks.com/meta',
+      url: 'https://cyberneticpunks.com/marathon/meta',
       fields,
       footer: {
-        text: metaRows.length + ' entries tracked · cyberneticpunks.com/meta',
+        text: metaRows.length + ' entries tracked · cyberneticpunks.com/marathon/meta',
       },
       timestamp: new Date().toISOString(),
     }],
@@ -177,7 +177,7 @@ export async function notifyRankedIntel(feedItem, editorName) {
       color,
       author: {
         name: symbol + ' ' + editorName + ' — Ranked Intel',
-        url: 'https://cyberneticpunks.com/ranked',
+        url: 'https://cyberneticpunks.com/marathon/ranked',
       },
       title: feedItem.headline,
       url: articleUrl,
@@ -185,7 +185,7 @@ export async function notifyRankedIntel(feedItem, editorName) {
       fields: [
         {
           name: 'RANKED RESOURCES',
-          value: '[Ranked Guide](https://cyberneticpunks.com/ranked) · [Meta Tier List](https://cyberneticpunks.com/meta) · [Build Advisor](https://cyberneticpunks.com/advisor)',
+          value: '[Ranked Guide](https://cyberneticpunks.com/marathon/ranked) · [Meta Tier List](https://cyberneticpunks.com/marathon/meta) · [Build Advisor](https://cyberneticpunks.com/marathon/advisor)',
           inline: false,
         },
       ],

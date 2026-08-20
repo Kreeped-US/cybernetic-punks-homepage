@@ -70,8 +70,8 @@ export const ROOT_GAMES = [
       { label: 'Shells',   href: '/shells' },
       { label: 'Matchups', href: '/marathon/matchups' },
       { label: 'Uniques',  href: '/uniques' },
-      { label: 'Factions', href: '/factions' },
-      { label: 'Ranked',   href: '/ranked' },
+      { label: 'Factions', href: '/marathon/factions' },
+      { label: 'Ranked',   href: '/marathon/ranked' },
     ],
     pulse: {
       mode: 'live',

@@ -753,7 +753,7 @@ function EditorLanePage({ config, items }) {
         )}
 
         {config.name === 'GHOST' && (
-          <Link href="/rising" className="lane-row" style={{
+          <Link href="/marathon/rising" className="lane-row" style={{
             display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none',
             background: 'linear-gradient(135deg, #1a1d24 0%, #0e1014 100%)',
             border: '1px solid #22252e', borderLeft: '3px solid #00ff88',

@@ -425,7 +425,7 @@ export default function ShellsHubClient(props) {
               Our build AI will engineer a complete loadout based on your playstyle, rank target, and experience level.
             </div>
           </div>
-          <Link href="/advisor" style={{
+          <Link href="/marathon/advisor" style={{
             padding: '11px 22px', background: '#ff8800', color: '#000',
             fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2,
             textDecoration: 'none', flexShrink: 0,
@@ -548,7 +548,7 @@ export default function ShellsHubClient(props) {
                       LEARN THE MAPS →
                     </Link>
                   ) : (
-                    <Link href={'/advisor?shell=' + qrName.toLowerCase()} style={{ flex: 1, minWidth: 180, padding: '12px', background: '#ff8800', border: 'none', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
+                    <Link href={'/marathon/advisor?shell=' + qrName.toLowerCase()} style={{ flex: 1, minWidth: 180, padding: '12px', background: '#ff8800', border: 'none', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
                       BUILD A LOADOUT →
                     </Link>
                   )}
@@ -570,7 +570,7 @@ export default function ShellsHubClient(props) {
                 <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>
                   No shell matched your answers perfectly. Try the Build Advisor for a custom loadout.
                 </div>
-                <Link href="/advisor" style={{ display: 'block', padding: '12px', background: '#ff8800', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
+                <Link href="/marathon/advisor" style={{ display: 'block', padding: '12px', background: '#ff8800', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
                   OPEN BUILD ADVISOR →
                 </Link>
                 <button onClick={resetQuiz} style={{ marginTop: 12, background: 'none', border: 'none', fontSize: 10, color: 'rgba(255,255,255,0.35)', cursor: 'pointer', letterSpacing: 1, fontFamily: 'inherit', fontWeight: 700 }}>

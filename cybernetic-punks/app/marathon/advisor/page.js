@@ -40,7 +40,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Build Advisor — Loadout Generator | CyberneticPunks',
     description: 'Pick your shell, playstyle, and rank goal. Get a complete Marathon loadout in seconds — weapons, mods, cores, implants, and a Cradle stat plan.',
-    url: 'https://cyberneticpunks.com/advisor',
+    url: 'https://cyberneticpunks.com/marathon/advisor',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -51,7 +51,7 @@ export const metadata = {
     description: 'Pick your shell, get a complete Marathon loadout in seconds.',
   },
   alternates: {
-    canonical: 'https://cyberneticpunks.com/advisor',
+    canonical: 'https://cyberneticpunks.com/marathon/advisor',
   },
 };
 
@@ -92,7 +92,7 @@ const breadcrumbSchema = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home',           item: 'https://cyberneticpunks.com' },
-    { '@type': 'ListItem', position: 2, name: 'Build Advisor',  item: 'https://cyberneticpunks.com/advisor' },
+    { '@type': 'ListItem', position: 2, name: 'Build Advisor',  item: 'https://cyberneticpunks.com/marathon/advisor' },
   ],
 };
 
@@ -101,7 +101,7 @@ const webApplicationSchema = {
   '@type': 'WebApplication',
   name: 'Marathon Build Advisor',
   description: 'Marathon loadout generator. Pick your Runner shell, playstyle, and rank target, and get a complete build — primary weapon, secondary, mods, cores, implants, and a Cradle stat-track plan — drawn from live meta data.',
-  url: 'https://cyberneticpunks.com/advisor',
+  url: 'https://cyberneticpunks.com/marathon/advisor',
   applicationCategory: 'GameApplication',
   operatingSystem: 'Web',
   offers: {
@@ -251,7 +251,7 @@ export default async function AdvisorPage({ searchParams }) {
             In Season&nbsp;2, shell stats come from{' '}
             <a href="/marathon/cradle" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>the Cradle</a>,
             a free-respec Energy system, while{' '}
-            <a href="/factions" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>factions</a>{' '}
+            <a href="/marathon/factions" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>factions</a>{' '}
             gate gear through their Armories. Browse every{' '}
             <a href="/shells" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>Runner shell</a>{' '}
             and{' '}

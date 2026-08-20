@@ -25,7 +25,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Factions — Roles, Reputation & Cryo Archive Access | CyberneticPunks',
     description: 'What each of the six Marathon factions offers in Season 2: contracts, reputation, unique gear, and Cryo Archive access. Core stats now come from the Cradle.',
-    url: 'https://cyberneticpunks.com/factions',
+    url: 'https://cyberneticpunks.com/marathon/factions',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -35,7 +35,7 @@ export const metadata = {
     title: 'Marathon Factions — Roles, Reputation & Cryo Archive Access | CyberneticPunks',
     description: 'What each faction offers in Season 2: contracts, reputation, unique gear, Cryo Archive access.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/factions' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/factions' },
 };
 
 export const dynamic = 'force-dynamic';
@@ -45,7 +45,7 @@ const breadcrumbSchema = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home',     item: 'https://cyberneticpunks.com' },
-    { '@type': 'ListItem', position: 2, name: 'Factions', item: 'https://cyberneticpunks.com/factions' },
+    { '@type': 'ListItem', position: 2, name: 'Factions', item: 'https://cyberneticpunks.com/marathon/factions' },
   ],
 };
 

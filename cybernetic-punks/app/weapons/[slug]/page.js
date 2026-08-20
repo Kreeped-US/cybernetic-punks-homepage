@@ -206,7 +206,7 @@ export default async function WeaponDetailPage({ params }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Meta', item: 'https://cyberneticpunks.com/meta' },
+      { '@type': 'ListItem', position: 2, name: 'Meta', item: 'https://cyberneticpunks.com/marathon/meta' },
       { '@type': 'ListItem', position: 3, name: weaponName, item: 'https://cyberneticpunks.com/weapons/' + slug },
     ],
   };

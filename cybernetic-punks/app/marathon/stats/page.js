@@ -68,7 +68,7 @@ export var metadata = {
   openGraph: {
     title: 'Marathon Stats Tracker | CyberneticPunks',
     description: 'Player lookup is not live: Bungie has not opened a Marathon stats API. Here is what the tracker will cover when they do.',
-    url: 'https://cyberneticpunks.com/stats',
+    url: 'https://cyberneticpunks.com/marathon/stats',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -78,7 +78,7 @@ export var metadata = {
     title: 'Marathon Stats Tracker | CyberneticPunks',
     description: 'Marathon player lookup is not live yet. What the tracker will cover once Bungie ships a public stats API.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/stats' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/stats' },
 };
 
 // ─── DESIGN TOKENS (aligned to locked design system) ─────────
@@ -257,11 +257,11 @@ export default function StatsPage() {
             margin: '0 auto 30px',
           }}>
             What we have today: live Steam concurrent players on{' '}
-            <Link href="/player-count" style={{ color: NEXUS, textDecoration: 'none' }}>
+            <Link href="/marathon/player-count" style={{ color: NEXUS, textDecoration: 'none' }}>
               player count
             </Link>{' '}
             and current shell and weapon tiers on{' '}
-            <Link href="/meta" style={{ color: NEXUS, textDecoration: 'none' }}>
+            <Link href="/marathon/meta" style={{ color: NEXUS, textDecoration: 'none' }}>
               the meta report
             </Link>.
           </p>
@@ -632,7 +632,7 @@ export default function StatsPage() {
         textAlign: 'center',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <Link href="/player-count" style={{
+          <Link href="/marathon/player-count" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -658,7 +658,7 @@ export default function StatsPage() {
           }}>
             LEADERBOARD →
           </Link>
-          <Link href="/builds" style={{
+          <Link href="/marathon/builds" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -671,7 +671,7 @@ export default function StatsPage() {
           }}>
             BUILDS & LOADOUTS →
           </Link>
-          <Link href="/meta" style={{
+          <Link href="/marathon/meta" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -724,7 +724,7 @@ export default function StatsPage() {
               '@type': 'ListItem',
               position: 2,
               name: 'Stats Tracker',
-              item: 'https://cyberneticpunks.com/stats',
+              item: 'https://cyberneticpunks.com/marathon/stats',
             },
           ],
         }),

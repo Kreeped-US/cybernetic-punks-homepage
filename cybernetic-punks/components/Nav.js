@@ -15,13 +15,13 @@ function intelChild(key, desc) {
 
 var NAV_ITEMS = [
   { label: 'HOME',     href: '/marathon' },
-  { label: 'META',     href: '/meta' },
+  { label: 'META',     href: '/marathon/meta' },
   { label: 'SHELLS',   href: '/shells' },
   { label: 'MATCHUPS', href: '/marathon/matchups' },
   { label: 'WEAPONS',  href: '/weapons' },
   { label: 'MODS',     href: '/mods' },
   { label: 'UNIQUES',  href: '/uniques' },
-  { label: 'FACTIONS', href: '/factions' },
+  { label: 'FACTIONS', href: '/marathon/factions' },
   {
     label: 'INTEL',
     activeOn: ['/intel', '/marathon/sitrep', '/editors'],
@@ -38,17 +38,17 @@ var NAV_ITEMS = [
   },
   {
     label: 'TOOLS',
-    activeOn: ['/advisor', '/marathon/cradle', '/builds', '/guides', '/status', '/join', '/me'],
+    activeOn: ['/marathon/advisor', '/marathon/cradle', '/marathon/builds', '/guides', '/marathon/status', '/join', '/me'],
     children: [
-      { label: 'BUILD ADVISOR',    href: '/advisor', desc: 'AI-engineered loadouts',               color: '#ff8800' },
+      { label: 'BUILD ADVISOR',    href: '/marathon/advisor', desc: 'AI-engineered loadouts',               color: '#ff8800' },
       { label: 'CRADLE PLANNER',   href: '/marathon/cradle',  desc: 'Plan your Season 2 Cradle build',       color: '#00f5ff' },
-      { label: 'BUILDS',           href: '/builds',  desc: 'Shell builds & weapon browser' },
+      { label: 'BUILDS',           href: '/marathon/builds',  desc: 'Shell builds & weapon browser' },
       { label: 'FIELD GUIDES',     href: '/guides',  desc: 'Shell breakdowns & strategy',           color: '#9b5de5' },
-      { label: 'SERVER STATUS',    href: '/status',  desc: 'Is Marathon down?' },
+      { label: 'SERVER STATUS',    href: '/marathon/status',  desc: 'Is Marathon down?' },
       { label: 'PERSONAL COACH ✦', href: '/join',    desc: 'AI loadout audit — closed beta',        color: '#00d4ff', beta: true },
     ],
   },
-  { label: 'RANKED', href: '/ranked' },
+  { label: 'RANKED', href: '/marathon/ranked' },
 ];
 
 function isTabActive(item, pathname) {

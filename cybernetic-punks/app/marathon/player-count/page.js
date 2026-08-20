@@ -14,8 +14,8 @@
 // tokens. Chart is a dependency-free inline SVG.
 
 import Link from 'next/link';
-import { supabase } from '../../lib/supabase';
-import { getLiveStats } from '../../lib/liveStats';
+import { supabase } from '@/lib/supabase';
+import { getLiveStats } from '@/lib/liveStats';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Player Count - Live Steam Concurrent Players | CyberneticPunks',
     description: 'Live Marathon Steam concurrent players, all-time tracked peak, and the full history. Steam only - not total playerbase.',
-    url: 'https://cyberneticpunks.com/player-count',
+    url: 'https://cyberneticpunks.com/marathon/player-count',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -35,7 +35,7 @@ export const metadata = {
     title: 'Marathon Player Count - Live Steam Concurrent Players',
     description: 'Live Steam concurrent players, all-time tracked peak, and the full trend. Steam only.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/player-count' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/player-count' },
 };
 
 // ── Design tokens (locked Marathon named-hex system) ──
@@ -130,7 +130,7 @@ export default async function PlayerCountPage() {
   var trackStart = history.length ? history[0].recorded_at : null;
   var chart = buildChart(history, peakVal || 1);
 
-  var pageUrl = 'https://cyberneticpunks.com/player-count';
+  var pageUrl = 'https://cyberneticpunks.com/marathon/player-count';
   var breadcrumbSchema = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
@@ -252,10 +252,10 @@ export default async function PlayerCountPage() {
       <section style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 24px 72px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
           {[
-            { href: '/status', label: 'SERVER STATUS', c: '#00ff88' },
+            { href: '/marathon/status', label: 'SERVER STATUS', c: '#00ff88' },
             { href: '/leaderboard', label: 'LEADERBOARD', c: '#ffd700' },
-            { href: '/stats', label: 'STATS TRACKER', c: STEAM },
-            { href: '/meta', label: 'META TIER LIST', c: '#00d4ff' },
+            { href: '/marathon/stats', label: 'STATS TRACKER', c: STEAM },
+            { href: '/marathon/meta', label: 'META TIER LIST', c: '#00d4ff' },
           ].map(function (l) {
             return (
               <Link key={l.href} href={l.href} style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: l.c, padding: '8px 18px', border: '1px solid ' + l.c + '44', borderRadius: 3, textDecoration: 'none', letterSpacing: 1.5 }}>

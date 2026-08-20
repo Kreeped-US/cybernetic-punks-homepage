@@ -7,6 +7,56 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Root-route migration STAGE 2 (10 routes -> /marathon/*) [HELD]
+
+Stage 2 of 4: the remaining single-page Marathon routes + /modes/vault-breaker,
+game-scoped under /marathon/* (Ruling 2). One atomic commit. HELD for operator
+FF-merge + verification gate.
+
+### Moved (git renames)
+ranked, status, builds, player-count, factions, meta, stats, rising, advisor ->
+/marathon/<route> (single pages); /modes/vault-breaker -> /marathon/modes/vault-
+breaker (modes/ nesting preserved; NO bare /modes redirect - nothing else lived
+there, so bare /modes 404s as before).
+
+### Change-set (same shape as Stage 1)
+- Canonicals/OG/JSON-LD in the moved trees -> /marathon/<route>.
+- Internal links updated the SAME commit across ~35 sites: Nav, Footer, root tools
+  row, guides, shells, weapons, intel, leaderboard, me, FactionAdvisorCallout, the
+  factions<->advisor cross-links, lib/discord canonicals, lib/modePages,
+  lib/games/marathon, rootGames, + the Stage-1 cradle/sitrep pages that link
+  Stage-2 routes. Grep confirms ZERO old-path functional links remain.
+- Sitemap (lib/sitemap/eligible.js): 9 of the 10 routes -> /marathon/* (all but
+  /builds, which was never in the sitemap; left absent). Old paths absent.
+- Redirects (next.config.mjs, 308): ONE wildcard rule per route (/<route>/:path*) -
+  Stage 1 proved the wildcard catches bare + child, so no exact+wildcard pairs.
+- GSC map (lib/gsc/storage.js): untouched; old segments kept to attribute
+  redirected old URLs.
+
+### Anchored-replacement discipline (Stage 1 lesson applied)
+Boundary-anchored regex: a route path is rewritten ONLY when preceded by a quote or
+cyberneticpunks.com AND followed by a non-alnum/hyphen boundary. So zero collisions:
+- /meta did NOT touch /metadata; /stats did NOT touch /status.
+- lib imports (@/lib/...) never matched (no quote/.com prefix) - no repeat of the
+  Stage-1 lib/matchups corruption.
+- Twitter x.com/<handle>/status/<id> in lib/gather/x.js was a REAL /status collision;
+  excluded and verified untouched. lib/gsc/* + tests excluded (historical URLs).
+- player-count had 2 relative supabase/liveStats imports that break one level deeper;
+  converted to the @/ alias.
+
+### Verification (pre-merge)
+next build exit 0, zero import/module errors. next start + curl: all 10 new
+/marathon/<route> -> 200; all 10 old -> 308 -> new (incl /modes/vault-breaker);
+bare /modes -> 404 (correct, no rule). Sitemap emits the 9 new paths, zero old.
+Grep: zero old-path functional links, no /marathon/marathon, no @/lib/marathon
+corruption, no x.com corruption. byte-clean: only PRE-EXISTING display glyphs
+(icons/arrows/em-dash) on touched lines; none introduced. HELD for operator FF-merge
++ verification gate. STAGE 3 pending: the mid-tier trees (weapons, mods, shells,
+maps, uniques, guides, tools/build); then STAGE 4 = /intel (938 URLs, separate
+major project).
+
+---
+
 ## 2026-08-20 - Root-route migration STAGE 1 (4 routes -> /marathon/*) [HELD]
 
 Stage 1 of 4 of the Marathon root-route migration (Ruling 2): lowest-stakes routes,

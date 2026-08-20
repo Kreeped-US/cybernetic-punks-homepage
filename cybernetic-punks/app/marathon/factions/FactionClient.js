@@ -105,7 +105,7 @@ export default function FactionClient({ data }) {
           <Link href="/marathon/cradle" style={{ padding: '11px 22px', background: '#00f5ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
             CRADLE BUILD PLANNER -&gt;
           </Link>
-          <Link href="/advisor" style={{ padding: '11px 22px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+          <Link href="/marathon/advisor" style={{ padding: '11px 22px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
             BUILD ADVISOR -&gt;
           </Link>
         </div>

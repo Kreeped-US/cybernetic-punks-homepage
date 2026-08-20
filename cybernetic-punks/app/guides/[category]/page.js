@@ -41,8 +41,8 @@ const CATEGORIES = {
     subhead: 'Ability breakdowns, stats, and playstyle analysis for all 7 Runner Shells. From Assassin\'s stealth reposition to Triage\'s squad support - pick the shell that fits your game.',
     related: [
       { href: '/shells',  label: 'SHELL DATABASE',      desc: 'Full stats + abilities', color: '#00d4ff' },
-      { href: '/builds',  label: 'BUILD LAB',           desc: 'Loadouts per shell',      color: '#ff8800' },
-      { href: '/advisor', label: 'BUILD ADVISOR',       desc: 'Get your ranked build',   color: '#ff8800' },
+      { href: '/marathon/builds',  label: 'BUILD LAB',           desc: 'Loadouts per shell',      color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'BUILD ADVISOR',       desc: 'Get your ranked build',   color: '#ff8800' },
     ],
     faqs: [
       { q: 'What is the best shell in Marathon?', a: 'The "best" shell depends on playstyle. Vandal and Thief dominate solo ranked with their speed and extraction tools. Triage and Recon excel in squads through support and information. Assassin rewards mechanical players. Check our live tier list for current meta positioning.' },
@@ -61,9 +61,9 @@ const CATEGORIES = {
     h1: 'MARATHON RANKED GUIDES',
     subhead: 'Holotag strategy, gear ante optimization, shell picks, and zone rotation intel. Tier climb guides updated with every meta shift.',
     related: [
-      { href: '/ranked',  label: 'RANKED HUB',     desc: 'Queue + tier list',       color: '#ffd700' },
-      { href: '/meta',    label: 'META TIER LIST', desc: 'Live weapon/shell tiers', color: '#00d4ff' },
-      { href: '/advisor', label: 'BUILD ADVISOR',  desc: 'Ranked-viable loadouts',  color: '#ff8800' },
+      { href: '/marathon/ranked',  label: 'RANKED HUB',     desc: 'Queue + tier list',       color: '#ffd700' },
+      { href: '/marathon/meta',    label: 'META TIER LIST', desc: 'Live weapon/shell tiers', color: '#00d4ff' },
+      { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Ranked-viable loadouts',  color: '#ff8800' },
     ],
     faqs: [
       { q: 'When is Marathon Ranked queue open?', a: 'The Ranked queue is open from Sunday 10AM PT through Thursday 10AM PT. Outside that window only Casual queues are available. Zones and Holotag targets rotate with each opening.' },
@@ -82,9 +82,9 @@ const CATEGORIES = {
     h1: 'MARATHON WEAPON GUIDES',
     subhead: 'Per-weapon analysis, fire rate breakdowns, ammo efficiency, and matchup notes. Pick the right gun for your build and your range.',
     related: [
-      { href: '/builds',  label: 'BUILD LAB',      desc: 'Full weapon arsenal',     color: '#ff8800' },
-      { href: '/meta',    label: 'META TIER LIST', desc: 'Live weapon rankings',    color: '#00d4ff' },
-      { href: '/advisor', label: 'BUILD ADVISOR',  desc: 'Weapon pairings',         color: '#ff8800' },
+      { href: '/marathon/builds',  label: 'BUILD LAB',      desc: 'Full weapon arsenal',     color: '#ff8800' },
+      { href: '/marathon/meta',    label: 'META TIER LIST', desc: 'Live weapon rankings',    color: '#00d4ff' },
+      { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Weapon pairings',         color: '#ff8800' },
     ],
     faqs: [
       { q: 'What is the best weapon in Marathon?', a: 'Weapon strength depends on range and shell pairing. The WSTR Combat Shotgun is consistently S-tier at close range, the M77 Assault Rifle is the most forgiving mid-range pick, and the Stryder M1T excels at long range. Our live tier list ranks every weapon by current meta viability.' },
@@ -103,9 +103,9 @@ const CATEGORIES = {
     h1: 'MARATHON MOD GUIDES',
     subhead: 'Mod slot analysis, best combinations, and synergies that turn mediocre loadouts into S-tier builds. Covers every mod rarity from Standard to Prestige.',
     related: [
-      { href: '/builds',  label: 'BUILD LAB',     desc: 'Meta mods showcase',     color: '#ff8800' },
-      { href: '/advisor', label: 'BUILD ADVISOR', desc: 'Get modded loadouts',    color: '#ff8800' },
-      { href: '/factions', label: 'FACTIONS',     desc: 'Faction-locked mods',    color: '#ffd700' },
+      { href: '/marathon/builds',  label: 'BUILD LAB',     desc: 'Meta mods showcase',     color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'BUILD ADVISOR', desc: 'Get modded loadouts',    color: '#ff8800' },
+      { href: '/marathon/factions', label: 'FACTIONS',     desc: 'Faction-locked mods',    color: '#ffd700' },
     ],
     faqs: [
       { q: 'What are the best mods in Marathon?', a: 'Top-tier mods are Superior and Prestige rarity - check our Meta Mods showcase for current picks. Stack damage, handling, and stability mods on your primary weapon, and recovery/resistance mods on your shell. Faction-locked mods like those from Traxus and Arachne are often build-defining.' },
@@ -125,7 +125,7 @@ const CATEGORIES = {
     subhead: 'Escape routes, timing windows, loot prioritization, and exfil tactics. Learn to survive the most dangerous part of every Marathon match - the last 60 seconds.',
     related: [
       { href: '/intel/ghost', label: 'COMMUNITY INTEL',      desc: 'Community patterns',     color: '#00ff88' },
-      { href: '/ranked',      label: 'RANKED HUB',       desc: 'Queue extraction intel', color: '#ffd700' },
+      { href: '/marathon/ranked',      label: 'RANKED HUB',       desc: 'Queue extraction intel', color: '#ffd700' },
       { href: '/guides/shells/thief', label: 'THIEF GUIDE', desc: 'The exfil specialist', color: '#ffd700' },
     ],
     faqs: [
@@ -146,7 +146,7 @@ const CATEGORIES = {
     subhead: 'New Runner essentials. Core mechanics, survival basics, first builds, and the do\'s and don\'ts every new player should know before their first drop.',
     related: [
       { href: '/shells',  label: 'SHELL DATABASE', desc: 'Learn the shells',     color: '#00d4ff' },
-      { href: '/advisor', label: 'BUILD ADVISOR',  desc: 'Start with a real build', color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Start with a real build', color: '#ff8800' },
       { href: '/guides/extraction', label: 'EXTRACTION 101', desc: 'Learn to exfil safely', color: '#00d4ff' },
     ],
     faqs: [
@@ -166,9 +166,9 @@ const CATEGORIES = {
     h1: 'MARATHON PROGRESSION GUIDES',
     subhead: 'Faction rank priorities, credit farming routes, material farming, and seasonal upgrade order. Hit your build goals faster by optimizing what you grind and when.',
     related: [
-      { href: '/factions', label: 'FACTION INTEL', desc: 'All 6 factions',           color: '#ffd700' },
-      { href: '/advisor',  label: 'BUILD ADVISOR', desc: 'Your build goal',          color: '#ff8800' },
-      { href: '/ranked',   label: 'RANKED HUB',    desc: 'Seasonal rewards',         color: '#ffd700' },
+      { href: '/marathon/factions', label: 'FACTION INTEL', desc: 'All 6 factions',           color: '#ffd700' },
+      { href: '/marathon/advisor',  label: 'BUILD ADVISOR', desc: 'Your build goal',          color: '#ff8800' },
+      { href: '/marathon/ranked',   label: 'RANKED HUB',    desc: 'Seasonal rewards',         color: '#ffd700' },
     ],
     faqs: [
       { q: 'Which faction should you prioritize first in Marathon?', a: 'Priority depends on your target build. Traxus for weapon mods, Arachne for melee/combat implants, Cyberacme for extraction and loot bonuses. Our Shell Faction Advisor recommends the best faction based on your shell pick.' },
@@ -189,7 +189,7 @@ const CATEGORIES = {
     related: [
       { href: '/guides/extraction', label: 'EXTRACTION STRATEGY', desc: 'Exfil-specific tactics', color: '#00d4ff' },
       { href: '/intel/ghost',       label: 'COMMUNITY INTEL',        desc: 'Community map tips',    color: '#00ff88' },
-      { href: '/ranked',            label: 'RANKED HUB',         desc: 'Zone rotations',        color: '#ffd700' },
+      { href: '/marathon/ranked',            label: 'RANKED HUB',         desc: 'Zone rotations',        color: '#ffd700' },
     ],
     faqs: [
       { q: 'How many maps are in Marathon?', a: 'Marathon features multiple distinct zones - planet-based maps like Perimeter, Dire Marsh, and Outpost, plus the endgame Cryo Archive raid map on the UESC Marathon ship. Each has unique POIs, extraction points, and environmental hazards.' },
@@ -229,7 +229,7 @@ const CATEGORIES = {
     h1: 'MARATHON SQUAD GUIDES',
     subhead: 'Three Runners, one mission. Best trio compositions, role assignments, communication patterns, and the difference between a coordinated team and three solo players in the same lobby.',
     related: [
-      { href: '/ranked',                 label: 'RANKED HUB',     desc: 'Squad queue intel',     color: '#ffd700' },
+      { href: '/marathon/ranked',                 label: 'RANKED HUB',     desc: 'Squad queue intel',     color: '#ffd700' },
       { href: '/guides/shells/triage',   label: 'TRIAGE GUIDE',   desc: 'The squad anchor',      color: '#00ff88' },
       { href: '/guides/shells/recon',    label: 'RECON GUIDE',    desc: 'Information backbone',  color: '#00d4ff' },
     ],
@@ -271,7 +271,7 @@ const CATEGORIES = {
     h1: 'MARATHON HOLOTAG GUIDES',
     subhead: 'The fastest path to Ranked climb. Holotag mechanics, target prioritization, gear ante math, and why hunting tags beats hunting kills for almost every Runner.',
     related: [
-      { href: '/ranked',     label: 'RANKED HUB',      desc: 'Live Holotag targets',   color: '#ffd700' },
+      { href: '/marathon/ranked',     label: 'RANKED HUB',      desc: 'Live Holotag targets',   color: '#ffd700' },
       { href: '/guides/ranked', label: 'RANKED STRATEGY', desc: 'Full ranked playbook', color: '#ffd700' },
       { href: '/guides/extraction', label: 'EXTRACTION',   desc: 'Exfil with tags',     color: '#00d4ff' },
     ],
@@ -294,7 +294,7 @@ const CATEGORIES = {
     related: [
       { href: '/guides/cryo-archive', label: 'CRYO ARCHIVE',   desc: 'Endgame raid',          color: '#00d4ff' },
       { href: '/guides/holotag',     label: 'HOLOTAG STRATEGY', desc: 'Ranked climb fuel',    color: '#ffd700' },
-      { href: '/meta',               label: 'META TIER LIST',  desc: 'Top picks for endgame', color: '#00d4ff' },
+      { href: '/marathon/meta',               label: 'META TIER LIST',  desc: 'Top picks for endgame', color: '#00d4ff' },
     ],
     faqs: [
       { q: 'What is the endgame in Marathon?', a: 'Marathon endgame includes: Cryo Archive raid runs (high-end PvPvE on the UESC Marathon ship), Prestige rank progression, Contraband weapon farming, faction liaison contract completion, and ranked tier climbs into the top brackets. Endgame Runners typically focus on Cryo Archive and Ranked simultaneously.' },
@@ -315,7 +315,7 @@ const CATEGORIES = {
     related: [
       { href: '/guides/squad',    label: 'SQUAD PLAY', desc: 'Team-fight coordination', color: '#00d4ff' },
       { href: '/guides/solo',     label: 'SOLO PLAY',  desc: '1v1 and 1v3 tactics',     color: '#ff8800' },
-      { href: '/meta',            label: 'META TIER LIST', desc: 'PvP weapon picks',    color: '#00d4ff' },
+      { href: '/marathon/meta',            label: 'META TIER LIST', desc: 'PvP weapon picks',    color: '#00d4ff' },
     ],
     faqs: [
       { q: 'How do you win PvP in Marathon?', a: 'Win the engagement before it starts. Audio is half the game - listen for footsteps, gear sounds, and gunfire to position yourself before the enemy sees you. Pre-aim common angles. Pick fights you can win in 2 seconds or less. Disengage if a fight goes longer than that - third parties always come.' },
@@ -357,7 +357,7 @@ const CATEGORIES = {
     related: [
       { href: '/guides/endgame',  label: 'ENDGAME GUIDES', desc: 'Cryo Archive prep',     color: '#ff2d55' },
       { href: '/guides/squad',    label: 'SQUAD PLAY',     desc: 'Required for entry',    color: '#00d4ff' },
-      { href: '/factions',        label: 'FACTIONS',       desc: 'Liaison contracts',     color: '#ffd700' },
+      { href: '/marathon/factions',        label: 'FACTIONS',       desc: 'Liaison contracts',     color: '#ffd700' },
     ],
     faqs: [
       { q: 'What is Cryo Archive in Marathon?', a: 'Cryo Archive is Marathon\'s endgame zone - a large PvPvE raid map set on the abandoned UESC Marathon colony ship in orbit around Tau Ceti IV. It features Security Clearance progression, 7 vaults with puzzle mechanics, UESC enemy faction (bots, soldiers, commanders, wardens), and the Compiler boss fight. It\'s only available Thursday 10AM PDT through Sunday 10AM PDT.' },

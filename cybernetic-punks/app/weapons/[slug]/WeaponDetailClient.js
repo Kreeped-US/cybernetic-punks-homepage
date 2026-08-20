@@ -106,7 +106,7 @@ export default function WeaponDetailClient({
 
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-            <Link href="/meta" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>META</Link>
+            <Link href="/marathon/meta" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>META</Link>
             <span style={{ color: 'rgba(255,255,255,0.15)' }}>/</span>
             <span style={{ color: color }}>{weaponName.toUpperCase()}</span>
           </div>
@@ -140,10 +140,10 @@ export default function WeaponDetailClient({
               </div>
 
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link href="/meta" style={{ padding: '11px 20px', background: color, color: (color === '#ffd700' || color === '#00d4ff' || color === '#ff8800' || color === '#00ff88' || color === '#39ff14') ? '#000' : '#fff', fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2, textDecoration: 'none' }}>
+                <Link href="/marathon/meta" style={{ padding: '11px 20px', background: color, color: (color === '#ffd700' || color === '#00d4ff' || color === '#ff8800' || color === '#00ff88' || color === '#39ff14') ? '#000' : '#fff', fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2, textDecoration: 'none' }}>
                   LIVE TIER LIST →
                 </Link>
-                <Link href="/advisor" style={{ padding: '11px 20px', background: 'transparent', border: '1px solid #22252e', color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: 1, borderRadius: 2, textDecoration: 'none' }}>
+                <Link href="/marathon/advisor" style={{ padding: '11px 20px', background: 'transparent', border: '1px solid #22252e', color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: 1, borderRadius: 2, textDecoration: 'none' }}>
                   BUILD ADVISOR →
                 </Link>
               </div>
@@ -276,7 +276,7 @@ export default function WeaponDetailClient({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ Build AI's Picks</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <Link href="/advisor" style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
+              <Link href="/marathon/advisor" style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 6 }}>

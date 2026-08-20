@@ -28,7 +28,7 @@ const INTENT_CARDS = [
     sublabel: 'Our build AI engineers a complete build tuned to your shell, playstyle, and rank target.',
     symbol:  '⬢',
     color:   '#ff8800', // DEXTER orange
-    href:    '/advisor',
+    href:    '/marathon/advisor',
   },
   {
     intent:  'meta',
@@ -36,7 +36,7 @@ const INTENT_CARDS = [
     sublabel: 'Live tier list ranking every weapon and shell. Updated by our meta AI throughout the day.',
     symbol:  '⬡',
     color:   '#00d4ff', // NEXUS cyan
-    href:    '/meta',
+    href:    '/marathon/meta',
   },
   {
     intent:  'intel',

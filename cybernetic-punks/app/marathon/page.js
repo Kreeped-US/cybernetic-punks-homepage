@@ -323,7 +323,7 @@ export default async function Home() {
             <div className="hp-product-grid">
 
               {/* CARD 1: TIER LIST (Maker folded in) */}
-              <Link href="/meta" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00ff41', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
+              <Link href="/marathon/meta" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00ff41', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#00ff41', letterSpacing: 1, lineHeight: 1 }}>TIER LIST</div>
@@ -362,7 +362,7 @@ export default async function Home() {
               </Link>
 
               {/* CARD 2: BUILD ADVISOR */}
-              <Link href="/advisor" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #ff8800', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
+              <Link href="/marathon/advisor" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #ff8800', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
                 <div>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#ff8800', letterSpacing: 1, lineHeight: 1 }}>BUILD ADVISOR</div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>Tell us your shell, we build the loadout</div>
@@ -484,7 +484,7 @@ export default async function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: '#00ff88', textTransform: 'uppercase', fontFamily: 'monospace' }}>Creator Spotlights</span>
                 <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-                <Link href="/rising" style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#00ff88', textDecoration: 'none', fontFamily: 'monospace' }}>RISING CREATORS -&gt;</Link>
+                <Link href="/marathon/rising" style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#00ff88', textDecoration: 'none', fontFamily: 'monospace' }}>RISING CREATORS -&gt;</Link>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
                 {spotlights.map(function(item) {

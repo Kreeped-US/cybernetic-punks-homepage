@@ -22,7 +22,7 @@
 export const MODE_PAGES = [
   {
     name: 'Vault Breaker',
-    href: '/modes/vault-breaker',
+    href: '/marathon/modes/vault-breaker',
     // Slug contract, same as game_modes.available_on: map slug(s) or 'all'.
     available_on: 'cryo-archive',
     blurb: 'Roguelite PvE Vault runs',
