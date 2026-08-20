@@ -7,6 +7,73 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Network root: 3 Fable rulings (positioning + game-scoped routes + onboarding)
+
+Foundational doctrine for the network-root remodel (cyberneticpunks.com). The root
+read found: real Discord-OAuth account system (/join, network_account +
+player_profiles, /u/[handle] profiles, /welcome onboarding - NOT just email
+capture); root has its own network identity (not a bare game-picker); BUT ~19
+Marathon-content routes squat on generic ROOT namespace, and the "tools" row
+points entirely at Marathon. Three rulings:
+
+### Ruling 1 - Positioning (identity copy, NOT a rankings instrument)
+Correction: the root's identity sentence is written for HUMANS + brand identity,
+not query-matching. Rankings accrue to game+entity surfaces ("dmz gunsmith"); the
+root ranks for the BRAND; category head terms are unwinnable at DA 23. The network
+"always comes up in FPS searches" by ADDING GAMES (each = its own keyword
+universe), not by broadening the tagline's adjectives. The root's job is post-
+discovery: the stranger who landed on a game page clicks through to learn what the
+site IS.
+LANGUAGE RULING: one word added -> "The VERIFIED intelligence network for
+competitive shooters." "Verified" = the moat in the masthead (the one claim wikis/
+aggregators/AI can't copy), and it passes anti-hype (checkable claim, unlike best/
+#1/ultimate). Layered copy under it: identity -> proof mechanics ("Human-verified
+data. Every claim sourced.") -> games as concrete instances. BOUNDARY: A7-for-nouns
+(demand-naming) governs product/nav NOUNS; the identity sentence is governed by
+meaning + moat, not search volume. Different surfaces, different rules.
+
+### Ruling 2 - Game-scoped routes (the "migration") + additive SEO confirmed
+Additive principle CONFIRMED: games target separate keyword universes, don't
+compete. Architecture ruling: YES, game-scope everything. The ~19 Marathon-era
+routes squatting at root (/meta, /weapons, /mods, /shells, /guides, /builds,
+/leaderboard, /stats, /status, /player-count, /cradle, /factions, /matchups,
+/ranked, /uniques, /maps, /rising, /sitrep, /creators) migrate to /marathon/*.
+Root reserved for network identity + game directory + accounts. Bonus: the game
+token in the path IS demand vocab (/dmz/meta matches "dmz meta" in-URL).
+MIGRATION DOCTRINE: 301s one-hop permanent-forever (redirects are infrastructure,
+not transition); every internal link updates to new URLs SAME deploy (never point
+internal links at redirects - leaks authority); sitemap swaps immediately; enroll
+new URLs in Consumer C, treat the weeks-scale re-eval dip as DATA not anxiety.
+TIMING: before Oct 23, inside Marathon's maintenance-mode LOW-TRAFFIC window -
+migrations cost least when traffic's lowest, AND DMZ launches INTO the game-scoped
+structure day one (the growth bet's URLs never migrate). FLAG: /tools/build/[shell]
+is also Marathon-shaped root namespace - include in scoping or defer explicitly.
+
+### Ruling 3 - Game-intent capture at registration (the onboarding journey)
+One network account (the spine; future tier flag lives here), game PREFERENCES on
+it, per-game surfaces rendered from them - NEVER per-game accounts. Three
+constraints: (a) CONFIRM don't interrogate - arrival route IS the intent signal
+(registering from /dmz/* = DMZ-intent); pre-select from referrer, confirm, multi-
+select, fully skippable (no mandatory game-quiz friction). (b) Pitch obeys anti-
+hype - promise only what EXISTS (launch notify, live coverage, saved builds when
+tools go live/status-labeled); "be there when it deploys" is a TRUE offer; no
+"join the revolution"/founding-member theater. (c) Intent data = plan-layer signal
+through the operator, NEVER enters a prompt (same firewall as all demand data).
+
+### The "complete circle" (what the remodel delivers, per the 3 rulings)
+Root says what it verifiably IS (refine copy, don't rewrite) -> every game in
+parallel structure (game-scoped routes) -> stranger->involved runs on true offers
++ signals the visitor already gave.
+
+### Work-streams (3 separate projects, by size/urgency)
+1. Positioning copy (Ruling 1) - smallest, cleanest, anytime.
+2. Onboarding journey (Ruling 3) - medium; builds on the existing account system.
+3. Route migration (Ruling 2) - BIGGEST + time-gated (before Oct 23); needs its own
+   staged plan (like the /dmz redesign staging). ~19 routes + /tools/build/[shell].
+Next: CoD NEXT Thu 08-21 (DMZ source -> Keys build + nav 6th slot).
+
+---
+
 ## 2026-08-20 - DMZ nav restructure: labels + structure + behavior (done)
 
 The DMZ nav was reworked in two gated commits under the two Fable rulings recorded
