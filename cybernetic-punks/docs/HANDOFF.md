@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Ruling 2 (route migration) COMPLETE - closure + board state
+
+The full Marathon-namespace migration is done, deployed, and verified on prod.
+Arc: 24191a4 -> 2345670 (S1) -> c359f9e (S2) -> e873e8c (S3) -> 4291eb4 (S4) ->
+90b00d0 (/intel) -> 714b5f2 (/tools/build). Main = 714b5f2.
+
+### Final state
+Every Marathon content/tool route is now under /marathon/*. Root holds ONLY network
+identity/accounts (/, /about, /editors, /join, /me, /u, /welcome, /profile-preview,
+/admin) + /dmz (own namespace). No game squats on root. Root is free for network
+identity + future games; DMZ launches Oct 23 INTO the structure (its URLs never
+migrate). /tools/build landed at /marathon/tools/build (option a - minimal move;
+DMZ builds already game-scoped at /dmz/builds/[weapon]; blueprint relationship is
+architectural, not a shared route).
+
+### Verified (post-deploy, prod, all PASS)
+1. Redirects one-hop on prod (incl. the V85 consolidation source firing ahead of
+   the /intel wildcard - no chain).
+2. Consumer C inspecting the NEW /marathon/* URLs (clean flip at deploy).
+3. Cannibalization classifier correct 8/8 on the real code path (confirms the
+   latent entity-misclassification repair, not just happy path).
+Two latent prod bugs were flushed + fixed by the migration: redirect chains
+(play-of-the-day/top-build -> moved /builds) and firstSegment() entity
+misclassification (parts[1]=='marathon' for all moved routes).
+Intel glut-clear ran EARLY (operator call): 1,200 dead noindexed articles
+hard-deleted, 373 survivors, recoverable snapshots in backups/ (gitignored).
+
+### Only remaining migration item: a passive WATCH
+Consumer C re-index recovery over ~weeks (~373 /marathon/intel URLs re-evaluating;
+the dip is EXPECTED DATA, not regression). Nothing to do - observe.
+
+### Board / next (post-migration)
+- Root remodel: 2 Fable rulings still UN-BUILT (now on clean game-scoped ground):
+  Ruling 1 (positioning copy: "The VERIFIED intelligence network for competitive
+  shooters" + layered identity->proof->games) and Ruling 3 (onboarding: confirm-
+  don't-interrogate game-intent capture). Ruling 1 is the next intended piece.
+- CoD NEXT: Thu 08-21 (tomorrow) - fresh DMZ source (likely Keys) -> unblocks the
+  held 6th nav slot + new DMZ content. Time-sensitive when it lands.
+- DMZ launch prep for Oct 23.
+- Recurring: pipeline dedup gap (2 near-dup-article cases observed) - investigate.
+
+---
+
 ## 2026-08-20 - /tools/build -> /marathon/tools/build (LAST deferred route; Ruling 2 FULLY done) [HELD]
 
 Migrated the final deferred Marathon root route - the shell build tool - completing
