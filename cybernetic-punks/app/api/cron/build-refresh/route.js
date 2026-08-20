@@ -11,7 +11,7 @@
 //      NOT flag builds stale.)
 //   2. REGENERATE each stale build via the shared regenerateCanonical helper (fresh
 //      build_json + source_updated_at + cited used_sources -- byte-identical to the backfill).
-//   3. revalidatePath('/tools/build/[slug]') so Next serves the fresh static page (busts the
+//   3. revalidatePath('/marathon/tools/build/[slug]') so Next serves the fresh static page (busts the
 //      route's revalidate:false cache on demand -- the first revalidatePath use in the app).
 //
 // REGENERATE-ALL-STALE via a GLOBAL MAX (simple; Fable: simple-and-exercised beats
@@ -113,7 +113,7 @@ export async function GET(req) {
         continue;
       }
       // canonical URL = /tools/build/[shell]; weapon variant = /tools/build/[shell]/[weapon_slug].
-      const path = b.weapon_slug ? '/tools/build/' + b.shell + '/' + b.weapon_slug : '/tools/build/' + b.shell;
+      const path = b.weapon_slug ? '/marathon/tools/build/' + b.shell + '/' + b.weapon_slug : '/marathon/tools/build/' + b.shell;
       revalidatePath(path);   // on-demand -> busts the revalidate:false static cache
       console.log('[build-refresh] refreshed ' + b.slug + ' (used_sources='
         + (Array.isArray(res.usedSources) ? res.usedSources.length : '?') + ') + revalidated ' + path);

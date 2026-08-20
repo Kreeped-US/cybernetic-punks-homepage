@@ -147,7 +147,7 @@ export async function computeEligible() {
   if (buildsErr) throw new Error('[sitemap] build_pages read failed: ' + buildsErr.message);
   // Canonical hub -> /tools/build/[shell]; weapon variant (A2) -> /tools/build/[shell]/[weapon].
   (builds || []).forEach((b) => {
-    const url = b.weapon_slug ? BASE + '/tools/build/' + b.shell + '/' + b.weapon_slug : BASE + '/tools/build/' + b.shell;
+    const url = b.weapon_slug ? BASE + '/marathon/tools/build/' + b.shell + '/' + b.weapon_slug : BASE + '/marathon/tools/build/' + b.shell;
     add(url, M, 'build', lm(b.updated_at), 'weekly', 0.8);
   });
 

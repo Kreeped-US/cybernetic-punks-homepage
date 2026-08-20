@@ -826,7 +826,7 @@ export default async function BuildsPage() {
 
                       {/* Canonical build page (route slice A1). Every shell has one, so this
                           is unconditional -- the nav -> /builds -> canonical discovery path. */}
-                      <Link href={'/tools/build/' + shell.name.toLowerCase()} style={{ display: 'block', marginTop: 10, paddingTop: 8, borderTop: '1px solid ' + BORDER, fontFamily: 'monospace', fontSize: 9, color: color, letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
+                      <Link href={'/marathon/tools/build/' + shell.name.toLowerCase()} style={{ display: 'block', marginTop: 10, paddingTop: 8, borderTop: '1px solid ' + BORDER, fontFamily: 'monospace', fontSize: 9, color: color, letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
                         BEST {shell.name.toUpperCase()} BUILD →
                       </Link>
                       {articleCount > 0 && (

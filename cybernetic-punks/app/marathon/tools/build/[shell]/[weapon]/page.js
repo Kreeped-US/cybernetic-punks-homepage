@@ -101,7 +101,7 @@ export async function generateMetadata({ params }) {
   const weaponName = (await weaponNameForSlug(getSupabase(), weapon)) || titleCase(weapon);
   const b = row.build_json;
   const primary = b.primary_weapon && b.primary_weapon.name ? b.primary_weapon.name : weaponName;
-  const url = BASE + '/tools/build/' + shell + '/' + weapon;
+  const url = BASE + '/marathon/tools/build/' + shell + '/' + weapon;
   const description =
     'The best Marathon ' + name + ' ' + weaponName + ' loadout: ' + primary +
     ', plus weapon mods, shell cores, implants, and a Cradle stat plan — built on verified in-game stats.';
@@ -129,15 +129,15 @@ export default async function VariantBuildPage({ params }) {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
-      { '@type': 'ListItem', position: 2, name: 'Builds', item: BASE + '/tools/build' },
-      { '@type': 'ListItem', position: 3, name: name + ' Build', item: BASE + '/tools/build/' + shell },
-      { '@type': 'ListItem', position: 4, name: name + ' ' + weaponName + ' Build', item: BASE + '/tools/build/' + shell + '/' + weapon },
+      { '@type': 'ListItem', position: 2, name: 'Builds', item: BASE + '/marathon/tools/build' },
+      { '@type': 'ListItem', position: 3, name: name + ' Build', item: BASE + '/marathon/tools/build/' + shell },
+      { '@type': 'ListItem', position: 4, name: name + ' ' + weaponName + ' Build', item: BASE + '/marathon/tools/build/' + shell + '/' + weapon },
     ],
   };
   const webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',
     name: name + ' ' + weaponName + ' Build — Marathon',
-    url: BASE + '/tools/build/' + shell + '/' + weapon,
+    url: BASE + '/marathon/tools/build/' + shell + '/' + weapon,
     isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: BASE },
   };
 
@@ -150,7 +150,7 @@ export default async function VariantBuildPage({ params }) {
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 12, fontFamily: 'monospace', letterSpacing: 1 }}>
             <Link href="/marathon/shells" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>Shells</Link>
-            {' / '}<Link href={'/tools/build/' + shell} style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>{name} Build</Link>
+            {' / '}<Link href={'/marathon/tools/build/' + shell} style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>{name} Build</Link>
             {' / '}<span style={{ color: accent }}>{weaponName}</span>
           </div>
           <h1 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 14px' }}>
@@ -159,10 +159,10 @@ export default async function VariantBuildPage({ params }) {
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 820, margin: '0 0 12px' }}>
             A complete Marathon {name} loadout built around the {weaponName} — weapon mods, shell cores,
             implants, and a{' '}
-            <Link href={'/tools/build/' + shell + '#cradle'} style={{ color: accent, textDecoration: 'none' }}>Cradle stat-track plan</Link>{' '}
+            <Link href={'/marathon/tools/build/' + shell + '#cradle'} style={{ color: accent, textDecoration: 'none' }}>Cradle stat-track plan</Link>{' '}
             — engineered from the {name}&rsquo;s playstyle and cross-referenced against real in-game stat
             values. See the full{' '}
-            <Link href={'/tools/build/' + shell} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>{name} build hub</Link>{' '}
+            <Link href={'/marathon/tools/build/' + shell} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>{name} build hub</Link>{' '}
             and the <Link href="/marathon/weapons" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>{weaponName}</Link> stats behind these picks.
           </p>
           <div>

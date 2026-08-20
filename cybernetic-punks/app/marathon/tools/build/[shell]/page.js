@@ -89,7 +89,7 @@ export async function generateMetadata({ params }) {
   const description =
     'The best Marathon ' + name + ' loadout: ' + primary +
     ', plus weapon mods, shell cores, implants, and a Cradle stat plan — built on verified in-game stats.';
-  const url = BASE + '/tools/build/' + shell;
+  const url = BASE + '/marathon/tools/build/' + shell;
   return {
     title,
     description,
@@ -113,14 +113,14 @@ export default async function BuildPage({ params }) {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
-      { '@type': 'ListItem', position: 2, name: 'Builds', item: BASE + '/tools/build' },
-      { '@type': 'ListItem', position: 3, name: name + ' Build', item: BASE + '/tools/build/' + shell },
+      { '@type': 'ListItem', position: 2, name: 'Builds', item: BASE + '/marathon/tools/build' },
+      { '@type': 'ListItem', position: 3, name: name + ' Build', item: BASE + '/marathon/tools/build/' + shell },
     ],
   };
   const webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',
     name: name + ' Build — Marathon Season 2',
-    url: BASE + '/tools/build/' + shell,
+    url: BASE + '/marathon/tools/build/' + shell,
     isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: BASE },
   };
 

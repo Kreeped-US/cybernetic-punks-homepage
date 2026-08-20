@@ -184,6 +184,11 @@ const nextConfig = {
       // specific /intel/<old-slug> consolidation rules above (faction/BR33/Rook/V85) still
       // match first; their destinations were repointed to /marathon/* to stay one-hop.
       { source: '/intel/:path*', destination: '/marathon/intel/:path*', permanent: true },
+      // /tools/build migration (2026-08-20): the LAST deferred Marathon root route (the
+      // shell build tool) -> /marathon/tools/build, completing Ruling 2 (no game squats on
+      // root). One wildcard covers /tools/build, /tools/build/[shell], and the
+      // [shell]/[weapon] variant. GSC map keeps the old 'tools' segment during age-out.
+      { source: '/tools/build/:path*', destination: '/marathon/tools/build/:path*', permanent: true },
     ];
   },
 };

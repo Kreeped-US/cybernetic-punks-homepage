@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - /tools/build -> /marathon/tools/build (LAST deferred route; Ruling 2 FULLY done) [HELD]
+
+Migrated the final deferred Marathon root route - the shell build tool - completing
+Ruling 2 (no game content squats on the root namespace). Same one-atomic-commit pattern
+as the 6 prior migration stages. HELD for operator FF-merge + verification gate.
+
+### Change-set
+- Moved app/tools/ -> app/marathon/tools/ (git renames: /tools/build/[shell] + [shell]/
+  [weapon] + BuildView + BuildRefiner). GAME='marathon' hardcoded, no cross-game logic.
+  Only relative import was [weapon]/page.js -> ../BuildRefiner (a SIBLING in [shell]/ that
+  moves with it, so the relative offset is preserved - no @/ conversion needed).
+- 21 anchored /tools/build -> /marathon/tools/build replacements: the 2 tool pages
+  (canonicals/OG/BreadcrumbList/WebPage JSON-LD), 4 inbound links (advisor, builds hub,
+  cradle, shells detail), the sitemap build_pages loop (eligible.js), and the
+  build-refresh cron revalidatePath (build-silent if missed - handled).
+- Redirect (308): one /tools/build/:path* -> /marathon/tools/build/:path* wildcard, placed
+  last. S4 chain-scan: NO redirect destination targeted /tools/build (no chains to repoint).
+- GSC map (storage.js): old 'tools' segment KEPT for redirected-URL attribution during age-out.
+
+### Verification (pre-merge)
+next build exit 0, zero import/module errors (generateStaticParams reads build_pages at build,
+succeeds at the new path; dynamicParams=false still 404s unknown shells). curl: /marathon/
+tools/build/destroyer + /destroyer/v85-circuit-breaker (weapon variant) -> 200; old
+/tools/build/destroyer(/v85...) -> 308 -> new; bare /tools/build -> 308 -> /marathon/tools/
+build. Sitemap: 14 new /marathon/tools/build paths, zero old /tools. POST-MOVE grep: zero
+old-path /tools/build functional links (the authoritative gate). No /marathon/marathon, no
+@/lib/marathon corruption. byte-clean (pure ASCII). eslint: no new errors (pre-existing
+unescaped-entities/no-img in advisor/shells, untouched by the path-token swap).
+
+### RULING 2 COMPLETE - the root migration is fully finished
+Every Marathon content/tool route is now under /marathon/*. The root holds ONLY network
+identity/accounts (/, /about, /editors, /join, /me, /u, /welcome, /profile-preview, /admin)
+and /dmz (own namespace). No game squats on root. The DMZ-inheritance memo can now name the
+DMZ build tool freely - Marathon landed at /marathon/tools/build (option a); DMZ builds
+already live at /dmz/builds/[weapon] (game-scoped). The build-tool BLUEPRINT relationship
+(Marathon tool = template for DMZ) is architectural, not a shared route.
+
+---
+
 ## 2026-08-20 - /intel migration POST-DEPLOY VERIFICATION (3 tests, all PASS on prod)
 
 Follows the capstone migration entry (main 90b00d0). All three post-deploy checks run

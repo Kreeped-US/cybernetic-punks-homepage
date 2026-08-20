@@ -187,7 +187,7 @@ export default function ShellDetailClient({
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {/* Canonical build page (route slice A1) -- the primary CTA + the internal
                     link that makes /tools/build/[shell] discoverable, not orphaned. */}
-                <Link href={'/tools/build/' + slug} style={{
+                <Link href={'/marathon/tools/build/' + slug} style={{
                   padding: '11px 20px',
                   background: color, color: color === '#ffd700' || color === '#00d4ff' || color === '#ff8800' || color === '#00ff88' ? '#000' : '#fff',
                   fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2,

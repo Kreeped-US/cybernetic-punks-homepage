@@ -284,7 +284,7 @@ export default function CradleClient({ nodes }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {['assassin', 'destroyer', 'recon', 'rook', 'sentinel', 'thief', 'triage', 'vandal'].map(function (s) {
               return (
-                <Link key={s} href={'/tools/build/' + s + '#cradle'} style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.25)', borderRadius: 2, padding: '3px 8px', letterSpacing: 0.5, fontWeight: 700, textDecoration: 'none', textTransform: 'capitalize' }}>{s} cradle build</Link>
+                <Link key={s} href={'/marathon/tools/build/' + s + '#cradle'} style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.25)', borderRadius: 2, padding: '3px 8px', letterSpacing: 0.5, fontWeight: 700, textDecoration: 'none', textTransform: 'capitalize' }}>{s} cradle build</Link>
               );
             })}
           </div>

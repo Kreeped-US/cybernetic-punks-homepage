@@ -979,7 +979,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                       OPEN THE CRADLE PLANNER →
                     </Link>
                     {build.shell && (
-                      <Link href={'/tools/build/' + build.shell.toLowerCase() + '#cradle'} style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>
+                      <Link href={'/marathon/tools/build/' + build.shell.toLowerCase() + '#cradle'} style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>
                         {build.shell.toUpperCase()} CRADLE BUILD →
                       </Link>
                     )}
