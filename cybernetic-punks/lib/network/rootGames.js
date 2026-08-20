@@ -69,7 +69,7 @@ export const ROOT_GAMES = [
     keyRoutes: [
       { label: 'Shells',   href: '/marathon/shells' },
       { label: 'Matchups', href: '/marathon/matchups' },
-      { label: 'Uniques',  href: '/uniques' },
+      { label: 'Uniques',  href: '/marathon/uniques' },
       { label: 'Factions', href: '/marathon/factions' },
       { label: 'Ranked',   href: '/marathon/ranked' },
     ],

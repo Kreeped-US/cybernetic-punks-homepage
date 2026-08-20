@@ -418,7 +418,7 @@ export default async function NetworkRoot() {
             <div className="nr-tools nr-stagger">
               {[
                 { href: '/marathon/meta',        glyph: '◈', label: 'Tier list',     sub: 'Weapons & shells ranked' },
-                { href: '/leaderboard', glyph: '▲', label: 'Leaderboard',   sub: 'Top runners tracked' },
+                { href: '/marathon/leaderboard', glyph: '▲', label: 'Leaderboard',   sub: 'Top runners tracked' },
                 { href: '/marathon/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
                 { href: '/marathon/player-count',glyph: '◱', label: 'Player count',   sub: 'Live Steam concurrents' },
                 { href: '/marathon/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },

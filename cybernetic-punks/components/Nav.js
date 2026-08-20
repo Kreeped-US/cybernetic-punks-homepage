@@ -20,7 +20,7 @@ var NAV_ITEMS = [
   { label: 'MATCHUPS', href: '/marathon/matchups' },
   { label: 'WEAPONS',  href: '/marathon/weapons' },
   { label: 'MODS',     href: '/marathon/mods' },
-  { label: 'UNIQUES',  href: '/uniques' },
+  { label: 'UNIQUES',  href: '/marathon/uniques' },
   { label: 'FACTIONS', href: '/marathon/factions' },
   {
     label: 'INTEL',

@@ -76,7 +76,7 @@ export async function computeEligible() {
     [BASE + '/marathon/modes/vault-breaker', facts, 'daily', 0.9],
     [BASE + '/marathon/rising', undefined, 'daily', 0.8],
     [BASE + '/marathon/stats', STATS_UPDATED, 'weekly', 0.75],
-    [BASE + '/leaderboard', LEADERBOARD_UPDATED, 'daily', 0.75],
+    [BASE + '/marathon/leaderboard', LEADERBOARD_UPDATED, 'daily', 0.75],
     [BASE + '/marathon/status', undefined, 'hourly', 0.7],
     [BASE + '/marathon/player-count', undefined, 'hourly', 0.8],
     [BASE + '/editors', EDITORS_UPDATED, 'weekly', 0.7],
@@ -126,7 +126,7 @@ export async function computeEligible() {
   try {
     const { data: uniques } = await supabase.from('unique_weapons').select('slug, updated_at').order('slug');
     hubLastMod.uniques = maxUpdatedAt(uniques);
-    (uniques || []).filter((u) => u.slug).forEach((u) => add(BASE + '/uniques/' + u.slug, M, 'unique', lm(u.updated_at), 'weekly', 0.75));
+    (uniques || []).filter((u) => u.slug).forEach((u) => add(BASE + '/marathon/uniques/' + u.slug, M, 'unique', lm(u.updated_at), 'weekly', 0.75));
   } catch (err) { console.error('[sitemap] unique fetch threw:', err); }
 
   // ── BUILD PAGES (goal-neutral canonicals; type='build') ─────────────────────
@@ -206,7 +206,7 @@ export async function computeEligible() {
 
   // ── ENTITY HUBS (dated from their rows via hubLastMod; type='hub') ──────────
   [['/marathon/shells', hubLastMod.shells, 'daily', 0.85], ['/marathon/weapons', hubLastMod.weapons, 'daily', 0.85],
-   ['/marathon/mods', hubLastMod.mods, 'weekly', 0.85], ['/uniques', hubLastMod.uniques, 'weekly', 0.85],
+   ['/marathon/mods', hubLastMod.mods, 'weekly', 0.85], ['/marathon/uniques', hubLastMod.uniques, 'weekly', 0.85],
    ['/marathon/maps', hubLastMod.maps, 'weekly', 0.85]].forEach(([route, max, cf, pr]) =>
     add(BASE + route, M, 'hub', lm(max), cf, pr));
 

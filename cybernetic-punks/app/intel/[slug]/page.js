@@ -388,7 +388,7 @@ function InlineStatCard({ item, type, color }) {
   // Guarded on item.slug -- a unique row with no slug renders as a span rather
   // than a link to /uniques/undefined.
   var Wrapper = (type === 'unique' && item.slug) ? Link : 'span';
-  var wrapperProps = (type === 'unique' && item.slug) ? { href: '/uniques/' + item.slug } : {};
+  var wrapperProps = (type === 'unique' && item.slug) ? { href: '/marathon/uniques/' + item.slug } : {};
 
   return (
     <Wrapper

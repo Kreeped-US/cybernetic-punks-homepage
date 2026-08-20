@@ -253,7 +253,7 @@ export default async function PlayerCountPage() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
           {[
             { href: '/marathon/status', label: 'SERVER STATUS', c: '#00ff88' },
-            { href: '/leaderboard', label: 'LEADERBOARD', c: '#ffd700' },
+            { href: '/marathon/leaderboard', label: 'LEADERBOARD', c: '#ffd700' },
             { href: '/marathon/stats', label: 'STATS TRACKER', c: STEAM },
             { href: '/marathon/meta', label: 'META TIER LIST', c: '#00d4ff' },
           ].map(function (l) {

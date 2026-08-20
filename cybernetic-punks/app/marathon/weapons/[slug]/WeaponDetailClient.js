@@ -239,7 +239,7 @@ export default function WeaponDetailClient({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <span style={{ fontSize: 10, color: '#ff2d55', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Unique Variants</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <Link href="/uniques" style={{ fontSize: 9, color: '#ff2d55', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL UNIQUES →</Link>
+              <Link href="/marathon/uniques" style={{ fontSize: 9, color: '#ff2d55', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL UNIQUES →</Link>
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 600 }}>
               Unique weapons based on the {weaponName}, with permanently locked mods.
@@ -249,7 +249,7 @@ export default function WeaponDetailClient({
               {uniqueVariants.map(function(u) {
                 var uColor = RARITY_COLORS[u.rarity] || '#ff2d55';
                 return (
-                  <Link key={u.name} href={'/uniques/' + u.slug} className="uniq-row" style={{
+                  <Link key={u.name} href={'/marathon/uniques/' + u.slug} className="uniq-row" style={{
                     display: 'block', background: '#1a1d24', border: '1px solid #22252e',
                     borderLeft: '3px solid ' + uColor, borderRadius: '0 3px 3px 0',
                     padding: '12px 16px', textDecoration: 'none', transition: 'background 0.1s',

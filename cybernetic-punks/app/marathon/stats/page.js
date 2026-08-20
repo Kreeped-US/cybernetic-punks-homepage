@@ -545,7 +545,7 @@ export default function StatsPage() {
             }}>
               JOIN DISCORD
             </a>
-            <Link href="/leaderboard" style={{
+            <Link href="/marathon/leaderboard" style={{
               fontFamily: 'Orbitron, monospace',
               fontSize: 12,
               fontWeight: 700,
@@ -645,7 +645,7 @@ export default function StatsPage() {
           }}>
             PLAYER COUNT →
           </Link>
-          <Link href="/leaderboard" style={{
+          <Link href="/marathon/leaderboard" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,
             fontWeight: 700,

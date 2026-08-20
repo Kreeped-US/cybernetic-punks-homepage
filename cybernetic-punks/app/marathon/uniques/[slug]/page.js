@@ -12,7 +12,7 @@
 // show the unique's identity + acquisition + the base link and DO NOT fabricate
 // numbers. Every schema value is real first-party data.
 
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { entitySlugFor } from '@/lib/coverage';
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: title + ' | CyberneticPunks',
       description: desc,
-      url: 'https://cyberneticpunks.com/uniques/' + slug,
+      url: 'https://cyberneticpunks.com/marathon/uniques/' + slug,
       siteName: 'CyberneticPunks',
       type: 'website',
       images: [{ url: ogImage, width: 1200, height: 630 }],
@@ -92,7 +92,7 @@ export async function generateMetadata({ params }) {
       description: desc,
       images: [ogImage],
     },
-    alternates: { canonical: 'https://cyberneticpunks.com/uniques/' + slug },
+    alternates: { canonical: 'https://cyberneticpunks.com/marathon/uniques/' + slug },
   };
 }
 
@@ -127,12 +127,12 @@ export default async function UniqueDetailPage({ params }) {
   ].filter(Boolean) : [];
 
   // ── JSON-LD (mirror the weapon page; only real values) ──
-  var pageUrl = 'https://cyberneticpunks.com/uniques/' + slug;
+  var pageUrl = 'https://cyberneticpunks.com/marathon/uniques/' + slug;
   var breadcrumbSchema = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Unique Weapons', item: 'https://cyberneticpunks.com/uniques' },
+      { '@type': 'ListItem', position: 2, name: 'Unique Weapons', item: 'https://cyberneticpunks.com/marathon/uniques' },
       { '@type': 'ListItem', position: 3, name: u.name, item: pageUrl },
     ],
   };
@@ -181,7 +181,7 @@ export default async function UniqueDetailPage({ params }) {
           <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '36px 24px' }}>
             {/* Breadcrumb */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-              <Link href="/uniques" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>UNIQUE WEAPONS</Link>
+              <Link href="/marathon/uniques" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>UNIQUE WEAPONS</Link>
               <span style={{ color: 'rgba(255,255,255,0.15)' }}>/</span>
               <span style={{ color: color }}>{u.name.toUpperCase()}</span>
             </div>
@@ -285,13 +285,13 @@ export default async function UniqueDetailPage({ params }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <span style={{ fontSize: 10, color: '#ff2d55', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>More Unique Weapons</span>
                 <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-                <Link href="/uniques" style={{ fontSize: 9, color: '#ff2d55', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL UNIQUES &rarr;</Link>
+                <Link href="/marathon/uniques" style={{ fontSize: 9, color: '#ff2d55', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>ALL UNIQUES &rarr;</Link>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 6 }}>
                 {siblings.map(function (s) {
                   var sc = rarityColor(s.rarity);
                   return (
-                    <Link key={s.slug} href={'/uniques/' + s.slug} className="uq-card" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + sc, borderRadius: '0 3px 3px 0', padding: '12px 14px', textDecoration: 'none', transition: 'background 0.1s' }}>
+                    <Link key={s.slug} href={'/marathon/uniques/' + s.slug} className="uq-card" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + sc, borderRadius: '0 3px 3px 0', padding: '12px 14px', textDecoration: 'none', transition: 'background 0.1s' }}>
                       <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: '#fff', letterSpacing: 0.5, marginBottom: 4 }}>{s.name.toUpperCase()}</div>
                       <div style={{ fontSize: 9, color: sc, letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace' }}>{(s.rarity || '').toUpperCase()}{s.base_weapon ? ' · ' + s.base_weapon.toUpperCase() : ''}</div>
                     </Link>

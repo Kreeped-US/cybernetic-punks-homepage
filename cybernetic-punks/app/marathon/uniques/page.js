@@ -12,7 +12,7 @@
 // ItemList URLs use #slug anchors on this hub for now; when Path B adds
 // /uniques/[slug] detail pages, the slugs already exist to upgrade these.
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { entitySlugFor } from '@/lib/coverage';
 import UniquesHubClient from './UniquesHubClient';
@@ -25,7 +25,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Unique Weapons — Prestige & Deluxe Cryo Variants | CyberneticPunks',
     description: 'Named unique weapon variants in Marathon — what they\'re based on, their locked mods, and where they drop.',
-    url: 'https://cyberneticpunks.com/uniques',
+    url: 'https://cyberneticpunks.com/marathon/uniques',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -35,7 +35,7 @@ export const metadata = {
     title: 'Marathon Unique Weapons — Prestige & Deluxe Cryo Variants | CyberneticPunks',
     description: 'Named unique weapon variants — base weapons, locked mods, and drop sources.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/uniques' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/uniques' },
 };
 
 export default async function UniquesIndexPage() {
@@ -67,7 +67,7 @@ export default async function UniquesIndexPage() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Unique Weapons', item: 'https://cyberneticpunks.com/uniques' },
+          { '@type': 'ListItem', position: 2, name: 'Unique Weapons', item: 'https://cyberneticpunks.com/marathon/uniques' },
         ],
       }) }} />
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
@@ -84,7 +84,7 @@ export default async function UniquesIndexPage() {
         '@type': 'CollectionPage',
         name: 'Marathon Unique Weapons — Prestige & Deluxe Variants',
         description: 'Named unique weapon variants in Marathon, the base weapons they derive from, their locked mods, and where they drop.',
-        url: 'https://cyberneticpunks.com/uniques',
+        url: 'https://cyberneticpunks.com/marathon/uniques',
         mainEntity: {
           '@type': 'ItemList',
           itemListElement: ldOrder.map(function(u, i) {
@@ -92,7 +92,7 @@ export default async function UniquesIndexPage() {
               '@type': 'ListItem',
               position: i + 1,
               name: u.name + ' — Marathon ' + (u.rarity || '') + ' Unique Weapon',
-              url: 'https://cyberneticpunks.com/uniques/' + (u.slug || entitySlugFor('weapon', u.name)),
+              url: 'https://cyberneticpunks.com/marathon/uniques/' + (u.slug || entitySlugFor('weapon', u.name)),
             };
           }),
         },

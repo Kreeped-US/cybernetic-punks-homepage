@@ -19,12 +19,12 @@ const nextConfig = {
       },
       {
         source: '/play-of-the-day',
-        destination: '/builds',
+        destination: '/marathon/builds',
         permanent: true,
       },
       {
         source: '/top-build',
-        destination: '/builds',
+        destination: '/marathon/builds',
         permanent: true,
       },
       {
@@ -78,22 +78,22 @@ const nextConfig = {
       // acquisition, so it is redirected, not merged.
       {
         source: '/intel/br33-victory-lap-the-new-mid-season-precision-meta-contender-jpc2',
-        destination: '/uniques/br33-victory-lap',
+        destination: '/marathon/uniques/br33-victory-lap',
         permanent: true,
       },
       {
         source: '/intel/br33-victory-lap-unique-mid-season-precision-rifle-meta-revolution-adsn',
-        destination: '/uniques/br33-victory-lap',
+        destination: '/marathon/uniques/br33-victory-lap',
         permanent: true,
       },
       {
         source: '/intel/br33-victory-lap-unique-shows-mid-season-meta-shift-to-mobility-rifles-3an0',
-        destination: '/uniques/br33-victory-lap',
+        destination: '/marathon/uniques/br33-victory-lap',
         permanent: true,
       },
       {
         source: '/intel/br33-victory-lap-unique-weapon-guide-complete-unlock-and-build-analysi-spks',
-        destination: '/uniques/br33-victory-lap',
+        destination: '/marathon/uniques/br33-victory-lap',
         permanent: true,
       },
       // Rook survivalist-build consolidation (2026-08-04): the DUPLICATE-SUPPRESSED
@@ -172,6 +172,12 @@ const nextConfig = {
       { source: '/mods/:path*', destination: '/marathon/mods/:path*', permanent: true },
       { source: '/weapons/:path*', destination: '/marathon/weapons/:path*', permanent: true },
       { source: '/guides/:path*', destination: '/marathon/guides/:path*', permanent: true },
+      // Root-route migration STAGE 4 (2026-08-20): the final in-scope routes, held for
+      // last (highest authority) - /uniques (top in-scope tree) + /leaderboard (single
+      // page, 2nd-highest click earner). One wildcard rule each. Root now holds only
+      // network identity + /tools/build (deferred) + /intel (separate project).
+      { source: '/uniques/:path*', destination: '/marathon/uniques/:path*', permanent: true },
+      { source: '/leaderboard/:path*', destination: '/marathon/leaderboard/:path*', permanent: true },
     ];
   },
 };

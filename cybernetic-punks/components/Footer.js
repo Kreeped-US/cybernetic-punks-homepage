@@ -36,7 +36,7 @@ const EXPLORE_LINKS = [
 // Discovery pages — community + tracker tools, often missed from main nav
 const DISCOVER_LINKS = [
   { label: 'RISING CREATORS', href: '/marathon/rising'     },
-  { label: 'LEADERBOARD',    href: '/leaderboard' },
+  { label: 'LEADERBOARD',    href: '/marathon/leaderboard' },
   { label: 'STATS TRACKER',  href: '/marathon/stats'       },
   { label: 'FACTIONS',       href: '/marathon/factions'    },
   { label: 'SITREP',         href: '/marathon/sitrep'      },

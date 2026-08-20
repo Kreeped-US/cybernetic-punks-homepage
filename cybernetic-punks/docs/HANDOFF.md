@@ -7,6 +7,65 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Root-route migration STAGE 4 (2 routes -> /marathon/*) + chain fix [HELD]
+
+Stage 4 of 4, the FINAL in-scope stage: the two highest-authority routes, held for
+last on purpose. Completes the in-scope migration (21 routes now under /marathon/*).
+One atomic commit. HELD for operator FF-merge + verification gate.
+
+### Moved (git renames)
+- /uniques      -> /marathon/uniques      (tree; [slug] child + UniquesHubClient)
+- /leaderboard  -> /marathon/leaderboard   (single page; 2nd-highest click earner)
+
+### INVERTED guard vs Stage 3 (the key check)
+Stage 3 LEFT inbound links to these two at root (they had not moved). Now they move,
+so EVERY inbound link across the codebase - including inside the already-moved
+/marathon/* trees (weapons detail -> /uniques, stats/player-count -> /leaderboard),
+Nav, Footer, root page, rootGames, and the InlineStatCard COMPONENT base path in
+app/intel/[slug]/page.js - was rewritten to /marathon/*. Grep confirms ZERO functional
+root /uniques or /leaderboard links remain. feed_items article-BODY links (DB data)
+were NOT touched - they ride the 308. /images/uniques/ (image path) untouched.
+
+### Change-set
+- Canonicals/OG/JSON-LD in the moved trees -> /marathon/<route>.
+- Sitemap (eligible.js): /uniques hub + [slug] loop and /leaderboard -> /marathon/*.
+- Redirects (308): /uniques/:path* and /leaderboard/:path*.
+- 2 relative supabase imports (uniques hub + child) -> @/ alias. No lib twins exist.
+- GSC map (storage.js): untouched; old segments kept.
+
+### REDIRECT-CHAIN FIX (doctrine: 301s one-hop, never chained) - found + fixed
+The migration turned 6 PRE-EXISTING redirects into 2-hop chains, because their
+destinations pointed at routes that later moved:
+- /play-of-the-day + /top-build -> /builds (Stage 2 moved /builds) = a Stage-2 miss.
+- 4x BR33 /intel/... -> /uniques/br33-victory-lap (this stage moves /uniques).
+All 6 destinations rewritten to point DIRECTLY at the /marathon/* final target, so
+every internal redirect is one-hop again. Verified by curl: /play-of-the-day -> 308 ->
+/marathon/builds (direct); /intel/br33-... -> 308 -> /marathon/uniques/br33-victory-lap
+(direct). LESSON: when a stage moves a route, also scan next.config for any redirect
+DESTINATION equal to that route and repoint it - a moved route can be a redirect target,
+not just a source.
+
+### Verification (pre-merge)
+next build exit 0, zero import/module errors. curl: /marathon/uniques + /marathon/
+uniques/br33-victory-lap + /marathon/leaderboard -> 200; old /uniques(/child) +
+/leaderboard -> 308 -> new; the 3 fixed chains now one-hop. Sitemap emits new paths
+(uniques 16+1, leaderboard 1), old absent. Grep: zero functional root links to the two,
+no /marathon/marathon, no @/lib/marathon corruption, /intel + /tools/build still root,
+external-URL builders untouched. byte-clean (only pre-existing display glyphs on touched
+lines). HELD for operator FF-merge + verification gate.
+
+### MIGRATION COMPLETE (in-scope). Root now holds ONLY:
+- Network identity + accounts: /, /about, /editors, /join, /me, /u/[handle], /welcome,
+  /profile-preview, /admin.
+- DEFERRED: /tools/build (downstream of the DMZ-inheritance memo).
+- SEPARATE PROJECT: /intel (~938 URLs, the bulk of Marathon GSC authority) - staged on
+  its own, not part of this 4-stage migration.
+- /dmz is its own game namespace (always was).
+All 21 in-scope Marathon content/tool routes are now /marathon/*; DMZ launches into the
+game-scoped structure day one.
+
+---
+
 ## 2026-08-20 - Root-route migration STAGE 3 (5 trees -> /marathon/*) [HELD]
 
 Stage 3 of 4: the five mid-tier Marathon TREES (every one has dynamic children),

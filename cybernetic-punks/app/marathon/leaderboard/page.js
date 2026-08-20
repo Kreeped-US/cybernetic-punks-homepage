@@ -28,7 +28,7 @@ export var metadata = {
   openGraph: {
     title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',
     description: 'Track the top Marathon players worldwide. Ranked leaderboards from Bronze to Master.',
-    url: 'https://cyberneticpunks.com/leaderboard',
+    url: 'https://cyberneticpunks.com/marathon/leaderboard',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -38,7 +38,7 @@ export var metadata = {
     title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',
     description: 'Global Marathon rankings. Track top players from Bronze to Master.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/leaderboard' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/leaderboard' },
 };
 
 // ─── DESIGN TOKENS (aligned to locked design system) ─────────
@@ -683,7 +683,7 @@ export default function LeaderboardPage() {
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           name: 'Marathon Global Leaderboard',
-          url: 'https://cyberneticpunks.com/leaderboard',
+          url: 'https://cyberneticpunks.com/marathon/leaderboard',
           description: 'Track the top ranked Marathon players worldwide. Global leaderboards from Bronze to Master.',
           isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
         }),
@@ -704,7 +704,7 @@ export default function LeaderboardPage() {
               '@type': 'ListItem',
               position: 2,
               name: 'Leaderboard',
-              item: 'https://cyberneticpunks.com/leaderboard',
+              item: 'https://cyberneticpunks.com/marathon/leaderboard',
             },
           ],
         }),
