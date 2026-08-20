@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 AM - DmzFrame image-slots BACKED OUT + nav/atmosphere direction set
+
+The 2026-08-19 PM DmzFrame image-frame scaffolding (empty slot-frames) was the
+WRONG direction and is fully reverted. Main = c6894df; /dmz is byte-identical to
+its pre-frame state (20f0c17) for those regions - all shipped redesign work
+(hero, coverage hover, notify copy, CTA orange) intact. DmzFrame.js deleted, zero
+importers. (Disregard the earlier "image-frame scaffolding shipped" entry - that
+work no longer exists.)
+
+Why: the goal was never fillable image slots - it's a SUBTLE atmospheric MW4/DMZ
+FEEL. Two Fable rulings now govern the redirect:
+
+### Fable ruling - atmospheric imagery
+- Chrome (nav/header/footer): NEVER carries game imagery, darkened or not (hard
+  line - chrome is where OUR identity lives).
+- Content-area backgrounds: only past a heavy processing threshold (darkened +
+  desaturated/blurred into texture); test = "could a screenshot be mistaken for
+  an official property's page?" Key art RESISTS processing (engineered for
+  recognizability) - process screenshots, not key art, if anything.
+- STRONGER REC (the plan): build atmosphere from OUR OWN signal - terminal
+  aesthetic (grids, scanlines, telemetry) + MAP-CONTOUR ABSTRACTIONS derived from
+  our own POI/map data. On-concept (an intel terminal whose texture is the map it
+  covers), unmistakably independent, zero IP surface. Cleared game stills stay in
+  FRAMED, CAPTIONED content slots only (identity work near the line; content work
+  is safe ground).
+
+### Fable ruling - nav labels (A7 for nouns, four-tier precedence)
+1. committed-demand term that ACCURATELY names the destination -> wins.
+2. no demand term -> first-party SOURCE term (game's own words).
+3. neither -> plain descriptive language.
+4. site-internal coinages -> NEVER.
+Cross-tier: a label may never MISDESCRIBE its destination (accuracy VETOes a wrong
+demand term, never dethrones a right one). Confirmed examples: "3D Printer" STANDS
+(source-verbatim, tier 2 - not internal naming); "Discourse" FAILS (site coinage,
+tier 4 - cut/rename).
+
+### Today's plan
+NAV first (structure precedes polish): (1) labels - read current nav vs
+dmz-demand-map.md, run the four-tier procedure per label, target SIX items; (2)
+structure - lock the six + order; (3) behavior - mobile, active states, NETWORK
+relationship; (4) aesthetic - nav's own tactical treatment, ZERO game imagery.
+Then ATMOSPHERE - own-signal (terminal texture + map-contour from POI data).
+
+---
+
 ## 2026-08-19 PM - /dmz redesign polish follow-ups (completed)
 
 Four small gated commits closing the polish items flagged in the redesign entry
