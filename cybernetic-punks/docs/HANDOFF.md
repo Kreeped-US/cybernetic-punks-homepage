@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - /intel migration POST-DEPLOY VERIFICATION (3 tests, all PASS on prod)
+
+Follows the capstone migration entry (main 90b00d0). All three post-deploy checks run
+against PRODUCTION and passed. Migration verified end to end.
+
+### Test 1 - Redirects resolve one-hop on prod (PASS)
+Curled old /intel paths on the live site, confirmed each returns a single 308 to the
+/marathon/intel/ equivalent with no intermediate hop:
+- /intel                 -> 308 -> /marathon/intel/
+- /intel/cipher (lane)   -> 308 -> /marathon/intel/cipher
+- V85 consolidation source: /intel/marathon-update-1154-ordnance-heist-and-the-v85-ceiling-cut-l574
+  -> 308 -> /marathon/intel/marathon-update-1154-ordnance-heist-and-the-v85-nerf-5gcc
+  (lands DIRECTLY on the -nerf-5gcc survivor, NOT on the old ceiling-cut slug - the specific
+  consolidation rule fires ahead of the broad /intel/:path* wildcard, so rule ordering holds
+  on prod. This was the redirect most at risk of chaining; it does not chain.)
+
+### Test 2 - Consumer C inspecting the NEW URLs (PASS)
+Read gsc_url_inspection (read-only). The inspection URL builder (inspectionRun.js) now emits
+/marathon/intel/ paths, not the old redirecting /intel/ paths:
+- Old /intel/ rows appear only up to 22:00:58 - the last run of the OLD code before the
+  production deploy finished (a deploy-transition straggler, not a bug).
+- From 22:30 onward, every inspected URL is /marathon/intel/... (13 new-path rows, most
+  recent 22:45:53). Clean flip the moment the deploy landed.
+Confirms the builder fix is live and Consumer C is not wasting budget inspecting old
+redirecting URLs. (Note: gsc_url_inspection has no 'desired' column - enrollment logic lives
+in code - so "enrollment" here means "inspecting the correct new paths", which this proves.)
+
+### Test 3 - Cannibalization classifier correct on the REAL code path (PASS, 8/8)
+firstSegment() is not exported; only classifyCannibalization(rows, opts) is. Claude Code drove
+the REAL classifyCannibalization with minimal same-game URL pairs and read the emitted type
+labels straight from its output (every 2-URL cluster emits type: typeLabel(url)) - so this
+exercises the actual firstSegment -> typeRank -> typeLabel path as deployed, NOT a
+reimplementation. Confirmed exercised code was current main (90b00d0), working tree clean,
+throwaway harness deleted.
+
+| URL                                  | segment      | type   | expected | result |
+|--------------------------------------|--------------|--------|----------|--------|
+| /marathon/intel/some-article-slug    | intel        | news   | news     | PASS   |
+| /marathon/intel/cipher (editor lane) | intel        | news   | news     | PASS   |
+| /marathon/uniques/some-unique-slug   | uniques      | entity | entity   | PASS   |
+| /marathon/weapons/some-weapon-slug   | weapons      | entity | entity   | PASS   |
+| /marathon/leaderboard                | leaderboard  | other  | other    | PASS   |
+| /dmz/some-dmz-slug                    | (after dmz)  | other  | other    | PASS   |
+| /intel/some-old-slug (redirect src)  | intel        | news   | news     | PASS   |
+| /marathon (control, bare)            | '' (none)    | other  | other    | PASS   |
+
+The intel->news and uniques|weapons->entity cases are exactly the ones that returned 'other'
+under the old parts[1]==='marathon' logic - so this confirms the latent-bug repair, not just
+the happy path. Controls: bare /marathon -> other (no false match / no index error), /dmz/*
+exercises the prefix branch, old /intel/* still types news via the else branch (so GSC rows
+carrying old URLs during redirect age-out keep classifying correctly).
+
+### Net
+All 3 post-deploy tests PASS on production. The migration is verified end to end - built,
+merged, deployed, and confirmed live. The only remaining item is a passive WATCH, not a test:
+Consumer C re-index recovery over the next ~weeks (~373 URLs re-evaluating; the dip is
+expected data, not regression).
+
+---
+
 ## 2026-08-20 - Marathon route migration FULLY COMPLETE + intel hard-delete (early-vs-Aug-27 decision)
 
 ### Outcome
