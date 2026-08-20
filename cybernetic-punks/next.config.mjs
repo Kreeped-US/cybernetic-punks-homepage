@@ -106,6 +106,16 @@ const nextConfig = {
         destination: '/intel/marathon-rook-build-the-underrated-solo-survivor-loadout-z5m0',
         permanent: true,
       },
+      // V85 / 1.1.5.4 patch-article consolidation (2026-08-20): two near-duplicate
+      // NEXUS "Update 1.1.5.4 / Ordnance Heist / V85" articles (generated a day
+      // apart). The thinner -ceiling-cut- take is retired for the fuller patch-day
+      // -v85-nerf- canonical; 308 transfers its authority. Fixed-path /intel ->
+      // /intel, slugs differ. Retired row unpublished + noindexed in feed_items.
+      {
+        source: '/intel/marathon-update-1154-ordnance-heist-and-the-v85-ceiling-cut-l574',
+        destination: '/intel/marathon-update-1154-ordnance-heist-and-the-v85-nerf-5gcc',
+        permanent: true,
+      },
     ];
   },
 };
