@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Duplicate V85/1.1.5.4 patch articles consolidated + dedup issue flagged
+
+Two near-duplicate NEXUS articles on patch 1.1.5.4 (Ordnance Heist / V85 Circuit
+Breaker) were both approved+published ~a day apart, then consolidated to one
+canonical. Main = b42abd6.
+
+### The consolidation
+- KEEPER (canonical, untouched): id 0c8085f3-73bd-4c3e-bd0a-94bf4d1cdf8a,
+  slug marathon-update-1154-ordnance-heist-and-the-v85-nerf-5gcc (Aug 18 patch-day,
+  4075 chars, richer event/Firestorm/implant detail, states V85 A->B).
+- RETIRED (duplicate): id 8579adde-0577-443f-802c-c7b01cf025d8,
+  slug ...-v85-ceiling-cut-l574 (Aug 19, thinner, WRONG verdict B->C).
+- They contradicted on the core verdict (A->B vs B->C) - operator confirmed A->B
+  correct, so the keeper was already right; no keeper edit needed. Also minor
+  factual drift between them (Firestorm frame "Hardline PR" vs "HPR").
+- FIX (redirect-first order, zero 404 window): (1) 308 redirect added to
+  next.config.mjs (...-ceiling-cut-l574 -> ...-v85-nerf-5gcc), deployed + confirmed
+  live; (2) then DB write: UPDATE feed_items SET is_published=false, noindex=true,
+  noindexed_at=now() on the retired id. Matches the prior-consolidation doctrine
+  (noindex + noindexed_at stamps GSC de-index tracking). No internal links pointed
+  at the retired slug (all links dynamic off DB flags); sitemap drops it, keeps
+  keeper. The unsourced "127 RPM" base-stat line from the retired article was NOT
+  folded in (no provenance).
+
+### UNDERLYING ISSUE TO INVESTIGATE (dedup guard) - flagged, not fixed
+This is the SECOND observed case of the pipeline generating near-duplicate articles
+for one source/event: this V85 pair (a day apart), and the March 2026 "content
+drought" pair (NEXUS + CIPHER, same YouTube source, ~1 min apart, both rejected).
+The topic/candidate-assignment layer (content_candidate / editorial_directive /
+gen scripts) is not deduping against recent same-topic output, so duplicate
+coverage is being caught MANUALLY at the approval gate. Worth a read: is there a
+dedup/recency guard on generation, and should same-topic/same-source drafts within
+a window be blocked or merged before they reach the queue? Not urgent, but it
+recurs - fix it before it costs more manual catches every patch cycle.
+
+---
+
 ## 2026-08-20 - Network root: 3 Fable rulings (positioning + game-scoped routes + onboarding)
 
 Foundational doctrine for the network-root remodel (cyberneticpunks.com). The root
