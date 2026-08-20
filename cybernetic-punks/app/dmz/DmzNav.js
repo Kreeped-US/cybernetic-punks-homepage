@@ -24,6 +24,9 @@ import { dmz } from '@/lib/games/dmz';
 
 export default function DmzNav() {
   var pathname = usePathname();
+  // Hub self-indication: the wordmark reads "you are here" ONLY on the DMZ hub
+  // itself (exact match). On section/article pages it stays a plain back-affordance.
+  var atHub = pathname === '/dmz';
 
   return (
     <nav style={{
@@ -43,10 +46,13 @@ export default function DmzNav() {
         padding:    '0 16px',
         height:     52,
       }}>
-        {/* Brand: DMZ wordmark -- FIXED left, never scrolls */}
-        <Link href="/dmz" style={{
-          display: 'flex', alignItems: 'center', gap: 9,
+        {/* Brand: DMZ wordmark -- FIXED left, never scrolls. On the hub it carries a
+            subtle 2px green underline (same active language as the tabs); elsewhere
+            the underline is transparent (same box, no layout shift). */}
+        <Link href="/dmz" aria-current={atHub ? 'page' : undefined} style={{
+          display: 'flex', alignItems: 'center', gap: 9, height: 52,
           textDecoration: 'none', marginRight: 10, flexShrink: 0,
+          borderBottom: atHub ? '2px solid var(--green)' : '2px solid transparent',
         }}>
           <span style={{
             width: 8, height: 8, borderRadius: '50%',
@@ -82,7 +88,11 @@ export default function DmzNav() {
         >
           {dmz.sections.filter(function(sec) { return !sec.hideFromNav; }).map(function(sec) {
             var href = '/dmz/' + sec.slug;
-            var active = pathname === href;
+            // Prefix-match: a tab lights on its hub URL AND on any article beneath it
+            // (/dmz/<slug>/<article>). The '+ /' guard blocks sibling-slug false hits
+            // (e.g. /dmz/printer must not match a hypothetical /dmz/print*). No slug is
+            // a prefix of another, so at most one tab ever lights.
+            var active = pathname === href || pathname.startsWith(href + '/');
             return (
               <Link
                 key={sec.slug}
