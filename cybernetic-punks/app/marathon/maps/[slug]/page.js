@@ -200,11 +200,11 @@ export async function generateMetadata({ params }) {
     // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
     title: { absolute: title },
     description: desc,
-    alternates: { canonical: 'https://cyberneticpunks.com/maps/' + slug },
+    alternates: { canonical: 'https://cyberneticpunks.com/marathon/maps/' + slug },
     openGraph: {
       title: title + ' | CyberneticPunks',
       description: desc,
-      url: 'https://cyberneticpunks.com/maps/' + slug,
+      url: 'https://cyberneticpunks.com/marathon/maps/' + slug,
       siteName: 'CyberneticPunks',
       type: 'website',
     },
@@ -296,8 +296,8 @@ export default async function MapPage({ params, searchParams }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Maps', item: 'https://cyberneticpunks.com/maps' },
-      { '@type': 'ListItem', position: 3, name: displayName, item: 'https://cyberneticpunks.com/maps/' + slug },
+      { '@type': 'ListItem', position: 2, name: 'Maps', item: 'https://cyberneticpunks.com/marathon/maps' },
+      { '@type': 'ListItem', position: 3, name: displayName, item: 'https://cyberneticpunks.com/marathon/maps/' + slug },
     ],
   };
 
@@ -333,7 +333,7 @@ export default async function MapPage({ params, searchParams }) {
     '@type': 'WebPage',
     name: 'Marathon ' + displayName + ' - Map Guide',
     description: 'Zones, boss, events, and modes for ' + displayName + ' in Marathon.',
-    url: 'https://cyberneticpunks.com/maps/' + slug,
+    url: 'https://cyberneticpunks.com/marathon/maps/' + slug,
     mainEntity: mapEntity,
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
   };
@@ -372,7 +372,7 @@ export default async function MapPage({ params, searchParams }) {
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
           <li>/</li>
-          <li><Link href="/maps" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>MAPS</Link></li>
+          <li><Link href="/marathon/maps" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>MAPS</Link></li>
           <li>/</li>
           <li style={{ color: CYAN }}>{(displayName || '').toUpperCase()}</li>
         </ol>
@@ -414,7 +414,7 @@ export default async function MapPage({ params, searchParams }) {
         </h1>
         {parentMap && (
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginBottom: 12, fontWeight: 700 }}>
-            VARIANT OF <Link href={'/maps/' + parentMap.slug} style={{ color: CYAN, textDecoration: 'none' }}>{(parentMap.name || '').toUpperCase()}</Link>
+            VARIANT OF <Link href={'/marathon/maps/' + parentMap.slug} style={{ color: CYAN, textDecoration: 'none' }}>{(parentMap.name || '').toUpperCase()}</Link>
           </div>
         )}
         {displaySummary && (
@@ -679,7 +679,7 @@ export default async function MapPage({ params, searchParams }) {
       )}
 
       <div style={{ padding: '0 24px 56px', maxWidth: 1100, margin: '0 auto' }}>
-        <Link href="/maps" style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700 }}>
+        <Link href="/marathon/maps" style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontWeight: 700 }}>
           ← ALL MAPS
         </Link>
       </div>

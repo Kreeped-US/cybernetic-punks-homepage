@@ -9,7 +9,7 @@
 // - Twitter card now has an explicit description + matching title.
 // - CollectionPage schema unchanged.
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import ShellsHubClient from './ShellsHubClient';
 
@@ -21,7 +21,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Shells — Tier List, Stats & Build Guides for All 7 Runners | CyberneticPunks',
     description: 'Stats, abilities, cores, implants, and tier rankings for every Marathon Runner Shell.',
-    url: 'https://cyberneticpunks.com/shells',
+    url: 'https://cyberneticpunks.com/marathon/shells',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -31,7 +31,7 @@ export const metadata = {
     title: 'Marathon Shells — Tier List & Build Guides',
     description: 'Stats, abilities, and tier rankings for all 7 Marathon Runner Shells.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/shells' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/shells' },
 };
 
 export default async function ShellsIndexPage() {
@@ -86,7 +86,7 @@ export default async function ShellsIndexPage() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Shells', item: 'https://cyberneticpunks.com/shells' },
+          { '@type': 'ListItem', position: 2, name: 'Shells', item: 'https://cyberneticpunks.com/marathon/shells' },
         ],
       }) }} />
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
@@ -103,11 +103,11 @@ export default async function ShellsIndexPage() {
         '@type': 'CollectionPage',
         name: 'Marathon Shells — Tier List, Stats & Build Guides for All 7 Runners',
         description: 'Stats, abilities, cores, implants, and tier rankings for all 7 Marathon Runner Shells.',
-        url: 'https://cyberneticpunks.com/shells',
+        url: 'https://cyberneticpunks.com/marathon/shells',
         mainEntity: {
           '@type': 'ItemList',
           itemListElement: sorted.map(function(s, i) {
-            return { '@type': 'ListItem', position: i + 1, name: s.name + ' — Marathon Runner Shell Guide', url: 'https://cyberneticpunks.com/shells/' + s.name.toLowerCase() };
+            return { '@type': 'ListItem', position: i + 1, name: s.name + ' — Marathon Runner Shell Guide', url: 'https://cyberneticpunks.com/marathon/shells/' + s.name.toLowerCase() };
           }),
         },
       })}} />

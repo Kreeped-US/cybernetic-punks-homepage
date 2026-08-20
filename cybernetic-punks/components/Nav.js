@@ -16,10 +16,10 @@ function intelChild(key, desc) {
 var NAV_ITEMS = [
   { label: 'HOME',     href: '/marathon' },
   { label: 'META',     href: '/marathon/meta' },
-  { label: 'SHELLS',   href: '/shells' },
+  { label: 'SHELLS',   href: '/marathon/shells' },
   { label: 'MATCHUPS', href: '/marathon/matchups' },
-  { label: 'WEAPONS',  href: '/weapons' },
-  { label: 'MODS',     href: '/mods' },
+  { label: 'WEAPONS',  href: '/marathon/weapons' },
+  { label: 'MODS',     href: '/marathon/mods' },
   { label: 'UNIQUES',  href: '/uniques' },
   { label: 'FACTIONS', href: '/marathon/factions' },
   {
@@ -38,12 +38,12 @@ var NAV_ITEMS = [
   },
   {
     label: 'TOOLS',
-    activeOn: ['/marathon/advisor', '/marathon/cradle', '/marathon/builds', '/guides', '/marathon/status', '/join', '/me'],
+    activeOn: ['/marathon/advisor', '/marathon/cradle', '/marathon/builds', '/marathon/guides', '/marathon/status', '/join', '/me'],
     children: [
       { label: 'BUILD ADVISOR',    href: '/marathon/advisor', desc: 'AI-engineered loadouts',               color: '#ff8800' },
       { label: 'CRADLE PLANNER',   href: '/marathon/cradle',  desc: 'Plan your Season 2 Cradle build',       color: '#00f5ff' },
       { label: 'BUILDS',           href: '/marathon/builds',  desc: 'Shell builds & weapon browser' },
-      { label: 'FIELD GUIDES',     href: '/guides',  desc: 'Shell breakdowns & strategy',           color: '#9b5de5' },
+      { label: 'FIELD GUIDES',     href: '/marathon/guides',  desc: 'Shell breakdowns & strategy',           color: '#9b5de5' },
       { label: 'SERVER STATUS',    href: '/marathon/status',  desc: 'Is Marathon down?' },
       { label: 'PERSONAL COACH ✦', href: '/join',    desc: 'AI loadout audit — closed beta',        color: '#00d4ff', beta: true },
     ],

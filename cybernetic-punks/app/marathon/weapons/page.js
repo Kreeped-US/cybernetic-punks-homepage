@@ -9,7 +9,7 @@
 // SLUG RULE: must match app/weapons/[slug]/page.js + app/sitemap.js exactly
 // (weapon_stats has no slug column; the slug is derived from the name).
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import { Sep } from '@/components/Sep';
@@ -32,7 +32,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Weapons — Stats, Tiers & Loadouts | CyberneticPunks',
     description: 'Damage, fire rate, magazine, range, mod slots, and ranked viability for every Marathon weapon.',
-    url: 'https://cyberneticpunks.com/weapons',
+    url: 'https://cyberneticpunks.com/marathon/weapons',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -42,7 +42,7 @@ export const metadata = {
     title: 'Marathon Weapons — Stats, Tiers & Loadouts | CyberneticPunks',
     description: 'Stats, mod slots, and ranked viability for every Marathon weapon.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/weapons' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/weapons' },
 };
 
 export default async function WeaponsIndexPage() {
@@ -70,7 +70,7 @@ export default async function WeaponsIndexPage() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Weapons', item: 'https://cyberneticpunks.com/weapons' },
+          { '@type': 'ListItem', position: 2, name: 'Weapons', item: 'https://cyberneticpunks.com/marathon/weapons' },
         ],
       }) }} />
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
@@ -114,7 +114,7 @@ export default async function WeaponsIndexPage() {
                   return (
                     <Link
                       key={w.name}
-                      href={'/weapons/' + nameToSlug(w.name)}
+                      href={'/marathon/weapons/' + nameToSlug(w.name)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
                         background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + WEAPON_ACCENT + '88',
@@ -167,11 +167,11 @@ export default async function WeaponsIndexPage() {
         '@type': 'CollectionPage',
         name: 'Marathon Weapons — Stats, Tiers & Loadout Guides for Every Gun',
         description: 'Stats, mod slots, range, and ranked viability for every Marathon weapon.',
-        url: 'https://cyberneticpunks.com/weapons',
+        url: 'https://cyberneticpunks.com/marathon/weapons',
         mainEntity: {
           '@type': 'ItemList',
           itemListElement: weapons.map(function(w, i) {
-            return { '@type': 'ListItem', position: i + 1, name: w.name + ' — Marathon Weapon Stats', url: 'https://cyberneticpunks.com/weapons/' + nameToSlug(w.name) };
+            return { '@type': 'ListItem', position: i + 1, name: w.name + ' — Marathon Weapon Stats', url: 'https://cyberneticpunks.com/marathon/weapons/' + nameToSlug(w.name) };
           }),
         },
       })}} />
@@ -179,7 +179,7 @@ export default async function WeaponsIndexPage() {
           Entity hubs linked guides in neither direction before 2026-07-20;
           guides linked out to entities but never received a link back. */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1100, margin: '0 auto' }}>
-        <Link href="/guides/weapons" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', padding: '14px 18px', textDecoration: 'none' }}>
+        <Link href="/marathon/guides/weapons" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', padding: '14px 18px', textDecoration: 'none' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff8800', letterSpacing: 2, fontWeight: 700, marginBottom: 4 }}>WEAPON GUIDES &rarr;</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Editorial analysis, matchups and loadouts</div>
         </Link>

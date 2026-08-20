@@ -132,7 +132,7 @@ export default function ShellDetailClient({
 
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-            <Link href="/shells" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>SHELLS</Link>
+            <Link href="/marathon/shells" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>SHELLS</Link>
             <span style={{ color: 'rgba(255,255,255,0.15)' }}>/</span>
             <span style={{ color: color }}>{shellName.toUpperCase()}</span>
           </div>
@@ -536,7 +536,7 @@ export default function ShellDetailClient({
                       var cColor = SHELL_COLORS[c.name] || '#666';
                       var cSym = SHELL_SYMBOLS[c.name] || '◈';
                       return (
-                        <Link key={i} href={'/shells/' + c.name.toLowerCase()} className="counter-card" style={{
+                        <Link key={i} href={'/marathon/shells/' + c.name.toLowerCase()} className="counter-card" style={{
                           display: 'flex', alignItems: 'center', gap: 10,
                           padding: '8px 10px', background: '#0e1014', border: '1px solid #22252e',
                           borderLeft: '3px solid ' + cColor + '88',
@@ -573,7 +573,7 @@ export default function ShellDetailClient({
                       var cColor = SHELL_COLORS[c.name] || '#666';
                       var cSym = SHELL_SYMBOLS[c.name] || '◈';
                       return (
-                        <Link key={i} href={'/shells/' + c.name.toLowerCase()} className="counter-card" style={{
+                        <Link key={i} href={'/marathon/shells/' + c.name.toLowerCase()} className="counter-card" style={{
                           display: 'flex', alignItems: 'center', gap: 10,
                           padding: '8px 10px', background: '#0e1014', border: '1px solid #22252e',
                           borderLeft: '3px solid ' + cColor + '88',
@@ -798,7 +798,7 @@ export default function ShellDetailClient({
               var c = SHELL_COLORS[s] || '#666';
               var sym = SHELL_SYMBOLS[s] || '◈';
               return (
-                <Link key={s} href={'/shells/' + s.toLowerCase()} className="bottom-nav" style={{
+                <Link key={s} href={'/marathon/shells/' + s.toLowerCase()} className="bottom-nav" style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '10px 14px',
                   background: '#1a1d24',

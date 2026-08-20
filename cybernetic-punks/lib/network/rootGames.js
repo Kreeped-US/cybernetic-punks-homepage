@@ -67,7 +67,7 @@ export const ROOT_GAMES = [
     // renders nothing at all -- no container, no label. DMZ has none until launch.
     // Shape: { label, href }. Labels are the hub's own noun, not a sentence.
     keyRoutes: [
-      { label: 'Shells',   href: '/shells' },
+      { label: 'Shells',   href: '/marathon/shells' },
       { label: 'Matchups', href: '/marathon/matchups' },
       { label: 'Uniques',  href: '/uniques' },
       { label: 'Factions', href: '/marathon/factions' },

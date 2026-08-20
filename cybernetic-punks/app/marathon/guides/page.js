@@ -6,7 +6,7 @@
 //   to match what feed_items.tags actually contains. Previously used hyphenated keys
 //   (`shell-guide`, etc.) which never matched, so every category count rendered 0
 //   and every card fell back to the BEGINNER color.
-// - TAG_TO_SLUG keeps both forms so old `/guides?cat=shell-guide` URLs still 301.
+// - TAG_TO_SLUG keeps both forms so old `/marathon/guides?cat=shell-guide` URLs still 301.
 // - Added the other 8 canonical categories (stealth, squad, solo, holotag, endgame,
 //   pvp, support, cryo-archive) so Browse by Category surfaces all 16 pages, not 8.
 // - Per-category counts now query the full corpus via Postgres array overlap
@@ -35,7 +35,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Guides — Shells, Ranked Prep & Builds | CyberneticPunks',
     description: 'Every Marathon guide you need. Shells, ranked, weapons, mods, extraction, and beginner tips. Auto-updated throughout the day.',
-    url: 'https://cyberneticpunks.com/guides',
+    url: 'https://cyberneticpunks.com/marathon/guides',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -45,7 +45,7 @@ export const metadata = {
     title: 'Marathon Guides — Shells, Ranked Prep & Builds | CyberneticPunks',
     description: 'Shell breakdowns, ranked prep, extraction strategy, and more. Updated throughout the day.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/guides' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/guides' },
 };
 
 // ─── CONSTANTS ──────────────────────────────────────────────
@@ -219,11 +219,11 @@ function GuideGrid({ guides }) {
 export default async function GuidesPage({ searchParams }) {
   var params = await searchParams;
 
-  // BACKWARD COMPAT: legacy `/guides?cat=shell-guide` URLs 301 to canonical.
+  // BACKWARD COMPAT: legacy `/marathon/guides?cat=shell-guide` URLs 301 to canonical.
   // Still works for both new-form (`?cat=shells`) and old-form params since
   // TAG_TO_SLUG covers both.
   if (params?.cat && TAG_TO_SLUG[params.cat]) {
-    redirect('/guides/' + TAG_TO_SLUG[params.cat]);
+    redirect('/marathon/guides/' + TAG_TO_SLUG[params.cat]);
   }
 
   // Build list of canonical tags for the corpus-wide count query
@@ -351,7 +351,7 @@ export default async function GuidesPage({ searchParams }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Guides', item: 'https://cyberneticpunks.com/guides' },
+      { '@type': 'ListItem', position: 2, name: 'Guides', item: 'https://cyberneticpunks.com/marathon/guides' },
     ],
   };
 
@@ -384,7 +384,7 @@ export default async function GuidesPage({ searchParams }) {
     '@type': 'CollectionPage',
     name: 'Marathon Guides — CyberneticPunks',
     description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips.',
-    url: 'https://cyberneticpunks.com/guides',
+    url: 'https://cyberneticpunks.com/marathon/guides',
     inLanguage: 'en-US',
     isPartOf: {
       '@type': 'WebSite',
@@ -480,7 +480,7 @@ export default async function GuidesPage({ searchParams }) {
         <SectionHeader
           label="EXPLORE BY SHELL"
           count={shellCount + ' SHELLS'}
-          rightLink={<Link href="/guides/shells" style={{ fontFamily: 'monospace', fontSize: 9, color: '#9b5de5', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL SHELL GUIDES →</Link>}
+          rightLink={<Link href="/marathon/guides/shells" style={{ fontFamily: 'monospace', fontSize: 9, color: '#9b5de5', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL SHELL GUIDES →</Link>}
         />
 
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 14, maxWidth: 720 }}>
@@ -493,7 +493,7 @@ export default async function GuidesPage({ searchParams }) {
             var imgSrc = dbShell?.image_filename ? '/images/shells/' + dbShell.image_filename : null;
             var guideCount = shellGuideCounts[shell.tag] || 0;
             return (
-              <Link key={shell.name} href={'/guides/shells/' + shell.tag} className="g-shell" style={{ display: 'flex', gap: 10, alignItems: 'center', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + shell.color, borderRadius: '0 2px 2px 0', padding: '10px 12px', textDecoration: 'none' }}>
+              <Link key={shell.name} href={'/marathon/guides/shells/' + shell.tag} className="g-shell" style={{ display: 'flex', gap: 10, alignItems: 'center', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + shell.color, borderRadius: '0 2px 2px 0', padding: '10px 12px', textDecoration: 'none' }}>
                 <div style={{ width: 36, height: 36, flexShrink: 0, background: DEEP_BG, border: '1px solid ' + shell.color + '30', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   {imgSrc ? <img src={imgSrc} alt={shell.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 14, color: shell.color + '40' }}>◎</span>}
                 </div>
@@ -522,7 +522,7 @@ export default async function GuidesPage({ searchParams }) {
             var slug = TAG_TO_SLUG[tag];
             var count = catCounts[tag] || 0;
             return (
-              <Link key={tag} href={'/guides/' + slug} className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+              <Link key={tag} href={'/marathon/guides/' + slug} className="g-cat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + cat.color, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'monospace', fontSize: 9, color: cat.color, letterSpacing: 2, marginBottom: 3, fontWeight: 700 }}>{cat.label}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.desc.slice(0, 36)}</div>
@@ -681,7 +681,7 @@ export default async function GuidesPage({ searchParams }) {
             {[
               { href: '/intel/miranda', label: '◎ ALL FIELD GUIDES',  sub: 'Full guide archive',       color: '#9b5de5' },
               { href: '/marathon/advisor',       label: '⬢ BUILD ADVISOR',       sub: 'Get your ranked loadout',  color: '#ff8800' },
-              { href: '/shells',        label: 'SHELL DATABASE',        sub: 'Full ability breakdowns',  color: '#00d4ff' },
+              { href: '/marathon/shells',        label: 'SHELL DATABASE',        sub: 'Full ability breakdowns',  color: '#00d4ff' },
               { href: '/marathon/ranked',        label: 'RANKED MODE',           sub: 'Tiers, Holotags, rewards', color: '#ffd700' },
             ].map(function(item) {
               return (

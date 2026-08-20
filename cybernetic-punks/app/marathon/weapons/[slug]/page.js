@@ -30,7 +30,7 @@
 //      back to og-image.png - better Reddit/Discord/X link shares.
 // Page structure + WeaponDetailClient are unchanged.
 
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { entitySlugFor } from '@/lib/coverage';
@@ -105,7 +105,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: title + ' | CyberneticPunks',
       description: desc,
-      url: 'https://cyberneticpunks.com/weapons/' + slug,
+      url: 'https://cyberneticpunks.com/marathon/weapons/' + slug,
       siteName: 'CyberneticPunks',
       type: 'website',
       images: [{ url: ogImage, width: 1200, height: 630 }],
@@ -117,7 +117,7 @@ export async function generateMetadata({ params }) {
       description: 'Stats, meta tier, builds, and unique variants for the ' + weapon.name + '.',
       images: [ogImage],
     },
-    alternates: { canonical: 'https://cyberneticpunks.com/weapons/' + slug },
+    alternates: { canonical: 'https://cyberneticpunks.com/marathon/weapons/' + slug },
   };
 }
 
@@ -207,7 +207,7 @@ export default async function WeaponDetailPage({ params }) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
       { '@type': 'ListItem', position: 2, name: 'Meta', item: 'https://cyberneticpunks.com/marathon/meta' },
-      { '@type': 'ListItem', position: 3, name: weaponName, item: 'https://cyberneticpunks.com/weapons/' + slug },
+      { '@type': 'ListItem', position: 3, name: weaponName, item: 'https://cyberneticpunks.com/marathon/weapons/' + slug },
     ],
   };
 
@@ -259,7 +259,7 @@ export default async function WeaponDetailPage({ params }) {
     '@type': 'WebPage',
     name: 'Marathon ' + weaponName + ' - Stats, Tier & Builds',
     description: 'Stats, meta tier, recommended builds, and unique variants for the ' + weaponName + ' in Marathon.',
-    url: 'https://cyberneticpunks.com/weapons/' + slug,
+    url: 'https://cyberneticpunks.com/marathon/weapons/' + slug,
     mainEntity: weaponEntity,
     publisher: {
       '@type': 'Organization',

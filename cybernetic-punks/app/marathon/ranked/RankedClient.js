@@ -614,7 +614,7 @@ export default function RankedClient({ data }) {
             var isBanned = grade === 'BAN';
             var imgSrc = shell.image_filename ? '/images/shells/' + shell.image_filename : null;
             return (
-              <Link key={shell.name} href={'/shells/' + shell.name.toLowerCase()} className="r-row" style={{
+              <Link key={shell.name} href={'/marathon/shells/' + shell.name.toLowerCase()} className="r-row" style={{
                 display: 'grid',
                 gridTemplateColumns: '44px 100px 56px 1fr auto',
                 gap: 12,
@@ -653,7 +653,7 @@ export default function RankedClient({ data }) {
           <Link href="/marathon/advisor" style={{ padding: '10px 20px', background: '#ff8800', color: '#000', fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
             GET YOUR RANKED BUILD →
           </Link>
-          <Link href="/shells" style={{ padding: '10px 20px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
+          <Link href="/marathon/shells" style={{ padding: '10px 20px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
             ALL SHELLS →
           </Link>
         </div>

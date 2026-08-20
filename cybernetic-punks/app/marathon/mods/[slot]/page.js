@@ -27,7 +27,7 @@
 // does not exist (Increment 3); linking now would 404. Same no-broken-state
 // discipline as Increment 1.
 
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Footer from '@/components/Footer';
@@ -94,7 +94,7 @@ export async function generateMetadata({ params }) {
     + (SLOT_BLURB[slot] ? ' - ' + SLOT_BLURB[slot].toLowerCase().replace(/\.$/, '') : '')
     + '. Effects, rarity tiers, and credit cost for every ' + lower + ' mod, straight from the game data.';
 
-  var url = 'https://cyberneticpunks.com/mods/' + slotToSlug(slot);
+  var url = 'https://cyberneticpunks.com/marathon/mods/' + slotToSlug(slot);
 
   return {
     // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
@@ -134,7 +134,7 @@ export default async function ModSlotPage({ params }) {
   var byName = groupByName(rows);
   var names = Object.keys(byName).sort();
   var lastModified = newestUpdatedAt(rows);
-  var url = 'https://cyberneticpunks.com/mods/' + slotToSlug(slot);
+  var url = 'https://cyberneticpunks.com/marathon/mods/' + slotToSlug(slot);
   var lower = slot.toLowerCase();
 
   // Sibling slots for the bottom nav (page-having slots only, so every link resolves).
@@ -145,7 +145,7 @@ export default async function ModSlotPage({ params }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Mods', item: 'https://cyberneticpunks.com/mods' },
+      { '@type': 'ListItem', position: 2, name: 'Mods', item: 'https://cyberneticpunks.com/marathon/mods' },
       { '@type': 'ListItem', position: 3, name: slot, item: url },
     ],
   };
@@ -177,7 +177,7 @@ export default async function ModSlotPage({ params }) {
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
           <li>/</li>
-          <li><Link href="/mods" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>MODS</Link></li>
+          <li><Link href="/marathon/mods" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>MODS</Link></li>
           <li>/</li>
           <li style={{ color: 'var(--red)' }}>{slot.toUpperCase()}</li>
         </ol>
@@ -190,7 +190,7 @@ export default async function ModSlotPage({ params }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
             <Link href="/" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>HOME</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
-            <Link href="/mods" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>MODS</Link>
+            <Link href="/marathon/mods" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>MODS</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
             <span style={{ color: MOD_ACCENT }}>{slot.toUpperCase()}</span>
           </div>
@@ -256,12 +256,12 @@ export default async function ModSlotPage({ params }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {otherSlots.map(function (s) {
               return (
-                <Link key={s} href={'/mods/' + slotToSlug(s)} style={{ display: 'inline-block', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+                <Link key={s} href={'/marathon/mods/' + slotToSlug(s)} style={{ display: 'inline-block', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
                   {s}
                 </Link>
               );
             })}
-            <Link href="/mods" style={{ display: 'inline-block', background: 'transparent', border: '1px solid ' + MOD_ACCENT + '40', borderRadius: 3, padding: '7px 14px', color: MOD_ACCENT, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+            <Link href="/marathon/mods" style={{ display: 'inline-block', background: 'transparent', border: '1px solid ' + MOD_ACCENT + '40', borderRadius: 3, padding: '7px 14px', color: MOD_ACCENT, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
               All Mods
             </Link>
           </div>

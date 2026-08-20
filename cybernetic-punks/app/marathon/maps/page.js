@@ -32,14 +32,14 @@ export const metadata = {
   // single templated suffix; it is not competing on a named-entity query.
   title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel',
   description: 'Marathon map guides for every location. Zones, bosses, events, and game modes for each map, with interactive vault breakdowns and credential routes where available.',
-  alternates: { canonical: 'https://cyberneticpunks.com/maps' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/maps' },
   // Self-set Marathon OG so /maps keeps its game-appropriate card instead of inheriting
   // the network-level root defaults (mirrors /marathon; the other Marathon pages already
   // self-set their own OG).
   openGraph: {
     title: 'Marathon Maps - Zone Guides, Bosses & Vault Intel',
     description: 'Marathon map guides for every location. Zones, bosses, events, and game modes for each map, with interactive vault breakdowns and credential routes where available.',
-    url: 'https://cyberneticpunks.com/maps',
+    url: 'https://cyberneticpunks.com/marathon/maps',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -122,7 +122,7 @@ export default async function MapsIndex() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Maps', item: 'https://cyberneticpunks.com/maps' },
+          { '@type': 'ListItem', position: 2, name: 'Maps', item: 'https://cyberneticpunks.com/marathon/maps' },
         ],
       }) }} />
       <style>{`
@@ -155,7 +155,7 @@ export default async function MapsIndex() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
             {maps.map(function(m) {
               return (
-                <Link key={m.slug} href={'/maps/' + m.slug} className="mi-card" style={{ display: 'block', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + CYAN, borderRadius: '0 2px 2px 0', padding: '18px 20px', textDecoration: 'none' }}>
+                <Link key={m.slug} href={'/marathon/maps/' + m.slug} className="mi-card" style={{ display: 'block', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + CYAN, borderRadius: '0 2px 2px 0', padding: '18px 20px', textDecoration: 'none' }}>
                   <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>{m.name}</h2>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: m.blurb ? 8 : 0 }}>
                     {m.difficulty && (
@@ -189,7 +189,7 @@ export default async function MapsIndex() {
           Entity hubs linked guides in neither direction before 2026-07-20;
           guides linked out to entities but never received a link back. */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1100, margin: '0 auto' }}>
-        <Link href="/guides/maps" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #888888', borderRadius: '0 2px 2px 0', padding: '14px 18px', textDecoration: 'none' }}>
+        <Link href="/marathon/guides/maps" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #888888', borderRadius: '0 2px 2px 0', padding: '14px 18px', textDecoration: 'none' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#888888', letterSpacing: 2, fontWeight: 700, marginBottom: 4 }}>MAP INTEL &rarr;</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Zone knowledge, POIs and rotations</div>
         </Link>

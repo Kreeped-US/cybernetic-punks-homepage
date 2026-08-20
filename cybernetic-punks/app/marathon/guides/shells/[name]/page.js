@@ -192,7 +192,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: shell.title,
       description: shell.description,
-      url: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
+      url: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name,
       siteName: 'CyberneticPunks',
       type: 'website',
     },
@@ -202,7 +202,7 @@ export async function generateMetadata({ params }) {
       title: shell.title,
       description: shell.description,
     },
-    alternates: { canonical: 'https://cyberneticpunks.com/guides/shells/' + resolved.name },
+    alternates: { canonical: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name },
   };
 }
 
@@ -304,9 +304,9 @@ export default async function ShellGuidePage({ params }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',   item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Guides', item: 'https://cyberneticpunks.com/guides' },
-      { '@type': 'ListItem', position: 3, name: 'Shells', item: 'https://cyberneticpunks.com/guides/shells' },
-      { '@type': 'ListItem', position: 4, name: shell.name, item: 'https://cyberneticpunks.com/guides/shells/' + resolved.name },
+      { '@type': 'ListItem', position: 2, name: 'Guides', item: 'https://cyberneticpunks.com/marathon/guides' },
+      { '@type': 'ListItem', position: 3, name: 'Shells', item: 'https://cyberneticpunks.com/marathon/guides/shells' },
+      { '@type': 'ListItem', position: 4, name: shell.name, item: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name },
     ],
   };
 
@@ -315,7 +315,7 @@ export default async function ShellGuidePage({ params }) {
   '@type': 'Article',
   headline: shell.title,
   description: shell.description,
-  url: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
+  url: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name,
   image: shellImg ? 'https://cyberneticpunks.com' + shellImg : 'https://cyberneticpunks.com/og-image.png',
   author: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
   publisher: {
@@ -328,7 +328,7 @@ export default async function ShellGuidePage({ params }) {
   // dateModified is attached BELOW, and only when the shell declares `updated`.
   // Assigning it here with a fallback is what produced the crawl-time value this
   // replaced -- there is deliberately no `|| something` on this line.
-  mainEntityOfPage: 'https://cyberneticpunks.com/guides/shells/' + resolved.name,
+  mainEntityOfPage: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name,
 };
 
   // FAIL CLOSED: a shell with no `updated` emits NO dateModified rather than a
@@ -364,9 +364,9 @@ export default async function ShellGuidePage({ params }) {
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
           <li>/</li>
-          <li><Link href="/guides" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>GUIDES</Link></li>
+          <li><Link href="/marathon/guides" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>GUIDES</Link></li>
           <li>/</li>
-          <li><Link href="/guides/shells" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>SHELLS</Link></li>
+          <li><Link href="/marathon/guides/shells" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>SHELLS</Link></li>
           <li>/</li>
           <li style={{ color: shell.color }}>{shell.name.toUpperCase()}</li>
         </ol>
@@ -620,14 +620,14 @@ export default async function ShellGuidePage({ params }) {
               </div>
               <span style={{ color: ORANGE, opacity: 0.5, fontSize: 13 }}>→</span>
             </Link>
-            <Link href={'/shells/' + resolved.name} className="sg-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + CYAN, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+            <Link href={'/marathon/shells/' + resolved.name} className="sg-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + CYAN, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
               <div>
                 <div style={{ fontFamily: 'monospace', fontSize: 10, color: CYAN, letterSpacing: 1, fontWeight: 700 }}>{shell.name.toUpperCase()} STATS</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>Full ability breakdown + stats</div>
               </div>
               <span style={{ color: CYAN, opacity: 0.5, fontSize: 13 }}>→</span>
             </Link>
-            <Link href="/guides/shells" className="sg-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+            <Link href="/marathon/guides/shells" className="sg-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
               <div>
                 <div style={{ fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 1, fontWeight: 700 }}>◎ ALL SHELL GUIDES</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>Compare with other shells</div>

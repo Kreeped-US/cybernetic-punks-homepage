@@ -85,7 +85,7 @@ export async function computeEligible() {
     [BASE + '/intel/dexter', undefined, 'daily', 0.7],
     [BASE + '/intel/ghost', undefined, 'daily', 0.7],
     [BASE + '/intel/miranda', undefined, 'daily', 0.7],
-    [BASE + '/guides', undefined, 'weekly', 0.65],
+    [BASE + '/marathon/guides', undefined, 'weekly', 0.65],
     [BASE + '/join', JOIN_UPDATED, 'monthly', 0.5],
   ];
   staticPages.forEach(([url, lastmod, cf, pr]) => add(url, M, 'static', lastmod, cf, pr));
@@ -102,16 +102,16 @@ export async function computeEligible() {
       shellQueryOk = true;
       shells.forEach((s) => {
         const slug = s.name.toLowerCase();
-        add(BASE + '/shells/' + slug, M, 'shell', lm(s.updated_at), 'weekly', 0.75);
-        if (hasShellGuide(slug)) add(BASE + '/guides/shells/' + slug, M, 'shell', lm(s.updated_at), 'weekly', 0.7);
+        add(BASE + '/marathon/shells/' + slug, M, 'shell', lm(s.updated_at), 'weekly', 0.75);
+        if (hasShellGuide(slug)) add(BASE + '/marathon/guides/shells/' + slug, M, 'shell', lm(s.updated_at), 'weekly', 0.7);
       });
     }
   } catch (err) { console.error('[sitemap] shell fetch threw:', err); }
   // Fallback shells ONLY if the DB read yielded nothing (build-time resilience).
   if (!shellQueryOk) {
     FALLBACK_SHELL_SLUGS.forEach((slug) => {
-      add(BASE + '/shells/' + slug, M, 'shell', undefined, 'weekly', 0.75);
-      if (hasShellGuide(slug)) add(BASE + '/guides/shells/' + slug, M, 'shell', undefined, 'weekly', 0.7);
+      add(BASE + '/marathon/shells/' + slug, M, 'shell', undefined, 'weekly', 0.75);
+      if (hasShellGuide(slug)) add(BASE + '/marathon/guides/shells/' + slug, M, 'shell', undefined, 'weekly', 0.7);
     });
   }
 
@@ -119,7 +119,7 @@ export async function computeEligible() {
   try {
     const { data: weapons } = await supabase.from('weapon_stats').select('name, updated_at').order('name');
     hubLastMod.weapons = maxUpdatedAt(weapons);
-    (weapons || []).forEach((w) => add(BASE + '/weapons/' + entitySlugFor('weapon', w.name), M, 'weapon', lm(w.updated_at), 'weekly', 0.75));
+    (weapons || []).forEach((w) => add(BASE + '/marathon/weapons/' + entitySlugFor('weapon', w.name), M, 'weapon', lm(w.updated_at), 'weekly', 0.75));
   } catch (err) { console.error('[sitemap] weapon fetch threw:', err); }
 
   // ── UNIQUES (type='unique') ────────────────────────────────────────────────
@@ -155,7 +155,7 @@ export async function computeEligible() {
   try {
     const { data: maps } = await supabase.from('game_maps').select('slug, updated_at').eq('game_slug', M).eq('verified', true).order('slug');
     hubLastMod.maps = maxUpdatedAt(maps);
-    (maps || []).forEach((m) => add(BASE + '/maps/' + m.slug, M, 'map', lm(m.updated_at), 'weekly', 0.8));
+    (maps || []).forEach((m) => add(BASE + '/marathon/maps/' + m.slug, M, 'map', lm(m.updated_at), 'weekly', 0.8));
   } catch (err) { console.error('[sitemap] map fetch threw:', err); }
 
   // ── MOD SLOT pages (type='modslot') ────────────────────────────────────────
@@ -165,7 +165,7 @@ export async function computeEligible() {
     if (modRows && modRows.length > 0) {
       const bySlot = {};
       for (const m of normalizeModRows(modRows)) { if (!hasSlotPage(m.slot_type)) continue; (bySlot[m.slot_type] = bySlot[m.slot_type] || []).push(m); }
-      Object.keys(bySlot).forEach((slot) => add(BASE + '/mods/' + slotToSlug(slot), M, 'modslot', lm(newestUpdatedAt(bySlot[slot])), 'weekly', 0.8));
+      Object.keys(bySlot).forEach((slot) => add(BASE + '/marathon/mods/' + slotToSlug(slot), M, 'modslot', lm(newestUpdatedAt(bySlot[slot])), 'weekly', 0.8));
     }
   } catch (err) { console.error('[sitemap] mod slot fetch threw:', err); }
 
@@ -201,13 +201,13 @@ export async function computeEligible() {
     const withContent = new Set();
     rows.forEach((r) => (r.tags || []).forEach((t) => { if (ALL_GUIDE_CATEGORIES.includes(t)) withContent.add(t); }));
     ALL_GUIDE_CATEGORIES.filter((s) => withContent.has(s)).forEach((slug) =>
-      add(BASE + '/guides/' + slug, M, 'guide', undefined, 'weekly', 0.65));
+      add(BASE + '/marathon/guides/' + slug, M, 'guide', undefined, 'weekly', 0.65));
   } catch (err) { console.error('[sitemap] feed_items fetch threw:', err); }
 
   // ── ENTITY HUBS (dated from their rows via hubLastMod; type='hub') ──────────
-  [['/shells', hubLastMod.shells, 'daily', 0.85], ['/weapons', hubLastMod.weapons, 'daily', 0.85],
-   ['/mods', hubLastMod.mods, 'weekly', 0.85], ['/uniques', hubLastMod.uniques, 'weekly', 0.85],
-   ['/maps', hubLastMod.maps, 'weekly', 0.85]].forEach(([route, max, cf, pr]) =>
+  [['/marathon/shells', hubLastMod.shells, 'daily', 0.85], ['/marathon/weapons', hubLastMod.weapons, 'daily', 0.85],
+   ['/marathon/mods', hubLastMod.mods, 'weekly', 0.85], ['/uniques', hubLastMod.uniques, 'weekly', 0.85],
+   ['/marathon/maps', hubLastMod.maps, 'weekly', 0.85]].forEach(([route, max, cf, pr]) =>
     add(BASE + route, M, 'hub', lm(max), cf, pr));
 
   // ── DMZ (game='dmz'), gated on dmz.indexable, all content-gated ────────────

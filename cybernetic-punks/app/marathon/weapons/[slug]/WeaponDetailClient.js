@@ -371,7 +371,7 @@ export default function WeaponDetailClient({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 6 }}>
               {otherWeapons.map(function(w) {
                 return (
-                  <Link key={w.slug} href={'/weapons/' + w.slug} className="bottom-nav" style={{
+                  <Link key={w.slug} href={'/marathon/weapons/' + w.slug} className="bottom-nav" style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
                     background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid ' + color + '70',
                     borderRadius: '0 0 3px 3px', textDecoration: 'none', transition: 'background 0.1s',

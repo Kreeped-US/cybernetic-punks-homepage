@@ -40,7 +40,7 @@ const CATEGORIES = {
     h1: 'MARATHON SHELL GUIDES',
     subhead: 'Ability breakdowns, stats, and playstyle analysis for all 7 Runner Shells. From Assassin\'s stealth reposition to Triage\'s squad support - pick the shell that fits your game.',
     related: [
-      { href: '/shells',  label: 'SHELL DATABASE',      desc: 'Full stats + abilities', color: '#00d4ff' },
+      { href: '/marathon/shells',  label: 'SHELL DATABASE',      desc: 'Full stats + abilities', color: '#00d4ff' },
       { href: '/marathon/builds',  label: 'BUILD LAB',           desc: 'Loadouts per shell',      color: '#ff8800' },
       { href: '/marathon/advisor', label: 'BUILD ADVISOR',       desc: 'Get your ranked build',   color: '#ff8800' },
     ],
@@ -126,7 +126,7 @@ const CATEGORIES = {
     related: [
       { href: '/intel/ghost', label: 'COMMUNITY INTEL',      desc: 'Community patterns',     color: '#00ff88' },
       { href: '/marathon/ranked',      label: 'RANKED HUB',       desc: 'Queue extraction intel', color: '#ffd700' },
-      { href: '/guides/shells/thief', label: 'THIEF GUIDE', desc: 'The exfil specialist', color: '#ffd700' },
+      { href: '/marathon/guides/shells/thief', label: 'THIEF GUIDE', desc: 'The exfil specialist', color: '#ffd700' },
     ],
     faqs: [
       { q: 'How do you extract successfully in Marathon?', a: 'Plan your exfil from match start - know your escape points before committing to fights. Prioritize Tag Chips and high-value loot early. Avoid late-match combat unless you have clear positioning. Always leave with enough health and ammo to contest the extraction zone. Don\'t be greedy.' },
@@ -145,9 +145,9 @@ const CATEGORIES = {
     h1: 'MARATHON BEGINNER GUIDES',
     subhead: 'New Runner essentials. Core mechanics, survival basics, first builds, and the do\'s and don\'ts every new player should know before their first drop.',
     related: [
-      { href: '/shells',  label: 'SHELL DATABASE', desc: 'Learn the shells',     color: '#00d4ff' },
+      { href: '/marathon/shells',  label: 'SHELL DATABASE', desc: 'Learn the shells',     color: '#00d4ff' },
       { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Start with a real build', color: '#ff8800' },
-      { href: '/guides/extraction', label: 'EXTRACTION 101', desc: 'Learn to exfil safely', color: '#00d4ff' },
+      { href: '/marathon/guides/extraction', label: 'EXTRACTION 101', desc: 'Learn to exfil safely', color: '#00d4ff' },
     ],
     faqs: [
       { q: 'Is Marathon hard for beginners?', a: 'Marathon has a learning curve due to its extraction-shooter mechanics, but new Runners can thrive by focusing on survival over kills. Start with Triage or Rook, learn one map thoroughly, and prioritize exfiltrating with any loot over attempting hero plays.' },
@@ -187,7 +187,7 @@ const CATEGORIES = {
     h1: 'MARATHON MAP GUIDES',
     subhead: 'Zone-by-zone knowledge. POIs, extraction points, loot hotspots, and rotation patterns. The difference between a lost run and a clean exfil is knowing the map better than the enemy.',
     related: [
-      { href: '/guides/extraction', label: 'EXTRACTION STRATEGY', desc: 'Exfil-specific tactics', color: '#00d4ff' },
+      { href: '/marathon/guides/extraction', label: 'EXTRACTION STRATEGY', desc: 'Exfil-specific tactics', color: '#00d4ff' },
       { href: '/intel/ghost',       label: 'COMMUNITY INTEL',        desc: 'Community map tips',    color: '#00ff88' },
       { href: '/marathon/ranked',            label: 'RANKED HUB',         desc: 'Zone rotations',        color: '#ffd700' },
     ],
@@ -208,9 +208,9 @@ const CATEGORIES = {
     h1: 'MARATHON STEALTH GUIDES',
     subhead: 'Plays where being unseen wins the round. Assassin reposition tech, Thief invisibility tools, sound-discipline routes, and how to extract without firing a shot.',
     related: [
-      { href: '/guides/shells/assassin', label: 'ASSASSIN GUIDE', desc: 'Stealth Prime ability', color: '#cc44ff' },
-      { href: '/guides/shells/thief',    label: 'THIEF GUIDE',    desc: 'Pickpocket + Grapple', color: '#ffd700' },
-      { href: '/guides/extraction',      label: 'EXTRACTION',     desc: 'Silent exfil routes', color: '#00d4ff' },
+      { href: '/marathon/guides/shells/assassin', label: 'ASSASSIN GUIDE', desc: 'Stealth Prime ability', color: '#cc44ff' },
+      { href: '/marathon/guides/shells/thief',    label: 'THIEF GUIDE',    desc: 'Pickpocket + Grapple', color: '#ffd700' },
+      { href: '/marathon/guides/extraction',      label: 'EXTRACTION',     desc: 'Silent exfil routes', color: '#00d4ff' },
     ],
     faqs: [
       { q: 'What is the best stealth shell in Marathon?', a: 'Assassin is the dedicated stealth shell with cloaking as its Prime ability and high-mobility reposition tools. Thief is a strong secondary option - Pickpocket Drone loots passively while you stay hidden, and Grapple Device lets you exit contested zones without combat.' },
@@ -230,8 +230,8 @@ const CATEGORIES = {
     subhead: 'Three Runners, one mission. Best trio compositions, role assignments, communication patterns, and the difference between a coordinated team and three solo players in the same lobby.',
     related: [
       { href: '/marathon/ranked',                 label: 'RANKED HUB',     desc: 'Squad queue intel',     color: '#ffd700' },
-      { href: '/guides/shells/triage',   label: 'TRIAGE GUIDE',   desc: 'The squad anchor',      color: '#00ff88' },
-      { href: '/guides/shells/recon',    label: 'RECON GUIDE',    desc: 'Information backbone',  color: '#00d4ff' },
+      { href: '/marathon/guides/shells/triage',   label: 'TRIAGE GUIDE',   desc: 'The squad anchor',      color: '#00ff88' },
+      { href: '/marathon/guides/shells/recon',    label: 'RECON GUIDE',    desc: 'Information backbone',  color: '#00d4ff' },
     ],
     faqs: [
       { q: 'What is the best squad composition in Marathon?', a: 'A strong baseline is Triage + Recon + DPS shell (Destroyer or Vandal). Triage anchors with self-repair and revives, Recon scouts and pings enemies, the DPS handles fights. Squads can also run double-utility (Triage + Recon + Thief for extraction-focused play) or pure aggression (Destroyer + Vandal + Recon).' },
@@ -250,9 +250,9 @@ const CATEGORIES = {
     h1: 'MARATHON SOLO GUIDES',
     subhead: 'One Runner. No revives. Every decision matters. Solo queue strategy, self-sufficient builds, avoiding 3-stacks, and how to outplay squads through positioning and patience.',
     related: [
-      { href: '/guides/shells/vandal',   label: 'VANDAL GUIDE',   desc: 'Solo mobility king',   color: '#ff8800' },
-      { href: '/guides/shells/thief',    label: 'THIEF GUIDE',    desc: 'Solo extraction',      color: '#ffd700' },
-      { href: '/guides/stealth',         label: 'STEALTH GUIDES', desc: 'Avoid PvP entirely',   color: '#cc44ff' },
+      { href: '/marathon/guides/shells/vandal',   label: 'VANDAL GUIDE',   desc: 'Solo mobility king',   color: '#ff8800' },
+      { href: '/marathon/guides/shells/thief',    label: 'THIEF GUIDE',    desc: 'Solo extraction',      color: '#ffd700' },
+      { href: '/marathon/guides/stealth',         label: 'STEALTH GUIDES', desc: 'Avoid PvP entirely',   color: '#cc44ff' },
     ],
     faqs: [
       { q: 'What is the best shell for solo play in Marathon?', a: 'Vandal and Thief dominate solo - Vandal for its mobility (jump jets, slide-cancel tech) lets you escape bad fights, Thief\'s Pickpocket Drone passively loots while you stay safe and Grapple Device extracts you from contested zones. Assassin is a strong third pick for mechanically skilled solo players.' },
@@ -272,8 +272,8 @@ const CATEGORIES = {
     subhead: 'The fastest path to Ranked climb. Holotag mechanics, target prioritization, gear ante math, and why hunting tags beats hunting kills for almost every Runner.',
     related: [
       { href: '/marathon/ranked',     label: 'RANKED HUB',      desc: 'Live Holotag targets',   color: '#ffd700' },
-      { href: '/guides/ranked', label: 'RANKED STRATEGY', desc: 'Full ranked playbook', color: '#ffd700' },
-      { href: '/guides/extraction', label: 'EXTRACTION',   desc: 'Exfil with tags',     color: '#00d4ff' },
+      { href: '/marathon/guides/ranked', label: 'RANKED STRATEGY', desc: 'Full ranked playbook', color: '#ffd700' },
+      { href: '/marathon/guides/extraction', label: 'EXTRACTION',   desc: 'Exfil with tags',     color: '#00d4ff' },
     ],
     faqs: [
       { q: 'What are Holotags in Marathon?', a: 'Holotags are score objectives in Marathon Ranked. They\'re tied to specific PvE targets, weapons, or events that rotate each Ranked window. Successfully eliminating or completing a Holotag target awards score that contributes to your Ranked tier climb. Tags must be extracted to count - dying with tags loses them.' },
@@ -292,8 +292,8 @@ const CATEGORIES = {
     h1: 'MARATHON ENDGAME GUIDES',
     subhead: 'Past the learning curve. Prestige tier strategy, Contraband weapon farming, faction max ranks, and the meta-level decisions that separate top-tier Runners from everyone else.',
     related: [
-      { href: '/guides/cryo-archive', label: 'CRYO ARCHIVE',   desc: 'Endgame raid',          color: '#00d4ff' },
-      { href: '/guides/holotag',     label: 'HOLOTAG STRATEGY', desc: 'Ranked climb fuel',    color: '#ffd700' },
+      { href: '/marathon/guides/cryo-archive', label: 'CRYO ARCHIVE',   desc: 'Endgame raid',          color: '#00d4ff' },
+      { href: '/marathon/guides/holotag',     label: 'HOLOTAG STRATEGY', desc: 'Ranked climb fuel',    color: '#ffd700' },
       { href: '/marathon/meta',               label: 'META TIER LIST',  desc: 'Top picks for endgame', color: '#00d4ff' },
     ],
     faqs: [
@@ -313,8 +313,8 @@ const CATEGORIES = {
     h1: 'MARATHON PVP GUIDES',
     subhead: 'Runner-vs-Runner combat. When to engage, when to disengage, peek technique, trade-killing, and the difference between winning fights and surviving them.',
     related: [
-      { href: '/guides/squad',    label: 'SQUAD PLAY', desc: 'Team-fight coordination', color: '#00d4ff' },
-      { href: '/guides/solo',     label: 'SOLO PLAY',  desc: '1v1 and 1v3 tactics',     color: '#ff8800' },
+      { href: '/marathon/guides/squad',    label: 'SQUAD PLAY', desc: 'Team-fight coordination', color: '#00d4ff' },
+      { href: '/marathon/guides/solo',     label: 'SOLO PLAY',  desc: '1v1 and 1v3 tactics',     color: '#ff8800' },
       { href: '/marathon/meta',            label: 'META TIER LIST', desc: 'PvP weapon picks',    color: '#00d4ff' },
     ],
     faqs: [
@@ -334,9 +334,9 @@ const CATEGORIES = {
     h1: 'MARATHON SUPPORT GUIDES',
     subhead: 'The role that wins rounds nobody else thought were winnable. Triage anchoring, revive timing, utility plays, and the support fundamentals that turn 1v3 disasters into 3v3 clutches.',
     related: [
-      { href: '/guides/shells/triage', label: 'TRIAGE GUIDE',  desc: 'The dedicated support', color: '#00ff88' },
-      { href: '/guides/squad',         label: 'SQUAD PLAY',    desc: 'Squad coordination',    color: '#00d4ff' },
-      { href: '/guides/shells/recon',  label: 'RECON GUIDE',   desc: 'Information support',   color: '#00d4ff' },
+      { href: '/marathon/guides/shells/triage', label: 'TRIAGE GUIDE',  desc: 'The dedicated support', color: '#00ff88' },
+      { href: '/marathon/guides/squad',         label: 'SQUAD PLAY',    desc: 'Squad coordination',    color: '#00d4ff' },
+      { href: '/marathon/guides/shells/recon',  label: 'RECON GUIDE',   desc: 'Information support',   color: '#00d4ff' },
     ],
     faqs: [
       { q: 'What is the best support shell in Marathon?', a: 'Triage is the dedicated support shell - self-repair, squad revives, and survivability stats make it the squad anchor. Recon is the secondary support choice, providing information advantage through pinging and scanning. Both can carry rounds that go sideways.' },
@@ -355,8 +355,8 @@ const CATEGORIES = {
     h1: 'CRYO ARCHIVE INTEL',
     subhead: 'Marathon\'s endgame raid map. Security Clearance progression, Vault 1-7 walkthroughs, Compiler boss mechanics, and the loadouts that survive the UESC Marathon ship. Available Thursdays through Sundays.',
     related: [
-      { href: '/guides/endgame',  label: 'ENDGAME GUIDES', desc: 'Cryo Archive prep',     color: '#ff2d55' },
-      { href: '/guides/squad',    label: 'SQUAD PLAY',     desc: 'Required for entry',    color: '#00d4ff' },
+      { href: '/marathon/guides/endgame',  label: 'ENDGAME GUIDES', desc: 'Cryo Archive prep',     color: '#ff2d55' },
+      { href: '/marathon/guides/squad',    label: 'SQUAD PLAY',     desc: 'Required for entry',    color: '#00d4ff' },
       { href: '/marathon/factions',        label: 'FACTIONS',       desc: 'Liaison contracts',     color: '#ffd700' },
     ],
     faqs: [
@@ -414,7 +414,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: cat.title,
       description: cat.description,
-      url: 'https://cyberneticpunks.com/guides/' + resolved.category,
+      url: 'https://cyberneticpunks.com/marathon/guides/' + resolved.category,
       siteName: 'CyberneticPunks',
       type: 'website',
     },
@@ -424,7 +424,7 @@ export async function generateMetadata({ params }) {
       title: cat.title,
       description: cat.description,
     },
-    alternates: { canonical: 'https://cyberneticpunks.com/guides/' + resolved.category },
+    alternates: { canonical: 'https://cyberneticpunks.com/marathon/guides/' + resolved.category },
   };
 }
 
@@ -604,8 +604,8 @@ export default async function CategoryPage({ params }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',   item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Guides', item: 'https://cyberneticpunks.com/guides' },
-      { '@type': 'ListItem', position: 3, name: cat.label, item: 'https://cyberneticpunks.com/guides/' + resolved.category },
+      { '@type': 'ListItem', position: 2, name: 'Guides', item: 'https://cyberneticpunks.com/marathon/guides' },
+      { '@type': 'ListItem', position: 3, name: cat.label, item: 'https://cyberneticpunks.com/marathon/guides/' + resolved.category },
     ],
   };
 
@@ -644,7 +644,7 @@ export default async function CategoryPage({ params }) {
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, flexWrap: 'wrap', fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
           <li>/</li>
-          <li><Link href="/guides" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>GUIDES</Link></li>
+          <li><Link href="/marathon/guides" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>GUIDES</Link></li>
           <li>/</li>
           <li style={{ color: cat.color }}>{cat.label}</li>
         </ol>
@@ -709,7 +709,7 @@ export default async function CategoryPage({ params }) {
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', maxWidth: 420, margin: '0 auto', lineHeight: 1.5 }}>
                 Editors are working on {cat.label.toLowerCase()}. Check back in a few cycles - new content drops throughout the day.
               </p>
-              <Link href="/guides" style={{ display: 'inline-block', marginTop: 16, fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 2, textDecoration: 'none', fontWeight: 700 }}>
+              <Link href="/marathon/guides" style={{ display: 'inline-block', marginTop: 16, fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 2, textDecoration: 'none', fontWeight: 700 }}>
                 &larr; ALL GUIDES
               </Link>
             </div>
@@ -806,7 +806,7 @@ export default async function CategoryPage({ params }) {
                 </Link>
               );
             })}
-            <Link href="/guides" className="gc-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
+            <Link href="/marathon/guides" className="gc-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
               <div>
                 <div style={{ fontFamily: 'monospace', fontSize: 10, color: PURPLE, letterSpacing: 1, fontWeight: 700 }}>ALL GUIDES</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>Back to the guides hub</div>

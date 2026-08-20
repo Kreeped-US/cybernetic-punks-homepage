@@ -307,7 +307,7 @@ export default function ShellsHubClient(props) {
               return (
                 <Link
                   key={shell.name}
-                  href={'/shells/' + shell.name.toLowerCase()}
+                  href={'/marathon/shells/' + shell.name.toLowerCase()}
                   className="shell-card"
                   style={{
                     '--shell-color': color,
@@ -540,11 +540,11 @@ export default function ShellsHubClient(props) {
                 )}
 
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <Link href={'/shells/' + qrName.toLowerCase()} style={{ flex: 1, minWidth: 180, padding: '12px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: 1 }}>
+                  <Link href={'/marathon/shells/' + qrName.toLowerCase()} style={{ flex: 1, minWidth: 180, padding: '12px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: 1 }}>
                     READ THE GUIDE
                   </Link>
                   {isRankedExcluded(qrName) ? (
-                    <Link href="/maps" style={{ flex: 1, minWidth: 180, padding: '12px', background: '#ff8800', border: 'none', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
+                    <Link href="/marathon/maps" style={{ flex: 1, minWidth: 180, padding: '12px', background: '#ff8800', border: 'none', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
                       LEARN THE MAPS →
                     </Link>
                   ) : (

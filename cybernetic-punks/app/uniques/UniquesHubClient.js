@@ -221,7 +221,7 @@ export default function UniquesHubClient(props) {
                             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 2, fontFamily: 'monospace' }}>
                               BASED ON{' '}
                               {u.baseWeaponSlug ? (
-                                <Link href={'/weapons/' + u.baseWeaponSlug} className="uniq-base" style={{ color: color + 'cc', textDecoration: 'none', fontWeight: 700, transition: 'color 0.1s' }}>
+                                <Link href={'/marathon/weapons/' + u.baseWeaponSlug} className="uniq-base" style={{ color: color + 'cc', textDecoration: 'none', fontWeight: 700, transition: 'color 0.1s' }}>
                                   {u.base_weapon} →
                                 </Link>
                               ) : (
@@ -297,7 +297,7 @@ export default function UniquesHubClient(props) {
               Prestige uniques drop from Locked Rooms in the Cryo Archive — Marathon's endgame raid map. Learn the layout, vault routes, and Compiler fight.
             </div>
           </div>
-          <Link href="/guides/cryo-archive" style={{
+          <Link href="/marathon/guides/cryo-archive" style={{
             padding: '11px 22px', background: '#ff2d55', color: '#fff',
             fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2,
             textDecoration: 'none', flexShrink: 0,

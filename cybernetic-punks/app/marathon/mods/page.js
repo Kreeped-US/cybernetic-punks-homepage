@@ -33,7 +33,7 @@
 //   - compatible_weapons is 0/202 populated, so this page does NOT claim which
 //     weapons a mod fits. Omitted rather than faked.
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import {
@@ -55,7 +55,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Mods — Every Weapon Mod, Effect & Rarity | CyberneticPunks',
     description: 'Effects, rarity tiers, and credit cost for every Marathon weapon mod — chip, magazine, barrel, optic, grip, shield, generator.',
-    url: 'https://cyberneticpunks.com/mods',
+    url: 'https://cyberneticpunks.com/marathon/mods',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -65,7 +65,7 @@ export const metadata = {
     title: 'Marathon Mods — Every Weapon Mod, Effect & Rarity',
     description: 'Effects, rarity tiers, and credit cost for every Marathon weapon mod.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/mods' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/mods' },
 };
 
 export default async function ModsIndexPage() {
@@ -105,7 +105,7 @@ export default async function ModsIndexPage() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Mods', item: 'https://cyberneticpunks.com/mods' },
+          { '@type': 'ListItem', position: 2, name: 'Mods', item: 'https://cyberneticpunks.com/marathon/mods' },
         ],
       }) }} />
 
@@ -147,12 +147,12 @@ export default async function ModsIndexPage() {
                     text rather than linking to a 404. */}
                 <h2 style={{ fontSize: 13, color: MOD_ACCENT, letterSpacing: 3, fontWeight: 800, textTransform: 'uppercase', fontFamily: 'Orbitron, monospace', margin: 0 }}>
                   {hasSlotPage(slot)
-                    ? <Link href={'/mods/' + slotToSlug(slot)} style={{ color: MOD_ACCENT, textDecoration: 'none' }}>{slot}</Link>
+                    ? <Link href={'/marathon/mods/' + slotToSlug(slot)} style={{ color: MOD_ACCENT, textDecoration: 'none' }}>{slot}</Link>
                     : slot}
                 </h2>
                 <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
                 {hasSlotPage(slot) && (
-                  <Link href={'/mods/' + slotToSlug(slot)} style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
+                  <Link href={'/marathon/mods/' + slotToSlug(slot)} style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', letterSpacing: 1, textDecoration: 'none', fontWeight: 700 }}>
                     ALL {slot.toUpperCase()} MODS →
                   </Link>
                 )}
@@ -213,7 +213,7 @@ export default async function ModsIndexPage() {
         '@type': 'CollectionPage',
         name: 'Marathon Mods — Every Weapon Mod, Effect & Rarity',
         description: 'Effects, rarity tiers, and credit cost for every Marathon weapon mod, grouped by slot.',
-        url: 'https://cyberneticpunks.com/mods',
+        url: 'https://cyberneticpunks.com/marathon/mods',
         mainEntity: {
           '@type': 'ItemList',
           itemListElement: slotNames.flatMap(function(slot) {
@@ -227,7 +227,7 @@ export default async function ModsIndexPage() {
           Entity hubs linked guides in neither direction before 2026-07-20;
           guides linked out to entities but never received a link back. */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1100, margin: '0 auto' }}>
-        <Link href="/guides/mods" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff2222', borderRadius: '0 2px 2px 0', padding: '14px 18px', textDecoration: 'none' }}>
+        <Link href="/marathon/guides/mods" style={{ display: 'block', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid #ff2222', borderRadius: '0 2px 2px 0', padding: '14px 18px', textDecoration: 'none' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff2222', letterSpacing: 2, fontWeight: 700, marginBottom: 4 }}>MOD GUIDES &rarr;</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Slot breakdowns and best combinations</div>
         </Link>

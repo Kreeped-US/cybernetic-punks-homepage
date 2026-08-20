@@ -162,6 +162,16 @@ const nextConfig = {
       { source: '/rising/:path*', destination: '/marathon/rising/:path*', permanent: true },
       { source: '/advisor/:path*', destination: '/marathon/advisor/:path*', permanent: true },
       { source: '/modes/vault-breaker/:path*', destination: '/marathon/modes/vault-breaker/:path*', permanent: true },
+      // Root-route migration STAGE 3 (2026-08-20): the five mid-tier Marathon TREES,
+      // game-scoped under /marathon/* (Ruling 2). One wildcard rule per tree covers
+      // the hub AND every depth of dynamic child; for /guides the single rule also
+      // covers /guides/[category] and the nested /guides/shells/[name]. (/uniques,
+      // /leaderboard, /tools/build, /intel stay at root - Stage 4 / deferred.)
+      { source: '/shells/:path*', destination: '/marathon/shells/:path*', permanent: true },
+      { source: '/maps/:path*', destination: '/marathon/maps/:path*', permanent: true },
+      { source: '/mods/:path*', destination: '/marathon/mods/:path*', permanent: true },
+      { source: '/weapons/:path*', destination: '/marathon/weapons/:path*', permanent: true },
+      { source: '/guides/:path*', destination: '/marathon/guides/:path*', permanent: true },
     ];
   },
 };

@@ -7,6 +7,60 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Root-route migration STAGE 3 (5 trees -> /marathon/*) [HELD]
+
+Stage 3 of 4: the five mid-tier Marathon TREES (every one has dynamic children),
+game-scoped under /marathon/* (Ruling 2). One atomic commit. HELD for operator
+FF-merge + verification gate.
+
+### Moved (git renames, whole trees incl. dynamic children)
+- /shells -> /marathon/shells      ([slug] + ShellsHubClient + ShellDetailClient)
+- /maps   -> /marathon/maps        ([slug]; vault/preview machinery moved untouched)
+- /mods   -> /marathon/mods        ([slot])
+- /weapons-> /marathon/weapons     ([slug] + WeaponDetailClient; most URLs, ~33)
+- /guides -> /marathon/guides      (NESTED: [category] + guides/shells/[name])
+
+### EXPLICITLY left at root (Stage 4 / deferred) - inbound links updated, folders NOT moved
+/uniques, /leaderboard, /tools/build, /intel stay at root. Verified: /uniques self-
+links (e.g. UniquesHubClient /uniques/<anchor>) untouched; only their OUTBOUND links
+to the five (e.g. uniques -> /marathon/weapons, tools/build -> /marathon/shells) were
+rewritten. Grep confirms no /marathon/uniques or /marathon/leaderboard anywhere.
+
+### Change-set
+- Canonicals/OG/JSON-LD in the moved trees -> /marathon/<route>.
+- Internal links updated the SAME commit (Nav, Footer, root page, rootGames, me,
+  cross-links from advisor/meta/ranked/vault-breaker, tools/build, uniques hub).
+- Sitemap (eligible.js): all 5 present -> /marathon/* (hub + child loops; /guides
+  also the /guides/shells/ sub-loop). Old paths absent; /uniques stays root.
+- Redirects (next.config.mjs, 308): ONE /<route>/:path* rule per tree. For /guides
+  the single rule covers /guides, /guides/[category], AND /guides/shells/[name] -
+  proven by curl at depth (/guides/shells/assassin -> 308 -> /marathon/...).
+- GSC map (storage.js): untouched; old segments kept.
+
+### Collision discipline (Stages 1-2 lessons)
+Anchored regex (quote or cyberneticpunks.com prefix + non-alnum/hyphen boundary):
+- /mods did NOT touch /modes (Stage-2 /marathon/modes/vault-breaker) or /modules;
+  /maps did NOT touch sitemap; lib twins @/lib/mods + @/lib/shellGuides untouched
+  (import paths have no quote/.com prefix). No external-URL collisions found.
+- 6 relative supabase imports (shells/mods/weapons hub+child) broke one level
+  deeper -> converted to @/ alias.
+
+### Verification (pre-merge)
+next build exit 0, zero import/module errors. next start + curl: all 11 new
+/marathon/<route>(/child) -> 200; all 11 old -> 308 -> new, INCLUDING the deep
+nested /guides/shells/assassin -> 308. Sitemap emits all 5 (shells 9, maps 6, mods
+7, weapons 33, guides 24 incl guides/shells 8), zero old, /uniques still root (16+1).
+Grep: zero old-path links to the five, no /marathon/marathon, no @/lib/marathon
+corruption, /uniques + /leaderboard untouched. byte-clean (only pre-existing display
+glyphs on touched lines). HELD for operator FF-merge + verification gate.
+
+### STAGE 4 (remaining) - the last, highest-stakes routes
+/uniques + /leaderboard (root entity/tool pages), /tools/build (the build tool),
+and /intel (~938 URLs, the bulk of Marathon GSC authority - a separate major
+project, staged on its own). Everything else is now under /marathon/*.
+
+---
+
 ## 2026-08-20 - Root-route migration STAGE 2 (10 routes -> /marathon/*) [HELD]
 
 Stage 2 of 4: the remaining single-page Marathon routes + /modes/vault-breaker,

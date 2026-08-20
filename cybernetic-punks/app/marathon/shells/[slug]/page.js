@@ -21,7 +21,7 @@
 //   WebPage with dateModified. Across 7 shells that's 21 new structured-
 //   data instances.
 
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { resolveSession } from '@/lib/auth/resolveSession';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }) {
       // OG title keeps '| CyberneticPunks' for social-share recognizability
       title: title + ' | CyberneticPunks',
       description: desc,
-      url: 'https://cyberneticpunks.com/shells/' + slug,
+      url: 'https://cyberneticpunks.com/marathon/shells/' + slug,
       siteName: 'CyberneticPunks',
       type: 'website',
     },
@@ -90,7 +90,7 @@ export async function generateMetadata({ params }) {
       title: 'Marathon ' + shell.name + ' Guide — Builds, Loadouts & Tier List',
       description: 'Stats, abilities, builds, and tier ranking for the ' + shell.name + ' shell.',
     },
-    alternates: { canonical: 'https://cyberneticpunks.com/shells/' + slug },
+    alternates: { canonical: 'https://cyberneticpunks.com/marathon/shells/' + slug },
   };
 }
 
@@ -229,8 +229,8 @@ export default async function ShellHubPage({ params }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',     item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Shells',   item: 'https://cyberneticpunks.com/shells' },
-      { '@type': 'ListItem', position: 3, name: shellName + ' Guide', item: 'https://cyberneticpunks.com/shells/' + slug },
+      { '@type': 'ListItem', position: 2, name: 'Shells',   item: 'https://cyberneticpunks.com/marathon/shells' },
+      { '@type': 'ListItem', position: 3, name: shellName + ' Guide', item: 'https://cyberneticpunks.com/marathon/shells/' + slug },
     ],
   };
 
@@ -257,7 +257,7 @@ export default async function ShellHubPage({ params }) {
     '@type': 'WebPage',
     name: 'Marathon ' + shellName + ' Guide',
     description: 'Complete guide to the ' + shellName + ' Runner Shell in Marathon — stats, abilities, cores, implants, builds, and tier ranking.',
-    url: 'https://cyberneticpunks.com/shells/' + slug,
+    url: 'https://cyberneticpunks.com/marathon/shells/' + slug,
     // dateModified attached below, only when a real date exists.
     about: {
       '@type': 'Thing',

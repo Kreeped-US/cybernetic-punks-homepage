@@ -244,7 +244,7 @@ export default function VaultBreakerPage() {
     location: {
       '@type': 'VirtualLocation',
       name: 'Cryo Archive - Marathon',
-      url: 'https://cyberneticpunks.com/maps/cryo-archive',
+      url: 'https://cyberneticpunks.com/marathon/maps/cryo-archive',
     },
     organizer: { '@type': 'Organization', name: 'Bungie', url: 'https://www.bungie.net' },
     isAccessibleForFree: true,
@@ -328,7 +328,7 @@ export default function VaultBreakerPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
           <FactCard label="Dates" value="July 21 – August 4, 2026" />
           <FactCard label="Patch" value={vb.patch} />
-          <FactCard label="Map" value="Cryo Archive" href="/maps/cryo-archive" />
+          <FactCard label="Map" value="Cryo Archive" href="/marathon/maps/cryo-archive" />
           <FactCard label="Group size" value="Solo, Duo, or Trio" note="Matchmade or premade" />
           <FactCard label="Requirement" value="Any Runner Level" note="No level gate" />
           <FactCard label="Format" value="Roguelite PvE" note="Progressively tougher Vaults across multiple runs" />
@@ -643,10 +643,10 @@ export default function VaultBreakerPage() {
             differ from the announcements now that the mode is live.
           </p>
           <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link href="/maps/cryo-archive" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+            <Link href="/marathon/maps/cryo-archive" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
               Cryo Archive Map
             </Link>
-            <Link href="/shells" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+            <Link href="/marathon/shells" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
               Shells
             </Link>
             <Link href="/intel" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>

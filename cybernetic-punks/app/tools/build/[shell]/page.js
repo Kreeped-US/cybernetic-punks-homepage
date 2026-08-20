@@ -133,8 +133,8 @@ export default async function BuildPage({ params }) {
       <section style={{ background: '#121418', color: '#fff', borderBottom: '1px solid #1e2028', padding: '40px 24px 20px', fontFamily: 'system-ui, sans-serif' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 12, fontFamily: 'monospace', letterSpacing: 1 }}>
-            <Link href="/shells" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>Shells</Link>
-            {' / '}<Link href={'/shells/' + shell} style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>{name}</Link>
+            <Link href="/marathon/shells" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>Shells</Link>
+            {' / '}<Link href={'/marathon/shells/' + shell} style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>{name}</Link>
             {' / '}<span style={{ color: accent }}>Build</span>
           </div>
           <h1 style={{ fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 14px' }}>
@@ -146,8 +146,8 @@ export default async function BuildPage({ params }) {
             <Link href="/marathon/cradle" style={{ color: accent, textDecoration: 'none' }}>Cradle stat-track plan</Link>{' '}
             — engineered from the {name}&rsquo;s playstyle and cross-referenced against real in-game stat
             values. Browse the full{' '}
-            <Link href={'/shells/' + shell} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>{name} shell data</Link>{' '}
-            and every <Link href="/weapons" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>weapon</Link> behind these picks.
+            <Link href={'/marathon/shells/' + shell} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>{name} shell data</Link>{' '}
+            and every <Link href="/marathon/weapons" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>weapon</Link> behind these picks.
           </p>
           <div>
             <Link href={'/advisor?shell=' + name} style={{ display: 'inline-block', padding: '10px 18px', background: accent, color: accent === '#ffd700' || accent === '#ff8800' || accent === '#00d4ff' || accent === '#00ff88' || accent === '#888888' ? '#000' : '#fff', fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>

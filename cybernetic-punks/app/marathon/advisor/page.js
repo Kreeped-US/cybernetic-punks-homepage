@@ -253,9 +253,9 @@ export default async function AdvisorPage({ searchParams }) {
             a free-respec Energy system, while{' '}
             <a href="/marathon/factions" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>factions</a>{' '}
             gate gear through their Armories. Browse every{' '}
-            <a href="/shells" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>Runner shell</a>{' '}
+            <a href="/marathon/shells" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>Runner shell</a>{' '}
             and{' '}
-            <a href="/weapons" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>weapon</a>{' '}
+            <a href="/marathon/weapons" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>weapon</a>{' '}
             for the data behind every recommendation.
           </p>
         </div>

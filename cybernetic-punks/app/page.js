@@ -421,8 +421,8 @@ export default async function NetworkRoot() {
                 { href: '/leaderboard', glyph: '▲', label: 'Leaderboard',   sub: 'Top runners tracked' },
                 { href: '/marathon/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
                 { href: '/marathon/player-count',glyph: '◱', label: 'Player count',   sub: 'Live Steam concurrents' },
-                { href: '/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },
-                { href: '/mods',        glyph: '⬡', label: 'Mods',           sub: 'Every mod, every slot' },
+                { href: '/marathon/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },
+                { href: '/marathon/mods',        glyph: '⬡', label: 'Mods',           sub: 'Every mod, every slot' },
               ].map(function(t) {
                 return (
                   <Link key={t.href} href={t.href} className="nr-tool">
