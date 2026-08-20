@@ -7,6 +7,119 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Marathon route migration FULLY COMPLETE + intel hard-delete (early-vs-Aug-27 decision)
+
+### Outcome
+Every Marathon content route is now game-scoped under `/marathon/*`. The network root holds
+only network identity/accounts (`/`, `/about`, `/editors`, `/join`, `/me`, `/u`, `/welcome`,
+`/profile-preview`, `/admin`), the deferred `/tools/build`, and `/dmz` (own namespace). The
+root is free for network identity + future games; DMZ launches Oct 23 INTO the structure, so
+its URLs never migrate.
+
+Commit chain: `24191a4 -> 2345670 (S1) -> c359f9e (S2) -> e873e8c (S3) -> 4291eb4 (S4) -> 90b00d0 (/intel)`
+
+### The migration (5 gated stages, each = one atomic Vercel deploy, FF-merged after gates green)
+- **S1** `2345670` - 4 singles (`/creators /cradle /sitrep`) + `/matchups` tree. Proved the pattern + wildcard.
+- **S2** `c359f9e` - 10 singles incl. `/advisor` + `/modes/vault-breaker`.
+- **S3** `e873e8c` - 5 trees `/shells /maps /mods /weapons /guides` (incl. nested `/guides/shells/[name]`).
+- **S4** `4291eb4` - `/uniques` tree + `/leaderboard` (highest-authority in-scope, last).
+- **/intel** `90b00d0` - flat namespace: hub + 373 articles + 5 editor lanes -> `/marathon/intel`.
+
+Mechanism throughout: `git mv` the folder, anchored internal-link rewrite (quote-or-`.com`
+prefix + segment boundary), one `/<route>/:path*` 308 wildcard per route, sitemap swap,
+canonical/OG/JSON-LD update - all in one commit. Old segments kept in `GAME_ROUTE_PREFIXES`
+until they age out of GSC.
+
+### Two latent production bugs flushed out by the migration (neither broke the build)
+1. **S2 redirect chains** - `/play-of-the-day` + `/top-build` pointed at `/builds`, which S2
+   moved, so they had been 2-hopping on prod since S2 merged. Caught + repointed in S4. Lesson:
+   a moved route can be a redirect DESTINATION, not just a source - scan `next.config` for both.
+2. **Entity misclassification (found during /intel)** - `cannibalization.js firstSegment()`
+   keyed on `parts[1]`, but every migrated route is now `/marathon/<x>`, so `parts[1]` had been
+   `'marathon'` for ALL of them since S1 - the entity classifier silently typed every moved
+   entity route as `'other'` on prod. The prefix-aware fix (`parts[1] in {marathon,dmz} -> parts[2]`)
+   repairs intel (news) AND restores all entity segments in one change.
+
+### Process lesson (/intel)
+The scoping-read link inventory UNDER-COUNTED. The first anchored pass left old `/intel` links
+in 8 files it missed (5 already-moved `/marathon/*` trees, `/me`, `lib/discord`, the DMZ article
+page). The post-move grep caught them (92 total, zero remaining). The authoritative gate is
+"zero old-path links POST-move" - never the pre-move inventory. Pre-move sizing informs; the
+post-move grep bounds.
+
+---
+
+### DECISION: ran the intel hard-delete EARLY (2026-08-20) instead of waiting for the Aug-27 deindex-watch
+
+**What was scheduled:** an Aug-27 deindex-watch that re-pulls GSC to confirm no click-loss on
+the ~1,200 noindexed intel articles BEFORE hard-deleting them ("the real Marathon glut-clear").
+
+**The collision:** the `/intel` migration and that watch both wanted the same URLs. Migrating
+mid-watch splits those URLs' GSC signal across old + new during the re-eval window, muddying the
+exact "no click loss" measurement the watch exists to produce.
+
+**Why we deleted early rather than sequencing around it (operator call):** the watch measures
+whether noindexed, already-pruned, dead URLs might regain impressions before deletion. Operator
+judgment: they will not - noindexed dead pages do not spontaneously regain traction. Under that
+premise the watch is measuring a foregone conclusion, so deleting now does not corrupt a
+measurement we need - it retires a measurement we have decided we do not. This was an operator
+judgment on his own data (that the ~1,200 are truly dead), not a mechanical certainty - so the
+delete was gated to SHOW the set before removing it, verifying "dead" at execution rather than
+assuming it.
+
+**Why early is also strictly better, not just faster:** doing the delete first shrank the
+corpus from 936 redirect-relevant URLs toward the ~379 that actually carry authority (373 live
+articles + hub + 5 lanes). We migrated the clean set instead of dragging ~563 about-to-be-deleted
+URLs through the redirect table. Wait would have made the job bigger, not smaller.
+
+**Trade-off accepted:** the Aug-27 click-loss confirmation is now forgone. If a deleted slug
+ever turns out to have mattered, the recoverable snapshot (below) is the recourse - not a
+re-run of the watch.
+
+### The hard-delete (operator ran the SQL; Claude Code prepared + verified only)
+Permanent deletion is the operator's to execute - Claude Code prepared, snapshotted, verified,
+and handed over the statement; it did NOT run the DELETE.
+
+- **Predicate:** `game_slug='marathon' AND is_published=true AND noindex=true` (columns
+  confirmed against schema). Dead set = the MIRANDA "Shell Selection for Ranked Mode /
+  Ranked Shell Guide" near-duplicate glut (pruned 2026-01-01 + 2026-08-13).
+- **Referential dependency caught in prep:** `coverage_registry` had 268 rows referencing the
+  dead set; its FK on-delete behavior was UNKNOWN from the repo (DDL lives only in Supabase).
+  Handled with a two-statement atomic transaction (clear the 268 coverage rows, then delete the
+  feed_items) that is correct under CASCADE, RESTRICT, or loose FK. `keyword_match_log` had 0
+  refs to the dead set - unaffected.
+- **Executed** inside `BEGIN ... COMMIT`. Pre-check returned 1200. Post-checks: **0 dead / 373
+  surviving** (reconciles: 1,573 published - 1,200 = 373). Emission confirmed clean - the dead
+  set was already `noindex`, off the sitemap and every related-articles surface, so deleting it
+  broke no emission.
+- **Recoverable snapshots (the escape hatch for an irreversible delete):**
+  `backups/intel-harddelete-20260820.json` (1,200 full rows, ~5 MB, all 27 columns) +
+  `backups/intel-harddelete-coverage_registry-20260820.json` (268 rows). Both COPIED to a second
+  folder outside the repo, and `backups/` is now gitignored (a `git add -A` had tried to stage
+  the 5 MB blob - exactly the accidental-commit risk flagged in prep).
+
+### /intel migration specifics
+- Flat namespace -> one `/intel/:path*` wildcard covers hub + articles + editor lanes.
+- **Zero** feed_items article-body `/intel/` links (confirmed pre- and post-delete) - no DB body
+  rewrite; all intel cross-linking is code.
+- Two GSC touchpoints updated (build-silent if missed): `inspectionRun.js` URL builder ->
+  `/marathon/intel/`; `cannibalization.js firstSegment()` made game-prefix-aware.
+- 4 consolidation destinations (faction x2, Rook, V85) repointed `/intel/<survivor>` ->
+  `/marathon/intel/<survivor>` - one-hop verified.
+
+### Operator post-deploy checks (open)
+- Live `/intel/*` -> 308 spot-checks incl. one consolidation source (V85 slug) - confirm one-hop on prod.
+- **Consumer C re-eval** - ~373 URLs re-enrolling, the largest re-eval surface of the whole
+  migration; the dip is EXPECTED DATA, not regression.
+- Eyeball the cannibalization entity-vs-news classification on real data post-deploy (the fix
+  corrected logic that was silently wrong in production).
+
+### Remaining threads (not loose ends - parked by decision)
+- `/tools/build` - deferred pending the DMZ-inheritance memo (that memo rules its landing name).
+- DMZ launch prep for Oct 23.
+
+---
+
 ## 2026-08-20 - /intel migration -> /marathon/intel (root migration FULLY COMPLETE) [HELD]
 
 The last Marathon namespace moved: /intel -> /marathon/intel (Ruling 2). Flat namespace,
