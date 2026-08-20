@@ -7,6 +7,64 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - DMZ nav restructure: labels + structure + behavior (done)
+
+The DMZ nav was reworked in two gated commits under the two Fable rulings recorded
+in the 2026-08-20 AM entry (four-tier label precedence + own-signal aesthetic).
+Labels, structure, and behavior are complete; aesthetic (own-signal tactical
+treatment, zero game imagery) is the remaining nav step, deferred to pair with the
+atmosphere pass. Main = 16b32ee.
+
+### Labels + structure (2428f35) - 5 decoupled tabs
+Nav went 7 tabs -> 5, DECOUPLED from the Coverage grid + JSON-LD via two new
+OPTIONAL nav-only fields on dmz.sections (navLabel, hideFromNav); DmzNav filters
+!hideFromNav and prefers navLabel. Coverage card labels, routes, and
+hubCollectionLd JSON-LD are BYTE-IDENTICAL (page.js not in the diff - decouple
+proven). The 5 tabs (four-tier procedure applied):
+- News (was Field Intel - tier-4 coinage renamed; Coverage label stays "Field
+  Intel", decoupled)
+- Loadouts (tier-1 demand-fit, "dmz best loadout" 480)
+- 3D Printer (tier-2 source-verbatim - STANDS)
+- FOB (tier-1+2 demand+source)
+- Map (was Hajin Regions - captures "dmz map" 22,200; href stays /dmz/regions)
+CUT from nav (hideFromNav, section/route/schema PRESERVED, not retired): Meta
+(no measured demand + empty pre-launch) and Discourse (tier-4 coinage).
+KEYS NOT ADDED: source-blocked. Step-0 audit + fresh grep = ZERO first-party MW4
+keys facts (not even confirmation keys exist in MW4 DMZ); dmz_keys empty, page
+noindex-until-rows. Demand is huge+winnable (dmz key locations 12,100, KD 30) but
+demand doesn't manufacture a source. Build trigger: a verbatim Deep-Dive keys
+excerpt (WATCH CoD NEXT Thu 08-21) or launch. Then it is a sourced build + 6th slot.
+
+### Behavior (16b32ee) - active states + hub indication
+- Active-state exact-match -> PREFIX-match (pathname === base || startsWith(base +
+  '/'); the '+ /' guard required). Article pages now light their parent tab. Safe:
+  no slug is a prefix of another, zero double-light. Accepted quirk (not special-
+  cased): the 3D-Printer ARTICLE is filed at /dmz/loadouts/<slug> so it lights
+  Loadouts, never the 3D Printer tab (correct - it is filed under loadouts).
+- Hub self-indication: the DMZ wordmark gets the active underline + aria-current
+  only on exactly /dmz (transparent same-size border off-hub = no layout shift).
+  On section pages the wordmark stays a plain back-to-hub affordance.
+- Mobile LEFT as horizontal-scroll (correct for 5 items; hamburger would be over-
+  engineering). Entity hubs (/dmz/pois, /keys) light no tab under either scheme.
+
+### Nav follow-ups (open, non-blocking)
+- Nav AESTHETIC (step 4) - own-signal tactical treatment, ZERO game imagery
+  (Fable chrome hard-line). Pairs with the atmosphere pass; deferred (CoD NEXT may
+  inform it).
+- "Map -> /dmz/regions vs /dmz/pois" - a routing/IA question (which page is the
+  "dmz map" ranking target; how regions + pois relate; redundancy). Separate small
+  IA look, NOT a label fix.
+- Active-state: /dmz/pois will not light "Map" (it is an entity hub, not the regions
+  section) - noted, tied to the regions-vs-pois IA question.
+
+### Next
+CoD NEXT Thu 08-21 = fresh official DMZ source (likely keys/systems detail) ->
+Keys build + 6th slot, new topics. Then: nav aesthetic + atmosphere (own-signal:
+terminal texture + map-contour from POI data). Also queued: map the network-root
+(cyberneticpunks.com) new-visitor journey + remodel the root page.
+
+---
+
 ## 2026-08-20 AM - DmzFrame image-slots BACKED OUT + nav/atmosphere direction set
 
 The 2026-08-19 PM DmzFrame image-frame scaffolding (empty slot-frames) was the
