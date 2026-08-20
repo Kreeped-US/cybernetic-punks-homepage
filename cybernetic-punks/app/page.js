@@ -45,8 +45,8 @@ import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
 // Indexed (inherits the layout's robots:index) with a self-referential canonical
 // to the apex -- this is the network root's own canonical home.
 export const metadata = {
-  title: 'Competitive-Shooter Intelligence Network',
-  description: 'The competitive-shooter intelligence network - deep, verified intel for Marathon and extraction shooters. Every weapon, shell, and build analyzed deeper than anywhere else and verified against the live game.',
+  title: 'Verified Competitive-Shooter Intelligence Network',
+  description: 'The verified competitive-shooter intelligence network - deep, verified intel for Marathon and extraction shooters. Every weapon, shell, and build analyzed deeper than anywhere else and verified against the live game.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
 
@@ -283,7 +283,7 @@ export default async function NetworkRoot() {
             </div>
             <p className="nr-kicker">Everyone has opinions. We have the data.</p>
             <h1 id="nr-thesis" className="nr-h1">
-              The intelligence network for competitive shooters.
+              The verified intelligence network for competitive shooters.
             </h1>
             <p className="nr-subhead">
               Human-verified intel across every game you grind. No hype, just data.
@@ -444,7 +444,7 @@ export default async function NetworkRoot() {
             <h2 id="nr-about-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />What is Cybernetic Punks?</h2>
             <div className="nr-about">
               <p className="nr-about-body">
-                An intelligence network for competitive shooters &mdash; Marathon now, Call of Duty&apos;s DMZ next, more to come. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.
+                The verified intelligence network for competitive shooters &mdash; Marathon now, Call of Duty&apos;s DMZ next, more to come. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.
               </p>
               <Link href="/about" className="nr-about-link">How the network works &rarr;</Link>
             </div>
@@ -470,7 +470,7 @@ export default async function NetworkRoot() {
         <div className="nr-wrap">
           <p className="nr-footer-tag">
             <span className="nr-footer-dot" aria-hidden="true" />
-            Cybernetic Punks - the competitive-shooter intelligence network. No hype. Just intel.
+            Cybernetic Punks - the verified competitive-shooter intelligence network. No hype. Just intel.
           </p>
           <p className="nr-footer-ai">powered by a live intelligence pipeline - updated continuously, verified against patch data</p>
           <Link href="/about" className="nr-footer-link">About the network &rarr;</Link>
