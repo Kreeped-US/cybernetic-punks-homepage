@@ -2,6 +2,9 @@
 // app/dmz/DmzNav.js
 // DMZ per-game header/nav. Renders FROM the DMZ sections-config (proving the
 // config-driven pattern: add a section to lib/games/dmz.js and it appears here).
+// NAV-ONLY config (decoupled from the Coverage grid + JSON-LD, which read `label`):
+//   navLabel -> the tab label here (falls back to `label`); hideFromNav -> omit the
+//   tab entirely. Neither touches lib/games/dmz.js consumers other than this nav.
 // Built for DMZ; not extracted to a shared component layer yet (GAME_TEMPLATE.md
 // D4 — extract when Marathon migrates onto the template). Uses theme tokens, so
 // it inherits DMZ colors from the .dmz-theme wrapper.
@@ -77,7 +80,7 @@ export default function DmzNav() {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {dmz.sections.map(function(sec) {
+          {dmz.sections.filter(function(sec) { return !sec.hideFromNav; }).map(function(sec) {
             var href = '/dmz/' + sec.slug;
             var active = pathname === href;
             return (
@@ -95,7 +98,7 @@ export default function DmzNav() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {sec.label}
+                {sec.navLabel || sec.label}
                 {sec.source === 'data' && (
                   <span style={{
                     fontSize: 7, fontWeight: 700, letterSpacing: 1,

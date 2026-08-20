@@ -148,9 +148,14 @@ export const dmz = {
   // where each section's content comes from. No other speculative fields.
   // description: one-line section summary (used in the section-list header and the
   // landing coverage cards). Display copy only; not used by gather/editorial.
+  // navLabel (optional): the DMZ NAV tab label. DmzNav prefers it; the Coverage
+  //   cards and the hubCollectionLd JSON-LD keep using `label` (DECOUPLED -- a nav
+  //   rename never rewrites the locked Coverage/schema labels).
+  // hideFromNav (optional): drop this section from the DMZ nav tab strip ONLY; its
+  //   Coverage card, route, and JSON-LD entry are unaffected (a nav-only cut).
   sections: [
-    { slug: 'field-intel', label: 'Field Intel',   source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
-    { slug: 'meta',        label: 'Meta',          source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates at launch, once real match data exists.' },
+    { slug: 'field-intel', label: 'Field Intel',   navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
+    { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates at launch, once real match data exists.' },
     { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
     { slug: 'printer',     label: '3D Printer',    source: 'data',   contentFilter: null, description: 'The 3D Printer crafting tool. Structured data launches with the zone.' },
     // FOB: FLIPPED 'data' -> 'editor' on 2026-07-16. It now renders the editor
@@ -170,14 +175,14 @@ export const dmz = {
     // co-exist above the article list on this same URL. To revert: source ->
     // 'data', contentFilter -> null, restore the old description, re-map the
     // article to 'field-intel'.
-    { slug: 'regions',     label: 'Hajin Regions', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The Hajin Exclusion Zone -- setting, the secure-and-extract loop, weather, and the map\'s regions, from the official Deep Dive.' },
+    { slug: 'regions',     label: 'Hajin Regions', navLabel: 'Map', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The Hajin Exclusion Zone -- setting, the secure-and-extract loop, weather, and the map\'s regions, from the official Deep Dive.' },
     // DISCOURSE (VANTAGE network desk): the network editor-in-chief's coverage of
     // the conversation around DMZ -- what creators and the community are saying,
     // and why it matters. Membership is by TAG ('discourse'), not the per-slug
     // DMZ_ARTICLE_SECTION map (discourse slugs are generated, not hand-curated) --
     // contentFilter.byTag flags that for the section list + landing count. Articles
     // render via the game-neutral components/DiscourseArticle renderer.
-    { slug: 'discourse',   label: 'Discourse',     source: 'editor', contentFilter: { table: 'feed_items', byTag: 'discourse' }, description: 'Network-desk coverage of the conversations shaping DMZ -- what creators and the community are saying, and what is actually at stake.' },
+    { slug: 'discourse',   label: 'Discourse',     hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items', byTag: 'discourse' }, description: 'Network-desk coverage of the conversations shaping DMZ -- what creators and the community are saying, and what is actually at stake.' },
   ],
 
   // ARTICLE -> BUILD ADVISOR CTA: DMZ has NO interactive build tool yet (only static
