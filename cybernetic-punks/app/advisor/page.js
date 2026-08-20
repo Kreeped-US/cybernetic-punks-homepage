@@ -19,7 +19,7 @@
 //   go stale. A name-keyed color/symbol map stays here for branding since the
 //   DB has no color column.
 // - Added a server-rendered, crawlable intro block (real H1 + prose + internal
-//   links to /cradle, /factions, /shells, /weapons). The generated builds are
+//   links to /marathon/cradle, /factions, /shells, /weapons). The generated builds are
 //   client-side/no-store and invisible to crawlers, so this static framing is
 //   what the page actually ranks on.
 // - Corrected the WebApplication schema description to the S2 model (stats come
@@ -243,13 +243,13 @@ export default async function AdvisorPage({ searchParams }) {
             Build a complete Marathon loadout for any Runner shell in seconds. Pick your shell,
             playstyle, priority, and rank goal, and the advisor engineers a full build — primary
             and secondary weapons, weapon mods, shell cores, implants, and a{' '}
-            <a href="/cradle" style={{ color: '#ff8800', textDecoration: 'none' }}>Cradle stat-track plan</a>{' '}
+            <a href="/marathon/cradle" style={{ color: '#ff8800', textDecoration: 'none' }}>Cradle stat-track plan</a>{' '}
             — cross-referenced against real in-game stat values. Covers all eight shells, including
             the Season&nbsp;2 defensive shell, Sentinel.
           </p>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 820, margin: 0 }}>
             In Season&nbsp;2, shell stats come from{' '}
-            <a href="/cradle" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>the Cradle</a>,
+            <a href="/marathon/cradle" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>the Cradle</a>,
             a free-respec Energy system, while{' '}
             <a href="/factions" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>factions</a>{' '}
             gate gear through their Armories. Browse every{' '}

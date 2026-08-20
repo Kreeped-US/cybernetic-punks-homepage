@@ -1,4 +1,4 @@
-// app/matchups/[shell]/page.js
+// app/marathon/matchups/[shell]/page.js
 //
 // Per-shell matchup page -- one template serving every shell in the allowlist
 // (lib/matchups.js SHELLS). force-dynamic + no generateStaticParams, so a shell
@@ -29,7 +29,7 @@
 // dateModified is the FIXED verification date, never new Date() (false-freshness
 // bug, see lib/mods.js).
 
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Footer from '@/components/Footer';
@@ -73,7 +73,7 @@ export async function generateMetadata({ params }) {
   var title = 'How to Beat ' + name + ' in Marathon — Counters & Tactics';
   var desc = 'How to beat ' + name + ' in Marathon: which shells counter it, the key counter '
     + 'items and tactics, and what ' + name + ' is strong against. Owner-verified in-game.';
-  var url = 'https://cyberneticpunks.com/matchups/' + shellToSlug(name);
+  var url = 'https://cyberneticpunks.com/marathon/matchups/' + shellToSlug(name);
 
   return {
     // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
@@ -136,7 +136,7 @@ export default async function ShellMatchupPage({ params }) {
   var weaknesses = toArr(row.weaknesses);
   var inverse = strongAgainst(allRows, name); // computed both-directions
   var faq = matchupFaq(row, allRows); // null only in 'pending'
-  var url = 'https://cyberneticpunks.com/matchups/' + shellToSlug(name);
+  var url = 'https://cyberneticpunks.com/marathon/matchups/' + shellToSlug(name);
 
   var otherShells = SHELLS.filter(function (s) { return s !== name; });
 
@@ -145,7 +145,7 @@ export default async function ShellMatchupPage({ params }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Matchups', item: 'https://cyberneticpunks.com/matchups' },
+      { '@type': 'ListItem', position: 2, name: 'Matchups', item: 'https://cyberneticpunks.com/marathon/matchups' },
       { '@type': 'ListItem', position: 3, name: name, item: url },
     ],
   };
@@ -175,7 +175,7 @@ export default async function ShellMatchupPage({ params }) {
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, fontWeight: 700 }}>
           <li><Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>HOME</Link></li>
           <li>/</li>
-          <li><Link href="/matchups" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>MATCHUPS</Link></li>
+          <li><Link href="/marathon/matchups" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>MATCHUPS</Link></li>
           <li>/</li>
           <li style={{ color: 'var(--red)' }}>{name.toUpperCase()}</li>
         </ol>
@@ -188,7 +188,7 @@ export default async function ShellMatchupPage({ params }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
             <Link href="/" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>HOME</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
-            <Link href="/matchups" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>MATCHUPS</Link>
+            <Link href="/marathon/matchups" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>MATCHUPS</Link>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>/</span>
             <span style={{ color: MATCHUP_ACCENT }}>{name.toUpperCase()}</span>
           </div>
@@ -214,7 +214,7 @@ export default async function ShellMatchupPage({ params }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {counters.map(function (c) {
                   var self = c === name;
-                  return <Chip key={c} label={c} mirror={self} href={SHELLS.indexOf(c) !== -1 ? '/matchups/' + shellToSlug(c) : null} />;
+                  return <Chip key={c} label={c} mirror={self} href={SHELLS.indexOf(c) !== -1 ? '/marathon/matchups/' + shellToSlug(c) : null} />;
                 })}
               </div>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '14px 0 0', maxWidth: 720 }}>
@@ -267,7 +267,7 @@ export default async function ShellMatchupPage({ params }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {inverse.map(function (c) {
                   var self = c === name;
-                  return <Chip key={c} label={c} mirror={self} href={SHELLS.indexOf(c) !== -1 ? '/matchups/' + shellToSlug(c) : null} />;
+                  return <Chip key={c} label={c} mirror={self} href={SHELLS.indexOf(c) !== -1 ? '/marathon/matchups/' + shellToSlug(c) : null} />;
                 })}
               </div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '12px 0 0', lineHeight: 1.5, maxWidth: 720 }}>
@@ -315,12 +315,12 @@ export default async function ShellMatchupPage({ params }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {otherShells.map(function (s) {
               return (
-                <Link key={s} href={'/matchups/' + shellToSlug(s)} style={{ display: 'inline-block', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+                <Link key={s} href={'/marathon/matchups/' + shellToSlug(s)} style={{ display: 'inline-block', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
                   {s}
                 </Link>
               );
             })}
-            <Link href="/matchups" style={{ display: 'inline-block', background: 'transparent', border: '1px solid ' + MATCHUP_ACCENT + '40', borderRadius: 3, padding: '7px 14px', color: MATCHUP_ACCENT, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+            <Link href="/marathon/matchups" style={{ display: 'inline-block', background: 'transparent', border: '1px solid ' + MATCHUP_ACCENT + '40', borderRadius: 3, padding: '7px 14px', color: MATCHUP_ACCENT, textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
               All Matchups
             </Link>
           </div>

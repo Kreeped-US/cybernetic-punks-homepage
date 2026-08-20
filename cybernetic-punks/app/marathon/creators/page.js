@@ -1,4 +1,4 @@
-// app/creators/page.js
+// app/marathon/creators/page.js
 // CREATOR DIRECTORY — Marathon content creators listed and searchable
 // SEO targets: "Marathon YouTubers", "Marathon content creators", "Marathon streamers"
 
@@ -15,7 +15,7 @@ export var metadata = {
   openGraph: {
     title: 'Marathon Content Creators | CyberneticPunks',
     description: 'Discover the best Marathon content creators — YouTubers, streamers, and community voices.',
-    url: 'https://cyberneticpunks.com/creators',
+    url: 'https://cyberneticpunks.com/marathon/creators',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -25,7 +25,7 @@ export var metadata = {
     title: 'Marathon Content Creators | CyberneticPunks',
     description: 'The best Marathon YouTubers, streamers, and community voices — curated directory.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/creators' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/creators' },
 };
 
 var CYAN = '#00f5ff';
@@ -80,7 +80,7 @@ export default async function CreatorsPage() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Creators', item: 'https://cyberneticpunks.com/creators' },
+          { '@type': 'ListItem', position: 2, name: 'Creators', item: 'https://cyberneticpunks.com/marathon/creators' },
         ],
       }) }} />
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
@@ -341,7 +341,7 @@ export default async function CreatorsPage() {
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',
           name: 'Marathon Content Creators Directory',
-          url: 'https://cyberneticpunks.com/creators',
+          url: 'https://cyberneticpunks.com/marathon/creators',
           description: 'Curated directory of Marathon content creators — YouTubers, streamers, and community voices.',
           mainEntity: {
             '@type': 'ItemList',
@@ -351,7 +351,7 @@ export default async function CreatorsPage() {
                 '@type': 'ListItem',
                 position: i + 1,
                 name: c.name,
-                url: c.url || 'https://cyberneticpunks.com/creators',
+                url: c.url || 'https://cyberneticpunks.com/marathon/creators',
               };
             }),
           },

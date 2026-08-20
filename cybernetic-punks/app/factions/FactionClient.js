@@ -102,7 +102,7 @@ export default function FactionClient({ data }) {
         </p>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 20 }}>
-          <Link href="/cradle" style={{ padding: '11px 22px', background: '#00f5ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
+          <Link href="/marathon/cradle" style={{ padding: '11px 22px', background: '#00f5ff', color: '#000', fontSize: 11, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
             CRADLE BUILD PLANNER -&gt;
           </Link>
           <Link href="/advisor" style={{ padding: '11px 22px', background: '#1a1d24', border: '1px solid #22252e', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: 2, borderRadius: 2, textDecoration: 'none', fontFamily: 'monospace' }}>
@@ -119,7 +119,7 @@ export default function FactionClient({ data }) {
             In Season 1, Runner Shell stat upgrades came from grinding faction reputation across six separate upgrade trees. Season 2 moved those core stat upgrades into the Cradle - a unified, freely respec-able system shared across all shells.
           </p>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
-            Factions still matter - just for different things now: contracts and reputation (faster in S2), unique gear and implant access, Sponsored Kits, Armory access, and gating Cryo Archive. For core stat builds, use the <Link href="/cradle" style={{ color: '#00f5ff', textDecoration: 'none' }}>Cradle build planner</Link>.
+            Factions still matter - just for different things now: contracts and reputation (faster in S2), unique gear and implant access, Sponsored Kits, Armory access, and gating Cryo Archive. For core stat builds, use the <Link href="/marathon/cradle" style={{ color: '#00f5ff', textDecoration: 'none' }}>Cradle build planner</Link>.
           </p>
         </div>
       </section>

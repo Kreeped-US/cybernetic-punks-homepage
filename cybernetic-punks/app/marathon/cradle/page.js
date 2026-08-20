@@ -1,4 +1,4 @@
-// app/cradle/page.js
+// app/marathon/cradle/page.js
 // Server component - SEO shell for the Cradle Build Planner.
 // Fetches cradle_nodes, renders crawlable explainer + JSON-LD, mounts the
 // interactive client planner. Two-layer pattern: server owns SEO/content,
@@ -18,7 +18,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Cradle Build Planner - Energy & Perk Calculator | CyberneticPunks',
     description: 'Allocate Energy across all six Cradle tracks, unlock perks at every breakpoint, and test Season 2 builds free. The complete Marathon Cradle calculator.',
-    url: 'https://cyberneticpunks.com/cradle',
+    url: 'https://cyberneticpunks.com/marathon/cradle',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -28,7 +28,7 @@ export const metadata = {
     title: 'Marathon Cradle Build Planner',
     description: 'Plan and test your Season 2 Cradle build - allocate Energy, unlock perks, share it.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/cradle' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/cradle' },
 };
 
 export const dynamic = 'force-dynamic';
@@ -63,7 +63,7 @@ const breadcrumbSchema = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-    { '@type': 'ListItem', position: 2, name: 'Cradle Build Planner', item: 'https://cyberneticpunks.com/cradle' },
+    { '@type': 'ListItem', position: 2, name: 'Cradle Build Planner', item: 'https://cyberneticpunks.com/marathon/cradle' },
   ],
 };
 
@@ -72,7 +72,7 @@ const webApplicationSchema = {
   '@type': 'WebApplication',
   name: 'Marathon Cradle Build Planner',
   description: 'Interactive planner for Marathon Season 2 Cradle builds. Allocate Energy across six stat tracks, unlock perks at breakpoints, and test builds with free respec.',
-  url: 'https://cyberneticpunks.com/cradle',
+  url: 'https://cyberneticpunks.com/marathon/cradle',
   applicationCategory: 'GameApplication',
   operatingSystem: 'Web',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },

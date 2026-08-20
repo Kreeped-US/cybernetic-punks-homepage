@@ -396,7 +396,7 @@ export default async function Home() {
               </Link>
 
               {/* CARD 3: CRADLE PLANNER (new S2 flagship) */}
-              <Link href="/cradle" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00f5ff', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
+              <Link href="/marathon/cradle" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #00f5ff', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#00f5ff', letterSpacing: 1, lineHeight: 1 }}>CRADLE PLANNER</div>

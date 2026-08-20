@@ -975,7 +975,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                     </div>
                   )}
                   <div style={{ marginTop: 12, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                    <Link href="/cradle" style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>
+                    <Link href="/marathon/cradle" style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>
                       OPEN THE CRADLE PLANNER →
                     </Link>
                     {build.shell && (
@@ -1032,7 +1032,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 </div>
               </div>
               <Link
-                href="/cradle"
+                href="/marathon/cradle"
                 style={{
                   padding:        '11px 20px',
                   background:     '#00d4ff',

@@ -143,7 +143,7 @@ export default async function BuildPage({ params }) {
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 820, margin: '0 0 12px' }}>
             A complete Marathon {name} loadout — primary and secondary weapons, weapon mods, shell cores,
             implants, and a{' '}
-            <Link href="/cradle" style={{ color: accent, textDecoration: 'none' }}>Cradle stat-track plan</Link>{' '}
+            <Link href="/marathon/cradle" style={{ color: accent, textDecoration: 'none' }}>Cradle stat-track plan</Link>{' '}
             — engineered from the {name}&rsquo;s playstyle and cross-referenced against real in-game stat
             values. Browse the full{' '}
             <Link href={'/shells/' + shell} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>{name} shell data</Link>{' '}

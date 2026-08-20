@@ -5,14 +5,14 @@
 // Purpose: answer "does a canonical page or an existing article already cover
 // this topic?" at the TOPIC level, so generation can be blocked rather than
 // warned. The Marathon failure this exists to prevent: 27 live "how to beat
-// [shell]" articles competing with each other AND with /matchups/[shell], because
+// [shell]" articles competing with each other AND with /marathon/matchups/[shell], because
 // the only dedup in the pipeline compared HEADLINE TOKENS within a single
 // editor's own history (app/api/cron/route.js findDuplicateEvergreen). Headline
 // similarity cannot express "this topic already has a canonical page", and a
 // per-editor scope cannot see what another editor published.
 //
 // TOPIC IDENTITY = the tuple (game_slug, entity_type, entity_slug, facet).
-//   ('marathon', 'shell', 'thief', 'counter')  -> canonical /matchups/thief
+//   ('marathon', 'shell', 'thief', 'counter')  -> canonical /marathon/matchups/thief
 // The facet dimension is load-bearing: shell:thief+counter must be
 // distinguishable from shell:thief+build, or the registry over-blocks
 // legitimately distinct coverage of the same entity. That over-blocking is
@@ -76,7 +76,7 @@ export const FACETS = ['counter', 'build', 'tier', 'guide', 'news', 'community',
 const CANONICAL_PAIRS = [
   {
     entity_type: 'shell', facet: 'counter',
-    route: function (slug) { return '/matchups/' + slug; },
+    route: function (slug) { return '/marathon/matchups/' + slug; },
     note: 'Built 2026-07-17 on the game-verified shell_stats matchup matrix.',
   },
   {

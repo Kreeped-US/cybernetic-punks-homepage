@@ -7,6 +7,61 @@ Newest entries on top.
 
 ---
 
+## 2026-08-20 - Root-route migration STAGE 1 (4 routes -> /marathon/*) [HELD]
+
+Stage 1 of 4 of the Marathon root-route migration (Ruling 2): lowest-stakes routes,
+run first to prove the pattern. ONE atomic commit (move + redirect + links + sitemap
++ canonicals) so Vercel cuts over with no 404 / duplicate-content window. HELD for
+operator FF-merge + the verification gate.
+
+### Moved (git-tracked renames, app/<route> -> app/marathon/<route>)
+- /creators -> /marathon/creators (single page)
+- /cradle   -> /marathon/cradle   (single page + CradleClient)
+- /sitrep   -> /marathon/sitrep   (single page)
+- /matchups -> /marathon/matchups (TREE: [shell] children)
+
+### Change-set
+- Canonicals/OG/JSON-LD in the moved trees -> /marathon/<route>.
+- Internal links updated the SAME commit (Nav, Footer, lib/network/rootGames,
+  FactionClient, AdvisorClient, advisor, marathon hub, tools/build, status,
+  lib/coverage). Grep confirms ZERO internal links still point at the old paths.
+- Sitemap (lib/sitemap/eligible.js): sitrep/cradle/matchups hub + the [shell] loop
+  -> /marathon/*. (/creators is not in the sitemap; unchanged.)
+- Redirects (next.config.mjs, 308): exact rule for each single page; /matchups got
+  exact + wildcard (/matchups/:path*).
+- GSC map (lib/gsc/storage.js): UNCHANGED - /marathon already enumerated; old
+  segments kept so redirected old URLs still attribute, age out later as cleanup.
+
+### Two execution issues caught + fixed (lessons for later tree stages)
+- BROKEN RELATIVE IMPORTS: the matchups hub + [shell] imported supabase via ../
+  paths that break one level deeper; converted to @/lib/supabase (move-safe alias).
+  Later tree moves must re-point any relative imports.
+- OVER-REPLACEMENT: the /matchups token is a SUBSTRING of the module path
+  lib/matchups, so a blind bulk rewrite corrupted @/lib/matchups imports ->
+  @/lib/marathon/matchups (would not resolve). Fixed all 10 (imports + comments).
+  LESSON: guard route-token replaces against lib/<route> module-path collisions -
+  weapons/mods/shells/maps/guides all have lib/<name>.js twins. Anchor the replace
+  to route contexts (href=, canonical url, BASE +), not a bare /<route> substring.
+
+### /matchups wildcard finding (PROVEN - decides later stages)
+Tested Next 16.1.6's bundled path-to-regexp: /matchups/:path* compiles with an
+OPTIONAL sub-path group, so it MATCHES bare /matchups (and /matchups/ and
+/matchups/rook). The exact /matchups rule is REDUNDANT. LATER TREE STAGES NEED ONLY
+ONE rule per tree (/<route>/:path*), not two. Stage 1 kept both per the safe-default
+instruction.
+
+### Verification (pre-merge)
+byte-clean: only 2 PRE-EXISTING display chars on lines touched for a URL token (an
+em-dash in a JSON-LD "how to beat X" string, an arrow glyph in button copy) - none
+introduced. eslint: ZERO new issues - the moved files carry pre-existing warnings/
+errors (no-img-element; no-unescaped-entities at sitrep:686), proven byte-identical
+to HEAD. next.config syntax OK. Operator verification gate (new 200s / old 308s /
+zero 404s / sitemap emits new URLs / links not pointing at redirects / Consumer C
+enrollment) runs post-merge before Stage 2. STAGES 2-4 pending (mid-tier trees;
+then /leaderboard + /uniques high-stakes; /intel is a separate major project).
+
+---
+
 ## 2026-08-20 - Duplicate V85/1.1.5.4 patch articles consolidated + dedup issue flagged
 
 Two near-duplicate NEXUS articles on patch 1.1.5.4 (Ordnance Heist / V85 Circuit

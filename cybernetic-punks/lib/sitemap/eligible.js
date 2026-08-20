@@ -66,13 +66,13 @@ export async function computeEligible() {
     [BASE, undefined, 'daily', 1.0],
     [BASE + '/marathon', undefined, 'daily', 0.95],
     [BASE + '/meta', undefined, 'hourly', 0.95],
-    [BASE + '/sitrep', undefined, 'hourly', 0.95],
+    [BASE + '/marathon/sitrep', undefined, 'hourly', 0.95],
     [BASE + '/factions', undefined, 'daily', 0.9],
     [BASE + '/ranked', undefined, 'daily', 0.9],
     [BASE + '/advisor', undefined, 'daily', 0.9],
-    [BASE + '/cradle', undefined, 'daily', 0.9],
+    [BASE + '/marathon/cradle', undefined, 'daily', 0.9],
     [BASE + '/intel', undefined, 'hourly', 0.9],
-    [BASE + '/matchups', mvd, 'weekly', 0.85],
+    [BASE + '/marathon/matchups', mvd, 'weekly', 0.85],
     [BASE + '/modes/vault-breaker', facts, 'daily', 0.9],
     [BASE + '/rising', undefined, 'daily', 0.8],
     [BASE + '/stats', STATS_UPDATED, 'weekly', 0.75],
@@ -174,7 +174,7 @@ export async function computeEligible() {
     const { data: matchupRows } = await supabase.from('shell_stats').select('name, updated_at').eq('game_slug', M);
     const updatedByName = {};
     (matchupRows || []).forEach((r) => { updatedByName[r.name] = r.updated_at; });
-    MATCHUP_SHELLS.forEach((name) => add(BASE + '/matchups/' + matchupSlug(name), M, 'matchup', lm(updatedByName[name]), 'weekly', 0.8));
+    MATCHUP_SHELLS.forEach((name) => add(BASE + '/marathon/matchups/' + matchupSlug(name), M, 'matchup', lm(updatedByName[name]), 'weekly', 0.8));
   } catch (err) { console.error('[sitemap] matchup fetch threw:', err); }
 
   // ── INTEL articles (the maintenance health meter; type='intel') + guide cats ─

@@ -1,9 +1,9 @@
-// app/matchups/page.js
+// app/marathon/matchups/page.js
 //
 // Matchup reference hub. shell_stats carries a game-verified matchup matrix
 // (countered_by / counter_items / weaknesses, owner-verified in-game S2,
 // written 2026-07-17) but had NO reference page -- and ~27 live "how to beat
-// [shell]" articles have no canonical to point at. This hub + /matchups/[shell]
+// [shell]" articles have no canonical to point at. This hub + /marathon/matchups/[shell]
 // is that canonical. Mirrors app/mods/page.js exactly: force-dynamic SSR,
 // static metadata, game_slug='marathon' filter, BreadcrumbList + CollectionPage
 // JSON-LD, the shared visible-breadcrumb style, a card grid, Footer.
@@ -16,7 +16,7 @@
 // Runners". The shell list is lib/matchups.js SHELLS (shared with the detail
 // route and the sitemap), never "whatever shell_stats returns".
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import {
@@ -35,7 +35,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Matchups — How to Beat Every Shell | CyberneticPunks',
     description: 'Which shells counter which, plus key counter items and tactics — owner-verified in-game for all 8 Marathon shells.',
-    url: 'https://cyberneticpunks.com/matchups',
+    url: 'https://cyberneticpunks.com/marathon/matchups',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -45,7 +45,7 @@ export const metadata = {
     title: 'Marathon Matchups — How to Beat Every Shell',
     description: 'Counters, matchups, and key counter items for all 8 Marathon shells — verified in-game.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/matchups' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/matchups' },
 };
 
 export default async function MatchupsIndexPage() {
@@ -73,7 +73,7 @@ export default async function MatchupsIndexPage() {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-          { '@type': 'ListItem', position: 2, name: 'Matchups', item: 'https://cyberneticpunks.com/matchups' },
+          { '@type': 'ListItem', position: 2, name: 'Matchups', item: 'https://cyberneticpunks.com/marathon/matchups' },
         ],
       }) }} />
 
@@ -111,7 +111,7 @@ export default async function MatchupsIndexPage() {
             var counters = toArr(row.countered_by);
             var slug = shellToSlug(row.name);
             return (
-              <Link key={row.name} href={'/matchups/' + slug} style={{ textDecoration: 'none', display: 'block' }}>
+              <Link key={row.name} href={'/marathon/matchups/' + slug} style={{ textDecoration: 'none', display: 'block' }}>
                 <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + MATCHUP_ACCENT + '88', borderRadius: '0 3px 3px 0', padding: '14px 16px', height: '100%', transition: 'border-color 0.12s' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: 0.5 }}>
@@ -163,12 +163,12 @@ export default async function MatchupsIndexPage() {
         '@type': 'CollectionPage',
         name: 'Marathon Matchups — How to Beat Every Shell',
         description: 'Which shells counter which, plus key counter items and tactics, for all 8 Marathon shells — owner-verified in-game.',
-        url: 'https://cyberneticpunks.com/matchups',
+        url: 'https://cyberneticpunks.com/marathon/matchups',
         mainEntity: {
           '@type': 'ItemList',
           numberOfItems: SHELLS.length,
           itemListElement: SHELLS.map(function (name, i) {
-            return { '@type': 'ListItem', position: i + 1, name: 'How to beat ' + name + ' — Marathon', url: 'https://cyberneticpunks.com/matchups/' + shellToSlug(name) };
+            return { '@type': 'ListItem', position: i + 1, name: 'How to beat ' + name + ' — Marathon', url: 'https://cyberneticpunks.com/marathon/matchups/' + shellToSlug(name) };
           }),
         },
         publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },

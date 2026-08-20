@@ -141,7 +141,7 @@ export default function BuildView({ build, accent }) {
             <div id="cradle" style={{ borderTop: '1px solid #22252e', padding: '18px 20px', background: '#16181e', scrollMarginTop: 60 }}>
               {/* WS2 cradle-strengthen: a real H2 carrying the "[shell] cradle build" query
                   language (the ~8-impr "cradle build" demand is a topic the canonical already
-                  covers) + a #cradle anchor target for internal links from /advisor and /cradle. */}
+                  covers) + a #cradle anchor target for internal links from /advisor and /marathon/cradle. */}
               <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#00d4ff', letterSpacing: 0.5, margin: '0 0 4px', lineHeight: 1.2 }}>
                 ◇ {shellName} Cradle Build — Season 2 Stat Plan
               </h2>
@@ -165,7 +165,7 @@ export default function BuildView({ build, accent }) {
                 </div>
               )}
               <div style={{ marginTop: 12 }}>
-                <Link href="/cradle" style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>OPEN THE CRADLE PLANNER →</Link>
+                <Link href="/marathon/cradle" style={{ fontSize: 10, color: '#00d4ff', letterSpacing: 1.5, fontWeight: 700, fontFamily: 'monospace', textDecoration: 'none' }}>OPEN THE CRADLE PLANNER →</Link>
               </div>
             </div>
           )}

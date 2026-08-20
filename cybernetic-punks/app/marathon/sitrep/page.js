@@ -1,4 +1,4 @@
-// app/sitrep/page.js
+// app/marathon/sitrep/page.js
 // SITREP — Aggregated Marathon intelligence snapshot
 // The "2-minute drop-in brief" — pulls from all editors + live meta + player data
 //
@@ -34,7 +34,7 @@ export const metadata = {
   openGraph: {
     title: 'Marathon Sitrep — Live Meta Snapshot | CyberneticPunks',
     description: 'Everything you need to know before you drop in. Live meta, top shells, rising weapons, community pulse. Refreshed throughout the day.',
-    url: 'https://cyberneticpunks.com/sitrep',
+    url: 'https://cyberneticpunks.com/marathon/sitrep',
     siteName: 'CyberneticPunks',
     type: 'website',
   },
@@ -44,7 +44,7 @@ export const metadata = {
     title: 'Marathon Sitrep — Live Meta Snapshot',
     description: 'Everything you need to know before you drop in.',
   },
-  alternates: { canonical: 'https://cyberneticpunks.com/sitrep' },
+  alternates: { canonical: 'https://cyberneticpunks.com/marathon/sitrep' },
 };
 
 // ─── CONSTANTS ──────────────────────────────────────────────
@@ -255,7 +255,7 @@ export default async function SitrepPage() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
-      { '@type': 'ListItem', position: 2, name: 'Sitrep', item: 'https://cyberneticpunks.com/sitrep' },
+      { '@type': 'ListItem', position: 2, name: 'Sitrep', item: 'https://cyberneticpunks.com/marathon/sitrep' },
     ],
   };
 
@@ -264,7 +264,7 @@ export default async function SitrepPage() {
     '@type': 'WebPage',
     name: 'Marathon Sitrep — Live Meta Snapshot',
     description: 'Everything you need to know before you drop in. Live Marathon meta snapshot refreshed throughout the day.',
-    url: 'https://cyberneticpunks.com/sitrep',
+    url: 'https://cyberneticpunks.com/marathon/sitrep',
     // dateModified attached below, only when a real date exists.
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
   };

@@ -116,6 +116,37 @@ const nextConfig = {
         destination: '/intel/marathon-update-1154-ordnance-heist-and-the-v85-nerf-5gcc',
         permanent: true,
       },
+      // Root-route migration STAGE 1 (2026-08-20): game-scope Marathon routes under
+      // /marathon/* (Ruling 2). The app/<route> folder moved to app/marathon/<route>
+      // with internal links, canonicals, and the sitemap updated in the SAME commit,
+      // so these 308s only catch external/legacy hits -- no 404 or duplicate-content
+      // window. Single pages get an exact rule; /matchups (a [shell] tree) gets an
+      // exact rule AND a wildcard (/matchups/:path*) as the safe default.
+      {
+        source: '/creators',
+        destination: '/marathon/creators',
+        permanent: true,
+      },
+      {
+        source: '/cradle',
+        destination: '/marathon/cradle',
+        permanent: true,
+      },
+      {
+        source: '/sitrep',
+        destination: '/marathon/sitrep',
+        permanent: true,
+      },
+      {
+        source: '/matchups',
+        destination: '/marathon/matchups',
+        permanent: true,
+      },
+      {
+        source: '/matchups/:path*',
+        destination: '/marathon/matchups/:path*',
+        permanent: true,
+      },
     ];
   },
 };

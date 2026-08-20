@@ -68,7 +68,7 @@ export const ROOT_GAMES = [
     // Shape: { label, href }. Labels are the hub's own noun, not a sentence.
     keyRoutes: [
       { label: 'Shells',   href: '/shells' },
-      { label: 'Matchups', href: '/matchups' },
+      { label: 'Matchups', href: '/marathon/matchups' },
       { label: 'Uniques',  href: '/uniques' },
       { label: 'Factions', href: '/factions' },
       { label: 'Ranked',   href: '/ranked' },

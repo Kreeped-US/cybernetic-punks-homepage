@@ -7,7 +7,7 @@
 // maintenance", "broccoli error" cluster), so changes are deliberate:
 // - CRITICAL: ranked queue used the dead S1 Sun-Thu rotation, rendering a
 //   misleading OPEN/CLOSED for a queue that doesn't return until June 14, 2026
-//   (per /ranked + /sitrep). Same fix applied here: RANKED_RETURN gate shows
+//   (per /ranked + /marathon/sitrep). Same fix applied here: RANKED_RETURN gate shows
 //   "RETURNS JUN 14" until the 14th, then auto-flips to the live rotation.
 //   The FAQ schema answer (indexed, served by Google) was also wrong and is
 //   rewritten to the S2 reality (returns June 14, merged 5,000-value queue).
@@ -477,7 +477,7 @@ export default async function StatusPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              { href: '/sitrep',                                       label: 'LIVE SITREP',      sub: 'Meta + system snapshot',      color: CYAN    },
+              { href: '/marathon/sitrep',                                       label: 'LIVE SITREP',      sub: 'Meta + system snapshot',      color: CYAN    },
               { href: '/ranked',                                       label: 'RANKED GUIDE',     sub: 'Queue schedule + tier list',  color: YELLOW  },
               { href: 'https://discord.gg/PnhbdRYh3w',                 label: 'DISCORD',          sub: 'Outage chatter + community',  color: '#5865f2', external: true },
               { href: 'https://x.com/BungieHelp',                      label: '@BUNGIEHELP',      sub: 'Official Bungie support',     color: '#1da1f2', external: true },

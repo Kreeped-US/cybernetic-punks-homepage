@@ -39,7 +39,7 @@ const DISCOVER_LINKS = [
   { label: 'LEADERBOARD',    href: '/leaderboard' },
   { label: 'STATS TRACKER',  href: '/stats'       },
   { label: 'FACTIONS',       href: '/factions'    },
-  { label: 'SITREP',         href: '/sitrep'      },
+  { label: 'SITREP',         href: '/marathon/sitrep'      },
   { label: 'SERVER STATUS',  href: '/status'      },
 ];
 
