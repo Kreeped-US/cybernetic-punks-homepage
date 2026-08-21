@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - DMZ strategy intel: Hajin is a SHARED Warzone/DMZ map (CoD NEXT)
+
+CoD NEXT (2026-08-21) was thin overall, but confirmed one strategically significant
+fact: the Hajin map used for DMZ is ALSO the Warzone map. This reshapes the DMZ map-
+content strategy. Banked as strategy intel. Main = 817124b. (Keys/mechanics still
+source-blocked - the reveal did not unblock them.)
+
+### The fact + why it matters
+Hajin is shared between DMZ (extraction) and Warzone (BR). Implication:
+- Hajin MAP/POI terms are now WARZONE-SCALE demand (Warzone's playerbase dwarfs
+  DMZ's) - much bigger search volume than a DMZ-only map would carry.
+- BUT also Warzone-scale COMPETITION - every major CoD site/creator will carpet-bomb
+  Hajin map coverage. We will NOT out-muscle the CoD content machine on raw "Hajin
+  map / POIs / drop spots" terms.
+
+### The strategy this implies (compete where we win, not where we lose)
+- MAP/POI content (shared Hajin): high-volume, high-competition. Our defensible angle
+  is the DMZ-EXTRACTION LENS, not raw map terms - "Hajin POIs for DMZ extraction"
+  (loot density, extraction routes, key spawns, exfil strategy). Warzone content
+  won't cover extraction mechanics because Warzone players don't care about them. The
+  map is shared; the EXTRACTION CONTEXT is ours.
+- DMZ-EXCLUSIVE mechanics (keys, missions, the exclusion-zone economy, extraction):
+  lower-volume, MUCH lower-competition, DEFENSIBLE. Warzone's content presence can't
+  follow here - these are extraction-mode-only. This is where the moat wins.
+- Net: compete on the extraction lens of Hajin + own the DMZ-exclusive mechanics.
+
+### POI naming: STRONG INFERENCE (Al Mazrah precedent), not yet confirmed
+Operator hunch, precedent-backed: Warzone and DMZ will use the SAME POI names for
+Hajin (not different callouts for the same map). Basis: in the original DMZ, Al Mazrah
+was the shared Warzone map and POIs carried IDENTICAL names across both modes -
+Activision did not fragment callouts. High confidence Hajin follows suit, so our nine
+established Hajin POIs (Hajin City, Casino, Fallout, Hospital, Military Base, Farmlands,
+Prison, Broadcast, Town) are likely the shared canonical names.
+STATUS: strong inference, NOT verified source. VERIFY when Warzone Hajin source drops
+(map/callout reveal). If confirmed, our POI content targets the shared (larger) term
+pool directly. If Warzone tweaks any callouts (unlikely per precedent), adjust the few
+affected terms. Low risk to act on the inference; cheap to confirm later.
+
+### Follow-ups
+- Watch for a WARZONE Hajin launch/reveal date - map-content demand may spike on
+  Warzone's cadence, not only DMZ's Oct 23.
+- Keys + DMZ-exclusive mechanics STILL source-blocked (CoD NEXT thin) - the held 6th
+  nav slot (Keys) remains gated on real first-party source.
+
+---
+
 ## 2026-08-21 - AI-quality dashboard: not broken (stale daily snapshot) + 3 DMZ-prep items
 
 Investigated the admin AI-QUALITY MEASUREMENT dashboard (showed stale verified-share
