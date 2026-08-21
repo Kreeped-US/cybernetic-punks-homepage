@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - Dedup-flagged corpus consolidation (7 of 8 pairs, 9 articles retired)
+
+Cleaned up the 8 near-dup pairs the Layer-1 dedup gate surfaced as still-live in the
+corpus (survivors that escaped the manual prune). Redirect-first consolidation, same
+pattern as the V85 play. Main = c0592df (the 9 redirects). De-diluted the corpus
+ahead of Miranda-reopen.
+
+### What was done
+- 9 x 308 redirects in next.config.mjs (c0592df, verified one-hop, no chains, live
+  targets), + a 9-id feed_items retire (is_published=false, noindex=true,
+  noindexed_at=now(), verified count=9), + a P3 headline graft.
+
+### The 8 pairs - dispositions
+- Pair 1 (CIPHER 1.1.0.3 vs 1.1.0.4 Ranked Impact): FALSE FLAG - NOT consolidated.
+  DIFFERENT patches; the Layer-1 token scorer drops version tokens so identical
+  headline templates scored 1.000. Content is distinct (1.1.0.3 removed solo queue;
+  1.1.0.4 bug-fix housekeeping). LEFT ALONE. This is the poster case for the
+  DEFERRED patch-version dedup layer (Layer 2) - do not re-flag/consolidate it.
+- Pairs 2,3,4,6,7 (Destroyer/S2-Mod/Assassin/Triage/Recon guides): TRUE DUPS, kept
+  the richer/more-recent, retired the twin, 308 retired->keeper. No verdict
+  contradictions (unlike V85).
+- Pair 5 (NEXUS Sentinel "underrated rising"): low-value repeated speculation -
+  RETIRED BOTH, 308 -> /marathon/shells/sentinel.
+- Pair 8 (MIRANDA 1.0.5.1 Thief-fix): stale (many patches old), thin, ce 0 -
+  RETIRED BOTH, 308 -> /marathon/intel.
+
+### Grafts (salvage the retired twins' unique bits into keepers)
+- P3 (S2 Mod keeper 5a621cf2): "Marathon " headline prefix - DONE (verified).
+- P2 (Destroyer keeper 69233d07): HP/shield 175/50 unconfirmed note - PENDING (admin
+  editor, optional).
+- P6 (Triage keeper 7740cd1d): NuCaloric daily Patch-Kit tip - PENDING (admin editor,
+  optional).
+
+### Note
+The gate that surfaced these 8 is the same roster-wide Layer-1 gate now protecting
+Miranda. So the corpus she'll dedup against is now cleaner by 9 articles. The 1
+false flag (Pair 1) confirms the known Layer-1 limit (patch-version dups need the
+deferred layer) - it's working as designed, not a gate bug.
+
+---
+
 ## 2026-08-21 - Miranda-reopen Stage A DONE + verified-flag reconciliation
 
 Layer 2a Stage A (coverage-gap seeding) complete + a verified-flag data-integrity
