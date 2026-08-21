@@ -189,6 +189,28 @@ const nextConfig = {
       // root). One wildcard covers /tools/build, /tools/build/[shell], and the
       // [shell]/[weapon] variant. GSC map keeps the old 'tools' segment during age-out.
       { source: '/tools/build/:path*', destination: '/marathon/tools/build/:path*', permanent: true },
+      // Dedup-consolidation batch (2026-08-21): the roster-wide dedup gate surfaced 8 live
+      // near-duplicate pairs; 9 articles are retired (unpublish + noindex, operator-run) and 308'd
+      // to their keeper (5 consolidations) or a living parent (2 retire-both pairs). Sources are
+      // the CURRENT canonical /marathon/intel/<slug> (post the Ruling-2 migration). Every
+      // destination is TERMINAL -- none is itself a redirect source, so no chains. (Legacy
+      // /intel/<slug> hits still 1-hop via the /intel/:path* wildcard to /marathon/intel/<slug>
+      // then 1 more to the keeper = a 2-hop on the decaying pre-migration path only; acceptable.)
+      // Pair 1 (CIPHER 1.1.0.3 vs 1.1.0.4) is a FALSE FLAG (different patches) and is deliberately
+      // NOT here -- it is the case the deferred patch-version dedup layer will handle.
+      // -- 5 consolidations: retired -> keeper --
+      { source: '/marathon/intel/marathon-destroyer-shell-guide-squad-ranked-dominance-e338', destination: '/marathon/intel/marathon-destroyer-shell-squad-dominance-and-ranked-guide-l7j1', permanent: true },
+      { source: '/marathon/intel/marathon-season-2-weapon-mod-priority-what-new-runners-should-chase-fi-ujjt', destination: '/marathon/intel/season-2-weapon-mod-priority-what-new-runners-should-chase-first-z5rc', permanent: true },
+      { source: '/marathon/intel/marathon-assassin-counter-guide-how-to-beat-it-in-ranked-solo-mvdf', destination: '/marathon/intel/marathon-assassin-counter-how-to-beat-it-in-ranked-solo-ow4i', permanent: true },
+      { source: '/marathon/intel/marathon-triage-shell-guide-keep-your-squad-alive-in-s2-ydjg', destination: '/marathon/intel/marathon-triage-shell-guide-keep-your-squad-alive-and-extracting-1czk', permanent: true },
+      { source: '/marathon/intel/marathon-recon-shell-guide-map-control-and-squad-intel-rd86', destination: '/marathon/intel/marathon-recon-shell-map-control-and-ranked-squad-guide-6efy', permanent: true },
+      // -- 2 retire-both pairs: both twins -> a living parent --
+      // Pair 5 (Sentinel, low-value speculation): both -> the Sentinel shell entity page.
+      { source: '/marathon/intel/marathon-sentinel-shell-the-underrated-pick-rising-in-s2-3q4a', destination: '/marathon/shells/sentinel', permanent: true },
+      { source: '/marathon/intel/marathon-sentinel-shell-the-underrated-squad-pick-rising-e5a4', destination: '/marathon/shells/sentinel', permanent: true },
+      // Pair 8 (stale 1.0.5.1 patch notes): both -> the Marathon intel hub.
+      { source: '/marathon/intel/marathon-update-1051-thief-exploit-fix-cryo-archive-improvements-mfp1', destination: '/marathon/intel', permanent: true },
+      { source: '/marathon/intel/marathon-update-1051-fixed-thief-exploits-and-cryo-archive-improvement-nx0w', destination: '/marathon/intel', permanent: true },
     ];
   },
 };
