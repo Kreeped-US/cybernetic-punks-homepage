@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - Miranda-reopen Stage A DONE + verified-flag reconciliation
+
+Layer 2a Stage A (coverage-gap seeding) complete + a verified-flag data-integrity
+fix. Main = e0cbd98 (seeder tooling). content_candidate now holds 25 real gap
+candidates; the 10 test rows are gone. Consumer still 2-OBSERVE, Miranda still
+frozen - no generation yet.
+
+### The verified-flag reconciliation (data-integrity fix - important)
+The `verified` flag on entity tables had DRIFTED from operator ground truth: the
+operator had done in-game visual verification of stats, but the work was never
+written back to the flag. State found: mod_stats 17/203 verified, weapon_stats
+16/32 verified (16 carried tauceti.gg SCRAPED sources, several with explicit
+"field unverified" notes), core_stats 85/85 (already fine), implant_stats ~119/120.
+The flag encodes ATTESTATION provenance (owner/Bungie-attested-with-source), and
+was stale relative to the operator's later in-game verification.
+FIX (operator-run): UPDATE mod_stats + weapon_stats SET verified=true,
+verified_source='owner in-game visual verification (Justin), S2 2026-08' on the
+previously-unverified rows (replacing the scraped tauceti.gg provenance with the
+real owner attestation). Verified after: mod 203/203, weapon 32/32, core 85/85.
+LESSON: the `verified` flag IS the moat's data-layer source of truth (Ruling 1 put
+"verified" in the masthead) - it must reflect ground truth. When verifying entities
+in-game, write the flag+source THEN, so it never drifts again. A guide generated
+from a stale/wrong verified flag would make the moat lie invisibly.
+
+### Stage A - the gap seeder (shipped + applied)
+scripts/seed-gap-candidates.mjs (merged e0cbd98): enumerates verified entity tables,
+finds entities with no existing Miranda guide (gap map), ranks (facet-order
+weapon>core>mod>implant, then keyword demand, then substance), caps a first tranche,
+inserts warrant_source='substance_floor' candidates. Dry-run-default; --apply writes.
+- Gap universe after flag fix: 369 (was 216 pre-fix - mod +138, weapon +15).
+- First tranche APPLIED: 25 data-rich weapons (all sub=1 = one complete verified
+  weapon_stats row, 34-36/47 fields populated - rich, confirmed by spot-check;
+  NOT thin). Verified in DB: queued|substance_floor|weapon|25, zero seed_reinforce.
+
+### Follow-ups (noted, not blocking)
+- THIN MODS: 107/203 mods are summary-only (empty stat_changes/effect_detail).
+  Not in this tranche (weapons filled it). When mods enter a LATER tranche, add a
+  within-facet completeness sort (rich mods before summary-only) so lean guides
+  defer. Weapons + cores are rich.
+- One straggler: implant_stats 119/120 verified - one unverified row (immaterial to
+  current tranche; flag if implants get verified as a set).
+
+### Next: Stage B + C (Miranda-reopen, remaining)
+- Stage B: the 2-arm consumer - turn route.js's log-only 2-OBSERVE block into
+  generation (synthesize Miranda _directive from a PASS candidate - OBJECT-based
+  seam not the string helper; write-back status=done). Ship with MIRANDA STILL
+  FROZEN so it's verifiable in the log (candidate -> synthetic directive ->
+  would-generate -> mark done) without live output.
+- Stage C: reopen Miranda - add to marathon.js editors, NOT editorsRequiringPatch,
+  behind the live roster-wide dedup gate. The ignition.
+
+---
+
 ## 2026-08-21 - Layer 2a Stage 1: roster-wide dedup gate LIVE (proof-validated)
 
 The invariant-1 enforcer (semantic dedup) is built, proven, and merged - the shared
