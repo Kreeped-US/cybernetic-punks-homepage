@@ -75,7 +75,7 @@ export default async function JoinPage({ searchParams }) {
 
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', background: 'rgba(0,255,65,0.1)', border: '1px solid rgba(0,255,65,0.2)', borderRadius: 2, fontSize: 8, fontWeight: 700, letterSpacing: 2, color: '#00ff41', marginBottom: 18 }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#00ff41' }} />
-            EARLY ACCESS
+            NETWORK REGISTRATION
           </div>
 
           <h1 style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 12px', color: '#fff' }}>
@@ -131,8 +131,8 @@ export default async function JoinPage({ searchParams }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: '#1e2028' }}>
           {[
             { icon: '⬡', color: '#00ff41',  label: 'PROFILE',          desc: 'Your handle, avatar and bio' },
-            { icon: '◈', color: '#ff2222',   label: 'EARLY ADOPTER',    desc: 'Permanent status for founding members' },
-            { icon: '◎', color: '#9b5de5',   label: 'PRIORITY ACCESS',  desc: 'First in line when new tools launch' },
+            { icon: '◈', color: '#ff2222',   label: 'VERIFIED',         desc: 'Every stat checked in-game, never scraped' },
+            { icon: '◎', color: '#9b5de5',   label: 'YOUR GAMES, YOUR INTEL', desc: 'Tell us which games you follow; we point you at the coverage that matters. Change it anytime.' },
           ].map(function(item) {
             return (
               <div key={item.label} style={{ background: '#121418', padding: '18px 14px', textAlign: 'center' }}>
