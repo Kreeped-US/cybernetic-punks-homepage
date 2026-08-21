@@ -19,7 +19,7 @@ import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { loadSurvivorCorpus, findCorpusDuplicate } from '@/lib/content/dedupGate';
 import { runGateLogPass } from '@/lib/content/gateLogPass';
 import { runAssignmentGate } from '@/lib/content/assignmentGate';
-import { buildCandidateDirective, selectQueuedCandidate } from '@/lib/content/candidateAssignment';
+import { buildCandidateDirectiveObject, selectQueuedCandidate } from '@/lib/content/candidateAssignment';
 
 export const dynamic = 'force-dynamic';
 
@@ -1137,15 +1137,33 @@ export async function GET(req) {
           supabase, PRODUCING_GAME
         );
         var wouldAssign = qGate.decision === 'pass';
-        var candBlock = buildCandidateDirective(topCandidate);
-        console.log('[QUEUE-ASSIGN-LOG] candidate entity="' + topCandidate.entity + '" facet=' +
-          topCandidate.facet + ' priority=' + topCandidate.priority + ' decision=' + qGate.decision +
-          ' would-assign=' + (wouldAssign ? 'YES' : 'no') + ' [2-OBSERVE: NOT generated, NOT written, self-select untouched]');
-        console.log('[QUEUE-ASSIGN-LOG] would-be assignment block for "' + topCandidate.entity + ' ' +
-          topCandidate.facet + '":' + candBlock);
+        // -- 2-ARM: turn the log-only observe into ASSIGNMENT. On a gate PASS, assign the
+        //    candidate to MIRANDA (the evergreen field-guide editor) via a synthesized
+        //    directive-ROW OBJECT -- the seam buildMirandaPrompt consumes (_directive), NOT the
+        //    string helper. A HUMAN MIRANDA directive always wins (never overwritten). gap/
+        //    reinforce -> not assigned (self-select fallback), unchanged. The candidate is NOT
+        //    marked done here; the write-back is coupled to ACTUAL generation (after allSettled).
+        //    So while MIRANDA is FROZEN (not in the active roster) she never runs -> the directive
+        //    is built + assigned but never applied/generated -> the candidate stays queued and
+        //    nothing is written. That is the observable-without-output verification surface.
+        var mirandaConfigured = (PRODUCING_GAME.editorial.editors || []).indexOf('MIRANDA') !== -1;
+        var humanMiranda = !!directiveMap['MIRANDA'];   // captured BEFORE we may assign (human wins)
+        var assigned = false;
+        if (wouldAssign && !humanMiranda) {
+          directiveMap['MIRANDA'] = buildCandidateDirectiveObject(topCandidate);
+          assigned = true;
+          console.log('[QUEUE-ASSIGN] 2-ARM: candidate entity="' + topCandidate.entity + '" facet=' +
+            topCandidate.facet + ' priority=' + topCandidate.priority + ' decision=pass -> ASSIGNED to MIRANDA' +
+            ' (synthetic directive: "' + directiveMap['MIRANDA'].instruction + '")' +
+            (mirandaConfigured ? '' : ' [MIRANDA FROZEN: not in roster -> will NOT generate; candidate stays queued, no write-back]'));
+        } else {
+          console.log('[QUEUE-ASSIGN] candidate entity="' + topCandidate.entity + '" facet=' +
+            topCandidate.facet + ' priority=' + topCandidate.priority + ' decision=' + qGate.decision +
+            ' -> NOT assigned (' + (wouldAssign ? 'human MIRANDA directive already present' : qGate.decision + ' -> self-select fallback') + ')');
+        }
         queueAssignObserve = {
           entity: topCandidate.entity, facet: topCandidate.facet, priority: topCandidate.priority,
-          decision: qGate.decision, wouldAssign: wouldAssign,
+          decision: qGate.decision, assigned: assigned,
         };
       }
     } catch (qErr) {
@@ -1277,15 +1295,33 @@ export async function GET(req) {
 
     for (var i = 0; i < results.length; i++) {
       var r = results[i];
-      if (r.success && directiveMap[r.editor]) {
+      var rDir = directiveMap[r.editor];
+      // Human editor_directives row -> mark consumed (it has a real .id). A synthetic 2-arm
+      // candidate directive has NO .id (it carries _candidateId instead), so it is skipped here.
+      if (r.success && rDir && rDir.id) {
         try {
           await supabase
             .from('editor_directives')
             .update({ status: 'consumed', consumed_at: new Date().toISOString() })
-            .eq('id', directiveMap[r.editor].id);
-          console.log('[CRON] Directive consumed for ' + r.editor + ': ' + directiveMap[r.editor].instruction.slice(0, 60));
+            .eq('id', rDir.id);
+          console.log('[CRON] Directive consumed for ' + r.editor + ': ' + rDir.instruction.slice(0, 60));
         } catch (consumeErr) {
           console.log('[CRON] Failed to mark directive consumed: ' + consumeErr.message);
+        }
+      }
+      // 2-ARM WRITE-BACK: a synthetic candidate directive (has _candidateId, no .id) marks its
+      // content_candidate DONE -- but ONLY now that its editor ACTUALLY generated (r.success).
+      // Coupled to generation, NOT assignment: a frozen or failed editor never reaches here, so
+      // the candidate correctly stays queued. assigned_editor records who consumed it.
+      if (r.success && rDir && rDir._candidateId) {
+        try {
+          await supabase
+            .from('content_candidate')
+            .update({ status: 'done', assigned_editor: r.editor, updated_at: new Date().toISOString() })
+            .eq('id', rDir._candidateId);
+          console.log('[QUEUE-ASSIGN] 2-ARM write-back: candidate ' + rDir._candidateId + ' -> status=done (' + r.editor + ' generated)');
+        } catch (wbErr) {
+          console.log('[QUEUE-ASSIGN] 2-ARM write-back failed (non-fatal): ' + wbErr.message);
         }
       }
     }

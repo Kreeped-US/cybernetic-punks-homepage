@@ -30,6 +30,24 @@ export function buildCandidateDirective(candidate) {
   return block;
 }
 
+// OBJECT-shaped directive a candidate rides for MIRANDA, whose prompt seam is `_directive`
+// (an OBJECT the prompt builder consumes) -- NOT the string block above. It mirrors the shape
+// of a human directive ROW, so the EXISTING application (prompts.MIRANDA._directive =
+// directiveMap['MIRANDA']) and buildMirandaPrompt (which reads _directive.instruction / .url on
+// the non-spotlight branch) consume it with ZERO change. `_candidateId` is an internal tag that
+// couples the post-generation write-back to THIS candidate (marked done only once the editor
+// actually generates). directive_type='standard' takes buildMirandaPrompt's plain-directive path.
+export function buildCandidateDirectiveObject(candidate) {
+  var subject = [candidate && candidate.entity, candidate && candidate.facet].filter(Boolean).join(' ');
+  return {
+    directive_type: 'standard',
+    instruction: 'Write a field guide about the ' + subject +
+      (candidate && candidate.target_phrase ? '. Angle: ' + candidate.target_phrase : ''),
+    url: null,
+    _candidateId: candidate ? candidate.id : null,
+  };
+}
+
 // Read-only: the top-priority status='queued' candidate for a game, or null.
 // Guarded (a lookup error returns null -- the observe pass is non-fatal).
 export async function selectQueuedCandidate(supabase, gameSlug) {
