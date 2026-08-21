@@ -242,11 +242,13 @@ export async function handleOAuthCallback(provider, request) {
       return NextResponse.redirect(new URL('/join?error=db_error', request.url));
     }
 
-    // LANDING (Ruling 3 Stage 2): everyone still lands on '/' -- there is no Discord onboarding
-    // screen yet (Stage 3 builds it; /welcome is Bungie-only and 401s Discord, so it is NOT a
-    // target here). isNew is now surfaced and wired so Stage 3 flips the new-user branch to the
-    // onboarding step by changing only this computed target.
-    const redirectTo = isNew ? '/' : '/';
+    // LANDING (Ruling 3 Stage 3b): a NEW Discord signup lands on the onboarding game-pick
+    // (/join/welcome, which confirms the intent captured in Stage 2); a returning user goes to
+    // '/' as before. /join/welcome self-guards -- redirects to '/' once onboarded_at is set, and
+    // to /join without a Discord session -- and a new user who abandons it is isNew=false on the
+    // next login (-> '/'), so this never loops or traps. (NOT /welcome: that is Bungie-only and
+    // 401s Discord.)
+    const redirectTo = isNew ? '/join/welcome' : '/';
     const response = NextResponse.redirect(new URL(redirectTo, request.url));
     response.cookies.set('cp_account', accountId, sessionCookieOptions());
     response.cookies.delete(provider.name + '_oauth_state');
