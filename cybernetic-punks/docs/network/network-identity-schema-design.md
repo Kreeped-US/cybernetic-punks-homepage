@@ -50,6 +50,22 @@ The network-level identity spine (the cross-game "career" owner).
   for actual per-game presence/progression. Status: APPLIED 2026-08-21
   (verified live: games_interested | ARRAY | NO | '{}'::text[]; recorded in
   docs/dmz/MIGRATIONS.md).
+- onboarded_at (timestamptz, nullable, NO default) -- ADDED 2026-08-21 (Ruling 3
+  onboarding Stage 3a). The seen-state for the /join/welcome game-pick screen:
+  NULL = the onboarding screen has NOT yet been shown/completed (show it); set =
+  the user has CONFIRMED or SKIPPED the pick (never show it again). NULL is the
+  meaningful "not yet onboarded" state, so the column is nullable with no default.
+  DELIBERATELY SEPARATE from games_interested: Stage 2 auto-writes games_interested
+  at account creation from the arrival intent (e.g. ['dmz']), so a "games_interested
+  is non-empty = seen" heuristic would SUPPRESS the confirm screen for exactly the
+  users it is meant to greet (their intent was inferred, never confirmed). A
+  dedicated timestamp is the only honest signal, and matches the *_at convention
+  (created_at, updated_at on this table; welcomed_at, noindexed_at elsewhere).
+  Confirm/skip stamps onboarded_at = now(); the screen guards on it (already set ->
+  redirect away) so it shows exactly once. Status: APPLIED 2026-08-21 (verified
+  live: onboarded_at | timestamp with time zone | YES | null; recorded in
+  docs/dmz/MIGRATIONS.md). Stage-3b code (screen + landing flip + write) follows
+  next.
 - (NO provider column — identity links live in linked_identity. NO auth/
   email columns; auth stays on bungie_* until the deferred cutover.)
 - (AS-BUILT also carries the profile columns added later by the profile feature:

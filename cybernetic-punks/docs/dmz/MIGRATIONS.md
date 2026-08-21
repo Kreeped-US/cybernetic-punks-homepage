@@ -6,6 +6,42 @@ In-repo record of production schema changes applied for the DMZ multi-game refac
 
 ---
 
+## network_account.onboarded_at -- Ruling 3 onboarding seen-state column (APPLIED 2026-08-21, Supabase SQL editor)
+
+Ruling 3 (onboarding) Stage 3a: the seen-state for the /join/welcome game-pick screen. ADDITIVE
+(one ALTER, no existing column touched). NULL = the onboarding screen has NOT yet been
+shown/completed (show it); set = the user has CONFIRMED or SKIPPED the pick (never show it
+again). Nullable with NO default -- NULL is the meaningful "not yet onboarded" state. DELIBERATELY
+SEPARATE from games_interested: Stage 2 auto-writes games_interested at account creation from the
+arrival intent (e.g. ['dmz']), so a "non-empty games_interested = seen" heuristic would SUPPRESS
+the confirm screen for exactly the users it is meant to greet (their intent was inferred, never
+confirmed). A dedicated timestamp is the only honest signal, and matches the *_at convention
+(created_at, updated_at on this table; welcomed_at, noindexed_at elsewhere). Design:
+docs/network/network-identity-schema-design.md (section 1).
+
+**STATUS: APPLIED 2026-08-21 (operator-run, Supabase SQL editor). Column verified live:
+`onboarded_at | timestamp with time zone | YES | null`. Stage-3b code (the /join/welcome screen +
+the isNew landing flip + the confirm/skip write) is STILL TO COME -- the column is inert on apply.**
+
+```sql
+-- network_account.onboarded_at: seen-state for the /join/welcome game-pick (Ruling 3 onboarding).
+ALTER TABLE public.network_account
+  ADD COLUMN IF NOT EXISTS onboarded_at timestamptz;
+
+COMMENT ON COLUMN public.network_account.onboarded_at IS
+  'Ruling 3 onboarding: NULL = onboarding screen not yet shown/completed; set = user has confirmed or skipped the /join/welcome game-pick. Separate from games_interested (which Stage 2 auto-writes at creation) so the confirm screen shows exactly once.';
+```
+
+**Verify SELECT (run after):**
+```sql
+-- column shape (expect: onboarded_at | timestamp with time zone | YES | null)
+SELECT column_name, data_type, is_nullable, column_default
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'network_account' AND column_name = 'onboarded_at';
+```
+
+---
+
 ## network_account.games_interested -- Ruling 3 onboarding intent column (APPLIED 2026-08-21, Supabase SQL editor)
 
 Ruling 3 (onboarding) Stage 1: a lightweight cross-game signup-intent column on the identity
