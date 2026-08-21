@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - Layer 2a Stage 1: roster-wide dedup gate LIVE (proof-validated)
+
+The invariant-1 enforcer (semantic dedup) is built, proven, and merged - the shared
+foundation every editor will sit behind. Main = ee97771. Inert until an editor
+reopens (only NEXUS produces today, patch-gated), so no current output change.
+
+### What shipped
+lib/content/dedupGate.js - findCorpusDuplicate (pure, reuses the existing
+topicJaccard/topicTokens/buildIdfMap scorer, no reimpl) + loadSurvivorCorpus.
+Wired in processEditor replacing the MIRANDA-only block: roster-wide, whole
+surviving corpus (is_published=true AND noindex=false), load-once-per-run,
+same-run-aware (accumulates this run's accepted headlines, sync push no await
+between check+push so parallel editors can't interleave). Thresholds (named
+constants): 0.7+shared>=3 = HARD BLOCK, 0.5-0.7 = REVIEW BAND (log not block).
+
+### THE PROOF FINDINGS (empirical, perishable - do not lose)
+Ran the actual scorer over the live 373-survivor corpus (69,378 pairs) BEFORE
+building. Results that shaped the design:
+- Token-Jaccard @0.7 is PRECISION-PERFECT: 0 false positives / 69,378 pairs, clean
+  wide gap (69,351 pairs <0.5). Catches the lexical-overlap dup pattern - all 8
+  known live near-dups block (both directions), which is EXACTLY Miranda's freeze-
+  reason failure mode.
+- BUT recall-limited - MISSES two dup shapes (not threshold-fixable, lowering
+  erodes the clean gap):
+  (1) feature-differentiated patch dups: the V85 pair scored 0.577 (shares patch
+      vocab, differs on "nerf" vs "ceiling cut", version token dropped).
+  (2) genuinely reworded synonyms: "Shell Selection for Ranked" vs "Ranked Shell
+      Guide" = 0.336 (token-Jaccard structurally can't catch different-words-same-
+      meaning).
+- Event editors do NOT false-positive at 0.7 (reversed the prior worry): legit
+  NEXUS meta coverage is lexically distinct; only real dups score high. So NO
+  lane-class exemption needed for the block.
+- Layer 2 (source_url/patch_key equality) PROVEN NON-VIABLE: no patch_key column on
+  feed_items; source_url null on V85 AND on 96% of corpus (only 14/373 non-null);
+  its only collisions are legit multi-angle articles (false positives). Dead as
+  conceived.
+
+### Coverage + LIMITS (so no future reopen over-trusts the gate)
+The gate is Layer 1 (lexical-overlap) ONLY. Complete dedup = this + two DEFERRED
+layers, each scoped to when its lane reopens:
+- patch-version key (regex-extract "1.1.5.4" from headline/body, same-version-in-
+  window = REVIEW flag not hard block, since legit patch-day + follow-up can share
+  a version) -> deferred to EVENT-EDITOR reopen (Nexus, for DMZ events).
+- embeddings (the only thing that catches reworded synonyms) -> deferred, larger.
+So "dedup gate exists" != "all duplication impossible" - it catches the lexical-
+overlap pattern (Miranda's), not patch-dups or reworded-synonyms yet.
+
+### Bonus lead (not urgent)
+The gate flagged 8 near-dup pairs STILL LIVE in the corpus (survivors that escaped
+the manual prune) - a cleanup lead: CIPHER patch-impact 1.1.0.3/.4, MIRANDA
+Destroyer/Recon/Triage/Season-2-mod/Thief-fix, CIPHER Assassin, NEXUS Sentinel.
+
+### Next Layer 2a pieces (to light up Miranda behind this gate)
+- Real candidate seeding: replace the 10 test content_candidate rows with coverage-
+  gap candidates from verified entity tables (+ keyword_targets demand), wire the
+  unused keyword_ref.
+- The 2-arm consumer: turn route.js's log-only 2-OBSERVE block into generation
+  (assign PASS candidate to receiving editor, write-back status=done).
+- Non-patch-gated evergreen lane: re-enable MIRANDA outside editorsRequiringPatch,
+  scoped to demand-candidates, behind this gate. (DEXTER deferred - needs verified
+  loadout data that doesn't exist; his recs are 100% model-generated.)
+
+---
+
 ## 2026-08-21 - Content-portfolio doctrine: 2 Fable rulings (evergreen reopen + opinion type)
 
 Foundational content-diversity doctrine. The pipeline read established the demand engine is
