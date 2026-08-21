@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - Ruling 3 (onboarding) COMPLETE - all 3 network-root rulings shipped
+
+The network-root remodel is DONE: all three Fable rulings live. The "complete
+circle" (stranger -> understanding -> involved) is built end to end, every piece
+anti-hype + provenance-honest. Main = 7b00742.
+
+### Ruling 3 - game-intent onboarding (4 stages, all live)
+- S1 (games_interested text[] NOT NULL DEFAULT '{}' on network_account) - the
+  intent field. Bare text[], validated at app layer not DB (adding a game = one
+  ROOT_GAMES entry, no schema change).
+- S2 (silent intent-capture plumbing through Discord OAuth) - game-scoped join
+  links carry ?intent=; cp_intent cookie (mirrors the proven discord_oauth_state
+  lifecycle, CSRF state untouched); games_interested written at account creation;
+  resolveOrCreateAccount returns {accountId, isNew}. No visible change - captures
+  plan-layer signal from game-page signups.
+- S3a (onboarded_at timestamptz nullable on network_account) - seen-state.
+  Separate from games_interested BECAUSE S2 auto-writes intent at creation, so a
+  "non-empty = seen" heuristic would suppress the confirm screen for exactly the
+  users it greets. NULL = not yet onboarded.
+- S3b (/join/welcome confirm-don't-interrogate screen + isNew->/join/welcome flip)
+  - reads current games_interested to PRE-CHECK (the "confirm"), multi-select,
+  full-size "Skip for now", once-only guard (onboarded_at set -> redirect '/'),
+  both confirm AND skip stamp onboarded_at (server-set via the dedicated
+  /api/account/onboarding POST, never client-forged), options ROOT_GAMES-derived,
+  honest DMZ pre-launch label. Copy anti-hype (verbatim-checked): "no early access
+  is being promised." Post-action routes to '/' (a selected-game-hub target was
+  scoped as optional; '/' shipped).
+- S4 (/join value-props aligned to verified-intel promise) - full de-perk: the
+  "EARLY ACCESS" eyebrow -> "NETWORK REGISTRATION"; PRIORITY ACCESS -> "YOUR GAMES,
+  YOUR INTEL" (the S3 personalization); EARLY ADOPTER -> "VERIFIED" / "Every stat
+  checked in-game, never scraped" (the moat). Kept the honest prop (PROFILE) + the
+  security footer. Three true offers, zero founding-member theater.
+
+### The full network-root arc (all 3 rulings, done today+yesterday)
+- Ruling 2 (route migration): every Marathon route -> /marathon/*; root clean for
+  network identity + future games. Verified end-to-end on prod. (+ intel glut-clear
+  early, V85 dup consolidation.)
+- Ruling 1 (positioning): "verified" promoted into the identity noun-phrase across
+  6 brand surfaces. The moat in the masthead.
+- Ruling 3 (onboarding): the above. Honest intent capture + true-offer join door.
+
+### Board / next
+- CoD NEXT (Thu 08-21, TODAY): fresh DMZ source (likely Keys) -> the held 6th nav
+  slot + new DMZ content. The next time-sensitive event.
+- DMZ launch prep for Oct 23.
+- Passive: Consumer C re-index watch (migration), games_interested/onboarded_at now
+  collecting real signal (aggregate = plan-layer, per Ruling 3c).
+- Recurring: pipeline dedup gap (2 near-dup cases) - still to investigate.
+
+---
+
 ## 2026-08-20 - Ruling 2 (route migration) COMPLETE - closure + board state
 
 The full Marathon-namespace migration is done, deployed, and verified on prod.
