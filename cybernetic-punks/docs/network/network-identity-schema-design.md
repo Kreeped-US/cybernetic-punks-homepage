@@ -36,8 +36,25 @@ The network-level identity spine (the cross-game "career" owner).
 - id (uuid, pk, default gen_random_uuid())
 - handle (text, unique, not null) — public display name / profile slug
 - created_at (timestamptz)
+- games_interested (text[], not null, default '{}') -- ADDED 2026-08-21 (Ruling 3
+  onboarding). Cross-game intent captured at signup: which games the user is here
+  for. Multi-select and fully skippable; default '{}' (empty array) IS the
+  "skipped / not yet set" state. Bare text[] with NO CHECK / NO FK -- matches the
+  network-wide convention that game_slug is an unconstrained text discriminator
+  (feed_items.game_slug and game_profile.game_slug are both bare text; there is no
+  games table to FK to). Allowed values ('marathon' | 'dmz') are validated at the
+  write path (app layer), the same discipline as player_profiles.signup_intent's
+  validIntents check -- not at the DB, so adding a game stays a one-line
+  ROOT_GAMES change, never a CHECK-constraint ALTER. This is a LIGHTWEIGHT intent
+  signal, NOT a per-game career: game_profile (section 2) remains the future home
+  for actual per-game presence/progression. Status: APPLIED 2026-08-21
+  (verified live: games_interested | ARRAY | NO | '{}'::text[]; recorded in
+  docs/dmz/MIGRATIONS.md).
 - (NO provider column — identity links live in linked_identity. NO auth/
   email columns; auth stays on bungie_* until the deferred cutover.)
+- (AS-BUILT also carries the profile columns added later by the profile feature:
+  display_name, bio, accent_color, avatar_url, updated_at -- present in the live
+  table though not in the original spine design above.)
 NOTE: design only — does NOT replace bungie auth; nothing reads this for
 login.
 
@@ -59,6 +76,11 @@ The sign-in providers linked to a network account (one account -> many).
 ### 2. game_profile
 A network_account's presence WITHIN one game (the per-game career slice).
 One row per (account, game).
+NOTE (2026-08-21): still the FUTURE per-game-career home (presence + progression
+once a user has a real game presence). It is NOT the signup-intent store -- that is
+the lightweight network_account.games_interested column (section 1), a separate and
+earlier "which games are you here for" signal. games_interested does not replace
+this table; a filled game_profile is a stronger, later signal than an intent tick.
 - id (uuid, pk)
 - account_id (fk -> network_account.id)
 - game_slug (text) — 'marathon' | 'dmz' | future (same dimension as the

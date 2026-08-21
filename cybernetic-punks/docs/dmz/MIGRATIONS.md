@@ -6,6 +6,47 @@ In-repo record of production schema changes applied for the DMZ multi-game refac
 
 ---
 
+## network_account.games_interested -- Ruling 3 onboarding intent column (APPLIED 2026-08-21, Supabase SQL editor)
+
+Ruling 3 (onboarding) Stage 1: a lightweight cross-game signup-intent column on the identity
+spine -- which games a new user is here for, captured at signup. ADDITIVE (one ALTER, no
+existing column touched). Multi-select and fully skippable: default '{}' (empty array) IS the
+"skipped / not yet set" state. Bare text[] with NO CHECK / NO FK -- matches the network-wide
+convention that game_slug is an unconstrained text discriminator (feed_items.game_slug and
+game_profile.game_slug are bare text; there is no games table to FK to). Allowed values
+('marathon' | 'dmz') are validated at the app write path, the same discipline as
+player_profiles.signup_intent's validIntents check -- so adding a game stays a one-line
+ROOT_GAMES change, never a CHECK-constraint ALTER. This is the LIGHTWEIGHT intent signal, NOT
+the per-game career: game_profile remains the future home for per-game presence/progression.
+Design: docs/network/network-identity-schema-design.md (section 1).
+
+**STATUS: APPLIED 2026-08-21 (operator-run, Supabase SQL editor). Column verified live:
+`games_interested | ARRAY | NO | '{}'::text[]`. Read/write code is DEFERRED to Ruling 3
+Stage 3 -- nothing reads or writes it yet; the column is inert on apply.**
+
+```sql
+-- network_account.games_interested: cross-game signup intent (Ruling 3 onboarding).
+ALTER TABLE public.network_account
+  ADD COLUMN IF NOT EXISTS games_interested text[] NOT NULL DEFAULT '{}';
+
+COMMENT ON COLUMN public.network_account.games_interested IS
+  'Ruling 3 onboarding: cross-game signup intent (which games the user is here for). Multi-select, fully skippable; default {} = skipped/not-set. Bare text[]; allowed values (marathon|dmz) validated at the app write path, unconstrained at the DB to match the game_slug discriminator convention.';
+```
+
+**Verify SELECTs (run after):**
+```sql
+-- column shape (expect: games_interested | ARRAY | NO | '{}'::text[])
+SELECT column_name, data_type, is_nullable, column_default
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'network_account' AND column_name = 'games_interested';
+-- column comment landed
+SELECT col_description('public.network_account'::regclass, ordinal_position) AS col_comment, column_name
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'network_account' AND column_name = 'games_interested';
+```
+
+---
+
 ## saved_build -- thin per-account build bookmarks (APPLIED 2026-08-07, Supabase SQL editor)
 
 The premium substrate (docs/MONETIZATION_AND_IDENTITY_STRATEGY.md), the last launch-critical
