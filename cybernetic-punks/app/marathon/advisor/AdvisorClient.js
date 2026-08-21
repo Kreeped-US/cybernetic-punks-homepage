@@ -1074,7 +1074,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                       <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)' }}>Priority access confirmed</div>
                     </div>
                   ) : (
-                    <Link href="/join" style={{ padding: '10px 18px', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 2, color: '#9b5de5', fontSize: 11, fontWeight: 800, letterSpacing: 1, textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                    <Link href="/join?intent=marathon" style={{ padding: '10px 18px', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 2, color: '#9b5de5', fontSize: 11, fontWeight: 800, letterSpacing: 1, textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
                       CLAIM EARLY ADOPTER →
                     </Link>
                   )}

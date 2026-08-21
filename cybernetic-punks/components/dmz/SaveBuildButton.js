@@ -67,7 +67,7 @@ export default function SaveBuildButton({ weaponSlug }) {
 
   if (status === 'out') {
     return (
-      <Link href="/join" style={Object.assign({}, base, { color: 'var(--text-secondary)' })}>
+      <Link href="/join?intent=dmz" style={Object.assign({}, base, { color: 'var(--text-secondary)' })}>
         <span aria-hidden="true">+</span> Sign in to save
       </Link>
     );

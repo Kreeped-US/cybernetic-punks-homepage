@@ -75,6 +75,16 @@ export function startOAuth(provider, request) {
 
   const response = NextResponse.redirect(provider.authorizeUrl + '?' + params.toString());
   response.cookies.set(provider.name + '_oauth_state', state, stateCookieOptions());
+
+  // Ruling 3 (onboarding intent): if the sign-in link carried a valid game intent, stash it
+  // in a short-lived cp_intent cookie with the SAME attributes/lifecycle as the CSRF state
+  // cookie, so the callback can write games_interested at account creation. Absent/invalid ->
+  // no cookie. This is fully independent of the state token -- CSRF generation is untouched.
+  const intent = new URL(request.url).searchParams.get('intent');
+  if (intent === 'marathon' || intent === 'dmz') {
+    response.cookies.set('cp_intent', intent, stateCookieOptions());
+  }
+
   return response;
 }
 
@@ -105,11 +115,16 @@ async function deriveUniqueHandle(supabase, username) {
 }
 
 // ACCOUNT RESOLVE / CREATE / LINK.
-//   - linked_identity exists  -> RETURNING USER, return its account_id (login).
-//   - not found               -> NEW USER, create network_account + linked_identity (signup).
-// Linking a provider to an ALREADY-logged-in account is sub-step 5; here we only
-// resolve by (provider, external_id). Returns the account id, or null on failure.
-async function resolveOrCreateAccount(supabase, providerName, identity) {
+//   - linked_identity exists  -> RETURNING USER, return its account_id (login), isNew=false.
+//   - not found               -> NEW USER, create network_account + linked_identity (signup),
+//                                isNew=true.
+// Linking a provider to an ALREADY-logged-in account is sub-step 5; here we only resolve by
+// (provider, external_id). Returns { accountId, isNew }; accountId is null on failure.
+//
+// intent (Ruling 3 Stage 2): a re-validated game intent ('marathon' | 'dmz' | null). When
+// present AND this is a NEW account, it is written to games_interested at creation. It is NEVER
+// applied to a returning account (that is a later append/merge policy call).
+async function resolveOrCreateAccount(supabase, providerName, identity, intent) {
   const { data: link } = await supabase
     .from('linked_identity')
     .select('account_id')
@@ -117,23 +132,31 @@ async function resolveOrCreateAccount(supabase, providerName, identity) {
     .eq('external_id', identity.externalId)
     .maybeSingle();
 
-  if (link && link.account_id) return link.account_id;
+  if (link && link.account_id) return { accountId: link.account_id, isNew: false };
 
   const handle = await deriveUniqueHandle(supabase, identity.username);
 
+  // Base row. games_interested is written ONLY on this new-account path, and ONLY when a valid
+  // intent is present (re-validated here as a defense-in-depth). Absent/invalid -> column omitted
+  // -> the DB default '{}' (the skipped / not-yet-set state).
+  const insertRow = {
+    handle,
+    display_name: identity.username || null,
+    avatar_url: identity.avatarUrl || null,
+  };
+  if (intent === 'marathon' || intent === 'dmz') {
+    insertRow.games_interested = [intent];
+  }
+
   const { data: account, error: accErr } = await supabase
     .from('network_account')
-    .insert({
-      handle,
-      display_name: identity.username || null,
-      avatar_url: identity.avatarUrl || null,
-    })
+    .insert(insertRow)
     .select('id')
     .single();
 
   if (accErr || !account) {
     console.error('[oauth:' + providerName + '] network_account insert failed:', accErr);
-    return null;
+    return { accountId: null, isNew: false };
   }
 
   const { error: linkErr } = await supabase
@@ -150,10 +173,10 @@ async function resolveOrCreateAccount(supabase, providerName, identity) {
     // UNIQUE(provider, external_id) protects integrity if two callbacks race; the
     // loser hits this and the user simply retries (and then resolves as returning).
     console.error('[oauth:' + providerName + '] linked_identity insert failed:', linkErr);
-    return null;
+    return { accountId: null, isNew: false };
   }
 
-  return account.id;
+  return { accountId: account.id, isNew: true };
 }
 
 // CALLBACK: verify state, exchange code for a token, fetch the provider identity,
@@ -166,6 +189,12 @@ export async function handleOAuthCallback(provider, request) {
 
   const cookieStore = await cookies();
   const savedState = cookieStore.get(provider.name + '_oauth_state')?.value;
+
+  // Ruling 3 Stage 2: the signup-intent cookie (set in startOAuth from the game-scoped join
+  // link). Re-validated here before it can influence any write; wholly independent of the CSRF
+  // state check below (which is left untouched). Invalid/absent -> null -> no intent written.
+  const intentCookie = cookieStore.get('cp_intent')?.value;
+  const intent = (intentCookie === 'marathon' || intentCookie === 'dmz') ? intentCookie : null;
 
   if (!code || !state || state !== savedState) {
     return NextResponse.redirect(new URL('/join?error=invalid_state', request.url));
@@ -208,14 +237,23 @@ export async function handleOAuthCallback(provider, request) {
     }
 
     const supabase = getSupabase();
-    const accountId = await resolveOrCreateAccount(supabase, provider.name, identity);
+    const { accountId, isNew } = await resolveOrCreateAccount(supabase, provider.name, identity, intent);
     if (!accountId) {
       return NextResponse.redirect(new URL('/join?error=db_error', request.url));
     }
 
-    const response = NextResponse.redirect(new URL('/', request.url));
+    // LANDING (Ruling 3 Stage 2): everyone still lands on '/' -- there is no Discord onboarding
+    // screen yet (Stage 3 builds it; /welcome is Bungie-only and 401s Discord, so it is NOT a
+    // target here). isNew is now surfaced and wired so Stage 3 flips the new-user branch to the
+    // onboarding step by changing only this computed target.
+    const redirectTo = isNew ? '/' : '/';
+    const response = NextResponse.redirect(new URL(redirectTo, request.url));
     response.cookies.set('cp_account', accountId, sessionCookieOptions());
     response.cookies.delete(provider.name + '_oauth_state');
+    // Consume the intent cookie on success (whether or not it was set). It has done its one job
+    // (written at creation for a new account); leaving it would let a stale intent leak into a
+    // later signup on the same browser.
+    response.cookies.delete('cp_intent');
     return response;
 
   } catch (err) {

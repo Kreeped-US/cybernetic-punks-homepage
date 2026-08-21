@@ -41,6 +41,13 @@ export default async function JoinPage({ searchParams }) {
 
   var error = searchParams?.error;
 
+  // Ruling 3 Stage 2: forward a validated game intent onto the sign-in link so the OAuth
+  // flow can capture it (startOAuth reads ?intent= and sets the cp_intent cookie). Only the
+  // two game-scoped join links carry ?intent= (dmz / marathon); anything else -> no param.
+  var rawIntent = searchParams?.intent;
+  var validIntent = (rawIntent === 'marathon' || rawIntent === 'dmz') ? rawIntent : null;
+  var discordHref = '/api/auth/discord' + (validIntent ? '?intent=' + validIntent : '');
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -97,7 +104,7 @@ export default async function JoinPage({ searchParams }) {
           */}
 
           <a
-            href="/api/auth/discord"
+            href={discordHref}
             style={{
               display: 'block',
               textAlign: 'center',
@@ -139,7 +146,7 @@ export default async function JoinPage({ searchParams }) {
 
         {/* Already have an account */}
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <a href="/api/auth/discord" style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 1, fontFamily: 'monospace' }}>
+          <a href={discordHref} style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 1, fontFamily: 'monospace' }}>
             Already registered? Sign in →
           </a>
         </div>
