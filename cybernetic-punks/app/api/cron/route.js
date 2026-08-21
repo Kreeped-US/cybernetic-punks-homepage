@@ -16,7 +16,7 @@ import { runGate } from '@/lib/gsc/runGate';
 import { decideGate } from '@/lib/gsc/prePublishGate';
 import { loadGateStore } from '@/lib/gsc/storeLoader';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
-import { topicTokens, buildIdfMap, topicJaccard } from '@/lib/topicTokens';
+import { loadSurvivorCorpus, findCorpusDuplicate } from '@/lib/content/dedupGate';
 import { runGateLogPass } from '@/lib/content/gateLogPass';
 import { runAssignmentGate } from '@/lib/content/assignmentGate';
 import { buildCandidateDirective, selectQueuedCandidate } from '@/lib/content/candidateAssignment';
@@ -170,9 +170,10 @@ function normalizeTitle(t) { return (t || '').toLowerCase().replace(/\s+/g, ' ')
 // still collides at 1.0; distinct per-weapon Rook variants drop from ~0.8 to
 // ~0.2-0.3 -> pass; -no19's distinct angle drops from 0.33 -> pass by a wider
 // margin. The threshold itself is unchanged.
-var DUP_JACCARD_THRESHOLD = 0.7;
-var DUP_MIN_SHARED_TOKENS = 3;
-var DUP_HISTORY_LIMIT = 500;
+// The thresholds + the token-Jaccard scorer + this guard were EXTRACTED 2026-08-21 into
+// lib/content/dedupGate.js as the roster-wide Layer 1 gate (findCorpusDuplicate). The
+// rationale above still holds; it now governs the whole-surviving-corpus gate wired in
+// processEditor below (0.7 hard-block, 0.5-0.7 review-band log, editor-agnostic).
 
 // topicTokens + buildIdfMap + topicJaccard now live in lib/topicTokens.js
 // (imported at the top of this file). They were EXTRACTED so this guard, the
@@ -182,43 +183,10 @@ var DUP_HISTORY_LIMIT = 500;
 // Behaviour is unchanged; the 0.7 threshold below is still calibrated against
 // the same transform.
 
-// Read-only: return the closest published article by this editor+game whose
-// topic crosses the near-duplicate threshold, or null. Never touches existing
-// rows. Fail-OPEN -- a lookup error returns null (let the piece publish) so a
-// transient DB blip never blocks generation.
-async function findDuplicateEvergreen(supabase, editorName, gameSlug, candidateHeadline) {
-  var candTokens = topicTokens(candidateHeadline);
-  if (candTokens.length < DUP_MIN_SHARED_TOKENS) return null;
-  try {
-    var { data, error } = await supabase
-      .from('feed_items')
-      .select('headline, slug, created_at')
-      .eq('editor', editorName)
-      .eq('game_slug', gameSlug)
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .limit(DUP_HISTORY_LIMIT);
-    if (error || !data) return null;
-    // Corpus IDF from this same history read: template boilerplate is frequent
-    // across MIRANDA's headlines -> low weight; the distinguishing subject is
-    // rare -> high weight (see the subject-weighting note above the constants).
-    var idf = buildIdfMap(data.map(function(r) { return r.headline || ''; }));
-    var best = null;
-    for (var i = 0; i < data.length; i++) {
-      var existing = data[i];
-      if (!existing.headline) continue;
-      var cmp = topicJaccard(candTokens, topicTokens(existing.headline), idf);
-      if (cmp.shared < DUP_MIN_SHARED_TOKENS) continue;
-      if (cmp.score >= DUP_JACCARD_THRESHOLD && (!best || cmp.score > best.score)) {
-        best = { headline: existing.headline, slug: existing.slug, created_at: existing.created_at, score: cmp.score, shared: cmp.shared };
-      }
-    }
-    return best;
-  } catch (err) {
-    console.log('[CRON] ' + editorName + ' dup-check error (non-fatal, publishing): ' + err.message);
-    return null;
-  }
-}
+// findDuplicateEvergreen (the MIRANDA-only, own-editor-history guard) was EXTRACTED +
+// generalised into lib/content/dedupGate.js as findCorpusDuplicate -- now roster-wide,
+// scored against the WHOLE surviving corpus, loaded once per run and same-run-aware.
+// See the wired call in processEditor below.
 
 function buildPatchPriorityBlock(patchItems) {
   if (!patchItems || patchItems.length === 0) return '';
@@ -831,23 +799,39 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       console.log('[CRON] ' + editorName + ' SKIP publish: duplicate title vs recent ("' + result.headline + '")');
       return { editor: editorName, success: false, error: 'duplicate title vs recent' };
     }
-    // (3) Near-duplicate EVERGREEN guard (MIRANDA only). (2) above catches only
-    //     byte-identical titles inside the recent window; the real failure is the
-    //     same evergreen guide re-minted weeks later with a reworded headline.
-    //     This compares topic tokens against MIRANDA's FULL recent published
-    //     history and SKIPS publish on a clear near-duplicate -- LOGGING which
-    //     existing article it matched, never silently dropping. The other four
-    //     editors are exempt on purpose: their day-to-day topic overlap is
-    //     legitimately high (dated meta/news), so only the evergreen field guide
-    //     runs the topic-similarity gate.
-    if (editorName === 'MIRANDA') {
-      var dup = await findDuplicateEvergreen(supabase, editorName, PRODUCING_GAME_SLUG, result.headline);
-      if (dup) {
-        console.log('[CRON] MIRANDA SKIP publish: near-duplicate evergreen (score ' +
-          dup.score.toFixed(2) + ', ' + dup.shared + ' shared topic words) of existing "' +
-          dup.headline + '" [' + dup.slug + '] -- new "' + result.headline + '" not published');
-        return { editor: editorName, success: false, error: 'near-duplicate of existing article (' + dup.slug + ', score ' + dup.score.toFixed(2) + ')' };
+    // (3) ROSTER-WIDE SEMANTIC DEDUP GATE (Layer 1: token-Jaccard vs the WHOLE surviving
+    //     corpus). Replaces the former MIRANDA-only, own-history guard -- runs for EVERY
+    //     editor now (MIRANDA is the first tenant; DEXTER/CIPHER/etc plug in with no rebuild).
+    //     score>=0.7 & shared>=3 -> BLOCK; 0.5-0.7 -> a [DEDUP-REVIEW] log line, still publishes.
+    //     Corpus + IDF are loaded ONCE per run (rawData.dedup) and shared across editors;
+    //     rawData.dedup.sessionHeadlines accumulates this run's accepted headlines so a
+    //     same-run sibling is caught. Fail-OPEN. LAYER 1 is lexical-overlap ONLY -- reworded
+    //     synonyms (embeddings) and feature-differentiated patch dups (a patch-version key)
+    //     are known gaps deferred to event-editor reopen; the proof showed event editors do
+    //     NOT false-positive at 0.7, so no lane-class exemption is needed here.
+    if (rawData.dedup && rawData.dedup.corpus) {
+      try {
+        var dg = findCorpusDuplicate(result.headline, rawData.dedup.corpus, rawData.dedup.idf, { sessionHeadlines: rawData.dedup.sessionHeadlines });
+        if (dg.block) {
+          console.log('[DEDUP-BLOCK] ' + editorName + ' near-duplicate vs surviving corpus (score ' +
+            dg.match.score.toFixed(2) + ', ' + dg.match.shared + ' shared topic words) of "' +
+            dg.match.headline + '" [' + (dg.match.slug || 'same-run') + '] -- new "' + result.headline + '" not published');
+          return { editor: editorName, success: false, error: 'near-duplicate vs surviving corpus (' + (dg.match.slug || 'same-run') + ', score ' + dg.match.score.toFixed(2) + ')' };
+        }
+        if (dg.reviewFlag) {
+          console.log('[DEDUP-REVIEW] ' + editorName + ' review-band near-dup (score ' +
+            dg.match.score.toFixed(2) + ', ' + dg.match.shared + ' shared) vs "' + dg.match.headline +
+            '" [' + (dg.match.slug || 'same-run') + '] -- new "' + result.headline + '" published (logged, not blocked)');
+        }
+      } catch (dgErr) {
+        console.log('[DEDUP] gate error (non-fatal, publishing): ' + (dgErr && dgErr.message));
       }
+    }
+    // Record this accepted headline for same-run dedup BEFORE the next await, so the gate
+    // check + this push stay atomic on the single JS thread (no interleave window). Passing
+    // the gate is the bar (a later held/reject still counts -- conservative over-dedup).
+    if (rawData.dedup && Array.isArray(rawData.dedup.sessionHeadlines)) {
+      rawData.dedup.sessionHeadlines.push({ headline: result.headline, slug: null, editor: editorName });
     }
 
     // (4) COVERAGE SHADOW MODE -- ALL editors, LOG ONLY, never blocks. See the
@@ -1268,6 +1252,19 @@ export async function GET(req) {
     var editors = activeRoster.map(function (name) {
       return { name: name, prompt: prompts[name] };
     });
+
+    // Load the surviving-corpus dedup gate ONCE per run (shared across every editor this
+    // cycle) + a same-run accumulator. Skipped on a frozen cycle (no editors). Fail-open: if
+    // the read fails, rawData.dedup stays unset and processEditor's gate simply no-ops.
+    if (editors.length > 0) {
+      try {
+        var dedupLoaded = await loadSurvivorCorpus(supabase, PRODUCING_GAME_SLUG);
+        rawData.dedup = { corpus: dedupLoaded.corpus, idf: dedupLoaded.idf, sessionHeadlines: [] };
+        console.log('[DEDUP] loaded ' + dedupLoaded.corpus.length + ' surviving ' + PRODUCING_GAME_SLUG + ' headlines for the roster-wide gate');
+      } catch (dedupLoadErr) {
+        console.log('[DEDUP] corpus load failed (non-fatal, gate disabled this run): ' + (dedupLoadErr && dedupLoadErr.message));
+      }
+    }
 
     var settledResults = await Promise.allSettled(
       editors.map(function(e) { return processEditor(e.name, e.prompt, rawData, supabase, regradeContext, directiveMap[e.name]); })
