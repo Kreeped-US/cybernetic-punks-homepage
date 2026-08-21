@@ -7,6 +7,71 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - CORPUS STAT-INTEGRITY ISSUE found: false Destroyer HP model in 17 articles (scoped for later)
+
+Chasing an optional consolidation graft (P2 Destroyer) surfaced a real corpus-
+integrity problem touching the Ruling-1 "verified" moat. Banked here, scoped as its
+own project - NOT fixed yet. Nothing changed. Main = a20e1f2.
+
+### The finding
+17 PUBLISHED (live, indexed) Marathon articles assert a FALSE per-shell health model:
+"Destroyer = 175 HP, 50 shield, 225 total" (and variants). This is wrong THREE ways
+per operator-confirmed ground truth:
+- VERIFIED MODEL (operator, in-game): ALL Runner Shells share 120 base HP - there is
+  NO unique per-shell base health (not Destroyer, not any shell). Shield is NOT a
+  shell-innate stat - it is EQUIPMENT-based: Grey/Standard +20, Green/Enhanced +40,
+  Blue/Deluxe +60, Purple/Superior or Gold/Prestige +80.
+- So the articles are wrong on: base HP (175 vs 120), shield-as-innate-stat (it is
+  equipment, not a shell property), and the derived "total" (no fixed total - depends
+  on equipped shield).
+- The articles invented a per-shell durability model the game does not have.
+
+### Source of truth is CORRECT (the articles contradict it, not the data)
+- shell_stats.base_health = 120 for Destroyer (CORRECT - but note 120 is UNIVERSAL,
+  not a Destroyer trait; framing "Destroyer's 120 HP" as if distinctive is still wrong).
+- shell_stats.base_shield = null for Destroyer (arguably correct now that we know
+  shield is equipment, not shell-innate - but confirm the data model represents the
+  +20/+40/+60/+80 equipment tiers somewhere).
+- shell_stat_values: 0 Destroyer rows with 175. The 175 never entered verified data.
+
+### The 17 article ids (2 false matches excluded)
+13265c80, 9c060a13, a5fd6c07, 69b58595, 231d3c18, d5434b5f, ba1e5bec, 5a2d8847,
+82d0b4a0, 343db4bf, 97152457, 3ad09b91, af49214b, b4dbaab1, dc26d545, d7430f07,
+0f3b67d6.
+EXCLUDE (false matches - "175 hours" playtime, NOT HP): 25972d1c, 4471379e.
+
+### Why this is NOT a find-replace (the correction is heavier than 175->120)
+Some articles use the 175 as LOAD-BEARING analysis ("Destroyer's slow 175 HP tank",
+"highest HP pool at 175", "run Destroyer for its HP advantage"). If the premise
+(Destroyer is uniquely tanky) is FALSE (all shells 120), the ANALYSIS built on it is
+also wrong - swapping 175->120 leaves "uniquely high 120 HP" which is still wrong
+(120 is universal). Correction requires CLAIMS-triage, not number-substitution.
+
+### Scoped approach (for a later dedicated session)
+1. Triage read: classify the 17 into (a) passing-mention (quick correct to the right
+   model), (b) load-bearing-but-salvageable (rewrite the stat claim), (c) invalidated-
+   analysis (thesis depends on the false premise - may need retiring not correcting).
+2. Correct/retire per bucket, grounded in the verified model (120 universal + equipment
+   shields).
+3. BROADER AUDIT (important, pre-DMZ): is Destroyer-175 a one-off, or did the OLD
+   generation invent OTHER wrong stat-models across the corpus (wrong shield values,
+   weapon stats, shell abilities)? A corpus-wide stat-vs-verified-table audit. Don't
+   carry a corpus of invented stats into the DMZ growth event.
+
+### Root-cause note (why Layer 2a matters)
+The old generation cited 175 HP while shell_stats said 120 - i.e. it was NOT grounding
+stat claims in the verified entity tables. This is EXACTLY the invariant-2 failure
+(fabricate/ungrounded claims) that Layer 2a's grounding + gate discipline is built to
+prevent GOING FORWARD. The 17 articles are pre-gate legacy. Fixing them + the audit is
+cleaning up before the disciplined engine takes over.
+
+### Also: P2 graft CANCELLED (correctly)
+The optional P2 Destroyer consolidation graft (175 HP / 50 shield) was NOT applied -
+it would have added an 18th wrong article. P6 (Triage NuCaloric tip) is unaffected,
+still optional/pending.
+
+---
+
 ## 2026-08-21 - Dedup-flagged corpus consolidation (7 of 8 pairs, 9 articles retired)
 
 Cleaned up the 8 near-dup pairs the Layer-1 dedup gate surfaced as still-live in the
