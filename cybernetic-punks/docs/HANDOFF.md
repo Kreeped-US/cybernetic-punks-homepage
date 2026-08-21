@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - AI-quality dashboard: not broken (stale daily snapshot) + 3 DMZ-prep items
+
+Investigated the admin AI-QUALITY MEASUREMENT dashboard (showed stale verified-share
+numbers contradicting today's flag reconciliation). NOT broken - stale snapshot.
+Found the real mechanism + 3 concrete DMZ-readiness improvements. Read-only, nothing
+changed. Main = 89a057f.
+
+### The dashboard is correctly wired - stale daily snapshot (recomputes at the next 19:00 UTC cron)
+- The panel is DISPLAY-ONLY. It reads the latest quality_metrics row. There is NO
+  refresh button in the UI (an earlier read wrongly claimed one - it does not exist).
+- The snapshot is written ONLY by the main daily cron (/api/cron, schedule 0 19 UTC,
+  app/api/cron/route.js) calling precomputeQualityMetrics() (live queries). It had not
+  re-run since the pre-reconciliation snapshot (computed_at 19:01 UTC today, before the
+  flips), so the panel showed stale pre-fix numbers.
+- Today's UPDATE DID work: live mod_stats 203/203, weapon_stats 32/32, both flag AND
+  verified_source set. Data is correct; only the DISPLAY lagged.
+- METRIC: the dashboard counts verified_source NON-NULL (not verified=true) - measures
+  whether a row cites a human-confirmed SOURCE, not just the boolean. This is the RIGHT
+  metric (source = real provenance; flag = mere claim), aligned with the moat.
+- RESOLUTION: recomputes at the next daily cron (19:00 UTC) from live data -> true
+  ~100% state; OR run scripts/refresh-quality-snapshot.mjs (built today, held on
+  feat/quality-snapshot-refresh) to refresh immediately. (Core stays 62/85 until the 23
+  sourceless cores get a verified_source - a real gap, not staleness.)
+
+### DMZ-PREP ITEM 1: hardcoded table list (launch blocker)
+The dashboard's entity-table list is HARDCODED (shell_stats, weapon_stats, mod_stats,
+core_stats, implant_stats, cradle_nodes, unique_weapons, shell_stat_values). When DMZ
+launches and dmz_* tables (dmz_keys, dmz_missions, dmz_items...) are populated, the
+dashboard WILL NOT track them - it shows Marathon 100% while DMZ verification is
+UNMONITORED. Fix before DMZ data lands: add dmz_* tables, OR (better) refactor to
+AUTO-DISCOVER entity tables (matches "adding a game = no code surgery" discipline).
+
+### DMZ-PREP ITEM 2: build an on-demand Refresh button (real launch value)
+There is NO on-demand refresh in the UI - only the daily cron (a CLI script,
+scripts/refresh-quality-snapshot.mjs, exists as of today but is operator-run, held).
+When actively verifying DMZ data at launch, the dashboard won't reflect progress until
+the next cron, which is painful for a live verification push. BUILD a "Refresh Snapshot"
+admin control (button -> endpoint -> precomputeQualityMetrics() + insert row; mirror the
+cron / the CLI script). Small build, lets the operator watch verification progress in
+real time. (The earlier read claimed this button already exists - it does not; it should.)
+
+### DMZ-PREP ITEM 3: define the DMZ verification STANDARD (the real decision)
+The dashboard counts verified_source non-null - and today a BULK IDENTICAL source
+string ('owner in-game visual verification (Justin), S2 2026-08' across 186 mods)
+SATISFIED it. Legitimate (the operator did verify in-game) but the LIGHT end -
+batch-attested, not per-entity cited. DMZ DECISION (calm, pre-launch): what counts as
+"verified" for DMZ data - batch-owner-attestation (light) or per-entity source
+citation (patch notes/official/screenshot - heavier, stronger moat)? The dashboard
+tracks whatever standard is set; the operator sets it via what goes in verified_source.
+Determines whether DMZ's "verified" moat is strong or thin from day one.
+
+### Through-line (today's integrity theme)
+The 17-article stat problem (articles asserting ungrounded facts), the verified-flag
+drift (flags != ground truth), and this dashboard (measures source not flag) are ALL
+the same theme: the moat is only as strong as the provenance is REAL. The dashboard
+keeps the DATA layer honest; the stat-integrity project keeps the ARTICLE layer honest;
+DMZ needs both real from day one.
+
+---
+
 ## 2026-08-21 - CORPUS STAT-INTEGRITY ISSUE found: false Destroyer HP model in 17 articles (scoped for later)
 
 Chasing an optional consolidation graft (P2 Destroyer) surfaced a real corpus-
