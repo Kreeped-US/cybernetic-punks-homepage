@@ -7,6 +7,79 @@ Newest entries on top.
 
 ---
 
+## 2026-08-21 - Content-portfolio doctrine: 2 Fable rulings (evergreen reopen + opinion type)
+
+Foundational content-diversity doctrine. The pipeline read established the demand engine is
+BUILT but not yet fed or flowing: keyword_targets holds 10 rows (all Marathon, 0 DMZ; sources
+gsc-review + KWfinder, 9/10 inactive); content_candidate holds 10 hand-seeded TEST rows
+(warrant_source=seed_reinforce, keyword_ref 0/10, none assigned) from a one-off Aug-10 seed;
+there is no content_type column and no ahrefs source in code. The block is TWO-fold: (1) the
+candidate->generation consumer is hardcoded 2-OBSERVE (log-only; "2-arm" is unwritten), and (2)
+Marathon's feed roster is NEXUS-only + patch-gated (frozen between events) -- there is no
+GENERATION_ENABLED flag. So the state is BOTH starvation (thin/test-only demand data) AND an
+inert consumer, not purely policy. Two rulings unblock it. Main = 8e1abde.
+
+### Core principle (governs both rulings + all future content work)
+The safety is STRUCTURAL / machine-legible, NOT behavioral. Fable rejected the
+weaker guardrails I proposed (volume throttle, visual label) for architectural
+ones (type-gated generation, schema-separated opinion, semantic dedup vs survivors).
+Every guardrail must hold regardless of how a human, AI, or crawler encounters the
+content. Reach for structural distinctions, never behavioral ones.
+
+### Ruling: Q1 - reopen Marathon EVERGREEN generation (type gate, not throttle)
+Volume was never the disease - undifferentiated patch-reactive volume was. So a
+throttle is the wrong tool; a TYPE GATE is right.
+- SPLIT the flag: GENERATION_ENABLED conflated "cover events" (stays OFF - dead
+  game, no events worth chasing) and "harvest evergreen demand" (turns ON).
+  Reopen the evergreen-demand lane ONLY; keep the event/patch lane dark.
+- Gates (all simultaneous): demand-gated (keyword_targets winnable + no existing
+  article, existing dedup) + evergreen-only (guides/builds/refs from VERIFIED
+  entity data, no patch-chasing) + quality-gated (corroboration gate stays) +
+  THE LOAD-BEARING ADD: semantic dedup vs the SURVIVING corpus (trigram/embedding
+  vs live titles) - because the glut was thin near-SYNONYM coverage ("Shell
+  Selection for Ranked" vs "Ranked Shell Guide"), not duplicate URLs. Exact-match
+  dedup would NOT have caught it.
+- The pruned 373-survivor corpus is now the TRAINING SIGNAL for "good" - generate
+  toward the shape of what survived, not what was deleted. Reopening USES the
+  cleanup as calibration.
+
+### Ruling: Q2 - opinion content as a STRUCTURAL type (not a label)
+A label is UI; the moat is an architectural claim. A skimming reader / scraping AI
+/ SERP snippet doesn't reliably see a label. So separation is structural:
+- Different content_type + different SCHEMA (Opinion/AnalysisNewsArticle, NOT the
+  factual-claim structured data) - machine-legible as a view, not asserted fact.
+- THE CLAIM BOUNDARY (the real firewall): opinion may ARGUE FROM verified facts to
+  a subjective conclusion; may NOT INTRODUCE new unverified factual claims as its
+  basis. "Given the verified nerf, I think X drops to C" = legit. "X is secretly
+  getting buffed next patch" as opinion = fabricated fact in an opinion costume =
+  forbidden. Opinion is a LENS on verified data, never a SMUGGLING ROUTE for
+  unverified data.
+- Attribution singular + load-bearing: ONE named editor, first person, identity-
+  color. "Cipher's read," never "CNP's position." Network HOSTS the take, doesn't
+  ASSERT it.
+- Eligibility: index-eligible YES, but NOT provenance-BADGE eligible. Verified
+  markers attach ONLY to fact content. Opinion stands on the editor's name, not
+  the network's verification stamp. Clean line: verified-badge=fact,
+  editor-attributed-unbadged=opinion.
+
+### Roadmap (sequenced, Fable-gated doctrine now in hand)
+- Layer 2a (NEXT): reopen evergreen Marathon gen. This is a REAL BUILD, not a flag
+  flip / scoped-config: it requires (1) FEEDING the pipeline with real candidates
+  (not the 10 test rows; e.g. coverage-gap candidates enumerated from the verified
+  entity tables), (2) WIRING the 2-OBSERVE consumer to actually generate (2-arm is
+  unwritten), and (3) the semantic-dedup-vs-survivors gate. Still the highest-value
+  next step - the diverse-demand-content win - but scoped honestly as engineering,
+  not configuration.
+- Layer 2b (after): opinion as a structural type - new content_type + Opinion
+  schema + editor-gating + the claim-boundary check + not-badge-eligible. Well-
+  specified, genuinely new build.
+- Layer 3 (later project): intelligence feeds (sentiment, top-player discourse).
+  Same claim-boundary applies - signals INFORM generation, never become published
+  facts.
+- DMZ evergreen diversity: source-gated, broadens naturally post-launch.
+
+---
+
 ## 2026-08-21 - Ruling 3 (onboarding) COMPLETE - all 3 network-root rulings shipped
 
 The network-root remodel is DONE: all three Fable rulings live. The "complete
