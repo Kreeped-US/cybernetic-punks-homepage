@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Ingestion Tier-2 weighting inversion SHIPPED (composes with G1)
+
+Second ingestion-rebuild piece merged (db975dd). Official is now the PRIMARY editorial
+substance; community is demoted to a bounded topicality signal. Main = db975dd.
+
+### What shipped
+4 files (+77/-38, engine.js + patchnotes/index.js + bungie.js + index.js): NEXUS and
+DEXTER prompts now LEAD with official news as primary editorial substance. YouTube creator
+discussion + G1's third-party [PRESS] are demoted to a COMMUNITY TOPICALITY SIGNAL block
+behind a HARD not-a-fact boundary (explicit instruction: community = what's being
+discussed, topicality ONLY, NOT factual claims; facts come from official + verified data;
+don't state creator claims as fact - same discipline as Stage C's grounding boundary).
+- Composes with G1: G1's positive-signal predicate decides WHICH items are official; this
+  gives official-labeled items the PRIMARY position + community the topicality framing.
+  Label (G1) + placement/framing (this) stack cleanly. Mechanism: engine.formatForEditorParts
+  exposes the OFFICIAL and PRESS blocks separately, each keeping the GLOBAL [BN{n}] index so
+  the verified_source resolver still lines up 1:1 with rawData.bungieNews.
+- Scope-verified: byte-identical output for GHOST/MIRANDA/CIPHER (only NEXUS/DEXTER had
+  YouTube-primary; formatForEditor refactored to concatenate the parts = same string as G1);
+  citations 12/12 intact. No collateral drift.
+- Community RETAINED (topicality is useful), reframed not removed.
+- Effective next daily cron (19:00 UTC).
+
+### Ingestion rebuild progress
+DONE: G1 (provenance labeling, 1cfc105) + weighting inversion (db975dd). The editors' input
+now has 3 stacked provenance guards: correct labels (G1) + official-primary positioning
+(this) + verified-data grounding (Stage C).
+REMAINING Tier-2+ (scoped, gated sessions): anti-hype ranking (replace popularity/
+view_count/hot sorting - has a DESIGN question: what should ranking optimize for instead
+of popularity?); cross-source dedup; Bungie.net first-party adapter; DMZ cod-blog adapter;
+remove dead fandom scraper.
+
 ## 2026-08-24 - Ingestion G1 SHIPPED: OFFICIAL-label provenance fix (Option A fail-safe)
 
 The Tier-1 ingestion integrity defect from the audit is FIXED + merged (1cfc105). The
