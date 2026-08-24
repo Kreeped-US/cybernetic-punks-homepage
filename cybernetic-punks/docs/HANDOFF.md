@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - DMZ content-build session: B done (1 edit), A held (thin substance) + architecture note
+
+Worked the DMZ content-build (improve existing content, then structural gaps). Outcome:
+DMZ content is already sound; one edit made; the structural gap held for lack of confirmed
+substance. Plus an architecture note (correcting an in-session misread). Main = d7c3193
+(this session made no code commit -- the Hajin edit was an operator DB write).
+
+### ARCHITECTURE NOTE (verified live against the DB + code this session)
+DMZ verticals ARE database-backed, config-driven entity tables -- the SAME table-per-vertical
+shape as Marathon's entities, NOT a file/MDX or static architecture. What the code actually shows:
+- TABLES EXIST (queried live): dmz_pois (9 rows), dmz_keys / dmz_missions / dmz_items (0 rows,
+  empty scaffolds), dmz_weapons (1) / dmz_attachments (3) / dmz_weapon_classes (1) with
+  placeholder/test data. MISSING: dmz_traits, dmz_gunsmith, dmz_printer_recipes, dmz_factions,
+  dmz_fob (PGRST205).
+- The verticals are TABLE-BACKED + config-driven + force-dynamic (server-rendered per request,
+  NOT static/MDX): lib/dmz/entities.js DMZ_ENTITIES maps each vertical to its table
+  (table: 'dmz_keys' etc.); the routes app/dmz/<v>/page.js + <v>/[slug]/page.js declare
+  `export const dynamic = 'force-dynamic'` and read via fetchDmzRows/fetchDmzRow ->
+  `supabase.from(entity.table).select('*').eq('game_slug','dmz')`, rendering shared
+  DmzEntityHub / DmzEntityDetail components. The sitemap auto-iterates DMZ_ENTITY_KEYS
+  (row-count gated). Indexing is row-count/verified gated (empty or unverified -> noindex,follow).
+- The 9 Hajin POIs live in the dmz_pois TABLE (Broadcast, Casino, Fallout, Farmlands, Hajin City,
+  Hospital, Military Base, Prison, Town; verified=false, "Windows Central June 2026" source) --
+  NOT in page/article content.
+- SEPARATE layer: the 8 DMZ articles are feed_items (game_slug='dmz'), force-dynamic, rendered
+  via /dmz/[section] + the DMZ_ARTICLE_SECTION slug->section map. So DMZ has TWO DB-backed
+  layers -- entity tables (keys/missions/items/pois) AND feed_items articles -- both dynamic,
+  neither MDX/static. A dmz_traits table + route DOES match this architecture (it mirrors
+  keys/missions/items). The one real DMZ-vs-Marathon difference is DMZ's fail-closed
+  pre-publish gate.
+
+### B - improve existing DMZ content: DONE (already sound)
+The 8 published DMZ articles were checked against the new beta/CoD NEXT intel. Result: 6 of
+8 already current, ZERO contradictions -- all sourced to the official June 6 CoD DMZ Deep
+Dive (not speculation), so the reveals mostly CONFIRMED what they already correctly stated.
+One worthwhile edit made + verified (confirmed present in the live body): added the Activision-
+confirmed 8-attachment-weapons-in-Hajin hook to the Hajin article (8c4c682c) "Depth and
+Discovery" section as a cross-ref (the fact already lived in the Gunsmith article). Provenance
+held: did NOT add the 5 Windows Central (reported, non-Activision) POIs or beta datamined stats.
+
+### A - Trait Trees structural gap: HELD (scope call, not architecture)
+The Trait Trees VERTICAL could be built empty now -- schema + route mirroring keys/missions/
+items, which already sit empty pre-launch (a structure-only add, scoped this session). Held as
+a SCOPE decision: the confirmed intel is THIN -- Activision confirms the system EXISTS (the FOB
+evolves with it) but does NOT detail the traits or tree mechanics, and the trait DATA is
+verification-gated to launch regardless. Building the empty structure now buys little (no data
+to populate, no confirmed explainer substance) -- same restraint that paused DEXTER's DMZ
+loadout guides. HELD until Activision details the system pre-launch OR launch reveals the
+actual traits; then build the vertical (structure + verified data) together.
+
+### Net
+DMZ content is in good pre-launch shape -- built on official sourcing, no contradictions, no
+thin gaps to paper over. Remaining DMZ entity data (keys/missions/items/traits/gunsmith
+weapons+attachments) is verification-gated to launch Oct 23. The pre-launch DMZ content-build
+is essentially complete; further substantive DMZ content awaits launch-day verified data.
+
 ## 2026-08-24 - Site audit (21 Aug) investigated: 1 real fix shipped, 2 categories verified benign
 
 The 21 Aug site audit (health 99/100, only 9 real errors) flagged 3 redirect-related
