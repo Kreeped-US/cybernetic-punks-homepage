@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Stat-integrity cleanup: 7 of 17 Destroyer-HP articles actioned (verified)
+
+Executed the first phase of the Destroyer false-HP correction (the 17-article problem).
+Triage + GSC-impressions gate applied; 7 articles actioned and verified, 10 low-traffic
+remain. Verified model throughout: ALL Runner Shells share 120 base HP; shield is
+EQUIPMENT-based (Grey +20 / Green +40 / Blue +60 / Purple-Gold +80), NOT an innate shell
+stat. Main = 8dde483 + operator DB writes.
+
+### Triage result (17 articles, GSC-impression-gated)
+- Buckets: 6 passing-mention, 7 salvageable, 4 invalidated. (2 false matches excluded:
+  25972d1c, 4471379e = "175 hours" playtime.)
+- Impressions: whole set low-traffic (274 total impr / 2 clicks over 5.5 months). Natural
+  break: 14 articles at 3-13 impr, 3 at 49/57/86. All 4 invalidated were low-traffic
+  (<=8) -> noindex per operator rule (unsalvageable + low-impressions = not worth rewrite).
+  Zero rewrite-decisions needed (no invalidated article had meaningful traffic).
+
+### DONE + verified
+- NOINDEX (4 invalidated): 3ad09b91 Budget Destroyer, 69b58595 Vandal vs Destroyer,
+  9c060a13 Sentinel Hype, 97152457 Ares RG Anti-One-Shot. Redirect-first (308 -> live
+  parent: Destroyer/Sentinel shell pages, Ares RG weapon page) merged 8dde483, then
+  operator UPDATE is_published=false/noindex=true/noindexed_at (verified count=4). Drop
+  from sitemap automatically (eligible.js filters is_published=true AND noindex=false).
+- CORRECT high-traffic (3 salvageable, the meaningful-traffic ones): 82d0b4a0 Squad Comp
+  (86 impr), 343db4bf S2 Meta Prediction (57), b4dbaab1 Cryo Loadout (49). Operator ran
+  targeted REPLACE(body,...) UPDATEs -> full-model correction (120 base + equipment
+  shield). Verified all 3: has_wrong=false, has_right=true. b4dbaab1 rpm_preserved=true
+  (the "225 RPM" is the Demolition HMG fire rate - scoped OUT of the replacement, intact).
+
+### Mechanism note (for the remaining 10)
+NO admin body-editor for published feed_items exists - body corrections are direct
+targeted REPLACE(body, exact-wrong, exact-right) UPDATEs scoped by id, operator-run.
+Each wrong string must be byte-exact + unique-in-body (verified 1 occurrence each). Prep
+by Claude Code, applied by operator, verify SELECT after (has_wrong=false, has_right=true).
+
+### REMAINING (scoped for a session): 10 low-traffic corrections
+6 passing + 4 salvageable, all <=13 impressions:
+Passing: a5fd6c07, 231d3c18, ba1e5bec, dc26d545, d7430f07, 0f3b67d6.
+Salvageable: 13265c80, d5434b5f, 5a2d8847, af49214b (+ the 3 high-traffic already done).
+Same REPLACE mechanism, verified model. Low urgency (low traffic).
+
+### Collateral (corpus-wide audit flag)
+The same broken per-shell-HP model appears for OTHER shells beyond the 17: 231d3c18
+("Thief's 90 HP"), af49214b ("Destroyer and Vandal higher base HP"). A corpus-wide
+stat-integrity audit should sweep non-Destroyer per-shell HP claims too, or those
+articles get half-corrected. Pre-DMZ priority.
+
 ## 2026-08-24 - Stage C LIVE: Miranda evergreen lane reopened (roster type-gate + grounding)
 
 Layer 2a Stage C merged (b933742) - the evergreen-demand generation lane is REOPENED
