@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Ingestion G1 SHIPPED: OFFICIAL-label provenance fix (Option A fail-safe)
+
+The Tier-1 ingestion integrity defect from the audit is FIXED + merged (1cfc105). The
+moat's input-layer provenance leak is closed. Main = 1cfc105.
+
+### What shipped
+formatForEditor (lib/gather/patchnotes/engine.js, +37/-8): STOPPED wrapping the whole
+mixed articles array in "--- OFFICIAL <label> ---". Now per-item: confirmed-official
+items (JSON feedname===officialFeedName, OR RSS source===steam-rss) keep the OFFICIAL
+label; third-party press (Gamemag.ru, Rock Paper Shotgun, etc.) goes into a clearly-
+labeled non-official [PRESS] block. Option A (fail-safe): label OFFICIAL only on positive
+confirmed signal; everything ambiguous/press labeled honestly. NO content dropped - all
+items still reach editors as topic signal; only the provenance CLAIM is corrected. The
+[BN{n}] citation index is preserved (global position), so the verified_source resolver
+still lines up 1:1 with rawData.bungieNews (citation test 12/12).
+- Before/after split, VERIFIED on the live Marathon feed this cycle: 13 items -> 10
+  official (unchanged, still OFFICIAL - no over-correction) + 3 press reclassified to
+  [PRESS] (2 Gamemag.ru + 1 Rock Paper Shotgun) = ~23% this cycle. The audit's ~51% was a
+  historical 100-item AVERAGE; the press share varies per cycle. Either way the mechanism
+  isolates exactly the press outlets - calibrated right (not over-correcting, not a no-op).
+- Effective next daily cron (19:00 UTC).
+
+### Why it matters
+The moat is "verified first-party intel." The ingestion was labeling secondary press as
+OFFICIAL BUNGIE NEWS before it reached an editor - the moat leaking at the INPUT layer.
+Now official means official. Same "don't assert what you can't confirm" discipline as the
+verified-flag / 175-HP / beta-stats work, applied to source provenance.
+
+### Remaining ingestion rebuild (Tier 2+, scoped for gated sessions)
+Per the audit blueprint (31429f1): invert the weighting (official primary, not YouTube-
+primary); source tiering (official > press > community); anti-hype ranking (replace
+popularity/view_count/hot); cross-source dedup; a Bungie.net adapter; the DMZ cod-blog
+adapter (only steam-news exists); remove the dead fandom scraper. All enhancement-tier,
+not integrity - G1 was the one true integrity defect.
+
 ## 2026-08-24 - Ingestion audit: state-of-the-art rebuild scoped (mislabel fix = first piece)
 
 Audited the full gather/ingestion layer to scope making it state-of-the-art for a gaming
