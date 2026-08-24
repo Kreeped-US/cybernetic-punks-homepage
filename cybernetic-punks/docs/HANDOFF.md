@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - MIRANDA'S FIRST GROUNDED GUIDE: PASS (Layer 2A chain proven live)
+
+The 19:01-19:03 UTC cron generated Miranda's first evergreen guide and the grounding
+held. This is the proof of the whole Layer 2A chain. Main = c4f8f2b.
+
+### Piece 1 - Miranda grounded guide: PASS (the day's proof point)
+Cron kind=all_succeeded, editors_configured=2 (Stage C roster flip live), articles_
+published=1. The 2-arm consumer selected Ares RG/weapon -> assigned MIRANDA -> she
+generated "Marathon Ares RG Guide: Master the Volt Railgun" (published 19:02:38) ->
+candidate marked done (24 queued, 1 done) -> dedup passed. Full chain end-to-end.
+GROUNDING (critical): every weapon number traces EXACTLY to the verified weapon_stats
+row - 123 dmg, 60 RPM, 4 mag, 55m range, mod slots, notes verbatim. ZERO invented
+weapon stats. verified_source correct.
+CLAIM-BOUNDARY held under real test: the guide touched Cradle perk values (NOT the
+injected entity, actual values unverified) and MIRANDA HEDGED them ("unconfirmed exact
+values") rather than asserting - the exact INVERSE of the 175-HP confident-false
+failure. Injected/verified -> confident+correct; non-injected/unverified -> hedged,
+not fabricated. The moat's anti-fabrication working structurally at generation.
+
+### Pieces 2 & 3 (G1 split, weighting inversion): DEPLOYED, NOT YET EXERCISED
+Only MIRANDA ran (evergreen). NEXUS/DEXTER/GHOST are patch-gated, no patch this cycle,
+so the formatForEditor path (where G1 + the inversion live) never triggered. Code IS
+live (the cron ran the new build) - but no production evidence until a PATCH cycle
+wakes NEXUS/DEXTER. Deployed-and-live != observed-working; they await a patch cycle.
+Gather is ephemeral (no stored artifact to inspect retroactively).
+
+### Follow-up flags from the guide (all minor, none is the 175-HP failure)
+1. HEDGED-BUT-WRONG cradle numbers: Miranda hedged unconfirmed Cradle Energy values
+   (3/9/4 vs actual 1/1/1) - good (not asserted) but she stated SPECIFIC wrong numbers
+   then hedged. Better: OMIT the specific number for unconfirmed data, don't state-then-
+   hedge. Fix options: inject related cradle data too, OR instruct her to drop
+   ungroundable specifics. Low severity (hedged).
+2. LEGACY PATHS in prose: guide links /factions, /cradle (308 to /marathon/*) - stale
+   CTA paths in Miranda's prompt guidance. Update the prompt's CTA paths. (Same stale-
+   path class as today's nav/footer fix, in the prompt.)
+3. MIRANDA'S NEWS PATH BYPASSES G1: buildMirandaPrompt renders devNews under its own
+   "OFFICIAL DEV NEWS" header WITHOUT G1's official/press split - press could appear
+   under her official header. Didn't fire here (evergreen, no news) but it's a real
+   G1-follow-up gap to scope.
+
+### Net
+Layer 2A is PROVEN: queue -> 2-arm assign -> verified-stat injection -> grounded
+generation -> claim-boundary -> dedup -> write-back, live, clean. The content engine's
+first grounded guide cites only verified data. Pieces 2/3 await a patch cycle.
+
 ## 2026-08-24 - Ingestion Tier-2 weighting inversion SHIPPED (composes with G1)
 
 Second ingestion-rebuild piece merged (db975dd). Official is now the PRIMARY editorial
