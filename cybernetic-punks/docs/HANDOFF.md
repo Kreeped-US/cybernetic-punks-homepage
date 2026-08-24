@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Site audit (21 Aug) investigated: 1 real fix shipped, 2 categories verified benign
+
+The 21 Aug site audit (health 99/100, only 9 real errors) flagged 3 redirect-related
+categories. Investigated against actual code - one REAL migration gap (fixed), two
+verified benign. Main = 5ed2e52.
+
+### 509 "page has links to redirect" - REAL (migration gap), FIXED
+Root cause: Nav.js + Footer.js + WelcomeClient.js emitted legacy /intel hrefs (not
+/marathon/intel). Site-wide nav/footer renders on every page -> every page "had links to
+redirect" (the 509 multiplier). The route migration repointed routes/redirects/canonical/
+sitemap but MISSED the nav/footer link hrefs. FIX (5ed2e52): repointed all 6 legacy /intel
+references (5 hrefs + the Nav activeOn matcher) to /marathon/intel* across 3 files; the
+activeOn fix also restored the broken intel-tab highlight. Verified: new targets resolve
+DIRECT 200 (no 308); no bare /intel href remains in the 3 files. Clears at the source;
+audit reflects on re-crawl.
+
+### 10 "redirect chains" - VERIFIED BENIGN (do not re-investigate)
+Config-level chain scan: 52 rules, NO destination is also a source = ZERO real config
+chains we created. The 10 = 4 accepted static-hub trailing-slash 2-hops (banked 213d5e2)
++ ~6 legacy /intel/<retired-slug> 2-hops on the decaying pre-migration path (pre-
+acknowledged in the consolidation commit). All legacy-only, age out on re-crawl. No real
+chain to flatten.
+
+### 17 "links to redirect (not-indexable)" - VERIFIED BENIGN (stale crawl)
+These point at retired+noindexed articles. Every internal mechanism that could link to
+them was verified to filter is_published=true AND noindex=false: intel hub, rising,
+article-page lanes, the related-content RPC (explicit noindex prune - "never internally
+link to a noindexed page"), sitemap; article bodies have 0 embedded links. So the site
+emits ZERO internal links to retired articles. The 17 = point-in-time artifact of the
+21 Aug crawl running the SAME DAY the consolidation retirements shipped (caught mid-
+transition). Clears on re-crawl.
+
+### Latent (opportunistic cleanup, not user-facing)
+coverage.js:84-99 route() returns legacy /shells//mods//weapons//maps/ prefixes, but
+feeds the internal shadow coverage registry, NOT rendered links - not part of the 509.
+Clean up opportunistically; not urgent.
+
+### Net: site is healthy (99). One real fix shipped (nav/footer). The rest is benign
+### crawler-noticing-this-week's-migration+consolidation, self-resolving on re-crawl.
+
 ## 2026-08-24 - DMZ intel update: confirmed systems from MW4 beta/CoD NEXT (DMZ NOT playable)
 
 Researched the active MW4 Early Access Beta + CoD NEXT for DMZ info. KEY: DMZ is NOT in
