@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Anti-hype ranking v1 SHIPPED (the loop closed: designed->Fable->built)
+
+Anti-hype ranking v1 built + merged - the ingestion no longer ranks by popularity. Closes
+the anti-hype loop (Fable-approved spec 16b0926 -> built). Main = 5b0cd0e.
+
+### What shipped (new lib/gather/ranking.js + engine.js/reddit.js/youtube.js)
+Composite priority SORT replacing the 3 popularity sorts (youtube view_count desc, reddit
+score desc, news date desc):
+  composite = 10000*tier + 1000*substance + 100*recency + 1*popularity
+- TIER by ORIGIN (Fable #2): is_official->2, press->1, community->0. Reads is_official/
+  source ONLY, never title. VERIFIED: a community item titled "OFFICIAL BUNGIE PATCH
+  NOTES" scored tier 0 (not gameable by title).
+- SUBSTANCE: is_patch_note->2, is_official->1, else 0.
+- RECENCY: day-bucketed decay (newer leads, same-day ties).
+- POPULARITY: weight 1, tiebreaker ONLY - order-of-magnitude weighting means it can't
+  jump a bucket or tier (demoted structurally, not just intended).
+- SORT-NOT-GATE (Fable #1): reorders only (in=out=8), caps/eligibility untouched, nothing
+  dropped.
+- OFFICIAL STRONG-NOT-ABSOLUTE (Fable #3): press/community still present, ranked below
+  official, not dropped.
+- PER-ITEM LOGGING (Fable #5): [RANK:<source>] composite + all components to cron log -
+  auditable/tunable; validate the claim against editor picks over coming weeks.
+- Citations safe: news reorders the WHOLE array after G1 tagging, so [BN{n}] still matches
+  rawData.bungieNews 1:1 (test 12/12).
+
+### Before/after (the core claim proven)
+YouTube OLD: 500k(3d) viral leads. NEW: 12k(fresh) leads, 500k(3d) drops to LAST - views
+only break same-day ties. News: official (~21000) leads all press (~10000). Hype falls,
+substance leads.
+
+### Scope / next
+v1 = composite sort, NO entity-matching, NO gate. Phase 2 (scoped, NOT built): entity-
+relevance (raises-never-lowers) + the unknown-entity COVERAGE-GAP SENSOR. Effective next
+cron. The per-item log is the evidence to validate v1 over the coming weeks.
+
+### Ingestion rebuild status
+DONE: G1 (all paths) + weighting inversion + anti-hype ranking v1. REMAINING: phase-2
+entity-relevance/coverage-sensor, cross-source dedup, Bungie.net adapter, DMZ cod-blog
+adapter, dead-scraper removal.
+
 ## 2026-08-24 - Anti-hype ranking DESIGN: Fable-approved spec (build pending)
 
 Designed the ingestion anti-hype ranking (replaces popularity-ranked intake) and got a
