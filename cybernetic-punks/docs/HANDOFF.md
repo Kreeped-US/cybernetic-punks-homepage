@@ -7,6 +7,53 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Stage C LIVE: Miranda evergreen lane reopened (roster type-gate + grounding)
+
+Layer 2a Stage C merged (b933742) - the evergreen-demand generation lane is REOPENED
+after the deliberate freeze. Marathon evergreen guides will generate again, grounded +
+gated. First live run: next daily cron 19:00 UTC. Main = b933742.
+
+### What shipped (the complete Stage C)
+- ROSTER TYPE-GATE (Fable's "type-gate not throttle", realized via the roster - there is
+  NO GENERATION_ENABLED flag and no MARATHON_EVENT_ENABLED / MARATHON_EVERGREEN_ENABLED env
+  var; grepped repeatedly, they do not exist). MIRANDA added to marathon.js `editors` and
+  deliberately NOT to `editorsRequiringPatch`, so she is an EVERGREEN editor: runs every
+  cycle, not patch-gated. The event/patch lane (CIPHER/DEXTER, listed in
+  editorsRequiringPatch) stays FROZEN - dead game, no events. Event vs evergreen are gated
+  purely by WHICH roster list an editor sits in (editors = evergreen/always;
+  editorsRequiringPatch = event/patch-only). The literal change:
+  editors ['NEXUS'] -> ['NEXUS', 'MIRANDA'].
+- CONSUMER WAS ALREADY A PRE-PASS (no hoist happened): the 2-ARM candidate consumer already
+  ran upstream of the roster freeze filter, building directiveMap before editors process.
+  It was NOT nested in a NEXUS-only loop and nothing was moved. The only reason Miranda's
+  assigned directive was dropped before was that she was ABSENT from the roster; adding her
+  to `editors` is what lets the directive reach processEditor('MIRANDA').
+- CAP is inherent, NOT a constant (there is no EVERGREEN_MAX_PER_CYCLE): the consumer
+  selects ONE top-priority queued candidate per cycle (selectQueuedCandidate, LIMIT 1) ->
+  at most one guide per cycle, a measured cohort, not a queue-drain.
+- GROUNDING (lib/content/grounding.js, the load-bearing fix): the function is
+  fetchVerifiedStatBlock(supabase, gameSlug, entity, facet) - it fetches the candidate
+  entity's VERIFIED stat row and injects it into Miranda's assigned directive (rides on
+  _verifiedBlock; buildMirandaPrompt renders it under the assignment). FACET-GENERAL via the
+  shared FACET_TABLE_MAP (weapon->weapon_stats, core->core_stats, mod->mod_stats,
+  implant->implant_stats, cradle->cradle_nodes), POPULATED verified fields only (nulls
+  filtered so a blank never reads as an estimate), verified=true rows only. Hard
+  claim-boundary instruction in every block: the verified stats are the ONLY
+  numeric/mechanical facts she may state; no inventing/estimating/inferring unlisted values;
+  thin data = write less, not invent more. This closes the 17-article invention mechanism at
+  the generation layer.
+- Dedup gate fires on Miranda (roster-wide). Write-back coupled to r.success (1 queued->done
+  per cycle; the rest stay queued). CIPHER/DEXTER remain frozen.
+
+### THE WATCH: verify the FIRST guide (next cron, 19:00 UTC) against these
+The first evergreen guide off the reopened engine is the proof of the whole Layer 2a chain.
+When the cron runs, check:
+1. EXACTLY ONE guide generated (cap held, not a drain).
+2. GROUNDED (THE critical check): every numeric/stat claim in the guide traces to a verified
+   field in the injected block - no invented damage/RPM/mag/effect numbers.
+3. One content_candidate flipped queued->done (the write-back fired); the rest stay queued.
+4. Dedup gate did not wrongly block it against the survivor corpus (headline is novel).
+
 ## 2026-08-21 - DMZ strategy intel: Hajin is a SHARED Warzone/DMZ map (CoD NEXT)
 
 CoD NEXT (2026-08-21) was thin overall, but confirmed one strategically significant
