@@ -9,6 +9,7 @@
 // per-source and lives in the adapters (Steam JSON = BBCode, RSS = HTML).
 
 import { blockId, BLOCK_CAP } from '../blockId.js';
+import { rankItems } from '../ranking.js';
 
 // SHARED provenance predicate (G1). An item is OFFICIAL only when affirmatively marked so:
 //   - source === 'steam-rss' : the Steam community-announcements RSS feed. It carries no
@@ -94,7 +95,12 @@ export function mergeAndDetect(articles, rules, now = Date.now()) {
     });
   });
 
-  return tagged;
+  // Anti-hype composite sort (Tier-2 v1): order by tier (official>press) + substance
+  // (patch>dev>none) + recency, popularity demoted to a tiebreaker. News carries no
+  // popularity, so it orders by provenance+substance then recency (the date pre-sort above
+  // is the stable final tiebreaker). Pure ordering -- drops nothing. The whole array is
+  // reordered together, so the [BN{n}] index still matches rawData.bungieNews 1:1.
+  return rankItems(tagged, 'news', now);
 }
 
 // Editor prompt blocks, SPLIT by provenance (G1). Returns the OFFICIAL and PRESS

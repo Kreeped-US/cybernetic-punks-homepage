@@ -17,6 +17,7 @@ import { fetchTranscripts } from './transcript.js';
 import { getGameConfig } from '../games/index.js';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from '../promptSafety';
 import { blockId, BLOCK_CAP } from './blockId.js';
+import { rankItems } from './ranking.js';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
@@ -145,22 +146,25 @@ export async function gatherYouTube(config = getGameConfig()) {
       return true;
     });
 
-    // Sort by view count
-    unique.sort(function(a, b) { return b.view_count - a.view_count; });
+    // Anti-hype composite sort (Tier-2 v1): was view_count desc (pure popularity -- the
+    // hype sort). YouTube items are all community/commentary tier, so the composite orders
+    // by recency (newest creator discussion first) with view_count DEMOTED to a same-day
+    // tiebreaker. Pure ordering -- drops nothing.
+    const ranked = rankItems(unique, 'youtube');
 
-    // Fetch transcripts for top 5
-    const top5Ids = unique.slice(0, 5).map(function(v) { return v.youtube_id; });
+    // Fetch transcripts for the top 5 by composite rank.
+    const top5Ids = ranked.slice(0, 5).map(function(v) { return v.youtube_id; });
     if (top5Ids.length > 0) {
       const transcriptMap = await fetchTranscripts(top5Ids);
-      for (const video of unique) {
+      for (const video of ranked) {
         if (transcriptMap[video.youtube_id]) {
           video.transcript = transcriptMap[video.youtube_id];
         }
       }
     }
 
-    console.log(`[GATHER:YOUTUBE] Found ${unique.length} unique Marathon videos across ${queries.length} queries`);
-    return unique;
+    console.log(`[GATHER:YOUTUBE] Found ${ranked.length} unique Marathon videos across ${queries.length} queries`);
+    return ranked;
 
   } catch (error) {
     console.error('[GATHER:YOUTUBE] Error:', error.message);

@@ -6,6 +6,7 @@
 
 import { getGameConfig } from '../games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from '../promptSafety';
+import { rankItems } from './ranking.js';
 
 async function fetchSubredditJson(subreddit, limit = 10) {
   try {
@@ -112,9 +113,12 @@ export async function gatherReddit(config = getGameConfig()) {
     seen.add(p.id);
     return true;
   });
-  unique.sort((a, b) => b.score - a.score);
-  console.log(`[GATHER:REDDIT] Found ${unique.length} unique posts total`);
-  return unique;
+  // Anti-hype composite sort (Tier-2 v1): was score desc (pure popularity/hot). Reddit posts
+  // are all community tier, so the composite orders by recency (newest discussion first) with
+  // score DEMOTED to a same-day tiebreaker. Pure ordering -- drops nothing.
+  const ranked = rankItems(unique, 'reddit');
+  console.log(`[GATHER:REDDIT] Found ${ranked.length} unique posts total`);
+  return ranked;
 }
 
 /**
