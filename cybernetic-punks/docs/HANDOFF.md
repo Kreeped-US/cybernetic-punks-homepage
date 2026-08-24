@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - DMZ intel update: confirmed systems from MW4 beta/CoD NEXT (DMZ NOT playable)
+
+Researched the active MW4 Early Access Beta + CoD NEXT for DMZ info. KEY: DMZ is NOT in
+the beta - not playable until launch Oct 23. So no first-hand DMZ entity data exists yet.
+BUT Activision published confirmed DMZ SYSTEMS/STRUCTURE (official, not datamine) worth
+scaffolding around. Provenance line is critical - see below.
+
+### CONFIRMED (Activision-official - safe to source/scaffold)
+- DMZ takes place in the Hajin Exclusion Zone, solo or squad.
+- Confirmed DMZ systems: Story Missions, Dynamic Operations, Side Ops, persistent
+  inventory, an FOB (forward operating base), Trait Trees, DMZ-specific Gunsmith rules.
+  (= the DMZ content/entity roadmap: missions, trait-tree, FOB, gunsmith verticals.)
+- DMZ Gunsmith rules: a weapon uses up to 5 standard attachments + 1 Apex Attachment;
+  8-ATTACHMENT weapons can be FOUND inside the Hajin Exclusion Zone (DMZ-exclusive,
+  Hajin-specific mechanic - a defensible extraction-lens content hook).
+- DMZ in-mode economy: spend Cash to modify weapons with unlocked attachments.
+- Weapon progression SHARED between Multiplayer and DMZ (leveling in either counts).
+- Launch counts: 33 weapons, 28 Apex Attachments (19 Apex usable in beta). Some weapons
+  have 2 Apex (Hyeon Burst, Kastov 762); PILA/Combat Knife have none (no Gunsmith).
+
+### THE PROVENANCE LINE (critical - same discipline as the 17-article/verified-flag work)
+- Activision-CONFIRMED SYSTEMS (above) = solid, sourceable to official reveals/deep-dives.
+  Safe for systems-explainer content + schema scaffolding.
+- Beta-OBSERVED / DATAMINED weapon STATS (e.g. "ISO Nightshade 923 RPM", beta tier lists)
+  = NOT verified. These do NOT go into verified entity tables. A beta tier list is a
+  secondary/observed source - exactly what `verified` must exclude. Confirming DMZ weapon
+  stats requires in-game verification POST-LAUNCH (Oct 23). Putting beta stats in
+  verified tables = the 175-HP problem reborn. HARD LINE.
+- Editorial engine can NOT generate grounded DMZ guides yet (no verified DMZ entities to
+  ground in). DMZ editorial generation waits for launch-day verified data.
+
+### What this ENABLES pre-launch (safe)
+- DMZ systems-explainer content sourced to Activision (how DMZ Gunsmith works, confirmed
+  systems, the Hajin 8-attachment hook) - defensible extraction-lens, framed "confirmed
+  pre-launch from official reveals".
+- Schema scaffolding for the confirmed entity types (dmz_missions, trait-tree, gunsmith
+  rules, etc.) - build table structures ready to populate at launch.
+- Confirms which dmz_* tables the quality dashboard needs to track (ties to the DMZ
+  dashboard-prep item).
+
+### NEXT: scope the DMZ content-build as its own session (starts with a read of CURRENT
+### DMZ infra state - existing dmz tables/routes/content - before adding anything).
+
 ## 2026-08-24 - Static-hub trailing-slash 2-hop: ACCEPTED, no fix (do not re-investigate)
 
 The site-audit "redirect chains" + morning canonical read flagged a 2-hop on the 4
