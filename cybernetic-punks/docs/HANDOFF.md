@@ -7,6 +7,42 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Flag #3 closed: G1 now complete across ALL news paths (shared predicate)
+
+The Miranda-news-path G1 gap (flag #3 from the Ares RG cron check) is fixed + merged
+(71c1495). G1's provenance integrity is now whole - no path leaks press-as-official.
+Main = 71c1495.
+
+### What shipped
+4 files (+51/-23, editorCore.js + gather/index.js + engine.js + patchnotes/index.js):
+isOfficialNewsItem(item, officialFeedName) is now the SINGLE SHARED PREDICATE - exported
+from engine.js and CALLED by mergeAndDetect (main path) + the gather-side devNews tagging;
+buildMirandaPrompt then CONSUMES the resulting is_official flag to split Miranda's devNews.
+One source of truth for "what's official"; no parallel copy to drift. Miranda's devNews now
+splits confirmed-official (OFFICIAL DEV NEWS) vs press (THIRD-PARTY PRESS/COMMUNITY block,
+topicality-not-fact framing).
+- Handled the fetchSteamDevNews fallback edge case (untagged when bungieNews empty ->
+  tagged via the shared predicate with the game officialFeedName; idempotent).
+- Live verify: devNews(6) -> 4 official + 2 press (Gamemag.ru, RPS) correctly split
+  (were all under OFFICIAL before); predicate===flag on all (no drift); nothing dropped.
+- Miranda's GROUNDED path untouched: _verifiedBlock (stat injection + claim-boundary)
+  intact, citations 12/12. This fix = news provenance only, not stat grounding.
+- Effective next cron.
+
+### G1 status: COMPLETE (all news paths)
+G1 now covers every news-rendering path via one shared predicate. Provenance-integrity
+thread whole.
+
+### Remaining Ares-RG follow-up flags (2, open, minor)
+1. Hedged-but-wrong Cradle numbers: Miranda states specific unconfirmed values then
+   hedges - better to OMIT ungroundable specifics. Low severity.
+2. Legacy /factions /cradle CTA paths in Miranda's prompt guidance - update to /marathon/*.
+
+### Ingestion rebuild status
+DONE: G1 (labeling) + G1-complete (all paths) + weighting inversion. REMAINING Tier-2+:
+anti-hype ranking (design question open), cross-source dedup, Bungie.net adapter, DMZ
+cod-blog adapter, dead-scraper removal. Pieces 2/3 deployed, await a patch cycle to observe.
+
 ## 2026-08-24 - MIRANDA'S FIRST GROUNDED GUIDE: PASS (Layer 2A chain proven live)
 
 The 19:01-19:03 UTC cron generated Miranda's first evergreen guide and the grounding
