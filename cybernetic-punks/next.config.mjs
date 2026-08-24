@@ -211,6 +211,18 @@ const nextConfig = {
       // Pair 8 (stale 1.0.5.1 patch notes): both -> the Marathon intel hub.
       { source: '/marathon/intel/marathon-update-1051-thief-exploit-fix-cryo-archive-improvements-mfp1', destination: '/marathon/intel', permanent: true },
       { source: '/marathon/intel/marathon-update-1051-fixed-thief-exploits-and-cryo-archive-improvement-nx0w', destination: '/marathon/intel', permanent: true },
+      // Destroyer-HP stat-integrity batch (2026-08-24): 4 articles whose THESIS depends on
+      // the false "Destroyer = 175 HP" model (all shells are 120 base; shield is equipment).
+      // Triage bucket "invalidated analysis" + confirmed low/zero GSC impressions -> not worth
+      // a rewrite: unpublish + noindex (operator-run) and 308 to the most relevant LIVE parent.
+      // Sources are the CURRENT canonical /marathon/intel/<slug>; every destination is a
+      // terminal entity/hub page (not a redirect source), so one-hop, no chains. Per-article
+      // parent chosen by subject: Destroyer-analysis -> Destroyer shell; a Sentinel-speculation
+      // piece -> Sentinel shell (matches Pair 5 above); an Ares RG build -> the Ares RG weapon.
+      { source: '/marathon/intel/budget-destroyer-low-cost-builds-that-still-force-holotag-kills-xycn', destination: '/marathon/shells/destroyer', permanent: true },
+      { source: '/marathon/intel/vandal-vs-destroyer-which-shell-wins-more-ranked-games-5y1t', destination: '/marathon/shells/destroyer', permanent: true },
+      { source: '/marathon/intel/sentinel-hype-fractures-community-season-2-bubble-shell-speculation-dr-9odj', destination: '/marathon/shells/sentinel', permanent: true },
+      { source: '/marathon/intel/ares-rg-anti-one-shot-build-post-1062-railgun-counter-theory-zzln', destination: '/marathon/weapons/ares-rg', permanent: true },
     ];
   },
 };
