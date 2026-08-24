@@ -7,6 +7,28 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Static-hub trailing-slash 2-hop: ACCEPTED, no fix (do not re-investigate)
+
+The site-audit "redirect chains" + morning canonical read flagged a 2-hop on the 4
+static hubs. Investigated empirically (dev server, tested each candidate rule) - RESOLVED
+as accept-no-action. Do not re-flag.
+
+- The 2-hop is LEGACY-ONLY, source-side: /leaderboard/ (trailing slash) -308(Next
+  auto-normalize)-> /leaderboard -308(migration wildcard)-> /marathon/leaderboard. The
+  no-slash paths (/leaderboard) are ALREADY clean one-hop; dynamic intel/weapon slugs
+  are clean one-hop. Only the trailing-slash legacy variant 2-hops.
+- NO next.config redirect rule fixes it (all TESTED, not assumed): bare-path rules are
+  inert (no-slash already one-hop); a trailing-slash-source rule is inert (Next strips
+  the slash before any custom redirect matches). The only working lever is
+  skipTrailingSlashRedirect:true - GLOBAL, would risk trailing-slash duplicate-content
+  across all /marathon/*, net-negative. Rejected.
+- We do NOT emit the 2-hop URLs: the sitemap emits clean no-slash hub URLs
+  (eligible.js), no internal link emits the trailing-slash variant. Google's
+  trailing-slash entries are pre-migration legacy holdings that age out on re-crawl.
+- VERDICT: within Google's redirect tolerance (equity passes through a 2-hop),
+  self-resolving, not fed by our own site. Accepted, no action. This is the "10 redirect
+  chains" the site audit flagged (mostly these 4 legacy 2-hops) - benign.
+
 ## 2026-08-24 - Stat-integrity cleanup: 7 of 17 Destroyer-HP articles actioned (verified)
 
 Executed the first phase of the Destroyer false-HP correction (the 17-article problem).
