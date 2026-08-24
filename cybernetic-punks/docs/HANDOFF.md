@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Phase 2 ranking (entity-relevance boost): Fable-approved DESIGN (build waits for v1 logs)
+
+Designed Phase 2 of the ingestion ranking (entity-relevance boost on the anti-hype v1
+sort) + got a Fable doctrine pass. APPROVED all 4, with 3 binding implementation
+constraints. Build NOT started - waits for v1's accumulated logs per the v1 sequencing.
+This is the blessed spec. Main = 2e9dad2.
+
+### The design (Fable-approved)
+Add entity-relevance to the v1 composite, BELOW substance / ABOVE recency:
+  composite = 10000*tier + 1000*substance + 100*relevance + 10*recency + 1*popularity
+- Relevance in [0, cap], ADDITIVE POSITIVE ONLY (no negative branch) = raises-never-lowers
+  by construction. Covered-entity news bumped within its tier/substance band; high-tier/
+  high-substance UNCOVERED news (new-weapon patch notes) still outranks (relevance below
+  substance guarantees it).
+- MATCHING: closed-vocabulary against the VERIFIED entity names + curated aliases (the
+  known finite set - NOT open NER). Precision-favoring: ambiguous = no match (missed match
+  = harmless no-op; false match corrupts ranking + audit). Relevance INHERITS the moat's
+  verification (boost asserts "touches something we verified") and auto-strengthens as the
+  store fills (DMZ vocab grows with zero config).
+- BINARY: touches >=1 verified entity -> flat boost; else 0. Graded deferred.
+
+### Fable's 3 BINDING implementation constraints
+1. BAND-INVARIANT AS AN ASSERTED TEST (Q1): the lexicographic guarantee holds only if each
+   term's max contribution stays strictly below one step of the term above (100*relevance_max
+   + 10*recency_max < 1000, etc). Must live as an ASSERTED TEST over the weight constants -
+   so a future grade/range-widen turns the build RED instead of silently breaking the sort.
+   Binary makes it trivial today (boost <=9); the test is the guard for later.
+2. SINGLE VOCABULARY, EXPLICIT AMBIGUOUS FLAG (Q2): matcher consumes the CANONICAL entity
+   vocabulary + alias set IN PLACE - never a second/matcher-local alias list (two-stores
+   drift). Ambiguous short names ("Ares" vs "Ares RG", "Rook" shell vs chess) handled by an
+   explicit curated ambiguous flag on vocab entries requiring full-name match - NOT context
+   heuristics (auditable data over uninspectable cleverness).
+3. BINARY NOW, CENTRALITY-NOT-COUNT IF GRADED (Q3, parked for Phase 2.5): if grading ever
+   comes it's CENTRALITY (entity in title/lead), NOT count (mention tally) - count-weighting
+   rewards listicle-roundup shape over substance shape, anti-doctrine.
+
+### Q4 - the A/B split (coverage-gap sensor deferred to Phase 3): SOUND, deferral loses NO data
+Fable's justification: v1's per-item logging + Phase 2's relevance term means every item's
+tier/substance/relevance is logged from Phase 2 day 1. "Frequent high-tier/high-substance
+items with relevance=0" = the coverage-gap sensor's raw material, accumulating in the logs.
+So PHASE 3 IS A VIEW OVER EXISTING LOGS, not a new capture system - deferring the sensor,
+not the evidence. Interim myopia bounded by Q1 arithmetic (burial only at EQUAL tier+
+substance, where preferring covered = the moat-alignment the boost buys). Operator awareness
+= interim sensor.
+
+### Sequencing
+Phase 2 build waits for v1's accumulated logs (tune relevance weight against OBSERVED v1
+ordering, assert the band invariant, compare picked-rank distributions before/after).
+Phase 3 (coverage-gap sensor) = a later view over the logs. Phase 2.5 (graded/centrality) =
+evidence-driven, if ever.
+
 ## 2026-08-24 - Anti-hype ranking v1 SHIPPED (the loop closed: designed->Fable->built)
 
 Anti-hype ranking v1 built + merged - the ingestion no longer ranks by popularity. Closes
