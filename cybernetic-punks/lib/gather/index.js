@@ -5,6 +5,7 @@ import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { gatherBungieNews, formatBungieNewsForEditor, formatBungieNewsForEditorParts } from './bungie.js';
+import { isOfficialNewsItem } from './patchnotes/index.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
 import { gatherCipher } from './cipher.js';
 import { getGameConfig } from '../games';
@@ -185,6 +186,18 @@ export async function gatherAll(config = getGameConfig()) {
   // ── MIRANDA — YouTube + Bungie news + game databases ──────────
   if (mirandaData) {
     if (bungieNews.length > 0) mirandaData.devNews = bungieNews.slice(0, 6);
+    // G1 provenance (Miranda news-path split): guarantee every devNews item carries
+    // is_official so buildMirandaPrompt can label official vs press with the SAME shared
+    // predicate as the main path. bungieNews items already carry it (mergeAndDetect); the
+    // fetchSteamDevNews fallback does not, so tag any untagged item here. Idempotent.
+    var mirOfficialFeed = (config.sources.patchNotes && config.sources.patchNotes.detection)
+      ? config.sources.patchNotes.detection.officialFeedName
+      : undefined;
+    if (Array.isArray(mirandaData.devNews)) {
+      mirandaData.devNews = mirandaData.devNews.map(function (n) {
+        return ('is_official' in n) ? n : Object.assign({}, n, { is_official: isOfficialNewsItem(n, mirOfficialFeed) });
+      });
+    }
     // xData explicitly null — buildMirandaPrompt's xIntelBlock conditional
     // checks xData?.posts?.length and skips when empty. No prompt corruption.
     mirandaData.xData = null;

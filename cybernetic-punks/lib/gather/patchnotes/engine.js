@@ -10,6 +10,21 @@
 
 import { blockId, BLOCK_CAP } from '../blockId.js';
 
+// SHARED provenance predicate (G1). An item is OFFICIAL only when affirmatively marked so:
+//   - source === 'steam-rss' : the Steam community-announcements RSS feed. It carries no
+//       feedname but IS the official endpoint, so we credit it by ORIGIN, not an absent field.
+//   - feedname === officialFeedName : a JSON item on the configured official feed.
+// Third-party press (a real outlet feedname, e.g. "Rock, Paper, Shotgun") and any ambiguous
+// empty-feedname JSON item are NOT official. With no officialFeedName configured the
+// restriction is off and everything is official (prior behaviour). SINGLE SOURCE OF TRUTH:
+// mergeAndDetect tags with it, and Miranda's news path (lib/gather/index.js) reuses it -- no
+// reimplementation.
+export function isOfficialNewsItem(item, officialFeedName) {
+  return !officialFeedName
+    || item.source === 'steam-rss'
+    || item.feedname === officialFeedName;
+}
+
 // Merge per-source articles (prefer the fuller version on title collision),
 // sort newest-first, then tag is_patch_note from per-game detection rules.
 // `now` is injectable (default Date.now()) so the freshness gate is
@@ -63,23 +78,12 @@ export function mergeAndDetect(articles, rules, now = Date.now()) {
   const tagged = all.map((a) => {
     var title = a.title || '';
     var titleLower = title.toLowerCase();
-    // POSITIVE official-provenance signal (G1, Option A -- conservative fail-safe).
-    // An item is OFFICIAL only when affirmatively marked so:
-    //   - source === 'steam-rss'  : the Steam community-announcements RSS feed. It
-    //       carries no feedname but IS the official endpoint (verified official-only),
-    //       so we credit it by its ORIGIN, not by an absent field.
-    //   - feedname === officialFeedName : a JSON item on the configured official feed.
-    // Everything else is NOT official: third-party press (a real outlet feedname, e.g.
-    // "Rock, Paper, Shotgun" / "Gamemag.ru") AND any ambiguous JSON item with an EMPTY
-    // feedname. We UNDER-claim the ambiguous empty-feedname case rather than over-claim
-    // it (the prior `!a.feedname` rule over-claimed). With no officialFeedName configured
-    // the restriction is off and all items are official (prior behaviour, unchanged).
-    // For the real Steam feed this is 1:1 with the old rule on official items -- RSS
-    // items are exactly the no-feedname ones -- so detection is unchanged in practice;
-    // it only stops STAMPING press as official and tightens a non-occurring edge.
-    var isOfficial = !rules.officialFeedName
-      || a.source === 'steam-rss'
-      || a.feedname === rules.officialFeedName;
+    // POSITIVE official-provenance signal (G1, Option A) -- via the shared predicate
+    // (isOfficialNewsItem, above) so Miranda's news path and any future caller classify
+    // identically, no reimplementation. Press (a real outlet feedname) and ambiguous
+    // empty-feedname JSON items are NOT official (under-claim); RSS items are official by
+    // origin; no officialFeedName configured -> all official (prior behaviour).
+    var isOfficial = isOfficialNewsItem(a, rules.officialFeedName);
     var matchesVersion = rules.versionRe.test(title);
     var matchesKeyword = rules.keywords.some((k) => titleLower.includes(k));
     var articleAgeMs = now - new Date(a.date).getTime();

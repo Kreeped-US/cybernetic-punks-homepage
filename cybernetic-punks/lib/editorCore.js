@@ -1021,9 +1021,20 @@ export function buildMirandaPrompt(data) {
       }).join('\n')
     : 'Implant data seeding in progress.';
 
-  const bungieNewsData = devNews?.length > 0
-    ? devNews.map(n => `TITLE: ${sanitizeUgc(n.title, 200)}\nURL: ${sanitizeUgc(n.url, 300)}`).join('\n---\n')
-    : 'No recent Bungie news found.';
+  // G1 provenance split (Miranda news path): only confirmed-official items sit under the
+  // OFFICIAL DEV NEWS header; third-party press goes in a labelled non-official block. Each
+  // item carries is_official from the shared predicate (mergeAndDetect / gather index), so
+  // this reuses the SAME classification as the main path. NOTHING dropped -- only the
+  // provenance CLAIM is corrected.
+  const renderNewsItem = n => `TITLE: ${sanitizeUgc(n.title, 200)}\nURL: ${sanitizeUgc(n.url, 300)}`;
+  const officialDevNews = (devNews || []).filter(n => n.is_official);
+  const pressDevNews = (devNews || []).filter(n => !n.is_official);
+  const bungieNewsData = officialDevNews.length > 0
+    ? officialDevNews.map(renderNewsItem).join('\n---\n')
+    : 'No recent official dev news found.';
+  const pressDevNewsData = pressDevNews.length > 0
+    ? pressDevNews.map(renderNewsItem).join('\n---\n')
+    : '';
 
   const devRedditData = devRedditPosts?.length > 0
     ? devRedditPosts.map(p => `TITLE: ${sanitizeUgc(p.title, 200)}\nAUTHOR: ${sanitizeUgc(p.author, 40)}\nCONTENT: ${sanitizeUgc(p.selftext, 600)}\nURL: ${sanitizeUgc(p.url, 300)}`).join('\n---\n')
@@ -1101,7 +1112,7 @@ export function buildMirandaPrompt(data) {
   // tags + the treat-as-data clause. Internal verified DB sections stay outside.
   const externalSources = fenceUntrusted(
 `OFFICIAL DEV NEWS:
-${bungieNewsData}
+${bungieNewsData}${pressDevNewsData ? '\n\nTHIRD-PARTY PRESS / COMMUNITY COVERAGE (NOT official -- secondary reporting; use only as a topicality signal, cite only what the outlet states, and never restate as official or as fact):\n' + pressDevNewsData : ''}
 
 OFFICIAL DEV REDDIT POSTS:
 ${devRedditData}
