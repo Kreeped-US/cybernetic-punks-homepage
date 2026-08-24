@@ -7,6 +7,73 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Ingestion audit: state-of-the-art rebuild scoped (mislabel fix = first piece)
+
+Audited the full gather/ingestion layer to scope making it state-of-the-art for a gaming
+intel operation. Complete current-state map + prioritized gaps below. NOTHING built - this
+is the blueprint for a dedicated ingestion session. Main = 8470cf0.
+
+### Current state (verified from code: lib/gather/)
+Sources (all config-driven off config.sources.*, pulled once per daily cron 0 19 UTC; the
+raw gather is ephemeral - never persisted to a news table):
+- YouTube Data API (googleapis.com/youtube/v3) - LIVE, 3rd-party. NEXUS/DEXTER PRIMARY +
+  MIRANDA guides. Ranked by view_count desc.
+- Reddit (old.reddit.com/r/<sub>/hot.json + hot.rss fallback) - LIVE, 3rd-party. GHOST + MIRANDA.
+- Twitch Helix (api.twitch.tv/helix) - LIVE, 3rd-party. GHOST clip-attention signal (titles +
+  view counts only).
+- Steam Web API - LIVE: player count (ISteamUserStats/GetNumberOfCurrentPlayers, 1st-party
+  metric) + recent reviews (store/appreviews, 3rd-party) + the "BUNGIE NEWS" feed via
+  ISteamNews/GetNewsForApp (JSON) AND store.steampowered.com/feeds/news (RSS).
+- Fandom wiki (marathonthegame.fandom.com) - INERT (403-blocked server-side).
+- X/Twitter (config.sources.x) - INERT (xData=null since Apr 2026).
+Live = YouTube, Reddit, Twitch, Steam (3 endpoints); inert = wiki + X. Editors ingest these
+as TOPIC SIGNALS, grounded against the verified entity DB for FACTS. Provenance is mostly
+third-party/community + an official-Bungie subset inside the Steam news feed.
+
+### THE REAL DEFECT (fix first - provenance integrity, moat-critical)
+The "OFFICIAL BUNGIE NEWS" mislabel: ~51% of the Steam news feed is third-party PRESS (Rock
+Paper Shotgun / PCGamesN / Gamemag) stamped as official. PINPOINT: lib/gather/patchnotes/
+engine.js formatForEditor wraps the block in a "--- OFFICIAL <label> ---" header around the
+UNFILTERED articles array, while the officialFeedName restriction (the isOfficial check in
+the same file) gates ONLY the is_patch_note FLAG, never array membership. So a press item
+reaches the editor as [DEV NEWS] under an "OFFICIAL BUNGIE NEWS" header. FIX: filter
+formatForEditor's input to feedname===officialFeedName (the data is already tagged). This is
+the moat leaking at the input layer - secondary press labeled first-party before it reaches
+an editor. FIX FIRST, gated, carefully (over-correcting = mislabeling official as press = its
+own bug; note the RSS half carries no feedname and is verified-official, so treat MISSING
+feedname as official, matching the existing detection logic).
+
+### THE STATE-OF-THE-ART BUILD (dedicated session, sequenced after the fix)
+1. Provenance integrity: the mislabel fix (above). No other accuracy defects found - the
+   labeling is otherwise sound (per-item [PATCH NOTE]/[DEV NEWS] + a FULL/PARTIAL
+   completeness hedge already exist).
+2. Source TIERING: official (Bungie/Steam announcements) > aggregated press > community
+   (Reddit/YouTube/Twitch). Label honestly, weight accordingly.
+3. First-party WEIGHTING: currently NOT flat - it is INVERTED. YouTube (3rd-party) is
+   explicitly labeled "PRIMARY SOURCE" for NEXUS/DEXTER (index.js) and official news is
+   APPENDED as secondary context. State-of-art inverts this: official signal leads, community
+   corroborates.
+4. ANTI-HYPE: ranking is currently by POPULARITY (YouTube view_count desc / Reddit hot) - i.e.
+   hype IS the top signal today. And there is NO cross-source dedup, so one hyped topic echoing
+   across YouTube+Reddit+press counts 3x. Handle hype-as-signal explicitly: down-weight
+   pure-popularity, count a cross-source topic once (corroboration = quality, not volume).
+5. PER-GAME readiness: gather IS config-driven (config.sources.* per lib/games/<slug>.js:
+   steamAppId, subreddits, youtube queries, twitch gameNames, patchNotes adapter), and the
+   patch layer has an ADAPTER REGISTRY built for drop-in sources. BUT the source TYPES are
+   Steam/Reddit/YouTube-centric and do not port to a non-Steam title: CoD/MW4's official source
+   is the CoD blog, not Steam. DMZ config has only sources.x + no patchNotes (gate no-op) -> DMZ
+   news is hand-curated (gen-dmz-news.mjs). Needs a 'cod-blog' adapter (only steam-news exists)
+   + non-Steam metrics. Infrastructure travels; the Marathon source SET does not.
+6. Freshness/dedup across sources: today = 48h patch-freshness + within-source id dedup + patch
+   title-merge (Steam JSON vs RSS); NO cross-source dedup (see #4). Output dedup (recentHeadlines
+   + roster-wide dedupGate) is a separate downstream layer.
+Also: remove/replace the dead fandom wiki scraper (403-blocked, inert code).
+
+### Note
+Ingestion quality is UPSTREAM of all content - highest-leverage quality work. The mislabel is
+the urgent piece (moat integrity); the rest is enhancement. Build in a focused session with
+gated diffs - it is provenance-classification code, handle carefully.
+
 ## 2026-08-24 - Ingestion pipeline mapped: external third-party SIGNALS, grounded in first-party verified DB
 
 Asked "what feeds the editors / should we upgrade ingested content quality." The read mapped
