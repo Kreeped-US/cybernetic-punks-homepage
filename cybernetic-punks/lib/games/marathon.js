@@ -269,7 +269,18 @@ export const marathon = {
     // would restore CIPHER automatically at midnight UTC whether or not anyone
     // has played, which is precisely the judgement this is meant to hold.
     // `editorsRequiringPatch` is left UNTOUCHED so the restore is one token.
-    editors: ['NEXUS'],
+    //
+    // -- STAGE C IGNITION: 2026-08-24 -- MIRANDA added as an EVERGREEN editor.
+    // She is in `editors` but deliberately NOT in `editorsRequiringPatch` below, so
+    // she runs EVERY cycle (not patch-gated) -- this is what turns the 2-ARM queue
+    // consumer on: it assigns the top queued content_candidate to MIRANDA and she
+    // generates the grounded field guide. Guardrails that make this safe: (1) the
+    // consumer selects ONE candidate per cycle -> at most one guide/cycle (a measured
+    // cohort, not a flood); (2) each assignment is GROUNDED with the entity's verified
+    // stat block (lib/content/grounding.js) + a hard claim boundary, so guides are
+    // written FROM verified data, never the topic name alone; (3) the roster-wide dedup
+    // gate still blocks near-duplicate headlines. CIPHER/DEXTER stay frozen (above).
+    editors: ['NEXUS', 'MIRANDA'],
     // These run ONLY when the cycle detects a patch. Absent on other games ->
     // the cron's `|| []` makes the whole gate a no-op for them (e.g. DMZ).
     // NOTE 'DEXTER' deliberately REMAINS listed here while paused: the entry is

@@ -20,6 +20,7 @@ import { loadSurvivorCorpus, findCorpusDuplicate } from '@/lib/content/dedupGate
 import { runGateLogPass } from '@/lib/content/gateLogPass';
 import { runAssignmentGate } from '@/lib/content/assignmentGate';
 import { buildCandidateDirectiveObject, selectQueuedCandidate } from '@/lib/content/candidateAssignment';
+import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 
 export const dynamic = 'force-dynamic';
 
@@ -1116,16 +1117,16 @@ export async function GET(req) {
       prompts.NEXUS += historicalBlock;
     }
 
-    // ── QUEUE-DRIVEN ASSIGNMENT -- 2-OBSERVE (log-only; content pipeline step 2) ──
-    // Selects the top-priority queued content_candidate and LOGS the exact
-    // candidate-directive prompt it WOULD produce + the gate decision -- WITHOUT
-    // generating on it and WITHOUT writing to content_candidate. NEXUS's real
-    // self-select/directive path ABOVE is byte-untouched (this block only reads +
-    // logs; it never assigns to prompts.NEXUS). This is the last safe look before
-    // 2-arm actually generates. Fully guarded: can never break the cron. Option A
-    // (queue-preferred) means only a PASS would drive generation in 2-arm; gap/
-    // reinforce would fall back to self-select. See
-    // docs/CONTENT_PIPELINE_ARCHITECTURE.md step 2.
+    // -- QUEUE-DRIVEN ASSIGNMENT -- 2-ARM (content pipeline step 2) --
+    // Selects the top-priority queued content_candidate, runs the assignment gate, and on
+    // a PASS ASSIGNS it to MIRANDA via a synthesized directive-ROW OBJECT (the seam
+    // buildMirandaPrompt consumes) GROUNDED with the entity's verified stat block. A HUMAN
+    // MIRANDA directive always wins (never overwritten); gap/reinforce -> self-select
+    // fallback (NEXUS's real path ABOVE is byte-untouched -- this never assigns to
+    // prompts.NEXUS). The candidate is NOT marked done here; the write-back is coupled to
+    // ACTUAL generation (after allSettled), so a single queued candidate yields at most one
+    // guide per cycle. Fully guarded: can never break the cron. Option A (queue-preferred).
+    // See docs/CONTENT_PIPELINE_ARCHITECTURE.md step 2.
     var queueAssignObserve = null;
     try {
       var topCandidate = await selectQueuedCandidate(supabase, PRODUCING_GAME_SLUG);
@@ -1150,11 +1151,16 @@ export async function GET(req) {
         var humanMiranda = !!directiveMap['MIRANDA'];   // captured BEFORE we may assign (human wins)
         var assigned = false;
         if (wouldAssign && !humanMiranda) {
-          directiveMap['MIRANDA'] = buildCandidateDirectiveObject(topCandidate);
+          // GROUNDING: fetch the candidate entity's populated verified stat row (facet-general;
+          // verified=true only) and inject it into the directive so MIRANDA writes FROM ground
+          // truth, not the topic name alone. Null (no verified row) -> block omitted, non-fatal.
+          var vBlock = await fetchVerifiedStatBlock(supabase, PRODUCING_GAME_SLUG, topCandidate.entity, topCandidate.facet);
+          directiveMap['MIRANDA'] = buildCandidateDirectiveObject(topCandidate, vBlock);
           assigned = true;
           console.log('[QUEUE-ASSIGN] 2-ARM: candidate entity="' + topCandidate.entity + '" facet=' +
             topCandidate.facet + ' priority=' + topCandidate.priority + ' decision=pass -> ASSIGNED to MIRANDA' +
-            ' (synthetic directive: "' + directiveMap['MIRANDA'].instruction + '")' +
+            ' (synthetic directive: "' + directiveMap['MIRANDA'].instruction + '"; grounding=' +
+            (vBlock ? 'verified-stats-injected' : 'NO-VERIFIED-ROW') + ')' +
             (mirandaConfigured ? '' : ' [MIRANDA FROZEN: not in roster -> will NOT generate; candidate stays queued, no write-back]'));
         } else {
           console.log('[QUEUE-ASSIGN] candidate entity="' + topCandidate.entity + '" facet=' +

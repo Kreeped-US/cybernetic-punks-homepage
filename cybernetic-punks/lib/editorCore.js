@@ -1064,7 +1064,12 @@ export function buildMirandaPrompt(data) {
       '7. STRUCTURE: break the article into sections. Write each section header on its OWN LINE as **HEADER TEXT** with a blank line before and after it. Never put a header on the same line as body text, and never glue a header to the paragraph that follows. Separate paragraphs with a blank line.\n' +
       '---';
   } else if (_directive) {
-    directiveBlock = `\n\n--- EDITOR DIRECTIVE - THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\nASSIGNMENT: ${_directive.instruction}\n${_directive.url ? 'SOURCE URL: ' + _directive.url + '\n' : ''}Write your article specifically about this topic. This overrides your normal content selection.\n---`;
+    // _verifiedBlock (candidate-driven guides): the assigned entity's populated verified
+    // stat fields + a hard claim boundary, injected as GROUNDING so the guide is written
+    // FROM the verified row -- not the topic name alone (the invention failure mode). It is
+    // entity-specific and authoritative; it does not depend on the truncated general WEAPON
+    // DATA block below carrying the assigned entity. Absent (null) -> simply omitted.
+    directiveBlock = `\n\n--- EDITOR DIRECTIVE - THIS IS YOUR ASSIGNED TOPIC THIS CYCLE ---\nASSIGNMENT: ${_directive.instruction}\n${_directive.url ? 'SOURCE URL: ' + _directive.url + '\n' : ''}${_directive._verifiedBlock ? _directive._verifiedBlock + '\n' : ''}Write your article specifically about this topic. This overrides your normal content selection.\n---`;
   }
 
   // X intel block. xData is null today (removed April 27, 2026), so this is INERT

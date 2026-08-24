@@ -34,10 +34,17 @@ export function buildCandidateDirective(candidate) {
 // (an OBJECT the prompt builder consumes) -- NOT the string block above. It mirrors the shape
 // of a human directive ROW, so the EXISTING application (prompts.MIRANDA._directive =
 // directiveMap['MIRANDA']) and buildMirandaPrompt (which reads _directive.instruction / .url on
-// the non-spotlight branch) consume it with ZERO change. `_candidateId` is an internal tag that
-// couples the post-generation write-back to THIS candidate (marked done only once the editor
-// actually generates). directive_type='standard' takes buildMirandaPrompt's plain-directive path.
-export function buildCandidateDirectiveObject(candidate) {
+// the non-spotlight branch) consume it. `_candidateId` is an internal tag that couples the
+// post-generation write-back to THIS candidate (marked done only once the editor actually
+// generates). directive_type='standard' takes buildMirandaPrompt's plain-directive path.
+//
+// `verifiedBlock` (optional, from lib/content/grounding.js fetchVerifiedStatBlock) is the
+// facet-general GROUNDING: the candidate entity's populated verified stat fields + a hard
+// claim boundary. It rides on `_verifiedBlock` and buildMirandaPrompt renders it directly
+// under the assignment, so the editor writes FROM the verified row -- not the topic name
+// alone (the invention failure mode). Null when no verified row exists; the block is then
+// simply omitted (the general VERIFICATION_NOTE still governs any stats the editor states).
+export function buildCandidateDirectiveObject(candidate, verifiedBlock) {
   var subject = [candidate && candidate.entity, candidate && candidate.facet].filter(Boolean).join(' ');
   return {
     directive_type: 'standard',
@@ -45,6 +52,7 @@ export function buildCandidateDirectiveObject(candidate) {
       (candidate && candidate.target_phrase ? '. Angle: ' + candidate.target_phrase : ''),
     url: null,
     _candidateId: candidate ? candidate.id : null,
+    _verifiedBlock: verifiedBlock || null,
   };
 }
 
