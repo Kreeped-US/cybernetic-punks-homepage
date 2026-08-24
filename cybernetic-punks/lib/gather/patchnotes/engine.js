@@ -63,14 +63,29 @@ export function mergeAndDetect(articles, rules, now = Date.now()) {
   const tagged = all.map((a) => {
     var title = a.title || '';
     var titleLower = title.toLowerCase();
+    // POSITIVE official-provenance signal (G1, Option A -- conservative fail-safe).
+    // An item is OFFICIAL only when affirmatively marked so:
+    //   - source === 'steam-rss'  : the Steam community-announcements RSS feed. It
+    //       carries no feedname but IS the official endpoint (verified official-only),
+    //       so we credit it by its ORIGIN, not by an absent field.
+    //   - feedname === officialFeedName : a JSON item on the configured official feed.
+    // Everything else is NOT official: third-party press (a real outlet feedname, e.g.
+    // "Rock, Paper, Shotgun" / "Gamemag.ru") AND any ambiguous JSON item with an EMPTY
+    // feedname. We UNDER-claim the ambiguous empty-feedname case rather than over-claim
+    // it (the prior `!a.feedname` rule over-claimed). With no officialFeedName configured
+    // the restriction is off and all items are official (prior behaviour, unchanged).
+    // For the real Steam feed this is 1:1 with the old rule on official items -- RSS
+    // items are exactly the no-feedname ones -- so detection is unchanged in practice;
+    // it only stops STAMPING press as official and tightens a non-occurring edge.
     var isOfficial = !rules.officialFeedName
-      || !a.feedname
+      || a.source === 'steam-rss'
       || a.feedname === rules.officialFeedName;
     var matchesVersion = rules.versionRe.test(title);
     var matchesKeyword = rules.keywords.some((k) => titleLower.includes(k));
     var articleAgeMs = now - new Date(a.date).getTime();
     var isFresh = !isNaN(articleAgeMs) && articleAgeMs >= 0 && articleAgeMs <= rules.freshnessMs;
     return Object.assign({}, a, {
+      is_official: isOfficial,
       is_patch_note: isOfficial && (matchesVersion || matchesKeyword) && isFresh,
     });
   });
@@ -84,11 +99,16 @@ export function mergeAndDetect(articles, rules, now = Date.now()) {
 export function formatForEditor(articles, label) {
   if (!articles || articles.length === 0) return '';
   const recent = articles.slice(0, BLOCK_CAP.bungie);
-  const lines = recent.map((a, i) => {
-    // Stable citable id (verified_source capture) -- the SAME [BN{n}] the write-site
-    // resolver reconstructs from rawData.bungieNews via blockId(). See lib/gather/blockId.js.
-    const bid = blockId('bungie', i + 1);
-    const lab = a.is_patch_note ? 'PATCH NOTE' : 'DEV NEWS';
+  // PROVENANCE-HONEST LABELLING (G1 fix). Only items with a POSITIVE official signal
+  // (a.is_official, set by mergeAndDetect) are presented under the OFFICIAL header;
+  // third-party press / ambiguous items go in a clearly-labelled non-official block.
+  // NOTHING is dropped -- every item still reaches the editor as a topic signal; only
+  // the provenance CLAIM is corrected. The blockId index is the item's position in
+  // `recent` (NOT a per-block counter), so the [BN{n}] ids still line up 1:1 with
+  // rawData.bungieNews for the verified_source capture resolver (see blockId.js).
+  const renderItem = (a, idx) => {
+    const bid = blockId('bungie', idx + 1);
+    const lab = a.is_patch_note ? 'PATCH NOTE' : (a.is_official ? 'DEV NEWS' : 'PRESS');
     // Completeness signal (Gap 1): tell the editor whether it has the full
     // official notes or only a blurb, so a partial ingest produces an honest
     // hedge instead of confident-wrong.
@@ -96,8 +116,17 @@ export function formatForEditor(articles, label) {
       ? 'COMPLETENESS: FULL official notes ingested below.'
       : 'COMPLETENESS: PARTIAL -- only a short blurb was ingested this cycle, NOT the full notes. Do NOT state specific values, numbers, or change lists as confirmed; report only what this blurb explicitly says and note that the full notes were not available.';
     return `[${bid}] [${lab}] ${a.title}\n  Date: ${new Date(a.date).toLocaleDateString()}\n  ${completeness}\n  ${a.contents || '(No preview available)'}\n  URL: ${a.url}`;
-  }).join('\n\n');
-  return `\n\n--- OFFICIAL ${label} (most recent first) ---\n${lines}\n--- END ${label} ---`;
+  };
+  const officialLines = recent.map((a, i) => (a.is_official ? renderItem(a, i) : null)).filter(Boolean).join('\n\n');
+  const pressLines = recent.map((a, i) => (a.is_official ? null : renderItem(a, i))).filter(Boolean).join('\n\n');
+  var out = '';
+  if (officialLines) {
+    out += `\n\n--- OFFICIAL ${label} (most recent first) ---\n${officialLines}\n--- END OFFICIAL ${label} ---`;
+  }
+  if (pressLines) {
+    out += `\n\n--- THIRD-PARTY PRESS / COMMUNITY COVERAGE (NOT official ${label}; secondary reporting -- use only as a topic signal, cite only what the outlet itself states, and never restate it as official) ---\n${pressLines}\n--- END THIRD-PARTY PRESS / COMMUNITY COVERAGE ---`;
+  }
+  return out;
 }
 
 // Ticker lines. The current ticker format carries no per-game label (just the
