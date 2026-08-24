@@ -10,7 +10,7 @@ import AccountMenu from '@/components/AccountMenu';
 // not in the map). Null-safe -> degrade to the raw key.
 function intelChild(key, desc) {
   var d = getEditorDisplay(key);
-  return { label: d ? (d.tag || d.fullName) : key, href: '/intel/' + key, desc: desc, color: d ? d.color : undefined };
+  return { label: d ? (d.tag || d.fullName) : key, href: '/marathon/intel/' + key, desc: desc, color: d ? d.color : undefined };
 }
 
 var NAV_ITEMS = [
@@ -24,9 +24,9 @@ var NAV_ITEMS = [
   { label: 'FACTIONS', href: '/marathon/factions' },
   {
     label: 'INTEL',
-    activeOn: ['/intel', '/marathon/sitrep', '/editors'],
+    activeOn: ['/marathon/intel', '/marathon/sitrep', '/editors'],
     children: [
-      { label: 'ALL INTEL', href: '/intel',         desc: 'Every article, every editor' },
+      { label: 'ALL INTEL', href: '/marathon/intel', desc: 'Every article, every editor' },
       intelChild('cipher',  'Play analysis & grades'),
       intelChild('nexus',   'Meta tracking & strategy'),
       intelChild('dexter',  'Build analysis & loadouts'),

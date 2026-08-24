@@ -44,7 +44,7 @@ const INTENT_CARDS = [
     sublabel: 'Plays, builds, meta shifts, and community pulse from six AI editors.',
     symbol:  '◇',
     color:   '#00ff88', // GHOST green
-    href:    '/intel',
+    href:    '/marathon/intel',
   },
   {
     intent:  'skip',

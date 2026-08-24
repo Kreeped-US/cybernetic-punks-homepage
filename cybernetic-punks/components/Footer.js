@@ -18,12 +18,12 @@ import { getAllEditors } from '@/lib/editors/roster';
 const EDITORS = getAllEditors()
   .filter(function(e) { return e.status === 'live'; })
   .map(function(e) {
-    return { symbol: e.symbol, color: e.color, name: e.tag || e.fullName, href: '/intel/' + e.key };
+    return { symbol: e.symbol, color: e.color, name: e.tag || e.fullName, href: '/marathon/intel/' + e.key };
   });
 
 // Primary site navigation — the editorial + tools surface
 const EXPLORE_LINKS = [
-  { label: 'INTEL FEED',    href: '/intel'   },
+  { label: 'INTEL FEED',    href: '/marathon/intel'   },
   { label: 'META TIER LIST',href: '/marathon/meta'    },
   { label: 'BUILD ADVISOR', href: '/marathon/advisor' },
   { label: 'SHELLS',        href: '/marathon/shells'  },
