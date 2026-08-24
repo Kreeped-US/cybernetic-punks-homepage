@@ -7,6 +7,74 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Ingestion pipeline mapped: external third-party SIGNALS, grounded in first-party verified DB
+
+Asked "what feeds the editors / should we upgrade ingested content quality." The read mapped
+the real pipeline. KEY FINDING: editors ingest EXTERNAL third-party sources as topic SIGNALS,
+grounded in the first-party verified DB. The moat is the GROUNDING, not an absence of external
+sources. (Corrects an earlier draft that said "no external ingestion" - wrong.) Main = c861d72.
+
+### What actually feeds the editors (from code: lib/gather/index.js gatherAll)
+The ingestion DOES reach outside our DB. External fetches, all per-game config-driven:
+- YouTube Data API (www.googleapis.com/youtube/v3) - NEXUS/DEXTER PRIMARY source, MIRANDA
+  guides. THIRD-PARTY (creators).
+- Reddit - old.reddit.com/r/<sub>/hot.json + a hot.rss RSS fallback. GHOST + MIRANDA. THIRD-PARTY.
+- Twitch Helix API (api.twitch.tv/helix) - clip titles + view counts (attention signal). GHOST.
+  THIRD-PARTY.
+- Steam Web API - player count (ISteamUserStats/GetNumberOfCurrentPlayers, 1st-party metric),
+  recent reviews (store/appreviews, 3rd-party sentiment), and the "BUNGIE NEWS"/patch-notes feed
+  via BOTH ISteamNews/GetNewsForApp (JSON API) AND store.steampowered.com/feeds/news (RSS).
+- Wiki scraper (marathonthegame.fandom.com) - 3rd-party fan wiki, 403-blocked -> inert.
+- X/Twitter - INERT (xData=null since Apr 2026).
+So a news API (GetNewsForApp), an RSS feed (Steam news RSS), AND a scraper (fandom) all exist -
+the earlier "no scraper, RSS, or news API" claim was wrong on all three.
+
+Internal inputs (grounding + steering - NOT the news gather):
+- Verified entity DB (weapon/shell/mod/core/implant/cradle/faction tables) - injected as
+  GROUNDING context into EVERY editor prompt. THE first-party layer.
+- feed_items recentHeadlines - read for MIRANDA dedup (no-repeat), not a generative input.
+- content_candidate queue - the Stage C demand-driven MIRANDA directive lane.
+- GSC keyword data - feeds demand/candidate steering + the pre-publish corroboration gate, NOT
+  the editor news gather.
+
+Per editor: NEXUS<-YouTube meta + news; DEXTER<-YouTube builds + news + faction DB; GHOST<-Reddit
++ Steam reviews + Twitch + news; MIRANDA<-YouTube guides + Reddit + Steam dev news + verified DBs
++ candidate directive; CIPHER<-internal synthesis of the others + DB (no external fetch). Raw
+external gather is EPHEMERAL - fetched fresh each cron, formatted into prompts, never persisted.
+
+### The reframe (KEPT - this part was right): the moat is GROUNDING quality, not source selection
+External third-party signals steer TOPICS; the verified first-party DB grounds the FACTS. The
+moat ("verified first-party intel") is enforced by binding generation to the verified tables +
+anti-fabrication fallbacks (every editor: "write ONLY from verified data, do NOT invent"), NOT
+by the feed being first-party (it mostly is not). This is WHY the 175-HP fix worked by GROUNDING
+generation in the verified tables - the grounding existed; generation just was not bound to it.
+Stage C bound it.
+
+### The real "upgrade ingestion" levers
+A. GROUNDING richness (highest-value, verification-gated):
+   1. Enrich thin entities (107/203 mods summary-only) with in-game-verified fields -> richer
+      grounding -> richer guides.
+   2. Coverage: seed more verified entities (cores/mods tranches) -> more to write about.
+   3. GSC demand steering (candidate queue; separate from the news gather).
+B. FIRST-PARTY NEWS provenance (a real leak found this session):
+   4. The "OFFICIAL BUNGIE NEWS" section fed to editors includes ~51% third-party PRESS
+      (RPS/PCGamesN/Gamemag) from Steam's mixed feed, labeled [DEV NEWS] under an "OFFICIAL"
+      header - the officialFeedName restriction gates only the patch-note FLAG, not the context.
+      FIX: extend that filter to formatForEditor (official-only context), or add a Bungie.net
+      first-party adapter (the adapter registry is built for it).
+   5. EVENT LANE (frozen for dead-game Marathon): for DMZ at launch add a 'cod-blog' adapter
+      (official CoD source); today DMZ news is hand-curated first-party (gen-dmz-news.mjs).
+CRITICAL: data-side upgrades are VERIFICATION-GATED - enriching/expanding with UNVERIFIED data
+reintroduces the 175-HP problem. But "no external sources" is false - the topic-signal feed IS
+external + mostly third-party; the moat holds via grounding, not source-absence.
+
+### Net
+The architecture is GROUNDING-correct: external third-party signals bound to a first-party
+verified DB. It is NOT all-internal - the primary editorial material (YouTube/Reddit/Twitch/
+Steam) is external. Two upgrade paths: (A) richer/broader VERIFIED grounding (owner in-game
+verification - highest leverage), and (B) close the "OFFICIAL BUNGIE NEWS" press-mislabel leak
+(small code fix).
+
 ## 2026-08-24 - DMZ content-build session: B done (1 edit), A held (thin substance) + architecture note
 
 Worked the DMZ content-build (improve existing content, then structural gaps). Outcome:
