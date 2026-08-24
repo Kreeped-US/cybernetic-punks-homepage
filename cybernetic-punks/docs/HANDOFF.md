@@ -7,6 +7,56 @@ Newest entries on top.
 
 ---
 
+## 2026-08-24 - Anti-hype ranking DESIGN: Fable-approved spec (build pending)
+
+Designed the ingestion anti-hype ranking (replaces popularity-ranked intake) and got a
+Fable doctrine/provenance pass. APPROVED with 5 hardening requirements. Build not started -
+this is the blessed spec. Main = 6787cc6.
+
+### The design (Fable-approved)
+Ranking is a COMPOSITE PRIORITY SORT, not a gate: source-tier + substance-type + recency
++ popularity(tiebreaker, demoted). Anti-hype by ORDERING substance first, not filtering
+popular items. Truth-guarantee lives DOWNSTREAM (grounding + claim-boundary); ranking only
+orders "what deserves attention first."
+
+### Fable's 5 hardening requirements (all binding on the build)
+1. SORT-NOT-GATE BOUNDARY (Q1): "no gate" = no new popularity/substance THRESHOLD drops
+   items. It does NOT remove existing eligibility layers (game filter, source allowlist,
+   spam exclusion) - those define the queue, not gate it. Keep them.
+2. TIER BY SOURCE IDENTITY (Q2): tier assigned by ORIGIN (allowlist / G1 labeling), NEVER
+   by content self-description. "OFFICIAL" = a fact about where it came from, not a string
+   an item can wear. Otherwise top tier is gameable by official-sounding titles. CRITICAL.
+3. OFFICIAL STRONG-NOT-ABSOLUTE (Q2): community-broken news surfaces (earliest true signal
+   often) carrying G1 labels, grounds as community-reported, claim-boundary holds what
+   can't be cited. Surfacing != trusting. Official-near-absolute would also starve frozen-
+   game weeks by policy.
+4. ENTITY-RELEVANCE RAISES-NEVER-LOWERS (Q3, phase 2): a positive boost for moat-adjacent
+   news, never a penalty. High-tier/high-substance news about an UNCOVERED entity (e.g.
+   official patch notes for a new weapon) must still outrank on its other signals.
+5. LOG SCORE COMPONENTS PER ITEM (v1): the sort must be auditable/tunable on evidence.
+   After a few weeks compare rank-distribution of what editors PICKED before vs after the
+   flip (measured-cohort reflex applied to the ranker). The design CLAIMS "substance leads";
+   the log lets us CHECK it.
+
+### Volume protection (Q4) - the key doctrinal insight
+Near-zero-traffic volume is protected NOT by a lowered news bar but by the EVERGREEN LANE:
+slow news days are evergreen days. News = event-driven, evergreen = demand-driven (Stage C,
+now proven live), the ~1000-target candidate queue is the backstop. The two lanes complement
+by construction. So the news ranker can be a strict-substance sort WITHOUT starving output.
+Editor self-skip stands; a slow day may honestly produce nothing from news (evergreen covers).
+
+### Sequencing (Fable-approved)
+v1: tier + substance + recency + popularity-tiebreaker. NO entity-matching, NO gate, WITH
+per-item score-component logging.
+Phase 2: entity-relevance (raises-never-lowers) + the UNKNOWN-ENTITY COVERAGE-GAP SENSOR
+(repeated high-substance news about an uncovered entity -> routed to the operator's plan
+layer -> coverage-myopia becomes the mechanism coverage GROWS). Uses the closed-vocab
+entity-extraction machinery.
+
+### NEXT: build v1 - starts with a read of how ranking CURRENTLY works (the popularity
+### sort: youtube.js view_count desc, news recency, per-source BLOCK_CAP) before building
+### the composite sort. Gated.
+
 ## 2026-08-24 - Flag #3 closed: G1 now complete across ALL news paths (shared predicate)
 
 The Miranda-news-path G1 gap (flag #3 from the Ares RG cron check) is fixed + merged
