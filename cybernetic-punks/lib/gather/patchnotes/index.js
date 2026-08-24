@@ -7,7 +7,7 @@
 
 import { getGameConfig } from '../../games';
 import { fetchSteamNewsSource } from './adapters/steam-news.js';
-import { mergeAndDetect, formatForEditor, formatForTicker } from './engine.js';
+import { mergeAndDetect, formatForEditor, formatForEditorParts, formatForTicker } from './engine.js';
 
 // type -> adapter. DMZ: add 'cod-blog' here when MW4's source is known.
 const ADAPTERS = {
@@ -35,4 +35,4 @@ export async function gatherPatchNotes(config = getGameConfig()) {
 }
 
 // Re-export the engine formatters so B2 consumers import everything from here.
-export { formatForEditor, formatForTicker };
+export { formatForEditor, formatForEditorParts, formatForTicker };

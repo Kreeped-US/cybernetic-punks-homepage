@@ -4,7 +4,7 @@ import { gatherTwitchClips, formatClipsForCipher, formatClipsForGhost } from './
 import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
-import { gatherBungieNews, formatBungieNewsForEditor } from './bungie.js';
+import { gatherBungieNews, formatBungieNewsForEditor, formatBungieNewsForEditorParts } from './bungie.js';
 import { runDexterStatPipeline } from './dexter-stats.js';
 import { gatherCipher } from './cipher.js';
 import { getGameConfig } from '../games';
@@ -50,6 +50,22 @@ import { filterGameVideos } from './relevance.js';
 // imported at the top; behavior here is unchanged (same calls at the two sites
 // below).
 
+// WEIGHTING (Tier-2): frame community sources (YouTube creator discussion + any G1
+// third-party PRESS) as a TOPICALITY signal behind a HARD not-a-fact boundary. Composes
+// with G1: OFFICIAL news is placed BEFORE this block as the primary substance; everything
+// here is "what is being discussed," never a fact source. `descriptor` names the
+// per-editor community material; `body` is the already-formatted community block(s).
+function communityTopicalityBlock(descriptor, body) {
+  return '\n\n--- COMMUNITY TOPICALITY SIGNAL (what is being DISCUSSED -- NOT a fact source) ---\n'
+    + 'CLAIM BOUNDARY (hard): the community signals below indicate what players and creators are DISCUSSING '
+    + 'this cycle -- use them ONLY to gauge topicality and interest (what is worth covering). They are NOT '
+    + 'factual claims. Every factual or substantive statement in your article must come from the OFFICIAL '
+    + 'material above and your verified database. Do NOT state a community opinion, creator take, or press '
+    + 'claim as fact.\n'
+    + descriptor + '\n\n'
+    + body;
+}
+
 export async function gatherAll(config = getGameConfig()) {
   console.log('[GATHER] Starting data collection for ' + config.slug + '...');
 
@@ -91,6 +107,11 @@ export async function gatherAll(config = getGameConfig()) {
   }
 
   const bungieNewsContext = formatBungieNewsForEditor(bungieNews);
+  // Tier-2 weighting: the SAME news split into { official, press } so NEXUS/DEXTER can
+  // lead with official (primary substance) and place press in the community/topicality
+  // tier. `bungieNewsContext` (official + press concatenated) is unchanged for GHOST,
+  // whose community-sentiment role legitimately keeps news as appended context.
+  const bungieParts = formatBungieNewsForEditorParts(bungieNews);
 
   // ── CIPHER — Internal synthesis (rebuilt May 1, 2026) ─────────
   // No longer reads YouTube/Twitch. Reads NEXUS/DEXTER/GHOST/Bungie/database
@@ -108,37 +129,44 @@ export async function gatherAll(config = getGameConfig()) {
       + 'Set source_video_id null and source_type null.';
   }
 
-  // ── NEXUS — YouTube primary ───────────────────────────────────
-  // YouTube primary (creator meta discussion + tier list videos).
-  // Bungie news for patch-driven meta shifts.
+  // -- NEXUS - OFFICIAL primary substance; community = topicality --
+  // WEIGHTING (Tier-2, 2026-08-24): official news LEADS as the primary editorial
+  // substance (what actually changed the meta). YouTube creator discussion + any G1
+  // third-party PRESS follow as a TOPICALITY signal behind a hard not-a-fact boundary
+  // -- retained, reordered + reframed, never dropped.
   var nexusPrompt = '';
 
+  if (bungieParts.official) nexusPrompt += bungieParts.official;
+
   var youtubeForNexus = formatForEditor(youtubeFiltered, 'NEXUS');
-  if (youtubeForNexus) {
-    nexusPrompt += '--- YOUTUBE META DISCUSSION (PRIMARY SOURCE) ---\nCreator analysis of current Marathon meta, weapon tiers, and strategic shifts.\n\n' + youtubeForNexus;
+  var nexusTopicality = (youtubeForNexus ? '--- YOUTUBE META DISCUSSION ---\n' + youtubeForNexus : '')
+    + (bungieParts.press || '');
+  if (nexusTopicality) {
+    nexusPrompt += communityTopicalityBlock('Creator meta discussion, weapon-tier takes, and strategic-shift talk (plus any third-party press below).', nexusTopicality);
   }
 
   if (!nexusPrompt) {
     nexusPrompt = 'No external meta content available this cycle. Write a meta analysis article based STRICTLY on the weapon, shell, and faction database and the CURRENT TIER STATE in your context. Describe the current tier placements and ranked viability as they stand. Do NOT invent "recent shifts," patch changes, or movement that is not supported by your verified sources - if nothing has changed, say the meta is holding steady. An accurate "no major movement this cycle" read is correct; a fabricated shift is not.';
   }
 
-  if (bungieNewsContext) nexusPrompt += bungieNewsContext;
-
-  // ── DEXTER — YouTube primary ──────────────────────────────────
-  // YouTube primary (build guides, loadout discussions).
-  // Faction database injected via game context handles unlock specifics.
+  // -- DEXTER - OFFICIAL primary substance; community = topicality --
+  // Same Tier-2 inversion as NEXUS: official leads; creator build discussion + press
+  // follow as topicality behind the not-a-fact boundary. Faction database (game context)
+  // still handles unlock specifics.
   var dexterPrompt = '';
 
+  if (bungieParts.official) dexterPrompt += bungieParts.official;
+
   var youtubeForDexter = formatForEditor(youtubeFiltered, 'DEXTER');
-  if (youtubeForDexter) {
-    dexterPrompt += '--- YOUTUBE BUILD CONTENT (PRIMARY SOURCE) ---\nCreator-published builds, loadouts, and synergy discussions.\n\n' + youtubeForDexter;
+  var dexterTopicality = (youtubeForDexter ? '--- YOUTUBE BUILD CONTENT ---\n' + youtubeForDexter : '')
+    + (bungieParts.press || '');
+  if (dexterTopicality) {
+    dexterPrompt += communityTopicalityBlock('Creator-published builds, loadouts, and synergy discussion (plus any third-party press below).', dexterTopicality);
   }
 
   if (!dexterPrompt) {
     dexterPrompt = 'No external build content available this cycle. Design a build using ONLY the weapon, shell, mod, implant, core, Cradle, and faction databases in your context. Pick an underexplored shell and build around its strengths. Every item, stat, and Cradle perk you name must appear in your verified data - do NOT invent gear, stats, or synergies to fill the build.';
   }
-
-  if (bungieNewsContext) dexterPrompt += bungieNewsContext;
 
   // ── GHOST — Reddit + Steam reviews + Twitch clip activity ─────
   // Reddit captures sustained community sentiment; Steam reviews capture

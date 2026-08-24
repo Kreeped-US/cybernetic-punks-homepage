@@ -11,7 +11,7 @@
 // active game's config (Marathon = "BUNGIE NEWS").
 
 import { getGameConfig } from '../games';
-import { gatherPatchNotes, formatForEditor, formatForTicker } from './patchnotes/index.js';
+import { gatherPatchNotes, formatForEditor, formatForEditorParts, formatForTicker } from './patchnotes/index.js';
 
 export async function gatherBungieNews(config = getGameConfig()) {
   return gatherPatchNotes(config);
@@ -23,4 +23,11 @@ export function formatBungieNewsForTicker(articles) {
 
 export function formatBungieNewsForEditor(articles) {
   return formatForEditor(articles, getGameConfig().sources.patchNotes.label);
+}
+
+// SPLIT variant (Tier-2 weighting): { official, press } as separate strings so the
+// editor assembly can lead with OFFICIAL (primary substance) and demote PRESS into the
+// community/topicality tier. Same per-game label + the citation-safe global blockId index.
+export function formatBungieNewsForEditorParts(articles) {
+  return formatForEditorParts(articles, getGameConfig().sources.patchNotes.label);
 }

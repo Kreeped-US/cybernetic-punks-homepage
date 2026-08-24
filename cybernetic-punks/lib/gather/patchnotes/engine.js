@@ -93,19 +93,16 @@ export function mergeAndDetect(articles, rules, now = Date.now()) {
   return tagged;
 }
 
-// Editor prompt block. `label` is the per-game news-section name (Marathon =
-// "BUNGIE NEWS"); the OFFICIAL.../END... decoration is added here, reproducing
-// the original header "OFFICIAL BUNGIE NEWS" + footer "END BUNGIE NEWS".
-export function formatForEditor(articles, label) {
-  if (!articles || articles.length === 0) return '';
+// Editor prompt blocks, SPLIT by provenance (G1). Returns the OFFICIAL and PRESS
+// blocks as SEPARATE strings so the caller can position them independently -- Tier-2
+// weighting leads with `official` (primary substance) and demotes `press` into the
+// community/topicality tier. Each block's [BN{n}] ids keep the item's GLOBAL index in
+// `recent` (NOT a per-block counter), so they still line up 1:1 with rawData.bungieNews
+// for the verified_source capture resolver (see blockId.js) even when the blocks are
+// placed apart. formatForEditor (below) concatenates them for the default single-block use.
+export function formatForEditorParts(articles, label) {
+  if (!articles || articles.length === 0) return { official: '', press: '' };
   const recent = articles.slice(0, BLOCK_CAP.bungie);
-  // PROVENANCE-HONEST LABELLING (G1 fix). Only items with a POSITIVE official signal
-  // (a.is_official, set by mergeAndDetect) are presented under the OFFICIAL header;
-  // third-party press / ambiguous items go in a clearly-labelled non-official block.
-  // NOTHING is dropped -- every item still reaches the editor as a topic signal; only
-  // the provenance CLAIM is corrected. The blockId index is the item's position in
-  // `recent` (NOT a per-block counter), so the [BN{n}] ids still line up 1:1 with
-  // rawData.bungieNews for the verified_source capture resolver (see blockId.js).
   const renderItem = (a, idx) => {
     const bid = blockId('bungie', idx + 1);
     const lab = a.is_patch_note ? 'PATCH NOTE' : (a.is_official ? 'DEV NEWS' : 'PRESS');
@@ -119,14 +116,21 @@ export function formatForEditor(articles, label) {
   };
   const officialLines = recent.map((a, i) => (a.is_official ? renderItem(a, i) : null)).filter(Boolean).join('\n\n');
   const pressLines = recent.map((a, i) => (a.is_official ? null : renderItem(a, i))).filter(Boolean).join('\n\n');
-  var out = '';
-  if (officialLines) {
-    out += `\n\n--- OFFICIAL ${label} (most recent first) ---\n${officialLines}\n--- END OFFICIAL ${label} ---`;
-  }
-  if (pressLines) {
-    out += `\n\n--- THIRD-PARTY PRESS / COMMUNITY COVERAGE (NOT official ${label}; secondary reporting -- use only as a topic signal, cite only what the outlet itself states, and never restate it as official) ---\n${pressLines}\n--- END THIRD-PARTY PRESS / COMMUNITY COVERAGE ---`;
-  }
-  return out;
+  const official = officialLines
+    ? `\n\n--- OFFICIAL ${label} (most recent first) ---\n${officialLines}\n--- END OFFICIAL ${label} ---`
+    : '';
+  const press = pressLines
+    ? `\n\n--- THIRD-PARTY PRESS / COMMUNITY COVERAGE (NOT official ${label}; secondary reporting -- use only as a topic signal, cite only what the outlet itself states, and never restate it as official) ---\n${pressLines}\n--- END THIRD-PARTY PRESS / COMMUNITY COVERAGE ---`
+    : '';
+  return { official, press };
+}
+
+// Editor prompt block. `label` is the per-game news-section name (Marathon =
+// "BUNGIE NEWS"). Concatenates the two provenance blocks (OFFICIAL then PRESS) --
+// byte-identical to the G1 single-block output for callers that want one string.
+export function formatForEditor(articles, label) {
+  const { official, press } = formatForEditorParts(articles, label);
+  return official + press;
 }
 
 // Ticker lines. The current ticker format carries no per-game label (just the
