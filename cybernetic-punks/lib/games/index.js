@@ -6,6 +6,7 @@
 
 import { marathon } from './marathon.js';
 import { dmz } from './dmz.js';
+import { wardogs } from './wardogs.js';
 
 // DMZ registered 2026-07-20 so getGameConfig('dmz') resolves instead of throwing.
 // This does NOT make the cron produce DMZ -- the cron calls getGameConfig() with
@@ -15,6 +16,7 @@ import { dmz } from './dmz.js';
 export const GAMES = {
   marathon,
   dmz,
+  wardogs,
 };
 
 // Default game slug for callers that haven't been parameterized yet (keeps the

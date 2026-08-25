@@ -74,6 +74,37 @@
   --text-disabled:  rgba(255,255,255,0.14);
 }
 
+/* The /wardogs route group wraps its subtree in .wardogs-theme, same token-swap
+   mechanism as .dmz-theme (kept in sync with lib/games/wardogs.js theme BY HAND --
+   CSS cannot import JS). Shared dark tactical base (both are gritty military
+   shooters); the accent is Wardogs' warm amber (matches the tile key art + the root
+   tile's gold pill). STARTING VALUES, tunable at launch polish. --green stays defined
+   so var(--green) live/confirmed go-signals still resolve. */
+.wardogs-theme {
+  --bg-page:       #08090c;
+  --bg-card:       #12140f;
+  --bg-card-hover: #191b13;
+  --bg-input:      #12140f;
+  --bg-nav:        #0c0d09;
+
+  --border:        #2c2a22;
+  --border-subtle: #201f18;
+
+  /* PRIMARY accent -- Wardogs warm amber. */
+  --accent:      #e0a13a;
+  --accent-dim:  #a9761f;
+  --accent-glow: rgba(224,161,58,0.14);
+
+  /* Functional green -- live / confirmed go-signals ONLY (secondary). */
+  --green:         #4a9d5b;
+  --red:           #e0563a;
+
+  --text-primary:   rgba(255,255,255,0.94);
+  --text-secondary: rgba(255,255,255,0.52);
+  --text-tertiary:  rgba(255,255,255,0.30);
+  --text-disabled:  rgba(255,255,255,0.14);
+}
+
 /* ── BASE ───────────────────────────────────────────────────── */
 html {
   scroll-behavior: smooth;

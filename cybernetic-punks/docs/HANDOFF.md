@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-08-25 - Wardogs vertical scaffold (Phase 1: infrastructure, dormant)
+
+Stood up the /wardogs vertical skeleton mirroring the DMZ pattern. Infrastructure
+only - dormant and honest: noindexed, off the front-door pulse, no entity tables,
+no auto-generation. NOT covered yet.
+- lib/games/wardogs.js + GAMES registration: config mirrors DMZ shape. indexable:
+  FALSE (hub emits noindex,follow - follow kept so crawlers still traverse back to the
+  network root, same as DMZ; excluded from sitemap). editorial mirrors DMZ byte-
+  identical: {cadenceCron:'0 19 * * *', editors:['NEXUS']}, verified at runtime (NEXUS
+  resolves to live editor Remi Okafor; BROKER absent - economy numbers lane waits for
+  post-Sep-10 verified data). Manual-script generation only; cron stays Marathon-locked,
+  so Wardogs never auto-generates.
+- .wardogs-theme tokens; 6 route files (hub + config-driven section route + the two
+  empty/coming-soon shells + nav), all empty-safe. Sections: field-intel, economy,
+  systems (editor) + arsenal (data, coming-soon shell, no table).
+- DEFERRED (deliberate): ROOT_GAMES entry + sitemap block + pulse column - all wait
+  until confirmed-systems content lands and the hub flips indexable. "Games Covered"
+  honestly stays 2. Entity tables (wardogs_*) NOT created - designed against verified
+  data post-Sep-10.
+- Marathon/DMZ untouched (both still indexable + in sitemap). Build/ESLint/ASCII clean.
+- Content plan: docs/wardogs-firstparty-collection.md (tiered, primary-source-gated);
+  full vertical plan: docs/wardogs-vertical-study.md.
+
 ## 2026-08-25 - Wardogs added as a third root game tile (pre-launch tease)
 
 Third game-selection tile added to the root, pre-launch tease. Tile-only scope -
