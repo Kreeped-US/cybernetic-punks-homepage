@@ -104,7 +104,7 @@ export const ROOT_GAMES = [
       // articles now, so the pulse column surfaces them while the tile still reads
       // pre-launch. `note` is used only as the column empty-state (zero rows).
       mode: 'pre-launch',
-      note: 'Oct 23 / field intel incoming',
+      note: 'field intel incoming',
       feed: { gameSlug: 'dmz' },      // feed_items scope for this game's column
       // Article URL builder: resolve the section from DMZ_ARTICLE_SECTION and emit
       // /dmz/<section>/<slug>. An unmapped slug returns null so the page drops that

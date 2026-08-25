@@ -89,6 +89,13 @@ export const EDITORS = {
   broker: {
     key:      'broker',
     status:   'incoming',  // NOT producing yet; no /intel/broker lane (wired in Step 6)
+    // COVERAGE (operator-confirmed 2026-08-25): the game whose economy this incoming
+    // editor deploys with. SINGLE SOURCE OF TRUTH for the root CLASSIFIED card's
+    // "deploys with <game>" line. The card resolves this slug to the game display name
+    // (and any date derives from that game's launch_date constant in lib/games/<slug>.js,
+    // never a hardcoded date on the card). Absent means the card falls back to "Incoming"
+    // with no game tie. Value 'dmz' is the DMZ extraction economy Broker covers at launch.
+    coverage: 'dmz',
     fullName: 'Vera Sloan',
     tag:      'Broker',
     role:     'Economy & Market',

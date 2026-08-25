@@ -1,58 +1,49 @@
 // app/page.js
-// NEUTRAL ROOT (network front door) -- the LIVE site root at /. Styled v2.
-// A lean, premium SHOWCASE ROUTER: brand hero (eyebrow -> depth thesis -> offer
-// -> live telemetry proof; NO game vocabulary, NO AI in the hero), game-agnostic
-// routing tiles (the signature element) + segmented pulse driven by
-// lib/network/rootGames.js (keyed by game_slug), the network editor's voice
-// (Vantage), a light join-free affordance, and a neutral footer where AI is
-// whispered as the engine.
+// NEUTRAL ROOT (network front door) -- premium redesign PASS A (visual + structural).
+// Ports the approved v7 mock treatment (burgundy/black/gold, Chakra Petch/Inter/JetBrains
+// Mono, the crosshair signature, the editorial desk, image-ready game tiles) over the
+// proven live root. PASS A is COSMETIC + STRUCTURAL ONLY: the honesty-load-bearing data
+// (telemetry values, the REPORTS count, the countdown, the subscribe storage, the receipts
+// panel) is rendered INERT/PLACEHOLDER here and wired in PASS B. Data fns + SEO metadata +
+// JSON-LD are preserved byte-for-byte from the live page. See docs/cnp-root-mock-v7.html
+// (visual target) + docs/cnp-root-redesign-spec.md (blueprint).
 //
-// CUTOVER: this replaced the Marathon homepage at /, which now lives at /marathon.
-// Indexed, self-canonical apex. See docs/network/cyberneticpunks-brand-positioning.md.
-//
-// STYLING (v2 visual pass): depth/elevation + a faint ambient texture give warmth
-// WITHOUT new hue -- the cool silver/platinum network identity is preserved. All
-// colors are design tokens (globals.css :root vars); the ONLY injected colors are
-// the two per-game accents (read from rootGames.js config) + the network's own
-// silver accent (--nr-vantage). ~90% neutral; accent only where it carries meaning
-// (brand dot, live dot, game spines, the live online-count, Vantage). Aliveness
-// comes from REAL live data (telemetry bar + freshness timestamps) + the existing
-// dot pulse -- no looping background animation. Character from the Orbitron /
-// Rajdhani / mono type hierarchy + structure.
-//
-// Game-specific vocabulary (Cradle, shells, loadout, FOB, Season 2, Runners, etc.)
-// MUST NOT appear in the root's own copy -- telemetry labels stay neutral
-// (games / online / articles). Game NAMES on tiles/columns and a game's own
-// content inside its segmented column are correct (routing + segmentation).
-//
-// The neutral root deliberately does NOT reuse components/Footer.js (that footer
-// carries Marathon vocabulary); a minimal neutral footer is rendered here.
+// Font loading is scoped to this page via next/font (no layout change). CSS is scoped
+// under `.cnp-root` so the mock's generic selectors cannot leak to other routes.
 
 import Link from 'next/link';
+import { Chakra_Petch, Inter, JetBrains_Mono } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { discourseHref } from '@/lib/discourse';
-import { minutesToNextRun } from '@/lib/cronCadence';
-import GameRoutingTile from '@/components/network/GameRoutingTile';
-import GamePulseColumn from '@/components/network/GamePulseColumn';
+import { entitySlugFor } from '@/lib/coverage';
 import AccountMenu from '@/components/AccountMenu';
+import HeroCrosshair from '@/components/network/HeroCrosshair';
+import ReceiptPanel from '@/components/network/ReceiptPanel';
 import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
+import { getEditorDisplay, editorInitial } from '@/lib/editors/roster';
+import { dmz } from '@/lib/games/dmz';
 
-// ── METADATA ────────────────────────────────────────────────
-// Neutral, network-level title (the layout title.template appends the site name;
-// no manual append here). Real brand-level description for the SERP pitch.
-// Indexed (inherits the layout's robots:index) with a self-referential canonical
-// to the apex -- this is the network root's own canonical home.
+// Premium type stack (mock Section 1). Scoped to this page; exposed as CSS variables the
+// ported CSS maps --display / --body / --mono onto.
+const chakra = Chakra_Petch({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--cnp-display', display: 'swap' });
+const inter = Inter({ subsets: ['latin'], variable: '--cnp-body', display: 'swap' });
+const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--cnp-mono', display: 'swap' });
+
+// -- METADATA -- title/canonical/JSON-LD are byte-for-byte unchanged from the live page.
+// The description string is edited ONCE in PASS B (the deliberate exception): the scope-free
+// superlative "analyzed deeper than anywhere else" is removed and replaced with the mechanism
+// statement "analyzed and verified", keeping every keyword. No comparative reaches the SERP.
 export const metadata = {
   title: 'Verified Competitive-Shooter Intelligence Network',
-  description: 'The verified competitive-shooter intelligence network - deep, verified intel for Marathon and extraction shooters. Every weapon, shell, and build analyzed deeper than anywhere else and verified against the live game.',
+  description: 'The verified competitive-shooter intelligence network - deep, verified intel for Marathon and extraction shooters. Every weapon, shell, and build analyzed and verified against the live game.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
 
 export const dynamic = 'force-dynamic';
 
-// ── HELPERS ─────────────────────────────────────────────────
+// -- HELPERS (unchanged) --------------------------------------
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   var diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
@@ -60,59 +51,42 @@ function timeAgo(dateStr) {
   if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
   return Math.floor(diff / 86400) + 'd ago';
 }
-
-// Compact number (1.2K, 3.4M) for the live online count.
 function formatNum(n) {
   if (n == null) return '--';
   if (n < 1000) return String(n);
   if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0) + 'K';
   return (n / 1000000).toFixed(1) + 'M';
 }
-
-// Thousands separators for the article count (a real big number reads as a
-// genuine depth flex). No locale dependency.
 function addCommas(n) {
   if (n == null) return '--';
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
-
-// Next-update label for the editorial cadence. Cadence math is centralized in
-// lib/cronCadence.js (single source anchored at 19:00 UTC, once daily).
-function nextUpdateLabel() {
-  var minsLeft = minutesToNextRun();
-  var h = Math.floor(minsLeft / 60);
-  var m = minsLeft % 60;
-  return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+// Whole days remaining until the DMZ launch, from the SINGLE machine date constant
+// (dmz.launch_date). No hardcoded "Oct 23" literal anywhere -- every date surface derives
+// from here. Null once the date has passed (the countdown then simply reads "live").
+function daysUntilLaunch() {
+  if (!dmz || !dmz.launch_date) return null;
+  var ms = new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now();
+  if (isNaN(ms)) return null;
+  var days = Math.ceil(ms / 86400000);
+  return days > 0 ? days : 0;
 }
 
-// Resolve the live pulse (online count, next update, latest feed items) for the
-// games that declare a live pulse. Pre-launch games need no query. Reads the SAME
-// sources the /marathon page uses: getLiveStats() + feed_items.
+// -- DATA FNS (unchanged -- PASS A does NOT re-wire data sources) -
 async function getNetworkPulse() {
   var liveGames = ROOT_GAMES.filter(function(g) { return g.pulse.mode === 'live'; });
   var feedGames = ROOT_GAMES.filter(function(g) { return g.pulse.feed && g.pulse.feed.gameSlug; });
-  var pulse = {};   // slug -> { online, nextUpdate }  (live games only -> tiles unchanged)
-  var feeds = {};   // slug -> [{ headline, slug, editor, when, href }]
-
+  var pulse = {};
+  var feeds = {};
   var liveStats = null;
   try { liveStats = await getLiveStats(); } catch (e) { liveStats = null; }
-  var nextUpd = nextUpdateLabel();
-
-  // Live pulse (online count + next update) -- LIVE games only. Pre-launch games
-  // (DMZ) get no pulse entry, so GameRoutingTile renders exactly as before.
   liveGames.forEach(function(g) {
     var online = null;
     if (liveStats && g.pulse.onlineSource && liveStats[g.pulse.onlineSource]) {
       online = liveStats[g.pulse.onlineSource].value;
     }
-    pulse[g.slug] = { online: online, nextUpdate: nextUpd };
+    pulse[g.slug] = { online: online };
   });
-
-  // Feed columns -- ANY game that declares a feed scope (live OR pre-launch), so
-  // published DMZ articles surface in its pulse column while the tile stays
-  // pre-launch. SAME select/filters/order/limit as before. Each row is mapped
-  // through the game's articleHref; a null href (unmapped slug) is dropped so the
-  // column never dead-links.
   await Promise.all(feedGames.map(async function(g) {
     feeds[g.slug] = [];
     try {
@@ -131,13 +105,9 @@ async function getNetworkPulse() {
       feeds[g.slug] = [];
     }
   }));
-
   return { pulse: pulse, feeds: feeds };
 }
 
-// NETWORK-LEVEL telemetry: total published article count + the latest publish
-// timestamp across ALL games (network-wide depth + freshness). Cheap: one head
-// count + one 1-row read. Game-agnostic (no per-game filter). force-dynamic.
 async function getNetworkStats() {
   var out = { articles: null, updated: null };
   try {
@@ -160,10 +130,6 @@ async function getNetworkStats() {
   return out;
 }
 
-// VANTAGE's latest surfaced framing. Reads the most recent NON-skipped
-// network_brief row (network-scoped, no game_slug). Null when none exists or the
-// latest cycle was skipped -> the voice slot shows its teaching placeholder.
-// Read-only here; generation lives in /api/network-editor.
 async function getNetworkVoice() {
   try {
     var { data } = await supabase
@@ -179,12 +145,6 @@ async function getNetworkVoice() {
   }
 }
 
-// NETWORK DESK feed: VANTAGE's PUBLISHED discourse articles across ALL games,
-// newest first, surfaced on the root under her brief. is_published=true +
-// tags-array-contains 'discourse' (drafts never appear here). Each row links to
-// its CANONICAL HOME via discourseHref (marathon -> /intel/<slug>, dmz ->
-// /dmz/discourse/<slug>); a null href (unknown game) is dropped so a card never
-// dead-links. Empty result -> the section renders nothing (no empty box).
 async function getNetworkDeskFeed() {
   try {
     var { data } = await supabase
@@ -209,10 +169,43 @@ async function getNetworkDeskFeed() {
   }
 }
 
-// Brand entity + site structured data. Organization + WebSite ONLY (brand-level);
-// no game-specific structured data on the root (that belongs on hubs/articles).
-// Name matches the site-wide entity ("CyberneticPunks") so Google sees ONE entity.
-// No SearchAction (there is no site-search endpoint to point at).
+// RECEIPTS: one REAL verified stat + its verified_source chain, for the receipts set piece.
+// Pulls the most-recently-verified weapon row that has a source AND a damage figure, and
+// resolves a TRAVERSABLE link to its entity page. FAIL-OPEN: any empty/malformed/thrown
+// result returns null, and the panel renders its clean static fallback instead of a
+// half-resolved chain, a null claim, or a dead link.
+async function getReceipt() {
+  try {
+    var res = await supabase
+      .from('weapon_stats')
+      .select('name, damage, damage_type, verified_source, patch_verified, updated_at')
+      .eq('verified', true)
+      .eq('game_slug', 'marathon')
+      .not('verified_source', 'is', null)
+      .not('damage', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    var r = res && res.data;
+    if (!r || !r.name || r.damage == null || !r.verified_source) return null;
+    var slug = entitySlugFor('weapon', r.name);
+    if (!slug) return null;
+    var srcLower = String(r.verified_source).toLowerCase();
+    var check = srcLower.indexOf('in-game') !== -1 ? 'Verified in-game, by hand' : 'Traced to the official source';
+    return {
+      claim: r.name + ' deals ' + r.damage + ' damage per shot' + (r.damage_type ? ' (' + r.damage_type + ' damage)' : ''),
+      source: String(r.verified_source),
+      check: check,
+      patch: r.patch_verified ? String(r.patch_verified) : null,
+      href: '/marathon/weapons/' + slug,
+      linkLabel: 'Inspect ' + r.name + ' on the weapon page',
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+// -- STRUCTURED DATA (PRESERVED byte-for-byte) ----------------
 const JSONLD = [
   {
     '@context': 'https://schema.org',
@@ -230,489 +223,598 @@ const JSONLD = [
   },
 ];
 
-export default async function NetworkRoot() {
-  var [data, voice, stats, deskFeed] = await Promise.all([getNetworkPulse(), getNetworkVoice(), getNetworkStats(), getNetworkDeskFeed()]);
+// -- EDITORIAL DESK (roster ground truth: 5 live + VANTAGE + BROKER) -
+// Order matches the approved mock. Cards render ONLY roster.js facts. BROKER (0 published)
+// is the locked/classified card; its "deploys with <game>" line reads from broker.coverage
+// (single source of truth), resolving the slug to the game display name -- no hardcoded date.
+const DESK_ORDER = ['nexus', 'cipher', 'dexter', 'ghost', 'miranda', 'vantage', 'broker'];
 
-  // Network telemetry (game-agnostic). online = sum across live games' pulses.
-  var onlineTotal = 0;
-  var anyOnline = false;
+function deskRankLabel(e, coverageLabel) {
+  if (e.status === 'network') return 'NETWORK';
+  if (e.status === 'incoming') return coverageLabel ? (coverageLabel + ' - INCOMING') : 'INCOMING';
+  return 'CORE';
+}
+
+export default async function NetworkRoot() {
+  var [data, voice, stats, deskFeed, receipt] = await Promise.all([getNetworkPulse(), getNetworkVoice(), getNetworkStats(), getNetworkDeskFeed(), getReceipt()]);
+
+  // Game tile meta + telemetry (real data, PASS B).
+  var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
+  var marathonOnline = (data.pulse.marathon && typeof data.pulse.marathon.online === 'number') ? data.pulse.marathon.online : null;
+  var launchDays = daysUntilLaunch();
+  var gameMeta = {};
   ROOT_GAMES.forEach(function(g) {
     var p = data.pulse[g.slug];
-    if (p && typeof p.online === 'number') { onlineTotal += p.online; anyOnline = true; }
+    gameMeta[g.slug] = {
+      online: p && typeof p.online === 'number' ? formatNum(p.online) : null,
+      updated: updatedLabel,
+    };
   });
-  var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
-  var teleItems = [
-    { label: 'GAMES', value: String(ROOT_GAMES.length) },
-    anyOnline ? { label: 'ONLINE', value: formatNum(onlineTotal) } : null,
-    stats.articles != null ? { label: 'REPORTS', value: addCommas(stats.articles) } : null,
-    updatedLabel ? { label: 'UPDATED', value: updatedLabel } : null,
-    { label: 'NEXT DROP', value: nextUpdateLabel() },
-  ].filter(Boolean);
+
+  // BROKER coverage -> display name (single-sourced from the game config, never hardcoded).
+  var brokerCoverageLabel = null;
+  var brokerEntry = getEditorDisplay('broker');
+  if (brokerEntry && brokerEntry.coverage) {
+    brokerCoverageLabel = (brokerEntry.coverage === dmz.slug) ? dmz.displayName : String(brokerEntry.coverage).toUpperCase();
+  }
+
+  var deskCards = DESK_ORDER.map(function(k) { return getEditorDisplay(k); }).filter(Boolean);
 
   return (
-    <div className="nr-page">
+    <div className={'cnp-root ' + chakra.variable + ' ' + inter.variable + ' ' + jbmono.variable}>
       {JSONLD.map(function(node, i) {
         return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }} />;
       })}
+      <style>{CNP_CSS}</style>
 
-      <style>{NR_CSS}</style>
+      <div className="atmos" aria-hidden="true" />
 
-      {/* ══ BRAND BANNER ══ */}
-      <header className="nr-header">
-        <div className="nr-wrap nr-header-row">
-          <div className="nr-brand">
-            <span className="nr-brand-dot" aria-hidden="true" />
-            <span className="nr-brand-name">CYBERNETIC <span className="nr-brand-accent">PUNKS</span></span>
+      {/* NAV */}
+      <nav>
+        <div className="wrap nav-in">
+          <div className="brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cnp-512.png" alt="Cybernetic Punks" width="38" height="38" />
+            <span className="wm">CYBERNETIC <b>PUNKS</b></span>
           </div>
-          <AccountMenu align="right" />
+          <div className="nav-right">
+            <div className="nav-links">
+              <a href="#games">Games</a>
+              <a href="#proof">Why us</a>
+              <a href="#desk">Editors</a>
+              <a href="#how">How it works</a>
+            </div>
+            <AccountMenu align="right" />
+          </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="nr-main">
-
-        {/* ══ HERO BAND ══ (eyebrow -> thesis -> offer -> live proof; depth + faint texture) */}
-        <section className="nr-hero-band" aria-labelledby="nr-thesis">
-          <div className="nr-ambient" aria-hidden="true" />
-          <div className="nr-wrap nr-hero">
-            {/* Broadcast top row: mono network label (the eyebrow) + LIVE pill.
-                The LIVE moment lives here now (removed from the telemetry bar) so
-                there is a single, high-contrast live signal. */}
-            <div className="nr-hero-top">
-              <p className="nr-eyebrow">No hype. Just intel.</p>
-              <span className="nr-livepill"><span className="nr-livepill-dot" aria-hidden="true" />LIVE</span>
-            </div>
-            <p className="nr-kicker">Everyone has opinions. We have the data.</p>
-            <h1 id="nr-thesis" className="nr-h1">
-              The verified intelligence network for competitive shooters.
-            </h1>
-            <p className="nr-subhead">
-              Human-verified intel across every game you grind. No hype, just data.
-            </p>
-            {/* Secondary tagline (reuses the kicker style -- no new styling). Moved
-                here from the H1 slot; Justin to decide keep/drop next pass after
-                seeing the new headline in place. */}
-            <p className="nr-kicker">Where the serious players check first.</p>
-            <div className="nr-cta-row">
-              <a href="#nr-subscribe" className="nr-cta nr-cta-primary">Get intel drops</a>
-              <a href="#nr-zones" className="nr-cta nr-cta-secondary">Explore the network</a>
-            </div>
-            <div className="nr-pitch">
-              <ul className="nr-points">
-                <li className="nr-point">
-                  <span className="nr-point-tick" aria-hidden="true" />
-                  <span className="nr-point-text"><span className="nr-point-lead">Verified against the live game</span><span className="nr-point-clause"> — every stat checked in-game, never scraped</span></span>
-                </li>
-                <li className="nr-point">
-                  <span className="nr-point-tick" aria-hidden="true" />
-                  <span className="nr-point-text"><span className="nr-point-lead">An engine that never sleeps</span><span className="nr-point-clause"> — every weapon, shell, and patch tracked</span></span>
-                </li>
-                <li className="nr-point">
-                  <span className="nr-point-tick" aria-hidden="true" />
-                  <span className="nr-point-text"><span className="nr-point-lead">Analyzed deeper than anywhere else</span><span className="nr-point-clause"> — the most thorough intel in the genre</span></span>
-                </li>
-                <li className="nr-point">
-                  <span className="nr-point-tick" aria-hidden="true" />
-                  <span className="nr-point-text"><span className="nr-point-lead">No hype. Just intel.</span><span className="nr-point-clause"> — the standard others can&apos;t match</span></span>
-                </li>
-              </ul>
-            </div>
-
-            {/* LIVE TELEMETRY -- the centerpiece. Network-level, game-agnostic.
-                ONLINE gets the one accent color; every other stat stays quiet. */}
-            <div className="nr-telemetry" role="group" aria-label="Live network status">
-              {teleItems.map(function(it) {
-                return (
-                  <span key={it.label} className={'nr-tele-item' + (it.label === 'ONLINE' ? ' nr-tele-accent' : '')}>
-                    <span className="nr-tele-val">{it.value}</span>
-                    <span className="nr-tele-label">{it.label}</span>
-                  </span>
-                );
-              })}
-            </div>
-
-            {/* NETWORK VOICE (Vantage) -- featured editorial callout when filled
-                (the default once her cron runs); a teaching placeholder otherwise
-                so the slot reads as a known feature, never unfinished. */}
-            {voice && voice.hero_line ? (
-              <figure className="nr-voice">
-                <figcaption className="nr-voice-byline">
-                  <span className="nr-voice-dot" aria-hidden="true" />
-                  Vivian Cross / Vantage <span className="nr-voice-role">Network editor</span>
-                </figcaption>
-                <blockquote className="nr-voice-line">{voice.hero_line}</blockquote>
-                {voice.brief && <p className="nr-voice-brief">{voice.brief}</p>}
-              </figure>
-            ) : (
-              <div className="nr-voice nr-voice-empty" role="note" aria-label="Network editor briefing">
-                <span className="nr-voice-byline">
-                  <span className="nr-voice-dot" aria-hidden="true" />
-                  Vantage <span className="nr-voice-role">Network Editor</span>
-                </span>
-                <p className="nr-voice-line nr-voice-teaching">The network editor&apos;s read on what is moving posts here each cycle.</p>
+      <main>
+        {/* HERO */}
+        <header className="hero">
+          <div className="wrap hero-grid">
+            <div>
+              <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
+              <h1>The verified intel network for <span className="hl">competitive shooters</span>.</h1>
+              <p className="sub">Every stat <b>checked by hand</b>, in-game. No AI slop, no reposted rumors, no hype cycles - just the real numbers, sourced and verified, for Marathon and MW4&apos;s DMZ.</p>
+              <div className="cta-row">
+                <a href="#join" className="btn btn-gold">Get the intel drops &rarr;</a>
+                <a href="#games" className="btn btn-ghost">Explore the network</a>
               </div>
-            )}
+            </div>
+            <HeroCrosshair />
+          </div>
 
-            {/* NETWORK DESK -- Vantage's PUBLISHED discourse across games, directly
-                under her brief. Only published pieces surface (drafts never); each
-                links to its canonical subject-game home. Renders nothing when empty
-                (no box), so it only appears once there is real coverage. */}
-            {deskFeed.length > 0 && (
-              <section className="nr-desk" aria-label="From the network desk">
-                <div className="nr-desk-head">
-                  <span className="nr-desk-tick" aria-hidden="true" />
-                  <span className="nr-desk-label">From the network desk</span>
-                </div>
-                <ul className="nr-desk-list">
-                  {deskFeed.map(function(a) {
-                    return (
-                      <li key={a.slug}>
-                        <Link href={a.href} className="nr-desk-row">
-                          <span className="nr-desk-meta">
-                            <span className="nr-desk-game">{a.game_slug}</span>
-                            {a.creator && <span className="nr-desk-creator">on {a.creator}</span>}
-                            <span className="nr-desk-when">{a.when}</span>
-                          </span>
-                          <span className="nr-desk-headline">{a.headline}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
+          {/* TELEMETRY -- real data. Each cell labelled as exactly what it measures. */}
+          <div className="wrap">
+            <div className="telemetry">
+              <div className="tel-head"><span>{'// NETWORK TELEMETRY'}</span><span className="rec"><i aria-hidden="true" />REC</span></div>
+              <div className="tel-grid">
+                <div className="tel-cell"><div className="lbl">Games Covered</div><div className="val">{String(ROOT_GAMES.length)}</div></div>
+                <div className="tel-cell pop"><div className="lbl">Marathon Players (Steam)</div><div className="val">{marathonOnline != null ? formatNum(marathonOnline) : '--'}</div></div>
+                <div className="tel-cell"><div className="lbl">Reports Published</div><div className="val">{stats.articles != null ? addCommas(stats.articles) : '--'}</div></div>
+                <div className="tel-cell"><div className="lbl">Last Verified Update</div><div className="val" style={{ fontSize: '22px' }}>{updatedLabel || '--'}</div></div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* PROOF / THE STANDARD */}
+        <section className="proof" id="proof">
+          <div className="wrap">
+            <div className="sec-eyebrow">The standard</div>
+            <h2>Every stat verified in-game. Every claim traced to source.</h2>
+            <p className="sec-sub">Game guides are drowning in unsourced, AI-generated content - stat pages scraped from other stat pages, patch numbers copied without a check. We built the opposite: a first-party data moat, verified by a human, in the actual game.</p>
+            <div className="proof-grid">
+              <div className="card them">
+                <div className="tag">{'// The problem'}</div>
+                <ul>
+                  <li><span className="ic">&#10007;</span> AI-generated stat pages scraped from other AI-generated stat pages</li>
+                  <li><span className="ic">&#10007;</span> Patch numbers reposted without ever being confirmed</li>
+                  <li><span className="ic">&#10007;</span> Tier-lists tuned for clicks, with no sourcing behind them</li>
+                  <li><span className="ic">&#10007;</span> Numbers you are just asked to trust</li>
                 </ul>
-              </section>
-            )}
+              </div>
+              <div className="card us">
+                <div className="tag">{'// Our method'}</div>
+                <ul>
+                  <li><span className="ic">&#10003;</span> Every stat verified in-game, by hand, before it ships</li>
+                  <li><span className="ic">&#10003;</span> Every claim traced to its source</li>
+                  <li><span className="ic">&#10003;</span> Unconfirmed data flagged as unconfirmed - never faked</li>
+                  <li><span className="ic">&#10003;</span> A first-party data moat, not a scraped aggregator</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* ══ BODY ══ */}
-        <div className="nr-wrap nr-body">
-
-          {/* ROUTING TILES (signature; game-agnostic, one per ROOT_GAMES entry) */}
-          <nav id="nr-zones" className="nr-section" aria-label="Game hubs">
-            <h2 className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Choose your game</h2>
-            <div className="nr-grid nr-stagger">
-              {ROOT_GAMES.map(function(game) {
-                return <GameRoutingTile key={game.slug} game={game} pulse={data.pulse[game.slug]} />;
-              })}
-            </div>
-          </nav>
-
-          {/* GAME-SEGMENTED PULSE (per-game columns, never blended) */}
-          <section className="nr-section" aria-labelledby="nr-pulse-h">
-            <h2 id="nr-pulse-h" className="nr-h2">
-              <span className="nr-h2-tick" aria-hidden="true" />Network pulse
-              {updatedLabel && <span className="nr-h2-meta">updated {updatedLabel}</span>}
-            </h2>
-            {/* Vantage's cross-game brief now lives in the featured hero callout
-                (with her hero line); the pulse section stays the per-game columns. */}
-            <div className="nr-pulse-grid nr-stagger">
-              {ROOT_GAMES.map(function(game) {
-                return <GamePulseColumn key={game.slug} game={game} items={data.feeds[game.slug]} />;
-              })}
+        {/* NETWORK VOICE (Vantage) -- PRESERVED live content, re-skinned */}
+        {voice && voice.hero_line && (
+          <section className="voice-sec">
+            <div className="wrap">
+              <figure className="voice">
+                <figcaption className="voice-by"><span className="voice-dot" aria-hidden="true" />Vivian Cross / Vantage <span className="voice-role">Network editor</span></figcaption>
+                <blockquote className="voice-line">{voice.hero_line}</blockquote>
+                {voice.brief && <p className="voice-brief">{voice.brief}</p>}
+              </figure>
             </div>
           </section>
+        )}
 
-          {/* TOOLS ROW -- the search-strength reference pages (these are the pages
-              that actually rank). Real links, game-agnostic network utilities. */}
-          <section className="nr-section" aria-labelledby="nr-tools-h">
-            <h2 id="nr-tools-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Tools &amp; references</h2>
-            <div className="nr-tools nr-stagger">
+        {/* GAMES -- image-ready tiles (real art + real current meta) */}
+        <section className="games" id="games">
+          <div className="wrap">
+            <div className="sec-eyebrow">Choose your game</div>
+            <h2>Covering the shooters worth grinding.</h2>
+            <div className="game-grid">
+              <Link href="/marathon" className="game mara" style={{ '--img': "url('/images/games/marathon-hero.jpg')" }}>
+                <div className="art" aria-hidden="true" /><div className="scrim" aria-hidden="true" />
+                <div className="status"><i aria-hidden="true" />Live now</div>
+                <div className="meta">Bungie&apos;s extraction shooter{gameMeta.marathon && gameMeta.marathon.online ? ' - ' + gameMeta.marathon.online + ' players tracked' : ''}{gameMeta.marathon && gameMeta.marathon.updated ? ' - updated ' + gameMeta.marathon.updated : ''}</div>
+                <div className="go">Enter the Marathon hub &rarr;</div>
+              </Link>
+              <Link href="/dmz" className="game dmz" style={{ '--img': "url('/images/games/dmz-hero.jpg')" }}>
+                <div className="art" aria-hidden="true" /><div className="scrim" aria-hidden="true" />
+                <div className="status dmz-pill"><i aria-hidden="true" />Launches with DMZ</div>
+                <div className="meta">Call of Duty: MW4 extraction &middot; Hajin Exclusion Zone &middot; pre-launch intel building</div>
+                <div className="go">Get day-one coverage &rarr;</div>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* NETWORK PULSE -- PRESERVED "Latest from" feeds (real data, re-skinned) */}
+        <section className="pulse-sec">
+          <div className="wrap">
+            <div className="sec-eyebrow">Network pulse{updatedLabel ? ' - updated ' + updatedLabel : ''}</div>
+            <h2>The latest, from the desk.</h2>
+            <div className="pulse-grid">
+              {ROOT_GAMES.map(function(game) {
+                var rows = data.feeds[game.slug] || [];
+                return (
+                  <div key={game.slug} className="pcol" style={{ '--accent': (game.theme && game.theme.primary) || 'var(--gold)' }}>
+                    <div className="pcol-head"><span className="pcol-mark" aria-hidden="true" /><span className="pcol-title">Latest from {game.label}</span></div>
+                    <div className="pcol-body">
+                      {rows.length > 0 ? rows.map(function(it) {
+                        var ed = getEditorDisplay(it.editor);
+                        return (
+                          <Link key={it.slug} href={it.href} className="prow">
+                            <span className="prow-meta">
+                              <span className="prow-ed">{ed && ed.symbol ? ed.symbol + ' ' : ''}{it.editor}</span>
+                              <span className="prow-when">{it.when}</span>
+                            </span>
+                            <span className="prow-head">{it.headline}</span>
+                          </Link>
+                        );
+                      }) : (
+                        <p className="pcol-empty">{game.pulse.mode === 'live' ? 'Quiet cycle - nothing new to verify yet.' : 'Pre-launch intel building.'}</p>
+                      )}
+                    </div>
+                    {Array.isArray(game.keys) && game.keys.length > 0 && (
+                      <div className="pkeys">
+                        <span className="pkeys-label">{game.label} reference</span>
+                        <span className="pkeys-row">
+                          {game.keys.map(function(k) { return <Link key={k.href} href={k.href} className="pkey">{k.label}</Link>; })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* NETWORK DESK FEED -- PRESERVED discourse (real data), re-skinned */}
+        {deskFeed.length > 0 && (
+          <section className="deskfeed-sec">
+            <div className="wrap">
+              <div className="sec-eyebrow">From the network desk</div>
+              <ul className="deskfeed">
+                {deskFeed.map(function(a) {
+                  return (
+                    <li key={a.slug}>
+                      <Link href={a.href} className="deskfeed-row">
+                        <span className="deskfeed-meta"><span className="deskfeed-game">{a.game_slug}</span>{a.creator ? <span className="deskfeed-creator">on {a.creator}</span> : null}<span className="deskfeed-when">{a.when}</span></span>
+                        <span className="deskfeed-head">{a.headline}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {/* THE EDITORIAL DESK -- roster ground truth */}
+        <section className="desk" id="desk">
+          <div className="wrap">
+            <div className="sec-eyebrow">The editorial desk</div>
+            <h2>An AI newsroom. A human on the numbers.</h2>
+            <p className="sec-sub">Specialist editors work the beats - meta, analysis, builds, community, field intel, and the cross-game view. Every number they publish is human-checked before it ships - against the game where it is live, against official sources where it is not. What can&apos;t be confirmed yet ships flagged. That is the difference between intel and noise.</p>
+            <div className="desk-grid">
+              {deskCards.map(function(e) {
+                var locked = e.status === 'incoming';
+                var isNetwork = e.status === 'network';
+                var rank = deskRankLabel(e, brokerCoverageLabel);
+                var lane = (!locked && !isNetwork) ? ('/marathon/intel/' + e.key) : null;
+                var beat = locked
+                  ? ('Beat - ' + e.role + (brokerCoverageLabel ? ' - deploys with ' + brokerCoverageLabel : ''))
+                  : ('Beat - ' + e.role);
+                var inner = (
+                  <>
+                    <div className="photo" style={{ '--op': e.color }}>
+                      <div className="cbar" aria-hidden="true" />
+                      {/* image-ready: /images/editors/<key>.jpg drops in here when generated */}
+                      <div className="ph-badge" aria-hidden="true">{editorInitial(e.key)}</div>
+                      {locked ? <div className="classified-stamp">Classified</div> : <div className="ph-tag">{'// PORTRAIT PENDING'}</div>}
+                    </div>
+                    <div className="body">
+                      <div className="rank">{rank}</div>
+                      <div className="code">{e.key.toUpperCase()}</div>
+                      <div className="handle">{e.role}</div>
+                      <div className="name">{locked ? <span className="redact">&nbsp;{e.fullName}&nbsp;</span> : e.fullName}</div>
+                      <div className="role">{e.bio}</div>
+                      <div className="beat" dangerouslySetInnerHTML={{ __html: beat.replace(/&/g, '&amp;') }} />
+                    </div>
+                  </>
+                );
+                var cls = 'op' + (locked ? ' locked' : '') + (isNetwork ? ' network' : '');
+                return lane
+                  ? <Link key={e.key} href={lane} className={cls} style={{ '--op': e.color }}>{inner}</Link>
+                  : <div key={e.key} className={cls} style={{ '--op': e.color }}>{inner}</div>;
+              })}
+            </div>
+            <p className="portrait-note">{'// Editor portraits are being generated - cards carry the real art once created.'}</p>
+          </div>
+        </section>
+
+        {/* RECEIPTS -- the set piece: a REAL verified stat chain, animated + traversable.
+            Fail-open in the client component: null receipt -> clean static true claim. */}
+        <section className="receipts" id="receipts">
+          <div className="wrap">
+            <div className="sec-eyebrow">Inspectable by design</div>
+            <h2>Every number, traceable to its receipt.</h2>
+            <p className="sec-sub">Not a promise - a chain you can walk. Here is a real stat resolving from its source to the page you can check it on.</p>
+            <ReceiptPanel receipt={receipt} />
+          </div>
+        </section>
+
+        {/* HOW IT WORKS */}
+        <section className="how" id="how">
+          <div className="wrap">
+            <div className="sec-eyebrow">How the intel gets made</div>
+            <h2>Transparent by design.</h2>
+            <div className="how-grid">
+              <div className="how-card"><div className="how-tag">{'// 01 - Pulled from the source'}</div><p>Official patch notes and dev channels lead. Community signal tells us what is hot - never what is true.</p></div>
+              <div className="how-card"><div className="how-tag">{'// 02 - Verified in-game'}</div><p>Numbers get checked by hand, in the actual game, before they enter the data. Unconfirmed data stays flagged.</p></div>
+              <div className="how-card"><div className="how-tag">{'// 03 - Published, sourced'}</div><p>The editorial desk writes only from verified data. What we can&apos;t confirm, we say so - plainly.</p></div>
+            </div>
+          </div>
+        </section>
+
+        {/* TOOLS & REFERENCES -- PRESERVED */}
+        <section className="tools-sec">
+          <div className="wrap">
+            <div className="sec-eyebrow">Tools &amp; references</div>
+            <h2>The reference pages, one click away.</h2>
+            <div className="tools-grid">
               {[
-                { href: '/marathon/meta',        glyph: '◈', label: 'Tier list',     sub: 'Weapons & shells ranked' },
-                { href: '/marathon/leaderboard', glyph: '▲', label: 'Leaderboard',   sub: 'Top runners tracked' },
-                { href: '/marathon/status',      glyph: '●', label: 'Server status',  sub: 'Player activity & errors' },
-                { href: '/marathon/player-count',glyph: '◱', label: 'Player count',   sub: 'Live Steam concurrents' },
-                { href: '/marathon/weapons',     glyph: '▣', label: 'Weapons',        sub: 'Every stat, every gun' },
-                { href: '/marathon/mods',        glyph: '⬡', label: 'Mods',           sub: 'Every mod, every slot' },
+                { href: '/marathon/meta',         label: 'Tier list',      sub: 'Weapons and shells ranked' },
+                { href: '/marathon/leaderboard',  label: 'Leaderboard',    sub: 'Top runners tracked' },
+                { href: '/marathon/status',       label: 'Server status',  sub: 'Player activity and errors' },
+                { href: '/marathon/player-count', label: 'Player count',   sub: 'Live Steam concurrents' },
+                { href: '/marathon/weapons',      label: 'Weapons',        sub: 'Every stat, every gun' },
+                { href: '/marathon/mods',         label: 'Mods',           sub: 'Every mod, every slot' },
               ].map(function(t) {
                 return (
-                  <Link key={t.href} href={t.href} className="nr-tool">
-                    <span className="nr-tool-glyph" aria-hidden="true">{t.glyph}</span>
-                    <span className="nr-tool-text">
-                      <span className="nr-tool-label">{t.label}</span>
-                      <span className="nr-tool-sub">{t.sub}</span>
-                    </span>
-                    <span className="nr-tool-arrow" aria-hidden="true">&rarr;</span>
+                  <Link key={t.href} href={t.href} className="tool">
+                    <span className="tool-text"><span className="tool-label">{t.label}</span><span className="tool-sub">{t.sub}</span></span>
+                    <span className="tool-arrow" aria-hidden="true">&rarr;</span>
                   </Link>
                 );
               })}
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* ABOUT THE NETWORK -- short blurb + link to the full /about page.
-              Server-rendered, crawlable. Network accent (red) on the link only. */}
-          <section className="nr-section" aria-labelledby="nr-about-h">
-            <h2 id="nr-about-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />What is Cybernetic Punks?</h2>
-            <div className="nr-about">
-              <p className="nr-about-body">
-                The verified intelligence network for competitive shooters &mdash; Marathon now, Call of Duty&apos;s DMZ next, more to come. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.
-              </p>
-              <Link href="/about" className="nr-about-link">How the network works &rarr;</Link>
-            </div>
-          </section>
+        {/* WHAT IS CNP -- PRESERVED */}
+        <section className="about-sec">
+          <div className="wrap">
+            <div className="sec-eyebrow">What is Cybernetic Punks?</div>
+            <p className="about-body">The verified intelligence network for competitive shooters - Marathon now, Call of Duty&apos;s DMZ next, more to come. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
+            <Link href="/about" className="about-link">How the network works &rarr;</Link>
+          </div>
+        </section>
 
-          {/* SUBSCRIBE -- network-level email capture (shared list, source-tagged). */}
-          <section id="nr-subscribe" className="nr-section" aria-labelledby="nr-sub-h">
-            <h2 id="nr-sub-h" className="nr-h2"><span className="nr-h2-tick" aria-hidden="true" />Get intel drops</h2>
-            <div className="nr-subscribe">
-              <div className="nr-subscribe-copy">
-                <p className="nr-subscribe-lead">One email when the meta moves.</p>
-                <p className="nr-subscribe-clause">Network-wide intel across every game we cover. No spam, no hype &mdash; just the drops that matter.</p>
-              </div>
+        {/* SUBSCRIBE -- real DMZ-launch notify capture (NetworkSubscribeForm -> email_signups).
+            Countdown days derive from the single dmz.launch_date constant. */}
+        <section className="subscribe" id="join">
+          <div className="wrap inner">
+            {launchDays != null && (
+              <div className="countdown">&#9670; {launchDays > 0 ? <>DMZ LAUNCHES IN <b>{launchDays} {launchDays === 1 ? 'DAY' : 'DAYS'}</b></> : <>DMZ IS <b>LIVE</b></>}</div>
+            )}
+            <h2>Get on the list before DMZ drops.</h2>
+            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - for Marathon now, and DMZ the day the Hajin Exclusion Zone opens. No spam, no hype. Only when there is something real to send.</p>
+            <div className="sub-form-slot">
               <NetworkSubscribeForm />
             </div>
-          </section>
-
-        </div>
+            <p className="microcopy">{'// Unsubscribe anytime; we email when the data changes, not on a schedule.'}</p>
+          </div>
+        </section>
       </main>
 
-      {/* ══ NEUTRAL FOOTER ══ (whispered AI line; no game vocabulary) */}
-      <footer className="nr-footer">
-        <div className="nr-wrap">
-          <p className="nr-footer-tag">
-            <span className="nr-footer-dot" aria-hidden="true" />
-            Cybernetic Punks - the verified competitive-shooter intelligence network. No hype. Just intel.
-          </p>
-          <p className="nr-footer-ai">powered by a live intelligence pipeline - updated continuously, verified against patch data</p>
-          <Link href="/about" className="nr-footer-link">About the network &rarr;</Link>
+      {/* FOOTER */}
+      <footer>
+        <div className="wrap foot-in">
+          <div className="brand foot-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cnp-512.png" alt="Cybernetic Punks" width="34" height="34" />
+            <div>
+              <span className="wm">CYBERNETIC <b>PUNKS</b></span>
+              <p className="whisper">An AI-operated intelligence network with a human-verified data moat. The machines write; a human checks the numbers.</p>
+            </div>
+          </div>
+          <div className="foot-links">
+            <Link href="/marathon">Marathon</Link>
+            <Link href="/dmz">DMZ</Link>
+            <Link href="/about">About</Link>
+          </div>
         </div>
       </footer>
     </div>
   );
 }
 
-// ── STYLES ──────────────────────────────────────────────────
-// All colors are design tokens (var(--*)); the only injected accents are the
-// per-game accents (inline, from rootGames.js config) and the network's silver
-// (--nr-vantage). Depth via --nr-elev + inset highlights. Motion, hover,
-// :focus-visible, reduced-motion, and responsive collapse are centralized here.
-const NR_CSS = `
-/* NETWORK PALETTE (two tiers, restrained):
-   - The RED brand accent (var(--red), CP red from the logo) carries the few
-     "pops": the LIVE pill, the ONLINE stat, and the primary CTA -- alongside the
-     pre-existing brand dot / wordmark / footer dot. This replaced Marathon's green
-     so the network no longer reads as a Marathon site.
-   - --nr-vantage stays the quiet, NEUTRAL structural accent (silver) for the many
-     small ticks/borders/bylines, so red does not blanket the page (restraint).
-   Neither is a per-game color: Marathon green + DMZ forest come from
-   game.theme.primary and are never recolored here. */
-.nr-page { background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; --nr-vantage: #c8d4e0; --nr-elev: 0 3px 16px rgba(0,0,0,0.30); }
-.nr-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
-/* Brand banner */
-.nr-header { border-bottom: 1px solid var(--border-subtle); background: var(--bg-nav); }
-.nr-header-row { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; padding-bottom: 16px; }
-.nr-brand { display: flex; align-items: center; gap: 9px; }
-.nr-brand-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
-.nr-brand-name { font-family: var(--font-orbitron); font-size: 15px; font-weight: 800; letter-spacing: 3px; color: var(--text-primary); }
-.nr-brand-accent { color: var(--red); }
-.nr-join { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border); border-radius: 2px; padding: 7px 14px; transition: color .15s ease, border-color .15s ease, background .15s ease; }
-.nr-join:hover { color: var(--text-primary); border-color: var(--text-tertiary); background: var(--bg-card); }
-
-.nr-main { flex: 1; }
-
-/* ── HERO BAND ── recessed gradient + faint static ambient texture (depth, no hue) */
-.nr-hero-band { position: relative; overflow: hidden; background: linear-gradient(180deg, var(--bg-nav) 0%, var(--bg-page) 100%); border-bottom: 1px solid var(--border-subtle); padding-top: 56px; padding-bottom: 44px; }
-.nr-ambient { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.nr-ambient::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 30px 30px; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
-.nr-ambient::after { content: ""; position: absolute; top: -140px; right: -110px; width: 460px; height: 460px; border: 1px solid rgba(255,255,255,0.03); transform: rotate(45deg); }
-.nr-hero { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
-
-/* Broadcast top row -- mono network label (eyebrow) left, LIVE pill right. */
-.nr-hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%; }
-.nr-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
-.nr-eyebrow::before { content: "// "; color: var(--nr-vantage); }
-/* LIVE pill -- a red broadcast accent (var(--red), CP brand); everything else quiet. */
-.nr-livepill { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--red); background: var(--bg-nav); border: 1px solid var(--red); border-radius: 2px; padding: 4px 10px; }
-.nr-livepill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); box-shadow: 0 0 5px var(--red); animation: pulse-glow 2.4s ease-in-out infinite; }
-/* Punchy short headline -> sized up to be the confident anchor of the hero
-   (the strongest statement on the page); a tight max-width gives it a bold
-   two-line stack on desktop, scaling down responsively via clamp. */
-.nr-h1 { font-family: var(--font-orbitron); font-weight: 900; letter-spacing: -0.5px; line-height: 1.05; font-size: clamp(34px, 6vw, 58px); color: var(--text-primary); margin: 0; max-width: 18ch; }
-/* Pitch: kicker lead-in + 4 differentiator bullets (designed, not a dash list).
-   Small silver diamond ticks (accent = network identity); bold lead + muted
-   clause per bullet; tight rhythm. Real ul/li; ticks are decorative. */
-.nr-pitch { display: flex; flex-direction: column; gap: 12px; max-width: 62ch; }
-/* Punchy positioning line (kept) directly under the H1; the plain-language
-   subhead follows it for newcomer clarity. */
-.nr-kicker { font-size: 18px; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin: 0; }
-.nr-subhead { font-size: clamp(15px, 2.2vw, 18px); font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin: 0; max-width: 54ch; }
-/* Hero CTAs: primary (red fill) + secondary (outline). Anchor links -> no JS. */
-.nr-cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
-.nr-cta { font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 3px; border: 1px solid var(--border); transition: transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease; }
-.nr-cta-primary { background: var(--red); border-color: var(--red); color: var(--text-primary); }
-.nr-cta-primary:hover { transform: translateY(-1px); }
-.nr-cta-secondary { background: transparent; color: var(--text-primary); }
-.nr-cta-secondary:hover { border-color: var(--text-tertiary); background: var(--bg-card); }
-.nr-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-.nr-point { display: flex; align-items: flex-start; gap: 11px; }
-.nr-point-tick { flex-shrink: 0; width: 6px; height: 6px; margin-top: 7px; border-radius: 1px; background: var(--nr-vantage); transform: rotate(45deg); }
-.nr-point-text { font-size: 14px; line-height: 1.45; }
-.nr-point-lead { color: var(--text-primary); font-weight: 700; }
-.nr-point-clause { color: var(--text-secondary); }
-
-/* ── LIVE TELEMETRY (centerpiece) ── elevated bar; dividers between items */
-/* Bold mono stat strip -- darker recessed bar for contrast; ONLINE is the lone
-   accent-colored stat, the rest stay primary/quiet. */
-.nr-telemetry { display: flex; align-items: center; flex-wrap: wrap; gap: 0 18px; margin-top: 18px; padding: 16px 20px; background: var(--bg-nav); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
-.nr-tele-item { display: inline-flex; align-items: baseline; gap: 8px; padding-left: 18px; border-left: 1px solid var(--border-subtle); }
-.nr-tele-item:first-child { padding-left: 0; border-left: 0; }
-.nr-tele-val { font-family: var(--font-orbitron); font-size: 18px; font-weight: 900; letter-spacing: 0.3px; color: var(--text-primary); }
-.nr-tele-accent .nr-tele-val { color: var(--red); }
-.nr-tele-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
-
-/* ── NETWORK VOICE (Vantage) ── featured callout; silver spine + quote */
-.nr-voice { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; align-self: stretch; max-width: 760px; padding: 16px 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
-.nr-voice-byline { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--nr-vantage); }
-.nr-voice-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--nr-vantage); flex-shrink: 0; }
-.nr-voice-role { color: var(--text-tertiary); }
-.nr-voice-line { font-size: 18px; font-weight: 500; line-height: 1.5; color: var(--text-primary); margin: 0; font-style: italic; }
-.nr-voice-teaching { font-size: 14px; color: var(--text-tertiary); }
-.nr-voice-empty { border-left-color: var(--border); }
-/* Vantage's cross-game brief, featured directly under her hero line. */
-.nr-voice-brief { font-size: 14px; font-weight: 500; line-height: 1.55; color: var(--text-secondary); margin: 0; }
-
-/* ── NETWORK DESK feed ── Vantage's published discourse, under her brief. Network
-   red chrome (spine + tick + hover) per the brand pass; neutral game tags. */
-.nr-desk { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; align-self: stretch; max-width: 760px; padding: 16px 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--red); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
-.nr-desk-head { display: flex; align-items: center; gap: 8px; }
-.nr-desk-tick { width: 8px; height: 8px; border-radius: 1px; background: var(--red); flex-shrink: 0; }
-.nr-desk-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
-.nr-desk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.nr-desk-row { display: block; text-decoration: none; padding: 11px 13px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
-.nr-desk-row:hover { background: var(--bg-card-hover); border-left-color: var(--red); }
-.nr-desk-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-.nr-desk-game { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px; line-height: 1.5; }
-.nr-desk-creator { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
-.nr-desk-when { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); margin-left: auto; }
-.nr-desk-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
-
-/* ── SECTIONS ── header gets an accent tick + optional freshness meta */
-.nr-body { display: flex; flex-direction: column; gap: 64px; padding-top: 56px; padding-bottom: 56px; }
-.nr-section { display: flex; flex-direction: column; gap: 20px; }
-.nr-h2 { display: flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-secondary); margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
-.nr-h2-tick { width: 9px; height: 9px; border-radius: 1px; background: var(--nr-vantage); flex-shrink: 0; }
-.nr-h2-meta { margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); text-transform: none; }
-
-/* Grids */
-.nr-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.nr-pulse-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-
-/* ── Tools row ── search-strength reference pages; compact link cards */
-.nr-tools { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-.nr-tool { display: flex; align-items: center; gap: 13px; padding: 16px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); transition: transform .16s ease, border-color .16s ease; }
-.nr-tool:hover { transform: translateY(-2px); border-color: var(--text-disabled); }
-.nr-tool-glyph { font-size: 18px; line-height: 1; color: var(--nr-vantage); flex-shrink: 0; }
-.nr-tool-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.nr-tool-label { font-family: var(--font-orbitron); font-size: 14px; font-weight: 800; letter-spacing: 0.3px; color: var(--text-primary); }
-.nr-tool-sub { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary); }
-.nr-tool-arrow { font-family: var(--font-mono); font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; transition: color .16s ease; }
-.nr-tool:hover .nr-tool-arrow { color: var(--nr-vantage); }
-
-/* ── Subscribe ── network email capture; elevated card, silver spine */
-.nr-subscribe { display: flex; flex-direction: column; gap: 16px; padding: 22px; background: var(--bg-card-hover); border: 1px solid var(--border); border-left: 2px solid var(--nr-vantage); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
-.nr-subscribe-copy { display: flex; flex-direction: column; gap: 6px; }
-.nr-subscribe-lead { font-family: var(--font-orbitron); font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0; }
-.nr-subscribe-clause { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 60ch; }
-
-/* ── About blurb ── short network summary + link to /about (crawlable) */
-.nr-about { display: flex; flex-direction: column; gap: 14px; }
-.nr-about-body { font-size: 15px; line-height: 1.7; color: var(--text-secondary); margin: 0; max-width: 74ch; }
-.nr-about-link { align-self: flex-start; font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); text-decoration: none; transition: opacity .15s ease; }
-.nr-about-link:hover { opacity: 0.75; }
-
-/* ── SIGNATURE: routing tiles ── (depth added; live count stays boldest) */
-.nr-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px; min-height: 188px; padding: 22px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
-.nr-tile:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: var(--text-disabled); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px rgba(0,0,0,0.30); }
-.nr-tile-art { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; }
-.nr-tile-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,20,24,0.80) 0%, rgba(18,20,24,0.60) 48%, rgba(18,20,24,0.90) 100%); }
-.nr-tile-head, .nr-tile-body, .nr-enter { position: relative; z-index: 1; }
-.nr-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.nr-tile-label { font-family: var(--font-orbitron); font-size: 22px; font-weight: 900; letter-spacing: 1px; line-height: 1; color: var(--text-primary); margin: 0; }
-.nr-tile-body { flex: 1; display: flex; flex-direction: column; gap: 12px; justify-content: center; }
-.nr-online { display: flex; align-items: baseline; gap: 9px; }
-.nr-dot { align-self: center; animation: pulse-glow 2.4s ease-in-out infinite; }
-.nr-online-num { font-family: var(--font-orbitron); font-size: 40px; font-weight: 900; line-height: 0.9; letter-spacing: -0.5px; }
-.nr-unit { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
-.nr-next { display: flex; align-items: baseline; gap: 8px; }
-.nr-next-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
-.nr-prelaunch { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary); }
-.nr-enter { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-tertiary); transition: color .16s ease; }
-.nr-tile:hover .nr-enter { color: var(--text-secondary); }
-
-/* ── Pulse columns ── editor content; elevated; freshness as a live signal */
-.nr-col { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--bg-card-hover); border: 1px solid var(--border); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--nr-elev); }
-.nr-col-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); }
-.nr-col-marker { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
-.nr-col-title { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
-.nr-col-all { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); text-decoration: none; margin-left: auto; transition: color .15s ease; }
-.nr-col-all:hover { color: var(--text-secondary); }
-.nr-col-body { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-.nr-row { display: block; text-decoration: none; padding: 12px 13px; background: var(--bg-page); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 2px; transition: border-color .15s ease, background .15s ease; }
-.nr-row:hover { background: var(--bg-card-hover); border-left-color: var(--text-tertiary); }
-.nr-row-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-.nr-tag { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.5; padding: 2px 7px; border: 1px solid var(--border); border-radius: 2px; color: var(--text-secondary); }
-.nr-tag-sym { font-size: 10px; line-height: 1; }
-.nr-row-when { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); margin-left: auto; }
-.nr-row-headline { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
-.nr-col-empty, .nr-col-prelaunch { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-tertiary); }
-
-/* ── Key routes: per-game reference hubs inside the game's own column ──
-   Subordinate by design: smaller and quieter than .nr-row headlines, which stay
-   the column's primary content. Tokens only -- no injected color, so this cannot
-   compete with the game accent used on the marker and tiles. */
-.nr-keys { display: flex; flex-direction: column; gap: 6px; }
-.nr-keys-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-tertiary); }
-.nr-keys-row { display: flex; flex-wrap: wrap; gap: 5px; }
-.nr-key { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; color: var(--text-secondary); background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 2px; padding: 4px 9px; transition: color .15s ease, border-color .15s ease; }
-.nr-key:hover { color: var(--text-primary); border-color: var(--border); }
-
-/* ── Creator-coverage "incoming" panel (intentional, not a TODO) ── */
-/* Reserved creator-coverage slot -- a subtle left accent + mono labels make it
-   read as an intentional "incoming" slot, not a broken/empty box. */
-.nr-coming { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-left: 2px solid var(--border); border-radius: 2px; }
-.nr-coming-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); }
-.nr-coming-soon { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px; }
-.nr-coming-text { flex-basis: 100%; font-size: 11px; line-height: 1.45; color: var(--text-tertiary); }
-
-/* Footer */
-.nr-footer { border-top: 1px solid var(--border-subtle); background: var(--bg-nav); padding-top: 22px; padding-bottom: 22px; }
-.nr-footer-tag { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 7px; }
-.nr-footer-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
-.nr-footer-ai { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-tertiary); margin: 0; }
-.nr-footer-link { display: inline-block; margin-top: 10px; font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); text-decoration: none; transition: opacity .15s ease; }
-.nr-footer-link:hover { opacity: 0.75; }
-
-/* Load-in (once), staggered across grid children */
-@keyframes nrIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.nr-stagger > * { animation: nrIn .45s ease both; }
-.nr-stagger > *:nth-child(2) { animation-delay: .07s; }
-.nr-stagger > *:nth-child(3) { animation-delay: .14s; }
-.nr-stagger > *:nth-child(4) { animation-delay: .21s; }
-
-/* Keyboard focus (game-neutral ring) */
-.nr-tile:focus-visible, .nr-row:focus-visible, .nr-col-all:focus-visible, .nr-join:focus-visible, .nr-key:focus-visible {
-  outline: 2px solid rgba(255,255,255,0.7); outline-offset: 2px;
+// -- STYLES (ported from cnp-root-mock-v7.html, scoped under .cnp-root; keyframes
+// cnp-prefixed; --display/--body/--mono mapped onto the next/font variables). Class-based
+// selectors carried through; a small preserved-feed block styles the "Latest from" columns,
+// the Vantage voice, the network-desk feed, tools, about, and the receipts set piece. --
+const CNP_CSS = `
+.cnp-root{
+  --base:#0D0A0B;--surface:#1A1315;--surface-2:#241A1D;
+  --burg:#6E1423;--burg-bright:#9A2740;--burg-glow:rgba(154,39,64,.32);
+  --red:#ff2038;--red-glow:rgba(255,32,56,.55);--gold:#E8B54D;
+  --text:#F0EAE2;--text-dim:#9c908c;--line:rgba(240,234,226,.09);
+  --display:var(--cnp-display),'Chakra Petch',sans-serif;--body:var(--cnp-body),'Inter',sans-serif;--mono:var(--cnp-mono),'JetBrains Mono',monospace;
+  position:relative;background:var(--base);color:var(--text);font-family:var(--body);line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;
 }
+.cnp-root *{box-sizing:border-box}
+.cnp-root ::selection{background:var(--burg-bright);color:#fff}
+.cnp-root a{color:inherit;text-decoration:none}
+.cnp-root .wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+@media(prefers-reduced-motion:reduce){.cnp-root *{animation:none!important;transition:none!important}}
 
-/* Respect reduced motion: kill load-in, hover transforms, dot pulse */
-@media (prefers-reduced-motion: reduce) {
-  .nr-stagger > * { animation: none !important; }
-  .nr-tile, .nr-enter, .nr-row, .nr-join, .nr-col-all, .nr-key { transition: none !important; }
-  .nr-tile:hover { transform: none !important; }
-  .nr-dot { animation: none !important; }
-}
+.cnp-root .atmos{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(1100px 700px at 75% -10%, var(--burg-glow), transparent 60%),radial-gradient(900px 600px at 8% 15%, rgba(110,20,35,.16), transparent 55%)}
+.cnp-root main{position:relative;z-index:1}
+.cnp-root nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:linear-gradient(180deg,rgba(13,10,11,.92),rgba(13,10,11,.5));border-bottom:1px solid var(--line)}
+.cnp-root .nav-in{display:flex;align-items:center;justify-content:space-between;height:70px}
+.cnp-root .nav-right{display:flex;align-items:center;gap:22px}
+.cnp-root .brand{display:flex;align-items:center;gap:13px}
+.cnp-root .brand img{width:38px;height:38px;border-radius:9px;display:block}
+.cnp-root .brand .wm{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.05em}
+.cnp-root .brand .wm b{color:var(--burg-bright)}
+.cnp-root .nav-links{display:flex;gap:28px;align-items:center;font-size:14px;color:var(--text-dim);font-weight:500}
+.cnp-root .nav-links a:hover{color:var(--text)}
 
-/* Mobile collapse */
-@media (max-width: 640px) {
-  .nr-grid, .nr-pulse-grid, .nr-tools { grid-template-columns: 1fr; }
-  .nr-body { gap: 40px; padding-top: 36px; }
-  .nr-hero-band { padding-top: 40px; }
-  .nr-online-num { font-size: 34px; }
-  /* Telemetry: drop the dividers when wrapped tight so it reads as chips */
-  .nr-telemetry { gap: 10px 16px; }
-  .nr-tele-item { padding-left: 0; border-left: 0; }
-  /* CTAs go full-width, stacked, so they are easy thumb targets */
-  .nr-cta-row { flex-direction: column; align-items: stretch; }
-  .nr-cta { text-align: center; }
-}
+.cnp-root .hero{padding:96px 0 68px;position:relative;overflow:hidden}
+.cnp-root .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+.cnp-root .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.32em;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.cnp-root .eyebrow .live{width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 10px #3ddc84;animation:cnpPulse 2s infinite}
+@keyframes cnpPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.cnp-root h1{font-family:var(--display);font-weight:700;font-size:clamp(38px,5.6vw,68px);line-height:1.03;letter-spacing:-.01em;margin-bottom:24px}
+.cnp-root h1 .hl{color:var(--burg-bright);position:relative}
+.cnp-root h1 .hl::after{content:'';position:absolute;left:0;bottom:.05em;width:100%;height:.08em;background:var(--gold);opacity:.9}
+.cnp-root .sub{font-size:18px;color:var(--text-dim);max-width:48ch;margin-bottom:36px;line-height:1.6}
+.cnp-root .sub b{color:var(--text);font-weight:500}
+.cnp-root .cta-row{display:flex;gap:14px;flex-wrap:wrap}
+.cnp-root .btn{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:.02em;padding:15px 28px;border-radius:2px;transition:.22s;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:9px}
+.cnp-root .btn-gold{background:var(--gold);color:var(--base)}
+.cnp-root .btn-gold:hover{box-shadow:0 6px 30px rgba(232,181,77,.35);transform:translateY(-2px)}
+.cnp-root .btn-gold:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.cnp-root .btn-ghost{border-color:var(--line);color:var(--text)}
+.cnp-root .btn-ghost:hover{border-color:var(--burg-bright);background:rgba(154,39,64,.12)}
+
+.cnp-root .scope{position:relative;aspect-ratio:1;max-width:440px;margin:0 auto}
+.cnp-root .scope svg{width:100%;height:100%;overflow:visible;display:block}
+.cnp-root #reticle{transform-box:fill-box;transform-origin:center}
+.cnp-root .glowpulse{animation:cnpGlowpulse 4s ease-in-out infinite}
+@keyframes cnpGlowpulse{0%,100%{opacity:.35}50%{opacity:.7}}
+.cnp-root .ring-rot{transform-origin:center;animation:cnpRot 26s linear infinite}
+@keyframes cnpRot{to{transform:rotate(360deg)}}
+.cnp-root .scope-label{position:absolute;bottom:4%;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;white-space:nowrap;transition:color .2s}
+.cnp-root .flash{opacity:0}
+
+.cnp-root .telemetry{margin-top:56px;border:1px solid var(--line);border-radius:6px;background:linear-gradient(180deg,rgba(36,26,29,.55),rgba(26,19,21,.28));overflow:hidden;position:relative}
+.cnp-root .telemetry::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.5}
+.cnp-root .tel-head{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--text-dim);text-transform:uppercase}
+.cnp-root .tel-head .rec{display:flex;align-items:center;gap:8px;color:var(--red)}
+.cnp-root .tel-head .rec i{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:cnpPulse 1.4s infinite}
+.cnp-root .tel-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.cnp-root .tel-cell{padding:22px 20px;border-right:1px solid var(--line)}
+.cnp-root .tel-cell:last-child{border-right:none}
+.cnp-root .tel-cell .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px}
+.cnp-root .tel-cell .val{font-family:var(--display);font-size:30px;font-weight:700;color:var(--text);line-height:1}
+.cnp-root .tel-cell.pop .val{color:var(--gold)}
+.cnp-root .pass-note{padding:9px 20px 13px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--burg-bright);border-top:1px solid var(--line)}
+
+.cnp-root section{padding:88px 0}
+.cnp-root .sec-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.cnp-root .sec-eyebrow::before{content:'';width:28px;height:1px;background:var(--gold)}
+.cnp-root h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,4vw,44px);line-height:1.08;letter-spacing:-.01em;margin-bottom:18px;max-width:22ch}
+.cnp-root .sec-sub{color:var(--text-dim);font-size:17px;max-width:60ch;line-height:1.6}
+
+.cnp-root .proof{border-top:1px solid var(--line)}
+.cnp-root .proof-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
+.cnp-root .card{border:1px solid var(--line);border-radius:6px;padding:32px;position:relative;overflow:hidden}
+.cnp-root .card.them{background:var(--surface);opacity:.72}
+.cnp-root .card.us{background:linear-gradient(180deg,rgba(110,20,35,.16),rgba(26,19,21,.4));border-color:var(--burg)}
+.cnp-root .card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:20px}
+.cnp-root .card.them .tag{color:var(--text-dim)}.cnp-root .card.us .tag{color:var(--gold)}
+.cnp-root .card ul{list-style:none;display:flex;flex-direction:column;gap:14px}
+.cnp-root .card li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.cnp-root .card .ic{font-family:var(--mono);flex-shrink:0;margin-top:1px}
+.cnp-root .card.them .ic{color:#7a4a4a}.cnp-root .card.us .ic{color:var(--gold)}
+.cnp-root .card.them li{color:var(--text-dim)}
+
+.cnp-root .voice-sec{border-top:1px solid var(--line)}
+.cnp-root .voice{border:1px solid var(--line);border-left:2px solid var(--gold);border-radius:6px;background:linear-gradient(180deg,rgba(36,26,29,.5),rgba(26,19,21,.25));padding:26px 28px;max-width:820px}
+.cnp-root .voice-by{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.cnp-root .voice-dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.cnp-root .voice-role{color:var(--text-dim)}
+.cnp-root .voice-line{font-family:var(--display);font-size:22px;font-weight:500;line-height:1.4;color:var(--text);margin:0}
+.cnp-root .voice-brief{font-size:14.5px;line-height:1.6;color:var(--text-dim);margin:14px 0 0}
+
+.cnp-root .games{border-top:1px solid var(--line)}
+.cnp-root .game-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
+.cnp-root .game{border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative;min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;padding:28px;transition:.25s;cursor:pointer;isolation:isolate}
+.cnp-root .game .art{position:absolute;inset:0;z-index:0;background-image:var(--img,var(--fallback));background-size:cover;background-position:center;transition:transform .5s ease}
+.cnp-root .game{--fallback:linear-gradient(180deg,#1d1417,var(--surface))}
+.cnp-root .game:hover .art{transform:scale(1.05)}
+.cnp-root .game .scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(13,10,11,.15) 0%,rgba(13,10,11,.05) 45%,rgba(13,10,11,.6) 78%,rgba(13,10,11,.94) 100%)}
+.cnp-root .game:hover{transform:translateY(-4px);border-color:var(--burg-bright)}
+.cnp-root .game>*:not(.art):not(.scrim){position:relative;z-index:2}
+.cnp-root .game .status{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;position:absolute;top:24px;left:28px;z-index:2;display:inline-flex;align-items:center;gap:8px;background:rgba(13,10,11,.72);backdrop-filter:blur(6px);padding:7px 12px;border-radius:100px;border:1px solid var(--line);color:#c8ff2f}
+.cnp-root .game .status.dmz-pill{color:var(--gold)}
+.cnp-root .game .status i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.cnp-root .game .meta{font-size:13.5px;color:#d8cdc8;margin-bottom:14px;text-shadow:0 1px 14px rgba(0,0,0,.9);font-weight:500}
+.cnp-root .game .go{font-family:var(--display);font-size:15px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:8px;text-shadow:0 1px 10px rgba(0,0,0,.8)}
+.cnp-root .game:hover .go{gap:12px}
+
+.cnp-root .pulse-sec{border-top:1px solid var(--line)}
+.cnp-root .pulse-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
+.cnp-root .pcol{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:20px}
+.cnp-root .pcol-head{display:flex;align-items:center;gap:9px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.cnp-root .pcol-mark{width:8px;height:8px;border-radius:2px;background:var(--accent,var(--gold));flex-shrink:0}
+.cnp-root .pcol-title{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim)}
+.cnp-root .pcol-body{display:flex;flex-direction:column;gap:9px}
+.cnp-root .prow{display:block;padding:12px 13px;background:var(--base);border:1px solid var(--line);border-left:2px solid transparent;border-radius:3px;transition:.15s}
+.cnp-root .prow:hover{border-left-color:var(--accent,var(--gold));background:var(--surface-2)}
+.cnp-root .prow-meta{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}
+.cnp-root .prow-when{margin-left:auto}
+.cnp-root .prow-head{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;font-weight:500;line-height:1.4;color:var(--text)}
+.cnp-root .pcol-empty{font-family:var(--mono);font-size:12px;color:var(--text-dim)}
+.cnp-root .pkeys{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+.cnp-root .pkeys-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+.cnp-root .pkeys-row{display:flex;flex-wrap:wrap;gap:6px}
+.cnp-root .pkey{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);border:1px solid var(--line);border-radius:3px;padding:4px 9px;transition:.15s}
+.cnp-root .pkey:hover{color:var(--text);border-color:var(--burg-bright)}
+
+.cnp-root .deskfeed-sec{border-top:1px solid var(--line)}
+.cnp-root .deskfeed{list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:36px}
+.cnp-root .deskfeed-row{display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--burg);border-radius:3px;transition:.15s}
+.cnp-root .deskfeed-row:hover{border-left-color:var(--gold);background:var(--surface-2)}
+.cnp-root .deskfeed-meta{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}
+.cnp-root .deskfeed-game{border:1px solid var(--line);border-radius:2px;padding:1px 7px}
+.cnp-root .deskfeed-when{margin-left:auto}
+.cnp-root .deskfeed-head{font-size:14.5px;font-weight:500;line-height:1.4;color:var(--text)}
+
+.cnp-root .desk{border-top:1px solid var(--line)}
+.cnp-root .desk-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
+.cnp-root .op{display:grid;grid-template-columns:150px 1fr;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;transition:.25s;color:inherit}
+.cnp-root .op:hover{border-color:var(--op);transform:translateY(-3px)}
+.cnp-root .op .photo{position:relative;background:linear-gradient(160deg,var(--surface-2),#120d0f);border-right:1px solid var(--line);display:flex;align-items:center;justify-content:center;min-height:150px}
+.cnp-root .op .photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(13,10,11,.5));pointer-events:none}
+.cnp-root .op .ph-badge{font-family:var(--display);font-weight:700;font-size:40px;color:var(--op);opacity:.85}
+.cnp-root .op .ph-tag{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase}
+.cnp-root .op .photo .cbar{position:absolute;top:0;left:0;width:100%;height:4px;background:var(--op);z-index:1}
+.cnp-root .op .body{padding:22px 24px;position:relative}
+.cnp-root .op .rank{position:absolute;top:20px;right:22px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;padding:3px 8px;border-radius:3px;text-transform:uppercase;background:rgba(232,181,77,.12);color:var(--gold);border:1px solid rgba(232,181,77,.3)}
+.cnp-root .op .code{font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:.02em;color:var(--text);line-height:1}
+.cnp-root .op .handle{font-family:var(--display);font-size:13px;font-weight:600;color:var(--op);margin:5px 0 2px;letter-spacing:.02em}
+.cnp-root .op .name{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-bottom:14px}
+.cnp-root .op .role{font-size:13.5px;color:var(--text-dim);line-height:1.5;margin-bottom:14px}
+.cnp-root .op .beat{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;padding-top:12px;border-top:1px solid var(--line)}
+.cnp-root .op .beat b{color:var(--text)}
+.cnp-root .op.locked .photo{background:repeating-linear-gradient(45deg,#160f11,#160f11 8px,#1c1315 8px,#1c1315 16px)}
+.cnp-root .op.locked .ph-badge{opacity:.14;filter:grayscale(1)}
+.cnp-root .op.locked .code{color:var(--text-dim)}
+.cnp-root .op.locked .redact{display:inline-block;background:var(--text-dim);color:transparent;border-radius:2px;user-select:none}
+.cnp-root .op.locked .rank{background:rgba(255,32,56,.14);color:var(--red);border-color:rgba(255,32,56,.4)}
+.cnp-root .op.locked .beat b{color:var(--gold)}
+.cnp-root .classified-stamp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-14deg);z-index:5;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.18em;color:var(--red);border:2.5px solid var(--red);border-radius:4px;padding:5px 12px;text-transform:uppercase;background:rgba(13,10,11,.55);box-shadow:0 0 20px rgba(255,32,56,.3);white-space:nowrap;opacity:.92}
+.cnp-root .portrait-note{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--burg-bright);letter-spacing:.04em}
+
+.cnp-root .receipts{border-top:1px solid var(--line)}
+.cnp-root .receipt-shell{margin-top:34px;border:1px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden;max-width:820px}
+.cnp-root .receipt-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+.cnp-root .receipt-live{display:inline-flex;align-items:center;gap:7px;color:var(--gold)}
+.cnp-root .receipt-live i{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:cnpPulse 1.5s ease-in-out infinite}
+.cnp-root .receipt-body{padding:18px;display:flex;flex-direction:column;gap:13px}
+.cnp-root .receipt-line{display:flex;align-items:baseline;gap:14px;opacity:0;transform:translateY(4px);transition:opacity .4s ease,transform .4s ease}
+.cnp-root .receipt-line.in{opacity:1;transform:none}
+.cnp-root .receipt-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);width:56px;flex-shrink:0}
+.cnp-root .receipt-val{font-family:var(--mono);font-size:13px;line-height:1.5;color:var(--text-dim)}
+.cnp-root .receipt-line.is-claim{margin-top:4px;padding-top:13px;border-top:1px solid var(--line)}
+.cnp-root .receipt-line.is-claim .receipt-val{color:var(--text);font-size:14.5px}
+.cnp-root .receipt-static-claim{font-size:15px;line-height:1.6;color:var(--text);margin:0 0 14px}
+.cnp-root .receipt-link{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);opacity:0;transform:translateY(4px);transition:opacity .45s ease,transform .45s ease}
+.cnp-root .receipt-link.in{opacity:1;transform:none}
+.cnp-root .receipt-link:hover{opacity:.75}
+
+.cnp-root .how{border-top:1px solid var(--line)}
+.cnp-root .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+.cnp-root .how-card{border:1px solid var(--line);border-radius:6px;padding:28px;background:var(--surface)}
+.cnp-root .how-tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.cnp-root .how-card p{color:var(--text-dim);font-size:14.5px;line-height:1.55}
+
+.cnp-root .tools-sec{border-top:1px solid var(--line)}
+.cnp-root .tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:44px}
+.cnp-root .tool{display:flex;align-items:center;gap:12px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:5px;transition:.16s}
+.cnp-root .tool:hover{border-color:var(--burg-bright);transform:translateY(-2px)}
+.cnp-root .tool-text{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.cnp-root .tool-label{font-family:var(--display);font-size:14px;font-weight:600;color:var(--text)}
+.cnp-root .tool-sub{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--text-dim)}
+.cnp-root .tool-arrow{color:var(--gold);flex-shrink:0}
+
+.cnp-root .about-sec{border-top:1px solid var(--line)}
+.cnp-root .about-body{font-size:15.5px;line-height:1.75;color:var(--text-dim);max-width:74ch;margin-top:22px}
+.cnp-root .about-link{display:inline-block;margin-top:16px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.cnp-root .about-link:hover{opacity:.75}
+
+.cnp-root .subscribe{border-top:1px solid var(--line);text-align:center}
+.cnp-root .subscribe .inner{max-width:640px;margin:0 auto}
+.cnp-root .countdown{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--red);text-transform:uppercase;border:1px solid var(--burg);padding:8px 16px;border-radius:100px;margin-bottom:26px;background:rgba(110,20,35,.14)}
+.cnp-root .countdown b{color:var(--text)}
+.cnp-root .subscribe h2{margin:0 auto 18px}
+/* Slot maps the shared NetworkSubscribeForm's tokens onto the cnp-root palette so its
+   inline-styled inputs render in burgundy/gold instead of the network-page silver. */
+.cnp-root .sub-form-slot{display:flex;justify-content:center;margin:30px auto 14px;max-width:480px;--bg-page:var(--surface);--border:var(--line);--text-primary:var(--text);--nr-vantage:var(--gold)}
+.cnp-root .microcopy{font-size:12.5px;color:var(--text-dim);font-family:var(--mono);letter-spacing:.04em}
+
+.cnp-root footer{border-top:1px solid var(--line);padding:48px 0 40px;position:relative;z-index:1}
+.cnp-root .foot-in{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px}
+.cnp-root .foot-brand{align-items:flex-start}
+.cnp-root .foot-brand img{width:34px;height:34px;border-radius:8px}
+.cnp-root .foot-brand .wm{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.05em}
+.cnp-root .whisper{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;max-width:42ch;margin-top:12px;line-height:1.6}
+.cnp-root .foot-links{display:flex;gap:22px;font-size:13px;color:var(--text-dim)}
+.cnp-root .foot-links a:hover{color:var(--gold)}
+
+.cnp-root :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
+
+@media(max-width:920px){.cnp-root .hero-grid{grid-template-columns:1fr;gap:8px}.cnp-root .scope{max-width:300px;order:-1;margin-bottom:24px}.cnp-root .desk-grid,.cnp-root .pulse-grid{grid-template-columns:1fr}}
+@media(max-width:820px){.cnp-root .proof-grid,.cnp-root .game-grid,.cnp-root .how-grid{grid-template-columns:1fr}.cnp-root .tel-grid{grid-template-columns:1fr 1fr}.cnp-root .tel-cell:nth-child(2){border-right:none}.cnp-root .tel-cell:nth-child(1),.cnp-root .tel-cell:nth-child(2){border-bottom:1px solid var(--line)}.cnp-root .nav-links{display:none}.cnp-root .form{flex-direction:column}.cnp-root .wrap{padding:0 22px}.cnp-root section{padding:60px 0}}
+@media(max-width:420px){.cnp-root .op{grid-template-columns:1fr}.cnp-root .op .photo{min-height:110px;border-right:none;border-bottom:1px solid var(--line)}}
 `;
