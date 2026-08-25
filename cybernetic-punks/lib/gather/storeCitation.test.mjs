@@ -116,7 +116,7 @@ test('minter: a VERIFIED row gets a tagged id + a registry entry with its proven
   const tag = m.tag('shell_stats', { verified: true, verified_source: 'in-game S2 shell screen (owner-verified)' });
   assert.equal(tag, '[SH1] ');
   const entry = m.registry.get('SH1');
-  assert.deepEqual(entry, { source: 'in-game S2 shell screen (owner-verified)', url: null, priority: STORE_SOURCE_PRIORITY });
+  assert.deepEqual(entry, { source: 'in-game S2 shell screen (owner-verified)', url: null, priority: STORE_SOURCE_PRIORITY, game_slug: null });
 });
 
 test('minter: UNVERIFIED rows get NO id and NO registry entry (a cite must mean verified)', () => {

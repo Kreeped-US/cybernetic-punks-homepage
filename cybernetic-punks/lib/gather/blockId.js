@@ -74,19 +74,23 @@ export function blockId(source, index1) {
   return p ? p + index1 : null;
 }
 
-// Reconstruct the id -> { source, url } registry from the SAME rawData the write-site
-// already holds (prompts._rawData.bungieNews + .youtubeVideos -- the latter is already
-// the FILTERED list the formatter used, so indices align). url is pipeline metadata;
-// null when the item carries none (never invented).
-export function buildBlockRegistry(rawData) {
+// Reconstruct the id -> { source, url, game_slug } registry from the SAME rawData the
+// write-site already holds (prompts._rawData.bungieNews + .youtubeVideos -- the latter is
+// already the FILTERED list the formatter used, so indices align). url is pipeline
+// metadata; null when the item carries none (never invented). game_slug is the producing
+// game the gather ran for -- stamped on every entry so resolveCitedBlocks can reject a
+// cross-game citation (the game_slug boundary). Optional for backward-compat: an omitted
+// gameSlug stamps null, which resolveCitedBlocks treats as "no game to check" (unchanged).
+export function buildBlockRegistry(rawData, gameSlug) {
   const reg = new Map();
   const rd = rawData || {};
+  const gs = gameSlug || null;
   (rd.bungieNews || []).slice(0, BLOCK_CAP.bungie).forEach((it, i) => {
-    reg.set(blockId('bungie', i + 1), { source: LABEL.bungie, url: (it && it.url) || null });
+    reg.set(blockId('bungie', i + 1), { source: LABEL.bungie, url: (it && it.url) || null, game_slug: gs });
   });
   (rd.youtubeVideos || []).slice(0, BLOCK_CAP.youtube).forEach((v, i) => {
     const url = v && v.youtube_id ? 'https://www.youtube.com/watch?v=' + v.youtube_id : null;
-    reg.set(blockId('youtube', i + 1), { source: LABEL.youtube, url });
+    reg.set(blockId('youtube', i + 1), { source: LABEL.youtube, url, game_slug: gs });
   });
   return reg;
 }
@@ -97,16 +101,26 @@ export function buildBlockRegistry(rawData) {
 // SOURCE_PRIORITY) becomes verified_source + its url. Empty or all-rejected ->
 // { verified_source: null } (honest-unknown; the caller flags it). The model cannot
 // author a URL (we only read the registry) or name an absent source (rejected).
-export function resolveCitedBlocks(citedBlocks, registry) {
+//
+// GAME_SLUG BOUNDARY (belt behind the context assembler): when articleGameSlug is given,
+// a cited block whose entry carries a DIFFERENT game_slug is REJECTED -- a game-B row can
+// never source a game-A article. Enforced only when BOTH the article game and the entry
+// game are known: a null on either side means "no game to check" -> resolve as before
+// (backward-compatible; single-game Marathon, where every entry's game_slug == the
+// article's, never rejects).
+export function resolveCitedBlocks(citedBlocks, registry, articleGameSlug) {
   const resolved = [], rejected = [];
   const ids = Array.isArray(citedBlocks) ? citedBlocks : [];
+  const articleGame = articleGameSlug || null;
   for (const id of ids) {
     const hit = registry.get(id);
+    if (!hit) { rejected.push(id); continue; }
+    // Cross-game citation refused: the block belongs to another game_slug.
+    if (articleGame && hit.game_slug && hit.game_slug !== articleGame) { rejected.push(id); continue; }
     // priority is carried through so store-row entries (which set an explicit
     // priority) can outrank label-keyed entries; [BN]/[YT] entries have no
     // priority field and fall back to SOURCE_PRIORITY[source] -- byte-unchanged.
-    if (hit) resolved.push({ id: id, source: hit.source, url: hit.url, priority: hit.priority });
-    else rejected.push(id);
+    resolved.push({ id: id, source: hit.source, url: hit.url, priority: hit.priority });
   }
   if (resolved.length === 0) {
     return { verified_source: null, verified_source_url: null, resolved: resolved, rejected: rejected };
@@ -124,9 +138,13 @@ export function resolveCitedBlocks(citedBlocks, registry) {
 // '[ID] ' to prefix the rendered line. Emit + register happen in ONE pass so the id
 // the editor SEES and the id the resolver looks up cannot drift. Unverified rows (or
 // unknown tables) return '' and are NOT citable -- a citation must MEAN verified.
-export function makeStoreMinter() {
+// gameSlug stamps every minted entry with the game the store was rendered for (the
+// producing game's config.slug), so resolveCitedBlocks can reject a cross-game store
+// citation. Optional for backward-compat: omitted -> null (no game to check).
+export function makeStoreMinter(gameSlug) {
   const registry = new Map();
   const counters = {};
+  const gs = gameSlug || null;
   return {
     registry,
     tag(table, row) {
@@ -134,7 +152,7 @@ export function makeStoreMinter() {
       if (!prefix || !row || row.verified !== true) return '';
       counters[prefix] = (counters[prefix] || 0) + 1;
       const id = prefix + counters[prefix];
-      registry.set(id, { source: row.verified_source || null, url: null, priority: STORE_SOURCE_PRIORITY });
+      registry.set(id, { source: row.verified_source || null, url: null, priority: STORE_SOURCE_PRIORITY, game_slug: gs });
       return '[' + id + '] ';
     },
   };

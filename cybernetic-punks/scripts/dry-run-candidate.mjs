@@ -69,10 +69,10 @@ if (!article || article._error || !article.headline) {
 // 3. Resolve cited_blocks EXACTLY as processEditor does, now WITH the store registry
 //    merged in (the write-site plumbing). No gathered [YT]/[BN] sources in the prompt,
 //    so buildBlockRegistry is empty; the store registry supplies the resolvable ids.
-const vsRegistry = buildBlockRegistry({ youtubeVideos: [], bungieNews: [] });
+const vsRegistry = buildBlockRegistry({ youtubeVideos: [], bungieNews: [] }, config.slug);
 const storeReg = getStoreRegistry(config);
 storeReg.forEach((v, k) => vsRegistry.set(k, v));
-const vs = resolveCitedBlocks(article.cited_blocks || [], vsRegistry);
+const vs = resolveCitedBlocks(article.cited_blocks || [], vsRegistry, config.slug);
 
 // 3b. STEP 3: validate the editor's declared recommendations' premises resolve in the
 //     same merged registry (== verified by construction; provenance-null passes). Findings

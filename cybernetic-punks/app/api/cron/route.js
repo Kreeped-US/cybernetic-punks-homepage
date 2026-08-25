@@ -452,7 +452,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // resolve below (identical registry, no rebuild, no change to cited_blocks resolution).
     // The store-row merge stays flag-gated (step 1); when OFF the registry is just the
     // [BN]/[YT] blocks and validateRecommendations sees no recommendations field -> [].
-    var vsRegistry = buildBlockRegistry(rawData);
+    var vsRegistry = buildBlockRegistry(rawData, PRODUCING_GAME_SLUG); // stamp external blocks with the producing game (game_slug boundary)
     if (storeRowCitationEnabled()) {
       getStoreRegistry(PRODUCING_GAME).forEach(function (v, k) { vsRegistry.set(k, v); });
     }
@@ -475,7 +475,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     }
 
     if (!gateStoreThrew) {
-      var gateRes = runGate({ entities: gateStore.entities }, gateDraftObj, { runDate: new Date().toISOString().slice(0, 10) });
+      var gateRes = runGate({ entities: gateStore.entities, game_slug: gateStore.game_slug }, gateDraftObj, { runDate: new Date().toISOString().slice(0, 10) });
       // STEP 3: fold the recommendation-premise findings into the gate decision. On
       // Marathon (log-only) decideGate publishes regardless (never holds) -- so this only
       // LOGS + records the finding; on DMZ (fail-closed) an UNSUPPORTED-RECOMMENDATION would
@@ -633,7 +633,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     try {
       // Reuse the merged registry built BEFORE the gate (identical map -- store rows
       // merged there only when the flag is on; [BN]/[YT] resolution unchanged either way).
-      var vs = resolveCitedBlocks(result.cited_blocks, vsRegistry);
+      var vs = resolveCitedBlocks(result.cited_blocks, vsRegistry, PRODUCING_GAME_SLUG); // reject any cited block from another game (game_slug boundary)
       insertData.verified_source = vs.verified_source;         // null when nothing resolvable
       insertData.verified_source_url = vs.verified_source_url; // null; never invented
       if (vs.rejected.length) console.log('[CRON] ' + editorName + ' cited_blocks: REJECTED unknown id(s) ' + JSON.stringify(vs.rejected));

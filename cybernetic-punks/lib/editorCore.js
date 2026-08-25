@@ -615,11 +615,16 @@ async function fetchGameContext(config = getGameConfig()) {
     // once that table is reseeded with actual S2 gear data. The `factions`
     // query (names/leaders/focus) is kept - that info is still valid.
     const [modsRes, coresRes, implantsRes, weaponsRes, shellsRes, factionsRes, cradleRes, factionArmoryRes, factionUpgradesRes, gameMapsRes, gameZonesRes, gameBossesRes, gameEventsRes, gameModesRes] = await Promise.all([
-      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source, verified, verified_source, patch_verified').not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(100),
-      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type, verified, verified_source').order('rarity', { ascending: false }).limit(100),
-      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source, verified, verified_source').order('rarity', { ascending: false }).limit(60),
-      supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, verified_source, patch_verified').order('name').limit(30),
-      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, countered_by, synergizes_with, counter_items, verified, verified_source, patch_verified').limit(10),
+      // GAME_SLUG BOUNDARY (Stage 1): the 5 verified stat tables carry game_slug -- filter
+      // by the producing game so another game's rows can NEVER enter this game's context (or
+      // become citable store-row blocks). Marathon rows are all 'marathon', so the returned
+      // set is byte-identical for Marathon. (The world tables below already filter this way;
+      // `factions` has no game_slug column, so it is left unfiltered.)
+      supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source, verified, verified_source, patch_verified').eq('game_slug', config.slug).not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(100),
+      supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type, verified, verified_source').eq('game_slug', config.slug).order('rarity', { ascending: false }).limit(100),
+      supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source, verified, verified_source').eq('game_slug', config.slug).order('rarity', { ascending: false }).limit(60),
+      supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, verified_source, patch_verified').eq('game_slug', config.slug).order('name').limit(30),
+      supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, countered_by, synergizes_with, counter_items, verified, verified_source, patch_verified').eq('game_slug', config.slug).limit(10),
       supabase.from('factions').select('name, leader, focus, description').order('name'),
       supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved, verified, verified_source, patch_verified').eq('game_slug', config.slug).order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
       supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', config.slug).eq('verified', true),
@@ -652,7 +657,7 @@ async function fetchGameContext(config = getGameConfig()) {
     // row renders exactly as before (no ids), the registry stays empty, and the
     // cite-instruction note below is suppressed.
     const citeStore = storeRowCitationEnabled();
-    const storeMinter = makeStoreMinter();
+    const storeMinter = makeStoreMinter(config.slug); // stamp store-row citation entries with the producing game (game_slug boundary)
     const tagRow = citeStore ? (table, row) => storeMinter.tag(table, row) : () => '';
 
     // Shared verification note (once, ahead of all data sections - not per persona).

@@ -57,5 +57,6 @@ test('loadDMZStore: empty tables -> [] entities (legitimate empty, no throw)', a
 test('loadGateStore: dmz -> loadDMZStore; an unknown game -> empty store (no loader)', async () => {
   const dmz = await loadGateStore(mockClient(FULL), 'dmz');
   assert.equal(dmz.entities.length, 5);
-  assert.deepEqual(await loadGateStore(mockClient({}), 'valorant'), { entities: [], counts: {} });
+  // game_slug is stamped on the returned store (game_slug boundary: runGate asserts store==draft game).
+  assert.deepEqual(await loadGateStore(mockClient({}), 'valorant'), { entities: [], counts: {}, game_slug: 'valorant' });
 });

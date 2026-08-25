@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-08-25 - Content-engine generalization Stage 1: game_slug through every boundary
+
+Structural cross-game rejection at the four generation boundaries (Fable ruling 1).
+Makes the existing caller-discipline invariant unfalsifiable, ahead of G1 (per-game
+cron) making cross-game runs real. NO behavior change on Marathon (verified
+byte-unchanged); the only new behavior is negative (cross-game refusal, can't fire
+on single-game data).
+- editorCore.js: .eq('game_slug', config.slug) on the 5 stat reads (weapon/shell/
+  mod/core/implant) - cross-game rows can't enter context or become citable at source.
+- blockId.js: registry entries stamped with game_slug (buildBlockRegistry +
+  makeStoreMinter); resolveCitedBlocks rejects a cited block whose game_slug != the
+  article's game. Null on either side resolves as before (citation doctrine intact).
+- storeLoader.js + runGate.js: store stamped with game_slug at load; runGate asserts
+  store.game_slug === draft.game_slug, fail-closed on mismatch (stays pure - a
+  comparison, not I/O).
+- gameSlugBoundary.test.mjs (new): CI fixture proving cross-game citation AND
+  cross-game store are both refused. The guarantee as CI, not intention.
+- 63/63 affected tests pass. Two existing assertions updated for the added game_slug
+  field (shape change, not regression).
+- KNOWN, PRE-EXISTING (not this stage): inspectionRun.test.mjs fails 7/12 on clean
+  base too (GSC URL-inspection sweep logic) - out of scope, flagged for separate look.
+- DB migration (5 stat tables DROP DEFAULT / SET NOT NULL) prepped in scratchpad,
+  NOT committed - operator-run separately after the STEP 0 pre-checks confirm zero
+  NULL rows. Insert-path audit clean (wiki.js stamps game_slug explicitly).
+
 ## 2026-08-25 - Wardogs vertical scaffold (Phase 1: infrastructure, dormant)
 
 Stood up the /wardogs vertical skeleton mirroring the DMZ pattern. Infrastructure

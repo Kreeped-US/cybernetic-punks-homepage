@@ -104,7 +104,10 @@ export async function loadDMZStore(client, gameSlug) {
 // Per-game gate store dispatch (the cron gate calls this). Marathon -> loadMarathonStore
 // (fail-open, swallow); DMZ -> loadDMZStore (fail-closed, throw-on-error); other -> empty store.
 export async function loadGateStore(client, gameSlug) {
-  if (gameSlug === 'marathon') return loadMarathonStore(client, gameSlug);
-  if (gameSlug === 'dmz') return loadDMZStore(client, gameSlug);
-  return { entities: [], counts: {} };
+  // game_slug stamped on the returned store so runGate can assert the store belongs to the
+  // draft's game (the game_slug boundary at the gate) -- a caller can no longer hand the
+  // wrong game's store to a draft without runGate refusing it (fail-closed).
+  if (gameSlug === 'marathon') return { ...(await loadMarathonStore(client, gameSlug)), game_slug: gameSlug };
+  if (gameSlug === 'dmz') return { ...(await loadDMZStore(client, gameSlug)), game_slug: gameSlug };
+  return { entities: [], counts: {}, game_slug: gameSlug };
 }

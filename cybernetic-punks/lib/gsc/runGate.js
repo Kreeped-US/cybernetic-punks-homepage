@@ -42,6 +42,25 @@ export function runGate(store, draft, opts) {
     };
   }
 
+  // STORE/DRAFT GAME MATCH (game_slug boundary): the store must belong to the draft's game.
+  // The store is loaded game-scoped and stamped with its game_slug (loadGateStore); a caller
+  // that hands a DIFFERENT game's store to this draft is a wiring error, so FAIL CLOSED (held)
+  // -- forced 'fail-closed' regardless of the game's mode, exactly like the unknown-game case
+  // above (a log-only game must not publish against the wrong store). Enforced ONLY when BOTH
+  // sides carry a game_slug: a legacy/unstamped store (game_slug == null) skips the check, so
+  // this is byte-identical wherever the store is not stamped. On Marathon the store's game
+  // equals the draft's, so the check always passes. Kept PURE (a comparison, no I/O).
+  if (store && store.game_slug != null && draft && draft.game_slug != null && store.game_slug !== draft.game_slug) {
+    return {
+      mode,
+      decision: decideGate(
+        [{ class: 'GATE_INFRA_FAILURE', reason: 'store game_slug "' + store.game_slug + '" != draft game_slug "' + draft.game_slug + '" -- cross-game store, fail-closed' }],
+        'fail-closed', true,
+      ),
+      findings: [], unparseable: [], corroborations: [], gap: null, threw: true,
+    };
+  }
+
   // THE GATE: classifier (Stage 2) + two-stage detector (Stage 1 -> UNPARSEABLE) + decideGate.
   // verifiedOnly:true is DERIVED here (not a param) -- corroboration is measured only against
   // VERIFIED rows; an unverified row is demoted to non-corroborating AND non-contradicting, so a
