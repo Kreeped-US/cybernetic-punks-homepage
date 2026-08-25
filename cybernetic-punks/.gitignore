@@ -49,3 +49,7 @@ scripts/out/
 # DMZ import-prep SQL artifacts -- raw research evidence, keep on disk, never commit (Fable ruling)
 docs/research/dmz-demand-2026-07/*.sql
 backups/
+
+# root-redesign design provenance -- ~1MB base64 mock + spec, keep on disk, out of history
+docs/cnp-root-mock-v7.html
+docs/cnp-root-redesign-spec.md

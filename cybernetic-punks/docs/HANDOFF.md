@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-08-25 - ROOT PAGE PREMIUM REDESIGN - SHIPPED (main 19dba60, live on prod)
+
+Root (app/page.js NetworkRoot) elevated from the proven ranking page (~pos 7.3) to the
+premium treatment. Reskin-and-enhance, not a rebuild - all prior content/conversion
+structure and SEO preserved.
+
+Shipped:
+* Treatment: burgundy/black/gold tokens + Chakra Petch/Inter/JetBrains Mono (next/font
+  in-page), all CSS scoped under .cnp-root, keyframes cnp-prefixed (no leak to other routes).
+* HeroCrosshair.js (new client component): aim/lock/fire/bullet-marks signature; captions
+  ACQUIRING / TARGET LOCKED / ON TARGET; NO "verified" on the crosshair (reserved brand
+  word); prefers-reduced-motion settles static.
+* Editorial desk from lib/editors/roster.js ground truth: 5 live (cipher/nexus/dexter/ghost/
+  miranda, 43-95 published, cards link real work) + VANTAGE (network) + BROKER classified.
+  BROKER = Vera Sloan, Economy & Market, status incoming, 0 published - card redacted/
+  CLASSIFIED, honest because a real editor is teased.
+* roster.js: broker gained coverage:'dmz' - the single source of truth for the card's DMZ
+  event tie ("deploys with DMZ"). Absent-field fallback = "Incoming", no game line (exercised).
+* ReceiptPanel.js (new client component): animates a REAL verified-stat chain (source ->
+  check -> patch stamp -> claim) pulled live from the newest verified weapon_stats row,
+  ending in a traversable link to the real weapon page (verified 200). Fail-open: on
+  empty/throw, degrades to a static true-and-traversable claim - never a broken receipt.
+* Telemetry wired to real data, honest labels: Marathon Steam concurrents (NOT "runners
+  online"); "Reports Published" = count of published feed_items (renamed from the mock's
+  "Verified Reports" - the filter counts published, not a verified flag, so the label was
+  reconciled to the filter); "Last Verified Update" = backward stamp from newest published
+  feed_items.created_at. The forward "next intel drop" countdown was REMOVED - generation is
+  demand-gated/fail-closed and a cron tick can publish zero, so a countdown to it is decorative.
+* Subscribe -> NetworkSubscribeForm -> /api/network-notify -> email_signups (source
+  'network-home'). Root is the NETWORK surface, so it feeds the network list, NOT the /dmz
+  launch list - that split is by design.
+* Date single-sourcing: the DMZ launch countdown pill and the rootGames.js tile note both
+  derive from dmz.js launch_date '2026-10-23'. Zero hardcoded date literals in components
+  (grep-confirmed).
+* Meta description: removed the scope-free superlative "deeper than anywhere else"; every
+  keyword kept. Title, canonical, and Organization+WebSite JSON-LD byte-for-byte UNCHANGED.
+  SEO not regressed.
+
+Process: built as two reviewed passes (A visual/structural, B data/honesty) but landed as
+ONE commit (19dba60) - Pass A was staged and reviewed, never separately committed; Pass B
+built on the same working tree. FF-merge 24c9106..19dba60, no merge commit. Provenance files
+(docs/cnp-root-mock-v7.html ~1MB base64, docs/cnp-root-redesign-spec.md) kept OUT of git
+history - now gitignored.
+
+WATCH-ITEMS (outlived the build - known state, not bugs):
+1. network_brief DB row renders "DMZ arrives Oct 23" - operator-authored editorial content,
+   NOT wired to dmz.launch_date. Will not auto-update if the launch date moves; needs a
+   manual DB edit. (DB writes = operator domain.)
+2. Receipt is dynamic-newest (shows whichever stat was verified most recently; currently V00
+   Zeus RG). On-brand and honest, but the hero proof rotates - pin a curated row later if a
+   permanent set piece is wanted.
+3. GamePulseColumn component now orphaned - root re-skinned the feed columns inline rather
+   than through it. Untouched but unused by root; reversible; delete later if nothing else
+   consumes it.
+4. Reveal-on-scroll entrance animation from the mock NOT ported (sections render visible) -
+   conscious minor-polish deferral.
+
 ## 2026-08-24 - Phase 2 ranking (entity-relevance boost): Fable-approved DESIGN (build waits for v1 logs)
 
 Designed Phase 2 of the ingestion ranking (entity-relevance boost on the anti-hype v1
