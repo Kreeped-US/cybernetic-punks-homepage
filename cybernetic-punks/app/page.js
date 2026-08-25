@@ -22,7 +22,8 @@ import AccountMenu from '@/components/AccountMenu';
 import HeroCrosshair from '@/components/network/HeroCrosshair';
 import ReceiptPanel from '@/components/network/ReceiptPanel';
 import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
-import { getEditorDisplay, editorInitial } from '@/lib/editors/roster';
+import { getEditorDisplay, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
+import EditorPortrait from '@/components/network/EditorPortrait';
 import { dmz } from '@/lib/games/dmz';
 import { wardogs } from '@/lib/games/wardogs';
 
@@ -489,9 +490,18 @@ export default async function NetworkRoot() {
                   <>
                     <div className="photo" style={{ '--op': e.color }}>
                       <div className="cbar" aria-hidden="true" />
-                      {/* image-ready: /images/editors/<key>.jpg drops in here when generated */}
-                      <div className="ph-badge" aria-hidden="true">{editorInitial(e.key)}</div>
-                      {locked ? <div className="classified-stamp">Classified</div> : <div className="ph-tag">{'// PORTRAIT PENDING'}</div>}
+                      {/* Portrait renders when a file exists (editorHasPortrait); onError or
+                          a missing file degrades to the initial badge. BROKER's clear face
+                          renders here even on the locked card -- redaction is on the name. */}
+                      <EditorPortrait
+                        src={editorHasPortrait(e.key) ? '/images/editors/' + e.key + '.jpg' : null}
+                        alt={e.key.toUpperCase() + ' - ' + e.fullName}
+                        imgClassName="ph-photo"
+                        fallback={<div className="ph-badge" aria-hidden="true">{editorInitial(e.key)}</div>}
+                      />
+                      {locked
+                        ? <div className="classified-stamp">Classified</div>
+                        : (!editorHasPortrait(e.key) ? <div className="ph-tag">{'// PORTRAIT PENDING'}</div> : null)}
                     </div>
                     <div className="body">
                       <div className="rank">{rank}</div>
@@ -509,7 +519,6 @@ export default async function NetworkRoot() {
                   : <div key={e.key} className={cls} style={{ '--op': e.color }}>{inner}</div>;
               })}
             </div>
-            <p className="portrait-note">{'// Editor portraits are being generated - cards carry the real art once created.'}</p>
           </div>
         </section>
 
@@ -771,7 +780,10 @@ const CNP_CSS = `
 .cnp-root .op{display:grid;grid-template-columns:150px 1fr;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;transition:.25s;color:inherit}
 .cnp-root .op:hover{border-color:var(--op);transform:translateY(-3px)}
 .cnp-root .op .photo{position:relative;background:linear-gradient(160deg,var(--surface-2),#120d0f);border-right:1px solid var(--line);display:flex;align-items:center;justify-content:center;min-height:150px}
-.cnp-root .op .photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(13,10,11,.5));pointer-events:none}
+.cnp-root .op .photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(13,10,11,.5));pointer-events:none;z-index:1}
+/* Portrait fills the photo slot behind the scrim + cbar; the locked (BROKER) card
+   does NOT grayscale it (only the badge is dimmed), so her face renders clear. */
+.cnp-root .op .ph-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;z-index:0}
 .cnp-root .op .ph-badge{font-family:var(--display);font-weight:700;font-size:40px;color:var(--op);opacity:.85}
 .cnp-root .op .ph-tag{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase}
 .cnp-root .op .photo .cbar{position:absolute;top:0;left:0;width:100%;height:4px;background:var(--op);z-index:1}

@@ -38,6 +38,7 @@ export const EDITORS = {
     symbol:   '◈',  // ◈ (existing)
     bio:      "Evidence absolutist. Would rather publish “insufficient data to call this” than guess — the slowest to commit, the hardest to refute. Authority from rigor.",
     image:    '/images/editors/cipher.jpg',
+    hasPortrait: true,
   },
   nexus: {
     key:      'nexus',
@@ -49,6 +50,7 @@ export const EDITORS = {
     symbol:   '⬡',  // ⬡ (existing)
     bio:      'Lives a week ahead of the lobby. Makes the aggressive early call and owns the misses — first, even when wrong. Authority from currency.',
     image:    '/images/editors/nexus.jpg',
+    hasPortrait: true,
   },
   dexter: {
     key:      'dexter',
@@ -60,6 +62,7 @@ export const EDITORS = {
     symbol:   '⬢',  // ⬢ (existing)
     bio:      "Compulsive optimizer who can’t call a loadout “done” — there’s always another 2% to find. “Good enough” is an insult. Authority from craft.",
     image:    '/images/editors/dexter.jpg',
+    hasPortrait: true,
   },
   ghost: {
     key:      'ghost',
@@ -71,6 +74,7 @@ export const EDITORS = {
     symbol:   '◇',  // ◇ (existing)
     bio:      'In the trenches, not the lab. Trusts the lived reality of the lobby over any spreadsheet. Authority from below.',
     image:    '/images/editors/ghost.jpg',
+    hasPortrait: true,
   },
   miranda: {
     key:      'miranda',
@@ -85,6 +89,7 @@ export const EDITORS = {
     symbol:   '◎',  // ◎ (existing)
     bio:      'The formidable oracle. Rarely issues a verdict, but it lands hard — and she remembers every season that came before. Authority from above.',
     image:    '/images/editors/miranda.jpg',
+    hasPortrait: true,
   },
   broker: {
     key:      'broker',
@@ -102,17 +107,20 @@ export const EDITORS = {
     color:    '#8b95a7', // slate / silver-grey (PROPOSED — see note below; not yet a live token)
     symbol:   '$',  // $ — economy / market lane
     bio:      "Unsentimental EV accountant. The game is a ledger; she only cares whether it pays — and will call your favorite meta a value trap. Authority from the ledger.",
-    image:    '/images/editors/broker.jpg', // NOTE: does not exist yet (imaging pass pending)
+    image:    '/images/editors/broker.jpg', // portrait file shipped 2026-08-25
+    // BROKER's CLEAR face renders on the CLASSIFIED card -- the redaction is on her
+    // NAME/identity, not her photo. hasPortrait is decoupled from status: an 'incoming'
+    // editor can still have a portrait file.
+    hasPortrait: true,
   },
   // VANTAGE / Vivian Cross -- the NETWORK editor-in-chief (persona in
   // lib/network/vantage.js). Added here so a feed_items row with editor='VANTAGE'
   // (her discourse articles) resolves a real byline / accent / initial via the
-  // same helpers every article renderer uses. status:'network' (NOT 'live') so
-  // editorHasPortrait() returns false -> consumers use the editorInitial() badge
-  // (no vantage.jpg exists, and she has no /intel/<lane>). Deliberately KEPT OUT
-  // of EDITOR_ORDER below, so the /editors masthead + /about desk (which lists
-  // her separately) are unchanged. Silver accent matches the homepage
-  // --nr-vantage structural color.
+  // same helpers every article renderer uses. status:'network' (NOT 'live') -> no
+  // /intel/<lane>; she has a portrait (hasPortrait:true) so her face renders on the
+  // root desk. Deliberately KEPT OUT of EDITOR_ORDER below, so the /editors masthead
+  // + /about desk (which lists her separately) are unchanged. Silver accent matches
+  // the homepage --nr-vantage structural color.
   vantage: {
     key:      'vantage',
     status:   'network',
@@ -122,7 +130,8 @@ export const EDITORS = {
     color:    '#c8d4e0', // silver (network structural accent; matches --nr-vantage)
     symbol:   '◆',
     bio:      "The network editor-in-chief. Frames what matters across every game and covers the discourse around them -- never a single game's in-game facts.",
-    image:    '/images/editors/vantage.jpg', // does not exist; consumers fall back to editorInitial()
+    image:    '/images/editors/vantage.jpg', // portrait file shipped 2026-08-25
+    hasPortrait: true,
   },
 };
 
@@ -151,13 +160,16 @@ export function editorInitial(key) {
   return e ? e.fullName.charAt(0).toUpperCase() : '?';
 }
 
-// Whether an editor currently has a portrait image on disk. broker.jpg has not been
-// generated yet (status 'incoming'); the live editors have portraits. Server
-// components have no <img onError>, so consumers call this to fall back to an
-// editorInitial() badge instead of rendering a broken image.
+// Whether an editor has a portrait file on disk -- DECOUPLED from publish-status
+// (the hasPortrait flag is the single source of truth, like coverage:'dmz'). All 7
+// current editors have portraits; a future editor defaults hasPortrait absent -> false
+// until their file lands. This is used ONLY to choose portrait-vs-badge rendering
+// (verified: no live-status proxy usage), so widening it from status to hasPortrait is
+// safe. Consumers still fall back to an editorInitial() badge (server components have no
+// <img onError>; client render sites additionally onError-swap to the badge).
 export function editorHasPortrait(key) {
   var e = getEditorDisplay(key);
-  return !!(e && e.status === 'live');
+  return !!(e && e.hasPortrait);
 }
 
 // How to render the byline name from a display entry (helper, not yet wired):

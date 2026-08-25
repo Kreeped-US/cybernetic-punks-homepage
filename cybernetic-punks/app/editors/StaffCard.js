@@ -7,14 +7,14 @@
 // their work); 'incoming' editors (Broker, not generating yet, no lane) render
 // with NO link and an "incoming" marker — honest, and sells the expansion.
 //
-// PORTRAIT: the imaging pass hasn't run, so no real portraits exist yet. We
-// render an initial-badge in the editor's accent color (editorInitial). When
-// /images/editors/<key>.jpg portraits land later, swap the badge block for an
-// <img src={editor.image}> with no other change. Initial-badge is the safe
-// default (server components can't use <img onError>, so we don't assume files).
+// PORTRAIT: renders the editor's portrait (editor.image) when a file exists
+// (editorHasPortrait, roster hasPortrait flag) via the EditorPortrait client
+// component, which onError-degrades to the initial-badge -- so a missing file shows
+// the badge, never a broken image. The initial-badge remains the graceful fallback.
 
 import Link from 'next/link';
-import { editorInitial } from '@/lib/editors/roster';
+import { editorInitial, editorHasPortrait } from '@/lib/editors/roster';
+import EditorPortrait from '@/components/network/EditorPortrait';
 
 const DEEP_BG = '#0e1014';
 const CARD_BG = '#1a1d24';
@@ -37,17 +37,22 @@ function CardBody({ editor }) {
       opacity: isLive ? 1 : 0.92,
       height: '100%',
     }}>
-      {/* Initial-badge portrait (swap for <img> when portraits exist) */}
+      {/* Portrait when a file exists (editorHasPortrait), else the initial badge;
+          onError also degrades to the badge. The framed box is shared by both. */}
       <div style={{
         width: 72, height: 72, flexShrink: 0,
         borderRadius: 3,
         border: '2px solid ' + accent + '55',
         background: DEEP_BG,
+        overflow: 'hidden',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 30, fontWeight: 800, color: accent, lineHeight: 1 }}>
-          {editorInitial(editor.key)}
-        </span>
+        <EditorPortrait
+          src={editorHasPortrait(editor.key) ? editor.image : null}
+          alt={editor.key.toUpperCase() + ' - ' + editor.fullName}
+          imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+          fallback={<span style={{ fontFamily: 'Orbitron, monospace', fontSize: 30, fontWeight: 800, color: accent, lineHeight: 1 }}>{editorInitial(editor.key)}</span>}
+        />
       </div>
 
       <div style={{ minWidth: 0 }}>
