@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-08-25 - Wardogs added as a third root game tile (pre-launch tease)
+
+Third game-selection tile added to the root, pre-launch tease. Tile-only scope -
+NOT a vertical (no /wardogs route, no wardogs_* tables, no editorial, no ROOT_GAMES
+entry). "Games Covered" telemetry stays 2 (honest: Wardogs is teased, not covered).
+- app/page.js: third tile (non-link DIV, no dead route), auto-fit grid
+  (repeat(auto-fit,minmax(300px,1fr))) replacing fixed 1fr 1fr, Wardogs-only
+  .scrim-strong for legibility over the amber art, launchLabel helper.
+- lib/games/wardogs.js (new): minimal data source, launch_date 2026-09-10 only.
+  Sep 10 single-sourced here - the pill "LAUNCHES SEP 10" derives from it, zero
+  hardcoded date literal in the component.
+- public/images/games/wardogs-hero.jpg (new): key art, convention path matching
+  dmz-hero.jpg. Legibility verified WCAG AA over the amber art (weakest element
+  "Coming soon" = 5.44 vs 4.5 threshold).
+- Only confirmed facts on the tile: name + Sep 10 + "Steam Early Access". Operator-
+  confirmed release date. All other Wardogs facts remain unverified/off.
+- Full Wardogs vertical scaffold plan is separate - see wardogs-vertical-study.md
+  (infrastructure-first, first-to-verified at Sep 10 EA, held so it doesn't compete
+  with the DMZ Oct 23 launch priority).
+
 ## 2026-08-25 - ROOT PAGE PREMIUM REDESIGN - SHIPPED (main 19dba60, live on prod)
 
 Root (app/page.js NetworkRoot) elevated from the proven ranking page (~pos 7.3) to the

@@ -24,6 +24,7 @@ import ReceiptPanel from '@/components/network/ReceiptPanel';
 import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
 import { getEditorDisplay, editorInitial } from '@/lib/editors/roster';
 import { dmz } from '@/lib/games/dmz';
+import { wardogs } from '@/lib/games/wardogs';
 
 // Premium type stack (mock Section 1). Scoped to this page; exposed as CSS variables the
 // ported CSS maps --display / --body / --mono onto.
@@ -70,6 +71,18 @@ function daysUntilLaunch() {
   if (isNaN(ms)) return null;
   var days = Math.ceil(ms / 86400000);
   return days > 0 ? days : 0;
+}
+
+// "Launches Sep 10" from an ISO launch date (the Wardogs tile pill). Single-sourced
+// from the data module (wardogs.launch_date) -- no hardcoded date in this component:
+// change the source and the label follows. Null on a missing/bad date so the tile
+// falls back to a plain "Coming soon" pill.
+var CNP_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function launchLabel(iso) {
+  if (!iso) return null;
+  var d = new Date(iso + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return null;
+  return 'Launches ' + CNP_MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate();
 }
 
 // -- DATA FNS (unchanged -- PASS A does NOT re-wire data sources) -
@@ -242,6 +255,7 @@ export default async function NetworkRoot() {
   var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
   var marathonOnline = (data.pulse.marathon && typeof data.pulse.marathon.online === 'number') ? data.pulse.marathon.online : null;
   var launchDays = daysUntilLaunch();
+  var wardogsLaunch = launchLabel(wardogs.launch_date); // "Launches Sep 10", single-sourced
   var gameMeta = {};
   ROOT_GAMES.forEach(function(g) {
     var p = data.pulse[g.slug];
@@ -379,6 +393,16 @@ export default async function NetworkRoot() {
                 <div className="meta">Call of Duty: MW4 extraction &middot; Hajin Exclusion Zone &middot; pre-launch intel building</div>
                 <div className="go">Get day-one coverage &rarr;</div>
               </Link>
+              {/* Wardogs -- teaser tile ONLY. No /wardogs route yet, so this is a
+                  non-link <div> (no click target, no dead route). No key art yet, so
+                  no --img: .art falls back to the burgundy gradient. Only confirmed
+                  facts shown: name + single-sourced launch date + Steam EA. */}
+              <div className="game wardogs is-static" role="group" aria-label="Wardogs - coming soon" style={{ '--img': "url('/images/games/wardogs-hero.jpg')" }}>
+                <div className="art" aria-hidden="true" /><div className="scrim scrim-strong" aria-hidden="true" />
+                <div className="status wardogs-pill"><i aria-hidden="true" />{wardogsLaunch || 'Coming soon'}</div>
+                <div className="meta">{wardogs.displayName} &middot; Steam Early Access</div>
+                <div className="go go-soon">Coming soon</div>
+              </div>
             </div>
           </div>
         </section>
@@ -687,20 +711,32 @@ const CNP_CSS = `
 .cnp-root .voice-brief{font-size:14.5px;line-height:1.6;color:var(--text-dim);margin:14px 0 0}
 
 .cnp-root .games{border-top:1px solid var(--line)}
-.cnp-root .game-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
+.cnp-root .game-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:44px}
 .cnp-root .game{border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative;min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;padding:28px;transition:.25s;cursor:pointer;isolation:isolate}
 .cnp-root .game .art{position:absolute;inset:0;z-index:0;background-image:var(--img,var(--fallback));background-size:cover;background-position:center;transition:transform .5s ease}
 .cnp-root .game{--fallback:linear-gradient(180deg,#1d1417,var(--surface))}
 .cnp-root .game:hover .art{transform:scale(1.05)}
 .cnp-root .game .scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(13,10,11,.15) 0%,rgba(13,10,11,.05) 45%,rgba(13,10,11,.6) 78%,rgba(13,10,11,.94) 100%)}
+/* Stronger bottom band for warm/bright art (Wardogs) so the bottom meta + muted
+   "Coming soon" stay legible over amber. Darkens the lower half; top stays clear. */
+.cnp-root .game .scrim.scrim-strong{background:linear-gradient(180deg,rgba(13,10,11,.22) 0%,rgba(13,10,11,.12) 38%,rgba(13,10,11,.74) 72%,rgba(13,10,11,.98) 100%)}
 .cnp-root .game:hover{transform:translateY(-4px);border-color:var(--burg-bright)}
 .cnp-root .game>*:not(.art):not(.scrim){position:relative;z-index:2}
 .cnp-root .game .status{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;position:absolute;top:24px;left:28px;z-index:2;display:inline-flex;align-items:center;gap:8px;background:rgba(13,10,11,.72);backdrop-filter:blur(6px);padding:7px 12px;border-radius:100px;border:1px solid var(--line);color:#c8ff2f}
 .cnp-root .game .status.dmz-pill{color:var(--gold)}
+.cnp-root .game .status.wardogs-pill{color:var(--gold)}
 .cnp-root .game .status i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
 .cnp-root .game .meta{font-size:13.5px;color:#d8cdc8;margin-bottom:14px;text-shadow:0 1px 14px rgba(0,0,0,.9);font-weight:500}
 .cnp-root .game .go{font-family:var(--display);font-size:15px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:8px;text-shadow:0 1px 10px rgba(0,0,0,.8)}
 .cnp-root .game:hover .go{gap:12px}
+/* Wardogs teaser tile: non-interactive (no route). Kill the click-affordances --
+   no pointer cursor, no lift, no art zoom -- and mute the "Coming soon" CTA so it
+   never reads as a link. */
+.cnp-root .game.is-static{cursor:default}
+.cnp-root .game.is-static:hover{transform:none;border-color:var(--line)}
+.cnp-root .game.is-static:hover .art{transform:none}
+.cnp-root .game .go.go-soon{color:var(--text-dim)}
+.cnp-root .game.is-static:hover .go.go-soon{gap:8px}
 
 .cnp-root .pulse-sec{border-top:1px solid var(--line)}
 .cnp-root .pulse-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
