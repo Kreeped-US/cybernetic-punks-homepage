@@ -1340,13 +1340,13 @@ function selectCommenters(publishingEditor) {
 // (a) forbid introducing new invented specifics and (b) stop commenters from
 // restating the article's claims as independently confirmed.
 var COMMENT_INTEGRITY_RULE = '\n\nCOMMENT INTEGRITY - CRITICAL:\n'
-  + '- React ONLY to what the article actually says and to durable Marathon facts (the rarity ladder, the 8 shells, the Cradle being an Energy/free-respec system, factions providing gear not stats). Do not introduce specifics the article did not establish.\n'
+  + '- React ONLY to what the article actually says and to durable {{cnp:game}} facts {{kit:commentModel.durableFacts}}. Do not introduce specifics the article did not establish.\n'
   + '- NEVER invent a username, handle, quote, upvote/view count, hours-played figure, win rate, pick rate, percentage, date, patch specific, currency amount, boss name, zone name, game mode, or ability name. If it was not in the article, do not state it.\n'
   + '- You are REACTING, not corroborating. Do NOT restate a specific claim from the article as if you independently confirmed it ("yes, the X mechanic is real"). You may agree with, extend, or push back on the article\'s argument, but do not lend invented evidence to it.\n'
   + '- If you have nothing specific and verifiable to add, keep the comment short and qualitative rather than inventing detail. A brief honest reaction beats a fabricated one.\n'
   + '- Do NOT assert a progression cap, ceiling, or "max" the article did not establish. If the article reports a level or number (e.g. "level 100"), do not call it the cap, the max, the ceiling, or claim a player is "maxed" unless the article itself says so. Treat a level as a milestone, not a known limit, absent explicit confirmation.\n'
   + '- If a claim in the article sounds dubious or unsupported, it is acceptable and good to express measured skepticism rather than amplify it.'
-  + '\n- READER ADDRESS - game-neutral: Address the reader plainly as "you" (or "players"). Do NOT address the reader, or refer to players in general, by an in-world noun such as "Runner" - not "Runner, do X", not "advice for Runners". This is about audience address ONLY. Keep using "Runner" where it names game entities - Runner Shells, the Runner Grade, the eight Runners, Runner-vs-Runner - that is game vocabulary, not reader-address.';
+  + '\n- READER ADDRESS - game-neutral: Address the reader plainly as "you" (or "players"). Do NOT address the reader, or refer to players in general, by an in-world noun such as "{{cnp:reader}}" - not "{{cnp:reader}}, do X", not "advice for {{cnp:readers}}". This is about audience address ONLY. Keep using "{{cnp:reader}}" where it names game entities - Runner Shells, the Runner Grade, the eight Runners, Runner-vs-Runner - that is game vocabulary, not reader-address.';
 
 // Extra clause appended ONLY when commenting on a creator_spotlight article.
 // The article subject is a real, named person, so the bar is higher than the
@@ -1357,7 +1357,7 @@ var COMMENT_CREATOR_SPOTLIGHT_RULE = '\n\nThis article is about a REAL, NAMED co
   + '- Do NOT speculate about the creator ("they probably...", "known for...", "this is the kind of streamer who..."). If the article did not say it, do not imply it.\n'
   + '- It is fine to react to the creator\'s work or the article\'s framing in your editorial voice, but every statement about the person must trace to the article. When in doubt, keep your reaction about the content, not the individual.';
 
-export async function generateArticleComments(article, publishingEditor, supabaseClient, tierChangeContext) {
+export async function generateArticleComments(article, publishingEditor, supabaseClient, tierChangeContext, config = getGameConfig()) {
   var selected = selectCommenters(publishingEditor);
 
   // A creator spotlight raises the bar for comments (real-person safety). The
@@ -1379,18 +1379,28 @@ export async function generateArticleComments(article, publishingEditor, supabas
       var arrow = m.trend === 'up' ? 'UP' : (m.trend === 'down' ? 'DOWN' : 'CHANGED');
       return '  - ' + m.name + ' (' + (m.type || '').toUpperCase() + '): ' + (m.oldTier || '?') + ' -> ' + (m.newTier || '?') + ' [' + arrow + ']';
     }).join('\n');
-    prompt = 'NEXUS just regraded the Marathon meta tier list. These items moved tiers this cycle:\n\n' + moversText + '\n\nReact to these SPECIFIC tier changes in your editorial voice. Pick the 1-2 movers that matter most given your focus. Say whether you agree with the move, what it means for players, or what NEXUS might be missing. Be specific to the items that moved - do NOT write a generic meta take. Keep it to 2-3 sentences max.\n\nARTICLE HEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + integrityRule;
+    prompt = 'NEXUS just regraded the {{cnp:game}} meta tier list. These items moved tiers this cycle:\n\n' + moversText + '\n\nReact to these SPECIFIC tier changes in your editorial voice. Pick the 1-2 movers that matter most given your focus. Say whether you agree with the move, what it means for players, or what NEXUS might be missing. Be specific to the items that moved - do NOT write a generic meta take. Keep it to 2-3 sentences max.\n\nARTICLE HEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + integrityRule;
   } else {
-    prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + integrityRule;
+    prompt = 'React to this {{cnp:game}} gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + article.headline + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + integrityRule;
   }
+
+  // GAME VOCABULARY + KIT (Stage 2b-4): the comment path assembles its own prompt and
+  // calls the model directly (it does NOT go through callEditor), so apply the same Layer-A
+  // token swap + Layer-B kit here. {{cnp:game}} -> this game's name; the COMMENT INTEGRITY
+  // rule's {{kit:commentModel.durableFacts}} + {{cnp:reader}} resolve per game. Kit BEFORE
+  // vocab (a {{cnp:...}} inside an injected block would still resolve). Marathon reproduces
+  // today's literals byte-for-byte; a game with no commentModel renders empty durable-facts.
+  var vocab = resolveVocab(config);
+  var kit = resolveKit(config);
+  var finalPrompt = applyVocab(applyKit(prompt, kit), vocab);
 
   var settled = await Promise.allSettled(
     selected.map(function(editor) {
       return client.messages.create({
         model: COMMENT_MODEL,
         max_tokens: 200,
-        system: COMMENT_VOICES[editor],
-        messages: [{ role: 'user', content: prompt }],
+        system: applyVocab(applyKit(COMMENT_VOICES[editor], kit), vocab),
+        messages: [{ role: 'user', content: finalPrompt }],
       }).then(function(message) {
         var commentText = message.content[0].text.trim();
         if (commentText && commentText.length > 10) {
@@ -1429,15 +1439,19 @@ export async function generateArticleComments(article, publishingEditor, supabas
 // BY CONSTRUCTION: no DB client, no insert -- it cannot persist. Mirrors the
 // per-editor comment call inside generateArticleComments (same prompt + voice +
 // model); changes NO prompt/voice content. Deterministic for a given editor.
-export async function sampleEditorComment(editor, article) {
+export async function sampleEditorComment(editor, article, config = getGameConfig()) {
   var voice = COMMENT_VOICES[editor];
   if (!voice) throw new Error('Unknown editor (no comment voice): ' + editor);
-  var prompt = 'React to this Marathon gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + (article.headline || '') + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + COMMENT_INTEGRITY_RULE;
+  var prompt = 'React to this {{cnp:game}} gaming article in your voice. Keep it to 2-3 sentences max. Be specific to the content - quote a specific point, react to a specific claim, or extend the argument.\n\nHEADLINE: ' + (article.headline || '') + '\n\nARTICLE BODY (first 400 chars): ' + (article.body || '').slice(0, 400) + '\n\nRespond with ONLY your comment text - no JSON, no labels, no quotes around the comment.' + COMMENT_INTEGRITY_RULE;
+  // Stage 2b-4: same Layer-A + kit application as generateArticleComments (this path also
+  // calls the model directly). Dev harness defaults config to marathon -> byte-identical.
+  var vocab = resolveVocab(config);
+  var kit = resolveKit(config);
   var message = await client.messages.create({
     model: COMMENT_MODEL,
     max_tokens: 200,
-    system: voice,
-    messages: [{ role: 'user', content: prompt }],
+    system: applyVocab(applyKit(voice, kit), vocab),
+    messages: [{ role: 'user', content: applyVocab(applyKit(prompt, kit), vocab) }],
   });
   return ((message.content && message.content[0] && message.content[0].text) || '').trim();
 }

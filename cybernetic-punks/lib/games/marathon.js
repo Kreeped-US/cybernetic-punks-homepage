@@ -440,6 +440,15 @@ When the community reacts to any of these, that's your lane. Do NOT reference th
         shellsEnd: `\n--- END SHELLS ---`,
       },
 
+      // Comment-path game-model prose (Stage 2b-4). The COMMENT INTEGRITY rule's
+      // "durable <game> facts (...)" parenthetical -> {{kit:commentModel.durableFacts}}.
+      // A game without commentModel renders "durable <Name> facts ." (empty parenthetical) -
+      // no Marathon model leaks. (COMMENT_VOICES woven Cradle/faction refs are DEFERRED to a
+      // later comment-voice pass, consistent with the article-path left-inline voice refs.)
+      commentModel: {
+        durableFacts: `(the rarity ladder, the 8 shells, the Cradle being an Energy/free-respec system, factions providing gear not stats)`,
+      },
+
       // The canonical tag standard, appended to all five persona prompts ({{kit:tagStandard}}).
       // Moved VERBATIM from editorCore.js CANONICAL_TAG_STANDARD (leading blank lines are
       // significant -- they reproduce the exact ${DATA_INTEGRITY_RULES}${...} join).

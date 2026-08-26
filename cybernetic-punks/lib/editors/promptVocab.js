@@ -137,6 +137,8 @@ export function resolveKit(config) {
   flattenInto(out, 'progression.', gm.progression || {});
   flattenInto(out, 'economy.', gm.economy || {});
   flattenInto(out, 'seasonContext.', pk.seasonContext || {});
+  // 2b-4: comment-path game-model prose -> {{kit:commentModel.durableFacts}}.
+  flattenInto(out, 'commentModel.', pk.commentModel || {});
   return out;
 }
 

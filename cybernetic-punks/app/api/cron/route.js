@@ -868,7 +868,8 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
         { id: feedItem.id, headline: feedItem.headline, body: feedItem.body, directive_type: insertData.directive_type || 'standard' },
         editorName,
         supabase,
-        tierChangeContext
+        tierChangeContext,
+        PRODUCING_GAME
       ).catch(function(err) {
         console.log('[CRON] comment generation error for ' + editorName + ': ' + err.message);
       });

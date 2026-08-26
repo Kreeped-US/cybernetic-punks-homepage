@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 2b-4: comment-generator path (final 2b sub-commit)
+
+Fourth and final 2b sub-commit. Brought the comment-generation path - a SEPARATE prompt
+assembly that never ran applyVocab/applyKit - under the same per-game vocab+kit mechanism
+as the article path. All generation (articles + comments) now flows through one mechanism.
+Marathon byte-identical (both comment functions).
+- Config threaded: generateArticleComments gains a config param (from PRODUCING_GAME at
+  the cron site); sampleEditorComment gains one defaulting to getGameConfig()=marathon
+  (dev harness, byte-identical).
+- Mechanism wired into BOTH functions: applyVocab(applyKit(...)) over the assembled
+  prompt AND the COMMENT_VOICES[editor] system string (uniform; no-op for Marathon).
+- Game name -> {{cnp:game}} at the 4 comment-path sites. commentModel.durableFacts (the
+  "rarity ladder / 8 shells / Cradle / factions-give-gear" parenthetical) extracted to
+  promptKit.commentModel; resolveKit gains the commentModel flatten. Reader-address noun
+  -> {{cnp:reader}} (matching 2a; game-vocab EXAMPLES left literal - same known non-Marathon
+  leak as the article path, fixed together later).
+- VERIFIED: both generateArticleComments and sampleEditorComment back-substitute to HEAD
+  zero-diff; dev default resolves to marathon byte-identical; non-Marathon renders own game
+  name + empty durableFacts (no Marathon-fact leak); deferred items (COMMENT_VOICES Cradle/
+  faction refs, reader-address examples) confirmed UNCHANGED. Build exit 0.
+- DEFERRED (flagged, consistent with article-path treatment): COMMENT_VOICES woven Cradle/
+  faction refs (later comment-voice generalization); reader-address game-vocab examples
+  (fixed with the article-path examples later).
+
+STAGE 2b COMPLETE: promptKit extraction across 4 sub-commits (2b-1 tagStandard/genre/enums,
+2b-2 per-persona gameModel, 2b-3 contextBlocks, 2b-4 comment path). Branch feat/stage2b-promptkit.
+
 ## 2026-08-26 - Content-engine generalization Stage 2b-3: promptKit contextBlocks
 
 Third of four 2b sub-commits. Extracted the fetchGameContext data-block prose (headers/
