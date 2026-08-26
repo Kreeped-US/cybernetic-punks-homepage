@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 2b-1: promptKit extraction (tagStandard + genre + toolEnums)
+
+First of four sub-commits extracting Marathon's Layer-B game-model into a per-game
+config.editorial.promptKit. This sub-commit: the cleanly-bounded structured pieces.
+Marathon byte-identical EXCEPT one intended correctness fix (youtube Sentinel).
+- promptVocab.js: +resolveKit/applyKit (block placeholders {{kit:...}}, render-EMPTY
+  on a missing block - Layer-B blocks are optional, unlike fail-closed Layer-A tokens)
+  + applyToolEnums (injects enum VALUES onto a deep-cloned tool schema). Kit applied
+  BEFORE vocab so {{cnp:...}} inside an injected block still resolves.
+- marathon.js: +promptKit { tagStandard (CANONICAL_TAG_STANDARD verbatim), genre,
+  toolEnums {entityFocus, metaTypes, guideCategories} }.
+- editorCore.js: CANONICAL_TAG_STANDARD const removed (moved to config); 6
+  {{kit:tagStandard}} + 3 {{kit:genre}} swaps at exact former positions; 3 tool-enum
+  arrays stripped from base schemas (values now injected). Field NAMES untouched
+  (shell_focus/type/guide_category stay - DB columns, out of 2b scope per Q2).
+- youtube.js: 7-shell literal -> {{kit:entityFocusList}}, single-sourced from
+  entityFocus. INTENTIONAL: this adds Sentinel (fixes the 7-vs-8 inconsistency). The
+  ONE deliberate Marathon-output change in 2b-1 - diff is exactly +Sentinel.
+- VERIFIED: tagStandard byte-identical to HEAD; enum values === HEAD arrays; editorCore
+  diff is only mechanical hunks (no prompt text touched); non-Marathon-no-kit renders
+  none of it (blocks empty, enums absent). 21/21 tests, build exit 0.
+- REMAINING 2b sub-commits: 2b-2 per-persona gameModel + seasonContext (highest risk),
+  2b-3 fetchGameContext contextBlocks, 2b-4 comment-generator path.
+
 ## 2026-08-26 - DDL record reconciliation: stat-table game_slug NOT NULL is APPLIED
 
 The 2026-08-25 migration (DROP DEFAULT + SET NOT NULL on game_slug for weapon_stats,

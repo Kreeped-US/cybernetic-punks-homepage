@@ -285,7 +285,7 @@ ${untrustedVideos}
 ANALYSIS GUIDANCE:
 - Pick the video with the most useful build information
 - If none are specifically about builds, analyze the loadout/gear visible in the most popular gameplay video
-- Set shell_focus to the shell the build centers on (Assassin/Destroyer/Recon/Rook/Thief/Triage/Vandal)
+- Set shell_focus to the shell the build centers on ({{kit:entityFocusList}})
 - For ranked-relevant builds, set ranked_viable=true and specify holotag_target
 - Reference exact item names from the database (faction unlocks where applicable)
 - Explain the build's win condition explicitly

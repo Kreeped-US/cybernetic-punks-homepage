@@ -6,7 +6,7 @@ import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
 import { HEADLINE_RULES, HEADLINE_MAX_CHARS } from './headlineRules';
 import { makeStoreMinter, storeRowCitationEnabled, toolWithStoreCites, renderRelationLine } from './gather/blockId';
-import { applyVocab, resolveVocab } from './editors/promptVocab';
+import { applyVocab, resolveVocab, applyKit, resolveKit, applyToolEnums } from './editors/promptVocab';
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -79,7 +79,7 @@ VIDEO & STREAM CONTENT - CRITICAL:
 - For any YouTube video, Twitch clip, or stream referenced in your sources, you have ONLY its title, channel, and short description. You did NOT watch it.
 - You may cite a video's title, creator, and stated topic. You may NOT describe what happens inside it, its outcome, specific plays, durations, or claims made in it unless that detail is explicitly in the provided title or description text.
 - NEVER write "this video demonstrates," "the creator shows," "in the clip they," or similar - you cannot see the content. Attribute only what the metadata states.
-- If a source video's title/description is not clearly about {{cnp:game}} the {{cnp:dev}} extraction shooter, IGNORE it entirely. Do not write around it, do not mention it, do not reference running, marathons-the-race, or any off-topic interpretation.
+- If a source video's title/description is not clearly about {{cnp:game}} the {{cnp:dev}} {{kit:genre}}, IGNORE it entirely. Do not write around it, do not mention it, do not reference running, marathons-the-race, or any off-topic interpretation.
 
 WORLD FACTS & GAME SYSTEMS - CRITICAL:
 - Game-world facts not held in the database below - map zones, named bosses, game modes, in-game events, currencies, seasonal mechanics, ability names, patch specifics - may ONLY be stated when they appear in the OFFICIAL {{cnp:dev^}} NEWS provided in this prompt or in the database blocks below.
@@ -113,59 +113,12 @@ READER ADDRESS - game-neutral:
 // CANONICAL TAG STANDARD - PERMANENT - APPLIES TO ALL EDITORS
 // ===========================================================
 
-const CANONICAL_TAG_STANDARD = `
-
-CANONICAL TAG STANDARD - PERMANENT RULE:
-When you set the tags field on your article, use ONLY canonical category tags from this list. Do not invent variants. Do not use -guide suffixes. Do not use uppercase. Do not use plurals of canonical tags.
-
-CANONICAL CATEGORY TAGS (use these exact strings):
-  shells          - Runner Shells generally
-  weapons         - weapons generally
-  mods            - mods generally
-  cradle          - The Cradle stat progression system (Energy, tracks, perks)
-  extraction      - exfil tactics, escape routes, exit strategy
-  ranked          - Ranked queue strategy, climbing, Holotag hunting
-  beginner        - new player content, tutorials, basics
-  progression     - faction reputation, contracts, Cradle leveling, credit/Salvage farming
-  maps            - map intel, POIs, zone breakdowns
-  stealth         - silent plays, cloaking, ghosting, avoiding fights
-  squad           - 3-player team tactics, comms, role assignment
-  solo            - solo queue, self-sufficient play, 1v3 survival
-  holotag         - Holotag strategy, targeting, ranked scoring
-  endgame         - high-rank content, Prestige, Contraband farming
-  pvp             - Runner-vs-Runner combat, engagements, gunplay
-  support         - Triage anchoring, revives, utility plays
-  cryo-archive    - the Cryo Archive endgame raid map and content
-
-SUB-TAGS (use in ADDITION to canonical tags):
-  Shell names: assassin, destroyer, recon, rook, thief, triage, vandal, sentinel
-  Cradle tracks: strength, recharge, dexterity, endurance, resistance (use with the 'cradle' canonical tag)
-  Weapon names: wstr-combat-shotgun, m77-assault-rifle, stryder-m1t, kkv-9sd, etc. (use lowercase hyphenated names from the weapon database)
-  Faction names: cyberacme, nucaloric, traxus, mida, arachne, sekiguchi
-  Topic context: meta-shift, balance, performance, dev-update, patch, builds, etc.
-
-EXAMPLES:
-- Article about Assassin's stealth playstyle in solo Ranked: ["shells", "assassin", "stealth", "solo", "ranked"]
-- Build guide for M77 Assault Rifle in squad play: ["weapons", "m77-assault-rifle", "builds", "squad"]
-- Guide about which Cradle perks to prioritize for a Vandal: ["cradle", "vandal", "dexterity", "builds"]
-- Guide about Cryo Archive Compiler boss: ["cryo-archive", "endgame", "squad"]
-
-DEPRECATED TAGS - DO NOT USE (these are NOT valid):
-  shell-guide   -> use 'shells'
-  weapon-guide  -> use 'weapons'
-  mod-guide     -> use 'mods'
-  map-guide     -> use 'maps'
-  CRYO_ARCHIVE  -> use 'cryo-archive'
-  holotags      -> use 'holotag' (singular)
-
-RULES:
-- All tags lowercase
-- Hyphens only when single word reads poorly (cryo-archive)
-- No spaces, no underscores, no special characters
-- No -guide suffix on any canonical category tag
-- No plural variants of canonical category tags
-- Each article should have 3-7 tags total
-- Always include at least 1 canonical category tag so your article appears on the appropriate /guides/[category] page`;
+// STAGE 2b-1: the canonical tag standard is Layer-B game-model prose. It now lives in
+// per-game config (config.editorial.promptKit.tagStandard) and is interpolated into the
+// five persona prompts via the {{kit:tagStandard}} placeholder, resolved at the callEditor
+// chokepoint (resolveKit/applyKit in ./editors/promptVocab). Marathon's kit carries the
+// former literal VERBATIM, so the assembled prompt is byte-identical; a game without a
+// promptKit renders nothing here (render-empty).
 
 // ===========================================================
 // TOOL SCHEMAS - one per editor
@@ -235,7 +188,7 @@ const NEXUS_TOOL = {
           type: 'object',
           properties: {
             name: { type: 'string' },
-            type: { type: 'string', enum: ['weapon', 'shell'] },
+            type: { type: 'string' }, // enum VALUES injected per game (promptKit.toolEnums.metaTypes)
             tier: { type: 'string', enum: ['S', 'A', 'B', 'C', 'D'] },
             trend: { type: 'string', enum: ['up', 'down', 'stable'] },
             note: { type: 'string', description: 'Max 80 chars' },
@@ -267,7 +220,7 @@ const DEXTER_TOOL = {
       body: { type: 'string', description: '500-700 word build analysis with **HEADER TEXT** section breaks. At least 4 sections.' },
       loadout_grade: { type: 'string', enum: ['F', 'D', 'C', 'B', 'A', 'S'] },
       ce_score: { type: 'number', description: 'STRICT RANGE: 0.0 to 10.0 ONLY. Decimals allowed (e.g. 7.5, 8.5). Examples of CORRECT values: 4.0 (niche pick), 7.0 (solid build), 8.5 (top-tier loadout), 9.5 (S-tier dominant). Examples of WRONG values: 75, 85, 95 (these are the 0-100 scale - DO NOT USE). If you find yourself writing a number above 10, divide it by 10. Rates the build\'s overall power.' },
-      shell_focus: { type: ['string', 'null'], enum: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Sentinel', 'Thief', 'Triage', 'Vandal', null] },
+      shell_focus: { type: ['string', 'null'] }, // enum VALUES injected per game (promptKit.toolEnums.entityFocus + null)
       ranked_viable: { type: 'boolean' },
       holotag_target: { type: ['string', 'null'] },
       tags: SHARED_TAG_SCHEMA,
@@ -307,12 +260,7 @@ const MIRANDA_TOOL = {
       guide_category: {
         type: 'string',
         description: 'Canonical category for this guide. Use one of the listed values exactly.',
-        enum: [
-          'shells', 'weapons', 'mods', 'cradle', 'extraction', 'ranked',
-          'beginner', 'progression', 'maps', 'stealth', 'squad',
-          'solo', 'holotag', 'endgame', 'pvp', 'support', 'cryo-archive',
-          'dev-update', 'community-event', 'faction-guide',
-        ],
+        // enum VALUES injected per game (promptKit.toolEnums.guideCategories)
       },
       shells_covered: { type: 'array', items: { type: 'string' } },
       weapons_covered: { type: 'array', items: { type: 'string' } },
@@ -398,7 +346,7 @@ PULL QUOTE - OPTIONAL, AT MOST ONCE PER ARTICLE:
 - Use it ONLY when one line genuinely earns the emphasis. Skip it entirely if nothing rises to it - most articles do not need one. Never force it and never use more than one.
 - This bare standalone-quote form is RESERVED for your pull-quote. Community quotes are ALWAYS attributed inline (the handle in the same paragraph) and must NEVER be written as a bare standalone quoted line.
 
-Use the publish_play_analysis tool to publish your article.${DATA_INTEGRITY_RULES}${CANONICAL_TAG_STANDARD}`,
+Use the publish_play_analysis tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
 
   NEXUS: `You are NEXUS, the meta intelligence editor for Cybernetic Punks - the autonomous {{cnp:game}} intelligence hub at cyberneticpunks.com.
 
@@ -454,7 +402,7 @@ The 8 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook
 
 RANKED MODE IS LIVE: Factor ranked play into all meta analysis. Note Solo vs Squad viability separately.
 
-Use the publish_meta_intel tool to publish your article.${DATA_INTEGRITY_RULES}${CANONICAL_TAG_STANDARD}`,
+Use the publish_meta_intel tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
 
   DEXTER: `You are DEXTER, the build analysis editor for Cybernetic Punks - the autonomous {{cnp:game}} intelligence hub at cyberneticpunks.com.
 
@@ -507,7 +455,7 @@ CONTENT VARIETY: Rotate through ALL 8 shells (including Sentinel). Rotate throug
 
 The 8 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel.
 
-Use the publish_build_analysis tool to publish your article.${DATA_INTEGRITY_RULES}${CANONICAL_TAG_STANDARD}`,
+Use the publish_build_analysis tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
 
   GHOST: `You are GHOST, the community pulse editor for Cybernetic Punks - the autonomous {{cnp:game}} intelligence hub at cyberneticpunks.com.
 
@@ -545,7 +493,7 @@ When the community reacts to any of these, that's your lane. Do NOT reference th
 
 RANKED MODE IS LIVE: Track ranked-specific sentiment closely. (Ranked returns June 14 in S2 - pre-return community anticipation is fair game.)
 
-Use the publish_community_pulse tool to publish your article.${DATA_INTEGRITY_RULES}${CANONICAL_TAG_STANDARD}`,
+Use the publish_community_pulse tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
 
   MIRANDA: `You are MIRANDA, the field guide editor for Cybernetic Punks - the autonomous {{cnp:game}} intelligence hub at cyberneticpunks.com.
 
@@ -578,7 +526,7 @@ PLANNING TOOLS YOU CAN POINT READERS TO:
 - For GEAR and faction progression: the {{cnp:link.factions}} page covers faction Armories and reputation. Point gear-progression guides there.
 Use these sparingly - only when the article meaningfully benefits players planning that path, not as a forced CTA.
 
-Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}${CANONICAL_TAG_STANDARD}`,
+Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
 };
 
 // ===========================================================
@@ -1126,7 +1074,7 @@ ${devRedditData}
 COMMUNITY REDDIT POSTS (what players are discussing - use as topic signals and sentiment; cite only what a post actually states, never restate as fact):
 ${redditSummaries}
 
-YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about {{cnp:game}} the {{cnp:dev}} extraction shooter):
+YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about {{cnp:game}} the {{cnp:dev}} {{kit:genre}}):
 ${videoSummaries}`,
     'official dev news, community Reddit posts, and YouTube video titles/descriptions'
   );
@@ -1137,7 +1085,7 @@ You are the only editor who teaches rather than reports. You write structured gu
 
 VOICE - write like these examples:
 
-"Players new to extraction shooters often misread the timer. The countdown is not telling you when to leave. It's telling you when the third-party shows up. Plan your route at the 3:00 mark, not the 0:30 mark."
+"Players new to {{kit:genre}}s often misread the timer. The countdown is not telling you when to leave. It's telling you when the third-party shows up. Plan your route at the 3:00 mark, not the 0:30 mark."
 
 "The Triage kit is the kindest shell to a new player. Active heal cuts squad mistakes. Passive ammo regen forgives ammo discipline you haven't learned yet. Start here. Earn the right to play Vandal."
 
@@ -1173,7 +1121,7 @@ Choose a completely different shell, weapon, mod, or topic this cycle. If a topi
 
 SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec, seasonal reset), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the planner at {{cnp:link.cradle}}. Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to {{cnp:link.factions}}. Use both links sparingly and only when they genuinely help the reader.
 
-Use the publish_field_guide tool to publish your article. Name real shells, weapons, mods, factions, and Cradle perks. Be specific and actionable. End with 2-3 concrete takeaways.${DATA_INTEGRITY_RULES}${CANONICAL_TAG_STANDARD}`;
+Use the publish_field_guide tool to publish your article. Name real shells, weapons, mods, factions, and Cradle perks. Be specific and actionable. End with 2-3 concrete takeaways.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`;
 }
 
 // ===========================================================
@@ -1221,6 +1169,13 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
   // plus any cron-appended blocks), and the tool DESCRIPTION. Layer-B prose carries no
   // placeholder, so it passes through untouched. Marathon's vocab == its current strings,
   // so this is byte-identical for Marathon. applyVocab fails closed on an unmapped token.
+  // GAME-MODEL KIT (Stage 2b-1): resolve the Layer-B {{kit:...}} BLOCKS (tag standard,
+  // genre, entity list) FIRST -- so any {{cnp:...}} token inside an injected block is still
+  // picked up by the applyVocab pass below. Missing block => render-empty (no leak).
+  var kit = resolveKit(config);
+  systemPrompt = applyKit(systemPrompt, kit);
+  userPrompt = applyKit(userPrompt, kit);
+
   var vocab = resolveVocab(config);
   systemPrompt = applyVocab(systemPrompt, vocab);
   userPrompt = applyVocab(userPrompt, vocab);
@@ -1239,6 +1194,11 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
   // Tool DESCRIPTION carries pure game-name/grade wording (e.g. "field guide article for
   // Marathon Runners"); vocab-swap it on a clone (never mutate the shared tool object).
   if (tool && tool.description) tool = { ...tool, description: applyVocab(tool.description, vocab) };
+  // TOOL-ENUM VALUES (Stage 2b-1): the base schemas carry NO enum on the entity/type/
+  // category fields; inject this game's VALUES from config.editorial.promptKit.toolEnums on
+  // a deep clone. Field NAMES are unchanged. Marathon's kit reproduces the exact arrays
+  // (byte-identical schema); a game without the enum leaves the field unconstrained (no leak).
+  tool = applyToolEnums(tool, editor, (config && config.editorial && config.editorial.promptKit) || {});
 
   var message;
   try {

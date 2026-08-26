@@ -76,3 +76,94 @@ export function applyVocab(text, vocab) {
 export function applyGameVocab(text, config) {
   return applyVocab(text, resolveVocab(config));
 }
+
+// ===========================================================
+// STAGE 2b-1: LAYER-B GAME-MODEL PROMPT KIT (blocks + enums)
+// ===========================================================
+// Where Layer A (2a, above) swaps small VOCABULARY TOKENS ({{cnp:...}}, fail-closed
+// because every generating game needs a game name / reader term), Layer B swaps whole
+// game-model BLOCKS and structured tool ENUM VALUES out to config.editorial.promptKit,
+// so each game supplies its own game-model. 2b-1 covers three pieces:
+//   - tagStandard : the full canonical tag standard block  -> {{kit:tagStandard}}
+//   - genre       : the genre phrase ("extraction shooter") -> {{kit:genre}}
+//   - toolEnums    : shell_focus / meta-type / guide_category enum VALUES (injected into
+//                    the tool schema; field NAMES are deliberately NOT touched in 2b)
+// plus a derived entityFocusList (the entity enum joined for prose) -> {{kit:entityFocusList}}.
+//
+// RENDER-EMPTY (not fail-closed): a Layer-B block is OPTIONAL. A game whose promptKit
+// omits a block (or has no promptKit at all) renders NOTHING at that {{kit:...}} site --
+// the block simply does not appear. This is the opposite of applyVocab: a missing
+// game-model block is a valid game (it just does not carry that model), whereas a missing
+// game NAME is a broken prompt. Marathon's promptKit carries today's strings verbatim, so
+// every {{kit:...}} resolves to its current literal and Marathon renders byte-identically.
+
+// Build the flat {key -> block} map from a game config. entityFocusList is DERIVED from the
+// tool-enum entity list (the same single source the shell_focus enum uses) so a prose list
+// and the schema enum can never drift. A game without promptKit yields undefined blocks ->
+// applyKit renders empty at every {{kit:...}} site (no Layer-B Marathon prose can leak).
+export function resolveKit(config) {
+  var c = config || {};
+  var e = c.editorial || {};
+  var pk = e.promptKit || {};
+  var te = pk.toolEnums || {};
+  var entityFocus = te.entityFocus;
+  return {
+    tagStandard: pk.tagStandard,
+    genre: pk.genre,
+    entityFocusList: Array.isArray(entityFocus) ? entityFocus.join('/') : undefined,
+  };
+}
+
+// KEY is a bare identifier: {{kit:tagStandard}}, {{kit:genre}}, {{kit:entityFocusList}}.
+var KIT_PLACEHOLDER_RE = /\{\{kit:([a-zA-Z]+)\}\}/g;
+
+// Replace every {{kit:KEY}} in `text` with kit[KEY]. A missing/undefined/null value
+// renders EMPTY (render-empty: the optional Layer-B block does not appear). Text with no
+// placeholder is returned unchanged. Apply kit BEFORE vocab at the chokepoint so any
+// {{cnp:...}} token inside an injected block is still resolved by the later applyVocab pass.
+export function applyKit(text, kit) {
+  if (text == null) return text;
+  var k = kit || {};
+  return String(text).replace(KIT_PLACEHOLDER_RE, function (_m, key) {
+    var val = k[key];
+    if (val == null) return '';
+    return String(val);
+  });
+}
+
+// Per-editor location of the ONE tool-schema field whose enum VALUES are Layer-B (the
+// entity/type/category vocabulary). Field NAMES stay Marathon's (shell_focus, type,
+// guide_category) -- they are DB columns read by renderers and are out of 2b scope.
+var TOOL_ENUM_SPECS = {
+  NEXUS:   { path: ['input_schema', 'properties', 'meta_update', 'items', 'properties', 'type'], key: 'metaTypes' },
+  DEXTER:  { path: ['input_schema', 'properties', 'shell_focus'], key: 'entityFocus', nullable: true },
+  MIRANDA: { path: ['input_schema', 'properties', 'guide_category'], key: 'guideCategories' },
+};
+
+// Return a DEEP CLONE of `tool` with the editor's enum field populated from
+// kit.toolEnums[key]. The base tool schemas carry NO enum on these fields (the values live
+// in the kit); this injects them per game. Marathon's kit reproduces the exact original
+// arrays -> byte-identical schema. A game with no matching enum leaves the field
+// UNCONSTRAINED (enum absent) -- no Marathon values can leak. `nullable` appends null to the
+// enum (shell_focus is a nullable field). Deep-clones via JSON round-trip: tool schemas are
+// pure JSON (strings/arrays/objects/numbers/booleans/null), so this never mutates the shared
+// base tool and preserves null enum members.
+export function applyToolEnums(tool, editor, promptKit) {
+  var spec = TOOL_ENUM_SPECS[editor];
+  if (!tool || !spec) return tool;
+  var clone = JSON.parse(JSON.stringify(tool));
+  var node = clone;
+  for (var i = 0; i < spec.path.length; i++) {
+    if (node == null) return clone;
+    node = node[spec.path[i]];
+  }
+  if (node == null) return clone;
+  var enums = (promptKit && promptKit.toolEnums) || {};
+  var values = enums[spec.key];
+  if (!Array.isArray(values)) {
+    delete node.enum;
+  } else {
+    node.enum = spec.nullable ? values.concat([null]) : values.slice();
+  }
+  return clone;
+}

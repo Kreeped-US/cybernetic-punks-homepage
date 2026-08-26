@@ -323,6 +323,93 @@ export const marathon = {
         },
       },
     },
+
+    // ── LAYER-B GAME-MODEL PROMPT KIT (content-engine generalization, Stage 2b-1) ──
+    // The game-model PROSE and structured tool-enum VALUES the editor prompts used to
+    // hardcode. editorCore.js interpolates these at the callEditor chokepoint via
+    // {{kit:...}} placeholders (lib/editors/promptVocab.js resolveKit/applyKit) and
+    // injects the enum VALUES into the tool schemas (applyToolEnums). A game whose config
+    // omits promptKit renders NONE of this (render-empty) -- no Marathon model can leak.
+    // These strings are Marathon's CURRENT prompt literals, moved here VERBATIM, so the
+    // assembled prompt stays byte-identical. Field NAMES (shell_focus/type/guide_category)
+    // are NOT here -- they are DB columns read by renderers, out of 2b scope.
+    promptKit: {
+      // Genre phrase. Sites: DATA_INTEGRITY_RULES + buildMirandaPrompt ({{kit:genre}},
+      // pluralized in prose as {{kit:genre}}s -> "extraction shooters").
+      genre: 'extraction shooter',
+
+      // Structured tool-enum VALUES (values only; field names unchanged). entityFocus is
+      // the shell_focus enum WITHOUT the trailing null (applyToolEnums appends null since
+      // shell_focus is nullable); it also single-sources the youtube prose shell list via
+      // {{kit:entityFocusList}}.
+      toolEnums: {
+        entityFocus: ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Sentinel', 'Thief', 'Triage', 'Vandal'],
+        metaTypes: ['weapon', 'shell'],
+        guideCategories: [
+          'shells', 'weapons', 'mods', 'cradle', 'extraction', 'ranked',
+          'beginner', 'progression', 'maps', 'stealth', 'squad',
+          'solo', 'holotag', 'endgame', 'pvp', 'support', 'cryo-archive',
+          'dev-update', 'community-event', 'faction-guide',
+        ],
+      },
+
+      // The canonical tag standard, appended to all five persona prompts ({{kit:tagStandard}}).
+      // Moved VERBATIM from editorCore.js CANONICAL_TAG_STANDARD (leading blank lines are
+      // significant -- they reproduce the exact ${DATA_INTEGRITY_RULES}${...} join).
+      tagStandard: `
+
+CANONICAL TAG STANDARD - PERMANENT RULE:
+When you set the tags field on your article, use ONLY canonical category tags from this list. Do not invent variants. Do not use -guide suffixes. Do not use uppercase. Do not use plurals of canonical tags.
+
+CANONICAL CATEGORY TAGS (use these exact strings):
+  shells          - Runner Shells generally
+  weapons         - weapons generally
+  mods            - mods generally
+  cradle          - The Cradle stat progression system (Energy, tracks, perks)
+  extraction      - exfil tactics, escape routes, exit strategy
+  ranked          - Ranked queue strategy, climbing, Holotag hunting
+  beginner        - new player content, tutorials, basics
+  progression     - faction reputation, contracts, Cradle leveling, credit/Salvage farming
+  maps            - map intel, POIs, zone breakdowns
+  stealth         - silent plays, cloaking, ghosting, avoiding fights
+  squad           - 3-player team tactics, comms, role assignment
+  solo            - solo queue, self-sufficient play, 1v3 survival
+  holotag         - Holotag strategy, targeting, ranked scoring
+  endgame         - high-rank content, Prestige, Contraband farming
+  pvp             - Runner-vs-Runner combat, engagements, gunplay
+  support         - Triage anchoring, revives, utility plays
+  cryo-archive    - the Cryo Archive endgame raid map and content
+
+SUB-TAGS (use in ADDITION to canonical tags):
+  Shell names: assassin, destroyer, recon, rook, thief, triage, vandal, sentinel
+  Cradle tracks: strength, recharge, dexterity, endurance, resistance (use with the 'cradle' canonical tag)
+  Weapon names: wstr-combat-shotgun, m77-assault-rifle, stryder-m1t, kkv-9sd, etc. (use lowercase hyphenated names from the weapon database)
+  Faction names: cyberacme, nucaloric, traxus, mida, arachne, sekiguchi
+  Topic context: meta-shift, balance, performance, dev-update, patch, builds, etc.
+
+EXAMPLES:
+- Article about Assassin's stealth playstyle in solo Ranked: ["shells", "assassin", "stealth", "solo", "ranked"]
+- Build guide for M77 Assault Rifle in squad play: ["weapons", "m77-assault-rifle", "builds", "squad"]
+- Guide about which Cradle perks to prioritize for a Vandal: ["cradle", "vandal", "dexterity", "builds"]
+- Guide about Cryo Archive Compiler boss: ["cryo-archive", "endgame", "squad"]
+
+DEPRECATED TAGS - DO NOT USE (these are NOT valid):
+  shell-guide   -> use 'shells'
+  weapon-guide  -> use 'weapons'
+  mod-guide     -> use 'mods'
+  map-guide     -> use 'maps'
+  CRYO_ARCHIVE  -> use 'cryo-archive'
+  holotags      -> use 'holotag' (singular)
+
+RULES:
+- All tags lowercase
+- Hyphens only when single word reads poorly (cryo-archive)
+- No spaces, no underscores, no special characters
+- No -guide suffix on any canonical category tag
+- No plural variants of canonical category tags
+- Each article should have 3-7 tags total
+- Always include at least 1 canonical category tag so your article appears on the appropriate /guides/[category] page`,
+    },
   },
 
   // Historical-context layer (AI-quality roadmap #2/#3). Drives the precompute
