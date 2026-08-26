@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Deferred item rescoped: faction/chip cross-game leak is CHIP-WIDE, not factions-only
+
+The deferred "factions.game_slug migration" is UNDER-scoped. Per the 2026-07-01
+investigation: all five chip/entity fetches (shells, weapons, mods, implants, factions) are
+un-scoped - they fetch game-agnostically. factions is only the VISIBLE case (it lacks the
+game_slug column entirely); the other four HAVE game_slug but also don't filter on it.
+Adding game_slug to factions alone does NOT close the leak - the fetches also need per-game
+scoping. NO live bug today (zero non-Marathon rows in these tables - over-match is
+mechanically impossible until non-Marathon entity rows exist). DEFERRED to DMZ entity-table
+prep, when it becomes load-bearing and the fetches get scoped anyway. Full fix = add
+game_slug to factions + scope all 5 chip fetches by game (using the generalization per-game
+plumbing, NOT hardcoded 'marathon' literals). Do NOT do the factions-only half-fix.
+
+PRECISION (2026-08-26 code read, verify-don't-inherit): the "don't filter on it" claim is
+PATH-SPECIFIC, so this note is not falsified by editorCore. The editorCore.js GENERATION reads
+(lines 555-562) ARE game_slug-scoped - Stage 1 added .eq('game_slug', config.slug) to
+weapon/shell/mod/core/implant + cradle_nodes + faction_armory/upgrades; factions (line 560) is
+the lone unscoped read THERE, so in the generation path a factions-only fix WOULD close it. The
+un-scoped chip fetches live in the DISPLAY paths Stage 1 never touched: lib/advisor/
+generateBuild.js (mod/core/implant/weapon + cradle game-agnostic; shell by name) and the API/
+display routes (homepage-data, sitrep-data, join/intake, audit, cron). The chip-wide leak is
+real THERE - that is what this rescope tracks.
+
+---
 ## 2026-08-26 - Known-benign: WARDOGS_AMBER Turbopack dev-console error
 The Turbopack dev-console error referencing WARDOGS_AMBER is a benign dev-cache phantom -
 the export exists, production builds clean, pages render. Diagnosed 3+ times as harmless.
