@@ -353,6 +353,58 @@ export const marathon = {
         ],
       },
 
+      // Per-persona game-model PROSE (Stage 2b-2). Each persona re-explains Marathon's
+      // Season 2 model in its OWN voice, so these are persona-keyed, not one shared block.
+      // Moved VERBATIM from the persona prompts and interpolated via
+      // {{kit:progression.<persona>}} / {{kit:economy.<persona>}} at the exact former block
+      // position (label included, so a game without gameModel renders nothing there). The
+      // economy + mirandaGuide blocks carry {{cnp:link.*}} tokens - resolved by the
+      // applyVocab pass that runs AFTER applyKit, so byte-identity holds.
+      gameModel: {
+        progression: {
+          cipher: `SEASON 2 PROGRESSION MODEL - KNOW THIS:
+In Season 2, Runner shell STATS are tuned through THE CRADLE - a free-respec, shell-shared progression system where players spend Energy across six stat tracks (Strength, Recharge, Dexterity, Endurance, Support, Resistance) and unlock perks at Energy breakpoints. When a ranked build's power depends on a specific stat profile, name the Cradle track and perk, not a faction grind. Factions in S2 are about GEAR ACCESS and reputation, not stat power - do not attribute stat advantages to faction rank.`,
+          nexus: `SEASON 2 PROGRESSION MODEL - KNOW THIS:
+Shell stat tuning in S2 happens through THE CRADLE (Energy spent across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - with perks at breakpoints, free respec, shared across shells). When a shell's meta position shifts because the optimal Cradle allocation changed, say so. Factions provide gear and reputation, not stat power. Never describe a shell's strength as coming from "faction stat bonuses" - that S1 system no longer exists.`,
+          dexter: `SEASON 2 STAT MODEL - THE CRADLE (CRITICAL - THIS REPLACED THE OLD FACTION STAT GRIND):
+In Season 2, a shell's STATS are tuned through THE CRADLE, not faction ranks. The Cradle is a progression system where players spend Energy (roughly one Energy per Runner level) across six stat tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passive boosts and named PERKS at specific Energy breakpoints. It is shared across all shells, can be re-spec'd freely at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below lists the real tracks, perks, and Energy breakpoints - use ONLY those.
+- When a build's power comes from a stat profile, prescribe the Cradle allocation: which tracks to invest in, which perks to hit, and the Energy breakpoint each perk unlocks at. Example shape: "Take Recharge to the [perk name] breakpoint for faster Tactical recovery."
+- Do NOT describe stats as coming from faction rank or "faction stat bonuses." That S1 system was removed in Season 2.
+- Because respec is free, you can recommend an exact optimal Cradle path without worrying about commitment cost - say so; it lowers the barrier for readers.`,
+          miranda: `SEASON 2 STAT MODEL - THE CRADLE (teach this correctly):
+In Season 2, Runner shell stats are improved through THE CRADLE, not faction ranks. Players spend Energy (about one per level) across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passives and named perks at Energy breakpoints. It is shared across all shells, fully re-spec-able at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below has the real tracks, perks, and breakpoints - teach only those. A great beginner lesson: because respec is free, encourage new players to experiment without fear. When teaching a stat-focused build, tell players which track to invest in and which perk breakpoint to aim for.`,
+          // MIRANDA's user-prompt (buildMirandaPrompt) restatement - separate text from the
+          // persona-prompt block above.
+          mirandaGuide: `SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec, seasonal reset), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the planner at {{cnp:link.cradle}}. Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to {{cnp:link.factions}}. Use both links sparingly and only when they genuinely help the reader.`,
+        },
+        economy: {
+          dexter: `FACTION GEAR AWARENESS (S2 model):
+Factions in Season 2 are about GEAR ACCESS and reputation, not stat power. They unlock weapons, mods, implants, cores, and Sponsored Kits through their Armory as you raise faction reputation via Contracts. Mods and implants that come from a faction are tagged in the database via faction_source - you may name that source faction (e.g. "this mod comes from the Arachne Armory").
+CITING FACTION SPECIFICS - VERIFIED ONLY: A partial set of verified S2 faction Armory data is injected below (VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks). You MAY cite the specific items, prices, ranks, and rank-gating facts that appear there, by their exact values - e.g. naming a verified item and the rank that unlocks it. For any faction or item NOT in those verified blocks (factions with no rows, or items shown as "unnamed"), you must NOT state a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination. Speak about those in general terms and point readers to {{cnp:link.factions}}. Sponsored Kits remain a fair, general mention as a fast way to try a playstyle.`,
+          miranda: `FACTION GUIDE RESPONSIBILITY (S2 model): In Season 2, factions are about GEAR and reputation, not stats. You may tell players which faction's Armory a piece of gear comes from and explain that factions gate gear behind reputation built through Contracts. A partial set of VERIFIED faction Armory data is injected below - you MAY cite the specific items, prices, and rank-gates that appear in the VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks, by their exact values. For any faction or item NOT in those verified blocks, do NOT cite a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination; speak generally and point players to {{cnp:link.factions}}. Do not tell players to grind factions for stat bonuses - that S1 system is gone; stats come from the Cradle now. You can point new players to Sponsored Kits as a low-risk way to try a faction's playstyle before committing.`,
+        },
+      },
+
+      // Marathon's dated season lore (Stage 2b-2). ghostLandscape is GHOST's whole
+      // COMMUNITY LANDSCAPE block; rankedNote.{cipher,ghost} are the two mid-sentence
+      // parentheticals (leading space is INSIDE the value, so a game without seasonContext
+      // renders the surrounding voice clean, with no dangling space or "June 14" leak).
+      seasonContext: {
+        ghostLandscape: `SEASON 2 COMMUNITY LANDSCAPE - WHAT PLAYERS ARE TALKING ABOUT:
+Season 2 (Nightfall) launched June 2 with a full reset, and the community conversation is centered on a specific set of S2 topics. Track sentiment on these:
+- THE CRADLE: the new stat-progression system (Energy across six tracks, free respec, seasonal reset). Reactions split between "freedom to experiment" and "build homogenization." High-engagement topic.
+- SPONSORED KITS: ready-made faction loadouts. Community debates their value, whether they trivialize gearing, and the rep bonus for using them.
+- FASTER PROGRESSION: S2 sped up faction reputation and reduced material grind. Returning S1 players have strong opinions on whether it's "too easy now" vs. "finally respects my time."
+- RANKED RETURNS JUNE 14: ranked is NOT live at launch. Pre-return anticipation, anxiety about the single-queue + 5,000 minimum changes, and Rook being banned are live threads.
+- OPEN PLAY WEEK (June 2-9) + the full reset: new-player influx vs. veteran "everything I earned is gone" sentiment. The new-vs-returning divide is a recurring story.
+- NIGHT MARSH + SENTINEL: the new dark zone and 8th shell - first-impression reactions.
+When the community reacts to any of these, that's your lane. Do NOT reference the removed S1 faction-stat-grind as if it still exists - that system is gone, replaced by the Cradle.`,
+        rankedNote: {
+          cipher: ` (Note: in Season 2 Ranked returns June 14 - if writing pre-return, frame as prep for the reopening.)`,
+          ghost: ` (Ranked returns June 14 in S2 - pre-return community anticipation is fair game.)`,
+        },
+      },
+
       // The canonical tag standard, appended to all five persona prompts ({{kit:tagStandard}}).
       // Moved VERBATIM from editorCore.js CANONICAL_TAG_STANDARD (leading blank lines are
       // significant -- they reproduce the exact ${DATA_INTEGRITY_RULES}${...} join).

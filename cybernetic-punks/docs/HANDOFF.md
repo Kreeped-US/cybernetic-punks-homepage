@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 2b-2: promptKit per-persona gameModel + seasonContext
+
+Second of four 2b sub-commits (highest byte-risk). Extracted Marathon's per-persona
+game-model prose into config.editorial.promptKit.gameModel/seasonContext. Marathon
+byte-identical, proven PER-PERSONA.
+- 8 clean blocks extracted verbatim: gameModel.progression (cipher/nexus/dexter/miranda
+  + mirandaGuide for buildMirandaPrompt), gameModel.economy (dexter/miranda),
+  seasonContext.ghostLandscape. Each at its exact former position, label included (a
+  no-kit game renders nothing, no dangling label).
+- 2 woven parentheticals tokenized (seasonContext.rankedNote.cipher/ghost) - the one
+  real leak-risk (non-Marathon would emit "Ranked returns June 14"). Both back-substitute
+  CHARACTER-EXACT incl. surrounding punctuation; neither needed the abandon-fallback.
+- promptVocab.js: applyKit regex -> [a-zA-Z.]+ (dotted keys, mirrors grade.cipher);
+  resolveKit flattens gameModel/seasonContext to dotted keys.
+- VERIFIED: five separate per-persona byte confirmations (cipher/nexus/dexter/ghost/
+  miranda) + buildMirandaPrompt region + whole-file aggregate, all reproduce HEAD;
+  editorCore diff is only the 10 placeholder swaps; non-Marathon-no-kit drops every
+  block with no {{kit: residue. Build exit 0. (GHOST has no progression block - carries
+  seasonContext.ghostLandscape instead.)
+- DEFERRED (out of 2b-2, correctly): 8-shell roster lines (Destroyer-first order differs
+  from entityFocus alphabetical - single-sourcing would change output; later entity pass),
+  DATA_INTEGRITY_RULES:62-66 faction/Cradle guardrails (later shared pass). LEFT inline
+  (voice, per decision): CIPHER:341 lens, buildMirandaPrompt voice examples, PLANNING
+  TOOLS blocks.
+- REMAINING 2b: 2b-3 fetchGameContext contextBlocks, 2b-4 comment-generator path.
+
 ## 2026-08-26 - Content-engine generalization Stage 2b-1: promptKit extraction (tagStandard + genre + toolEnums)
 
 First of four sub-commits extracting Marathon's Layer-B game-model into a per-game

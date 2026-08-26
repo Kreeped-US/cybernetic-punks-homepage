@@ -101,21 +101,47 @@ export function applyGameVocab(text, config) {
 // tool-enum entity list (the same single source the shell_focus enum uses) so a prose list
 // and the schema enum can never drift. A game without promptKit yields undefined blocks ->
 // applyKit renders empty at every {{kit:...}} site (no Layer-B Marathon prose can leak).
+// Flatten a nested object into `target` under `prefix`, joining levels with dots, so
+// promptKit.gameModel.progression.cipher becomes the flat key "progression.cipher"
+// (2b-2). Mirrors how resolveVocab exposes the dotted "grade.cipher" token. Only plain
+// objects recurse; strings/arrays/etc. are leaf values.
+function flattenInto(target, prefix, obj) {
+  if (obj == null || typeof obj !== 'object') return;
+  for (var k in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+    var v = obj[k];
+    if (v != null && typeof v === 'object' && !Array.isArray(v)) {
+      flattenInto(target, prefix + k + '.', v);
+    } else {
+      target[prefix + k] = v;
+    }
+  }
+}
+
 export function resolveKit(config) {
   var c = config || {};
   var e = c.editorial || {};
   var pk = e.promptKit || {};
   var te = pk.toolEnums || {};
   var entityFocus = te.entityFocus;
-  return {
+  var out = {
     tagStandard: pk.tagStandard,
     genre: pk.genre,
     entityFocusList: Array.isArray(entityFocus) ? entityFocus.join('/') : undefined,
   };
+  // 2b-2: per-persona game-model prose. Dotted keys -> {{kit:progression.cipher}},
+  // {{kit:economy.dexter}}, {{kit:seasonContext.ghostLandscape}},
+  // {{kit:seasonContext.rankedNote.cipher}}. A game without gameModel/seasonContext
+  // yields no keys -> those placeholders render empty (no leak).
+  var gm = pk.gameModel || {};
+  flattenInto(out, 'progression.', gm.progression || {});
+  flattenInto(out, 'economy.', gm.economy || {});
+  flattenInto(out, 'seasonContext.', pk.seasonContext || {});
+  return out;
 }
 
-// KEY is a bare identifier: {{kit:tagStandard}}, {{kit:genre}}, {{kit:entityFocusList}}.
-var KIT_PLACEHOLDER_RE = /\{\{kit:([a-zA-Z]+)\}\}/g;
+// KEY is a dotted identifier: {{kit:tagStandard}}, {{kit:genre}}, {{kit:progression.cipher}}.
+var KIT_PLACEHOLDER_RE = /\{\{kit:([a-zA-Z.]+)\}\}/g;
 
 // Replace every {{kit:KEY}} in `text` with kit[KEY]. A missing/undefined/null value
 // renders EMPTY (render-empty: the optional Layer-B block does not appear). Text with no
