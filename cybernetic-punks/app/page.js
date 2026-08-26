@@ -16,6 +16,7 @@ import { Chakra_Petch, Inter, JetBrains_Mono } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { getIndexableGames } from '@/lib/games';
 import { discourseHref } from '@/lib/discourse';
 import { entitySlugFor } from '@/lib/coverage';
 import AccountMenu from '@/components/AccountMenu';
@@ -74,16 +75,16 @@ function daysUntilLaunch() {
   return days > 0 ? days : 0;
 }
 
-// "Launches Sep 10" from an ISO launch date (the Wardogs tile pill). Single-sourced
-// from the data module (wardogs.launch_date) -- no hardcoded date in this component:
-// change the source and the label follows. Null on a missing/bad date so the tile
-// falls back to a plain "Coming soon" pill.
+// "Sep 10" from an ISO launch date -- the EA-date fragment of the Wardogs tile pill
+// ("INTEL LIVE - EA SEP 10"; the pill is CSS-uppercased). Single-sourced from the data
+// module (wardogs.launch_date) -- no hardcoded date in this component: change the source
+// and the label follows. Null on a missing/bad date so the pill falls back to "soon".
 var CNP_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function launchLabel(iso) {
+function eaDateLabel(iso) {
   if (!iso) return null;
   var d = new Date(iso + 'T00:00:00Z');
   if (isNaN(d.getTime())) return null;
-  return 'Launches ' + CNP_MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate();
+  return CNP_MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate();
 }
 
 // -- DATA FNS (unchanged -- PASS A does NOT re-wire data sources) -
@@ -256,7 +257,7 @@ export default async function NetworkRoot() {
   var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
   var marathonOnline = (data.pulse.marathon && typeof data.pulse.marathon.online === 'number') ? data.pulse.marathon.online : null;
   var launchDays = daysUntilLaunch();
-  var wardogsLaunch = launchLabel(wardogs.launch_date); // "Launches Sep 10", single-sourced
+  var wardogsEA = eaDateLabel(wardogs.launch_date); // "Sep 10", single-sourced from wardogs.launch_date
   var gameMeta = {};
   ROOT_GAMES.forEach(function(g) {
     var p = data.pulse[g.slug];
@@ -311,7 +312,7 @@ export default async function NetworkRoot() {
             <div>
               <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
               <h1>The verified intel network for <span className="hl">competitive shooters</span>.</h1>
-              <p className="sub">Every stat <b>checked by hand</b>, in-game. No AI slop, no reposted rumors, no hype cycles - just the real numbers, sourced and verified, for Marathon and MW4&apos;s DMZ.</p>
+              <p className="sub">Every stat <b>checked by hand</b>, in-game. No AI slop, no reposted rumors, no hype cycles - just the real numbers, sourced and verified, for Marathon and MW4&apos;s DMZ, plus verified-source intel on Wardogs ahead of Early Access.</p>
               <div className="cta-row">
                 <a href="#join" className="btn btn-gold">Get the intel drops &rarr;</a>
                 <a href="#games" className="btn btn-ghost">Explore the network</a>
@@ -325,7 +326,7 @@ export default async function NetworkRoot() {
             <div className="telemetry">
               <div className="tel-head"><span>{'// NETWORK TELEMETRY'}</span><span className="rec"><i aria-hidden="true" />REC</span></div>
               <div className="tel-grid">
-                <div className="tel-cell"><div className="lbl">Games Covered</div><div className="val">{String(ROOT_GAMES.length)}</div></div>
+                <div className="tel-cell"><div className="lbl">Games Covered</div><div className="val">{String(getIndexableGames().length)}</div></div>
                 <div className="tel-cell pop"><div className="lbl">Marathon Players (Steam)</div><div className="val">{marathonOnline != null ? formatNum(marathonOnline) : '--'}</div></div>
                 <div className="tel-cell"><div className="lbl">Reports Published</div><div className="val">{stats.articles != null ? addCommas(stats.articles) : '--'}</div></div>
                 <div className="tel-cell"><div className="lbl">Last Verified Update</div><div className="val" style={{ fontSize: '22px' }}>{updatedLabel || '--'}</div></div>
@@ -394,16 +395,16 @@ export default async function NetworkRoot() {
                 <div className="meta">Call of Duty: MW4 extraction &middot; Hajin Exclusion Zone &middot; pre-launch intel building</div>
                 <div className="go">Get day-one coverage &rarr;</div>
               </Link>
-              {/* Wardogs -- teaser tile ONLY. No /wardogs route yet, so this is a
-                  non-link <div> (no click target, no dead route). No key art yet, so
-                  no --img: .art falls back to the burgundy gradient. Only confirmed
-                  facts shown: name + single-sourced launch date + Steam EA. */}
-              <div className="game wardogs is-static" role="group" aria-label="Wardogs - coming soon" style={{ '--img': "url('/images/games/wardogs-hero.jpg')" }}>
+              {/* Wardogs -- LIVE tile. OUR COVERAGE is live (published confirmed-systems
+                  intel at /wardogs); the GAME is still pre-launch (EA Sep 10), so the pill
+                  leads with INTEL LIVE and keeps the EA date -- never implying the game
+                  launched. Clickable Link mirroring the Marathon/DMZ tile structure. */}
+              <Link href="/wardogs" className="game wardogs" style={{ '--img': "url('/images/games/wardogs-hero.jpg')" }}>
                 <div className="art" aria-hidden="true" /><div className="scrim scrim-strong" aria-hidden="true" />
-                <div className="status wardogs-pill"><i aria-hidden="true" />{wardogsLaunch || 'Coming soon'}</div>
+                <div className="status wardogs-pill"><i aria-hidden="true" />INTEL LIVE &middot; EA {wardogsEA || 'soon'}</div>
                 <div className="meta">{wardogs.displayName} &middot; Steam Early Access</div>
-                <div className="go go-soon">Coming soon</div>
-              </div>
+                <div className="go">Get the confirmed intel &rarr;</div>
+              </Link>
             </div>
           </div>
         </section>
@@ -726,8 +727,8 @@ const CNP_CSS = `
 .cnp-root .game{--fallback:linear-gradient(180deg,#1d1417,var(--surface))}
 .cnp-root .game:hover .art{transform:scale(1.05)}
 .cnp-root .game .scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(13,10,11,.15) 0%,rgba(13,10,11,.05) 45%,rgba(13,10,11,.6) 78%,rgba(13,10,11,.94) 100%)}
-/* Stronger bottom band for warm/bright art (Wardogs) so the bottom meta + muted
-   "Coming soon" stay legible over amber. Darkens the lower half; top stays clear. */
+/* Stronger bottom band for warm/bright art (Wardogs) so the bottom meta + CTA
+   stay legible over amber. Darkens the lower half; top stays clear. */
 .cnp-root .game .scrim.scrim-strong{background:linear-gradient(180deg,rgba(13,10,11,.22) 0%,rgba(13,10,11,.12) 38%,rgba(13,10,11,.74) 72%,rgba(13,10,11,.98) 100%)}
 .cnp-root .game:hover{transform:translateY(-4px);border-color:var(--burg-bright)}
 .cnp-root .game>*:not(.art):not(.scrim){position:relative;z-index:2}
@@ -738,14 +739,6 @@ const CNP_CSS = `
 .cnp-root .game .meta{font-size:13.5px;color:#d8cdc8;margin-bottom:14px;text-shadow:0 1px 14px rgba(0,0,0,.9);font-weight:500}
 .cnp-root .game .go{font-family:var(--display);font-size:15px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:8px;text-shadow:0 1px 10px rgba(0,0,0,.8)}
 .cnp-root .game:hover .go{gap:12px}
-/* Wardogs teaser tile: non-interactive (no route). Kill the click-affordances --
-   no pointer cursor, no lift, no art zoom -- and mute the "Coming soon" CTA so it
-   never reads as a link. */
-.cnp-root .game.is-static{cursor:default}
-.cnp-root .game.is-static:hover{transform:none;border-color:var(--line)}
-.cnp-root .game.is-static:hover .art{transform:none}
-.cnp-root .game .go.go-soon{color:var(--text-dim)}
-.cnp-root .game.is-static:hover .go.go-soon{gap:8px}
 
 .cnp-root .pulse-sec{border-top:1px solid var(--line)}
 .cnp-root .pulse-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}

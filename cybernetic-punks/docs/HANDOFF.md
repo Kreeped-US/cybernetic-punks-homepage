@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Root page reflects Wardogs coverage-live (Step 2: tile + count + hero)
+
+app/page.js updated so the network root honestly shows Wardogs as a covered vertical now that
+the 6 confirmed-systems articles are published + indexable. Honest framing throughout: OUR
+COVERAGE is live, the GAME is still pre-launch (EA Sep 10) - nothing implies the game launched.
+- TILE: the Wardogs tile went from a non-clickable <div className="game wardogs is-static"> teaser
+  to a clickable <Link href="/wardogs"> mirroring the Marathon/DMZ tile structure. Pill changed
+  from the launch-date tease to "INTEL LIVE - EA SEP 10" (DOM text "INTEL LIVE - EA Sep 10"; the
+  .status pill is CSS text-transform:uppercase). EA date fragment single-sourced from
+  wardogs.launch_date via the renamed helper eaDateLabel (was launchLabel "Launches Sep 10").
+  CTA "Coming soon" -> "Get the confirmed intel". Dead .is-static/.go-soon CSS + the stale
+  "non-interactive (no route)" comment removed (the tile is now interactive).
+- COUNT: "Games Covered" decoupled from ROOT_GAMES.length to getIndexableGames().length (= 3
+  today: marathon/dmz/wardogs). Reads 3 without touching ROOT_GAMES, so NO pulse column appears.
+  Honest + self-maintaining (counts indexable verticals).
+- HERO sub (:315): added ", plus verified-source intel on Wardogs ahead of Early Access." The
+  distinction is deliberate - verified NUMBERS for Marathon/DMZ, verified-SOURCE intel for
+  Wardogs (whose stat numbers do not exist pre-EA). No verified-numbers overclaim. Comma, not
+  an em-dash.
+- ROOT_GAMES stays DEFERRED (unchanged): the tile is hardcoded JSX independent of it; a
+  ROOT_GAMES entry was intentionally NOT added, so no "Latest from Wardogs" pulse column and
+  "Reports Published" (already network-wide) needed no change.
+- VERIFIED on the live dev DOM: Games Covered = 3; Wardogs tile is <a href="/wardogs"> pill
+  "INTEL LIVE - EA Sep 10" CTA "Get the confirmed intel"; hero sub carries the Wardogs line;
+  Marathon (<a href="/marathon"> "Live now") and DMZ (<a href="/dmz"> "Launches with DMZ")
+  UNCHANGED. Build exit 0.
+- DEFERRED FOLLOW-ON (separate cosmetic tweak, NOT done here): the page metadata description
+  (app/page.js:42) says "intel for Marathon and extraction shooters" - slightly inaccurate
+  network-wide since Wardogs is combined-arms, not extraction. Broaden to "competitive shooters"
+  later.
+
+---
 ## 2026-08-26 - Test closed: inspectionRun.test.mjs stale-URL fixture fixed (7/12 -> 12/12)
 Closes the Stage 1 flagged item "inspectionRun.test.mjs fails 7/12 on clean base". Diagnosed:
 NOT a real bug and NOT a signature/deps refactor - there is no runInspectionSweep function, and
