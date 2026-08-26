@@ -86,7 +86,10 @@ export const VANTAGE_TOOL = {
 // Build her user prompt from NETWORK-LEVEL signals only. games: [{label, live,
 // note}] from ROOT_GAMES; recent: [{game, editor, headline, when}] from recent
 // cross-game feed_items HEADLINES used strictly as framing material to point at.
-// No stat tables ever feed this.
+// No stat tables ever feed this. STORELESS INVARIANT (Stage 4, Fable ruling 4): both
+// Vantage prompt builders render ONLY a fixed set of network/discourse fields and never a
+// store-row (stat/entity) block -- enforced by lib/network/vantage.test.mjs (a future
+// change that injected store blocks into her context fails that test).
 export function buildVantageUserPrompt(signals) {
   signals = signals || {};
   var lines = [];

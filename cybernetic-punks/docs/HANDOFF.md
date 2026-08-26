@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 4: VANTAGE storelessness enforced
+
+VANTAGE (network/community editor) was already storeless EMERGENTLY - her generators never
+call fetchGameContext, so no store-row blocks reach her context, but nothing ASSERTED it.
+Fable ruling 4 make-it-storeless was already satisfied in behavior; this stage makes it
+ENFORCED so a future change cannot silently inject verified-stat blocks into a discourse editor.
+- lib/network/vantage.test.mjs (new, 3-test suite) asserts storelessness against the REAL
+  context-assembly functions - buildVantageUserPrompt and buildVantageDiscoursePrompt, the
+  exact exported builders the network-editor route + both discourse scripts call to build the
+  user-message content (verified: all three callers pass the builder output DIRECTLY as
+  content, no concatenation) - NOT a proxy/representation. Test 1 (import guard): vantage.js
+  imports no per-game store machinery (fetchGameContext/editorCore/gather/blockId/grounding/
+  stat tables), checked on import lines only (the module header names them in prose to say it
+  does NOT touch them). Tests 2+3: each builder, fed adversarial store/stat data via rogue
+  fields, renders ZERO store-row blocks (no injected sentinel; no "--- ... DATABASE ---"
+  delimiters or [WS#]/[SH#]/[CS#]/[MS#]/[IS#] citation ids) while keeping its legitimate
+  network/discourse material. NO vantageContextIsStoreless() runtime guard was added: a
+  runtime output-scan would false-positive on a creator stat-shaped quote inside the vetted
+  source_text, so enforcement is build-time (the test). A comment in vantage.js documents the
+  invariant + points to the test.
+- SCOPE (honest): the test covers the user-prompt builders (the only vector for dynamic store
+  data) + the module import surface. The static system prompts are constants with no store
+  blocks; the test does not separately re-assert the callers never post-concatenate store data
+  (today all three pass builder output verbatim - confirmed).
+- VANTAGE behavior UNCHANGED: still manual, is_published:false, human-approved. No automation,
+  no output change (the only vantage.js edit is a comment; diff is comment-only).
+DEFERRED - WANTED FUTURE WORK (VANTAGE full build-out, recorded so the sequence isn't re-derived):
+- Automate VANTAGE on the cron. BLOCKED until the reframe is structurally honest - automation
+  removes the human approver who is currently the ONLY guard against attribution-drop and
+  fact-laundering. (generateNews is a per-game switch and does NOT apply to network-level
+  VANTAGE; she would need her own trigger, like the network-editor homepage-brief cron entry.)
+- Discourse-honesty gate (prerequisite for automation): (1) attribution-survival (source
+  creator/handle must structurally survive into published output - today prompt-only, NOT
+  structural; row-level source_url/creator_info ARE stored, but in-body attribution is prompt-
+  enforced); (2) no-fact-laundering (a creator factual claim must not become a CNP-voiced
+  assertion - today NO guard). The fact-laundering half is a provenance-DOCTRINE question ->
+  Fable consult before building. runGate does NOT fit (stat-citation model; VANTAGE has no store).
+- Read findings 2026-08-26: storeless YES; attribution prompt-only (row columns structural,
+  body prose not); no fact-laundering guard; manual is_published:false approval is the sole
+  current safety mechanism; VANTAGE output never runs runGate.
+
 ## 2026-08-26 - Content-engine generalization Stage 3: generation/indexability decouple (predicate + sitemap membership)
 
 Decoupled two axes onto explicit, distinct config switches: which games GENERATE (cron)
