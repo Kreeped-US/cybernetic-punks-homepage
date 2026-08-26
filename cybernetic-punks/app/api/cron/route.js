@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { buildBlockRegistry, resolveCitedBlocks, storeRowCitationEnabled, validateRecommendations } from '@/lib/gather/blockId';
 import { heldForReviewApplies, heldPublishState } from '@/lib/content/heldForReview';
-import { getGameConfig } from '@/lib/games';
+import { getGameConfig, getGenerationGames } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
@@ -28,9 +28,16 @@ export const dynamic = 'force-dynamic';
 // per-game config registry (lib/games) instead of a bare literal. Drives the
 // gather sources, the relevance filter, fetchGameContext scoping, the editor
 // roster, and the game_slug stamped on inserts + no-repeat/synthesis reads, so
-// a DMZ editor would read DMZ's prior articles, not Marathon's. Marathon today;
-// the cron becomes per-game (query param + its own cron entry) in Phase D.
-var PRODUCING_GAME = getGameConfig();
+// a DMZ editor would read DMZ's prior articles, not Marathon's.
+//
+// STAGE 3: the game is now selected by the explicit generation switch
+// (editorial.generateNews) via getGenerationGames() -- NOT a hardcoded default and
+// NOT any SEO/indexable signal. getGenerationGames() returns ['marathon'] today, so
+// PRODUCING_GAME is byte-identical to the prior getGameConfig() default. This cron
+// remains single-game (produces the FIRST generation-active game); iterating multiple
+// generation-active games in one fire is a later stage -- there is only one today.
+var GENERATION_SLUGS = getGenerationGames();
+var PRODUCING_GAME = getGameConfig(GENERATION_SLUGS[0]);
 var PRODUCING_GAME_SLUG = PRODUCING_GAME.slug;
 
 var TIER_ORDINAL = { S: 5, A: 4, B: 3, C: 2, D: 1 };

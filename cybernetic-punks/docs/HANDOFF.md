@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 3: generation/indexability decouple (predicate + sitemap membership)
+
+Decoupled two axes onto explicit, distinct config switches: which games GENERATE (cron)
+and which games are SITEMAP-INDEXABLE. Read-first found the reframe mechanism did not
+exist (no getActiveGames; the cron was a single module-scope getGameConfig() default; the
+sitemap already gated DMZ on dmz.indexable, never on generation), so this stage introduces
+the explicit switches rather than swapping an existing filter.
+- editorial.generateNews:true on marathon.js ONLY - the GENERATION switch (Fable ruling 5:
+  config is the switch, no runtime toggle). getGenerationGames() (new) filters
+  editorial.generateNews === true; the cron selects its game via getGenerationGames()[0]
+  (was: bare getGameConfig() marathon default). Returns [marathon] - same marathon object,
+  byte-identical selection.
+- getIndexableGames() (new) filters indexable !== false - the SITEMAP MEMBERSHIP axis.
+  eligible.js DMZ gate now reads getIndexableGames().includes(D) (was: dmz.indexable, same
+  value today). Per-route-type freshness tiers (static/article/entity/hub) and lastmod are
+  UNCHANGED - they were never generation-coupled.
+- Two distinct enumerators on two independent axes: getGenerationGames (generation, cron)
+  vs getIndexableGames (indexability, sitemap).
+- BEHAVIOR-NEUTRAL TODAY (proven, 30 assertions): cron PRODUCING_GAME is the SAME marathon
+  object as the prior default; Marathon editors/cadence/gate unchanged. Sitemap XML
+  byte-identical - the ONLY eligible.js change is the DMZ gate expression, which evaluates
+  identically today (getIndexableGames().includes(dmz) === dmz.indexable !== false === true);
+  no URL, freshness, lastmod, or ordering logic touched. Marathon unconditional; DMZ present
+  (indexable:true); Wardogs absent (indexable:false) - all as before. Build exit 0. (XML
+  proven by gate-equivalence + import-and-gate-only diff, NOT a live generated-file run.)
+- DMZ generation safe-by-construction (traced from code, not a live-DB claim): the cron is
+  news-only for DMZ [NEXUS] roster; the evergreen candidate path only generates through
+  MIRANDA, which DMZ lacks -> evergreen unreachable from the scheduler even if generateNews
+  were flipped; DMZ fail-closed prePublishGate would HOLD any news draft.
+- DECOUPLE PROVEN on both divergent cases: indexable+not-generating -> in getIndexableGames,
+  not getGenerationGames (the Wardogs-at-Stage-6 case); generating+not-indexable ->
+  getGenerationGames, not getIndexableGames.
+- Fixes two latent footguns by construction: generation keys off the explicit generateNews
+  switch (never any SEO/indexable signal), and sitemap membership reads the explicit
+  indexability enumerator (never the generation switch) - the two can no longer be conflated.
+- Sets up Stage 6: Wardogs enters the sitemap by flipping indexable:true, and generates by
+  flipping generateNews:true + a stocked queue - two independent config switches.
+- FLAGGED, DEFERRED (harmless today): getIndexableGames() is necessary-not-sufficient for
+  sitemap emission - eligible.js still hardcodes the Marathon pages + a single DMZ block, so
+  a future indexable game needs its own page-emission block to actually appear (Stage 6).
+- NOTE on prior naming: earlier session notes referenced getActiveGames/getGamesInSitemap;
+  the shipped functions are getGenerationGames/getIndexableGames (clearer per-axis names).
+
 ## 2026-08-26 - Content-engine generalization Stage 2b-4: comment-generator path (final 2b sub-commit)
 
 Fourth and final 2b sub-commit. Brought the comment-generation path - a SEPARATE prompt

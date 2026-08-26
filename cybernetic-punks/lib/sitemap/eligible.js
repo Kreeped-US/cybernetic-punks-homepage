@@ -24,6 +24,7 @@ import { supabase } from '@/lib/supabase';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
+import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { sectionHasContent } from '@/lib/dmz/sections';
@@ -210,8 +211,12 @@ export async function computeEligible() {
    ['/marathon/maps', hubLastMod.maps, 'weekly', 0.85]].forEach(([route, max, cf, pr]) =>
     add(BASE + route, M, 'hub', lm(max), cf, pr));
 
-  // ── DMZ (game='dmz'), gated on dmz.indexable, all content-gated ────────────
-  if (dmz.indexable) {
+  // ── DMZ (game='dmz'), gated on the INDEXABILITY axis, all content-gated ─────
+  // Membership tracks indexability, NOT generation (Stage 3): getIndexableGames() is the
+  // dedicated indexability enumerator. getIndexableGames().includes('dmz') is exactly
+  // dmz.indexable !== false today (true), so this is byte-identical -- the point is that
+  // sitemap membership reads the indexability axis, never the generation switch.
+  if (getIndexableGames().includes(D)) {
     // DMZ articles (type='dmz-article'; lastmod = updated_at, created_at fallback --
     // same Gap-3 recrawl signal as the intel articles above, now that the column is live).
     try {

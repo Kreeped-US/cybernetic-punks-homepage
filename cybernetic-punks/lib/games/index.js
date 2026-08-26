@@ -36,6 +36,36 @@ export function getGameConfig(slug = DEFAULT_GAME_SLUG) {
   return config;
 }
 
+// Slugs of games the news-generation scheduler should produce for (Stage 3). A game is
+// generation-active ONLY when its config declares editorial.generateNews === true. This is
+// the generation switch and is DELIBERATELY separate from `indexable` (SEO exposure) and
+// `status`/`launch_date` (lifecycle): decoupling them is the whole point -- flipping a game
+// indexable can never accidentally start generation. Absent/false generateNews = not active
+// (fail-closed; unconfigured = not generated, never a runtime toggle). Marathon is the only
+// generation-active game today, so this returns ['marathon'] -- byte-identical to the prior
+// hardcoded marathon default. Order follows GAMES insertion order (stable).
+export function getGenerationGames() {
+  return Object.keys(GAMES).filter(function (slug) {
+    var c = GAMES[slug];
+    return !!(c && c.editorial && c.editorial.generateNews === true);
+  });
+}
+
+// Slugs of games that are SEO-INDEXABLE (Stage 3 sitemap axis). A game is indexable
+// unless its config sets indexable:false (absent = indexable by default -- Marathon has no
+// indexable field and is indexable). This is the INDEXABILITY axis, the counterpart to
+// getGenerationGames() (the GENERATION axis) -- two DISTINCT enumerators on two DISTINCT
+// signals, so sitemap membership (indexability) can never be conflated with generation.
+// Today: ['marathon', 'dmz'] (Wardogs is indexable:false). Note this is necessary-not-
+// sufficient for sitemap emission: the sitemap still needs a per-game page block to emit a
+// game's URLs; the enumerator gates WHETHER an existing block runs.
+export function getIndexableGames() {
+  return Object.keys(GAMES).filter(function (slug) {
+    var c = GAMES[slug];
+    return !!(c && c.indexable !== false);
+  });
+}
+
 // Resolve a game's section by slug. Returns the section object or null.
 //
 // Moved here from the former lib/games/registry.js (deleted): that file held a
