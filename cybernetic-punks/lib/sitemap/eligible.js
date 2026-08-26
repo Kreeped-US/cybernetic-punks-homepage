@@ -24,6 +24,7 @@ import { supabase } from '@/lib/supabase';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
+import { wardogsSectionForArticle } from '@/lib/games/wardogs';
 import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
@@ -34,7 +35,7 @@ import { hasShellGuide } from '@/lib/shellGuides';
 import { FACTS_UPDATED } from '@/lib/vaultBreaker';
 
 const BASE = 'https://cyberneticpunks.com';
-const M = 'marathon', D = 'dmz';
+const M = 'marathon', D = 'dmz', W = 'wardogs';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -267,6 +268,22 @@ export async function computeEligible() {
       add(BASE + '/dmz/builds', D, 'dmz-build', lm(maxUpdatedAt(buildEntries.map((b) => ({ updated_at: b.updatedAt })))), 'weekly', 0.8);
     }
     buildEntries.forEach((b) => add(BASE + '/dmz/builds/' + b.weaponSlug, D, 'dmz-build', lm(b.updatedAt), 'weekly', 0.7));
+  }
+
+  // ── WARDOGS (game='wardogs'), gated on the INDEXABILITY axis (Stage 6 Track 2). INERT
+  // while wardogs.indexable is false: getIndexableGames() excludes it -> this emits NOTHING ->
+  // the partition wardogs bucket stays empty -> the sitemap is byte-identical. Articles only
+  // (no entity/build verticals yet); section derived per-row via wardogsSectionForArticle
+  // (unmapped -> dropped), same shape as the DMZ article emitter above. lastmod = updated_at,
+  // created_at fallback. A read error is caught + logged (non-fatal; the block yields 0 URLs).
+  if (getIndexableGames().includes('wardogs')) {
+    try {
+      const { data: wdRows } = await supabase.from('feed_items')
+        .select('slug, created_at, updated_at, tags').eq('game_slug', W).eq('is_published', true)
+        .order('created_at', { ascending: false });
+      (wdRows || []).map((r) => ({ r, section: wardogsSectionForArticle(r) })).filter((x) => x.section)
+        .forEach((x) => add(BASE + '/wardogs/' + x.section + '/' + x.r.slug, W, 'wardogs-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
+    } catch (err) { console.error('[sitemap] wardogs feed fetch threw:', err); }
   }
 
   // RUNTIME PARTITION INVARIANT (Change 1): assert union==eligible-set AND pairwise

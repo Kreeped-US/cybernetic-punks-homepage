@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Stage 6 Track 2: Wardogs article-detail route + sitemap coupled set (inert)
+
+The atomic render/sitemap infrastructure so the 6 persisted Wardogs drafts can render/index
+once published + indexable-flipped. Ships INERT (wardogs.indexable stays false) - nothing
+observable changes until the deliberate flip.
+- The actual 6-piece set: app/wardogs/[section]/[slug]/page.js (minimal mirror of DMZ -
+  force-dynamic; fetchArticle by slug + game_slug='wardogs' + is_published=true via maybeSingle,
+  returns null -> notFound; section-validate via wardogsSectionForArticle (getGameSection guard
+  + wardogsSectionForArticle(article) !== section.slug -> notFound); canonical
+  /wardogs/<section>/<slug>; NO robots key -> inherits app/wardogs/layout.js wardogs.indexable
+  gate; NewsArticle + BreadcrumbList JSON-LD; body via the reused game-neutral
+  lib/dmz/articleContent parseBody/stripMarkers/extractKeyFacts/readTime; source citation is a
+  real link when source_url present, plain label when honest-null; OMITS discourse, POI linkify,
+  system cross-linker, share/notify; no WARDOGS_ARTICLE_SEO -> headline + auto-truncated meta
+  fallback). partition.js: wardogs branch + bucket before the terminal else-throw, union check
+  and return updated, assertPartition destructures/iterates wardogs. eligible.js: wardogs block
+  gated on getIndexableGames().includes('wardogs'), emits /wardogs/<section>/<slug> type
+  'wardogs-article' (monthly, 0.6, lastmod updated_at||created_at), per-row section via
+  wardogsSectionForArticle. app/sitemap-wardogs.xml/route.js: new child, a filter over the one
+  computeEligible set (empty while inert, unlisted by the index). app/sitemap.xml/route.js: the
+  wardogs child is pushed ONLY when getIndexableGames().includes('wardogs') - byte-identical now,
+  added atomically on the flip (deliberate divergence from DMZ's unconditional child).
+  WARDOGS_ARTICLE_SECTION 6-slug map in lib/games/wardogs.js.
+- Section map: control-zone/roles-not-classes/map-respawn -> systems, cash-economy -> economy,
+  factions/monetization -> field-intel.
+- VERIFIED: sitemap byte-identical now (structural - every wardogs path gated on
+  getIndexableGames excluding wardogs; index has 4 children, no wardogs child; the index XML
+  equals the pre-Track-2 4-child index; a live generated-file diff needs DB access, not run -
+  structural proof airtight). Atomic anti-freeze PROVEN (a synthetic wardogs URL routes to its
+  bucket, does not else-throw; assertPartition tolerates it). Route renders (traced + compiles;
+  no draft flipped, no DB touched). Build exit 0 (f /wardogs/[section]/[slug], o
+  /sitemap-wardogs.xml). node --check clean on the 5 non-JSX files; structural verify 15/15.
+- REMAINING to go live (operator, the final flip sequence): (1) review the 6 rendered drafts
+  [flip is_published:true to view, or preview]; (2) publish the approved drafts; (3) flip
+  wardogs.indexable:true LAST - atomically opens the robots gate + emits published articles in
+  the sitemap + adds the wardogs child to the index.
+
+---
 ## 2026-08-26 - Content-engine generalization Stage 6 Track 1b: persist-wardogs-news.mjs (6 drafts)
 
 Added scripts/persist-wardogs-news.mjs - persists the SIX reviewed Wardogs pre-launch

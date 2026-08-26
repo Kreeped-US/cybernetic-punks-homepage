@@ -91,7 +91,17 @@ export const wardogs = {
 // here or it renders in no section (fail-safe: unassigned = hidden, never mis-placed).
 // When the first article publishes (Phase 2), add its slug + the /wardogs/[section]/[slug]
 // detail route (deferred this pass -- there is nothing to open yet).
-export const WARDOGS_ARTICLE_SECTION = {};
+export const WARDOGS_ARTICLE_SECTION = {
+  // Stage 6 Track 2: the 6 reviewed pre-launch drafts (persist-wardogs-news.mjs), mapped to
+  // their editor section. feed_items has no section column, so this map is the only source of
+  // an article's section (unmapped slug -> null -> hidden, never mis-placed).
+  'wardogs-control-zone': 'systems',
+  'wardogs-cash-economy': 'economy',
+  'wardogs-roles-not-classes': 'systems',
+  'wardogs-map-respawn': 'systems',
+  'wardogs-factions': 'field-intel',
+  'wardogs-monetization': 'field-intel',
+};
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).
 export function wardogsArticleSlugsForSection(sectionSlug) {

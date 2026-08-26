@@ -19,18 +19,27 @@
 // guarantees the only correctness property that matters.
 import { computeEligible } from '@/lib/sitemap/eligible';
 import { partitionEligible, sitemapIndexXml, newestLastmod } from '@/lib/sitemap/partition';
+import { getIndexableGames } from '@/lib/games';
 
 export const revalidate = 3600;
 
 const BASE = 'https://cyberneticpunks.com';
 
 export async function GET() {
-  const { dmz, dmzBuilds, intel, entities } = partitionEligible(await computeEligible());
-  const body = sitemapIndexXml([
+  const { dmz, dmzBuilds, intel, entities, wardogs } = partitionEligible(await computeEligible());
+  const children = [
     { loc: BASE + '/sitemap-dmz.xml', lastmod: newestLastmod(dmz) },
     { loc: BASE + '/sitemap-dmz-builds.xml', lastmod: newestLastmod(dmzBuilds) },
     { loc: BASE + '/sitemap-marathon-intel.xml', lastmod: newestLastmod(intel) },
     { loc: BASE + '/sitemap-marathon-entities.xml', lastmod: newestLastmod(entities) },
-  ]);
+  ];
+  // Stage 6 Track 2: the wardogs child is listed ONLY when wardogs is indexable, so the index
+  // is BYTE-IDENTICAL while wardogs.indexable is false (no empty child appears). The indexable
+  // flip then atomically adds this child alongside its emitted content. Deliberate divergence
+  // from DMZ's unconditional listing -- honors "inert until the flip."
+  if (getIndexableGames().includes('wardogs')) {
+    children.push({ loc: BASE + '/sitemap-wardogs.xml', lastmod: newestLastmod(wardogs) });
+  }
+  const body = sitemapIndexXml(children);
   return new Response(body, { headers: { 'Content-Type': 'application/xml' } });
 }
