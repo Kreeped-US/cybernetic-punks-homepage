@@ -7,6 +7,12 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Known-benign: WARDOGS_AMBER Turbopack dev-console error
+The Turbopack dev-console error referencing WARDOGS_AMBER is a benign dev-cache phantom -
+the export exists, production builds clean, pages render. Diagnosed 3+ times as harmless.
+Do NOT re-investigate; it does not affect prod.
+
+---
 ## 2026-08-26 - Wardogs GO-LIVE: indexable flipped true (Stage 6 + generalization complete)
 
 The final atomic go-live. Flipped wardogs.indexable false -> true in lib/games/wardogs.js
