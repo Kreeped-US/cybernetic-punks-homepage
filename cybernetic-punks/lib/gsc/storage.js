@@ -10,6 +10,12 @@
 // constructing one, so this module is callable from a script, a route, or a test without
 // caring where credentials come from.
 
+// Games registry (Stage 5, G5): namespaced route prefixes derive from each game's
+// config.basePath, so a new namespaced game is attributed automatically. Marathon's root
+// namespace stays enumerated (it has no basePath). Registry configs are pure data (no gsc
+// import), so this is acyclic and stays node-importable for the tests.
+import { GAMES } from '../games/index.js';
+
 // Batch size for the upsert. 1080 rows (a 7-day window) fits in one call comfortably;
 // the backfill is tens of thousands, so batching is built in from the start rather than
 // discovered later. Keeps any single request payload well under PostgREST's limits.
@@ -45,25 +51,38 @@ export function pathnameOf(pageUrl) {
 // unknown prefix returns NULL and logs loudly -- the caller drops the row and the pull is
 // flagged, never a default game. Same principle as game_slug carrying no column default.
 //
-// ADDING A GAME: add its namespace prefix(es) below. A new MARATHON route also needs its
-// top-level segment added here -- until then its first indexed URL fails LOUDLY (null +
-// log) rather than being silently mislabelled. A named gap beats a silent wrong. The
-// eventual home is the games registry (per the multi-game audit); a literal map today.
-const GAME_ROUTE_PREFIXES = {
-  dmz: ['dmz'],
-  // Marathon = the root namespace, enumerated from app/ (every top-level route dir
-  // except dmz + api). '' is the homepage '/'. Verified against the live GSC URL set:
-  // every one of the 3419 stored page_urls resolves through this map (no-op proof).
-  marathon: [
-    '', 'about', 'admin', 'advisor', 'builds', 'cradle', 'creators', 'editors',
-    'factions', 'guides', 'intel', 'join', 'leaderboard', 'maps', 'marathon',
-    'matchups', 'me', 'meta', 'modes', 'mods', 'player-count', 'profile-preview',
-    'ranked', 'rising', 'shells', 'sitrep', 'stats', 'status', 'tools', 'u', 'uniques',
-    'weapons', 'welcome',
-  ],
-  // 'tools' = the /tools/build/[shell] build pages (route slice A1). Marathon today; a DMZ
-  // build tool would namespace under /dmz to keep this first-segment scheme unambiguous.
-};
+// ADDING A GAME: a NAMESPACED game is now picked up AUTOMATICALLY from the registry -- its
+// single prefix is derived from config.basePath ('/dmz' -> 'dmz'), so dmz/wardogs/future
+// games need no edit here (Stage 5, G5: the "eventual home is the games registry" note is
+// now realized for namespaced games). A new MARATHON ROOT route still needs its top-level
+// segment added to MARATHON_ROOT_PREFIXES below -- until then its first indexed URL fails
+// LOUDLY (null + log) rather than being silently mislabelled. A named gap beats a silent wrong.
+//
+// HYBRID by necessity: Marathon owns the ROOT namespace -- "everything not claimed by another
+// game" -- which cannot come from config (there is no basePath for the root); it is enumerated
+// from app/ top-level route dirs. Namespaced games ARE registry-derived.
+const MARATHON_ROOT_PREFIXES = [
+  // Enumerated from app/ (every top-level route dir except dmz + api). '' is the homepage
+  // '/'. Verified against the live GSC URL set: every one of the 3419 stored page_urls
+  // resolves through this map (no-op proof). Marathon-root only (no namespaced segments).
+  '', 'about', 'admin', 'advisor', 'builds', 'cradle', 'creators', 'editors',
+  'factions', 'guides', 'intel', 'join', 'leaderboard', 'maps', 'marathon',
+  'matchups', 'me', 'meta', 'modes', 'mods', 'player-count', 'profile-preview',
+  'ranked', 'rising', 'shells', 'sitrep', 'stats', 'status', 'tools', 'u', 'uniques',
+  'weapons', 'welcome',
+];
+const GAME_ROUTE_PREFIXES = (function () {
+  const map = { marathon: MARATHON_ROOT_PREFIXES };
+  // Namespaced games: derive the single first-segment prefix from config.basePath. Marathon
+  // (root, no basePath) is the enumerated exception above. A game with no basePath contributes
+  // nothing (root-implicit is Marathon's alone; a second root game would be an explicit finding).
+  for (const slug of Object.keys(GAMES)) {
+    if (slug === 'marathon') continue;
+    const bp = GAMES[slug] && GAMES[slug].basePath;
+    if (bp) map[slug] = [String(bp).replace(/^\/+/, '').replace(/\/+$/, '')];
+  }
+  return map;
+})();
 
 // Reverse index: first path segment -> game. Built once.
 const PREFIX_TO_GAME = (function () {

@@ -26,7 +26,12 @@ import { createClient } from '@supabase/supabase-js';
 import { FACET_TABLE_MAP, DEFAULT_SUBSTANCE_THRESHOLDS } from '../lib/content/substanceFloor.js';
 
 const APPLY = process.argv.includes('--apply');
-const GAME = 'marathon';
+// Stage 5 (G6): the producing game is a parameter, defaulting to marathon (byte-identical
+// to the prior hardcoded literal when run with no --game). Usage: --game <slug>.
+const GAME = (function () {
+  const i = process.argv.indexOf('--game');
+  return (i !== -1 && process.argv[i + 1]) ? String(process.argv[i + 1]).trim().toLowerCase() : 'marathon';
+})();
 const TRANCHE_SIZE = 25;                                   // bound the first cohort (reviewable)
 const FACETS = ['weapon', 'mod', 'core', 'implant', 'cradle'];  // non-shell (shells saturated)
 const FACET_ORDER = { weapon: 0, core: 1, mod: 2, implant: 3, cradle: 4 };  // guide-worthiness
@@ -139,4 +144,4 @@ const ins = await sb.from('content_candidate')
   .select('id, entity, facet, priority');
 if (ins.error) { console.error('insert tranche failed:', ins.error.message); process.exit(1); }
 console.log('Upserted ' + ins.data.length + ' substance_floor gap candidates (status=queued).');
-console.log('Verify: SELECT status, warrant_source, facet, count(*) FROM content_candidate WHERE game_slug=\'marathon\' GROUP BY 1,2,3;');
+console.log('Verify: SELECT status, warrant_source, facet, count(*) FROM content_candidate WHERE game_slug=\'' + GAME + '\' GROUP BY 1,2,3;');

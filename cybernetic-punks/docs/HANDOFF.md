@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 5: config-gap closers + keyword-firewall CI
+
+Closed the remaining per-game config gaps + made the keyword firewall a CI-enforced
+guarantee. Most of the planned G-items were ALREADY done (verify-don't-inherit): G5's
+gameSlugForUrl was already the fail-loud GAME_ROUTE_PREFIXES lookup (not an else->marathon
+bug); G6's canonicalUrlFor already fails closed (null) for non-Marathon; and the G4 news-
+source FORMATTERS were already {{cnp:game}} from Stage 2a. So the shipped work is small.
+- KEYWORD FIREWALL (Fable ruling 3, the key piece): new lib/gsc/keywordFirewall.test.mjs. A
+  node --test assertion greps every editor-GENERATION file - editorCore.js + all of
+  lib/gather/** (recursive, incl. patchnotes adapters) + scripts/gen-*.mjs - for an import/
+  require of the GSC review namespace (specifiers containing reviewList or gsc-review),
+  matching import lines only (a comment naming the module is not flagged). PROVEN to fail on
+  a violation: planting import { reviewList } from @/lib/gsc/reviewList into editorCore.js
+  makes the test FAIL (exit 1, naming lib/editorCore.js -> reviewList); reverting makes it
+  PASS. The test also carries an in-file synthetic fail-on-violation + comment-not-flagged
+  proof, so the assertion is never a pass-only no-op. Converts the review-list-never-enters-
+  generation rule from discipline to CI. Confirmed per-game config carries NO GSC-review
+  keyword field (the only keywords field is sources.patchNotes.detection.keywords - patch-
+  news title detection, a gather concern, not the SEO review list - not a side door).
+- G5 (storage.js): GAME_ROUTE_PREFIXES is now built from the GAMES registry - NAMESPACED
+  games derive their single first-segment prefix from config.basePath (/dmz -> dmz,
+  /wardogs -> wardogs, future namespaced games automatic). Marathon's ~33-segment ROOT list
+  is kept enumerated as MARATHON_ROOT_PREFIXES - HYBRID, because the root namespace is the
+  everything-unclaimed case with no basePath. wardogs is now attributed (was null+loud-log).
+  Marathon + DMZ byte-identical (10/10 verify); unknown prefix still null+loud-log.
+- G4: NO change shipped. The youtube/reddit/twitch formatters were already {{cnp:game}}
+  (Stage 2a); the only remaining literal is the Steam-news author fallback (author:
+  item.author || Bungie in lib/gather/steam.js) - DEFERRED (see below).
+- G6 (scripts/seed-gap-candidates.mjs): the hardcoded const GAME = marathon is now a --game
+  param defaulting to marathon (byte-identical with no flag); the verify-SQL log uses GAME.
+  coverage.js canonicalUrlFor left as-is (already fail-closed null for non-Marathon).
+- Marathon behavior unchanged for every item (literals resolve to the same Marathon values).
+- FLAGGED, DEFERRED (all harmless today, not wrong-now - deferred per the trivial-or-defer
+  rule, lowest value):
+  (1) Steam-news author fallback Bungie (steam.js:68): reached only via miranda.js +
+      the patchnotes adapter engine (multi-hop threading), and dmz/wardogs have no
+      vocabulary.developer - not a trivial swap. Harmless: Marathon is the only game on
+      the Bungie-news path and its developer IS Bungie, so the literal is correct today.
+  (2) User-Agent Marathon Intelligence Hub (dexter-stats.js:186): a cosmetic HTTP header,
+      not reader-facing or attribution.
+  (3) canonicalUrlFor basePath parameterization (coverage.js): already returns null for
+      non-Marathon (fail-safe, no wrong URL); parameterize only when non-Marathon
+      canonicals exist. Route via config.basePath then.
+
 ## 2026-08-26 - Content-engine generalization Stage 4: VANTAGE storelessness enforced
 
 VANTAGE (network/community editor) was already storeless EMERGENTLY - her generators never
