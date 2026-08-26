@@ -256,7 +256,7 @@ export function formatClipsForGhost(clips) {
   }).join('\n');
 
   return '--- TWITCH CLIP ACTIVITY (community ATTENTION signal, last 48h) ---\n'
-    + 'These are the most-viewed Marathon clips on Twitch right now, ranked by views.\n'
+    + 'These are the most-viewed {{cnp:game}} clips on Twitch right now, ranked by views.\n'
     + 'This is an ATTENTION signal: it tells you WHAT players found notable enough to clip\n'
     + 'and rewatch. You have ONLY the clip titles, the broadcaster, and the view counts below.\n'
     + 'You have NOT watched these clips and do not know what happens in them.\n\n'

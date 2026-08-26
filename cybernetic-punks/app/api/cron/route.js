@@ -192,8 +192,8 @@ function normalizeTitle(t) { return (t || '').toLowerCase().replace(/\s+/g, ' ')
 function buildPatchPriorityBlock(patchItems) {
   if (!patchItems || patchItems.length === 0) return '';
   return (
-    '\n\n--- PRIORITY OVERRIDE: NEW OFFICIAL BUNGIE UPDATE DETECTED ---\n' +
-    'The following Bungie communications were just published:\n' +
+    '\n\n--- PRIORITY OVERRIDE: NEW OFFICIAL {{cnp:dev^}} UPDATE DETECTED ---\n' +
+    'The following {{cnp:dev}} communications were just published:\n' +
     patchItems.map(function(p) {
       return '- ' + p.title + (p.url ? ' -- ' + p.url : '');
     }).join('\n') +
@@ -274,7 +274,7 @@ function buildCreatorSpotlightBlock(directive) {
   block += '2. Do NOT add, infer, embellish, or invent ANY fact, quote, event, date, number, claim, or piece of "drama" that is not explicitly present in the vetted source text. This article is about a real person; inventing or distorting what they said or did is strictly prohibited.\n';
   block += '3. If a detail is not in the source text, do not include it. A shorter, fully-accurate article is correct; a padded one with invented specifics is not.\n';
   block += '4. Refer to the creator by the exact name provided. Do not invent alternate handles, real names, or affiliations.\n';
-  block += '5. You may write engagingly and add neutral framing/context about Marathon itself (using your verified game knowledge), but every claim ABOUT THE CREATOR or the events described must trace directly to the vetted source text.\n';
+  block += '5. You may write engagingly and add neutral framing/context about {{cnp:game}} itself (using your verified game knowledge), but every claim ABOUT THE CREATOR or the events described must trace directly to the vetted source text.\n';
   block += '6. Do NOT inflate the creator\'s achievement beyond the source. If the source states a level or number, do not call it a "cap," "max," or "the highest" unless the source explicitly says so. Do not state or imply the creator plays a particular mode (e.g. ranked), holds a status, or has a reputation that the source did not establish. Stick to exactly what the source claims, no more.\n';
   block += '7. STRUCTURE: break the article into sections. Write each section header on its OWN LINE as **HEADER TEXT** with a blank line before and after it. Never put a header on the same line as body text, and never glue a header to the paragraph that follows. Separate paragraphs with a blank line.\n';
   block += '---';

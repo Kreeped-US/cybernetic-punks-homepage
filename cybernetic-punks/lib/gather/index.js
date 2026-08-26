@@ -180,7 +180,7 @@ export async function gatherAll(config = getGameConfig()) {
   if (bungieNewsContext) ghostPrompt = (ghostPrompt || '') + bungieNewsContext;
 
   if (!ghostPrompt) {
-    ghostPrompt = 'No community sources (Reddit posts or Steam reviews) were available to you this cycle. Do NOT write a sentiment piece from imagination. Instead, write a short, honest community-pulse note that states plainly the community discussion was quiet/limited this cycle. You MAY factually summarize what is objectively happening in Season 2 using the verified game database and any official Bungie news in your context (e.g. what systems or content are current), framed as context - NOT as community reaction. You must NOT invent Reddit users, quotes, upvote counts, Steam reviews, hours-played figures, or any sentiment you cannot source. A brief, accurate "quiet cycle" pulse is the correct output here; fabricating community voices is not.';
+    ghostPrompt = 'No community sources (Reddit posts or Steam reviews) were available to you this cycle. Do NOT write a sentiment piece from imagination. Instead, write a short, honest community-pulse note that states plainly the community discussion was quiet/limited this cycle. You MAY factually summarize what is objectively happening in Season 2 using the verified game database and any official {{cnp:dev}} news in your context (e.g. what systems or content are current), framed as context - NOT as community reaction. You must NOT invent Reddit users, quotes, upvote counts, Steam reviews, hours-played figures, or any sentiment you cannot source. A brief, accurate "quiet cycle" pulse is the correct output here; fabricating community voices is not.';
   }
 
   // ── MIRANDA — YouTube + Bungie news + game databases ──────────

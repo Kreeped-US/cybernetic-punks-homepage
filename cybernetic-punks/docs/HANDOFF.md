@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 2a: editor-prompt de-Marathoning (Layer A tokens)
+
+Parameterized the token-swappable Marathon literals in the editor prompts from
+config.vocabulary, phase 1 of 2 (Stage 2b = the Layer B game-model prompt-kit
+extraction, deferred). Marathon generation byte-identical (proven).
+- promptVocab.js (new, pure, node-importable): applyVocab(text, vocab) swaps {{cnp:...}}
+  placeholders; resolveVocab(config) builds the token map. A {{cnp:key^}} uppercase
+  modifier covers both UPPER and title-case sites from one value. Unmapped key THROWS
+  (fail-closed - never emits a raw placeholder or empty string into a live prompt).
+- Single chokepoint: applyVocab runs in callEditor over systemPrompt, userPrompt, and
+  the tool description. buildMirandaPrompt is covered (its output is callEditor's
+  userPrompt) - verified, no separate threading needed.
+- marathon.js: vocabulary block carrying Marathon's current strings verbatim.
+- 50 placeholders across editorCore (40), youtube (4), reddit (1), twitch (1), index
+  (1), route.js (3): game name, developer, reader-address (Runner/Runners), grade names
+  (RUNNER GRADE/GRID PULSE/LOADOUT GRADE), internal-link paths (/cradle //factions /meta).
+- LEFT Marathon-literal (Stage 2b): CANONICAL_TAG_STANDARD, tool ENUMs (shell_focus,
+  guide_category), fetchGameContext Cradle/faction/world prose, season-history dates,
+  "extraction shooter" genre. No placeholders = the visible 2a scope boundary.
+- BYTE-VERIFIED: source-level back-substitution of Marathon's vocab diffs to zero on
+  gather/route files; editorCore shows only added mechanism lines, zero modified
+  prompt-content. applyVocab unit test 7/7.
+- FOLLOW-ON (flagged, NOT covered by 2a): comment generators (generateArticleComments/
+  sampleEditorComment, editorCore.js ~1390-1468) carry "Marathon" literals on a separate
+  direct-SDK path (no callEditor/config) - need their own config-threading; fold into 2b
+  or a small pass.
+- Prior operator DDL still needs recording: the 2026-08-25 stat-table game_slug NOT NULL
+  migration is applied but the Stage 1 HANDOFF entry still reads "prepped, not run" -
+  reconcile (see below).
+
 ## 2026-08-25 - Content-engine generalization Stage 1: game_slug through every boundary
 
 Structural cross-game rejection at the four generation boundaries (Fable ruling 1).

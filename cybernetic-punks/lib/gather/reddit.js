@@ -214,7 +214,7 @@ export function formatForGhost(posts, steamData, _legacyXData, clipSignal, subre
 - Clips are a SECONDARY signal. Reddit and Steam remain your primary sentiment sources — use clips as supporting texture, not the spine of the article.`
     : '';
 
-  return `Your job: synthesize Marathon community sentiment from ${sourceList}. Surface what real players are actually saying — not what creators or press say.
+  return `Your job: synthesize {{cnp:game}} community sentiment from ${sourceList}. Surface what real players are actually saying — not what creators or press say.
 
 ${fenceUntrusted(`${redditSection}${steamSection}${clipSection}`, 'Reddit posts, Steam reviews, Twitch clip titles')}
 

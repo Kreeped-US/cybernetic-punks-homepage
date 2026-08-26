@@ -24,6 +24,22 @@ export const marathon = {
   slug: 'marathon',
   displayName: 'Marathon',
 
+  // EDITOR-PROMPT VOCABULARY (content-engine generalization Stage 2a, Layer A tokens).
+  // The per-game words the editor prompts template from via {{cnp:...}} placeholders
+  // (lib/editors/promptVocab.js): developer name, the reader-address term, the per-editor
+  // grade names, and the internal-link page paths. Marathon's values are its CURRENT
+  // prompt strings VERBATIM, so Marathon's assembled prompt is byte-identical. (game name
+  // is the top-level displayName above; not duplicated here.) Layer B -- the Cradle/
+  // faction/shell-taxonomy prose, tool enums, and the tag standard -- is NOT tokenized
+  // this stage (that is Stage 2b), so those stay Marathon-literal in the prompts.
+  vocabulary: {
+    developer: 'Bungie',
+    readerTerm: 'Runner',
+    readerTermPlural: 'Runners',
+    grades: { cipher: 'Runner Grade', nexus: 'Grid Pulse', dexter: 'Loadout Grade' },
+    links: { cradle: '/cradle', factions: '/factions', meta: '/meta' },
+  },
+
   // Pre-publish corroboration gate mode (lib/gsc/prePublishGate.js). 'log-only' = fail-OPEN:
   // the gate logs findings but NEVER holds -- a frozen, retrofit game tolerates Season-lag, so
   // Marathon publishes regardless (identical to the Phase 1 probe).
