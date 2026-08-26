@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 6 Track 1b: persist-wardogs-news.mjs (6 drafts)
+
+Added scripts/persist-wardogs-news.mjs - persists the SIX reviewed Wardogs pre-launch
+confirmed-systems articles into feed_items (game_slug=wardogs) as DRAFTS: is_published:FALSE
++ noindex:true (unlike DMZ's is_published:true), because the /wardogs article route + sitemap
++ indexable flip are not built yet (Track 2) - publishing now would create indexed-but-
+unroutable pages.
+- Bodies FROZEN from the EXACT reviewed dry-run text (Option 1, not re-generated): first-run
+  reviewed text for the 4 clean (cash-economy, factions, roles-not-classes, monetization),
+  re-run post-leak-fix text for the 2 fixed (what-wardogs-is, map-respawn). The saved-re-run
+  versions of the 4 (never displayed/reviewed in full) were deliberately NOT used.
+- HONEST per-topic source_url, corrected against article weight: 5 rows -> the Top Questions
+  Steam news post URL (real, operator-verified live). map-respawn -> NULL (honest-null: the
+  article's bulk is the Aug 11 respawn design, name-only in-body with no supplied URL; Top
+  Questions supplies only the minor map-dimension line, so pointing the row there would
+  misrepresent the citation). monetization -> Top Questions (leads with the "No Battlepass"
+  material; store pricing is a trailing in-body detail). The Steam store URL is retained for
+  reference but is no longer any row's primary source_url. source_url is NEVER synthesized.
+- Explicit deterministic slugs (wardogs-control-zone / -factions / -cash-economy /
+  -roles-not-classes / -map-respawn / -monetization). Idempotent (skip existing slug).
+  --dry prints the plan and writes nothing.
+- TRACK 2 PENDING for render/index: feed_items has no section column, so each slug needs a
+  WARDOGS_ARTICLE_SECTION[slug]=section entry, plus app/wardogs/[section]/[slug]/page.js +
+  the sitemap eligible wardogs block + a partition branch + a sitemap-wardogs.xml child +
+  the wardogs.indexable flip (all must land together per the else-throw freeze rule).
+  Publishing (is_published:true) happens there.
+- The OPERATOR runs the real persist (writes to the DB via the service key); Claude wrote
+  NOTHING to the DB. Run: node scripts/persist-wardogs-news.mjs (or --dry for the plan).
+
 ## 2026-08-26 - Content-engine generalization Stage 6 Track 1: gen-wardogs-news.mjs (honest pre-launch generator)
 
 Added scripts/gen-wardogs-news.mjs - the bespoke Wardogs pre-launch confirmed-systems news
