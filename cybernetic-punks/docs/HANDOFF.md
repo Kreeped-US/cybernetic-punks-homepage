@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Wardogs GO-LIVE: indexable flipped true (Stage 6 + generalization complete)
+
+The final atomic go-live. Flipped wardogs.indexable false -> true in lib/games/wardogs.js
+(one field). The 6 confirmed-systems articles are now published (is_published:true, operator-
+confirmed) AND indexed. Wardogs enters the index; the content-engine generalization program
+and Stage 6 are complete.
+- One field flip, nothing else. Two consumers activate atomically off wardogs.indexable:
+  app/wardogs/layout.js robots gate (robots: indexable ? undefined : {index:false,follow:true}
+  now returns undefined -> the whole /wardogs subtree + the 6 article routes are indexable),
+  and the sitemap (eligible.js wardogs block + the gated index child).
+- VERIFIED against the live DB via the build prerender (sitemap routes are static/ISR, so
+  npm run build queries Supabase and writes the real .next/server/app/sitemap-*.xml.body):
+  sitemap-wardogs.xml emits exactly the 6 published article URLs -
+  /wardogs/systems/wardogs-control-zone, /wardogs/systems/wardogs-roles-not-classes,
+  /wardogs/systems/wardogs-map-respawn, /wardogs/economy/wardogs-cash-economy,
+  /wardogs/field-intel/wardogs-factions, /wardogs/field-intel/wardogs-monetization (all
+  wardogs-article, monthly, 0.6, real lastmod from updated_at). The sitemap index went 4 -> 5
+  children (the gated wardogs child activated). ONLY the 6 articles emit - no section shells
+  (/wardogs, /wardogs/<section>): the wardogs block has no hub/section emitter (unlike DMZ), so
+  the empty shells are structurally excluded. Marathon + DMZ UNCHANGED and zero leak: per-child
+  loc counts dmz 14, dmz-builds 0, marathon-intel 363, marathon-entities 141, with 0 wardogs
+  hits in any non-wardogs child. Build exit 0; node --check clean on the flipped file.
+- Stale-comment follow-up (NOT touched this commit per one-field-flip discipline): the
+  rationale comments in lib/games/wardogs.js (the indexable block) and app/wardogs/layout.js
+  still say "FALSE for Phase 1" - now historical; worth a separate copy-edit pass.
+
+---
 ## 2026-08-26 - Stage 6 Track 2: Wardogs article-detail route + sitemap coupled set (inert)
 
 The atomic render/sitemap infrastructure so the 6 persisted Wardogs drafts can render/index

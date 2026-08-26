@@ -27,7 +27,7 @@ export const wardogs = {
   //   lands (Phase 2). Two consumers read it: app/wardogs/layout.js (robots) and, once
   //   wired, the sitemap block (NOT added this pass -- see the study's gap analysis).
   // launched: whether the game is actually LIVE (EA Sep 10 2026). STILL FALSE.
-  indexable: false,
+  indexable: true,
   launched: false,
 
   // Pre-publish corroboration gate mode. Mirrors DMZ: 'fail-closed' = a hold-class
