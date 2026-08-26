@@ -580,6 +580,16 @@ async function fetchGameContext(config = getGameConfig()) {
 
     let output = '';
 
+    // CONTEXT-BLOCK PROSE (Stage 2b-3): the data-block headers, intros, fences, and END
+    // markers are Marathon label PROSE moved to per-game config. Resolve once and
+    // interpolate (cb.KEY || '') at each render site below - a game with a promptKit gets
+    // its own framing; a game without renders empty framing (no Marathon prose leaks). The
+    // ROW-rendering logic is untouched. NOTE: the `factions` base table has no game_slug
+    // column and is queried unfiltered, so a non-Marathon context still renders Marathon's
+    // faction ROWS - that DATA leak is a separate open gap (needs a factions.game_slug
+    // migration + filter); 2b-3 only closes the faction PROSE leak.
+    const cb = (config.editorial && config.editorial.promptKit && config.editorial.promptKit.contextBlocks) || {};
+
     // STORE-ROW CITATION (content-model precondition), gated by the MASTER FLAG
     // STORE_ROW_CITATION_ENABLED (default OFF -> byte-identical to pre-store-citation).
     // When ON: a single-pass minter tags each VERIFIED stat row below with a citable
@@ -619,7 +629,7 @@ async function fetchGameContext(config = getGameConfig()) {
       const lines = Object.entries(bySlot)
         .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
         .join('\n\n');
-      output += `\n\n--- WEAPON MODS DATABASE (use exact names only) ---\n${lines}\n--- END MODS ---`;
+      output += (cb.modsHeader || '') + lines + (cb.modsEnd || '');
     }
 
     if (coresRes.data?.length) {
@@ -649,7 +659,7 @@ async function fetchGameContext(config = getGameConfig()) {
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
         .join('\n\n');
-      output += `\n\n--- SHELL CORES DATABASE (shell-specific upgrades, use exact names) ---\n${lines}\n--- END CORES ---`;
+      output += (cb.coresHeader || '') + lines + (cb.coresEnd || '');
     }
 
     if (implantsRes.data?.length) {
@@ -670,7 +680,7 @@ async function fetchGameContext(config = getGameConfig()) {
       const lines = Object.entries(bySlot)
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
         .join('\n\n');
-      output += `\n\n--- IMPLANTS DATABASE (slot upgrades) ---\n${lines}\n--- END IMPLANTS ---`;
+      output += (cb.implantsHeader || '') + lines + (cb.implantsEnd || '');
     }
 
     if (weaponsRes.data && weaponsRes.data.length > 0) {
@@ -686,7 +696,7 @@ async function fetchGameContext(config = getGameConfig()) {
         ].filter(Boolean).join(' | ');
         return '  ' + tagRow('weapon_stats', w) + w.name + (parts ? ' - ' + parts : '') + verificationTag(w);
       }).join('\n');
-      output += '\n\n--- WEAPON STATS DATABASE ---\n' + weaponLines + '\n--- END WEAPONS ---';
+      output += (cb.weaponsHeader || '') + weaponLines + (cb.weaponsEnd || '');
     }
 
     if (shellsRes.data && shellsRes.data.length > 0) {
@@ -720,13 +730,13 @@ async function fetchGameContext(config = getGameConfig()) {
           renderRelationLine('Counter items', s.counter_items, citeStore),
         ].filter(Boolean).join('\n');
       }).join('\n\n');
-      output += '\n\n--- SHELL ABILITIES DATABASE (S2 four-part kit: Prime / Tactical / two Traits. Use ONLY these ability names and effects. If a slot says "not yet revealed," say so - do not invent the ability.) ---\n' + shellLines + '\n--- END SHELLS ---';
+      output += (cb.shellsHeader || '') + shellLines + (cb.shellsEnd || '');
     }
 
     // CRADLE PROGRESSION (S2 stat system - replaced the faction stat grind)
     if (cradleRes.data && cradleRes.data.length > 0) {
-      output += '\n\n--- CRADLE PROGRESSION DATABASE (Season 2 shell stat system) ---';
-      output += '\nIn Season 2, shell STATS come from the Cradle. Players spend Energy (about one per Runner level) across six stat tracks. Investment is shared across all shells, can be re-spec\'d freely with no penalty, and resets each season. Named PERKS unlock at specific Energy breakpoints. Use ONLY the tracks, perks, and breakpoints below. Do not invent perks or Energy costs.\n';
+      output += (cb.cradleHeader || '');
+      output += (cb.cradleIntro || '');
       var byTrack = {};
       cradleRes.data.forEach(function(n) {
         var t = n.stat_track || 'Other';
@@ -753,7 +763,7 @@ async function fetchGameContext(config = getGameConfig()) {
           output += '  (improves: ' + statList.join(', ') + ')\n';
         }
       });
-      output += '--- END CRADLE ---';
+      output += (cb.cradleEnd || '');
     }
 
     // FACTION SYSTEM (S2 model: gear access + reputation + Sponsored Kits,
@@ -768,8 +778,8 @@ async function fetchGameContext(config = getGameConfig()) {
     var hasFactionData = (factionsRes.data?.length > 0);
 
     if (hasFactionData) {
-      output += '\n\n--- FACTION SYSTEM DATABASE ---';
-      output += '\nMarathon has 6 factions. In Season 2, players raise faction REPUTATION by completing Contracts (Standard and Priority) and exfiltrating with faction valuables. Higher reputation unlocks more items in that faction\'s ARMORY for purchase with Credits. Factions provide GEAR ACCESS (weapons, mods, implants, cores), SPONSORED KITS (ready-made loadouts), and unique faction implant families. Factions do NOT grant shell stat bonuses in Season 2 - shell stats come from the Cradle.\n';
+      output += (cb.factionHeader || '');
+      output += (cb.factionIntro || '');
 
       if (factionsRes.data?.length > 0) {
         output += '\nFACTIONS (names and focus):\n';
@@ -821,9 +831,9 @@ async function fetchGameContext(config = getGameConfig()) {
         });
       }
 
-      output += '\nFENCE - READ CAREFULLY: The verified data above is PARTIAL. You may cite the specific items, prices, ranks, and rank-gating facts shown above by their exact values. For any faction or item NOT listed above (e.g. factions with no rows, or items shown only as "unnamed"), you MUST speak in general terms only - do NOT invent an item name, price, rank, or cost. Point readers to /factions for fuller progression. Inventing a faction specific not shown above is a hallucination.\n';
+      output += (cb.factionFence || '');
 
-      output += '--- END FACTION SYSTEM ---';
+      output += (cb.factionEnd || '');
     }
 
     // --- GAME WORLD (maps / zones / bosses / events / modes) ---
@@ -859,17 +869,17 @@ async function fetchGameContext(config = getGameConfig()) {
         return lines.join('\n');
       }).join('\n\n');
 
-      output += '\n\n--- GAME WORLD: MAPS, ZONES, BOSSES, EVENTS ---\n' + worldLines;
+      output += (cb.worldHeader || '') + worldLines;
 
       if (gameModesRes.data && gameModesRes.data.length > 0) {
         var modeLines = gameModesRes.data.map(function(md) {
           return '  ' + md.mode_name + (md.mode_type ? ' [' + md.mode_type + ']' : '') + (md.available_on ? ' (on: ' + md.available_on + ')' : '') + (md.summary ? '\n    ' + md.summary : '');
         }).join('\n\n');
-        output += '\n\n--- GAME MODES ---\n' + modeLines;
+        output += (cb.worldModesHeader || '') + modeLines;
       }
 
-      output += '\nFENCE - READ CAREFULLY: The maps, zones, bosses, events, and modes above are the COMPLETE set of verified game-world facts. Cite ONLY these by their exact names and descriptions. Do NOT invent map names, zone names, boss names (e.g. there is no "Upper Complex Warden" - the Night Marsh boss is the Frost Warden), event names, or mode mechanics not listed here. If a map is marked a variant, it shares its parent map\'s zones. If something is not listed, say it is not yet confirmed rather than inventing it.\n';
-      output += '--- END GAME WORLD ---';
+      output += (cb.worldFence || '');
+      output += (cb.worldEnd || '');
     }
 
     // Cache the store-row registry ALONGSIDE the context string, keyed on the same

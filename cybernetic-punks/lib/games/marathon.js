@@ -405,6 +405,41 @@ When the community reacts to any of these, that's your lane. Do NOT reference th
         },
       },
 
+      // fetchGameContext data-block PROSE (Stage 2b-3): the headers, intros, fences, and
+      // END markers of the injected database blocks. Moved VERBATIM (surrounding whitespace
+      // included - each value IS the exact literal it replaced), interpolated directly as
+      // (cb.KEY || '') in fetchGameContext. A game without contextBlocks renders empty
+      // framing - no Marathon label prose leaks. (The faction ROWS still leak cross-game
+      // until factions gets a game_slug column; that is a separate open data gap - see the
+      // fetchGameContext comment and docs/HANDOFF.md.) Faction sub-labels (FACTIONS /
+      // VERIFIED ARMORY STOCK / VERIFIED FACTION RANK-GATING) are deliberately LEFT in code
+      // - they are welded to Marathon-shaped faction queries and move with the future
+      // faction-model generalization. The fence's "/factions" is a known G2 nav-literal,
+      // left as-is (not tokenized here).
+      contextBlocks: {
+        cradleHeader: `\n\n--- CRADLE PROGRESSION DATABASE (Season 2 shell stat system) ---`,
+        cradleIntro: `\nIn Season 2, shell STATS come from the Cradle. Players spend Energy (about one per Runner level) across six stat tracks. Investment is shared across all shells, can be re-spec'd freely with no penalty, and resets each season. Named PERKS unlock at specific Energy breakpoints. Use ONLY the tracks, perks, and breakpoints below. Do not invent perks or Energy costs.\n`,
+        cradleEnd: `--- END CRADLE ---`,
+        factionHeader: `\n\n--- FACTION SYSTEM DATABASE ---`,
+        factionIntro: `\nMarathon has 6 factions. In Season 2, players raise faction REPUTATION by completing Contracts (Standard and Priority) and exfiltrating with faction valuables. Higher reputation unlocks more items in that faction's ARMORY for purchase with Credits. Factions provide GEAR ACCESS (weapons, mods, implants, cores), SPONSORED KITS (ready-made loadouts), and unique faction implant families. Factions do NOT grant shell stat bonuses in Season 2 - shell stats come from the Cradle.\n`,
+        factionFence: `\nFENCE - READ CAREFULLY: The verified data above is PARTIAL. You may cite the specific items, prices, ranks, and rank-gating facts shown above by their exact values. For any faction or item NOT listed above (e.g. factions with no rows, or items shown only as "unnamed"), you MUST speak in general terms only - do NOT invent an item name, price, rank, or cost. Point readers to /factions for fuller progression. Inventing a faction specific not shown above is a hallucination.\n`,
+        factionEnd: `--- END FACTION SYSTEM ---`,
+        worldHeader: `\n\n--- GAME WORLD: MAPS, ZONES, BOSSES, EVENTS ---\n`,
+        worldModesHeader: `\n\n--- GAME MODES ---\n`,
+        worldFence: `\nFENCE - READ CAREFULLY: The maps, zones, bosses, events, and modes above are the COMPLETE set of verified game-world facts. Cite ONLY these by their exact names and descriptions. Do NOT invent map names, zone names, boss names (e.g. there is no "Upper Complex Warden" - the Night Marsh boss is the Frost Warden), event names, or mode mechanics not listed here. If a map is marked a variant, it shares its parent map's zones. If something is not listed, say it is not yet confirmed rather than inventing it.\n`,
+        worldEnd: `--- END GAME WORLD ---`,
+        modsHeader: `\n\n--- WEAPON MODS DATABASE (use exact names only) ---\n`,
+        modsEnd: `\n--- END MODS ---`,
+        coresHeader: `\n\n--- SHELL CORES DATABASE (shell-specific upgrades, use exact names) ---\n`,
+        coresEnd: `\n--- END CORES ---`,
+        implantsHeader: `\n\n--- IMPLANTS DATABASE (slot upgrades) ---\n`,
+        implantsEnd: `\n--- END IMPLANTS ---`,
+        weaponsHeader: `\n\n--- WEAPON STATS DATABASE ---\n`,
+        weaponsEnd: `\n--- END WEAPONS ---`,
+        shellsHeader: `\n\n--- SHELL ABILITIES DATABASE (S2 four-part kit: Prime / Tactical / two Traits. Use ONLY these ability names and effects. If a slot says "not yet revealed," say so - do not invent the ability.) ---\n`,
+        shellsEnd: `\n--- END SHELLS ---`,
+      },
+
       // The canonical tag standard, appended to all five persona prompts ({{kit:tagStandard}}).
       // Moved VERBATIM from editorCore.js CANONICAL_TAG_STANDARD (leading blank lines are
       // significant -- they reproduce the exact ${DATA_INTEGRITY_RULES}${...} join).

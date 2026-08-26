@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 2b-3: promptKit contextBlocks
+
+Third of four 2b sub-commits. Extracted the fetchGameContext data-block prose (headers/
+intros/fences/END markers) into config.editorial.promptKit.contextBlocks. Marathon
+byte-identical, proven per-block.
+- 21 prose slots extracted verbatim: cradle (header/intro/end), faction (header/intro/
+  fence/end), world (header/modesHeader/fence/end), and entity-table labels
+  (mods/cores/implants/weapons/shells header+end). fetchGameContext resolves cb once
+  from config.editorial.promptKit.contextBlocks and interpolates (cb.KEY || '') at each
+  render site. Row-rendering logic 100% untouched (the 3 fused templates split into
+  cb.header + lines + cb.end, assembly shape verified).
+- Direct interpolation (cb.KEY || ''), NOT the {{kit:...}} round-trip - fetchGameContext
+  has config in scope and builds a plain string. promptVocab.js unchanged.
+- VERIFIED: 30/30 per-block byte checks (each slot matches HEAD verbatim); editorCore
+  diff is only prose-source swaps + the cb line, zero change to row logic (grep-confirmed).
+- NON-LEAK STATUS (honest): faction PROSE leak CLOSED (no-kit game renders empty framing).
+  Faction ROW leak STILL OPEN - the factions base table has NO game_slug column and is
+  queried unfiltered, so hasFactionData is true for any game and Marathon's faction ROWS
+  render cross-game. This 2b-3 prose extraction does NOT fix it.
+- OPEN GAP (tracked, out of 2b-3 scope): factions table needs a game_slug column + filter
+  (operator-run migration, like the stat-table one) to close the faction-row cross-game
+  leak. G3-adjacent. Only matters when a non-Marathon game needs faction data.
+- LEFT inline (per decision): faction sub-labels (FACTIONS/VERIFIED ARMORY STOCK/VERIFIED
+  FACTION RANK-GATING) - fused with Marathon-shaped faction queries, belong with the
+  future faction-model generalization. factionFence's /factions nav-literal left as the
+  known separate G2 item.
+- REMAINING 2b: 2b-4 comment-generator path (config threading + commentModel) - the final
+  sub-commit, then 2b merges as a unit.
+
 ## 2026-08-26 - Content-engine generalization Stage 2b-2: promptKit per-persona gameModel + seasonContext
 
 Second of four 2b sub-commits (highest byte-risk). Extracted Marathon's per-persona
