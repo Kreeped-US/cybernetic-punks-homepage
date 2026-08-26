@@ -7,6 +7,22 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Test closed: inspectionRun.test.mjs stale-URL fixture fixed (7/12 -> 12/12)
+Closes the Stage 1 flagged item "inspectionRun.test.mjs fails 7/12 on clean base". Diagnosed:
+NOT a real bug and NOT a signature/deps refactor - there is no runInspectionSweep function, and
+the failing tests already called the current signatures (runEscalation(supa,latest,fi,now),
+runInspectionChunk(supa,deps), selectInspectionCandidates(supa,now)) identically to the 5
+passing tests. Real cause: the test helper intelUrl(slug) built the pre-migration
+BASE+'/intel/'+slug, but feedUrl() (inspectionRun.js:98) correctly emits BASE+'/marathon/intel/'
++slug after the /intel -> /marathon/intel route migration. Every positive URL-keyed assertion
+(bump/flag/premature-count) missed because the action was recorded under the new URL. One-line
+fixture fix: intelUrl -> BASE+'/marathon/intel/'+slug. All 7 went green from that line alone
+(no hidden assertion failure). Test-only change, ZERO production code touched. Consumer C is
+LIVE and correct: app/api/cron/inspect/route.js runs runInspectionChunk, scheduled every 15 min
+(vercel.json */15); prod is self-consistent (feedUrl emits /marathon/intel for both candidates
+and the written inspection rows), so the drift lived only in the test fixture.
+
+---
 ## 2026-08-26 - Cosmetic closed: dexter-stats wiki-fetch User-Agent de-Marathoned
 Closes Stage 5 cosmetic deferral (2). lib/gather/dexter-stats.js:186 User-Agent changed from
 'CyberneticPunks/1.0 Marathon Intelligence Hub' to 'CyberneticPunks-Bot/1.0

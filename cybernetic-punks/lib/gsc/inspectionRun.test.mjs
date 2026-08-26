@@ -18,7 +18,7 @@ const DAY = 86400000;
 const HOUR = 3600000;
 const BASE = 'https://cyberneticpunks.com'; // must match feedUrl()'s BASE
 const iso = (ms) => new Date(ms).toISOString();
-const intelUrl = (slug) => BASE + '/intel/' + slug;
+const intelUrl = (slug) => BASE + '/marathon/intel/' + slug;
 
 // A published (desired=IN) marathon feed_item created `createdAgeDays` ago.
 function publishItem(slug, createdAgeDays) {
