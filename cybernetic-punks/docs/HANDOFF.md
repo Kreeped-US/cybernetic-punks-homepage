@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Content-engine generalization Stage 6 Track 1: gen-wardogs-news.mjs (honest pre-launch generator)
+
+Added scripts/gen-wardogs-news.mjs - the bespoke Wardogs pre-launch confirmed-systems news
+generator (Option A). Mirrors DMZ's isolated-script approach (standalone: no callEditor, no
+promptKit, no getGameConfig, no cron, no gather) - because the cron news path is live-
+external-gather only and cannot serve a pre-launch game (nothing to gather). BUT it fixes
+DMZ's citation weakness: citations are the REAL source URLs carried per topic, never
+synthesized.
+- 6 topics grounded VERBATIM in docs/wardogs-firstparty-VERIFIED.md (operator-verified
+  primary): what-wardogs-is / factions / cash-economy (flagship) / roles-not-classes /
+  map-and-respawn / monetization. Each topic's hand-fed excerpt is the ONLY factual basis.
+- HONEST citations: SOURCES map carries real URLs - topQuestions -> the Steam news post
+  (store.steampowered.com/news/app/1867240/view/496095152751771744), steamStore -> the store
+  page (store.steampowered.com/app/1867240/WARDOGS/), both operator-verified live. The Aug 11
+  devlog URL was NOT supplied -> HONEST-NULL: those claims (hardened monetization quotes;
+  travel-time respawn) ship name-only ("Bulkhead's August 11 devlog", source_url null),
+  NEVER a fabricated/aggregator URL.
+- Excerpt-only rule is STRUCTURAL in the prompt: it forbids cross-topic facts, "well-known"/
+  common-knowledge facts, and training-memory facts EVEN WHEN TRUE. Dry-run review caught a
+  leak (what-wardogs-is + map-and-respawn pulled faction names / $10,000 / 6-tracks that were
+  not in their own excerpts - verified-real but out-of-basis); tightening the prompt closed
+  both (re-run confirmed leaks gone, the clean 4 unregressed). The struck aggregator
+  inventions (the 5-class list, faction mechanical asymmetry) are structurally excluded -
+  not in any excerpt, so the model cannot state them. All numbers ($10,000, 256km2, 2x2km,
+  100 points, 6 tracks) stay FLAGGED as Bulkhead pre-launch figures.
+- editor NEXUS, game_slug=wardogs. DRY-RUN ONLY - this file has NO persist path (writes
+  nothing). Persist is a SEPARATE next step (persist-wardogs-news.mjs, is_published:FALSE
+  drafts - unlike DMZ's is_published:true - since the /wardogs article route + sitemap +
+  indexable flip are not built yet).
+- FLAGGED BACKLOG (separate session, NOT Stage 6): DMZ source-quality audit. An operator
+  concern that DMZ pre-launch content carries fabricated aggregator citations (Windows
+  Central/VideoGamer) was NOT reproduced against the code - grep found ZERO such URLs in
+  scripts/lib, and both gen-dmz-news.mjs + persist-dmz-news.mjs use ONLY the real
+  callofduty.com Deep Dive URL. The honest open item is a DB-state audit: verify the live
+  DMZ feed_items.source_url values match the real Deep Dive URL (the scripts do not fabricate;
+  a manual DB edit is the only way live rows could differ, and that cannot be checked from code).
+
 ## 2026-08-26 - Content-engine generalization Stage 5: config-gap closers + keyword-firewall CI
 
 Closed the remaining per-game config gaps + made the keyword firewall a CI-enforced
