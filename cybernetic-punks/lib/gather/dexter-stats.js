@@ -183,7 +183,7 @@ async function fetchWikiContent(wikiUrls) {
   for (const url of wikiUrls) {
     try {
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'CyberneticPunks/1.0 Marathon Intelligence Hub' },
+        headers: { 'User-Agent': 'CyberneticPunks-Bot/1.0 (https://cyberneticpunks.com)' },
         signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) {

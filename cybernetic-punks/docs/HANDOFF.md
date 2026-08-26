@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - Cosmetic closed: dexter-stats wiki-fetch User-Agent de-Marathoned
+Closes Stage 5 cosmetic deferral (2). lib/gather/dexter-stats.js:186 User-Agent changed from
+'CyberneticPunks/1.0 Marathon Intelligence Hub' to 'CyberneticPunks-Bot/1.0
+(https://cyberneticpunks.com)' - byte-identical to the sibling wiki-HTML fetch (wiki.js:55).
+fetchWikiContent is already per-game generalized (takes per-game wikiUrls), so the Marathon
+label was stale. Cosmetic outbound courtesy UA, nothing external keys on the literal, risk
+strictly downward. One line; the OG-image "Marathon Intelligence Hub" strings
+(app/marathon/opengraph-image.js) are correct page branding and were left untouched.
+
+---
 ## 2026-08-26 - Deferred item rescoped: faction/chip cross-game leak is CHIP-WIDE, not factions-only
 
 The deferred "factions.game_slug migration" is UNDER-scoped. Per the 2026-07-01
