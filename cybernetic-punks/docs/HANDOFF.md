@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-08-26 - DDL record reconciliation: stat-table game_slug NOT NULL is APPLIED
+
+The 2026-08-25 migration (DROP DEFAULT + SET NOT NULL on game_slug for weapon_stats,
+shell_stats, mod_stats, core_stats, implant_stats) is APPLIED and verified in prod,
+superseding the Stage 1 entry's "prepped ... NOT committed - operator-run separately"
+(that was the point-in-time state). Operator ran it in the Supabase SQL editor:
+pre-checks confirmed 0 NULL rows, all 'marathon' (32/8/203/85/120); post-check verified
+is_nullable=NO, column_default=NULL on all 5. Consequence: new insert paths into these
+tables must set game_slug explicitly (live paths already clean - wiki.js stamps it,
+dexter-stats only UPDATEs by id). Backs the Stage 1 code filter (0f3fff6).
+
 ## 2026-08-26 - Content-engine generalization Stage 2a: editor-prompt de-Marathoning (Layer A tokens)
 
 Parameterized the token-swappable Marathon literals in the editor prompts from

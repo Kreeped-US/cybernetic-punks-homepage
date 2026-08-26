@@ -6,6 +6,54 @@ In-repo record of production schema changes applied for the DMZ multi-game refac
 
 ---
 
+## stat-table game_slug -- DROP DEFAULT + SET NOT NULL (APPLIED 2026-08-25, Supabase SQL editor)
+
+Content-engine generalization Stage 1 hardening: the 5 verified stat tables (weapon_stats,
+shell_stats, mod_stats, core_stats, implant_stats) had game_slug NULLABLE + DEFAULT 'marathon'.
+This closes the silent-default-to-marathon footgun -- a row inserted without game_slug no longer
+becomes Marathon by default; it now ERRORS. Backs the Stage 1 code filter (0f3fff6), which reads
+these tables .eq('game_slug', config.slug); the code did not depend on the constraint (the query
+filters regardless), so this is defence-in-depth, applied separately after Stage 1 shipped.
+CONSEQUENCE: any NEW insert path into these 5 tables MUST set game_slug explicitly. Live paths are
+already clean -- lib/gather/wiki.js:158 stamps game_slug: 'marathon' on upsert; lib/gather/dexter-stats.js
+only UPDATEs by id (existing rows keep their game_slug).
+
+**STATUS: APPLIED 2026-08-25 (operator-run, Supabase SQL editor). Pre-checks confirmed 0 NULL rows,
+all 'marathon' (row counts weapon 32 / shell 8 / mod 203 / core 85 / implant 120); post-check
+verified is_nullable=NO, column_default=NULL on all 5.**
+
+```sql
+-- STEP 0 pre-checks (run first; every table must return 0):
+SELECT 'weapon_stats'  AS tbl, count(*) AS null_game_rows FROM weapon_stats  WHERE game_slug IS NULL
+UNION ALL SELECT 'shell_stats',   count(*) FROM shell_stats   WHERE game_slug IS NULL
+UNION ALL SELECT 'mod_stats',     count(*) FROM mod_stats     WHERE game_slug IS NULL
+UNION ALL SELECT 'core_stats',    count(*) FROM core_stats    WHERE game_slug IS NULL
+UNION ALL SELECT 'implant_stats', count(*) FROM implant_stats WHERE game_slug IS NULL;
+
+-- STEP 1 migration (run only after STEP 0 returns 0 for every table):
+ALTER TABLE weapon_stats  ALTER COLUMN game_slug DROP DEFAULT;
+ALTER TABLE weapon_stats  ALTER COLUMN game_slug SET NOT NULL;
+ALTER TABLE shell_stats   ALTER COLUMN game_slug DROP DEFAULT;
+ALTER TABLE shell_stats   ALTER COLUMN game_slug SET NOT NULL;
+ALTER TABLE mod_stats     ALTER COLUMN game_slug DROP DEFAULT;
+ALTER TABLE mod_stats     ALTER COLUMN game_slug SET NOT NULL;
+ALTER TABLE core_stats    ALTER COLUMN game_slug DROP DEFAULT;
+ALTER TABLE core_stats    ALTER COLUMN game_slug SET NOT NULL;
+ALTER TABLE implant_stats ALTER COLUMN game_slug DROP DEFAULT;
+ALTER TABLE implant_stats ALTER COLUMN game_slug SET NOT NULL;
+```
+
+**Verify SELECT (run after; expect is_nullable=NO, column_default=NULL for all 5):**
+```sql
+SELECT table_name, is_nullable, column_default
+  FROM information_schema.columns
+  WHERE column_name = 'game_slug'
+    AND table_name IN ('weapon_stats','shell_stats','mod_stats','core_stats','implant_stats')
+  ORDER BY table_name;
+```
+
+---
+
 ## network_account.onboarded_at -- Ruling 3 onboarding seen-state column (APPLIED 2026-08-21, Supabase SQL editor)
 
 Ruling 3 (onboarding) Stage 3a: the seen-state for the /join/welcome game-pick screen. ADDITIVE
