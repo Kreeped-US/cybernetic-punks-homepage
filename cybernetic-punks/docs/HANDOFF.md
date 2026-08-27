@@ -7,6 +7,27 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - DED.NET go-live wiring: DEDNET_ARTICLE_SECTION populated (indexable STILL false)
+
+Populated DEDNET_ARTICLE_SECTION in lib/games/pubg-dednet.js with the 6 slug->section entries
+matching the persister's shipped sections (keys = the dednet- prefixed feed_items slugs):
+- dednet-the-reveal -> field-intel; dednet-confirmed-vs-unknown -> field-intel
+- dednet-the-run-and-roms -> systems; dednet-match-structure -> systems; dednet-unorthodox-tactics -> systems
+- dednet-grungehouse-setting -> world
+PURE WIRING, inert until go-live: the article route fetches is_published=true (the drafts are
+is_published=false, so nothing renders yet), and the sitemap is gated on indexable (still FALSE,
+getIndexableGames excludes pubg-dednet, so no emission). The map only takes effect once the drafts
+are published AND pubg-dednet.indexable is flipped true.
+- 15/15 trace: all 6 sections valid (field-intel/systems/world editor sections; none map to the
+  arsenal data section), dednetSectionForArticle resolves each slug correctly, unknown slug -> null
+  (fail-safe hidden), dednetArticleSlugsForSection(systems) returns the 3 expected slugs, indexable
+  still false, getIndexableGames still excludes pubg-dednet (sitemap inert). Build green, ASCII-clean.
+- indexable STAYS false -- the owner flips it after the drafts are in and reviewed. Remaining owner
+  steps: (1) run scripts/persist-pubg-dednet-news.mjs (DB write, drafts is_published=false);
+  (2) review + publish the drafts; (3) flip pubg-dednet indexable:true.
+
+---
+
 ## 2026-08-27 - DED.NET persister (frozen drafts, wardogs pattern) - built, NOT run
 
 Built scripts/persist-pubg-dednet-news.mjs so the 6 dry-run-reviewed DED.NET articles can be

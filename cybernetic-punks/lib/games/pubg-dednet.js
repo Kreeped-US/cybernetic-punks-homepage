@@ -96,11 +96,19 @@ export const pubgDednet = {
 };
 
 // PUBG: DED.NET ARTICLE -> SECTION ASSIGNMENT. feed_items has no section column, so (as with
-// DMZ/Wardogs) a curated piece maps its slug to exactly one editor section here. EMPTY for now --
-// Phase 1 ships zero articles. A NEW article must get an entry here or it renders in no section
-// (fail-safe: unassigned = hidden, never mis-placed). Phase 2 adds slugs as content publishes.
+// DMZ/Wardogs) a curated piece maps its slug to exactly one editor section here. A NEW article
+// must get an entry here or it renders in no section (fail-safe: unassigned = hidden, never
+// mis-placed). These 6 slugs are the Phase 2b articles persisted by
+// scripts/persist-pubg-dednet-news.mjs (keys = the feed_items slugs, dednet- prefixed). They
+// resolve to their section for /pubg-dednet/<section>/<slug> routing + sitemap emission once the
+// drafts are published (is_published=true) AND pubg-dednet.indexable is flipped true.
 export const DEDNET_ARTICLE_SECTION = {
-  // (empty until Phase 2 content lands)
+  'dednet-the-reveal': 'field-intel',
+  'dednet-the-run-and-roms': 'systems',
+  'dednet-match-structure': 'systems',
+  'dednet-grungehouse-setting': 'world',
+  'dednet-unorthodox-tactics': 'systems',
+  'dednet-confirmed-vs-unknown': 'field-intel',
 };
 
 // Slugs assigned to a given section (empty array -> empty state).
