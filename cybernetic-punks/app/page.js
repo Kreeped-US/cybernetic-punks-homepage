@@ -612,6 +612,7 @@ export default async function NetworkRoot() {
           <div className="foot-links">
             <Link href="/marathon">Marathon</Link>
             <Link href="/dmz">DMZ</Link>
+            <Link href="/wardogs">Wardogs</Link>
             <Link href="/about">About</Link>
           </div>
         </div>

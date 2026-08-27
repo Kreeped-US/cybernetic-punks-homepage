@@ -50,6 +50,7 @@ const BORDER_SUBTLE = '#1e2028';
 const CIPHER  = '#ff2222';
 const NEXUS   = '#00d4ff';
 const DMZ_FOREST = '#3f7d44'; // DMZ (Call of Duty) accent -- footer cross-game wayfinding link
+const WARDOGS_AMBER = '#e0a13a'; // Wardogs (Bulkhead) accent -- footer cross-game wayfinding link
 
 export default function Footer() {
   const [year] = useState(function() { return new Date().getFullYear(); });
@@ -173,9 +174,9 @@ export default function Footer() {
           >
             PART OF THE CYBERNETICPUNKS NETWORK →
           </Link>
-          {/* Cross-game wayfinding: the network's other game. Quiet, always-visible
-              (footer renders on every Marathon page), honestly labelled pre-launch --
-              the only in-Marathon path to /dmz besides the neutral root. */}
+          {/* Cross-game wayfinding: the network's other games. Quiet, always-visible
+              (footer renders on every Marathon page), honestly labelled -- the only
+              in-Marathon paths to /dmz and /wardogs besides the neutral root. */}
           <Link href="/dmz" style={{
             display: 'block',
             fontFamily: 'monospace',
@@ -191,6 +192,22 @@ export default function Footer() {
             onMouseLeave={function(e) { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
           >
             DMZ · CALL OF DUTY (PRE-LAUNCH) →
+          </Link>
+          <Link href="/wardogs" style={{
+            display: 'block',
+            fontFamily: 'monospace',
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.4)',
+            letterSpacing: 1.5,
+            textDecoration: 'none',
+            fontWeight: 700,
+            marginBottom: 18,
+            transition: 'color 0.15s',
+          }}
+            onMouseEnter={function(e) { e.currentTarget.style.color = WARDOGS_AMBER; }}
+            onMouseLeave={function(e) { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+          >
+            WARDOGS · BULKHEAD (EA SEP 10) →
           </Link>
           <div style={{
             fontFamily: 'monospace',

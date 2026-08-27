@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Wardogs nav/footer dead-end closed (seam #1); silo + theming preserved
+
+From the user-journey audit Tier 1 #1: Wardogs was reachable only from the root tile. Made it
+as reachable as DMZ by adding /wardogs everywhere /dmz already appears as cross-game wayfinding
+- WITHOUT touching the deliberate per-vertical nav silo.
+- Root footer (app/page.js): added <Link href="/wardogs">Wardogs</Link> alongside Marathon/DMZ/
+  About.
+- Marathon footer (components/Footer.js): added a /wardogs cross-game wayfinding link mirroring
+  the /dmz one - label "WARDOGS - BULKHEAD (EA SEP 10)", local WARDOGS_AMBER accent (#e0a13a,
+  matching the local DMZ_FOREST convention in the file). Footer.js renders only on Marathon
+  pages, so this is the in-Marathon path to /wardogs, exactly as DMZ has one.
+- The delta was exactly those 2 surfaces. NOT touched (correctly): the /dmz links in
+  components/dmz/* are within-DMZ breadcrumbs (symmetric with Wardogs own); AccountMenu
+  /dmz/builds/saved is a DMZ feature, not wayfinding. No game-switcher / network menu exists.
+- SILO + THEMING PRESERVED: the global green Nav still return-nulls under /wardogs
+  (Nav.js:229, untouched) - verified live globalMarathonNavPresent:0 (no green nav leaks into
+  the /wardogs subtree); WardogsNav "back to Network" -> / works. No de-siloing, no
+  game-switcher. Marathon/DMZ nav unchanged. Build exit 0; only Footer.js + page.js changed.
+- Reachability now matches DMZ: root tile + pulse column + root-footer link + Marathon-footer
+  cross-link.
+STILL OPEN: Tier 1 stale copy (#5 #join DMZ-only framing/countdown ignoring Wardogs Sep-10 EA;
+#6 "Marathon now, DMZ next" about-copy) + stale comments (#8: lib/games/index.js:59 getIndexable
+comment, wardogs layout noindex comments). Tier 2 (profile personalization: /me Marathon-only,
+no follow-feed, game_profile unwired) and Tier 3 (the nav silo itself - game->game navigation,
+affects all 3 games) remain SEPARATE deliberate decisions, not bugs.
+
+---
 ## 2026-08-27 - Wardogs made a first-class identity citizen for FOLLOW (seams #2 + #4 closed)
 
 From the user-journey audit: Wardogs was a content/SEO citizen but a non-citizen in identity/
