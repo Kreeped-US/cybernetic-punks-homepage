@@ -33,6 +33,7 @@
 // the live numbers/items and passes them in; the config only declares intent.
 
 import { dmz as dmzGame, DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
+import { wardogs as wardogsGame, WARDOGS_ARTICLE_SECTION } from '@/lib/games/wardogs';
 import { MARATHON_GREEN } from '../brandColors.js';
 
 export const ROOT_GAMES = [
@@ -115,6 +116,40 @@ export const ROOT_GAMES = [
       },
     },
   },
+  {
+    slug: wardogsGame.slug,          // 'wardogs' from the canonical config
+    label: wardogsGame.displayName,  // 'Wardogs'
+    route: wardogsGame.basePath,     // '/wardogs'
+    // Atmosphere art for the routing tile (present in the repo). No known wordmark
+    // issue on this source, so no imagePosition override -- the default crop is fine.
+    heroImage: '/images/games/wardogs-hero.jpg',
+    theme: { primary: wardogsGame.theme.primary, tint: 'rgba(224,161,58,0.08)' }, // amber (= WARDOGS_AMBER)
+    pulse: {
+      // COVERAGE is live (6 published confirmed-systems articles) but the GAME is pre-launch
+      // (EA Sep 10), so mode stays 'pre-launch' (no live player count) while the feed key
+      // surfaces the published articles in the column -- the exact posture DMZ uses. `note`
+      // is the onboarding status pill + the column's zero-row empty-state.
+      mode: 'pre-launch',
+      note: 'Intel live, EA Sep 10',
+      feed: { gameSlug: 'wardogs' },  // feed_items scope for this game's column
+      // Resolve the section from WARDOGS_ARTICLE_SECTION (Stage 6 Track 2) and emit
+      // /wardogs/<section>/<slug>. An unmapped slug returns null so the row is dropped
+      // (fail-safe -- never a dead link), mirroring the DMZ builder above.
+      articleHref: function (slug) {
+        var section = WARDOGS_ARTICLE_SECTION[slug];
+        return section ? '/wardogs/' + section + '/' + slug : null;
+      },
+    },
+  },
 ];
+
+// Valid game-intent slug = exactly a front-door game. Single source for the ?intent=
+// deep-link gates (lib/auth/oauth.js, app/join/page.js) so the intent, the onboarding
+// picker, the onboarding validator, and the persisted games_interested all agree. Adding a
+// game to ROOT_GAMES above makes it a valid intent automatically -- no per-slug literal to
+// widen again for the next game.
+export function isValidGameIntent(slug) {
+  return typeof slug === 'string' && ROOT_GAMES.some(function (g) { return g.slug === slug; });
+}
 
 export default ROOT_GAMES;

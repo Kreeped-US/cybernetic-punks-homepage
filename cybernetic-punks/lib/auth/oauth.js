@@ -25,6 +25,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { isValidGameIntent } from '@/lib/network/rootGames';
 
 // Service-key client, built in-handler (no module-scope createClient).
 function getSupabase() {
@@ -81,7 +82,7 @@ export function startOAuth(provider, request) {
   // cookie, so the callback can write games_interested at account creation. Absent/invalid ->
   // no cookie. This is fully independent of the state token -- CSRF generation is untouched.
   const intent = new URL(request.url).searchParams.get('intent');
-  if (intent === 'marathon' || intent === 'dmz') {
+  if (isValidGameIntent(intent)) {
     response.cookies.set('cp_intent', intent, stateCookieOptions());
   }
 
@@ -144,7 +145,7 @@ async function resolveOrCreateAccount(supabase, providerName, identity, intent) 
     display_name: identity.username || null,
     avatar_url: identity.avatarUrl || null,
   };
-  if (intent === 'marathon' || intent === 'dmz') {
+  if (isValidGameIntent(intent)) {
     insertRow.games_interested = [intent];
   }
 
@@ -194,7 +195,7 @@ export async function handleOAuthCallback(provider, request) {
   // link). Re-validated here before it can influence any write; wholly independent of the CSRF
   // state check below (which is left untouched). Invalid/absent -> null -> no intent written.
   const intentCookie = cookieStore.get('cp_intent')?.value;
-  const intent = (intentCookie === 'marathon' || intentCookie === 'dmz') ? intentCookie : null;
+  const intent = isValidGameIntent(intentCookie) ? intentCookie : null;
 
   if (!code || !state || state !== savedState) {
     return NextResponse.redirect(new URL('/join?error=invalid_state', request.url));

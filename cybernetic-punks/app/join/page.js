@@ -1,6 +1,7 @@
 import { resolveSession } from '@/lib/auth/resolveSession';
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { isValidGameIntent } from '@/lib/network/rootGames';
 
 export const metadata = {
   // Manual suffix REMOVED - was double-appended by the root layout template.
@@ -42,10 +43,11 @@ export default async function JoinPage({ searchParams }) {
   var error = searchParams?.error;
 
   // Ruling 3 Stage 2: forward a validated game intent onto the sign-in link so the OAuth
-  // flow can capture it (startOAuth reads ?intent= and sets the cp_intent cookie). Only the
-  // two game-scoped join links carry ?intent= (dmz / marathon); anything else -> no param.
+  // flow can capture it (startOAuth reads ?intent= and sets the cp_intent cookie). Valid
+  // intents = the front-door games (isValidGameIntent, derived from ROOT_GAMES) so any
+  // game-scoped join link works; anything else -> no param.
   var rawIntent = searchParams?.intent;
-  var validIntent = (rawIntent === 'marathon' || rawIntent === 'dmz') ? rawIntent : null;
+  var validIntent = isValidGameIntent(rawIntent) ? rawIntent : null;
   var discordHref = '/api/auth/discord' + (validIntent ? '?intent=' + validIntent : '');
 
   return (

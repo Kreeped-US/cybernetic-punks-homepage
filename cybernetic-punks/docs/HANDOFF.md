@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Wardogs made a first-class identity citizen for FOLLOW (seams #2 + #4 closed)
+
+From the user-journey audit: Wardogs was a content/SEO citizen but a non-citizen in identity/
+follow. Closed the two follow seams end-to-end.
+- ROOT_GAMES entry (lib/network/rootGames.js): added the wardogs entry mirroring dmz, single-
+  sourced from the wardogs config (slug/displayName/basePath/theme.primary=WARDOGS_AMBER),
+  pulse{mode:'pre-launch', note:'Intel live, EA Sep 10', feed.gameSlug:'wardogs', articleHref
+  via WARDOGS_ARTICLE_SECTION -> /wardogs/<section>/<slug>}. Effect (verified live DOM): the
+  root now renders a "Latest from Wardogs" pulse column with the published articles + correct
+  detail links (seam #4); the onboarding picker (app/join/welcome) now offers Wardogs and the
+  onboarding validator (api/account/onboarding, allowlist = ROOT_GAMES slugs) now accepts it
+  (seam #2, picker + validator). Marathon/DMZ pulse + onboarding unchanged.
+- Count decoupling HELD: "Games Covered" stays getIndexableGames().length (=3); ROOT_GAMES.
+  length is also 3 now but nothing sums them -> no double-count, consistent.
+- Intent deep-link gates DE-HARDCODED (seam #2, other half): new isValidGameIntent(slug) in
+  rootGames.js derives valid intents from ROOT_GAMES (so intent, picker, validator, and the
+  persisted games_interested all agree; a 4th game auto-works). Replaced the hardcoded
+  'marathon' || 'dmz' literals so a ?intent=wardogs deep-link persists end-to-end.
+  IMPORTANT: the journey audit named 3 sites (oauth.js:84, oauth.js:147, join/page.js:48) but
+  there was a FOURTH, load-bearing one: oauth.js:198 (the callback re-validates the cp_intent
+  cookie BEFORE the write). Fixing only the 3 named sites would have left the seam OPEN -
+  :198 would null a wardogs intent before account-create. All FOUR now use isValidGameIntent;
+  zero intent literals remain. Trace (auth-gated, code-verified): /join?intent=wardogs ->
+  cookie set -> callback re-validate -> games_interested=[wardogs].
+- STILL OPEN in Tier 1 (not this commit): nav/footer cross-links + the Wardogs dead-end (#1),
+  stale #join DMZ-only framing + about copy (#5, #6), stale enumerator/layout comments (#8).
+  Tier 2 (profile personalization: /me Marathon-only, no follow-feed, game_profile unwired)
+  and Tier 3 (nav silo, affects all games) are SEPARATE, larger items.
+
+---
 ## 2026-08-27 - BROKER: pre-launch activation ruled out (content-verified); Oct-23 activation, doc paths stale
 
 Re-scoped BROKER for possible pre-launch activation (Wardogs + DMZ both have economies).
