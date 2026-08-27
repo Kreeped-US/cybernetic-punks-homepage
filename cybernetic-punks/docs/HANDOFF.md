@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - DED.NET LIVE: pubg-dednet indexable flipped true (vertical complete)
+
+Flipped pubg-dednet indexable false -> true in lib/games/pubg-dednet.js (the one value). The 6
+DED.NET articles are published (is_published=true) and reviewed rendered on production -- approved.
+This makes DED.NET fully live: indexed, sitemap-emitting, Games Covered -> 4, followable in the
+community feed (the FIRST new game through the follow->feed loop since it shipped).
+- VERIFIED (7/7 config trace + build inspection): getIndexableGames() now = marathon, dmz, wardogs,
+  pubg-dednet -> Games Covered reads 4 (was 3). The sitemap INDEX now lists sitemap-pubg-dednet.xml
+  (6 children total; the other 5 unchanged), and the pubg-dednet child emits all 6 article URLs at
+  the correct sections: field-intel/dednet-the-reveal + field-intel/dednet-confirmed-vs-unknown,
+  systems/dednet-the-run-and-roms + systems/dednet-match-structure + systems/dednet-unorthodox-tactics,
+  world/dednet-grungehouse-setting (matches DEDNET_ARTICLE_SECTION). The layout robots gate flips
+  with indexable -> now allows indexing (undefined, not noindex,follow). Marathon/DMZ/Wardogs
+  unchanged; build green; ASCII-clean.
+- launched STAYS false + launch_date STAYS null: indexable(content is public) and launched(game is
+  playable) are independent -- DED.NET release is still TBA (closed beta coming), so the null-date
+  discipline (no fake countdown) is intact; this flip is SEO/content exposure only.
+- COMPLETES THE DED.NET VERTICAL: Phase 0 grounding doc -> Phase 1 config + infra -> 2a shared
+  grounding library -> 2b-i post-gen validator -> 2b-ii generator (dry-run) -> persister (frozen
+  drafts) -> DEDNET_ARTICLE_SECTION map -> indexable flip. Vercel auto-deploys on push.
+
+---
+
 ## 2026-08-27 - DED.NET go-live wiring: DEDNET_ARTICLE_SECTION populated (indexable STILL false)
 
 Populated DEDNET_ARTICLE_SECTION in lib/games/pubg-dednet.js with the 6 slug->section entries

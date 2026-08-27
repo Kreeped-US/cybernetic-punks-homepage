@@ -24,12 +24,13 @@ export const pubgDednet = {
   basePath: '/pubg-dednet',
 
   // SEO INDEXING GATE vs LAUNCH GATE -- two separate flags (same discipline as DMZ/Wardogs).
-  // indexable: SEO exposure ONLY. FALSE for Phase 1 -- the hub + sections are empty skeletons, so
-  //   the whole /pubg-dednet subtree stays noindex,follow (crawlers still traverse back to the
-  //   network root). Flip TRUE when the first content lands (Phase 2). Read by
-  //   app/pubg-dednet/layout.js (robots) + the sitemap block (gated on getIndexableGames()).
-  // launched: whether the game is actually LIVE. FALSE (not even a beta date yet).
-  indexable: false,
+  // indexable: SEO exposure ONLY. Now TRUE -- the 6 Phase 2b articles are published + reviewed
+  //   rendered on production, so the /pubg-dednet subtree is indexed and the sitemap emits its
+  //   child. (Was FALSE through Phase 1/2b while the subtree was an empty skeleton / drafts only.)
+  //   Read by app/pubg-dednet/layout.js (robots) + the sitemap block (gated on getIndexableGames()).
+  // launched: whether the game is actually LIVE (playable). Still FALSE -- release is TBA, only a
+  //   closed beta is coming. indexable(content is public) and launched(game is out) are independent.
+  indexable: true,
   launched: false,
 
   // Pre-publish corroboration gate mode. Mirrors DMZ/Wardogs: 'fail-closed'. Inert until an
