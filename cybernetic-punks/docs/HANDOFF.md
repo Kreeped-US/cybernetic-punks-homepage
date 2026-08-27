@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - BROKER: pre-launch activation ruled out (content-verified); Oct-23 activation, doc paths stale
+
+Re-scoped BROKER for possible pre-launch activation (Wardogs + DMZ both have economies).
+Content inventory verdict: NOT enough for a real pre-launch set - activate at DMZ launch
+(Oct 23) as originally scoped. Reasons (confirmed against ground truth):
+- Every Wardogs + DMZ economy fact from the fixed primary sources (Wardogs verified-facts
+  doc; DMZ Deep Dive) is ALREADY published by NEXUS across the existing articles. No
+  un-published economy fact remains - a pre-launch BROKER would duplicate/re-frame NEXUS.
+- BROKER's identity is EV / cost-benefit analysis, which REQUIRES verified numbers. All
+  pre-launch economy numbers are FLAGGED/unverified (stay out of verified tables until
+  in-game); dmz_items/keys/ingredients tables are EMPTY (0 rows). She has no verified data
+  and no renewing dataset to analyze pre-launch - EV analysis on flagged figures would
+  violate the moat.
+- So BROKER stays status:'incoming', coverage:'dmz', built-dormant. Her real EV beat (printer
+  recipes/material costs/loot values/in-match cash) lands as populated, renewing, verifiable
+  data at DMZ launch.
+
+ACTIVATION-DOC STALENESS FLAG (for whoever runs the Oct-23 build): docs/network/
+BROKER_STEP6_SCOPING.md predates the Stage 2a-6 promptKit generalization. Its Part-2 wiring
+path list references PRE-migration locations (e.g. app/intel/[slug] is now
+app/marathon/intel/[slug]; the persona layer is now promptKit/{{kit}}-aware). The core model
+holds (EDITOR_PROMPTS/EDITOR_TOOLS still hardcoded maps; the gather-source gate and the
+CIPHER-fallback-on-unwired-display landmine still apply), but REFRESH the doc wiring-site
+list against current post-generalization paths before executing the activation. Also: build
+BROKER's DMZ-economy gather source against the REAL dmz_items/keys/ingredients data shape once
+populated near launch - not against assumed shapes now.
+
+---
 ## 2026-08-27 - VANTAGE discourse-honesty gate Phase 1 (detection + flag-for-review, non-blocking)
 
 Built the VANTAGE discourse-honesty gate per Fable Q1. Phase 1 is DETECTION ONLY: it runs and
