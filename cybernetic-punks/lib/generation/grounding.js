@@ -16,11 +16,16 @@
 //   - buildLaunchNote() (TBA-aware close -- NOT date-shaped for null-date games)
 //   - runDryRunCli() (the argv-filter + loop + dry-run epilogue skeleton)
 //
-// WHAT THIS IS NOT (honest scope): there is NO post-generation grounding VALIDATOR
-// here -- none exists in the legacy generators either. The enforcement extracted is
-// a PROMPT CONTRACT + THIN CODE SCAFFOLD + STRUCTURAL GUARDS + the citation resolver.
-// A verifier that checks the generated body contains only excerpt-derived facts would
-// be NEW work, deliberately out of scope for this extraction.
+// POST-GENERATION VALIDATOR (Phase 2b-i): validateGrounding() is a DETECTION-AND-FLAG
+// review assist -- it flags body content not traceable to the excerpt (fabricated proper
+// nouns, unsourced numbers, dropped attribution, secondary leaks) and prints a report
+// ALONGSIDE the dry-run. It does NOT hard-block and does NOT replace human review. It is
+// deliberately NOT a containment guarantee: it will MISS fabrication phrased in excerpt
+// vocabulary (semantic drift with real words) and it WILL false-positive on legitimate
+// rephrasing/synonyms. It catches the obvious/high-signal fabrications, nothing more.
+// Available to every generator; DED.NET wires it in (2b-ii); legacy adopts if/when it
+// regenerates. The enforcement here remains a PROMPT CONTRACT + THIN CODE SCAFFOLD +
+// STRUCTURAL GUARDS + the citation resolver + this flag-only validator.
 //
 // ADOPTION: DED.NET (Phase 2b) is built on this. DMZ + Wardogs are DELIBERATELY NOT
 // retrofitted -- they are done (DMZ shipped, Wardogs frozen-drafted) and their output
@@ -376,6 +381,40 @@ function isRealUrlOrNull(u) {
   return u === null || u === undefined || (typeof u === 'string' && /^https?:\/\//i.test(u));
 }
 
+// Common capitalized-at-sentence-start / connector words the proper-noun check must
+// NOT treat as fabricated entities. Kept deliberately broad -- a false NEGATIVE here
+// (missing a real fabricated noun) is rare because fabricated nouns are content words,
+// while a false POSITIVE (flagging "Meanwhile") is pure review noise. Shared by the
+// validator and the attribution-cue derivation.
+var STOPWORDS = (function () {
+  var w = ('the a an this that these those it its in on at for with and but or so as if when while '
+    + 'because after before from to by of he she they we you i his her their our your my no not '
+    + 'every each all both there here then than also however meanwhile additionally structurally '
+    + 'per read use used using state stated states note noting only more most many some any which '
+    + 'who what where why how is are was were be been being has have had do does did will would can '
+    + 'could may might must shall should players player teams team match matches game games run runs '
+    + 'new now yet still just into out up down over under about across against between within without '
+    + 'earn earned earns cash source sources according detailed announced confirmed').split(/\s+/);
+  var s = {};
+  for (var i = 0; i < w.length; i++) s[w[i]] = true;
+  return s;
+})();
+
+// Distinctive attribution cues for the laundering check: explicit e.attributionCues, else
+// the capitalized content words of the attribution phrase (e.g. "PUBG Studios' Dave Curd
+// told Inven Global" -> [PUBG, Studios, Dave, Curd, Inven, Global]). Presence of ANY cue in
+// the body counts the attributed material as attributed (lenient -- avoids false flags).
+function deriveAttributionCues(e) {
+  if (Array.isArray(e.attributionCues) && e.attributionCues.length) return e.attributionCues.slice();
+  if (!e.attribution) return [];
+  var out = [];
+  var m = String(e.attribution).match(/[A-Z][a-zA-Z0-9.'-]+/g) || [];
+  for (var i = 0; i < m.length; i++) {
+    if (m[i].length >= 3 && !STOPWORDS[m[i].toLowerCase()] && out.indexOf(m[i]) === -1) out.push(m[i]);
+  }
+  return out;
+}
+
 // makeSourceRegistry(entries): entries = { key: { label, url?, tier, attribution?, code? } }
 // Returns a frozen, validated registry. code = the short DB "source" column value
 // (e.g. 'TOP QUESTIONS', 'DEEP DIVE'); falls back to label when absent.
@@ -402,6 +441,10 @@ export function makeSourceRegistry(entries) {
       attribution: e.attribution || null,
       code: e.code || null,
       citable: citable,
+      // Distinctive terms tied to THIS source's material -- used by validateGrounding():
+      // secondary terms must never surface; attributed terms must carry an attribution cue.
+      terms: Object.freeze((e.terms || []).slice()),
+      attributionCues: Object.freeze(deriveAttributionCues(e)),
     });
   }
   return Object.freeze(out);
@@ -506,4 +549,189 @@ export async function runDryRunCli(cfg) {
   console.log('');
   console.log('DRY-RUN complete. Nothing was written to feed_items.');
   if (c.epilogue) c.epilogue();
+}
+
+// ============================================================
+// 9. POST-GENERATION GROUNDING VALIDATOR -- detection-and-flag review assist.
+// ============================================================
+// validateGrounding({ body, excerpt|excerpts, registry, allow }) -> a FLAG REPORT.
+// It does NOT block; the human reviews the flags. Four checks:
+//   1. PROPER NOUNS in the body absent from the excerpt (fabricated entity -- highest signal)
+//   2. NUMBERS/STATS in the body absent (verbatim) from the excerpt (unsourced figure)
+//   3. ATTRIBUTED-TIER LAUNDERING: an attributed source's terms appear in the body but no
+//      attribution cue does (interview material stated as anonymous first-party)
+//   4. SECONDARY-TIER LEAK: any secondary source's terms appear in the body at all
+// LIMITS (reported in the output, never hidden): misses fabrication phrased in excerpt
+// vocabulary (semantic drift with real words); false-positives on legitimate rephrasing and
+// on capitalized common words. It is a review ASSIST, not a containment guarantee.
+
+function lc(s) { return String(s == null ? '' : s).toLowerCase(); }
+
+// Numeric tokens: $, commas, decimals, and hyphen ranges ("6-10") captured whole.
+function numberTokens(text) {
+  var m = String(text || '').match(/\d[\d,]*(?:\.\d+)?(?:\s?-\s?\d[\d,]*(?:\.\d+)?)?/g) || [];
+  var out = [];
+  for (var i = 0; i < m.length; i++) {
+    var norm = m[i].replace(/,/g, '').replace(/\s?-\s?/g, '-').trim();
+    if (norm) out.push(norm);
+  }
+  return out;
+}
+
+// Excerpt number set: each token, plus the endpoints of any range (so a body "8" is sourced
+// when the excerpt says "8-12", and the exact range "8-12" is sourced too).
+function excerptNumberSet(text) {
+  var set = {};
+  var toks = numberTokens(text);
+  for (var i = 0; i < toks.length; i++) {
+    set[toks[i]] = true;
+    if (toks[i].indexOf('-') !== -1) {
+      var parts = toks[i].split('-');
+      for (var j = 0; j < parts.length; j++) if (parts[j]) set[parts[j]] = true;
+    }
+  }
+  return set;
+}
+
+function excerptWordSet(text) {
+  var set = {};
+  var m = String(text || '').toLowerCase().match(/[a-z0-9]+/g) || [];
+  for (var i = 0; i < m.length; i++) set[m[i]] = true;
+  return set;
+}
+
+// Proper-noun candidates: runs of Capitalized words (keeps multi-word entities like
+// "Cult Church" intact). Leading articles are stripped.
+function properNounCandidates(body) {
+  var m = String(body || '').match(/\b[A-Z][a-zA-Z0-9.'-]*(?:\s+[A-Z][a-zA-Z0-9.'-]*)*\b/g) || [];
+  var out = [];
+  for (var i = 0; i < m.length; i++) {
+    var words = m[i].split(/\s+/);
+    while (words.length && STOPWORDS[lc(words[0])]) words.shift(); // drop leading The/A/An/...
+    if (words.length) out.push(words.join(' '));
+  }
+  return out;
+}
+
+function inAllow(text, allowLc) {
+  var t = lc(text);
+  for (var i = 0; i < allowLc.length; i++) { if (allowLc[i] && (t === allowLc[i] || t.indexOf(allowLc[i]) !== -1 || allowLc[i].indexOf(t) !== -1)) return true; }
+  return false;
+}
+
+// Proper nouns the sources THEMSELVES legitimately introduce -- attribution names
+// (Dave Curd, Inven Global), first-party/attributed labels + codes, and their known
+// terms -- so the proper-noun check does not false-flag them. SECONDARY sources are
+// excluded on purpose: their terms must stay flaggable (that is the whole point).
+function registryAllowLc(registry) {
+  var out = [];
+  var keys = Object.keys(registry || {});
+  for (var i = 0; i < keys.length; i++) {
+    var s = registry[keys[i]];
+    if (!s || s.tier === TIER.SECONDARY) continue;
+    var m = (String(s.label || '') + ' ' + String(s.attribution || '')).match(/[A-Z][a-zA-Z0-9.'-]+/g) || [];
+    var bag = [];
+    for (var j = 0; j < m.length; j++) if (m[j].length >= 3 && !STOPWORDS[lc(m[j])]) bag.push(m[j]);
+    bag = bag.concat(s.attributionCues || [], s.terms || []);
+    if (s.code) bag.push(s.code);
+    for (var b = 0; b < bag.length; b++) out.push(lc(bag[b]));
+  }
+  return out;
+}
+
+export function validateGrounding(opts) {
+  var o = opts || {};
+  var body = o.body || '';
+  var excerpt = o.excerpts ? (Array.isArray(o.excerpts) ? o.excerpts.join('\n') : o.excerpts) : (o.excerpt || '');
+  var registry = o.registry || {};
+  var allowLc = (o.allow || []).map(lc).concat(registryAllowLc(registry));
+  var bodyLc = lc(body);
+  var flags = [];
+
+  var eWords = excerptWordSet(excerpt);
+  var eNums = excerptNumberSet(excerpt);
+
+  // --- check 1: fabricated proper nouns -------------------------------------
+  var seenNoun = {};
+  var nouns = properNounCandidates(body);
+  for (var i = 0; i < nouns.length; i++) {
+    var phrase = nouns[i];
+    if (seenNoun[lc(phrase)]) continue;
+    seenNoun[lc(phrase)] = true;
+    if (lc(excerpt).indexOf(lc(phrase)) !== -1) continue;      // whole phrase is sourced
+    if (inAllow(phrase, allowLc)) continue;                     // caller-allowed (game/editor/etc.)
+    // unexplained words = capitalized words not in the excerpt, not stopwords, not allowed
+    var words = phrase.split(/\s+/);
+    var unexplained = [];
+    for (var w = 0; w < words.length; w++) {
+      var core = words[w].replace(/[^A-Za-z0-9'-]/g, '');
+      if (core.length < 3) continue;
+      if (eWords[lc(core)]) continue;
+      if (STOPWORDS[lc(core)]) continue;
+      if (inAllow(core, allowLc)) continue;
+      unexplained.push(words[w]);
+    }
+    if (unexplained.length) {
+      flags.push({ check: 'proper-noun', severity: 'high', text: phrase, why: 'proper noun / named entity not present in the excerpt (possible fabricated entity): ' + unexplained.join(' ') });
+    }
+  }
+
+  // --- check 2: unsourced numbers -------------------------------------------
+  var seenNum = {};
+  var bNums = numberTokens(body);
+  for (var n = 0; n < bNums.length; n++) {
+    var tok = bNums[n];
+    if (seenNum[tok]) continue;
+    seenNum[tok] = true;
+    if (eNums[tok]) continue;                 // exact token (or range) is sourced
+    if (inAllow(tok, allowLc)) continue;       // caller-allowed (e.g. a launch date)
+    flags.push({ check: 'number', severity: 'high', text: tok, why: 'number / stat not present verbatim in the excerpt (unsourced figure)' });
+  }
+
+  // --- checks 3 & 4: attributed laundering + secondary leak -----------------
+  var keys = Object.keys(registry);
+  for (var k = 0; k < keys.length; k++) {
+    var s = registry[keys[k]];
+    if (!s || !s.terms || !s.terms.length) continue;
+    for (var t = 0; t < s.terms.length; t++) {
+      var term = s.terms[t];
+      if (!term) continue;
+      if (bodyLc.indexOf(lc(term)) === -1) continue; // term not in body
+      if (s.tier === TIER.SECONDARY) {
+        flags.push({ check: 'secondary-leak', severity: 'high', text: term, why: 'secondary / press-only term appears in the body -- it must never surface (source: ' + s.label + ')' });
+      } else if (s.tier === TIER.ATTRIBUTED) {
+        var cued = false;
+        for (var c = 0; c < s.attributionCues.length; c++) { if (bodyLc.indexOf(lc(s.attributionCues[c])) !== -1) { cued = true; break; } }
+        if (!cued) {
+          flags.push({ check: 'attribution-laundering', severity: 'high', text: term, why: 'attributed material stated without an attribution cue (' + (s.attributionCues.join(' / ') || s.label) + ') -- surface it attributed, not as anonymous first-party' });
+        }
+      }
+    }
+  }
+
+  return {
+    ok: flags.length === 0,
+    flags: flags,
+    stats: { flags: flags.length, byCheck: flags.reduce(function (a, f) { a[f.check] = (a[f.check] || 0) + 1; return a; }, {}) },
+    limits: [
+      'Misses fabrication phrased in excerpt vocabulary (semantic drift with real words).',
+      'False-positives on legitimate rephrasing/synonyms and on capitalized common words.',
+      'A review ASSIST, not a containment guarantee -- a human still reviews every article.',
+    ],
+  };
+}
+
+// Pretty-print a validation report for the dry-run output. Never throws.
+export function formatGroundingReport(report, label) {
+  var r = report || { ok: true, flags: [] };
+  var lines = [];
+  lines.push('GROUNDING FLAGS' + (label ? ' [' + label + ']' : '') + ': ' + (r.ok ? 'NONE (clean -- still needs human review)' : (r.flags.length + ' flag(s) -- REVIEW')));
+  for (var i = 0; i < (r.flags || []).length; i++) {
+    var f = r.flags[i];
+    lines.push('  [' + f.check + '] "' + f.text + '" -- ' + f.why);
+  }
+  if (!r.ok) {
+    lines.push('  (flags ASSIST review; they do not block. Some may be false positives on legit rephrasing.)');
+  }
+  return lines.join('\n');
 }

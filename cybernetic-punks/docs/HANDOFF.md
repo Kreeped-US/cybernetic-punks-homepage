@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Phase 2b-i: post-generation grounding validator (detection-and-flag)
+
+Added the post-gen grounding validator to lib/generation/grounding.js (section 9:
+validateGrounding + formatGroundingReport). This is the NEW work flagged-separately in 2a - it
+is DETECTION-AND-FLAG, it NEVER blocks: the report prints alongside the dry-run and a human
+reviews every article. It is a review ASSIST, not a containment guarantee.
+- 4 checks: (1) fabricated proper nouns (capitalized body entities absent from the excerpt;
+  multi-word runs kept intact e.g. "Cult Church"; leading articles stripped). (2) unsourced
+  numbers (range-aware: 8-12 and 6-10 both count as sourced when in the excerpt; range endpoints
+  pass individually; $/comma/decimal handled). (3) attributed-tier laundering (an attributed
+  source term in the body with NO attribution cue -> flag; ties to the registry tier +
+  attribution/attributionCues). (4) secondary-tier leak (any secondary source term in the body
+  at all -> flag; must never surface).
+- Registry extended backward-compatibly: entries carry optional terms + attributionCues.
+  Non-secondary sources own nouns (attribution names, labels, codes, known terms) are
+  auto-allowed so a correctly-attributed body does not false-flag "Dave Curd" / "Inven Global";
+  SECONDARY sources are excluded from that allowance so their terms stay flaggable.
+- PROVEN 14/14 (harness run then deleted, VANTAGE-gate discipline): invented proper noun
+  flagged; unsourced numbers (12-20, 90) flagged while sourced (3/5/60) pass; unattributed Curd
+  material (benefactors, King of Killers) flagged while the SAME material WITH attribution
+  passes clean; Cult Church flagged (redundantly by secondary-leak + proper-noun); clean body
+  0 flags; honest-null ranges (8-12 / 6-10) pass.
+- HONEST LIMITS surfaced in report.limits on EVERY run: misses fabrication phrased in excerpt
+  vocabulary (semantic drift with real words); false-positives on legitimate rephrasing/synonyms
+  and capitalized common words. Human review stays the gate.
+- DMZ/Wardogs generators + persisters UNTOUCHED (grep-confirmed): the validator is
+  available-in-the-library, not wired into them; they adopt if/when they regenerate. Build green
+  (library is script-only; app build unaffected).
+- NEXT (NOT built): Phase 2b-ii - the DED.NET generator wiring this in (topics, verbatim
+  excerpts, the 4-tier source registry with terms, the prompt + validateGrounding on each
+  dry-run), grounding strictly in docs/dednet-firstparty-VERIFIED.md.
+
+---
+
 ## 2026-08-27 - Phase 2a: shared grounding library (Fable Q3, DED.NET-only adoption)
 
 Built lib/generation/grounding.js - the game-agnostic enforcement surface extracted from the two
