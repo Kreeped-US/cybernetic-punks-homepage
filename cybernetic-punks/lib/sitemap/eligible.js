@@ -25,6 +25,7 @@ import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { wardogsSectionForArticle } from '@/lib/games/wardogs';
+import { dednetSectionForArticle } from '@/lib/games/pubg-dednet';
 import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
@@ -35,7 +36,7 @@ import { hasShellGuide } from '@/lib/shellGuides';
 import { FACTS_UPDATED } from '@/lib/vaultBreaker';
 
 const BASE = 'https://cyberneticpunks.com';
-const M = 'marathon', D = 'dmz', W = 'wardogs';
+const M = 'marathon', D = 'dmz', W = 'wardogs', PD = 'pubg-dednet';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -284,6 +285,21 @@ export async function computeEligible() {
       (wdRows || []).map((r) => ({ r, section: wardogsSectionForArticle(r) })).filter((x) => x.section)
         .forEach((x) => add(BASE + '/wardogs/' + x.section + '/' + x.r.slug, W, 'wardogs-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
     } catch (err) { console.error('[sitemap] wardogs feed fetch threw:', err); }
+  }
+
+  // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while
+  // pubg-dednet.indexable is false: getIndexableGames() excludes it -> this emits NOTHING -> the
+  // partition pubgDednet bucket stays empty -> the sitemap is byte-identical. Articles only;
+  // section derived per-row via dednetSectionForArticle (unmapped -> dropped), same shape as the
+  // Wardogs/DMZ emitters above. lastmod = updated_at, created_at fallback. Read error caught.
+  if (getIndexableGames().includes('pubg-dednet')) {
+    try {
+      const { data: pdRows } = await supabase.from('feed_items')
+        .select('slug, created_at, updated_at, tags').eq('game_slug', PD).eq('is_published', true)
+        .order('created_at', { ascending: false });
+      (pdRows || []).map((r) => ({ r, section: dednetSectionForArticle(r) })).filter((x) => x.section)
+        .forEach((x) => add(BASE + '/pubg-dednet/' + x.section + '/' + x.r.slug, PD, 'pubg-dednet-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
+    } catch (err) { console.error('[sitemap] pubg-dednet feed fetch threw:', err); }
   }
 
   // RUNTIME PARTITION INVARIANT (Change 1): assert union==eligible-set AND pairwise

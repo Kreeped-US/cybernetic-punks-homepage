@@ -408,6 +408,15 @@ export default async function NetworkRoot() {
                 <div className="meta">{wardogs.displayName} &middot; Steam Early Access</div>
                 <div className="go">Get the confirmed intel &rarr;</div>
               </Link>
+              {/* PUBG: DED.NET -- REVEALED, no release date (launch_date null). The pill states
+                  "REVEALED / CLOSED BETA" honestly -- NO countdown, NO date (there is none). Blood-red
+                  accent inline (no new CSS class). Clickable Link mirroring the other tiles. */}
+              <Link href="/pubg-dednet" className="game" style={{ '--img': "url('/images/games/pubg-dednet-hero.jpg')" }}>
+                <div className="art" aria-hidden="true" /><div className="scrim scrim-strong" aria-hidden="true" />
+                <div className="status" style={{ color: '#cc2936' }}><i aria-hidden="true" />REVEALED &middot; CLOSED BETA</div>
+                <div className="meta">PUBG: DED.NET &middot; PUBG Studios / KRAFTON &middot; roguelite FPS</div>
+                <div className="go">Get the intel &rarr;</div>
+              </Link>
             </div>
           </div>
         </section>
@@ -599,7 +608,7 @@ export default async function NetworkRoot() {
               )}
             </div>
             <h2>Get on the list before the next drop.</h2>
-            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - Marathon live now, Wardogs intel live ahead of Early Access, and DMZ the day the Hajin Exclusion Zone opens. No spam, no hype. Only when there is something real to send.</p>
+            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - Marathon live now, Wardogs intel live ahead of Early Access, DMZ the day the Hajin Exclusion Zone opens, and PUBG: DED.NET as its closed beta and release firm up. No spam, no hype. Only when there is something real to send.</p>
             <div className="sub-form-slot">
               <NetworkSubscribeForm />
             </div>
@@ -623,6 +632,7 @@ export default async function NetworkRoot() {
             <Link href="/marathon">Marathon</Link>
             <Link href="/dmz">DMZ</Link>
             <Link href="/wardogs">Wardogs</Link>
+            <Link href="/pubg-dednet">PUBG: DED.NET</Link>
             <Link href="/about">About</Link>
           </div>
         </div>

@@ -227,7 +227,7 @@ export default function Nav() {
   // segment check (/admin and /admin/*, never a public route that merely starts
   // with the letters "admin"). Declared after all hooks so hook order stays
   // stable. Marathon's other unprefixed routes are unaffected.
-  if (pathname === '/' || (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/wardogs') || pathname === '/me' || pathname.startsWith('/me/') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/')))) return null;
+  if (pathname === '/' || (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/wardogs') || pathname.startsWith('/pubg-dednet') || pathname === '/me' || pathname.startsWith('/me/') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/')))) return null;
 
   return (
     <nav style={{

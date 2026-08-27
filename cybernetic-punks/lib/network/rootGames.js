@@ -34,6 +34,7 @@
 
 import { dmz as dmzGame, DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
 import { wardogs as wardogsGame, WARDOGS_ARTICLE_SECTION } from '@/lib/games/wardogs';
+import { pubgDednet as dednetGame, DEDNET_ARTICLE_SECTION } from '@/lib/games/pubg-dednet';
 import { MARATHON_GREEN } from '../brandColors.js';
 
 export const ROOT_GAMES = [
@@ -138,6 +139,30 @@ export const ROOT_GAMES = [
       articleHref: function (slug) {
         var section = WARDOGS_ARTICLE_SECTION[slug];
         return section ? '/wardogs/' + section + '/' + slug : null;
+      },
+    },
+  },
+  {
+    slug: dednetGame.slug,          // 'pubg-dednet' from the canonical config
+    label: dednetGame.displayName,  // 'PUBG: DED.NET'
+    route: dednetGame.basePath,     // '/pubg-dednet'
+    // Atmosphere art for the routing tile (add the file at this path; the tile degrades to the
+    // clean gradient until it exists). No known wordmark issue -> no imagePosition override.
+    heroImage: '/images/games/pubg-dednet-hero.jpg',
+    theme: { primary: dednetGame.theme.primary, tint: 'rgba(204,41,54,0.08)' }, // blood-red (= DEDNET_BLOOD)
+    pulse: {
+      // Coverage is INERT this pass (Phase 1: zero articles -> empty column via the note). The GAME
+      // is REVEALED with NO release date (launch_date null) -- so `note` reads honestly and there is
+      // NO countdown to show (daysUntil(null) -> null -> the #join countdown hides). mode
+      // 'pre-launch' -> no live player count.
+      mode: 'pre-launch',
+      note: 'Revealed - closed beta',
+      feed: { gameSlug: 'pubg-dednet' },  // feed_items scope for this game's column
+      // Resolve the section from DEDNET_ARTICLE_SECTION (empty until Phase 2) and emit
+      // /pubg-dednet/<section>/<slug>. Unmapped slug -> null so the row is dropped (fail-safe).
+      articleHref: function (slug) {
+        var section = DEDNET_ARTICLE_SECTION[slug];
+        return section ? '/pubg-dednet/' + section + '/' + slug : null;
       },
     },
   },

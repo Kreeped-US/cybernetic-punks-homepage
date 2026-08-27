@@ -19,6 +19,7 @@ export const NETWORK_BURGUNDY = '#b32d40'; // CNP network default
 export const MARATHON_GREEN   = '#00ff41'; // Marathon (= globals.css :root --green)
 export const DMZ_FOREST        = '#3f7d44'; // DMZ (= globals.css .dmz-theme --green)
 export const WARDOGS_AMBER     = '#e0a13a'; // Wardogs (= globals.css .wardogs-theme --accent)
+export const DEDNET_BLOOD       = '#cc2936'; // PUBG: DED.NET (GRUNGEHOUSE grindhouse blood-red; distinct from the 3 above + the network burgundy)
 
 // Editor accent colors (mirror globals.css :root --cipher/--nexus/--dexter/--ghost/--miranda).
 export const EDITOR_COLORS = {

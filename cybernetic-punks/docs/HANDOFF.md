@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - DED.NET vertical Phase 1: config + infrastructure built (Wardogs playbook)
+
+Built the full DED.NET vertical shell (slug pubg-dednet) minus content/generator, following the
+Wardogs playbook. No live articles yet - the render + sitemap paths are wired so Phase 2 only has
+to publish.
+- Config lib/games/pubg-dednet.js: slug pubg-dednet, "PUBG: DED.NET", launch_date: null, status
+  'revealed', indexable:false, NEXUS editorial, 4 sections (field-intel/systems/world/arsenal),
+  promptKit with sourceDoc (docs/dednet-firstparty-VERIFIED.md) + the attribution rule baked in for
+  Phase 2. Registered in lib/games/index.js GAMES.
+- Accent DEDNET_BLOOD #cc2936 (GRUNGEHOUSE grindhouse blood-red), distinct from the other 3
+  (Marathon green / DMZ forest / Wardogs amber).
+- ROOT_GAMES entry -> followable: first new game added to the community loop since it shipped
+  (pulse column + onboarding picker + follow validator + Piece-B personalized feed). articleHref
+  -> /pubg-dednet/<section>/<slug>.
+- Coupled route set (layout/nav/hub/[section]/[section][slug]) + sitemap (partition bucket +
+  eligible block + child route + gated index, terminal else-throw preserved). Nav.js +
+  LivePulseGate.js null-guards add /pubg-dednet (no green Marathon leak; the layout self-themes
+  via inline CSS tokens, no globals.css block).
+- CRITICAL PASS: null launch_date flows honestly everywhere - daysUntil(null)->null->hidden. No
+  fake countdown in #join (only Wardogs 14d + DMZ 57d), tile pill "REVEALED - CLOSED BETA", hub
+  status "Release: To be announced". DED.NET is the first no-date game; the null path is clean
+  (no 0, no negative, no fabricated date).
+- indexable:false -> Games Covered stays 3 (getIndexableGames excludes it); sitemap child is an
+  empty urlset and the index does not list it (byte-identical) until the Phase 2 flip.
+- Hero image: the dropped asset arrived mis-named (pubg-dednet-hero.jpg.png, a 1MB RGBA PNG) plus
+  a stray copy at public root. Converted via sharp to a real 98KB JPG flattened on #0b0a0a at the
+  referenced path public/images/games/pubg-dednet-hero.jpg; both strays removed. Tile now resolves
+  200 instead of degrading to the gradient.
+- NEXT (NOT built): Phase 2 - the bespoke honest generator grounding strictly in the verified doc
+  (excerpt-only; honest-null the UNKNOWN list; attribute the Curd/Inven tier; never state SECONDARY
+  as first-party). indexable flips true when content lands.
+
+---
+
 ## 2026-08-27 - DED.NET Phase 0 amendment: grounding doc enriched with the Curd/Inven interview
 
 Amended docs/dednet-firstparty-VERIFIED.md with the full PUBG Studios Creative Director Dave Curd

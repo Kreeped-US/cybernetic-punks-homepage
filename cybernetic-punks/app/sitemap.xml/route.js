@@ -26,7 +26,7 @@ export const revalidate = 3600;
 const BASE = 'https://cyberneticpunks.com';
 
 export async function GET() {
-  const { dmz, dmzBuilds, intel, entities, wardogs } = partitionEligible(await computeEligible());
+  const { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet } = partitionEligible(await computeEligible());
   const children = [
     { loc: BASE + '/sitemap-dmz.xml', lastmod: newestLastmod(dmz) },
     { loc: BASE + '/sitemap-dmz-builds.xml', lastmod: newestLastmod(dmzBuilds) },
@@ -39,6 +39,12 @@ export async function GET() {
   // from DMZ's unconditional listing -- honors "inert until the flip."
   if (getIndexableGames().includes('wardogs')) {
     children.push({ loc: BASE + '/sitemap-wardogs.xml', lastmod: newestLastmod(wardogs) });
+  }
+  // PUBG: DED.NET Phase 1: same gating as Wardogs -- the child is listed ONLY when pubg-dednet is
+  // indexable, so the index is BYTE-IDENTICAL while pubg-dednet.indexable is false (no empty child).
+  // The flip adds this child alongside its emitted content, atomically.
+  if (getIndexableGames().includes('pubg-dednet')) {
+    children.push({ loc: BASE + '/sitemap-pubg-dednet.xml', lastmod: newestLastmod(pubgDednet) });
   }
   const body = sitemapIndexXml(children);
   return new Response(body, { headers: { 'Content-Type': 'application/xml' } });
