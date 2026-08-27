@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - DED.NET persister (frozen drafts, wardogs pattern) - built, NOT run
+
+Built scripts/persist-pubg-dednet-news.mjs so the 6 dry-run-reviewed DED.NET articles can be
+written as is_published:FALSE frozen drafts. Same frozen-persister pattern as
+persist-wardogs-news.mjs. COMMITTED as the reviewable artifact; the OWNER runs the DB write
+separately (Claude has no direct DB write access).
+- 6 frozen article records: game_slug pubg-dednet, is_published:false, noindex:true, editor NEXUS,
+  deterministic dednet-<slug> slugs, idempotent slug-skip (safe re-run). Standalone -- imports
+  createClient/readFileSync/logCoverageShadow + the grounding library; does NOT call the generator.
+- source_url is DERIVED, not hand-picked: resolveCitations().primary binds by tier priority
+  (first-party > attributed) from each row's tier-ordered sources against a frozen registry copy.
+  --dry confirms: the-reveal + grungehouse-setting -> PRESS (first-party wins over attributed);
+  the-run-and-roms + match-structure -> INVEN (attributed, interview-only rows bind the Inven URL);
+  unorthodox-tactics + confirmed-vs-unknown -> STEAM. Matches the generator's printed ROW BINDINGs.
+- Section per record (field-intel x2 / systems x3 / world x1) validated against the 4 valid slugs;
+  section is NOT a feed_items column -- it drives DEDNET_ARTICLE_SECTION + the intended
+  /pubg-dednet/<section>/<slug> path.
+- VERIFY: all 6 bodies BYTE-MATCH the reviewed post-fix dry-run (re-extraction + diff); node --check
+  clean; 12 backticks = exactly the 6 template-literal body delimiters, none in prose; 0 smart chars;
+  legacy persisters + the generator grep-confirmed UNTOUCHED.
+- CRITICAL: dry-runs are NON-DETERMINISTIC -- re-running the generator will NOT reproduce these
+  bodies. THIS persister is now the SOURCE OF TRUTH for the shipped text. The owner re-reads each
+  frozen body and confirms it matches the approved dry-run BEFORE running the write.
+- NEXT (separate OWNER steps, NOT done): (1) owner confirms the frozen bodies + runs the persister
+  (DB write) to insert the 6 drafts; (2) GO-LIVE: populate DEDNET_ARTICLE_SECTION (lib/games/
+  pubg-dednet.js) with the 6 slug->section entries, then flip pubg-dednet indexable:true, AFTER the
+  drafts are in and reviewed.
+
+---
+
 ## 2026-08-27 - Phase 2b-ii: the DED.NET generator (dry-run, grounded + validated)
 
 Built scripts/gen-pubg-dednet-news.mjs - the FIRST generator on the shared library
