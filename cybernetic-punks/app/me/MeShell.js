@@ -18,6 +18,7 @@ import MeClient from './MeClient';
 import AccountMenu from '@/components/AccountMenu';
 import FollowEditor from './FollowEditor';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 var CARD = {
   background: '#16181d',
@@ -155,12 +156,28 @@ export default function MeShell({ account, player, feed }) {
           </div>
         )}
 
-        {/* DISCORD CTA slot -- Piece D */}
+        {/* DISCORD CTA slot -- Piece D: the social layer lives off-site on Discord; /me links
+            to it. Neutral-themed; the invite is single-sourced from lib/socialLinks. */}
         <div style={CARD}>
           <div style={SLOT_LABEL}>Community</div>
-          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-            Discord CTA lands here next (Piece D).
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginBottom: 12 }}>
+            The conversation happens on Discord -- patch talk, questions, and the wider community.
           </div>
+          <a
+            href={DISCORD_INVITE}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 9, padding: '9px 16px',
+              borderRadius: 6, textDecoration: 'none', fontSize: 13, fontWeight: 700, color: '#fff',
+              background: '#5865f2', border: '1px solid #5865f2',
+            }}
+          >
+            <svg width="16" height="12" viewBox="0 0 14 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M11.854 0.927C10.956 0.505 9.994 0.198 8.99 0.022C8.861 0.256 8.711 0.57 8.607 0.819C7.534 0.655 6.47 0.655 5.414 0.819C5.31 0.57 5.157 0.256 5.027 0.022C4.022 0.198 3.059 0.506 2.161 0.929C0.311 3.641 -0.19 6.285 0.06 8.893C1.27 9.789 2.442 10.336 3.595 10.696C3.887 10.3 4.147 9.879 4.371 9.436C3.947 9.276 3.541 9.078 3.158 8.845C3.261 8.769 3.362 8.69 3.461 8.609C5.742 9.672 8.266 9.672 10.52 8.609C10.62 8.691 10.721 8.77 10.823 8.845C10.439 9.079 10.031 9.278 9.606 9.437C9.83 9.879 10.089 10.302 10.382 10.697C11.536 10.337 12.709 9.79 13.919 8.893C14.213 5.87 13.419 3.25 11.854 0.927ZM4.676 7.279C3.983 7.279 3.413 6.639 3.413 5.854C3.413 5.069 3.971 4.428 4.676 4.428C5.381 4.428 5.952 5.068 5.939 5.854C5.94 6.639 5.38 7.279 4.676 7.279ZM9.297 7.279C8.604 7.279 8.034 6.639 8.034 5.854C8.034 5.069 8.592 4.428 9.297 4.428C10.002 4.428 10.573 5.068 10.56 5.854C10.56 6.639 10.001 7.279 9.297 7.279Z" fill="#fff"/>
+            </svg>
+            Join the community on Discord
+          </a>
         </div>
 
         {/* MARATHON SECTION -- conditional. MeClient's outer wrapper is demoted (Option B) so it

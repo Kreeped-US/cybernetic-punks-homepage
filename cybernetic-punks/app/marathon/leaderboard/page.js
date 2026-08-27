@@ -20,6 +20,7 @@
 
 import Link from 'next/link';
 import ViewTracker from '@/components/ViewTracker';
+import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 export var metadata = {
   title: 'Marathon Ranked Leaderboard — Global Top Players',
@@ -445,7 +446,7 @@ export default function LeaderboardPage() {
             CyberneticPunks will activate the global Marathon leaderboard the moment Bungie opens the ranked API. Join our Discord to get notified instantly.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <a href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer" style={{
+            <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" style={{
               fontFamily: 'Orbitron, monospace',
               fontSize: 12,
               fontWeight: 700,

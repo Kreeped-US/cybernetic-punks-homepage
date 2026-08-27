@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 // variant: 'banner' (large) | 'compact' (small inline)
 export default function CoachCTA({ variant = 'banner' }) {
@@ -94,7 +95,7 @@ export default function CoachCTA({ variant = 'banner' }) {
             REQUEST BETA ACCESS →
           </a>
           <Link
-            href="https://discord.gg/PnhbdRYh3w"
+            href={DISCORD_INVITE}
             target="_blank"
             rel="noopener noreferrer"
             style={{

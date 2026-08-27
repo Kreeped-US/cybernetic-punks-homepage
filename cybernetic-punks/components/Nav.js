@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { DISCORD_INVITE } from '@/lib/socialLinks';
 import { usePathname } from 'next/navigation';
 import { useState, useRef } from 'react';
 import { getEditorDisplay } from '@/lib/editors/roster';
@@ -334,7 +335,7 @@ export default function Nav() {
 
           {/* Discord */}
           <Link
-            href="https://discord.gg/PnhbdRYh3w"
+            href={DISCORD_INVITE}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -529,7 +530,7 @@ export default function Nav() {
 
           {/* Mobile bottom links */}
           <div style={{ padding: '12px 20px', display: 'flex', gap: 10 }}>
-            <Link href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer"
+            <Link href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer"
               onClick={function() { setMobileOpen(false); }}
               style={{ flex: 1, textAlign: 'center', padding: '10px', background: 'rgba(88,101,242,0.1)', border: '1px solid rgba(88,101,242,0.3)', borderRadius: 2, fontSize: 10, fontWeight: 700, color: '#7289da', textDecoration: 'none', letterSpacing: 1 }}>
               DISCORD

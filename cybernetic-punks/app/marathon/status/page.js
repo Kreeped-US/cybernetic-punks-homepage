@@ -19,6 +19,7 @@
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 export const dynamic = 'force-dynamic';
 
@@ -479,7 +480,7 @@ export default async function StatusPage() {
             {[
               { href: '/marathon/sitrep',                                       label: 'LIVE SITREP',      sub: 'Meta + system snapshot',      color: CYAN    },
               { href: '/marathon/ranked',                                       label: 'RANKED GUIDE',     sub: 'Queue schedule + tier list',  color: YELLOW  },
-              { href: 'https://discord.gg/PnhbdRYh3w',                 label: 'DISCORD',          sub: 'Outage chatter + community',  color: '#5865f2', external: true },
+              { href: DISCORD_INVITE,                 label: 'DISCORD',          sub: 'Outage chatter + community',  color: '#5865f2', external: true },
               { href: 'https://x.com/BungieHelp',                      label: '@BUNGIEHELP',      sub: 'Official Bungie support',     color: '#1da1f2', external: true },
               { href: 'https://help.bungie.net',                       label: 'BUNGIE HELP',      sub: 'Official knowledge base',     color: '#888',    external: true },
             ].map(function(link) {

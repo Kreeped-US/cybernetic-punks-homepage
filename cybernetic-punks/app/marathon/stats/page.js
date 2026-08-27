@@ -5,7 +5,7 @@
 // Updated April 27, 2026:
 // - Colors aligned to design system tokens (#121418 / #1a1d24 / #22252e)
 // - Fonts standardized to explicit Orbitron / system-ui / monospace
-// - Discord invite corrected to discord.gg/PnhbdRYh3w
+// - Discord invite single-sourced from lib/socialLinks (DISCORD_INVITE)
 // - BreadcrumbList JSON-LD + visible breadcrumb added
 // - Cross-link bar expanded
 // - FAQ section + schema preserved
@@ -60,6 +60,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import Link from 'next/link';
+import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 export var metadata = {
   title: 'Marathon Stats Tracker — What It Will Track When Bungie Ships the API',
@@ -532,7 +533,7 @@ export default function StatsPage() {
             CyberneticPunks will activate Marathon stats tracking the moment Bungie opens the API. Join our Discord to get notified instantly.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <a href="https://discord.gg/PnhbdRYh3w" target="_blank" rel="noopener noreferrer" style={{
+            <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" style={{
               fontFamily: 'Orbitron, monospace',
               fontSize: 12,
               fontWeight: 700,

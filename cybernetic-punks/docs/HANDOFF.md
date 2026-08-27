@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Community v1 Piece D + COMMUNITY V1 COMPLETE
+
+Piece D - Discord CTA on /me (COMMUNITY slot) + centralized invite constant.
+- NEW lib/socialLinks.js: DISCORD_INVITE constant (+ DISPLAY_DISCORD, the bare host/slug for
+  link text). Dedicated links module (brandColors is colors-only).
+- All ~10 scattered discord.gg/PnhbdRYh3w literals across 7 files replaced with the constant:
+  Nav.js x2, Footer.js (href + display text), CoachCTA.js, and marathon creators/leaderboard/
+  stats/status. Single-sourced -- grep-confirmed the ONLY raw literal remaining is the constant
+  definition. Same discipline as brandColors / the countdown helper / the intent gates.
+- /me COMMUNITY CTA (MeShell): a neutral Discord-blurple button, honest copy, opens off-site
+  (target=_blank, rel=noopener). The social half lives off-site on Discord; /me links to it.
+- Regression: existing Discord links still resolve (Nav + Footer on /marathon/matchups still
+  point to https://discord.gg/PnhbdRYh3w via the constant). Build exit 0.
+- DEFERRED-NOTED: the X handle @Cybernetic87250 is similarly scattered -- a future one-line
+  socialLinks.js addition if wanted.
+
+COMMUNITY V1 COMPLETE -- all 4 slots:
+- A: /me inverted into the game-agnostic network hub shell + neutral chrome (no Marathon nav,
+  no live-strip, brand wordmark).
+- B: personalized feed (feed_items across games_interested, newest-first, correct per-game
+  detail links via ROOT_GAMES articleHref).
+- C: follow-editor (dedicated /api/account/games owner-gated write, no onboarded_at stamp) --
+  the loop closes.
+- D: Discord CTA + centralized invite.
+The core loop works end-to-end (operator-verified live on the deploy: follow 3 games -> feed
+populated with Marathon + Wardogs articles, newest-first, correct links). Return-path via
+"My Feed" in AccountMenu. Retention/monetization foundation in place.
+DEFERRED v2 (recorded, NOT built): game_profile per-game prefs; on-site social; notifications;
+Tier 2 richer personalization; Tier 3 nav-silo (game->game navigation).
+
+---
 ## 2026-08-27 - Community v1 Piece C: follow-editor on /me (the loop closes)
 
 Filled the MeShell FOLLOWING slot with the follow-editor -- delivers "change your games
