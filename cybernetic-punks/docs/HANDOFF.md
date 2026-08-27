@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Phase 2a: shared grounding library (Fable Q3, DED.NET-only adoption)
+
+Built lib/generation/grounding.js - the game-agnostic enforcement surface extracted from the two
+working inline generators (Fable Q3, triggered by DED.NET as the 4th pre-launch game). Extracts
+ONLY the ACTUAL shared surface the read mapped; legacy generators stay untouched.
+- Extracted: loadEnvLocal (parameterized on the caller import.meta.url), makeNewsTool
+  (headline/body/tags), buildSystemPrompt (parameterized ~8-rule honesty skeleton with computed
+  numbering so inserted rules never desync the count), buildUserPrompt (excerpt-injection
+  scaffold), generate (forced tool-call + tool_use extraction + throw-if-none), the structural
+  no-excerpt guard (hasExcerpt/guardExcerpt/filterSourced), runDryRunCli (argv filter + loop +
+  dry-run epilogue).
+- TIERED citation resolver (the DED.NET generalization): registry entry {label, url|null, tier,
+  attribution?, code?}; 4 tiers = first-party (plain) / attributed (surface WITH attribution,
+  never as anonymous first-party) / secondary (NEVER a citation line, excluded + AVOID-listed,
+  never primary) / unknown (honest-null, source_url always null). makeSourceRegistry THROWS on a
+  synthesized/relative URL, a missing attribution phrase, or a bad tier - the library
+  structurally cannot emit a fabricated URL. primary source_url binding prioritizes by TIER
+  (first-party > attributed > unknown), not list order, so a topic grounded on both binds the
+  row to the stronger first-party citation.
+- TBA-aware buildLaunchNote: a null date yields an honest non-date close (zero fabricated
+  digits); a real date yields the dated close. Serves DED.NET (null) and the dated games alike.
+- VERIFY: 48/48 harness assertions pass (all 4 tiers, TBA close, no-excerpt guard, prompt
+  renumbering, registry validation, ASCII-clean built prompt). Build green (library is
+  script-only; app build unaffected). DMZ/Wardogs generators + persisters grep-confirmed
+  UNTOUCHED.
+- HONEST SCOPE: this is a prompt-contract + thin code scaffold + structural guards + tiered
+  resolver. It is NOT a post-generation grounding validator - none exists in the legacy
+  generators, and a body-vs-excerpt containment check is NEW work, flagged separately and
+  deliberately out of this extraction.
+- ADOPTION: DED.NET (Phase 2b) is built on this; DMZ/Wardogs stay on their inline versions
+  (retrofit deferred, gated behind a built-prompt byte-diff + dry-run parity if ever needed).
+  The library is the architecture for game #5 onward.
+- NEXT (NOT built): Phase 2b - the DED.NET generator (topics, verbatim excerpts, the 4-tier
+  source registry, prompt wiring) importing this library, grounding strictly in
+  docs/dednet-firstparty-VERIFIED.md. Then persist as owner-reviewed drafts + flip indexable.
+
+---
+
 ## 2026-08-27 - DED.NET vertical Phase 1: config + infrastructure built (Wardogs playbook)
 
 Built the full DED.NET vertical shell (slug pubg-dednet) minus content/generator, following the
