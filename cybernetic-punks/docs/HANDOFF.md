@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Community v1 Piece C: follow-editor on /me (the loop closes)
+
+Filled the MeShell FOLLOWING slot with the follow-editor -- delivers "change your games
+anytime" and makes the Piece B empty-state actionable.
+- NEW app/api/account/games/route.js -- the DEDICATED write path. Owner-gated on
+  session.accountId (IDOR-safe, never a body id), validates games_interested against the
+  canonical ROOT_GAMES slugs + dedupes, writes ONLY games_interested. Chosen OVER
+  /api/account/onboarding because that route ALWAYS stamps onboarded_at (it serves the
+  one-time /join/welcome confirm) -- a follow-edit must NOT re-mark the onboarding seen-state.
+  The single update field is { games_interested: clean }; onboarded_at is never touched.
+- NEW app/me/FollowEditor.js (client): inline games multi-select reusing OnboardingClient's
+  toggle PATTERN (not the onboarding-coupled full-page component). Pre-populated from the
+  account current games_interested (intersected with real options to drop stale slugs),
+  per-option game accent, a "Save follows" button that is dirty-gated (inert until the
+  selection changes) -> POST /api/account/games -> router.refresh() so the /me server
+  component re-runs and the Piece B feed reflects the new follows. Re-editable (POST overwrites)
+  -- change anytime, not write-once.
+- MeShell: renders <FollowEditor options={followOptions} current={games}/> in the FOLLOWING
+  slot; followOptions is a serializable ROOT_GAMES-derived list (slug/label/accent/live).
+- THE LOOP NOW CLOSES: follow (C) -> personalized feed populates (B) -> return (My Feed in
+  AccountMenu, Piece A). All 3 games selectable; neutral-themed.
+- VERIFIED: build exit 0 (/api/account/games builds); node --check clean on the route; write
+  path owner-gated + games-only (no onboarded_at). The full select->save->feed loop is
+  auth-gated -> deploy-then-eyeball.
+- NEXT: Piece D -- Discord CTA on /me + centralize the ~10 scattered discord.gg literals into
+  one DISCORD_INVITE constant.
+
+---
 ## 2026-08-27 - Community v1 Piece B: personalized feed on /me
 
 Filled the MeShell YOUR FEED slot with the personalized feed (the return-reason of the

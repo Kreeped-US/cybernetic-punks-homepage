@@ -16,6 +16,8 @@
 import Link from 'next/link';
 import MeClient from './MeClient';
 import AccountMenu from '@/components/AccountMenu';
+import FollowEditor from './FollowEditor';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 var CARD = {
   background: '#16181d',
@@ -45,6 +47,15 @@ export default function MeShell({ account, player, feed }) {
   var followEnabled = hasAccount;                          // feed + follow-editor need games_interested
   var games = (account && Array.isArray(account.games_interested)) ? account.games_interested : [];
   var feedItems = Array.isArray(feed) ? feed : [];
+  // Serializable game options for the follow-editor (client), derived from ROOT_GAMES.
+  var followOptions = ROOT_GAMES.map(function (g) {
+    return {
+      slug: g.slug,
+      label: g.label,
+      accent: (g.theme && g.theme.primary) || '#8b95a7',
+      live: !!(g.pulse && g.pulse.mode === 'live'),
+    };
+  });
   var name = (account && (account.display_name || account.handle)) ||
              (player && player.bungie_display_name && player.bungie_display_name.replace(/#\d+/, '').trim()) ||
              'You';
@@ -92,13 +103,13 @@ export default function MeShell({ account, player, feed }) {
 
         {followEnabled ? (
           <>
-            {/* FOLLOW-EDITOR slot -- Piece C */}
+            {/* FOLLOW-EDITOR slot -- Piece C: pick the games you follow (games_interested). */}
             <div style={CARD}>
               <div style={SLOT_LABEL}>Following{games.length ? ' · ' + games.length : ''}</div>
-              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-                {games.length ? ('You follow: ' + games.join(', ') + '.') : 'You are not following any games yet.'}
-                {' '}Follow-editor lands here next (Piece C) -- change your games anytime.
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
+                Pick the games you want intel on. Change this anytime; your feed below updates to match.
               </div>
+              <FollowEditor options={followOptions} current={games} />
             </div>
 
             {/* PERSONALIZED FEED slot -- Piece B: latest intel across the followed games,
