@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Community v1 Piece A: /me inverted into the game-agnostic network hub shell
+
+Re-architected /me from the Marathon-only dashboard into the game-agnostic NETWORK HUB shell
+(community v1 core loop: follow -> personalized /me feed -> return). This commit ships the
+STRUCTURE + the re-architecture; the feed/follow-editor/Discord slots are placeholders, built
+next as B/C/D.
+- meDestination (lib/auth/meDestination.js): inverted to authed -> render, else -> /join. Was:
+  non-Marathon (accountId, no playerProfileId) bounced to /u/[handle]. Now ANY authed account
+  renders the hub; playerProfileId no longer gates render-vs-bounce, it gates the Marathon
+  SECTION. handle param dropped. Test rewritten 6/6 (Discord-only now render, was redirect).
+- /me server component (app/me/page.js): owner-gated by the SAME resolveSession accountId gate
+  (IDOR-safe, no new auth). Loads network_account (handle/display_name/avatar_url/
+  games_interested) when accountId present; loads player_profiles when playerProfileId present;
+  renders <MeShell>. The old forced /join/setup redirect for an un-set-up Marathon user was
+  REMOVED -- the hub renders and MeClient's own setup modal prompts shell/playstyle inline in
+  the Marathon section (a game-agnostic hub must not gate on one game setup).
+- MeShell (new, app/me/MeShell.js): owns the page canvas + lays out HEADER (network identity)
+  / FOLLOW-EDITOR slot [C] / PERSONALIZED FEED slot [B] / DISCORD CTA slot [D] / conditional
+  MARATHON SECTION (<MeClient/> only when player_profiles present).
+- Edge degradation (accountId:null -- pure-Bungie unbridged): no network_account -> feed +
+  follow-editor HIDE behind a short "link your network account" prompt (never a broken/empty
+  feed, never an error); the Marathon section still renders; header falls back to Bungie identity.
+- MeClient (app/me/MeClient.js): outer wrapper demoted (Option B) from a 100vh page-root to a
+  section container (me-marathon-section) so it renders as the Marathon SECTION, not a nested
+  page. Content unchanged.
+- Return entry-point (components/AccountMenu.js): added "My Feed" -> /me in BOTH renderings
+  (dropdown + compact), kept "Profile" -> /u/[handle] SEPARATE (private hub vs public profile,
+  not collapsed). This closes the loop return path.
+- /u/[handle] NOT orphaned: still reached from /join (:38), AccountMenu "Profile", and public
+  links (the Profile links are untouched).
+- VERIFIED: meDestination test 6/6; build exit 0 (/me = f dynamic); node --check clean; owner-
+  gate live (logged-out /me -> /join, no crash). Authed hub views (Discord-only hub, Marathon
+  hub+section, accountId:null degrade) are trace/test-verified -- auth-gated, not eyeballable in
+  a fresh browser; production is the logged-in review surface (deploy-then-eyeball).
+- NEXT: B personalized feed (feed_items .in(game_slug, games_interested), reuse getNetworkPulse
+  pattern) -> C follow-editor (reuse OnboardingClient + POST /api/account/onboarding) -> D
+  Discord CTA + centralize the ~10 scattered discord.gg literals into one DISCORD_INVITE constant.
+
+---
 ## 2026-08-27 - Tier 1 COMPLETE: Wardogs a first-class citizen (seams #6 + #8 closed - cleanup)
 
 Final Tier-1 cleanup batch from the user-journey audit: copy + comments only, zero logic.

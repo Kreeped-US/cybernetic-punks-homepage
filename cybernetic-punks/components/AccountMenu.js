@@ -158,6 +158,9 @@ export default function AccountMenu({ align, variant, onResolved }) {
           )}
           <span style={M_NAME}>{mName}</span>
         </div>
+        {/* My Feed = the PRIVATE network hub (/me). Distinct from Profile (the PUBLIC
+            /u/[handle] page) -- the return-path into the personalized feed. */}
+        <Link href="/me" style={M_ROW}>My Feed</Link>
         {(data.handle || data.hasMarathonProfile) && (
           <Link href={data.handle ? '/u/' + data.handle : '/me'} style={M_ROW}>Profile</Link>
         )}
@@ -223,6 +226,18 @@ export default function AccountMenu({ align, variant, onResolved }) {
 
       {open && (
         <div role="menu" style={Object.assign({}, DROPDOWN, alignRight ? { right: 0 } : { left: 0 })}>
+          {/* My Feed = the PRIVATE network hub (/me) -- the return-path into the personalized
+              feed. Kept DISTINCT from Profile (the PUBLIC /u/[handle] page). */}
+          <Link
+            href="/me"
+            role="menuitem"
+            onClick={function() { setOpen(false); }}
+            style={ITEM_LINK}
+            onMouseEnter={function(e) { e.currentTarget.style.background = '#1e2228'; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
+          >
+            My Feed
+          </Link>
           {data && (data.handle || data.hasMarathonProfile) && (
             <Link
               href={data.handle ? '/u/' + data.handle : '/me'}

@@ -132,7 +132,10 @@ export default function MeClient({ player }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#121418', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
+    // Community v1 Piece A (Option B): wrapper demoted from a 100vh page-root to a SECTION
+    // container so this renders as "the Marathon section" inside the game-agnostic /me hub
+    // (MeShell owns the page canvas). Content below is unchanged.
+    <div className="me-marathon-section" style={{ color: '#fff', fontFamily: 'system-ui, sans-serif', borderRadius: 10, overflow: 'hidden', border: '1px solid #23262e' }}>
 
       <style>{`
         .tool-card { transition: background 0.12s, border-color 0.12s, transform 0.12s; }
