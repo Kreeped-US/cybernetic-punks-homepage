@@ -56,7 +56,7 @@ export function getGenerationGames() {
 // indexable field and is indexable). This is the INDEXABILITY axis, the counterpart to
 // getGenerationGames() (the GENERATION axis) -- two DISTINCT enumerators on two DISTINCT
 // signals, so sitemap membership (indexability) can never be conflated with generation.
-// Today: ['marathon', 'dmz'] (Wardogs is indexable:false). Note this is necessary-not-
+// Today: ['marathon', 'dmz', 'wardogs'] (Wardogs flipped indexable:true 2026-08-26). Note this is necessary-not-
 // sufficient for sitemap emission: the sitemap still needs a per-game page block to emit a
 // game's URLs; the enumerator gates WHETHER an existing block runs.
 export function getIndexableGames() {

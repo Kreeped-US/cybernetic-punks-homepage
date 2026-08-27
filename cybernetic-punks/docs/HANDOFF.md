@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Tier 1 COMPLETE: Wardogs a first-class citizen (seams #6 + #8 closed - cleanup)
+
+Final Tier-1 cleanup batch from the user-journey audit: copy + comments only, zero logic.
+- #6 "What is CNP" about-copy (app/page.js): named all 3 verticals honestly, no overclaim.
+  BEFORE: "Marathon now, Call of Duty's DMZ next, more to come."
+  AFTER:  "Marathon live now, Wardogs intel live ahead of its September 10 Early Access, and
+  Call of Duty's DMZ landing October 23." Wardogs framed intel-live-ahead-of-EA (NOT launched).
+  Verified live: names Marathon/Wardogs/DMZ; no "Wardogs ... launched" phrasing.
+- #8 stale comments corrected to current reality (COMMENTS ONLY, gate logic untouched):
+  lib/games/index.js:59 now reads ['marathon','dmz','wardogs'] (Wardogs flipped indexable:true
+  2026-08-26) - function body unchanged. app/wardogs/layout.js + [section]/page.js + page.js
+  robots comments corrected from "noindex while indexable is false" to "indexed now that
+  indexable is true; gate remains" - the robots: gate + hasContent logic are byte-unchanged
+  (verified: no non-comment lines changed). Build exit 0, node --check clean.
+
+TIER 1 COMPLETE. Wardogs is now a first-class citizen across: content/SEO (indexable, sitemap,
+detail route - earlier), FOLLOW (#2: ROOT_GAMES entry + onboarding picker/validator + intent
+deep-link gates de-hardcoded), PULSE (#4: "Latest from Wardogs" column), NAV/FOOTER (#1: root
+footer + Marathon-footer cross-link, silo preserved), CONVERSION COPY (#5: two countdowns; #6:
+about-copy), and COMMENTS (#8). Seams #1/#2/#4/#5/#6/#8 all closed.
+NOT seams - separate DELIBERATE decisions, out of Tier 1:
+- TIER 2 profile personalization: /me is Marathon-only (player_profiles), no games-follow feed,
+  game_profile table schema-only/unwired. A real build (per-game profile slice), not a seam.
+- TIER 3 the nav silo itself: game->game navigation requires returning to root (affects ALL 3
+  games, DMZ too). Deliberate per-vertical theming isolation (global Nav return-nulls under
+  /dmz + /wardogs to prevent green-leak). De-siloing is a separate design decision.
+
+---
 ## 2026-08-27 - #join conversion section: two countdowns + honest 3-game copy (seam #5 closed)
 
 Reworked the app/page.js #join conversion surface (user-journey audit Tier 1 #5). Was a single

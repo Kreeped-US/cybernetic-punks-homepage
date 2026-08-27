@@ -13,8 +13,8 @@
 // it must land together with the first published Wardogs article.
 //
 // Queries Supabase -> force-dynamic. `supabase` is the lazy anon proxy.
-// ROBOTS: the whole subtree is noindex while wardogs.indexable is false (layout gate);
-// this route's generateMetadata also noindexes an empty section (belt-and-suspenders).
+// ROBOTS: the subtree is indexed now that wardogs.indexable is true (layout gate); this
+// route's generateMetadata still noindexes an EMPTY section (belt-and-suspenders).
 
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }) {
   var ogTitle = section.label + ' - Wardogs';
   var url = 'https://cyberneticpunks.com/wardogs/' + section.slug;
   // Empty section -> keep OUT of the index (follow:true so crawlers still traverse).
-  // Once it has content AND wardogs.indexable is true, omit robots here and inherit.
+  // With wardogs.indexable true, a section WITH content omits robots here and inherits (indexed).
   var hasContent = await sectionHasContent(section);
   var robots = hasContent ? undefined : { index: false, follow: true };
   return {

@@ -579,7 +579,7 @@ export default async function NetworkRoot() {
         <section className="about-sec">
           <div className="wrap">
             <div className="sec-eyebrow">What is Cybernetic Punks?</div>
-            <p className="about-body">The verified intelligence network for competitive shooters - Marathon now, Call of Duty&apos;s DMZ next, more to come. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
+            <p className="about-body">The verified intelligence network for competitive shooters - Marathon live now, Wardogs intel live ahead of its September 10 Early Access, and Call of Duty&apos;s DMZ landing October 23. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
             <Link href="/about" className="about-link">How the network works &rarr;</Link>
           </div>
         </section>

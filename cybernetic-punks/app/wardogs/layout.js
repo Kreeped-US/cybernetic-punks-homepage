@@ -14,11 +14,11 @@ export const metadata = {
   title: 'Wardogs - Early Access Intel',
   description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the CyberneticPunks game network.',
   alternates: { canonical: 'https://cyberneticpunks.com/wardogs' },
-  // SEO exposure gated on wardogs.indexable (NOT wardogs.launched). indexable is FALSE
-  // for the Phase 1 skeleton, so the whole /wardogs subtree stays noindex,follow (follow
+  // SEO exposure gated on wardogs.indexable (NOT wardogs.launched). indexable is TRUE now
+  // (confirmed-systems content landed 2026-08-26), so the whole /wardogs subtree is indexed.
+  // The gate remains: if flipped back to false, the subtree returns noindex,follow (follow
   // keeps crawlers traversing back to the network root via WardogsNav). This inherits down
-  // to /wardogs and every /wardogs/[section] (they set no robots of their own). Flip
-  // wardogs.indexable -> true when confirmed-systems content lands and this opens to index.
+  // to /wardogs and every /wardogs/[section] (they set no robots of their own).
   robots: wardogs.indexable ? undefined : { index: false, follow: true },
 };
 

@@ -6,8 +6,8 @@
 // scaffolded empty now. Mirrors the structural core of app/dmz/page.js.
 //
 // Server component + a Supabase read for live counts -> force-dynamic.
-// ROBOTS: the whole subtree is noindex while wardogs.indexable is false (layout gate);
-// this page sets no robots of its own.
+// ROBOTS: the subtree is indexed now that wardogs.indexable is true (layout gate); this
+// page sets no robots of its own.
 
 import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
