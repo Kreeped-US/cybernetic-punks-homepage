@@ -21,7 +21,7 @@ export default function LivePulseGate({ stats }) {
   // (app/admin/layout.js) -- no public chrome there. Precise path-segment check
   // (/admin and /admin/*, not any public route starting with "admin"). Marathon
   // routes are unaffected.
-  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/wardogs') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/'))) return null;
+  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/wardogs') || pathname === '/me' || pathname.startsWith('/me/') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/'))) return null;
 
   var hasSteam = !!(stats && stats.steam);
   var hasTwitch = !!(stats && stats.twitch);

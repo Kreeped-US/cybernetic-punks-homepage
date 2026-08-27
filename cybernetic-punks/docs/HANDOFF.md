@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - /me chrome completed: LivePulseStrip excludes /me + wordmark two-tone
+
+Batched the last two /me neutral-chrome fixes.
+- (a) LivePulseStrip (components/LivePulseGate.js:24): added /me to the return-null list
+  (pathname === '/me' || startsWith('/me/')), mirroring how it + Nav.js exclude /dmz//wardogs.
+  Was leaking the Marathon telemetry strip ("RUNNERS ONLINE" + Steam/Twitch counts) onto the
+  game-agnostic hub. Nothing renders in its place (correct -- the hub content is the feed, not
+  Marathon telemetry). This is the LAST of the 2 global Marathon green-hardcoders from the
+  June-30 audit (Nav.js + LivePulseStrip); BOTH now null under /me. The root layout renders only
+  Nav / LivePulseStrip / Analytics -- Analytics is @vercel/analytics (network-wide, correct),
+  and there is no app/me/layout.js, so this is the COMPLETE set: no other Marathon global leaks
+  onto /me.
+- (b) MeShell wordmark: two-tone CYBERNETIC (white) + PUNKS (#9A2740) matching the root nav
+  (root .wm b = var(--burg-bright) = #9A2740, the approved brand burgundy); was plain all-white.
+  Hardcoded the hex because --burg-bright is scoped to .cnp-root and does not reach MeShell.
+- VERIFIED: live-strip still renders on Marathon pages (regression: /marathon/matchups still
+  shows "RUNNERS ONLINE"); /dmz//wardogs unchanged; build exit 0. Logged-in /me (no strip,
+  two-tone wordmark) is deploy-then-eyeball (auth-gated).
+- RECORDED pre-existing discrepancy (NOT fixed here): the wordmark accent is inconsistent
+  site-wide -- root + /me use burgundy #9A2740, but Nav.js:277 uses red #ff2222. #9A2740 is the
+  approved brand burgundy (v7 mock palette); Nav.js is the outlier. A tiny follow-on to unify
+  Nav.js to #9A2740 if wanted.
+
+---
 ## 2026-08-27 - Community v1 Piece A follow-up: /me neutral chrome (drop the green Marathon nav)
 
 /me showed the green Marathon Nav.js - contextually wrong now that /me is the game-agnostic

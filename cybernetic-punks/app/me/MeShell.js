@@ -61,7 +61,10 @@ export default function MeShell({ account, player }) {
           <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 11, textDecoration: 'none' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/cnp-512.png" alt="Cybernetic Punks" width={30} height={30} style={{ width: 30, height: 30, borderRadius: 7, display: 'block' }} />
-            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '0.05em', color: '#fff' }}>CYBERNETIC PUNKS</span>
+            {/* Two-tone brand wordmark, matching the root nav: CYBERNETIC white + PUNKS in the
+                approved brand burgundy (root .wm b = var(--burg-bright) = #9A2740). Hardcoded
+                here because --burg-bright is scoped to .cnp-root and does not reach MeShell. */}
+            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '0.05em', color: '#fff' }}>CYBERNETIC <span style={{ color: '#9A2740' }}>PUNKS</span></span>
           </Link>
           <AccountMenu align="right" />
         </div>
