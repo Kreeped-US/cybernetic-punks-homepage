@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - DED.NET vertical Phase 0: verified source doc committed (grounding foundation)
+
+Committed docs/dednet-firstparty-VERIFIED.md - the primary-source grounding foundation for the
+DED.NET vertical (equivalent to wardogs-firstparty-VERIFIED.md). This GATES the build: the
+generator will ground STRICTLY in this doc.
+- Assembled by live capture of THREE first-party KRAFTON sources (verbatim + source URLs):
+  Steam app 2726580 (store.steampowered.com/app/2726580), the official site ded.net, and the
+  KRAFTON Press Room gamescom-2026-ONL reveal release. Nothing inferred or padded.
+- THIN + CONCEPTUAL by design (revealed 2 days prior, gamescom ONL Aug 25 2026; Krafton was
+  deliberately vague). The short CONFIRMED set is the truth of the material, not a shortfall.
+- Structure: CONFIRMED (first-party verbatim + URLs) / SECONDARY (press, do-not-ground) /
+  UNKNOWN (the honest-null map). PRESS QUARANTINED: "Cult Church" is PRESS-ONLY (GamesBeat),
+  NOT on the official site or press release - recorded as secondary, NOT first-party. Cryptid
+  Cove IS first-party (ded.net, verbatim). "Inside the City" is a first-party location NAME
+  only; slides 2-5 of the 5-location world carousel are image-based / not text-extractable ->
+  honest gap recorded, generator honest-nulls them.
+- CONFIRMED core: PUBG: DED.NET, a PvP FPS from PUBG STUDIOS (Steam dev field: PUBG Madison),
+  KRAFTON; Cascadia 1996 (press) / "1990s" (Steam); tagline "Death is Only the Beginning";
+  multiplayer FPS + roguelite progression across runs; earn/mix "dozens of abilities";
+  unorthodox tactics (car-door shields, cannibalize for health, play dead, hack payphones);
+  closed-beta pre-registration open (KRAFTON Player Account); AI-content disclosure; frequent
+  violence. LONG UNKNOWN list is the generator honest-null map (how progression actually works,
+  ability list, player counts/format, 3 of 5 locations, beta date, platforms beyond PC, price).
+- RELEASE DATE: To be announced. NO launch window stated by any primary source. This CORRECTS
+  the earlier "November 2026" premise, which was WRONG - there is no Krafton-stated date/window.
+- Verify-don't-inherit corrections vs the brief: Cult Church is press-only (above); ONL date is
+  Aug 25 (press release) though ded.net dates the trailer 2026.08.23; studio is "PUBG Madison"
+  (Steam) vs "PUBG STUDIOS" (press), both first-party; the press release carries NO attributed
+  dev quote (the store + site + release ARE the official statements).
+- NEXT (NOT built): the DED.NET config + the bespoke honest generator grounding strictly in this
+  doc (excerpt-only, honest-null the UNKNOWN list, never state SECONDARY/press as first-party).
+
+---
 ## 2026-08-27 - Community v1 Piece D + COMMUNITY V1 COMPLETE
 
 Piece D - Discord CTA on /me (COMMUNITY slot) + centralized invite constant.
