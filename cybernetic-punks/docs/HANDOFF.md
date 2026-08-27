@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Phase 2b-ii: the DED.NET generator (dry-run, grounded + validated)
+
+Built scripts/gen-pubg-dednet-news.mjs - the FIRST generator on the shared library
+(lib/generation/grounding.js) + the post-gen validator. Grounds STRICTLY in
+docs/dednet-firstparty-VERIFIED.md (every excerpt verbatim; no topic without its real excerpt).
+Dry-run only: nothing persisted, indexable still false (both are separate owner steps after review).
+- 6 topics: the-reveal, the-run-and-roms, match-structure, grungehouse-setting, unorthodox-tactics,
+  confirmed-vs-unknown (the honest-ledger flagship). 4-tier source registry with real URLs +
+  validator terms/attributionCues: first-party (Steam/ded.net/KRAFTON press), attributed
+  (Curd/Inven, interview-exclusive terms), secondary (Cult Church, AVOID-listed), unknown (6
+  honest-null entries). extraRules: ATTRIBUTION TIERS + RUN-LENGTH RANGE (both 6-10 AND 8-12).
+- VERIFY-DON'T-INHERIT corrections against the doc (2, both folded in): (a) "King of Killers"
+  and the unorthodox tactics (car-door shields, cannibalize, play-dead, hack-payphones) are
+  first-party per the verbatim Steam feature list, NOT attributed - kept OUT of the attributed
+  terms so they do not false-flag topic 5 (the brief had these as attributed). (b) The platform
+  list PC/PS5/Xbox Series X|S + "console-first" are ATTRIBUTED per the doc (PS5/Xbox appear ONLY
+  in the interview; only PC is first-party-implied via the Steam PC store) - so they are
+  attributed to Curd, NOT split off as first-party (the brief's fix-2 premise that platforms
+  are Steam/press first-party was not doc-supported).
+- Dry-run result: attribution perfect across all 6 (every Curd/Inven fact reads attributed);
+  the-run-and-roms fully clean. No fabrication, no secondary leak (Cult Church never in any body),
+  no fabricated world locations (only Cryptid Cove; other 3 of 5 honest-nulled), run-length given
+  both ways, UNKNOWN list honest-null. Validator: 0 real flags - residual proper-noun flags are
+  all markdown title-case HEADERS (the documented false-positive class); the real Steam app id
+  2726580 is allow-listed (a first-party identifier riding in on the citation line, not a figure).
+- Two attribution-precision drifts FIXED (facts were right, provenance was slightly off):
+  console-first was mis-credited to ded.net (the-reveal) and platforms blurred with Steam/press
+  (match-structure, and confirmed-vs-unknown had the same drift). Fix: dropped "console-first"
+  from the global TBA close note (it seeded the drift; "a closed beta is coming" alone is
+  first-party), added a platform/console-first ATTRIBUTED clause to the ATTRIBUTION TIERS rule,
+  and prefixed the match-structure platform excerpt line with explicit Curd attribution. Re-run
+  confirmed: the-reveal now honest-nulls platforms; match-structure + confirmed-vs-unknown
+  attribute platforms/console-first to Curd/Inven; close note 6/6 says "A closed beta is coming";
+  0 real validator flags; attribution perfect elsewhere.
+- NEXT (separate owner steps, NOT done): owner reviews the dry-run, then persist as
+  is_published:FALSE drafts (frozen text, like DMZ/Wardogs), then flip pubg-dednet indexable:true
+  when content lands. DMZ/Wardogs generators UNTOUCHED.
+
+---
+
 ## 2026-08-27 - Phase 2b-i: post-generation grounding validator (detection-and-flag)
 
 Added the post-gen grounding validator to lib/generation/grounding.js (section 9:
