@@ -2,6 +2,8 @@ import { resolveSession } from '@/lib/auth/resolveSession';
 import { meDestination } from '@/lib/auth/meDestination';
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { formatPublishDate } from '@/lib/formatDate';
 import MeShell from './MeShell';
 
 export const metadata = { title: 'My Feed' };
@@ -56,5 +58,40 @@ export default async function MePage() {
     player = p || null;
   }
 
-  return <MeShell account={account} player={player} />;
+  // PERSONALIZED FEED (Piece B): the latest published intel across the games the account
+  // follows, newest-first, one .in() query (adapts getNetworkPulse). Each row's detail href
+  // is resolved by its game's ROOT_GAMES pulse.articleHref -- marathon -> /marathon/intel/,
+  // dmz -> /dmz/<section>/, wardogs -> /wardogs/<section>/ (unmapped slug -> null -> dropped,
+  // fail-safe, never a dead link). Empty games_interested -> empty feed -> the shell shows the
+  // "follow games" empty-state. Fail-open: any error yields an empty feed, never a broken page.
+  var feed = [];
+  var games = (account && Array.isArray(account.games_interested)) ? account.games_interested : [];
+  if (games.length > 0) {
+    try {
+      var { data: rows } = await supabase
+        .from('feed_items')
+        .select('game_slug, headline, slug, editor, created_at')
+        .eq('is_published', true)
+        .in('game_slug', games)
+        .order('created_at', { ascending: false })
+        .limit(12);
+      feed = (rows || []).map(function (r) {
+        var entry = ROOT_GAMES.find(function (g) { return g.slug === r.game_slug; });
+        var href = (entry && entry.pulse && entry.pulse.articleHref) ? entry.pulse.articleHref(r.slug) : null;
+        if (!href) return null; // unmapped (e.g. a dmz/wardogs slug with no section) -> drop
+        return {
+          headline: r.headline,
+          editor: r.editor,
+          when: formatPublishDate(r.created_at),
+          game: entry ? entry.label : r.game_slug,
+          accent: (entry && entry.theme && entry.theme.primary) || '#8b95a7',
+          href: href,
+        };
+      }).filter(Boolean);
+    } catch (e) {
+      feed = [];
+    }
+  }
+
+  return <MeShell account={account} player={player} feed={feed} />;
 }

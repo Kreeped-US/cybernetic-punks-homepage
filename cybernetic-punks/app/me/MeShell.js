@@ -40,10 +40,11 @@ function initialsOf(name) {
   return ((parts[0][0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
 }
 
-export default function MeShell({ account, player }) {
+export default function MeShell({ account, player, feed }) {
   var hasAccount = !!account;                              // network_account present (accountId)
   var followEnabled = hasAccount;                          // feed + follow-editor need games_interested
   var games = (account && Array.isArray(account.games_interested)) ? account.games_interested : [];
+  var feedItems = Array.isArray(feed) ? feed : [];
   var name = (account && (account.display_name || account.handle)) ||
              (player && player.bungie_display_name && player.bungie_display_name.replace(/#\d+/, '').trim()) ||
              'You';
@@ -100,13 +101,37 @@ export default function MeShell({ account, player }) {
               </div>
             </div>
 
-            {/* PERSONALIZED FEED slot -- Piece B */}
-            <div style={CARD}>
-              <div style={SLOT_LABEL}>Your feed</div>
-              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-                Personalized feed lands here next (Piece B): the latest verified intel across the
-                games you follow, newest first.
-              </div>
+            {/* PERSONALIZED FEED slot -- Piece B: latest intel across the followed games,
+                newest first. Each row's game pill uses that game's accent; the container stays
+                neutral (no full theme bleed into the hub). */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ ...SLOT_LABEL, marginBottom: 12 }}>Your feed</div>
+              {games.length === 0 ? (
+                <div style={CARD}>
+                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+                    Follow games to build your feed -- use the follow editor above to pick the games
+                    you want intel on, and their latest verified reports land here.
+                  </div>
+                </div>
+              ) : feedItems.length === 0 ? (
+                <div style={CARD}>
+                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+                    No new intel from the games you follow yet -- check back soon.
+                  </div>
+                </div>
+              ) : (
+                feedItems.map(function (item, i) {
+                  return (
+                    <Link key={i} href={item.href} style={{ display: 'block', textDecoration: 'none', background: '#16181d', border: '1px solid #23262e', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: '#08090c', background: item.accent, padding: '2px 7px', borderRadius: 3 }}>{item.game}</span>
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{item.editor}{item.when ? ' · ' + item.when : ''}</span>
+                      </div>
+                      <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff', lineHeight: 1.4 }}>{item.headline}</div>
+                    </Link>
+                  );
+                })
+              )}
             </div>
           </>
         ) : (

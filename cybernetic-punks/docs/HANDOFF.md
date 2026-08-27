@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Community v1 Piece B: personalized feed on /me
+
+Filled the MeShell YOUR FEED slot with the personalized feed (the return-reason of the
+follow -> feed -> return loop).
+- Query (app/me/page.js): feed_items .select(game_slug, headline, slug, editor, created_at)
+  .eq('is_published', true) .in('game_slug', games_interested) .order(created_at desc)
+  .limit(12) -- ONE query across the followed games, mirroring getNetworkPulse (which does it
+  per-game). Runs only when games_interested is non-empty.
+- Href resolution: each row -> ROOT_GAMES.find(g => g.slug === row.game_slug).pulse.articleHref
+  (row.slug) -- the SAME functions the root pulse columns use. Proven live via the root pulse:
+  marathon -> /marathon/intel/<slug>, dmz -> /dmz/<section>/<slug>, wardogs -> /wardogs/<section>
+  /<slug> (dmz/wardogs sections via DMZ_ARTICLE_SECTION / WARDOGS_ARTICLE_SECTION). Unmapped
+  slug -> articleHref null -> row dropped (no dead link). Fail-open: any query error -> empty
+  feed, never a broken page.
+- Render (MeShell): each item a Link to its detail page -- a per-row game pill in that game
+  accent (theme.primary) + editor + date (formatPublishDate) + headline. Container stays
+  NEUTRAL; accent only on the per-row pill (no full theme bleed into the hub).
+- Three honest empty-states: games_interested empty -> "Follow games to build your feed"
+  (points at the Piece C follow-editor slot); follows-but-no-articles -> "No new intel from
+  the games you follow yet"; no account (accountId null) -> the Piece A "link your account"
+  degrade. Never blank/broken.
+- VERIFIED: href resolution proven for all 3 games (root pulse, identical functions); the
+  operator's account (empty games_interested) hits the honest empty-state; build exit 0; only
+  app/me/page.js + MeShell.js changed. Live feed render is deploy-then-eyeball (auth-gated).
+- NEXT: Piece C (follow-editor -- reuse OnboardingClient + POST /api/account/onboarding) makes
+  the empty-state actionable; then D (Discord CTA + centralize the discord.gg invite constant).
+
+---
 ## 2026-08-27 - /me chrome completed: LivePulseStrip excludes /me + wordmark two-tone
 
 Batched the last two /me neutral-chrome fixes.
