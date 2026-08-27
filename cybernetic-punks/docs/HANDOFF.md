@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - Community v1 Piece A follow-up: /me neutral chrome (drop the green Marathon nav)
+
+/me showed the green Marathon Nav.js - contextually wrong now that /me is the game-agnostic
+network hub (Piece A), and a Marathon-green leak into the hub (Nav.js hardcodes #00ff41). Fix,
+two parts:
+- (1) Added /me to Nav.js's return-null list (pathname === '/me' || startsWith('/me/')),
+  matching how /dmz and /wardogs already exclude it. Nav.js is rendered globally in the root
+  layout; the guard is what hides it per-path. This stops the Marathon nav + its hardcoded
+  green from rendering on the hub. One-line change; no other nav logic touched.
+- (2) MeShell gets its own neutral top-bar (sticky): wordmark (logo + CYBERNETIC PUNKS,
+  Link -> /) left + AccountMenu (client, rendered directly as Nav/root do) right. Neutral dark
+  theme, NO green. Restores what Nav.js was providing - home link + account access +
+  "My Feed"/"Sign out" - so /me is not left bare. Matches the root network convention
+  (wordmark + AccountMenu, no game nav).
+- VERIFIED: Marathon nav intact on /marathon/* (regression: /marathon/matchups still renders
+  the full Nav, 5 links); /dmz//wardogs still excluded (unchanged); /me owner-gate intact
+  (logged-out /me -> /join); build exit 0; only Nav.js + MeShell.js changed. The logged-in /me
+  chrome (no green nav, neutral top-bar) is deploy-then-eyeball (auth-gated).
+- ADJACENT-DEFERRED (not this fix): /dmz + /wardogs vertical navs also lack AccountMenu -
+  account access is missing from those verticals chrome too. A separate "network chrome on the
+  verticals" decision if wanted later.
+
+---
 ## 2026-08-27 - Community v1 Piece A: /me inverted into the game-agnostic network hub shell
 
 Re-architected /me from the Marathon-only dashboard into the game-agnostic NETWORK HUB shell

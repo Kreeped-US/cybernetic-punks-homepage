@@ -13,7 +13,9 @@
 // DEGRADE (accountId null -- a pure-Bungie, unbridged session): no network_account -> no
 // games_interested. The follow-editor + feed HIDE behind a short "link your account" prompt
 // (never a broken or empty feed, never an error); the Marathon section still renders.
+import Link from 'next/link';
 import MeClient from './MeClient';
+import AccountMenu from '@/components/AccountMenu';
 
 var CARD = {
   background: '#16181d',
@@ -49,7 +51,22 @@ export default function MeShell({ account, player }) {
   var avatar = (account && account.avatar_url) || (player && player.bungie_avatar_url) || null;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#121418', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#121418', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+
+      {/* NEUTRAL NETWORK TOP-BAR -- replaces the Marathon Nav.js (green) that used to render
+          here. Matches the root's network convention: wordmark (home) + AccountMenu, no game
+          nav, no Marathon green. AccountMenu (client) rendered directly as Nav/root do. */}
+      <div style={{ borderBottom: '1px solid #1e2028', background: '#0e1014', position: 'sticky', top: 0, zIndex: 20 }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '13px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 11, textDecoration: 'none' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cnp-512.png" alt="Cybernetic Punks" width={30} height={30} style={{ width: 30, height: 30, borderRadius: 7, display: 'block' }} />
+            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '0.05em', color: '#fff' }}>CYBERNETIC PUNKS</span>
+          </Link>
+          <AccountMenu align="right" />
+        </div>
+      </div>
+
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 24px 96px' }}>
 
         {/* HEADER -- network identity */}
