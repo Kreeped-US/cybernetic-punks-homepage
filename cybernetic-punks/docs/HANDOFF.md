@@ -7,6 +7,28 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - #join conversion section: two countdowns + honest 3-game copy (seam #5 closed)
+
+Reworked the app/page.js #join conversion surface (user-journey audit Tier 1 #5). Was a single
+DMZ-only countdown + DMZ-only framing that ignored Wardogs nearer Sep-10 EA.
+- TWO countdowns now: Wardogs EA (Sep 10, the nearer event, shown first) + DMZ launch (Oct 23).
+  Each single-sourced from its game launch_date (wardogs.launch_date / dmz.launch_date) via a
+  generalized daysUntil(iso) helper (replaced the DMZ-only daysUntilLaunch; launchDays removed).
+- Clean zero-state (mirrors the prior DMZ pattern): daysUntil returns days (>0), 0 once the
+  date passes (never negative -> the pill flips to "WARDOGS IS LIVE" / "DMZ IS LIVE"), or null
+  on a missing/bad date (the pill hides). Proven by trace: past date 2020-01-01 -> 0; today -> 0;
+  bad/null -> null; 2026-09-10 -> 14; 2026-10-23 -> 57. Live DOM confirmed both pills render with
+  correct days.
+- h2 is now evergreen ("Get on the list before the next drop."); the sub-copy names all three
+  verticals honestly - Marathon live now, Wardogs intel live ahead of Early Access, DMZ the day
+  the Hajin Exclusion Zone opens. Conversion CTA (NetworkSubscribeForm) kept.
+- Single-sourced dates (no hardcoded date literal); build exit 0; only app/page.js changed.
+STILL OPEN in Tier 1: #6 "What is CNP" about-copy ("Marathon now, Call of Duty DMZ next, more
+to come" - names 2, Wardogs unnamed) + #8 stale comments (lib/games/index.js:59 getIndexableGames
+comment says [marathon,dmz] but returns 3; wardogs layout/section noindex comments) - pure
+copy/comment cleanup, no behavior. Tier 2 (profile personalization) + Tier 3 (nav silo) separate.
+
+---
 ## 2026-08-27 - Wardogs nav/footer dead-end closed (seam #1); silo + theming preserved
 
 From the user-journey audit Tier 1 #1: Wardogs was reachable only from the root tile. Made it

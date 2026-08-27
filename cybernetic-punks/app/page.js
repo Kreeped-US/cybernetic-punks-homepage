@@ -64,12 +64,14 @@ function addCommas(n) {
   if (n == null) return '--';
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
-// Whole days remaining until the DMZ launch, from the SINGLE machine date constant
-// (dmz.launch_date). No hardcoded "Oct 23" literal anywhere -- every date surface derives
-// from here. Null once the date has passed (the countdown then simply reads "live").
-function daysUntilLaunch() {
-  if (!dmz || !dmz.launch_date) return null;
-  var ms = new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now();
+// Whole days remaining until an ISO launch date, single-sourced per game from its
+// launch_date constant (dmz.launch_date / wardogs.launch_date). No hardcoded date literal --
+// every countdown derives from config. Returns days (>0), 0 once the date has passed (never
+// negative -- the countdown then flips to a "LIVE" state), or null on a missing/bad date
+// (the countdown hides).
+function daysUntil(iso) {
+  if (!iso) return null;
+  var ms = new Date(iso + 'T00:00:00Z').getTime() - Date.now();
   if (isNaN(ms)) return null;
   var days = Math.ceil(ms / 86400000);
   return days > 0 ? days : 0;
@@ -256,7 +258,8 @@ export default async function NetworkRoot() {
   // Game tile meta + telemetry (real data, PASS B).
   var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
   var marathonOnline = (data.pulse.marathon && typeof data.pulse.marathon.online === 'number') ? data.pulse.marathon.online : null;
-  var launchDays = daysUntilLaunch();
+  var wardogsDays = daysUntil(wardogs.launch_date); // Sep 10 EA -- the nearer event
+  var dmzDays = daysUntil(dmz.launch_date);         // Oct 23 launch -- the primary growth launch
   var wardogsEA = eaDateLabel(wardogs.launch_date); // "Sep 10", single-sourced from wardogs.launch_date
   var gameMeta = {};
   ROOT_GAMES.forEach(function(g) {
@@ -581,15 +584,22 @@ export default async function NetworkRoot() {
           </div>
         </section>
 
-        {/* SUBSCRIBE -- real DMZ-launch notify capture (NetworkSubscribeForm -> email_signups).
-            Countdown days derive from the single dmz.launch_date constant. */}
+        {/* SUBSCRIBE -- real launch notify capture (NetworkSubscribeForm -> email_signups).
+            TWO countdowns, each single-sourced from its game's launch_date (Wardogs Sep 10,
+            DMZ Oct 23) via daysUntil; each hides on a missing date and flips to "LIVE" (never
+            negative) once its own date passes. */}
         <section className="subscribe" id="join">
           <div className="wrap inner">
-            {launchDays != null && (
-              <div className="countdown">&#9670; {launchDays > 0 ? <>DMZ LAUNCHES IN <b>{launchDays} {launchDays === 1 ? 'DAY' : 'DAYS'}</b></> : <>DMZ IS <b>LIVE</b></>}</div>
-            )}
-            <h2>Get on the list before DMZ drops.</h2>
-            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - for Marathon now, and DMZ the day the Hajin Exclusion Zone opens. No spam, no hype. Only when there is something real to send.</p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 26 }}>
+              {wardogsDays != null && (
+                <div className="countdown" style={{ marginBottom: 0 }}>&#9670; {wardogsDays > 0 ? <>WARDOGS EARLY ACCESS IN <b>{wardogsDays} {wardogsDays === 1 ? 'DAY' : 'DAYS'}</b></> : <>WARDOGS IS <b>LIVE</b></>}</div>
+              )}
+              {dmzDays != null && (
+                <div className="countdown" style={{ marginBottom: 0 }}>&#9670; {dmzDays > 0 ? <>DMZ LAUNCHES IN <b>{dmzDays} {dmzDays === 1 ? 'DAY' : 'DAYS'}</b></> : <>DMZ IS <b>LIVE</b></>}</div>
+              )}
+            </div>
+            <h2>Get on the list before the next drop.</h2>
+            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - Marathon live now, Wardogs intel live ahead of Early Access, and DMZ the day the Hajin Exclusion Zone opens. No spam, no hype. Only when there is something real to send.</p>
             <div className="sub-form-slot">
               <NetworkSubscribeForm />
             </div>
