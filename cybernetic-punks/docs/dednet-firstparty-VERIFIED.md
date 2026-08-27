@@ -13,6 +13,14 @@ SECONDARY section, and is never to be grounded as first-party). This gates the v
 - Official site: https://ded.net (tagline, premise, world carousel, closed-beta register).
 - KRAFTON Press Room (the ONL reveal release): https://press.krafton.com/KRAFTON-SHOWCASES-FIVE-NEW-TITLES-AT-GAMESCOM-2026-OPENING-NIGHT-LIVE
 
+**Attributed source (Fable Q2 - on-record dev statements to an outlet; primary as a record, but
+must be surfaced ATTRIBUTED, not as anonymous first-party):**
+- Inven Global interview: https://www.invenglobal.com/articles/25264 - "Beyond Battle Royale to
+  Roguelite: PUBG Studio's New Title 'PUBG: DED.NET'", by Doohyun "Biit" Lee, Aug 27 2026. Quotes
+  **PUBG Studios Creative Director Dave Curd**. Everything in the "CONFIRMED (ATTRIBUTED)" section
+  below is from this interview and MUST be attributed ("PUBG Studios' Dave Curd told Inven Global...").
+  Verified line-by-line against the fetched article 2026-08-27; every claim below is in the article.
+
 ---
 
 ## CONFIRMED - exact wording, citable to primary
@@ -109,6 +117,108 @@ SECONDARY section, and is never to be grounded as first-party). This gates the v
 
 ---
 
+## CONFIRMED (ATTRIBUTED) - PUBG Studios Creative Director Dave Curd, via Inven Global interview
+Source for this ENTIRE section: https://www.invenglobal.com/articles/25264 (Doohyun "Biit" Lee,
+Aug 27 2026). Fable Q2: on-record dev statements to an outlet - primary as a record, but the
+generator MUST attribute them ("PUBG Studios' Dave Curd told Inven Global..."), NEVER state them
+as anonymous first-party. Verified line-by-line against the fetched article.
+
+### Framing (Curd quotes)
+- "not PUBG's twin brother, but its mutant cousin."
+- "in DED.NET, every time you lose, you get one step closer to the perfect build" / "You're not
+  just playing a match; you're doing a run."
+
+### Match structure
+- **60 players** per match, structured around **3-player squads**. "It's more fun with friends, and
+  three is the magic number." Squad size from asymmetry playtests (over 2 years): a **1v4 is
+  virtually insurmountable, a 1v2 lacks excitement, a 1v3 offers slim odds without a predetermined
+  outcome.** Solo has been tested internally; considered if demand/player base support it.
+- Initial blue zone **2.5x2.5 km**; full map **slightly over 5x5 km**.
+- **Verticality** (towering cliffs + low plains) and "the densest forest ever rendered in a battle
+  royale" cited as key differences from BATTLEGROUNDS.
+- A single match lasts **about 30 minutes** for the final survivor.
+- **FPS**; **console-first**, planned for **PC, PS5, Xbox Series X|S** (camera perspective vs
+  BATTLEGROUNDS is "fundamentally different" - see vs BATTLEGROUNDS).
+
+### Runs (the roguelite spine)
+- A **run** is "a continuous journey spanning multiple matches." You choose a **contestant** and set
+  a rough character route (target archetype: **support role, fire-cover role, or melee door-breaker**).
+- Run length: Curd gave **BOTH "8 to 12" AND "6 to 10" matches** as the average in the same interview
+  (record BOTH; do not pick one). Varies by **wins/losses, accumulated injuries, and player skill**.
+  A lost match is not a full reset ("every time you lose, you get one step closer").
+
+### ROMs (abilities)
+- **ROMs = chips plugged into the head** to unlock new gameplay abilities.
+- Examples (Curd): standard perks (**faster reload speed, increased dive distance**) up to radical
+  choices (**slither flat on your belly like a snake, turn into a small lethal doll, rip off a car
+  door to use as a shield**).
+- Curd's personal example build: **"Peekaboo"** (reveals player outlines within **10 meters** through
+  walls/buildings) + **"Blade Hands"** (lethal close range) + a Hong-Kong-action dive/slide mobility
+  skill + a **boombox that heals himself and squadmates** ("To turn off the music, you have to kill
+  me, but my hands are blades and I know where you are"). Ambush example: **"Creeper"** (hide inside a
+  refrigerator, peek through the door crack) + **"Killer Vibes"** (controller vibrates subtly when
+  enemies are near). [These are Curd's illustrative examples - NOT a full/verified ability roster.]
+
+### Injuries
+- Wounds **accumulate every match** - e.g. **cough in smoke, drop your weapon while reloading, greater
+  penalties in water**. "If too many pile up, your run ends."
+- Tolerate-vs-incinerate tension is the core thrill: a swim-only penalty you tolerate ("I just won't
+  go in the water"); a drop-gun-on-reload penalty is "deadly enough to make you want to incinerate
+  your character and start a fresh run."
+- Loop (verbatim): "You play matches, find ROMs, build power, manage damage, and extract before
+  injuries finally catch up to you."
+
+### Phase-based Power Gates (balancing)
+- A match has **five phases**; at each phase milestone, **abilities unlock simultaneously for all
+  players** (so a 5-ability vs 0-ability start can't happen - "If I am using four abilities, my
+  opponent is using four abilities too. However, what they invested in differs.").
+- **No numerical stat-inflation abilities** ("If you touch abilities like 2x attack power or 3x
+  health, it becomes an unfair game"): abilities grant **strategic opportunity**, each with strengths
+  and weaknesses. Goal is not perfect balance but "players always see a path forward."
+
+### Zone
+- After a few phases the **blue zone WANDERS** ("straying from the predictable circle shrink of
+  traditional battle royales"). Players "won't know which district of Cascadia will be selected each
+  game."
+
+### Tone / world / lore (Curd + presentation materials)
+- **1996 Cascadia**; era framed as "'90s decay, first reality shows, VHS, internet revolution,
+  grindhouse movies, uncensored violence."
+- Coined tone term **"GRUNGEHOUSE"** = 1990s grunge culture fused with grindhouse films.
+- **DED.NET = "Dog Eat Dog."** Objective: chase the throne of **"King of Killers"** in an underworld
+  where dog eats dog.
+- Roguelite lore = **"bartering your body for power"**; **no upgrades are reversible during a run**.
+- Dark-web reality-show framing; **"benefactors"** = viewers who intervene (the **yellow telephone
+  ringing** at the trailer's start = a viewer trying to influence the field); relationships with
+  viewers can decide victory/defeat.
+- Influence: **Stephen King's "The Running Man"** (as Richard Bachman). Each character has a backstory
+  tied to the map; reaching a meaningful location triggers voice lines that expand the narrative.
+
+### Music (licensed)
+- Licensed era-defining music: **Biggie (The Notorious B.I.G.), Wu-Tang Clan, Pixies, Nine Inch
+  Nails.** **Rap** radio stations + **alternative/grunge** stations, played through malls, dive bars,
+  strip clubs, car radios, or an opponent's boombox.
+
+### Monetization
+- **No pay-to-win.** "Putting paywalls on abilities and gameplay is poison to both the community and
+  the title." **Paid items are expected to be cosmetics; all gameplay elements earned through play.**
+
+### vs PUBG: BATTLEGROUNDS
+- **100 players (BATTLEGROUNDS) vs 60 (DED.NET).** BATTLEGROUNDS: everyone starts identical; DED.NET:
+  all 60 are at **different run stages** ("A player in their very first match can meet a player on
+  their 12th match in the same lobby").
+- Why not a BATTLEGROUNDS mode: "camera perspective, gunplay, and mobility are all fundamentally
+  different."
+- Shared DNA: **"desperate survival and survival of the fittest"** - "overcoming overwhelming odds to
+  become the last survivor."
+
+### Beta
+- A **closed beta** is scheduled **following the Gamescom reveal**, **console-first** ("the next
+  closed beta will take place on consoles first"; definite PC plans, K&M under consideration).
+  **Release date still TBA.**
+
+---
+
 ## FLAGGED (confirmed-to-source, but the SPECIFIC value differs across first-party sources)
 - **Year: 1996 (press release) vs "1990's" (Steam).** Both are first-party. The press release is
   specific ("Cascadia in 1996"); Steam's About text says "1990's Cascadia". Cite as "1996 (KRAFTON
@@ -116,29 +226,32 @@ SECONDARY section, and is never to be grounded as first-party). This gates the v
 
 ---
 
-## UNKNOWN / UNDETAILED - the honest-null list (what the reveal did NOT specify)
-The generator MUST honest-null on all of these; none is stated by any primary source captured:
-- **Release date** - "To be announced" (Steam). No window, no year.
-- **Closed beta date** - registration is open; no beta date/window stated.
-- **HOW roguelite progression actually works** - "retain progression", "evolve your build", "earn
-  abilities", "mix and match dozens of abilities" are stated as concepts; the MECHANICS (what
-  carries between runs, how abilities are earned/slotted, run structure, meta-progression) are NOT
-  detailed.
-- **Player counts / match format** - "multi-player" / "PvP" / "Online PvP" stated; team size, lobby
-  size, match length, whether it is battle-royale-shaped (the "Battle Royale" tag notwithstanding)
-  are NOT stated.
-- **The full world** - 5 world locations exist; only Cryptid Cove is described verbatim and one
-  more ("Inside the City") is named. The other 3 locations' names/descriptions were not captured.
-- **The cryptids / occult / cult** - "The Occult", "Body Horror", fictional "fiberglass cryptids"
-  at Cryptid Cove are stated as flavor; there is NO stated mechanic, faction, or system tied to
-  them. Do not assert cryptids/cults as gameplay systems.
-- **Abilities list** - "dozens of abilities" claimed; specific ability names/effects NOT given
-  (only the example UNORTHODOX TACTICS: car-door shields, cannibalize for health, play dead, hack
-  payphones - these are illustrative examples, not a full/verified list).
-- **Platforms beyond PC** - only the Steam (PC) page exists; no console platforms stated for DED.NET.
-- **Price / monetization / edition** - none stated.
-- **Developer-name reconciliation** - "PUBG Madison" (Steam) vs "PUBG STUDIOS" (press). Do not assert
-  one as THE studio; cite the field.
+## UNKNOWN / UNDETAILED - the honest-null list (still NOT specified after the interview)
+The generator MUST honest-null on these. (Several items that were UNKNOWN at reveal are now
+answered in CONFIRMED (ATTRIBUTED) above - match format/60-players/3-squads/~30-min, how the
+run/ROM/injury progression works, platforms PC-PS5-Xbox, monetization-is-cosmetics-only - and are
+NO LONGER unknown, but remain ATTRIBUTED to Curd/Inven Global, not direct first-party.) Still open:
+- **Release date** - "To be announced." No window, no year (confirmed still-TBA by the interview too).
+- **Closed beta date** - a console-first closed beta is coming "following the Gamescom reveal"
+  (attributed), but NO specific date/window is stated.
+- **The full world** - 5 world locations exist on ded.net; only Cryptid Cove is described verbatim,
+  one more ("Inside the City") is named, the other 3 are image-based / not text-captured. Their
+  names/descriptions are unknown.
+- **The cryptids / occult** - fictional "fiberglass cryptids" (Cryptid Cove) + "The Occult"/"Body
+  Horror" are FLAVOR; NO mechanic, faction, or system is tied to them. Do not assert cryptids as a
+  gameplay system. (The "benefactors"/viewer-intervention and "King of Killers" ARE stated systems -
+  attributed - but the cryptids specifically are set dressing.)
+- **Full ability (ROM) roster** - Curd gave ILLUSTRATIVE examples (Peekaboo, Blade Hands, Creeper,
+  Killer Vibes, boombox heal, car-door shield, doll, snake-slither, cannibalize, play dead, hack
+  payphones). The COMPLETE list, exact effects, counts, and how ROMs are found/slotted per phase are
+  NOT fully specified.
+- **Exact run length** - given as a RANGE that varies ("6 to 10" AND "8 to 12" matches); there is no
+  single fixed number - record the range + the variance, never one clean figure.
+- **Solo mode** - tested internally; "considered if demand and player base support it." NOT confirmed.
+- **Price / edition / exact monetization model** - cosmetics-only + no-P2W is stated (attributed);
+  actual price, editions, and store model are NOT stated.
+- **Developer-name reconciliation** - "PUBG Madison" (Steam field) vs "PUBG STUDIOS" (press + interview).
+  Do not assert one as THE studio; cite the field. (See NAMING NOTES.)
 
 ---
 
@@ -153,6 +266,10 @@ first-party fact:
   UNCONFIRMED against primary. (Cryptid Cove, by contrast, IS confirmed on ded.net.)
 - General press framing (roguelite-extraction comparisons, "Pacific Northwest cryptid" angle, etc.):
   interpretation only; not first-party; excluded.
+- **"Cash out by winning a chicken dinner" as the run goal** - do NOT state. This specific phrasing
+  is NOT in the Inven Global interview or any first-party source. The confirmed run/objective framing
+  is **"King of Killers"** + **"extract before injuries catch up"** (attributed). Drop the
+  chicken-dinner phrasing unless separately first-party-sourced.
 
 ---
 

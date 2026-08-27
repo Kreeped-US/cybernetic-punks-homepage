@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - DED.NET Phase 0 amendment: grounding doc enriched with the Curd/Inven interview
+
+Amended docs/dednet-firstparty-VERIFIED.md with the full PUBG Studios Creative Director Dave Curd
+interview (Inven Global, invenglobal.com/articles/25264, Doohyun "Biit" Lee, Aug 27 2026), folded
+in ATTRIBUTED per Fable Q2 (dev-to-outlet on-record statements -> primary as a record, but the
+generator MUST cite it to Curd/Inven, never surface it as anonymous first-party). Every interview
+claim was verified line-by-line against the fetched article before recording.
+- Doc is now tiered: CONFIRMED (direct first-party: Steam / ded.net / KRAFTON press release) ->
+  CONFIRMED (ATTRIBUTED: Curd/Inven) -> FLAGGED -> UNKNOWN -> SECONDARY -> NAMING NOTES.
+- ATTRIBUTED adds: match structure (60 players, 3-player squads, blue zone 2.5x2.5 km, map slightly
+  over 5x5 km, ~30 min/match, verticality, densest-BR-forest, FPS, console-first PC/PS5/Xbox);
+  runs (contestant + build route; length BOTH 8-12 AND 6-10, recorded unreconciled); ROMs (chips in
+  the head; Peekaboo/Blade Hands/Creeper/Killer Vibes/boombox-heal example build); injuries
+  (accumulate, tolerate-vs-incinerate, the loop quote); 5-phase Power Gates (simultaneous unlock,
+  no stat-inflation, strategic-opportunity abilities); wandering zone; GRUNGEHOUSE tone; DED = Dog
+  Eat Dog; King of Killers; benefactors (yellow telephone); barter-body-for-power; The Running Man;
+  licensed music (Biggie/Wu-Tang/Pixies/NIN); no-P2W cosmetics-only; and the vs-BATTLEGROUNDS
+  contrast (100 vs 60, identical-start vs different-run-stages, different camera/gunplay/mobility,
+  shared DNA desperate-survival/survival-of-the-fittest).
+- UNKNOWN (still open): release date, closed-beta date, 3 of 5 world locations (image-based/not
+  text-captured), full ROM roster, exact run length (a range, not fixed), solo mode, exact price.
+- SECONDARY (do-not-ground): "Cult Church" (press-only, GamesBeat; NOT first-party - Cryptid Cove
+  IS first-party); "cash out by winning a chicken dinner" phrasing (in NO source - confirmed goal
+  is King of Killers / extract).
+- PRECISION: "first-person" recorded as "FPS" only (the article says the camera is "fundamentally
+  different" from BATTLEGROUNDS but does not state first-person-only). The ATTRIBUTED section is
+  headed with the attribution rule so the generator surfaces it attributed, never anonymous
+  first-party. Direct-first-party (Steam/ded.net/press) facts stay in the original CONFIRMED tier.
+- Release date remains TBA (no window) across ALL sources incl. the interview.
+- NEXT (NOT built): the DED.NET config + bespoke honest generator grounding strictly in this doc
+  (excerpt-only; honest-null the UNKNOWN list; attribute the ATTRIBUTED tier; never state SECONDARY
+  as first-party).
+
+---
 ## 2026-08-27 - DED.NET vertical Phase 0: verified source doc committed (grounding foundation)
 
 Committed docs/dednet-firstparty-VERIFIED.md - the primary-source grounding foundation for the
