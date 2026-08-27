@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - VANTAGE discourse-honesty gate Phase 1 (detection + flag-for-review, non-blocking)
+
+Built the VANTAGE discourse-honesty gate per Fable Q1. Phase 1 is DETECTION ONLY: it runs and
+flags for a human reviewer, NEVER blocks and never touches is_published. VANTAGE stays
+is_published:false + human-approved; the gate is the structural backstop that must exist
+BEFORE any Phase-2 automation removes that human. NOT automated in this phase.
+- lib/network/vantageGate.js (pure, node-testable leaf; same .js-ESM convention as vantage.js).
+  Enforces Fable Q1 three tiers:
+  T1 attribution-survival (ASSERTED): sourceReference(row) mirrors the DiscourseArticle
+     "Sourced from X" bar, which renders by construction from creator_info.name + source_url.
+     survives = hasName || hasUrl -> survives:false on a dropped-source row (the failure to catch).
+  T2 per-claim-attribution DETECTOR: detectUnattributedClaims(body) flags sentences carrying
+     reception/settled-language (largely settled, consensus, everyone agrees, undisputed, ...)
+     with NO nearby attribution cue (says/argues/in his read/many players argue/the community).
+     Catches the July "largely settled" slip. Tuned to that failure class, not every declarative
+     sentence (keeps VANTAGE framing from being noise).
+  T3 unverified-stat DETECTOR: detectUnverifiedStats(body, sourceText) flags stat-shaped numbers
+     (percentages, comma-grouped/4+-digit counts, magnitude suffixes, "<n> players/viewers/...")
+     NOT present verbatim in the vetted source_text, excluding dates/years/version labels.
+     Catches the July 2,263/50,000 fabrication.
+  runVantageGate(row, sourceText) orchestrates; formatGateReport prints an advisory report.
+- Wired non-blocking into scripts/gen-vantage-discourse.mjs + gen-vantage-discourse-auto.mjs:
+  a formatGateReport(runVantageGate(...)) console print next to the generated draft (import +
+  one console line each). It flags for the human; it does not gate the insert.
+- PROVEN: lib/network/vantageGate.test.mjs, 15/15. T1 dropped-source fails survival; T2 flags
+  the "largely settled" slip and passes the attributed/framing versions; T3 flags 2,263/50,000
+  not-in-source and excludes verbatim-in-source + dates; clean attributed stat-free piece = zero
+  flags; a poisoned piece flags on all three tiers.
+- HONEST RESIDUE (stays with the human, NOT caught by the gate): T2 misses reality-claims phrased
+  WITHOUT settled-language (e.g. a flat "the game is dying" with no cue); T3 misses
+  in-source-but-unverifiable stats (Fable's stricter "even attributed" concern). So the gate
+  NARROWS the human review job, does not eliminate it.
+- PHASE 2 (separate, NOT built): automation must be "gate flags + human reviews the residue",
+  NOT hands-off. Tune the T2 lexicon / T3 shapes later from OBSERVED behavior on real VANTAGE
+  output, not imagined cases.
+
+---
 ## 2026-08-27 - DMZ source audit: CLEAN, no remediation (item closed)
 
 Per Fable Q2, audited live DMZ content for non-first-party/press citations. Result: clean.

@@ -36,6 +36,7 @@ import { readFileSync } from 'node:fs';
 import { ARTICLE_MODEL } from '../lib/models.js';
 import { VANTAGE_DISCOURSE_SYSTEM_PROMPT, VANTAGE_DISCOURSE_TOOL, buildVantageDiscoursePrompt } from '../lib/network/vantage.js';
 import { logCoverageShadow } from '../lib/coverageShadow.js';
+import { runVantageGate, formatGateReport } from '../lib/network/vantageGate.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
 // Unlike gen-dmz-news.mjs this does NOT early-return on ANTHROPIC_API_KEY, since
@@ -206,6 +207,11 @@ async function main() {
   console.log('---------------------------------------------------------------');
   console.log(row.body);
   console.log('===============================================================');
+  console.log('');
+
+  // VANTAGE HONESTY GATE (Phase 1 -- DETECTION, non-blocking). Runs and prints flags for the
+  // human reviewer; it NEVER blocks or touches is_published. The human is still the backstop.
+  console.log(formatGateReport(runVantageGate(row, directive.source_text)));
   console.log('');
 
   if (dry) {

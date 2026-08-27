@@ -39,6 +39,7 @@ import { gatherYouTube } from '../lib/gather/youtube.js';
 import { filterGameVideos } from '../lib/gather/relevance.js';
 import { getGameConfig } from '../lib/games/index.js';
 import { logCoverageShadow } from '../lib/coverageShadow.js';
+import { runVantageGate, formatGateReport } from '../lib/network/vantageGate.js';
 
 var GAME_SLUG = 'marathon';   // the gather is Marathon-only
 var MIN_DESC_CHARS = 300;     // eligibility floor: a description under ~300 chars is
@@ -215,6 +216,9 @@ async function main() {
     };
 
     console.log('  DRAFT: ' + row.headline);
+    // VANTAGE HONESTY GATE (Phase 1 -- DETECTION, non-blocking). Prints flags for the human
+    // reviewer; never blocks or touches is_published. Higher-risk auto path -> flags matter more.
+    console.log(formatGateReport(runVantageGate(row, directiveObj.source_text)));
     if (dry) {
       console.log('  (dry -- not written) source_url=' + wurl);
       console.log('  ----------------------------------------------------------');
