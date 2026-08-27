@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-08-27 - DMZ source audit: CLEAN, no remediation (item closed)
+
+Per Fable Q2, audited live DMZ content for non-first-party/press citations. Result: clean.
+- All 8 published DMZ articles (feed_items, game_slug='dmz') cite the real first-party Deep
+  Dive URL (callofduty.com/blog/2026/06/...dmz-deep-dive), source='DEEP DIVE'. Zero press
+  citations in source_url.
+- Body scan for press outlet references (Windows Central / VideoGamer): zero rows. No
+  press-sourced facts in CNP voice, attributed or laundered.
+- Current gen-dmz-news / persist-dmz-news scripts confirmed (twice) to use only the Deep
+  Dive URL - no press-citation path in current code.
+CONCLUSION: DMZ live content is first-party-sourced and clean. No remediation. The earlier
+"DMZ fabricates Windows Central/VideoGamer URLs" concern is CLOSED - disproven against both
+code and live DB; it does not exist. Do not re-raise absent new evidence.
+
+---
 ## 2026-08-26 - Root page reflects Wardogs coverage-live (Step 2: tile + count + hero)
 
 app/page.js updated so the network root honestly shows Wardogs as a covered vertical now that
