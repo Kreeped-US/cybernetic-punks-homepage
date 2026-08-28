@@ -42,6 +42,28 @@ export const wardogs = {
   status: 'pre-launch',
   launch_date: '2026-09-10',
 
+  // FOOTER PRESENTATION (Phase 1; config DATA ONLY -- NOTHING renders this yet). legal is
+  // VERBATIM from components/wardogs/WardogsDisclaimer.js (Bulkhead/Team17). description is
+  // Wardogs' own metadata.description (app/wardogs/layout.js). The POWERED BY roster is
+  // NETWORK-level (the full desk, roster.js EDITOR_ORDER), read from roster.js by the footer and
+  // identical on all 4 games -- NOT stored per game. links are Wardogs' ACTUAL sections only --
+  // no tool/entity hubs exist yet, so no DISCOVER column.
+  footer: {
+    description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the CyberneticPunks game network.',
+    legal: [
+      'CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY BULKHEAD OR TEAM17.',
+      'WARDOGS IS A TRADEMARK OF ITS RESPECTIVE OWNER.',
+    ],
+    links: {
+      explore: [
+        { label: 'Field Intel', href: '/wardogs/field-intel' },
+        { label: 'Economy',     href: '/wardogs/economy'     },
+        { label: 'Systems',     href: '/wardogs/systems'     },
+        { label: 'Arsenal',     href: '/wardogs/arsenal'     },
+      ],
+    },
+  },
+
   // EDITORIAL ROSTER -- mirrors DMZ exactly: NEXUS ONLY. News / official-announcement
   // tracking is the one editorial job that exists pre-launch (no verified play data yet).
   // Read by the cron roster gate (app/api/cron/route.js) -- its ABSENCE would crash the

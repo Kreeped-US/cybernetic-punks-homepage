@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Footer generalization PHASE 1 of 4: per-game footer config (DATA ONLY)
+
+Added the per-game config fields a generalized footer needs, to all 4 game configs
+(lib/games/marathon.js, dmz.js, wardogs.js, pubg-dednet.js). CONFIG DATA ONLY: no component
+touched, no Footer.js change, NOTHING renders differently yet. This is the data prerequisite for
+Phase 2 (parameterize the shared Footer.js by game). Each field is HONEST to its game -- no
+Marathon values bleeding into the others.
+- Shape: one footer:{ description, legal, links } object per game, inserted after the lifecycle
+  (status/launch_date) block.
+- LEGAL (the biggest prior gap -- was hardcoded in 4 places): sourced VERBATIM from each game's
+  existing correct disclaimer -- marathon from Footer.js (Bungie), dmz from DmzDisclaimer.js
+  (Activision), wardogs from WardogsDisclaimer.js (Bulkhead/Team17). DED.NET is a 3-part legal:
+  (1) an AUTHORED affiliation line ("...NOT AFFILIATED WITH OR ENDORSED BY KRAFTON OR PUBG
+  STUDIOS.") built from the exact DMZ/Wardogs template with publisher names verbatim from
+  DED.NET's own official-sourced text (decision 1B); (2) a HEDGED trademark line matching the
+  Wardogs pattern ("PUBG AND PUBG: DED.NET ARE TRADEMARKS OF THEIR RESPECTIVE OWNERS.", decision
+  ii -- no unverified specific owner); (3) the VERBATIM provenance paragraph from the pubg layout.
+- EDITOR ROSTER: the POWERED BY roster is NETWORK-LEVEL, NOT per-game. There is NO footer.editors
+  array in any config (an earlier pass added per-game arrays; they were removed). Phase 2 reads
+  the full desk from lib/editors/roster.js (EDITOR_ORDER, all 6: cipher, nexus, dexter, ghost,
+  miranda, broker) directly, so the desk is one source, not 4 copies that drift. roster.js is
+  UNTOUCHED -- it already carries per-editor status, so Broker (status incoming) can be rendered
+  dimmed. BROKER = decision (b): all 6 shown, Broker dimmed/incoming -- a PHASE 2 RENDER rule the
+  roster.js status field already supports (no Phase 1 config change).
+- DESCRIPTION (brand blurb): marathon verbatim from Footer.js (one deviation: the em-dash is
+  normalized to a hyphen for house style); its "six AI editors" is CORRECT with the full 6-desk.
+  dmz/wardogs/pubg use each game's own metadata.description.
+- LINKS: authored per game, REAL routes only (stay per-game since sections genuinely differ).
+  marathon reproduces its current Footer.js EXPLORE (8) + DISCOVER (6) verbatim (unchanged). dmz
+  EXPLORE = 5 nav-visible sections + DISCOVER = 5 real entity/tool hubs (items/keys/missions/pois/
+  builds, confirmed real content pages). wardogs + pubg = EXPLORE only (4 sections each; no tool
+  hubs exist yet). Hidden sections (dmz meta/discourse: hideFromNav) omitted.
+- CROSS-GAME links: still ROOT_GAMES-driven (label/route/accent). The hardcoded publisher +
+  lifecycle sublabels are a Phase 2 concern -- RECOMMENDATION: put the publisher string in game
+  config, derive the lifecycle sublabel from status/launch_date (both present on all 4), keep
+  ROOT_GAMES for peer label/route/accent. NOT built in Phase 1.
+- VERIFY: all 4 configs gain footer:{}; no footer.editors anywhere; roster.js unchanged; DED.NET
+  legal = affiliation + hedged trademark + provenance; build green; house-style clean (straight
+  hyphens, 0 em-dash / 0 backtick in added lines); only lib/games/*.js touched.
+
+---
+
+
 ## 2026-08-28 - GSC keyword review UI extended to all 4 games
 
 Extended the GSC keyword review surface to all 4 games, closing the audit's one gap: the data

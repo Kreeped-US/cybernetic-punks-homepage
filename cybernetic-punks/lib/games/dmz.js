@@ -58,6 +58,38 @@ export const dmz = {
   status: 'pre-launch',
   launch_date: '2026-10-23',
 
+  // FOOTER PRESENTATION (Phase 1; config DATA ONLY -- NOTHING renders this yet). legal is
+  // VERBATIM from components/dmz/DmzDisclaimer.js (Activision). description is DMZ's own
+  // metadata.description (app/dmz/layout.js). The POWERED BY roster is NOT here -- it is
+  // NETWORK-level (the full desk, roster.js EDITOR_ORDER), read from roster.js by the footer and
+  // identical on all 4 games. links are DMZ's ACTUAL routes only -- no Marathon-style pages DMZ
+  // does not have. EXPLORE =
+  // the nav-visible sections; the hidden sections (meta, discourse: hideFromNav) are omitted.
+  // DISCOVER = the standalone entity/tool hubs that genuinely exist as real content pages.
+  footer: {
+    description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for the DMZ. Part of the CyberneticPunks game network.',
+    legal: [
+      'CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY ACTIVISION.',
+      'CALL OF DUTY AND MODERN WARFARE ARE TRADEMARKS OF ACTIVISION PUBLISHING, INC.',
+    ],
+    links: {
+      explore: [
+        { label: 'Field Intel',   href: '/dmz/field-intel' },
+        { label: 'Loadouts',      href: '/dmz/loadouts'    },
+        { label: '3D Printer',    href: '/dmz/printer'     },
+        { label: 'FOB',           href: '/dmz/fob'         },
+        { label: 'Hajin Regions', href: '/dmz/regions'     },
+      ],
+      discover: [
+        { label: 'Items',    href: '/dmz/items'    },
+        { label: 'Keys',     href: '/dmz/keys'     },
+        { label: 'Missions', href: '/dmz/missions' },
+        { label: 'POIs',     href: '/dmz/pois'     },
+        { label: 'Builds',   href: '/dmz/builds'   },
+      ],
+    },
+  },
+
   // X (official paid API) intake for VANTAGE discourse -- Stage 1 (mirrors the
   // marathon.sources.x shape). watchlist = TRUSTED seed accounts; searchQueries =
   // the games-scoped discovery door. START SMALL -- Justin drops the full vetted

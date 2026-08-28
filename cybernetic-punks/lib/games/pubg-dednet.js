@@ -46,6 +46,33 @@ export const pubgDednet = {
   status: 'revealed',
   launch_date: null,
 
+  // FOOTER PRESENTATION (Phase 1; config DATA ONLY -- NOTHING renders this yet). legal has THREE
+  // parts: (1) an AFFILIATION line (per decision 1B) AUTHORED from the exact sibling template
+  // used by DMZ/Wardogs, with the publisher names (KRAFTON / PUBG Studios) that appear verbatim
+  // in DED.NET's own official-sourced text; (2) a HEDGED trademark line (decision ii) matching
+  // the Wardogs pattern -- "TRADEMARKS OF THEIR RESPECTIVE OWNERS", no unverified specific owner;
+  // and (3) the VERBATIM provenance paragraph from app/pubg-dednet/layout.js. description is
+  // DED.NET's own metadata.description. The POWERED BY roster is
+  // NETWORK-level (the full desk, roster.js EDITOR_ORDER), read from roster.js by the footer and
+  // identical on all 4 games -- NOT stored per game. links are DED.NET's ACTUAL sections only --
+  // no tool/entity hubs exist yet, so no DISCOVER.
+  footer: {
+    description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Part of the CyberneticPunks game network.',
+    legal: [
+      'CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY KRAFTON OR PUBG STUDIOS.',
+      'PUBG AND PUBG: DED.NET ARE TRADEMARKS OF THEIR RESPECTIVE OWNERS.',
+      'PUBG: DED.NET was revealed at gamescom 2026 and is pre-launch (release date TBA, closed beta incoming). Everything here is drawn from official KRAFTON / PUBG Studios material; gameplay detail from the PUBG Studios developer interview is attributed to its source, and specific numbers stay flagged until verified in-game.',
+    ],
+    links: {
+      explore: [
+        { label: 'Field Intel', href: '/pubg-dednet/field-intel' },
+        { label: 'Systems',     href: '/pubg-dednet/systems'     },
+        { label: 'World',       href: '/pubg-dednet/world'       },
+        { label: 'Arsenal',     href: '/pubg-dednet/arsenal'     },
+      ],
+    },
+  },
+
   // EDITORIAL ROSTER -- NEXUS only, mirroring DMZ/Wardogs. News / official-announcement tracking is
   // the one editorial job that exists pre-launch (no verified play data). Read by the cron roster
   // gate (config.editorial.editors); DED.NET stays OFF the auto-cron (Phase 2 uses a manual,

@@ -56,6 +56,45 @@ export const marathon = {
   status: 'live',
   launch_date: null,
 
+  // FOOTER PRESENTATION (Phase 1 of the footer generalization -- config DATA ONLY; NOTHING
+  // renders this yet). Per-game so the shared footer can be parameterized without Marathon
+  // values bleeding into other games. legal + description + link labels are sourced VERBATIM
+  // from the current Marathon footer (components/Footer.js) so Marathon renders identically
+  // when Phase 2 wires this in (the ONE deviation: the description's em-dash is normalized to
+  // a hyphen for house style). NOTE: the POWERED BY editor roster is NOT stored here -- it is
+  // NETWORK-LEVEL (the full desk, all 6 in roster.js EDITOR_ORDER), read from roster.js directly
+  // by the footer and identical on all 4 games; there is no per-game footer.editors array.
+  footer: {
+    description: 'Marathon intelligence hub. Autonomous editorial coverage from six AI editors. Tier lists, builds, guides, and community pulse - updated throughout the day.',
+    // Verbatim from the current Footer.js Bungie disclaimer (two lines).
+    legal: [
+      'NOT AFFILIATED WITH BUNGIE',
+      'MARATHON IS A TRADEMARK OF BUNGIE, INC.',
+    ],
+    // EXPLORE + DISCOVER copied VERBATIM from Footer.js EXPLORE_LINKS / DISCOVER_LINKS (labels +
+    // hrefs unchanged) so Marathon's footer is byte-identical when Phase 2 renders it.
+    links: {
+      explore: [
+        { label: 'INTEL FEED',     href: '/marathon/intel'   },
+        { label: 'META TIER LIST', href: '/marathon/meta'    },
+        { label: 'BUILD ADVISOR',  href: '/marathon/advisor' },
+        { label: 'SHELLS',         href: '/marathon/shells'  },
+        { label: 'FIELD GUIDES',   href: '/marathon/guides'  },
+        { label: 'RANKED GUIDE',   href: '/marathon/ranked'  },
+        { label: 'EDITORS',        href: '/editors' },
+        { label: 'ABOUT',          href: '/about'   },
+      ],
+      discover: [
+        { label: 'RISING CREATORS', href: '/marathon/rising'      },
+        { label: 'LEADERBOARD',     href: '/marathon/leaderboard' },
+        { label: 'STATS TRACKER',   href: '/marathon/stats'       },
+        { label: 'FACTIONS',        href: '/marathon/factions'    },
+        { label: 'SITREP',          href: '/marathon/sitrep'      },
+        { label: 'SERVER STATUS',   href: '/marathon/status'      },
+      ],
+    },
+  },
+
   sources: {
     steamAppId: '3065800',
 
