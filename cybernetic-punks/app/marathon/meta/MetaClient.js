@@ -319,17 +319,14 @@ async function generateTierImage(tierItems, runnerTag) {
   }
   ctx.fillText(titleText, PAD, 92);
 
-  // Subtitle. For the LIVE list (no user tag) this is the METHODOLOGY SIGNAL -- the transparency
-  // differentiator, right on the shared artifact ("ranked by the numbers", not vibes). It is
-  // honest-safe across the mixed image: weapons are stat-derived, shells derive from ranked
-  // tiers -- both by the numbers. A USER-built list (hasTag) is their own picks, so it does NOT
-  // claim the methodology; it keeps the plain identity line.
+  // Subtitle: a plain IDENTITY line. This generator produces ONLY the user-built CREATE YOUR OWN
+  // image (handleGenerate is its sole caller), so it must NOT claim the methodology -- the user
+  // dragged these picks; they are not "ranked by the numbers". That methodology signal belongs
+  // solely to the model-derived By-Class image (generateBandedTierImage). Wordmark, URL, and
+  // tagline stay on both images; only the methodology claim is withheld here.
   ctx.fillStyle = COL.green;
   ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText(
-    hasTag ? ('MARATHON META TIER LIST · ' + CURRENT_SEASON) : ('RANKED BY THE NUMBERS · ' + CURRENT_SEASON),
-    PAD, 112
-  );
+  ctx.fillText('CUSTOM TIER LIST · ' + CURRENT_SEASON, PAD, 112);
 
   // header divider
   ctx.fillStyle = COL.border;

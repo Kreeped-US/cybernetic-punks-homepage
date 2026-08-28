@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Tier-list fix: methodology line no longer leaks onto user-built share images
+
+Fixed the "RANKED BY THE NUMBERS" methodology claim leaking onto CREATE YOUR OWN (user-built)
+share images - caught by an operator real-browser test (an untagged custom list showed the
+methodology line).
+- Root cause: generateTierImage's subtitle keyed off hasTag (tagged vs untagged), NOT
+  derived-vs-built - so an anonymous untagged custom list fell into the else branch printing
+  "RANKED BY THE NUMBERS", an overclaim (the user's hand-dragged picks labeled as
+  model-derived). generateTierImage is only ever called by the CREATE YOUR OWN builder
+  (handleGenerate), so it is ALWAYS user-built.
+- Fix (app/marathon/meta/MetaClient.js): its subtitle is now an unconditional plain "CUSTOM TIER
+  LIST - SEASON 2", never the methodology claim. The title still distinguishes tagged
+  ([TAG]'S TIER LIST) vs untagged (MARATHON TIER LIST).
+- The derived By-Class image (generateBandedTierImage) correctly KEEPS "RANKED BY THE NUMBERS"
+  (untouched) - it is the only image whose tiers are actually model-derived. The methodology
+  claim now appears ONLY where it is true.
+- All other branding preserved on BOTH images: wordmark (CYBERNETIC PUNKS), URL
+  (CYBERNETICPUNKS.COM), tagline (NO HYPE. JUST INTEL.).
+- VERIFY: build green; house-style clean (0 backticks, 0 em-dashes in the edited region; the
+  middot separator is pre-existing shared style). Operator to eyeball both images on a real
+  browser (headless cannot rasterize the canvas): an untagged CREATE YOUR OWN list should now
+  read "CUSTOM TIER LIST"; the By-Class down-arrow IMAGE should still read "RANKED BY THE
+  NUMBERS".
+
+---
+
+
 ## 2026-08-28 - DB cleanup Part 2: DEXTER reload misroute fix + deferred-column cleanup
 
 Fixed the latent DEXTER reload misroute and made the 5 deferred dead weapon_stats columns
