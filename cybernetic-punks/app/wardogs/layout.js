@@ -34,9 +34,8 @@ export default function WardogsLayout({ children }) {
     >
       <WardogsNav />
       {children}
-      {/* Phase 3: the generalized network Footer (game="wardogs") REPLACES the standalone
-          WardogsDisclaimer -- the footer's legal row now carries the same notice, so legal shows
-          ONCE. components/wardogs/WardogsDisclaimer.js stays until Phase 4. */}
+      {/* Network Footer (game="wardogs"): its legal row carries this game's legal, so legal
+          shows ONCE. Replaced the former standalone WardogsDisclaimer, deleted in Phase 4. */}
       <Footer game="wardogs" />
     </div>
   );

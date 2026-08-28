@@ -42,8 +42,10 @@ export const wardogs = {
   status: 'pre-launch',
   launch_date: '2026-09-10',
 
-  // FOOTER PRESENTATION (Phase 1; config DATA ONLY -- NOTHING renders this yet). legal is
-  // VERBATIM from components/wardogs/WardogsDisclaimer.js (Bulkhead/Team17). description is
+  // FOOTER PRESENTATION. This config is CONSUMED BY the generalized Footer (components/Footer.js,
+  // game="wardogs"), which renders it as of Phase 3. legal is the Wardogs fan-site notice
+  // (Bulkhead/Team17), lifted verbatim from the former standalone WardogsDisclaimer (deleted
+  // Phase 4); it now lives in config and renders in the footer's legal row. description is
   // Wardogs' own metadata.description (app/wardogs/layout.js). The POWERED BY roster is
   // NETWORK-level (the full desk, roster.js EDITOR_ORDER), read from roster.js by the footer and
   // identical on all 4 games -- NOT stored per game. links are Wardogs' ACTUAL sections only --

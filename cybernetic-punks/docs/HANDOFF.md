@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Footer generalization PHASE 4 of 4 (final): delete the standalone disclaimers
+
+Deleted the two now-unused standalone disclaimer components -- the last step of the footer
+generalization. Their RENDERS were removed in Phase 3 (e4dc6f9) when each game layout adopted the
+generalized Footer; Phase 4 deletes the orphaned files.
+- CONFIRM-THEN-DELETE: grepped the whole codebase first. The only references to DmzDisclaimer /
+  WardogsDisclaimer were the component files themselves + comments -- NO live import, NO
+  <...Disclaimer/> render anywhere. Confirmed zero live references, then deleted:
+  components/dmz/DmzDisclaimer.js + components/wardogs/WardogsDisclaimer.js (the now-empty
+  components/wardogs/ dir went with it). The pubg grep hits were the landing page metadata
+  description (SEO) + a page-body provenance <p> -- neither a disclaimer-component reference nor
+  the layout remnant (Phase 3 removed that), so nothing orphaned.
+- COMMENT SCRUB (dangling refs this deletion created): fixed the 2 layout comments (they said the
+  files "stay until Phase 4") and the 2 config provenance comments (lib/games/dmz.js +
+  wardogs.js) that cited the now-deleted files and still claimed "nothing renders yet" (false
+  since Phase 3). Config VALUES unchanged -- comments only. No dangling path refs remain in source.
+- VERIFY: grep-confirmed zero live references before deletion; both files gone; build green (fresh
+  build regenerated .next without the deleted chunks -- no broken import); house-style clean. Legal
+  still renders ONCE per game via the footer -- provably unchanged, since the deleted files were
+  not imported or rendered as of Phase 3, so removing them cannot alter any page output. Marathon
+  never used these.
+- FLAGGED, NOT TOUCHED (out of scope): the pubg landing page (app/pubg-dednet/page.js) has its own
+  provenance <p> that overlaps the footer legal on that one page -- PRE-EXISTING (the landing
+  carried both a layout-provenance and this page-provenance before Phase 3 too), not created here.
+
+FOOTER GENERALIZATION COMPLETE (4 phases): bc87d57 (P1 config) -> bd1934b (P1 wording) -> aa5933a
+(P2 parameterize Footer.js) -> e4dc6f9 (P3 rollout to the 3 games) -> this commit (P4 delete
+disclaimers). All 4 games now render one generalized, per-game-configured footer; Marathon stayed
+byte-identical throughout (SSR-diff-proven at each phase).
+
+---
+
+
 ## 2026-08-28 - Footer generalization PHASE 3 of 4: roll the footer onto dmz/wardogs/pubg-dednet
 
 Rolled the parameterized footer onto dmz/wardogs/pubg-dednet (Part A config + Part C rollout).

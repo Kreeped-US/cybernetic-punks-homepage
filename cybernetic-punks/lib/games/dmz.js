@@ -58,8 +58,10 @@ export const dmz = {
   status: 'pre-launch',
   launch_date: '2026-10-23',
 
-  // FOOTER PRESENTATION (Phase 1; config DATA ONLY -- NOTHING renders this yet). legal is
-  // VERBATIM from components/dmz/DmzDisclaimer.js (Activision). description is DMZ's own
+  // FOOTER PRESENTATION. This config is CONSUMED BY the generalized Footer (components/Footer.js,
+  // game="dmz"), which renders it as of Phase 3. legal is the DMZ fan-site notice (Activision),
+  // lifted verbatim from the former standalone DmzDisclaimer (deleted Phase 4); it now lives in
+  // config and renders in the footer's legal row. description is DMZ's own
   // metadata.description (app/dmz/layout.js). The POWERED BY roster is NOT here -- it is
   // NETWORK-level (the full desk, roster.js EDITOR_ORDER), read from roster.js by the footer and
   // identical on all 4 games. links are DMZ's ACTUAL routes only -- no Marathon-style pages DMZ

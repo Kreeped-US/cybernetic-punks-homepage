@@ -35,9 +35,9 @@ export default function DmzLayout({ children }) {
     >
       <DmzNav />
       {children}
-      {/* Phase 3: the generalized network Footer (game="dmz") REPLACES the standalone
-          DmzDisclaimer -- the footer's legal row now carries the same notice, so legal shows
-          ONCE (never twice, never zero). components/dmz/DmzDisclaimer.js stays until Phase 4. */}
+      {/* Network Footer (game="dmz"): its legal row carries this game's legal, so legal shows
+          ONCE (never twice, never zero). Replaced the former standalone DmzDisclaimer, deleted
+          in Phase 4. */}
       <Footer game="dmz" />
     </div>
   );
