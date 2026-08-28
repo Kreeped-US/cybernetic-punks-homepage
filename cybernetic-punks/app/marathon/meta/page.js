@@ -27,16 +27,19 @@ import { supabase } from '@/lib/supabase';
 import MetaClient from './MetaClient';
 import ViewTracker from '@/components/ViewTracker';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
+import { entitySlugFor } from '@/lib/coverage';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Meta Tier List — Best Weapons & Shells (Live)',
-  description: 'Live Marathon meta tier list ranking every weapon and Runner Shell. See what\'s S-tier, A-tier, and what\'s falling — updated throughout the day.',
-  keywords: 'Marathon tier list, Marathon meta, Marathon best weapons, Marathon S-tier, Marathon weapons ranked, Marathon shells tier list, best Marathon weapons, Marathon meta tier list, Marathon ranked tier list, Marathon weapon tier list 2026, Marathon top weapons, Marathon top shells, Marathon dominant builds, Marathon meta snapshot, Marathon weapon ranking, what is the meta in Marathon',
+  // Weapon-forward intent (front-load "weapon tier list" / "best weapons"; "meta" is secondary).
+  // 54 chars (A2 ceiling 60). Straight hyphen (house style -- the old em-dash was a violation).
+  title: 'Marathon Weapon Tier List - Best Weapons Ranked (Live)',
+  description: 'Live Marathon weapon tier list - every weapon and Runner Shell ranked by the numbers. See what\'s S-tier, A-tier, and what\'s falling, updated throughout the day.',
+  keywords: 'best Marathon weapons, Marathon weapon tier list, Marathon tier list, Marathon weapons ranked, Marathon S-tier weapons, Marathon best guns, Marathon weapon ranking, Marathon meta tier list, Marathon shells tier list, Marathon top weapons, Marathon weapon tier list 2026, what are the best weapons in Marathon',
   openGraph: {
-    title: 'Marathon Meta Tier List — Best Weapons & Shells (Live) | CyberneticPunks',
-    description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
+    title: 'Marathon Weapon Tier List - Best Weapons Ranked (Live) | CyberneticPunks',
+    description: 'Live Marathon weapon tier list - every weapon and shell ranked by the numbers. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/marathon/meta',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -44,8 +47,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Meta Tier List — Best Weapons & Shells (Live) | CyberneticPunks',
-    description: 'Live Marathon tier list — every weapon and shell ranked. Updated throughout the day.',
+    title: 'Marathon Weapon Tier List - Best Weapons Ranked (Live) | CyberneticPunks',
+    description: 'Live Marathon weapon tier list - every weapon and shell ranked by the numbers. Updated throughout the day.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/meta' },
 };
@@ -139,6 +142,28 @@ export default async function MetaPage() {
     return (m && m.tier) ? Object.assign({}, row, { tier: m.tier }) : row;
   });
 
+  // CRAWLABLE transparency mirror. The interactive By-Class view + axis breakdown (MetaClient)
+  // are client-only (gated behind React state), so the "why is X S-tier: Firepower N ..." content
+  // -- the long-tail SEO moat -- is invisible to crawlers. This groups the model output by band +
+  // tier for a SERVER-RENDERED text version below. Real SSR HTML; reflects the actual model axes
+  // (same values the on-click panel shows), so it stays honest.
+  const SEO_BANDS = [
+    { key: 'Close', label: 'Close Range', note: 'Close-range weapons (shotguns, SMGs) are ranked on burst / per-trigger lethality.' },
+    { key: 'Mid', label: 'Mid Range', note: 'Mid-range weapons (assault + precision rifles, pistols) are ranked on sustained DPS, accuracy, and handling.' },
+    { key: 'Long', label: 'Long Range', note: 'Long-range weapons (snipers) are ranked on sustained DPS, precision, and handling.' },
+    { key: 'Special', label: 'Special', note: 'Power weapons (railguns, LMGs) are ranked on sustained DPS.' },
+  ];
+  const SEO_TIERS = ['S', 'A', 'B', 'C', 'D'];
+  const seoByBand = {};
+  weapons.forEach(function (w) {
+    const m = weaponModel[w.name];
+    if (!m || !m.band || m.band === 'EXCLUDE' || !m.tier) return;
+    if (!seoByBand[m.band]) seoByBand[m.band] = {};
+    if (!seoByBand[m.band][m.tier]) seoByBand[m.band][m.tier] = [];
+    seoByBand[m.band][m.tier].push({ name: w.name, type: w.weapon_type, axes: m.axes || {} });
+  });
+  const axVal = function (v) { return (v == null) ? 'N/A' : Math.round(v); };
+
   // -- JSON-LD SCHEMAS --
   // Built from the live data, so they reflect actual tier list state.
 
@@ -197,50 +222,32 @@ export default async function MetaPage() {
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Marathon Meta Tier List — Top Weapons and Shells',
-    description: 'Ranked tier list of Marathon weapons and Runner Shells based on current meta analysis.',
+    name: 'Best Marathon Weapons - Tier List',
+    description: 'Marathon weapons and Runner Shells ranked by the numbers - the current best-weapons tier list.',
     numberOfItems: sortedForSchema.length,
     itemListOrder: 'https://schema.org/ItemListOrderDescending',
     itemListElement: sortedForSchema.map(function(item, i) {
-      return {
+      var type = (item.type || '').toLowerCase();
+      var url = type === 'weapon'
+        ? 'https://cyberneticpunks.com/marathon/weapons/' + entitySlugFor('weapon', item.name)
+        : type === 'shell'
+          ? 'https://cyberneticpunks.com/marathon/shells/' + entitySlugFor('shell', item.name)
+          : null;
+      var li = {
         '@type': 'ListItem',
         position: i + 1,
         name: item.name,
-        description: (item.tier ? item.tier + '-tier ' : '') + (item.type || 'item') + (item.note ? ' — ' + item.note : ''),
+        description: (item.tier ? item.tier + '-tier ' : '') + (item.type || 'item') + (item.note ? ' - ' + item.note : ''),
       };
+      // url -> the entity page, so the ranked list links its items (rich-result eligibility).
+      if (url) li.url = url;
+      return li;
     }),
   };
 
-  // FAQPage schema -- targets the tier query cluster. Answers MIRROR the visible
-  // "How this tier list works" section below and are HONEST: tier letters are
-  // editor-assigned (NEXUS, daily), NOT human-verified; underlying stats are
-  // verified where a badge marks them. Exactly one FAQPage block on the page.
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'What is the best weapon in Marathon right now?',
-        acceptedAnswer: { '@type': 'Answer', text: 'The current S-tier picks on the live tier list are the strongest weapons in the meta. Tier letters are assigned by our NEXUS editor and refreshed daily, so check the S-tier section for the up-to-date list rather than a fixed answer.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'What does S-tier mean in a Marathon tier list?',
-        acceptedAnswer: { '@type': 'Answer', text: 'S-tier marks the strongest, meta-defining weapons and Runner Shells. Tiers run from S (best) down through A, B, C, and D. S and A are the picks that most reliably win engagements in the current meta.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'How often is the Marathon tier list updated?',
-        acceptedAnswer: { '@type': 'Answer', text: 'It is refreshed throughout the day. Tier letters are reassigned by our NEXUS editor on a daily cadence, and sooner when a balance patch lands. The trend arrow on each entry shows whether it has risen or fallen over the past 48 hours.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Are the Marathon tiers verified?',
-        acceptedAnswer: { '@type': 'Answer', text: 'The tier letters are editorial calls assigned by our NEXUS editor from gameplay, community, and patch signals -- they are not human-verified rankings. The underlying weapon and shell stats ARE verified against the live game wherever an entry shows a Stats Verified badge.' },
-      },
-    ],
-  };
+  // NOTE: NO FAQPage schema. Doctrine A1 bans @type:FAQPage sitewide, so it was removed
+  // (2026-08-28). The visible "Frequently asked" prose below stays -- it is fine as page
+  // content; only the schema is banned.
 
   return (
     <main style={{ minHeight: '100vh', background: '#121418', color: '#fff', paddingTop: 48, paddingBottom: 80 }}>
@@ -251,7 +258,6 @@ export default async function MetaPage() {
       {sortedForSchema.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
       )}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Visible breadcrumb -- semantic nav for accessibility + E-E-A-T signal */}
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1200, margin: '0 auto' }}>
@@ -274,22 +280,23 @@ export default async function MetaPage() {
       </Suspense>
 
       {/* HOW THIS TIER LIST WORKS -- server-rendered (crawlable) tier definitions +
-          honest methodology + visible FAQ that mirrors the FAQPage schema above.
-          Honesty is the moat: tier LETTERS are editor-assigned (NEXUS, daily), NOT
-          human-verified; underlying STATS are verified where an entry is badged. */}
+          honest methodology + a visible "Frequently asked" prose block (content only; NO
+          FAQPage schema -- doctrine A1). Honesty is the moat: weapon tiers are model-derived,
+          shell tiers derive from ranked tiers, and underlying STATS are verified where badged. */}
       <section aria-labelledby="how-it-works" style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 24px 8px' }}>
         <h2 id="how-it-works" style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: 0.5, margin: '0 0 12px' }}>
           How this tier list works
         </h2>
 
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 760, margin: '0 0 18px' }}>
-          Tier letters are assigned by our NEXUS editor and refreshed daily &mdash; sooner when a balance patch lands
-          &mdash; from gameplay analysis, community sentiment, and Bungie patch notes. They are editorial calls, not
-          human-verified rankings. The underlying weapon and Runner Shell stats are pulled from our verified database:
-          an entry marked <strong style={{ color: '#00ff41' }}>Stats Verified</strong> has had its stats confirmed against
-          the live game, while <strong style={{ color: '#8a8f99' }}>Stats Unverified</strong> means the numbers are not yet
-          confirmed and the tier is an editorial read. The trend arrow shows whether an entry has risen or fallen over the
-          past 48 hours.
+          <strong style={{ color: '#fff' }}>Weapon</strong> tiers are ranked by the numbers: each weapon is scored on four
+          axes - Firepower, Accuracy, Handling, and Range - derived from its in-game stats and weighted Accuracy 34%,
+          Firepower 32%, Handling 18%, Range 16%, then tiered within its weapon class. Tap any weapon for its exact axis
+          scores. <strong style={{ color: '#fff' }}>Runner Shell</strong> tiers derive from their ranked-play performance.
+          The underlying stats are pulled from our verified database: an entry marked
+          <strong style={{ color: '#00ff41' }}> Stats Verified</strong> has had its numbers confirmed against the live game,
+          while <strong style={{ color: '#8a8f99' }}>Stats Unverified</strong> means they are not yet confirmed. The trend
+          arrow shows whether an entry has risen or fallen over the past 48 hours.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 22 }}>
@@ -314,10 +321,10 @@ export default async function MetaPage() {
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 820 }}>
           {[
-            { q: 'What is the best weapon in Marathon right now?', a: 'The current S-tier picks on the live tier list are the strongest weapons in the meta. Tier letters are assigned by our NEXUS editor and refreshed daily, so check the S-tier section for the up-to-date list rather than a fixed answer.' },
-            { q: 'What does S-tier mean in a Marathon tier list?', a: 'S-tier marks the strongest, meta-defining weapons and Runner Shells. Tiers run from S (best) down through A, B, C, and D. S and A are the picks that most reliably win engagements in the current meta.' },
-            { q: 'How often is the Marathon tier list updated?', a: 'It is refreshed throughout the day. Tier letters are reassigned by our NEXUS editor on a daily cadence, and sooner when a balance patch lands. The trend arrow on each entry shows whether it has risen or fallen over the past 48 hours.' },
-            { q: 'Are the Marathon tiers verified?', a: 'The tier letters are editorial calls assigned by our NEXUS editor from gameplay, community, and patch signals -- they are not human-verified rankings. The underlying weapon and shell stats ARE verified against the live game wherever an entry shows a Stats Verified badge.' },
+            { q: 'What is the best weapon in Marathon right now?', a: 'The current S-tier picks are the strongest weapons in the meta. Weapon tiers are computed from in-game stats (Firepower, Accuracy, Handling, Range) and ranked within each weapon class, so check the S-tier section of each class for the up-to-date best guns rather than a fixed answer.' },
+            { q: 'What does S-tier mean in a Marathon tier list?', a: 'S-tier marks the strongest picks in a class. Tiers run from S (best) down through A, B, C, and D. Because weapons are ranked within class, an S-tier shotgun is the best shotgun - not necessarily better than an A-tier rifle.' },
+            { q: 'How often is the Marathon tier list updated?', a: 'It is refreshed throughout the day. Weapon tiers recompute from the current stats, and re-rank when a balance patch changes those stats. The trend arrow on each entry shows whether it has risen or fallen over the past 48 hours.' },
+            { q: 'How are the Marathon weapon tiers calculated?', a: 'Each weapon is scored 0-100 on four axes - Firepower, Accuracy, Handling, Range - from its in-game stats, weighted Accuracy 34%, Firepower 32%, Handling 18%, Range 16%, then tiered within its weapon class. Tap any weapon for its exact axis scores. Runner Shell tiers derive from ranked-play performance. Underlying stats are verified against the live game wherever an entry shows a Stats Verified badge.' },
           ].map(function(row, i) {
             return (
               <div key={i} style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00ff41', borderRadius: '0 3px 3px 0', padding: '12px 16px' }}>
@@ -327,6 +334,54 @@ export default async function MetaPage() {
             );
           })}
         </div>
+      </section>
+
+      {/* BEST WEAPONS BY CLASS -- server-rendered (crawlable) mirror of the interactive By-Class
+          view + axis breakdown. Real text + entity links in the SSR HTML so the transparency moat
+          ("why is X S-tier: the axis scores") is indexable long-tail. Reflects the live model. */}
+      <section aria-labelledby="by-class-breakdown" style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 24px 40px' }}>
+        <h2 id="by-class-breakdown" style={{ fontFamily: 'Orbitron, monospace', fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: 0.5, margin: '24px 0 12px' }}>
+          Best Marathon weapons by class
+        </h2>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 760, margin: '0 0 20px' }}>
+          Weapon tiers are ranked <strong style={{ color: '#fff' }}>within weapon class</strong> from the game&apos;s own stats,
+          weighted Accuracy 34%, Firepower 32%, Handling 18%, Range 16%. An S-tier shotgun is the best shotgun, not necessarily
+          better than an A-tier rifle. Each weapon&apos;s four axis scores (0-100) are shown below.
+        </p>
+
+        {SEO_BANDS.map(function (band) {
+          const tiers = seoByBand[band.key];
+          if (!tiers) return null;
+          return (
+            <div key={band.key} style={{ marginBottom: 26 }}>
+              <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#00ff41', letterSpacing: 1.5, textTransform: 'uppercase', margin: '0 0 4px' }}>
+                {band.label}
+              </h3>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '0 0 10px', lineHeight: 1.5 }}>{band.note}</p>
+              {SEO_TIERS.map(function (t) {
+                const ws = tiers[t];
+                if (!ws || !ws.length) return null;
+                return (
+                  <div key={t} style={{ marginBottom: 10 }}>
+                    <h4 style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, color: '#fff', letterSpacing: 1, margin: '0 0 5px' }}>
+                      {t}-Tier {band.label} weapons
+                    </h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {ws.map(function (w) {
+                        return (
+                          <li key={w.name} style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, marginBottom: 3 }}>
+                            <Link href={'/marathon/weapons/' + entitySlugFor('weapon', w.name)} style={{ color: '#fff', fontWeight: 700, textDecoration: 'none' }}>{w.name}</Link>
+                            {' - ' + t + '-tier ' + (w.type || 'weapon') + ' in ' + band.label + '. Firepower ' + axVal(w.axes.firepower) + ', Accuracy ' + axVal(w.axes.accuracy) + ', Handling ' + axVal(w.axes.handling) + ', Range ' + axVal(w.axes.range) + '.'}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </section>
     </main>
   );

@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Tier-list SEO improvements on /marathon/meta (4 fixes + an honesty fix)
+
+Four SEO improvements plus a methodology-accuracy fix on the meta page.
+- (1) A1 COMPLIANCE: removed the FAQPage JSON-LD (schema gone from the SSR HTML; the visible
+  "Frequently asked" prose stays -- content is fine, only @type:FAQPage is banned).
+- (2) HIGHEST UPSIDE -- server-rendered crawlable transparency: new "Best Marathon weapons by
+  class" section in page.js, band-grouped (Close/Mid/Long/Special), tier-laddered, with 60
+  per-weapon axis-rationale lines + entity links, reflecting the ACTUAL model axes (honest,
+  e.g. "WSTR - S-tier Shotgun in Close Range. Firepower 85, Accuracy N/A [honest-null], Handling
+  55, Range 13"). Verified in the SSR HTML -- the transparency moat ("why is X S-tier") is now
+  indexable long-tail. The interactive By-Class + breakdown (MetaClient, client-only) stay for
+  JS users: progressive enhancement, SSR mirror for crawlers/no-JS.
+- (3) INTENT: title + H1 retargeted to front-load high-volume terms. Title "Marathon Weapon Tier
+  List - Best Weapons Ranked (Live)" (54 chars, A2-safe; straight hyphen -- the old em-dash was a
+  house-style violation); H1 "Best Marathon Weapons / Weapon Tier List"; "meta" secondary. No URL
+  change (redirect cost not worth it -- on-page only). Description + OG/Twitter retargeted +
+  straight-hyphened.
+- (4) ITEMLIST: added url per ListItem -> the entity pages (/marathon/weapons/[slug]); 170 weapon
+  links in the SSR HTML; name/description made weapon-forward + straight-hyphened.
+- HONESTY FIX: the FAQ + "how this works" prose still said weapon tiers were "assigned by our
+  NEXUS editor" -- now FALSE (weapons are model-derived as of the tier-model wire-in). Corrected
+  to describe the 4-axis stat derivation (Accuracy 34 / Firepower 32 / Handling 18 / Range 16,
+  within class). Fixes a false methodology claim and strengthens the transparency story. The FAQ
+  section stays (kept per the ask), just made accurate.
+- VERIFY: build green; FAQPage gone from SSR; transparency content crawlable (60 axis lines, band
+  structure, entity links); title <=60 + straight hyphens; H1 retargeted; ItemList urls present;
+  smart-char-clean. Interactive views unchanged (only the H1 text changed in MetaClient) but NOT
+  click-tested (headless pane) -- OPERATOR TO EYEBALL live.
+- SITEWIDE FINDING (verify-don't-inherit, SEPARATE task): A1 bans FAQPage sitewide, but ~15
+  OTHER Marathon pages still emit @type:FAQPage (builds, cradle, factions, guides x3, intel,
+  leaderboard, maps, matchups, ranked, rising, shells, stats, status) -- all A1 violations. A
+  dedicated FAQPage-removal sweep is needed (not done here; this task was scoped to /marathon/meta).
+
+---
+
 ## 2026-08-28 - Tier-list presentation: hybrid transparency + band view on /marathon/meta
 
 Added the hybrid tier view (EVOLVED the existing page, not a new route). Turns the derived weapon

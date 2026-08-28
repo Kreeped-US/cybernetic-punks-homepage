@@ -871,10 +871,10 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 16 }}>
           <div style={{ flex: 1, minWidth: 300 }}>
             <h1 style={{ fontSize: 'clamp(32px, 4.5vw, 48px)', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1, margin: '0 0 12px', color: '#fff' }}>
-              Marathon Meta<br /><span style={{ color: '#00ff41' }}>Tier List</span>
+              Best Marathon Weapons<br /><span style={{ color: '#00ff41' }}>Weapon Tier List</span>
             </h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
-              What weapons, shells, and strategies are actually winning in Marathon right now. Updated throughout the day by our meta AI.
+              Every Marathon weapon and Runner Shell ranked by the numbers - which guns are actually winning right now, and the meta behind them. Updated throughout the day.
             </p>
           </div>
 
