@@ -19,8 +19,28 @@ import { track } from '@/lib/useTrack';
 import { supabase } from '@/lib/supabase';
 import { secondsToNextRun } from '@/lib/cronCadence';
 import { entitySlugFor } from '@/lib/coverage';
+import AxisBreakdown from '@/components/tierlist/AxisBreakdown';
+import ClassBandView from '@/components/tierlist/ClassBandView';
 
 // ─── CONSTANTS ───────────────────────────────────────────────
+
+// MARATHON BAND CONFIG (per-game) -- the generic tierlist components (ClassBandView,
+// AxisBreakdown) are game-agnostic and driven by this. Game #2 supplies its own band order +
+// labels + firepower note; the components + the model lib are shared. Order/keys match
+// lib/weapons/tierModel.js BAND_OF_TYPE.
+const BAND_ORDER = ['Close', 'Mid', 'Long', 'Special'];
+const BAND_LABELS = { Close: 'Close Range', Mid: 'Mid Range', Long: 'Long Range', Special: 'Special' };
+const BAND_BLURB = {
+  Close: 'Shotguns + SMGs. Firepower = burst / per-trigger lethality.',
+  Mid: 'ARs, precision rifles, pistols. Firepower = sustained DPS.',
+  Long: 'Snipers. Firepower = sustained DPS.',
+  Special: 'Railguns + LMGs. Firepower = sustained DPS.',
+};
+function firepowerNoteFor(band) {
+  return band === 'Close'
+    ? 'In the Close class, Firepower measures burst / per-trigger lethality (how fast you delete).'
+    : 'In Mid/Long/Special, Firepower measures sustained DPS (damage x fire rate).';
+}
 
 // Current Marathon season — update this one line when a new season launches.
 // Shown on shared tier-list images. A tier list is season-specific, so this
@@ -424,14 +444,97 @@ async function generateTierImage(tierItems, runnerTag) {
   return canvas.toDataURL('image/png');
 }
 
+// ── BANDED share image (By Class): band ROWS instead of tier rows; weapons ordered best-first
+// within each band, tier-colored. Inherits the same burgundy wordmark + RANKED BY THE NUMBERS +
+// URL + tagline branding as the flat generator. `bands` = [{ key, label, items:[{name,tier,src}] }]
+// already ordered best-first. Generalizes: any game's bands render from the same function.
+async function generateBandedTierImage(bands) {
+  try { await document.fonts.ready; } catch (_) {}
+  const imageCache = {};
+  for (const b of bands) for (const it of b.items) { if (it.src && !imageCache[it.src]) imageCache[it.src] = await loadImage(it.src); }
+
+  const W = 1200, H = 630;
+  const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const COL = { bg: '#0e1014', card: '#1a1d24', border: '#22252e', green: '#00ff41', white: '#fff', dim: 'rgba(255,255,255,0.45)', faint: 'rgba(255,255,255,0.22)' };
+  const BURG = '#9A2740';
+  const tierCol = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#7a8089', D: '#4a4f59' };
+
+  ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.014)'; ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.fillStyle = COL.green; ctx.fillRect(0, 0, W, 3);
+  const PAD = 44;
+
+  // Header (same brand treatment as the flat image)
+  ctx.fillStyle = BURG; ctx.shadowColor = BURG; ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.arc(PAD + 5, 42, 5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = COL.white; ctx.font = '700 15px Orbitron, Arial, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('CYBERNETIC', PAD + 18, 47);
+  const cwW = ctx.measureText('CYBERNETIC').width;
+  ctx.fillStyle = BURG; ctx.fillText('PUNKS', PAD + 18 + cwW, 47);
+  ctx.fillStyle = COL.faint; ctx.font = '400 12px "Share Tech Mono", monospace, sans-serif'; ctx.textAlign = 'right';
+  const now = new Date(); const mn = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  ctx.fillText(CURRENT_SEASON + ' · ' + mn[now.getMonth()] + ' ' + now.getFullYear(), W - PAD, 46);
+  ctx.textAlign = 'left'; ctx.fillStyle = COL.white; ctx.font = '900 40px Orbitron, Arial, sans-serif';
+  ctx.fillText('WEAPON TIERS BY CLASS', PAD, 92);
+  ctx.fillStyle = COL.green; ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
+  ctx.fillText('RANKED BY THE NUMBERS · ' + CURRENT_SEASON, PAD, 112);
+  ctx.fillStyle = COL.border; ctx.fillRect(PAD, 124, W - PAD * 2, 1);
+
+  // Body: one row per band
+  const bodyTop = 138, footerTop = H - 70, bodyH = footerTop - bodyTop - 8, rowGap = 8;
+  const rowH = (bodyH - rowGap * (bands.length - 1)) / bands.length;
+  const labelW = 118, itemsX = PAD + labelW + 12, itemsMaxX = W - PAD;
+  bands.forEach((b, i) => {
+    const y = bodyTop + i * (rowH + rowGap);
+    ctx.fillStyle = COL.card; roundRect(ctx, PAD, y, W - PAD * 2, rowH, 4); ctx.fill();
+    // band label block
+    ctx.fillStyle = '#12141a'; roundRect(ctx, PAD, y, labelW, rowH, 4); ctx.fill(); ctx.fillRect(PAD + labelW - 6, y, 6, rowH);
+    ctx.fillStyle = COL.white; ctx.font = '800 14px Orbitron, Arial, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText((b.label || b.key).toUpperCase(), PAD + 14, y + rowH / 2 + 1); ctx.textBaseline = 'alphabetic';
+    // weapon pills, best-first, tier-colored
+    const pillH = Math.min(44, rowH - 12), pillY = y + (rowH - pillH) / 2, imgW = 38, imgH = 26;
+    let x = itemsX;
+    for (let k = 0; k < b.items.length; k++) {
+      const it = b.items[k]; const tc = tierCol[(it.tier || 'C').toUpperCase()] || '#666';
+      const imgEl = it.src ? imageCache[it.src] : null; const hasImg = !!imgEl;
+      const label = it.name.toUpperCase(); ctx.font = '700 10px Orbitron, Arial, sans-serif';
+      const textW = ctx.measureText(label).width; const padL = 9, padR = 12, gap = 7;
+      const pillW = padL + (hasImg ? imgW + gap : 0) + textW + padR + 16; // +16 for the tier letter
+      if (x + pillW > itemsMaxX) { ctx.fillStyle = COL.faint; ctx.font = '700 11px "Share Tech Mono", monospace, sans-serif'; ctx.fillText('+' + (b.items.length - k), x + 4, pillY + pillH / 2 + 4); break; }
+      ctx.fillStyle = '#0e1014'; roundRect(ctx, x, pillY, pillW, pillH, 4); ctx.fill();
+      ctx.fillStyle = tc; ctx.fillRect(x, pillY, 3, pillH);
+      if (hasImg) { ctx.save(); ctx.filter = 'brightness(1.2) contrast(1.05)'; ctx.drawImage(imgEl, x + padL, pillY + (pillH - imgH) / 2, imgW, imgH); ctx.restore(); }
+      const lx = x + padL + (hasImg ? imgW + gap : 0);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = '700 10px Orbitron, Arial, sans-serif'; ctx.fillText(label, lx, pillY + pillH / 2 + 3);
+      // tier letter (tier-colored) after the name
+      ctx.fillStyle = tc; ctx.font = '900 11px Orbitron, Arial, sans-serif'; ctx.fillText(it.tier || '', lx + textW + 5, pillY + pillH / 2 + 4);
+      x += pillW + 7;
+    }
+  });
+
+  // Footer (same brand treatment)
+  ctx.fillStyle = COL.border; ctx.fillRect(PAD, footerTop, W - PAD * 2, 1);
+  ctx.fillStyle = BURG; ctx.fillRect(PAD, footerTop + 22, 3, 15);
+  ctx.textAlign = 'left'; ctx.fillStyle = COL.white; ctx.font = '700 17px Orbitron, Arial, sans-serif';
+  ctx.fillText('CYBERNETICPUNKS.COM', PAD + 12, footerTop + 34);
+  ctx.textAlign = 'right'; ctx.fillStyle = COL.dim; ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
+  ctx.fillText('NO HYPE. JUST INTEL.', W - PAD, footerTop + 33);
+  return canvas.toDataURL('image/png');
+}
+
 // ─── MAIN COMPONENT ──────────────────────────────────────────
 
-export default function MetaClient({ metaTiers, weapons, shells, modCount, recentPosts }) {
+export default function MetaClient({ metaTiers, weapons, shells, modCount, recentPosts, weaponModel = {} }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('live');
   const [liveFilter, setLiveFilter] = useState('all');
+  const [liveView, setLiveView] = useState('tier');   // 'tier' (flat, default) | 'class' (banded)
+  const [breakdownName, setBreakdownName] = useState(null); // weapon name for the axis panel
   const [usageCount, setUsageCount] = useState(null);
   const [sharedList, setSharedList] = useState(null);
   const [movements, setMovements] = useState({});
@@ -475,6 +578,20 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   (weapons || []).forEach(w => { weaponMap[w.name.toLowerCase()] = w; });
   const shellMap = {};
   (shells || []).forEach(s => { shellMap[s.name.toLowerCase()] = s; });
+
+  // Items for the "By Class" band view -- merge weapon display data with the model output
+  // (tier/band). Excludes melee (model band 'EXCLUDE'). The breakdown entry (for the panel) is
+  // looked up from weaponModel by name on click.
+  const classItems = (weapons || [])
+    .filter(w => weaponModel[w.name] && weaponModel[w.name].band && weaponModel[w.name].band !== 'EXCLUDE')
+    .map(w => ({
+      name: w.name,
+      tier: weaponModel[w.name].tier,
+      band: weaponModel[w.name].band,
+      imgSrc: getImageSrc(w, 'weapon'),
+      iconFallback: getWeaponIcon(w.weapon_type),
+    }));
+  const breakdownEntry = breakdownName ? { name: breakdownName, ...(weaponModel[breakdownName] || {}) } : null;
 
   useEffect(() => {
     setCountdown(formatCronCountdown(getSecondsToNextCron()));
@@ -648,6 +765,25 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
     a.href = generatedImage;
     a.download = `marathon-tier-list-${Date.now()}.png`;
     a.click();
+  }
+
+  // Banded (By Class) share image: group the live weapon model by band, best-first within band,
+  // render + download the branded PNG. Direct download (the live view has no preview-image slot).
+  async function handleBandedDownload() {
+    const rank = { S: 0, A: 1, B: 2, C: 3, D: 4 };
+    const bands = BAND_ORDER.map(key => ({
+      key, label: key,
+      items: classItems.filter(m => m.band === key && m.tier)
+        .sort((a, b) => (rank[a.tier] ?? 9) - (rank[b.tier] ?? 9))
+        .map(m => ({ name: m.name, tier: m.tier, src: m.imgSrc })),
+    })).filter(b => b.items.length);
+    if (!bands.length) return;
+    try {
+      track('tierlist_share');
+      const dataUrl = await generateBandedTierImage(bands);
+      const a = document.createElement('a');
+      a.href = dataUrl; a.download = `marathon-weapon-tiers-by-class-${Date.now()}.png`; a.click();
+    } catch (e) { console.error('[generateBandedTierImage]', e); }
   }
 
   function handleShareX() {
@@ -858,6 +994,33 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
             })}
           </div>
 
+          {/* View toggle (weapons only) -- BY TIER (flat, default) vs BY CLASS (band-grouped) */}
+          {liveFilter !== 'shells' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+              <div style={{ display: 'inline-flex', border: '1px solid #22252e', borderRadius: 4, overflow: 'hidden' }}>
+                {[{ key: 'tier', label: 'BY TIER' }, { key: 'class', label: 'BY CLASS' }].map(v => (
+                  <button key={v.key} onClick={() => setLiveView(v.key)} style={{
+                    fontSize: 9, fontWeight: 800, letterSpacing: 1.5, padding: '6px 16px', cursor: 'pointer', border: 'none',
+                    background: liveView === v.key ? 'rgba(0,255,65,0.1)' : 'transparent',
+                    color: liveView === v.key ? '#00ff41' : 'rgba(255,255,255,0.35)', fontFamily: 'inherit',
+                  }}>{v.label}</button>
+                ))}
+              </div>
+              {liveView === 'class' && (
+                <button onClick={handleBandedDownload} title="Download the branded By-Class tier image" style={{
+                  fontSize: 9, fontWeight: 800, letterSpacing: 1.5, padding: '6px 14px', cursor: 'pointer',
+                  background: 'transparent', border: '1px solid #22252e', borderRadius: 4,
+                  color: 'rgba(255,255,255,0.5)', fontFamily: 'inherit',
+                }}>↓ IMAGE</button>
+              )}
+            </div>
+          )}
+
+          {/* Within-class honesty note -- the model tiers WITHIN weapon class */}
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 20, maxWidth: 660 }}>
+            Weapon tiers are ranked <strong style={{ color: 'rgba(255,255,255,0.6)' }}>within weapon class</strong> &mdash; an S-tier shotgun is the best shotgun, not necessarily better than an A-tier rifle. Tap any weapon for its stat breakdown.
+          </div>
+
           {metaTiers.length === 0 ? (
             <div style={{ padding: '40px 28px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 3, textAlign: 'center', marginBottom: 28 }}>
               <div style={{ fontSize: 12, color: '#00ff41', letterSpacing: 3, marginBottom: 8, fontWeight: 700 }}>META AI IS CALIBRATING</div>
@@ -865,6 +1028,16 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                 Tier list populates automatically throughout the day.
               </div>
             </div>
+          ) : (liveView === 'class' && liveFilter !== 'shells') ? (
+            <ClassBandView
+              items={classItems}
+              bandOrder={BAND_ORDER}
+              bandLabels={BAND_LABELS}
+              bandBlurb={BAND_BLURB}
+              tiers={['S', 'A', 'B', 'C', 'D']}
+              tierStyles={TIER_STYLES}
+              onSelect={setBreakdownName}
+            />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {TIERS.filter(t => t !== 'F').map(tier => {
@@ -911,11 +1084,14 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                         const imgSrc = getImageSrc(shellData || weaponData, typeKey);
 
                         return (
-                          <div key={i} className="meta-tier-row" style={{
+                          <div key={i} className="meta-tier-row"
+                            onClick={() => { if (typeKey === 'weapon' && weaponModel[item.name] && !weaponModel[item.name].unrankable) setBreakdownName(item.name); }}
+                            style={{
                             background: '#1a1d24', border: '1px solid #22252e',
                             borderLeft: '3px solid ' + style.accent,
                             borderRadius: '0 3px 3px 0', padding: '14px 18px',
                             transition: 'background 0.1s',
+                            cursor: (typeKey === 'weapon' && weaponModel[item.name] && !weaponModel[item.name].unrankable) ? 'pointer' : 'default',
                           }}>
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
 
@@ -939,6 +1115,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                         ? '/marathon/weapons/' + entitySlugFor('weapon', item.name)
                                         : '/marathon/shells/' + entitySlugFor('shell', item.name)}
                                       className="meta-name-link"
+                                      onClick={e => e.stopPropagation()}
                                       style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5, textDecoration: 'none', transition: 'color 0.1s' }}
                                     >
                                       {item.name}
@@ -950,6 +1127,12 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                   <span style={{ fontSize: 8, letterSpacing: 2, color: typeColor, background: typeColor + '18', border: '1px solid ' + typeColor + '30', borderRadius: 2, padding: '2px 7px', fontWeight: 700, textTransform: 'uppercase' }}>
                                     {(item.type || '').toUpperCase()}
                                   </span>
+                                  {/* Band label -- tiers are ranked WITHIN this class (so an S here means best-in-class) */}
+                                  {typeKey === 'weapon' && weaponModel[item.name] && weaponModel[item.name].band ? (
+                                    <span style={{ fontSize: 8, letterSpacing: 1.5, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2e38', borderRadius: 2, padding: '2px 7px', fontWeight: 700, textTransform: 'uppercase' }}>
+                                      {weaponModel[item.name].band} CLASS
+                                    </span>
+                                  ) : null}
                                   {/* Stats-verification badge -- about the UNDERLYING stats, not the tier.
                                       Rendered from server-passed props (in the SSR HTML, crawlable). */}
                                   {(function() {
@@ -1294,6 +1477,20 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
       <Link href="/" style={{ fontSize: 10, letterSpacing: 2, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', fontFamily: 'monospace', fontWeight: 700 }}>
         ← BACK TO HOME
       </Link>
+
+      {/* Weapon axis-breakdown panel (the transparency moat) -- opens from either view */}
+      {breakdownEntry && (
+        <AxisBreakdown
+          name={breakdownEntry.name}
+          tier={breakdownEntry.tier}
+          bandLabel={BAND_LABELS[breakdownEntry.band] || breakdownEntry.band}
+          axes={breakdownEntry.axes}
+          unrankable={breakdownEntry.unrankable}
+          firepowerNote={firepowerNoteFor(breakdownEntry.band)}
+          accent="#00ff41"
+          onClose={() => setBreakdownName(null)}
+        />
+      )}
     </div>
   );
 }

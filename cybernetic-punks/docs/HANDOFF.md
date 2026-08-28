@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Tier-list presentation: hybrid transparency + band view on /marathon/meta
+
+Added the hybrid tier view (EVOLVED the existing page, not a new route). Turns the derived weapon
+model into a reader-facing transparency layer + a class-accurate view.
+- DATA (Option B, recompute on render -- no DB/cron/DDL change): page.js widens the weapon_stats
+  select to the full computeWeaponTiers input set, runs the model server-side, and passes a
+  name->{tier,band,axes} map to MetaClient. It ALSO overrides the stored meta_tiers.tier with the
+  model value on render, so the page is model-consistent NOW (before the cron persists the same
+  values) -- flat view, By Class, breakdown, JSON-LD, and the share image all agree. Verified via
+  the ItemList JSON-LD: BRRT/Bully/Longshot/BR33/V66 = S, WSTR/Misriah = A, Impact HAR = B
+  (matches the validated model).
+- FLAT "BY TIER" stays DEFAULT + honesty fix: a band chip per weapon (Close/Mid/Long/Special) +
+  a within-class note ("an S-tier shotgun is the best shotgun, not necessarily better than an
+  A-tier rifle") so the flat list no longer misrepresents the within-class tiering. Shells
+  unchanged.
+- "BY CLASS" toggle -> the game-agnostic ClassBandView: Close/Mid/Long/Special sections, each its
+  own S-D ladder of weapon tiles.
+- BREAKDOWN-ON-CLICK (both views) -> the game-agnostic AxisBreakdown modal: 4 axis bars
+  (Firepower/Accuracy/Handling/Range 0-100) + the per-band firepower methodology + the weight
+  formula. The transparency moat. Weapons only; shells keep their ranked tier.
+- BANDED share image (generateBandedTierImage): band rows, weapons best-first + tier-colored,
+  inheriting the burgundy wordmark + RANKED BY THE NUMBERS + URL + NO HYPE JUST INTEL branding.
+  Triggered by a down-IMAGE button in By Class. The flat branded image stays.
+- GENERALIZED: ClassBandView + AxisBreakdown live in components/tierlist/ and are driven purely
+  by model output + config props (game #2 reuses them unchanged); the Marathon band config
+  (BAND_ORDER/LABELS/BLURB + firepowerNoteFor) stays in MetaClient. The model lib + components
+  are shared.
+- VERIFY: build green; SSR markup verified (model tiers correct, band chips render, within-class
+  note + toggle + breakdown present in the HTML). CLICK INTERACTIONS NOT EXERCISED this session
+  (headless -- the browser pane was undisplayed, so client hydration/clicks did not fire; the
+  PRE-EXISTING WEAPONS filter was equally inert, confirming environment-not-code). OPERATOR TO
+  CLICK-TEST LIVE (toggle switch, breakdown modal, By Class image download) before relying on it.
+  Shells/builder/share/SEO-JSON-LD all intact.
+- NEXT (separate, still pending): the dead-column DDL + the deferred 5-column cleanup incl. the
+  DEXTER reload_time -> reload_speed fix.
+
+---
+
 ## 2026-08-28 - Shareable tier-list image branded for attribution (generateTierImage)
 
 Branded the tier-list share PNG (app/marathon/meta/MetaClient.js generateTierImage). The shared

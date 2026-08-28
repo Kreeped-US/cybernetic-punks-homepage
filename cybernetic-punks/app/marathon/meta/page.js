@@ -26,6 +26,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import MetaClient from './MetaClient';
 import ViewTracker from '@/components/ViewTracker';
+import { computeWeaponTiers } from '@/lib/weapons/tierModel';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +70,10 @@ export default async function MetaPage() {
         .order('updated_at', { ascending: false }),
       supabase
         .from('weapon_stats')
-        .select('name, weapon_type, ammo_type, damage, fire_rate, range_rating, ranked_viable, firepower_score, accuracy_score, image_filename, verified'),
+        // Widened for the tier model (Option B: recompute on render). The extra raw fields
+        // (precision/magazine/spreads/handling/range) are the computeWeaponTiers inputs; the
+        // originals stay for the card display. No DB/cron/DDL change -- same pure lib the cron uses.
+        .select('name, weapon_type, ammo_type, damage, fire_rate, precision_multiplier, magazine_size, firepower_score, accuracy_score, hipfire_spread, moving_inaccuracy, crouch_spread_bonus, recoil, ads_speed, weight, equip_speed, reload_speed, aim_assist, range_meters, range_rating, zoom, ranked_viable, image_filename, verified'),
       supabase
         .from('shell_stats')
         .select('name, role, base_health, base_shield, prime_ability_name, tactical_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes, image_filename, verified'),
@@ -111,6 +115,29 @@ export default async function MetaPage() {
   } catch (err) {
     console.error('[MetaPage] fetch error:', err);
   }
+
+  // WEAPON TIER MODEL (Option B: recompute on render). The same pure lib the cron uses to WRITE
+  // meta_tiers.tier -- so the on-page axis breakdown is consistent with the stored tier, with no
+  // DB/cron/DDL change. name -> { tier, band, axes:{firepower,accuracy,handling,range}, unrankable }.
+  const weaponModel = {};
+  try {
+    computeWeaponTiers(weapons).forEach(function (r) {
+      weaponModel[r.name] = { tier: r.tier, band: r.band, axes: r.axes, unrankable: r.unrankable };
+    });
+  } catch (e) {
+    console.error('[MetaPage] weapon model compute:', e && e.message);
+  }
+
+  // Reflect the model tiers on the page NOW: weapons are model-derived, and the cron persists the
+  // SAME values to meta_tiers on its next regrade. Overriding the stored weapon tier with the
+  // freshly-computed model tier keeps the flat "By Tier" view, the "By Class" view, the JSON-LD,
+  // and the share image all consistent with the model regardless of when the cron last ran (no
+  // transient old-vs-new split). Shells + any unrankable weapon keep their stored tier.
+  metaTiers = metaTiers.map(function (row) {
+    if (row.type !== 'weapon') return row;
+    const m = weaponModel[row.name];
+    return (m && m.tier) ? Object.assign({}, row, { tier: m.tier }) : row;
+  });
 
   // -- JSON-LD SCHEMAS --
   // Built from the live data, so they reflect actual tier list state.
@@ -242,6 +269,7 @@ export default async function MetaPage() {
           shells={shells}
           modCount={modCount}
           recentPosts={recentPosts}
+          weaponModel={weaponModel}
         />
       </Suspense>
 
