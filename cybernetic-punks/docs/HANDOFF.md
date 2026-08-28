@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - DED.NET landing: remove the redundant body provenance <p> (footer dedup)
+
+Removed the redundant body provenance <p> from app/pubg-dednet/page.js (:120-122). It duplicated
+the footer legal's provenance (pubg-dednet.footer.legal part 3), which Phase 3's sitewide footer
+now renders on every page -- so the landing was showing two near-identical provenance notes
+stacked (the body <p> directly above the footer legal). Only app/pubg-dednet/page.js changed.
+- SSR-VERIFIED: the body <p> phrase is gone (0); the footer provenance renders once (1); the
+  shared phrase "drawn from official KRAFTON" now appears exactly ONCE (footer only) -- confirming
+  we removed the DUPLICATE, not the only copy; the page is structurally intact (</main> + <footer>
+  present; the removed <p> was the last element in <main>). Build green.
+- VERIFY-DONT-INHERIT (important): the brief also said to remove the WARDOGS equivalent body <p>,
+  but that premise was WRONG (false-by-analogy). Checked wardogs.footer.legal FIRST: it has NO
+  provenance paragraph -- only the affiliation + trademark lines (unlike DED.NET, whose footer
+  legal carries the 3rd provenance part). So the Wardogs body <p> ("...drawn from official BULKHEAD
+  / Team17 material; flagged unconfirmed until verified in-game...") is the SOLE copy of its
+  provenance, NOT a duplicate; removing it would LOSE provenance. The Wardogs edit was reverted and
+  is NOT part of this commit. (An earlier read-only report called it redundant by analogy to
+  DED.NET without checking the Wardogs footer -- that was the error, caught before shipping.)
+- Wardogs stays as-is for now (its body <p> is the only provenance on /wardogs). Making it parallel
+  to DED.NET -- add a provenance line to wardogs.footer.legal, then drop the body <p> -- is a
+  possible follow-up, deferred (operator chose to leave Wardogs untouched). DMZ + Marathon never
+  had this <p>, unaffected.
+
+---
+
+
 ## 2026-08-28 - Footer generalization PHASE 4 of 4 (final): delete the standalone disclaimers
 
 Deleted the two now-unused standalone disclaimer components -- the last step of the footer

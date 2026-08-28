@@ -116,10 +116,6 @@ export default async function PubgDednetLanding() {
           return <CoverageCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} />;
         })}
       </div>
-
-      <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '28px 0 0', maxWidth: 700, lineHeight: 1.6, fontFamily: 'monospace' }}>
-        PUBG: DED.NET is pre-launch with no release date. Everything here is drawn from official KRAFTON / PUBG Studios material; gameplay detail from the developer interview is attributed to its source, and specific numbers stay flagged as unconfirmed until verified in-game.
-      </p>
     </main>
   );
 }
