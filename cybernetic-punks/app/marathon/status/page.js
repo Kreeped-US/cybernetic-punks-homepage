@@ -83,7 +83,7 @@ const RESET_DEFAULTS = [
 
 // Season 2 ranked queue returns June 14, 2026, 10AM PT. Until then the queue
 // has not returned, so the status card must say so rather than computing the
-// Sun-Thu rotation. After this datetime the rotation logic applies.
+// weekend (Sat->Tue) rotation. After this datetime the rotation logic applies.
 const RANKED_RETURN = new Date('2026-06-14T17:00:00Z'); // 10AM PT = 17:00 UTC
 
 // ─── HELPERS ────────────────────────────────────────────────
@@ -100,9 +100,9 @@ function timeAgo(dateStr) {
   return Math.floor(diffH / 24) + 'd ago';
 }
 
-// Ranked queue rotation — Sun 10AM PT to Thu 10AM PT open.
-// Pre-June-14, the S2 queue has not returned, so report a dedicated "returns"
-// phase instead of a misleading OPEN/CLOSED.
+// Ranked queue rotation -- Season 2 is a WEEKEND mode: opens Sat 10AM PT, closes Tue 10AM PT
+// (verified S2 window; was the stale S1 Sun->Thu). Pre-June-14 the S2 queue has not returned, so
+// report a dedicated "returns" phase instead of a misleading OPEN/CLOSED.
 function getRankedStatus() {
   var now = new Date();
 
@@ -111,12 +111,12 @@ function getRankedStatus() {
   }
 
   var pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-  var day = pt.getDay();
+  var day = pt.getDay(); // 0=Sun .. 6=Sat
   var hour = pt.getHours();
   var isOpen = false;
-  if (day === 0 && hour >= 10) isOpen = true;
-  else if (day >= 1 && day <= 3) isOpen = true;
-  else if (day === 4 && hour < 10) isOpen = true;
+  if (day === 6 && hour >= 10) isOpen = true;      // Saturday from 10AM PT
+  else if (day === 0 || day === 1) isOpen = true;  // Sunday + Monday all day
+  else if (day === 2 && hour < 10) isOpen = true;  // Tuesday until 10AM PT
   return { phase: 'rotating', isOpen: isOpen };
 }
 
@@ -196,7 +196,7 @@ export default async function StatusPage() {
   var queueLabel = queueStatus.phase === 'returns' ? 'RETURNS JUN 14' : (queueStatus.isOpen ? 'OPEN' : 'CLOSED');
   var queueSub   = queueStatus.phase === 'returns'
     ? 'Season 2 ranked returns June 14'
-    : (queueStatus.isOpen ? 'Closes Thursday 10AM PT' : 'Reopens Sunday 10AM PT');
+    : (queueStatus.isOpen ? 'Closes Tuesday 10AM PT' : 'Reopens Saturday 10AM PT');
 
   // Active (unresolved) incidents -- a manually-curated table; renders only when
   // real incidents exist (makes NO claim when empty, unlike the removed banner).

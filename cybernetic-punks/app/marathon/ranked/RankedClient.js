@@ -38,7 +38,7 @@ const SHELL_FALLBACK = {
   Triage:    { solo: 'C',   squad: 'S',   why: 'Squad sustain in high-value extractions. Weak without teammates.' },
   Destroyer: { solo: 'B',   squad: 'B',   why: 'High kill potential but ranked punishes aggression. Use carefully.' },
   Sentinel:  { solo: 'B',   squad: 'A',   why: 'Area denial and projectile defense. Strong for holding exfil under pressure.' },
-  Rook:      { solo: 'BAN', squad: 'BAN', why: 'BANNED FROM RANKED. Sponsored Kits also banned. No exceptions.' },
+  Rook:      { solo: 'BAN', squad: 'BAN', why: 'BANNED FROM RANKED. No exceptions.' },
 };
 
 const SHELL_COLORS = {
@@ -76,6 +76,9 @@ const FAQS = [
   { q: 'What are the ranked rewards?', a: 'Bronze: Ranked Emblem. Silver: Emblem + Player Background. Gold: Emblem + Destroyer Shell Style + Title. Platinum/Diamond: Emblem + Gun Style. Pinnacle: Emblem + Gun Style + Title. Rewards are milestone-based - drop from Pinnacle and you keep the Pinnacle cosmetic. Season 2 ships all-new rewards across the board.' },
   { q: 'Do ranked rewards carry over between seasons?', a: 'Yes. Cosmetics earned through ranked are permanent. Rank progress resets each season. Liaison contract progression carries over.' },
   { q: 'What is the gear ante?', a: 'A minimum loadout value threshold you must meet to queue. You must also be Runner Level 25 before the queue unlocks. In Season 2, the single Ranked queue requires a 5,000 loadout-value minimum (Low and High Stakes are no longer separate) plus a Holotag matching your current rank.' },
+  { q: 'Is Marathon Ranked always available in Season 2?', a: 'No. Season 2 Ranked is a weekend mode: the queue opens Saturday 10AM PT and closes Tuesday 10AM PT, with the featured zone and Holotag targets rotating each opening.' },
+  { q: 'How do wins and losses against different ranks work?', a: 'Season 2 uses soft skill-based matchmaking across the rank ladder: lose to a higher-ranked crew and you lose less; beat a higher-ranked crew and you gain more. Combined with the tuned-up progression, climbing is faster than Season 1.' },
+  { q: 'What is the daily Ranked Sponsored Kit?', a: 'Season 2 adds a daily Ranked Sponsored Kit scaled to your current rank - a ready-made loadout you can take into the ranked queue that scales up as you climb.' },
 ];
 
 // -- HELPERS ----------------------------------------------------
@@ -546,7 +549,7 @@ export default function RankedClient({ data }) {
                   <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 1, fontWeight: 700 }}>ROTATING</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                  Ranked zones rotate weekly to keep the ladder fresh. The featured map changes each week - adapt your loadout to the zone in rotation.
+                  Ranked is a Season 2 weekend mode: the queue opens Saturday 10AM PT and closes Tuesday 10AM PT. The featured zone rotates each opening - adapt your loadout to the zone in rotation.
                 </div>
               </div>
 
@@ -563,7 +566,7 @@ export default function RankedClient({ data }) {
                   </div>
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                  Ranked reopens June 14 with the new single queue. Cryo Archive returns June 11 and stays on rotation through Season 2.
+                  Ranked reopens June 14 as a weekend mode (Saturday 10AM to Tuesday 10AM PT). Cryo Archive returned June 11; following a Season 2 change, Ranked and Cryo Archive no longer overlap the way they did at launch.
                 </div>
               </div>
             </div>

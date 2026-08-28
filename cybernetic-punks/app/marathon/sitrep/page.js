@@ -71,7 +71,7 @@ const FACTION_NAMES_LOWER = ['cyberacme', 'nucaloric', 'traxus', 'mida', 'arachn
 
 // Season 2 ranked queue returns June 14, 2026, 10AM PT. Until then the queue
 // is not live and the status card must say so rather than computing a
-// rotation. After this datetime, the normal Sun→Thu rotation logic applies.
+// rotation. After this datetime, the normal weekend (Sat->Tue) rotation logic applies.
 const RANKED_RETURN = new Date('2026-06-14T17:00:00Z'); // 10AM PT = 17:00 UTC
 
 // ─── HELPERS ────────────────────────────────────────────────
@@ -88,9 +88,9 @@ function parseBrief(body) {
   return body.replace(/\*\*/g, '').replace(/#+\s/g, '').replace(/\n/g, ' ').trim().slice(0, 160);
 }
 
-// Ranked queue rotation — Sun 10AM PT to Thu 10AM PT open.
-// Pre-June-14, the queue has not returned for Season 2, so we report a
-// dedicated "returns" state instead of a misleading OPEN/CLOSED.
+// Ranked queue rotation -- Season 2 WEEKEND mode: opens Sat 10AM PT, closes Tue 10AM PT
+// (verified S2 window; was the stale S1 Sun->Thu). Pre-June-14, the queue has not returned for
+// Season 2, so we report a dedicated "returns" state instead of a misleading OPEN/CLOSED.
 function getRankedStatus() {
   var now = new Date();
 
@@ -102,11 +102,11 @@ function getRankedStatus() {
   var day = pt.getDay(); // 0=Sun, 1=Mon, ... 6=Sat
   var hour = pt.getHours();
 
-  // OPEN: Sun 10AM → Thu 10AM
+  // OPEN: Sat 10AM -> Tue 10AM PT (weekend)
   var isOpen = false;
-  if (day === 0 && hour >= 10) isOpen = true;
-  else if (day >= 1 && day <= 3) isOpen = true;
-  else if (day === 4 && hour < 10) isOpen = true;
+  if (day === 6 && hour >= 10) isOpen = true;      // Saturday from 10AM
+  else if (day === 0 || day === 1) isOpen = true;  // Sunday + Monday
+  else if (day === 2 && hour < 10) isOpen = true;  // Tuesday until 10AM
 
   return { phase: 'rotating', isOpen: isOpen, day: day, hour: hour };
 }
@@ -247,7 +247,7 @@ export default async function SitrepPage() {
   var queueLabel = queueStatus.phase === 'returns' ? 'RETURNS JUN 14' : (queueStatus.isOpen ? 'OPEN' : 'CLOSED');
   var queueSub   = queueStatus.phase === 'returns'
     ? 'SEASON 2 RANKED · JUN 14'
-    : (queueStatus.isOpen ? 'CLOSES THU 10AM PT' : 'REOPENS SUN 10AM PT');
+    : (queueStatus.isOpen ? 'CLOSES TUE 10AM PT' : 'REOPENS SAT 10AM PT');
 
   // Structured data
   var breadcrumbSchema = {

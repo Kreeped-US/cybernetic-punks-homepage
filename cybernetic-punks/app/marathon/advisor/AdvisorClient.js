@@ -572,6 +572,12 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
             {/* Rank Target */}
             <div>
               <SectionHeader num="04" label="Rank Target" />
+              {/* SOURCED: the Holotag score-target values below are verified against Bungie's
+                  Ranked article and are current for Season 2. S2 changed how tags are USED (a tag
+                  must match your rank), not the target values -- those are unchanged from S1. */}
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: '2px 0 8px', fontFamily: 'monospace' }}>
+                Holotag values per Bungie&apos;s Ranked article; unchanged in Season 2 - S2 changed how tags are used (a tag must match your rank), not the values.
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 5 }}>
                 {RANK_TARGETS.map(function(r) {
                   var isSel = rankTarget === r.id;

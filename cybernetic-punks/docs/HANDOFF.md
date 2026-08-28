@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Ranked Season 2 content corrections (verified vs Bungie sources)
+
+Corrected the site Ranked content to the verified current Season 2 rules (grounded in Bungie
+welcome_season_2 + ranked_in_marathon; corroborated across Dot Esports / PC Gamer / Mobalytics).
+- (1) Ranked WINDOW fixed sitewide: the stale Sun 10AM -> Thu 10AM PT window corrected to
+  SAT 10AM -> TUE 10AM PT (verified weekend window) in status/page.js, sitrep/page.js, and
+  guides/[category]/page.js -- both the day-boundary LOGIC and the visible text. Countdown
+  boundary logic tested 9/9 (open Sat 11AM through Tue 9AM PT; closed Wed-Fri + Sat<10 + Tue>=10).
+  Zero Sun-Thu windows remain sitewide.
+- (2) RankedClient.js:41 stale "Sponsored Kits banned" removed -- S2 has a DAILY Ranked Sponsored
+  Kit scaled to rank (now stated as a fact + FAQ).
+- (3) Cryo/Ranked "no longer overlap" corrected: guides:300 "simultaneously" + RankedClient:566
+  "stays on rotation always" fixed to the feedback-driven no-overlap state. The unverified Cryo
+  "Thursdays-Sundays" hours (guides:356/363) were REMOVED, not restated -- sources conflict on
+  the exact Cryo schedule, so we keep the no-overlap RELATIONSHIP general and invent no hours.
+- (4) Added missing verified S2 facts to the ranked hub: soft-MMR (lose to a higher rank = smaller
+  loss, beat them = bigger gain), the daily Sponsored Kit, and weekend-mode (3 FAQs + a visible
+  weekend-window line in the rotation card).
+- (5) Advisor RANK_TARGETS Holotag table (Bronze 3,000 ... Pinnacle 20,000): numbers KEPT --
+  verified correct vs Bungie's Ranked article and unchanged S1->S2 (S2 changed the
+  tag-matches-your-rank RULE, not the target values). The earlier "Season 2 targets not yet
+  confirmed" hedge was REPLACED with a provenance note sourcing the values to Bungie
+  (unsourced-numbers -> sourced-verified-numbers).
+- NO "Master" reintroduced anywhere -- it is unconfirmed datamine speculation, not a shipped tier;
+  Pinnacle is the confirmed top. (The leaderboard Master->Pinnacle fix from the A1 sweep is live;
+  untouched here.)
+- VERIFY: build green; Sat->Tue window everywhere + countdown 9/9; Sponsored-Kit ban gone + daily
+  kit stated; Cryo no-overlap without invented hours; soft-MMR/weekend facts added; advisor keeps
+  correct numbers + gains the source note; no Master; smart-char-clean.
+- RESIDUAL: the Sat->Tue window lives as day-boundary constants in status/sitrep/ranked -- the
+  single place to adjust if Bungie ever changes the hours.
+
+---
+
 ## 2026-08-28 - Sitewide A1 FAQPage sweep + 3 stale-prose fixes
 
 Cleared @type:FAQPage JSON-LD across the whole site (doctrine A1 bans it sitewide). 0 FAQPage
