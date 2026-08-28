@@ -240,6 +240,10 @@ async function generateTierImage(tierItems, runnerTag) {
   };
   // Tier accent colors (match the site's TIER_STYLES, tuned to read on canvas)
   const tierCol = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#7a8089', D: '#4a4f59', F: '#8a3a44' };
+  // Network brand burgundy (root .wm b / MeShell wordmark = --burg-bright #9A2740). The wordmark
+  // uses it so the shared PNG is unmistakably CNP-branded FOR ATTRIBUTION -- the image travels
+  // without a link (re-screenshotted), so branding is baked into the pixels, not the tweet text.
+  const BURG = '#9A2740';
 
   // ── Background ──
   ctx.fillStyle = COL.bg;
@@ -257,9 +261,9 @@ async function generateTierImage(tierItems, runnerTag) {
 
   const PAD = 44;
 
-  // ── Header: brand mark top-left (quiet watermark) ──
-  ctx.fillStyle = '#ff2222';
-  ctx.shadowColor = '#ff2222';
+  // ── Header: brand mark top-left (CYBERNETIC white + PUNKS burgundy, per the brand system) ──
+  ctx.fillStyle = BURG;
+  ctx.shadowColor = BURG;
   ctx.shadowBlur = 8;
   ctx.beginPath(); ctx.arc(PAD + 5, 42, 5, 0, Math.PI * 2); ctx.fill();
   ctx.shadowBlur = 0;
@@ -268,7 +272,7 @@ async function generateTierImage(tierItems, runnerTag) {
   ctx.textAlign = 'left';
   ctx.fillText('CYBERNETIC', PAD + 18, 47);
   const cwW = ctx.measureText('CYBERNETIC').width;
-  ctx.fillStyle = '#ff2222';
+  ctx.fillStyle = BURG;
   ctx.fillText('PUNKS', PAD + 18 + cwW, 47);
 
   // season, top-right (quiet)
@@ -295,11 +299,15 @@ async function generateTierImage(tierItems, runnerTag) {
   }
   ctx.fillText(titleText, PAD, 92);
 
-  // subtitle keeps the "marathon tier list" identity when a tag is featured
+  // Subtitle. For the LIVE list (no user tag) this is the METHODOLOGY SIGNAL -- the transparency
+  // differentiator, right on the shared artifact ("ranked by the numbers", not vibes). It is
+  // honest-safe across the mixed image: weapons are stat-derived, shells derive from ranked
+  // tiers -- both by the numbers. A USER-built list (hasTag) is their own picks, so it does NOT
+  // claim the methodology; it keeps the plain identity line.
   ctx.fillStyle = COL.green;
   ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
   ctx.fillText(
-    hasTag ? ('MARATHON META TIER LIST · ' + CURRENT_SEASON) : ('CURATED LIVE BY AI · ' + CURRENT_SEASON),
+    hasTag ? ('MARATHON META TIER LIST · ' + CURRENT_SEASON) : ('RANKED BY THE NUMBERS · ' + CURRENT_SEASON),
     PAD, 112
   );
 
@@ -398,15 +406,20 @@ async function generateTierImage(tierItems, runnerTag) {
   ctx.fillStyle = COL.border;
   ctx.fillRect(PAD, footerTop, W - PAD * 2, 1);
 
+  // Footer band: the URL is the TRAFFIC DRIVER (prominent, left) -- someone sees the image, reads
+  // the domain, visits. The tagline is the brand voice (right, understated). Both baked in so
+  // attribution survives a re-screenshot. A small burgundy tick ties the domain to the brand mark.
+  ctx.fillStyle = BURG;
+  ctx.fillRect(PAD, footerTop + 22, 3, 15);
   ctx.textAlign = 'left';
   ctx.fillStyle = COL.white;
   ctx.font = '700 17px Orbitron, Arial, sans-serif';
-  ctx.fillText('CYBERNETICPUNKS.COM', PAD, footerTop + 34);
+  ctx.fillText('CYBERNETICPUNKS.COM', PAD + 12, footerTop + 34);
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = COL.green;
+  ctx.fillStyle = COL.dim;
   ctx.font = '700 12px "Share Tech Mono", monospace, sans-serif';
-  ctx.fillText('BUILD YOUR OWN → /META', W - PAD, footerTop + 33);
+  ctx.fillText('NO HYPE. JUST INTEL.', W - PAD, footerTop + 33);
 
   return canvas.toDataURL('image/png');
 }

@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Shareable tier-list image branded for attribution (generateTierImage)
+
+Branded the tier-list share PNG (app/marathon/meta/MetaClient.js generateTierImage). The shared
+image travels WITHOUT a link (re-screenshotted, re-uploaded; surrounding tweet/link text gets
+stripped), so branding is baked INTO the pixels, not the surrounding text.
+- GROUND-TRUTH-MATCHED (2 corrections vs the brief premise): (a) wordmark color fixed from
+  off-brand red #ff2222 to network burgundy #9A2740 (--burg-bright; matches the root .wm + the
+  MeShell wordmark; also de-collides the brand from the red S-tier accent). (b) methodology line
+  is "RANKED BY THE NUMBERS", NOT "stat-derived": the live image MIXES weapons (stat-derived)
+  AND shells (ranked-tier-derived), so "stat-derived" would overclaim on the shells -- "by the
+  numbers" is honest across both and still signals the transparency differentiator.
+- HONESTY: the methodology line shows on the LIVE/derived image ONLY, not on user-built
+  drag-drop lists (a user's own picks are not the model's output -- the tagged-list path keeps
+  the plain identity subtitle so it never mislabels their picks as data-ranked).
+- Layout (1200x630, tasteful, content-first): top-left wordmark CYBERNETIC (white) + PUNKS
+  (burgundy #9A2740) with a burgundy glow dot; hero title; subtitle = the methodology signal;
+  footer band = a burgundy tick + CYBERNETICPUNKS.COM (white 17px, prominent -- the traffic
+  driver) on the left and "NO HYPE. JUST INTEL." (the established brand line, understated dim) on
+  the right; green Marathon accent bar + tier grid retained. Four modest brand touches, each in
+  its own zone -- reads as a tier list first, brand second.
+- Applied to the FLAT generator (the live shareable artifact). The banded share variant (pending
+  presentation layer) inherits the same BURG + subtitle/footer treatment -- kept as plain draw
+  calls it can reuse.
+- VERIFIED: build green; brand colors paint EXACT #9a2740 (footer tick + wordmark PUNKS glyph)
+  via canvas pixel-sampling; green accent intact. Full visual not screenshottable this session
+  (Browser pane not displayed) -- draw commands are the working layout coords with color/text
+  swaps only; operator to eyeball via Generate/Download on /marathon/meta.
+- NEXT (separate, pending): the tier-list presentation/transparency layer (band-grouped weapon
+  view + axis breakdown-on-click + the banded share image) -- scoped read already done.
+
+---
+
 ## 2026-08-28 - Weapon tier model wired in: weapons now FORMULA-DERIVED (was AI-freehand)
 
 The Marathon weapon tier is now COMPUTED from weapon_stats by a transparent model, replacing the
