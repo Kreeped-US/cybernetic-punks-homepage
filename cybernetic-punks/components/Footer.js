@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { getAllEditors } from '@/lib/editors/roster';
 import { getGameConfig } from '@/lib/games';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 // Updated April 27, 2026:
 // - Colors aligned to design system (#0e1014 footer / #ff2222 / #00d4ff)
@@ -15,16 +16,17 @@ import { getGameConfig } from '@/lib/games';
 // - Tagline standardized to one canonical form
 
 // The NETWORK editor desk -- all 6 (roster.js EDITOR_ORDER), identical on every game's footer
-// (the roster is a network asset, not per-game). LIVE editors get a lane chip + link
-// (/marathon/intel/<key>); an 'incoming' editor (Broker -- no lane yet) renders DIMMED with a
-// small "incoming" marker and is NOT linked. Compact chip shows the tag (proper case), not the
-// raw uppercase codename. Phase 2 decision (b): Broker is now shown (dimmed); the footer no
-// longer filters to live-only.
+// (the roster is a network asset, not per-game). LIVE editors get a lane/masthead chip + link;
+// an 'incoming' editor (Broker -- no lane yet) renders DIMMED with a small "incoming" marker and
+// is NOT linked. Compact chip shows the tag (proper case), not the raw uppercase codename.
+// Phase 2 decision (b): Broker is now shown (dimmed); the footer no longer filters to live-only.
+// The chip HREF is computed per game in the component (chipHref): Marathon links each live editor
+// to its lane (/marathon/intel/<key>); the other games have no per-game lanes, so they link to the
+// network editor masthead (/editors) -- Phase 3 decision (c).
 const DESK = getAllEditors().map(function(e) {
-  var live = e.status === 'live';
   return {
-    symbol: e.symbol, color: e.color, name: e.tag || e.fullName, status: e.status,
-    live: live, href: live ? ('/marathon/intel/' + e.key) : null,
+    key: e.key, symbol: e.symbol, color: e.color, name: e.tag || e.fullName,
+    status: e.status, live: e.status === 'live',
   };
 });
 
@@ -38,9 +40,8 @@ const BORDER    = '#22252e';
 const BORDER_SUBTLE = '#1e2028';
 const CIPHER  = '#ff2222';
 const NEXUS   = '#00d4ff';
-const DMZ_FOREST = '#3f7d44'; // DMZ (Call of Duty) accent -- footer cross-game wayfinding link
-const WARDOGS_AMBER = '#e0a13a'; // Wardogs (Bulkhead) accent -- footer cross-game wayfinding link
-const DEDNET_BLOOD = '#cc2936'; // PUBG: DED.NET (KRAFTON) accent -- footer cross-game wayfinding link
+// Cross-game peer accents are no longer hardcoded here -- each peer's accent comes from its
+// ROOT_GAMES theme.primary (same source of truth as the network root tiles).
 
 export default function Footer({ game = 'marathon' }) {
   const [year] = useState(function() { return new Date().getFullYear(); });
@@ -49,6 +50,31 @@ export default function Footer({ game = 'marathon' }) {
   var fcfg = getGameConfig(game).footer;
   var exploreLinks = (fcfg.links && fcfg.links.explore) || [];
   var discoverLinks = (fcfg.links && fcfg.links.discover) || [];
+
+  // Editor-chip href, GAME-DEPENDENT (Phase 3 decision c). An 'incoming' editor is never linked.
+  // Marathon links to the editor's own lane; the other games have no per-game lanes, so they link
+  // to the network editor masthead (/editors). Marathon is unchanged -> byte-identical.
+  function chipHref(ed) {
+    if (!ed.live) return null;
+    return game === 'marathon' ? ('/marathon/intel/' + ed.key) : '/editors';
+  }
+
+  // Cross-game row peers: the OTHER games (this row INVERTS per game -- never shows itself).
+  // Order + route + accent come from ROOT_GAMES (the network-root source of truth); the sublabel
+  // token + lifecycle come from each peer's footer config. The label is built as ONE string so it
+  // renders as a single text node (no SSR text-delimiter comments) -- the technique that kept the
+  // Phase 2 legal/description marker-free. Marathon's derived peers reproduce its former hardcoded
+  // strings verbatim (Part A was authored to match), so Marathon stays byte-identical.
+  var peers = ROOT_GAMES.filter(function (g) { return g.slug !== game; }).map(function (g) {
+    var pf = getGameConfig(g.slug).footer;
+    var up = String(g.label || '').toUpperCase();
+    return {
+      slug: g.slug,
+      route: g.route,
+      accent: g.theme && g.theme.primary,
+      text: up + ' · ' + pf.peerLabel + ' (' + pf.peerLifecycle + ') →',
+    };
+  });
 
   return (
     <footer style={{
@@ -74,7 +100,7 @@ export default function Footer({ game = 'marathon' }) {
           {DESK.map(function(ed) {
             if (ed.live) {
               return (
-                <Link key={ed.name} href={ed.href} style={{
+                <Link key={ed.name} href={chipHref(ed)} style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 5,
@@ -206,64 +232,31 @@ export default function Footer({ game = 'marathon' }) {
           >
             PART OF THE CYBERNETICPUNKS NETWORK →
           </Link>
-          {/* Cross-game wayfinding: the network's other games. Quiet, always-visible
-              (footer renders on every Marathon page), honestly labelled -- the only
-              in-Marathon paths to /dmz and /wardogs besides the neutral root.
-              PHASE 2 NOTE: still HARDCODED (Marathon-specific), on purpose. Parameterizing
-              this per game (peers from ROOT_GAMES, inverting per game) is PHASE 3 -- and it
-              needs config that Phase 1 did not add: a per-game publisher/peer-label token
-              (the sublabels mix franchise / dev / publisher: "CALL OF DUTY" / "BULKHEAD" /
-              "KRAFTON") and a lifecycle sublabel; there is no single reusable launchLabel that
-              reproduces these exact strings. Kept hardcoded here so Marathon stays byte-identical;
-              FLAGGED for the Phase 3 config additions. See the Phase 2 HOLD report. */}
-          <Link href="/dmz" style={{
-            display: 'block',
-            fontFamily: 'monospace',
-            fontSize: 10,
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: 1.5,
-            textDecoration: 'none',
-            fontWeight: 700,
-            marginBottom: 18,
-            transition: 'color 0.15s',
-          }}
-            onMouseEnter={function(e) { e.currentTarget.style.color = DMZ_FOREST; }}
-            onMouseLeave={function(e) { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
-          >
-            DMZ · CALL OF DUTY (PRE-LAUNCH) →
-          </Link>
-          <Link href="/wardogs" style={{
-            display: 'block',
-            fontFamily: 'monospace',
-            fontSize: 10,
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: 1.5,
-            textDecoration: 'none',
-            fontWeight: 700,
-            marginBottom: 18,
-            transition: 'color 0.15s',
-          }}
-            onMouseEnter={function(e) { e.currentTarget.style.color = WARDOGS_AMBER; }}
-            onMouseLeave={function(e) { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
-          >
-            WARDOGS · BULKHEAD (EA SEP 10) →
-          </Link>
-          <Link href="/pubg-dednet" style={{
-            display: 'block',
-            fontFamily: 'monospace',
-            fontSize: 10,
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: 1.5,
-            textDecoration: 'none',
-            fontWeight: 700,
-            marginBottom: 18,
-            transition: 'color 0.15s',
-          }}
-            onMouseEnter={function(e) { e.currentTarget.style.color = DEDNET_BLOOD; }}
-            onMouseLeave={function(e) { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
-          >
-            PUBG: DED.NET · KRAFTON (REVEALED · TBA) →
-          </Link>
+          {/* Cross-game wayfinding: the network's OTHER games (this row INVERTS per game -- it
+              never lists the current game). Peers, order, route + accent come from ROOT_GAMES;
+              each peer's sublabel token + lifecycle come from its footer config; the label is one
+              interpolated string so it renders as a single text node (no SSR marker). Quiet,
+              always-visible. Marathon's derived peers reproduce its former hardcoded strings. */}
+          {peers.map(function(peer) {
+            return (
+              <Link key={peer.slug} href={peer.route} style={{
+                display: 'block',
+                fontFamily: 'monospace',
+                fontSize: 10,
+                color: 'rgba(255,255,255,0.4)',
+                letterSpacing: 1.5,
+                textDecoration: 'none',
+                fontWeight: 700,
+                marginBottom: 18,
+                transition: 'color 0.15s',
+              }}
+                onMouseEnter={function(e) { e.currentTarget.style.color = peer.accent; }}
+                onMouseLeave={function(e) { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+              >
+                {peer.text}
+              </Link>
+            );
+          })}
           <div style={{
             fontFamily: 'monospace',
             fontSize: 9,
@@ -476,7 +469,7 @@ export default function Footer({ game = 'marathon' }) {
             letterSpacing: 1.5,
             fontWeight: 700,
           }}>
-            MARATHON INTELLIGENCE HUB · TAU CETI IV
+            {fcfg.bottomTagline}
           </div>
         </div>
       </div>

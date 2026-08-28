@@ -50,6 +50,14 @@ export const wardogs = {
   // no tool/entity hubs exist yet, so no DISCOVER column.
   footer: {
     description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the CyberneticPunks game network.',
+    // Phase 3 (inert until Footer.js reads them). See marathon.js footer for the full note.
+    // peerLabel/peerLifecycle reproduce Wardogs' CURRENT sublabel in the Marathon footer
+    // ("WARDOGS · BULKHEAD (EA SEP 10)"). peerLifecycle 'EA SEP 10' duplicates launch_date's date
+    // (2026-09-10) as literal text -- it could be derived via the eaDateLabel helper in app/page.js
+    // if that were extracted to a shared lib (flagged for a later cleanup). Middot matches the UI.
+    bottomTagline: 'WARDOGS INTELLIGENCE HUB · THE CASH ECONOMY',
+    peerLabel: 'BULKHEAD',
+    peerLifecycle: 'EA SEP 10',
     legal: [
       'CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY BULKHEAD OR TEAM17.',
       'WARDOGS IS A TRADEMARK OF ITS RESPECTIVE OWNER.',

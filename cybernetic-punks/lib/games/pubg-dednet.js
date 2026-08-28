@@ -58,6 +58,12 @@ export const pubgDednet = {
   // no tool/entity hubs exist yet, so no DISCOVER.
   footer: {
     description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Part of the CyberneticPunks game network.',
+    // Phase 3 (inert until Footer.js reads them). See marathon.js footer for the full note.
+    // peerLabel/peerLifecycle reproduce DED.NET's CURRENT sublabel in the Marathon footer
+    // ("PUBG: DED.NET · KRAFTON (REVEALED · TBA)"). Both middots match the footer UI.
+    bottomTagline: 'DED.NET INTELLIGENCE HUB · 1996 CASCADIA',
+    peerLabel: 'KRAFTON',
+    peerLifecycle: 'REVEALED · TBA',
     legal: [
       'CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY KRAFTON OR PUBG STUDIOS.',
       'PUBG AND PUBG: DED.NET ARE TRADEMARKS OF THEIR RESPECTIVE OWNERS.',

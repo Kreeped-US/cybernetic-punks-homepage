@@ -68,6 +68,12 @@ export const dmz = {
   // DISCOVER = the standalone entity/tool hubs that genuinely exist as real content pages.
   footer: {
     description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for the DMZ. Part of the CyberneticPunks game network.',
+    // Phase 3 (inert until Footer.js reads them). See marathon.js footer for the full note.
+    // peerLabel/peerLifecycle reproduce DMZ's CURRENT sublabel in the Marathon footer
+    // ("DMZ · CALL OF DUTY (PRE-LAUNCH)"). Middot separator matches the footer UI.
+    bottomTagline: 'DMZ INTELLIGENCE HUB · HAJIN EXCLUSION ZONE',
+    peerLabel: 'CALL OF DUTY',
+    peerLifecycle: 'PRE-LAUNCH',
     legal: [
       'CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY ACTIVISION.',
       'CALL OF DUTY AND MODERN WARFARE ARE TRADEMARKS OF ACTIVISION PUBLISHING, INC.',

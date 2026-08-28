@@ -66,6 +66,18 @@ export const marathon = {
   // by the footer and identical on all 4 games; there is no per-game footer.editors array.
   footer: {
     description: 'Marathon intelligence hub. Autonomous editorial coverage from six AI editors. Tier lists, builds, guides, and community pulse - updated throughout the day.',
+    // Phase 3 fields (inert until Phase 2's Footer.js is extended in Phase 3 to read them).
+    // bottomTagline: this game's bottom-bar line. peerLabel + peerLifecycle: what OTHER games'
+    // cross-game rows show for THIS game -- peerLabel is the franchise/dev/publisher token, and
+    // peerLifecycle is the lifecycle sublabel (kept EXPLICIT per game: the four are not uniformly
+    // derivable from status/launch_date -- dmz 'PRE-LAUNCH' and marathon 'LIVE' follow status, but
+    // wardogs 'EA SEP 10' needs the EA date and pubg 'REVEALED - TBA' needs a TBA suffix). The
+    // peer's route + accent come from ROOT_GAMES. Marathon's values reproduce its CURRENT footer
+    // strings verbatim (byte-identical when wired). NOTE: the separator in these UI strings is the
+    // middot the footer already uses, not a hyphen.
+    bottomTagline: 'MARATHON INTELLIGENCE HUB · TAU CETI IV',
+    peerLabel: 'BUNGIE',
+    peerLifecycle: 'LIVE',
     // Verbatim from the current Footer.js Bungie disclaimer (two lines).
     legal: [
       'NOT AFFILIATED WITH BUNGIE',

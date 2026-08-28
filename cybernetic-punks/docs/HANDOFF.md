@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Footer generalization PHASE 3 of 4: roll the footer onto dmz/wardogs/pubg-dednet
+
+Rolled the parameterized footer onto dmz/wardogs/pubg-dednet (Part A config + Part C rollout).
+- PART A: added bottomTagline + peerLabel + peerLifecycle to all 4 game configs. Per-game taglines
+  (marathon "TAU CETI IV" UNCHANGED, dmz "HAJIN EXCLUSION ZONE", wardogs "THE CASH ECONOMY", pubg
+  "1996 CASCADIA"). peer sublabels authored to reproduce Marathon's CURRENT cross-game strings
+  byte-identically (dmz "CALL OF DUTY (PRE-LAUNCH)", wardogs "BULKHEAD (EA SEP 10)", pubg "KRAFTON
+  (REVEALED - TBA)", marathon "BUNGIE (LIVE)"). Lifecycle kept EXPLICIT per game -- not uniformly
+  derivable from status/launch_date (wardogs needs the EA date, pubg a TBA suffix; eaDateLabel is
+  a non-exported local in app/page.js).
+- PART C (Footer.js): editor-chip href is now GAME-DEPENDENT -- marathon -> /marathon/intel/<key>
+  (UNCHANGED); the 3 new games -> /editors (the game-agnostic masthead, decision c, since no
+  per-game editor lanes exist); Broker non-linked everywhere. bottomTagline read from config. The
+  cross-game row is PARAMETERIZED to INVERT per game (each footer shows the OTHER 3 from ROOT_GAMES
+  + each peer's peerLabel/peerLifecycle), each peer built as ONE interpolated string (marker-free).
+- PART C (rollout): <Footer game=.../> added to the dmz/wardogs/pubg-dednet layouts, and the
+  standalone disclaimer RENDER removed from each in the SAME edit (DmzDisclaimer, WardogsDisclaimer,
+  pubg's inline provenance paragraph) so legal shows ONCE. The disclaimer COMPONENT FILES are
+  retained -- Phase 4 deletes them.
+- REGRESSION GUARD PROVEN: pre-Part-C vs Part-C SSR diff of the Marathon footer = IDENTICAL, zero
+  diff (both 12018 chars). The derived cross-game row + config tagline + chipHref reproduce Marathon
+  exactly.
+- VERIFIED: the 3 new games render their OWN config (chips -> /editors, Broker dimmed, own tagline /
+  links / legal); the cross-game row inverts (each shows the other 3, never itself); legal appears
+  exactly once per page (no double, no lost); build green; house-style clean (0 em-dash, 0 backtick;
+  the only non-ASCII is the middot/arrow the footer UI already uses). Operator real-browser-confirmed
+  all 4 footers.
+- Phase 4 (delete the 3 standalone disclaimer component files) remains.
+
+---
+
+
 ## 2026-08-28 - Footer generalization PHASE 2 of 4: parameterize Footer.js by game
 
 Footer.js now takes a game prop (default 'marathon') and reads per-game footer config

@@ -7,7 +7,7 @@
 // app/dmz/layout.js (GAME_TEMPLATE.md D3/D4).
 
 import WardogsNav from './WardogsNav';
-import WardogsDisclaimer from '@/components/wardogs/WardogsDisclaimer';
+import Footer from '@/components/Footer';
 import { wardogs } from '@/lib/games/wardogs';
 
 export const metadata = {
@@ -34,7 +34,10 @@ export default function WardogsLayout({ children }) {
     >
       <WardogsNav />
       {children}
-      <WardogsDisclaimer />
+      {/* Phase 3: the generalized network Footer (game="wardogs") REPLACES the standalone
+          WardogsDisclaimer -- the footer's legal row now carries the same notice, so legal shows
+          ONCE. components/wardogs/WardogsDisclaimer.js stays until Phase 4. */}
+      <Footer game="wardogs" />
     </div>
   );
 }

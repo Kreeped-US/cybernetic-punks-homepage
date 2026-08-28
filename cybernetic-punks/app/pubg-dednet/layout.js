@@ -7,6 +7,7 @@
 // Mirrors app/wardogs/layout.js.
 
 import PubgDednetNav from './PubgDednetNav';
+import Footer from '@/components/Footer';
 import { pubgDednet } from '@/lib/games/pubg-dednet';
 
 export const metadata = {
@@ -44,15 +45,10 @@ export default function PubgDednetLayout({ children }) {
     >
       <PubgDednetNav />
       {children}
-      {/* Provenance disclaimer -- DED.NET is days-old and thin; interview detail stays attributed. */}
-      <div style={{ borderTop: '1px solid var(--border)', marginTop: 40 }}>
-        <p style={{ maxWidth: 760, margin: '0 auto', padding: '18px 16px 40px', fontSize: 12, lineHeight: 1.6, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
-          PUBG: DED.NET was revealed at gamescom 2026 and is pre-launch (release date TBA, closed
-          beta incoming). Everything here is drawn from official KRAFTON / PUBG Studios material;
-          gameplay detail from the PUBG Studios developer interview is attributed to its source, and
-          specific numbers stay flagged until verified in-game.
-        </p>
-      </div>
+      {/* Phase 3: the generalized network Footer (game="pubg-dednet") REPLACES the inline
+          provenance paragraph -- the footer's legal row carries the affiliation + hedged
+          trademark + the same provenance text (Phase 1 config), so legal shows ONCE. */}
+      <Footer game="pubg-dednet" />
     </div>
   );
 }
