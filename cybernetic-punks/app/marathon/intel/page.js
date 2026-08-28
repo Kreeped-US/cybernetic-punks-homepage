@@ -261,21 +261,6 @@ export default async function IntelHubPage({ searchParams }) {
 
   // FAQPage — now built from MARATHON_FAQS (questions Marathon players ask)
   // not publication-system FAQs (questions nobody asks).
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: MARATHON_FAQS.map(function(item) {
-      return {
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: item.a,
-        },
-      };
-    }),
-  };
-
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#ffffff', paddingTop: 12, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
 
@@ -285,7 +270,6 @@ export default async function IntelHubPage({ searchParams }) {
       {items.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
       )}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <style>{`
         .intel-row:hover   { background: #1e2228 !important; }

@@ -154,22 +154,9 @@ export default async function ShellMatchupPage({ params }) {
   // The schema serializes the SAME text rendered in the visible FAQ block below,
   // so the two cannot drift (single source: matchupFaq). dateModified is the
   // FIXED verification date, never new Date().
-  var faqSchema = faq ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    url: url,
-    dateModified: MATCHUP_VERIFIED_DATE,
-    mainEntity: [{
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-    }],
-  } : null;
-
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
 
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>
         <ol style={{ display: 'flex', gap: 8, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, listStyle: 'none', padding: 0, margin: 0, fontWeight: 700 }}>

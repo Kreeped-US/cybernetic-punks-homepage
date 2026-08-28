@@ -814,23 +814,6 @@ export default async function RisingPage() {
         }),
       }} />
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: FAQS.map(function(faq) {
-            return {
-              '@type': 'Question',
-              name: faq.q,
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: faq.a,
-              },
-            };
-          }),
-        }),
-      }} />
-
       {/* ItemList of creator spotlights — only when there are spotlights to list. */}
       {spotlights.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{

@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Sitewide A1 FAQPage sweep + 3 stale-prose fixes
+
+Cleared @type:FAQPage JSON-LD across the whole site (doctrine A1 bans it sitewide). 0 FAQPage
+schemas remain across 16 files -- 15 Marathon pages + the shared components/dmz/DmzEntityDetail.js
+(one edit covering all DMZ entity pages). Net diff +29/-307 (mostly deleted schema).
+- Removed ONLY the FAQPage script/const per file; EVERY other schema is intact
+  (BreadcrumbList/WebPage/ItemList/CollectionPage/WebApplication -- SSR-verified on
+  builds/leaderboard/factions). Visible FAQ prose kept as content (only the schema is banned).
+  Group B dead faqItems arrays cleaned (maps + DMZ; the DMZ acq var stays -- still used by the
+  visible render). Handled the 3 inline-JSX schemas (leaderboard/rising/stats) and the multi-line
+  {faqSchema && (...)} wrappers (maps/shells) correctly; stale FAQPage header/inline comments
+  updated (shells, leaderboard).
+- No shared Marathon FAQ helper existed (15 separate edits); the DMZ side had one shared
+  component (1 edit).
+- 3 stale/false-prose fixes surfaced by the honesty check (the meta-page lesson -- look, do not
+  blind-delete):
+  (1) FLAG 2 -- leaderboard "Master" -> "Pinnacle". Pinnacle is confirmed the current top ranked
+      tier (RankedClient.js + advisor + BuildRefiner; operator-confirmed). All 12 leaderboard
+      rank-references corrected; ranked/RankedClient.js left as-is (already correct);
+      guides/[category] "Master stealth" (the VERB) correctly untouched.
+  (2) FLAG 1 -- guides/page.js false "faction ranks unlock stat bonuses" corrected to the current
+      Cradle mechanic (S2 moved core stat upgrades to the Cradle; matches factions/page.js:64).
+  (3) FLAG 3 -- leaderboard fabricated performance stats removed with NO replacement numbers
+      (honest-null on a data-less page): K/D 4.0 / 3.0 / 2.0-3.0, "top 5%", "at least N" all
+      genericized. Definitional "top 1%" kept; the intentional skeleton "---" placeholder rows
+      preserved (an over-broad em-dash normalization initially swept those up -- restored the file
+      and re-applied converting ONLY spaced prose em-dashes).
+- VERIFY: build green; 0 FAQPage sitewide; visible FAQs + all other schemas intact (SSR-checked);
+  leaderboard Master->Pinnacle + no fabricated stats + placeholders intact; guides Cradle fix
+  present; all added lines smart-char-clean. Server-rendered schema/prose -- no client
+  interactions to test.
+
+---
+
 ## 2026-08-28 - Tier-list SEO improvements on /marathon/meta (4 fixes + an honesty fix)
 
 Four SEO improvements plus a methodology-accuracy fix on the meta page.

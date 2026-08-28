@@ -213,27 +213,9 @@ export default async function StatusPage() {
     ],
   };
 
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      { '@type': 'Question', name: 'Is Marathon down right now?', acceptedAnswer: { '@type': 'Answer', text: 'Check cyberneticpunks.com/marathon/status for real-time Marathon server status across Steam, PlayStation 5, and Xbox Series X|S. Our status page aggregates live platform availability and current incidents.' } },
-      { '@type': 'Question', name: 'When does Marathon weekly reset happen?', acceptedAnswer: { '@type': 'Answer', text: 'Marathon resets every Tuesday at 10 AM PT / 1 PM ET / 6 PM GMT. This includes ranked zone rotations, faction contracts, and Armory stock refreshes.' } },
-      { '@type': 'Question', name: 'What does WEASEL error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'WEASEL means you lost connection to Bungie servers. This is often a server-side issue during high traffic or maintenance windows. Check server status before assuming it\'s a local issue.' } },
-      { '@type': 'Question', name: 'What does BROCCOLI error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'BROCCOLI means your GPU cannot be detected, usually caused by a driver crash. Update your OS and GPU drivers and ensure your graphics card is properly installed and recognized by your system.' } },
-      { '@type': 'Question', name: 'What does CENTIPEDE error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'CENTIPEDE indicates general connection instability — often packet loss or unstable routing. Try a wired ethernet connection, restart your router, and close bandwidth-heavy background applications.' } },
-      { '@type': 'Question', name: 'What does BASIL error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'BASIL is a basic disconnect. Try logging back in first. If it persists, check the live server status, as it may indicate a wider connectivity issue rather than a problem on your end.' } },
-      { '@type': 'Question', name: 'What does CURRANT error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'CURRANT is a network connectivity issue. Check your ISP status, restart your router, and try a wired ethernet connection rather than Wi-Fi for a more stable route to the servers.' } },
-      { '@type': 'Question', name: 'What does ANTEATER error code mean in Marathon?', acceptedAnswer: { '@type': 'Answer', text: 'ANTEATER means Marathon is unable to connect to Bungie. Check your NAT type, review your firewall settings, and ensure BattlEye and Marathon are not being blocked by your security software.' } },
-      { '@type': 'Question', name: 'How do I fix Marathon connection issues?', acceptedAnswer: { '@type': 'Answer', text: 'Restart Marathon, check server status, restart your router, try a wired ethernet connection, ensure BattlEye is not blocked by your firewall, and update your platform software.' } },
-      { '@type': 'Question', name: 'When does Marathon ranked return in Season 2?', acceptedAnswer: { '@type': 'Answer', text: 'Marathon ranked returns June 14, 2026, in Season 2. Season 2 merges the previous Low Stakes and High Stakes queues into a single 5,000 loadout-value ranked queue, with faster progression and Holotag requirements tied to your current rank. Ranked tiers reset with the new season, requiring placement before official rank assignments resume.' } },
-    ],
-  };
-
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <style>{`
         .st-card       { transition: background 0.12s, border-color 0.12s; }

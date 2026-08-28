@@ -79,43 +79,6 @@ const webApplicationSchema = {
   publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
 };
 
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'What is the Cradle in Marathon Season 2?',
-      acceptedAnswer: { '@type': 'Answer', text: 'The Cradle is Marathon Season 2 progression system that replaced most of the Season 1 faction stat grind. You earn Energy by converting looted items into Cradle XP, then spend that Energy across six stat tracks - Strength, Recharge, Dexterity, Endurance, Support, and Resistance - to upgrade your Runner Shell and unlock perks. Progression is shared across all shells and can be respec freely at any time.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'How does Cradle Energy work?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Every 1,000 Cradle XP grants one level and one Energy point. You spend Energy one point at a time into a stat track. Each point adds a small passive stat increase, and named perks unlock when you reach their exact Energy breakpoint. Maxing all tracks takes roughly Cradle level 84.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'Can you respec the Cradle in Marathon?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Yes. The Cradle can be reset and reallocated freely at any time with no cost or penalty. This makes it ideal for experimentation - you can move all your Energy from one stat track to another between runs. Cradle progression also resets at the start of each new season.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'What is the best Cradle stat to level first?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Endurance is widely recommended as a strong early track because Quick Vent unlocks at just 3 Energy and heat management is valuable on every shell. Because the Cradle is shared across all shells and freely respec-able, many players focus one or two tracks to their first major perk before spreading out. Use the planner above to test allocations.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'Do Cradle stats carry across all Runner Shells?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Yes. Cradle progression is shared across every Runner Shell on your account, including the Season 2 Sentinel shell. Energy you invest benefits all shells, so investing in broadly useful stats helps your whole roster rather than a single class.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'Did the Cradle replace factions in Marathon?',
-      acceptedAnswer: { '@type': 'Answer', text: 'It replaced the faction role in core stat progression. In Season 1, Runner Shell stat upgrades came from grinding faction reputation. In Season 2 those stat upgrades moved to the Cradle. Factions still matter for contracts, reputation, unique gear and implant access, Sponsored Kits, and gating Cryo Archive - but they no longer gate your core shell stats.' },
-    },
-  ],
-};
-
 export default async function CradlePage() {
   var nodes = await getCradleNodes();
 
@@ -123,7 +86,6 @@ export default async function CradlePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
         {/* Breadcrumb */}

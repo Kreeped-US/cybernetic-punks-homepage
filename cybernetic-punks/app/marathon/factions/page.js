@@ -49,38 +49,6 @@ const breadcrumbSchema = {
   ],
 };
 
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'What do factions do in Marathon Season 2?',
-      acceptedAnswer: { '@type': 'Answer', text: 'In Season 2, factions provide contracts and reputation, unique faction gear and implants, Sponsored Kits, and Armory and vendor access. Importantly, they also gate Cryo Archive - you must unlock all six factions to access it. What factions no longer do is gate your core Runner Shell stat upgrades; those moved to the Cradle in Season 2.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'Do factions still give stat upgrades in Season 2?',
-      acceptedAnswer: { '@type': 'Answer', text: 'No. In Season 1, Runner Shell stat upgrades came from grinding faction reputation. In Season 2 those core stat upgrades moved to the Cradle, a unified progression system where you allocate Energy across six stat tracks. Factions now focus on contracts, unique gear, and access rather than core stats.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'Why should I unlock all six factions in Marathon?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Unlocking all six factions is required to access Cryo Archive, the endgame zone. Beyond that, each faction offers its own contracts, reputation rewards, unique gear and implants, and Armory access, so unlocking more factions widens the gear and rewards available to you.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'How is faction progression different in Season 2?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Faction progression is faster in Season 2. Standard Contracts grant significantly more reputation, new reputation sources were added (including Enhanced valuables and defeating UESC), material costs to unlock faction upgrades were reduced, and Priority Contracts no longer require a faction rank. Faction level and upgrades reset at the start of the season, but factions you previously unlocked stay unlocked.' },
-    },
-    {
-      '@type': 'Question',
-      name: 'Who are the six Marathon factions?',
-      acceptedAnswer: { '@type': 'Answer', text: 'The six factions are Cyberacme, Nucaloric, Traxus, Mida, Arachne, and Sekiguchi. Each is a distinct organization with its own representative, identity, and rewards. Cyberacme is the typical starting faction, and Sekiguchi are the creators of the Runner Shells.' },
-    },
-  ],
-};
-
 async function getFactionData() {
   try {
     var [factionsRes, materialsRes, articlesRes] = await Promise.all([
@@ -111,7 +79,6 @@ export default async function FactionsPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <FactionClient data={data} />
     </>
   );

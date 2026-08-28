@@ -203,20 +203,11 @@ export default function RankedClient({ data }) {
   var moverCount = data.metaMovers.length;
   var editorsActive = [...new Set(data.rankedArticles.map(function(a) { return a.editor; }))];
 
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: FAQS.map(function(f) {
-      return { '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } };
-    }),
-  };
-
   var isReturning = liveStatus === 'RETURNS';
   var returnDays = daysUntilReturn();
 
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <style>{`
         .r-card         { transition: background 0.12s, border-color 0.12s; }

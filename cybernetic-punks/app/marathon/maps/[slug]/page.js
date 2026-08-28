@@ -266,30 +266,6 @@ export default async function MapPage({ params, searchParams }) {
   var parentMap = seo.parentMap;
   var zoneCount = ownZones.length + inheritedZones.length;
 
-  // --- FAQ ITEMS (also feed FAQPage JSON-LD) -------------------
-  var faqItems = [];
-  if (bosses.length > 0) {
-    faqItems.push({
-      q: 'Who is the boss on ' + displayName + ' in Marathon?',
-      a: 'The boss on ' + displayName + ' is ' + bosses.map(function(b) { return b.boss_name; }).join(' and ') + '.'
-        + (bosses[0].summary ? ' ' + bosses[0].summary : ''),
-    });
-  }
-  if (zoneCount > 0) {
-    faqItems.push({
-      q: 'What zones are on ' + displayName + '?',
-      a: displayName + ' has ' + zoneCount + ' zone' + (zoneCount !== 1 ? 's' : '') + ': '
-        + ownZones.concat(inheritedZones).map(function(z) { return z.zone_name; }).join(', ') + '.',
-    });
-  }
-  if (gameMap && gameMap.difficulty) {
-    faqItems.push({
-      q: 'How hard is ' + displayName + ' in Marathon?',
-      a: displayName + ' is rated ' + gameMap.difficulty + ' difficulty.'
-        + (gameMap.best_for ? ' Best for: ' + gameMap.best_for + '.' : ''),
-    });
-  }
-
   // --- JSON-LD (SEO layer) -------------------------------------
   var breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -339,14 +315,6 @@ export default async function MapPage({ params, searchParams }) {
   };
   if (gameMap && gameMap.updated_at) webPageSchema.dateModified = gameMap.updated_at;
 
-  var faqSchema = faqItems.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map(function(item) {
-      return { '@type': 'Question', name: item.q, acceptedAnswer: { '@type': 'Answer', text: item.a } };
-    }),
-  } : null;
-
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
       <style>{`
@@ -357,9 +325,6 @@ export default async function MapPage({ params, searchParams }) {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
-      {faqSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      )}
 
       {isVaultPreview && (
         <div style={{ background: GOLD, color: '#000', textAlign: 'center', padding: '6px 12px', fontFamily: 'monospace', fontSize: 11, fontWeight: 800, letterSpacing: 2 }}>

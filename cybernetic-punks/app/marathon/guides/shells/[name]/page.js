@@ -336,22 +336,10 @@ export default async function ShellGuidePage({ params }) {
   // become "now", because a wrong freshness claim is worse than a silent one.
   if (shell.updated) articleSchema.dateModified = shell.updated;
 
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      { '@type': 'Question', name: 'Is ' + shell.name + ' good in Marathon?', acceptedAnswer: { '@type': 'Answer', text: shell.intro } },
-      { '@type': 'Question', name: 'How do you play ' + shell.name + ' in Marathon?', acceptedAnswer: { '@type': 'Answer', text: shell.playstyle } },
-      { '@type': 'Question', name: 'What are the strengths of ' + shell.name + ' in Marathon?', acceptedAnswer: { '@type': 'Answer', text: shell.strengths.join('. ') + '.' } },
-      { '@type': 'Question', name: 'What are the weaknesses of ' + shell.name + ' in Marathon?', acceptedAnswer: { '@type': 'Answer', text: shell.weaknesses.join('. ') + '.' } },
-    ],
-  };
-
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <style>{`
         .sg-card       { transition: background 0.12s, border-color 0.12s; }

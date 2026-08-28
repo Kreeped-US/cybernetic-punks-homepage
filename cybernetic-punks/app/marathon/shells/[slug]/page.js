@@ -220,9 +220,8 @@ export default async function ShellHubPage({ params }) {
   if (shell.active_ability_name) faqItems.push({ q: 'What is ' + shellName + "'s active ability?", a: shell.active_ability_name + (shell.active_ability_description ? ': ' + shell.active_ability_description : '') });
 
   // ─── JSON-LD SCHEMAS ────────────────────────────────────────
-  // Three schemas per shell page. The faqSchema is built from the same
-  // faqItems we already construct for the client, so no duplication of
-  // logic — same data, two consumers.
+  // BreadcrumbList + WebPage only (A1: no FAQPage -- removed 2026-08-28). faqItems is still
+  // constructed and passed to the client for the visible FAQ; it just no longer feeds a schema.
 
   var breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -274,25 +273,10 @@ export default async function ShellHubPage({ params }) {
   // Omit rather than emit a stand-in -- see lastModified above.
   if (lastModified) webPageSchema.dateModified = lastModified;
 
-  var faqSchema = faqItems.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map(function(item) {
-      return {
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: { '@type': 'Answer', text: item.a },
-      };
-    }),
-  } : null;
-
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
-      {faqSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      )}
 
       <ShellDetailClient
         shell={shell}

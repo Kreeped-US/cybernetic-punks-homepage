@@ -609,14 +609,6 @@ export default async function CategoryPage({ params }) {
     ],
   };
 
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: cat.faqs.map(function(f) {
-      return { '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } };
-    }),
-  };
-
   var itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -631,7 +623,6 @@ export default async function CategoryPage({ params }) {
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       {allGuides.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />}
 
       <style>{`

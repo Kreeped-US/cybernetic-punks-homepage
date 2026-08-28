@@ -134,7 +134,7 @@ const FAQS = [
   },
   {
     q: 'How do I unlock faction items in Marathon?',
-    a: 'Each of the 6 factions (Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi) has a reputation track. Run faction-aligned missions and farm their materials to level up. Higher ranks unlock stat bonuses, weapons, mods, and implants specific to that faction. See our Faction Guide for rank requirements and costs.',
+    a: 'Each of the 6 factions (Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi) has a reputation track. Run faction-aligned missions and farm their materials to level up. Higher ranks unlock weapons, mods, and implants specific to that faction. Core Runner Shell stat upgrades no longer come from faction reputation - in Season 2 those moved to the Cradle. See our Faction Guide for rank requirements and costs.',
   },
   {
     q: 'What is the best weapon in Marathon?',
@@ -355,14 +355,6 @@ export default async function GuidesPage({ searchParams }) {
     ],
   };
 
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: FAQS.map(function(f) {
-      return { '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } };
-    }),
-  };
-
   var itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -397,7 +389,6 @@ export default async function GuidesPage({ searchParams }) {
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }} />
 

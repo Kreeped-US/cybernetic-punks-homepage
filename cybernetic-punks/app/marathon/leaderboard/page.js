@@ -1,15 +1,15 @@
 // app/leaderboard/page.js
-// LEADERBOARD — Marathon ranked leaderboard placeholder
+// LEADERBOARD - Marathon ranked leaderboard placeholder
 // SEO-optimized, ready for Bungie API integration when it ships.
 //
 // Updated April 27, 2026:
 // - Colors aligned to design system tokens (#121418 / #1a1d24 / #22252e)
 // - Rank descriptions expanded for SEO depth (now 2-3 sentences each)
-// - FAQ section + FAQPage JSON-LD added
+// - FAQ section added (FAQPage JSON-LD removed 2026-08-28 per doctrine A1; visible FAQ kept)
 // - BreadcrumbList JSON-LD added
 // - Long-tail keywords expanded
 //
-// LIGHT SEO PASS June 2, 2026 (surgical — this is the #2 traffic page at
+// LIGHT SEO PASS June 2, 2026 (surgical - this is the #2 traffic page at
 // 13% CTR, so title/description/H1/rank-explainer left UNTOUCHED):
 // - "SEASON 1" filter chip → "SEASON 2" (S2 launched June 2; was a factual
 //   error undercutting the "current" signal).
@@ -23,12 +23,12 @@ import ViewTracker from '@/components/ViewTracker';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 export var metadata = {
-  title: 'Marathon Ranked Leaderboard — Global Top Players',
-  description: 'The Marathon game\'s global leaderboard tracks the top ranked players from Bronze to Master. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie\'s extraction shooter.',
-  keywords: 'Marathon leaderboard, Marathon ranked leaderboard, Marathon top players, Marathon rankings, Marathon ranked mode, Marathon best players, Marathon global leaderboard, Marathon Bronze, Marathon Silver, Marathon Gold, Marathon Platinum, Marathon Diamond, Marathon Master, Marathon ranked stats, how to reach Master Marathon, Marathon Holotag score, Marathon ranked tiers explained, Marathon competitive rankings, Marathon player stats',
+  title: 'Marathon Ranked Leaderboard - Global Top Players',
+  description: 'The Marathon game\'s global leaderboard tracks the top ranked players from Bronze to Pinnacle. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie\'s extraction shooter.',
+  keywords: 'Marathon leaderboard, Marathon ranked leaderboard, Marathon top players, Marathon rankings, Marathon ranked mode, Marathon best players, Marathon global leaderboard, Marathon Bronze, Marathon Silver, Marathon Gold, Marathon Platinum, Marathon Diamond, Marathon Pinnacle, Marathon ranked stats, how to reach Pinnacle Marathon, Marathon Holotag score, Marathon ranked tiers explained, Marathon competitive rankings, Marathon player stats',
   openGraph: {
-    title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',
-    description: 'Track the top Marathon players worldwide. Ranked leaderboards from Bronze to Master.',
+    title: 'Marathon Ranked Leaderboard - Global Top Players | CyberneticPunks',
+    description: 'Track the top Marathon players worldwide. Ranked leaderboards from Bronze to Pinnacle.',
     url: 'https://cyberneticpunks.com/marathon/leaderboard',
     siteName: 'CyberneticPunks',
     type: 'website',
@@ -36,8 +36,8 @@ export var metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Ranked Leaderboard — Global Top Players | CyberneticPunks',
-    description: 'Global Marathon rankings. Track top players from Bronze to Master.',
+    title: 'Marathon Ranked Leaderboard - Global Top Players | CyberneticPunks',
+    description: 'Global Marathon rankings. Track top players from Bronze to Pinnacle.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/leaderboard' },
 };
@@ -55,31 +55,31 @@ var DEXTER  = '#ff8800';
 var GHOST   = '#00ff88';
 var MIRANDA = '#9b5de5';
 
-// ─── RANKS — expanded SEO-friendly descriptions ──────────────
+// ─── RANKS - expanded SEO-friendly descriptions ──────────────
 var RANKS = [
   {
-    name: 'MASTER',
+    name: 'PINNACLE',
     color: '#ffcc00',
     icon: '♛',
-    description: 'The top 1% of Marathon Runners. Master tier requires consistently elite Holotag scores across rotating ranked zones, demonstrating mechanical precision under sustained third-party pressure. Master Runners typically extract in the top 5% of zone timing windows and maintain K/D ratios above 4.0 across multiple Runner Shells.',
+    description: 'The top 1% of Marathon Runners. Pinnacle tier requires consistently elite Holotag scores across rotating ranked zones, demonstrating mechanical precision under sustained third-party pressure. Pinnacle Runners sustain elite Holotag scores and zone timing across many matches and multiple Runner Shells.',
   },
   {
     name: 'DIAMOND',
     color: '#00d4ff',
     icon: '◆',
-    description: 'Elite competitive tier sitting just below Master. Diamond Runners post strong Holotag scores in active ranked zones and execute high-value extractions under pressure. Reaching Diamond typically requires completing extractions with K/D above 3.0, deep loadout knowledge across at least three shells, and consistent map-state reading.',
+    description: 'Elite competitive tier sitting just below Pinnacle. Diamond Runners post strong Holotag scores in active ranked zones and execute high-value extractions under pressure. Reaching Diamond typically requires strong extraction consistency, deep loadout knowledge across multiple shells, and consistent map-state reading.',
   },
   {
     name: 'PLATINUM',
     color: '#aabbcc',
     icon: '◈',
-    description: 'Advanced tier representing the upper bracket of skilled Runners. Platinum players demonstrate solid game sense, optimized loadouts, and reliable extraction execution across most ranked zones. Most Platinum Runners maintain K/D ratios between 2.0 and 3.0 and have unlocked at least two faction progression tracks.',
+    description: 'Advanced tier representing the upper bracket of skilled Runners. Platinum players demonstrate solid game sense, optimized loadouts, and reliable extraction execution across most ranked zones. Most Platinum Runners show consistent positive K/D and have unlocked multiple faction progression tracks.',
   },
   {
     name: 'GOLD',
     color: '#ff8800',
     icon: '◉',
-    description: 'Above-average competitive tier. Gold Runners show strong fundamentals — they extract reliably, manage Holotag risk well, and have working knowledge across multiple Runner Shells. Reaching Gold typically signals readiness to commit to a primary shell specialization and begin pushing into ranked-relevant faction unlocks.',
+    description: 'Above-average competitive tier. Gold Runners show strong fundamentals - they extract reliably, manage Holotag risk well, and have working knowledge across multiple Runner Shells. Reaching Gold typically signals readiness to commit to a primary shell specialization and begin pushing into ranked-relevant faction unlocks.',
   },
   {
     name: 'SILVER',
@@ -91,7 +91,7 @@ var RANKS = [
     name: 'BRONZE',
     color: '#cc7744',
     icon: '●',
-    description: 'Entry-tier ranked competition. Bronze Runners are learning ranked-mode mechanics, building map awareness, and developing extraction-versus-fight decision-making. Bronze is also where new ranked players land after their placement matches — climbing out requires consistent Holotag scoring rather than highlight-reel plays.',
+    description: 'Entry-tier ranked competition. Bronze Runners are learning ranked-mode mechanics, building map awareness, and developing extraction-versus-fight decision-making. Bronze is also where new ranked players land after their placement matches - climbing out requires consistent Holotag scoring rather than highlight-reel plays.',
   },
 ];
 
@@ -124,15 +124,15 @@ var PLACEHOLDER_ENTRIES = [
 // names. A live palette sitting next to blanked placeholders is an invitation
 // to repopulate them; there is nothing to colour until real data arrives.
 
-// ─── FAQ DATA — drives both visible section AND schema ───────
+// ─── FAQ DATA - drives both visible section AND schema ───────
 var FAQS = [
   {
     q: 'What is the Marathon ranked leaderboard?',
-    a: "The Marathon ranked leaderboard tracks the top competitive Runners across Bungie's extraction shooter. Players climb through six tiers — Bronze, Silver, Gold, Platinum, Diamond, and Master — by accumulating Holotag scores in rotating ranked zones. The leaderboard reflects extraction efficiency and combat performance under high-pressure ranked conditions.",
+    a: "The Marathon ranked leaderboard tracks the top competitive Runners across Bungie's extraction shooter. Players climb through six tiers - Bronze, Silver, Gold, Platinum, Diamond, and Pinnacle - by accumulating Holotag scores in rotating ranked zones. The leaderboard reflects extraction efficiency and combat performance under high-pressure ranked conditions.",
   },
   {
-    q: 'How do you reach Master rank in Marathon?',
-    a: "Reaching Master tier requires sustaining elite Holotag scores in active ranked zones over multiple matches. Master Runners typically maintain K/D ratios above 4.0, extract in the top 5% of zone timing windows, and demonstrate mastery across multiple Runner Shells. Consistency under third-party pressure matters more than highlight plays — Master is earned across dozens of matches, not one strong run.",
+    q: 'How do you reach Pinnacle rank in Marathon?',
+    a: "Reaching Pinnacle tier requires sustaining elite Holotag scores in active ranked zones over multiple matches. Pinnacle Runners sustain elite Holotag scores and zone timing, and demonstrate mastery across multiple Runner Shells. Consistency under third-party pressure matters more than highlight plays - Pinnacle is earned across dozens of matches, not one strong run.",
   },
   {
     q: 'What is a Holotag score in Marathon?',
@@ -148,7 +148,7 @@ var FAQS = [
   },
   {
     q: 'How will the CyberneticPunks leaderboard work when the Bungie API ships?',
-    a: "When Bungie releases public ranked stats endpoints (as they did for Destiny 2's API), the CyberneticPunks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard infrastructure is already built and ready — only the data layer is pending Bungie's API release. Players will be able to filter by platform, region, Runner Shell, and time period.",
+    a: "When Bungie releases public ranked stats endpoints (as they did for Destiny 2's API), the CyberneticPunks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard infrastructure is already built and ready - only the data layer is pending Bungie's API release. Players will be able to filter by platform, region, Runner Shell, and time period.",
   },
 ];
 
@@ -233,7 +233,7 @@ export default function LeaderboardPage() {
             maxWidth: 620,
             margin: '0 auto 30px',
           }}>
-            Track the top Marathon Runners worldwide. Ranked leaderboards from Bronze to Master — filterable by platform, region, and Runner Shell. Live data activates when Bungie ships the public ranked API.
+            Track the top Marathon Runners worldwide. Ranked leaderboards from Bronze to Pinnacle - filterable by platform, region, and Runner Shell. Live data activates when Bungie ships the public ranked API.
           </p>
 
           <div style={{
@@ -413,7 +413,7 @@ export default function LeaderboardPage() {
         </div>
       </section>
 
-      {/* ─── NOTIFY CTA (mirrors /stats — honest pre-API framing) ─── */}
+      {/* ─── NOTIFY CTA (mirrors /stats - honest pre-API framing) ─── */}
       <section style={{
         padding: '40px 20px 60px',
         textAlign: 'center',
@@ -501,7 +501,7 @@ export default function LeaderboardPage() {
             maxWidth: 720,
             margin: '0 auto',
           }}>
-            Marathon&apos;s ranked mode uses Holotag score targets in rotating competitive zones. Your rank reflects consistent extraction value under pressure — not one-shot highlight plays. Six tiers separate entry-level Bronze from elite Master.
+            Marathon&apos;s ranked mode uses Holotag score targets in rotating competitive zones. Your rank reflects consistent extraction value under pressure - not one-shot highlight plays. Six tiers separate entry-level Bronze from elite Pinnacle.
           </p>
         </div>
 
@@ -685,7 +685,7 @@ export default function LeaderboardPage() {
           '@type': 'WebPage',
           name: 'Marathon Global Leaderboard',
           url: 'https://cyberneticpunks.com/marathon/leaderboard',
-          description: 'Track the top ranked Marathon players worldwide. Global leaderboards from Bronze to Master.',
+          description: 'Track the top ranked Marathon players worldwide. Global leaderboards from Bronze to Pinnacle.',
           isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
         }),
       }} />
@@ -711,22 +711,6 @@ export default function LeaderboardPage() {
         }),
       }} />
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: FAQS.map(function(faq) {
-            return {
-              '@type': 'Question',
-              name: faq.q,
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: faq.a,
-              },
-            };
-          }),
-        }),
-      }} />
     </main>
   );
 }

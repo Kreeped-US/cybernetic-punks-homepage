@@ -62,18 +62,10 @@ export default async function DmzEntityDetail({ entity, row, siblings }) {
   // FAQ ONLY from real data -- no invented Q&As. Acquisition is the one honest
   // question we can answer from the columns when they are present AND verified.
   var acq = row.acquisition_source ? (row.acquisition_source + (row.acquisition_detail ? ' - ' + row.acquisition_detail : '')) : '';
-  var faqItems = [];
-  if (confirmed && acq) faqItems.push({ q: 'How do you get the ' + row.name + ' in DMZ?', a: 'The ' + row.name + ' comes from ' + acq + '.' });
-  var faqSchema = faqItems.length > 0 ? {
-    '@context': 'https://schema.org', '@type': 'FAQPage',
-    mainEntity: faqItems.map(function (i) { return { '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } }; }),
-  } : null;
-
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
-      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
 
       <main style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 20px 96px' }}>
         {/* Breadcrumb */}

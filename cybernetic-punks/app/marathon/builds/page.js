@@ -380,24 +380,11 @@ export default async function BuildsPage() {
   // the shell guides: a missing date must never become "now".
   if (lastModified) collectionPageSchema.dateModified = lastModified;
 
-  var faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: BUILD_FAQS.map(function(item) {
-      return {
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: { '@type': 'Answer', text: item.a },
-      };
-    }),
-  };
-
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
       {/* JSON-LD Schemas — render inline so Google sees on first crawl */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <style>{`
         .b-card { transition: background 0.12s, border-color 0.12s; }
