@@ -16,7 +16,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_GAMES = ['marathon', 'dmz'];
+const ALLOWED_GAMES = ['marathon', 'dmz', 'wardogs', 'pubg-dednet'];
 
 function windowStartISO() {
   const d = new Date();

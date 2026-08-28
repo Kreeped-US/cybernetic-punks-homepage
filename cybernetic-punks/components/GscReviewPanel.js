@@ -21,9 +21,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const GAMES = ['marathon', 'dmz'];
+const GAMES = ['marathon', 'dmz', 'wardogs', 'pubg-dednet'];
 const DISPLAY_DEFAULT = 25; // a DISPLAY limit, not a query filter -- the full set is always returned
-const GAME_ACCENT = { marathon: '#00ff41', dmz: '#3f7d44' };
+// Per-game accent = each vertical's real theme.accent (lib/games/*, via lib/brandColors.js):
+// wardogs WARDOGS_AMBER, pubg-dednet DEDNET_BLOOD. Kept as literals here (this is a client display
+// concern, not a data-layer import).
+const GAME_ACCENT = { marathon: '#00ff41', dmz: '#3f7d44', wardogs: '#e0a13a', 'pubg-dednet': '#cc2936' };
 
 function gscNote(r, reason) {
   const page = (r.best_page || '').replace('https://cyberneticpunks.com', '');

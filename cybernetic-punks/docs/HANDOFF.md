@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - GSC keyword review UI extended to all 4 games
+
+Extended the GSC keyword review surface to all 4 games, closing the audit's one gap: the data
+layer was already 4-game-complete (gameSlugForUrl is registry-derived, so wardogs + pubg-dednet
+GSC rows are already attributed correctly), but the human review UI was capped to marathon+dmz.
+- app/api/admin/gsc-review/route.js:19 - ALLOWED_GAMES -> [marathon, dmz, wardogs, pubg-dednet].
+  No more 400 for the new verticals; all three DB reads were already game_slug-scoped, so they
+  now scope correctly to the new games.
+- components/GscReviewPanel.js - GAMES gains both slugs (the selector button row maps over GAMES,
+  so all 4 buttons render automatically). GAME_ACCENT gains wardogs #e0a13a (=WARDOGS_AMBER) +
+  pubg-dednet #cc2936 (=DEDNET_BLOOD). Accents VERIFIED against the real theme constants
+  (lib/brandColors.js + the lib/games/* configs), not assumed.
+- FIREWALL INTACT: keywordFirewall.test.mjs 2/2 pass; nothing entered generation; no generation,
+  keywordFraming, or boundary file was touched. This is the human REVIEW surface ONLY - the honest
+  strategy: keywords inform the operator's review + post-generation headline framing of real
+  sourced content, NEVER editor generation.
+- VERIFY: firewall test 2/2 pass; route accepts all 4 (no 400); panel offers all 4 with correct
+  per-game accents; build green; house-style clean (0 backticks, 0 em-dashes in edited regions).
+- NOTE: the review list only surfaces queries a page already ranks for (>=5 impressions / 28 days).
+  Wardogs (indexable 2026-08-26) + DED.NET are new, so their lanes may be empty until GSC ranking
+  history accumulates; the UI is ready to show it as it arrives.
+
+---
+
+
 ## 2026-08-28 - Tier-list fix: methodology line no longer leaks onto user-built share images
 
 Fixed the "RANKED BY THE NUMBERS" methodology claim leaking onto CREATE YOUR OWN (user-built)
