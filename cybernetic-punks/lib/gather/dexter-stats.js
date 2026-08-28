@@ -225,7 +225,7 @@ async function fetchExtractionTargets() {
     // Weapons
     const { data: weapons } = await supabase
       .from('weapon_stats')
-      .select('name, damage, fire_rate, magazine_size, reload_time');
+      .select('name, damage, fire_rate, magazine_size, reload_speed');
     targets.weapons = (weapons || [])
       .filter(w => !w.damage || !w.fire_rate || !w.magazine_size)
       .map(w => w.name);
@@ -276,7 +276,7 @@ const EXTRACT_TOOL = {
             damage: { type: ['number', 'null'] },
             fire_rate: { type: ['number', 'null'], description: 'Rounds per minute' },
             magazine_size: { type: ['number', 'null'] },
-            reload_time: { type: ['number', 'null'], description: 'Seconds' },
+            reload_speed: { type: ['number', 'null'], description: 'Reload time in seconds (e.g. 3.2)' },
           },
           required: ['name'],
         },
@@ -517,7 +517,12 @@ async function updateShell(row, ctx) {
 }
 
 async function updateWeapon(row, ctx) {
-  const update = buildUpdate(row, ['damage', 'fire_rate', 'magazine_size', 'reload_time']);
+  // reload_speed is the column consumers read (the tier model's Handling axis, the meta page,
+  // the admin editor). It was previously misrouted to the dead reload_time column (2026-08-28
+  // fix). Owner-entered reload_speed is a STRING ("4.46"), and the model parseFloats it, so write
+  // the extracted number as a string to match that format (safe for a text or numeric column).
+  const update = buildUpdate(row, ['damage', 'fire_rate', 'magazine_size', 'reload_speed']);
+  if (update.reload_speed != null) update.reload_speed = String(update.reload_speed);
   if (Object.keys(update).length === 0) return 'skipped';
   const target = await resolveId(ctx, 'weapon_stats', row.name);
   if (target.status) return target.status;

@@ -25,7 +25,7 @@ export const FACET_GROUNDING = {
   weapon: { fields: [
     ['category','Category'],['weapon_type','Type'],['ammo_type','Ammo'],['damage','Damage'],
     ['damage_type','Damage Type'],['fire_rate','Fire Rate (RPM)'],['magazine_size','Magazine'],
-    ['reserve_ammo','Reserve Ammo'],['reload_time_seconds','Reload (s)'],['range_rating','Range'],
+    ['range_rating','Range'],
     ['range_meters','Range (m)'],['precision_multiplier','Precision Mult'],['firing_mode','Firing Mode'],
     ['rarity','Rarity'],['ranked_viable','Ranked Viable'],['mod_slot_types','Mod Slots'],['notes','Notes'],
   ] },

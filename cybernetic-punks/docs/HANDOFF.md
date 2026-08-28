@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - DB cleanup Part 2: DEXTER reload misroute fix + deferred-column cleanup
+
+Fixed the latent DEXTER reload misroute and made the 5 deferred dead weapon_stats columns
+droppable. NO data damage: DEXTER was dormant on the owner-verified roster (all 32 rows
+verified=true proves DEXTER -- which stamps verified=false on write -- never wrote to them), and
+reload_speed is sound (29/32 filled, owner-entered). So NO data repair and NO tier re-validation.
+- (a) DEXTER redirected reload_time -> reload_speed (lib/gather/dexter-stats.js: :228 select, :279
+  extraction schema field, :524 buildUpdate list). The value is STRINGIFIED on write
+  (String(update.reload_speed), :525) -- owner reload_speed values are strings ("4.46") the model
+  parseFloats, so stringify is type-safe for a text-or-numeric column. Checked the other DEXTER
+  buildUpdate calls: :572 is updateImplant (implant_stats, different table -- no misroute), and
+  damage/fire_rate/magazine_size already matched the read columns. Only reload was misrouted.
+- (b) Stopped the deferred writes so all 5 become droppable:
+  - reload_time -- DEXTER redirected off it (above); nothing writes it now.
+  - reload_time_seconds + reserve_ammo -- removed from lib/content/grounding.js FACET_GROUNDING
+    weapon field list (both 0% fill; read only for grounding blocks, so removing loses nothing).
+  - mod_slots -- VERIFY-DONT-INHERIT: the brief said route -> mod_slot_types, but wiki wrote a
+    parseInt COUNT while mod_slot_types is an ARRAY of slot-type names (the app uses it as || []);
+    a count cannot populate the array, so I DROPPED the wiki mod_slots write instead of
+    mis-routing bad data. mod_slot_types is untouched.
+  - source_url -- weapon_stats.source_url was wiki-written and read nowhere -> write dropped
+    (lib/gather/wiki.js). feed_items.source_url + shell_stats.source_url are different tables and
+    stay untouched.
+  All 5 deferred columns now have 0 code references (grep-confirmed; only an explanatory comment).
+- (c) SECOND migration docs/migrations/2026-08-28-retire-deferred-weapon-columns.sql drops the 5
+  deferred columns, with a RUN-ORDER GUARD (deploy this code fix FIRST). The owner runs it AFTER
+  this deploys -- kept SEPARATE from Part 1 (2026-08-28-retire-dead-weapon-columns.sql, the 5
+  safe drops, ready to run now).
+- VERIFY: DEXTER writes reload_speed (correct column, stringified/parse-compatible); no field left
+  misrouted; grounding list no longer references the 2 removed columns; wiki drops mod_slots +
+  source_url writes; 5 deferred columns unwritten + unread (grep 0); node --check clean; build
+  green; smart-char-clean.
+- OWNER: TWO migrations to run at discretion -- Part 1 (5 safe drops, ready now) + Part 2 (5
+  deferred drops, after this code deploys).
+
+---
+
 ## 2026-08-28 - Ranked Season 2 content corrections (verified vs Bungie sources)
 
 Corrected the site Ranked content to the verified current Season 2 rules (grounded in Bungie

@@ -98,8 +98,10 @@ function parseWeapons(html) {
       fire_rate:     parseInt(r['fire rate'] || r['rpm']) || null,
       magazine_size: parseInt(r['magazine'] || r['mag']) || null,
       range_rating:  r['range'] || null,
-      mod_slots:     parseInt(r['mod slots'] || r['mods']) || null,
-      source_url:    WIKI_URLS.weapon_stats,
+      // NOTE (2026-08-28): dropped the mod_slots + source_url writes. mod_slots was a parseInt
+      // COUNT that the app never reads (the app uses mod_slot_types, an ARRAY of slot-type names -
+      // a count can't populate it), and weapon_stats.source_url was written here but read nowhere.
+      // Both were 0%-fill dead columns; not writing them lets the DDL drop them.
       updated_at:    new Date().toISOString()
     }));
 }
