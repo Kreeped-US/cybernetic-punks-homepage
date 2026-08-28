@@ -4,6 +4,7 @@ import { DISCORD_INVITE, DISPLAY_DISCORD } from '@/lib/socialLinks';
 import Link from 'next/link';
 import { useState } from 'react';
 import { getAllEditors } from '@/lib/editors/roster';
+import { getGameConfig } from '@/lib/games';
 
 // Updated April 27, 2026:
 // - Colors aligned to design system (#0e1014 footer / #ff2222 / #00d4ff)
@@ -13,36 +14,23 @@ import { getAllEditors } from '@/lib/editors/roster';
 // - Discovery column added: Rising Runners, Leaderboard, Stats, Factions, Sitrep, Status
 // - Tagline standardized to one canonical form
 
-// Sourced from the canonical display map (lib/editors/roster.js). Only LIVE
-// editors get a footer chip + lane link (Broker is 'incoming' -- no lane yet).
-// Compact chip shows the tag (proper case), not the raw uppercase codename.
-const EDITORS = getAllEditors()
-  .filter(function(e) { return e.status === 'live'; })
-  .map(function(e) {
-    return { symbol: e.symbol, color: e.color, name: e.tag || e.fullName, href: '/marathon/intel/' + e.key };
-  });
+// The NETWORK editor desk -- all 6 (roster.js EDITOR_ORDER), identical on every game's footer
+// (the roster is a network asset, not per-game). LIVE editors get a lane chip + link
+// (/marathon/intel/<key>); an 'incoming' editor (Broker -- no lane yet) renders DIMMED with a
+// small "incoming" marker and is NOT linked. Compact chip shows the tag (proper case), not the
+// raw uppercase codename. Phase 2 decision (b): Broker is now shown (dimmed); the footer no
+// longer filters to live-only.
+const DESK = getAllEditors().map(function(e) {
+  var live = e.status === 'live';
+  return {
+    symbol: e.symbol, color: e.color, name: e.tag || e.fullName, status: e.status,
+    live: live, href: live ? ('/marathon/intel/' + e.key) : null,
+  };
+});
 
-// Primary site navigation — the editorial + tools surface
-const EXPLORE_LINKS = [
-  { label: 'INTEL FEED',    href: '/marathon/intel'   },
-  { label: 'META TIER LIST',href: '/marathon/meta'    },
-  { label: 'BUILD ADVISOR', href: '/marathon/advisor' },
-  { label: 'SHELLS',        href: '/marathon/shells'  },
-  { label: 'FIELD GUIDES',  href: '/marathon/guides'  },
-  { label: 'RANKED GUIDE',  href: '/marathon/ranked'  },
-  { label: 'EDITORS',       href: '/editors' },
-  { label: 'ABOUT',         href: '/about'   },
-];
-
-// Discovery pages — community + tracker tools, often missed from main nav
-const DISCOVER_LINKS = [
-  { label: 'RISING CREATORS', href: '/marathon/rising'     },
-  { label: 'LEADERBOARD',    href: '/marathon/leaderboard' },
-  { label: 'STATS TRACKER',  href: '/marathon/stats'       },
-  { label: 'FACTIONS',       href: '/marathon/factions'    },
-  { label: 'SITREP',         href: '/marathon/sitrep'      },
-  { label: 'SERVER STATUS',  href: '/marathon/status'      },
-];
+// EXPLORE + DISCOVER links, the brand description, and the legal lines now come from each game's
+// footer config (the footer object in lib/games/<game>.js), read via the game prop below. Marathon's
+// values were copied VERBATIM from this file in Phase 1, so Marathon renders unchanged.
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────
 const BG_FOOTER = '#0e1014';
@@ -54,8 +42,13 @@ const DMZ_FOREST = '#3f7d44'; // DMZ (Call of Duty) accent -- footer cross-game 
 const WARDOGS_AMBER = '#e0a13a'; // Wardogs (Bulkhead) accent -- footer cross-game wayfinding link
 const DEDNET_BLOOD = '#cc2936'; // PUBG: DED.NET (KRAFTON) accent -- footer cross-game wayfinding link
 
-export default function Footer() {
+export default function Footer({ game = 'marathon' }) {
   const [year] = useState(function() { return new Date().getFullYear(); });
+  // Per-game footer config (Phase 1 data). Default game 'marathon' keeps every existing
+  // <Footer /> call unchanged. description / legal / EXPLORE + DISCOVER links read from here.
+  var fcfg = getGameConfig(game).footer;
+  var exploreLinks = (fcfg.links && fcfg.links.explore) || [];
+  var discoverLinks = (fcfg.links && fcfg.links.discover) || [];
 
   return (
     <footer style={{
@@ -78,18 +71,45 @@ export default function Footer() {
           }}>
             POWERED BY
           </span>
-          {EDITORS.map(function(ed) {
+          {DESK.map(function(ed) {
+            if (ed.live) {
+              return (
+                <Link key={ed.name} href={ed.href} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  textDecoration: 'none',
+                  padding: '4px 10px',
+                  background: ed.color + '08',
+                  border: '1px solid ' + ed.color + '22',
+                  borderRadius: 2,
+                  transition: 'border-color 0.15s',
+                }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: ed.color }}>{ed.symbol}</span>
+                  <span style={{
+                    fontFamily: 'monospace',
+                    fontSize: 9,
+                    color: ed.color,
+                    opacity: 0.75,
+                    letterSpacing: 1,
+                    fontWeight: 700,
+                  }}>
+                    {ed.name}
+                  </span>
+                </Link>
+              );
+            }
+            // 'incoming' editor (Broker): DIMMED, NOT linked (no lane yet), + a small "incoming" marker.
             return (
-              <Link key={ed.name} href={ed.href} style={{
+              <span key={ed.name} title="Incoming editor" style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                textDecoration: 'none',
                 padding: '4px 10px',
-                background: ed.color + '08',
-                border: '1px solid ' + ed.color + '22',
+                background: ed.color + '05',
+                border: '1px dashed ' + ed.color + '20',
                 borderRadius: 2,
-                transition: 'border-color 0.15s',
+                opacity: 0.5,
               }}>
                 <span style={{ fontFamily: 'monospace', fontSize: 11, color: ed.color }}>{ed.symbol}</span>
                 <span style={{
@@ -102,7 +122,17 @@ export default function Footer() {
                 }}>
                   {ed.name}
                 </span>
-              </Link>
+                <span style={{
+                  fontFamily: 'monospace',
+                  fontSize: 7,
+                  color: 'rgba(255,255,255,0.4)',
+                  letterSpacing: 1,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                }}>
+                  incoming
+                </span>
+              </span>
             );
           })}
           <span style={{
@@ -154,7 +184,7 @@ export default function Footer() {
             lineHeight: 1.6,
             margin: '0 0 18px',
           }}>
-            Marathon intelligence hub. Autonomous editorial coverage from six AI editors. Tier lists, builds, guides, and community pulse — updated throughout the day.
+            {fcfg.description}
           </p>
           {/* Network-membership link: gives Marathon's authority pages (this footer
               renders on every /intel article + the hubs) a crawlable internal link
@@ -178,7 +208,14 @@ export default function Footer() {
           </Link>
           {/* Cross-game wayfinding: the network's other games. Quiet, always-visible
               (footer renders on every Marathon page), honestly labelled -- the only
-              in-Marathon paths to /dmz and /wardogs besides the neutral root. */}
+              in-Marathon paths to /dmz and /wardogs besides the neutral root.
+              PHASE 2 NOTE: still HARDCODED (Marathon-specific), on purpose. Parameterizing
+              this per game (peers from ROOT_GAMES, inverting per game) is PHASE 3 -- and it
+              needs config that Phase 1 did not add: a per-game publisher/peer-label token
+              (the sublabels mix franchise / dev / publisher: "CALL OF DUTY" / "BULKHEAD" /
+              "KRAFTON") and a lifecycle sublabel; there is no single reusable launchLabel that
+              reproduces these exact strings. Kept hardcoded here so Marathon stays byte-identical;
+              FLAGGED for the Phase 3 config additions. See the Phase 2 HOLD report. */}
           <Link href="/dmz" style={{
             display: 'block',
             fontFamily: 'monospace',
@@ -235,8 +272,11 @@ export default function Footer() {
             lineHeight: 1.8,
             fontWeight: 700,
           }}>
-            NOT AFFILIATED WITH BUNGIE<br />
-            MARATHON IS A TRADEMARK OF BUNGIE, INC.
+            {fcfg.legal.reduce(function(acc, line, i) {
+              if (i > 0) acc.push(<br key={'lg' + i} />);
+              acc.push(line);
+              return acc;
+            }, [])}
           </div>
         </div>
 
@@ -253,7 +293,7 @@ export default function Footer() {
             EXPLORE
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {EXPLORE_LINKS.map(function(link) {
+            {exploreLinks.map(function(link) {
               return (
                 <Link key={link.href} href={link.href} style={{
                   fontFamily: 'monospace',
@@ -287,7 +327,7 @@ export default function Footer() {
             DISCOVER
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {DISCOVER_LINKS.map(function(link) {
+            {discoverLinks.map(function(link) {
               return (
                 <Link key={link.href} href={link.href} style={{
                   fontFamily: 'monospace',

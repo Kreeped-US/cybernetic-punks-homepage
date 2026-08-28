@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Footer generalization PHASE 2 of 4: parameterize Footer.js by game
+
+Footer.js now takes a game prop (default 'marathon') and reads per-game footer config
+(description / legal / EXPLORE + DISCOVER links) from lib/games/[game].js; the POWERED BY roster
+reads the network desk from roster.js EDITOR_ORDER (all 6). Only components/Footer.js touched; no
+rollout (Phase 3), no disclaimer retirement (Phase 4).
+- REGRESSION GUARD SATISFIED WITH EVIDENCE: captured the SSR-rendered Marathon footer BEFORE
+  editing, refactored, re-captured, diffed on tag boundaries. The diff is EXACTLY two pre-accepted
+  deltas and nothing else: (1) the dimmed non-linked Broker chip (decision b: opacity 0.5, dashed
+  border, "incoming" marker, appended after Miranda); (2) the blurb em-dash -> hyphen (Phase 1
+  normalization). All 5 live chips, links, legal, label, cross-game row, contact, and bottom bar
+  are byte-identical; legal + description render marker-free (no stray React comment delimiters).
+- SPEC CORRECTION: the brief said the current footer shows 6 chips -- it actually showed 5 (Broker
+  was filtered out, status incoming / no lane). Operator resolved to full-desk-with-Broker-dimmed,
+  which makes the added Broker chip the ONE accepted render delta on Marathon.
+- ITEMS 4-5 FLAGGED, NOT GUESSED: cross-game sublabels + the bottom-bar tagline need config that
+  Phase 1 did not add and cannot be derived byte-identically -- there is no publisher/peerLabel
+  field, and no reusable launchLabel produces the footer's exact strings (the root page's pill
+  logic differs). Both kept HARDCODED (byte-identical) and deferred to Phase 3 with exact config
+  requirements: a per-game footer.peerLabel token (the sublabels mix franchise / dev / publisher --
+  CALL OF DUTY / BULKHEAD / KRAFTON) + a lifecycle helper for the cross-game row; footer.bottomTagline
+  for the bottom bar. They only matter visually for the OTHER games, so Phase 3 owns them.
+- The "6 EDITORS ..." count label is kept LITERAL on purpose (correct, since the network desk is 6);
+  interpolating the count would inject SSR text-delimiter comments = a Marathon render change.
+- VERIFY: SSR Marathon footer byte-identical except the 2 accepted deltas (explicit before/after
+  diff); Broker dimmed-incoming renders non-linked; build green; house-style clean (0 em-dash,
+  0 backtick). Operator real-browser-confirmed Marathon unchanged + the Broker chip reads as incoming.
+
+---
+
+
 ## 2026-08-28 - Footer generalization PHASE 1 of 4: per-game footer config (DATA ONLY)
 
 Added per-game footer config to all 4 game configs (lib/games/*.js) as the data prerequisite
