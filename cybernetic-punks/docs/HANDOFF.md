@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - About rebuild PHASE 1 of 3: extract the network v7 theme to shared modules
+
+Extracted the network v7 theme from app/page.js into shared modules so /about and future network
+pages can reuse the homepage's burgundy/black/gold identity. Foundation only -- NO /about change
+(Phase 2).
+- lib/network/networkTheme.js (new): CNP_CSS as a PURE STATIC STRING (no imports/side-effects) --
+  the canonical .cnp-root v7 tokens (--burg-bright #9A2740, --red #ff2038, --gold #E8B54D, the
+  base/surface set). Moved BYTE-FOR-BYTE (23270 CSS bytes). The homepage now imports it via the
+  unchanged <style>{CNP_CSS}</style>.
+- lib/network/networkFonts.js (new): the network font stack (Chakra Petch / Inter / JetBrains
+  Mono) + networkFontVars, reusable for /about and future network pages.
+- KEY FINDING + FIX: next/font hashes generated class names by CALL SITE, so a first attempt that
+  moved the font loaders into lib/ re-hashed them and broke the homepage's rendered HTML (invisible
+  -- same font -- but a real byte change). Fixed by SPLITTING: CSS is fully shared (static string,
+  byte-identical); the FONTS stay INLINE on the homepage (hashes preserved) with a separate
+  networkFonts.js for /about. next/font DEDUPES the woff2 across call sites, so no double-download
+  -- only the generated class-hash differs per call site (invisible). So the homepage imports the
+  shared CSS but keeps its own font loaders, on purpose.
+- REGRESSION GUARD PROVEN: SSR homepage rendered-portion diff = BYTE-IDENTICAL (54656 bytes both;
+  identical except the random per-request dev nonce __next_r; same font bundle URL; same className
+  font hashes; same CNP_CSS).
+- THREE-REDS: the canonical shared set is ESTABLISHED in networkTheme.js (the .cnp-root v7 tokens).
+  brandColors NETWORK_BURGUNDY #b32d40 and globals.css :root --red #cc2222 were LEFT UNCHANGED --
+  they have different roles (:root --red is the default-theme accent on non-.cnp-root surfaces;
+  NETWORK_BURGUNDY is the JS-side tile/OG brand). A reconciliation sweep is its own deferred task,
+  not smuggled into this extraction.
+- Other .cnp-root consumers (app/me/MeShell.js, components/network/HeroCrosshair.js) are UNAFFECTED
+  -- they do not import the homepage or the new modules (MeShell has its own tokens; HeroCrosshair
+  reads via getComputedStyle). Build green, house-style clean (the only backticks are the CNP_CSS
+  template-literal delimiters).
+- NEXT: Phase 2 reskins /about to this network identity (import CNP_CSS + networkFontVars, wrap in
+  .cnp-root); Phase 3 brings /about current (config-drive The Games from ROOT_GAMES, deepen
+  Who's-behind-it).
+
+---
+
+
 ## 2026-08-28 - DED.NET landing: remove the redundant body provenance <p> (footer dedup)
 
 Removed the redundant body provenance <p> from app/pubg-dednet/page.js (:120-122). It duplicated
