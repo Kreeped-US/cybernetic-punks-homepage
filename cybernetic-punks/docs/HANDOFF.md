@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - Weapon tier model wired in: weapons now FORMULA-DERIVED (was AI-freehand)
+
+The Marathon weapon tier is now COMPUTED from weapon_stats by a transparent model, replacing the
+AI-freehand meta_tiers letter (the old cron item.tier || 'B'). This resolves the
+"inconsistent and bad" split the audit found: weapons now derive like shells already do
+(deriveShellTier) -- both formula-derived.
+- lib/weapons/tierModel.js (NEW, pure, no deps): 4 axes (firepower/accuracy/handling/range) from
+  RAW fields; within-band min-max normalization (Close/Mid/Long/Special bands by weapon_type);
+  kill-capped CLOSE-band burst-lethality firepower (shotguns use firepower_score as effective
+  per-trigger damage since raw damage is per-pellet; Mid/Long/Special use sustained DPS); weights
+  .34/.32/.18/.16; S>=62.5 cutoff; honest-null (missing sub-field drops, axis <50% coverage -> N/A
+  and redistributes) + band-median accuracy imputation for non-pellet weapons (flagged inferred);
+  D54-style unrankable guard (no firepower data -> no tier). computeWeaponTiers(rows) -> tiers +
+  axis breakdown. scripts/weapon-tier-dryrun.mjs now IMPORTS the lib (validation + prod run
+  identical code).
+- Cron (app/api/cron/route.js): the NEXUS regrade fetches full weapon_stats, runs the model, and
+  sets each weapon tier from derivedWeaponTiers (unrankable -> B neutral); the NEXUS item.tier is
+  discarded for weapons (as it already was for shells). item.note stays editorial.
+- Renderer bugs fixed (app/marathon/meta/MetaClient.js): tier default C -> B (matches the cron;
+  was a DB-says-B / screen-says-C mismatch); weapon stat bars now use DATA-DRIVEN maxes
+  (Math.max over the live weapon set) so damage-123 / fire_rate-900 no longer clip past 100%.
+- Final calls: Bully -> S via S>=62.5. PRECISION NOTE: Bully's true total is 62.8 (rounded to
+  63 in the round-3 report, which prompted the "S>=63" ask); 62.5 flips Bully ONLY (Twin Tap 62.3
+  stays A, nothing else in [62.5,63)). M77 stays B (honest -- its recoil legitimately tanks
+  handling; no recoil-cap).
+- Validated (3 tuning rounds) against the operator expert read: shotguns WSTR/Misriah high-A via
+  the kill-capped burst firepower; BR33/BRRT/V66/Bully/Longshot S; Impact HAR/most pistols/LMGs
+  correctly low; V99 B (skill-conditional, deliberately not lifted).
+- NO reader-facing breakdown yet -- the axis scores are computed, not shown. The presentation /
+  transparency layer is the NEXT step.
+- Dead-column migration (docs/migrations/2026-08-28-retire-dead-weapon-columns.sql): the OWNER
+  runs the DDL. VERIFY-DON'T-INHERIT: 5 of the 10 audit-dead columns are still write targets in
+  code -- migration drops ONLY the 5 genuinely-unreferenced (handling, effective_range_m,
+  weapon_class, rarity_tiers, starting_weapon_for) and DEFERS 5 (reload_time [DEXTER writes it,
+  MISROUTED vs the app-read reload_speed -- a latent bug], reload_time_seconds + reserve_ammo
+  [grounding field list], mod_slots + source_url [wiki importer]) behind a documented code
+  cleanup.
+- NEXT (separate): (1) the transparency/presentation layer (show the axis breakdown + disclose the
+  per-band firepower methodology); (2) the deferred 5-column cleanup incl. the DEXTER
+  reload_time -> reload_speed fix. The model takes effect on the next NEXUS tier regrade.
+
+---
+
 ## 2026-08-27 - DED.NET LIVE: pubg-dednet indexable flipped true (vertical complete)
 
 Flipped pubg-dednet indexable false -> true in lib/games/pubg-dednet.js (the one value). The 6

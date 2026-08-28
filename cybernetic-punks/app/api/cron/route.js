@@ -21,6 +21,7 @@ import { runGateLogPass } from '@/lib/content/gateLogPass';
 import { runAssignmentGate } from '@/lib/content/assignmentGate';
 import { buildCandidateDirectiveObject, selectQueuedCandidate } from '@/lib/content/candidateAssignment';
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
+import { computeWeaponTiers } from '@/lib/weapons/tierModel';
 
 export const dynamic = 'force-dynamic';
 
@@ -663,10 +664,18 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
 
         try {
           var [validWeaponsRes, validShellsRes] = await Promise.all([
-            supabase.from('weapon_stats').select('name'),
+            supabase.from('weapon_stats').select('*').eq('game_slug', PRODUCING_GAME_SLUG),
             supabase.from('shell_stats').select('name, ranked_tier_solo, ranked_tier_squad'),
           ]);
-          var validWeapons = new Map((validWeaponsRes.data || []).map(function(w) { return [w.name.toLowerCase().trim(), w.name]; }));
+          var weaponRows = validWeaponsRes.data || [];
+          var validWeapons = new Map(weaponRows.map(function(w) { return [w.name.toLowerCase().trim(), w.name]; }));
+          // DERIVED WEAPON TIERS (2026-08-28): the weapon tier is now COMPUTED from weapon_stats
+          // by the transparent model (lib/weapons/tierModel.js), NOT authored by the NEXUS model.
+          // This makes weapons consistent with shells (deriveShellTier) -- both formula-derived.
+          // The model's item.tier for weapons is DISCARDED (like shells); item.note stays editorial.
+          var derivedWeaponTiers = new Map(
+            computeWeaponTiers(weaponRows).map(function(r) { return [r.name, r.tier]; })
+          );
           var validShells = new Map((validShellsRes.data || []).map(function(s) { return [s.name.toLowerCase().trim(), s.name]; }));
           // Ranked tiers by canonical name -- the inputs to the shell-tier derivation.
           var shellRankedByName = new Map((validShellsRes.data || []).map(function(s) {
@@ -687,16 +696,17 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
                 console.log('[CRON] NEXUS meta_tiers: rejecting unknown ' + item.type + ' "' + item.name + '"');
                 return null;
               }
-              // SHELL tier is derived from shell_stats (deterministic); the model's
-              // item.tier is DISCARDED for shells. WEAPON tier stays model-authored
-              // (no derivable inputs exist). The 'B' default applies to weapons only
-              // -- a shell with no basis must be null, never 'B'.
+              // SHELL tier is derived from shell_stats (deterministic); WEAPON tier is now derived
+              // from weapon_stats by the transparent model (2026-08-28). BOTH discard the NEXUS
+              // model's item.tier -- the split that had weapons model-authored while shells were
+              // derived is resolved: both are formula-derived now. A weapon the model cannot rank
+              // (no firepower data, e.g. an empty row) falls back to 'B' neutral, never editorial.
               var newTier;
               if (item.type === 'shell') {
                 var sr = shellRankedByName.get(canonicalName) || {};
                 newTier = deriveShellTier(sr.solo, sr.squad); // null when no basis
               } else {
-                newTier = item.tier || 'B';
+                newTier = derivedWeaponTiers.get(canonicalName) || 'B'; // derived; 'B' if unrankable
               }
               var oldTier = existingTierMap.get(canonicalName + ':' + item.type);
               // A null tier (ungraded shell) has no trend to speak of -- keep it null

@@ -441,9 +441,17 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
 
   const weaponTypes = getUniqueWeaponTypes(weapons);
 
+  // Real (data-driven) maxes for the weapon stat bars -- the old hardcoded max=120/800 clipped
+  // the top weapons (damage reaches 123, fire_rate 900). Computed from the live weapon set so a
+  // bar can never exceed 100% again, whatever future patches do to the numbers.
+  const maxDamage = Math.max(1, ...(weapons || []).map(w => w.damage || 0));
+  const maxFireRate = Math.max(1, ...(weapons || []).map(w => w.fire_rate || 0));
+
+  // Default tier for a row with no tier letter is 'B' -- matches the cron's neutral fallback
+  // (was 'C' here, a mismatch: an ungraded weapon read as B in the DB but C on screen).
   const sortedTiers = { S: [], A: [], B: [], C: [], D: [], F: [] };
   (metaTiers || []).forEach(item => {
-    const t = (item.tier || 'C').toUpperCase();
+    const t = (item.tier || 'B').toUpperCase();
     if (sortedTiers[t]) sortedTiers[t].push(item);
   });
   const lastUpdated = metaTiers?.length > 0
@@ -963,8 +971,8 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
                                 {weaponData && (
                                   <div style={{ display: 'flex', gap: 12, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap', alignItems: 'center' }}>
                                     {weaponData.weapon_type && <StatInline label="TYPE" value={weaponData.weapon_type} />}
-                                    {weaponData.damage && <StatBar label="DMG" value={weaponData.damage} max={120} color="#ff8800" />}
-                                    {weaponData.fire_rate && <StatBar label="RPM" value={weaponData.fire_rate} max={800} color="#00d4ff" />}
+                                    {weaponData.damage && <StatBar label="DMG" value={weaponData.damage} max={maxDamage} color="#ff8800" />}
+                                    {weaponData.fire_rate && <StatBar label="RPM" value={weaponData.fire_rate} max={maxFireRate} color="#00d4ff" />}
                                     {weaponData.range_rating && <StatInline label="RANGE" value={weaponData.range_rating} />}
                                     {weaponData.ranked_viable === false && <StatInline label="RANKED" value="AVOID" color="#ff2222" />}
                                   </div>
