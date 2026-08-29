@@ -24,12 +24,14 @@ import { supabase } from '@/lib/supabase';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
-import { wardogsSectionForArticle } from '@/lib/games/wardogs';
-import { dednetSectionForArticle } from '@/lib/games/pubg-dednet';
+import { wardogs, wardogsSectionForArticle } from '@/lib/games/wardogs';
+import { pubgDednet, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
 import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { sectionHasContent } from '@/lib/dmz/sections';
+import { sectionHasContent as wardogsSectionHasContent } from '@/lib/wardogs/sections';
+import { sectionHasContent as dednetSectionHasContent } from '@/lib/pubg-dednet/sections';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug, MATCHUP_VERIFIED_DATE } from '@/lib/matchups';
 import { hasShellGuide } from '@/lib/shellGuides';
@@ -78,11 +80,13 @@ export async function computeEligible() {
     [BASE + '/marathon/matchups', mvd, 'weekly', 0.85],
     [BASE + '/marathon/modes/vault-breaker', facts, 'daily', 0.9],
     [BASE + '/marathon/rising', undefined, 'daily', 0.8],
+    [BASE + '/marathon/creators', undefined, 'weekly', 0.7],
     [BASE + '/marathon/stats', STATS_UPDATED, 'weekly', 0.75],
     [BASE + '/marathon/leaderboard', LEADERBOARD_UPDATED, 'daily', 0.75],
     [BASE + '/marathon/status', undefined, 'hourly', 0.7],
     [BASE + '/marathon/player-count', undefined, 'hourly', 0.8],
     [BASE + '/editors', EDITORS_UPDATED, 'weekly', 0.7],
+    [BASE + '/about', undefined, 'monthly', 0.6],
     [BASE + '/marathon/intel/cipher', undefined, 'daily', 0.7],
     [BASE + '/marathon/intel/nexus', undefined, 'daily', 0.7],
     [BASE + '/marathon/intel/dexter', undefined, 'daily', 0.7],
@@ -285,6 +289,19 @@ export async function computeEligible() {
       (wdRows || []).map((r) => ({ r, section: wardogsSectionForArticle(r) })).filter((x) => x.section)
         .forEach((x) => add(BASE + '/wardogs/' + x.section + '/' + x.r.slug, W, 'wardogs-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
     } catch (err) { console.error('[sitemap] wardogs feed fetch threw:', err); }
+
+    // Section hubs (type='wardogs-section'), gated on the SHARED sectionHasContent predicate -- the
+    // same one the /wardogs/[section] noindex tag uses, so the sitemap and the page never drift.
+    // Mirrors the DMZ section-hub emitter above.
+    try {
+      for (const sec of wardogs.sections) {
+        if (!(await wardogsSectionHasContent(sec))) continue; // noindexed empty section -> excluded
+        add(BASE + '/wardogs/' + sec.slug, W, 'wardogs-section', undefined, 'weekly', 0.8);
+      }
+    } catch (err) { console.error('[sitemap] wardogs section gate threw:', err); }
+
+    // The /wardogs landing itself (indexable while wardogs.indexable; DB-driven -> no lastmod).
+    add(BASE + '/wardogs', W, 'wardogs-section', undefined, 'daily', 0.9);
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while
@@ -300,6 +317,19 @@ export async function computeEligible() {
       (pdRows || []).map((r) => ({ r, section: dednetSectionForArticle(r) })).filter((x) => x.section)
         .forEach((x) => add(BASE + '/pubg-dednet/' + x.section + '/' + x.r.slug, PD, 'pubg-dednet-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
     } catch (err) { console.error('[sitemap] pubg-dednet feed fetch threw:', err); }
+
+    // Section hubs + landing, SAME shape as the Wardogs/DMZ emitters. This whole block is gated on
+    // pubg-dednet.indexable (false today), so it stays EMPTY until the flip -- then it emits the
+    // landing + every content-bearing section, pre-empting the articles-only gap.
+    try {
+      for (const sec of pubgDednet.sections) {
+        if (!(await dednetSectionHasContent(sec))) continue; // noindexed empty section -> excluded
+        add(BASE + '/pubg-dednet/' + sec.slug, PD, 'pubg-dednet-section', undefined, 'weekly', 0.8);
+      }
+    } catch (err) { console.error('[sitemap] pubg-dednet section gate threw:', err); }
+
+    // The /pubg-dednet landing itself (indexable while pubg-dednet.indexable; DB-driven -> no lastmod).
+    add(BASE + '/pubg-dednet', PD, 'pubg-dednet-section', undefined, 'daily', 0.9);
   }
 
   // RUNTIME PARTITION INVARIANT (Change 1): assert union==eligible-set AND pairwise

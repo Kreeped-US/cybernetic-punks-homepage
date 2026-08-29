@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - SEO Fix 1: close real sitemap gaps (indexable pages Google could not discover)
+
+Closed real sitemap gaps -- indexable pages that were missing, so Google could not discover them.
+One file, lib/sitemap/eligible.js.
+- WARDOGS emitter: extended from articles-only to ALSO emit the landing (/wardogs) + content-bearing
+  section hubs (/wardogs/[section]), gated on sectionHasContent -- the SAME predicate the section
+  noindex tag uses, so the sitemap and the page never drift (arsenal excluded: no content). Matches
+  the DMZ pattern (landing + sections + articles).
+- PUBG-DEDNET emitter: SAME extension, gated on indexable. CORRECTION to the brief's premise:
+  pubg-dednet.indexable is TRUE (DED.NET went live this session -- 6 published articles), so this
+  gap was LIVE, not latent -- DED.NET's landing + section hubs were genuinely missing from the
+  sitemap for a live indexed game. Now emitted: 10 URLs = /pubg-dednet landing + field-intel /
+  systems / world section hubs + 6 articles (arsenal excluded, no content).
+- STATIC list: added /about (just rebuilt, indexable) + /marathon/creators (indexable, was missing
+  from the list -- the list had /marathon/rising but not /creators).
+- DMZ emitter UNCHANGED (already correct -- it was the reference pattern). All game emitters are now
+  consistent: landing + content-sections + articles/entities.
+- /u/[handle] user profiles LEFT OUT of the sitemap, per operator (thin/unbounded UGC -- a
+  deliberate exclusion, not a bug).
+- VERIFY (against live emitted XML): /about, /marathon/creators, /wardogs + its content sections,
+  and /pubg-dednet + its content sections all present; only content-bearing sections emit (arsenal
+  excluded in both games); assertPartition passes (new URLs route to their game buckets by the
+  game-keyed partition, no partition change needed); XML valid; build green; house-style clean.
+- Part of the SEO triage from the code-side verification (the stale 21-28 Aug audit). Remaining SEO
+  items to triage: the Article publisher.logo/image inconsistency (intel + pubg lack it; the
+  DiscourseArticle schema is the correct template) and the title-length-vs-A2 breaches (the +18
+  " | CyberneticPunks" suffix pushes template-page titles over 60; homepage 67, meta 72).
+
+---
+
+
 ## 2026-08-28 - About rebuild PHASE 3 of 3 (final): the prose rewrite
 
 Replaced the three thin prose sections in app/about/page.js with deepened, DURABLE copy. Phase 2's
