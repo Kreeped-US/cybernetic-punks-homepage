@@ -7,16 +7,18 @@
 // RELATIVE path with extension so the bare-node icon script (scripts/gen-icons.mjs ->
 // iconMark.js -> this file -> brandColors.js) resolves the whole chain.
 
-import { NETWORK_BURGUNDY, MARATHON_GREEN, DMZ_FOREST } from '../brandColors.js';
+import { NETWORK_BURGUNDY, MARATHON_GREEN, DMZ_FOREST, DEDNET_BLOOD } from '../brandColors.js';
 
 export const OG_COLORS = {
-  network:  NETWORK_BURGUNDY, // burgundy -- the CNP network default (no game tag)
-  marathon: MARATHON_GREEN,   // neon green -- the live Marathon --green
-  dmz:      DMZ_FOREST,       // forest green -- DMZ
+  network:  NETWORK_BURGUNDY,   // burgundy -- the CNP network default (no game tag)
+  marathon: MARATHON_GREEN,     // neon green -- the live Marathon --green
+  dmz:      DMZ_FOREST,         // forest green -- DMZ
+  'pubg-dednet': DEDNET_BLOOD,  // grindhouse blood-red (#cc2936) -- PUBG: DED.NET
 };
 
 // CNP block text color: BLACK on the neon-green Marathon block (contrast on bright
-// green), WHITE on the burgundy + forest blocks.
+// green), WHITE on every darker block (burgundy, forest, blood-red). Keyed on the bright
+// marathon accent so any dark accent (incl. the new DED.NET blood-red) correctly gets white.
 export function blockTextColor(accent) {
   return accent === OG_COLORS.marathon ? '#000000' : '#ffffff';
 }

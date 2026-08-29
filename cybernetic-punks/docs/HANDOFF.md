@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - SEO Fix 2b: Article image fallback via per-article dynamic OG + card IP fix
+
+Completed the Article-schema image gap using the EXISTING dynamic OG system -- ZERO static assets.
+- (1) PUBG per-article OG route: added app/pubg-dednet/[section]/[slug]/opengraph-image.js (mirrors
+  the DMZ/intel per-article generators) + OG_COLORS[pubg-dednet] = DEDNET_BLOOD #cc2936. Renders
+  1200x630 at a stable URL (200 image/png, no hash -- verified). The existing blockTextColor rule
+  correctly gives WHITE text on the dark blood-red block (only bright Marathon green needs black).
+- (2) Wired the Article image fallback: the intel Article + pubg NewsArticle now set
+  image = thumbnail || the article's OWN dynamic OG (absolute CANONICAL URL). So EVERY article now
+  has a valid Article image -- the real thumbnail when present, else its branded per-article OG
+  card -- not a forced generic fallback. publisher.logo (Fix 2) is still present.
+- (3) IP FIX at the shared layer: removed marathonLogo from lib/og/card.js (the shared Card) -- ONE
+  change neutralized the Bungie Marathon wordmark on EVERY card at once. Cleaned the now-dead
+  loadMarathonLogo plumbing from lib/og/marathonSection.js + the intel OG route. NOTE: marathonSection
+  was a SECOND consumer the brief's "only the intel route" premise missed -- caught here, so the fix
+  covers all Marathon section cards too.
+- VERIFIED (screenshots): the Marathon card now renders "MARATHON" TEXT (green pill), not the Bungie
+  wordmark; the DED.NET card renders blood-red + "DED.NET" text + white CNP block. All 4 games are
+  CNP-text-branded in their accent (Marathon green / DMZ forest / DED.NET blood-red / Wardogs
+  amber-ready); NO card uses a publisher logo -- consistent with the unaffiliated-fan-site posture.
+  Both Article schemas emit an absolute image; build green; house-style clean.
+- NOW-DEAD, left in place (noted): lib/og/logo.js + lib/og/assets/marathon-logo.png are unused after
+  the cleanup (nothing imports loadMarathonLogo) -- a trivial deletion follow-up.
+- SEO TRIAGE REMAINING: Wardogs Article schema (same publisher.logo/image gap + needs OG_COLORS
+  [wardogs]=WARDOGS_AMBER + a per-article OG route, with BLACK block text for the bright amber);
+  title-length-vs-A2 (the +18 " | CyberneticPunks" suffix); the dormant noindex:true flag on
+  pubg/wardogs articles.
+
+---
+
+
 ## 2026-08-28 - SEO Fix 1: close real sitemap gaps (indexable pages Google could not discover)
 
 Closed real sitemap gaps -- indexable pages that were missing, so Google could not discover them.

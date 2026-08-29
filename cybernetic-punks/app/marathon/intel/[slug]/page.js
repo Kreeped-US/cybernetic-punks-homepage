@@ -1034,12 +1034,16 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
     headline: item.headline,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
     author: { '@type': 'Organization', name: item.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/marathon/intel/' + item.editor.toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.updated_at || item.created_at),
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',
   };
-  if (item.thumbnail) jsonLd.image = item.thumbnail;
+  // image: an ImageObject (matching DiscourseArticle). Every Article now has one -- the real
+  // thumbnail when present, else the article's OWN dynamic OG card (a 1200x630 CNP-text-branded,
+  // accent-colored, IP-safe per-article image at a stable URL). articleUrl is CANONICAL-absolute,
+  // so the OG URL is absolute for JSON-LD.
+  jsonLd.image = { '@type': 'ImageObject', url: item.thumbnail || (articleUrl + '/opengraph-image') };
 
   var creatorPersonSchema = null;
   if (isCreatorSpotlight) {

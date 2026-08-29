@@ -10,11 +10,12 @@
 //          headlineFontSize (px number, default 50) }. The per-article card passes a
 // length-derived headlineFontSize; the headline clamps to 3 lines either way.
 
-// marathonLogo (data URI | null|undefined): when gameTag === 'MARATHON' and this is
-// present, the official wordmark image renders INSIDE the existing tag pill in place
-// of the text; the pill's border/padding/radius are unchanged. Any other gameTag
-// (e.g. 'DMZ'), or a missing logo, keeps the plain text tag.
-export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50, marathonLogo }) {
+// The game-tag pill always renders gameTag as TEXT (e.g. 'MARATHON', 'DMZ', 'DED.NET'). NO
+// publisher game logo is ever rendered -- every card is CNP-text-branded in the game's accent
+// color, IP-safe for an unaffiliated fan site. (A prior marathonLogo prop that rendered the
+// Marathon wordmark inside the Marathon pill was removed in SEO Fix 2b; lib/og/logo.js is now
+// unused.)
+export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50 }) {
   return (
     <div
       style={{
@@ -81,14 +82,7 @@ export function Card({ accent, blockTextColor, gameTag, headline, tagline, headl
               letterSpacing: '0.10em',
             }}
           >
-            {gameTag === 'MARATHON' && marathonLogo ? (
-              // 34px tall, width from the native 1920x650 aspect (~2.95:1) so satori
-              // gets explicit, undistorted dimensions. Transparent PNG blends with the
-              // dark card; sits inside the pill's existing padding.
-              <img src={marathonLogo} height={34} width={Math.round(34 * 1920 / 650)} alt="Marathon" style={{ display: 'block' }} />
-            ) : (
-              gameTag
-            )}
+            {gameTag}
           </div>
         ) : null}
       </div>
