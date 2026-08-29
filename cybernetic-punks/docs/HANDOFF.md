@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - About rebuild PHASE 2 of 3: reskin /about + config-drive the mechanical parts
+
+Reskinned /about to the shared NETWORK v7 identity and config-drove the staleness-prone parts.
+Structural only -- the prose rewrite (mission / how-we-work / who's-behind-it) is Phase 3.
+- RESKIN: /about now wraps in .cnp-root with CNP_CSS (lib/network/networkTheme.js) + networkFontVars
+  (lib/network/networkFonts.js) -- the same burgundy/black/gold + Chakra Petch identity as the
+  homepage. Retired the generic :root/--red #cc2222 styling (verified absent). Homepage NOT touched.
+- THE GAMES: config-driven from ROOT_GAMES (all 4 render; a 5th appears automatically). Status labels
+  are DERIVED (auto-flip, no "at launch" time-bomb) via a new helper lib/network/gameStatus.js
+  (networkGameStatus): status 'live' -> LIVE; a launch_date that has passed -> LIVE (the clock, not
+  a manual flip); revealed/no-date -> REVEALED; pre-launch/no-date -> PRE-LAUNCH.
+- EARLY ACCESS honesty: status/launch_date alone cannot tell EA (Wardogs) from a full launch (DMZ),
+  so added an explicit earlyAccess:true flag to lib/games/wardogs.js and a branch in gameStatus.js.
+  FINAL 4 LABELS: Marathon LIVE; DMZ ARRIVES OCT 23; Wardogs EARLY ACCESS SEP 10; PUBG: DED.NET
+  REVEALED. (Was "ARRIVES SEP 10" for Wardogs -- fixed, "ARRIVES" implied full release.) The game
+  blurb comes from config (footer.description, network-membership suffix stripped).
+- EDITORIAL DESK: roster-driven from lib/editors/roster.js (getAllEditors + Vantage). 7 editors;
+  Broker's "INCOMING - deploys with DMZ" is DERIVED from roster status + coverage (not a hardcoded
+  "when DMZ launches" time-bomb). Beats kept as a keyed map (Phase 3 refines the prose).
+- FOOTER: /about is a NETWORK page; the generalized <Footer /> takes a game slug and renders a
+  single game's legal/links/cross-game row -- there is NO network mode, so forcing a slug would be
+  dishonest. Kept a small restyled network footer strip; a network-mode Footer is FLAGGED as a
+  follow-up (NOT forced a slug).
+- Confirmed KEEPS (operator): the network footer strip, footer.description as the blurb source, and
+  the full-desk (About: Vantage + Broker-as-incoming) vs footer (EDITOR_ORDER, Broker dimmed, no
+  Vantage) difference -- an intentional, honest per-surface difference.
+- Pre-existing (NOT Phase 2): /about still renders the Marathon global Nav (unprefixed route) -- a
+  network-nav treatment is its own task, parallel to the footer flag.
+- VERIFY: browser-confirmed .cnp-root/burgundy-gold/Chakra Petch; all 4 games with derived labels
+  (EA fix live); desk roster-driven; build green; house-style clean. NEXT: Phase 3 rewrites the prose
+  (deeper, lowkey-mysterious who's-behind-it).
+
+---
+
+
 ## 2026-08-28 - About rebuild PHASE 1 of 3: extract the network v7 theme to shared modules
 
 Extracted the network v7 theme from app/page.js into shared modules so /about and future network

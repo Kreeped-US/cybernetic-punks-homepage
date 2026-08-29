@@ -41,6 +41,10 @@ export const wardogs = {
   //   Keep it here -- do not add a second date literal anywhere.
   status: 'pre-launch',
   launch_date: '2026-09-10',
+  // earlyAccess: Wardogs launches into Steam EARLY ACCESS on launch_date, not a full release.
+  // Consumed by lib/network/gameStatus.js so the derived status label reads "EARLY ACCESS <date>"
+  // (honest) instead of "ARRIVES <date>" (which implies full launch). Full-launch games omit it.
+  earlyAccess: true,
 
   // FOOTER PRESENTATION. This config is CONSUMED BY the generalized Footer (components/Footer.js,
   // game="wardogs"), which renders it as of Phase 3. legal is the Wardogs fan-site notice
