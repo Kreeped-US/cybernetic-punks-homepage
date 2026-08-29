@@ -40,7 +40,7 @@ const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--cnp-mono', disp
 // superlative "analyzed deeper than anywhere else" is removed and replaced with the mechanism
 // statement "analyzed and verified", keeping every keyword. No comparative reaches the SERP.
 export const metadata = {
-  title: 'Verified Competitive-Shooter Intelligence Network',
+  title: { absolute: 'Cybernetic Punks - Verified FPS Intelligence' },
   description: 'The verified competitive-shooter intelligence network - deep, verified intel for Marathon and extraction shooters. Every weapon, shell, and build analyzed and verified against the live game.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
@@ -228,7 +228,7 @@ const JSONLD = [
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'CyberneticPunks',
+    name: 'Cybernetic Punks',
     url: 'https://cyberneticpunks.com',
     logo: 'https://cyberneticpunks.com/cnp-512.png',
     sameAs: ['https://x.com/Cybernetic87250'],
@@ -236,7 +236,7 @@ const JSONLD = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'CyberneticPunks',
+    name: 'Cybernetic Punks',
     url: 'https://cyberneticpunks.com',
   },
 ];

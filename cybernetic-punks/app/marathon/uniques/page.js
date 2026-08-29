@@ -20,19 +20,19 @@ import UniquesHubClient from './UniquesHubClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Unique Weapons — Prestige & Deluxe Cryo Variants',
+  title: { absolute: 'Marathon Unique Weapons - Prestige & Deluxe Cryo Variants' },
   description: 'Every Marathon unique weapon — Prestige uniques from Cryo Archive Locked Rooms (DRRVISH, Fist of Phobos, Salt Wages) and Deluxe uniques from Showcase encounters. Base weapons, locked mods, and where each drops.',
   openGraph: {
-    title: 'Marathon Unique Weapons — Prestige & Deluxe Cryo Variants | CyberneticPunks',
+    title: 'Marathon Unique Weapons - Prestige & Deluxe Cryo Variants | Cybernetic Punks',
     description: 'Named unique weapon variants in Marathon — what they\'re based on, their locked mods, and where they drop.',
     url: 'https://cyberneticpunks.com/marathon/uniques',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Unique Weapons — Prestige & Deluxe Cryo Variants | CyberneticPunks',
+    title: 'Marathon Unique Weapons - Prestige & Deluxe Cryo Variants | Cybernetic Punks',
     description: 'Named unique weapon variants — base weapons, locked mods, and drop sources.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/uniques' },

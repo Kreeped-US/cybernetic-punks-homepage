@@ -13,19 +13,19 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
-  title: 'Marathon Ranked — Tiers, Skill Rating & Rank Push',
+  title: { absolute: 'Marathon Ranked - Tiers, Skill Rating & Rank Push' },
   description: 'Everything you need to climb Marathon Ranked in Season 2. Tier breakdowns, Holotag rules, the new single-queue 5,000 loadout minimum, live shell tier list, season rewards, and AI-graded ranked intel — updated throughout the day. Ranked returns June 14.',
   openGraph: {
-    title: 'Marathon Ranked — Tiers, Skill Rating & Rank Push | CyberneticPunks',
+    title: 'Marathon Ranked - Tiers, Skill Rating & Rank Push | Cybernetic Punks',
     description: 'Ranked mode intel for Marathon Season 2. Six tiers, three subdivisions each. New single combined queue, live shell tier list, AI meta tracking, flagged weapons, and recent ranked intelligence. Returns June 14.',
     url: 'https://cyberneticpunks.com/marathon/ranked',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Ranked — Tiers, Skill Rating & Rank Push | CyberneticPunks',
+    title: 'Marathon Ranked - Tiers, Skill Rating & Rank Push | Cybernetic Punks',
     description: 'Tier breakdowns, Holotag rules, shell picks, and season rewards for Marathon Ranked. Season 2 returns June 14.',
   },
   alternates: {

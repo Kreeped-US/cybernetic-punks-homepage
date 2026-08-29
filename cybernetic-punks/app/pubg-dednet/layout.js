@@ -12,7 +12,7 @@ import { pubgDednet } from '@/lib/games/pubg-dednet';
 
 export const metadata = {
   title: 'PUBG: DED.NET - Verified Intel',
-  description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Part of the CyberneticPunks game network.',
+  description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Part of the Cybernetic Punks game network.',
   alternates: { canonical: 'https://cyberneticpunks.com/pubg-dednet' },
   // SEO exposure gated on pubg-dednet.indexable (NOT launched). FALSE for Phase 1 -> the whole
   // /pubg-dednet subtree is noindex,follow (crawlers still traverse back to the network root via

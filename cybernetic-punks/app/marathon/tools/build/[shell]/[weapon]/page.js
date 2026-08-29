@@ -84,7 +84,7 @@ export async function generateStaticParams() {
 // "Destroyer V85 Circuit Breaker Build — Marathon" (46). Guard for future long weapons:
 // drop " Build", then fall back to the bare "[Shell] [Weapon]" if still over.
 function variantTitle(name, weaponName) {
-  const full = name + ' ' + weaponName + ' Build — Marathon';
+  const full = name + ' ' + weaponName + ' Build - Marathon';
   if (full.length <= 60) return full;
   const noBuild = name + ' ' + weaponName + ' — Marathon';
   if (noBuild.length <= 60) return noBuild;
@@ -95,7 +95,7 @@ export async function generateMetadata({ params }) {
   const { shell, weapon } = await params;
   const row = await fetchVariant(shell, weapon);
   if (!row || !row.is_indexable || !row.build_json) {
-    return { title: 'Build Not Found — Marathon', robots: { index: false } };
+    return { title: 'Build Not Found - Marathon', robots: { index: false } };
   }
   const name = titleCase(shell);
   const weaponName = (await weaponNameForSlug(getSupabase(), weapon)) || titleCase(weapon);
@@ -109,8 +109,8 @@ export async function generateMetadata({ params }) {
     title: variantTitle(name, weaponName),
     description,
     alternates: { canonical: url },   // self-canonical per the promotion rule (its own query)
-    openGraph: { title: name + ' ' + weaponName + ' Build — Marathon', description, url, siteName: 'CyberneticPunks', type: 'website' },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: name + ' ' + weaponName + ' Build — Marathon', description },
+    openGraph: { title: name + ' ' + weaponName + ' Build - Marathon', description, url, siteName: 'Cybernetic Punks', type: 'website' },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: name + ' ' + weaponName + ' Build - Marathon', description },
   };
 }
 
@@ -136,9 +136,9 @@ export default async function VariantBuildPage({ params }) {
   };
   const webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',
-    name: name + ' ' + weaponName + ' Build — Marathon',
+    name: name + ' ' + weaponName + ' Build - Marathon',
     url: BASE + '/marathon/tools/build/' + shell + '/' + weapon,
-    isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: BASE },
+    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
   };
 
   return (

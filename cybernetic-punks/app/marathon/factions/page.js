@@ -19,20 +19,20 @@ import FactionClient from './FactionClient';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
-  title: 'Marathon Factions — Roles, Reputation & Cryo Archive Access',
+  title: { absolute: 'Marathon Factions - Roles, Reputation & Cryo Archive Access' },
   description: 'Marathon Season 2 faction guide. What each of the six factions - Cyberacme, Nucaloric, Traxus, Mida, Arachne, Sekiguchi - offers: contracts, reputation, unique gear, and Cryo Archive access. Core stat upgrades now come from the Cradle.',
   keywords: 'Marathon factions, Marathon faction guide, Marathon Season 2 factions, Marathon Cyberacme, Marathon Traxus, Marathon Arachne, Marathon faction reputation, Marathon Cryo Archive factions, which Marathon faction first, Marathon faction contracts',
   openGraph: {
-    title: 'Marathon Factions — Roles, Reputation & Cryo Archive Access | CyberneticPunks',
+    title: 'Marathon Factions - Roles, Reputation & Cryo Archive Access | Cybernetic Punks',
     description: 'What each of the six Marathon factions offers in Season 2: contracts, reputation, unique gear, and Cryo Archive access. Core stats now come from the Cradle.',
     url: 'https://cyberneticpunks.com/marathon/factions',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Factions — Roles, Reputation & Cryo Archive Access | CyberneticPunks',
+    title: 'Marathon Factions - Roles, Reputation & Cryo Archive Access | Cybernetic Punks',
     description: 'What each faction offers in Season 2: contracts, reputation, unique gear, Cryo Archive access.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/factions' },

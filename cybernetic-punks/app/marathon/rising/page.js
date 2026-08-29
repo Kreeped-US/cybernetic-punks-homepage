@@ -52,7 +52,7 @@ function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.full
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Rising Marathon Creators - Twitch Streamers & Spotlights',
+  title: { absolute: 'Rising Marathon Creators - Twitch Streamers & Spotlights' },
   description: 'Discover rising Marathon creators: live Twitch streamers under 100 viewers plus editor spotlights for Bungie\'s extraction shooter. Make Marathon content? Get featured.',
   keywords: [
     // Viewer intent — someone looking for a small creator to watch/support
@@ -74,7 +74,7 @@ export const metadata = {
     title: 'Rising Marathon Creators - Twitch Streamers & Spotlights',
     description: 'Live small Marathon streamers under 100 viewers, plus editor creator spotlights. Watch the next wave — or make Marathon content and get featured.',
     url: 'https://cyberneticpunks.com/marathon/rising',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
@@ -137,7 +137,7 @@ const FAQS = [
     a: "Big Marathon streamers already have established audiences and algorithmic reach. Small streamers are putting in the work right now — learning the game, developing strategies, and building communities from scratch. A single chat message or follow can genuinely change their day. Discovering creators early is also how Marathon's community identity gets built — the next big personalities in the scene are streaming under 50 viewers right now.",
   },
   {
-    q: 'How does CyberneticPunks find small Marathon streamers?',
+    q: 'How does Cybernetic Punks find small Marathon streamers?',
     a: "We scan Twitch in real-time for streamers playing Marathon with under 100 viewers. The feed updates every time you visit the page — these are real players streaming right now, not algorithmic recommendations or pre-curated lists. We don't accept payment to feature streamers and we don't filter by language or region. If they're live and small, they're surfaced.",
   },
   {
@@ -789,7 +789,7 @@ export default async function RisingPage() {
           name: 'Rising Creators — Marathon Streamers to Watch',
           url: 'https://cyberneticpunks.com/marathon/rising',
           description: 'Discover up-and-coming Marathon creators on Twitch. Live small streamers under 100 viewers — surfaced in real-time. Creators can get featured.',
-          isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+          isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
         }),
       }} />
 
@@ -821,7 +821,7 @@ export default async function RisingPage() {
             '@context': 'https://schema.org',
             '@type': 'ItemList',
             name: 'Marathon Creator Spotlights',
-            description: 'Editorial spotlights on Marathon content creators published by the CyberneticPunks editors.',
+            description: 'Editorial spotlights on Marathon content creators published by the Cybernetic Punks editors.',
             numberOfItems: spotlights.length,
             itemListElement: spotlights.map(function(item, i) {
               return {

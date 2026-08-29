@@ -39,7 +39,7 @@ var DMZ_GAME_SLUG = 'dmz';
 export async function generateMetadata({ params }) {
   var sectionSlug = (await params).section;
   var section = getGameSection('dmz', sectionSlug);
-  if (!section) return { title: 'DMZ — Not Found' };
+  if (!section) return { title: 'DMZ - Not Found' };
   // Description resolves to the config `description` (all current sections have one).
   // The fallback is state-aware and never implies coverage exists: a data section is a
   // coming-soon structured-data shell (launches with the zone); an editor section without
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }) {
       title: ogTitle,
       description: desc,
       url: url,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
     },
     twitter: {
@@ -134,9 +134,9 @@ function DmzSectionSchema({ section, articles }) {
     schemas.push({
       '@context': 'https://schema.org', '@type': 'CollectionPage',
       name: section.label + ' - DMZ',
-      description: section.description || ('DMZ ' + section.label + ' on the CyberneticPunks network.'),
+      description: section.description || ('DMZ ' + section.label + ' on the Cybernetic Punks network.'),
       url: base + '/dmz/' + section.slug,
-      isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: base },
+      isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: base },
       mainEntity: {
         '@type': 'ItemList',
         itemListElement: articles.map(function (a, i) {

@@ -20,13 +20,13 @@ import { getLiveStats } from '@/lib/liveStats';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Player Count - Live Steam Concurrent Players & History',
+  title: { absolute: 'Marathon Player Count - Live Steam Concurrent Players' },
   description: 'Live Marathon Steam concurrent player count, the all-time peak we have tracked, and the full trend since March 2026. This is Steam players in-game right now - not the total playerbase (PlayStation and Xbox are not counted).',
   openGraph: {
-    title: 'Marathon Player Count - Live Steam Concurrent Players | CyberneticPunks',
+    title: 'Marathon Player Count - Live Steam Concurrent Players | Cybernetic Punks',
     description: 'Live Marathon Steam concurrent players, all-time tracked peak, and the full history. Steam only - not total playerbase.',
     url: 'https://cyberneticpunks.com/marathon/player-count',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
@@ -143,7 +143,7 @@ export default async function PlayerCountPage() {
     name: 'Marathon Player Count - Steam Concurrent Players',
     description: 'Live Steam concurrent player count for Marathon, the peak tracked since March 2026, and the full trend. Steam only, not total playerbase.',
     url: pageUrl,
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
   };
 
   return (

@@ -54,7 +54,7 @@ export async function generateMetadata({ params }) {
     description,
     alternates: { canonical: url },
     robots: indexable ? undefined : { index: false, follow: true }, // DERIVED honesty gate
-    openGraph: { title: buildTitle(weaponName), description, url, siteName: 'CyberneticPunks', type: 'website' },
+    openGraph: { title: buildTitle(weaponName), description, url, siteName: 'Cybernetic Punks', type: 'website' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: buildTitle(weaponName), description },
   };
 }
@@ -80,7 +80,7 @@ export default async function DmzWeaponBuildPage({ params }) {
   const webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',
     name: buildTitle(weaponName), url,
-    isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: BASE },
+    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
   };
 
   return (

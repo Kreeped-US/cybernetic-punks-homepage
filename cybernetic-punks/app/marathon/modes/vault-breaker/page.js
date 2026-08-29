@@ -144,7 +144,7 @@ const VAULT_BREAKER = {
 };
 
 export const metadata = {
-  // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars). This
+  // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars). This
   // comment previously said the layout appends the suffix, which it did -- that
   // was a description of the bug, not a reason to keep it. 57 chars bare, 75
   // suffixed, against a ~60 char budget.
@@ -152,10 +152,10 @@ export const metadata = {
   description: 'Marathon Vault Breaker runs July 21 - August 4, 2026 (Update 1.1.5). The first experimental PvE mode: roguelite Vault runs in Cryo Archive, Solo/Duo/Trio, any Runner Level. How Vault Data, the Sponsored Kit, and the Armory work - sourced from Bungie.',
   alternates: { canonical: PAGE_URL },
   openGraph: {
-    title: 'Marathon Vault Breaker - Dates, Vault Data & How It Works | CyberneticPunks',
+    title: 'Marathon Vault Breaker - Dates, Vault Data & How It Works | Cybernetic Punks',
     description: 'July 21 - August 4, 2026. Marathon\'s first experimental PvE mode: roguelite Vaults in Cryo Archive, Solo/Duo/Trio, any Runner Level. Vault Data, Sponsored Kit, and Armory explained.',
     url: PAGE_URL,
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
     images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
   },
@@ -261,7 +261,7 @@ export default function VaultBreakerPage() {
     mainEntity: eventSchema,
     // Honest freshness: a fixed date tied to the source, NOT new Date().
     dateModified: FACTS_UPDATED,
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
     citation: citations,
   };
 

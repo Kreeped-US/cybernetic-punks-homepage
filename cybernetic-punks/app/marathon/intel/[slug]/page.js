@@ -26,11 +26,11 @@ function edSymbol(key) { var d = getEditorDisplay(key); return d ? d.symbol : ''
 function edColor(key) { var d = getEditorDisplay(key); return d ? d.color : '#888'; }
 
 const EDITORS = {
-  cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'CIPHER — Marathon Play Analysis & Competitive Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
-  nexus:   { name: 'NEXUS',   symbol: '⬡', color: '#00d4ff', role: 'Meta Strategist', desc: 'Tracks what weapons and strategies are actually winning right now.', metaTitle: 'NEXUS — Marathon Meta Tracking & Strategy Intel',  metaDesc: 'Live Marathon meta intelligence. What weapons and loadouts are winning — tracked throughout the day.' },
-  ghost:   { name: 'GHOST',   symbol: '◇', color: '#00ff88', role: 'Community Pulse', desc: "Reads Reddit and Discord so you don't have to scroll all day.", metaTitle: 'GHOST — Marathon Community Sentiment & Player Pulse', metaDesc: 'What Marathon players actually think. Community sentiment from Reddit and Discord.' },
-  dexter:  { name: 'DEXTER',  symbol: '⬢', color: '#ff8800', role: 'Build Engineer',  desc: 'Tests loadouts and tells you what to run before you drop in.', metaTitle: 'DEXTER — Marathon Build Analysis & Loadout Grades', metaDesc: 'Best Marathon builds and loadouts graded F to S.' },
-  miranda: { name: 'MIRANDA', symbol: '◎', color: '#9b5de5', role: 'Field Guide',     desc: 'Deep-dive guides on shells, weapons, mods, and extraction strategy.', metaTitle: 'MIRANDA — Marathon Field Guides', metaDesc: 'Shell breakdowns, weapon analysis, and ranked prep for Marathon Runners.' },
+  cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'Marathon Play Analysis & Runner Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
+  nexus:   { name: 'NEXUS',   symbol: '⬡', color: '#00d4ff', role: 'Meta Strategist', desc: 'Tracks what weapons and strategies are actually winning right now.', metaTitle: 'Marathon Meta Tracking & Strategy Intel',  metaDesc: 'Live Marathon meta intelligence. What weapons and loadouts are winning - tracked throughout the day.' },
+  ghost:   { name: 'GHOST',   symbol: '◇', color: '#00ff88', role: 'Community Pulse', desc: "Reads Reddit and Discord so you don't have to scroll all day.", metaTitle: 'Marathon Community Sentiment & Pulse', metaDesc: 'What Marathon players actually think. Community sentiment from Reddit and Discord.' },
+  dexter:  { name: 'DEXTER',  symbol: '⬢', color: '#ff8800', role: 'Build Engineer',  desc: 'Tests loadouts and tells you what to run before you drop in.', metaTitle: 'Marathon Build Analysis & Loadout Grades', metaDesc: 'Best Marathon builds and loadouts graded F to S.' },
+  miranda: { name: 'MIRANDA', symbol: '◎', color: '#9b5de5', role: 'Field Guide',     desc: 'Deep-dive guides on shells, weapons, mods, and extraction strategy.', metaTitle: 'Marathon Field Guides', metaDesc: 'Shell breakdowns, weapon analysis, and ranked prep for Marathon Runners.' },
 };
 
 const EDITOR_STYLES = {
@@ -209,7 +209,7 @@ export async function generateMetadata({ params }) {
     return {
       title: editorConfig.metaTitle,
       description: editorConfig.metaDesc,
-      openGraph: { title: editorConfig.metaTitle + ' — CyberneticPunks', description: editorConfig.metaDesc, url: 'https://cyberneticpunks.com/marathon/intel/' + slug.toLowerCase(), siteName: 'CyberneticPunks', type: 'website' },
+      openGraph: { title: editorConfig.metaTitle + ' - Cybernetic Punks', description: editorConfig.metaDesc, url: 'https://cyberneticpunks.com/marathon/intel/' + slug.toLowerCase(), siteName: 'Cybernetic Punks', type: 'website' },
       twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: editorConfig.metaTitle, description: editorConfig.metaDesc },
       alternates: { canonical: 'https://cyberneticpunks.com/marathon/intel/' + slug.toLowerCase() },
     };
@@ -219,13 +219,13 @@ export async function generateMetadata({ params }) {
   var desc = buildMetaDescription(item.body, item.headline);
   return {
     // TITLE SUFFIX DROPPED (`absolute` bypasses the root layout's
-    // '%s | CyberneticPunks' template). The suffix costs 18 chars of an ~60-char
+    // '%s | Cybernetic Punks' template). The suffix costs 18 chars of an ~60-char
     // SERP budget on every article -- 30% of the budget spent on branding the
     // domain already shows. Article titles are where keyword competition happens;
     // the homepage and non-keyword hubs keep the suffix.
     title: { absolute: item.headline },
     description: desc,
-    openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/marathon/intel/' + item.slug, siteName: 'CyberneticPunks', type: 'article', publishedTime: item.created_at },
+    openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/marathon/intel/' + item.slug, siteName: 'Cybernetic Punks', type: 'article', publishedTime: item.created_at },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: item.headline, description: desc },
     alternates: { canonical: 'https://cyberneticpunks.com/marathon/intel/' + item.slug },
     // SEO prune: de-index flagged articles. follow:true so outbound link equity
@@ -1033,8 +1033,8 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
-    author: { '@type': 'Organization', name: item.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/marathon/intel/' + item.editor.toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
+    author: { '@type': 'Organization', name: item.editor + ' - Cybernetic Punks', url: 'https://cyberneticpunks.com/marathon/intel/' + item.editor.toLowerCase() },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.updated_at || item.created_at),
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',

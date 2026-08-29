@@ -63,20 +63,20 @@ import Link from 'next/link';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 export var metadata = {
-  title: 'Marathon Stats Tracker — What It Will Track When Bungie Ships the API',
-  description: 'Marathon has no public stats API yet, so player lookup is not live. Here is what the CyberneticPunks Marathon stats tracker will cover when Bungie ships one: extraction rates, K/D, loot value, weapon kills, and shell performance. Live now: Steam player count and current tiers.',
+  title: { absolute: 'Marathon Stats Tracker - When Bungie Ships the API' },
+  description: 'Marathon has no public stats API yet, so player lookup is not live. Here is what the Cybernetic Punks Marathon stats tracker will cover when Bungie ships one: extraction rates, K/D, loot value, weapon kills, and shell performance. Live now: Steam player count and current tiers.',
   keywords: 'Marathon stats, Marathon stats tracker, Marathon player stats, Marathon player lookup, Marathon K/D, Marathon extraction rate, Marathon weapon stats, Marathon ranked stats, Marathon leaderboard, Marathon performance tracker, Marathon Steam stats, Marathon PlayStation stats, Marathon Xbox stats, Marathon Bungie name lookup, Marathon profile stats, Marathon weapon kills',
   openGraph: {
-    title: 'Marathon Stats Tracker | CyberneticPunks',
+    title: 'Marathon Stats Tracker | Cybernetic Punks',
     description: 'Player lookup is not live: Bungie has not opened a Marathon stats API. Here is what the tracker will cover when they do.',
     url: 'https://cyberneticpunks.com/marathon/stats',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Stats Tracker | CyberneticPunks',
+    title: 'Marathon Stats Tracker | Cybernetic Punks',
     description: 'Marathon player lookup is not live yet. What the tracker will cover once Bungie ships a public stats API.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/stats' },
@@ -153,15 +153,15 @@ var FAQS = [
   },
   {
     q: 'Will my Marathon stats carry over between seasons?',
-    a: "Marathon wipes gear and progression each season, but CyberneticPunks will track your historical performance across every season. This gives you a complete picture of your improvement over time, even when in-game progression resets — your career stats persist permanently.",
+    a: "Marathon wipes gear and progression each season, but Cybernetic Punks will track your historical performance across every season. This gives you a complete picture of your improvement over time, even when in-game progression resets — your career stats persist permanently.",
   },
   {
-    q: 'How is CyberneticPunks different from other Marathon stat trackers?',
+    q: 'How is Cybernetic Punks different from other Marathon stat trackers?',
     a: "Right now the honest answer is that nobody has Marathon player stats, us included, because Bungie has not opened an API. What we do publish today is meta context: current shell and weapon tiers on /meta, and live Steam concurrent players on /player-count. The plan when stats arrive is to pair them with that context, so a most-used weapon sits next to its tier placement rather than being a bare number.",
   },
   {
-    q: 'Is CyberneticPunks affiliated with Bungie?',
-    a: "No. CyberneticPunks is an independent fan-operated Marathon intelligence hub. Marathon is a trademark of Bungie, Inc. We use only publicly available data from official APIs once they become available.",
+    q: 'Is Cybernetic Punks affiliated with Bungie?',
+    a: "No. Cybernetic Punks is an independent fan-operated Marathon intelligence hub. Marathon is a trademark of Bungie, Inc. We use only publicly available data from official APIs once they become available.",
   },
   {
     q: 'How accurate will the stats be?',
@@ -349,7 +349,7 @@ export default function StatsPage() {
             maxWidth: 720,
             margin: '0 auto',
           }}>
-            CyberneticPunks will track everything the Bungie Marathon API exposes — here&apos;s what we&apos;re building for.
+            Cybernetic Punks will track everything the Bungie Marathon API exposes — here&apos;s what we&apos;re building for.
           </p>
         </div>
 
@@ -530,7 +530,7 @@ export default function StatsPage() {
             lineHeight: 1.6,
             marginBottom: 20,
           }}>
-            CyberneticPunks will activate Marathon stats tracking the moment Bungie opens the API. Join our Discord to get notified instantly.
+            Cybernetic Punks will activate Marathon stats tracking the moment Bungie opens the API. Join our Discord to get notified instantly.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
             <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" style={{
@@ -587,7 +587,7 @@ export default function StatsPage() {
             maxWidth: 720,
             margin: '0 auto',
           }}>
-            Common questions about Marathon stats tracking, the Bungie API, and how CyberneticPunks compares to other trackers.
+            Common questions about Marathon stats tracking, the Bungie API, and how Cybernetic Punks compares to other trackers.
           </p>
         </div>
 

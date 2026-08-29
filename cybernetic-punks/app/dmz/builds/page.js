@@ -44,7 +44,7 @@ export async function generateMetadata() {
     description: BUILDS_HUB.hubDesc,
     robots: robots,
     alternates: { canonical: url },
-    openGraph: { title: BUILDS_HUB.hubTitle + ' | CyberneticPunks', description: BUILDS_HUB.hubDesc, url: url, siteName: 'CyberneticPunks', type: 'website' },
+    openGraph: { title: BUILDS_HUB.hubTitle + ' | Cybernetic Punks', description: BUILDS_HUB.hubDesc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: BUILDS_HUB.hubTitle, description: BUILDS_HUB.hubDesc },
   };
 }

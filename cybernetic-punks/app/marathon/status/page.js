@@ -24,20 +24,20 @@ import { DISCORD_INVITE } from '@/lib/socialLinks';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Server Status & Player Activity (Live)',
+  title: { absolute: 'Marathon Server Status & Player Activity (Live)' },
   description: 'Live Marathon player activity — current Steam player count and review sentiment — plus the weekly reset schedule, ranked queue rotation, and a complete Marathon error code reference. We report real player activity; we do not have a direct server-health feed, so we do not claim to detect outages.',
   keywords: 'Marathon server status, is Marathon down, Marathon servers down, Marathon maintenance, Marathon weekly reset, Marathon reset schedule, Marathon ranked rotation, Marathon error codes, Marathon WEASEL, Marathon BROCCOLI, Marathon BASIL, Marathon ANTEATER, Marathon CENTIPEDE, Marathon CURRANT, Marathon GINGER, Marathon server issues, Marathon outage, Marathon player count, Marathon steam reviews',
   openGraph: {
-    title: 'Marathon Server Status & Player Activity (Live) | CyberneticPunks',
+    title: 'Marathon Server Status & Player Activity (Live) | Cybernetic Punks',
     description: 'Live Marathon player count and review sentiment, weekly reset tracker, ranked rotation, and a complete error code reference.',
     url: 'https://cyberneticpunks.com/marathon/status',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Server Status & Player Activity (Live) | CyberneticPunks',
+    title: 'Marathon Server Status & Player Activity (Live) | Cybernetic Punks',
     description: 'Live player activity, weekly reset tracker, and error code reference.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/status' },

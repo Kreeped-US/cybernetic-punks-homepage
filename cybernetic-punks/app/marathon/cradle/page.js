@@ -12,14 +12,14 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export const metadata = {
-  title: 'Marathon Cradle Build Planner - Energy Allocation & Perk Calculator',
+  title: { absolute: 'Marathon Cradle Build Planner - Energy & Perk Calculator' },
   description: 'Plan your Marathon Season 2 Cradle build. Allocate Energy across all six stat tracks, unlock perks at every breakpoint, and test builds free. The complete Cradle calculator for Strength, Recharge, Dexterity, Endurance, Support, and Resistance.',
   keywords: 'marathon cradle, marathon cradle build, marathon cradle calculator, marathon cradle planner, best cradle stats marathon, marathon cradle guide, marathon cradle perks, marathon season 2 cradle, cradle energy allocation, marathon cradle nodes, marathon endurance cradle, marathon cradle leech',
   openGraph: {
-    title: 'Marathon Cradle Build Planner - Energy & Perk Calculator | CyberneticPunks',
+    title: 'Marathon Cradle Build Planner - Energy & Perk Calculator | Cybernetic Punks',
     description: 'Allocate Energy across all six Cradle tracks, unlock perks at every breakpoint, and test Season 2 builds free. The complete Marathon Cradle calculator.',
     url: 'https://cyberneticpunks.com/marathon/cradle',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
@@ -76,7 +76,7 @@ const webApplicationSchema = {
   applicationCategory: 'GameApplication',
   operatingSystem: 'Web',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+  publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
 };
 
 export default async function CradlePage() {

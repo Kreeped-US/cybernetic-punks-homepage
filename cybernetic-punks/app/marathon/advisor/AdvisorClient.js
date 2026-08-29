@@ -350,7 +350,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   }
 
   function shareToX() {
-    var text = 'Just got my ' + (build?.shell || '') + ' build engineered by DEXTER at CyberneticPunks\n\n"' + (build?.build_name || '') + '" — Grade: ' + (build?.loadout_grade || '') + '\n' + (build?.primary_weapon?.name || '') + ' + ' + (build?.secondary_weapon?.name || '') + '\n\ncyberneticpunks.com/marathon/advisor #Marathon #MarathonGame';
+    var text = 'Just got my ' + (build?.shell || '') + ' build engineered by DEXTER at Cybernetic Punks\n\n"' + (build?.build_name || '') + '" — Grade: ' + (build?.loadout_grade || '') + '\n' + (build?.primary_weapon?.name || '') + ' + ' + (build?.secondary_weapon?.name || '') + '\n\ncyberneticpunks.com/marathon/advisor #Marathon #MarathonGame';
     window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
   }
 

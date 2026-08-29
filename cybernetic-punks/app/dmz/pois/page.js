@@ -19,7 +19,7 @@ export async function generateMetadata() {
     description: entity.hubDesc,
     robots: robots,
     alternates: { canonical: url },
-    openGraph: { title: entity.hubTitle + ' | CyberneticPunks', description: entity.hubDesc, url: url, siteName: 'CyberneticPunks', type: 'website' },
+    openGraph: { title: entity.hubTitle + ' | Cybernetic Punks', description: entity.hubDesc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: entity.hubTitle, description: entity.hubDesc },
   };
 }

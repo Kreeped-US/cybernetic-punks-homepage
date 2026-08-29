@@ -12,8 +12,8 @@ import WelcomeClient from './WelcomeClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Welcome — CyberneticPunks',
-  description: 'Welcome to CyberneticPunks. Pick where to start.',
+  title: 'Welcome - Cybernetic Punks',
+  description: 'Welcome to Cybernetic Punks. Pick where to start.',
   robots: { index: false, follow: false }, // do not index this transient page
   alternates: { canonical: 'https://cyberneticpunks.com/welcome' },
 };

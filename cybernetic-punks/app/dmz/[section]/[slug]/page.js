@@ -90,12 +90,12 @@ export async function generateMetadata({ params }) {
   var section = getGameSection('dmz', p.section);
   var article = await fetchArticle(p.slug);
   if (!section || !article || dmzSectionForArticle(article) !== section.slug) {
-    return { title: 'DMZ — Not Found' };
+    return { title: 'DMZ - Not Found' };
   }
   // Authored SEO overrides (lib/games/dmz.js) preferred; fall back to the
   // headline title + auto-truncated meta for any unmapped slug. The "-- DMZ"
   // suffix is dropped (headlines already lead with "DMZ"); the root
-  // title.template appends " | CyberneticPunks".
+  // title.template appends " | Cybernetic Punks".
   var seo = DMZ_ARTICLE_SEO[article.slug] || null;
   var title = seo && seo.title ? seo.title : article.headline;
   var description = seo && seo.description ? seo.description : metaDescription(article.body, article.headline);
@@ -105,7 +105,7 @@ export async function generateMetadata({ params }) {
   // links carry the article's own title/description; the per-article DMZ OG image
   // comes from the sibling opengraph-image.js (Next wires og:image automatically).
   return {
-    // Suffix dropped (`absolute` bypasses the root '%s | CyberneticPunks'
+    // Suffix dropped (`absolute` bypasses the root '%s | Cybernetic Punks'
     // template). DMZ article titles are keyword-competitive in exactly the way
     // /intel articles are, so they follow the same rule: the 18-char suffix is
     // budget spent branding a domain the SERP already shows.
@@ -116,7 +116,7 @@ export async function generateMetadata({ params }) {
       title: title,
       description: description,
       url: canonical,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'article',
     },
     twitter: {
@@ -330,8 +330,8 @@ export default async function DmzArticlePage({ params }) {
     '@context': 'https://schema.org', '@type': 'NewsArticle',
     headline: article.headline,
     description: description,
-    author: { '@type': 'Organization', name: article.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/marathon/intel/' + (article.editor || '').toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    author: { '@type': 'Organization', name: article.editor + ' — Cybernetic Punks', url: 'https://cyberneticpunks.com/marathon/intel/' + (article.editor || '').toLowerCase() },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
     datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: article.tags ? article.tags.join(', ') : 'DMZ, Call of Duty',

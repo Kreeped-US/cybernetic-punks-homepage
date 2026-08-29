@@ -30,19 +30,19 @@ import {
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Matchups — How to Beat Every Shell (Counters & Tactics)',
+  title: { absolute: 'Marathon Matchups - How to Beat Every Shell (Counters)' },
   description: 'How to beat every Marathon shell — Assassin, Destroyer, Recon, Rook, Sentinel, Thief, Triage, Vandal. Which shells counter which, plus key counter items, owner-verified in-game.',
   openGraph: {
-    title: 'Marathon Matchups — How to Beat Every Shell | CyberneticPunks',
+    title: 'Marathon Matchups - How to Beat Every Shell | Cybernetic Punks',
     description: 'Which shells counter which, plus key counter items and tactics — owner-verified in-game for all 8 Marathon shells.',
     url: 'https://cyberneticpunks.com/marathon/matchups',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Matchups — How to Beat Every Shell',
+    title: 'Marathon Matchups - How to Beat Every Shell',
     description: 'Counters, matchups, and key counter items for all 8 Marathon shells — verified in-game.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/matchups' },
@@ -171,7 +171,7 @@ export default async function MatchupsIndexPage() {
             return { '@type': 'ListItem', position: i + 1, name: 'How to beat ' + name + ' — Marathon', url: 'https://cyberneticpunks.com/marathon/matchups/' + shellToSlug(name) };
           }),
         },
-        publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+        publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
       })}} />
     </main>
   );

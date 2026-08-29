@@ -34,20 +34,20 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   // Weapon-forward intent (front-load "weapon tier list" / "best weapons"; "meta" is secondary).
   // 54 chars (A2 ceiling 60). Straight hyphen (house style -- the old em-dash was a violation).
-  title: 'Marathon Weapon Tier List - Best Weapons Ranked (Live)',
+  title: 'Best Marathon Weapons - Tier List (Live)',
   description: 'Live Marathon weapon tier list - every weapon and Runner Shell ranked by the numbers. See what\'s S-tier, A-tier, and what\'s falling, updated throughout the day.',
   keywords: 'best Marathon weapons, Marathon weapon tier list, Marathon tier list, Marathon weapons ranked, Marathon S-tier weapons, Marathon best guns, Marathon weapon ranking, Marathon meta tier list, Marathon shells tier list, Marathon top weapons, Marathon weapon tier list 2026, what are the best weapons in Marathon',
   openGraph: {
-    title: 'Marathon Weapon Tier List - Best Weapons Ranked (Live) | CyberneticPunks',
+    title: 'Best Marathon Weapons - Tier List (Live) | Cybernetic Punks',
     description: 'Live Marathon weapon tier list - every weapon and shell ranked by the numbers. Updated throughout the day.',
     url: 'https://cyberneticpunks.com/marathon/meta',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Weapon Tier List - Best Weapons Ranked (Live) | CyberneticPunks',
+    title: 'Best Marathon Weapons - Tier List (Live) | Cybernetic Punks',
     description: 'Live Marathon weapon tier list - every weapon and shell ranked by the numbers. Updated throughout the day.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/meta' },
@@ -199,7 +199,7 @@ export default async function MetaPage() {
     // dateModified attached below, only when a real date exists.
     publisher: {
       '@type': 'Organization',
-      name: 'CyberneticPunks',
+      name: 'Cybernetic Punks',
       url:  'https://cyberneticpunks.com',
     },
   };

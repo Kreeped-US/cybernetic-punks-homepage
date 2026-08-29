@@ -15,8 +15,8 @@ import { pubgDednet, dednetArticleSlugsForSection } from '@/lib/games/pubg-dedne
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: { absolute: 'PUBG: DED.NET - Verified Intel Hub | CyberneticPunks' },
-  description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Release date TBA; closed beta incoming. Part of the CyberneticPunks network.',
+  title: { absolute: 'PUBG: DED.NET - Verified Intel Hub | Cybernetic Punks' },
+  description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Release date TBA; closed beta incoming. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/pubg-dednet' },
 };
 

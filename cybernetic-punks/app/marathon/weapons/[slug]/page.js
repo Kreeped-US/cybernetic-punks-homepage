@@ -73,7 +73,7 @@ export async function generateMetadata({ params }) {
   var typeLabel = weapon.weapon_type ? weapon.weapon_type : 'Weapon';
 
   // Title leads with "Marathon [Weapon]" - the literal search pattern.
-  // No '| CyberneticPunks' suffix; the layout title.template appends it.
+  // No '| Cybernetic Punks' suffix; the layout title.template appends it.
   var title = 'Marathon ' + weapon.name + ' - ' + typeLabel + ' Stats, Tier & Builds';
 
   // Description leads with a real spec ("1200 RPM SMG (Aggressive Ammo)")
@@ -97,16 +97,16 @@ export async function generateMetadata({ params }) {
     : 'https://cyberneticpunks.com/og-image.png';
 
   return {
-    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
+    // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars).
     // Keyword-competitive detail route: the entity name and its qualifiers
     // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
     title: { absolute: title },
     description: desc,
     openGraph: {
-      title: title + ' | CyberneticPunks',
+      title: title + ' | Cybernetic Punks',
       description: desc,
       url: 'https://cyberneticpunks.com/marathon/weapons/' + slug,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
       images: [{ url: ogImage, width: 1200, height: 630 }],
     },
@@ -263,7 +263,7 @@ export default async function WeaponDetailPage({ params }) {
     mainEntity: weaponEntity,
     publisher: {
       '@type': 'Organization',
-      name: 'CyberneticPunks',
+      name: 'Cybernetic Punks',
       url: 'https://cyberneticpunks.com',
     },
   };

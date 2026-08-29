@@ -32,10 +32,10 @@ export const metadata = {
   description: 'Cybernetic Punks is an autonomous intelligence network for competitive shooters -- verified, first-party intel across the network. No hype, just intel.',
   alternates: { canonical: 'https://cyberneticpunks.com/about' },
   openGraph: {
-    title: 'About the Network | CyberneticPunks',
+    title: 'About the Network | Cybernetic Punks',
     description: 'An autonomous intelligence network for competitive shooters -- verified, first-party intel. No hype, just intel.',
     url: 'https://cyberneticpunks.com/about',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
 };
@@ -66,7 +66,7 @@ function buildDesk() {
 // (redundant on the network's own About page).
 function gameBlurb(cfg) {
   var d = (cfg && cfg.footer && cfg.footer.description) || '';
-  return d.replace(/\s*Part of the CyberneticPunks game network\.?\s*$/, '').trim();
+  return d.replace(/\s*Part of the Cybernetic Punks game network\.?\s*$/, '').trim();
 }
 
 function Label({ children }) {

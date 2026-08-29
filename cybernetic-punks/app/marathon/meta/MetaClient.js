@@ -226,7 +226,7 @@ function loadImage(src) {
 // Matches the site theme (#0e1014 bg, #1a1d24 cards, #00ff41 accent,
 // Orbitron + Share Tech Mono). "Less is more": dropped scanlines and the
 // multi-line footer. Featured byline (option A): the user's RUNNER TAG is
-// the hero of the header; CyberneticPunks rides along as a quiet watermark
+// the hero of the header; Cybernetic Punks rides along as a quiet watermark
 // (top-left mark + single footer line) so the image still markets the site.
 
 async function generateTierImage(tierItems, runnerTag) {
@@ -790,7 +790,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
   }
 
   function handleShareReddit() {
-    const title = `My Marathon Tier List — Made with CyberneticPunks`;
+    const title = `My Marathon Tier List — Made with Cybernetic Punks`;
     const url = shareUrl || 'https://cyberneticpunks.com/marathon/meta';
     window.open(`https://www.reddit.com/r/Marathon/submit?title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
   }
@@ -901,7 +901,7 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, fontFamily: 'monospace', marginRight: 4 }}>SHARE</span>
           {[
             { label: 'X',       action: () => window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('Marathon meta tier list updated — check what weapons and shells are winning') + '&url=' + encodeURIComponent('https://cyberneticpunks.com/marathon/meta') + '&hashtags=Marathon,MarathonGame', '_blank') },
-            { label: 'REDDIT',  action: () => window.open('https://www.reddit.com/r/Marathon/submit?title=' + encodeURIComponent('CyberneticPunks Marathon Meta Tier List — Updated ' + (lastUpdated ? hoursAgo(lastUpdated) : 'now')) + '&url=' + encodeURIComponent('https://cyberneticpunks.com/marathon/meta'), '_blank') },
+            { label: 'REDDIT',  action: () => window.open('https://www.reddit.com/r/Marathon/submit?title=' + encodeURIComponent('Cybernetic Punks Marathon Meta Tier List — Updated ' + (lastUpdated ? hoursAgo(lastUpdated) : 'now')) + '&url=' + encodeURIComponent('https://cyberneticpunks.com/marathon/meta'), '_blank') },
             { label: 'COPY',    action: () => { navigator.clipboard.writeText('https://cyberneticpunks.com/marathon/meta').catch(() => {}); } },
           ].map(btn => (
             <button key={btn.label} className="meta-share-btn" onClick={btn.action} style={{

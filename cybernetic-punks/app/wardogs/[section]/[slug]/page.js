@@ -59,7 +59,7 @@ export async function generateMetadata({ params }) {
   var section = getGameSection('wardogs', p.section);
   var article = await fetchArticle(p.slug);
   if (!section || !article || wardogsSectionForArticle(article) !== section.slug) {
-    return { title: 'Wardogs — Not Found' };
+    return { title: 'Wardogs - Not Found' };
   }
   var title = article.headline;
   var description = metaDescription(article.body, article.headline);
@@ -69,7 +69,7 @@ export async function generateMetadata({ params }) {
     title: { absolute: title },
     description: description,
     alternates: { canonical: canonical },
-    openGraph: { title: title, description: description, url: canonical, siteName: 'CyberneticPunks', type: 'article' },
+    openGraph: { title: title, description: description, url: canonical, siteName: 'Cybernetic Punks', type: 'article' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: title, description: description },
   };
 }
@@ -99,8 +99,8 @@ export default async function WardogsArticlePage({ params }) {
     '@context': 'https://schema.org', '@type': 'NewsArticle',
     headline: article.headline,
     description: description,
-    author: { '@type': 'Organization', name: article.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/marathon/intel/' + (article.editor || '').toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
+    author: { '@type': 'Organization', name: article.editor + ' — Cybernetic Punks', url: 'https://cyberneticpunks.com/marathon/intel/' + (article.editor || '').toLowerCase() },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
     datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: tags.length ? tags.join(', ') : 'Wardogs, Bulkhead',

@@ -11,8 +11,8 @@ import Footer from '@/components/Footer';
 import { dmz } from '@/lib/games/dmz';
 
 export const metadata = {
-  title: 'DMZ — Extraction Intelligence Hub',
-  description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for the DMZ. Part of the CyberneticPunks game network.',
+  title: 'DMZ - Extraction Intelligence Hub',
+  description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for the DMZ. Part of the Cybernetic Punks game network.',
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
   // SEO exposure is gated on dmz.indexable (NOT dmz.launched -- see lib/games/dmz.js).
   // While indexable is false the /dmz subtree stays OUT of the index (follow stays on

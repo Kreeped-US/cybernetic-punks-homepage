@@ -29,20 +29,20 @@ import Footer from '@/components/Footer';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Guides — Shells, Ranked Prep & Builds',
+  title: { absolute: 'Marathon Guides - Shells, Ranked Prep & Builds' },
   description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips — updated throughout the day by our field-guide AI. Covers all 7 shells, weapons, mods, and map intel.',
   keywords: 'Marathon guides, Marathon guide, Marathon tips, Marathon beginner guide, Marathon shell guide, Marathon ranked guide, Marathon weapon guide, Marathon mod guide, Marathon extraction guide, Marathon strategy, how to play Marathon, Marathon Bungie guide, Marathon Thief guide, Marathon Destroyer guide, Marathon Assassin guide, Marathon Recon guide, Marathon Vandal guide, Marathon Triage guide, Marathon Rook guide',
   openGraph: {
-    title: 'Marathon Guides — Shells, Ranked Prep & Builds | CyberneticPunks',
+    title: 'Marathon Guides - Shells, Ranked Prep & Builds | Cybernetic Punks',
     description: 'Every Marathon guide you need. Shells, ranked, weapons, mods, extraction, and beginner tips. Auto-updated throughout the day.',
     url: 'https://cyberneticpunks.com/marathon/guides',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Guides — Shells, Ranked Prep & Builds | CyberneticPunks',
+    title: 'Marathon Guides - Shells, Ranked Prep & Builds | Cybernetic Punks',
     description: 'Shell breakdowns, ranked prep, extraction strategy, and more. Updated throughout the day.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/guides' },
@@ -374,13 +374,13 @@ export default async function GuidesPage({ searchParams }) {
   var collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Marathon Guides — CyberneticPunks',
+    name: 'Marathon Guides — Cybernetic Punks',
     description: 'Complete Marathon guides for every Runner. Shell ability breakdowns, ranked prep, weapon analysis, extraction strategy, mod guides, and beginner tips.',
     url: 'https://cyberneticpunks.com/marathon/guides',
     inLanguage: 'en-US',
     isPartOf: {
       '@type': 'WebSite',
-      name: 'CyberneticPunks',
+      name: 'Cybernetic Punks',
       url: 'https://cyberneticpunks.com',
     },
     dateModified: lastUpdated,

@@ -179,11 +179,11 @@ export async function generateMetadata({ params }) {
     name = gameMap.name; descSource = gameMap.summary; difficulty = gameMap.difficulty; style = gameMap.style;
   } else {
     var { data: vaultMap } = await supabase.from('maps').select('name, description, is_published').eq('slug', slug).eq('game_slug', 'marathon').maybeSingle();
-    if (!vaultMap || !vaultMap.is_published) return { title: 'Map Not Found | CyberneticPunks' };
+    if (!vaultMap || !vaultMap.is_published) return { title: 'Map Not Found | Cybernetic Punks' };
     name = vaultMap.name; descSource = vaultMap.description;
   }
 
-  if (!name) return { title: 'Map Not Found | CyberneticPunks' };
+  if (!name) return { title: 'Map Not Found | Cybernetic Punks' };
 
   var title = 'Marathon ' + name + ' - Map Guide, Zones & Boss';
   var lead = [];
@@ -195,17 +195,17 @@ export async function generateMetadata({ params }) {
     + 'Zones, boss, events, and what to expect on ' + name + '.').slice(0, 300);
 
   return {
-    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
+    // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars).
     // Keyword-competitive detail route: the entity name and its qualifiers
     // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
     title: { absolute: title },
     description: desc,
     alternates: { canonical: 'https://cyberneticpunks.com/marathon/maps/' + slug },
     openGraph: {
-      title: title + ' | CyberneticPunks',
+      title: title + ' | Cybernetic Punks',
       description: desc,
       url: 'https://cyberneticpunks.com/marathon/maps/' + slug,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
     },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: 'Marathon ' + name + ' - Map Guide', description: desc.slice(0, 180) },
@@ -311,7 +311,7 @@ export default async function MapPage({ params, searchParams }) {
     description: 'Zones, boss, events, and modes for ' + displayName + ' in Marathon.',
     url: 'https://cyberneticpunks.com/marathon/maps/' + slug,
     mainEntity: mapEntity,
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
   };
   if (gameMap && gameMap.updated_at) webPageSchema.dateModified = gameMap.updated_at;
 

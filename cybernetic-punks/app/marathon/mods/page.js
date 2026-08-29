@@ -50,19 +50,19 @@ import {
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Mods — Every Weapon Mod, Effect & Rarity',
+  title: { absolute: 'Marathon Mods - Every Weapon Mod, Effect & Rarity' },
   description: 'Every Marathon weapon mod — chip, magazine, barrel, optic, grip, shield, and generator. Effects, rarity tiers, and credit cost for all 151 mods, straight from the game data.',
   openGraph: {
-    title: 'Marathon Mods — Every Weapon Mod, Effect & Rarity | CyberneticPunks',
+    title: 'Marathon Mods - Every Weapon Mod, Effect & Rarity | Cybernetic Punks',
     description: 'Effects, rarity tiers, and credit cost for every Marathon weapon mod — chip, magazine, barrel, optic, grip, shield, generator.',
     url: 'https://cyberneticpunks.com/marathon/mods',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Mods — Every Weapon Mod, Effect & Rarity',
+    title: 'Marathon Mods - Every Weapon Mod, Effect & Rarity',
     description: 'Effects, rarity tiers, and credit cost for every Marathon weapon mod.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/mods' },

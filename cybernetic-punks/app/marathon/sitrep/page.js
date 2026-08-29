@@ -28,20 +28,20 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   // Manual suffix REMOVED - was double-appended by the root template (90 chars).
-  title: 'Marathon Sitrep — Live Meta Snapshot & Drop-In Brief',
+  title: { absolute: 'Marathon Sitrep - Live Meta Snapshot & Drop-In Brief' },
   description: 'The 2-minute drop-in brief. Live Marathon meta snapshot — S-tier weapons, top shells, meta movers, community pulse, ranked queue status, and what every editor covered this cycle. Refreshed throughout the day.',
   keywords: 'Marathon meta today, Marathon current meta, Marathon meta snapshot, Marathon sitrep, Marathon what to run, Marathon ranked meta, Marathon meta tier list, Marathon daily briefing, Marathon live meta, Marathon top weapons, Marathon top shells',
   openGraph: {
-    title: 'Marathon Sitrep — Live Meta Snapshot | CyberneticPunks',
+    title: 'Marathon Sitrep - Live Meta Snapshot | Cybernetic Punks',
     description: 'Everything you need to know before you drop in. Live meta, top shells, rising weapons, community pulse. Refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/marathon/sitrep',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Sitrep — Live Meta Snapshot',
+    title: 'Marathon Sitrep - Live Meta Snapshot',
     description: 'Everything you need to know before you drop in.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/sitrep' },
@@ -266,7 +266,7 @@ export default async function SitrepPage() {
     description: 'Everything you need to know before you drop in. Live Marathon meta snapshot refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/marathon/sitrep',
     // dateModified attached below, only when a real date exists.
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
   };
 
   // Omit rather than emit `dateModified: null`. An explicit null is an INVALID

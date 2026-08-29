@@ -9,7 +9,7 @@
 //
 // SEO PASS June 1, 2026:
 // - Title now leads with "Marathon [Shell] Guide" (literal search pattern)
-//   and drops the redundant '| CyberneticPunks' suffix — the layout's
+//   and drops the redundant '| Cybernetic Punks' suffix — the layout's
 //   title.template appends it automatically.
 // - Replaced '--' double-hyphen with real em-dash (—) throughout titles
 //   and descriptions. Double-hyphens render as two literal hyphens in
@@ -61,7 +61,7 @@ export async function generateMetadata({ params }) {
   if (!shell) return { title: 'Shell Not Found' };
 
   // Title leads with "Marathon [Shell] Guide" — matches literal search pattern.
-  // No '| CyberneticPunks' suffix here; layout's title.template appends it.
+  // No '| Cybernetic Punks' suffix here; layout's title.template appends it.
   var title = 'Marathon ' + shell.name + ' Guide — Builds, Loadouts, Tier List & Stats';
 
   // Description: lore_tagline if available, otherwise generic. Both use a real
@@ -71,23 +71,23 @@ export async function generateMetadata({ params }) {
     : 'Marathon ' + shell.name + ' guide — stats, abilities, best cores, implants, and tier rankings. Updated throughout the day.';
 
   return {
-    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
+    // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars).
     // Keyword-competitive detail route: the entity name and its qualifiers
     // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
     title: { absolute: title },
     description: desc,
     openGraph: {
-      // OG title keeps '| CyberneticPunks' for social-share recognizability
-      title: title + ' | CyberneticPunks',
+      // OG title keeps '| Cybernetic Punks' for social-share recognizability
+      title: title + ' | Cybernetic Punks',
       description: desc,
       url: 'https://cyberneticpunks.com/marathon/shells/' + slug,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
-      title: 'Marathon ' + shell.name + ' Guide — Builds, Loadouts & Tier List',
+      title: 'Marathon ' + shell.name + ' Guide - Builds, Loadouts & Tier List',
       description: 'Stats, abilities, builds, and tier ranking for the ' + shell.name + ' shell.',
     },
     alternates: { canonical: 'https://cyberneticpunks.com/marathon/shells/' + slug },
@@ -265,7 +265,7 @@ export default async function ShellHubPage({ params }) {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'CyberneticPunks',
+      name: 'Cybernetic Punks',
       url:  'https://cyberneticpunks.com',
     },
   };

@@ -55,7 +55,7 @@ export async function generateMetadata({ params }) {
   // SHORTENED 2026-07-20. The old template interpolated base_weapon AND rarity
   // ("Marathon BR33 Victory Lap - BR33 Volley Rifle Deluxe Unique: Stats, Mods
   // & How to Get It"), which ran 71-89 chars on its own and 89-107 once the
-  // root layout appended " | CyberneticPunks". Against a ~60 char SERP budget
+  // root layout appended " | Cybernetic Punks". Against a ~60 char SERP budget
   // that truncated the back half of every one of the 16 titles. base_weapon and
   // rarity are still in the description and on the page; they do not need to be
   // in the title, and pushing them there cost us the searched term.
@@ -71,17 +71,17 @@ export async function generateMetadata({ params }) {
     + ' Base weapon stats, permanently locked mods, and how to get it.';
 
   return {
-    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars). These
+    // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars). These
     // are the site's best-verified pages and named-item queries convert best;
     // spending 18 of a ~60 char budget on the site name pushes the item name's
     // qualifiers out of the SERP. Same call as /intel/[slug] and /dmz (61c9095).
     title: { absolute: title },
     description: desc,
     openGraph: {
-      title: title + ' | CyberneticPunks',
+      title: title + ' | Cybernetic Punks',
       description: desc,
       url: 'https://cyberneticpunks.com/marathon/uniques/' + slug,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
       images: [{ url: ogImage, width: 1200, height: 630 }],
     },
@@ -161,7 +161,7 @@ export default async function UniqueDetailPage({ params }) {
     name: 'Marathon ' + u.name + ' - Unique Weapon',
     description: 'Base weapon, locked mods, acquisition, and base stats for the ' + u.name + ' unique in Marathon.',
     url: pageUrl, mainEntity: thing,
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
   };
 
   return (

@@ -35,7 +35,7 @@ export const dynamic = 'force-dynamic';
 // same breath (see FAQ_LAUNCH_A). Title 53 chars / description 145 chars (Gate 4:
 // <=60 / <=155).
 export const metadata = {
-  // `absolute` drops the root '%s | CyberneticPunks' suffix: with it this title
+  // `absolute` drops the root '%s | Cybernetic Punks' suffix: with it this title
   // rendered at 75 chars, over the SERP limit. This page exists to compete for
   // "dmz 2 release date" (630/mo), so brand framing earns nothing here.
   // (openGraph/twitter titles below are set explicitly, not templated -- kept in
@@ -51,7 +51,7 @@ export const metadata = {
     title: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
     description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
     url: 'https://cyberneticpunks.com/dmz',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     locale: 'en_US',
     type: 'website',
   },
@@ -274,7 +274,7 @@ export default async function DmzLanding() {
     name: 'DMZ - Extraction Intelligence Hub',
     description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for Call of Duty Modern Warfare 4 DMZ.',
     url: HUB_BASE + '/dmz',
-    isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: HUB_BASE },
+    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: HUB_BASE },
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: dmz.sections.map(function (sec, i) {

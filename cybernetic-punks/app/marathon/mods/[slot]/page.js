@@ -85,7 +85,7 @@ export async function generateMetadata({ params }) {
   var lower = slot.toLowerCase();
 
   // Title leads with "Marathon [Slot] Mods" - the literal search pattern.
-  // No '| CyberneticPunks' suffix; the layout title.template appends it.
+  // No '| Cybernetic Punks' suffix; the layout title.template appends it.
   var title = 'Marathon ' + slot + ' Mods - Every ' + slot + ' Mod, Effect & Rarity';
 
   // Honest description: the real count, and only claims we can back. No
@@ -97,16 +97,16 @@ export async function generateMetadata({ params }) {
   var url = 'https://cyberneticpunks.com/marathon/mods/' + slotToSlug(slot);
 
   return {
-    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
+    // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars).
     // Keyword-competitive detail route: the entity name and its qualifiers
     // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
     title: { absolute: title },
     description: desc,
     openGraph: {
-      title: title + ' | CyberneticPunks',
+      title: title + ' | Cybernetic Punks',
       description: desc,
       url: url,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
       images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
     },
@@ -163,7 +163,7 @@ export default async function ModSlotPage({ params }) {
         return { '@type': 'ListItem', position: i + 1, name: name + ' - Marathon ' + slot + ' Mod' };
       }),
     },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
   };
   // Honest freshness only: omitted entirely when the slot has no real date.
   if (lastModified) collectionSchema.dateModified = lastModified;

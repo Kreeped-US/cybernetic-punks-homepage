@@ -138,7 +138,7 @@ export default function WelcomeClient({ displayName, playerId }) {
             {displayName ? (
               <>Welcome,<br/><span style={{ color: '#00ff41' }}>{displayName}.</span></>
             ) : (
-              <>Welcome to<br/><span style={{ color: '#00ff41' }}>CyberneticPunks.</span></>
+              <>Welcome to<br/><span style={{ color: '#00ff41' }}>Cybernetic Punks.</span></>
             )}
           </h1>
 

@@ -16,19 +16,19 @@ import ShellsHubClient from './ShellsHubClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Shells — Tier List, Stats & Build Guides for All 7 Runners',
+  title: { absolute: 'Marathon Shells - Tier List, Stats & Build Guides' },
   description: 'Marathon shell guides for all 7 Runners — Assassin, Destroyer, Recon, Rook, Thief, Triage, Vandal. Stats, abilities, cores, implants, and tier rankings.',
   openGraph: {
-    title: 'Marathon Shells — Tier List, Stats & Build Guides for All 7 Runners | CyberneticPunks',
+    title: 'Marathon Shells - Tier List, Stats & Build Guides for All 7 Runners | Cybernetic Punks',
     description: 'Stats, abilities, cores, implants, and tier rankings for every Marathon Runner Shell.',
     url: 'https://cyberneticpunks.com/marathon/shells',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Shells — Tier List & Build Guides',
+    title: 'Marathon Shells - Tier List & Build Guides',
     description: 'Stats, abilities, and tier rankings for all 7 Marathon Runner Shells.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/shells' },

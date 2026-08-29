@@ -27,19 +27,19 @@ function nameToSlug(name) {
 const WEAPON_ACCENT = '#ff8800';
 
 export const metadata = {
-  title: 'Marathon Weapons — Stats, Tiers & Loadouts',
+  title: { absolute: 'Marathon Weapons - Stats, Tiers & Loadouts' },
   description: 'Every Marathon weapon — assault rifles, SMGs, snipers, shotguns, LMGs, pistols and more. Damage, fire rate, magazine, range, mod slots, and ranked viability for each.',
   openGraph: {
-    title: 'Marathon Weapons — Stats, Tiers & Loadouts | CyberneticPunks',
+    title: 'Marathon Weapons - Stats, Tiers & Loadouts | Cybernetic Punks',
     description: 'Damage, fire rate, magazine, range, mod slots, and ranked viability for every Marathon weapon.',
     url: 'https://cyberneticpunks.com/marathon/weapons',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Weapons — Stats, Tiers & Loadouts | CyberneticPunks',
+    title: 'Marathon Weapons - Stats, Tiers & Loadouts | Cybernetic Punks',
     description: 'Stats, mod slots, and ranked viability for every Marathon weapon.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/weapons' },

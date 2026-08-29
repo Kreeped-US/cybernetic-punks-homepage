@@ -20,8 +20,8 @@ var EXO = 'var(--font-exo2), system-ui, sans-serif';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: { absolute: 'Wardogs - Early Access Intel Hub | CyberneticPunks' },
-  description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter launching in Steam Early Access on September 10, 2026. Part of the CyberneticPunks network.',
+  title: { absolute: 'Wardogs - Early Access Intel Hub | Cybernetic Punks' },
+  description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter launching in Steam Early Access on September 10, 2026. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/wardogs' },
 };
 
@@ -134,9 +134,9 @@ export default async function WardogsLanding() {
   var hubCollectionLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
     name: 'Wardogs - Early Access Intel Hub',
-    description: 'Confirmed-systems intel for Wardogs on the CyberneticPunks network.',
+    description: 'Confirmed-systems intel for Wardogs on the Cybernetic Punks network.',
     url: HUB_BASE + '/wardogs',
-    isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: HUB_BASE },
+    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: HUB_BASE },
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: wardogs.sections.map(function (sec, i) {

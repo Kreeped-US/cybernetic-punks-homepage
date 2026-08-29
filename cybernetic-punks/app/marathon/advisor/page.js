@@ -34,20 +34,20 @@ import ViewTracker from '@/components/ViewTracker';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Marathon Build Advisor — Loadout Generator & Tier-Ranked Builds',
+  title: { absolute: 'Marathon Build Advisor - Loadout Generator' },
   description: 'Marathon build generator. Pick your shell, playstyle, and rank goal — get a complete loadout with weapons, mods, cores, implants, and a Cradle stat plan in seconds.',
   keywords: 'Marathon build generator, Marathon loadout advisor, best Marathon builds, Marathon shell builds, Marathon build advisor, Marathon mods cores implants, Marathon ranked builds, Marathon shell loadout, Marathon weapon builds, best Marathon loadout, Marathon loadout generator, Marathon Cradle build, Sentinel build Marathon',
   openGraph: {
-    title: 'Marathon Build Advisor — Loadout Generator | CyberneticPunks',
+    title: 'Marathon Build Advisor - Loadout Generator | Cybernetic Punks',
     description: 'Pick your shell, playstyle, and rank goal. Get a complete Marathon loadout in seconds — weapons, mods, cores, implants, and a Cradle stat plan.',
     url: 'https://cyberneticpunks.com/marathon/advisor',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Build Advisor — Loadout Generator',
+    title: 'Marathon Build Advisor - Loadout Generator',
     description: 'Pick your shell, get a complete Marathon loadout in seconds.',
   },
   alternates: {
@@ -111,7 +111,7 @@ const webApplicationSchema = {
   },
   publisher: {
     '@type': 'Organization',
-    name: 'CyberneticPunks',
+    name: 'Cybernetic Punks',
     url:  'https://cyberneticpunks.com',
   },
 };

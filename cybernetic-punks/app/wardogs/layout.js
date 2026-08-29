@@ -12,7 +12,7 @@ import { wardogs } from '@/lib/games/wardogs';
 
 export const metadata = {
   title: 'Wardogs - Early Access Intel',
-  description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the CyberneticPunks game network.',
+  description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the Cybernetic Punks game network.',
   alternates: { canonical: 'https://cyberneticpunks.com/wardogs' },
   // SEO exposure gated on wardogs.indexable (NOT wardogs.launched). indexable is TRUE now
   // (confirmed-systems content landed 2026-08-26), so the whole /wardogs subtree is indexed.

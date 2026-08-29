@@ -10,20 +10,20 @@ export const dynamic = 'force-dynamic';
 
 export var metadata = {
   // Manual suffix REMOVED - was double-appended by the root template (105 chars).
-  title: 'Marathon Content Creators — YouTubers, Streamers & Community Voices',
-  description: 'Discover the best Marathon content creators — YouTubers, Twitch streamers, and community voices covering builds, gameplay, guides, and competitive play. Curated by CyberneticPunks.',
+  title: { absolute: 'Marathon Content Creators - YouTubers & Streamers' },
+  description: 'Discover the best Marathon content creators — YouTubers, Twitch streamers, and community voices covering builds, gameplay, guides, and competitive play. Curated by Cybernetic Punks.',
   keywords: 'Marathon content creators, Marathon YouTubers, Marathon streamers, Marathon Twitch, best Marathon channels, Marathon guides YouTube, Marathon gameplay creators, Marathon community creators',
   openGraph: {
-    title: 'Marathon Content Creators | CyberneticPunks',
+    title: 'Marathon Content Creators | Cybernetic Punks',
     description: 'Discover the best Marathon content creators — YouTubers, streamers, and community voices.',
     url: 'https://cyberneticpunks.com/marathon/creators',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Content Creators | CyberneticPunks',
+    title: 'Marathon Content Creators | Cybernetic Punks',
     description: 'The best Marathon YouTubers, streamers, and community voices — curated directory.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/creators' },
@@ -70,7 +70,7 @@ export default async function CreatorsPage() {
   });
 
   var TIER_ORDER = [
-    { key: 'featured', label: 'FEATURED CREATORS', desc: 'Top Marathon content creators recognized by CyberneticPunks.', color: RED },
+    { key: 'featured', label: 'FEATURED CREATORS', desc: 'Top Marathon content creators recognized by Cybernetic Punks.', color: RED },
     { key: 'rising', label: 'RISING VOICES', desc: 'Up-and-coming creators producing quality Marathon content.', color: ORANGE },
     { key: 'community', label: 'COMMUNITY CONTRIBUTORS', desc: 'Active community members creating guides, discussions, and content.', color: GREEN },
   ];

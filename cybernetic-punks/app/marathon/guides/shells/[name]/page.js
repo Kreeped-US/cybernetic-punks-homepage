@@ -51,7 +51,7 @@ const SHELLS = {
     color: '#cc44ff',
     role: 'Stealth Killer',
     oneLiner: 'High-risk reposition gameplay. Pick a target, eliminate, disappear.',
-    title: 'Marathon Assassin Guide — Stealth Builds, Abilities & Strategy',
+    title: 'Marathon Assassin Guide - Stealth Builds & Abilities',
     description: 'Complete Marathon Assassin shell guide. Active Camo strategy, stealth kill optimization, best weapons, and builds for the high-risk reposition playstyle.',
     keywords: 'Marathon Assassin guide, Marathon Assassin build, Marathon Assassin abilities, Marathon Assassin tips, Marathon stealth shell, Marathon Active Camo, Marathon Assassin loadout, Marathon Assassin strategy',
     intro: 'Assassin is Marathon\'s stealth specialist. Active Camo resets engagements and mobility traits let you disappear before the body hits the ground. The hardest shell to master — the highest ceiling when you do.',
@@ -66,7 +66,7 @@ const SHELLS = {
     color: '#ff3333',
     role: 'Heavy Combat',
     oneLiner: 'Frontline DPS. Tank damage, deal damage, hold ground.',
-    title: 'Marathon Destroyer Guide — Heavy Combat Builds & Strategy',
+    title: 'Marathon Destroyer Guide - Heavy Combat Builds & Strategy',
     description: 'Complete Marathon Destroyer shell guide. Heavy weapon optimization, tank builds, abilities, and strategy for the frontline combat shell.',
     keywords: 'Marathon Destroyer guide, Marathon Destroyer build, Marathon Destroyer abilities, Marathon Destroyer tips, Marathon tank shell, Marathon Destroyer loadout, Marathon Destroyer strategy, Marathon heavy shell',
     intro: 'Destroyer is Marathon\'s heavy frontline shell. Built for sustained fights, it trades mobility for firepower and survivability. If Assassin picks engagements, Destroyer ends them — by standing in the middle and winning the DPS race.',
@@ -81,7 +81,7 @@ const SHELLS = {
     color: '#00d4ff',
     role: 'Information Specialist',
     oneLiner: 'Information-first play. See before they see you.',
-    title: 'Marathon Recon Guide — Scout Builds, Echo Pulse & Squad Strategy',
+    title: 'Marathon Recon Guide - Scout Builds & Squad Strategy',
     description: 'Complete Marathon Recon shell guide. Echo Pulse optimization, scout builds, squad support strategy, and the information-first playstyle.',
     keywords: 'Marathon Recon guide, Marathon Recon build, Marathon Recon abilities, Marathon Recon tips, Marathon scout shell, Marathon Echo Pulse, Marathon Recon loadout, Marathon Recon strategy',
     intro: 'Recon is Marathon\'s information specialist. Echo Pulse scans enemies through walls, passive detection traits reveal threats before they\'re in sight, and squad utility makes it the highest-impact support shell. Knowledge wins fights.',
@@ -96,7 +96,7 @@ const SHELLS = {
     color: '#aaaaaa',
     role: 'Scavenger',
     oneLiner: 'Free loadout. Nothing at risk. Farm and learn.',
-    title: 'Marathon Rook Guide — Free Loadout, Farming & Why It Is Not In Ranked',
+    title: 'Marathon Rook Guide - Free Loadout, Farming & Ranked',
     description: 'Complete Marathon Rook shell guide. Rook is a free-loadout scavenger: drop in with nothing of your own at risk and farm gear, credits, and map knowledge. Highest loot speed in the game. Note: Rook is banned from Ranked.',
     keywords: 'Marathon Rook guide, Marathon Rook build, Marathon Rook abilities, Marathon Rook tips, Marathon free loadout, Marathon farming shell, Marathon Rook loot speed, Marathon Rook strategy',
     intro: 'Rook is Marathon\'s scavenger. It runs a free loadout, so a Rook run risks none of your own gear, and it has by far the highest loot speed in the game. It exists to farm gear, credits, and map knowledge cheaply rather than to contest objectives — which is why it is banned from Ranked.',
@@ -111,7 +111,7 @@ const SHELLS = {
     color: '#ffd700',
     role: 'Extraction Specialist',
     oneLiner: 'In, loot, out. Never be seen. Never be followed.',
-    title: 'Marathon Thief Guide — Extraction Builds, Loot Strategy & Tips',
+    title: 'Marathon Thief Guide - Extraction Builds & Loot Strategy',
     description: 'Complete Marathon Thief shell guide. Pickpocket Drone strategy, Grapple Device optimization, loot routes, and the extraction-first playstyle. Top solo ranked pick.',
     keywords: 'Marathon Thief guide, Marathon Thief build, Marathon Thief abilities, Marathon Thief tips, Marathon extraction shell, Marathon Pickpocket Drone, Marathon Grapple Device, Marathon Thief loadout',
     intro: 'Thief is Marathon\'s extraction specialist. Pickpocket Drone loots enemies passively, Grapple Device escapes contested zones, and mobility traits make you the hardest shell to pin down. Ghost in, ghost out, never fight unless forced to.',
@@ -126,7 +126,7 @@ const SHELLS = {
     color: '#00ff88',
     role: 'Squad Support',
     oneLiner: 'Squad anchor. Keep everyone alive, win through attrition.',
-    title: 'Marathon Triage Guide — Support Builds, Revive Strategy & Squad Tips',
+    title: 'Marathon Triage Guide - Support Builds & Revive Strategy',
     description: 'Complete Marathon Triage shell guide. REBOOT+ revive strategy, MED-DRONE optimization, support builds, and the squad-anchor playstyle.',
     keywords: 'Marathon Triage guide, Marathon Triage build, Marathon Triage abilities, Marathon Triage tips, Marathon support shell, Marathon REBOOT, Marathon MED-DRONE, Marathon Triage loadout, Marathon medic shell',
     intro: 'Triage is Marathon\'s dedicated support shell. REBOOT+ revives teammates in situations that would wipe any other squad, MED-DRONE sustains through extended engagements, and self-repair makes you the hardest support to kill. Squad play\'s best shell.',
@@ -141,7 +141,7 @@ const SHELLS = {
     color: '#ff8800',
     role: 'Movement Specialist',
     oneLiner: 'Movement chains. Force fights at ranges they can\'t handle.',
-    title: 'Marathon Vandal Guide — Movement Builds, Microjet Strategy & Tips',
+    title: 'Marathon Vandal Guide - Movement Builds & Microjet',
     description: 'Complete Marathon Vandal shell guide. Microjet optimization, movement chain tactics, aggressive builds, and the pace-setting playstyle. Top solo ranked pick.',
     keywords: 'Marathon Vandal guide, Marathon Vandal build, Marathon Vandal abilities, Marathon Vandal tips, Marathon movement shell, Marathon Microjets, Marathon Vandal loadout, Marathon Vandal strategy, Marathon aggressive shell',
     intro: 'Vandal is Marathon\'s movement specialist. Microjets force engagements at ranges the enemy isn\'t prepared for, heat capacity lets you chain mobility abilities, and aggression traits reward pace. The build IS the strategy.',
@@ -182,7 +182,7 @@ export async function generateMetadata({ params }) {
   if (!shell) return { title: 'Not Found' };
 
   return {
-    // Was `shell.title + ' | CyberneticPunks'`, which the root layout template
+    // Was `shell.title + ' | Cybernetic Punks'`, which the root layout template
     // then suffixed AGAIN -- these titles rendered with the site name TWICE
     // (100 chars for Assassin). `absolute` both fixes the duplication and frees
     // the budget for the shell name, which is the searched term.
@@ -193,7 +193,7 @@ export async function generateMetadata({ params }) {
       title: shell.title,
       description: shell.description,
       url: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
     },
     twitter: {
@@ -317,10 +317,10 @@ export default async function ShellGuidePage({ params }) {
   description: shell.description,
   url: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name,
   image: shellImg ? 'https://cyberneticpunks.com' + shellImg : 'https://cyberneticpunks.com/og-image.png',
-  author: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+  author: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
   publisher: {
     '@type': 'Organization',
-    name: 'CyberneticPunks',
+    name: 'Cybernetic Punks',
     url: 'https://cyberneticpunks.com',
     logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/og-image.png' }
   },

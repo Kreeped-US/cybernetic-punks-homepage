@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-08-29 - Title A2: systematic <title> length fix + two-word brand (all page types <=60)
+
+Systematic title fix - every page type now renders a <title> <=60 chars, keyword-first, per
+Fable's strategy + the operator principle (titles serve the site and searchable keywords; editors
+OUT of titles; brand is two words). Built on feat/title-a2-serp-lengths, FF-merged to main.
+
+GLOBAL: "CyberneticPunks" -> "Cybernetic Punks" (two words) at the root layout template + all
+metadata (siteName / authors / creator / keywords / openGraph / twitter). Grep-confirmed zero
+one-word remnants.
+
+HOMEPAGE: "Cybernetic Punks - Verified FPS Intelligence" (44).
+
+EDITOR LANES (5): editor NAMES dropped, content-type keywords kept - CIPHER -> "Marathon Play
+Analysis & Runner Grades", NEXUS -> "Marathon Meta Tracking & Strategy Intel", GHOST -> "Marathon
+Community Sentiment & Pulse", DEXTER -> "Marathon Build Analysis & Loadout Grades", MIRANDA ->
+"Marathon Field Guides". All render <=60 with the two-word brand suffix.
+
+META: keeps "Best Marathon Weapons - Tier List (Live)" (59 with brand).
+
+INTEL ARTICLES: unchanged - already headline-only (generateMetadata {absolute: item.headline}),
+verified untouched.
+
+HUB/GUIDE pages: brand-conditional rule - suffix KEPT where base+suffix <=60 (short pages: editors,
+about, dmz/layout, the 5 editor lanes); DROPPED (title switched to {absolute}) where the base is
+keyword-rich enough to overflow (the Marathon hubs: shells, factions, stats, creators, advisor,
+cradle, matchups, intel-feed, and ~13 more) so the full keyword title displays <=60 with no
+truncation. Brand-drop list is principled (long keyword-rich pages, not arbitrary); the domain
+brands the result regardless. Keyword-preserving trims applied where the base itself was >60
+(shells, matchups, advisor, creators, stats, cradle, player-count; 12 guide categories; 4 shell
+guides). Guides double-append: already fixed ({absolute: cat.title}), confirmed.
+
+INVARIANTS: all deliberate keywords preserved; NO title >60 (worst = 59: meta, factions); NO
+keyword cut; editor names gone; no "CNP" in any title; straight hyphens, zero em-dashes in title
+fields. Before/after verified via live SSR + git HEAD-vs-worktree across all page types (home
+67->44, hubs 77-87 -> 42-59, meta 72->59, stats 87->50, shells 85->49). Build green. 65 files,
+symmetric 267/267 (line-for-line swaps, no structural bloat). House-style clean (straight quotes,
+ASCII).
+
+---
 ## 2026-08-28 - SEO Fix 2c: Wardogs Article schema (Article-schema consistency across all 4 games)
 
 Premise confirmed: the Wardogs article route (app/wardogs/[section]/[slug]/page.js) emits a

@@ -20,20 +20,20 @@ import StaffCard from './StaffCard';
 const BG = '#121418';
 
 export const metadata = {
-  title: 'The Newsroom — Meet the Editors',
+  title: 'The Newsroom - Meet the Editors',
   description: 'The Cybernetic Punks newsroom: six role-specialist analysts — Marcus Vane (Cipher), Remi Okafor (Nexus), Felix Andersen (Dexter), Tariq Webb (Ghost), Miranda Malini, and Vera Sloan (Broker) — covering analysis, meta, builds, community, field guides, and economy across the network.',
   keywords: 'Cybernetic Punks editors, the newsroom, Marcus Vane Cipher, Remi Okafor Nexus, Felix Andersen Dexter, Tariq Webb Ghost, Miranda Malini, Vera Sloan Broker, extraction shooter analysts',
   openGraph: {
-    title: 'The Newsroom — Meet the Editors | CyberneticPunks',
+    title: 'The Newsroom - Meet the Editors | Cybernetic Punks',
     description: 'Six role-specialist analysts. One network. We don\'t agree, and we don\'t guess.',
     url: 'https://cyberneticpunks.com/editors',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'The Newsroom — Meet the Editors',
+    title: 'The Newsroom - Meet the Editors',
     description: 'Six role-specialist analysts. One network. We don\'t agree, and we don\'t guess.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/editors' },

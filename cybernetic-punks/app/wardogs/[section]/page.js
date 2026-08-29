@@ -57,7 +57,7 @@ export async function generateMetadata({ params }) {
       title: ogTitle,
       description: desc,
       url: url,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
     },
     twitter: {
@@ -121,9 +121,9 @@ function WardogsSectionSchema({ section, articles }) {
     schemas.push({
       '@context': 'https://schema.org', '@type': 'CollectionPage',
       name: section.label + ' - Wardogs',
-      description: section.description || ('Wardogs ' + section.label + ' on the CyberneticPunks network.'),
+      description: section.description || ('Wardogs ' + section.label + ' on the Cybernetic Punks network.'),
       url: base + '/wardogs/' + section.slug,
-      isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: base },
+      isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: base },
       mainEntity: {
         '@type': 'ItemList',
         itemListElement: articles.map(function (a, i) {

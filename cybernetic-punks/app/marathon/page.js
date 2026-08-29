@@ -13,7 +13,7 @@ import { cycleInfo } from '@/lib/cronCadence';
 // self-canonical to /marathon, and listed in the sitemap. (Pre-cutover this was
 // a noindex staging copy of the homepage.)
 export const metadata = {
-  title: 'Marathon Meta, Builds & Tier List - Updated Daily',
+  title: { absolute: 'Marathon Meta, Builds & Tier List - Updated Daily' },
   description: 'Live Marathon tier list, build advisor, and Cradle build planner. Tier rankings, weapon and shell guides, and Season 2 progression tools - refreshed throughout the day.',
   keywords: 'Marathon, Marathon meta, Marathon tier list, Marathon builds, Marathon loadouts, Marathon ranked, Marathon weapons, Marathon shells, Marathon guides, Marathon build advisor, Marathon cradle, Marathon cradle planner, best Marathon builds, what to run in Marathon, Bungie Marathon, Marathon intelligence',
   alternates: { canonical: 'https://cyberneticpunks.com/marathon' },
@@ -21,7 +21,7 @@ export const metadata = {
     title: 'Marathon Meta, Builds & Tier List - Updated Daily',
     description: 'Live Marathon tier list, build advisor, and Cradle build planner. Refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/marathon',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
@@ -540,7 +540,7 @@ export default async function Home() {
           </span>
         </div>
         <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.1)', letterSpacing: 1, textTransform: 'uppercase' }}>
-          CyberneticPunks.com
+          Cybernetic Punks.com
         </span>
       </div>
 

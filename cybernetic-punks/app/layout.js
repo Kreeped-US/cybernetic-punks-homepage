@@ -15,25 +15,25 @@ export const metadata = {
   // content pages, DMZ, article template), so these defaults only surface on the apex
   // homepage and network/utility pages -- exactly where network copy belongs.
   title: {
-    default: 'CyberneticPunks — Verified Competitive-Shooter Intelligence Network',
-    template: '%s | CyberneticPunks',
+    default: 'Cybernetic Punks - Competitive-Shooter Intelligence',
+    template: '%s | Cybernetic Punks',
   },
   description: 'The verified competitive-shooter intelligence network. First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
-  keywords: ['CyberneticPunks', 'competitive shooter intelligence', 'Marathon', 'DMZ', 'extraction shooter'],
-  authors: [{ name: 'CyberneticPunks' }],
-  creator: 'CyberneticPunks',
+  keywords: ['Cybernetic Punks', 'competitive shooter intelligence', 'Marathon', 'DMZ', 'extraction shooter'],
+  authors: [{ name: 'Cybernetic Punks' }],
+  creator: 'Cybernetic Punks',
   openGraph: {
-    title: 'CyberneticPunks — Verified Competitive-Shooter Intelligence Network',
+    title: 'Cybernetic Punks - Verified Competitive-Shooter Intelligence Network',
     description: 'The verified competitive-shooter intelligence network. First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
     url: 'https://cyberneticpunks.com',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'CyberneticPunks — Verified Competitive-Shooter Intelligence Network',
+    title: 'Cybernetic Punks - Verified Competitive-Shooter Intelligence Network',
     description: 'First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
   },
   robots: {

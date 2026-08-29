@@ -23,20 +23,20 @@ import ViewTracker from '@/components/ViewTracker';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
 
 export var metadata = {
-  title: 'Marathon Ranked Leaderboard - Global Top Players',
+  title: { absolute: 'Marathon Ranked Leaderboard - Global Top Players' },
   description: 'The Marathon game\'s global leaderboard tracks the top ranked players from Bronze to Pinnacle. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie\'s extraction shooter.',
   keywords: 'Marathon leaderboard, Marathon ranked leaderboard, Marathon top players, Marathon rankings, Marathon ranked mode, Marathon best players, Marathon global leaderboard, Marathon Bronze, Marathon Silver, Marathon Gold, Marathon Platinum, Marathon Diamond, Marathon Pinnacle, Marathon ranked stats, how to reach Pinnacle Marathon, Marathon Holotag score, Marathon ranked tiers explained, Marathon competitive rankings, Marathon player stats',
   openGraph: {
-    title: 'Marathon Ranked Leaderboard - Global Top Players | CyberneticPunks',
+    title: 'Marathon Ranked Leaderboard - Global Top Players | Cybernetic Punks',
     description: 'Track the top Marathon players worldwide. Ranked leaderboards from Bronze to Pinnacle.',
     url: 'https://cyberneticpunks.com/marathon/leaderboard',
-    siteName: 'CyberneticPunks',
+    siteName: 'Cybernetic Punks',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Ranked Leaderboard - Global Top Players | CyberneticPunks',
+    title: 'Marathon Ranked Leaderboard - Global Top Players | Cybernetic Punks',
     description: 'Global Marathon rankings. Track top players from Bronze to Pinnacle.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/leaderboard' },
@@ -140,15 +140,15 @@ var FAQS = [
   },
   {
     q: 'Which Runner Shell is best for ranked play?',
-    a: "Top ranked Runners typically lean on Vandal for movement-heavy zone rotations, Destroyer for sustained team fights, and Recon for information-driven extraction setups. The CyberneticPunks meta tier list tracks current ranked viability across all seven shells, with Solo and Squad rankings tracked separately. Rook is currently banned from ranked play.",
+    a: "Top ranked Runners typically lean on Vandal for movement-heavy zone rotations, Destroyer for sustained team fights, and Recon for information-driven extraction setups. The Cybernetic Punks meta tier list tracks current ranked viability across all seven shells, with Solo and Squad rankings tracked separately. Rook is currently banned from ranked play.",
   },
   {
     q: 'When does Marathon ranked return in Season 2?',
     a: "Marathon's ranked queue returns June 14, 2026, during Season 2. Season 2 merges the previous Low Stakes and High Stakes queues into a single 5,000 loadout-value ranked queue, with faster progression and Holotag requirements tied to your current rank. Ranked tiers reset with the new season, requiring placement before official rank assignments resume. See the ranked page for the full Season 2 ranked breakdown.",
   },
   {
-    q: 'How will the CyberneticPunks leaderboard work when the Bungie API ships?',
-    a: "When Bungie releases public ranked stats endpoints (as they did for Destiny 2's API), the CyberneticPunks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard infrastructure is already built and ready - only the data layer is pending Bungie's API release. Players will be able to filter by platform, region, Runner Shell, and time period.",
+    q: 'How will the Cybernetic Punks leaderboard work when the Bungie API ships?',
+    a: "When Bungie releases public ranked stats endpoints (as they did for Destiny 2's API), the Cybernetic Punks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard infrastructure is already built and ready - only the data layer is pending Bungie's API release. Players will be able to filter by platform, region, Runner Shell, and time period.",
   },
 ];
 
@@ -443,7 +443,7 @@ export default function LeaderboardPage() {
             lineHeight: 1.6,
             marginBottom: 20,
           }}>
-            CyberneticPunks will activate the global Marathon leaderboard the moment Bungie opens the ranked API. Join our Discord to get notified instantly.
+            Cybernetic Punks will activate the global Marathon leaderboard the moment Bungie opens the ranked API. Join our Discord to get notified instantly.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
             <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" style={{
@@ -686,7 +686,7 @@ export default function LeaderboardPage() {
           name: 'Marathon Global Leaderboard',
           url: 'https://cyberneticpunks.com/marathon/leaderboard',
           description: 'Track the top ranked Marathon players worldwide. Global leaderboards from Bronze to Pinnacle.',
-          isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+          isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
         }),
       }} />
 

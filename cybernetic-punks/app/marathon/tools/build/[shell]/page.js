@@ -79,7 +79,7 @@ export async function generateMetadata({ params }) {
   const { shell } = await params;
   const row = await fetchCanonical(shell);
   if (!row || !row.is_indexable || !row.build_json) {
-    return { title: 'Build Not Found — Marathon', robots: { index: false } };
+    return { title: 'Build Not Found - Marathon', robots: { index: false } };
   }
   const name = titleCase(shell);
   const b = row.build_json;
@@ -94,8 +94,8 @@ export async function generateMetadata({ params }) {
     title,
     description,
     alternates: { canonical: url },   // bare URL: any ?goal=/?rank= refinement self-canonicalizes here
-    openGraph: { title: name + ' Build — Marathon', description, url, siteName: 'CyberneticPunks', type: 'website' },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: name + ' Build — Marathon', description },
+    openGraph: { title: name + ' Build - Marathon', description, url, siteName: 'Cybernetic Punks', type: 'website' },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: name + ' Build - Marathon', description },
   };
 }
 
@@ -121,7 +121,7 @@ export default async function BuildPage({ params }) {
     '@context': 'https://schema.org', '@type': 'WebPage',
     name: name + ' Build — Marathon Season 2',
     url: BASE + '/marathon/tools/build/' + shell,
-    isPartOf: { '@type': 'WebSite', name: 'CyberneticPunks', url: BASE },
+    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
   };
 
   return (

@@ -76,16 +76,16 @@ export async function generateMetadata({ params }) {
   var url = 'https://cyberneticpunks.com/marathon/matchups/' + shellToSlug(name);
 
   return {
-    // `absolute` drops the root '%s | CyberneticPunks' suffix (18 chars).
+    // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars).
     // Keyword-competitive detail route: the entity name and its qualifiers
     // need the whole ~60 char budget. Same call as /intel/[slug] and /dmz.
     title: { absolute: title },
     description: desc,
     openGraph: {
-      title: title + ' | CyberneticPunks',
+      title: title + ' | Cybernetic Punks',
       description: desc,
       url: url,
-      siteName: 'CyberneticPunks',
+      siteName: 'Cybernetic Punks',
       type: 'website',
       images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
     },

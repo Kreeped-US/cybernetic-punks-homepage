@@ -27,7 +27,7 @@ export async function generateMetadata({ params }) {
     description: desc,
     robots: robots,
     alternates: { canonical: url },
-    openGraph: { title: title + ' | CyberneticPunks', description: desc, url: url, siteName: 'CyberneticPunks', type: 'website' },
+    openGraph: { title: title + ' | Cybernetic Punks', description: desc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: title, description: desc },
   };
 }
