@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - About rebuild PHASE 3 of 3 (final): the prose rewrite
+
+Replaced the three thin prose sections in app/about/page.js with deepened, DURABLE copy. Phase 2's
+reskin + config-driven games + roster desk are all UNTOUCHED -- prose only.
+- THE MISSION: added the AI-content-farm framing ("a wave of AI-generated sites scrapes wikis,
+  mangles the numbers, publishes broken data as fact") + "when a number isn't confirmed, we say so
+  - out loud, on the page."
+- HOW WE WORK: the transparent-stat-model line ("tap any weapon and see the exact numbers and
+  weights... including what we can't measure and won't fake") + primary-source citing +
+  honest-null flagging. The ECONOMY claim was DROPPED (Broker is not live -- honest, does not claim
+  active economy tracking yet).
+- WHO'S BEHIND IT: rewrote the one-liner into the first-person founder voice (Option A) -- lifelong
+  gamer since the Commodore 64, built as the antidote to AI-scraped slop, "I don't put my name on it
+  - I put the receipts on it," with "Kreeped" linking to https://x.com/Kreeped (target=_blank,
+  rel=noopener noreferrer, gold network-accent, underlined).
+- All copy is DURABLE (no time-bombs). H1 + intro kept (no stale game list -- Phase 2 generalized
+  it); metadata stays network-level. Kept the "Explore the network" CTA (navigation, not the
+  replaced prose).
+- VERIFY: browser-confirmed the 3 sections render the new copy in the network theme; the Kreeped
+  link resolves to x.com/Kreeped in a new tab with noopener. Build green; house-style clean
+  (straight hyphens, apostrophes as &apos;, ASCII; 0 em-dash / 0 backtick).
+
+ABOUT REBUILD COMPLETE (3 phases): 0d213ee (theme extract to shared modules) -> 1ce8f80 (reskin +
+config-drive games/desk + EA flag) -> this commit (prose rewrite). /about now wears the network v7
+identity, is config-current for all games, and carries durable deepened copy.
+- FOLLOW-UPS (separate, deferred -- network-page chrome, not About-content): a network-mode Footer
+  (Footer takes a game slug, no network mode) and the Marathon global Nav rendering on /about (an
+  unprefixed route). Both would complete the "network page, not a game page" treatment.
+
+---
+
+
 ## 2026-08-28 - About rebuild PHASE 2 of 3: reskin /about + config-drive the mechanical parts
 
 Reskinned /about to the shared NETWORK v7 identity and config-drove the staleness-prone parts.

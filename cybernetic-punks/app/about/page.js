@@ -123,7 +123,7 @@ export default function AboutPage() {
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>The mission</Label>
           <Body>
-            Competitive shooter communities run on opinions -- hot takes, guesswork, and tier lists nobody can back up. We built the opposite. Every stat we publish is verified against the live game, not scraped from a wiki or guessed by an AI that&apos;s never loaded in. In a genre drowning in noise, we&apos;re the signal: first-party data, checked in-game, updated continuously.
+            Competitive shooter communities run on opinions - hot takes, guesswork, and tier lists nobody can back up. Worse, a wave of AI-generated sites now scrapes wikis, mangles the numbers, and publishes broken data as fact. We built the opposite. Every stat we publish is verified against the live game, not scraped, not guessed, not hallucinated by a model that never loaded in. When a number isn&apos;t confirmed, we say so - out loud, on the page. In a genre drowning in noise, we&apos;re the signal: first-party data, checked in-game, updated continuously.
           </Body>
         </div>
 
@@ -131,7 +131,7 @@ export default function AboutPage() {
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>How we work</Label>
           <Body>
-            Our data is first-party and human-verified -- the moat that general-purpose AI can&apos;t replicate. We track every weapon, shell, build, and economy shift across each game we cover, around the clock. When a stat isn&apos;t confirmed, we say so. When the meta moves, we catch it. The result is intel you can build around, not content written to fill a page.
+            Our data is first-party and human-verified - the moat that scraped, general-purpose AI can&apos;t replicate. We track every weapon, shell, and build across each game we cover, around the clock. Tier lists are ranked by a transparent stat model you can inspect - tap any weapon and see the exact numbers and weights behind its placement, including what we can&apos;t measure and won&apos;t fake. Primary sources are cited; unconfirmed details stay flagged until they&apos;re verified in-game. The result is intel you can build around, not content written to fill a page.
           </Body>
         </div>
 
@@ -186,7 +186,7 @@ export default function AboutPage() {
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px 60px' }}>
           <Label>Who&apos;s behind it</Label>
           <Body>
-            Cybernetic Punks is an independent project, built for players who got tired of guesswork passing for intel.
+            One person builds this. I&apos;ve been gaming since the Commodore 64 - RTS, FPS, MMOs, decades of it - and I got tired of watching AI content farms flood the games I love with fake tier lists and broken scraped data. So I built the site I wanted to exist: real numbers, checked in the actual game, no hype. I don&apos;t put my name on it - I put the receipts on it. If you want to know who&apos;s behind the data, I&apos;m <a href="https://x.com/Kreeped" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped</a>.
           </Body>
           <div style={{ marginTop: 22 }}>
             <Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>Explore the network &rarr;</Link>
