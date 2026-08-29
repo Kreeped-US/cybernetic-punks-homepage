@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-08-28 - SEO Fix 2c: Wardogs Article schema (Article-schema consistency across all 4 games)
+
+Premise confirmed: the Wardogs article route (app/wardogs/[section]/[slug]/page.js) emits a
+NewsArticle schema (lines 98-107) with the SAME gap as intel/pubg -- no publisher.logo, no image;
+its 6 articles are published + render. Applied the matching fix (3 files).
+- publisher.logo -> cnp-512.png (the confirmed-real asset).
+- image = thumbnail || <canonical>/opengraph-image (absolute) -- every Wardogs article now has a
+  valid image (real thumbnail, else its own per-article OG card).
+- Added the Wardogs per-article OG route (app/wardogs/[section]/[slug]/opengraph-image.js, mirrors
+  the pubg one) + OG_COLORS[wardogs] = WARDOGS_AMBER #e0a13a.
+- AMBER CONTRAST FIX (the one real difference from pubg): updated blockTextColor to return BLACK
+  for the BRIGHT accents (Marathon green AND Wardogs amber) and WHITE for the DARK accents
+  (burgundy / forest / blood-red). White-on-amber would be unreadable; black-on-amber is legible.
+- VERIFIED (screenshot): the Wardogs card renders the amber accent, BLACK CNP-block text (legible),
+  a "WARDOGS" text pill, and no publisher logo. Schema emits publisher.logo + an absolute image;
+  the OG route serves 1200x630 at a stable URL (200); build green; house-style clean.
+
+ALL 4 GAMES NOW CONSISTENT: every game is CNP-text-branded (no publisher logo ever), carries a
+publisher.logo, and every article has a valid image in its own accent with correct text contrast --
+Marathon green / DMZ forest / DED.NET blood-red / Wardogs amber. The Article-schema SEO arc
+(Fix 2 publisher.logo -> Fix 2b intel+pubg image + card IP fix -> Fix 2c Wardogs) is complete.
+- SEO TRIAGE REMAINING: title-length-vs-A2 (the +18 " | CyberneticPunks" suffix pushes template-
+  page titles over 60; homepage 67, meta 72); the dormant noindex:true flag on pubg/wardogs
+  articles; and the now-dead lib/og/logo.js + marathon-logo.png (optional deletion).
+
+---
+
+
 ## 2026-08-28 - SEO Fix 2b: Article image fallback via per-article dynamic OG + card IP fix
 
 Completed the Article-schema image gap using the EXISTING dynamic OG system -- ZERO static assets.

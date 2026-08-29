@@ -32,7 +32,7 @@ async function fetchArticle(slug) {
   try {
     var { data } = await supabase
       .from('feed_items')
-      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, game_slug')
+      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, game_slug, thumbnail')
       .eq('slug', slug)
       .eq('game_slug', WARDOGS_GAME_SLUG)
       .eq('is_published', true)
@@ -100,11 +100,15 @@ export default async function WardogsArticlePage({ params }) {
     headline: article.headline,
     description: description,
     author: { '@type': 'Organization', name: article.editor + ' — CyberneticPunks', url: 'https://cyberneticpunks.com/marathon/intel/' + (article.editor || '').toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
+    publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
     datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: tags.length ? tags.join(', ') : 'Wardogs, Bulkhead',
   };
+  // image: an ImageObject (matching intel/pubg). Every article has one -- the real thumbnail when
+  // present, else the article's OWN dynamic OG card (1200x630, Wardogs amber, CNP-text-branded,
+  // IP-safe) at the stable canonical OG URL. canonical is CANONICAL_BASE-absolute.
+  jsonLd.image = { '@type': 'ImageObject', url: article.thumbnail || (canonical + '/opengraph-image') };
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
