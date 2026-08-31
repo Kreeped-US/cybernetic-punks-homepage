@@ -2,7 +2,10 @@
 // "Coming soon" shell for DATA-FED Wardogs sections (currently 'arsenal'). These will
 // later read their OWN entity tables (verified weapon/vehicle/gear data), NOT
 // feed_items -- so there is no query here yet, and NO table is required for this shell.
-// The verified numbers are built in-game post-Early-Access, never guessed pre-launch.
+// The verified numbers in these STRUCTURED tables are built in-game post-Early-Access,
+// never guessed pre-launch. (The looser tier -- attributed playtest intel, flagged
+// unconfirmed -- is allowed only in EDITORIAL articles, e.g. the armory piece, never
+// in this verified-data shell.)
 // Server component, presentational, token-driven. Mirrors app/dmz/DmzComingSoon.js.
 
 import Link from 'next/link';

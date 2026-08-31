@@ -7,10 +7,17 @@
 // docs/wardogs-vertical-study.md + docs/HANDOFF.md).
 //
 // PROVENANCE: Wardogs is BULKHEAD (dev) / Team17 (publisher), Steam Early Access
-// Sep 10 2026. Everything Wardogs beyond name + launch date is unverified planning
-// intel until it can be checked in-game post-EA. This config asserts only the
-// confirmed facts; section copy stays at "here is the system the studio confirmed",
-// never specific numbers.
+// Sep 10 2026. Two tiers of pre-launch honesty:
+//   - CONFIRMED (official Bulkhead/Team17 material) -> stated as fact (e.g. the
+//     37-weapon count, the three named starter rifles, the buy-per-life system).
+//   - ATTRIBUTED (Closed Alpha/Beta playtest captures) -> allowed in EDITORIAL
+//     articles ONLY when explicitly flagged "playtest-captured, unconfirmed, may
+//     change" (e.g. the armory piece's vendor roster + beta prices). This is a
+//     deliberate softening of the earlier "never specific numbers" stance: FLAGGED
+//     attributed intel is permitted; FABRICATED numbers (no source) stay banned.
+// This CONFIG and the STRUCTURED entity data (the arsenal tables) still assert only
+// CONFIRMED facts -- the looser attributed tier lives in flagged editorial prose,
+// never in config or the verified tables.
 
 import { WARDOGS_AMBER } from '../brandColors.js';
 
@@ -107,9 +114,11 @@ export const wardogs = {
   //     publish. contentFilter scopes the read. Zero rows -> empty-state.
   //   source 'data' = its own entity tables at launch; renders a coming-soon shell now,
   //     contentFilter null (no query, no table needed for the shell).
-  // Pre-launch these are studio-confirmed SYSTEMS topics only; every specific number
-  // (the $10,000 start, weapon/vehicle prices, payouts) stays flagged unconfirmed until
-  // verified in-game post-EA. navLabel/hideFromNav behave as in DMZ.
+  // Pre-launch, STRUCTURED section data (the arsenal tables) stays studio-confirmed
+  // only; every specific number in those tables (the $10,000 start, weapon/vehicle
+  // prices, payouts) stays out until verified in-game post-EA. EDITORIAL articles in
+  // these sections MAY carry attributed playtest data when flagged unconfirmed (see
+  // the armory piece). navLabel/hideFromNav behave as in DMZ.
   sections: [
     { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on Wardogs and what Bulkhead has officially detailed so far.' },
     { slug: 'economy',     label: 'Economy',                       source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The cash-economy structure - loadout buys, teamplay payouts, and match-to-match persistence - as the studio confirms it.' },
@@ -137,6 +146,9 @@ export const WARDOGS_ARTICLE_SECTION = {
   'wardogs-map-respawn': 'systems',
   'wardogs-factions': 'field-intel',
   'wardogs-monetization': 'field-intel',
+  // The pre-launch ARMORY piece (persist-wardogs-armory.mjs): the buy-per-life loadout
+  // system + the 37-weapon count sit with the other confirmed systems.
+  'wardogs-armory': 'systems',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).

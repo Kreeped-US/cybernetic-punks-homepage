@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Wardogs pre-launch armory article (confirmed + attributed roster + honest gap)
+
+NEXUS-authored pre-launch Wardogs armory piece, staged as a DRAFT persister. Content is tiered
+strictly by confidence:
+- CONFIRMED (Bulkhead official, stated as fact): 37 weapons at Early Access (Aug 11 devlog,
+  attributed by name in-body), the 3 named starter rifles (A-91/Valkyra, Bushmaster/Lonestar,
+  KH-2002/Manticore), and the buy-per-life armory SYSTEM (no classes; persistent cash; free
+  starters so a wiped account can still fight; FAL/AMR 50/MGL-40 as premium buys; new guns during EA).
+- ATTRIBUTED (Closed Alpha/Beta playtest captures, flagged unconfirmed): the itemized ~35-gun
+  vendor roster (33 named + the flagged Verba MANPADS), grouped by category, names as captured
+  (calibers were NOT in the capture, so omitted, not invented). Prices given as a RANGE only
+  (~$200 sidearm to ~$8,800 AMR 50, unconfirmed beta capture) - no per-gun price stated as fact.
+- THE GAP (honest, no speculation-as-fact): 37 confirmed vs 33-34 named -> two to four unannounced;
+  the .338 Norma / Verba stay labeled community speculation, never presented as the missing guns.
+
+MECHANISM: NEW scripts/persist-wardogs-armory.mjs (mirrors persist-wardogs-news.mjs; kept separate
+so the frozen 6 stay untouched) inserts the row as a DRAFT (is_published=false, noindex=true,
+game_slug=wardogs, editor=NEXUS, source_url=honest-null). Mapped to the systems section in
+lib/games/wardogs.js (WARDOGS_ARTICLE_SECTION). DB insert + publish (persister run, then approve
+route or scripts/publish-drafts.mjs) remain operator-run.
+
+POLICY RECONCILED to two-tier: FLAGGED attributed playtest intel is allowed in EDITORIAL articles;
+FABRICATED numbers stay banned; the CONFIG and STRUCTURED entity data (arsenal tables) stay
+confirmed-only. Updated the comments in lib/games/wardogs.js (PROVENANCE + sections) and
+app/wardogs/WardogsComingSoon.js to match.
+
+Build green, house-style clean (straight hyphens, ASCII, body 5595 chars).
+
+---
 ## 2026-08-31 - QA fixes: homepage game-card badge overlap + /editors mobile grid overflow
 
 Two device-testing fixes.
