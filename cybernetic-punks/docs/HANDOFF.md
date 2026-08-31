@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Wardogs economy article (persister + section mapping; draft, operator-run insert)
+
+NEXUS-authored Wardogs economy deep-dive (companion to the armory), grounded strictly in the
+operator's first-party sources (Steam/Team17 store, Bulkhead "TOP QUESTIONS" 18 Feb 2026, official
+videos, @WARDOGS), honestly tiered.
+
+CONFIRMED DESIGN (as fact): the persistent-wallet loop ($10,000 ONE-TIME seed stated precisely --
+not per-life/per-match; buy-per-life; cash persists match-to-match; death does NOT refill),
+teamplay-pays (actions listed, RATES flagged unpublished), player-defined roles + 6 XP tracks, the
+Hot Zone (double cash + double body-count), the Gold Market (cash->gold at a daily-fluctuating rate,
+permanent cosmetics, survives seasons, season-end auto-convert), death-penalty-as-DESIGN (no
+countdown, opportunity-cost, no refund %), cross-server economy integrity (anti-farm fence).
+
+PLEDGE SCOPE PRECISE (the key honesty edge): the PERMANENT pledges (no battlepass/P2W, never
+monetize cash-gold, never sell camos directly) are SEPARATED from the EA-time-boxed "won't monetize
+during Early Access" (with Bulkhead's own "post-1.0 may need some monetization" caveat) -- NOT
+flattened into "never monetizes". Supporter Edition ($49.99) + stepped box price ($39.99 EA ->
+~$49.99 -> ~$59.99) included. EA-vs-1.0 honest (cash+XP at EA; the fuller metagame + Black Market /
+Vault / Player Skills / Challenge System = designed/planned, NOT shipped).
+
+HARD PIVOT to the unpublished-numbers section: every price/payout/refund-%/gold-rate/beta-carry
+(assume WIPE)/faction-vendor/player-trading (a pre-alpha trailer MENTIONED it) flagged unconfirmed,
+verifiable only at the live Sep 10 economy -- none guessed.
+
+MECHANISM: NEW scripts/persist-wardogs-economy.mjs (mirrors the armory persister; DRY-RUN by
+default, --commit to write, idempotent) inserts the DRAFT (is_published=false, noindex=true,
+game_slug=wardogs, NEXUS, source_url honest-null). Mapped to the economy section in
+lib/games/wardogs.js (WARDOGS_ARTICLE_SECTION). Build green, house-style clean (straight hyphens,
+ASCII, body 6440 chars). DB insert + publish remain operator-run.
+
+---
 ## 2026-08-31 - DMZ launch-shift stale-label sweep (full launch, Oct 23; the negative-countdown fix)
 
 Date-drove DMZ's launch surfaces off isGameLive(dmz)/launchDateLong() (reusing the Wardogs sweep

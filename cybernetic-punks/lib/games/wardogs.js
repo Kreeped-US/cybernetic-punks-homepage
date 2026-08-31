@@ -150,6 +150,9 @@ export const WARDOGS_ARTICLE_SECTION = {
   // The pre-launch ARMORY piece (persist-wardogs-armory.mjs): the buy-per-life loadout
   // system + the 37-weapon count sit with the other confirmed systems.
   'wardogs-armory': 'systems',
+  // The pre-launch ECONOMY deep-dive (persist-wardogs-economy.mjs): the persistent
+  // wallet, Gold Market, and monetization pledges -- the economy section.
+  'wardogs-economy': 'economy',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).
