@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - SEO cleanups: dead OG logo deleted + noindex publish-path root cause fixed
+
+CLEANUP 1: deleted the dead lib/og/logo.js + lib/og/assets/marathon-logo.png (loadMarathonLogo had
+zero importers/callers after the IP fix removed its last consumer). Tidied the 2 stale comments that
+named the file (lib/og/card.js, app/dmz/[section]/[slug]/opengraph-image.js). Build green, zero
+dangling refs.
+
+CLEANUP 3: TRACED the wardogs/pubg noindex staleness to root cause. There is NO code publish path
+for those games: the persisters are drafts-only (is_published=false + noindex=true = correct
+defense-in-depth while unpublished), gate-release/releaseHeld only touches gate_status='held' rows
+(which they are not), and the approve route clears noindex but was not used. The 12 rows were
+published by a MANUAL/bulk SQL is_published=true step (Track-2 owner action) that bypassed approve
+and never cleared noindex -> they shipped stale-noindexed (dormant: the pages index via the layout
+gate regardless, but the row flag was wrong).
+
+FIXES:
+(a) DEFENSE-IN-DEPTH: lib/gsc/releaseHeld.js now also clears noindex=false + noindexed_at=null on
+    release, matching app/api/admin/drafts/approve/route.js -- closes the one AUTOMATED publish path
+    that shared the gap. No live behavior change (held Marathon drafts are noindex=false by default
+    today); all 7 releaseHeld tests pass.
+(b) NEW scripts/publish-drafts.mjs: a safe Track-2 bulk-publish tool. --game <slug> [--slugs a,b,c]
+    [--commit]; DRY-RUN BY DEFAULT (writes nothing without --commit); DRAFTS ONLY (WHERE
+    is_published=false, idempotent, never re-touches a live row); service-key required. It flips
+    is_published=true AND clears noindex=false + noindexed_at=null in one write, so future bulk
+    publishing CANNOT leave noindex stale. Replaces the raw-SQL publish habit that caused this.
+
+GO-FORWARD: publish wardogs/pubg drafts via the approve route OR scripts/publish-drafts.mjs, never
+raw SQL. CLEANUP 2 (the 12 existing stale rows) already run by the operator via the UPDATE.
+
+Build green, house-style clean. Straight quotes/ASCII.
+
+---
 ## 2026-08-31 - Homepage FPS-identity word aligned to "players"
 
 Aligned the homepage FPS identity word to the operator's locked decision ("players", matching the

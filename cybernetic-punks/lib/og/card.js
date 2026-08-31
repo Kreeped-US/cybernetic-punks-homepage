@@ -13,8 +13,8 @@
 // The game-tag pill always renders gameTag as TEXT (e.g. 'MARATHON', 'DMZ', 'DED.NET'). NO
 // publisher game logo is ever rendered -- every card is CNP-text-branded in the game's accent
 // color, IP-safe for an unaffiliated fan site. (A prior marathonLogo prop that rendered the
-// Marathon wordmark inside the Marathon pill was removed in SEO Fix 2b; lib/og/logo.js is now
-// unused.)
+// Marathon wordmark inside the Marathon pill was removed in SEO Fix 2b -- the card is now
+// always CNP-text-branded.)
 export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50 }) {
   return (
     <div

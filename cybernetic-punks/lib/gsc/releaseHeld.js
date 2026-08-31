@@ -99,8 +99,12 @@ export async function releaseHeldDrafts(supabase, opts) {
 
       // CLEAN pass -> ATOMIC release. The WHERE gate_status='held' closes the double-release race:
       // an overlapping run that already released this row leaves 0 rows matched here -> we skip it.
+      // noindex=false + noindexed_at=null on release (matching app/api/admin/drafts/approve/route.js):
+      // a draft carries noindex=true as defense-in-depth while unpublished, so EVERY publish path
+      // must clear it -- otherwise a released article ships stale-noindexed. (Held drafts are
+      // noindex=false by default today, so this is defense-in-depth, not a live behavior change.)
       const { data: updated, error: uErr } = await supabase.from('feed_items')
-        .update({ is_published: true, gate_status: 'released', gate_findings: null })
+        .update({ is_published: true, gate_status: 'released', gate_findings: null, noindex: false, noindexed_at: null })
         .eq('id', row.id).eq('gate_status', 'held')
         .select('id');
       if (uErr) {

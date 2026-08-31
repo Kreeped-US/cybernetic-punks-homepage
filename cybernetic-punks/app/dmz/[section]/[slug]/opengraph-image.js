@@ -2,8 +2,8 @@
 // PER-ARTICLE DMZ OG card. Overrides the generic /dmz card (app/dmz/opengraph-image.js)
 // for /dmz/[section]/[slug] URLs, so a shared DMZ article shows its OWN headline on a
 // DMZ-branded (forest-green) card instead of the generic one. Reuses lib/og/card.js
-// with gameTag='DMZ' -- no marathonLogo is passed, so the DMZ text pill renders (no
-// Marathon logo/neon green). Card code is NOT duplicated; only this route is new.
+// with gameTag='DMZ' -- the DMZ text pill renders (CNP-text-branded, no game logo).
+// Card code is NOT duplicated; only this route is new.
 //
 // Font is the bundled Exo 2 buffer (loadExo2) -- next/og needs the bytes, not a bare
 // import (same gotcha as the other cards). Node runtime for the font read.
