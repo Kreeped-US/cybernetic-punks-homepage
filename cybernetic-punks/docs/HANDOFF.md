@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Shell detail-page title retarget (cannibalization fix P1)
+
+Fixed the systemic shell self-cannibalization the content eval surfaced: all 7 non-Sentinel shells
+ran /marathon/shells/[slug] (detail) AND /marathon/guides/shells/[name] (guide), BOTH titled
+"Marathon [Shell] Guide" -- splitting ranking signal for the same query.
+
+FIX: metadata-only retarget of the DETAIL page (one template edit -> all 8 shells the route serves)
+to DROP "Guide" so the detail page owns the ENTITY query ("marathon [shell]" / "[shell] abilities/
+stats/tier"), while the guide page KEEPS "Guide" (owns "marathon [shell] guide" / how-to / build).
+The two pages are genuinely different (detail = entity/data hub: shell_stats, cores, implants,
+matchups, live articles; guide = hand-written how-to/strategy), so DIFFERENTIATE, not MERGE -- the
+risky redirect path is avoided entirely.
+
+CHANGES (app/marathon/shells/[slug]/page.js, all template-driven):
+- <title>: "Marathon [Shell] Guide - Builds, Loadouts, Tier List & Stats" -> "Marathon [Shell] -
+  Abilities, Stats, Cores & Tier List"
+- Twitter title: aligned to the same entity framing
+- Breadcrumb node: "[Shell] Guide" -> "[Shell]"
+- WebPage schema name: "Marathon [Shell] Guide" -> "Marathon [Shell]"
+
+The GUIDE page is UNCHANGED (git diff empty -- still owns "marathon [shell] guide"). VERIFIED:
+"Guide" gone from all 4 detail metadata targets (grep-confirmed, comments-only remain); titles
+<=60 (A2, 51-56 chars, longest Destroyer 56, absolute title = no site-name suffix); straight
+hyphens (dropped the old em-dash); H1 unchanged (already just "[SHELL]" + role, in ShellDetailClient);
+NO URL/canonical/redirect change; build green.
+
+Next in this cluster (NOT done -- reported, held): reframe the Tier-B "[Shell] Shell Guide" article
+headlines (Rook/Thief/Triage/Vandal/Assassin) that also compete for the guide query; and ADD a
+Sentinel guide page (the one demand-justified build -- Sentinel has no guide yet + the most demand).
+
+---
 ## 2026-08-31 - Demand-check admin view (decision-support, firewall-safe, high-reuse)
 
 Built an admin DEMAND-CHECK view that operationalizes the build/don't-build gate -- systematizing

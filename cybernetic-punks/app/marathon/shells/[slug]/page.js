@@ -8,9 +8,12 @@
 // post-May 25) when added to shell_stats.
 //
 // SEO PASS June 1, 2026:
-// - Title now leads with "Marathon [Shell] Guide" (literal search pattern)
-//   and drops the redundant '| Cybernetic Punks' suffix — the layout's
-//   title.template appends it automatically.
+// - Title led with "Marathon [Shell] Guide" (literal search pattern) and drops
+//   the redundant '| Cybernetic Punks' suffix — the layout's title.template
+//   appends it automatically.
+//   NOTE (2026-08-31): "Guide" was DROPPED from the title/breadcrumb/WebPage-name/
+//   twitter (see generateMetadata) to de-conflict with the how-to guide page. See
+//   the retarget comment there.
 // - Replaced '--' double-hyphen with real em-dash (—) throughout titles
 //   and descriptions. Double-hyphens render as two literal hyphens in
 //   Google search results.
@@ -60,9 +63,13 @@ export async function generateMetadata({ params }) {
   var { data: shell } = await supabase.from('shell_stats').select('name, role, lore_tagline, best_for').eq('name', shellName).single();
   if (!shell) return { title: 'Shell Not Found' };
 
-  // Title leads with "Marathon [Shell] Guide" — matches literal search pattern.
-  // No '| Cybernetic Punks' suffix here; layout's title.template appends it.
-  var title = 'Marathon ' + shell.name + ' Guide — Builds, Loadouts, Tier List & Stats';
+  // RETARGET (2026-08-31): DROP "Guide" so the DETAIL page owns the ENTITY query
+  // ("marathon [shell]" / "[shell] abilities/stats/tier") and no longer competes with the
+  // how-to guide page (/marathon/guides/shells/[name], which KEEPS "Guide"). Detail = entity/
+  // stats, guide = how-to. Metadata only -- no URL, H1, or redirect change. Straight hyphens.
+  // Longest shell (Destroyer) = 56 chars, within the A2 <=60 budget. No '| Cybernetic Punks'
+  // suffix here; the `absolute` title drops the layout template suffix.
+  var title = 'Marathon ' + shell.name + ' - Abilities, Stats, Cores & Tier List';
 
   // Description: lore_tagline if available, otherwise generic. Both use a real
   // em-dash and lead with "Marathon [Shell] guide" — the actual search term.
@@ -87,7 +94,7 @@ export async function generateMetadata({ params }) {
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
-      title: 'Marathon ' + shell.name + ' Guide - Builds, Loadouts & Tier List',
+      title: 'Marathon ' + shell.name + ' - Abilities, Stats, Cores & Tier List',
       description: 'Stats, abilities, builds, and tier ranking for the ' + shell.name + ' shell.',
     },
     alternates: { canonical: 'https://cyberneticpunks.com/marathon/shells/' + slug },
@@ -229,7 +236,7 @@ export default async function ShellHubPage({ params }) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',     item: 'https://cyberneticpunks.com' },
       { '@type': 'ListItem', position: 2, name: 'Shells',   item: 'https://cyberneticpunks.com/marathon/shells' },
-      { '@type': 'ListItem', position: 3, name: shellName + ' Guide', item: 'https://cyberneticpunks.com/marathon/shells/' + slug },
+      { '@type': 'ListItem', position: 3, name: shellName, item: 'https://cyberneticpunks.com/marathon/shells/' + slug },
     ],
   };
 
@@ -254,7 +261,7 @@ export default async function ShellHubPage({ params }) {
   var webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Marathon ' + shellName + ' Guide',
+    name: 'Marathon ' + shellName,
     description: 'Complete guide to the ' + shellName + ' Runner Shell in Marathon — stats, abilities, cores, implants, builds, and tier ranking.',
     url: 'https://cyberneticpunks.com/marathon/shells/' + slug,
     // dateModified attached below, only when a real date exists.
