@@ -76,7 +76,8 @@ export default async function MetaPage() {
         // Widened for the tier model (Option B: recompute on render). The extra raw fields
         // (precision/magazine/spreads/handling/range) are the computeWeaponTiers inputs; the
         // originals stay for the card display. No DB/cron/DDL change -- same pure lib the cron uses.
-        .select('name, weapon_type, ammo_type, damage, fire_rate, precision_multiplier, magazine_size, firepower_score, accuracy_score, hipfire_spread, moving_inaccuracy, crouch_spread_bonus, recoil, ads_speed, weight, equip_speed, reload_speed, aim_assist, range_meters, range_rating, zoom, ranked_viable, image_filename, verified'),
+        .select('name, weapon_type, ammo_type, damage, fire_rate, precision_multiplier, magazine_size, firepower_score, accuracy_score, hipfire_spread, moving_inaccuracy, crouch_spread_bonus, recoil, ads_speed, weight, equip_speed, reload_speed, aim_assist, range_meters, range_rating, zoom, ranked_viable, image_filename, verified')
+        .eq('game_slug', 'marathon'), // scope: weapon_stats is game-shared; the tier model must not pull other games' weapons
       supabase
         .from('shell_stats')
         .select('name, role, base_health, base_shield, prime_ability_name, tactical_ability_name, passive_ability_name, ranked_tier_solo, ranked_tier_squad, ranked_notes, image_filename, verified'),

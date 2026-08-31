@@ -80,10 +80,13 @@ export async function GET() {
         .select('name, role, active_ability_name, ranked_tier_solo, ranked_tier_squad, image_filename')
         .order('name'),
 
-      // Weapon stats -- used by MetaWeaponShowcase
+      // Weapon stats -- used by MetaWeaponShowcase. Marathon-scoped like every other query in this
+      // (Marathon) endpoint (see the article-count query below): weapon_stats is game-shared, so
+      // scope it so other games' weapons never leak into this feed.
       supabase
         .from('weapon_stats')
-        .select('name, weapon_type, damage, fire_rate, range_rating, image_filename'),
+        .select('name, weapon_type, damage, fire_rate, range_rating, image_filename')
+        .eq('game_slug', 'marathon'),
 
       // Article counts today per editor -- used by EditorsStrip
       supabase

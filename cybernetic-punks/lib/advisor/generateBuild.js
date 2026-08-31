@@ -143,6 +143,7 @@ export async function fetchAdvisorContext(shell) {
     supabase
       .from('weapon_stats')
       .select('name, category, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, verified_source, patch_verified, updated_at')
+      .eq('game_slug', 'marathon') // scope: this is the LLM build context -- MUST be Marathon-only so no other game's weapon can be recommended in a Marathon build
       .order('name')
       .limit(60),
     supabase

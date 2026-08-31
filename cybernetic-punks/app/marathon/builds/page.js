@@ -194,6 +194,7 @@ export default async function BuildsPage() {
     supabase
       .from('weapon_stats')
       .select('id, name, weapon_type, ammo_type, rarity, damage, fire_rate, firepower_score, accuracy_score, handling_score, range_rating, magazine_size, ranked_viable, image_filename')
+      .eq('game_slug', 'marathon') // scope: weapon_stats is game-shared; the builds grid is Marathon-only
       .order('firepower_score', { ascending: false, nullsFirst: false }),
     supabase
       .from('shell_stats')
