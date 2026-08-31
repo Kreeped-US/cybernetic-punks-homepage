@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Homepage FPS-identity word aligned to "players"
+
+Aligned the homepage FPS identity word to the operator's locked decision ("players", matching the
+/about sub-headline). The FPS pass (0242d50) had set the homepage to "FPS gamers" BEFORE the
+gamers-vs-players decision landed on "players", leaving the two front-door pages inconsistent.
+Fixed app/page.js: H1 "for FPS gamers." -> "for FPS players."; about-body "network for FPS gamers"
+-> "FPS players"; + the internal keyword-pass comment for consistency.
+
+Grep-confirmed zero "FPS gamers"/"FPS-gamer" sitewide; all identity copy now says "FPS players"
+(/about sub-headline, homepage H1, homepage about-body). Real "gamer" hits left alone (correctly):
+"gamertag" (the actual Bungie/Steam ID term in the meta/stats search inputs), and the
+GameRoutingTile / isGameRelevant code identifiers. Homepage byte-identical except the word swaps;
+build green; live-SSR confirmed. Straight quotes/ASCII.
+
+---
 ## 2026-08-31 - Option C network chrome (/about + /editors) + FPS-players SEO pass
 
 NETWORK CHROME (Option C): /about + /editors now render shared network chrome instead of the

@@ -37,7 +37,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--cnp-body', display: 'swap
 const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--cnp-mono', display: 'swap' });
 
 // -- METADATA -- title/canonical/JSON-LD unchanged. The description was rewritten in the
-// FPS-gamer keyword pass: leads "Verified FPS intelligence" and weaves searched content-types
+// FPS-players keyword pass: leads "Verified FPS intelligence" and weaves searched content-types
 // (tier lists, weapon stats, guides) + game names, dropping the narrower "competitive-shooter"
 // framing. Keeps the differentiator language ("verified", "first-party", "no hype", "checked
 // in-game"); no superlative/comparative reaches the SERP.
@@ -317,7 +317,7 @@ export default async function NetworkRoot() {
           <div className="wrap hero-grid">
             <div>
               <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
-              <h1>The verified intel network for <span className="hl">FPS gamers</span>.</h1>
+              <h1>The verified intel network for <span className="hl">FPS players</span>.</h1>
               <p className="sub">Every stat <b>checked by hand</b>, in-game. No AI slop, no reposted rumors, no hype cycles - just the real numbers, sourced and verified, for Marathon and MW4&apos;s DMZ, plus verified-source intel on Wardogs ahead of Early Access.</p>
               <div className="cta-row">
                 <a href="#join" className="btn btn-gold">Get the intel drops &rarr;</a>
@@ -591,7 +591,7 @@ export default async function NetworkRoot() {
         <section className="about-sec">
           <div className="wrap">
             <div className="sec-eyebrow">What is Cybernetic Punks?</div>
-            <p className="about-body">The verified intelligence network for FPS gamers - Marathon live now, Wardogs intel live ahead of its September 10 Early Access, and Call of Duty&apos;s DMZ landing October 23. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
+            <p className="about-body">The verified intelligence network for FPS players - Marathon live now, Wardogs intel live ahead of its September 10 Early Access, and Call of Duty&apos;s DMZ landing October 23. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
             <Link href="/about" className="about-link">How the network works &rarr;</Link>
           </div>
         </section>
