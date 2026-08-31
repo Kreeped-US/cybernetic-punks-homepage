@@ -266,6 +266,7 @@ export default async function NetworkRoot() {
   var dmzDays = daysUntil(dmz.launch_date);         // Oct 23 launch -- the primary growth launch
   var wardogsEA = eaDateLabel(wardogs.launch_date); // "Sep 10", single-sourced from wardogs.launch_date
   var wardogsLive = isGameLive(wardogs);            // date-driven: flips the tile pill when EA opens
+  var dmzLive = isGameLive(dmz);                     // date-driven: flips the DMZ tile pill when it launches (Oct 23, full launch)
   var gameMeta = {};
   ROOT_GAMES.forEach(function(g) {
     var p = data.pulse[g.slug];
@@ -399,7 +400,7 @@ export default async function NetworkRoot() {
               </Link>
               <Link href="/dmz" className="game dmz" style={{ '--img': "url('/images/games/dmz-hero.jpg')" }}>
                 <div className="art" aria-hidden="true" /><div className="scrim" aria-hidden="true" />
-                <div className="status dmz-pill"><i aria-hidden="true" />Launches with DMZ</div>
+                <div className="status dmz-pill"><i aria-hidden="true" />{dmzLive ? <>LIVE NOW</> : <>Launches with DMZ</>}</div>
                 <div className="meta">Call of Duty: MW4 extraction &middot; Hajin Exclusion Zone &middot; pre-launch intel building</div>
                 <div className="go">Get day-one coverage &rarr;</div>
               </Link>

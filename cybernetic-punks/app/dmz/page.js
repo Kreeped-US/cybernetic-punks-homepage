@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { dmz, dmzArticleSlugsForSection } from '@/lib/games/dmz';
+import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
@@ -249,10 +250,13 @@ function FactionsCard({ code }) {
 export default async function DmzLanding() {
   var [published, dCount] = await Promise.all([publishedDmzSlugs(), discourseCount()]);
 
-  // Countdown to launch -- computed SERVER-SIDE. The page is force-dynamic, so this
-  // evaluates per request and the day number lands in the initial HTML (crawlable,
-  // renders with JS disabled). No client tick -- the SSR day count is the truth.
-  var daysToLaunch = Math.ceil((Date.UTC(2026, 9, 23) - Date.now()) / 86400000);
+  // Countdown to launch -- computed SERVER-SIDE (force-dynamic, per request, in the
+  // initial HTML). Date-DRIVEN off dmz.launch_date (not a hardcoded Date.UTC literal),
+  // CLAMPED with Math.max(0, ...) so it can NEVER go negative after launch, and paired
+  // with isGameLive(dmz) so the whole hero flips to LIVE once Oct 23 passes.
+  var dmzLive = isGameLive(dmz);
+  var daysToLaunch = Math.max(0, Math.ceil((new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now()) / 86400000));
+  var launchLong = launchDateLong(dmz.launch_date) || '23 Oct 2026'; // single-sourced launch date string
   var briefingCount = published.size; // published DMZ articles = live briefings
 
   // Source-independent structured data for the hub. BreadcrumbList: Network -> DMZ
@@ -360,7 +364,7 @@ export default async function DmzLanding() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
           <h1 style={{ fontFamily: EXO, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>MW4 DMZ</h1>
-          <Pill text="Pre-launch" tone="muted" />
+          {dmzLive ? <Pill text="Live Now" tone="live" /> : <Pill text="Pre-launch" tone="muted" />}
         </div>
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 600, lineHeight: 1.6 }}>
           {dmz.tagline}. Confirmed coverage of Modern Warfare 4&apos;s extraction mode &mdash; setting, systems, and field intel &mdash; with structured tools landing as the zone goes live.
@@ -379,20 +383,30 @@ export default async function DmzLanding() {
             <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--accent)', textTransform: 'uppercase' }}>Operation Hajin</span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Countdown Active</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{dmzLive ? 'Live Now' : 'Countdown Active'}</span>
             </span>
           </div>
           {/* T-minus + meta */}
           <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ flexShrink: 0 }}>
-              <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToLaunch}</span>
-                <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
+            {dmzLive ? (
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>Status</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 44, fontWeight: 900, lineHeight: 1, color: 'var(--green)', letterSpacing: 1 }}>LIVE</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>In DMZ</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToLaunch}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
+                </div>
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 210 }}>
-              {[['Drop Date', '23 OCT 2026'], ['Zone', 'Hajin Exclusion'], ['Mode', 'Extraction']].map(function (r) {
+              {[['Drop Date', launchLong.toUpperCase()], ['Zone', 'Hajin Exclusion'], ['Mode', 'Extraction']].map(function (r) {
                 return (
                   <div key={r[0]} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                     <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>{r[0]}</span>
@@ -410,8 +424,8 @@ export default async function DmzLanding() {
           </div>
           {/* Launch-date callout -- COPY PRESERVED VERBATIM, re-parented into the clock. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>DMZ launches October 23, 2026</span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>&mdash; the hub is already standing by.</span>
+            <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>{dmzLive ? 'DMZ is live now' : 'DMZ launches October 23, 2026'}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{dmzLive ? '- the hub is live.' : <>&mdash; the hub is already standing by.</>}</span>
           </div>
           {/* Notify on Deployment -- the payoff. REUSES the existing DmzNotifyBlock (not rebuilt). */}
           <div style={{ marginTop: 18 }}>

@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - DMZ launch-shift stale-label sweep (full launch, Oct 23; the negative-countdown fix)
+
+Date-drove DMZ's launch surfaces off isGameLive(dmz)/launchDateLong() (reusing the Wardogs sweep
+mechanism) so they auto-flip when Oct 23 passes. DMZ is a FULL launch (no earlyAccess) -> LIVE
+wording is "Live Now" / "In DMZ", NOT "Early Access".
+
+THE KEY FIX: the DMZ hero countdown used a hardcoded Date.UTC(2026,9,23) literal with NO clamp ->
+it went NEGATIVE after Oct 23 (visibly broken on a live game). Fixed: derived from dmz.launch_date
++ Math.max(0, ...) clamp + a LIVE branch. Unit-test proven: countdown is POSITIVE before (T-53) and
+clamps to 0 (NEVER negative) after; isGameLive flips on the date.
+
+SURFACES SWEPT (SSR-verified at both dates): the countdown; hero pill (Pre-launch -> Live Now);
+"Countdown Active" -> "Live Now"; T-Minus block -> Status/LIVE/In DMZ (no dead "0 Days"); Drop Date
+(now derived from launch_date); launch line -> "DMZ is live now - the hub is live"; homepage DMZ
+tile pill (Launches with DMZ -> LIVE NOW, gated on dmzLive like the adjacent Wardogs tile); DmzShare
+CTA -> "DMZ is live now." (via a `live` prop from the server article page -- DmzShare is a client
+component, so no game-config import into the client bundle). Post-launch simulation: all flip to
+LIVE, NO negative countdown anywhere, reverted cleanly (dmz.js not in the diff).
+
+TWO DELIBERATE NON-CHANGES: (1) the tool-activation badges ("Live at launch" / "Activates at
+launch" / "Tools go live with the zone" / "Deploying with the zone" / "Launches with the zone")
+LEFT as-is -- they are DATA/feature-gated, NOT date-gated (those tools go live when built +
+populated + verified in-game, not on the calendar; date-driving them to "Live" on Oct 23 would
+falsely claim empty/unbuilt tools are live -- the exact faked-status the guard forbids; the entity
+hubs already self-gate via the row-count -> noindex rule). (2) the metadata "MW4 DMZ Release Date:
+October 23, 2026" title LEFT (a valid factual/SEO page even post-launch).
+
+GUARDS: drove off the DATE, not the dead `launched` flag; no faked player count; Marathon / Wardogs
+/ PUBG byte-identical (only the DMZ tile pill + DMZ files changed); the 3 already-correct auto-flips
+(/about pill, homepage #join countdown, footer peer) untouched. Build green.
+
+---
 ## 2026-08-31 - Phase D: per-game cron plumbing (infrastructure only, NO game enabled)
 
 Made the content cron capable of per-game production WITHOUT enabling any non-Marathon game.

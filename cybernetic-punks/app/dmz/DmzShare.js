@@ -58,7 +58,7 @@ var pillBase = {
   borderRadius: 4, cursor: 'pointer', textDecoration: 'none', fontFamily: 'inherit',
 };
 
-export default function DmzShare({ url, title, mode }) {
+export default function DmzShare({ url, title, mode, live }) {
   var [copied, setCopied] = useState(false);
 
   function copy() {
@@ -80,7 +80,7 @@ export default function DmzShare({ url, title, mode }) {
         borderTop: '2px solid var(--green)',
       }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4, fontFamily: 'var(--font-exo2), system-ui, sans-serif' }}>
-          DMZ launches Oct 23, 2026.
+          {live ? 'DMZ is live now.' : 'DMZ launches Oct 23, 2026.'}
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
           Found this useful? Share it.

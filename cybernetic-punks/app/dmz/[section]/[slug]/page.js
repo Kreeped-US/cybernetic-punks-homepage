@@ -29,7 +29,8 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
-import { DMZ_ARTICLE_SEO, dmzSectionForArticle } from '@/lib/games/dmz';
+import { DMZ_ARTICLE_SEO, dmzSectionForArticle, dmz } from '@/lib/games/dmz';
+import { isGameLive } from '@/lib/network/gameStatus';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
@@ -467,7 +468,7 @@ export default async function DmzArticlePage({ params }) {
       )}
 
       {/* 9. Bottom share CTA */}
-      <DmzShare url={canonical} title={article.headline} mode="cta" />
+      <DmzShare url={canonical} title={article.headline} mode="cta" live={isGameLive(dmz)} />
 
       {/* Back link */}
       <div style={{ marginTop: 28 }}>
