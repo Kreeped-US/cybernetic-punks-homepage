@@ -60,7 +60,7 @@ export default function EditorsPage() {
       <NewsroomMasthead />
 
       <section style={{ padding: '24px 24px 72px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))', gap: 14 }}>
           {editors.map(function(e) {
             return <StaffCard key={e.key} editor={e} />;
           })}

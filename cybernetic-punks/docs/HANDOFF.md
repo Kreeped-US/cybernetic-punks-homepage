@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - QA fixes: homepage game-card badge overlap + /editors mobile grid overflow
+
+Two device-testing fixes.
+
+(1) HOMEPAGE badge overlap: CSS specificity collision in lib/network/networkTheme.js. Line 120
+.game>*:not(.art):not(.scrim) (spec 0,4,0 -- each :not() arg adds a class) out-specified
+.game .status{position:absolute} (0,3,0), so .status computed position:relative and its top:24px
+became a relative offset that shoved the badge 24px DOWN into the description. Pre-existing since
+the v7 port; surfaced as descriptions grew (dynamic player counts). FIX: exclude .status from
+line 120 -> :not(.art):not(.scrim):not(.status). One token; .status now renders position:absolute
+(pinned top-left over the art) via its own rule, .meta/.go keep their z-index. Verified in-browser
+all 4 cards clear at desktop 1280 (badge bottom 58px, meta top 194px) and mobile 375, no overlap,
+no horizontal scroll.
+
+(2) /EDITORS mobile overflow: the staff-card grid was minmax(440px, 1fr) -- the 440px column MIN
+cannot shrink below 440, so on a 375px phone each card rendered 440px and overflowed ~89px (right
+edge 464 > 375). NOT the images (portraits are 72x72; the masthead h1 is clamp()) -- purely the
+grid min. Pre-existing (the 440px predates the (network) move, git-confirmed at 0242d50~1), but
+the move EXPOSED it: the .cnp-root shell added overflow-x:hidden, changing the symptom from
+horizontal-scroll (before) to cut-off (after) -- why it read as new on-device. FIX:
+minmax(min(440px, 100%), 1fr) -- keeps the 440px min when there is room (multi-column desktop),
+collapses to 100% of the container on narrow screens so the card shrinks to fit. No media query
+needed (the editors page uses inline styles). Verified at 375px: grid column 327px, card 327px,
+right edge 351 < 375, no overflow, no scroll.
+
+Build green, house-style clean. Straight quotes/ASCII.
+
+---
 ## 2026-08-31 - SEO cleanups: dead OG logo deleted + noindex publish-path root cause fixed
 
 CLEANUP 1: deleted the dead lib/og/logo.js + lib/og/assets/marathon-logo.png (loadMarathonLogo had

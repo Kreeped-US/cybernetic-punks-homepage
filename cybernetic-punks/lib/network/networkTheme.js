@@ -117,7 +117,7 @@ export const CNP_CSS = `
    stay legible over amber. Darkens the lower half; top stays clear. */
 .cnp-root .game .scrim.scrim-strong{background:linear-gradient(180deg,rgba(13,10,11,.22) 0%,rgba(13,10,11,.12) 38%,rgba(13,10,11,.74) 72%,rgba(13,10,11,.98) 100%)}
 .cnp-root .game:hover{transform:translateY(-4px);border-color:var(--burg-bright)}
-.cnp-root .game>*:not(.art):not(.scrim){position:relative;z-index:2}
+.cnp-root .game>*:not(.art):not(.scrim):not(.status){position:relative;z-index:2}
 .cnp-root .game .status{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;position:absolute;top:24px;left:28px;z-index:2;display:inline-flex;align-items:center;gap:8px;background:rgba(13,10,11,.72);backdrop-filter:blur(6px);padding:7px 12px;border-radius:100px;border:1px solid var(--line);color:#c8ff2f}
 .cnp-root .game .status.dmz-pill{color:var(--gold)}
 .cnp-root .game .status.wardogs-pill{color:var(--gold)}
