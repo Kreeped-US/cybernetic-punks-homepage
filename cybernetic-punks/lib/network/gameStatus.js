@@ -52,3 +52,24 @@ export function networkGameStatus(cfg) {
   if (!dl) return { text: 'PRE-LAUNCH', live: false };
   return { text: (cfg.earlyAccess ? 'EARLY ACCESS ' : 'ARRIVES ') + dl.toUpperCase(), live: false };
 }
+
+// The SINGLE pre-launch -> live signal. True once status is 'live' OR the launch date
+// has passed (the clock, never negative). Every launch-shift surface (homepage tile
+// pill, the /wardogs hero pill + countdown, the cross-game footer peer label) drives
+// off THIS one check so they flip together on the date and cannot drift.
+// NOTE: config's `launched` boolean is a DEAD field (never read); this uses the DATE,
+// not that flag. A game with no launch_date is never "live" by this signal.
+export function isGameLive(cfg) {
+  if (!cfg) return false;
+  if (cfg.status === 'live') return true;
+  return daysUntil(cfg.launch_date) === 0;
+}
+
+// "10 Sep 2026" (day MON year) from an ISO date -- for surfaces that print the launch
+// date literally, so it single-sources from launch_date instead of a hardcoded string.
+export function launchDateLong(iso) {
+  if (!iso) return null;
+  var d = new Date(iso + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return null;
+  return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+}

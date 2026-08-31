@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { wardogs, wardogsArticleSlugsForSection } from '@/lib/games/wardogs';
+import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -121,6 +122,8 @@ function SoonCard({ section, code }) {
 export default async function WardogsLanding() {
   var published = await publishedWardogsSlugs();
   var daysToEA = daysToEarlyAccess();
+  var eaLive = isGameLive(wardogs); // date-driven: flips hero pill/countdown to LIVE once EA opens
+  var launchLong = launchDateLong(wardogs.launch_date) || '10 Sep 2026'; // single-sourced from launch_date
   var briefingCount = published.size;
 
   var HUB_BASE = 'https://cyberneticpunks.com';
@@ -177,7 +180,7 @@ export default async function WardogsLanding() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
           <h1 style={{ fontFamily: EXO, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>Wardogs</h1>
-          <Pill text="Pre-launch" tone="muted" />
+          {eaLive ? <Pill text="In Early Access" tone="live" /> : <Pill text="Pre-launch" tone="muted" />}
         </div>
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 600, lineHeight: 1.6 }}>
           {wardogs.tagline}. Confirmed-systems coverage of the BULKHEAD / Team17 combined-arms shooter - the three-team Control Zone, the cash economy, and combined arms - with verified data landing as Early Access opens.
@@ -193,11 +196,19 @@ export default async function WardogsLanding() {
             <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--accent)', textTransform: 'uppercase' }}>Early Access</span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Countdown Active</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{eaLive ? 'Live Now' : 'Countdown Active'}</span>
             </span>
           </div>
           <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', alignItems: 'center' }}>
-            {daysToEA != null && (
+            {eaLive ? (
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>Status</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 44, fontWeight: 900, lineHeight: 1, color: 'var(--green)', letterSpacing: 1 }}>LIVE</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>In Early Access</span>
+                </div>
+              </div>
+            ) : (daysToEA != null && (
               <div style={{ flexShrink: 0 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
@@ -205,9 +216,9 @@ export default async function WardogsLanding() {
                   <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
                 </div>
               </div>
-            )}
+            ))}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 210 }}>
-              {[['Launch', '10 SEP 2026'], ['Platform', 'Steam (PC)'], ['Access', 'Early Access']].map(function (r) {
+              {[['Launch', launchLong.toUpperCase()], ['Platform', 'Steam (PC)'], ['Access', 'Early Access']].map(function (r) {
                 return (
                   <div key={r[0]} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                     <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>{r[0]}</span>
@@ -226,8 +237,8 @@ export default async function WardogsLanding() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>Wardogs opens in Early Access September 10, 2026</span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>- the hub is standing by.</span>
+            <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>{eaLive ? 'Wardogs is in Early Access now' : 'Wardogs opens in Early Access September 10, 2026'}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{eaLive ? '- the hub is live.' : '- the hub is standing by.'}</span>
           </div>
         </div>
       </div>

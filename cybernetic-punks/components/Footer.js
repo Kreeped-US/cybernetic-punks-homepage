@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { getAllEditors } from '@/lib/editors/roster';
 import { getGameConfig } from '@/lib/games';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { isGameLive } from '@/lib/network/gameStatus';
 
 // Updated April 27, 2026:
 // - Colors aligned to design system (#0e1014 footer / #ff2222 / #00d4ff)
@@ -66,13 +67,19 @@ export default function Footer({ game = 'marathon' }) {
   // Phase 2 legal/description marker-free. Marathon's derived peers reproduce its former hardcoded
   // strings verbatim (Part A was authored to match), so Marathon stays byte-identical.
   var peers = ROOT_GAMES.filter(function (g) { return g.slug !== game; }).map(function (g) {
-    var pf = getGameConfig(g.slug).footer;
+    var pcfg = getGameConfig(g.slug);
+    var pf = pcfg.footer;
     var up = String(g.label || '').toUpperCase();
+    // Lifecycle is DATE-DRIVEN: once a peer's launch date passes, its static pre-launch
+    // token (e.g. Wardogs' 'EA SEP 10') flips to a live label so it cannot go stale --
+    // EA games read 'IN EA', full launches read 'LIVE'. isGameLive uses the clock, not
+    // the dead `launched` flag. Byte-identical today (no peer is live yet).
+    var lifecycle = isGameLive(pcfg) ? (pcfg.earlyAccess ? 'IN EA' : 'LIVE') : pf.peerLifecycle;
     return {
       slug: g.slug,
       route: g.route,
       accent: g.theme && g.theme.primary,
-      text: up + ' · ' + pf.peerLabel + ' (' + pf.peerLifecycle + ') →',
+      text: up + ' · ' + pf.peerLabel + ' (' + lifecycle + ') →',
     };
   });
 

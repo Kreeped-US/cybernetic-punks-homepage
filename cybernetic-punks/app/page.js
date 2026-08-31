@@ -17,6 +17,7 @@ import { CNP_CSS } from '@/lib/network/networkTheme';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { isGameLive } from '@/lib/network/gameStatus';
 import { getIndexableGames } from '@/lib/games';
 import { discourseHref } from '@/lib/discourse';
 import { entitySlugFor } from '@/lib/coverage';
@@ -264,6 +265,7 @@ export default async function NetworkRoot() {
   var wardogsDays = daysUntil(wardogs.launch_date); // Sep 10 EA -- the nearer event
   var dmzDays = daysUntil(dmz.launch_date);         // Oct 23 launch -- the primary growth launch
   var wardogsEA = eaDateLabel(wardogs.launch_date); // "Sep 10", single-sourced from wardogs.launch_date
+  var wardogsLive = isGameLive(wardogs);            // date-driven: flips the tile pill when EA opens
   var gameMeta = {};
   ROOT_GAMES.forEach(function(g) {
     var p = data.pulse[g.slug];
@@ -407,7 +409,7 @@ export default async function NetworkRoot() {
                   launched. Clickable Link mirroring the Marathon/DMZ tile structure. */}
               <Link href="/wardogs" className="game wardogs" style={{ '--img': "url('/images/games/wardogs-hero.jpg')" }}>
                 <div className="art" aria-hidden="true" /><div className="scrim scrim-strong" aria-hidden="true" />
-                <div className="status wardogs-pill"><i aria-hidden="true" />INTEL LIVE &middot; EA {wardogsEA || 'soon'}</div>
+                <div className="status wardogs-pill"><i aria-hidden="true" />{wardogsLive ? <>EARLY ACCESS &middot; LIVE</> : <>INTEL LIVE &middot; EA {wardogsEA || 'soon'}</>}</div>
                 <div className="meta">{wardogs.displayName} &middot; Steam Early Access</div>
                 <div className="go">Get the confirmed intel &rarr;</div>
               </Link>

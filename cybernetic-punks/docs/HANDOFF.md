@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Wardogs launch-shift stale-label sweep (P1): 7 surfaces now date-driven
+
+Made all 7 hardcoded/ungated Wardogs launch-shift surfaces DATE-DRIVEN so the site auto-flips to
+LIVE when the Sep 10 EA date passes - no manual flip, no dead-flag reliance, no faked stats.
+
+MECHANISM: one shared isGameLive(cfg) helper in lib/network/gameStatus.js (promoted there per the
+file's "third consumer" note) returns true once launch_date passes (the CLOCK, never the dead
+`launched` field). Every surface drives off it so they flip together and cannot drift. Added
+launchDateLong() so the printed launch date single-sources from config.
+
+SURFACES FIXED (old -> post-Sep-10):
+- Homepage tile pill (app/page.js): "INTEL LIVE - EA SEP 10" -> "EARLY ACCESS - LIVE".
+- /wardogs hero pill (app/wardogs/page.js): "Pre-launch" -> "In Early Access".
+- /wardogs "Countdown Active" -> "Live Now".
+- /wardogs T-Minus counter -> LIVE branch (Status / LIVE / In Early Access; no dead "0 Days").
+- /wardogs launch-date row -> derived from launch_date (was hardcoded "10 SEP 2026").
+- /wardogs opens-line: "opens...standing by" -> "is in Early Access now...the hub is live".
+- Footer cross-game peer (components/Footer.js): "BULKHEAD (EA SEP 10)" -> "(IN EA)".
+
+BOUNDARY PROVEN: unit test (today=false, yesterday-launch=true, tomorrow=false, launch-day=true,
+status:live=true, no-date=false) + live-SSR simulation (temp-flipped launch_date to a past date,
+verified all 7 surfaces render LIVE, reverted cleanly - diff confirms only the peerLifecycle
+comment changed, launch_date back to 2026-09-10).
+
+GUARDS: drove off the DATE, not the dead `launched` flag; NO fake player count (pulse
+mode:pre-launch / no onlineSource left untouched - that is P3); Marathon footer BYTE-IDENTICAL
+today (isGameLive false for all peers pre-Sep-10, so the peer label is unchanged now, the flip
+inert until the date). The 2 already-correct auto-flips (/about pill, homepage #join countdown)
+still work. Build green, house-style clean.
+
+---
 ## 2026-08-31 - Wardogs pre-launch armory article (confirmed + attributed roster + honest gap)
 
 NEXUS-authored pre-launch Wardogs armory piece, staged as a DRAFT persister. Content is tiered

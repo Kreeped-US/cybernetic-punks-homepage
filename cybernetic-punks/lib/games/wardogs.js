@@ -64,10 +64,11 @@ export const wardogs = {
   footer: {
     description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the CyberneticPunks game network.',
     // Phase 3 (inert until Footer.js reads them). See marathon.js footer for the full note.
-    // peerLabel/peerLifecycle reproduce Wardogs' CURRENT sublabel in the Marathon footer
-    // ("WARDOGS · BULKHEAD (EA SEP 10)"). peerLifecycle 'EA SEP 10' duplicates launch_date's date
-    // (2026-09-10) as literal text -- it could be derived via the eaDateLabel helper in app/page.js
-    // if that were extracted to a shared lib (flagged for a later cleanup). Middot matches the UI.
+    // peerLabel/peerLifecycle reproduce Wardogs' sublabel in the Marathon footer
+    // ("WARDOGS · BULKHEAD (EA SEP 10)"). peerLifecycle 'EA SEP 10' is the PRE-LAUNCH
+    // token only: Footer.js now DATE-DRIVES the live flip via isGameLive() -- once
+    // launch_date (2026-09-10) passes, the footer renders '(IN EA)' instead of this
+    // literal, so it cannot go stale. Middot matches the UI.
     bottomTagline: 'WARDOGS INTELLIGENCE HUB · THE CASH ECONOMY',
     peerLabel: 'BULKHEAD',
     peerLifecycle: 'EA SEP 10',
