@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Wardogs weapon data: cross-game leak fix + structured arsenal (code; insert operator-run)
+
+PART 1 (prerequisite, MUST deploy before any Wardogs weapon insert): scoped 4 Marathon
+weapon_stats queries to .eq(game_slug, marathon) -- meta By-Class (app/marathon/meta/page.js),
+builds grid (app/marathon/builds/page.js), the build-advisor LLM context
+(lib/advisor/generateBuild.js - the worst leak), and the orphaned Marathon homepage-data feed
+(app/api/homepage-data/route.js). Byte-identical to Marathon today (weapon_stats: marathon=32,
+ALL=32 -> same rows); load-bearing once other-game weapon data exists.
+
+PART 2 (structured arsenal code; the DB insert is OPERATOR-RUN, after Part 1 deploys):
+- NEW scripts/persist-wardogs-weapons.mjs: DRY-RUN by default, --commit to write. 33 playtest
+  weapons -> weapon_stats, game_slug=wardogs, verified=false + verified_source (playtest, or the
+  official reveal for the 3 starters), COMBAT STATS NULL (so the tier model returns
+  unrankable/tier:null and SKIPS them -> Wardogs stays "tier list coming at launch"), NO
+  meta_tiers rows, NO price (no column; prices stay in the article prose), ammo_type=null
+  (caliber not captured, never invented), starters flagged via notes (STARTER: <camo>), Verba
+  MANPADS OMITTED (inconsistent; the article flags it in prose). Idempotent (skips existing).
+- NEW components/wardogs/WardogsArsenal.js + wired into app/wardogs/[section]/page.js: the arsenal
+  (data) section renders a ROSTER BROWSER when Wardogs weapon rows exist, else the coming-soon
+  shell. DMZ verified=false/amber-UNCONFIRMED pattern (amber banner + attribution, no verified
+  pill, no tier badge, grouped by category). The section stays NOINDEX while unverified
+  (sectionHasContent=false for data sources) and asserts NO JSON-LD fact.
+
+VERIFIED: leak fix byte-identical to Marathon today; insert dry-run prints the 33-row set (3
+starters flagged, Verba omitted, all verified=false, stats null); weapon_stats combat columns
+confirmed nullable (a Marathon row already has damage/fire_rate null); no-data /wardogs/arsenal
+renders coming-soon + noindex,follow; a temporary mock proved the amber roster renders (reverted
+clean). Build green.
+
+OPERATOR NEXT: deploy, then run `node scripts/persist-wardogs-weapons.mjs` (dry) to review, then
+--commit to insert. The arsenal roster lights up automatically once the rows exist.
+
+---
 ## 2026-08-31 - Wardogs launch-shift stale-label sweep (P1): 7 surfaces now date-driven
 
 Made all 7 hardcoded/ungated Wardogs launch-shift surfaces DATE-DRIVEN so the site auto-flips to

@@ -26,6 +26,7 @@ import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
 import WardogsEmptyState from '../WardogsEmptyState';
 import WardogsComingSoon from '../WardogsComingSoon';
+import WardogsArsenal from '@/components/wardogs/WardogsArsenal';
 import Link from 'next/link';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
@@ -146,12 +147,26 @@ export default async function WardogsSectionPage({ params }) {
   var section = getGameSection('wardogs', sectionSlug);
   if (!section) notFound();
 
-  // Data-fed section: structured-data tool, no feed_items query.
+  // Data-fed section (arsenal): render the roster BROWSER if Wardogs weapon rows exist,
+  // else the coming-soon shell. Rows are all verified=false, so the section stays noindex
+  // (sectionHasContent is false for data sources) and renders a roster, NOT a tier list.
   if (section.source !== 'editor') {
+    var weaponRows = null;
+    if (section.slug === 'arsenal') {
+      var wres = await supabase
+        .from('weapon_stats')
+        .select('name, category, weapon_type, ammo_type, verified, verified_source, notes')
+        .eq('game_slug', WARDOGS_GAME_SLUG)
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+      weaponRows = (wres && wres.data) || [];
+    }
     return (
       <>
         <WardogsSectionSchema section={section} articles={[]} />
-        <WardogsComingSoon section={section} />
+        {weaponRows && weaponRows.length > 0
+          ? <WardogsArsenal weapons={weaponRows} />
+          : <WardogsComingSoon section={section} />}
       </>
     );
   }
