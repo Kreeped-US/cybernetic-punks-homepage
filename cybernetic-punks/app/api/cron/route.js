@@ -31,12 +31,17 @@ export const dynamic = 'force-dynamic';
 // roster, and the game_slug stamped on inserts + no-repeat/synthesis reads, so
 // a DMZ editor would read DMZ's prior articles, not Marathon's.
 //
-// STAGE 3: the game is now selected by the explicit generation switch
+// STAGE 3: the game is selected by the explicit generation switch
 // (editorial.generateNews) via getGenerationGames() -- NOT a hardcoded default and
-// NOT any SEO/indexable signal. getGenerationGames() returns ['marathon'] today, so
-// PRODUCING_GAME is byte-identical to the prior getGameConfig() default. This cron
-// remains single-game (produces the FIRST generation-active game); iterating multiple
-// generation-active games in one fire is a later stage -- there is only one today.
+// NOT any SEO/indexable signal. getGenerationGames() returns ['marathon'] today.
+//
+// PHASE D (per-game cron): the module-level values below are the DEFAULT (the first
+// generation-active game). GET(req) RE-SELECTS per request from the ?game= query
+// param, fail-closed to generation-active games (see the selection block in GET).
+// The declaration stays module-level because processEditor() + GET() close over it;
+// only the SELECTION moves into GET. No ?game= param -> these defaults, byte-identical
+// to the prior behavior. Every request sets them explicitly (param or default), so a
+// warm lambda never leaks a prior request's game. `var` (not const) so GET can reassign.
 var GENERATION_SLUGS = getGenerationGames();
 var PRODUCING_GAME = getGameConfig(GENERATION_SLUGS[0]);
 var PRODUCING_GAME_SLUG = PRODUCING_GAME.slug;
@@ -961,6 +966,28 @@ export async function GET(req) {
     return Response.json({ error: 'SUPABASE_SERVICE_KEY not configured' }, { status: 500 });
   }
 
+  // PHASE D: per-game cron selection. Choose the producing game per REQUEST from the
+  // ?game= param, reassigning the module-level PRODUCING_GAME (the closures below read
+  // it). FAIL-CLOSED AUTHORIZATION: the param may only select a game that is generation-
+  // active (editorial.generateNews via getGenerationGames()); a game the param names but
+  // which is NOT generation-active is REFUSED (400) -- the param can NEVER turn on an
+  // inactive game. No ?game= param -> the default first generation-active game (byte-
+  // identical to the prior behavior). Both branches set the vars explicitly so a warm
+  // lambda cannot leak a prior request's selection.
+  var requestedGame = null;
+  try { requestedGame = new URL(req.url).searchParams.get('game'); } catch (e) { requestedGame = null; }
+  if (requestedGame) {
+    if (GENERATION_SLUGS.indexOf(requestedGame) === -1) {
+      console.warn('[CRON] Refused ?game=' + requestedGame + ' -- not generation-active. getGenerationGames()=' +
+        JSON.stringify(GENERATION_SLUGS) + '. A game without editorial.generateNews cannot be produced by the param.');
+      return Response.json({ error: 'game_not_generation_active', game: requestedGame, generationActive: GENERATION_SLUGS }, { status: 400 });
+    }
+    PRODUCING_GAME = getGameConfig(requestedGame);
+  } else {
+    PRODUCING_GAME = getGameConfig(GENERATION_SLUGS[0]); // default: unchanged from the prior behavior
+  }
+  PRODUCING_GAME_SLUG = PRODUCING_GAME.slug;
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY
@@ -1399,6 +1426,7 @@ export async function GET(req) {
     // watches; this only makes absence queryable).
     await recordCronRun(supabase, {
       route: '/api/cron',
+      game_slug: PRODUCING_GAME_SLUG, // Phase D: stamp the ACTUAL produced game, not hardcoded marathon
       kind: (alertOutcome && alertOutcome.kind) || 'unknown',
       status: 'ok',
       has_patch: hasPatch,
@@ -1508,6 +1536,7 @@ export async function GET(req) {
     // undefined -> recorded as null, which is honest).
     await recordCronRun(supabase, {
       route: '/api/cron',
+      game_slug: PRODUCING_GAME_SLUG, // Phase D: stamp the ACTUAL produced game, not hardcoded marathon
       kind: 'error',
       status: 'error',
       has_patch: typeof hasPatch === 'boolean' ? hasPatch : null,

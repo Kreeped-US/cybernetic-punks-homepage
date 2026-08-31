@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Phase D: per-game cron plumbing (infrastructure only, NO game enabled)
+
+Made the content cron capable of per-game production WITHOUT enabling any non-Marathon game.
+
+app/api/cron/route.js: the producing game is now selected per-request from ?game= inside GET(req)
+(reassigning the module-level PRODUCING_GAME / PRODUCING_GAME_SLUG so the processEditor() + GET()
+closures keep reading it; only the SELECTION moved in, not the declaration). FAIL-CLOSED
+AUTHORIZATION: the param may only select a game in getGenerationGames() (editorial.generateNews:
+true) - a named-but-inactive game is REFUSED with HTTP 400 (game_not_generation_active) before any
+client/generation. The param is a SELECTOR among authorized games, never an ACTIVATOR. No ?game=
+-> the default first generation-active game, byte-identical to before (both branches set the vars
+explicitly so warm-lambda reuse cannot leak a prior selection).
+
+cron_runs.game_slug now stamps the ACTUAL produced game (PRODUCING_GAME_SLUG), resolving the
+deferred nullable-column decision the HANDOFF warned against (it said do NOT pre-stamp marathon).
+cronRunLog.js adds game_slug to the payload (null if a caller omits it).
+
+PROVEN (live): ?game=wardogs -> 400, ?game=dmz refused, ?game=marathon allowed; getGenerationGames()
+= ["marathon"] (no-param default). Marathon byte-identical: the diff is ONLY the param plumbing +
+the game_slug stamp -- NOTHING in the generation path (processEditor/callEditor/gather/persist/
+feed_items/meta_tiers) changed; the only marathon-run delta is cron_runs.game_slug null -> marathon
+(telemetry, not content).
+
+SAFETY BOUNDARY (held, NOT crossed): getGenerationGames() still returns ONLY [marathon]; vercel.json
+UNCHANGED (no wardogs cron entry); generateNews still ABSENT on wardogs; no Wardogs fail-closed
+gate / store loader. The plumbing exists but NO non-marathon game is wired to fire -- behavior
+UNCHANGED, inert until a game is deliberately enabled post-EA (flip generateNews:true + add a
+?game=wardogs vercel.json cron entry -- a later deliberate step, NOT this build).
+
+Build green.
+
+---
 ## 2026-08-31 - Wardogs weapon data: cross-game leak fix + structured arsenal (code; insert operator-run)
 
 PART 1 (prerequisite, MUST deploy before any Wardogs weapon insert): scoped 4 Marathon

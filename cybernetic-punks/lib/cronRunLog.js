@@ -34,9 +34,10 @@
 //   editors_succeeded, editors_failed, alert_sent, articles_published,
 //   error, started_at
 // }
-// game_slug is deliberately NOT set here -- see the HANDOFF entry: the column is
-// NULLABLE and left for the multi-game audit to decide (one network row per run, or a
-// row per game once the cron goes per-game). Do not pre-decide it by stamping a value.
+// game_slug: the NULLABLE column, resolved by the Phase D per-game cron build -- it is
+// now stamped with the ACTUAL produced game (row.game_slug = the cron's PRODUCING_GAME_SLUG,
+// the ?game= param or the default). One row PER GAME per run. Falls back to null if a
+// caller omits it (older callers / non-game runs stay null, never invented).
 export async function recordCronRun(supabase, row) {
   try {
     if (!supabase) {
@@ -45,6 +46,7 @@ export async function recordCronRun(supabase, row) {
     }
     var payload = {
       route: row.route || '/api/cron',
+      game_slug: row.game_slug || null, // Phase D: the produced game (PRODUCING_GAME_SLUG); null if omitted
       kind: row.kind || null,
       status: row.status || 'ok',
       has_patch: typeof row.has_patch === 'boolean' ? row.has_patch : null,
