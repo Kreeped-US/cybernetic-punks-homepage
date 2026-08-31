@@ -48,6 +48,7 @@ export const ADMIN_NAV = [
   { key: 'keywords',   label: 'Keywords',      href: '/admin/content?tab=keyword_targets',   desc: 'Keyword-framing targets', color: '#ff8c00' },
   { key: 'drafts',     label: 'Drafts',        href: '/admin/content',                       desc: 'Held drafts -- review + approve (panel)', color: '#00ff88' },
   { key: 'gsc',        label: 'GSC Review',    href: '/admin/content',                       desc: 'Search-console keyword candidates (panel)', color: '#00f5ff' },
+  { key: 'demand',     label: 'Demand Check',  href: '/admin/content',                       desc: 'Authorize-before-building: committed demand + already-served (panel)', color: '#00ff88' },
   { key: 'stats',      label: 'Stats',         href: '/admin/content',                       desc: 'Usage analytics (panel)', color: '#ffd700' },
   { key: 'emails',     label: 'Email Signups', href: '/admin/email-signups',                 desc: 'Launch-email capture -- view + CSV export (read-only)', color: '#00ff88' },
 ];

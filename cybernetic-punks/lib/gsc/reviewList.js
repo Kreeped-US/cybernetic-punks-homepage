@@ -8,7 +8,7 @@
 // the lens-not-gate boundary. Reviewing a candidate produces a keyword_targets row, but a
 // HUMAN decides; this module only ranks candidates.
 
-import { slugCandidate } from './storage.js';
+import { aggregateByQuery } from './queryAggregate.js';
 
 // ── NAMED CONSTANTS (C3 threshold + the position bands) ──────────────────────
 // Proposed defaults, flagged for operator sign-off in HANDOFF (same as KEYWORD_STALE_DAYS
@@ -29,31 +29,11 @@ export function classifyReviewCandidates(rows, opts) {
   const framingLow = opts.framingLow == null ? FRAMING_POSITION_LOW : opts.framingLow;
   const framingHigh = opts.framingHigh == null ? FRAMING_POSITION_HIGH : opts.framingHigh;
 
-  // Aggregate per query, over ONLY indexed pages. A noindexed page cannot rank, so it
-  // must not contribute -- filtered BEFORE aggregation, so a query's candidacy rests on
-  // its indexed pages alone. The noindex set covers ALL noindexed pages (the exclusion
-  // consumer), which is why the caller selects noindexed_at IS NOT NULL, NOT the cohort
-  // date -- excluding only the 2026-07-23 cohort would leave the 668 pre-column pruned
-  // pages eligible as framing targets, silently recommending reframes on de-indexed pages.
-  // A page with no feed_items row (tool/entity page) is not in the set -> kept, and those
-  // are exactly the pages that rank.
-  const byQuery = new Map();
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r.query || !r.page_url) continue;
-    const slug = slugCandidate(r.page_url);
-    if (slug && noindexedSlugs.has(slug)) continue; // drop noindexed-page rows
-    const key = r.query;
-    let agg = byQuery.get(key);
-    if (!agg) {
-      agg = { query: r.query, game_slug: r.game_slug, impressions: 0, clicks: 0, minPos: Infinity, bestPage: null };
-      byQuery.set(key, agg);
-    }
-    agg.impressions += r.impressions || 0;
-    agg.clicks += r.clicks || 0;
-    const pos = typeof r.position === 'number' ? r.position : null;
-    if (pos != null && pos < agg.minPos) { agg.minPos = pos; agg.bestPage = r.page_url; }
-  }
+  // Aggregate per query, over ONLY indexed pages, via the SHARED aggregator -- single-sourced
+  // with demandCheck.js so served-status math can never diverge between the two admin panels.
+  // See lib/gsc/queryAggregate.js for why noindexed rows are filtered BEFORE aggregation (a
+  // noindexed page cannot rank, so it must not contribute to a query's candidacy).
+  const byQuery = aggregateByQuery(rows, { noindexedSlugs });
 
   const framing = [];
   const weakPosition = [];

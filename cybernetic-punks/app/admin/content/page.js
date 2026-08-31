@@ -7,6 +7,7 @@ import QualityAlertsPanel from '@/components/QualityAlertsPanel';
 import VantageDraftsPanel from '@/components/VantageDraftsPanel';
 import SourceReviewPanel from '@/components/SourceReviewPanel';
 import GscReviewPanel from '@/components/GscReviewPanel';
+import DemandCheckPanel from '@/components/DemandCheckPanel';
 
 const FACTION_NAMES = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
 const STAT_NAMES = ['Heat Capacity', 'Agility', 'Loot Speed', 'Melee Damage', 'Prime Recovery', 'Tactical Recovery', 'Self-Repair Speed', 'Finisher Siphon', 'Revive Speed', 'Hardware', 'Firewall', 'Fall Resistance', 'Ping Duration', 'DBNO', 'TAD'];
@@ -1061,6 +1062,7 @@ export default function AdminContentPage() {
         <VantageDraftsPanel password={password} />
         <SourceReviewPanel password={password} />
         <GscReviewPanel password={password} onAccept={acceptGscCandidate} refreshKey={ktVersion} />
+        <DemandCheckPanel password={password} />
       </div>
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + S.border, padding: '0 32px', overflowX: 'auto', position: 'sticky', top: 49, background: S.bg, zIndex: 99 }}>

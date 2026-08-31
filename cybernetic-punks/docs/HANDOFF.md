@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Demand-check admin view (decision-support, firewall-safe, high-reuse)
+
+Built an admin DEMAND-CHECK view that operationalizes the build/don't-build gate -- systematizing
+the manual demand check that caught the tier-list misfire (intuition != authorization: check
+committed demand + whether a query is already served BEFORE building).
+
+8 files:
+- lib/gsc/queryAggregate.js (NEW) -- shared aggregateByQuery(rows, {noindexedSlugs}); single-sources
+  the per-query served-status math (minPos/bestPage/impressions) so the two admin panels can never
+  disagree.
+- lib/gsc/reviewList.js (REFACTOR) -- now calls the shared aggregator (-26 lines). Behavior PROVEN
+  IDENTICAL via an end-to-end classifyReviewCandidates run (framing/weak lanes, aggregation,
+  minPos/bestPage, below-floor/excluded/already-ranked drops all unchanged). The review panel works
+  identically.
+- lib/gsc/demandCheck.js (NEW, PURE) -- the join core. LEFT JOIN keyword_targets <- GSC aggregate so
+  COMMITTED-BUT-UNSERVED demand is surfaced (GSC structurally cannot see it -- it only returns
+  queries the site already appeared for -- so driving the join from keyword_targets is what keeps
+  the real build signal visible). Verdicts: build / already-served / no-demand.
+- lib/gsc/demandCheck.test.mjs (NEW) -- 9 tests (the 3 verdicts, left-join surfacing, served
+  short-circuits build, case-insensitive join, aggregator parity).
+- app/api/admin/demand-check/route.js (NEW) -- admin-gated, service-key, force-dynamic, all 4 games.
+  Two modes: ?game=<slug> browser (full join) + ?game=&query=<text> lookup. PURE READ, zero writes.
+- components/DemandCheckPanel.js (NEW) -- client panel: game selector, query-lookup card, verdict
+  filter chips, sortable table. No ACCEPT/DECLINE, no mutation button -- pure display.
+- app/admin/content/page.js + app/admin/adminShell.js (EDITS) -- embed the panel beside GscReviewPanel
+  + add the demand ADMIN_NAV entry.
+
+VERDICTS PROVEN: build (committed forecast volume, no GSC page); already-served (/marathon/meta @
+pos 4 for "marathon tier list" -- the exact cannibalization guard that would have caught the tier
+hub); no-demand (sub-floor + uncommitted).
+
+FIREWALL INTACT: pure read -- no writes, no mutation control, nothing enters a prompt/gather/
+generation path. keywordFirewall.test still passes; no generation file (editorCore / gather / gen-*
+/ cron) imports the demand modules; demandCheck imports NEITHER reviewList NOR gsc-review (the demand
+surface is decoupled from the review namespace). The human still creates any keyword_targets row
+through the existing validated entry form -- this view never auto-creates targets.
+
+Build green, 11/11 tests, ASCII-clean, staged via explicit paths (the two wardogs docs stay
+untracked). Panel is behind admin auth + RLS-gated demand tables, so live verification (eyeballing
+the panel with real data) is operator-side -- unprovable in the visitor/preview context.
+
+---
 ## 2026-08-31 - Wardogs economy article (persister + section mapping; draft, operator-run insert)
 
 NEXUS-authored Wardogs economy deep-dive (companion to the armory), grounded strictly in the
