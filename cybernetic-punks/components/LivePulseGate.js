@@ -5,6 +5,7 @@
 // double up the Steam/Twitch numbers there. Everywhere else it renders normally.
 
 import { usePathname } from 'next/navigation';
+import { isNetworkChrome } from '@/lib/network/isNetworkChrome';
 
 function formatNum(n) {
   if (!n || n < 1000) return n ? n.toString() : '0';
@@ -14,14 +15,14 @@ function formatNum(n) {
 
 export default function LivePulseGate({ stats }) {
   var pathname = usePathname();
+  // '/' and '/marathon' both render a richer top strip (player counts + DB counts
+  // + freshness), so the global strip would double the numbers -- suppressed here.
+  // (This pair is LivePulseGate-specific; see the helper's note.)
   if (pathname === '/' || pathname === '/marathon') return null;
-  // DMZ route group has its own shell (GAME_TEMPLATE.md D4) and network-level
-  // pages (e.g. /profile-preview) aren't Marathon pages -- Marathon-specific
-  // live stats don't apply on either. The /admin section runs its own shell
-  // (app/admin/layout.js) -- no public chrome there. Precise path-segment check
-  // (/admin and /admin/*, not any public route starting with "admin"). Marathon
-  // routes are unaffected.
-  if (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/wardogs') || pathname.startsWith('/pubg-dednet') || pathname === '/me' || pathname.startsWith('/me/') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/'))) return null;
+  // Everywhere a route renders its own chrome, Marathon-specific live stats don't
+  // apply: the per-game route groups, the network pages (/about, /editors), and
+  // the app shells (/me, /profile-preview, /admin) -- centralized in isNetworkChrome().
+  if (isNetworkChrome(pathname)) return null;
 
   var hasSteam = !!(stats && stats.steam);
   var hasTwitch = !!(stats && stats.twitch);

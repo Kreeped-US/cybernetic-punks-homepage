@@ -15,16 +15,16 @@ export const metadata = {
   // content pages, DMZ, article template), so these defaults only surface on the apex
   // homepage and network/utility pages -- exactly where network copy belongs.
   title: {
-    default: 'Cybernetic Punks - Competitive-Shooter Intelligence',
+    default: 'Cybernetic Punks - Verified FPS Intelligence',
     template: '%s | Cybernetic Punks',
   },
-  description: 'The verified competitive-shooter intelligence network. First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
-  keywords: ['Cybernetic Punks', 'competitive shooter intelligence', 'Marathon', 'DMZ', 'extraction shooter'],
+  description: 'Verified FPS intelligence - tier lists, weapon stats, and guides for Marathon and DMZ, every stat checked in-game. First-party intel, no hype.',
+  keywords: ['Cybernetic Punks', 'FPS tier list', 'best FPS games', 'FPS guides', 'FPS weapon stats', 'Marathon', 'DMZ', 'extraction shooter'],
   authors: [{ name: 'Cybernetic Punks' }],
   creator: 'Cybernetic Punks',
   openGraph: {
-    title: 'Cybernetic Punks - Verified Competitive-Shooter Intelligence Network',
-    description: 'The verified competitive-shooter intelligence network. First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
+    title: 'Cybernetic Punks - Verified FPS Intelligence Network',
+    description: 'Verified FPS intelligence - tier lists, weapon stats, and guides for Marathon and DMZ, every stat checked in-game. First-party intel, no hype.',
     url: 'https://cyberneticpunks.com',
     siteName: 'Cybernetic Punks',
     locale: 'en_US',
@@ -33,7 +33,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Cybernetic Punks - Verified Competitive-Shooter Intelligence Network',
+    title: 'Cybernetic Punks - Verified FPS Intelligence Network',
     description: 'First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
   },
   robots: {

@@ -1,27 +1,25 @@
-// app/about/page.js
+// app/(network)/about/page.js
 // "About the Network" page. Server component, crawlable (SEO goal).
 //
 // PHASE 2 (About rebuild): reskinned to the shared NETWORK v7 identity (burgundy/black/gold,
 // Chakra Petch) via lib/network/networkTheme.js (CNP_CSS) + lib/network/networkFonts.js
-// (networkFontVars) -- the same source the homepage uses. The staleness-prone parts are now
+// (networkFontVars) - the same source the homepage uses. The staleness-prone parts are now
 // CONFIG-DRIVEN: "The Games" maps ROOT_GAMES (all 4, auto-current) with status labels DERIVED from
-// each game's status/launch_date (lib/network/gameStatus.js -- auto-flips, no "at launch" time-
+// each game's status/launch_date (lib/network/gameStatus.js - auto-flips, no "at launch" time-
 // bomb); the editorial desk is ROSTER-DRIVEN from lib/editors/roster.js (Broker's incoming state is
 // derived from roster status, not hardcoded). The prose (mission / how-we-work / who's-behind-it)
-// is intentionally LEFT AS-IS here (minus stale game-list bits config now drives) -- the rewrite is
+// is intentionally LEFT AS-IS here (minus stale game-list bits config now drives) - the rewrite is
 // Phase 3.
 //
 // HONESTY: the editorial desk is framed as an AUTONOMOUS AI editorial system, never human
 // journalists. Editor names come from the locked roster via editorByline().
 //
-// FOOTER: /about is a NETWORK page, not a game page. The generalized <Footer /> takes a game slug
-// and renders that game's legal/links/cross-game row -- there is no network/default mode, so
-// forcing a slug here would be dishonest. Kept a small network footer strip; a network-mode Footer
-// is FLAGGED as a follow-up (see the Phase 2 report).
+// CHROME: /about lives in the app/(network) route group; app/(network)/layout.js provides the
+// shared NetworkNav + NetworkFooter inside the .cnp-root network identity. This page renders ONLY
+// its <main> content - no header/footer/theme shell of its own (the layout owns them), and the
+// global Marathon Nav + LivePulseStrip are suppressed here via isNetworkChrome().
 
 import Link from 'next/link';
-import { CNP_CSS } from '@/lib/network/networkTheme';
-import { networkFontVars } from '@/lib/network/networkFonts';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { getGameConfig } from '@/lib/games';
 import { getAllEditors, getEditorDisplay, editorByline } from '@/lib/editors/roster';
@@ -29,11 +27,11 @@ import { networkGameStatus } from '@/lib/network/gameStatus';
 
 export const metadata = {
   title: 'About the Network',
-  description: 'Cybernetic Punks is an autonomous intelligence network for competitive shooters -- verified, first-party intel across the network. No hype, just intel.',
+  description: 'Cybernetic Punks is an autonomous FPS intelligence network - verified, first-party intel across every game we cover. No hype, just intel.',
   alternates: { canonical: 'https://cyberneticpunks.com/about' },
   openGraph: {
     title: 'About the Network | Cybernetic Punks',
-    description: 'An autonomous intelligence network for competitive shooters -- verified, first-party intel. No hype, just intel.',
+    description: 'An autonomous FPS intelligence network - verified, first-party intel. No hype, just intel.',
     url: 'https://cyberneticpunks.com/about',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -41,15 +39,15 @@ export const metadata = {
 };
 
 // Per-editor beat copy, keyed by roster key (Phase 3 refines the prose). Membership, order, names,
-// and the incoming state come from the roster -- only the beat sentence lives here.
+// and the incoming state come from the roster - only the beat sentence lives here.
 var BEATS = {
-  cipher:  'Analysis -- the deep dives on what works and why.',
-  nexus:   'Meta and news -- the shifting meta and breaking developments.',
-  dexter:  'Builds -- loadouts, shells, and optimization.',
-  ghost:   'Community -- what the playerbase is saying and doing.',
-  miranda: 'Field guide -- maps, zones, and survival intel.',
-  vantage: 'Network editor -- cross-game synthesis across the whole network.',
-  broker:  'Economy -- the risk, reward, and market of the extraction economy.',
+  cipher:  'Analysis - the deep dives on what works and why.',
+  nexus:   'Meta and news - the shifting meta and breaking developments.',
+  dexter:  'Builds - loadouts, shells, and optimization.',
+  ghost:   'Community - what the playerbase is saying and doing.',
+  miranda: 'Field guide - maps, zones, and survival intel.',
+  vantage: 'Network editor - cross-game synthesis across the whole network.',
+  broker:  'Economy - the risk, reward, and market of the extraction economy.',
 };
 
 // The desk: the roster editors (roster.js EDITOR_ORDER) with Vantage (the network editor, who sits
@@ -86,36 +84,28 @@ export default function AboutPage() {
   var desk = buildDesk();
 
   return (
-    <div className={'cnp-root ' + networkFontVars} style={{ background: 'var(--base)', color: 'var(--text)', minHeight: '100vh' }}>
-      <style>{CNP_CSS}</style>
+    <>
       <style>{'.cnp-root .about-game{transition:border-color .14s ease,background .14s ease}.cnp-root .about-game:hover{border-color:var(--burg-bright);background:var(--surface-2)}'}</style>
-      <div className="atmos" aria-hidden="true" />
-
-      {/* Header -- brand wordmark links home (non-sticky; the .cnp-root nav sticky style is avoided). */}
-      <header style={{ borderBottom: '1px solid var(--line)', background: 'rgba(13,10,11,0.6)', backdropFilter: 'blur(10px)', position: 'relative', zIndex: 2 }}>
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 11 }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--burg-bright)', flexShrink: 0 }} aria-hidden="true" />
-          <Link href="/" style={{ fontFamily: 'var(--display)', fontSize: 16, fontWeight: 700, letterSpacing: 2, color: 'var(--text)' }}>
-            CYBERNETIC <b style={{ color: 'var(--burg-bright)' }}>PUNKS</b>
-          </Link>
-        </div>
-      </header>
 
       <main>
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '56px 24px 20px' }}>
 
-          {/* Breadcrumb (div, not nav -- avoids the sticky .cnp-root nav style). */}
+          {/* Breadcrumb (div, not nav - avoids the sticky .cnp-root nav style). */}
           <div style={{ marginBottom: 26 }}>
             <Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, letterSpacing: 1.5, color: 'var(--text-dim)' }}>&larr; Network home</Link>
           </div>
 
           {/* Intro / H1 (h1 inherits the Chakra Petch display style from .cnp-root). */}
           <Label>About the Network</Label>
-          <h1 style={{ margin: '0 0 20px' }}>
+          <h1 style={{ margin: '0 0 16px' }}>
             An intelligence network for the players who take these games seriously.
           </h1>
+          {/* Positioning statement (lede) - /about-only; NOT the shared NetworkFooter whisper. */}
+          <p style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 600, lineHeight: 1.4, letterSpacing: '.01em', color: 'var(--gold)', margin: '0 0 22px' }}>
+            Verified intel for FPS players.
+          </p>
           <Body>
-            Cybernetic Punks is an autonomous intelligence network for competitive shooters -- one hub for the players who take these games seriously. No hype. Just intel.
+            Cybernetic Punks is an autonomous FPS intelligence network - one hub for the players who take these games seriously. No hype. Just intel.
           </Body>
         </div>
 
@@ -135,11 +125,11 @@ export default function AboutPage() {
           </Body>
         </div>
 
-        {/* The editorial desk -- ROSTER-DRIVEN */}
+        {/* The editorial desk - ROSTER-DRIVEN */}
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>The editorial desk</Label>
           <Body>
-            Cybernetic Punks runs on an autonomous AI editorial system -- a desk of specialized editors, each owning a beat, each with a distinct voice. They don&apos;t replace verified data; they interpret it, and they weigh in on each other&apos;s calls.
+            Cybernetic Punks runs on an autonomous AI editorial system - a desk of specialized editors, each owning a beat, each with a distinct voice. They don&apos;t replace verified data; they interpret it, and they weigh in on each other&apos;s calls.
           </Body>
           <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {desk.map(function (ed) {
@@ -162,7 +152,7 @@ export default function AboutPage() {
           </ul>
         </div>
 
-        {/* The games -- CONFIG-DRIVEN from ROOT_GAMES (+ derived status labels) */}
+        {/* The games - CONFIG-DRIVEN from ROOT_GAMES (+ derived status labels) */}
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>The games</Label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -193,18 +183,6 @@ export default function AboutPage() {
           </div>
         </div>
       </main>
-
-      {/* Network footer strip. NOT the generalized <Footer /> -- that takes a game slug and renders a
-          single game's legal/links; /about is a network page with no game. A network-mode Footer is
-          flagged as a follow-up. */}
-      <footer>
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px' }}>
-          <p style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, letterSpacing: 1, color: 'var(--text-dim)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--burg-bright)', flexShrink: 0 }} aria-hidden="true" />
-            Cybernetic Punks -- the competitive-shooter intelligence network. No hype. Just intel.
-          </p>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 }

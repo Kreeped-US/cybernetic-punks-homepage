@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Option C network chrome (/about + /editors) + FPS-players SEO pass
+
+NETWORK CHROME (Option C): /about + /editors now render shared network chrome instead of the
+global Marathon nav + Marathon live-stats strip.
+- NEW components/network/NetworkNav.js (Home + the 4 games from ROOT_GAMES + About + Editors +
+  AccountMenu; NO Marathon game links) and components/network/NetworkFooter.js (extracted verbatim
+  from the homepage <footer> + an added Editors link; NO stats bar).
+- NEW app/(network)/layout.js provides the .cnp-root shell + NetworkNav + NetworkFooter. app/about
+  and app/editors moved into app/(network)/ via git mv -- route groups do NOT change URLs, so
+  /about and /editors are unchanged (verified 200).
+- NEW lib/network/isNetworkChrome.js: single suppression predicate (kills the Nav/LivePulseGate
+  duplication). /about + /editors added to it; the ROOT layout still renders the global Marathon
+  Nav + LivePulseStrip, but a nested layout cannot remove a parent, so those globals are suppressed
+  for these paths via the helper. Removed the editors paddingTop:48 Marathon-nav hack.
+- The /about page was stripped to its <main> (the layout owns header/footer/theme); its old
+  brand header + tagline footer strip are gone (NetworkNav/NetworkFooter replace them).
+
+BYTE-IDENTICAL PROVEN (live SSR): Marathon (/marathon/shells) <body> diff = 0 lines (chrome +
+content identical, modulo dev-chunk hashes + live-stat digits); the only Marathon-page head delta
+is the inherited root <meta keywords> (Part B, network-level default -- kept, decision #2).
+Homepage footer is byte-for-byte identical once the single added Editors <a> is removed (footer
+extraction clean). /editors re-chroming under .cnp-root (breadcrumb --red shift) + full-width nav
+left as-is (decision #3).
+
+FPS-PLAYERS PASS (SEO copy only): dropped the narrowing "competitive"/"competitive-shooter", led
+with "FPS", wove SEARCHED content-types (tier lists, weapon stats, guides) + game names. Touched:
+homepage H1 ("for FPS gamers") + meta desc + about-body; app/layout.js default title / description
+/ OG+twitter titles / OG desc; keywords (dropped "competitive shooter intelligence"; added FPS tier
+list, best FPS games, FPS guides, FPS weapon stats); /about meta + OG desc + intro. KEPT as voice:
+the /about mission line ("Competitive shooter communities run on opinions..."), the VANTAGE system
+prompts (lib/network/vantage.js), and all differentiator language (verified / first-party / no hype
+/ checked in-game). Game pages untouched (already lead with searched game-terms).
+
+ADDED: "Verified intel for FPS players." as a prominent gold lede sub-headline under the /about H1
+(/about-ONLY -- the shared NetworkFooter whisper is untouched, so the homepage footer stays
+byte-identical). COPY FIXES: marathon.js footer.description "six AI editors" -> "five" (Broker is
+incoming, not live); /about swept of all " -- " to straight hyphens.
+
+Build green (compiled + 81/81 static). No server/console errors. Straight quotes/ASCII.
+
+---
 ## 2026-08-29 - Title A2: systematic <title> length fix + two-word brand (all page types <=60)
 
 Systematic title fix - every page type now renders a <title> <=60 chars, keyword-first, per

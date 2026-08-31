@@ -42,7 +42,7 @@ export const metadata = {
 export default function EditorsPage() {
   var editors = getAllEditors();
   return (
-    <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
+    <main style={{ background: BG, minHeight: '100vh', color: '#fff' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [

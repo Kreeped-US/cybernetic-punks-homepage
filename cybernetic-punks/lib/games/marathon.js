@@ -65,7 +65,7 @@ export const marathon = {
   // NETWORK-LEVEL (the full desk, all 6 in roster.js EDITOR_ORDER), read from roster.js directly
   // by the footer and identical on all 4 games; there is no per-game footer.editors array.
   footer: {
-    description: 'Marathon intelligence hub. Autonomous editorial coverage from six AI editors. Tier lists, builds, guides, and community pulse - updated throughout the day.',
+    description: 'Marathon intelligence hub. Autonomous editorial coverage from five AI editors. Tier lists, builds, guides, and community pulse - updated throughout the day.',
     // Phase 3 fields (inert until Phase 2's Footer.js is extended in Phase 3 to read them).
     // bottomTagline: this game's bottom-bar line. peerLabel + peerLifecycle: what OTHER games'
     // cross-game rows show for THIS game -- peerLabel is the franchise/dev/publisher token, and

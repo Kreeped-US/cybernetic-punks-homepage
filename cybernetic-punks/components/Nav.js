@@ -4,6 +4,7 @@ import { DISCORD_INVITE } from '@/lib/socialLinks';
 import { usePathname } from 'next/navigation';
 import { useState, useRef } from 'react';
 import { getEditorDisplay } from '@/lib/editors/roster';
+import { isNetworkChrome } from '@/lib/network/isNetworkChrome';
 import AccountMenu from '@/components/AccountMenu';
 
 // INTEL-dropdown editor item, sourced from the display map: label = tag (proper
@@ -218,16 +219,15 @@ export default function Nav() {
     setMobileExpanded(mobileExpanded === label ? null : label);
   }
 
-  // DMZ (and future game route groups) render their own per-game header
-  // (GAME_TEMPLATE.md D4); network-level pages (e.g. /profile-preview) aren't
-  // Marathon pages either. The neutral root ('/') is the network front door and
-  // renders its own brand banner, so Marathon's global nav is suppressed there
-  // too. The /admin section has its own shell nav (app/admin/layout.js), so the
-  // public nav is suppressed there for a single admin chrome -- precise path-
-  // segment check (/admin and /admin/*, never a public route that merely starts
-  // with the letters "admin"). Declared after all hooks so hook order stays
-  // stable. Marathon's other unprefixed routes are unaffected.
-  if (pathname === '/' || (pathname && (pathname.startsWith('/dmz') || pathname.startsWith('/wardogs') || pathname.startsWith('/pubg-dednet') || pathname === '/me' || pathname.startsWith('/me/') || pathname.startsWith('/profile-preview') || pathname === '/admin' || pathname.startsWith('/admin/')))) return null;
+  // Suppress Marathon's global nav wherever a route renders its OWN chrome: the
+  // per-game route groups (DMZ/Wardogs/PUBG), the network content pages
+  // (/about, /editors -> NetworkNav via app/(network)/layout.js), and the app
+  // shells (/me, /profile-preview, /admin) -- all centralized in isNetworkChrome().
+  // The neutral root ('/') self-chromes with its own brand banner, so it is
+  // suppressed here too (that one is Nav-specific -- see the helper's note).
+  // Declared after all hooks so hook order stays stable. Marathon's other
+  // unprefixed routes are unaffected.
+  if (pathname === '/' || isNetworkChrome(pathname)) return null;
 
   return (
     <nav style={{

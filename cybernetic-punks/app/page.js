@@ -24,6 +24,7 @@ import AccountMenu from '@/components/AccountMenu';
 import HeroCrosshair from '@/components/network/HeroCrosshair';
 import ReceiptPanel from '@/components/network/ReceiptPanel';
 import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
+import NetworkFooter from '@/components/network/NetworkFooter';
 import { getEditorDisplay, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
 import EditorPortrait from '@/components/network/EditorPortrait';
 import { dmz } from '@/lib/games/dmz';
@@ -35,13 +36,14 @@ const chakra = Chakra_Petch({ subsets: ['latin'], weight: ['500', '600', '700'],
 const inter = Inter({ subsets: ['latin'], variable: '--cnp-body', display: 'swap' });
 const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--cnp-mono', display: 'swap' });
 
-// -- METADATA -- title/canonical/JSON-LD are byte-for-byte unchanged from the live page.
-// The description string is edited ONCE in PASS B (the deliberate exception): the scope-free
-// superlative "analyzed deeper than anywhere else" is removed and replaced with the mechanism
-// statement "analyzed and verified", keeping every keyword. No comparative reaches the SERP.
+// -- METADATA -- title/canonical/JSON-LD unchanged. The description was rewritten in the
+// FPS-gamer keyword pass: leads "Verified FPS intelligence" and weaves searched content-types
+// (tier lists, weapon stats, guides) + game names, dropping the narrower "competitive-shooter"
+// framing. Keeps the differentiator language ("verified", "first-party", "no hype", "checked
+// in-game"); no superlative/comparative reaches the SERP.
 export const metadata = {
   title: { absolute: 'Cybernetic Punks - Verified FPS Intelligence' },
-  description: 'The verified competitive-shooter intelligence network - deep, verified intel for Marathon and extraction shooters. Every weapon, shell, and build analyzed and verified against the live game.',
+  description: 'Verified FPS intelligence - tier lists, weapon stats, and guides for Marathon and extraction shooters, every stat checked in-game. First-party intel, no hype.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
 
@@ -315,7 +317,7 @@ export default async function NetworkRoot() {
           <div className="wrap hero-grid">
             <div>
               <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
-              <h1>The verified intel network for <span className="hl">competitive shooters</span>.</h1>
+              <h1>The verified intel network for <span className="hl">FPS gamers</span>.</h1>
               <p className="sub">Every stat <b>checked by hand</b>, in-game. No AI slop, no reposted rumors, no hype cycles - just the real numbers, sourced and verified, for Marathon and MW4&apos;s DMZ, plus verified-source intel on Wardogs ahead of Early Access.</p>
               <div className="cta-row">
                 <a href="#join" className="btn btn-gold">Get the intel drops &rarr;</a>
@@ -589,7 +591,7 @@ export default async function NetworkRoot() {
         <section className="about-sec">
           <div className="wrap">
             <div className="sec-eyebrow">What is Cybernetic Punks?</div>
-            <p className="about-body">The verified intelligence network for competitive shooters - Marathon live now, Wardogs intel live ahead of its September 10 Early Access, and Call of Duty&apos;s DMZ landing October 23. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
+            <p className="about-body">The verified intelligence network for FPS gamers - Marathon live now, Wardogs intel live ahead of its September 10 Early Access, and Call of Duty&apos;s DMZ landing October 23. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
             <Link href="/about" className="about-link">How the network works &rarr;</Link>
           </div>
         </section>
@@ -618,26 +620,8 @@ export default async function NetworkRoot() {
         </section>
       </main>
 
-      {/* FOOTER */}
-      <footer>
-        <div className="wrap foot-in">
-          <div className="brand foot-brand">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/cnp-512.png" alt="Cybernetic Punks" width="34" height="34" />
-            <div>
-              <span className="wm">CYBERNETIC <b>PUNKS</b></span>
-              <p className="whisper">An AI-operated intelligence network with a human-verified data moat. The machines write; a human checks the numbers.</p>
-            </div>
-          </div>
-          <div className="foot-links">
-            <Link href="/marathon">Marathon</Link>
-            <Link href="/dmz">DMZ</Link>
-            <Link href="/wardogs">Wardogs</Link>
-            <Link href="/pubg-dednet">PUBG: DED.NET</Link>
-            <Link href="/about">About</Link>
-          </div>
-        </div>
-      </footer>
+      {/* FOOTER -- shared NetworkFooter (extracted verbatim; adds the Editors link). */}
+      <NetworkFooter />
     </div>
   );
 }
