@@ -57,6 +57,23 @@ const MAP_HERO_IMAGES = {
 };
 const MAP_HERO_SLUGS = new Set(Object.keys(MAP_HERO_IMAGES));
 
+// CANONICAL HUB -> SPOKE cross-links. A curated list of the differentiated cluster
+// articles a map entity page anchors, so the canonical binds its long-tail spokes and the
+// articles are no longer orphaned from the entity page. GROUNDED: these are real published
+// /marathon/intel/<slug> articles; the label is editorial NAV text (chosen to match each
+// article's distinct angle), NOT the article's headline and NOT any verified map fact -- the
+// page invents nothing, it only LINKS. fetchRelatedIntel() renders only the slugs that are
+// still published+indexable, so an unpublished article drops off automatically (no dead link).
+const MAP_RELATED_INTEL = {
+  'cryo-archive': [
+    { slug: 'marathon-cryo-archive-guide-first-steps-into-the-endgame-2urw',                 label: 'Solo Survival: First-Timer Basics' },
+    { slug: 'marathon-cryo-archive-guide-how-to-survive-your-first-raid-run-p2vh',           label: 'Raid Guide: Subroutines & Survival' },
+    { slug: 'cryo-archive-complete-vault-guide-secret-cryo-locations-compiler-boss-dpmg',    label: 'The 7 Vaults & the Compiler Boss' },
+    { slug: 'cryo-archive-secret-cryo-locations-complete-weekend-2-discovery-guide-nc9o',    label: 'The Secret Cryo Pod on Outpost' },
+    { slug: 'marathon-cryo-archive-learning-the-map-before-vault-breaker-lands-6nf8',        label: 'Vault Breaker & Vault 6' },
+  ],
+};
+
 // key-tier -> color (rarity ladder)
 function keyTierColor(tier) {
   switch ((tier || '').toLowerCase()) {
@@ -164,6 +181,26 @@ async function fetchSeoData(slug) {
   };
 }
 
+// --- HUB -> SPOKE related-intel fetch --------------------------
+// Returns the curated cluster articles for this map that are STILL published+indexable,
+// in the curated order, each with its editorial nav label. Empty for maps with no curated
+// list. Never links an unpublished/noindexed article (a reader-facing surface).
+async function fetchRelatedIntel(slug) {
+  var curated = MAP_RELATED_INTEL[slug];
+  if (!curated || curated.length === 0) return [];
+  var supabase = getServiceClient();
+  var slugs = curated.map(function(c) { return c.slug; });
+  var { data } = await supabase
+    .from('feed_items')
+    .select('slug')
+    .in('slug', slugs)
+    .eq('game_slug', 'marathon')
+    .eq('is_published', true)
+    .eq('noindex', false);
+  var liveSet = new Set((data || []).map(function(r) { return r.slug; }));
+  return curated.filter(function(c) { return liveSet.has(c.slug); });
+}
+
 export async function generateMetadata({ params }) {
   var resolved = await params;
   var slug = resolved.slug;
@@ -217,10 +254,11 @@ export default async function MapPage({ params, searchParams }) {
   var resolvedSearch = (await searchParams) || {};
   var slug = resolved.slug;
 
-  // Fetch BOTH layers in parallel.
-  var [seo, vault] = await Promise.all([
+  // Fetch BOTH layers + the hub->spoke related intel in parallel.
+  var [seo, vault, relatedIntel] = await Promise.all([
     fetchSeoData(slug),
     fetchVaultData(slug),
+    fetchRelatedIntel(slug),
   ]);
 
   var gameMap = seo.gameMap;
@@ -639,6 +677,27 @@ export default async function MapPage({ params, searchParams }) {
                 );
               })}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== HUB -> SPOKE: related intel (binds the differentiated cluster) =====
+          Editorial cross-links from the canonical map page to its long-tail articles.
+          Links only; no article content is absorbed and no map fact is invented. */}
+      {relatedIntel.length > 0 && (
+        <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
+          <SectionHeader label={((displayName || 'Map') + ' Guides').toUpperCase()} color={PURPLE} />
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, margin: '0 0 12px', maxWidth: 680 }}>
+            In-depth {displayName} intel from the desk - deep dives on each part of the map.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
+            {relatedIntel.map(function(r, i) {
+              return (
+                <Link key={i} href={'/marathon/intel/' + r.slug} className="mp-link" style={{ textDecoration: 'none', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + PURPLE, borderRadius: '0 2px 2px 0', padding: '14px 16px', display: 'block' }}>
+                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#fff', lineHeight: 1.35 }}>{r.label} &rarr;</div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

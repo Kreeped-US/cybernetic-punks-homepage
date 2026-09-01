@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Cryo Archive canonical: bind the differentiated cluster (hub -> spokes)
+
+Cryo consolidation, the SAFE grounded step: bind the over-covered Cryo Archive cluster with
+internal links instead of merging/deleting. Adds a "Cryo Archive Guides" section to the canonical
+/marathon/maps/cryo-archive linking the 5 now-differentiated long-tail articles (solo/first-timer,
+raid/subroutines, vaults/compiler, secret-pod, vault-breaker/vault-6).
+
+MECHANISM (app/marathon/maps/[slug]/page.js): a curated MAP_RELATED_INTEL { map -> [{slug,label}] }
+constant + fetchRelatedIntel(slug) that renders ONLY the slugs still published+indexable (an
+unpublished article auto-drops -- no dead links). Rendered as a hub->spoke section before the
+ALL MAPS footer, generic by map (label = displayName + " Guides").
+
+ZERO FABRICATION: links ONLY. No article hook (subroutines/compiler/vaults/vault-breaker/secret-pod)
+was absorbed into the page; the labels are editorial NAV text matching each article angle, NOT
+headlines and NOT map facts. The verified map_* data (game_maps/zones/boss/modes) is untouched.
+De-orphans the 5 articles + concentrates cluster signal on the canonical.
+
+NO METADATA CHANGE -- both requested metadata fixes were FALSE premises, verified in code and left
+untouched: (1) no "Marathon Marathon" title doubling (no app/marathon/layout.js title template; the
+maps title uses { absolute } which bypasses the root "%s | Cybernetic Punks" template; game_maps.name
+= "Cryo Archive", so title = "Marathon Cryo Archive - Map Guide, Zones & Boss", single Marathon, 48c
+-- confirmed live in the tab title). (2) "cryo archive" is NOT omitted from the description (built
+from name + the verified summary "Cryo Archive is Marathon's endgame...", it appears 3x).
+
+VERIFIED: build green; dev-server preview confirmed the section renders with all 5 spoke links
+(5/5 slugs live+indexable) and zero console errors.
+
+HELD FOLLOW-UPS (reported, not done): (a) the reverse spoke -> hub link (each of the 5 articles
+linking back to /maps/cryo-archive) needs a touch to the SHARED article template -- the "Related
+Intel" section is get_related_articles (article->article) only, so a map backlink is a separate,
+broader change, deliberately out of this zero-risk commit. (b) an OPTIONAL sharper map title
+("Marathon Cryo Archive: Vaults, Zones, Boss & Exfil") -- an improvement, not a bug fix; operator
+choice, not applied.
+
+---
 ## 2026-08-31 - Shell detail-page title retarget (cannibalization fix P1)
 
 Fixed the systemic shell self-cannibalization the content eval surfaced: all 7 non-Sentinel shells
