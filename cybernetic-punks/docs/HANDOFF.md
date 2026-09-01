@@ -7,6 +7,71 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Operator DB actions completed (catch-up; DB state as of 2026-08-31)
+
+DOC-ONLY. The HANDOFF completeness check found code commits are all documented but operator DB
+actions (run in the Supabase editor) were recorded only as "operator-run (pending)" -- so HANDOFF
+did not reflect the actual DB state. This entry records them as DONE. "verified" = confirmed by a
+service-key SELECT this session; "per operator" = operator-reported, not client-verifiable.
+
+1. slug_redirects INFRASTRUCTURE (the durable churn fix, code shipped in 7a02ded proxy.js):
+   - CREATE TABLE slug_redirects (from_slug text PK, to_path text NOT NULL, game_slug text NOT NULL
+     DEFAULT 'marathon', reason text, created_at timestamptz DEFAULT now()). TABLE EXISTS -- verified.
+   - ALTER TABLE slug_redirects ENABLE ROW LEVEL SECURITY -- per operator.
+   - CREATE POLICY "public read slug_redirects" FOR SELECT TO anon, authenticated USING (true)
+     -- per operator. Rationale: redirect data is non-sensitive, and the proxy reads service-key-
+     primary / anon-fallback -- the anon SELECT policy prevents a fail-QUIET (0 rows) if the edge
+     runtime lacks the service key.
+
+2. slug_redirects DATA -- 4 redirect rows INSERTed (all verified present; targets proven 200 on
+   prod, dead sources proven 404):
+   - ares-railgun-post-1062-...-95bh -> /marathon/intel/ares-railgun-nerf-incoming-...-vhkp
+   - complete-marathon-shield-mod-guide-...-defense-upgrades-for-ever-11fl ->
+     /marathon/intel/complete-marathon-shield-mod-guide-...-protection-upgrades-80qe (recovered the
+     #2-trafficked page, ~22 recent visitors; the -11fl source was HARD-DELETED, redirected to its
+     surviving near-twin)
+   - content-drought-exposes-marathons-identity-crisis-...-7rv9 -> /marathon/intel/content-drought-
+     exposes-marathons-tutorial-gap-...-l3a1
+   - marathon-community-content-drought-...-6j3h -> (same) content-drought-...-tutorial-gap-...-l3a1
+   HONEST-POLICY: only content with a LIVE successor was redirected. Genuinely-gone content (e.g. the
+   two 1.1.5.5 Ordnance Heist patch-news near-dups, both unpublished with no same-version survivor)
+   was INTENTIONALLY left to the Part B recovery page rather than misdirected to stale/adjacent
+   content. 14 of the 18 unpublished marathon articles were already covered by next.config redirects
+   (excluded from the batch to avoid double-hops).
+
+3. ARTICLE RETITLES -- title-only DB UPDATEs (slugs/URLs/canonicals UNCHANGED), all verified live:
+   Shell cannibalization P2 (6, dropped the competing "Shell Guide" framing):
+   - ...-v70a "Marathon Rook: The Best Starter Shell for New Players"
+   - ...-vrs2 "Marathon Thief: Solo Ranked Loot & Survival Tactics"
+   - ...-1czk "Marathon Triage: Squad Support & Sustain"
+   - ...-blny "Marathon Vandal: Movement, Heat & Ranked Climbing"
+   - ...-gqxy "Marathon Vandal: Why It's the Best Starting Ranked Shell"
+   - ...-omnm "Marathon Assassin: Shadow Strike Core Builds for Cryo Archive"
+   Cryo Archive differentiation (5, distinct long-tails; the /maps/cryo-archive hub canonical, retitle
+   -guide qy7a KEPT as the ranking anchor):
+   - ...-2urw "Marathon Cryo Archive Solo: First-Timer Survival Basics"
+   - ...-p2vh "Marathon Cryo Archive Raid: Subroutines & Survival"
+   - ...-dpmg "Marathon Cryo Archive: All 7 Vaults & Compiler Boss"
+   - ...-nc9o "Marathon Cryo Archive: The Secret Cryo Pod on Outpost"
+   - ...-6nf8 "Marathon Vault Breaker: Cryo Archive Vault 6 Map"
+
+4. OTHER operator DB actions the check flagged:
+   - Wardogs structured data (code shipped adc7b2e/43c9e6a + persisters): weapon_stats wardogs = 33
+     rows INSERTed -- verified. wardogs-economy article present, is_published=true, noindex=false --
+     verified (inserted AND published). wardogs-armory article present, is_published=true -- verified.
+     (HANDOFF had all three as "operator-run insert (pending)".)
+   - noindex state: audited this session -- 0 published articles wrongly noindexed across all 4 games
+     (the 14 noindex feed_items are all unpublished drafts); the wardogs/pubg noindex-staleness fix is
+     fully cleared. Verified.
+   - GSC "Validate Fix" recrawl (for the stale 404 / noindex reports): OPERATOR-SIDE, not in the repo;
+     record here if/when run.
+   - Dead-column DDL drops (the deferred 5-column cleanup, HANDOFF ~line 1200): NOT verified this
+     session -- status unknown. Operator to confirm whether the DROP COLUMNs were run; recorded as
+     OPEN.
+
+This makes HANDOFF the accurate source of truth for the current DB state. Nothing in code changed.
+
+---
 ## 2026-08-31 - Network-wide slug-redirect consultation (durable churn fix, C-full)
 
 Built the durable, GAME-AGNOSTIC fix for retire-without-redirect dead /*/intel/* URLs. A stale
