@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Cryo Archive reverse spoke -> hub link (two-way binding complete)
+
+Completes the two-way Cryo Archive cluster binding. Hub -> spokes shipped in b1bcb83
+(MAP_RELATED_INTEL on the map page); this adds the reverse: the 5 differentiated Cryo articles
+link back to the canonical /marathon/maps/cryo-archive. Both directions are now CODE CONSTANTS.
+
+MECHANISM (app/marathon/intel/[slug]/page.js): a new ARTICLE_CANONICAL_MAP constant maps the 5
+cryo slugs -> { label: "Cryo Archive", url: "/marathon/maps/cryo-archive" } (label matches the hub
+direction, symmetric), plus a SMALL new data-gated <Link> chip in the article meta/tags row. It
+renders ONLY for the 5 curated slugs -- every other article has ARTICLE_CANONICAL_MAP[item.slug]
+undefined and renders nothing (byte-identical). The meta-row gate was widened to include
+canonicalMap so the link shows even for an article with no tags/ce_score.
+
+MECHANISM CORRECTION (important, so this is not mis-recorded): there is NO computed crossLinks
+array and NO "CONTINUE THE BRIEFING" block -- both were assumed by earlier scoping but DO NOT
+exist in the code (grep-confirmed across app/components/lib). The article page renders related
+links ONLY via the get_related_articles RPC ("Related Intel", article -> article) + the Data
+Reference sidebar (shells/weapons/mods/implants). So this change is a NEW small render block,
+data-gated to the 5 -- NOT an injection into an existing array, and there is no cap-slice. Also:
+the "crosslinks" DB column the very first scoping assumed does not exist either (service-key
+verified). No DB column, no RPC, no schema change, no DB write -- purely a code constant + render.
+
+DEDUP: moot by construction -- the article renders no other link to a /maps/ entity, so this is
+the sole map link (nothing to double). Guarded on presence regardless.
+
+DEAD-SCRIPT CLEANUP: removed scripts/add-cryo-canonical-crosslink.mjs. It was NEVER committed
+(the cited 43a5d09 is not a valid commit); it was an untracked one-off that targeted the
+non-existent crosslinks column, so it was deleted from the working tree (not part of this diff)
+to stop it misleading later.
+
+VERIFIED (dev server): a spoke renders the "Cryo Archive Map" back-link to /maps/cryo-archive; a
+control article (not in the 5) renders none; build green; console clean apart from HMR noise.
+Incidental: the 5 articles' retitles appear already applied (2urw rendered as "...Solo:
+First-Timer Survival Basics") -- unrelated, this change is slug-keyed not headline-keyed.
+
+FOLLOW-UP 2 (title change) DELIBERATELY SKIPPED: the /maps/cryo-archive title is a winning
+ranker; do not change a title that is working. SYNC NOTE: ARTICLE_CANONICAL_MAP mirrors
+MAP_RELATED_INTEL['cryo-archive'] (same 5 slugs, two files) -- a future cleanup could
+single-source both from one shared lib; kept local to keep this change scoped.
+
+---
 ## 2026-08-31 - Cryo Archive canonical: bind the differentiated cluster (hub -> spokes)
 
 Cryo consolidation, the SAFE grounded step: bind the over-covered Cryo Archive cluster with

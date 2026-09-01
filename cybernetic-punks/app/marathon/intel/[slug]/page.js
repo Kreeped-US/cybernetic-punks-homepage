@@ -966,10 +966,36 @@ function SidebarItemCard({ item, type, editorColor }) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// CANONICAL MAP BACK-LINK (reverse spoke -> hub, scoped by slug)
+// ═══════════════════════════════════════════════════════════
+// The reverse of the hub->spoke binding shipped in b1bcb83 (MAP_RELATED_INTEL in
+// app/marathon/maps/[slug]/page.js): a curated map from an article slug to the canonical
+// map entity page it belongs to. Scoped to a named slug list, so ONLY these articles render
+// the link -- every other article's `ARTICLE_CANONICAL_MAP[item.slug]` is undefined and it
+// renders nothing (byte-identical). No DB column, no RPC, no template change beyond the small
+// gated block below -- a CODE constant, mirroring the hub direction.
+//
+// KEEP IN SYNC with MAP_RELATED_INTEL['cryo-archive'] (the same 5 slugs, the other direction).
+// A future cleanup could single-source both from one shared lib; kept local here to keep this
+// change scoped to the article page.
+var ARTICLE_CANONICAL_MAP = {
+  'marathon-cryo-archive-guide-first-steps-into-the-endgame-2urw':               { label: 'Cryo Archive', url: '/marathon/maps/cryo-archive' },
+  'marathon-cryo-archive-guide-how-to-survive-your-first-raid-run-p2vh':         { label: 'Cryo Archive', url: '/marathon/maps/cryo-archive' },
+  'cryo-archive-complete-vault-guide-secret-cryo-locations-compiler-boss-dpmg':  { label: 'Cryo Archive', url: '/marathon/maps/cryo-archive' },
+  'cryo-archive-secret-cryo-locations-complete-weekend-2-discovery-guide-nc9o':  { label: 'Cryo Archive', url: '/marathon/maps/cryo-archive' },
+  'marathon-cryo-archive-learning-the-map-before-vault-breaker-lands-6nf8':      { label: 'Cryo Archive', url: '/marathon/maps/cryo-archive' },
+};
+
+// ═══════════════════════════════════════════════════════════
 // ARTICLE PAGE
 // ═══════════════════════════════════════════════════════════
 
 function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques, comments, related, creatorAvatar }) {
+  // Canonical map back-link for this article (undefined for all but the curated slugs).
+  // DEDUP: the article renders no other link to a /maps/ entity (Related Intel is article->
+  // article; the Data Reference sidebar is shells/weapons/mods/implants only), so this is the
+  // sole map link -- there is nothing to double. Guarded on presence regardless.
+  var canonicalMap = ARTICLE_CANONICAL_MAP[item.slug] || null;
   var editor = EDITOR_STYLES[item.editor] || EDITOR_STYLES.CIPHER;
   var publishedAt = formatPublishDate(item.created_at);
   var videoId = extractYouTubeId(item.source_url);
@@ -1120,7 +1146,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
             {item.headline}
           </h1>
 
-          {(item.ce_score > 0 || (item.tags && item.tags.length > 0)) && (
+          {(item.ce_score > 0 || (item.tags && item.tags.length > 0) || canonicalMap) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {item.ce_score > 0 && (
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '5px 12px' }}>
@@ -1131,6 +1157,13 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
               {item.tags && item.tags.slice(0, 4).map(function(tag, i) {
                 return <span key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', border: '1px solid #22252e', background: 'rgba(255,255,255,0.02)', padding: '4px 9px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{tag}</span>;
               })}
+              {/* Canonical map back-link (reverse spoke -> hub). Renders only for the curated
+                  slugs in ARTICLE_CANONICAL_MAP; a real <Link> to the map entity page. */}
+              {canonicalMap && (
+                <Link href={canonicalMap.url} style={{ fontSize: 9, color: '#00d4ff', border: '1px solid rgba(0,212,255,0.35)', background: 'rgba(0,212,255,0.08)', padding: '4px 9px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', textDecoration: 'none' }}>
+                  {canonicalMap.label} Map &rarr;
+                </Link>
+              )}
             </div>
           )}
         </div>
