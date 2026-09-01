@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Network-wide slug-redirect consultation (durable churn fix, C-full)
+
+Built the durable, GAME-AGNOSTIC fix for retire-without-redirect dead /*/intel/* URLs. A stale
+link to a deleted/re-slugged article 404s (the redirect forwards to a gone page); this makes a
+recorded redirect 301 it to the survivor instead, across ALL 4 games uniformly.
+
+MECHANISM: proxy.js (Next 16 renamed the middleware file convention to `proxy`; used the
+non-deprecated form -- build shows "Proxy (Middleware)", no warning). It consults a slug_redirects
+table (from_slug PK, to_path, game_slug, reason, created_at -- OPERATOR-DDL'd, schema in the file
+header) and 301s a matched retired slug to its recorded survivor BEFORE the route renders. One
+proxy covers all 4 games because their article routes differ (/marathon/intel/[slug] vs
+/<game>/[section]/[slug]).
+
+SAFETY -- all PROVEN via curl: FAIL-OPEN (table absent -> live 200 / dead -> Part B 404 / home 200;
+deploy-before-DDL is safe, the site never depends on the proxy or the table). CACHED (module-level
+60s TTL; a matched request is a Map.get(), NOT a DB round-trip -- no per-request DB, no latency).
+SCOPED (matcher = only the 4 games' article-detail paths; home/hubs/assets/API never invoke it).
+LOOP-SAFE + GAME-AGNOSTIC (temp-seeded then reverted: marathon dead slug -> one 301 -> survivor ->
+200; WARDOGS dead slug -> 301 -> its own survivor; survivor 200/0-redirects; unrelated 200/0 no
+false-positive).
+
+SCOPE CORRECTED FROM THE BRIEF (2 of the 4 parts do not exist to build -- proven, not fabricated):
+- #4 admin hard-delete guard: the app CANNOT delete feed_items (not in ALLOWED_TABLES; the generic
+  admin DELETE already rejects it as "Invalid table"; no code path deletes feed_items anywhere).
+  -95bh was deleted OUTSIDE the app (Supabase dashboard / SQL), which app code cannot guard -- a
+  DB trigger/policy is the operator-side protection. A guard would be dead code.
+- #3 dedup/consolidation retire-hook: the cron dedup gate BLOCKS a new near-duplicate from being
+  inserted (returns before the insert), it never RETIRES the old survivor -- so no dead URL forms
+  from dedup and there is no automated retire path to hook. (Reverted a wrong attempt to pass a
+  redirect_to through the generic PATCH -- it would hit .update() as a non-existent column.)
+
+So the durable fix correctly = the table + the consulting proxy. RECORDING a redirect is an
+OPERATOR SQL action (INSERT INTO slug_redirects when retiring an article; the survivor is operator
+knowledge, not auto-derivable). An unmapped retirement still lands on the Part B recovery page
+(proper 404 + live-content links). OPTIONAL FUTURE (additive, not required): a one-click
+"unpublish + record redirect" admin tool. Operator runs the slug_redirects DDL (proxy fail-opens
+until it exists, so deploy order does not matter).
+
+Build green, ASCII-clean, one new file (proxy.js); admin route unchanged; temp test-seed removed.
+
+---
 ## 2026-08-31 - Article 404 recovery page (/marathon/intel/[slug])
 
 Added app/marathon/intel/[slug]/not-found.js -- renders when page.js calls notFound() (a missing
