@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Game-agnostic (entity, intent) coverage-bucket dedup (near-dup overview root-cause fix)
+
+The durable root-cause fix for the cannibalization pattern (the shell "Shell Guide" cluster, the
+Cryo Archive overviews, and 9qk2-vs-6efy were all the SAME gap): the lexical dedup gate cannot see
+reworded same-entity-same-intent OVERVIEWS -- its own documented limitation ("reworded synonyms are
+MISSED -- needs embeddings"). This adds a deterministic (entity_type:entity, intent) OVERVIEW bucket
+LAYERED ON the existing lexical gate. GAME-AGNOSTIC + ALL-ENTITY-TYPE.
+
+lib/content/topicBucket.js (NEW):
+- ENTITY_TABLES: config-driven per-game entity source tables (marathon shells/maps/weapons/uniques;
+  dmz keys/missions/items/pois/maps/weapons; wardogs + pubg-dednet weapons). A NEW GAME = add a row,
+  no logic change.
+- loadGameEntities(supabase, gameSlug): loads that game's entities across all its tables,
+  game_slug-filtered, deduped, <4-char names dropped, FAIL-OPEN per table.
+- classifyIntent: overview vs build/news/counter/mechanic -- only OVERVIEW is bucketed (builds/news
+  stay distinct). Intent is game-agnostic (unchanged from the shells-only version).
+- word-bounded, longest-match entity matching (reconnaissance != recon); bucket key = type:entity.
+
+lib/content/dedupGate.js: loadSurvivorCorpus also loads THIS game's entities and builds the
+overviewIndex from this game's corpus + entities (game-scoping is INHERENT -- the corpus and
+entities are both the run's game, so cross-game cannot collide; fail-open -> empty index -> no-op).
+findCorpusDuplicate HARD-BLOCKS an overview whose (type:entity) already has a live canonical,
+regardless of lexical score. app/api/cron/route.js carries entities through + a distinct
+[DEDUP-BLOCK] "duplicate OVERVIEW for entity ..." log.
+
+PROVEN (9/9 topicBucket tests): marathon SHELL (9qk2/6efy -> shell:recon block, the money test);
+marathon MAP (two Cryo Archive overviews -> map:cryo archive collide -- the case the shells-only
+version MISSED); DMZ (Ashika key overviews dedup); CROSS-GAME NO collision (marathon recon absent
+from a dmz index, and matches no dmz entity); distinct builds/news NEVER bucketed (not over-blocked);
+word-bounded matching; config-driven (5th game = one ENTITY_TABLES row); loadGameEntities mock-tested
+(game-scopes, spans types, dedupes, fail-open).
+
+KEPT UNCHANGED: classifyIntent, the gate hook, the hard-block, overview-only firing, the lexical
+Jaccard. 34/34 regression (novelty / assignmentGate / keywordFirewall / demandCheck) pass --
+firewall/keyword side untouched. loadGameEntities = a few cached reads per run, fail-open, negligible.
+Build green, ASCII.
+
+NOTE: hard-block (not review-flag) because the bucket fires only on same-(type,entity)
+overview-vs-overview -- a genuine duplicate; one-line switch to review-flag if a softer default is
+wanted. Optional future (b): a generation-time skip (check the bucket BEFORE generating) -- saves
+the wasted generation; deferred (option (a) already stops the publish).
+
+---
 ## 2026-08-31 - Marathon 1.1.9 patch-notes article (NEXUS draft; Full-Auto section re-corrected)
 
 NEXUS 1.1.9 patch-notes article, grounded in Bungie 1.1.9 notes, DRAFT (operator publishes). New

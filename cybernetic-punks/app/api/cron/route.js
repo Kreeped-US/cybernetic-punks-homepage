@@ -834,7 +834,13 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     //     NOT false-positive at 0.7, so no lane-class exemption is needed here.
     if (rawData.dedup && rawData.dedup.corpus) {
       try {
-        var dg = findCorpusDuplicate(result.headline, rawData.dedup.corpus, rawData.dedup.idf, { sessionHeadlines: rawData.dedup.sessionHeadlines });
+        var dg = findCorpusDuplicate(result.headline, rawData.dedup.corpus, rawData.dedup.idf, { sessionHeadlines: rawData.dedup.sessionHeadlines, overviewIndex: rawData.dedup.overviewIndex, entities: rawData.dedup.entities });
+        if (dg.block && dg.reason === 'overview-bucket') {
+          console.log('[DEDUP-BLOCK] ' + editorName + ' duplicate OVERVIEW for entity "' + dg.bucket +
+            '" -- a live canonical overview exists ("' + dg.match.headline + '" [' + (dg.match.slug || 'same-run') +
+            ']); new "' + result.headline + '" not published (builds/news/counters are exempt -- only reworded overviews are caught here)');
+          return { editor: editorName, success: false, error: 'duplicate overview for entity ' + dg.bucket + ' vs ' + (dg.match.slug || 'same-run') };
+        }
         if (dg.block) {
           console.log('[DEDUP-BLOCK] ' + editorName + ' near-duplicate vs surviving corpus (score ' +
             dg.match.score.toFixed(2) + ', ' + dg.match.shared + ' shared topic words) of "' +
@@ -1328,7 +1334,7 @@ export async function GET(req) {
     if (editors.length > 0) {
       try {
         var dedupLoaded = await loadSurvivorCorpus(supabase, PRODUCING_GAME_SLUG);
-        rawData.dedup = { corpus: dedupLoaded.corpus, idf: dedupLoaded.idf, sessionHeadlines: [] };
+        rawData.dedup = { corpus: dedupLoaded.corpus, idf: dedupLoaded.idf, overviewIndex: dedupLoaded.overviewIndex, entities: dedupLoaded.entities, sessionHeadlines: [] };
         console.log('[DEDUP] loaded ' + dedupLoaded.corpus.length + ' surviving ' + PRODUCING_GAME_SLUG + ' headlines for the roster-wide gate');
       } catch (dedupLoadErr) {
         console.log('[DEDUP] corpus load failed (non-fatal, gate disabled this run): ' + (dedupLoadErr && dedupLoadErr.message));

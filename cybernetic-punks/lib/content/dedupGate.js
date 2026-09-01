@@ -25,6 +25,7 @@
 //     false-positive at 0.7, so this gate is safe roster-wide with no lane-class carve-out.
 
 import { topicTokens, buildIdfMap, topicJaccard } from '@/lib/topicTokens';
+import { buildOverviewIndex, overviewBucket, loadGameEntities } from '@/lib/content/topicBucket';
 
 export const DEDUP_BLOCK_THRESHOLD = 0.7;   // >= this (with shared>=MIN) -> block
 export const DEDUP_REVIEW_THRESHOLD = 0.5;  // >= this and < block -> review-band log
@@ -51,7 +52,15 @@ export async function loadSurvivorCorpus(supabase, gameSlug) {
     from += 1000;
   }
   var idf = buildIdfMap(corpus.map(function (r) { return r.headline || ''; }));
-  return { corpus: corpus, idf: idf };
+  // Layer 1b: load THIS game's entities (all types, config-driven per game) and precompute the
+  // (entity, overview) index over the SAME live survivors, so a new entity overview is caught
+  // against an existing canonical regardless of lexical wording. Game-scoped by gameSlug (the
+  // corpus + the entities are both this game's), so cross-game never collides. Fail-open: if the
+  // entity load throws, entities is [] -> the index is empty -> the bucket simply no-ops.
+  var entities = [];
+  try { entities = await loadGameEntities(supabase, gameSlug); } catch (e) { entities = []; }
+  var overviewIndex = buildOverviewIndex(corpus, entities);
+  return { corpus: corpus, idf: idf, overviewIndex: overviewIndex, entities: entities };
 }
 
 // PURE near-dup check against an IN-MEMORY corpus (no DB, no await) so the caller can run
@@ -85,8 +94,32 @@ export function findCorpusDuplicate(candidateHeadline, corpus, idf, opts) {
   var extra = opts.sessionHeadlines || [];
   for (var j = 0; j < extra.length; j++) consider(extra[j]);
 
+  // ---- Layer 1b: (entity, overview) bucket ----------------------------------------------
+  // Catches reworded same-entity OVERVIEWS the lexical scan above misses. Fires ONLY when the
+  // candidate is itself an overview with a matched entity AND a LIVE canonical overview for that
+  // entity already exists (in the precomputed index, or a same-run sibling). Builds/news/counters
+  // are not overviews -> never bucketed -> never blocked here. A bucket hit is a HARD BLOCK: by
+  // construction it is overview-vs-overview for the same entity, i.e. a genuine duplicate.
+  if (opts.overviewIndex) {
+    var bkt = overviewBucket(candidateHeadline, opts.entities);
+    if (bkt) {
+      var canon = opts.overviewIndex.get(bkt) || null;
+      if (!canon) {
+        for (var s = 0; s < extra.length; s++) {
+          if (overviewBucket(extra[s] && extra[s].headline, opts.entities) === bkt) { canon = extra[s]; break; }
+        }
+      }
+      if (canon && canon.headline !== candidateHeadline) {
+        return {
+          block: true, reviewFlag: false, reason: 'overview-bucket', bucket: bkt,
+          match: { headline: canon.headline, slug: canon.slug || null, editor: canon.editor || null, score: 1, shared: 0 },
+        };
+      }
+    }
+  }
+
   if (!best) return { block: false, reviewFlag: false, match: null };
   var block = best.score >= DEDUP_BLOCK_THRESHOLD;
   var reviewFlag = !block && best.score >= DEDUP_REVIEW_THRESHOLD;
-  return { block: block, reviewFlag: reviewFlag, match: best };
+  return { block: block, reviewFlag: reviewFlag, reason: block ? 'lexical' : (reviewFlag ? 'lexical-review' : null), match: best };
 }
