@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Marathon 1.1.9 patch-notes article (NEXUS draft; Full-Auto section re-corrected)
+
+NEXUS 1.1.9 patch-notes article, grounded in Bungie 1.1.9 notes, DRAFT (operator publishes). New
+scripts/persist-marathon-119-patchnotes.mjs (mirrors persist-wardogs-economy.mjs; dry-run default,
+--commit, idempotent). Marathon renders in the /marathon/intel feed -- no section map. Title
+"Marathon 1.1.9 Patch Notes: Rook, Economy & Mod Fixes" (53 chars, SEO-targets the searched term).
+is_published=false, noindex=true; real source_url (bungie.net 1.1.9 article).
+
+FULL-AUTO SELECTOR -- the load-bearing re-correction (two wrong turns, now TRUE):
+- FIRST correction was WRONG: grounded in the ambiguous 1.1.9 note alone, it claimed the mod "never
+  increased fire rate / the number was never real." The operator then found Bungie's SEASON 2 COMBAT
+  TUNING PREVIEW (Steam, first-party) confirming the mod DOES boost RoF: +90 RPM (retuned from +150),
+  plus +50 ADS Speed, +50 ADS Accuracy, dual-mode (hipfire full-auto / ADS tighter + longer).
+- The article now tells the TRUE story: the RoF boost is REAL (+90 RPM); 1.1.9 fixed the in-game
+  TOOLTIP that stated the increase INCORRECTLY -- a wording fix, NOT a nerf, and NOT "never real."
+  Both sources cited in-body (S2 Combat Tuning Preview for the effect; 1.1.9 notes for the tooltip).
+
+REST OF THE ARTICLE (grounded, no invented meta-impact): C.A.R.R.I. economy (new Superior Shield
+Implant + Superior Backpack 3x/week; commendation cost cuts Deluxe Backpack 20->15, Deluxe Shield
+Implant 12->10, Deluxe Key Template 40->30, Superior Key Template 75->50); Rook temporary loadout
+(Sneak Pack, 2x Claymores, Depleted Self Revive, Signal Jammer -- UNTIL END OF S2); contract/codex/
+zone (Sponsored Night Marsh returns)/Cryo Archive/UI/localization/general fixes reported at the
+level Bungie gave.
+
+RELATED OPERATOR DB WRITE (flagged, NOT in this commit -- article commit is code-only): the mod_stats
+Full-Auto Selector row is currently WRONG -- the earlier wrong UPDATE (run by the operator) stripped
+the RoF boost (effect_desc "fires in full-auto", stat_changes only hipfire_spread). It must be
+re-corrected to the true S2 effect: stat_changes {rpm:+90, ads_speed:+50, ads_accuracy:+50}, effect_desc
+restoring the RoF-boost + dual-mode wording, verified per the S2 Combat Tuning Preview. Exact UPDATE
+was reported to the operator.
+
+Dry-run clean, ASCII, straight hyphens. Operator runs the persister (--commit) + publish + the
+mod_stats re-correction.
+
+---
 ## 2026-08-31 - Operator DB actions completed (catch-up; DB state as of 2026-08-31)
 
 DOC-ONLY. The HANDOFF completeness check found code commits are all documented but operator DB
