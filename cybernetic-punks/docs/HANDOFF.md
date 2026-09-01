@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-08-31 - Article 404 recovery page (/marathon/intel/[slug])
+
+Added app/marathon/intel/[slug]/not-found.js -- renders when page.js calls notFound() (a missing
+or unpublished article slug). Instead of a dead-end default 404, it surfaces 6 real recent
+published+indexable Marathon articles + 5 real hubs (All Intel, Weapon Tier List, Shells, Uniques,
+Maps), so a stale-link visitor (old Google result / bookmark to a deleted or re-slugged article)
+lands on live content and finds their way in.
+
+CONTEXT: the reverse-link diagnosis found the 404s are stale EXTERNAL links to /intel/<slug>
+articles that were deleted or re-slugged -- the /intel/:path* redirect faithfully forwards to
+/marathon/intel/<slug>, which 404s because that article is gone. This softens that landing (Part B).
+
+CRITICAL - proper status: returns HTTP 404 (NOT a soft-200), verified by curl, so Google does not
+index the recovery page; a live slug still returns 200. GROUNDED: links only real published+
+indexable articles + real hubs; the recent-articles fetch is try/caught so a build-time no-env
+render degrades to the hubs (never crashes). Dynamic (force-dynamic) so the recent list is live.
+ASCII-clean (&rarr; arrows). Additive, zero risk. Build green; verified live on the dead slug
+(renders + 404) and a live slug (200).
+
+PART C (churn root cause) DIAGNOSED, not fixed: slugs are time-derived (generateSlug =
+slugify(headline) + Date.now().toString(36).slice(-4), app/api/cron/route.js:81) + generation is
+INSERT-only (never upsert) + articles are retired by unpublish-or-hard-delete. A dead /intel/
+target forms whenever a retirement skips a redirect: dedup-unpublish without a 308, OR the admin
+CRUD hard-delete (app/api/admin/route.js:162, which killed ...-95bh -- gone from feed_items, no
+redirect). ONGOING (not a migration artifact), low-rate. DURABLE FIX (held for operator go): a
+redirects table consulted by not-found.js (301 if a mapping exists, else the recovery page) +
+a guard on admin hard-delete -- stops NEW dead targets regardless of how an article is retired.
+
+---
 ## 2026-08-31 - Cryo Archive reverse spoke -> hub link (two-way binding complete)
 
 Completes the two-way Cryo Archive cluster binding. Hub -> spokes shipped in b1bcb83
