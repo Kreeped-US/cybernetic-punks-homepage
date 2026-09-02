@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam per-weapon crawlable pages built (phase 3, build-order #4) -- HELD
+
+Built /bodycam/weapons/[slug] -- the other half of the builder SEO asset (with the #2 frame): a server-rendered page per REAL Bodycam weapon (weapon_stats has 20). Honest system content keyed per weapon; NO fabricated parts/numbers.
+
+- app/bodycam/weapons/[slug]/page.js: force-dynamic, mirrors the DMZ per-weapon + Marathon weapon-page pattern. Resolves [slug] -> a real weapon by fetching bodycam weapon names and matching entitySlugFor('weapon', name) (weapon_stats has no slug column); ALL reads scoped game_slug=bodycam (shared table). Bad slug -> notFound() (verified 404). generateMetadata: title "Bodycam <Weapon> Attachments & Build" (<=60 guard), honest description (no stat promises -- bodycam stats are null), robots noindex,follow derived from bodycam.indexable, canonical + openGraph + twitter. JSON-LD BreadcrumbList + WebPage. Crawlable content (h1 + 3 h2): the weapon (name + class), an honest-null "stats & parts pending" banner (+ weapon.notes if present), the attachment slots from lib/bodycam/slots.js, the rail->optic rule, the 8 effect axes -- all sourced, "specific compatible parts pending". Cross-links to /bodycam/builder + /bodycam/arsenal + /bodycam.
+- components/game/GameArsenal.js: each weapon name now LINKS to config.basePath + /weapons/ + entitySlugFor(weapon, name) -- the arsenal->weapon internal-link graph. GameArsenal is bodycam-only (consumed via GameSectionPage by /bodycam only), so no other game is affected. Verified: the arsenal renders 20 weapon links whose slugs resolve to the per-weapon pages.
+
+PER-PART pages (/bodycam/attachments/[slug]) DEFERRED -- bodycam_attachments is EMPTY, so there are no part slugs to route (never scaffold routes for entities that do not exist). Build when parts are seeded. This is the ONLY deferred piece.
+
+Verified: build passes (exit 0); /bodycam/weapons/[slug] registers; real slug (m1911) renders full SSR ranking content (title/robots noindex/canonical/JSON-LD/h1/h2 + weapon + slots + rule all in the SERVER HTML, not client-only); bad slug 404s; honest-null stats shown as pending (zero fabricated numbers); arsenal links all 20 weapons; only dev-HMR websocket noise in console; no other route/game changed (GameArsenal is bodycam-only). Phase 3 #4 DONE.
+
+PHASE 3 COMPLETE except the deferred per-part pages: resolver (#1) + SSR frame (#2) + interactive widget (#3) + per-weapon pages (#4) are all live. NEXT (blocked on external data): seed the honest-null parts roster when a published parts list exists (phase 2 step 2) -> the widget + weapon pages auto-fill and, with the indexable flip, auto-rank. bodycam.indexable stays false until then.
+
+---
+
 ## 2026-09-02 - BodycamBuilderClient interactive widget built (phase 3, build-order #3) -- HELD
 
 Built the client widget that mounts at the SSR frame placeholder and drives the interactive builder OVER the proven resolver. CRITICAL SEPARATION honored: the widget owns STATE + RENDER only; it calls resolveMountable (lib/bodycam/mountability.js, 17 tests) for EVERY gate decision -- it never re-derives the requires/provides / compat / slot-free logic.

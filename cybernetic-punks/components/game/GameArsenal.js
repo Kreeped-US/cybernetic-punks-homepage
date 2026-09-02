@@ -7,6 +7,7 @@
 // fact. First used by Bodycam via the shared GameSectionPage.
 
 import Link from 'next/link';
+import { entitySlugFor } from '@/lib/coverage';
 
 var FONT = 'Exo_2, system-ui, sans-serif';
 var AMBER = '#ffb400'; // the site-wide "unconfirmed" honesty marker
@@ -76,7 +77,7 @@ export default function GameArsenal({ config, section, weapons }) {
                 var t = tier(w);
                 return (
                   <div key={w.name} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '2px solid ' + t.color, borderRadius: '0 3px 3px 0', padding: '13px 15px' }}>
-                    <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 6 }}>{w.name}</div>
+                    <Link href={config.basePath + '/weapons/' + entitySlugFor('weapon', w.name)} style={{ display: 'block', fontFamily: FONT, fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 6, textDecoration: 'none' }}>{w.name}</Link>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: t.color }}>{t.label}</span>
                       {w.notes ? <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{w.notes}</span> : null}
