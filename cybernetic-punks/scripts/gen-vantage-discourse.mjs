@@ -37,6 +37,7 @@ import { ARTICLE_MODEL } from '../lib/models.js';
 import { VANTAGE_DISCOURSE_SYSTEM_PROMPT, VANTAGE_DISCOURSE_TOOL, buildVantageDiscoursePrompt } from '../lib/network/vantage.js';
 import { logCoverageShadow } from '../lib/coverageShadow.js';
 import { runVantageGate, formatGateReport } from '../lib/network/vantageGate.js';
+import { youtubeIdFromUrl, fetchYouTubeSource } from '../lib/gather/youtubeSource.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
 // Unlike gen-dmz-news.mjs this does NOT early-return on ANTHROPIC_API_KEY, since
@@ -129,6 +130,31 @@ async function main() {
     console.log('Queue one in admin: DIRECTIVES tab, editor=VANTAGE, type=discourse, paste the vetted source text + creator info.');
     return;
   }
+  // FETCH-ON-PASTE (YouTube only): when the directive has no source_text but its url is a
+  // YouTube video, auto-fetch the video (snippet metadata + free transcript) and populate
+  // source_text -- removing the hand-paste step for YouTube. Triggers ONLY when source_text
+  // is empty AND the url parses as a YouTube id: an operator paste always wins, and a
+  // non-YouTube url (X, Reddit, generic, unparseable) is left untouched to fall through to
+  // the paste-required refusal below. HONEST-NULL: a failed or too-thin fetch never
+  // fabricates source_text -- it logs why and lets the existing refusal fire (paste needed).
+  if ((!directive.source_text || !directive.source_text.trim()) && youtubeIdFromUrl(directive.url)) {
+    console.log('No source_text; url is a YouTube video -- attempting fetch-on-paste ...');
+    try {
+      var fetched = await fetchYouTubeSource(directive.url, process.env.YOUTUBE_API_KEY);
+      if (fetched && fetched.source_text && fetched.source_text.trim()) {
+        // ONLY source_text is populated here -- creator_info handling is unchanged. The
+        // video channel is captured INSIDE source_text ("CHANNEL: ...") for attribution;
+        // set the directive's creator name in admin for the render byline if you want it.
+        directive.source_text = fetched.source_text;
+        console.log('Fetched source_text from YouTube (' + fetched.source_text.length + ' chars, ' + (fetched.hadTranscript ? 'transcript present' : 'description-only') + ').');
+      } else {
+        console.error('YouTube fetch returned no usable source (no transcript AND thin/empty description, or the API key is unset). Not fabricating -- paste the vetted source_text into the directive and re-run.');
+      }
+    } catch (e) {
+      console.error('YouTube fetch failed: ' + e.message + '. Not fabricating -- paste the vetted source_text into the directive and re-run.');
+    }
+  }
+
   if (!directive.source_text || !directive.source_text.trim()) {
     console.error('ERROR: directive ' + directive.id + ' has no source_text. VANTAGE writes strictly from a vetted source -- refusing (no source => no article).');
     process.exit(1);

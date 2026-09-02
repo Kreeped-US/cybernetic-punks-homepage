@@ -40,6 +40,7 @@ import { filterGameVideos } from '../lib/gather/relevance.js';
 import { getGameConfig } from '../lib/games/index.js';
 import { logCoverageShadow } from '../lib/coverageShadow.js';
 import { runVantageGate, formatGateReport } from '../lib/network/vantageGate.js';
+import { youtubeIdFromUrl, buildSourceText } from '../lib/gather/youtubeSource.js';
 
 var GAME_SLUG = 'marathon';   // the gather is Marathon-only
 var MIN_DESC_CHARS = 300;     // eligibility floor: a description under ~300 chars is
@@ -75,33 +76,10 @@ function slugify(headline) {
   return (base || 'discourse') + '-' + hash;
 }
 
-// Extract the 11-char YouTube id from a watch/embed/youtu.be URL (dedup key).
-function youtubeIdFromUrl(url) {
-  if (!url) return null;
-  var m = String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
-
+// youtubeIdFromUrl + buildSourceText were MOVED to lib/gather/youtubeSource.js (shared with
+// the manual fetch-on-paste path in gen-vantage-discourse.mjs) and are imported above -- one
+// copy, no duplication. watchUrl stays local (used only here).
 function watchUrl(id) { return 'https://www.youtube.com/watch?v=' + id; }
-
-// Build the in-memory source_text from a video: title + channel + FULL description
-// + FULL transcript (not truncated -- the transcript/description is the honesty
-// substance, unlike formatForEditor's 800-char slice for the per-cycle prompt).
-function buildSourceText(v) {
-  var parts = [];
-  parts.push('VIDEO TITLE: ' + v.title);
-  parts.push('CHANNEL: ' + (v.channelTitle || v.channel || 'Unknown'));
-  if (v.published_at) parts.push('PUBLISHED: ' + v.published_at);
-  parts.push('');
-  parts.push('DESCRIPTION:');
-  parts.push((v.description && v.description.trim()) ? v.description.trim() : '(no description)');
-  if (v.transcript && v.transcript.trim()) {
-    parts.push('');
-    parts.push("AUTO-GENERATED TRANSCRIPT (the creator's actual words -- the primary substance):");
-    parts.push(v.transcript.trim());
-  }
-  return parts.join('\n');
-}
 
 async function main() {
   loadEnvLocal();

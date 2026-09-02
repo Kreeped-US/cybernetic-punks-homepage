@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Discourse fetch-on-paste for YouTube (revival build #2)
+
+gen-vantage-discourse.mjs now auto-fetches source_text when a discourse directive has a YouTube url but empty source_text -- removing the hand-paste step for YouTube. Reuses the existing YouTube plumbing (transcript.js fetchTranscript) plus a NEW single-video snippet read (videos.list by id), and builds source_text in the SAME shape the auto script uses.
+
+- NEW lib/gather/youtubeSource.js: youtubeIdFromUrl + buildSourceText LIFTED verbatim from gen-vantage-discourse-auto.mjs (one shared copy, no duplication), plus fetchYouTubeVideoMeta (videos.list snippet) + fetchYouTubeSource (orchestrator). Honest-null: returns null when the url is not YouTube, the API key is missing, the id is not found, or the source is too thin (no transcript AND description under 300 chars).
+- gen-vantage-discourse.mjs: fetch-on-paste step inserted BEFORE the source_text-empty refusal. Triggers ONLY when source_text is empty AND the url parses as YouTube; operator paste always wins; non-YouTube urls (X/Reddit/generic/unparseable) fall through to the unchanged refusal. A failed or too-thin fetch never fabricates -- it logs why and the existing refusal fires (paste required).
+- gen-vantage-discourse-auto.mjs: local youtubeIdFromUrl + buildSourceText removed, now imported from the shared module (dedup). watchUrl stays local.
+
+Scope-limited: only source_text is populated. creator_info handling is unchanged -- the video channel is captured inside source_text as "CHANNEL: ...". The honesty gate, generator prompt, draft insert, and is_published gating are all untouched. No DB writes. Part of the operator-flagged discourse revival (after the A11 ruling record, 7176d46). X/Reddit single-URL fetch = later fast-follow; admin-triggered generation = next brief (#2b).
+
+---
+
 ## 2026-09-02 - A11 recorded: VANTAGE discourse attribution / anti-laundering ruling
 
 Added A11 to the amendment ledger (docs/doctrine-v3-amendments.md) - the VANTAGE discourse attribution / anti-laundering ruling (Fable 2026-08-26, Q1 of the three-question doctrine doc: attribution, press-source tiering, bespoke scripts). Prerequisite for the VANTAGE discourse honesty gate build: the gate must quote ratified doctrine, and this ruling had been unrecorded until now - only the QUESTION was on file, which stalled a prior discourse revival.
