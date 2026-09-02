@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam maps/world reference doc captured, TIERED BY CONFIDENCE -- HELD
+
+Captured docs/bodycam/BODYCAM_MAPS_REFERENCE.md -- operator-verified Bodycam map/world facts as committed ground truth for map articles/pages, TIERED so a stale rotation is never published as fact. Companion to BODYCAM_SYSTEM_REFERENCE.md.
+
+Records: WORLD MODEL (no campaign/overworld/lore; disconnected real-world-inspired arenas seen through a bodycam + a persistent walkable HUB; the fiction is the footage); the HUB (Sept 2: open firing range/armory/attachment room/lounge/etc.; closed-for-maintenance obstacle course/shoot house/drone-RC rooms; a training compound with a tablet, not a city hub); WEATHER/LIGHTING (no live day-night; each match rolls a weighted lighting+weather scenario and holds it; host migration preserves it; stronger night moonlight; weather is a match modifier).
+
+MAPS -- the load-bearing tiering (explicit + unmissable): TIER A CONFIRMED CURRENT (Trenches, added this update -- flagship, minefield borders, drone/RC lanes, Hardpoint+Wingman; CQB/Powergun, real French airsoft site). TIER B CONFIRMED OUT (Oil Rig, Tumblewood -- announced, not in this update). TIER C MODE-DISABLED (Village + Asylum -- Zombies maps, Zombies off this patch, back for Halloween; not current PvP). TIER D HISTORICAL, last enumerated v0.7 (Nov 25 2025), NOT VERIFIED in the live Sept 2 build (Russian Building, Hospital, Rome, Worn House, Airsoft, Bomb House, Paintball, Public Pool, Warehouse, Logistics, Backrooms, The Pit, Shooting Range) -- recorded as a HISTORICAL INVENTORY, honest-null on live status, NEVER a current rotation (the "named once, not removed" rule is leaky; no v0.8 roster exists to verify). TIER E COMMUNITY-ATTRIBUTED (Boss Leroy Village Easter egg etc. -- flagged not first-party).
+
+USAGE (confirmed): Wingman 2v2 is the competitive mode (Body Bomb 5v5 gone; compatible maps got bombsites + side-switch; no mid-match join); Hardpoint on Trenches + CQB; gadgets are map FEATURES now (Trenches drone workshops + RC lanes). Writing rules included so downstream content qualifies each tier correctly. Sourced to the Sept 2 patch + devlogs (v0.7 notes for the historical pool, labeled; secondary coverage corroboration only; community bits attributed). ASCII, straight quotes. Reference doc, not rendered. No code, no DB. HELD for review.
+
+---
+
 ## 2026-09-02 - Bodycam article #1 shipped (does-bodycam-have-classes)
 
 - Operator DB action (rule 2): inserted 1 feed_items row, game_slug=bodycam, editor=NEXUS, section field-intel, slug does-bodycam-have-classes, is_published=true, noindex=true (live-but-noindex; bodycam.indexable false). SQL: docs/migrations/2026-09-02-bodycam-article-classes.sql. The quality-bar article ("Does Bodycam have classes? How the loadout system actually works"), grounded 100% in BODYCAM_SYSTEM_REFERENCE.md, zero fabricated numbers, operator-reviewed and approved.
