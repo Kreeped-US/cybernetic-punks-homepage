@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam attachment DDL FINALIZED (v3): reuse dmz_guard_game_slug(), no new function
+
+Finalized the DDL to eliminate the failure mode entirely. The prior failure was the dollar-quoted CREATE FUNCTION for bodycam_guard_game_slug not executing. v3 REMOVES that CREATE FUNCTION and instead REUSES the existing live generic dmz_guard_game_slug() (game-agnostic immutability guard) for both guard triggers; the updated_at triggers keep reusing the existing live set_updated_at(). No new function is created by the file, so there is no dollar-quoted block to mangle.
+
+- DB confirmed CLEAN SLATE before this (operator diagnostics): bodycam_attachment tables do NOT exist, bodycam_guard_game_slug() does NOT exist; dmz_guard_game_slug() + set_updated_at() DO exist as shared live functions.
+- The file now has ZERO literal dollar-quote sequences anywhere (comments reworded too), so it runs correctly whether executed whole or statement-by-statement. Still one BEGIN/COMMIT transaction (any error rolls back). DROP TABLE IF EXISTS ... CASCADE kept as harmless clean-slate insurance.
+- UNCHANGED from the approved schema: composite FK bodycam_attachment_weapon(game_slug, weapon_name) -> weapon_stats(game_slug, name); GIN indexes on requires_slots/provides_slots for the DAG traversal; all columns; RLS enable + public-read.
+- Cross-family naming coupling ACCEPTED as cosmetic: bodycam triggers call the dmz_-named generic guard. The body only enforces game_slug immutability (game-agnostic), so reuse is correct; only the name carries a dmz prefix.
+
+HELD on branch fix/bodycam-attachments-ddl-guardfn (v2 + v3 commits). No DDL run. Operator runs the whole final file after greenlight. bodycam.indexable stays false; no data seeded; no render built.
+
+---
+
 ## 2026-09-02 - URGENT fix: Bodycam attachment DDL failed on missing guard function (v2)
 
 The operator ran docs/migrations/2026-09-02-bodycam-attachments-schema.sql and it FAILED: 42883 "function bodycam_guard_game_slug() does not exist" at the first guard trigger. DIAGNOSIS: the file DID create that function (line 30), correctly ordered before the trigger, inside the transaction -- so it is NOT a missing/misordered/misnamed defect in the file text. Execution reached the trigger with the table + indexes already created but the function absent, which means the $$-dollar-quoted CREATE FUNCTION did not execute in the same pass as the plain statements -- the signature of a PARTIAL/selection run or a client that splits the script on ";" and mangles the $$ body (Supabase's own SQL editor handles $$ correctly when the whole file is run at once).
