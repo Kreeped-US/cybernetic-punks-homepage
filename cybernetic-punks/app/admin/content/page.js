@@ -571,6 +571,7 @@ export default function AdminContentPage() {
   const [showAddForm, setShowAddForm]     = useState(false);
   const [formData, setFormData]           = useState({});
   const [saving, setSaving]               = useState(false);
+  const [generatingId, setGeneratingId]   = useState(null); // directive id currently generating (client concurrency guard)
   const [toast, setToast]                 = useState(null);
   const [search, setSearch]               = useState('');
   const [filterFaction, setFilterFaction] = useState('');
@@ -594,6 +595,35 @@ export default function AdminContentPage() {
 
   function apiHeaders() {
     return { 'Content-Type': 'application/json', 'x-admin-password': password };
+  }
+
+  // Admin-triggered VANTAGE discourse generation (#2b). Runs the SAME gen core the CLI does,
+  // server-side and synchronously, producing an is_published=false DRAFT (reviewed + approved
+  // in the DRAFTS panel). Client concurrency guard: generatingId disables the button while
+  // in-flight; the server also atomically claims the directive so a double-trigger can't
+  // double-draft. On success the directive flips to consumed locally (drops the Generate button).
+  async function generateDirective(row) {
+    if (generatingId) return;
+    setGeneratingId(row.id);
+    try {
+      const res = await fetch('/api/admin/drafts/generate', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ directiveId: row.id }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.ok === false) throw new Error(json.error || ('Failed (' + res.status + ')'));
+      if (json.skipped) {
+        showToast('VANTAGE skipped -- source too thin. Directive left pending.', false);
+      } else {
+        setRows(rows.map(r => r.id === row.id ? { ...r, status: 'consumed' } : r));
+        showToast(json.existed ? ('Draft already existed: ' + json.slug) : ('Draft generated: ' + json.slug + ' -- review in the DRAFTS panel'));
+      }
+    } catch (e) {
+      showToast('Generate failed: ' + e.message, false);
+    } finally {
+      setGeneratingId(null);
+    }
   }
 
   // Deep-link support: /admin/content?tab=editor_directives (used by the shell nav +
@@ -1196,6 +1226,9 @@ export default function AdminContentPage() {
                 <div key={row.id} style={{ background: editingRow === row.id ? rowAccent + '08' : S.surface, border: '1px solid ' + (editingRow === row.id ? rowAccent + '44' : S.border), borderLeft: '3px solid ' + (editingRow === row.id ? rowAccent : rowAccent + '55'), borderRadius: 6, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>{rowPreview(row)}</div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    {isDirectives && row.status === 'pending' && row.directive_type === 'discourse' && (
+                      <button onClick={() => generateDirective(row)} disabled={generatingId === row.id} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid #c8d4e055', borderRadius: 4, color: '#c8d4e0', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: generatingId === row.id ? 'default' : 'pointer', letterSpacing: 1, opacity: generatingId === row.id ? 0.5 : 1 }}>{generatingId === row.id ? 'GENERATING...' : 'GENERATE'}</button>
+                    )}
                     <button onClick={() => startEdit(row)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid ' + rowAccent + '44', borderRadius: 4, color: rowAccent, fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>EDIT</button>
                     <button onClick={() => deleteRow(row.id, row.name || row.item_name || row.material_name || row.zone_name || row.boss_name || row.event_name || row.mode_name || (row.instruction || '').slice(0, 30) || row.shell_name)} style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 4, color: '#ff4444', fontFamily: 'Share Tech Mono, monospace', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>DEL</button>
                   </div>

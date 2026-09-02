@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Admin-triggered discourse generation (#2b)
+
+The operator can now generate a VANTAGE discourse draft from the admin DIRECTIVES tab instead of running the CLI. Synchronous execution (Vercel Pro, maxDuration=120).
+
+- NEW lib/network/discourseGen.js: generateDiscourseDraft(supabase, {directiveId, dry, coverageSource, log, logError}) -- the gen core lifted out of the CLI. Returns a RESULT OBJECT (never process.exit, never throws for expected failures). Flow: select directive (by id, else oldest pending FIFO) -> fetch-on-paste (youtubeSource) -> source_text check -> CLAIM -> generate (ARTICLE_MODEL) -> runVantageGate report -> game_slug validation (gamesWithDiscourse) -> insert is_published=false + noindex=true draft. slugify + sourceLabelFor moved here.
+- scripts/gen-vantage-discourse.mjs: thinned to a wrapper (env loader + argv + service-key client -> generateDiscourseDraft, passing console.log/console.error). CLI behavior identical -- same selection, --dry, --id, gate print, and exit codes (force-exit 1 on failure; natural drain otherwise, as before). Verified: --dry --id <nonexistent> prints the same not-found message and exits 0.
+- NEW app/api/admin/drafts/generate/route.js: sync trigger. dynamic=force-dynamic, maxDuration=120. Auth copied verbatim from drafts/approve (SHA-256 constant-time + per-IP lockout). POST {directiveId} -> 200 {draftId, slug, gateReport} | 404 not_found | 409 not_pending | 422 validation refusal | 502 model | 500 else. Secrets stay server-side; the client sends only directiveId + the x-admin-password header.
+- app/admin/content/page.js: a GENERATE button per PENDING discourse directive row (disabled in-flight via generatingId). On success the row flips to consumed locally and a toast points to the DRAFTS panel.
+
+CONCURRENCY (both layers): client -- generatingId disables the button while in-flight. Server -- claim-first atomic guard: the core flips the directive status pending->consumed WHERE status=pending BEFORE the Anthropic call; if that claims 0 rows (a concurrent call took it), it returns not_pending and does NOT generate. Any non-success after the claim ROLLS BACK to pending, so a failed / skipped / duplicate attempt never strands the directive. This -- not slugify's Date.now hash -- is what prevents double-drafts. Net end-state matches the old CLI (consumed on success, pending otherwise).
+
+Same is_published=false draft; runVantageGate + game_slug validation still in path; NO auto-publish; the A11 gate at drafts/approve is untouched. No schema change, no client-exposed secrets.
+
+---
+
 ## 2026-09-02 - A11 enforcing honesty gate (approve chokepoint)
 
 The VANTAGE discourse honesty gate now ENFORCES at the publish chokepoint (doctrine A11, recorded 7176d46). Stateless, ROW-ONLY -- no source_text, no schema change, no gate_status collision.

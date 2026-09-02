@@ -2,27 +2,17 @@
 // ============================================================
 // VANTAGE DISCOURSE-ARTICLE DRAFT GENERATOR (Phase 1). MANUAL. DRAFT-ONLY.
 // ============================================================
-// Reads a human-curated discourse directive from editor_directives
-// (editor='VANTAGE', directive_type='discourse', status='pending'), has VANTAGE
-// write a discourse ARTICLE strictly from the vetted source_text, and inserts it
-// into feed_items as an UNPUBLISHED DRAFT (is_published=false). Then marks the
-// directive consumed.
+// THIN CLI WRAPPER over lib/network/discourseGen.js (generateDiscourseDraft). The gen
+// core is shared with the admin trigger route (app/api/admin/drafts/generate) so both
+// paths behave identically -- this file only loads .env.local, parses argv, constructs a
+// service-key Supabase client, calls the core (passing console.log / console.error so the
+// original console output is preserved verbatim), and maps the result to an exit code.
 //
-// HARD SAFETY GATE (Phase 1): this NEVER publishes and NEVER renders. The draft
-// row is is_published=false + noindex=true. There is no approve->publish action
-// and no render route in this phase -- those are Phase 2, built only after the
-// owner verifies these drafts are honest. This script cannot flip is_published.
-//
-// HONESTY: VANTAGE writes STRICTLY from the directive's vetted source_text (the
-// only permitted source of facts about the creator), never asserts a game's
-// facts in her own voice, and never invents anything about the real person. The
-// enforcement lives in lib/network/vantage.js (VANTAGE_DISCOURSE_SYSTEM_PROMPT).
-// If the source is too thin to write honestly, VANTAGE skips and nothing writes.
-//
-// This path is FULLY ISOLATED from the Marathon editor machinery and from the
-// daily cron -- it is web-unreachable and never auto-fires. It reuses ONLY the
-// Anthropic SDK + ARTICLE_MODEL + the VANTAGE discourse exports + a Supabase
-// service-key client (same pattern as scripts/persist-dmz-news.mjs).
+// Reads a human-curated discourse directive from editor_directives (editor='VANTAGE',
+// directive_type='discourse', status='pending'), has VANTAGE write a discourse ARTICLE
+// strictly from the vetted source_text, and inserts it into feed_items as an UNPUBLISHED
+// DRAFT (is_published=false, noindex=true). Then marks the directive consumed. It NEVER
+// publishes and NEVER renders -- publishing is the separate approve step (with the A11 gate).
 //
 // RUN:  node scripts/gen-vantage-discourse.mjs            (oldest pending VANTAGE discourse directive)
 //       node scripts/gen-vantage-discourse.mjs --dry      (generate + print, write NOTHING, leave directive pending)
@@ -30,19 +20,11 @@
 // Needs ANTHROPIC_API_KEY + NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_KEY --
 // auto-loaded from .env.local if not already in env.
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
-import { ARTICLE_MODEL } from '../lib/models.js';
-import { VANTAGE_DISCOURSE_SYSTEM_PROMPT, VANTAGE_DISCOURSE_TOOL, buildVantageDiscoursePrompt } from '../lib/network/vantage.js';
-import { logCoverageShadow } from '../lib/coverageShadow.js';
-import { runVantageGate, formatGateReport } from '../lib/network/vantageGate.js';
-import { youtubeIdFromUrl, fetchYouTubeSource } from '../lib/gather/youtubeSource.js';
-import { gamesWithDiscourse } from '../lib/games/index.js';
+import { generateDiscourseDraft } from '../lib/network/discourseGen.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
-// Unlike gen-dmz-news.mjs this does NOT early-return on ANTHROPIC_API_KEY, since
-// this script also needs the Supabase keys.
 function loadEnvLocal() {
   var raw;
   try {
@@ -65,30 +47,6 @@ function loadEnvLocal() {
   }
 }
 
-function slugify(headline) {
-  var base = (headline || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 70);
-  var hash = Date.now().toString(36).slice(-4);
-  return (base || 'discourse') + '-' + hash;
-}
-
-// Bottom-of-article source label by URL type (mirrors the cron's creator-spotlight
-// labelling so the eventual render doesn't mislabel the link). Default DISCOURSE.
-function sourceLabelFor(url) {
-  if (!url) return 'DISCOURSE';
-  var u = url.toLowerCase();
-  if (u.includes('twitch.tv')) return 'TWITCH';
-  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YOUTUBE';
-  if (u.includes('x.com') || u.includes('twitter.com')) return 'X';
-  if (u.includes('reddit.com')) return 'REDDIT';
-  return 'DISCOURSE';
-}
-
 async function main() {
   loadEnvLocal();
   var dry = process.argv.indexOf('--dry') !== -1;
@@ -96,10 +54,9 @@ async function main() {
   var idIdx = process.argv.indexOf('--id');
   if (idIdx !== -1 && process.argv[idIdx + 1]) idArg = process.argv[idIdx + 1];
 
-  var anthropicKey = process.env.ANTHROPIC_API_KEY;
   var url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   var key = process.env.SUPABASE_SERVICE_KEY;
-  if (!anthropicKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     console.error('ERROR: ANTHROPIC_API_KEY must be set (env or .env.local).');
     process.exit(1);
   }
@@ -109,190 +66,20 @@ async function main() {
   }
 
   var supabase = createClient(url, key);
-
-  // 1. Fetch the target pending VANTAGE discourse directive (oldest, or by --id).
-  var q = supabase
-    .from('editor_directives')
-    .select('id, editor, instruction, url, directive_type, source_text, creator_info, status')
-    .eq('editor', 'VANTAGE')
-    .eq('directive_type', 'discourse')
-    .eq('status', 'pending');
-  if (idArg) q = q.eq('id', idArg);
-  q = q.order('created_at', { ascending: true }).limit(1);
-
-  var dirRes = await q;
-  if (dirRes.error) {
-    console.error('ERROR reading editor_directives: ' + dirRes.error.message);
-    process.exit(1);
-  }
-  var directive = dirRes.data && dirRes.data[0];
-  if (!directive) {
-    console.log('No pending VANTAGE discourse directive found.');
-    console.log('Queue one in admin: DIRECTIVES tab, editor=VANTAGE, type=discourse, paste the vetted source text + creator info.');
-    return;
-  }
-  // FETCH-ON-PASTE (YouTube only): when the directive has no source_text but its url is a
-  // YouTube video, auto-fetch the video (snippet metadata + free transcript) and populate
-  // source_text -- removing the hand-paste step for YouTube. Triggers ONLY when source_text
-  // is empty AND the url parses as a YouTube id: an operator paste always wins, and a
-  // non-YouTube url (X, Reddit, generic, unparseable) is left untouched to fall through to
-  // the paste-required refusal below. HONEST-NULL: a failed or too-thin fetch never
-  // fabricates source_text -- it logs why and lets the existing refusal fire (paste needed).
-  if ((!directive.source_text || !directive.source_text.trim()) && youtubeIdFromUrl(directive.url)) {
-    console.log('No source_text; url is a YouTube video -- attempting fetch-on-paste ...');
-    try {
-      var fetched = await fetchYouTubeSource(directive.url, process.env.YOUTUBE_API_KEY);
-      if (fetched && fetched.source_text && fetched.source_text.trim()) {
-        // ONLY source_text is populated here -- creator_info handling is unchanged. The
-        // video channel is captured INSIDE source_text ("CHANNEL: ...") for attribution;
-        // set the directive's creator name in admin for the render byline if you want it.
-        directive.source_text = fetched.source_text;
-        console.log('Fetched source_text from YouTube (' + fetched.source_text.length + ' chars, ' + (fetched.hadTranscript ? 'transcript present' : 'description-only') + ').');
-      } else {
-        console.error('YouTube fetch returned no usable source (no transcript AND thin/empty description, or the API key is unset). Not fabricating -- paste the vetted source_text into the directive and re-run.');
-      }
-    } catch (e) {
-      console.error('YouTube fetch failed: ' + e.message + '. Not fabricating -- paste the vetted source_text into the directive and re-run.');
-    }
-  }
-
-  if (!directive.source_text || !directive.source_text.trim()) {
-    console.error('ERROR: directive ' + directive.id + ' has no source_text. VANTAGE writes strictly from a vetted source -- refusing (no source => no article).');
-    process.exit(1);
-  }
-
-  var creatorName = (directive.creator_info && directive.creator_info.name) || '(unnamed)';
-  console.log('Directive: ' + directive.id + '   creator=' + creatorName);
-
-  // 2. Generate the discourse article (tool-forced, ARTICLE_MODEL).
-  var anthropic = new Anthropic({ apiKey: anthropicKey });
-  var userPrompt = buildVantageDiscoursePrompt(directive);
-  var message;
-  try {
-    message = await anthropic.messages.create({
-      model: ARTICLE_MODEL,
-      max_tokens: 2000,
-      system: VANTAGE_DISCOURSE_SYSTEM_PROMPT,
-      tools: [VANTAGE_DISCOURSE_TOOL],
-      tool_choice: { type: 'tool', name: VANTAGE_DISCOURSE_TOOL.name },
-      messages: [{ role: 'user', content: userPrompt }],
-    });
-  } catch (e) {
-    console.error('ANTHROPIC error: ' + e.message);
-    process.exit(1);
-  }
-
-  var block = (message.content || []).find(function (b) {
-    return b.type === 'tool_use' && b.name === VANTAGE_DISCOURSE_TOOL.name;
-  });
-  if (!block) {
-    console.error('No tool_use returned (stop_reason=' + message.stop_reason + ').');
-    process.exit(1);
-  }
-  var out = block.input || {};
-  if (out.skip === true || !out.headline || !out.body) {
-    console.log('VANTAGE SKIPPED -- source insufficient for an honest article. Nothing written; directive left pending.');
-    if (out.skip_reason) console.log('  reason: ' + out.skip_reason);
-    return;
-  }
-
-  // 3. Build the DRAFT feed_items row. is_published=false is the HARD GATE;
-  //    noindex=true is defense-in-depth (both NOT NULL columns are set). game_slug
-  //    is the SUBJECT game -- it decides the article's canonical home and render
-  //    path (marathon -> /intel, dmz -> /dmz/discourse). REQUIRED: refuse rather
-  //    than silently default, so a marathon-subject piece can never land in DMZ.
-  //    Set it via the directive's "Game Slug (discourse)" field (creator_info.game_slug).
-  var gameSlug = directive.creator_info && directive.creator_info.game_slug;
-  if (!gameSlug || !String(gameSlug).trim()) {
-    console.error('ERROR: directive ' + directive.id + ' has no Game Slug (creator_info.game_slug). Set it to the SUBJECT game (e.g. marathon or dmz) in the directive -- refusing to guess.');
-    process.exit(1);
-  }
-  gameSlug = String(gameSlug).trim().toLowerCase();
-  // Defense-in-depth (mirrors the admin selector): the game_slug MUST be a discourse-capable
-  // game, so even a directive created outside the form (SQL/script) can't orphan an article
-  // under a game with no discourse render surface. Derived from gamesWithDiscourse() -- the
-  // same source of truth the selector reads -- so it auto-widens as games gain discourse.
-  var supportedDiscourse = gamesWithDiscourse().map(function (g) { return g.slug; });
-  if (supportedDiscourse.indexOf(gameSlug) === -1) {
-    console.error('ERROR: directive ' + directive.id + ' has game_slug "' + gameSlug + '", which is not a discourse-capable game. Supported today: ' + supportedDiscourse.join(', ') + ' (a game becomes supported when it gains a discourse render surface). Refusing to create an orphan.');
-    process.exit(1);
-  }
-  var slug = slugify(out.headline);
-  var row = {
-    headline: out.headline,
-    body: out.body,
-    editor: 'VANTAGE',
-    source: sourceLabelFor(directive.url),
-    source_url: directive.url || null,
-    tags: ['discourse'],
-    ce_score: 0,
-    is_published: false, // DRAFT -- Phase 1 hard gate. Nothing publishes here.
-    noindex: true,       // NOT NULL + defense-in-depth until a Phase 2 approve.
-    thumbnail: null,
-    slug: slug,
-    game_slug: gameSlug, // NOT NULL.
-    directive_type: 'discourse',
-    creator_info: directive.creator_info || {},
-  };
-
-  console.log('');
-  console.log('===== GENERATED DRAFT (review before it can ever publish) =====');
-  console.log('HEADLINE: ' + row.headline);
-  console.log('GAME: ' + row.game_slug + '   SOURCE: ' + row.source + '   URL: ' + (row.source_url || '(none)'));
-  console.log('SLUG: ' + row.slug);
-  console.log('---------------------------------------------------------------');
-  console.log(row.body);
-  console.log('===============================================================');
-  console.log('');
-
-  // VANTAGE HONESTY GATE (Phase 1 -- DETECTION, non-blocking). Runs and prints flags for the
-  // human reviewer; it NEVER blocks or touches is_published. The human is still the backstop.
-  console.log(formatGateReport(runVantageGate(row, directive.source_text)));
-  console.log('');
-
-  if (dry) {
-    console.log('DRY RUN -- nothing written, directive left pending.');
-    return;
-  }
-
-  // 4. Insert as a DRAFT (idempotent on slug within the game).
-  var existing = await supabase
-    .from('feed_items')
-    .select('id')
-    .eq('slug', slug)
-    .eq('game_slug', gameSlug)
-    .maybeSingle();
-  if (existing.data) {
-    console.log('SKIP insert (slug already exists): ' + slug + '  id=' + existing.data.id);
-    return;
-  }
-  // COVERAGE SHADOW (Unit 4b) -- LOG ONLY, fail-open. This path bypasses the
-  // cron's processEditor entirely. Never blocks: the insert below runs
-  // unconditionally, and the probe cannot reach the process.exit(1) path.
-  await logCoverageShadow(supabase, {
-    source: 'vantage-manual',
-    editor: 'VANTAGE',
-    gameSlug: gameSlug,
-    headline: row.headline,
+  var result = await generateDiscourseDraft(supabase, {
+    directiveId: idArg,
+    dry: dry,
+    log: console.log,
+    logError: console.error,
   });
 
-  var ins = await supabase.from('feed_items').insert(row).select('id, slug, is_published').maybeSingle();
-  if (ins.error) {
-    console.error('INSERT FAILED: ' + ins.error.message);
-    process.exit(1);
-  }
-  console.log('DRAFT INSERTED: id=' + ins.data.id + '  slug=' + ins.data.slug + '  is_published=' + ins.data.is_published + ' (DRAFT -- not published, not rendered).');
-
-  // 5. Mark the directive consumed (mirrors the cron's directive lifecycle).
-  var upd = await supabase
-    .from('editor_directives')
-    .update({ status: 'consumed', consumed_at: new Date().toISOString() })
-    .eq('id', directive.id);
-  if (upd.error) console.error('WARN: failed to mark directive consumed: ' + upd.error.message);
-  else console.log('Directive ' + directive.id + ' marked consumed.');
-
-  console.log('');
-  console.log('Review the draft in admin (DRAFTS panel) or Supabase. Phase 2 adds the approve->publish action + render route.');
+  // Exit code, matching the old CLI: a real failure force-exits 1; success + informational
+  // outcomes (created / skipped / dry / exists / not_found / not_pending) just RETURN and let
+  // the process drain naturally, exactly as the old script did (which only ever called
+  // process.exit on error branches). Forcing exit(0) mid-async would abort open sockets.
+  var softCodes = ['not_found', 'not_pending'];
+  var failed = !(result.ok || softCodes.indexOf(result.code) !== -1);
+  if (failed) process.exit(1);
 }
 
 main();
