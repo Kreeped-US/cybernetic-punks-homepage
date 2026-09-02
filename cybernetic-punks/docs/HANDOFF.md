@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam builder SSR frame built (phase 3, build-order #2) -- HELD
+
+Built /bodycam/builder as a CRAWLABLE, SEO-first content page -- the SEO asset of the whole builder feature lives here (the client widget is not crawlable). app/bodycam/builder/page.js: a pure SERVER component (all content SSR), force-dynamic, inheriting the bodycam GameLayout chrome + theme (steel-cyan #3d97b8 via --accent).
+
+- SEO surface (verified in RAW SSR HTML via curl): title "Bodycam Attachments & Weapon Builder"; meta description targeting the confirmed search space; robots noindex,follow (DERIVED from bodycam.indexable=false -- flips to indexable automatically when the vertical opens, and the page is already content-rich so it ranks immediately, no shell); canonical https://cyberneticpunks.com/bodycam/builder; JSON-LD BreadcrumbList + WebPage (the house pattern); openGraph + twitter. Matches the Marathon build-tool / DMZ per-weapon generateMetadata + JSON-LD conventions.
+- CRAWLABLE CONTENT (server-rendered, in the SSR HTML -- h1 + five h2 sections): the attachment SYSTEM explainer -- the confirmed slot taxonomy (12 slot types + subtypes as a semantic table), the rail->optic mounting rule ("mount a rail before a sight", sourced), the 8 effect axes (ADS/switch/reload speed, h/v recoil, spread, kick, ammo capacity), and the size-vs-control design principle. All sourced from docs/bodycam/ATTACHMENT_SEED_SCOPING.md (patch + devlog). ZERO fabricated part names or numbers (confirmed: no numeric stat claims in the file).
+- Honest posture banner ("system confirmed -- parts & values pending") + internal links to /bodycam and /bodycam/arsenal.
+- The #3 client-builder mount is an HONEST PLACEHOLDER (a slot-frame showing all slots with "parts pending"), clearly marked where BodycamBuilderClient will mount over lib/bodycam/mountability -- NOT the widget.
+
+Verified: build passes (exit 0), /bodycam/builder registers (dynamic); raw SSR HTML carries the title/description/robots/canonical/JSON-LD + h1/h2 + all sourced content (crawlable, not client-only); pure server component (no use client); zero console errors; noindex while indexable:false but fully search-ready; no fabricated content; no existing game/route changed (only app/bodycam/builder/ added). Phase 3 #2 DONE.
+
+NEXT (gated): #3 BodycamBuilderClient (the interactive widget over the resolver, mounting at the placeholder) -> #4 crawlable per-weapon/per-part shells. bodycam.indexable stays false.
+
+---
+
 ## 2026-09-02 - Bodycam mountability DAG resolver built + tested (phase 3, build-order #1) -- HELD
 
 Built the ONE genuinely novel piece isolated, DB-free, UI-free, and proven by ACTUAL TESTS before any UI/route/data depends on it (per the approved architecture).
