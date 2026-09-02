@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Inert pre-flip Bodycam sitemap wiring landed (all 4 pieces, gated) -- HELD
+
+Wired bodycam into the sitemap system NOW, fully but GATED on getIndexableGames().includes(bodycam) so it is INERT while bodycam.indexable is false. Removes the flip landmine: previously flipping indexable would surface bodycam with NO sitemap, and half-wiring (an eligible block without a partition bucket) would crash the build via assertPartition -- the exact failure this session already hit. All four pieces landed TOGETHER, mirroring the wardogs/pubg-dednet pattern.
+
+- eligible.js: added BC=bodycam + a bodycam emission block gated on getIndexableGames().includes(BC). Emits (on the flip) the landing /bodycam, /bodycam/builder, content-bearing sections (via the SHARED sectionHasContent from components/game/GameSectionPage -- no drift with the page noindex tag), published+noindex=false articles (so the live-but-noindex classes explainer stays out until its own noindex clears -- same gate as the marathon emitter), and the per-weapon /bodycam/weapons/<slug> pages (weapon_stats, game_slug=bodycam-scoped, entitySlugFor). Per-part /bodycam/attachments/<slug> DEFERRED (bodycam_attachments empty).
+- partition.js: added the bodycam bucket + else-if (e.game===bodycam) BEFORE the marathon catch-all + return entry + union-size-check term + assertPartition bucket-loop entry. This is what prevents the half-wire crash: a bodycam URL now routes to its bucket instead of the else-throw.
+- app/sitemap-bodycam.xml/route.js: new child route mirroring sitemap-wardogs.xml (reads the bodycam bucket; empty urlset while inert).
+- app/sitemap.xml (index): added a CONDITIONAL bodycam child gated on getIndexableGames().includes(bodycam) -- inert now, so the index XML is byte-identical while bodycam excluded.
+
+Verified: BUILD PASSES (exit 0, no assertPartition/union error, all sitemap children prerender incl. sitemap-bodycam.xml). INERT PROOF: getIndexableGames()=[marathon,dmz,wardogs,pubg-dednet] (excludes bodycam); the eligible bodycam block emits ZERO; partition assigns zero bodycam entries; /sitemap.xml lists the 6 pre-existing children with ZERO sitemap-bodycam occurrences (byte-identical); /sitemap-bodycam.xml renders an empty urlset (0 url). partition unit tests 10/10 pass (no regression). No other game sitemap changed; bodycam.indexable STILL false (not flipped).
+
+FLIP-READINESS: flipping bodycam.indexable:true now surfaces bodycam WITH a correct sitemap (index child + emitted landing/builder/sections/articles/weapons) and does NOT crash partition -- the flip is a one-line config change. (Also add a bodycam attachments emission once parts are seeded.)
+
+---
+
 ## 2026-09-02 - Bodycam maps/world reference doc captured, TIERED BY CONFIDENCE -- HELD
 
 Captured docs/bodycam/BODYCAM_MAPS_REFERENCE.md -- operator-verified Bodycam map/world facts as committed ground truth for map articles/pages, TIERED so a stale rotation is never published as fact. Companion to BODYCAM_SYSTEM_REFERENCE.md.

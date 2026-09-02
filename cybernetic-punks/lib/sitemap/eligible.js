@@ -26,19 +26,21 @@ import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { wardogs, wardogsSectionForArticle } from '@/lib/games/wardogs';
 import { pubgDednet, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
+import { bodycam, bodycamSectionForArticle, bodycamArticleSlugsForSection } from '@/lib/games/bodycam';
 import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { sectionHasContent } from '@/lib/dmz/sections';
 import { sectionHasContent as wardogsSectionHasContent } from '@/lib/wardogs/sections';
 import { sectionHasContent as dednetSectionHasContent } from '@/lib/pubg-dednet/sections';
+import { sectionHasContent as bodycamSectionHasContent } from '@/components/game/GameSectionPage';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug, MATCHUP_VERIFIED_DATE } from '@/lib/matchups';
 import { hasShellGuide } from '@/lib/shellGuides';
 import { FACTS_UPDATED } from '@/lib/vaultBreaker';
 
 const BASE = 'https://cyberneticpunks.com';
-const M = 'marathon', D = 'dmz', W = 'wardogs', PD = 'pubg-dednet';
+const M = 'marathon', D = 'dmz', W = 'wardogs', PD = 'pubg-dednet', BC = 'bodycam';
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -330,6 +332,49 @@ export async function computeEligible() {
 
     // The /pubg-dednet landing itself (indexable while pubg-dednet.indexable; DB-driven -> no lastmod).
     add(BASE + '/pubg-dednet', PD, 'pubg-dednet-section', undefined, 'daily', 0.9);
+  }
+
+  // ── BODYCAM (game='bodycam'), gated on the INDEXABILITY axis. INERT while bodycam.indexable is
+  // false: getIndexableGames() excludes it -> this whole block emits NOTHING -> the partition
+  // bodycam bucket stays empty -> the sitemap index is byte-identical. On the flip it emits the
+  // landing, the builder, content-bearing sections, published+noindex=false articles, and the
+  // per-weapon pages -- so the flip is a one-line config change with a correct sitemap, not an
+  // articles-only gap. Per-part pages (/bodycam/attachments/<slug>) are DEFERRED: bodycam_attachments
+  // is empty (no slugs to emit); add when parts are seeded. All reads game_slug='bodycam'-scoped
+  // (shared tables). Errors caught + logged (non-fatal; the block yields 0 URLs on error).
+  if (getIndexableGames().includes(BC)) {
+    // Articles: published AND noindex=false -- same honesty gate as the marathon emitter, so a
+    // live-but-noindex row (e.g. the classes explainer) stays OUT of the sitemap until its own
+    // noindex clears. Section derived per-row via bodycamSectionForArticle (unmapped -> dropped).
+    try {
+      const { data: bcRows } = await supabase.from('feed_items')
+        .select('slug, created_at, updated_at, tags').eq('game_slug', BC).eq('is_published', true).eq('noindex', false)
+        .order('created_at', { ascending: false });
+      (bcRows || []).map((r) => ({ r, section: bodycamSectionForArticle(r) })).filter((x) => x.section)
+        .forEach((x) => add(BASE + '/bodycam/' + x.section + '/' + x.r.slug, BC, 'bodycam-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
+    } catch (err) { console.error('[sitemap] bodycam feed fetch threw:', err); }
+
+    // Section hubs, gated on the SHARED sectionHasContent predicate -- the SAME one the
+    // /bodycam/[section] noindex tag uses (components/game/GameSectionPage), so the sitemap and the
+    // page never drift. Data sections (arsenal/maps) return false (source!=='editor') and are excluded.
+    try {
+      for (const sec of bodycam.sections) {
+        if (!(await bodycamSectionHasContent(bodycam, sec, bodycamArticleSlugsForSection))) continue;
+        add(BASE + '/bodycam/' + sec.slug, BC, 'bodycam-section', undefined, 'weekly', 0.8);
+      }
+    } catch (err) { console.error('[sitemap] bodycam section gate threw:', err); }
+
+    // Per-weapon pages (/bodycam/weapons/<slug>) -- the real weapon_stats roster, game_slug-scoped
+    // (shared table). Slug via entitySlugFor('weapon', name), matching the arsenal links + the
+    // per-weapon route resolver. lastmod = updated_at.
+    try {
+      const { data: bcWeapons } = await supabase.from('weapon_stats').select('name, updated_at').eq('game_slug', BC).order('name');
+      (bcWeapons || []).forEach((w) => add(BASE + '/bodycam/weapons/' + entitySlugFor('weapon', w.name), BC, 'bodycam-weapon', lm(w.updated_at), 'weekly', 0.7));
+    } catch (err) { console.error('[sitemap] bodycam weapons fetch threw:', err); }
+
+    // The builder tool + the landing (DB-driven -> no lastmod).
+    add(BASE + '/bodycam/builder', BC, 'bodycam-section', undefined, 'weekly', 0.8);
+    add(BASE + '/bodycam', BC, 'bodycam-section', undefined, 'daily', 0.9);
   }
 
   // RUNTIME PARTITION INVARIANT (Change 1): assert union==eligible-set AND pairwise

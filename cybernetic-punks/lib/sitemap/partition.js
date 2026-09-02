@@ -18,12 +18,13 @@
 // NOTE the dmz-build branch is BEFORE the dmz catch-all, so /dmz/builds/* routes to its
 // own child rather than being absorbed into sitemap-dmz.xml.
 export function partitionEligible(eligible) {
-  const dmz = [], dmzBuilds = [], intel = [], entities = [], wardogs = [], pubgDednet = [];
+  const dmz = [], dmzBuilds = [], intel = [], entities = [], wardogs = [], pubgDednet = [], bodycam = [];
   for (const e of eligible) {
     if (e.game === 'dmz' && e.type === 'dmz-build') dmzBuilds.push(e);
     else if (e.game === 'dmz') dmz.push(e);
     else if (e.game === 'wardogs') wardogs.push(e); // Stage 6 Track 2: own child sitemap-wardogs.xml
     else if (e.game === 'pubg-dednet') pubgDednet.push(e); // DED.NET Phase 1: own child sitemap-pubg-dednet.xml
+    else if (e.game === 'bodycam') bodycam.push(e); // Bodycam: own child sitemap-bodycam.xml (inert until indexable flip)
     else if (e.game === 'marathon' && e.type === 'intel') intel.push(e);
     else if (e.game === 'marathon') entities.push(e);
     else throw new Error('[sitemap] partition: URL belongs to no child -- ' + e.url +
@@ -31,10 +32,10 @@ export function partitionEligible(eligible) {
   }
   // Defensive union check (the branches already make this exact; a mismatch would
   // mean an element was counted twice, which the append-once logic cannot do).
-  if (dmz.length + dmzBuilds.length + intel.length + entities.length + wardogs.length + pubgDednet.length !== eligible.length) {
+  if (dmz.length + dmzBuilds.length + intel.length + entities.length + wardogs.length + pubgDednet.length + bodycam.length !== eligible.length) {
     throw new Error('[sitemap] partition: union != eligible set');
   }
-  return { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet };
+  return { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet, bodycam };
 }
 
 // RUNTIME partition invariant (Change 1), asserted at COMPUTE time -- i.e. per ISR
@@ -45,9 +46,9 @@ export function partitionEligible(eligible) {
 // error -- it never serves a wrong partition and never 500s Googlebot. Same property
 // the 7 unit tests cover, now also enforced on the live set every regeneration.
 export function assertPartition(eligible) {
-  const { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet } = partitionEligible(eligible); // throws on unassignable game/type + union-size mismatch
+  const { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet, bodycam } = partitionEligible(eligible); // throws on unassignable game/type + union-size mismatch
   const seen = new Set();
-  for (const bucket of [dmz, dmzBuilds, intel, entities, wardogs, pubgDednet]) {
+  for (const bucket of [dmz, dmzBuilds, intel, entities, wardogs, pubgDednet, bodycam]) {
     for (const e of bucket) {
       if (seen.has(e.url)) throw new Error('[sitemap] partition: URL in more than one child -- ' + e.url);
       seen.add(e.url);

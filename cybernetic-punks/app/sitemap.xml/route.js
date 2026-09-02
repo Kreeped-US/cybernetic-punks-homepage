@@ -26,7 +26,7 @@ export const revalidate = 3600;
 const BASE = 'https://cyberneticpunks.com';
 
 export async function GET() {
-  const { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet } = partitionEligible(await computeEligible());
+  const { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet, bodycam } = partitionEligible(await computeEligible());
   const children = [
     { loc: BASE + '/sitemap-dmz.xml', lastmod: newestLastmod(dmz) },
     { loc: BASE + '/sitemap-dmz-builds.xml', lastmod: newestLastmod(dmzBuilds) },
@@ -45,6 +45,12 @@ export async function GET() {
   // The flip adds this child alongside its emitted content, atomically.
   if (getIndexableGames().includes('pubg-dednet')) {
     children.push({ loc: BASE + '/sitemap-pubg-dednet.xml', lastmod: newestLastmod(pubgDednet) });
+  }
+  // Bodycam: same gating as Wardogs/DED.NET -- the child is listed ONLY when bodycam is indexable,
+  // so the index is BYTE-IDENTICAL while bodycam.indexable is false (no empty child). The flip adds
+  // this child alongside its emitted content, atomically.
+  if (getIndexableGames().includes('bodycam')) {
+    children.push({ loc: BASE + '/sitemap-bodycam.xml', lastmod: newestLastmod(bodycam) });
   }
   const body = sitemapIndexXml(children);
   return new Response(body, { headers: { 'Content-Type': 'application/xml' } });
