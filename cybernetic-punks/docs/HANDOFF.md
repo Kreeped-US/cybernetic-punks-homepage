@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam mountability DAG resolver built + tested (phase 3, build-order #1) -- HELD
+
+Built the ONE genuinely novel piece isolated, DB-free, UI-free, and proven by ACTUAL TESTS before any UI/route/data depends on it (per the approved architecture).
+
+- lib/bodycam/mountability.js: PURE DAG mountability resolver (zero imports/requires -- no DB, no fetch, no supabase, no React; caller passes plain data in). resolveMountable({weapon, attachments, compatibility, mountedParts, baseSlots}) -> per-attachment {slug, name, slot_type, mountable, reason, missing?}. Rule: mountable iff compatible-with-weapon AND requires_slots subset-of providedSlots AND slot-free-or-shared-toggle_group; providedSlots = baseSlots UNION mounted parts provides_slots. Reason codes (no-weapon-selected/incompatible/requires-slots/slot-occupied/already-mounted) so the UI can show WHY a part is locked. Also exports providedSlots, isMountable, compatibleSlugSet, mountableSlugs, BASE_SLOTS_DEFAULT, REASON.
+- BASE_SLOTS_DEFAULT = [] (honest: the only confirmed edge is rail-before-sight, so optic-mount is NOT free; base parts carry requires_slots=[] and mount freely regardless). baseSlots stays an INPUT so a per-weapon integral-mount exception can pass a non-empty set later (scoping Q3 extension seam). NOTE: this refines the architecture doc's base-slots wording, which conflated slot_type (the occupied category) with the requires/provides mount-point vocabulary -- the resolver keeps them distinct.
+- lib/bodycam/mountability.test.mjs: 17 tests, ALL PASS (node --test). SYNTHETIC fixtures only (test-* slugs / "Test ..." names -- clearly fake, never seeded, never rendered). Covers: the confirmed rail->optic edge (locked until rail, unlocked after); base-slot parts mount immediately; weapon incompatibility gates out; filled slot blocks another (and the canted-optic toggle_group co-existence exception); already-mounted reported distinctly; empty attachments -> [] (skeleton case, no crash); no-weapon -> all locked; reason correctness (missing=[optic-mount]); helper units.
+
+Verified: 17/17 pass; mountability.js has zero imports (pure); fixtures live ONLY in the test file (none in lib non-test code, none seeded); empty-input handled without error; no consumers yet (built ahead of the UI). Phase 3 build-order #1 DONE.
+
+NEXT (gated): #2 /bodycam/builder SSR frame -> #3 BodycamBuilderClient widget over this resolver -> #4 crawlable per-weapon/per-part shells. bodycam.indexable stays false.
+
+---
+
 ## 2026-09-02 - Bodycam attachment builder ARCHITECTURE (phase 3 step 1) -- HELD for review
 
 Design only. No builder code, no DB writes. DELIVERABLE: docs/bodycam/ATTACHMENT_BUILDER_ARCHITECTURE.md. Proposes the dependency-gated builder + crawlable content, grounded in the live schema, the confirmed slot DAG, and the existing tool/render layer.
