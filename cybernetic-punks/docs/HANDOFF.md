@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam article #1 shipped (does-bodycam-have-classes)
+
+- Operator DB action (rule 2): inserted 1 feed_items row, game_slug=bodycam, editor=NEXUS, section field-intel, slug does-bodycam-have-classes, is_published=true, noindex=true (live-but-noindex; bodycam.indexable false). SQL: docs/migrations/2026-09-02-bodycam-article-classes.sql. The quality-bar article ("Does Bodycam have classes? How the loadout system actually works"), grounded 100% in BODYCAM_SYSTEM_REFERENCE.md, zero fabricated numbers, operator-reviewed and approved.
+- Code (commit c3627fc): added the does-bodycam-have-classes slug->section mapping to BODYCAM_ARTICLE_SECTION in lib/games/bodycam.js (required for the article to render; unmapped slugs are hidden by the fail-safe).
+- Render fix (commit abe2135): fixed a latent shared-parser bug -- splitBlocks in lib/dmz/articleContent.js split paragraphs on a blank-line regex that matches only consecutive LF and cannot match CRLF blank lines, so the SQL-inserted (CRLF) article body collapsed into one wall-of-text block. Normalized CRLF/lone-CR to LF before splitting. Zero regression for LF bodies (Marathon/DMZ/Wardogs persist-script articles are byte-identical); hardens every future SQL-inserted article. Render-only, no DB re-insert. Confirmed live: article renders formatted (headings, bullet lists, paragraphs).
+- Article renders live at /bodycam/field-intel/does-bodycam-have-classes (noindex until the vertical indexable flip). First piece of the Bodycam content library.
+
+---
+
 ## 2026-09-02 - Fix: Bodycam article rendered as an unformatted wall of text (CRLF parse bug) -- HELD
 
 The does-bodycam-have-classes article rendered as ONE run-on plain-text blob (headings, bullets, and paragraph breaks all flattened). ROOT CAUSE (confirmed empirically): the shared body parser splitBlocks (lib/dmz/articleContent.js) split paragraphs on a blank-line regex that matches only consecutive LF newlines, which CANNOT match CRLF blank lines. The article was inserted from a SQL file with CRLF line endings (Windows), so its stored body is CRLF -- splitBlocks then returned the WHOLE body as one block and parseBody produced a single paragraph. Other games articles come from Node persist scripts (LF bodies), so they never hit this; that is why only Bodycam, the first SQL-inserted article, showed the bug.
