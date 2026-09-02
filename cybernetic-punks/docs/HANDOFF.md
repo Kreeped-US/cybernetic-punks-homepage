@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam registered (game #5) [config + registry only]
+
+lib/games/bodycam.js created + registered in GAMES / ROOT_GAMES / ENTITY_TABLES. Pure ADDITIVE -- no existing game config or output changed; no routes, tables, or content (later briefs).
+
+- LIVE Early Access: status:live + launch_date:null (mirrors Marathon), so networkGameStatus reads {text:LIVE,live:true} and isGameLive true -- NO countdown, no "launches in N days" (daysUntil(null)=null hides every countdown surface). earlyAccess:true records the EA nature (inert in the label -- the EA-date branch only fires for a future date). launched:true (dead field, set for semantic honesty). Developer Reissad Studio; Steam app 2406770.
+- Lean config: displayName Bodycam, tagline, basePath /bodycam, footer (Reissad affiliation + hedged trademark + provenance), INLINE steel-cyan theme (#3d97b8 -- distinct from Marathon green / DMZ forest / Wardogs amber / DED.NET red / network burgundy). sections [field-intel(editor), modes(editor), arsenal(data), maps(data)] -- NO attachments section yet (the bespoke attachment builder + its data model are a later brief; attachments live under Arsenal), NO discourse section (render deferred). BODYCAM_ARTICLE_SECTION empty + bodycamSectionForArticle / bodycamArticleSlugsForSection helpers.
+- Posture at brief #1: indexable:false (no content -> getIndexableGames excludes it -> sitemap emits nothing, subtree would noindex). NO generateNews (getGenerationGames stays [marathon]; Bodycam is off the auto-cron; editorial arrives via a manual script later). NOT in gamesWithDiscourse (no discourse section).
+
+Verified: Object.keys(GAMES) includes bodycam; getGameConfig(bodycam) resolves; STATUS reads LIVE with no countdown; bodycam is absent from getGenerationGames / gamesWithDiscourse / getIndexableGames; build clean (EXIT 0); topicBucket + runGate tests pass. Bodycam arc brief #1. Next: routes, co-designed as the shared game-section route template (Option C).
+
+---
+
 ## 2026-09-02 - Admin-triggered discourse generation (#2b)
 
 The operator can now generate a VANTAGE discourse draft from the admin DIRECTIVES tab instead of running the CLI. Synchronous execution (Vercel Pro, maxDuration=120).

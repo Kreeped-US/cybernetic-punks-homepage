@@ -35,6 +35,7 @@
 import { dmz as dmzGame, DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
 import { wardogs as wardogsGame, WARDOGS_ARTICLE_SECTION } from '@/lib/games/wardogs';
 import { pubgDednet as dednetGame, DEDNET_ARTICLE_SECTION } from '@/lib/games/pubg-dednet';
+import { bodycam as bodycamGame, BODYCAM_ARTICLE_SECTION } from '@/lib/games/bodycam';
 import { MARATHON_GREEN } from '../brandColors.js';
 
 export const ROOT_GAMES = [
@@ -163,6 +164,29 @@ export const ROOT_GAMES = [
       articleHref: function (slug) {
         var section = DEDNET_ARTICLE_SECTION[slug];
         return section ? '/pubg-dednet/' + section + '/' + slug : null;
+      },
+    },
+  },
+  {
+    slug: bodycamGame.slug,          // 'bodycam' from the canonical config
+    label: bodycamGame.displayName,  // 'Bodycam'
+    route: bodycamGame.basePath,     // '/bodycam'
+    // Atmosphere art for the routing tile (optional; degrades to the clean tile until the file
+    // exists in the repo at this public path).
+    heroImage: '/images/games/bodycam-hero.jpg',
+    theme: { primary: bodycamGame.theme.primary, tint: 'rgba(61,151,184,0.08)' }, // steel-cyan (= bodycam.theme.primary #3d97b8)
+    pulse: {
+      // Bodycam is LIVE (Early Access), so the tile framing is 'live' -- mirroring Marathon. There
+      // is no content yet, so the pulse column renders its empty state until the first article
+      // publishes; the mode reflects the GAME's real state, independent of the feed being empty.
+      mode: 'live',
+      onlineSource: 'steam',           // which live_stats source counts as "online"
+      feed: { gameSlug: 'bodycam' },   // feed_items scope for this game's column
+      // Resolve the section from BODYCAM_ARTICLE_SECTION (empty until content lands) and emit
+      // /bodycam/<section>/<slug>. Unmapped slug -> null so the row is dropped (fail-safe).
+      articleHref: function (slug) {
+        var section = BODYCAM_ARTICLE_SECTION[slug];
+        return section ? '/bodycam/' + section + '/' + slug : null;
       },
     },
   },

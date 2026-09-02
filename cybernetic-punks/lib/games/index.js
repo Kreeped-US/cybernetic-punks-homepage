@@ -8,6 +8,7 @@ import { marathon } from './marathon.js';
 import { dmz } from './dmz.js';
 import { wardogs } from './wardogs.js';
 import { pubgDednet } from './pubg-dednet.js';
+import { bodycam } from './bodycam.js';
 
 // DMZ registered 2026-07-20 so getGameConfig('dmz') resolves instead of throwing.
 // This does NOT make the cron produce DMZ -- the cron calls getGameConfig() with
@@ -19,6 +20,7 @@ export const GAMES = {
   dmz,
   wardogs,
   'pubg-dednet': pubgDednet,
+  bodycam,
 };
 
 // Default game slug for callers that haven't been parameterized yet (keeps the

@@ -39,6 +39,7 @@ export const ENTITY_TABLES = {
   ],
   wardogs:        [{ table: 'weapon_stats', col: 'name', type: 'weapon' }],
   'pubg-dednet':  [{ table: 'weapon_stats', col: 'name', type: 'weapon' }],
+  bodycam:        [{ table: 'weapon_stats', col: 'name', type: 'weapon' }],
 };
 
 // Load a game's entities as [{ name (lowercased), type }], game_slug-filtered where possible.
