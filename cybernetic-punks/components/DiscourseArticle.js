@@ -128,7 +128,13 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
   var home = discourseHome(item.game_slug);
   var ci = item.creator_info || {};
   var srcLabel = sourceLabelFor(item);
-  var canonical = CANONICAL_BASE + (item.game_slug === 'dmz' ? '/dmz/discourse/' : '/intel/') + item.slug;
+  // Canonical for the JSON-LD below, by subject game: marathon -> /intel/, dmz ->
+  // /dmz/discourse/ (existing routes, preserved exactly). An unknown slug returns null
+  // (mirrors discourseHref/discourseHome fail-safe) so we never emit a WRONG /intel/
+  // canonical for a non-marathon piece; the JSON-LD then omits url + mainEntityOfPage.
+  var canonical = item.game_slug === 'dmz' ? (CANONICAL_BASE + '/dmz/discourse/' + item.slug)
+    : item.game_slug === 'marathon' ? (CANONICAL_BASE + '/intel/' + item.slug)
+    : null;
 
   // Source-bar text: attribute to the vetted creator + platform when known.
   var sourcedText = ci.name
@@ -149,7 +155,7 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
     author: { '@type': 'Person', name: (display && display.fullName) ? display.fullName : byline, worksFor: { '@type': 'Organization', name: 'CyberneticPunks', url: CANONICAL_BASE } },
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: CANONICAL_BASE, logo: { '@type': 'ImageObject', url: CANONICAL_BASE + '/cnp-512.png' } },
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.created_at),
-    url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+    ...(canonical ? { url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical } } : {}),
     keywords: tags.length ? tags.join(', ') : 'discourse',
     ...(ogImageUrl ? { image: { '@type': 'ImageObject', url: ogImageUrl } } : {}),
   };

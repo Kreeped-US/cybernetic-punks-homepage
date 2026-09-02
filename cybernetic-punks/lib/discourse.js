@@ -26,8 +26,13 @@ export function discourseHref(item) {
   return null;
 }
 
-// Breadcrumb "home" ({ href, label }) for the article's subject-game hub.
+// Breadcrumb "home" ({ href, label }) for the article's subject-game hub, or null for
+// an unknown game_slug (fail-safe, mirrors discourseHref -- NOT a silent marathon default).
+// Only the marathon/intel + dmz routes render DiscourseArticle, and each passes only its
+// own game's rows, so marathon/dmz never receive null; the null case is unreachable in the
+// current render and exists so a stray slug fails visibly rather than mis-filing as marathon.
 export function discourseHome(gameSlug) {
   if (gameSlug === 'dmz') return { href: '/dmz', label: 'DMZ' };
-  return { href: '/marathon/intel', label: 'Intel' }; // marathon (default)
+  if (gameSlug === 'marathon') return { href: '/marathon/intel', label: 'Intel' };
+  return null;
 }

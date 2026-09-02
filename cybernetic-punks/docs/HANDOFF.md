@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Discourse routing fail-safe (Option A)
+
+discourseHome (lib/discourse.js) and the DiscourseArticle canonical (components/DiscourseArticle.js) now return null for any game_slug that is not marathon or dmz, instead of silently defaulting to marathon. discourseHref already failed safe (null for unknown), so all three routing spots are now consistent.
+
+- lib/discourse.js discourseHome: the else-branch marathon default was replaced with an explicit marathon branch plus null for unknown. marathon -> {/marathon/intel, Intel} and dmz -> {/dmz, DMZ} are preserved exactly.
+- components/DiscourseArticle.js: canonical is now marathon -> /intel/<slug>, dmz -> /dmz/discourse/<slug> (both unchanged), null otherwise; the Article JSON-LD omits url + mainEntityOfPage when canonical is null (conditional spread, mirroring the existing ogImageUrl pattern) rather than emitting a wrong /intel/ canonical.
+
+Kills two latent silent-marathon-default bugs (harmless today at 0 non-marathon/dmz discourse rows). marathon/dmz never receive null (only their own routes render DiscourseArticle, each passing only its game rows), so their render is byte-identical; a stray non-marathon/dmz slug now fails visibly -- dropped from feeds by discourseHref, no wrong canonical -- instead of mis-filing as marathon. NOT 4-game enablement: that is a separate feature build (wardogs/pubg render handlers + a discourse section), pending a future-proofing read on whether discourse render can be a shared, auto-inherited capability. Next: game-selector fix (marathon+dmz only until 4-game render exists).
+
+---
+
 ## 2026-09-02 - Discourse fetch-on-paste for YouTube (revival build #2)
 
 gen-vantage-discourse.mjs now auto-fetches source_text when a discourse directive has a YouTube url but empty source_text -- removing the hand-paste step for YouTube. Reuses the existing YouTube plumbing (transcript.js fetchTranscript) plus a NEW single-video snippet read (videos.list by id), and builds source_text in the SAME shape the auto script uses.
