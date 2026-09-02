@@ -50,6 +50,36 @@ function sourceLabelFor(item) {
   return null;
 }
 
+// Only accept an absolute http(s) URL as a followable creator link. Guards against a
+// malformed / non-URL / unsafe (e.g. javascript:) stored value ever becoming an href --
+// a bad value is simply skipped (no chip), never rendered broken.
+function isHttpUrl(v) {
+  return typeof v === 'string' && /^https?:\/\//i.test(v.trim());
+}
+
+// Label for the free-form "other" profile link: the URL's bare hostname, else "Link".
+function otherLinkLabel(url) {
+  try {
+    var h = new URL(url).hostname.replace(/^www\./, '');
+    return h || 'Link';
+  } catch (e) {
+    return 'Link';
+  }
+}
+
+// Build the visible creator profile chips from creator_info -- ONLY the populated,
+// valid-URL platforms, labeled by platform. Empty array when none are set (graceful
+// degrade: name-only creators show no chips, just the existing attribution bar).
+function creatorLinks(ci) {
+  ci = ci || {};
+  var out = [];
+  if (isHttpUrl(ci.youtube)) out.push({ key: 'youtube', label: 'YouTube', url: ci.youtube.trim() });
+  if (isHttpUrl(ci.x))       out.push({ key: 'x',       label: 'X',       url: ci.x.trim() });
+  if (isHttpUrl(ci.twitch))  out.push({ key: 'twitch',  label: 'Twitch',  url: ci.twitch.trim() });
+  if (isHttpUrl(ci.other))   out.push({ key: 'other',   label: otherLinkLabel(ci.other.trim()), url: ci.other.trim() });
+  return out;
+}
+
 // Inline renderer: **bold** -> <strong>, [text](url) -> external link, else text.
 function InlineRich({ text, accent }) {
   var parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/);
@@ -128,6 +158,7 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
   var home = discourseHome(item.game_slug);
   var ci = item.creator_info || {};
   var srcLabel = sourceLabelFor(item);
+  var creatorProfileLinks = creatorLinks(ci); // visible follow-chips (populated links only)
   // Canonical for the JSON-LD below, by subject game: marathon -> /intel/, dmz ->
   // /dmz/discourse/ (existing routes, preserved exactly). An unknown slug returns null
   // (mirrors discourseHref/discourseHome fail-safe) so we never emit a WRONG /intel/
@@ -227,6 +258,24 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
           {' '}&mdash; characterized by the network desk. Views are the creator&apos;s.
         </span>
       </div>
+
+      {/* Creator profile chips: the vetted creator's own channels, so a reader can
+          follow them. Render-only surfacing of creator_info links already in JSON-LD
+          sameAs. Shows ONLY populated, valid-URL platforms; nothing when none are set. */}
+      {creatorProfileLinks.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '8px 0 4px' }}>
+          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: MONO, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
+            Follow {ci.name || 'the creator'}
+          </span>
+          {creatorProfileLinks.map(function (l) {
+            return (
+              <a key={l.key} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: accent, border: '1px solid ' + accent + '55', background: 'var(--bg-card)', borderRadius: 2, padding: '3px 9px', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase', textDecoration: 'none' }}>
+                {l.label}
+              </a>
+            );
+          })}
+        </div>
+      )}
 
       {/* Body */}
       <article style={{ marginTop: 26 }}>

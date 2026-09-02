@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Discourse creator showcase (VANTAGE revival build #3)
+
+components/DiscourseArticle.js now renders the vetted creator profile links (creator_info youtube/x/twitch/other) as VISIBLE, clickable chips -- a compact "Follow <name>" row directly below the existing Sourced-from attribution bar. Render-only: the data already existed in creator_info and in JSON-LD sameAs; this makes it human-visible so a reader can follow the creator.
+
+- Graceful degrade: only populated, valid-URL platforms render a chip (isHttpUrl guard). name + several links -> all chips; name + one link -> one chip; name-only / no links -> no chips, the attribution bar unchanged. Never renders an empty/broken chip or "undefined".
+- Security: chips are http(s)-only (a malformed or javascript: value is skipped, never an href), target=_blank rel=noopener noreferrer. The "other" link is labeled by its bare hostname, else "Link".
+- Style matches the page tokens (accent-bordered chips on var(--bg-card), MONO caps label) -- a small clean addition, not a widget.
+
+Unchanged: JSON-LD sameAs and the about Person, the attribution-bar text logic, honesty gate, routing, and all data handling. No data model change, no DB writes, no per-creator page (the creator-index stays deferred). Game-agnostic -- both marathon (/intel) and dmz (/dmz/discourse) discourse render the showcase via the shared DiscourseArticle.
+
+---
+
 ## 2026-09-02 - Discourse routing fail-safe (Option A)
 
 discourseHome (lib/discourse.js) and the DiscourseArticle canonical (components/DiscourseArticle.js) now return null for any game_slug that is not marathon or dmz, instead of silently defaulting to marathon. discourseHref already failed safe (null for unknown), so all three routing spots are now consistent.
