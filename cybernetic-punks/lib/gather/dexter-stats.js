@@ -27,7 +27,7 @@ import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety';
 // VERIFICATION HONESTY (audit Phase 5): this scraper extracts stat values from
 // community wiki + AI parsing -- inherently UNVERIFIED (no authoritative source
 // for Marathon base stats; see docs/MARATHON_VERIFICATION_DEBT.md). So every
-// value it writes is stamped verified=false + patch_verified=ACTIVE_PATCH, so
+// value it writes is stamped verified=false, so
 // fresh ingest is honestly unverified-by-default and shows [UNVERIFIED] to
 // editors until a trusted contributor confirms it. The scraper never sets
 // verified=true and never bulk-touches rows it isn't writing.
@@ -54,12 +54,11 @@ import { sanitizeUgc, neutralizeBlock, fenceUntrusted } from '../promptSafety';
 // updated", which is also what a legitimate no-op looks like. See the summary
 // line at the end of this file -- it was changed to stop being ambiguous.
 //
-// ACTIVE_PATCH = the live patch new scrapes reflect. Marathon-scoped (this is
-// the Marathon scraper); a DMZ scraper would define its own. BUMP THIS each
-// patch -- it is the per-patch cadence hook (Phase 4): stamping the current
-// patch is what lets a future "re-verify stale rows" pass find what needs
-// rechecking after a balance patch.
-const ACTIVE_PATCH = '1.1.0.2';
+// patch_verified WRITE-ARRESTED 2026-09-02: this scraper no longer stamps a
+// patch_verified watermark. verified/verified_source is the sole provenance
+// mechanism (doctrine A4); patch_verified was a gatherer-restamped watermark,
+// not provenance. Do NOT re-add an ACTIVE_PATCH stamp here. Reader removal and
+// the column DROP are deferred (post-Wardogs-EA). See docs/HANDOFF.md 2026-09-02.
 
 // *** WRITE GATE for core_stats + implant_stats -- DEFAULT OFF. READ BEFORE FLIPPING. ***
 //
@@ -506,7 +505,6 @@ async function updateShell(row, ctx) {
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
   update.verified = false;
-  update.patch_verified = ACTIVE_PATCH;
   const { error } = await supabase.from('shell_stats').update(update).eq('id', target.id);
   if (error) {
     console.error('[dexter-stats] Shell update failed: ' + row.name + ' -- ' + error.message);
@@ -530,7 +528,6 @@ async function updateWeapon(row, ctx) {
   // Phase 5: a scraped value is unverified by definition. Stamp it honestly so
   // it hedges ([UNVERIFIED]) until a trusted contributor confirms it. Never true.
   update.verified = false;
-  update.patch_verified = ACTIVE_PATCH;
   const { error } = await supabase.from('weapon_stats').update(update).eq('id', target.id);
   if (error) {
     console.error('[dexter-stats] Weapon update failed: ' + row.name + ' -- ' + error.message);

@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - patch_verified write-arrest (cheap-half step 1)
+
+Stopped all code paths that stamp the deprecated patch_verified watermark.
+- lib/gather/dexter-stats.js: removed update.patch_verified = ACTIVE_PATCH in updateWeapon (live auto-writer) and updateShell (dead path); removed now-unused ACTIVE_PATCH const.
+- app/admin/content/page.js: removed the 3 patch_verified field defs on the dmz_keys/dmz_missions/dmz_items editors (manual write path).
+
+Rationale: patch_verified is a gatherer-restamped watermark, not provenance; verified/verified_source is the sole provenance mechanism (A4). Arrests ongoing accrual. NO DB writes, NO backfill; existing 348 Marathon rows untouched.
+
+Deferred (DDL half, post-Wardogs-EA): retarget corroboration.js seniority off the watermark (needs a replacement basis, not just removal), neutralize inert reads (verification.js SOURCE_AGREED branch, qualityMetricsCore stale-stamp), strip select-into-context SELECT lists, update 4 test files, then DROP COLUMN on the 9 tables. Render removal (ReceiptPanel.js patch row) is a separate cheap-half brief, still open.
+
+---
+
 ## 2026-08-31 - Game-agnostic (entity, intent) coverage-bucket dedup (near-dup overview root-cause fix)
 
 The durable root-cause fix for the cannibalization pattern (the shell "Shell Guide" cluster, the
