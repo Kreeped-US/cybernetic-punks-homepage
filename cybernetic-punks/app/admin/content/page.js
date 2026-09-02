@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAdminAuth } from '../adminShell';
+import { gamesWithDiscourse } from '@/lib/games';
 import UsageStats from '@/components/UsageStats';
 import QualityMetricsPanel from '@/components/QualityMetricsPanel';
 import QualityAlertsPanel from '@/components/QualityAlertsPanel';
@@ -211,7 +212,7 @@ const SCHEMAS = {
     { key: 'creator_x',       label: 'Creator X/Twitter URL', type: 'text',   creatorOnly: true, placeholder: 'https://x.com/...' },
     { key: 'creator_twitch',  label: 'Creator Twitch URL', type: 'text',      creatorOnly: true, placeholder: 'https://twitch.tv/...' },
     { key: 'creator_other',   label: 'Creator Other URL',  type: 'text',      creatorOnly: true, placeholder: 'Any other canonical profile (optional)' },
-    { key: 'creator_game',    label: 'Game Slug (discourse)', type: 'text',    creatorOnly: true, placeholder: 'e.g. dmz (defaults to dmz for VANTAGE discourse drafts)' },
+    { key: 'creator_game',    label: 'Game (discourse)', type: 'select',    creatorOnly: true, options: gamesWithDiscourse().map(function (g) { return g.slug; }) },
     { key: 'scheduled_for', label: 'Scheduled For',   type: 'datetime-local', placeholder: 'Leave blank to fire on next cycle' },
     { key: 'status',        label: 'Status',          type: 'select',         options: ['pending', 'consumed'] },
   ],

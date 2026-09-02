@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Discourse game selector, derived from gamesWithDiscourse() (VANTAGE revival)
+
+Added gamesWithDiscourse() to lib/games/index.js -- the single source of truth for which games can serve VANTAGE discourse TODAY, as [{slug,label}]. DERIVED, not hardcoded: a game qualifies iff its config has a discourse section (getGameSection(slug,discourse) != null), PLUS marathon (the legacy exception -- it renders discourse at flat /marathon/intel and has no sections array). Output today: [marathon, dmz]. It auto-includes wardogs/pubg the moment they gain a discourse section (the deferred 4-game render build) -- no edit to the helper.
+
+- app/admin/content/page.js: the creator_game directive field changed from FREE-TEXT to a SELECT whose options are gamesWithDiscourse().map(slug) (marathon + dmz today). The creator_info.game_slug mapping (CREATOR_FIELD_MAP) is unchanged. Fixes the free-text orphan bug proven live -- a test directive filed as "warzone sbmm" (an invalid slug that would orphan the article) is now unselectable.
+- scripts/gen-vantage-discourse.mjs: defense-in-depth -- validates the directive game_slug against gamesWithDiscourse() and refuses loudly on an unsupported slug, so a directive created outside the form (SQL/script) also cannot orphan.
+
+Future-proof: a game gaining a discourse section auto-appears in the selector AND passes the gen validation, together. NOTE: routing/render (lib/discourse.js, DiscourseArticle canonical) still read hardcoded marathon/dmz -- repointing them to gamesWithDiscourse() is part of the deferred 4-game render build (verdict (c) shareable-with-work), noted, not done here. No DB writes, no data-model change.
+
+---
+
 ## 2026-09-02 - Discourse creator showcase (VANTAGE revival build #3)
 
 components/DiscourseArticle.js now renders the vetted creator profile links (creator_info youtube/x/twitch/other) as VISIBLE, clickable chips -- a compact "Follow <name>" row directly below the existing Sourced-from attribution bar. Render-only: the data already existed in creator_info and in JSON-LD sameAs; this makes it human-visible so a reader can follow the creator.

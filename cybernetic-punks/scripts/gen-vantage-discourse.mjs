@@ -38,6 +38,7 @@ import { VANTAGE_DISCOURSE_SYSTEM_PROMPT, VANTAGE_DISCOURSE_TOOL, buildVantageDi
 import { logCoverageShadow } from '../lib/coverageShadow.js';
 import { runVantageGate, formatGateReport } from '../lib/network/vantageGate.js';
 import { youtubeIdFromUrl, fetchYouTubeSource } from '../lib/gather/youtubeSource.js';
+import { gamesWithDiscourse } from '../lib/games/index.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
 // Unlike gen-dmz-news.mjs this does NOT early-return on ANTHROPIC_API_KEY, since
@@ -207,6 +208,15 @@ async function main() {
     process.exit(1);
   }
   gameSlug = String(gameSlug).trim().toLowerCase();
+  // Defense-in-depth (mirrors the admin selector): the game_slug MUST be a discourse-capable
+  // game, so even a directive created outside the form (SQL/script) can't orphan an article
+  // under a game with no discourse render surface. Derived from gamesWithDiscourse() -- the
+  // same source of truth the selector reads -- so it auto-widens as games gain discourse.
+  var supportedDiscourse = gamesWithDiscourse().map(function (g) { return g.slug; });
+  if (supportedDiscourse.indexOf(gameSlug) === -1) {
+    console.error('ERROR: directive ' + directive.id + ' has game_slug "' + gameSlug + '", which is not a discourse-capable game. Supported today: ' + supportedDiscourse.join(', ') + ' (a game becomes supported when it gains a discourse render surface). Refusing to create an orphan.');
+    process.exit(1);
+  }
   var slug = slugify(out.headline);
   var row = {
     headline: out.headline,

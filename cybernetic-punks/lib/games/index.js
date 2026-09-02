@@ -53,6 +53,25 @@ export function getGenerationGames() {
   });
 }
 
+// SINGLE SOURCE OF TRUTH for "which games can serve VANTAGE discourse TODAY", as
+// [{ slug, label }]. DERIVED, never hardcoded: a game serves discourse iff its config
+// declares a 'discourse' section (getGameSection(slug, 'discourse') != null) -- PLUS
+// marathon, the one legacy exception (it renders discourse at the flat /marathon/intel/
+// <slug> namespace and has no `sections` array, so the section test can't see it). Result
+// today: [marathon, dmz]. It AUTO-INCLUDES wardogs / pubg-dednet the moment they gain a
+// 'discourse' section (the deferred 4-game render build) -- no edit here. Every discourse
+// consumer should read THIS (the admin game selector today; the routing/render when they
+// are repointed off their hardcoded marathon/dmz), so enabling a new game updates them all
+// at once. Order follows GAMES insertion order (stable).
+export function gamesWithDiscourse() {
+  return Object.keys(GAMES)
+    .filter(function (slug) { return slug === 'marathon' || !!getGameSection(slug, 'discourse'); })
+    .map(function (slug) {
+      var g = GAMES[slug];
+      return { slug: slug, label: (g && g.displayName) || slug };
+    });
+}
+
 // Slugs of games that are SEO-INDEXABLE (Stage 3 sitemap axis). A game is indexable
 // unless its config sets indexable:false (absent = indexable by default -- Marathon has no
 // indexable field and is indexable). This is the INDEXABILITY axis, the counterpart to
