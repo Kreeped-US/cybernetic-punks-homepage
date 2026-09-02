@@ -15,6 +15,8 @@
 
 import Link from 'next/link';
 import { bodycam } from '@/lib/games/bodycam';
+import { BODYCAM_SLOTS } from '@/lib/bodycam/slots';
+import BodycamBuilderClient from './BodycamBuilderClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,22 +24,10 @@ const BASE = 'https://cyberneticpunks.com';
 const URL = BASE + '/bodycam/builder';
 const ACCENT = bodycam.theme.accent; // steel-cyan #3d97b8, from config
 
-// The confirmed slot taxonomy (docs/bodycam/ATTACHMENT_SEED_SCOPING.md section 2). Sourced
-// STRUCTURE -- categories + subtypes only; specific parts and numbers are unpublished (not shown).
-const SLOTS = [
-  { slot: 'Barrel', subtypes: 'Short, Long', role: 'Size vs control (section below)' },
-  { slot: 'Muzzle', subtypes: 'Suppressor, Flash Hider, Compensator', role: 'Suppressors carry per-weapon audio' },
-  { slot: 'Upper Barrel', subtypes: '-', role: 'Provides a mounting rail' },
-  { slot: 'Side Rail', subtypes: '-', role: 'Provides an optic mount' },
-  { slot: 'Optic Mount', subtypes: '-', role: 'Provides the optic mounting point' },
-  { slot: 'Optic', subtypes: 'Iron, Close, Mid, Long', role: 'Requires an optic mount; reticle + canted-toggle option' },
-  { slot: 'Magazine', subtypes: '-', role: 'Ammo capacity and handling' },
-  { slot: 'Trigger', subtypes: '-', role: 'Fire behavior' },
-  { slot: 'Grip', subtypes: '-', role: 'Recoil and handling' },
-  { slot: 'Stock', subtypes: 'Light, Heavy', role: 'Size vs control (section below)' },
-  { slot: 'Ammo', subtypes: '-', role: 'Ammo type slot' },
-  { slot: 'Sticker', subtypes: '-', role: 'Cosmetic only' },
-];
+// The confirmed slot taxonomy (docs/bodycam/ATTACHMENT_SEED_SCOPING.md section 2) lives in
+// lib/bodycam/slots.js so the crawlable table here and the interactive widget render from ONE
+// source. Sourced STRUCTURE only -- categories + subtypes; parts/numbers unpublished (not shown).
+const SLOTS = BODYCAM_SLOTS;
 
 // The eight effect axes the system tunes (schema `effects` shape). The AXES are confirmed
 // structure; the per-part VALUES are unpublished and are NOT shown (no fabricated numbers).
@@ -189,30 +179,15 @@ export default function BodycamBuilderPage() {
           values are added only once verified in-game.
         </p>
 
-        {/* The #3 client-builder mount seam -- honest placeholder, NOT the widget. */}
+        {/* Interactive builder: the crawlable heading + intro stay server-rendered; the widget
+            (client) mounts below and drives the interactive slot frame over the resolver. The
+            widget receives parts/compatibility as props (empty now -> auto-fills when seeded). */}
         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>Interactive builder</h2>
-        {/* BodycamBuilderClient (build-order #3) mounts HERE, over lib/bodycam/mountability. Until the
-            parts roster is published it stays an honest slot-frame placeholder -- not a broken tool. */}
-        <div style={{ ...card, padding: '22px 20px' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 14 }}>
-            Slot frame &mdash; parts pending
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(150px, 100%), 1fr))', gap: 8 }}>
-            {SLOTS.map(function (s) {
-              return (
-                <div key={s.slot} style={{ border: '1px dashed var(--border)', borderRadius: 4, padding: '12px 12px', background: 'var(--bg-page)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>{s.slot}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>Parts pending</div>
-                </div>
-              );
-            })}
-          </div>
-          <p style={{ fontSize: 12.5, color: 'var(--text-tertiary)', margin: '16px 0 0', lineHeight: 1.6 }}>
-            The interactive builder &mdash; pick a weapon, mount parts, and watch the dependency slots
-            unlock &mdash; activates when the verified parts roster is published. The slot structure and
-            mounting rules above are already live.
-          </p>
-        </div>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 720, margin: '0 0 16px' }}>
+          Pick a weapon, mount parts, and watch the dependency slots unlock. The slot structure and
+          the mounting rule are live now; per-slot parts activate when the verified roster is published.
+        </p>
+        <BodycamBuilderClient weapons={[]} attachments={[]} compatibility={[]} accent={ACCENT} />
 
         {/* Footer cross-links. */}
         <div style={{ marginTop: 30, display: 'flex', gap: 10, flexWrap: 'wrap' }}>

@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - BodycamBuilderClient interactive widget built (phase 3, build-order #3) -- HELD
+
+Built the client widget that mounts at the SSR frame placeholder and drives the interactive builder OVER the proven resolver. CRITICAL SEPARATION honored: the widget owns STATE + RENDER only; it calls resolveMountable (lib/bodycam/mountability.js, 17 tests) for EVERY gate decision -- it never re-derives the requires/provides / compat / slot-free logic.
+
+- app/bodycam/builder/BodycamBuilderClient.js (use client): useState only (selectedWeapon, mounted, demoRail) -- NO useEffect, NO fetch-on-load, NO URL/localStorage writes (BuildRefiner discipline). Receives weapons/attachments/compatibility as PROPS (empty now -> auto-fills when parts are seeded, no rewrite). Renders the slot frame from the shared taxonomy; per-slot mountable parts + locked-reason come from the resolver result grouped by slot_type; mount/unmount/reset re-resolve.
+- lib/bodycam/slots.js: the sourced slot taxonomy extracted to ONE data module (no React/DB) so the crawlable SSR table and the widget frame render from a single source. page.js now imports it (crawlable table output unchanged).
+- HONEST EMPTY-SKELETON (zero parts): an empty-roster notice, the full slot frame showing "parts pending" per slot, and a LIVE dependency-lock DEMO of the confirmed rail->optic rule -- the lock/unlock decision computed by the resolver over the sourced SLOT STRUCTURE (Optic Mount / Optic demonstrators, clearly labelled "not the parts roster", never seeded, no fabricated product parts). Verified live: the demo starts "Optic slot: LOCKED -- Needs optic-mount first" and flips to "UNLOCKED" when the rail is added.
+- page.js: the placeholder region swapped for the mounted widget; the crawlable h1/h2/table/rules/axes/principle + JSON-LD stay SERVER-rendered (the #2 SEO win intact).
+
+Verified: build passes (exit 0), /bodycam/builder renders the widget; widget imports + calls resolveMountable and does NOT duplicate gate logic (grep-clean); useState only (no fetch/effect/URL/storage in code); raw SSR HTML still carries the full crawlable content + robots noindex,follow (SEO not regressed); live demo LOCKED->UNLOCKED works; only app dev-HMR websocket noise in console (no app errors); no fabricated parts/numbers; no other route/game changed. Phase 3 #3 DONE.
+
+NEXT (gated): #4 crawlable per-weapon /bodycam/weapons/[slug] + per-part /bodycam/attachments/[slug] shells (derived-indexable, honest empty states). bodycam.indexable stays false.
+
+---
+
 ## 2026-09-02 - Bodycam builder SSR frame built (phase 3, build-order #2) -- HELD
 
 Built /bodycam/builder as a CRAWLABLE, SEO-first content page -- the SEO asset of the whole builder feature lives here (the client widget is not crawlable). app/bodycam/builder/page.js: a pure SERVER component (all content SSR), force-dynamic, inheriting the bodycam GameLayout chrome + theme (steel-cyan #3d97b8 via --accent).
