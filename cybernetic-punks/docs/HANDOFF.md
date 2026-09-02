@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Fix: Bodycam article rendered as an unformatted wall of text (CRLF parse bug) -- HELD
+
+The does-bodycam-have-classes article rendered as ONE run-on plain-text blob (headings, bullets, and paragraph breaks all flattened). ROOT CAUSE (confirmed empirically): the shared body parser splitBlocks (lib/dmz/articleContent.js) split paragraphs on a blank-line regex that matches only consecutive LF newlines, which CANNOT match CRLF blank lines. The article was inserted from a SQL file with CRLF line endings (Windows), so its stored body is CRLF -- splitBlocks then returned the WHOLE body as one block and parseBody produced a single paragraph. Other games articles come from Node persist scripts (LF bodies), so they never hit this; that is why only Bodycam, the first SQL-inserted article, showed the bug.
+
+- FIX: splitBlocks now normalizes CRLF and lone-CR to LF BEFORE splitting on blank lines. Render-only, inside the SHARED parser that GameArticle already uses (no new parser written). Proven: parseBody of the stored CRLF body went from 1 block to 21 blocks (7 h2 headings, 3 bullet lists including the 5 loadout slots, 12 paragraphs); extractKeyFacts went from 0 to 5. Live check: /bodycam/field-intel/does-bodycam-have-classes now renders 7 h2 + 4 ul (26 li) + 12 p, with zero literal asterisk markers leaking.
+- ZERO REGRESSION for other games: an LF body has no CR, so the normalize is a no-op -- parseBody of an LF body is byte-identical (21 blocks before and after). Marathon, DMZ, and Wardogs article rendering is unchanged. The stored DB body needs NO change (the parser now renders CRLF correctly); no re-insert required.
+
+Verified: build passes (exit 0); the article renders formatted (was a wall of text); article CONTENT unchanged (render-only fix); no other file touched (only lib/dmz/articleContent.js splitBlocks); only dev-HMR websocket noise in console.
+
+---
+
 ## 2026-09-02 - Bodycam system reference doc captured (Bodycam arc -- knowledge capture) -- HELD
 
 Captured docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md -- the confirmed, primary-sourced Bodycam system facts that previously lived only in chat, now committed ground truth for the per-weapon pages, editors, and articles (stated once, no drift / re-derivation).

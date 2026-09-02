@@ -14,6 +14,12 @@
 export function splitBlocks(body) {
   if (!body) return [];
   return body
+    // Normalize CRLF / lone-CR to LF FIRST, so blank-line splitting is newline-agnostic. A body
+    // stored with CRLF line endings (e.g. a SQL-inserted article on Windows) has "\r\n\r\n" blank
+    // lines, which "\n{2,}" cannot match -- the whole body then collapses into a single paragraph
+    // (the unformatted-wall-of-text bug). Node persist-script bodies are already LF, so this is a
+    // no-op for them (identical output); it only rescues CRLF-stored bodies.
+    .replace(/\r\n?/g, '\n')
     .split(/\n{2,}/)
     .map(function (b) { return b.replace(/^\s+|\s+$/g, ''); })
     .filter(Boolean);
