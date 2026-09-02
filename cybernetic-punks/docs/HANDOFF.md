@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam hero image wired (Case A: track the file, no code change)
+
+The operator-provided hero image is now tracked so it deploys. CASE A -- the code ALREADY referenced it correctly; nothing to wire.
+- Convention (all games): ROOT_GAMES.heroImage = /images/games/<slug>-hero.jpg, rendered as the homepage routing-tile background by components/network/GameRoutingTile.js (absent file -> graceful clean-tile fallback). Bodycam ROOT_GAMES already had heroImage /images/games/bodycam-hero.jpg (added in the config brief).
+- The operator file public/images/games/bodycam-hero.jpg (JPEG, 460x215, 37855 bytes) MATCHES that path exactly. It was untracked -> git-added (an untracked image does not deploy on Vercel).
+- The Bodycam LANDING hero is text/typography (wordmark + live-status strip), like the other games -- it does NOT use a background image; the image is the TILE only. So no landing change.
+Resolved: the homepage Bodycam tile now renders /images/games/bodycam-hero.jpg instead of the clean-tile fallback. No code edit was required. No existing game changed. Size is the smallest of the heroes (37KB), fine; resolution 460x215 is modest but serviceable (operator asset -- not re-encoded). Bodycam arc.
+
+---
+
 ## 2026-09-02 - Bodycam routes as the first shared-template instance (Option C)
 
 Bodycam (game #5) gets its routes, built on a NEW shared game-section route template co-designed with Bodycam as its first consumer. Legacy games (wardogs/pubg/dmz/marathon) are UNTOUCHED -- they keep their drifted copies (Option C); this template is for new games so #6+ inherit good patterns, not drift.
