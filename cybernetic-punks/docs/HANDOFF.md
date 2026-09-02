@@ -7,6 +7,24 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam attachment builder ARCHITECTURE (phase 3 step 1) -- HELD for review
+
+Design only. No builder code, no DB writes. DELIVERABLE: docs/bodycam/ATTACHMENT_BUILDER_ARCHITECTURE.md. Proposes the dependency-gated builder + crawlable content, grounded in the live schema, the confirmed slot DAG, and the existing tool/render layer.
+
+ARCHITECTURE: a DEDICATED tool route /bodycam/builder = an SSR crawlable FRAME (the rankable asset) + a client DAG-gated WIDGET (engagement) -- the same SSR-page + client-component split as /marathon/tools/build/[shell] (BuildRefiner). Data flow is SERVER-FETCH / CLIENT-RESOLVE: the server page fetches the small bodycam_attachments + bodycam_attachment_weapon datasets once and passes them as PROPS; the client resolves mountability in memory (NO fetch on load, NO API route, NO paid call -- BuildRefiner discipline; crawler gets the SSR frame and the client does nothing on mount). Static builder segment beats the [section] dynamic (no route collision). force-dynamic, accent steel-cyan #3d97b8 from config.
+
+DAG RESOLVER = the NOVEL core (no codebase precedent -- Marathon 5+1 and DMZ 9-slot are FLAT models, nothing walks a requires/provides graph). Isolated as a PURE module lib/bodycam/mountability.js, unit-tested over SYNTHETIC fixtures (test-only, never seeded/rendered -- exercises logic, not product content) BEFORE any UI. Mountable = compat(weapon) AND requires_slots subset-of providedSlots AND slot free (or shared toggle_group); providedSlots = BASE_SLOTS(W) UNION mounted parts provides_slots; BASE_SLOTS = builder constant (scoping Q3), bodycam_weapon extension table is the additive seam if base slots diverge.
+
+CRAWLABLE SEO ASSET (NOT the widget -- client JS is not crawlable): SSR per-weapon /bodycam/weapons/[slug] (primary target, mirrors /dmz/builds/[weapon]) + per-part /bodycam/attachments/[slug], both force-dynamic + DERIVED indexability (noindex until cited rows verified; auto-index on verify), JSON-LD BreadcrumbList+WebPage, interlinked with each other + the builder + the Arsenal section.
+
+EMPTY-SKELETON (zero parts today, honest not broken): the SSR frame renders the sourced slot taxonomy + the ONE dependency rule (rail before optic) as real crawlable content; the widget shows the full slot frame with per-slot "parts pending" and a live dependency-lock demo (optic slot LOCKED "needs an optic-mount -- add a rail first" until a rail is mounted); content pages show honest empty states, noindex. No fabricated rows.
+
+BUILD ORDER (phase 3, buildable NOW against empty tables): 1) mountability.js resolver + tests (novel risk first, isolated); 2) /bodycam/builder SSR frame; 3) BodycamBuilderClient slot-frame widget; 4) crawlable per-weapon/per-part shells + cross-links. WAITS FOR PARTS: nothing needs parts to BUILD -- all ship empty/noindex and auto-fill + auto-index when a published sourced parts list is seeded (phase 2 step 2). No rebuild.
+
+HELD for Justin's review of the architecture BEFORE any builder code. bodycam.indexable stays false.
+
+---
+
 ## 2026-09-02 - Bodycam attachment seed SCOPING (phase 2 step 1) -- HELD; recommend seed NOTHING yet
 
 Read-only scoping + proposal. Nothing inserted. DELIVERABLE: docs/bodycam/ATTACHMENT_SEED_SCOPING.md -- the confirmed-structure reference. RECOMMENDATION: Option A -- seed NOTHING into bodycam_attachments yet, because it holds PARTS and no parts list is published. Seeding slot CATEGORIES as part ROWS would be a category error (a builder/render would treat a vocab term like "Optic Mount" as a mountable part) -- fabrication-adjacent. The table stays empty until a published parts list exists; the confirmed structure lives in the doc.
