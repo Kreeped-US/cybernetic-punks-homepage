@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - operator DB actions: Bodycam weapon roster (weapon_stats)
+
+Recorded per rule 2 (operator-run Supabase actions leave no git trace). Two actions from the Bodycam weapon-roster work:
+
+1. CONSTRAINT CHANGE (shared weapon_stats table, ALL games): dropped weapon_stats_name_key UNIQUE(name); added weapon_stats_game_slug_name_key UNIQUE(game_slug, name). Reason: the global name-unique was wrong for a multi-game table -- it forbade two games sharing a real-world weapon name (blocked Bodycam M1911 / MP5, which also exist under wardogs). Now per-game. Verified: M1911 and MP5 coexist under both bodycam and wardogs. Confirmed the old constraint via pg_get_constraintdef before dropping.
+2. ROSTER INSERT: 20 rows into weapon_stats, game_slug=bodycam, all verified=false, all stat values NULL (honest-null; no published per-weapon numbers exist). Tiered by verified_source: 6 patch-confirmed (Sept 2 "Locked & Loaded"), 13 reworked-existing, 1 devlog-attributed (Draco, included, flagged Attributed). SQL: docs/migrations/2026-09-02-bodycam-weapon-roster.sql. Categories: Assault Rifle 4, Machine Pistol 3, Pistol 6, Shotgun 2, Sniper Rifle 2, Submachine Gun 3.
+
+Render verified: /bodycam/arsenal shows the roster honestly (names + classes, no numeric values, Draco reads "Attributed" not "Confirmed", values-pending banner, double-noindex). Brief #4 done.
+
+Carry-forward: lib/sitemap/eligible.js:127 game-scoping (pre-existing wardogs leak, now also bodycam M1911/MP5 cross-game dupes -- harmless while bodycam is noindex; fix before the indexable flip).
+
+---
+
 ## 2026-09-02 - Bodycam weapon roster prepared + arsenal roster render (brief #4)
 
 Prepared the honest-null Bodycam weapon_stats inserts (the operator runs them) AND wired the shared arsenal render so they display.
