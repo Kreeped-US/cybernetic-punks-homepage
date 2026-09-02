@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - URGENT build fix: sitemap eligible.js weapon_stats game_slug scope
+
+Production build was FAILING (blocking all deploys): "[sitemap] partition: URL in more than one child -- /marathon/weapons/m1911". Cause: lib/sitemap/eligible.js queried weapon_stats WITHOUT a game_slug filter and emitted /marathon/weapons/<slug> for EVERY game's weapons. After the weapon_stats constraint went per-game (UNIQUE(game_slug,name)), Bodycam M1911/MP5 (which also exist under wardogs) mapped to the SAME /marathon/weapons/ slug -> duplicate URL -> assertPartition (partition.js:52) threw -> build crash. THIS is why Bodycam was not appearing: the site had not deployed since the roster insert.
+
+- FIX: scoped the marathon-weapons query to .eq(game_slug, M) (eligible.js:127). Fixes the crash AND the pre-existing wardogs leak (the marathon weapons sitemap had been emitting all games weapons).
+- HARDENED (same latent bug, same file, trivial + ZERO output change since both are all-marathon today): shell_stats (106) and unique_weapons (134) also lacked a game_slug scope -> both now .eq(game_slug, M). No other unscoped shared-table entity query remains in eligible.js (the matchup shell_stats:181, mod_stats, game_maps, build_pages, and feed_items blocks were already scoped).
+
+Verified: full build PASSES (exit 0, no "more than one child", every sitemap child prerenders). The marathon weapons sitemap now emits ONLY marathon weapons (32, game_slug-scoped); wardogs/bodycam weapons excluded. No other game sitemap changed; no DB writes; sitemap structure unchanged beyond the game_slug scope. Unblocks the deploy that was stuck since the Bodycam roster insert.
+
+---
+
 ## 2026-09-02 - operator DB actions: Bodycam weapon roster (weapon_stats)
 
 Recorded per rule 2 (operator-run Supabase actions leave no git trace). Two actions from the Bodycam weapon-roster work:

@@ -103,7 +103,7 @@ export async function computeEligible() {
 
   // ── SHELLS + guides/shells (type='shell') ──────────────────────────────────
   try {
-    const { data: shells } = await supabase.from('shell_stats').select('name, updated_at').order('name');
+    const { data: shells } = await supabase.from('shell_stats').select('name, updated_at').eq('game_slug', M).order('name');
     hubLastMod.shells = maxUpdatedAt(shells);
     if (shells && shells.length > 0) {
       shellQueryOk = true;
@@ -124,14 +124,14 @@ export async function computeEligible() {
 
   // ── WEAPONS (type='weapon') ────────────────────────────────────────────────
   try {
-    const { data: weapons } = await supabase.from('weapon_stats').select('name, updated_at').order('name');
+    const { data: weapons } = await supabase.from('weapon_stats').select('name, updated_at').eq('game_slug', M).order('name');
     hubLastMod.weapons = maxUpdatedAt(weapons);
     (weapons || []).forEach((w) => add(BASE + '/marathon/weapons/' + entitySlugFor('weapon', w.name), M, 'weapon', lm(w.updated_at), 'weekly', 0.75));
   } catch (err) { console.error('[sitemap] weapon fetch threw:', err); }
 
   // ── UNIQUES (type='unique') ────────────────────────────────────────────────
   try {
-    const { data: uniques } = await supabase.from('unique_weapons').select('slug, updated_at').order('slug');
+    const { data: uniques } = await supabase.from('unique_weapons').select('slug, updated_at').eq('game_slug', M).order('slug');
     hubLastMod.uniques = maxUpdatedAt(uniques);
     (uniques || []).filter((u) => u.slug).forEach((u) => add(BASE + '/marathon/uniques/' + u.slug, M, 'unique', lm(u.updated_at), 'weekly', 0.75));
   } catch (err) { console.error('[sitemap] unique fetch threw:', err); }
