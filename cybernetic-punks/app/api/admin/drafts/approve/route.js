@@ -14,6 +14,7 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { checkLockout, recordFailure, clearFailures } from '@/lib/rateLimit';
+import { runA11Gate } from '@/lib/network/vantageGate';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,8 +68,41 @@ export async function POST(req) {
   try { body = await req.json(); } catch (e) { body = null; }
   var id = body && body.id;
   if (!id) return Response.json({ error: 'Missing draft id' }, { status: 400 });
+  var overrideHolds = !!(body && body.overrideHolds === true);
 
   var supabase = getSupabase();
+
+  // A11 ENFORCING GATE (doctrine A11). Fetch the draft ROW and run the row-only gate BEFORE
+  // publishing -- stateless, no source_text needed, no gate_status write. A hard-block never
+  // publishes; a review-hold requires an explicit human override (overrideHolds:true). The
+  // read is scoped to is_published=false so this only ever gates a draft.
+  var { data: draft, error: readErr } = await supabase
+    .from('feed_items')
+    .select('id, headline, body, creator_info, source_url, source, is_published')
+    .eq('id', id)
+    .eq('is_published', false)
+    .maybeSingle();
+  if (readErr) return Response.json({ error: readErr.message }, { status: 500 });
+  if (!draft) return Response.json({ error: 'No draft found for that id (already published or missing).' }, { status: 404 });
+
+  var verdict = runA11Gate(draft);
+  if (verdict.hardBlock) {
+    return Response.json({
+      error: 'A11 honesty gate: HARD BLOCK (' + verdict.hardBlockCheck + '). VANTAGE is storeless -- a stat-shaped number in her voice is laundered or unverifiable, both disqualifying. Remove the figure(s) and regenerate; this cannot be published.',
+      gate: 'hard-block',
+      check: verdict.hardBlockCheck,
+      statHits: verdict.statHits,
+    }, { status: 422 });
+  }
+  if (verdict.reviewHolds.length > 0 && !overrideHolds) {
+    return Response.json({
+      error: 'A11 honesty gate: REVIEW HOLD (' + verdict.reviewHolds.join(', ') + '). Review the piece, then approve again with override to publish.',
+      gate: 'review-hold',
+      reviewHolds: verdict.reviewHolds,
+      requiresOverride: true,
+    }, { status: 409 });
+  }
+
   var { data, error } = await supabase
     .from('feed_items')
     // noindexed_at MUST be cleared alongside noindex. The stamp marks a de-index
@@ -84,5 +118,8 @@ export async function POST(req) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (!data) return Response.json({ error: 'No draft found for that id (already published or missing).' }, { status: 404 });
-  return Response.json({ data });
+  if (verdict.reviewHolds.length > 0) {
+    console.log('[drafts/approve] A11 review-holds overridden by human for ' + id + ': ' + verdict.reviewHolds.join(', '));
+  }
+  return Response.json({ data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : 'pass' });
 }

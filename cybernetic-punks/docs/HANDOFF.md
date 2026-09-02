@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - A11 enforcing honesty gate (approve chokepoint)
+
+The VANTAGE discourse honesty gate now ENFORCES at the publish chokepoint (doctrine A11, recorded 7176d46). Stateless, ROW-ONLY -- no source_text, no schema change, no gate_status collision.
+
+- lib/network/vantageGate.js: added runA11Gate(row). Check (1) any stat-shaped sentence in headline/body = HARD BLOCK (VANTAGE is storeless; a number in her voice is laundered or unverifiable, both disqualifying). Reuses the Tier 3 stat-shape scan (extracted to a shared scanStatShaped) WITH stripInline URL/ID stripping + date/version-label exclusions KEPT, but WITHOUT Tier 3's in-source exclusion (A11: ANY number holds). Checks (2) attribution-survival + (3) headline attribution = REVIEW-HOLD (overridable). detectUnverifiedStats / runVantageGate behavior UNCHANGED (Tier 3 tests 15/15 green; the gen-script print stays non-blocking).
+- app/api/admin/drafts/approve/route.js: fetches the draft row and runs runA11Gate BEFORE the publish flip. hardBlock -> 422, never publishes, row untouched. A review-hold without override -> 409 requiresOverride (no publish). A review-hold WITH overrideHolds:true (explicit human acknowledgment) -> publishes + logs the override. Auth (SHA-256 + per-IP lockout) and the WHERE is_published=false guard are unchanged.
+- components/VantageDraftsPanel.js: surfaces the verdict per draft (A11 PASS / A11 BLOCK:<check> / A11 HOLD:<checks>), computed row-only from the already-fetched draft; approve() refuses a hard-block client-side and sends overrideHolds on a confirmed review-hold.
+
+Regression/baseline: the real MrMarvelTV draft -> hardBlock=false, zero review-holds (its source-URL tweet-ID is stripped by stripInline, so check (1) never false-positives on it). Human still approves each piece with the verdict surfaced (A11's sampled-QA future is not built here). No DB writes, no schema change.
+
+---
+
 ## 2026-09-02 - Discourse game selector, derived from gamesWithDiscourse() (VANTAGE revival)
 
 Added gamesWithDiscourse() to lib/games/index.js -- the single source of truth for which games can serve VANTAGE discourse TODAY, as [{slug,label}]. DERIVED, not hardcoded: a game qualifies iff its config has a discourse section (getGameSection(slug,discourse) != null), PLUS marathon (the legacy exception -- it renders discourse at flat /marathon/intel and has no sections array). Output today: [marathon, dmz]. It auto-includes wardogs/pubg the moment they gain a discourse section (the deferred 4-game render build) -- no edit to the helper.

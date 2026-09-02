@@ -166,10 +166,16 @@ var STAT_RE = new RegExp('(\\d[\\d,]*(?:\\.\\d+)?)(\\s?%|\\s?(?:k|m|million|thou
 var MONTHS_RE = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*$/i;
 var LABEL_RE = /(season|phase|chapter|act|tier|week|day|version|patch|update|level|mw|cod|no\.|#)\s*$/i;
 
-export function detectUnverifiedStats(body, sourceText) {
+// Shared stat-shape scan -- the primitive BOTH Tier 3 and A11 check (1) build on, so the
+// stat-shape logic lives in ONE place. Strips [text](url) links + **bold** via stripInline
+// FIRST (so a tweet-ID inside a source URL is never seen -- the MrMarvelTV baseline depends
+// on this), then finds stat-shaped numbers, excluding bare years, version/label numbers
+// ("Season 2", "#3") and month-day ("October 23"). When srcKeys is passed (Tier 3), numbers
+// present verbatim in the vetted source are ALSO excluded; A11 check (1) passes NO srcKeys,
+// so ANY stat-shaped number in the prose survives. Returns [{ token, context }].
+function scanStatShaped(body, srcKeys) {
   var text = stripInline(body);
-  var srcKeys = digitRuns(sourceText);
-  var flags = [];
+  var out = [];
   var m;
   STAT_RE.lastIndex = 0;
   while ((m = STAT_RE.exec(text)) !== null) {
@@ -178,27 +184,30 @@ export function detectUnverifiedStats(body, sourceText) {
     var key = numPart.replace(/[,\.]/g, '');
     if (!key) continue;
     var before = text.slice(Math.max(0, m.index - 14), m.index);
-
-    // Exclusions: bare year, version/label number, month-day, and verbatim-in-source.
     var bareYear = !suffix && /^(?:19|20)\d{2}$/.test(numPart.replace(/,/g, ''));
     if (bareYear) continue;
-    if (LABEL_RE.test(before)) continue;      // "Season 2", "Patch 4", "#3"
-    if (MONTHS_RE.test(before)) continue;     // "October 23"
-    if (srcKeys.has(key)) continue;           // present verbatim in the vetted source
-
+    if (LABEL_RE.test(before)) continue;       // "Season 2", "Patch 4", "#3"
+    if (MONTHS_RE.test(before)) continue;      // "October 23"
+    if (srcKeys && srcKeys.has(key)) continue; // Tier 3 ONLY: verbatim in the vetted source
     // Stat-shaped == has a %/unit/metric suffix, OR is comma-grouped, OR is a 4+ digit count.
     var statShaped = !!suffix || /,/.test(numPart) || key.length >= 4;
     if (!statShaped) continue;
+    out.push({ token: m[0].trim(), context: contextAround(text, m.index, m[0]) });
+  }
+  return out;
+}
 
-    flags.push({
+export function detectUnverifiedStats(body, sourceText) {
+  var srcKeys = digitRuns(sourceText);
+  return scanStatShaped(body, srcKeys).map(function (s) {
+    return {
       tier: 3,
       kind: 'unverified-stat',
-      token: m[0].trim(),
-      context: contextAround(text, m.index, m[0]),
+      token: s.token,
+      context: s.context,
       note: 'stat-shaped number not found verbatim in the vetted source_text -- confirm before surfacing',
-    });
-  }
-  return flags;
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +227,42 @@ export function runVantageGate(row, sourceText) {
     tier3: tier3,
     flagCount: flagCount,
     needsReview: flagCount > 0,
+  };
+}
+
+// A11 ENFORCING verdict -- ROW-ONLY (no sourceText needed), per doctrine amendment A11
+// (docs/doctrine-v3-amendments.md, recorded at commit 7176d46). This is what the publish
+// chokepoint (app/api/admin/drafts/approve) enforces; runVantageGate above stays
+// detection-only for the gen-script print. Three checks:
+//   (1) STAT-SHAPED SENTENCE -> HARD BLOCK. VANTAGE is structurally storeless, so ANY
+//       stat-shaped number in her prose is laundered or unverifiable -- both disqualifying
+//       (A11 check 1). Uses scanStatShaped WITH stripInline URL/ID stripping + date/
+//       version-label exclusions KEPT, but WITHOUT Tier 3's in-source exclusion (A11: ANY
+//       number holds). Runs on the HEADLINE and the BODY.
+//   (2) ATTRIBUTION-SURVIVAL -> REVIEW-HOLD (overridable): the "Sourced from" reference
+//       dropped (Tier 1 survives=false), or a settled-language reception claim stated in the
+//       body without attribution (Tier 2).
+//   (3) HEADLINE ATTRIBUTION -> REVIEW-HOLD (overridable, hard-leaning): a settled-language
+//       claim in the HEADLINE without attribution (the Tier-2 detector run on the headline).
+//       Dial-able to a broader headline-claim detector later.
+// BASELINE the gate MUST NOT hard-block: the real MrMarvelTV discourse draft (feed_items,
+// body ~2653 chars) -> hardBlock=false, zero reviewHolds. Its source-URL tweet-ID is removed
+// by stripInline, so check (1) never false-positives on it.
+export function runA11Gate(row) {
+  row = row || {};
+  var statHits = scanStatShaped(row.headline || '', null).concat(scanStatShaped(row.body || '', null));
+  var tier1 = sourceReference(row);
+  var bodyClaims = detectUnattributedClaims(row.body);
+  var headlineClaims = detectUnattributedClaims(row.headline);
+  var reviewHolds = [];
+  if (!tier1.survives || bodyClaims.length > 0) reviewHolds.push('attribution-survival');
+  if (headlineClaims.length > 0) reviewHolds.push('headline-attribution');
+  return {
+    hardBlock: statHits.length > 0,
+    hardBlockCheck: statHits.length > 0 ? 'stat-shaped-sentence' : null,
+    statHits: statHits,
+    reviewHolds: reviewHolds,
+    detail: { tier1: tier1, bodyClaims: bodyClaims, headlineClaims: headlineClaims },
   };
 }
 

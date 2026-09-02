@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import { parseBody } from '@/lib/articleBody';
 import { resolveBuildToolCta } from '@/lib/buildToolCta';
 import ToolCTAClient from '@/components/ToolCTAClient';
+import { runA11Gate } from '@/lib/network/vantageGate';
 
 var mono = 'Share Tech Mono, monospace';
 var heading = 'Orbitron, monospace';
@@ -93,18 +94,31 @@ export default function VantageDraftsPanel({ password }) {
   // noindex->false). On success it drops off this list (no longer a draft).
   async function approve(d) {
     if (busy) return;
-    if (typeof window !== 'undefined' && !window.confirm('Publish this discourse article live?\n\n"' + d.headline + '"\n\nIt becomes public and indexable at its ' + (d.game_slug === 'dmz' ? '/dmz/discourse/' : '/intel/') + d.slug + ' home.')) return;
+    // A11 gate (client-side, for UX) -- the approve route re-runs it authoritatively.
+    // A hard-block never publishes (refuse here, do not hit the server). A review-hold is
+    // overridable: the human confirms, and we send overrideHolds:true so the route publishes.
+    var verdict = runA11Gate(d);
+    if (verdict.hardBlock) {
+      if (typeof window !== 'undefined') window.alert('A11 HARD BLOCK (' + verdict.hardBlockCheck + ').\n\nVANTAGE is storeless; a stat-shaped number in her voice is disqualifying. Remove the figure(s) and regenerate. This cannot be published.');
+      setNote('Blocked (A11 hard-block: ' + verdict.hardBlockCheck + '): ' + d.headline);
+      return;
+    }
+    var confirmMsg = 'Publish this discourse article live?\n\n"' + d.headline + '"\n\nIt becomes public and indexable at its ' + (d.game_slug === 'dmz' ? '/dmz/discourse/' : '/intel/') + d.slug + ' home.';
+    if (verdict.reviewHolds.length > 0) {
+      confirmMsg = 'A11 REVIEW HOLD (' + verdict.reviewHolds.join(', ') + ').\n\nReview the headline/body, then confirm to publish ANYWAY (override).\n\n' + confirmMsg;
+    }
+    if (typeof window !== 'undefined' && !window.confirm(confirmMsg)) return;
     setBusy(d.id); setNote(null);
     try {
       var res = await fetch('/api/admin/drafts/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
-        body: JSON.stringify({ id: d.id }),
+        body: JSON.stringify({ id: d.id, overrideHolds: verdict.reviewHolds.length > 0 }),
       });
       var data = await res.json();
       if (!res.ok) throw new Error(data.error || ('Failed (' + res.status + ')'));
       setDrafts(function (list) { return list.filter(function (x) { return x.id !== d.id; }); });
-      setNote('Published: ' + d.headline);
+      setNote('Published: ' + d.headline + (verdict.reviewHolds.length > 0 ? ' (A11 review-holds overridden)' : ''));
     } catch (err) {
       setNote('Approve failed: ' + err.message);
     } finally {
@@ -186,6 +200,14 @@ export default function VantageDraftsPanel({ password }) {
             var isOpen = !!open[d.id];
             var isVantage = d.editor === 'VANTAGE';
             var accent = isVantage ? '#c8d4e0' : 'rgba(255,255,255,0.35)';
+            // A11 verdict (row-only, same gate the approve route enforces): PASS / HARD-BLOCK
+            // (stat-shaped sentence, never publishes) / REVIEW-HOLD (overridable). Surfaced so
+            // the human sees WHY before approving. Only meaningful for VANTAGE discourse.
+            var gate = isVantage ? runA11Gate(d) : null;
+            var gateBadge = !gate ? null
+              : gate.hardBlock ? { label: 'A11 BLOCK: ' + gate.hardBlockCheck, color: '#ff4444' }
+              : gate.reviewHolds.length > 0 ? { label: 'A11 HOLD: ' + gate.reviewHolds.join(', '), color: '#ff8800' }
+              : { label: 'A11 PASS', color: '#00ff88' };
             return (
               <div key={d.id} style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '2px solid ' + accent, borderRadius: 4, padding: '10px 12px' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
@@ -193,6 +215,7 @@ export default function VantageDraftsPanel({ password }) {
                   {d.directive_type && <span style={{ ...chip, color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.12)' }}>{d.directive_type}</span>}
                   <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>{d.game_slug}</span>
                   <span style={{ ...chip, color: '#ff8800', border: '1px solid rgba(255,136,0,0.4)' }}>DRAFT</span>
+                  {gateBadge && <span style={{ ...chip, color: gateBadge.color, border: '1px solid ' + gateBadge.color + '66' }}>{gateBadge.label}</span>}
                   {d.noindex && <span style={{ ...chip, color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>noindex</span>}
                   <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto' }}>{when(d.created_at)}</span>
                 </div>
