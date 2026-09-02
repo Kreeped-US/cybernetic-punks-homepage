@@ -121,6 +121,9 @@ export const BODYCAM_ARTICLE_SECTION = {
   // docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md. Renders at /bodycam/field-intel/<slug> once the
   // operator runs docs/migrations/2026-09-02-bodycam-article-classes.sql (feed_items row).
   'does-bodycam-have-classes': 'field-intel',
+  // content #2 -- the Trenches flagship-map deep-dive, grounded in the CONFIRMED tier of
+  // docs/bodycam/BODYCAM_MAPS_REFERENCE.md. Operator runs docs/migrations/2026-09-02-bodycam-article-trenches.sql.
+  'bodycam-trenches-map': 'field-intel',
 };
 
 // Slugs assigned to a given section (empty array -> empty state).
