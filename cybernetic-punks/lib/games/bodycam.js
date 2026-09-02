@@ -116,7 +116,12 @@ export const bodycam = {
 // games) a curated piece maps its slug to exactly one editor section here. EMPTY at brief #1 -- no
 // Bodycam articles exist yet. A NEW article must get an entry here or it renders in no section
 // (fail-safe: unassigned = hidden, never mis-placed).
-export const BODYCAM_ARTICLE_SECTION = {};
+export const BODYCAM_ARTICLE_SECTION = {
+  // content #1 (the quality-bar article) -- the no-class / loadout-system explainer, grounded in
+  // docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md. Renders at /bodycam/field-intel/<slug> once the
+  // operator runs docs/migrations/2026-09-02-bodycam-article-classes.sql (feed_items row).
+  'does-bodycam-have-classes': 'field-intel',
+};
 
 // Slugs assigned to a given section (empty array -> empty state).
 export function bodycamArticleSlugsForSection(sectionSlug) {
