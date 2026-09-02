@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam attachment schema DESIGN + DDL-PREP (LARGE arc, phase 1) -- HELD for review
+
+DESIGN + DDL-PREP ONLY. Nothing run, nothing seeded, no render built. Produced the bespoke two-table schema the feasibility read required (mod_stats is flat/single-slot -- cannot hold Bodycam's hierarchical mounting DAG). Awaiting Justin's schema review before any DDL executes.
+
+- DESIGN DOC: docs/bodycam/ATTACHMENT_SCHEMA_DESIGN.md -- convention baseline (Gen-2: bigint identity, game_slug text NOT NULL no-default, UNIQUE(game_slug,slug), verified/verified_source with NO patch_verified, jsonb loose-but-documented, slot vocab NOT a CHECK enum, reused set_updated_at + a game_slug immutability guard, RLS public-read), the two finalized tables with per-column rationale, RLS/exposure, the builder-query proof, and three flagged questions.
+- DDL: docs/migrations/2026-09-02-bodycam-attachments-schema.sql (operator runs after review; Claude runs no DDL). bodycam_attachments (id, game_slug, slug, name, slot_type, slot_subtype, requires_slots text[], provides_slots text[], effects jsonb [8 axes honest-null], is_cosmetic, toggle_group, rp_cost, rarity, notes, verified, verified_source, updated_at) + bodycam_attachment_weapon (attachment_slug + weapon_name composite FKs, compatible, tested, audio_note, effect_overrides jsonb, verified, verified_source). GIN indexes on requires_slots/provides_slots for the DAG traversal; btree (game_slug, weapon_name) for the builder lookup.
+- THE DAG (what mod_stats cannot express): requires_slots/provides_slots are slot-level edges (rail PROVIDES optic-mount; optic REQUIRES optic-mount). Builder resolves mountable = compatible-with-weapon AND requires_slots <@ available-provided-slots (GIN-served), expanding as parts add provides_slots. Proven traversable.
+- WEAPON REF: composite FK (game_slug, weapon_name) -> weapon_stats(game_slug, name), enabled by this session's UNIQUE(game_slug,name). Resolves the DMZ scar-1 (name refs with no integrity) since this is a relational join with a real FK + ON UPDATE CASCADE, not a denormalized jsonb ref.
+
+THREE FLAGGED QUESTIONS for Justin: (Q1) slot-level deps are SUFFICIENT -- no part-requires-specific-part rule exists; part-level is an additive seam (bodycam_attachment_dependency), NOT built. (Q2) weapon ref by composite name (recommended) vs uuid id. (Q3) base_slots(W) DAG root -- recommend a builder-constant now with per-weapon exceptions via the compat join; a bodycam_weapon extension table is the additive seam if base slots diverge per weapon (NOT built; weapon_stats is shared and must not gain bodycam-only columns).
+
+HELD: no DDL run, no data seeded, no render/builder built. bodycam.indexable stays false. Branch feat/bodycam-attachment-schema; awaiting review before merge and before the operator runs the DDL.
+
+---
+
 ## 2026-09-02 - Bodycam homepage tile added (discovery fix)
 
 The homepage game-grid (app/page.js) HARDCODES one <Link> tile per game -- it is NOT a ROOT_GAMES map. There were 4 tiles (marathon/dmz/wardogs/pubg-dednet); Bodycam's was never added, so Bodycam was not discoverable from the homepage even though it is registered and /bodycam routes fine. THIS -- a missing hardcoded tile -- was the real reason Bodycam's tile was absent; NOT the deploy, NOT an indexable filter (the grid has no filter of any kind).
