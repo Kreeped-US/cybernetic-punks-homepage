@@ -199,7 +199,7 @@ async function getReceipt() {
   try {
     var res = await supabase
       .from('weapon_stats')
-      .select('name, damage, damage_type, verified_source, patch_verified, updated_at')
+      .select('name, damage, damage_type, verified_source, updated_at')
       .eq('verified', true)
       .eq('game_slug', 'marathon')
       .not('verified_source', 'is', null)
@@ -217,7 +217,6 @@ async function getReceipt() {
       claim: r.name + ' deals ' + r.damage + ' damage per shot' + (r.damage_type ? ' (' + r.damage_type + ' damage)' : ''),
       source: String(r.verified_source),
       check: check,
-      patch: r.patch_verified ? String(r.patch_verified) : null,
       href: '/marathon/weapons/' + slug,
       linkLabel: 'Inspect ' + r.name + ' on the weapon page',
     };

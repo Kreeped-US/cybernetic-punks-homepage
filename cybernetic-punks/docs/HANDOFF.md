@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - patch_verified render removal (cheap-half step 2)
+
+Removed the last user-facing render of the deprecated patch_verified watermark.
+- components/network/ReceiptPanel.js: removed the "patch" row (rendered "Update <patch_verified>").
+- app/page.js getReceipt: removed patch_verified from the select and the patch field from the receipt object.
+
+Provenance intact: verified_source still renders as the receipt source line; check derivation unchanged. OPTION A (drop) chosen; verified_source already carried the real provenance, so no replacement needed. NO DB writes; 348 existing rows untouched.
+
+Cheap half now complete (write-arrest b9bf8af + this render removal). Deferred DDL half (post-Wardogs-EA), still open: retarget corroboration.js seniority off the watermark (needs replacement basis), neutralize inert reads (verification.js SOURCE_AGREED branch, qualityMetricsCore stale-stamp), strip select-into-context SELECT lists, update 4 test files, then DROP COLUMN on the 9 tables.
+
+Latent note: ReceiptPanel renders verified_source untruncated (no guard); fine for the current weapon-only receipt pool, but add truncation before sourcing the receipt from tables with long correction-narrative verified_source (e.g. shell_stats).
+
+---
+
 ## 2026-09-02 - patch_verified write-arrest (cheap-half step 1)
 
 Stopped all code paths that stamp the deprecated patch_verified watermark.

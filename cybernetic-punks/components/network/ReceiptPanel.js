@@ -64,7 +64,6 @@ function buildRows(r) {
     { lbl: 'source', val: r.source },
     { lbl: 'check', val: r.check },
   ];
-  if (r.patch) rows.push({ lbl: 'patch', val: 'Update ' + r.patch });
   rows.push({ lbl: 'claim', val: r.claim, claim: true });
   return rows;
 }
