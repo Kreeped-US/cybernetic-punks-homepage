@@ -422,6 +422,17 @@ export default async function NetworkRoot() {
                 <div className="meta">PUBG: DED.NET &middot; PUBG Studios / KRAFTON &middot; roguelite FPS</div>
                 <div className="go">Get the intel &rarr;</div>
               </Link>
+              {/* Bodycam -- LIVE in Steam Early Access (game #5). Genuinely playable now, so the
+                  pill reads "LIVE / EARLY ACCESS" (honest, matching the Wardogs-live convention) --
+                  NO countdown, NO date (there is none; status:'live', launch_date null). Steel-cyan
+                  accent inline (no new CSS class), mirroring the DED.NET tile mechanism. Nav-only:
+                  bodycam.indexable stays false, so the /bodycam subtree remains noindex. */}
+              <Link href="/bodycam" className="game" style={{ '--img': "url('/images/games/bodycam-hero.jpg')" }}>
+                <div className="art" aria-hidden="true" /><div className="scrim scrim-strong" aria-hidden="true" />
+                <div className="status" style={{ color: '#3d97b8' }}><i aria-hidden="true" />LIVE &middot; EARLY ACCESS</div>
+                <div className="meta">Bodycam &middot; Reissad Studio &middot; body-cam tactical FPS</div>
+                <div className="go">Get the intel &rarr;</div>
+              </Link>
             </div>
           </div>
         </section>

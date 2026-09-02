@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam homepage tile added (discovery fix)
+
+The homepage game-grid (app/page.js) HARDCODES one <Link> tile per game -- it is NOT a ROOT_GAMES map. There were 4 tiles (marathon/dmz/wardogs/pubg-dednet); Bodycam's was never added, so Bodycam was not discoverable from the homepage even though it is registered and /bodycam routes fine. THIS -- a missing hardcoded tile -- was the real reason Bodycam's tile was absent; NOT the deploy, NOT an indexable filter (the grid has no filter of any kind).
+
+- ADDED: one Bodycam <Link className="game"> tile, after the pubg-dednet tile, mirroring that tile's EXACT mechanism (inline --img hero, inline status color, scrim-strong, no new CSS class). href=/bodycam, hero /images/games/bodycam-hero.jpg, steel-cyan #3d97b8 accent (from config, same inline-color mechanism as the DED.NET tile), status "LIVE / EARLY ACCESS" (honest -- Bodycam is live in Steam EA; matches the Wardogs-live label convention; NO countdown, NO date), meta "Bodycam - Reissad Studio - body-cam tactical FPS".
+- Nav-only: bodycam.indexable STAYS false (untouched) -- the tile is a homepage link; the /bodycam subtree remains noindex. This is inherently the decouple-visibility-from-indexability fix (homepage link to the live game while search stays excluded). No config, no ROOT_GAMES, no other game's tile changed. Additive: one <Link>.
+
+Verified: build passes (exit 0). No other game tile changed.
+
+FLAG (not fixed here): the game-grid is hardcoded per-game -- the same smell as isNetworkChrome. Game #6 will need a manual tile added here too. Candidate future refactor: make the grid ROOT_GAMES-driven (like the NETWORK PULSE section already is) so a registered game auto-appears. NOT done in this brief (scope = discovery fix only).
+
+---
+
 ## 2026-09-02 - URGENT build fix: sitemap eligible.js weapon_stats game_slug scope
 
 Production build was FAILING (blocking all deploys): "[sitemap] partition: URL in more than one child -- /marathon/weapons/m1911". Cause: lib/sitemap/eligible.js queried weapon_stats WITHOUT a game_slug filter and emitted /marathon/weapons/<slug> for EVERY game's weapons. After the weapon_stats constraint went per-game (UNIQUE(game_slug,name)), Bodycam M1911/MP5 (which also exist under wardogs) mapped to the SAME /marathon/weapons/ slug -> duplicate URL -> assertPartition (partition.js:52) threw -> build crash. THIS is why Bodycam was not appearing: the site had not deployed since the roster insert.
