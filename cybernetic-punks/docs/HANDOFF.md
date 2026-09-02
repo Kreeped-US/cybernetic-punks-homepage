@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - operator DB action: Bodycam attachment schema created (2 tables)
+
+Recorded per rule 2 (operator-run Supabase actions leave no git trace). The operator ran the finalized DDL (docs/migrations/2026-09-02-bodycam-attachments-schema.sql, v3 reuse variant) and created the two bespoke attachment tables. Live-verified: 2 tables + 4 triggers present; both tables EMPTY.
+
+1. bodycam_attachments: the attachment entities + the mounting DAG (requires_slots / provides_slots text[] with GIN indexes; effects jsonb honest-null; slot_type / slot_subtype; is_cosmetic; toggle_group; rp_cost; rarity; verified / verified_source -- NO patch_verified). UNIQUE(game_slug, slug).
+2. bodycam_attachment_weapon: per-weapon compatibility m2m. Composite FK to bodycam_attachments(game_slug, slug) ON DELETE CASCADE and to weapon_stats(game_slug, name) ON DELETE RESTRICT (the latter enabled by this session's weapon_stats UNIQUE(game_slug, name)). compatible / tested / audio_note / effect_overrides.
+3. Both tables reuse the live shared dmz_guard_game_slug() + set_updated_at() -- no new function (the v3 fix that dodged the earlier dollar-quoted CREATE FUNCTION 42883 failure). RLS enabled + public-read (anon + authenticated SELECT).
+
+NO data seeded -- values are honest-null / unsourced (seeding now = fabrication); tables are empty. Context on the fix path: the original DDL run failed 42883 because a dollar-quoted CREATE FUNCTION did not execute; resolved by reusing the existing dmz_ generic guard (no dollar-quoted block).
+
+NEXT (both gated behind an operator go-ahead): phase 2 = seed the CONFIRMED SKELETON (slot taxonomy + known mounting dependencies, honest-null, NO fabricated parts or values); phase 3 = the DAG-resolving builder + the arsenal attachment render. bodycam.indexable stays false until reviewed content lands.
+
+---
+
 ## 2026-09-02 - Bodycam attachment DDL FINALIZED (v3): reuse dmz_guard_game_slug(), no new function
 
 Finalized the DDL to eliminate the failure mode entirely. The prior failure was the dollar-quoted CREATE FUNCTION for bodycam_guard_game_slug not executing. v3 REMOVES that CREATE FUNCTION and instead REUSES the existing live generic dmz_guard_game_slug() (game-agnostic immutability guard) for both guard triggers; the updated_at triggers keep reusing the existing live set_updated_at(). No new function is created by the file, so there is no dollar-quoted block to mangle.
