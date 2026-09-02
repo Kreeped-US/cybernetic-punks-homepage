@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam system reference doc captured (Bodycam arc -- knowledge capture) -- HELD
+
+Captured docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md -- the confirmed, primary-sourced Bodycam system facts that previously lived only in chat, now committed ground truth for the per-weapon pages, editors, and articles (stated once, no drift / re-derivation).
+
+Records: IDENTITY (PC body-cam POV tactical FPS, no floating gun / minimal HUD, photoreal UE5, raw audio, Reissad Studio, Early Access, grounded CS / Ready or Not hybrid not COD, physical HUB front end); NO CLASSES (loadout-based, self-built -- Primary/Secondary/Melee/Explosives/Gadget[FPV drone or RC car], same operator body, RP unlocks); PROGRESSION as TWO distinct tracks (RP unlock economy, shop off this update / bought skins retained; Rank/ELO moves ONLY in Wingman 2v2 solo-queue, matchmaking not skill-based yet, flat rewards, casual modes do not climb); MODES (Wingman ranked 2v2 S&D replacing Body Bomb 5v5, TDM/DM/Hardpoint/Gun Game casual); SESSION FLOW (HUB -> tablet -> queue -> fight w/ friendly fire + audio-primary -> host migration new this patch -> post-match RP, Wingman updates ELO); and an HONEST-NULL boundary (no published per-weapon numbers, no parts list, no exact RP/rank thresholds).
+
+CORRECTION recorded explicitly: ZOMBIES is DISABLED in the Sept 2 "Locked & Loaded" update (reintroduced for Halloween) -- the patch is authoritative over any older context listing it active. Section 4 records it as disabled, not active.
+
+Sourced to the Sept 2 2026 patch + operator context; ASCII, straight quotes. Reference doc (like ATTACHMENT_SEED_SCOPING.md), not rendered. HELD for review. No code, no DB.
+
+---
+
 ## 2026-09-02 - Bodycam per-weapon crawlable pages built (phase 3, build-order #4) -- HELD
 
 Built /bodycam/weapons/[slug] -- the other half of the builder SEO asset (with the #2 frame): a server-rendered page per REAL Bodycam weapon (weapon_stats has 20). Honest system content keyed per weapon; NO fabricated parts/numbers.
