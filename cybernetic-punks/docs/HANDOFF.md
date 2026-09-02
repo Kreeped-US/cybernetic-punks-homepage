@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam article #2 shipped (bodycam-trenches-map)
+
+- Operator DB action (rule 2): inserted 1 feed_items row, game_slug=bodycam, editor=NEXUS, section field-intel, slug bodycam-trenches-map, is_published=true, noindex=true (live-but-noindex; bodycam.indexable false). SQL: docs/migrations/2026-09-02-bodycam-article-trenches.sql. Article "Bodycam Trenches Map: What It Is and How It Plays" -- grounded 100% in the CONFIRMED tier of BODYCAM_MAPS_REFERENCE.md + the Sept 2 patch/devlog; destructible trees flagged ROADMAP not shipped; no historical-pool maps stated as current, no Zombies-as-active, zero fabricated numbers/dimensions/callouts. Operator-reviewed and approved.
+- Code (commit 6352133): added the bodycam-trenches-map slug->section mapping to BODYCAM_ARTICLE_SECTION in lib/games/bodycam.js (required for render).
+- Confirmed live at /bodycam/field-intel/bodycam-trenches-map, renders FORMATTED (headings, bullet lists, paragraphs) -- verifies the CRLF parser fix (abe2135) holds on a fresh SQL-inserted article, hardening the whole SQL-article path.
+- Bodycam content library now has 2 shipped articles (classes + Trenches), both live-but-noindex until the indexable flip.
+
+---
+
 ## 2026-09-02 - Inert pre-flip Bodycam sitemap wiring landed (all 4 pieces, gated) -- HELD
 
 Wired bodycam into the sitemap system NOW, fully but GATED on getIndexableGames().includes(bodycam) so it is INERT while bodycam.indexable is false. Removes the flip landmine: previously flipping indexable would surface bodycam with NO sitemap, and half-wiring (an eligible block without a partition bucket) would crash the build via assertPartition -- the exact failure this session already hit. All four pieces landed TOGETHER, mirroring the wardogs/pubg-dednet pattern.
