@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam attachment seed SCOPING (phase 2 step 1) -- HELD; recommend seed NOTHING yet
+
+Read-only scoping + proposal. Nothing inserted. DELIVERABLE: docs/bodycam/ATTACHMENT_SEED_SCOPING.md -- the confirmed-structure reference. RECOMMENDATION: Option A -- seed NOTHING into bodycam_attachments yet, because it holds PARTS and no parts list is published. Seeding slot CATEGORIES as part ROWS would be a category error (a builder/render would treat a vocab term like "Optic Mount" as a mountable part) -- fabrication-adjacent. The table stays empty until a published parts list exists; the confirmed structure lives in the doc.
+
+CONFIRMED (documented, not seeded): the slot taxonomy (barrel[+short/long], muzzle[suppressor/flash-hider/compensator], upper-barrel, side-rail, optic-mount, optic[iron/close/mid/long + reticle + canted-toggle], magazine, trigger, grip, stock[+light/heavy], ammo, sticker); the ONE stated dependency edge -- optic REQUIRES optic-mount / rail-mount PROVIDES optic-mount (devlog: "mount a rail before a sight"), slot-level; the size-vs-control DESIGN PRINCIPLE (short/light = faster/less stable, long/heavy = slower/more stable) as NOTES only, never numbers.
+
+HELD as INFERRED-not-stated (NOT encoded): muzzle-requires-barrel, upper-barrel-provides-a-distinct-rail, canted-needs-own-mount, any base-slot ordering, optic-subtype-to-mount-tier gating. UNPUBLISHED (must not be seeded until sourced): the ~400 named parts, all 8 numeric effect axes, the per-gun compatibility matrix, RP/rarity/per-part-cosmetic, and the caliber-swap ballistics claim (devlog-only, contradicted by the patch listing Ammo Types as a slot -- ammo is a plain slot, no caliber-swap behavior encoded).
+
+bodycam_attachment_weapon (compatibility): seed NONE -- confirmed (no per-gun matrix published). No SQL to run; an illustrative (commented, not-to-run) single-row example shows the honest encoding for when a real part lands.
+
+HELD for Justin's review. No DB writes. bodycam.indexable stays false. NEXT (gated): step 2 seeds real named parts ONLY when a published sourced parts list exists; phase 3 (DAG builder + render) unchanged.
+
+---
+
 ## 2026-09-02 - operator DB action: Bodycam attachment schema created (2 tables)
 
 Recorded per rule 2 (operator-run Supabase actions leave no git trace). The operator ran the finalized DDL (docs/migrations/2026-09-02-bodycam-attachments-schema.sql, v3 reuse variant) and created the two bespoke attachment tables. Live-verified: 2 tables + 4 triggers present; both tables EMPTY.
