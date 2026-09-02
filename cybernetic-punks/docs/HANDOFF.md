@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam weapon roster prepared + arsenal roster render (brief #4)
+
+Prepared the honest-null Bodycam weapon_stats inserts (the operator runs them) AND wired the shared arsenal render so they display.
+
+- docs/migrations/2026-09-02-bodycam-weapon-roster.sql: 20 rows, game_slug=bodycam, verified=false + every stat column NULL (structure-known / values-pending, the Wardogs precedent -- no published numbers exist, none invented). Tiered via verified_source: 6 PATCH-CONFIRMED (Sept 2 2026 Locked & Loaded), 13 REWORKED-EXISTING, 1 DEVLOG-ATTRIBUTED (Draco -- INCLUDED, flagged attributed / not-patch; operator may hold it out). Devlog aliases (R12 / Remington 700 / Viper / CZ 75 / AKM / M870 / SVD) captured in notes (no alias column). Crossbow excluded (Zombies-only, disabled this patch). THE OPERATOR runs the INSERT in Supabase; that run gets recorded in the next HANDOFF per rule 2.
+- READ-FIRST FINDING + FIX: the arsenal section is source:data, which rendered the coming-soon EmptyState and did NOT read weapon_stats -- so the inserts alone would not show. Added the render (shared template, Bodycam-only impact):
+  - NEW components/game/GameArsenal.js: honest-null roster (grouped by class, NAMES + CLASSES only, no numbers; a per-weapon tier badge derived from verified_source -- an attributed gun reads Attributed, never Confirmed; amber "structure confirmed - values pending" banner). Mirrors the Wardogs/DMZ honesty pattern.
+  - GameSectionPage.js: a data section whose contentFilter.table===weapon_stats fetches weapon_stats by game_slug and renders GameArsenal when rows exist, else the coming-soon EmptyState. Stays noindex (data sections have sectionHasContent=false).
+  - lib/games/bodycam.js: arsenal section contentFilter null -> { table: weapon_stats }.
+
+Only Bodycam uses the shared GameSectionPage (Option C) -- wardogs/pubg/dmz keep their own copies, untouched. No existing game changed. bodycam stays indexable:false. Pre-insert the arsenal shows coming-soon; post-insert it shows the roster (names + classes + honest tier badges, no numbers). Build clean. Bodycam arc brief #4. Next: verify render after the operator inserts; then the attachment model / indexable flip.
+
+---
+
 ## 2026-09-02 - Bodycam hero image wired (Case A: track the file, no code change)
 
 The operator-provided hero image is now tracked so it deploys. CASE A -- the code ALREADY referenced it correctly; nothing to wire.

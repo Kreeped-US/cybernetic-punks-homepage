@@ -16,6 +16,7 @@ import { getGameSection } from '@/lib/games';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
 import Link from 'next/link';
+import GameArsenal from './GameArsenal';
 
 var FONT = 'Exo_2, system-ui, sans-serif';
 
@@ -130,7 +131,27 @@ export default async function GameSectionPage({ config, articleSlugsForSection, 
   var section = getGameSection(config.slug, sectionSlug);
   if (!section) notFound();
 
-  if (section.source !== 'editor') return <EmptyState config={config} section={section} />;
+  // Data section (source !== 'editor'). If it targets weapon_stats and rows exist for this game,
+  // render the honest-null arsenal roster; otherwise the coming-soon EmptyState. (A data section
+  // never counts as indexable content -- sectionHasContent stays false -- so this roster of
+  // verified=false rows renders WITHOUT being indexed, exactly like the Wardogs precedent.)
+  if (section.source !== 'editor') {
+    var cf = section.contentFilter || {};
+    if (cf.table === 'weapon_stats') {
+      var weapons = [];
+      try {
+        var wres = await supabase
+          .from('weapon_stats')
+          .select('name, category, weapon_type, ammo_type, verified, verified_source, notes')
+          .eq('game_slug', config.slug)
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+        weapons = (wres && wres.data) || [];
+      } catch (err) { weapons = []; }
+      if (weapons.length > 0) return <GameArsenal config={config} section={section} weapons={weapons} />;
+    }
+    return <EmptyState config={config} section={section} />;
+  }
 
   var articles = [];
   try {
