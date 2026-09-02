@@ -18,6 +18,7 @@ export function isNetworkChrome(pathname) {
   return pathname.startsWith('/dmz')
     || pathname.startsWith('/wardogs')
     || pathname.startsWith('/pubg-dednet')
+    || pathname.startsWith('/bodycam')
     || pathname === '/about' || pathname.startsWith('/about/')
     || pathname === '/editors' || pathname.startsWith('/editors/')
     || pathname === '/me' || pathname.startsWith('/me/')

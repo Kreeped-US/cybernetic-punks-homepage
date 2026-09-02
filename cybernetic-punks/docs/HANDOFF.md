@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - Bodycam routes as the first shared-template instance (Option C)
+
+Bodycam (game #5) gets its routes, built on a NEW shared game-section route template co-designed with Bodycam as its first consumer. Legacy games (wardogs/pubg/dmz/marathon) are UNTOUCHED -- they keep their drifted copies (Option C); this template is for new games so #6+ inherit good patterns, not drift.
+
+SHARED TEMPLATE (components/game/, config-driven, one clean shape -- inline theme tokens, one font string):
+- GameLayout.js: theme-token wrapper (from config.theme, cold-neutral text defaults) + GameNav + Footer + gameLayoutMetadata (robots gated on config.indexable).
+- GameNav.js: config-driven nav (wordmark=displayName, tabs from config.sections, Network back-link).
+- GameSectionPage.js: section-list render (editor sections read feed_items, data sections = coming-soon shell, empty editor sections = honest empty state) + a GENERIC sectionHasContent (replaces per-game lib/<game>/sections.js copies) + the CoverageCard + gameSectionMetadata.
+- GameArticle.js: article-detail render + gameArticleMetadata (not-found -> honest "<game> - Not Found", never an error).
+- gameOgImage.js: makeGameOgImage(config) -- OG card whose accent resolves from OG_COLORS[slug] else config.theme.accent (so a new game OG works from config; no shared OG-map edit).
+The per-game article->section fns are PASSED IN by the thin route files, so the template imports no game.
+
+BODYCAM ROUTES (app/bodycam/, thin instances): layout.js, page.js (LIVE landing -- Bodycam-specific hero, NO countdown/date since the game is already live in EA; honest live-status strip + shared CoverageCard grid; graceful-empty since no content -> cards read Soon, Intel reads Being built), [section]/page.js, [section]/[slug]/page.js, [section]/[slug]/opengraph-image.js. The 4 route wrappers are ~12 lines each; only the landing hero is bespoke.
+
+One non-config per-game line: lib/network/isNetworkChrome.js gains /bodycam (global Marathon nav + LivePulse suppression; a hardcoded prefix list -- future games add one line here until it is derived).
+
+Verified: build clean; /bodycam + /bodycam/[section] + /bodycam/[section]/[slug] + opengraph-image registered (dynamic); LIVE landing has NO countdown; empty states render honest "being built" copy (not errors); a bad article slug is an honest 404. NO existing game route/config changed (only the isNetworkChrome line added; app/wardogs|pubg-dednet|dmz|marathon untouched). bodycam stays indexable:false. PAYOFF: game #6 routes now take ~5 thin files (4 wrappers ~12 lines + 1 landing hero) + 1 isNetworkChrome line, vs ~5 hand-written 60-190 line files. Bodycam arc brief #2. Next: weapon roster data (honest-null).
+
+---
+
 ## 2026-09-02 - Bodycam registered (game #5) [config + registry only]
 
 lib/games/bodycam.js created + registered in GAMES / ROOT_GAMES / ENTITY_TABLES. Pure ADDITIVE -- no existing game config or output changed; no routes, tables, or content (later briefs).
