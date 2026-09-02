@@ -6,6 +6,23 @@
 -- seeded (values are honest-null and unsourced; seeding now would be fabrication). No existing
 -- table is touched (weapon_stats / mod_stats unchanged).
 --
+-- >>> CORRECTED 2026-09-02 (v2) after a failed first run <<<
+-- The first run failed with 42883 "function bodycam_guard_game_slug() does not exist" at the
+-- first guard trigger, even though the file creates that function above the trigger. Root cause:
+-- the CREATE FUNCTION (a $$-dollar-quoted plpgsql body) did not execute in the same pass as the
+-- plain statements -- the signature of a PARTIAL/selection run, or a client that splits the script
+-- on ';' and mangles the $$ body. So the table + indexes were created but the function was not,
+-- and the trigger referencing it failed. This corrected version:
+--   (1) DROPs any partial bodycam_attachment* objects first (safe -- no data was ever seeded), so a
+--       re-run starts from a clean slate regardless of the partial state the failure left behind;
+--   (2) creates the guard function FIRST, standalone, inside the single transaction;
+--   (3) is one atomic transaction -- any error rolls the whole thing back (no more partial state).
+--
+-- >>> HOW TO RUN (important) <<<
+-- Run this ENTIRE FILE AS ONE EXECUTION in the Supabase SQL editor (it handles $$ correctly). Do
+-- NOT run a partial selection, and do NOT pipe it through a tool that splits on ';' -- either can
+-- skip the $$-bodied CREATE FUNCTION and reproduce the original failure.
+--
 -- CONVENTIONS (Gen-2, per docs/dmz/WEAPON_BUILD_SCHEMA_DESIGN.md + HANDOFF): bigint identity PK;
 -- game_slug text NOT NULL, NO default (a forgotten value ERRORS, never silently the wrong game);
 -- UNIQUE(game_slug, slug); verified + verified_source (NO patch_verified -- retired this session;
@@ -13,19 +30,38 @@
 -- game_slug immutability guard mirroring dmz_guard_game_slug(); RLS enabled + public-read.
 --
 -- PRE-FLIGHT for the operator (verify-before-run):
---   1. set_updated_at() exists with body `NEW.updated_at = now(); RETURN NEW;` -- REUSE it (the
---      block below does NOT recreate it). If your project names it differently, adjust the trigger.
+--   1. set_updated_at() exists with body `NEW.updated_at = now(); RETURN NEW;` -- REUSE it (this
+--      file does NOT recreate it). If your project names it differently, adjust the two
+--      set_updated_at triggers below. (This function was NOT the cause of the first failure -- the
+--      run died at the guard trigger, before reaching a set_updated_at trigger -- but confirm it
+--      exists so the corrected run does not fail later at line ~set_updated_at.)
 --   2. weapon_stats has UNIQUE(game_slug, name) (weapon_stats_game_slug_name_key, added this
 --      session) -- the FK target for bodycam_attachment_weapon.weapon_name. Confirm before running.
 --   3. Confirm the exact public-read RLS policy shape on weapon_stats (policy name + roles) and
 --      match it; the policy below is the standard anon+authenticated SELECT.
+--
+-- ALTERNATIVE (optional): if you would rather NOT create a bodycam-specific guard, you can reuse
+-- the existing generic dmz_guard_game_slug() (its body is game-agnostic): delete the CREATE
+-- FUNCTION block below and change both guard triggers' `execute function bodycam_guard_game_slug()`
+-- to `execute function dmz_guard_game_slug()`. That removes the $$ block entirely (cannot hit the
+-- original failure) but couples bodycam to a dmz-named function. Default below keeps a
+-- self-contained bodycam guard, matching how dmz has its own dmz_guard_game_slug.
 
 begin;
 
 -- ---------------------------------------------------------------------------
--- game_slug immutability guard (mirrors dmz_guard_game_slug's confirmed body).
--- Generic: rejects any UPDATE that changes game_slug. If a shared generic guard
--- already exists in your project, use it instead and skip this CREATE.
+-- (1) CLEAN UP any partial objects from the failed first run. SAFE: no data was
+-- ever seeded (both tables are/were empty), so dropping loses nothing. CASCADE
+-- also removes the table's indexes, triggers, and RLS policies. If the first run
+-- created nothing, these are no-ops.
+-- ---------------------------------------------------------------------------
+drop table if exists bodycam_attachment_weapon cascade;
+drop table if exists bodycam_attachments cascade;
+
+-- ---------------------------------------------------------------------------
+-- (2) game_slug immutability guard -- created FIRST, standalone (mirrors
+-- dmz_guard_game_slug's confirmed body). Generic: rejects any UPDATE that changes
+-- game_slug. Must exist before the guard triggers below reference it.
 -- ---------------------------------------------------------------------------
 create or replace function bodycam_guard_game_slug()
 returns trigger
@@ -42,7 +78,7 @@ $$;
 -- ===========================================================================
 -- Table 1: bodycam_attachments -- the attachment entities + the mounting DAG.
 -- ===========================================================================
-create table if not exists bodycam_attachments (
+create table bodycam_attachments (
   id              bigint generated always as identity primary key,
   game_slug       text        not null,                 -- 'bodycam'; immutable (trigger); no default
   slug            text        not null,                 -- stable join key; refs use this, never name
@@ -68,19 +104,17 @@ create table if not exists bodycam_attachments (
   constraint bodycam_attachments_game_slug_slug_key unique (game_slug, slug)
 );
 
-create index if not exists bodycam_attachments_slot_type_idx
+create index bodycam_attachments_slot_type_idx
   on bodycam_attachments (game_slug, slot_type);
-create index if not exists bodycam_attachments_requires_slots_gin
+create index bodycam_attachments_requires_slots_gin
   on bodycam_attachments using gin (requires_slots);   -- serves the DAG `<@` / `&&` traversal
-create index if not exists bodycam_attachments_provides_slots_gin
+create index bodycam_attachments_provides_slots_gin
   on bodycam_attachments using gin (provides_slots);
 
-drop trigger if exists bodycam_attachments_guard_game_slug on bodycam_attachments;
 create trigger bodycam_attachments_guard_game_slug
   before update on bodycam_attachments
   for each row execute function bodycam_guard_game_slug();
 
-drop trigger if exists bodycam_attachments_set_updated_at on bodycam_attachments;
 create trigger bodycam_attachments_set_updated_at
   before update on bodycam_attachments
   for each row execute function set_updated_at();
@@ -88,7 +122,7 @@ create trigger bodycam_attachments_set_updated_at
 -- ===========================================================================
 -- Table 2: bodycam_attachment_weapon -- per-weapon compatibility (many-to-many).
 -- ===========================================================================
-create table if not exists bodycam_attachment_weapon (
+create table bodycam_attachment_weapon (
   id               bigint generated always as identity primary key,
   game_slug        text        not null,                -- 'bodycam'; immutable; no default
   attachment_slug  text        not null,                -- -> bodycam_attachments(game_slug, slug)
@@ -113,17 +147,15 @@ create table if not exists bodycam_attachment_weapon (
     on update cascade on delete restrict               -- never silently drop a compat fact
 );
 
-create index if not exists bodycam_attachment_weapon_weapon_idx
+create index bodycam_attachment_weapon_weapon_idx
   on bodycam_attachment_weapon (game_slug, weapon_name);   -- the builder's primary lookup
-create index if not exists bodycam_attachment_weapon_attachment_idx
+create index bodycam_attachment_weapon_attachment_idx
   on bodycam_attachment_weapon (game_slug, attachment_slug);
 
-drop trigger if exists bodycam_attachment_weapon_guard_game_slug on bodycam_attachment_weapon;
 create trigger bodycam_attachment_weapon_guard_game_slug
   before update on bodycam_attachment_weapon
   for each row execute function bodycam_guard_game_slug();
 
-drop trigger if exists bodycam_attachment_weapon_set_updated_at on bodycam_attachment_weapon;
 create trigger bodycam_attachment_weapon_set_updated_at
   before update on bodycam_attachment_weapon
   for each row execute function set_updated_at();
@@ -136,11 +168,9 @@ create trigger bodycam_attachment_weapon_set_updated_at
 alter table bodycam_attachments        enable row level security;
 alter table bodycam_attachment_weapon  enable row level security;
 
-drop policy if exists bodycam_attachments_public_read on bodycam_attachments;
 create policy bodycam_attachments_public_read
   on bodycam_attachments for select to anon, authenticated using (true);
 
-drop policy if exists bodycam_attachment_weapon_public_read on bodycam_attachment_weapon;
 create policy bodycam_attachment_weapon_public_read
   on bodycam_attachment_weapon for select to anon, authenticated using (true);
 
@@ -150,6 +180,8 @@ commit;
 --   -- both tables exist, empty:
 --   select count(*) from bodycam_attachments;         -- expect 0
 --   select count(*) from bodycam_attachment_weapon;   -- expect 0
+--   -- the guard function now exists:
+--   select proname from pg_proc where proname = 'bodycam_guard_game_slug';   -- expect 1 row
 --   -- FK targets resolve:
 --   select conname, pg_get_constraintdef(oid) from pg_constraint
 --     where conrelid = 'bodycam_attachment_weapon'::regclass and contype = 'f';

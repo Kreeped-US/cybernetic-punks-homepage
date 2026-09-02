@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - URGENT fix: Bodycam attachment DDL failed on missing guard function (v2)
+
+The operator ran docs/migrations/2026-09-02-bodycam-attachments-schema.sql and it FAILED: 42883 "function bodycam_guard_game_slug() does not exist" at the first guard trigger. DIAGNOSIS: the file DID create that function (line 30), correctly ordered before the trigger, inside the transaction -- so it is NOT a missing/misordered/misnamed defect in the file text. Execution reached the trigger with the table + indexes already created but the function absent, which means the $$-dollar-quoted CREATE FUNCTION did not execute in the same pass as the plain statements -- the signature of a PARTIAL/selection run or a client that splits the script on ";" and mangles the $$ body (Supabase's own SQL editor handles $$ correctly when the whole file is run at once).
+
+- The DMZ functions (dmz_guard_game_slug, set_updated_at) exist ONLY in the live DB (operator-run 2026-08-06); there is no committed CREATE for them. set_updated_at is the shared generic; dmz_guard_game_slug is a generic-bodied immutability guard. The bodycam DDL correctly creates its own per-family bodycam_guard_game_slug (matching how dmz has its own).
+- CORRECTED (v2, same file, HELD on branch fix/bodycam-attachments-ddl-guardfn): (1) DROP any partial bodycam_attachment* objects first (CASCADE; SAFE -- no data was ever seeded), so a re-run starts clean regardless of partial state; (2) create the guard function FIRST, standalone, inside the single transaction; (3) one atomic transaction so any error rolls back (no more partial state); plus a prominent "run the ENTIRE FILE as one execution" instruction and an optional alternative to reuse the existing generic dmz_guard_game_slug() (removes the $$ block entirely).
+
+PARTIAL-STATE: the first run likely left bodycam_attachments (+ its 3 indexes) created and bodycam_attachment_weapon NOT created, with NO triggers/policies on either and the guard function absent. The corrected v2 DROP...CASCADE cleans all of it. Operator diagnostic (read-only) to confirm before re-running: check information_schema.tables for the two table names, pg_proc for bodycam_guard_game_slug, pg_trigger/pg_indexes for bodycam_% objects.
+
+HELD: no DDL run. Awaiting operator review of the corrected v2 file, then a clean re-run (whole file, one execution). bodycam.indexable stays false; no render/builder built; no data seeded.
+
+---
+
 ## 2026-09-02 - Bodycam attachment schema DESIGN + DDL-PREP (LARGE arc, phase 1) -- HELD for review
 
 DESIGN + DDL-PREP ONLY. Nothing run, nothing seeded, no render built. Produced the bespoke two-table schema the feasibility read required (mod_stats is flat/single-slot -- cannot hold Bodycam's hierarchical mounting DAG). Awaiting Justin's schema review before any DDL executes.
