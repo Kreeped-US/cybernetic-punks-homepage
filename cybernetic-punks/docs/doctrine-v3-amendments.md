@@ -104,3 +104,28 @@ Implemented by the URL Inspection loop (Consumer C): every published page enroll
 3. The doctrine is added to HANDOFF's required-reading list (A9's corollary).
 
 Nothing in v2 is removed except the standalone patch_verified field (A4, which folds the patch version into verified_source). Every other amendment adds a rule paid for the week of 2026-07-24. The core inversion, the five gates, the calendar, and the authority strategy stand unchanged.
+
+---
+
+## A11 - Gate 3: VANTAGE discourse attribution is per-claim (anti-laundering)
+
+**Later amendment - ratified by Fable 2026-08-26 (Q1 of the three-question doctrine doc: attribution, press-source tiering, bespoke scripts). Recorded 2026-09-02.** NOT part of the 2026-07-24 A1-A10 set; appended after it so the ratified ruling is on paper before the VANTAGE discourse honesty gate that will quote it. Until now only the QUESTION had survived in the record, which stalled a prior discourse revival.
+
+**Applied as:** recorded in this ledger first - an A9 act (the ruling on paper before the code that enforces it). It governs Gate 3 (provenance/honesty) as applied to VANTAGE's discourse lane; the companion Gate 3 edit to docs/content-operating-doctrine.md lands with the gate build that enforces it, not here. No base-doctrine text and no code changed in this commit.
+
+Attribution is per-claim, never per-article. "CNP's own neutral news" framing does not insulate anything - readers consume headlines, snippets, skims, and quotes-of-quotes, not whole articles. Any creator-sourced factual claim that escapes its attribution wrapper anywhere - headline, lede, or pull-quote - becomes CNP-voiced at the point of consumption regardless of the article's overall framing. Therefore attribution must survive in the same sentence as every creator-sourced factual claim, everywhere that claim appears, including the headline. Attribution and hedge are not separate requirements: "Creator X claims" / "according to X" IS the attribution wrapper, and the rule is that no claim ever stands outside one.
+
+Operational test (the strip test): remove every attributed sentence from the piece; what remains must contain zero creator-sourced factual claims - only CNP-safe scaffolding (that a debate exists, who is in it, where it is happening).
+
+Three claim tiers:
+1. Opinions and sentiment ("X argues the meta is stale") - VANTAGE's charter; reportable with attribution; flows freely.
+2. Checkable-class claims (stats about things CNP's own store verifies) - NOT surfaceable even attributed. When CNP owns a verifier for a claim class, repeating an unverified version is laundering-by-adjacency. The claim routes to a verification-task lead; the piece covers the debate without repeating the number, and links the verified page if the store has one.
+3. Unverifiable precise statistics ("lost 80% of players") - the figure is never repeated. Numbers are sticky and hedges are not: readers remember "80%" and forget "claims"; attribution cannot cure a number whose precision is the misinformation. Cover at claim-shape level ("creators citing unverifiable player-count figures argue...").
+
+The automation gate that falls out of it (built from existing machinery):
+(1) the Stage-1 hard-stat detector runs on VANTAGE output; any stat-shaped sentence is a HOLD - she is structurally storeless, so a number in her voice is either laundered or unverifiable, both disqualifying.
+(2) a per-claim attribution-survival check: source reference present in each claim-bearing sentence.
+(3) a headline attribution check: a claim in a headline carries its attribution inside the headline.
+With those three, both failure modes (attribution-drop and fact-laundering) are caught structurally, and the human approver retires to sampled QA.
+
+**Earned by:** the stalled VANTAGE discourse revival - only the QUESTION was on file, never Fable's answer, so a prior session could not build the gate the ruling requires. Sharpened by the July slips the gate exists to catch: the fabricated "2,263/50,000" figure and the "largely settled" reception claim now targeted by the detectors in lib/network/vantageGate.js.

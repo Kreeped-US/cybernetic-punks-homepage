@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-02 - A11 recorded: VANTAGE discourse attribution / anti-laundering ruling
+
+Added A11 to the amendment ledger (docs/doctrine-v3-amendments.md) - the VANTAGE discourse attribution / anti-laundering ruling (Fable 2026-08-26, Q1 of the three-question doctrine doc: attribution, press-source tiering, bespoke scripts). Prerequisite for the VANTAGE discourse honesty gate build: the gate must quote ratified doctrine, and this ruling had been unrecorded until now - only the QUESTION was on file, which stalled a prior discourse revival.
+
+The entry transcribes the ruling verbatim (ASCII): the per-claim (not per-article) attribution rule, the strip test, the three claim tiers (opinion/sentiment flows with attribution; checkable-class routes to a verification-task lead and is never surfaced even attributed; unverifiable precise stats never repeated), and the three-check automation gate (Stage-1 hard-stat HOLD on structurally-storeless VANTAGE output; per-claim attribution-survival; headline attribution).
+
+Ledger-only by scope, recorded A9-style (the ruling on paper before the code that enforces it). The companion Gate 3 edit to docs/content-operating-doctrine.md and the base version-line bump are deferred to the gate build that enforces the ruling; no base-doctrine text and no code changed here.
+
+---
+
 ## 2026-09-02 - patch_verified render removal (cheap-half step 2)
 
 Removed the last user-facing render of the deprecated patch_verified watermark.
