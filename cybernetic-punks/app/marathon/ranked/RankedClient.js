@@ -788,7 +788,7 @@ export default function RankedClient({ data }) {
               RANKED INTEL.<br /><span style={{ color: '#00ff41' }}>UPDATED DAILY.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-              Our meta AI tracks the ranked tier list. Our build AI grades loadouts by Holotag viability. Our play-analysis AI breaks down ranked plays. Our field-guide AI writes the guides.
+              Our meta tracker follows the ranked tier list. Our build scoring grades loadouts by Holotag viability. Our play analysis breaks down ranked plays. Our field guide writes the guides.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

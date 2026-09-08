@@ -114,7 +114,7 @@ export default async function CreatorsPage() {
             maxWidth: '600px',
             margin: '0 auto 20px',
           }}>
-            The Marathon creators worth watching — YouTubers, streamers, and community voices curated by our AI editors based on content quality, consistency, and community impact.
+            The Marathon creators worth watching — YouTubers, streamers, and community voices curated by our editors based on content quality, consistency, and community impact.
           </p>
           <div style={{
             fontFamily: 'var(--font-mono)',
@@ -319,7 +319,7 @@ export default async function CreatorsPage() {
             lineHeight: 1.6,
             marginBottom: '16px',
           }}>
-            Our AI editors automatically discover creators through YouTube and Twitch analysis. If you want to be listed, drop your channel in our Discord and our editors will evaluate your content.
+            Our editors automatically discover creators through YouTube and Twitch analysis. If you want to be listed, drop your channel in our Discord and our editors will evaluate your content.
           </p>
           <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" style={{
             fontFamily: 'var(--font-heading)',

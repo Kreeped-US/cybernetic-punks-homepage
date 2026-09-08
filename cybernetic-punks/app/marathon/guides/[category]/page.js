@@ -41,7 +41,7 @@ const CATEGORIES = {
     subhead: 'Ability breakdowns, stats, and playstyle analysis for all 7 Runner Shells. From Assassin\'s stealth reposition to Triage\'s squad support - pick the shell that fits your game.',
     related: [
       { href: '/marathon/shells',  label: 'SHELL DATABASE',      desc: 'Full stats + abilities', color: '#00d4ff' },
-      { href: '/marathon/builds',  label: 'BUILD LAB',           desc: 'Loadouts per shell',      color: '#ff8800' },
+      { href: '/marathon/builds',  label: 'BUILDS & LOADOUTS',           desc: 'Loadouts per shell',      color: '#ff8800' },
       { href: '/marathon/advisor', label: 'BUILD ADVISOR',       desc: 'Get your ranked build',   color: '#ff8800' },
     ],
     faqs: [
@@ -82,7 +82,7 @@ const CATEGORIES = {
     h1: 'MARATHON WEAPON GUIDES',
     subhead: 'Per-weapon analysis, fire rate breakdowns, ammo efficiency, and matchup notes. Pick the right gun for your build and your range.',
     related: [
-      { href: '/marathon/builds',  label: 'BUILD LAB',      desc: 'Full weapon arsenal',     color: '#ff8800' },
+      { href: '/marathon/builds',  label: 'BUILDS & LOADOUTS',      desc: 'Full weapon arsenal',     color: '#ff8800' },
       { href: '/marathon/meta',    label: 'META TIER LIST', desc: 'Live weapon rankings',    color: '#00d4ff' },
       { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Weapon pairings',         color: '#ff8800' },
     ],
@@ -103,7 +103,7 @@ const CATEGORIES = {
     h1: 'MARATHON MOD GUIDES',
     subhead: 'Mod slot analysis, best combinations, and synergies that turn mediocre loadouts into S-tier builds. Covers every mod rarity from Standard to Prestige.',
     related: [
-      { href: '/marathon/builds',  label: 'BUILD LAB',     desc: 'Meta mods showcase',     color: '#ff8800' },
+      { href: '/marathon/builds',  label: 'BUILDS & LOADOUTS',     desc: 'Meta mods showcase',     color: '#ff8800' },
       { href: '/marathon/advisor', label: 'BUILD ADVISOR', desc: 'Get modded loadouts',    color: '#ff8800' },
       { href: '/marathon/factions', label: 'FACTIONS',     desc: 'Faction-locked mods',    color: '#ffd700' },
     ],

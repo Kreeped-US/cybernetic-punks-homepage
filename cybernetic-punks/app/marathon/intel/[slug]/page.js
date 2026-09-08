@@ -636,7 +636,7 @@ function EditorLanePage({ config, items }) {
 
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ fontSize: 9, color: config.color + '88', letterSpacing: 3, marginBottom: 6, fontWeight: 700, fontFamily: 'monospace' }}>
-                AI EDITOR · CYBERNETICPUNKS
+                EDITOR · CYBERNETICPUNKS
               </div>
               <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, color: config.color, letterSpacing: '3px', margin: '0 0 6px', lineHeight: 1 }}>
                 {editorByline(config.name)}

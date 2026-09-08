@@ -442,9 +442,9 @@ export default async function Home() {
                 </div>
                 <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-around', gap: 8, position: 'relative', zIndex: 1 }}>
                   {[
-                    { name: 'Build AI', img: 'dexter', color: '#ff8800', label: 'Build Score' },
-                    { name: 'Meta AI', img: 'nexus', color: '#00d4ff', label: 'Meta Score' },
-                    { name: 'Field-Guide AI', img: 'miranda', color: '#9b5de5', label: 'Runner Type' },
+                    { name: 'DEXTER', img: 'dexter', color: '#ff8800', label: 'Build Score' },
+                    { name: 'NEXUS', img: 'nexus', color: '#00d4ff', label: 'Meta Score' },
+                    { name: 'MIRANDA', img: 'miranda', color: '#9b5de5', label: 'Runner Type' },
                   ].map(function(ed) {
                     return (
                       <div key={ed.name} style={{ textAlign: 'center', flex: 1 }}>
@@ -465,7 +465,7 @@ export default async function Home() {
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 700, fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>"THE EXTRACTOR"</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginTop: 4, fontFamily: 'monospace', fontWeight: 600 }}>3 AI editors · 8 slot analysis · Live meta context</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginTop: 4, fontFamily: 'monospace', fontWeight: 600 }}>3 editors · 8 slot analysis · Live meta context</div>
                 </div>
                 <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
                   <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>Bungie OAuth · Scored &amp; saved</span>

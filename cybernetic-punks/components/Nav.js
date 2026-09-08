@@ -42,7 +42,7 @@ var NAV_ITEMS = [
     label: 'TOOLS',
     activeOn: ['/marathon/advisor', '/marathon/cradle', '/marathon/builds', '/marathon/guides', '/marathon/status', '/join', '/me'],
     children: [
-      { label: 'BUILD ADVISOR',    href: '/marathon/advisor', desc: 'AI-engineered loadouts',               color: '#ff8800' },
+      { label: 'BUILD ADVISOR',    href: '/marathon/advisor', desc: 'search-tuned loadouts',               color: '#ff8800' },
       { label: 'CRADLE PLANNER',   href: '/marathon/cradle',  desc: 'Plan your Season 2 Cradle build',       color: '#00f5ff' },
       { label: 'BUILDS',           href: '/marathon/builds',  desc: 'Shell builds & weapon browser' },
       { label: 'FIELD GUIDES',     href: '/marathon/guides',  desc: 'Shell breakdowns & strategy',           color: '#9b5de5' },

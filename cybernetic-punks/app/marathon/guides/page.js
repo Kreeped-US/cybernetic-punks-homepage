@@ -130,7 +130,7 @@ const FAQS = [
   },
   {
     q: 'What is the meta in Marathon right now?',
-    a: 'The meta shifts throughout the day as our meta AI tracks live play data. Generally, Vandal and Thief dominate solo ranked, while Recon and Triage excel in squad play. Weapon meta rotates more often — check the live tier list for current picks. Rook is banned from Ranked.',
+    a: 'The meta shifts throughout the day as our meta tracking follows live play data. Generally, Vandal and Thief dominate solo ranked, while Recon and Triage excel in squad play. Weapon meta rotates more often — check the live tier list for current picks. Rook is banned from Ranked.',
   },
   {
     q: 'How do I unlock faction items in Marathon?',

@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - "A" de-AI reword + build-surface label harmonization (Marathon/network, LABELS-ONLY) -- HELD
+
+De-AI-labeled the enumerated user-facing content labels + harmonized the build-surface labels. LABELS/HEADINGS/CTA-text/nav-desc ONLY -- ZERO URL / href / route / title / generateMetadata / canonical / sitemap changes (verified: changed lines carry identical hrefs; no title/metadata touched). /about honest AI disclosure UNTOUCHED (strengthened in a later pass). bodycam/wardogs shared components untouched. Build passes.
+
+DONE (12 files): "Meta AI Analysis" -> "Meta Analysis" and "Build AI's Picks" -> "Best Builds" (WeaponDetailClient + ShellDetailClient headings); Nav.js + me/MeClient.js build-advisor desc "AI-engineered loadouts" -> "search-tuned loadouts"; marathon/page.js editor card names Build AI/Meta AI/Field-Guide AI -> DEXTER/NEXUS/MIRANDA (personas; the score sublabels already existed, avoids duplication) + "3 AI editors" -> "3 editors"; intel/[slug] byline "AI EDITOR" -> "EDITOR"; creators "our AI editors" -> "our editors" (both hits); guides "our meta AI tracks live play data" -> "our meta tracking follows live play data"; ranked "Our meta AI / build AI / play-analysis AI / field-guide AI ..." sentence de-AI'd to plain function words; dmz "produced by an AI-assisted editorial desk" -> "produced by our editorial desk" (honest, no human-authorship claim). Build-surface: "BUILD LAB" CTAs (guides categories, /me) -> "BUILDS & LOADOUTS" to match the hub H1 (hub already renamed); all ~11 "BUILD ADVISOR" CTAs verified pointing to /marathon/advisor and KEPT (AI-free tool name; hrefs unchanged).
+
+FLAG -- LARGER FOOTPRINT DISCOVERED (needs its own gated pass + a voice-direction call, NOT done here): ~26 rendered "our build AI / our meta AI / our field-guide AI / play-analysis AI" PROSE instances remain across app/join/intake/IntakeClient.js (deferred by the brief; ~13 AI mentions), app/marathon/builds/page.js:1020, app/marathon/guides/page.js:145/439/478/668, app/marathon/guides/shells/[name]/page.js:600, app/marathon/meta/MetaClient.js:1242, app/marathon/ranked/RankedClient.js:442/796, app/marathon/shells/ShellsHubClient.js:425, app/marathon/shells/[slug]/ShellDetailClient.js:667/844, app/welcome/WelcomeClient.js:28/36, and the SHARED components/CoachCTA.js:75. Also: a persona metaDesc "AI-powered" (app/marathon/intel/[slug]/page.js:29) is METADATA -> out of this labels-only/no-metadata pass. The enumerated verify strings (Meta AI Analysis / Build AI's Picks / AI EDITOR / AI-engineered / our AI editors) are 0-remaining rendered; the prose "our <x> AI" pattern is the next wave. Grounded in search-intent (people search builds/loadouts/best builds, not "AI's picks").
+
+NEXT: (1) decide the voice for the prose de-AI (personas vs "our editors" vs function words) + do that pass (incl. the shared CoachCTA + join/intake); (2) strengthen /about verification-first disclosure; (3) network /methodology page; (4) surface the moat (verified/verified_source/patch) on Marathon entity pages.
+
+---
+
 ## 2026-09-08 - Wardogs roster-completeness gap documented (reference, Tier-4 honest-null) -- HELD
 
 Documented the Wardogs weapon roster-completeness gap in docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md (Tier 4): the site roster has 33 of the ~37 Bulkhead-confirmed launch weapons, so ~4 launch weapons are not yet present (a STRUCTURE gap, not a data error).

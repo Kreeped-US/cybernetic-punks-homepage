@@ -534,7 +534,7 @@ export default async function ShellGuidePage({ params }) {
             <Link href="/marathon/builds" style={{ fontFamily: 'monospace', fontSize: 9, color: ORANGE, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>BUILDS & LOADOUTS →</Link>
           </div>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 12, maxWidth: 680 }}>
-            Top ranked-viable weapons by Firepower Score. Pair with {shell.name}\'s playstyle for optimal results. For full weapon analysis, visit the Build Lab.
+            Top ranked-viable weapons by Firepower Score. Pair with {shell.name}\'s playstyle for optimal results. For full weapon analysis, visit Builds & Loadouts.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 6 }}>
             {topWeapons.map(function(w) {
