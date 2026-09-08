@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Wardogs EA launch reference doc captured, TIERED BY CONFIDENCE -- HELD
+
+Captured docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md -- Wardogs EA launch facts (launch Wed Sept 10 2026 16:00 UTC) as committed ground truth for launch-week articles (overview/economy/free-weapons/what-changed), TIERED so an article never states a beta-observed or community-recorded figure as Bulkhead-official. Wardogs previously had NO reference doc; facts were scattered across web sources at different confidence tiers.
+
+TIER 1 BULKHEAD-CONFIRMED (state as fact): Sept 10 16:00 UTC, Steam/PC only, no invite; $39.99 / Supporter $49.99 (cosmetic only), no MTX beyond Supporter, regional pricing ~$24.99; 37 weapons confirmed at EA (more post-launch); 3 free recruit ARs (A-91 / Bushmaster M17S / KH-2002, no full-auto) + free limited backpack; beta progress does NOT carry (clean slate); identity (100-player three-faction combined-arms Control Zone, buy-from-vendor economy, cash carries between matches); roadmap (fighter jets / expanded categories / new vehicles = STATED DIRECTION not launch). TIER 2 BETA-OBSERVED (labeled observed-not-official): ~245K combined beta peak; ~21 vehicles / 3 maps expected; vendor economy (~$10k one-time start, -50% recruit discount < ~lvl 9, ammo billed by caliber ~$10-250/box, alpha 33 / beta ~35 guns); vehicles (transport+attack helis, ~$250k level-gated tank, jeeps, radar-dome mobile-spawn recon); 9 weapon categories; attachments via WARDOG Level. TIER 3 CHANGES-SINCE-BETA (reported, confirm at launch): progression slowed; tank re-gated Wardog-50 -> Driver-level. TIER 4 HONEST-NULL: no official price list / named roster (37 is a count), anti-cheat/Deck/crossplay unaddressed, map names undetailed.
+
+Sourced: Bulkhead official Steam announcements + store page (Tier 1); community trackers / NDA-lifted beta captures (Tier 2/3, labeled); web-verified 2026-09-08. Notes the site 33-row weapon_stats roster = alpha-observed (Tier 2) vs the 37 Tier-1 count (gap honest/intended). PRE-LAUNCH dated; a post-launch pass promotes Tier-2 items to Tier-1 as live EA confirms them. Writing rules + change discipline included. ASCII, straight quotes. Reference doc, not rendered. No code, no DB. HELD for review.
+
+---
+
 ## 2026-09-02 - Bodycam article #2 shipped (bodycam-trenches-map)
 
 - Operator DB action (rule 2): inserted 1 feed_items row, game_slug=bodycam, editor=NEXUS, section field-intel, slug bodycam-trenches-map, is_published=true, noindex=true (live-but-noindex; bodycam.indexable false). SQL: docs/migrations/2026-09-02-bodycam-article-trenches.sql. Article "Bodycam Trenches Map: What It Is and How It Plays" -- grounded 100% in the CONFIRMED tier of BODYCAM_MAPS_REFERENCE.md + the Sept 2 patch/devlog; destructible trees flagged ROADMAP not shipped; no historical-pool maps stated as current, no Zombies-as-active, zero fabricated numbers/dimensions/callouts. Operator-reviewed and approved.
