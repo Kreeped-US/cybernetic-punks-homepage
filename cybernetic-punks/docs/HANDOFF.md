@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - "A" de-AI / moat pass -- /about strengthened + status
+
+- Shipped (324640f): /about "How we work" strengthened into a verification-first methodology, discipline-first voice -- primary-source-first, confidence tiers (confirmed / attributed / honest-null), honest-null over fabricate, flag-until-verified + correct-and-re-tier, inspectable stat model; AI framed honestly as the verification-first "how" (no human-authorship claim); the prior "human-verified" OVERCLAIM removed (was over-implying humans check every stat in-game -- corrected toward AI-operated / operator-reviewed / primary-source-verified). Mission + editorial-desk sections untouched. Operator-reviewed and approved.
+- Shipped earlier (38589e8): de-AI content-label reword + build-surface harmonization (labels-only, zero URL / title / metadata change). Meta AI Analysis -> Meta Analysis, Build AI's Picks -> Best Builds, AI-engineered nav desc, AI EDITOR byline, editor card -> personas, our AI editors -> our editors, DMZ AI-disclosure de-labeled. Build Advisor kept as the tool name. Grounded in search-intent data (people search "builds / loadouts / best builds").
+- "A" thread status: DONE = de-AI visible labels + /about strengthen (the high-value core). REMAINING (all lower-priority / not time-pressured):
+  1. ~26 "our build / meta / field-guide AI" PROSE mentions across intake (deferred ~13), builds, guides, meta, shells, welcome, shared CoachCTA.js -- needs operator voice-direction (persona / "our editors" / function-words) before executing.
+  2. Network /methodology page -- deeper citable version of what /about now sketches (how-the-site-works + how-to-read-tier-lists / rankings); a real content-page build.
+  3. Surface the moat (verified / verified_source / patch) on Marathon entity pages -- bring them to parity with the shared bodycam / wardogs components (GameArsenal already shows provenance tiers; Marathon weapon / shell pages fetch verified but do not render it).
+- Competitive-study conclusion (recorded direction): DO NOT out-reference wardogshub (their strongest turf); OWN the advisor / synthesis layer they refuse to build -- a cost-aware Wardogs Build Advisor, POST-LAUNCH (HYBRID: reuse the Marathon advisor architecture + a net-new cost engine, gated on live-game data). Steal their visible wins: loud sourcing (the /methodology page) + no AI labels (done).
+
+---
+
 ## 2026-09-08 - "A" de-AI reword + build-surface label harmonization (Marathon/network, LABELS-ONLY) -- HELD
 
 De-AI-labeled the enumerated user-facing content labels + harmonized the build-surface labels. LABELS/HEADINGS/CTA-text/nav-desc ONLY -- ZERO URL / href / route / title / generateMetadata / canonical / sitemap changes (verified: changed lines carry identical hrefs; no title/metadata touched). /about honest AI disclosure UNTOUCHED (strengthened in a later pass). bodycam/wardogs shared components untouched. Build passes.
