@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Wardogs roster-completeness gap documented (reference, Tier-4 honest-null) -- HELD
+
+Documented the Wardogs weapon roster-completeness gap in docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md (Tier 4): the site roster has 33 of the ~37 Bulkhead-confirmed launch weapons, so ~4 launch weapons are not yet present (a STRUCTURE gap, not a data error).
+
+- ORPHAN CALIBERS confirm the missing weapons exist: 9x39mm, 12.7x55mm, and .338 Norma Magnum appear in the game ammo roster (community-catalogued, Beta 02) but NO weapon in the current 33 uses them.
+- Their NAMES are NOT captured by any source (wardogswiki ammo page: "weapon-count values were not captured" for those calibers). Do NOT infer names from real-world caliber matches -- Wardogs uses stylized / renamed weapons (GGX 17/18, Scout Rifle TD, MK22), so real-world inference would FABRICATE. No guessed weapons added.
+- RESOLUTION: complete the roster from the LIVE GAME post-launch (Wed Sept 10 EA) -- add the missing weapons as observed in-game (real names/classes/calibers, honest-null stats), then the whole roster flips to verified as live numbers land. Recorded as a KNOWN, DOCUMENTED gap (the post-launch pass knows exactly what to complete), not a silent omission.
+- Related: the caliber backfill (33 rows, ammo_type) is done + recorded separately (commit d281aff).
+
+---
+
 ## 2026-09-08 - Wardogs caliber (ammo_type) backfill (operator DB action, rule 2)
 
 - Operator ran docs/migrations/2026-09-08-wardogs-caliber-backfill.sql: backfilled ammo_type (caliber) on all 33 wardogs weapon_stats rows. STRUCTURE ONLY -- no stat column touched, verified stays FALSE. Verified: all 33 rows now carry a caliber (5.56x45mm, 7.62x54mm, .308 Win, .45 ACP, 9x19mm, 12 Gauge, .50 Cal / .50 AE, .45 Colt, 5.45x39mm, 7.62x39mm, 84mm / 93mm / 40mm launcher rounds, Standard Arrows for the bow), none NULL.

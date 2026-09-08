@@ -165,6 +165,18 @@ as Bulkhead-official.
   IN-GAME BETA CLIENT provenance), never launch-confirmed. Do NOT state any of these as the launch
   economy or as a Bulkhead figure.
 - No official full weapon LIST / named roster from Bulkhead -- "37" is a count, not a roster.
+- ROSTER-COMPLETENESS GAP [documented 2026-09-08]: the site roster has 33 weapons; Bulkhead
+  confirmed 37 at launch -- so ~4 launch weapons are NOT yet in the roster (a STRUCTURE gap, not a
+  data error). ORPHAN CALIBERS confirm those weapons exist: 9x39mm, 12.7x55mm, and .338 Norma
+  Magnum appear in the game's ammo roster (community-catalogued, Beta 02) but NO weapon in the 33
+  uses them -- so weapons in these calibers exist. Their NAMES are NOT captured by any source
+  (wardogswiki's ammo page explicitly: "weapon-count values were not captured" for those calibers).
+  Do NOT infer the names from real-world caliber matches (e.g. 9x39mm -> AS Val): Wardogs uses
+  stylized / renamed weapons (GGX 17/18, Scout Rifle TD, MK22), so real-world inference would
+  FABRICATE. RESOLUTION: complete the roster from the LIVE GAME post-launch (Wed Sept 10 EA) --
+  add the missing weapons as observed in-game (real names / classes / calibers, honest-null stats),
+  then the whole roster flips to verified as live numbers land. This is a KNOWN, DOCUMENTED gap
+  (the post-launch pass knows exactly what to complete), not a silent omission.
 - ANTI-CHEAT SPECIFICS [re-tiered 2026-09-08]: Bulkhead ADDRESSED anti-cheat on Sept 8 (that FACT is
   Tier 1, above), but the actual system -- which anti-cheat it uses, kernel-level or not, its
   mechanics -- is NOT yet captured here (the news blurb is only the video; no patch-note / text dump
