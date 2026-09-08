@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Wardogs launch reference UPDATED with Sept 3-8 material (tiered) -- HELD
+
+Amended docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md in place with fresh Sept 3-8 2026 official material, tiered; added new items and RE-TIERED anti-cheat. Tiering intact.
+
+TIER 1 additions (state as fact): DEDICATED SERVERS pre-orderable via approved partners for EA -- QONZER, BisectHosting (both Sept 7), xREALM (Sept 8), ready for Sept 10; $100K CLIP CONTEST (official, month after launch, top 100, #WARDOGS100K / wardogs100k.com, announced FPS Games Show Sept 3) with the FUNDING NUANCE recorded (paid from MARKETING budget NOT pre-order money, per Bulkhead Sept 4 video; the show cash-prize framing was WALKED BACK/toned down in that same video); FPS GAMES SHOW (Sept 3) reality -- NOT a new map/price-cut/date-change; the drop was the clip contest + Closed Beta 02 going live for pre-orders; Bulkhead apologized Sept 4 for overhype; OPEN BETA now OVER (last stretch of CB02 opened to everyone, ran to Sun Sept 6 08:00 UTC -- do not describe any beta as running); 2-day countdown as of Sept 8.
+
+RE-TIER -- ANTI-CHEAT: moved from Tier 4 (unaddressed) to a split -- the FACT that Bulkhead ADDRESSED it is now Tier 1 (Steam news + official video "The 11th Reason NOT To Buy WARDOGS", Sept 8, breaking their prior "studios do not talk about anti-cheat" stance); the SPECIFICS (which anti-cheat, kernel or not, mechanics) stay Tier 4 pending -- NOT captured, do NOT invent. Both halves recorded; change-discipline notes to promote the specifics to Tier 1 once the video substance is captured.
+
+TIER 3 CONTEXT/TONE added: Bulkhead Sept 4 "Addressing the Announcement" video -- apologized for overhyping the FPS show drop, clarified marketing-funded contest, said the game is "a lot bigger than we planned"; recorded neutrally (report factually, do not editorialize/dunk). WRITING RULE added: cover the FPS-show/clip-contest walk-back straight and fairly (state what was announced AND that Bulkhead themselves clarified/toned it down); anti-cheat rule (may state they addressed it; do NOT state the system). SOURCING + UPDATE + change-discipline lines updated. ASCII, straight quotes. Reference doc, not rendered. No code, no DB. No anti-cheat specifics invented.
+
+---
+
 ## 2026-09-08 - Wardogs launch-overview article shipped (wardogs-early-access-everything-confirmed)
 
 - Operator DB action (rule 2): inserted 1 feed_items row, game_slug=wardogs, editor=NEXUS, section field-intel, slug wardogs-early-access-everything-confirmed, is_published=true, noindex=FALSE (INDEXABLE -- wardogs.indexable=true, so this ranks; first timely launch-week SEO article). SQL: docs/migrations/2026-09-08-wardogs-article-launch-overview.sql. Article "Wardogs Early Access: Everything Confirmed for the September 10 Launch" -- grounded 100% in WARDOGS_LAUNCH_REFERENCE.md, tier-respecting (Tier 1 Bulkhead-confirmed stated as fact; Tier 2 beta-observed labeled "community-tracked/observed, subject to change"; roadmap flagged not-launch; Tier 4 gaps stated honestly). Operator-reviewed and approved.
