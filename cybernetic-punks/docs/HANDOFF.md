@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - /methodology page shipped ("A" -- surface the moat)
+
+- Shipped (4e8f093): new network-level /methodology page, indexable (default index,follow matching /about; crawlable). The citable moat / SEO asset ("surface your moat loudly" -- the competitive-study win vs reference sites). Content: how we source (primary-source-first, confidence tiers, honest-null-over-fabricate, corrections), how to READ our outputs (tier-list band model + Unrankable, confidence badges / provenance tiers, how builds are chosen), and the sourced-vs-scraped contrast. Grounded in REAL mechanics -- overclaims cut during draft (refused a numeric tier formula it could not confirm; softened "operator-reviewed" to match the actual reduced-oversight disclosure). Operator-reviewed and approved. /about links to it ("The full methodology ->").
+- What "A" has shipped: de-AI visible content labels + build-surface harmonization (38589e8); /about "How we work" strengthened (324640f); /methodology page (4e8f093). The high-value core of "A" is done.
+- "A" REMAINING (lower-priority / not time-pressured):
+  1. ~26 "our build / meta / field-guide AI" PROSE mentions (intake, builds, guides, meta, shells, welcome, shared CoachCTA.js) -- gated on operator voice-direction (persona / "our editors" / function-words).
+  2. Surface the moat (verified / verified_source / patch) on Marathon entity pages -- parity with shared bodycam / wardogs components (GameArsenal renders provenance tiers; Marathon weapon / shell pages fetch verified but do not render it). NOTE: the /methodology page now PROMISES readers we show sourcing -- so this makes Marathon pages deliver that promise.
+  3. Entity-page citation links to /methodology (cite the method from the data pages).
+  4. Align /about confidence-tier count (3) to methodology 4 -- tiny, deferred, operator call.
+
+---
+
 ## 2026-09-08 - "A" de-AI / moat pass -- /about strengthened + status
 
 - Shipped (324640f): /about "How we work" strengthened into a verification-first methodology, discipline-first voice -- primary-source-first, confidence tiers (confirmed / attributed / honest-null), honest-null over fabricate, flag-until-verified + correct-and-re-tier, inspectable stat model; AI framed honestly as the verification-first "how" (no human-authorship claim); the prior "human-verified" OVERCLAIM removed (was over-implying humans check every stat in-game -- corrected toward AI-operated / operator-reviewed / primary-source-verified). Mission + editorial-desk sections untouched. Operator-reviewed and approved.
