@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Wardogs caliber (ammo_type) backfill (operator DB action, rule 2)
+
+- Operator ran docs/migrations/2026-09-08-wardogs-caliber-backfill.sql: backfilled ammo_type (caliber) on all 33 wardogs weapon_stats rows. STRUCTURE ONLY -- no stat column touched, verified stays FALSE. Verified: all 33 rows now carry a caliber (5.56x45mm, 7.62x54mm, .308 Win, .45 ACP, 9x19mm, 12 Gauge, .50 Cal / .50 AE, .45 Colt, 5.45x39mm, 7.62x39mm, 84mm / 93mm / 40mm launcher rounds, Standard Arrows for the bow), none NULL.
+- Provenance: calibers are Tier-2 community-catalogued from Beta 02 vendor cards -- NOT Bulkhead-published, NOT verified in-game. Block 2 (append the caliber-source note to the 3 official starters A-91 / Bushmaster M17S / KH-2002 verified_source) was the operator run-time choice -- either applied to those 3 rows or left minimal; confirm which at next touch.
+- Reconciliation flags (catalogued, NOT forced; verify at launch): Scout Rifle TD 5.56 (light for a sniper class), MK22 .308 (real platform is multi-caliber). These stay as-catalogued pending live-game confirmation.
+- Discipline held: damage / RPM / price / tier NOT ingested from competitor cards (wardogshub) despite availability -- those flip from the LIVE GAME post-launch (Wed Sept 10 EA). Only observable STRUCTURE (caliber) added.
+- Next: roster-delta -- orphan calibers in the game ammo list (9x39mm, 12.7x55mm, .338 Norma Magnum) that no current weapon uses signal ~missing launch weapons toward the confirmed-37; ground names against sources, add as honest-null structure.
+
+---
+
 ## 2026-09-08 - Wardogs economy-explainer article shipped (how-the-wardogs-economy-works)
 
 - Operator DB action (rule 2): inserted 1 feed_items row, game_slug=wardogs, editor=NEXUS, slug how-the-wardogs-economy-works, is_published=true, noindex=FALSE (indexable, ranks). SQL: docs/migrations/2026-09-08-wardogs-article-economy.sql. Article "How the Wardogs Economy Works: Buy-Per-Life Loadouts and Persistent Cash".
