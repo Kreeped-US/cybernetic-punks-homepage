@@ -34,6 +34,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { entitySlugFor } from '@/lib/coverage';
+import { provenanceBadge } from '@/lib/marathon/provenanceBadge';
 import WeaponDetailClient from './WeaponDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -165,6 +166,11 @@ export default async function WeaponDetailPage({ params }) {
   var weapon = weaponRes.data;
   if (!weapon) notFound();
 
+  // Derive the clean provenance badge SERVER-SIDE, then drop the raw internal verified_source so it
+  // is never serialized into the client-prop payload (view-source). The stored DB value is untouched.
+  var provenance = provenanceBadge(weapon.verified, weapon.verified_source);
+  delete weapon.verified_source;
+
   var metaTier = metaTierRes.data;
   var uniques = (uniquesRes.data || []).map(function(u) {
     return { ...u, slug: u.slug || entitySlugFor('weapon', u.name) };
@@ -278,6 +284,7 @@ export default async function WeaponDetailPage({ params }) {
 
       <WeaponDetailClient
         weapon={weapon}
+        provenance={provenance}
         weaponName={weaponName}
         slug={slug}
         metaTier={metaTier}

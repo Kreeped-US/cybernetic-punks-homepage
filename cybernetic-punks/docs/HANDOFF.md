@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Marathon provenance badges surfaced on weapon/shell pages (HELD)
+
+Surfaced the verification moat on Marathon's OWN weapon + shell detail pages as clean, derived, SERVER-RENDERED badges -- delivering the /methodology promise on the mature vertical (383+ live pages). RENDER-LAYER transform ONLY; stored verified_source is UNCHANGED (no DB write of any kind). All 40 Marathon rows read-confirmed verified=true with a real verified_source: 32 weapon_stats + 8 shell_stats.
+
+Transform (lib/marathon/provenanceBadge.js -- pure, deterministic, order-sensitive): contains "unverified" -> "Partially verified" (distinct amber, GameArsenal #ffb400 honesty marker); else "patch notes"/"patch" -> "Verified - Bungie <patch> patch notes" (FIRST/primary patch token; parenthetical field-lists dropped; middot separator in the actual label); else "in-game"/"inspect"/"owner"/"shell screen"/"confirmed in-game" -> "Owner-verified in-game (S<n>)"; else safe generic "Verified". "(Justin)", internal paths (docs/HANDOFF.md), and correction-log history (Rook) are NEVER surfaced -- only the clean current state. 44 unit tests pass (all 40 rows verbatim + edge cases): lib/marathon/provenanceBadge.test.mjs.
+
+KEY FIX (found during verify; PRE-EXISTING, not caused by the badge): the pages pass the full row to a 'use client' component, so Next.js serialized the raw verified_source into the page HTML (view-source) all along -- "(Justin)", the HANDOFF path, the Rook correction-log were all in the client-prop payload. Fixed properly: derive the badge SERVER-SIDE in page.js, then delete weapon/shell.verified_source before passing to the client, so the raw string never reaches the browser. Verified on a PRODUCTION serve (next start): Rook 0/5 verified_source hits, every badge correct, zero (Justin)/HANDOFF/correction-log leaks across weapon + shell pages. (Dev-server showed an intermittent stale-RSC hit; production is deterministic and clean.)
+
+Visual mirrors GameArsenal (site-wide amber for lower-confidence) in Marathon's own pill chrome -- new component components/marathon/ProvenanceBadge.js (takes the pre-derived badge; no raw source). Marathon-ONLY: shared components/game/GameArsenal.js (bodycam/wardogs) UNTOUCHED; git name-only confirms no shared/bodycam/wardogs file changed. Badges are in the SSR HTML (crawlable trust/SEO signal). Build passes.
+
+Sample rendered badges: BR33 -> "Verified - Bungie 1.1.0 patch notes"; KKV-9SD / Twin Tap -> "Verified - Bungie 1.1.5 patch notes" (primary patch; hotfix/older not shown); Ares RG / Impact HAR -> "Owner-verified in-game (S2)"; Misriah 2442 -> "Partially verified" (amber, NO HANDOFF ref); Rook shell -> "Owner-verified in-game (S2)" (correction-log NOT rendered); Sentinel shell -> "Verified - Bungie 1.1.0 patch notes".
+
+Files: NEW lib/marathon/provenanceBadge.js + provenanceBadge.test.mjs, components/marathon/ProvenanceBadge.js; MODIFIED app/marathon/weapons/[slug]/page.js + WeaponDetailClient.js, app/marathon/shells/[slug]/page.js + ShellDetailClient.js. Branch feat/marathon-provenance-badges -- HELD (pre-merge), pending greenlight. Closes "A" REMAINING item 2 (surface the moat on Marathon entity pages).
+
+---
 ## 2026-09-08 - /methodology page shipped ("A" -- surface the moat)
 
 - Shipped (4e8f093): new network-level /methodology page, indexable (default index,follow matching /about; crawlable). The citable moat / SEO asset ("surface your moat loudly" -- the competitive-study win vs reference sites). Content: how we source (primary-source-first, confidence tiers, honest-null-over-fabricate, corrections), how to READ our outputs (tier-list band model + Unrankable, confidence badges / provenance tiers, how builds are chosen), and the sourced-vs-scraped contrast. Grounded in REAL mechanics -- overclaims cut during draft (refused a numeric tier formula it could not confirm; softened "operator-reviewed" to match the actual reduced-oversight disclosure). Operator-reviewed and approved. /about links to it ("The full methodology ->").

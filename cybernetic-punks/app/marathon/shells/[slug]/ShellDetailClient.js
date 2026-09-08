@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import CoachCTA from '@/components/CoachCTA';
 import { Sep } from '@/components/Sep';
+import ProvenanceBadge from '@/components/marathon/ProvenanceBadge';
 
 // SEO FIX June 1, 2026:
 // - Removed the duplicate FAQ schema at the bottom of this file. The server
@@ -53,7 +54,7 @@ function timeAgo(dateStr) {
 }
 
 export default function ShellDetailClient({
-  shell, shellName, slug, color, symbol,
+  shell, provenance, shellName, slug, color, symbol,
   metaTier, shellCores, universalCores, articles,
   strengths, weaknesses, counteredShells, synergyShells,
   viewerMatches, pickPct, faqItems,
@@ -293,6 +294,7 @@ export default function ShellDetailClient({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Base Stats</span>
             <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+            <ProvenanceBadge badge={provenance} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 1, background: '#1e2028' }}>

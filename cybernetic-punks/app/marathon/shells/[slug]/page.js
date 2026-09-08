@@ -29,6 +29,7 @@ import { resolveSession } from '@/lib/auth/resolveSession';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CoachCTA from '@/components/CoachCTA';
+import { provenanceBadge } from '@/lib/marathon/provenanceBadge';
 import ShellDetailClient from './ShellDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -152,6 +153,11 @@ export default async function ShellHubPage({ params }) {
 
   var shell = shellRes.data;
   if (!shell) notFound();
+
+  // Derive the clean provenance badge SERVER-SIDE, then drop the raw internal verified_source so it
+  // is never serialized into the client-prop payload (view-source). The stored DB value is untouched.
+  var provenance = provenanceBadge(shell.verified, shell.verified_source);
+  delete shell.verified_source;
 
   // Viewer match — check if logged-in user's favorite_shell matches this page
   var session = await resolveSession();
@@ -287,6 +293,7 @@ export default async function ShellHubPage({ params }) {
 
       <ShellDetailClient
         shell={shell}
+        provenance={provenance}
         shellName={shellName}
         slug={slug}
         color={SHELL_COLORS[slug] || '#00ff41'}

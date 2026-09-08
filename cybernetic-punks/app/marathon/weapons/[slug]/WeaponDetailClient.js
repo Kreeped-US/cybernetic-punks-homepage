@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import ProvenanceBadge from '@/components/marathon/ProvenanceBadge';
 
 // Matches the shell detail page's visual system: #1a1d24 cards, #22252e
 // borders, Orbitron headers, borderTop accent. Weapon data is uneven (many
@@ -53,7 +54,7 @@ function timeAgo(dateStr) {
 }
 
 export default function WeaponDetailClient({
-  weapon, weaponName, slug, metaTier, uniques, dexterPicks, articles, otherWeapons, faqItems,
+  weapon, provenance, weaponName, slug, metaTier, uniques, dexterPicks, articles, otherWeapons, faqItems,
 }) {
   var color = TYPE_COLORS[weapon.weapon_type] || '#00d4ff';
   var imgSrc = weapon.image_filename ? '/images/weapons/' + weapon.image_filename : null;
@@ -194,6 +195,7 @@ export default function WeaponDetailClient({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Combat Stats</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
+              <ProvenanceBadge badge={provenance} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 1, background: '#1e2028' }}>
@@ -216,8 +218,11 @@ export default function WeaponDetailClient({
         {statRows.length === 0 && (
           <section style={{ paddingTop: 32 }}>
             <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + color, borderRadius: '0 3px 3px 0', padding: '14px 18px' }}>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-                Detailed stats for the {weaponName} haven't been published yet. Check back as the database is updated.
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                  Detailed stats for the {weaponName} haven't been published yet. Check back as the database is updated.
+                </div>
+                <ProvenanceBadge badge={provenance} />
               </div>
             </div>
           </section>
