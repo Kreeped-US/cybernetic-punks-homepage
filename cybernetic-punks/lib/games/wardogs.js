@@ -153,6 +153,10 @@ export const WARDOGS_ARTICLE_SECTION = {
   // The pre-launch ECONOMY deep-dive (persist-wardogs-economy.mjs): the persistent
   // wallet, Gold Market, and monetization pledges -- the economy section.
   'wardogs-economy': 'economy',
+  // Launch-week content #1 -- the EA launch overview, grounded in the tiered
+  // docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md. Operator runs
+  // docs/migrations/2026-09-08-wardogs-article-launch-overview.sql.
+  'wardogs-early-access-everything-confirmed': 'field-intel',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).
