@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Wardogs economy-explainer article shipped (how-the-wardogs-economy-works)
+
+- Operator DB action (rule 2): inserted 1 feed_items row, game_slug=wardogs, editor=NEXUS, slug how-the-wardogs-economy-works, is_published=true, noindex=FALSE (indexable, ranks). SQL: docs/migrations/2026-09-08-wardogs-article-economy.sql. Article "How the Wardogs Economy Works: Buy-Per-Life Loadouts and Persistent Cash".
+- Code (commits 884bce7 + 2e5f7dd): added the slug->section mapping to WARDOGS_ARTICLE_SECTION in lib/games/wardogs.js, routed to the ECONOMY section (not field-intel) to CLUSTER with the two existing economy articles (wardogs-cash-economy, wardogs-economy) for topical concentration. Renders at /wardogs/economy/how-the-wardogs-economy-works.
+- Grounded 100% in the refined WARDOGS_LAUNCH_REFERENCE.md economy section, honesty-by-construction: STRUCTURE stated as Tier 1 confirmed fact (validated through 2 betas); NUMBERS stated only as beta-client-observed (Beta 02 Gold Exchange panel, "3 Sept", subject to change), never as launch fact; the 90% death refund NOT stated (honest-null); the Brammer wipe scoped as test-wipe not economy-rule. Operator-reviewed and approved.
+- Confirmed live + formatted at /wardogs/economy/how-the-wardogs-economy-works; the /wardogs/economy section page now clusters 3 economy articles.
+- Wardogs launch content #2 (of the launch-week set). Status: overview (#1, field-intel) + economy (#2, economy section) both live / indexable / ranking. Remaining set: free-weapons, what-changed, FPS-show-walkback -- all groundable from the tiered reference. Wardogs EA launches Wed Sept 10 16:00 UTC.
+
+---
+
 ## 2026-09-08 - Wardogs launch reference: economy section refined (structure/numbers split + beta-client provenance) -- HELD
 
 Refined the economy coverage of docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md in place, so an economy article states the STRUCTURE as fact and the NUMBERS only as beta-client-observed (never launch-fact). No numbers promoted to launch-fact.
