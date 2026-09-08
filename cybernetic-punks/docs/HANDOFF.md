@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Wardogs launch-overview article shipped (wardogs-early-access-everything-confirmed)
+
+- Operator DB action (rule 2): inserted 1 feed_items row, game_slug=wardogs, editor=NEXUS, section field-intel, slug wardogs-early-access-everything-confirmed, is_published=true, noindex=FALSE (INDEXABLE -- wardogs.indexable=true, so this ranks; first timely launch-week SEO article). SQL: docs/migrations/2026-09-08-wardogs-article-launch-overview.sql. Article "Wardogs Early Access: Everything Confirmed for the September 10 Launch" -- grounded 100% in WARDOGS_LAUNCH_REFERENCE.md, tier-respecting (Tier 1 Bulkhead-confirmed stated as fact; Tier 2 beta-observed labeled "community-tracked/observed, subject to change"; roadmap flagged not-launch; Tier 4 gaps stated honestly). Operator-reviewed and approved.
+- Code (commit 3ac1b33): added the wardogs-early-access-everything-confirmed slug->section mapping to WARDOGS_ARTICLE_SECTION in lib/games/wardogs.js.
+- Confirmed live + formatted at /wardogs/field-intel/wardogs-early-access-everything-confirmed (renders via the wardogs route own parseBody -- verifies the wardogs article render path formats markdown correctly, same CRLF-fixed parser as bodycam).
+- Wardogs launch content #1 of a planned set (overview done; economy / free-weapons / what-changed can follow from the same tiered reference doc). Wardogs EA launches Wed Sept 10 16:00 UTC.
+- Also note (readiness audit follow-up): the 16h-early launch-label flip (labels flip at 00:00 UTC Sept 10 vs actual 16:00 UTC launch) was ACCEPTED as-is; logged as a future improvement (datetime-precision launch_date across games), NOT a pre-launch fix.
+
+---
+
 ## 2026-09-08 - Wardogs EA launch reference doc captured, TIERED BY CONFIDENCE -- HELD
 
 Captured docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md -- Wardogs EA launch facts (launch Wed Sept 10 2026 16:00 UTC) as committed ground truth for launch-week articles (overview/economy/free-weapons/what-changed), TIERED so an article never states a beta-observed or community-recorded figure as Bulkhead-official. Wardogs previously had NO reference doc; facts were scattered across web sources at different confidence tiers.
