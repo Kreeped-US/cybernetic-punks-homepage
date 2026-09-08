@@ -158,9 +158,10 @@ export const WARDOGS_ARTICLE_SECTION = {
   // docs/migrations/2026-09-08-wardogs-article-launch-overview.sql.
   'wardogs-early-access-everything-confirmed': 'field-intel',
   // Launch-week content #2 -- the economy explainer (buy-your-loadout / persistent cash),
-  // grounded in the refined economy section of docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md.
+  // grounded in the refined economy section of docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md. Lives in
+  // the dedicated 'economy' section (clustered with wardogs-cash-economy + wardogs-economy).
   // Operator runs docs/migrations/2026-09-08-wardogs-article-economy.sql.
-  'how-the-wardogs-economy-works': 'field-intel',
+  'how-the-wardogs-economy-works': 'economy',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).

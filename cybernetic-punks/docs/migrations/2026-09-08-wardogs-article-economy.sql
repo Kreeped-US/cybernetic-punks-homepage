@@ -10,14 +10,15 @@
 -- promoted to launch-fact; honest-null figures (payout rates, the death refund, gold-bar rate) are
 -- left unstated.
 --
--- WHERE IT RENDERS: /wardogs/field-intel/how-the-wardogs-economy-works. Requires BOTH this row AND
--- the slug->section mapping in lib/games/wardogs.js WARDOGS_ARTICLE_SECTION (added on this branch).
--- (There is also a dedicated 'economy' section; this uses field-intel per the brief -- swap the
--- mapping value to 'economy' if you prefer it grouped with the other economy pieces.)
+-- WHERE IT RENDERS: /wardogs/economy/how-the-wardogs-economy-works. Requires BOTH this row AND the
+-- slug->section mapping in lib/games/wardogs.js WARDOGS_ARTICLE_SECTION (added on this branch).
+-- Section = economy (the dedicated section, clustered with wardogs-cash-economy + wardogs-economy).
+-- (feed_items has no section column, so the mapping is the only section source -- no section value
+-- in this INSERT changes; only the mapping determines the URL.)
 --
 -- STATE: is_published=true (live on run). noindex=FALSE -- wardogs.indexable is TRUE, so this ranks.
 --
--- EDITOR: NEXUS (wardogs' news voice; every live wardogs article). SECTION: field-intel.
+-- EDITOR: NEXUS (wardogs' news voice; every live wardogs article). SECTION: economy.
 --
 -- BODY FORMAT: standard markdown -- whole-line **bold** headers, "- " bullets, blank-line paragraphs.
 -- The shared parser (lib/dmz/articleContent, CRLF fix on main) renders it formatted.
@@ -106,5 +107,5 @@ One clarification, because it gets muddled: your beta progress does not carry in
 -- VERIFY after running:
 --   select slug, editor, is_published, noindex, char_length(body) from feed_items
 --     where game_slug='wardogs' and slug='how-the-wardogs-economy-works';
---   -- then load /wardogs/field-intel/how-the-wardogs-economy-works -- INDEXABLE, renders formatted,
+--   -- then load /wardogs/economy/how-the-wardogs-economy-works -- INDEXABLE, renders formatted,
 --   -- appears in the Field Intel list.
