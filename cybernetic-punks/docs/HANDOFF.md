@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Wardogs launch reference: economy section refined (structure/numbers split + beta-client provenance) -- HELD
+
+Refined the economy coverage of docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md in place, so an economy article states the STRUCTURE as fact and the NUMBERS only as beta-client-observed (never launch-fact). No numbers promoted to launch-fact.
+
+- ECONOMY STRUCTURE = Tier 1 (first-party, confirmed, UNCHANGED -- validated through both public betas): $10,000 one-time "journey" stake (Steam page), buy-a-loadout-each-life with cash persisting match-to-match, teamplay pays (revives/transport/kills/spotting/objective), Hot Zone = double cash + double body, cash -> Gold Bars -> Gold Market cosmetics (gold rate moves daily, season-end auto-converts leftover cash, gold/cosmetics persist across seasons), never sell cash/gold/camos, no EA monetization except the Supporter pack. Higher confidence (2 tests) but SYSTEM not numbers.
+- SCOPED CLARIFICATION (Joe Brammer, Sept 2): beta progress does NOT roll into launch because the TEST was condensed into a weekend -- a wipe statement FOR THE TEST, NOT a change to the live EA economy rules (do not conflate "beta progress wiped" with "the live economy wipes"). The $100K prize is marketing budget (contest ops), not a new economy system.
+- NEW PROVENANCE -- IN-GAME BETA CLIENT (distinct; ABOVE Tier-2 tracker data, BELOW Tier-1 Bulkhead-published): the economy NUMBERS are not first-party, but community sites now quote the in-game GOLD EXCHANGE panel text stamped "Beta 2 - 3 Sept" = authentic client copy from the OFFICIAL BETA 02 BUILD (beta-versioned, NOT Bulkhead-republished). Label rule: "observed in the official game client during Beta 02" -- may be cited AS beta-client-observed with that caveat, never as the launch economy or a Bulkhead figure. The -50% recruit discount + ammo-by-caliber prices moved here as beta-client-observed examples.
+- Tier 2 trimmed to VENDOR ROSTER only (33 alpha / ~35 beta); economy numbers no longer restated there. Tier 4 economy-numbers entry refined (payout rates, 90% death refund, Gold-Bar dollar rate, vendor prices, whether Beta 02 gold survives Sept 10 -- no first-party figure; beta-client value is beta-client-observed only). Writing rule added (structure as fact, numbers only as beta-client-observed subject to change; bottom line: better confidence the structure holds, no better official numbers). Sourcing (Steam-page "journey", Brammer Sept 2, Gold Exchange beta-client copy) + change-discipline updated. Tiering intact, ASCII. No code, no DB.
+
+---
+
 ## 2026-09-08 - Wardogs launch reference UPDATED with Sept 3-8 material (tiered) -- HELD
 
 Amended docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md in place with fresh Sept 3-8 2026 official material, tiered; added new items and RE-TIERED anti-cheat. Tiering intact.

@@ -11,9 +11,16 @@ beta/alpha-observed or community-recorded (legitimate, NDA-lifted, but OBSERVED 
 reported changes-since-beta (attribute as reported, confirm at launch). Tier 4 is honest-null --
 unknown, do NOT invent. Never promote a Tier 2/3 item to stated fact without a Tier 1 source.
 
-SOURCING: primary = Bulkhead official Steam announcements + the Steam store page + official
-@WARDOGS posts and official Bulkhead YouTube videos (Tier 1); community trackers / NDA-lifted beta
-captures (Tier 2/3, labeled as such); web-verified 2026-09-08.
+SOURCING: primary = Bulkhead official Steam announcements + the Steam store page (incl. the economy
+"journey" language) + official @WARDOGS posts and official Bulkhead YouTube videos + a Bulkhead dev
+statement (Joe Brammer, Sept 2) (Tier 1); the in-game Gold Exchange panel copy from the official
+Beta 02 client (a distinct provenance -- see the IN-GAME BETA CLIENT section); community trackers /
+NDA-lifted beta captures (Tier 2/3, labeled as such); web-verified 2026-09-08.
+
+REFINEMENT 2026-09-08 (economy): split the economy into STRUCTURE (Tier 1, first-party, unchanged
+through two public tests) vs NUMBERS (not first-party), and added a distinct IN-GAME BETA CLIENT
+provenance for authentic official-build UI figures (Gold Exchange panel, "Beta 2 - 3 Sept") that
+Bulkhead has not republished.
 
 UPDATE 2026-09-08: amended with Sept 3-8 2026 material -- dedicated-server hosts, the $100K clip
 contest, the FPS Games Show (Sept 3) reality + Bulkhead's Sept 4 walk-back, the open beta (now
@@ -54,6 +61,28 @@ is the ALPHA-OBSERVED roster (Tier 2). The "37 weapons" figure is the Tier-1 con
   post-launch as leaning toward bug-fixes / balance / community feedback rather than frequent new
   content. (Do NOT describe roadmap items as available at launch.)
 
+### Economy -- STRUCTURE (Tier 1, first-party, UNCHANGED -- validated through both public tests) [refined 2026-09-08]
+
+The economy STRUCTURE is first-party and held unchanged through two public betas -- higher
+confidence, but it is the SYSTEM, not the numbers (for numbers see the IN-GAME BETA CLIENT
+provenance below + Tier 4). State the structure as fact:
+
+- You start with $10,000 ONCE -- a one-time "journey" stake per the Steam store page (not per match).
+- You buy a loadout each life; cash PERSISTS match-to-match.
+- Teamplay pays: revives, transport, kills, spotting, and objective all earn cash.
+- The Hot Zone pays double -- double cash and double body value on the score tick.
+- Cash converts to Gold Bars, which buy Gold Market COSMETICS. The gold rate moves daily; at season
+  end leftover cash auto-converts; gold and cosmetics PERSIST across seasons.
+- You never sell cash, gold, or camos. There is no EA monetization except the Supporter pack.
+- This STRUCTURE is doubly validated (two public tests) -- but it is the system, not the figures.
+
+SCOPED CLARIFICATION (Joe Brammer, Sept 2 -- state precisely, do NOT over-read):
+- Beta progress does NOT roll into launch because the TEST was condensed into a weekend -- a WIPE
+  STATEMENT FOR THE TEST, not a change to the live EA economy rules. Do NOT conflate "beta progress
+  wiped" with "the live economy wipes"; they are different things.
+- The $100K contest prize is MARKETING budget (framed in-show as in-game cash for featured clips) --
+  contest ops, NOT a new economy system (cross-ref the $100K clip contest entry above).
+
 ### Added 2026-09-08 (Sept 3-8 material)
 
 - DEDICATED SERVERS: available to PRE-ORDER through approved partners for Early Access, ready for
@@ -78,6 +107,25 @@ is the ALPHA-OBSERVED roster (Tier 2). The "37 weapons" figure is the Tier-1 con
   system actually is has not been captured yet (Tier 4).
 - COUNTDOWN: 2 days until Early Access as of Sept 8 2026.
 
+## IN-GAME BETA CLIENT (provenance -- official-build UI, beta-versioned, NOT Bulkhead-republished) [added 2026-09-08]
+
+A DISTINCT provenance for the economy NUMBERS: it sits ABOVE Tier 2 community-tracker data (it is
+authentic official-build UI, not a third-party guess) but BELOW Tier 1 Bulkhead-published (it is
+beta-versioned and Bulkhead has not republished it as a source).
+
+- The economy NUMBERS are NOT first-party. Community sites now stamp economy data "Beta 2 - 3 Sept"
+  and quote the in-game GOLD EXCHANGE panel text directly. That is CLIENT COPY FROM AN OFFICIAL
+  BUILD -- authentic UI, but from the BETA, and Bulkhead has NOT republished it as a Steam / devlog
+  source.
+- LABEL RULE: describe these as "observed in the official game client during Beta 02" -- more
+  trustworthy than a third-party tracker recording, but still BETA-VERSIONED and NOT
+  launch-authoritative. An article MAY cite these numbers AS beta-client-observed with that caveat;
+  it must NOT state them as the launch economy or as a Bulkhead-published figure.
+- Examples of beta-client-observed economy numbers (Beta 02, subject to launch change, NOT
+  launch-confirmed): a -50% "new recruit" discount below roughly level 9; ammunition billed
+  separately by caliber (~$10-$250 per box); the Gold Exchange panel's rates/prices. These are the
+  NUMBERS the Tier-1 structure runs on -- observed in the official client, not first-party.
+
 ## TIER 2 -- BETA-OBSERVED / COMMUNITY-RECORDED (NDA-lifted; OBSERVED, not official)
 
 Label every item from this tier "recorded in beta/alpha, subject to launch changes." Do NOT state
@@ -86,11 +134,10 @@ as Bulkhead-official.
 - CONCURRENCY: combined Closed Beta peak ~245,000 (244,926) across the two betas.
 - SCOPE (widely reported; treat as expected, not official-confirmed, unless a Bulkhead source is
   found): ~21 vehicles and 3 maps (3 variations each) expected at launch.
-- VENDOR ECONOMY (recorded in alpha/beta):
-  - ~$10,000 one-time STARTING cash per account (not per match).
-  - a -50% "new recruit" discount below roughly level 9.
-  - ammunition billed SEPARATELY by caliber (~$10-$250 per box).
-  - the ALPHA vendor roster was 33 weapons (one faction playable); beta observed ~35.
+- VENDOR ROSTER (recorded in alpha/beta): the ALPHA vendor roster was 33 weapons (one faction
+  playable); beta observed ~35. (The economy STRUCTURE is now Tier 1 -- see "Economy -- STRUCTURE"
+  above; the economy NUMBERS -- starting cash, recruit discount, ammo / Gold Exchange prices -- are
+  split into the Tier-1 structure + the IN-GAME BETA CLIENT provenance + Tier 4, not restated here.)
 - VEHICLES (recorded in beta): transport and attack helicopters; a main battle tank (~$250k,
   level-gated); jeeps; a recon vehicle with a radar dome usable as a MOBILE SPAWN (team at 20 pts,
   roughly once per 10 minutes). ~20 vehicles counted in alpha.
@@ -111,7 +158,12 @@ as Bulkhead-official.
 
 ## TIER 4 -- HONEST-NULL / UNKNOWN (do NOT invent)
 
-- No official per-weapon PRICE LIST published by Bulkhead -- all prices are beta-recorded (Tier 2).
+- No official per-weapon PRICE LIST published by Bulkhead -- all prices are beta-recorded.
+- ECONOMY NUMBERS with NO first-party figure [refined 2026-09-08]: payout rates, the 90% death
+  refund, the Gold-Bar dollar rate, vendor prices, and whether Beta 02 gold survives Sept 10. Where
+  a beta-client value exists (the Gold Exchange panel), it is BETA-CLIENT-OBSERVED only (see the
+  IN-GAME BETA CLIENT provenance), never launch-confirmed. Do NOT state any of these as the launch
+  economy or as a Bulkhead figure.
 - No official full weapon LIST / named roster from Bulkhead -- "37" is a count, not a roster.
 - ANTI-CHEAT SPECIFICS [re-tiered 2026-09-08]: Bulkhead ADDRESSED anti-cheat on Sept 8 (that FACT is
   Tier 1, above), but the actual system -- which anti-cheat it uses, kernel-level or not, its
@@ -140,10 +192,16 @@ as Bulkhead-official.
   intel, not a takedown -- do not dunk on the studio.
 - Anti-cheat: you MAY state that Bulkhead addressed anti-cheat (Sept 8 video) -- that is Tier 1. Do
   NOT state what the anti-cheat system is; the specifics are Tier 4 pending (do not invent them).
+- Economy: state the STRUCTURE as confirmed fact (first-party, doubly validated through two public
+  tests). State any specific NUMBER only as "beta-client-observed (Beta 02), subject to change at
+  launch" -- never as the launch economy or a Bulkhead figure. Beta-client (Gold Exchange panel)
+  ranks above a third-party tracker but is still not launch-authoritative. Bottom line to preserve:
+  better confidence the STRUCTURE holds through two public tests; no better OFFICIAL numbers.
 
 CHANGE DISCIPLINE: update from a new primary source (a Bulkhead announcement / store change, or --
 post-launch -- live in-game verification). The post-launch pass promotes Tier-2 items that live EA
 confirms into Tier 1 (with the source), and moves anything the launch build contradicts into a
 corrections note. When the Sept 8 anti-cheat video's substance is captured (transcript / text
-source), promote the anti-cheat SPECIFICS from Tier 4 to Tier 1. Keep the sourcing line, the UPDATE
-line, and the LAUNCH-DATED note current.
+source), promote the anti-cheat SPECIFICS from Tier 4 to Tier 1. When Bulkhead republishes an
+economy number (or live EA verifies it), promote it from IN-GAME BETA CLIENT / Tier 4 to Tier 1.
+Keep the sourcing line, the UPDATE / REFINEMENT lines, and the LAUNCH-DATED note current.
