@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Marathon provenance badges shipped ("A" remaining #2 -- surface the moat)
+
+- Shipped (597c3f1): render-layer provenance badges on Marathon weapon + shell pages (WeaponDetailClient/ShellDetailClient). Pure transform (verified_source string -> clean public badge): patch-notes -> "Verified - Bungie [patch] patch notes"; owner/in-game -> "Owner-verified in-game (S2)" (accountability kept, "(Justin)" dropped); mixed/caveated (Misriah 2442) -> "Partially verified" (distinct amber, honest field-level caveat); correction-log (Rook) -> current-state badge (history NOT surfaced). Classifier checks "unverified" BEFORE "in-game" so partial rows aren't misclassified as verified.
+- Data confirmed pre-ship: all 40 Marathon rows (32 weapons + 8 shells) verified=true with real verified_source -- badge honest to both signals. (Earlier "1 verified" scope-read was a stale/wrong-slug artifact; corrected.)
+- SAFETY: raw verified_source STRIPPED from the client payload (not just hidden) -- "(Justin)", "docs/HANDOFF.md", Rook correction-history never reach the client. Stored strings UNCHANGED (internal records intact). Shared GameArsenal/bodycam/wardogs UNTOUCHED (Marathon-only). Badges server-rendered (crawlable trust/SEO signal).
+- Delivers the /methodology promise on the mature domain-carrying vertical: provenance now VISIBLE + honest + leak-free.
+- "A" status: DONE = de-AI labels (38589e8), /about strengthen (324640f), /methodology page (4e8f093), Marathon moat-surfacing (597c3f1). REMAINING (lower-priority): ~26 prose AI-mentions (voice-gated); entity->/methodology citation links; /about 3-vs-4 tier tidy.
+
+---
 ## 2026-09-08 - Marathon provenance badges surfaced on weapon/shell pages (HELD)
 
 Surfaced the verification moat on Marathon's OWN weapon + shell detail pages as clean, derived, SERVER-RENDERED badges -- delivering the /methodology promise on the mature vertical (383+ live pages). RENDER-LAYER transform ONLY; stored verified_source is UNCHANGED (no DB write of any kind). All 40 Marathon rows read-confirmed verified=true with a real verified_source: 32 weapon_stats + 8 shell_stats.
