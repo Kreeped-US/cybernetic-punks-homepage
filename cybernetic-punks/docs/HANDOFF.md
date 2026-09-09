@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-09 - Correction-sweep Version A piece 2 (publish-time guard) -- HELD
+
+- The PREVENTIVE half of the correction sweep: an advisory guard that WARNS (not hard-blocks) when a draft being published co-occurs a recorded correction's entity+keywords, requiring operator acknowledgment. Catches the db15-class error (content generated AFTER a correction still asserting the corrected-away claim) at publish time. With piece 1 (detect existing) already shipped, Version A is now COMPLETE: detect-existing + prevent-new.
+- SHARED MATCHER: extracted the co-occurrence logic to NEW lib/corrections/match.js (wordRe / sentences / analyze / matchCorrectionsForBody) -- the SINGLE source. Refactored piece 1 (scripts/correction-sweep.mjs) to import it (removed its inline copies; re-ran the Rook sweep -> still 31 candidates, zero behavior change). Piece 2 imports the same. One matcher, no drift; whole-word matching (the %elo% fix) lives there.
+- GUARDED BOTH publish entry points (the two independent paths that flip is_published false->true; no shared code chokepoint, so both needed it):
+  1. scripts/publish-drafts.mjs (bulk operator script) -- added body to the draft select; before each flip, matchCorrectionsForBody(body, game). A flagged draft is HELD (skipped, warned with correction + snippet) unless --force acknowledges; the DRY plan shows WARN + a per-draft summary. No-match drafts publish unchanged.
+  2. app/api/admin/drafts/approve/route.js (admin UI, per-id) -- added game_slug to the draft select; after the A11 gate, before the flip, matchCorrectionsForBody(body, game_slug). A match returns 409 { gate:"correction-warning", requiresCorrectionAck:true, corrections:[...] } and does NOT publish; acknowledgeCorrections:true publishes and logs the ack. Mirrors the existing A11 overrideHolds review-hold flow exactly.
+- ADDITIVE / NO BYPASS: the guard runs only BEFORE the existing flip; a draft matching no correction hits neither branch and runs the identical update as before (common case byte-identical). Both publish paths carry the guard -- no way to publish around it.
+- WARN-not-block is deliberate (piece 1's high-recall/low-precision lesson): a legitimate "Rook is not a ranked pick" explainer co-occurs and must stay publishable, so a match asks for acknowledgment rather than refusing. Traced: (a) Rook-in-ranked draft -> flagged/held/409; (b) unrelated draft -> publishes unchanged; (c) same text under game=wardogs -> no hit (game-scoped, no bleed); (d) "Rook is NOT ranked" disclaimer -> flagged, acknowledgeable. publish-drafts DRY on marathon flagged 10/29 drafts (every Rook-in-ranked one, incl. all 7 unpublished earlier), 19 unwarned.
+- Build passes (route compiles); node --check passes on all scripts + the matcher.
+
+---
 ## 2026-09-09 - Correction-sweep Version A piece 1 (registry + read-only sweep) -- HELD
 
 - Built the process-fix for the Rook remediation (14 articles, 7 query passes, one un-swept correction). An operator-run sweep that, given a ratified correction, flags PUBLISHED content still asserting the now-false claim -- collapsing the manual multi-query hunt into ONE command.

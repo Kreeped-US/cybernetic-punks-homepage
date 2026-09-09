@@ -43,6 +43,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { CORRECTIONS } from '../lib/corrections/registry.js';
+// Shared matcher (lib/corrections/match.js) -- the SINGLE co-occurrence logic, also
+// used by the piece-2 publish guard. Imported, never re-implemented, so detect-existing
+// and prevent-new can never drift. `analyze` carries the whole-word matching (the %elo% fix).
+import { analyze } from '../lib/corrections/match.js';
 
 function loadEnvLocal() {
   let raw;
@@ -69,43 +73,9 @@ const only = process.argv.includes('--id')
   : null;
 const wantJson = process.argv.includes('--json');
 
-// Split prose into sentences for snippet extraction. Mirrors the sweep queries done
-// by hand during the Rook remediation (CRLF-normalized, blank-line- and .!?-split).
-function sentences(body) {
-  return String(body || '')
-    .replace(/\r/g, '')
-    .split(/\n+|(?<=[.!?])\s+/)
-    .map((s) => s.replace(/\*\*/g, '').trim())
-    .filter(Boolean);
-}
-
-// WHOLE-WORD match, case-insensitive. Deliberately NOT a bare substring: `body
-// ILIKE '%elo%'` matches "below"/"develop", which floods the queue with
-// meaningless hits and buries the real candidates. Word-boundary keeps recall of
-// the actual term ("elo", "tier", "solo queue") while dropping substring accidents.
-// The server-side .ilike() on the entity stays a coarse prefilter; THIS is the
-// precise decision.
-function wordRe(term) {
-  return new RegExp('\\b' + String(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
-}
-
-// A candidate: the text contains the entity AND at least one topic keyword (both
-// as whole words). Returns { keywordsFound, sentenceHits } -- sentenceHits are
-// sentences where the entity and a keyword co-occur (the strongest review signal);
-// a candidate with keywordsFound but no sentenceHits is a document-level
-// co-occurrence (entity and keyword in different sentences) -- still surfaced,
-// still human-adjudicated.
-function analyze(text, entity, keywords) {
-  const body = String(text || '');
-  if (!wordRe(entity).test(body)) return null;
-  const keywordsFound = keywords.filter((k) => wordRe(k).test(body));
-  if (keywordsFound.length === 0) return null;
-  const entityRe = wordRe(entity);
-  const sentenceHits = sentences(body).filter(
-    (s) => entityRe.test(s) && keywords.some((k) => wordRe(k).test(s))
-  );
-  return { keywordsFound, sentenceHits };
-}
+// NOTE: the matching primitives (sentences / wordRe / analyze) now live in the shared
+// lib/corrections/match.js and are imported above -- do NOT re-inline them here, or piece 1
+// and the piece-2 publish guard will drift. `analyze` carries the whole-word matching.
 
 let totalCandidates = 0;
 const summary = [];

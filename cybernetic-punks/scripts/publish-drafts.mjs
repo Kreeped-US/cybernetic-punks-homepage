@@ -25,6 +25,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+// Correction guard (piece 2): before publishing a draft, warn if its body co-occurs a
+// recorded correction's entity+keywords (shared matcher -- same logic as the read-only sweep).
+// A match HOLDS the draft (skipped) unless --force is passed; a no-match draft publishes unchanged.
+import { matchCorrectionsForBody } from '../lib/corrections/match.js';
 
 // Load .env.local into process.env (only fills what is not already set) -- mirrors the persist scripts.
 function ensureEnv() {
@@ -50,6 +54,7 @@ const KNOWN_GAMES = ['marathon', 'dmz', 'wardogs', 'pubg-dednet'];
 async function main() {
   ensureEnv();
   const commit = process.argv.indexOf('--commit') !== -1;
+  const force = process.argv.indexOf('--force') !== -1; // acknowledge correction warnings and publish anyway
   const game = argValue('--game');
   const slugsArg = argValue('--slugs');
   const slugs = slugsArg ? slugsArg.split(',').map((s) => s.trim()).filter(Boolean) : null;
@@ -74,7 +79,7 @@ async function main() {
 
   // Read the DRAFTS this run would publish (is_published=false, this game, optional slug filter).
   let q = supabase.from('feed_items')
-    .select('id, slug, headline, noindex, noindexed_at, created_at')
+    .select('id, slug, headline, body, noindex, noindexed_at, created_at')
     .eq('game_slug', game).eq('is_published', false)
     .order('created_at', { ascending: true });
   if (slugs) q = q.in('slug', slugs);
@@ -93,11 +98,28 @@ async function main() {
     return;
   }
 
+  // CORRECTION GUARD (piece 2): flag any draft whose body co-occurs a recorded correction's
+  // entity+keywords. High-recall/low-precision -> this WARNS, it does not hard-block; a flagged
+  // draft is HELD (skipped) unless --force. A draft matching no correction is untouched by the guard.
+  const matchesById = {};
+  for (const d of drafts) matchesById[d.id] = matchCorrectionsForBody(d.body, game);
+  const flaggedCount = drafts.filter((d) => matchesById[d.id].length).length;
+
   console.log('Would publish ' + drafts.length + ' draft(s) -> is_published=true, noindex=false, noindexed_at=null:');
   for (const d of drafts) {
-    console.log('  ' + d.slug + '   noindex=' + d.noindex + (d.noindexed_at ? '  noindexed_at=' + d.noindexed_at : '') + '   ' + (d.headline || '').slice(0, 60));
+    const m = matchesById[d.id];
+    console.log('  ' + (m.length ? 'WARN ' : '') + d.slug + '   noindex=' + d.noindex + (d.noindexed_at ? '  noindexed_at=' + d.noindexed_at : '') + '   ' + (d.headline || '').slice(0, 60));
+    for (const hit of m) {
+      console.log('       ! correction "' + hit.entry.id + '": ' + hit.entry.correction);
+      const snip = hit.sentenceHits[0] || ('(document-level co-occurrence -- keywords: ' + hit.keywordsFound.join(', ') + ')');
+      console.log('         > ' + String(snip).slice(0, 180));
+    }
   }
   console.log('');
+  if (flaggedCount) {
+    console.log(flaggedCount + ' draft(s) flagged by the correction guard. These are HELD (not published) unless you pass --force to acknowledge.');
+    console.log('Review each: is the entity being ASSERTED into the corrected-away topic, or merely mentioned? Only --force once you have checked.\n');
+  }
 
   if (!commit) {
     console.log('DRY -- nothing written. Re-run with --commit to publish (clears noindex on the way).');
@@ -105,8 +127,20 @@ async function main() {
   }
 
   // ATOMIC-per-row publish: WHERE is_published=false guards against ever re-touching a live row.
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, held = 0;
   for (const d of drafts) {
+    // CORRECTION GUARD: a flagged draft is HELD unless --force acknowledges it. This is the ONLY
+    // added gate -- an unflagged draft (matchesById[d.id] empty) falls straight through to the
+    // exact same update as before, so the common case is byte-identical to pre-guard behavior.
+    const m = matchesById[d.id];
+    if (m.length && !force) {
+      console.log('  HELD ' + d.slug + ' -- correction guard (' + m.map((x) => x.entry.id).join(', ') + '). Not published. Review, then re-run with --force to publish anyway.');
+      held++;
+      continue;
+    }
+    if (m.length && force) {
+      console.log('  (--force) correction warning acknowledged for ' + d.slug + ': ' + m.map((x) => x.entry.id).join(', '));
+    }
     const { data, error } = await supabase.from('feed_items')
       .update({ is_published: true, noindex: false, noindexed_at: null })
       .eq('id', d.id).eq('is_published', false)
@@ -116,7 +150,8 @@ async function main() {
     console.log('  PUBLISHED ' + data.slug + '  is_published=' + data.is_published + '  noindex=' + data.noindex);
     ok++;
   }
-  console.log('\nDone. published=' + ok + '  failed=' + fail + '. Every published row has noindex=false + noindexed_at=null.');
+  console.log('\nDone. published=' + ok + '  held=' + held + '  failed=' + fail + '. Every published row has noindex=false + noindexed_at=null.');
+  if (held) console.log('  ' + held + ' draft(s) HELD by the correction guard -- re-run with --force once reviewed.');
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

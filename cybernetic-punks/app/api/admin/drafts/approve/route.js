@@ -15,6 +15,10 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { checkLockout, recordFailure, clearFailures } from '@/lib/rateLimit';
 import { runA11Gate } from '@/lib/network/vantageGate';
+// Correction guard (piece 2): warn (do not publish) when the draft body co-occurs a recorded
+// correction's entity+keywords, unless the caller explicitly acknowledges. Shared matcher --
+// same co-occurrence logic as the read-only sweep and the publish-drafts script.
+import { matchCorrectionsForBody } from '@/lib/corrections/match';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,6 +73,7 @@ export async function POST(req) {
   var id = body && body.id;
   if (!id) return Response.json({ error: 'Missing draft id' }, { status: 400 });
   var overrideHolds = !!(body && body.overrideHolds === true);
+  var acknowledgeCorrections = !!(body && body.acknowledgeCorrections === true);
 
   var supabase = getSupabase();
 
@@ -78,7 +83,7 @@ export async function POST(req) {
   // read is scoped to is_published=false so this only ever gates a draft.
   var { data: draft, error: readErr } = await supabase
     .from('feed_items')
-    .select('id, headline, body, creator_info, source_url, source, is_published')
+    .select('id, headline, body, game_slug, creator_info, source_url, source, is_published')
     .eq('id', id)
     .eq('is_published', false)
     .maybeSingle();
@@ -103,6 +108,26 @@ export async function POST(req) {
     }, { status: 409 });
   }
 
+  // CORRECTION GUARD (advisory, high-recall/low-precision). If the draft body co-occurs a recorded
+  // correction's entity+keywords, WARN and do NOT publish -- unless the caller acknowledges
+  // (acknowledgeCorrections:true). Mirrors the A11 review-hold override flow. A draft matching no
+  // correction is untouched by this gate and publishes exactly as before (additive, no bypass:
+  // this is the only server path besides publish-drafts.mjs, which carries the same guard).
+  var correctionHits = matchCorrectionsForBody(draft.body, draft.game_slug);
+  if (correctionHits.length > 0 && !acknowledgeCorrections) {
+    return Response.json({
+      error: 'Correction guard: this draft co-occurs a recorded correction (' + correctionHits.map((h) => h.entry.id).join(', ') + '). It may assert a corrected-away claim. Review, then approve again with acknowledgeCorrections to publish anyway.',
+      gate: 'correction-warning',
+      requiresCorrectionAck: true,
+      corrections: correctionHits.map((h) => ({
+        id: h.entry.id,
+        correction: h.entry.correction,
+        keywordsFound: h.keywordsFound,
+        snippet: h.sentenceHits[0] || null,
+      })),
+    }, { status: 409 });
+  }
+
   var { data, error } = await supabase
     .from('feed_items')
     // noindexed_at MUST be cleared alongside noindex. The stamp marks a de-index
@@ -121,5 +146,8 @@ export async function POST(req) {
   if (verdict.reviewHolds.length > 0) {
     console.log('[drafts/approve] A11 review-holds overridden by human for ' + id + ': ' + verdict.reviewHolds.join(', '));
   }
-  return Response.json({ data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : 'pass' });
+  if (correctionHits.length > 0) {
+    console.log('[drafts/approve] correction warning acknowledged by human for ' + id + ': ' + correctionHits.map((h) => h.entry.id).join(', '));
+  }
+  return Response.json({ data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : (correctionHits.length > 0 ? 'correction-acknowledged' : 'pass') });
 }
