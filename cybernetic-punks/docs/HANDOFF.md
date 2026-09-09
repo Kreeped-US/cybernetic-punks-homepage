@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Rook-in-ranked content remediation -- COMPLETE (moat-integrity)
+
+- Rook CANNOT be selected in ranked (owner-verified correction 2026-07-20, shell_stats Rook verified_source). Published content violating this was a PATTERN, not isolated -- 14 articles across tier-guides, patch articles, community posts, and end-of-season recaps, all tracing to ONE correction that fixed the data but never swept the content. Found across multiple query passes + full-body checks.
+- RESOLVED (all operator DB actions; state re-verified before this log: 7/7 unpublished, 7/7 corrected with the false strings confirmed removed):
+  UNPUBLISHED (7, whole-thesis-false, each with a quoted ranked claim): carri-protocol-solo-extraction (231d3c18), best-ranked-solo-loadout-impact-har (57cd0c31), best-rook-build-s2-ranked-solo (d3b2c365), learn-ranked-before-you-specialize (c60d23da, "ranked rating B solo C squad"), adaptive-uprising (fe11ca9d, "Rook usage in ranked is climbing"), solo-survivor-youre-sleeping-on (1ea362d9, "RANKED VIABILITY" section), solo-survival-anchor (2c97bc57, "ranked profile B-tier solo").
+  CORRECTED (7, false Rook-ranked claim removed, rest of article preserved):
+   - 5 ranked tier-guides -- Rook entry removed from the ranked tier list + orphan refs fixed: kjt2 (d7430f07), rgjf (78672e87), htjj (ba1e5bec), fhwm (2b5e4344), 2oke (2936b18d).
+   - 97og (f7d17e3e) -- Option B: stripped "matters for ranked consistency"/"A-tier solo climb", kept the true spawn-fix fact.
+   - 1l61 (d5822686) -- rewrite: "ROOK ASCENDS" section de-ranked (header, para-1 rewrite keeping the real Signal Mask buff + adding "not a ranked pick" clarifier, deleted "B-tier to A-tier in solo ranked"). Verified: sentence-level flags (has_ascends/climb_ladder/ranked_contender/tier_move) all FALSE + full-body read clean.
+  KEPT (verified CLEAN -- Rook mentioned near ranked but NO viability claim; over-nuking avoided): hrax (solo/PvE extraction), tjbn (explicit "This doesn't make Rook a ranked pick" disclaimer), 6w2n ("A-tier for LEARNING fundamentals"/"training shell"), plus the earlier clean set (patch-notes, farm/maps, community "friendly rooks", starter-shell).
+- COMPLETION CRITERION (corrected during work): the blunt co-occurrence query (body has "rook" AND "ranked") does NOT go empty and SHOULD NOT -- corrected/clean articles legitimately still contain both words (a "Ranked Impact" patch article; a "not a ranked pick" disclaimer). The correct check is SENTENCE-LEVEL (the specific false claim removed) + full-body read for rewrites -- not the document-level co-occurrence dropping off. Remediation confirmed complete by that criterion.
+- PROCESS GAP (the real lesson -- OPEN, the next hardening task): a ratified correction (verified_source correction-log) fixed the DATA but never triggered a SWEEP of published CONTENT built on the old claim -- letting 14 false articles sit live/indexed for months. This whole remediation was manual archaeology across 7 query passes. FOLLOW-UP TO BUILD: (1) on a ratified correction, auto-sweep published content for the old claim and flag violators; (2) article generation consults verified_source correction-logs before publishing (the db15 article was generated a MONTH after the correction). This is the moat-hardening that makes the next correction a single automatic sweep instead of an evening of hand-hunting.
+- Note: Claude twice overstated "isolated" and once FABRICATED quotes in an earlier draft of this log (#4/#5 attributed quotes not in the bodies) -- caught by verifying against the actual bodies before committing. Real quotes are recorded above. The verify-before-commit discipline caught the log's own author; worth keeping.
+
+---
 ## 2026-09-08 - Rook-in-ranked remediation -- unpublishing COMPLETE (body-verified) (moat-integrity)
 
 - Rook CANNOT be selected in ranked (owner-verified correction 2026-07-20, shell_stats Rook verified_source). Violating published content was a PATTERN (stale pre-correction articles the 2026-07-20 correction never swept), NOT isolated. Early "8"/"6" estimates were overcounts; the body-verified actual is below.
