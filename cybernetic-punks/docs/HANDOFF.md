@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Unpublished false article -- Rook-in-ranked (moat-integrity)
+
+- Operator DB action (rule 2): set is_published=false on feed_items slug "rook-week-the-ranked-climb-strategy-built-for-marathons-retention-cris-db15" (game_slug=marathon, id cae95940-18d1-427a-8d36-1167c0b2bd3c). Reason: the article's ENTIRE thesis was a Rook ranked-climb strategy, but Rook CANNOT be selected in ranked -- owner-verified correction recorded 2026-07-20 in shell_stats Rook verified_source ("Rook cannot be selected in ranked of any kind; prior ranked-tier/solo-only claims were wrong"). Unpublished (not just noindexed) because it was FALSE and its whole premise was the impossibility -- nothing separable to correct. (Also carried a stat error: body "140 HP/35 Shield" vs verified base_health 120.)
+- Created 2026-05-26 -- ~8 weeks BEFORE the 2026-07-20 correction. This is a STALE PRE-CORRECTION publish (accurate-to-then; the DB itself listed Rook at ranked tiers C/B before the correction), NOT a fresh post-correction error.
+- Systemic sweep (read-only): NOT isolated. 8 core-premise Rook-in-ranked articles remain PUBLISHED + INDEXED (e.g. ...best-ranked-solo-loadout...tsf0, carri-protocol...gyfw, ...s1-end-of-season...1l61, best-rook-build...eosw), plus ~4 multi-shell guides that assign Rook a ranked tier (B solo / C squad). Two articles are correctly aligned (say Rook is NOT a ranked pick) -- leave them. OPEN: operator decision on sweep-fixing the backlog (Group A unfixable -> unpublish; Group B correctable -> strike the Rook-ranked line).
+- PROCESS GAP (the real lesson -- OPEN): (1) no BACK-SWEEP when a correction lands -- the 2026-07-20 fix updated shell_stats but never reviewed already-published content asserting the old claim (this produced the whole backlog). (2) Secondary signal: a post-correction draft (...pzfh, 2026-09-02) still framed Rook "ranked impact" but was caught/left unpublished -- suggests generation may also not consult verified_source correction-logs; worth confirming. FOLLOW-UP: add a corrections back-sweep (flag published articles that match a newly-corrected claim) AND have generation cross-check verified_source correction-notes before publish.
+
+---
 ## 2026-09-08 - Marathon provenance badges shipped ("A" remaining #2 -- surface the moat)
 
 - Shipped (597c3f1): render-layer provenance badges on Marathon weapon + shell pages (WeaponDetailClient/ShellDetailClient). Pure transform (verified_source string -> clean public badge): patch-notes -> "Verified - Bungie [patch] patch notes"; owner/in-game -> "Owner-verified in-game (S2)" (accountability kept, "(Justin)" dropped); mixed/caveated (Misriah 2442) -> "Partially verified" (distinct amber, honest field-level caveat); correction-log (Rook) -> current-state badge (history NOT surfaced). Classifier checks "unverified" BEFORE "in-game" so partial rows aren't misclassified as verified.
