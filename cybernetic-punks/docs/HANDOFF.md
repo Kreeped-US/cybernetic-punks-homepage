@@ -7,6 +7,23 @@ Newest entries on top.
 
 ---
 
+## 2026-09-08 - Rook-in-ranked remediation -- unpublishing COMPLETE (body-verified) (moat-integrity)
+
+- Rook CANNOT be selected in ranked (owner-verified correction 2026-07-20, shell_stats Rook verified_source). Violating published content was a PATTERN (stale pre-correction articles the 2026-07-20 correction never swept), NOT isolated. Early "8"/"6" estimates were overcounts; the body-verified actual is below.
+- UNPUBLISHED (operator DB actions, is_published=false) -- 7 whole-thesis-false Rook-in-ranked articles, each with a ranked claim quoted from the body:
+  1. carri-protocol-shifts-rook-meta-solo-extraction (231d3c18)
+  2. best-ranked-solo-loadout-with-the-impact-har (57cd0c31)
+  3. best-rook-build-for-season-2-ranked-solo (d3b2c365)
+  4. learn-ranked-before-you-specialize -- "ranked rating of B solo and C squad" (c60d23da)
+  5. adaptive-uprising -- "Rook usage in ranked is climbing steadily" (fe11ca9d)
+  6. solo-survivor-youre-sleeping-on -- dedicated "RANKED VIABILITY" section, "in solo ranked" (1ea362d9)
+  7. solo-survival-anchor -- "ranked profile B-tier solo" verdict; also had a stat error (140HP/35 shield vs verified base_health 120) (2c97bc57)
+- BODY-VERIFIED COMPLETE: all still-live Rook articles read to the body. KEPT (clean, no ranked claim -- Rook for casual/PvE/starter/survival is CORRECT): underrated-solo-survivor-loadout (370b5441 -- actively DISCLAIMS ranked viability), 1-1-9-patch-notes, rook-shell-how-to-learn-maps-and-farm-fast, update-115-patch-impact, community-health "friendly rooks", starter-shell-guide. No whole-false Rook-in-ranked article remains live. (NOTE: starter-shell-guide v70a still carries a "Rook ranked rating -- Solo B, Squad C" line inside its "when to leave Rook behind" section -- aligned thesis, but that one line is a Group-B tier-correction candidate, not strictly clean.)
+- OPEN FOLLOW-UPS (not urgent, fresh-day):
+  1. Group-B: ~4 multi-shell ranked TIER-GUIDES that LIST Rook in a ranked tier (complete-solo-ranked-shell-tier-guide, marathon-ranked-progression-guide, holotag-benchmark set) -- CORRECT the Rook entry, preserve the guide. Content edits, not unpublish. NOT YET DONE.
+  2. PROCESS FIX (the real lesson): a ratified correction (verified_source correction-log) must trigger a SWEEP of existing published content for the old claim -- it did not, letting this pattern sit live for months. Also: article generation should consult verified_source correction-logs before publishing. This is the moat-hardening task that prevents recurrence.
+
+---
 ## 2026-09-08 - Unpublished false article -- Rook-in-ranked (moat-integrity)
 
 - Operator DB action (rule 2): set is_published=false on feed_items slug "rook-week-the-ranked-climb-strategy-built-for-marathons-retention-cris-db15" (game_slug=marathon, id cae95940-18d1-427a-8d36-1167c0b2bd3c). Reason: the article's ENTIRE thesis was a Rook ranked-climb strategy, but Rook CANNOT be selected in ranked -- owner-verified correction recorded 2026-07-20 in shell_stats Rook verified_source ("Rook cannot be selected in ranked of any kind; prior ranked-tier/solo-only claims were wrong"). Unpublished (not just noindexed) because it was FALSE and its whole premise was the impossibility -- nothing separable to correct. (Also carried a stat error: body "140 HP/35 Shield" vs verified base_health 120.)
