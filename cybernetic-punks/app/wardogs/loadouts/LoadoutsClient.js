@@ -342,6 +342,35 @@ function MiniBars({ title, rows }) {
   );
 }
 
+// Weapon-image SLOT -- forward-compat with the network convention (weapon_stats.image_filename ->
+// /images/weapons/<file>, same as Marathon/Bodycam). No image today for any wardogs weapon -> an
+// HONEST empty state (a muted reticle + "IMAGE PENDING"), never a fake image. When the operator sets
+// image_filename on the wardogs rows and drops the file, it auto-fills here with no redesign. onError
+// falls back to the empty state so a missing/mistyped file never shows a broken image.
+function WeaponImage({ imageFilename, name, hero }) {
+  const [failed, setFailed] = useState(false);
+  const src = imageFilename ? '/images/weapons/' + imageFilename : null;
+  const show = src && !failed;
+  const h = hero ? 128 : 104;
+  return (
+    <div style={{ height: h, marginBottom: 14, borderRadius: 3, background: 'linear-gradient(180deg, ' + CARD + ', ' + PAGE + ')', border: '1px solid ' + LSUB, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {show ? (
+        <img src={src} alt={name + ' — Wardogs weapon'} onError={() => setFailed(true)} style={{ maxWidth: '90%', maxHeight: '82%', objectFit: 'contain' }} />
+      ) : (
+        <div style={{ textAlign: 'center', color: AD, opacity: 0.6 }}>
+          <svg width={hero ? 44 : 38} height={hero ? 44 : 38} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true" style={{ display: 'block', margin: '0 auto' }}>
+            <circle cx="12" cy="12" r="8.2" />
+            <line x1="12" y1="0.5" x2="12" y2="4.5" /><line x1="12" y1="19.5" x2="12" y2="23.5" />
+            <line x1="0.5" y1="12" x2="4.5" y2="12" /><line x1="19.5" y1="12" x2="23.5" y2="12" />
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+          </svg>
+          <div style={{ fontSize: 7.5, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, marginTop: 5 }}>IMAGE PENDING</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp }) {
   if (!pick) {
     return (
@@ -355,6 +384,7 @@ function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp }) {
   const ammoRows = detail && detail.ammo_compare ? detail.ammo_compare.map((r) => ({ label: r.ammo, ttk_ms: r.ttk_ms })) : null;
   return (
     <div style={{ background: PAGE, border: '1px solid ' + (hero ? AD : LINE), borderLeft: '3px solid ' + (hero ? A : T3), borderRadius: '0 3px 3px 0', padding: '16px 18px' }}>
+      <WeaponImage imageFilename={detail && detail.image_filename} name={pick.weapon_name} hero={hero} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 8, letterSpacing: 2, color: T3, fontWeight: 700 }}>{label}</span>
         {rank && total ? <span style={{ fontSize: 8, letterSpacing: 1, color: A, fontWeight: 800, fontFamily: 'monospace', background: AG, border: '1px solid ' + AD, borderRadius: 3, padding: '2px 6px' }}>#{rank} OF {total} BY TTK</span> : null}

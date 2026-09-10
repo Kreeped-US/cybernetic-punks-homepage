@@ -25,7 +25,7 @@ export async function loadLoadoutContext() {
   const [weaponsRes, ttkRes] = await Promise.all([
     supabase
       .from('weapon_stats')
-      .select('name, category, weapon_type, ammo_type, fire_rate, credit_cost, unlock_career_level, unlock_class, unlock_class_level, ranked_viable, verified, verified_source')
+      .select('name, category, weapon_type, ammo_type, fire_rate, credit_cost, unlock_career_level, unlock_class, unlock_class_level, ranked_viable, verified, verified_source, image_filename')
       .eq('game_slug', 'wardogs')
       .order('name'),
     supabase

@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Wardogs loadouts: intro-blurb redesign + weapon-image slots (render/forward-compat, HELD for review)
+
+- Two refinements on the live-and-good loadouts page. ENGINE UNCHANGED (SSE reader run() byte-identical; solver/streaming/narration/provenance/honest-null preserved). Build passes, eslint clean (one non-blocking <img> warning -- see below), verified live.
+- FIX 1 INTRO (was a flat gray text-wall, the weakest element): redesigned in app/wardogs/loadouts/page.js (SSR, crawlable text PRESERVED for SEO) with hierarchy -- an amber "LOADOUT FINDER" eyebrow, a bigger H1, a brighter/larger LEAD value-prop (with "time-to-kill" in amber), and the honesty notes lifted OUT of buried gray prose into a distinct 3-up strip of amber-left-bordered cards: MEASURED TTK / ATTRIBUTED / PRICES TBD. Wardogs theme (var(--accent) etc.). Designed + inviting, verified live.
+- FIX 2 WEAPON-IMAGE SLOTS (forward-compat, mirrors Marathon/Bodycam): the network convention is weapon_stats.image_filename -> /images/weapons/<file> (Marathon renders exactly this; the admin content UI already exposes the field for weapons). Wired a WeaponImage slot into each loadout hero card (PRIMARY/SECONDARY) that builds that path from the pick's image_filename. loadLoadoutContext.js now selects image_filename; route.js surfaces it in the per-pick detail. All wardogs rows have image_filename=NULL today, so it shows an HONEST EMPTY STATE (a muted amber reticle + "IMAGE PENDING"), never a fake image; onError falls back to the same empty state if a file is missing/mistyped. When the operator sets image_filename on the wardogs rows + drops files in public/images/weapons/ (the SAME way as the other games), images auto-appear here with NO redesign.
+- BOARD THUMBNAILS: deliberately DEFERRED (flagged). 21+4 tiny thumbnails that are ALL empty placeholders today would be noise; revisit once real images exist (e.g. thumbnail on the pick row / on hover). Hero-card slots are the meaningful placement now.
+- <img> vs next/image: kept a plain <img> to MATCH the existing Marathon weapon-image convention (app/marathon/builds/page.js uses plain <img src=/images/weapons/...>). eslint warns (no-img-element) but it is consistent with the codebase; not an error.
+- HONEST: no fabricated images, no fake prices (still TBD), no invented data. Mobile-safe (image slot is a responsive fixed-height box; intro strip is auto-fit minmax -> stacks). Files: page.js (intro), LoadoutsClient.js (WeaponImage slot), api/loadouts/route.js + lib/wardogs/loadLoadoutContext.js (surface image_filename). HELD for review. NEXT after greenlight: surface it (nav/tile/sitemap) + Phase 1d.
+
+---
 ## 2026-09-10 - Wardogs loadouts: density + Wardogs-theme pass (render + data-surfacing, HELD for review)
 
 - Operator feedback on the redesigned loadouts experience: looks better, but (2) thinner than the Marathon advisor (needs more data) and (3) colors did not match the Wardogs vertical. Both fixed honestly. ENGINE UNCHANGED -- the SSE reader run() is byte-identical; solver/streaming/honest-narration/provenance/honest-null preserved. Build passes, eslint clean, verified live with a real authed generation.

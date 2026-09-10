@@ -45,22 +45,41 @@ export default function LoadoutsPage() {
       <ViewTracker slug="loadouts" type="tool" gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '40px 24px 8px', fontFamily: 'system-ui, sans-serif' }}>
+      <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '38px 24px 26px', fontFamily: 'system-ui, sans-serif' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <h1 style={{ fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 14px' }}>
+          {/* eyebrow */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 7px var(--accent-glow)' }} />
+            <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace' }}>LOADOUT FINDER</span>
+          </div>
+
+          <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 900, letterSpacing: '-0.6px', lineHeight: 1.05, margin: '0 0 14px' }}>
             Wardogs Best Loadouts
           </h1>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 780, margin: '0 0 12px' }}>
-            Tell us your career level, your cash budget, and how you play. We rank every weapon by its
-            measured <strong>time-to-kill</strong> -- from community ballistics testing -- and hand back
-            the best loadout you can field right now, with the reasoning behind each pick. Not a spec
-            dump: the actual answer to &ldquo;what should I run?&rdquo;
+
+          {/* lead value-prop -- brighter + larger, the invitation */}
+          <p style={{ fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'var(--text-primary)', lineHeight: 1.6, maxWidth: 720, margin: '0 0 22px', fontWeight: 500 }}>
+            Your level, your budget, your playstyle &mdash; we rank every weapon by its measured{' '}
+            <span style={{ color: 'var(--accent)', fontWeight: 800 }}>time-to-kill</span> and hand back the
+            best loadout you can field right now, with the reasoning behind every pick. Not a spec dump:
+            the actual answer to &ldquo;what should I run?&rdquo;
           </p>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 780, margin: 0 }}>
-            Combat numbers come from community-tested ballistics (attributed, not yet Bulkhead-official)
-            and every recommendation says so. Prices are not published yet, so loadouts are ranked by
-            effectiveness today -- budget filtering switches on the moment official prices land.
-          </p>
+
+          {/* the honesty / how-it-works strip -- distinct, amber-marked, not buried gray prose */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 10 }}>
+            {[
+              { k: 'MEASURED TTK', v: 'Ranked on real time-to-kill from community ballistics testing — not vibes.' },
+              { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official — every pick says so.' },
+              { k: 'PRICES TBD', v: 'No official prices yet, so loadouts rank by effectiveness — budget filtering switches on when they land.' },
+            ].map((item) => (
+              <div key={item.k} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '12px 14px' }}>
+                <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: 5 }}>
+                  <span style={{ marginRight: 6 }}>&#9698;</span>{item.k}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.v}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

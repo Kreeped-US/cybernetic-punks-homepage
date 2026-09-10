@@ -105,6 +105,10 @@ export async function POST(req) {
       const w = weapons.find((x) => x.name === pk.weapon_name) || {};
       return {
         weapon_name: pk.weapon_name,
+        // Mirror the Marathon/Bodycam convention: weapon_stats.image_filename -> /images/weapons/<file>.
+        // null today for every wardogs row (honest empty slot); auto-fills when the operator sets the
+        // column + drops the file, exactly like the other games. The client builds the /images path.
+        image_filename: w.image_filename || null,
         fire_rate: w.fire_rate != null ? w.fire_rate : null,
         caliber: w.ammo_type || null,
         weapon_class: w.category || w.weapon_type || null,
