@@ -66,6 +66,29 @@ export const DEFAULT_PLAYSTYLE = 'balanced';
 function asArray(v) { return Array.isArray(v) ? v : []; }
 function num(v) { return typeof v === 'number' && Number.isFinite(v) ? v : null; }
 
+// ONE-SHOT FLOOR (the fix). A TTK cell of 0 means a one-shot kill (shots-to-kill 1 -> no inter-shot
+// time). Treating that as literally 0 ("infinitely fast") ignores fire rate, which over-ranks SLOW
+// one-shotters (a 55-rpm AMR 50, bolt snipers, break shotguns) on the tiers they one-shot even though
+// their cadence makes them specialists, not top killers. Honest practical model: a one-shot is still
+// gated by the weapon's cadence -- if it misses or a second target appears, the fire interval decides
+// -- so a one-shot is "very fast" (one shot-cycle), not "infinitely fast". floor = 60000 / fire_rate.
+//
+// FALLBACK when fire_rate is unknown (null/0): no ttk-having wardogs weapon lacks fire_rate today
+// (the 3 fire_rate-null launchers carry no ballistics, so they never reach the weighting), so this is
+// defensive only. Use a moderate ~400-rpm cadence so an unknown-cadence one-shot stays "fast but not
+// infinite" rather than either 0 (the skew we are fixing) or punitively slow.
+export const ONE_SHOT_FALLBACK_INTERVAL_MS = 150;
+
+export function oneShotFloorMs(fireRate) {
+  return (typeof fireRate === 'number' && fireRate > 0) ? 60000 / fireRate : ONE_SHOT_FALLBACK_INTERVAL_MS;
+}
+
+// Apply the one-shot floor to a raw TTK: a 0 (one-shot) becomes the cadence floor; any non-zero TTK
+// is already >= one fire interval by construction (TTK = (STK-1) * interval), so it passes through.
+function flooredTtk(rawMs, fireRate) {
+  return rawMs === 0 ? oneShotFloorMs(fireRate) : rawMs;
+}
+
 // Resolve the effective playstyle profile, honoring caller overrides (ammo / armorWeights).
 function resolveProfile(playstyle, overrides) {
   const base = PLAYSTYLES[playstyle] || PLAYSTYLES[DEFAULT_PLAYSTYLE];
@@ -97,17 +120,18 @@ function indexTtk(ttkRows) {
 // Playstyle-weighted TTK for one weapon at the profile's ammo. Weighted average over the tiers that
 // have data (weights renormalized to the present tiers, so a missing tier does not distort). Returns
 // { weightedTtkMs, tiersUsed } or null when the weapon has no TTK data for this ammo.
-export function weightedTtk(ttkIndex, weaponName, profile) {
+export function weightedTtk(ttkIndex, weaponName, profile, fireRate) {
   const byAmmo = ttkIndex.get(weaponName);
   if (!byAmmo) return null;
   const byTier = byAmmo.get(profile.ammo);
   if (!byTier || byTier.size === 0) return null;
   let wsum = 0, acc = 0, tiersUsed = 0;
   for (let tier = 0; tier < profile.armorWeights.length; tier++) {
-    const ms = byTier.get(tier);
-    if (ms == null) continue;
+    const raw = byTier.get(tier);
+    if (raw == null) continue;
     const w = profile.armorWeights[tier];
     if (w <= 0) continue;
+    const ms = flooredTtk(raw, fireRate); // one-shot (0) -> cadence floor, not literal 0
     acc += w * ms;
     wsum += w;
     tiersUsed++;
@@ -115,7 +139,7 @@ export function weightedTtk(ttkIndex, weaponName, profile) {
   if (wsum === 0) {
     // profile weights all fell on tiers with no data -> fall back to a plain mean of present tiers
     let sum = 0, n = 0;
-    for (const ms of byTier.values()) { sum += ms; n++; }
+    for (const raw of byTier.values()) { sum += flooredTtk(raw, fireRate); n++; }
     return n ? { weightedTtkMs: sum / n, tiersUsed: n, fallbackMean: true } : null;
   }
   return { weightedTtkMs: acc / wsum, tiersUsed, fallbackMean: false };
@@ -181,7 +205,7 @@ export function rankByEffectiveness(weapons, ttkRows, { playstyle = DEFAULT_PLAY
   const profile = resolveProfile(playstyle, overrides);
   const ttkIndex = indexTtk(ttkRows);
   const scored = asArray(weapons).map((w) => {
-    const wt = weightedTtk(ttkIndex, w.name, profile);
+    const wt = weightedTtk(ttkIndex, w.name, profile, num(w.fire_rate)); // fire rate powers the one-shot floor
     return {
       weapon_name: w.name,
       slot: slotOf(w),

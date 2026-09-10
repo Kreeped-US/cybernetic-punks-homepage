@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Wardogs solver: one-shot TTK weighting fixed (fire-interval floor) -- de-skew before Phase 1d
+
+- The one-shot/0ms review (recorded earlier) found the TTK ranking mostly correct but SKEWED: a one-shot cell (ttk 0, shots-to-kill 1) was treated as literally 0 ("infinitely fast"), ignoring fire rate, so SLOW one-shotters (AMR 50 55rpm, bolt snipers, break shotguns) were over-ranked on the tiers they one-shot. Operator approved Option (a): floor a one-shot at the weapon cadence.
+- FIX (lib/wardogs/loadoutSolver.js, PURE -- no DB/UI/fetch): in weightedTtk, a raw TTK of 0 now becomes oneShotFloorMs(fireRate) = 60000/fire_rate ms (one shot-cycle) instead of 0; non-zero TTKs pass through unchanged (they are already >= one interval by construction). rankByEffectiveness passes each weapon's fire_rate in. Null/0 fire_rate -> ONE_SHOT_FALLBACK_INTERVAL_MS = 150 (~400rpm), defensive only (no ttk-having wardogs weapon lacks fire_rate; the 3 fire_rate-null launchers carry no ballistics). Rationale: a one-shot is gated by cadence (miss / second target = the interval decides) -> "very fast", not "infinitely fast". Honest practical model. unlock-gate, playstyle weights, budget honest-null, provenance inheritance all UNCHANGED.
+- TESTS: lib/wardogs/loadoutSolver.test.mjs 20 -> 23, all green (node --test). Added: oneShotFloorMs (60000/rpm, null->fallback), weightedTtk floors a one-shot cell to cadence not 0, and the DE-SKEW proof (a fast one-shotter out-ranks a slow one-shotter when both are raw-0ms). Existing 20 unaffected (their fixtures carry no 0ms cells).
+- WORKED EXAMPLE confirmed on REAL data (ran the actual solver over the live stores, read-only): BALANCED -- AMR 50 436 -> 1090.9ms, rank 25 (correctly demoted; a 55rpm anti-materiel rifle is not a balanced primary); FAL stays #2 (204). AGGRESSIVE -- FAL still #1 (357 -> 391, its T0 one-shot now floored to 85ms); the slow BMR-308 (468rpm) correctly drops #2 -> #3 below the faster Super-45 (1255rpm) -- ties now break by cadence. TACTICAL -- FAL #1 (AMR 50 absent, no AP data). The correct part (fast one-shotters top) is preserved; the skew (slow specialists over-ranked) is fixed.
+- EFFECT ON THE LIVE TOOL: /wardogs/loadouts rankings shift slightly (correctly) after merge -- weighted TTK values rise a little for one-shotters (now cadence-floored) and slow specialists demote. The per-pick armor-curve still shows the raw one-shot honestly as "1-shot" (display unchanged); only the solver's ranking/score uses the floor.
+- PHASE 1d FLAG (carry forward): TTK -- even floored -- still does NOT model reload, range, recoil, or magazine. Published synthesis pages must scope the claim as "fastest time-to-kill" WITH weapon-class caveats (e.g. MP43 topping BALANCED is a close-range shotgun truth, not "best overall"), never an unqualified "best loadout". A framing rule for the Channel B pages, not a solver bug.
+
+---
 ## 2026-09-10 - Wardogs loadouts: intro-blurb redesign + weapon-image slots (render/forward-compat, HELD for review)
 
 - Two refinements on the live-and-good loadouts page. ENGINE UNCHANGED (SSE reader run() byte-identical; solver/streaming/narration/provenance/honest-null preserved). Build passes, eslint clean (one non-blocking <img> warning -- see below), verified live.

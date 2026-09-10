@@ -18,6 +18,8 @@ import {
   floorTier,
   inheritProvenance,
   slotOf,
+  oneShotFloorMs,
+  ONE_SHOT_FALLBACK_INTERVAL_MS,
   PLAYSTYLES,
   TIER_ORDER,
 } from './loadoutSolver.js';
@@ -122,6 +124,38 @@ test('weightedTtk: renormalizes over present tiers (a missing tier does not dist
   const wt = weightedTtk(idx, 'W', profile);
   assert.equal(wt.weightedTtkMs, 100, 'only tier 0 present -> weighted average is exactly that value');
   assert.equal(weightedTtk(idx, 'MISSING', profile), null, 'no data -> null');
+});
+
+// --- the one-shot fire-interval floor (the de-skew fix) ---------------------
+
+test('oneShotFloorMs: a one-shot is floored at the fire interval (60000/rpm), null fire_rate -> fallback', () => {
+  assert.equal(oneShotFloorMs(1200), 50, '1200 rpm -> 50ms cadence floor');
+  assert.equal(oneShotFloorMs(60), 1000, '60 rpm -> 1000ms cadence floor (a slow one-shotter is slow)');
+  assert.equal(oneShotFloorMs(null), ONE_SHOT_FALLBACK_INTERVAL_MS, 'unknown fire_rate -> fallback constant');
+  assert.equal(oneShotFloorMs(0), ONE_SHOT_FALLBACK_INTERVAL_MS, 'zero fire_rate -> fallback constant');
+});
+
+test('weightedTtk: a one-shot cell (ttk 0) is scored at the cadence floor, NOT literal 0', () => {
+  const idx = new Map([['One', new Map([['HP', new Map([[0, 0]])]])]]); // one-shots at T0
+  const profile = { ammo: 'HP', armorWeights: [0.4, 0.3, 0.2, 0.1, 0.0] };
+  assert.equal(weightedTtk(idx, 'One', profile, 1200).weightedTtkMs, 50, 'fast one-shotter -> 50ms (not 0)');
+  assert.equal(weightedTtk(idx, 'One', profile, 60).weightedTtkMs, 1000, 'slow one-shotter -> 1000ms (not 0)');
+});
+
+test('one-shot floor DE-SKEWS: a fast one-shotter out-ranks a slow one-shotter (both 0ms raw)', () => {
+  // both one-shot unarmored (raw ttk 0); ONLY fire rate should separate them after the floor
+  const FAST = { name: 'Test Fast OneShot', category: 'SMG',    fire_rate: 1200 }; // floor 50ms
+  const SLOW = { name: 'Test Slow OneShot', category: 'Sniper', fire_rate: 60 };   // floor 1000ms
+  const ttk = [
+    { weapon_name: 'Test Fast OneShot', ammo_type: 'HP', armor_tier: 0, ttk_ms: 0, confidence_tier: 'attributed', verified_source: 'fixture' },
+    { weapon_name: 'Test Slow OneShot', ammo_type: 'HP', armor_tier: 0, ttk_ms: 0, confidence_tier: 'attributed', verified_source: 'fixture' },
+  ];
+  const { ranked } = rankByEffectiveness([SLOW, FAST], ttk, { playstyle: 'aggressive' });
+  assert.equal(ranked[0].weapon_name, 'Test Fast OneShot', 'the faster-cadence one-shotter ranks first');
+  assert.equal(ranked[0].weighted_ttk_ms, 50, 'fast one-shot scored at its 50ms cadence, not 0');
+  assert.equal(ranked[1].weapon_name, 'Test Slow OneShot');
+  assert.equal(ranked[1].weighted_ttk_ms, 1000, 'slow one-shot correctly demoted to its 1000ms cadence');
+  assert.ok(ranked[0].score > ranked[1].score, 'fast one-shotter has the higher effectiveness score');
 });
 
 // --- step 3: budget-solve ---------------------------------------------------
