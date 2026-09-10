@@ -5,7 +5,7 @@
 // copies could drift. Both now import this one helper.
 //
 // Covers: the per-game route groups (/dmz, /wardogs, /pubg-dednet) which ship
-// their own headers; the NETWORK content pages (/about, /editors) which now render
+// their own headers; the NETWORK content pages (/about, /editors, /methodology) which now render
 // NetworkNav + NetworkFooter via app/(network)/layout.js; and the app shells
 // (/me, /profile-preview, /admin) which run their own chrome.
 //
@@ -21,6 +21,7 @@ export function isNetworkChrome(pathname) {
     || pathname.startsWith('/bodycam')
     || pathname === '/about' || pathname.startsWith('/about/')
     || pathname === '/editors' || pathname.startsWith('/editors/')
+    || pathname === '/methodology' || pathname.startsWith('/methodology/')
     || pathname === '/me' || pathname.startsWith('/me/')
     || pathname.startsWith('/profile-preview')
     || pathname === '/admin' || pathname.startsWith('/admin/');

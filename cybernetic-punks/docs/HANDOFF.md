@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Fixed /methodology double-chrome (network registration gap) -- HELD
+
+- /methodology was in the (network) route group (so app/(network)/layout.js gave it NetworkNav + NetworkFooter) but was MISSING from lib/network/isNetworkChrome.js, so the global Marathon Nav (components/Nav.js) + LivePulseStrip (mounted after children -> reads as a bottom "footer") rendered ON TOP -- double chrome. /about and /editors were in the list and rendered correctly; /methodology was the only (network) page wrong.
+- FIX (one line): added "/methodology" to isNetworkChrome.js in the exact sibling format ("=== '/methodology' || startsWith('/methodology/')"), right after /editors. Now isNetworkChrome('/methodology')===true -> Nav.js:230 returns null (Marathon nav suppressed) AND LivePulseGate:25 returns null (strip suppressed), leaving ONLY NetworkNav + NetworkFooter -- byte-identical chrome to /about and /editors.
+- VERIFIED: build passes; predicate trace shows /methodology now matches /about + /editors (isNetworkChrome/Nav-suppressed/LivePulse-suppressed all true); /about, /editors, /marathon*, and / unchanged; the addition only matches /methodology (+ /methodology/*), no other page affected.
+- SYSTEMIC NOTE (flagged, NOT fixed): isNetworkChrome is a hand-maintained per-path list that must be updated for every new (network) page or game route. This is the THIRD instance of the per-path-hardcode pattern (after the manual /bodycam chrome entry and the homepage-tile hardcode). FUTURE HARDENING (logged): derive network-chrome suppression automatically from (network) route-group membership, so adding a network page cannot silently reintroduce this double-chrome bug. Worth a real fix eventually.
+- Minor (left per one-line scope): the doc comment in isNetworkChrome.js:8-9 still enumerates "(/about, /editors)" -- now slightly stale (omits /methodology); harmless, optional tidy.
+
+---
 ## 2026-09-09 - Correction-sweep Version A piece 2 (publish-time guard) -- HELD
 
 - The PREVENTIVE half of the correction sweep: an advisory guard that WARNS (not hard-blocks) when a draft being published co-occurs a recorded correction's entity+keywords, requiring operator acknowledgment. Catches the db15-class error (content generated AFTER a correction still asserting the corrected-away claim) at publish time. With piece 1 (detect existing) already shipped, Version A is now COMPLETE: detect-existing + prevent-new.
