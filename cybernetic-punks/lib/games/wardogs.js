@@ -162,6 +162,11 @@ export const WARDOGS_ARTICLE_SECTION = {
   // the dedicated 'economy' section (clustered with wardogs-cash-economy + wardogs-economy).
   // Operator runs docs/migrations/2026-09-08-wardogs-article-economy.sql.
   'how-the-wardogs-economy-works': 'economy',
+  // Launch-DAY piece -- the "it's live, here's what to know" article, grounded 100% in the
+  // Tier-1 + Season 1 facts of docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md (no Tier-4 unknowns stated).
+  // field-intel (with the launch overview). Operator runs
+  // docs/migrations/2026-09-10-wardogs-article-launch-day.sql (staged draft; flip at 16:00 UTC).
+  'wardogs-early-access-is-live-what-to-know': 'field-intel',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).

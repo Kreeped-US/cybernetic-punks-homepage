@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Wardogs launch-day article STAGED (publishes 16:00 UTC) -- HELD
+
+- Wrote the launch-day piece "Wardogs Early Access Is Live: What to Know at Launch" NOW from confirmed facts, staged as a DRAFT to publish at 16:00 UTC (the launch-hour search spike). Indexable vertical (noindex clears on flip).
+- CODE: added slug wardogs-early-access-is-live-what-to-know -> field-intel in lib/games/wardogs.js WARDOGS_ARTICLE_SECTION (with the launch overview). Build passes.
+- SQL: docs/migrations/2026-09-10-wardogs-article-launch-day.sql -- operator-run feed_items INSERT, wardogs/NEXUS, staged is_published=FALSE + noindex=TRUE, created_at pinned to 2026-09-10 16:00:00+00 (launch-fresh). ASCII, $wd$ dollar-quoted, standard markdown.
+- GROUNDING (100% WARDOGS_LAUNCH_REFERENCE.md, tier-respecting): Tier-1 stated as fact (live on Steam EA, $39.99/$49.99 cosmetic, PC-only + consoles 2028, 100-player 3-faction combined-arms identity, buy-per-life economy, 37-weapon COUNT, beta does not carry, anti-cheat public bans + report-weight). Season 1 numbers are the NEW official ones (FOB $7,500, doubled L10-20 XP, ~1.0M to L50, Heavy Tank Driver 35, Artillery Career 90) -- NOT the superseded beta figures ($2,500/838k, verified absent from the body). Tier-4 unknowns NOT stated -- full named 37-gun table, live per-gun prices, Gold rate, day-one faction split, and the $10k starting-cash number are framed as "resolves as players hit the live vendor" or omitted.
+- PUBLISH AT 16:00 UTC (recommended): stage-now-flip via `node scripts/publish-drafts.mjs --game wardogs --slugs wardogs-early-access-is-live-what-to-know --commit` -- the correction-guard WILL flag it (economy + vendor/FOB co-occur the wardogs-s1-economy correction; EXPECTED -- it uses the NEW numbers), so publish with `--force` to acknowledge; --force also clears noindex. Alt (raw SQL, no guard) documented in the migration. Chose stage-now-flip over run-at-16:00 so the row is reviewable pre-launch AND the flip goes through the guarded + noindex-clearing path.
+- HELD for Justin's review of the article before it goes live. NEXT (at 16:00): flip to published; post-launch the Tier-4 items resolve from the live game.
+
+---
 ## 2026-09-09 - Correction-sweep FIRST PRODUCTION RUN -- Wardogs S1 economy supersession -- HELD
 
 - Registered wardogs-s1-economy-supersedes-beta in lib/corrections/registry.js (game_slug=wardogs, entity "economy"; keywords = smoking-gun old values "2,500"/"2500"/"838" + changed-item recall terms FOB / supply crate / air vehicle / Career 55 / Career 35 / Deagle / vendor) and ran scripts/correction-sweep.mjs on it -- the sweep's FIRST real-world use, ~a day before Wardogs EA.
