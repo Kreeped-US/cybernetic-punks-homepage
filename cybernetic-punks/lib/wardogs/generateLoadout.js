@@ -78,12 +78,19 @@ export function buildLoadoutPrompt(solved, inputs) {
     ? 'solved within $' + budget.limit + ' (spent $' + budget.total + ').'
     : 'NOT applied -- Bulkhead has published no prices, so this is ranked by effectiveness only, not budget-optimized. Say so plainly.'));
   lines.push('');
-  lines.push('WRITE THE ANALYSIS (120-180 words, plain prose, no headings, no lists, no JSON):');
-  lines.push('1. LEAD with the single sharpest insight -- the one thing that makes this loadout work (the hook).');
-  lines.push('2. Say why the primary beats the obvious alternative, using the real TTK gap above.');
-  lines.push('3. Name the honest tradeoff (what this gives up -- e.g. the ammo choice, the armor assumption).');
-  lines.push('4. If budget was not applied, say the price picture is not published yet -- verify in-game.');
-  lines.push('Be opinionated and specific. Never name a weapon not listed above.');
+  lines.push('WRITE THE ANALYSIS (120-180 words total) as SHORT PARAGRAPHS separated by a BLANK LINE.');
+  lines.push('No markdown, no headings, no lists, no JSON -- just plain paragraphs split by blank lines,');
+  lines.push('in this order:');
+  lines.push('');
+  lines.push('- Paragraph 1 (THE PICK): lead with the single sharpest insight -- the one thing that makes the');
+  lines.push('  primary the call -- and the key number. 1-2 sentences.');
+  lines.push('- Paragraph 2 (THE EDGE): why the primary beats the runner-up, using the real TTK gap above. 1-2 sentences.');
+  lines.push('- Paragraph 3 (THE SIDEARM): why the secondary backs it up. 1 sentence.');
+  lines.push('- FINAL paragraph (THE CAVEAT): it MUST begin with the exact token "CAVEAT:" and cover the honest');
+  lines.push('  tradeoff -- the ammo/armor assumption -- and, if budget was not applied, that prices are not');
+  lines.push('  published yet so verify in-game. 1-2 sentences. This is the ONLY paragraph that starts with a token.');
+  lines.push('');
+  lines.push('Be opinionated and specific. Never name a weapon not listed above. Separate every paragraph with a blank line.');
   return lines.join('\n');
 }
 

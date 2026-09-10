@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Wardogs loadouts: structured THE READ (short paragraphs + distinct caveat callout, still streamed)
+
+- Operator: THE READ (the streamed LLM analysis) still read as a block of words. Fixed with a prompt + render change; ENGINE/streaming/solver/honest-null/provenance unchanged. Build passes, eslint clean (known <img> warning only), verified live.
+- PROMPT (lib/wardogs/generateLoadout.js): the analysis is now requested as SHORT PARAGRAPHS separated by BLANK LINES in a fixed order -- (1) THE PICK (hook + key number), (2) THE EDGE (why it beats the runner-up, the TTK gap), (3) THE SIDEARM (why the secondary backs it), and a FINAL paragraph that MUST begin with the exact token "CAVEAT:" (the honest ammo/armor tradeoff + prices-not-published). Same content/insight/honesty -- just chunked. Still streamed (paragraphs arrive progressively).
+- RENDER (app/wardogs/loadouts/LoadoutsClient.js, new TheRead component): splits the accumulated stream on blank lines into spaced <p> chunks (no more wall-of-words), and pulls the "CAVEAT:"-prefixed paragraph into a DISTINCT amber callout labelled "THE CATCH" (border-left accent, like the intro honesty strip). Number-highlighting (357ms/40ms/6% in amber) applied per chunk. Fully PROGRESSIVE: partial paragraphs render as they stream, the caveat flips into its callout the moment "CAVEAT:" arrives; if the model omits the marker the tail renders as a normal paragraph (graceful degradation -- still chunked).
+- VERIFIED LIVE (real generation, DOM-confirmed; hidden dev pane so below-fold screenshots blank): THE READ rendered as 3 body paragraphs [PICK "FAL ... 391ms weighted TTK", EDGE "beats the Super-45 by ~25ms, ~6% margin", SIDEARM "GGX 18 ... backs the primary"] + a separate "THE CATCH" callout ["Both TTK figures assume HP ammo is connecting ... armor tier ... can shift these ..."]. Also confirms the merged one-shot floor is live (FAL 391ms, Super-45 #2).
+- KEPT: streamed (not static), Wardogs amber theme, honest content unchanged, provenance basis strip, number-highlighting, mobile-safe (paragraphs + callout are fluid, maxWidth 68ch). HELD for review. NEXT after greenlight: surface it (nav/tile/sitemap) + Phase 1d (crawlable synthesis pages, evidence-ramped, "fastest TTK" + class-caveat framing).
+
+---
 ## 2026-09-10 - Wardogs solver: one-shot TTK weighting fixed (fire-interval floor) -- de-skew before Phase 1d
 
 - The one-shot/0ms review (recorded earlier) found the TTK ranking mostly correct but SKEWED: a one-shot cell (ttk 0, shots-to-kill 1) was treated as literally 0 ("infinitely fast"), ignoring fire rate, so SLOW one-shotters (AMR 50 55rpm, bolt snipers, break shotguns) were over-ranked on the tiers they one-shot. Operator approved Option (a): floor a one-shot at the weapon cadence.

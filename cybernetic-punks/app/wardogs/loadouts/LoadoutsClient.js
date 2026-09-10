@@ -45,6 +45,46 @@ function highlightNumbers(text) {
       : <span key={i}>{p}</span>);
 }
 
+// THE READ renderer: the streamed prose arrives as short paragraphs separated by blank lines, with a
+// final paragraph the model prefixes "CAVEAT:". We split on blank lines -> spaced <p> chunks (no more
+// wall-of-words), pull the CAVEAT paragraph into a distinct amber callout, and keep number-highlighting
+// per chunk. Fully progressive: partial paragraphs render as they stream; the caveat flips into its
+// callout the moment "CAVEAT:" arrives. If the model omits the marker, the tail just renders as a
+// normal paragraph (graceful degradation) -- still chunked, still readable.
+function TheRead({ text, streaming }) {
+  const raw = text || '';
+  if (!raw) {
+    return <div style={{ fontSize: 16, color: T3 }}>Reading the numbers<span className="ls-cursor">_</span></div>;
+  }
+  const paras = raw.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+  const body = [];
+  let caveat = null;
+  for (const p of paras) {
+    const m = p.match(/^CAVEAT:\s*/i);
+    if (m) caveat = p.slice(m[0].length).trim();
+    else body.push(p);
+  }
+  return (
+    <div>
+      {body.map((p, i) => (
+        <p key={i} style={{ fontSize: 16, lineHeight: 1.7, color: T1, maxWidth: '68ch', margin: '0 0 12px' }}>
+          {highlightNumbers(p)}
+          {streaming && !caveat && i === body.length - 1 && <span className="ls-cursor" style={{ color: A }}>▍</span>}
+        </p>
+      ))}
+      {caveat && (
+        <div style={{ marginTop: 4, background: AG, border: '1px solid ' + AD, borderLeft: '3px solid ' + A, borderRadius: '0 3px 3px 0', padding: '12px 14px', maxWidth: '68ch' }}>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: 5 }}>&#9698; THE CATCH</div>
+          <div style={{ fontSize: 14, lineHeight: 1.6, color: T2 }}>
+            {highlightNumbers(caveat)}
+            {streaming && <span className="ls-cursor" style={{ color: A }}>▍</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LoadoutsClient() {
   const [phase, setPhase] = useState('input');
   const [careerLevel, setCareerLevel] = useState('');
@@ -220,14 +260,11 @@ export default function LoadoutsClient() {
         </div>
       )}
 
-      {/* THE READ */}
+      {/* THE READ -- streamed prose, structured into short paragraphs + a distinct caveat callout */}
       {(analysis || phase === 'result') && (
         <div style={{ background: CARD, border: '1px solid ' + LINE, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '20px 22px', marginBottom: 14 }}>
           <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: 12 }}>◢ THE READ</div>
-          <div style={{ fontSize: 16, lineHeight: 1.8, color: T1, maxWidth: '68ch' }}>
-            {analysis ? highlightNumbers(analysis) : <span style={{ color: T3 }}>Reading the numbers<span className="ls-cursor">_</span></span>}
-            {phase === 'loading' && analysis && <span className="ls-cursor" style={{ color: A }}>▍</span>}
-          </div>
+          <TheRead text={analysis} streaming={phase === 'loading'} />
         </div>
       )}
 
