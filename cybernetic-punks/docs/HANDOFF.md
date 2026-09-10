@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Bodycam roster Phase 1 -- names + calibers enriched (operator DB action, rule 2)
+
+- Operator ran docs/migrations/2026-09-10-bodycam-roster-phase1.sql (commit b99b1e3). Bodycam weapon_stats: 20 -> 29 rows. Verified cross-game safe (re-checked 2026-09-10): bodycam 29 (was 20), wardogs 33 UNCHANGED, marathon 32 UNCHANGED (only bodycam touched).
+- 1A RENAME+ENRICH (6): SCAR->SKR-H (7.62x51mm), FN FAL->LAR (7.62x51mm), Dragunov->VSD (7.62x54mmR), Desert Eagle->Deagle (.50 AE), M1911->M1914 (.45 ACP), Rivington->Rivington 700 (Rem 700, 7.62x51mm). Roster now uses IN-GAME names (was mixed real-world/in-game). Verified: all 6 new names present, all 6 old names gone.
+- 1B ENRICH (6): Draco (7.62x39mm), Veaper (.45 ACP), SG9-X (9x19mm), BK-101 (12ga), CR-75 (9x19mm), M4A1 (5.56x45mm, name pending Phase 2 "M4A1-AR" parse).
+- 1C NEW (9): KA-74M, KA-US, M16-1A, Vaiga, TAC Rivington, Revolver, FX-45, Mlock19, KARPM (caliber honest-null, model unconfirmed). All verified=false, stats NULL, sourced. (20 rows now carry a caliber; the 7 flagged + KARPM + untouched Mini Uzi carry none.)
+- Source: in-game roster confirmed via YouTube roster video (zdJ7A-n6MG8), owner-observed 2026-09-10. Caliber = per real-world basis (video-identified), NOT game-stat-confirmed. Real-world basis in notes. STATS NOT added (Phase 1 = names+calibers only).
+- 1D UNVERIFIED FLAGS (7, notes-only, not renamed/deleted): AK-47, Glock 17, MP5, SG5-X, Remington 870, Kobra, UMP-45 (not observed in the roster video / ambiguous), + R-12 (video maps to Benelli M4 but BK-101 note claims R-12 alias -- conflict, held; not inserted -- confirmed absent).
+- FIX NOTE: the migration initially triggered a Supabase "UPDATE without WHERE" warning -- caused by IN-STRING SEMICOLONS in note text (Postgres parses fine, but Supabase's naive ;-splitter chopped a note-bearing UPDATE, orphaning its WHERE). Fixed by replacing non-terminator ; with , in notes/comments (commit b99b1e3). The UPDATEs were always scoped; the splitter was the bug. LESSON: avoid semicolons inside migration note-strings (Supabase editor mis-splits).
+- BODYCAM FOLLOW-UPS (logged, deferred): (1) community-tested STATS (damage/RPM/mag from a player-collaborative tier-list, screenshots) -- add as ATTRIBUTED/community-tested (verified=false, sourced as community-tested, NOT owner-verified) in a later pass; (2) Phase 2 ambiguities -- resolve AK-47/Glock 17/MP5-SG5/Remington 870/Kobra/UMP-45/R-12/Mini Uzi(UZ-1) via in-game confirmation.
+
+---
 ## 2026-09-10 - Wardogs launch-day article SHIPPED (wardogs-early-access-is-live-what-to-know) -- EA LAUNCH 16:00 UTC
 
 - Operator DB action (rule 2): staged the draft (migration insert, is_published=false/noindex=true, created_at pinned 16:00 UTC), then flipped at launch via publish-drafts.mjs --commit --force. Now is_published=true, noindex=FALSE (indexable, live for the launch-hour search spike). Article "Wardogs Early Access Is Live: What to Know at Launch" -- game_slug=wardogs, NEXUS, field-intel (clustered w/ the launch overview). Confirmed live + rendering formatted at /wardogs/field-intel/wardogs-early-access-is-live-what-to-know. (Re-verified 2026-09-10: is_published=true, noindex=false, created_at 16:00:00+00.)
