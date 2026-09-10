@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Wardogs fire-rate loaded from Swoleguy ballistics (operator DB action, rule 2)
+
+- Operator ran the two fire-rate migrations. FINAL STATE re-verified 2026-09-10: wardogs weapon_stats = 30 of 33 rows now have fire_rate; the 3 launchers (MAAWS, MGL-40, RPG-7) stay honest-null (no RPM). 0 rows verified=true (attributed only). All 30 fire_rate rows carry the Swoleguy provenance.
+- SOURCE: community in-game shooting-range ballistics testing by Swoleguy (YouTube), released for community use, 2026-09-10 -- ATTRIBUTED, not owner-verified. verified STAYS false. Only fire_rate was flattened; the full ballistics matrix is reserved as Build Advisor fuel (internal-data-store doctrine), NOT flattened.
+- PROVENANCE recorded field-scoped (APPENDED, not overwritten): each row keeps its existing caliber/roster provenance and gains " | fire_rate: <Swoleguy source>" -- so the caliber is never misattributed to Swoleguy (Marathon field-scoped-provenance pattern).
+- SPLIT FIRE-RATES: Bushmaster M17S 709 (513 semi / 709 burst), A-91 721 (512 / 721), KH-2002 711 (518 / 711) -- burst RPM is the headline fire_rate, the split is in notes. BMR-308 = 468 (semi-only). Value range 16 (Scout Rifle TD) to 1255 (Super-45).
+- TWO MIGRATIONS (both on main): docs/migrations/2026-09-10-wardogs-firerate-swoleguy.sql (commit 22ca8e0, 30 UPDATEs) -- on the first run only BMR-308 landed (the full file was not executed). docs/migrations/2026-09-10-wardogs-firerate-swoleguy-rerun.sql (commit 423c958, 29 UPDATEs, idempotency-guarded WHERE coalesce(verified_source,'') not like %Swoleguy%) applied the remaining 29. Net result: all 30 set, no double-append (the guard is confirmed by the field-scoped provenance appearing once per row).
+- LESSON (carried): paste the WHOLE migration file into the Supabase editor -- a partial paste applies only the statements pasted. (Separate from the earlier in-string-semicolon splitter lesson.)
+- NEXT: the Wardogs Build Advisor (HYBRID) remains the flagship -- fire_rate is one input; the reserved full ballistics matrix + economy/progression feed it. Weapon combat stats beyond fire_rate still await genuine live in-game observation (community "Season 1" data is retagged beta).
+
+---
 ## 2026-09-10 - DOCTRINE: internal data store per game = editor + advisor fuel (NOT public reference)
 
 - Recorded a LOCKED network-level principle in docs/network/internal-data-store-doctrine.md (new). Guides every game vertical. Articulated while deciding NOT to build public unlock-level tracking (would compete with wardogshub on their strength -- a losing fight).
