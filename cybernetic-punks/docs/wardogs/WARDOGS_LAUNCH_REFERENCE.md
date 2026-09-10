@@ -29,6 +29,17 @@ addressed Sept 8, with the specifics still Tier-4 pending). New sources: the off
 account, Steam news, official Bulkhead videos ("The 11th Reason NOT To Buy WARDOGS", "Addressing the
 Announcement"), and a BisectHosting partner post.
 
+UPDATE 2026-09-09: FIRST real first-party systems doc landed -- Bulkhead published the SEASON 1
+CHANGELOG + a LAUNCH TRAILER (Sep 9 2026, the day before EA). This pass (a) adds Tier-1 facts and
+(b) SUPERSEDES several beta-observed figures. Changes: consoles stated 2028 (launch trailer); anti-
+cheat SPECIFICS promoted Tier-4 -> Tier-1 (public bans + report-weight); Season 1 progression framing
+(launch slower, officially) + OFFICIAL Season 1 economy/XP deltas that SUPERSEDE the beta-client
+numbers for the changed items (FOB $2.5k -> $7.5k, level curves, tank gates, Deagle 90 -> 85 -- all
+marked superseded so the correction-sweep can find content on the old figures); the first NAMED
+weapon/vehicle FRAGMENT (confirms names, does NOT close the 33-vs-37 roster gap); preload live. See
+the new "Season 1 changelog + launch trailer" subsection under Tier 1. New sources: Bulkhead Season 1
+changelog + launch trailer + Steam preload news (all Sep 9 2026, Tier 1).
+
 LAUNCH-DATED: this is a pre-launch snapshot. A POST-LAUNCH PASS promotes Tier-2 items to Tier-1 as
 live Early Access confirms them (and updates the tiers + this sourcing line).
 
@@ -42,6 +53,9 @@ is the ALPHA-OBSERVED roster (Tier 2). The "37 weapons" figure is the Tier-1 con
 
 - LAUNCH: Wednesday, September 10, 2026, 16:00 UTC. Steam / PC (Windows) only. No invite, key, or
   queue -- open purchase at launch.
+- CONSOLES: 2028 (launch trailer, Sep 9 2026 -- "COMING TO CONSOLES IN 2028"). EA today is PC-only;
+  this is the FIRST dated console statement (supersedes any earlier undated / assumed console
+  timing). Do NOT describe consoles as near-term.
 - PRICE: Standard $39.99; Supporter Edition $49.99. The Supporter Edition is COSMETIC ONLY (faction
   weapon camos, a helicopter paint job, a scoreboard tag/icon, bobbleheads). Regional pricing exists
   (e.g. some LatAm / Turkey tiers around $24.99).
@@ -107,6 +121,52 @@ SCOPED CLARIFICATION (Joe Brammer, Sept 2 -- state precisely, do NOT over-read):
   system actually is has not been captured yet (Tier 4).
 - COUNTDOWN: 2 days until Early Access as of Sept 8 2026.
 
+### Season 1 changelog + launch trailer (Tier 1, official) [added 2026-09-09]
+
+FIRST real first-party systems doc: Bulkhead published the SEASON 1 CHANGELOG + a LAUNCH TRAILER
+(Sep 9 2026, the day before EA). Ground truth -- it ADDS Tier-1 facts AND SUPERSEDES several
+beta-observed figures (superseded items marked here and in the IN-GAME BETA CLIENT section, so
+content built on the old numbers can be corrected via the correction-sweep).
+
+- PRELOAD: LIVE NOW (Steam news, Sep 9 2026), roughly 42-50 GB. Downloading does NOT open the
+  servers -- servers open at 16:00 UTC launch. (Preload availability is Tier 1; the size is approx.)
+- PROGRESSION FRAMING (Bulkhead-stated): the median player reaches ~level 20 in ~20-25 hours; the
+  top ~5% grind for the big-ticket items. Each season runs a DIFFERENT XP curve and item-unlock
+  order. The betas were weekend-tuned (fast); LAUNCH IS SLOWER -- now OFFICIAL. [This PROMOTES the
+  prior Tier-3 "progression slowed" note to Tier 1.]
+
+- OFFICIAL SEASON 1 ECONOMY / XP DELTAS (Tier 1, Season-1-official). These SUPERSEDE the
+  corresponding beta-observed numbers -- the beta-client figures are now STALE for these items
+  (correction-sweep targets):
+  * FOB vendor: $2,500 -> $7,500.
+  * Supply-crate sell under $75: 25 XP -> 1 XP (anti-farming).
+  * Air-vehicle kill: 300 XP -> 250 XP.
+  * Level 10 -> 20 XP: roughly DOUBLED.
+  * Level 50 total XP: 838,000 -> ~1,000,000 (about 19% slower to reach 50).
+  * Artillery Tank gate: Career 55 -> Career 90.
+  * Heavy Tank gate: Career 35 -> Driver 35 (a class-level gate, not career -- this SPECIFIES the
+    prior Tier-3 "tank re-gated to a driver-level gate", now Tier-1 confirmed with the exact number).
+  * Deagle: 90 -> 85.
+  * Plus Driver / Medic / Support unlock-order shuffles (URAL, Kodiak, Dune Buggy, PP-19 drum, etc.).
+  NOTE: these are SEASON 1 values; each season re-tunes the curve (per the progression framing), so
+  record them as Season-1-official, not permanent.
+
+- FIRST NAMED WEAPON / VEHICLE FRAGMENT (Tier 1, but a FRAGMENT -- NOT the full 37-gun roster): the
+  changelog names specific items. Weapons: Deagle, PP-19. Vehicles: Artillery Tank, Heavy Tank, URAL,
+  Kodiak, Humvee (minigun). Equipment (NOT weapons): Sports Parachute, Large Backpack. Plus AP ammo
+  SKUs. ROSTER CROSS-REF vs the site's 33-row weapon_stats: Deagle IS present; PP-19 IS present
+  (PP-19 Vityaz -- the "PP-19 drum" is a magazine variant of it). Sports Parachute + Large Backpack
+  are EQUIPMENT, not weapons (do NOT add to weapon_stats). This CONFIRMS names but does NOT close the
+  33-vs-37 roster gap -- the full NAMED 37-gun table is still unpublished (Tier 4, resolves at
+  launch). The ~4 missing weapons (orphan calibers 9x39mm / 12.7x55mm / .338 Norma Magnum) remain
+  uncaptured; do NOT infer their names.
+
+- ANTI-CHEAT SPECIFICS -- NOW TIER 1 (promoted from Tier-4 pending): the Season 1 changelog specifies
+  the measures (pairs with the Sept 8 "11th Reason" video): PUBLIC cheater bans (bans posted
+  publicly), and REPORT WEIGHT REDUCED for repeat / bad-faith reporters (to blunt false-report
+  abuse). These are now Tier-1 documented. STILL Tier 4: which anti-cheat ENGINE it uses and whether
+  it is kernel-level (uncaptured).
+
 ## IN-GAME BETA CLIENT (provenance -- official-build UI, beta-versioned, NOT Bulkhead-republished) [added 2026-09-08]
 
 A DISTINCT provenance for the economy NUMBERS: it sits ABOVE Tier 2 community-tracker data (it is
@@ -125,6 +185,14 @@ beta-versioned and Bulkhead has not republished it as a source).
   launch-confirmed): a -50% "new recruit" discount below roughly level 9; ammunition billed
   separately by caliber (~$10-$250 per box); the Gold Exchange panel's rates/prices. These are the
   NUMBERS the Tier-1 structure runs on -- observed in the official client, not first-party.
+- SUPERSEDED 2026-09-09 (PARTIAL): the Season 1 changelog now gives OFFICIAL figures for several
+  economy/XP items -- FOB vendor ($7,500), supply-crate sell XP, air-vehicle-kill XP, the level
+  10->20 and level-50 XP curves, the Artillery/Heavy Tank gates, and Deagle (85). For THOSE items the
+  beta-client numbers are STALE -- use the Season 1 official values (see "Season 1 changelog" under
+  Tier 1). Beta-client numbers NOT touched by Season 1 (the -50% recruit discount, per-caliber ammo
+  billing, the Gold Exchange rate itself) remain BETA-CLIENT-OBSERVED until the live launch verifies
+  them. This split is a CORRECTION-SWEEP target: content that stated the superseded beta figures
+  (esp. the Sept 8 economy-explainer article) needs re-checking against the Season 1 values.
 
 ## TIER 2 -- BETA-OBSERVED / COMMUNITY-RECORDED (NDA-lifted; OBSERVED, not official)
 
@@ -147,9 +215,12 @@ as Bulkhead-official.
 
 ## TIER 3 -- CHANGES SINCE BETA (reported -- for a "what changed" piece; attribute as reported, confirm at launch)
 
-- PROGRESSION SLOWED at launch vs beta (harder to unlock top-tier gear early).
+- PROGRESSION SLOWED at launch vs beta (harder to unlock top-tier gear early). [PROMOTED 2026-09-09
+  -> TIER 1: the Season 1 changelog states this officially, with the framing + XP deltas -- see
+  "Season 1 changelog" under Tier 1. State it as fact now, not "reported".]
 - The TANK re-gated: moved from a Wardog-level-50 gate (beta) to a DRIVER-level gate (launch),
-  making it slower to unlock.
+  making it slower to unlock. [PROMOTED/SPECIFIED 2026-09-09 -> TIER 1: the Season 1 changelog gives
+  the exact gates -- Heavy Tank Driver 35, Artillery Tank Career 90. Use those numbers.]
 - CONTEXT / TONE (studio candor -- report factually, do NOT editorialize or dunk) [added 2026-09-08]:
   in their Sept 4 "Addressing the Announcement" video, Bulkhead apologized for OVERHYPING the FPS
   Games Show drop, clarified that the clip-contest prize is marketing-funded (not pre-order money),
@@ -177,14 +248,19 @@ as Bulkhead-official.
   add the missing weapons as observed in-game (real names / classes / calibers, honest-null stats),
   then the whole roster flips to verified as live numbers land. This is a KNOWN, DOCUMENTED gap
   (the post-launch pass knows exactly what to complete), not a silent omission.
-- ANTI-CHEAT SPECIFICS [re-tiered 2026-09-08]: Bulkhead ADDRESSED anti-cheat on Sept 8 (that FACT is
-  Tier 1, above), but the actual system -- which anti-cheat it uses, kernel-level or not, its
-  mechanics -- is NOT yet captured here (the news blurb is only the video; no patch-note / text dump
-  of the substance yet). Honest-null on the specifics until the video's content is transcribed or a
-  text source lands. Do NOT invent anti-cheat details.
+- ANTI-CHEAT SPECIFICS [re-tiered 2026-09-08; PARTIALLY PROMOTED 2026-09-09]: Bulkhead ADDRESSED
+  anti-cheat on Sept 8 (Tier 1). The Season 1 changelog (Sep 9) then SPECIFIED two measures -- PUBLIC
+  cheater bans + REDUCED report weight for repeat/bad-faith reporters -- so those specifics are now
+  TIER 1 (see "Season 1 changelog" above), NO LONGER honest-null. STILL Tier 4 (uncaptured): which
+  anti-cheat ENGINE it uses and whether it is kernel-level. Do NOT invent those remaining details.
 - Other launch mechanics beyond 16:00 UTC -- Steam Deck / Proton status, crossplay -- unconfirmed /
   unaddressed.
 - Map NAMES / POIs beyond the counts -- not officially detailed.
+- RESOLVES AT LAUNCH (16:00 UTC TODAY, from the LIVE GAME) [added 2026-09-09]: live vendor prices;
+  the full 37-gun NAMED table; whether the $10,000 one-time starting cash changed for Season 1; the
+  Gold-Bar dollar rate; launch review score / CCU; whether all 3 factions are day-one playable. These
+  flip to first-party the moment the store opens / the Equipment tab is screenshotted. Do NOT invent
+  -- honest-null until the live game shows them.
 
 ---
 
@@ -217,3 +293,11 @@ corrections note. When the Sept 8 anti-cheat video's substance is captured (tran
 source), promote the anti-cheat SPECIFICS from Tier 4 to Tier 1. When Bulkhead republishes an
 economy number (or live EA verifies it), promote it from IN-GAME BETA CLIENT / Tier 4 to Tier 1.
 Keep the sourcing line, the UPDATE / REFINEMENT lines, and the LAUNCH-DATED note current.
+
+CORRECTION-SWEEP (2026-09-09 -- the sweep's FIRST production use): the Season 1 official economy/XP
+figures SUPERSEDE the beta-observed numbers for the changed items (FOB $2.5k -> $7.5k, level curves,
+tank gates, Deagle 90 -> 85, etc.). NEXT: register these as correction entries in
+lib/corrections/registry.js (game_slug=wardogs, entity + the superseded numbers as keywords), then
+run scripts/correction-sweep.mjs --id <...> on published Wardogs content that states the old beta
+figures (ESP. the Sept 8 economy-explainer article) so nothing keeps asserting a superseded number.
+This is exactly the data-fixed-without-content-sweep gap the sweep was built to close.

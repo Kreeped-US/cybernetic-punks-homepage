@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-09 - WARDOGS_LAUNCH_REFERENCE updated: Season 1 changelog + launch trailer (tiered, with supersessions) -- HELD
+
+- First real first-party systems doc (Bulkhead Season 1 changelog + launch trailer, Sep 9 2026, day before EA). Amended docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md IN PLACE, tier-labeled, with supersessions marked so the correction-sweep can find stale content. DOC only.
+- CORRECTIONS / SUPERSESSIONS (marked, not just added):
+  * CONSOLES: 2028 (launch trailer). First dated console statement; EA today is PC-only. (No prior explicit console line existed to overwrite -- recorded as the first dated fact, supersedes any assumed timing.)
+  * ANTI-CHEAT: specifics PROMOTED Tier-4 -> Tier-1 -- Season 1 changelog specifies PUBLIC cheater bans + REDUCED report weight for repeat/bad-faith reporters (pairs with the Sept 8 "11th Reason" video). Residual Tier 4: which engine / kernel-level (uncaptured). Marked in both the new Tier-1 section and the old Tier-4 anti-cheat entry.
+  * OFFICIAL SEASON 1 ECONOMY/XP DELTAS -- Tier-1, and they SUPERSEDE the beta-client numbers for the changed items: FOB $2,500 -> $7,500; supply-crate sell XP 25 -> 1; air-vehicle kill 300 -> 250; L10->20 XP ~doubled; L50 total 838k -> ~1.0M (~19% slower); Artillery Tank gate Career 55 -> 90; Heavy Tank gate Career 35 -> Driver 35; Deagle 90 -> 85; + Driver/Medic/Support unlock shuffles. The IN-GAME BETA CLIENT section now carries a SUPERSEDED-2026-09-09 (partial) note (changed items stale; untouched items -- recruit discount, per-caliber ammo, Gold rate -- stay beta-client-observed).
+  * TIER-3 progression-slowed + tank-regated entries PROMOTED -> Tier 1 (changelog states them officially, with the exact tank gates).
+- TIER 1 ADDED: Season 1 progression framing (median ~level 20 in ~20-25h; top ~5% grind; per-season XP curve; launch slower -- official); PRELOAD live (Sep 9, ~42-50 GB; servers still open at 16:00 UTC); first NAMED weapon/vehicle FRAGMENT (Deagle, PP-19, Artillery/Heavy Tank, URAL, Kodiak, Humvee minigun, Sports Parachute + Large Backpack = equipment, AP ammo). Roster cross-ref: Deagle + PP-19 (Vityaz) already in the 33-row set; the fragment CONFIRMS names but does NOT close the 33-vs-37 gap (full named table still Tier 4).
+- TIER 4 refreshed: added a "RESOLVES AT LAUNCH (16:00 UTC TODAY, from the live game)" list -- live vendor prices, the full 37-gun named table, whether $10k starting cash changed, Gold-Bar rate, review score/CCU, all-3-factions-day-one.
+- NEXT (logged in the doc + here): register the superseded beta economy numbers as correction entries (lib/corrections/registry.js, game_slug=wardogs) and run scripts/correction-sweep.mjs on published Wardogs content stating the old beta figures (ESP. the Sept 8 economy-explainer article) -- the correction-sweep's FIRST production use.
+
+---
 ## 2026-09-10 - Provenance badges REVAMPED -- per-tier icons + matching /methodology legend -- HELD (design review)
 
 - Added a per-tier ICON to the provenance badges AND rebuilt the /methodology confidence explainer into a matching LEGEND, driven by ONE shared source so the mark on a weapon/shell page and the mark that explains it cannot drift.
