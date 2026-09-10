@@ -16,6 +16,9 @@
 // editorial review before it is treated as shipped.
 
 import Link from 'next/link';
+// The confidence legend below is driven by the SHARED tier source -- the SAME icons that render on
+// the entity-page provenance badges, so the explanation here can't drift from the marks it explains.
+import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
 
 export const metadata = {
   title: 'Methodology - How We Verify FPS Data',
@@ -41,11 +44,6 @@ function Label({ children }) {
 
 function Body({ children }) {
   return <p style={{ fontSize: 15.5, lineHeight: 1.75, color: 'var(--text-dim)', margin: '0 0 16px', maxWidth: '68ch' }}>{children}</p>;
-}
-
-// A small inline term chip for the badge examples (uses the shared theme tokens).
-function Chip({ children }) {
-  return <span style={{ fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, letterSpacing: 0.5, color: 'var(--gold)', border: '1px solid var(--line)', borderRadius: 3, padding: '1px 7px', whiteSpace: 'nowrap' }}>{children}</span>;
 }
 
 export default function MethodologyPage() {
@@ -99,12 +97,32 @@ export default function MethodologyPage() {
         </Body>
 
         {/* ===================== BADGES / PROVENANCE ===================== */}
-        <Label>Confidence badges and provenance</Label>
+        {/* Header brands the "how we verify" legend with the CNP mark (per operator: logo in the
+            explainer header, NOT in each badge). */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '34px 0 16px' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/cnp-512.png" alt="Cybernetic Punks" width="22" height="22" style={{ borderRadius: 5, flexShrink: 0 }} />
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--gold)' }}>Confidence badges and provenance</span>
+        </div>
         <Body>
-          Structured data carries its source strength on its face. On an arsenal you will see a per-item marker: <Chip>Patch-confirmed</Chip> (added or changed in an official patch), <Chip>Reworked</Chip> (present in-game, reworked), or <Chip>Attributed</Chip> (from a devlog or capture, not yet patch-confirmed). A section still awaiting numbers shows a plain <Chip>values pending</Chip> banner - structure confirmed, values honest-null.
+          Every structured fact carries its source strength on its face &mdash; the SAME mark you see on a weapon or shell page appears here, so you always know how far to trust a number at a glance. From most to least confident:
         </Body>
+        <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0, maxWidth: '68ch' }}>
+          {CONFIDENCE_TIERS.map(function (t) {
+            return (
+              <li key={t.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, margin: '0 0 12px' }}>
+                <span style={{ color: t.color, display: 'inline-flex', flexShrink: 0, marginTop: 3 }}>
+                  <TierIcon tier={t.key} size={15} title={t.label} />
+                </span>
+                <span style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text-dim)' }}>
+                  <strong style={{ color: 'var(--text)' }}>{t.label}.</strong> {t.desc}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
         <Body>
-          The same logic scales to a whole game at launch. A pre-launch reference separates what the studio has officially confirmed from what was only recorded in a beta build - the second is usable, but flagged "subject to change at launch" and never stated as official. You always know which shelf a fact is sitting on.
+          The gradient is the whole point: a solid mark is a fact we stand behind, a hollow or dashed one is us telling you the data is not there yet. We would rather show you the empty mark than a confident guess.
         </Body>
 
         {/* ===================== BUILDS ===================== */}

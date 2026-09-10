@@ -14,6 +14,11 @@
 // full "Verified" uses the site's confirmed green. Styling matches Marathon's existing status pills
 // (mono, 9px, uppercase) so it belongs on the page. Pure render, no state, no DB.
 
+// The per-tier ICON comes from the SHARED confidence-tier source (components/network/confidenceTiers)
+// -- the SAME mark the /methodology legend explains, so the badge and its explanation can't drift.
+// It inherits the badge's text color (currentColor), so verified reads green and partial reads amber.
+import { TierIcon } from '@/components/network/confidenceTiers';
+
 var TONES = {
   verified: { fg: '#00ff88', bg: 'rgba(0,255,136,0.10)', bd: 'rgba(0,255,136,0.28)' },
   partial:  { fg: '#ffb400', bg: 'rgba(255,180,0,0.10)', bd: 'rgba(255,180,0,0.30)' }, // GameArsenal amber
@@ -34,7 +39,7 @@ export default function ProvenanceBadge({ badge }) {
         padding: '4px 10px', whiteSpace: 'nowrap',
       }}
     >
-      <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: tone.fg, flexShrink: 0 }} />
+      <TierIcon tier={badge.tier} size={11} />
       {badge.label}
     </span>
   );

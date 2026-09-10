@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Provenance badges REVAMPED -- per-tier icons + matching /methodology legend -- HELD (design review)
+
+- Added a per-tier ICON to the provenance badges AND rebuilt the /methodology confidence explainer into a matching LEGEND, driven by ONE shared source so the mark on a weapon/shell page and the mark that explains it cannot drift.
+- SHARED SOURCE (NEW components/network/confidenceTiers.js): CONFIDENCE_TIERS (ordered gradient) + TierIcon(tier). Icons inherit currentColor. The gradient (most -> least confident): verified = solid disc + check (green), partial = half-filled disc (amber), attributed/beta-observed = hollow ring (bronze), pending = dash (dim). Shape encodes confidence, color reinforces.
+- REAL-TIER MAPPING (not invented): lib/marathon/provenanceBadge.js emits only verified + partial (honest-null = no badge), so Marathon entity pages show the top two marks -- verified rows get the green check, partial (e.g. Misriah) gets the amber half. attributed + pending are real NETWORK states (bodycam/wardogs arsenal + values-pending), so the /methodology legend (network-level) documents all four.
+- ENTITY BADGE (components/marathon/ProvenanceBadge.js): replaced the plain dot with <TierIcon tier={badge.tier}>. Label + pill styling unchanged; the icon is the at-a-glance add, inheriting the badge fg color. Verified badges: green solid-check + "VERIFIED - BUNGIE x.y.z PATCH NOTES"; partial: amber half + "PARTIALLY VERIFIED".
+- /METHODOLOGY LEGEND: replaced the old <Chip> paragraph (Patch-confirmed/Reworked/Attributed/values-pending prose) with a proper legend -- each of the 4 tiers as its ICON + label + one-line explanation, most-to-least confident, plus a CNP logo in the section header (branding the "how we verify" legend; logo in the header, NOT in each badge -- operator decision). Removed the now-unused Chip component.
+- VERIFIED: build passes; entity badges render the icons on Marathon weapon pages (BR33 = green check verified, Misriah = amber half partial); the /methodology legend renders all 4 icons + logo header; SAME TierIcon source drives both (no drift); server-rendered (legend labels + the tier-icon svg are in the crawlable HTML). Screenshots captured for review.
+- SCOPE: Marathon ProvenanceBadge + /methodology legend. NOT changed: GameArsenal (bodycam/wardogs arsenal badges, its own label vocabulary) -- adopting the shared TierIcon there is an optional future follow-up.
+
+---
 ## 2026-09-10 - Network footer REBUILT -- multi-column, moat-forward positioning -- HELD (design review)
 
 - Replaced the thin logo+one-whisper footer (whose "the machines write; a human checks the numbers" line was MORE AI-forward than the corrected /about) with a proper multi-column footer.
