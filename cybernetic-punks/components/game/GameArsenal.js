@@ -8,18 +8,29 @@
 
 import Link from 'next/link';
 import { entitySlugFor } from '@/lib/coverage';
+// Shared confidence-mark source (also drives Marathon's ProvenanceBadge + the /methodology legend).
+// AXIS NOTE: this arsenal is STRUCTURE-PROVENANCE (where a weapon's existence is sourced, in a
+// values-pending list) -- a DIFFERENT axis from the data-confidence gradient. So the icons map only
+// where the meaning genuinely coincides: Attributed -> the shared attributed ring, Unconfirmed ->
+// the shared pending dash. Patch-confirmed + Reworked (existence confirmed, values pending) get the
+// STRUCTURE mark (a framed square) -- deliberately NOT the green data-"verified" check, which would
+// falsely imply the stats are verified on a list that shows none. Icons inherit each label's color.
+import { TierIcon } from '@/components/network/confidenceTiers';
 
 var FONT = 'Exo_2, system-ui, sans-serif';
 var AMBER = '#ffb400'; // the site-wide "unconfirmed" honesty marker
 
 // Honest tier from verified_source. Order matters: 'attributed' and 'reworked' win over 'patch'
 // (a reworked gun's source also mentions the patch). Never upgrades an attributed gun to confirmed.
+// `icon` is the shared TierIcon key: 'attributed'/'pending' where the meaning matches the network
+// confidence tiers, 'structure' (the framed-square mark) for the existence-confirmed / values-pending
+// entries. Never 'verified' -- no data-verified check belongs on a values-pending arsenal.
 function tier(w) {
   var s = String(w.verified_source || '').toLowerCase();
-  if (s.indexOf('attributed') !== -1 || s.indexOf('devlog') !== -1) return { label: 'Attributed', color: AMBER };
-  if (s.indexOf('reworked') !== -1 || s.indexOf('present in-game') !== -1) return { label: 'Reworked', color: 'var(--text-tertiary)' };
-  if (s.indexOf('patch') !== -1 || s.indexOf('locked') !== -1) return { label: 'Patch-confirmed', color: 'var(--accent)' };
-  return { label: 'Unconfirmed', color: AMBER };
+  if (s.indexOf('attributed') !== -1 || s.indexOf('devlog') !== -1) return { label: 'Attributed', color: AMBER, icon: 'attributed' };
+  if (s.indexOf('reworked') !== -1 || s.indexOf('present in-game') !== -1) return { label: 'Reworked', color: 'var(--text-tertiary)', icon: 'structure' };
+  if (s.indexOf('patch') !== -1 || s.indexOf('locked') !== -1) return { label: 'Patch-confirmed', color: 'var(--accent)', icon: 'structure' };
+  return { label: 'Unconfirmed', color: AMBER, icon: 'pending' };
 }
 
 function groupByCategory(weapons) {
@@ -79,7 +90,10 @@ export default function GameArsenal({ config, section, weapons }) {
                   <div key={w.name} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '2px solid ' + t.color, borderRadius: '0 3px 3px 0', padding: '13px 15px' }}>
                     <Link href={config.basePath + '/weapons/' + entitySlugFor('weapon', w.name)} style={{ display: 'block', fontFamily: FONT, fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 6, textDecoration: 'none' }}>{w.name}</Link>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: t.color }}>{t.label}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: t.color }}>
+                        <TierIcon tier={t.icon} size={10} />
+                        {t.label}
+                      </span>
                       {w.notes ? <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{w.notes}</span> : null}
                     </div>
                   </div>

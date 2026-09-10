@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Unified arsenal badges (Option A, axis-aware) -- HELD (design review)
+
+- Brought the shared confidence marks to the GameArsenal badges, axis-honestly. One source (components/network/confidenceTiers.js) now drives Marathon ProvenanceBadge + GameArsenal + the /methodology legend -- fully unified, no drift.
+- THE RECONCILE (two axes): GameArsenal measures STRUCTURE-PROVENANCE (where a weapon's existence is sourced, in a values-pending list) -- a different axis from the network data-confidence tiers. So icons map ONLY where the meaning coincides:
+  * Attributed -> the shared ATTRIBUTED ring (clean match: devlog/beta, not confirmed by us).
+  * Unconfirmed -> the shared PENDING dash (lowest confidence / not established).
+  * Patch-confirmed + Reworked -> a NEW distinct STRUCTURE mark (a framed square), added to confidenceTiers.js TierIcon as tier "structure". It reads "weapon existence / structure confirmed, values pending" -- deliberately NOT the green data-"verified" check (which would falsely imply the stats are verified on a list that shows none). Inherits each label's color (accent for Patch-confirmed, tertiary for Reworked).
+- Kept GameArsenal's labels (Patch-confirmed / Reworked / Attributed / Unconfirmed -- accurate to the structure axis) and the "Structure confirmed - values pending" banner. No relabel to the network-tier names.
+- HONESTY GUARD (verified): NO green data-verified check anywhere in GameArsenal -- the arsenal HTML has zero of the verified-check punch-out path, so a values-pending list never carries a false data-confidence signal. GameArsenal maps nothing to tier "verified".
+- /methodology legend: added one line distinguishing the axes -- entity-page marks grade confidence in the NUMBER; a square mark on a pre-launch arsenal means the weapon's STRUCTURE is sourced (patch-confirmed / reworked-in-game), a provenance note, not a stats claim. "Same visual language, two honest axes."
+- SCOPE NOTE (premise correction): GameArsenal is used by BODYCAM only (via GameSectionPage), NOT wardogs -- wardogs has its own section pages. So this lands on the bodycam arsenal now + any future game that adopts GameSectionPage; it does not touch wardogs today.
+- VERIFIED: build passes; /bodycam/arsenal renders the attributed ring (Draco), the structure squares (Patch-confirmed + Reworked), labels + banner kept, SSR/crawlable; single confidenceTiers.js source across Marathon badges + arsenal + legend.
+
+---
 ## 2026-09-10 - Wardogs launch-day article STAGED (publishes 16:00 UTC) -- HELD
 
 - Wrote the launch-day piece "Wardogs Early Access Is Live: What to Know at Launch" NOW from confirmed facts, staged as a DRAFT to publish at 16:00 UTC (the launch-hour search spike). Indexable vertical (noindex clears on flip).

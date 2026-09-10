@@ -124,6 +124,9 @@ export default function MethodologyPage() {
         <Body>
           The gradient is the whole point: a solid mark is a fact we stand behind, a hollow or dashed one is us telling you the data is not there yet. We would rather show you the empty mark than a confident guess.
         </Body>
+        <Body>
+          One note on where you see these. On an entity page (a weapon or shell) the mark grades our confidence in the <strong style={{ color: 'var(--text)' }}>number</strong>. On a pre-launch arsenal &mdash; a weapon list we publish before any stats are known &mdash; a square mark instead means the weapon&apos;s <strong style={{ color: 'var(--text)' }}>structure</strong> is sourced (patch-confirmed, or reworked and present in-game); it is a note on where the weapon came from, not a claim that its stats are verified. Same visual language, two honest axes.
+        </Body>
 
         {/* ===================== BUILDS ===================== */}
         <Label>How builds are chosen</Label>

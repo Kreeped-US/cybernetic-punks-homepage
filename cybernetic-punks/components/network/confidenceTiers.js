@@ -56,6 +56,20 @@ export function TierIcon({ tier, size = 12, title }) {
       </svg>
     );
   }
+  if (tier === 'structure') {
+    // STRUCTURE-CONFIRMED mark -- a DIFFERENT AXIS from the confidence gradient above. Used by the
+    // pre-launch arsenal (GameArsenal) where a weapon's EXISTENCE/structure is sourced but its stat
+    // VALUES are pending by design. A framed square (deliberately NOT a circle and NOT the green
+    // "verified" check) so it never reads as "the data is verified". Inherits currentColor (the
+    // arsenal keeps its own per-label color). NOT a member of CONFIDENCE_TIERS -- it is not a
+    // confidence level, it is a provenance note on the structure axis.
+    return (
+      <svg {...common}>{t}
+        <rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        <rect x="5.6" y="5.6" width="4.8" height="4.8" rx="1" fill="currentColor" />
+      </svg>
+    );
+  }
   // pending / honest-null -> a dash
   return (
     <svg {...common}>{t}
