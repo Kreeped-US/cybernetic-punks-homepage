@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Network footer REBUILT -- multi-column, moat-forward positioning -- HELD (design review)
+
+- Replaced the thin logo+one-whisper footer (whose "the machines write; a human checks the numbers" line was MORE AI-forward than the corrected /about) with a proper multi-column footer.
+- STRUCTURE (4 columns + bottom bar): IDENTITY (logo + moat tagline) / GAMES (derived from ROOT_GAMES -- all 5 incl. Bodycam, future games auto-appear) / NETWORK (About, Editors, Methodology) / COMMUNITY (Discord + X, from lib/socialLinks + the @Cybernetic87250 handle, with icons). Bottom bar: the positioning line + a copyright (dynamic year).
+- POSITIONING (operator decision -- AI SUBTLE, not primary; matches the strengthened /about + /methodology voice): leads with the MOAT -- identity tagline "Human-verified FPS intelligence. Every stat checked in the game itself -- sourced, tiered by confidence, and never scraped." Bottom line: "Sourced against primary records, tiered by confidence, and corrected when the source changes. When we are not sure, we leave it blank. How we verify ->" (link to /methodology). AI-operation is acknowledged HONESTLY but DEMOTED -- the explanation lives at /methodology (reached via the link), NOT headlined. No "the machines write".
+- IMPLEMENTATION: components/network/NetworkFooter.js is now self-contained -- a scoped <style> (.nf-* classes) + the shared .cnp-root design tokens (var(--burg-bright)/--gold/--text-dim/--line/--display/--mono). It renders in TWO CSS contexts (app/(network)/layout.js AND the homepage app/page.js), so it depends on no footer classes from networkTheme.js/app-page -- styles identically in both, with hover + a 820px responsive collapse (4 cols -> 2, bottom bar stacks). Games still derived from ROOT_GAMES.
+- VERIFIED: build passes; renders SSR (crawlable footer links = internal-linking value) on /methodology, /about, and the homepage -- all show 5 games + About/Editors/Methodology + Discord + X + the positioning line. Screenshot captured for review.
+- SCOPE: footer only. The methodology-badge revamp is a separate next task.
+
+---
 ## 2026-09-10 - Bodycam added to network footer -- DERIVED from registry (kills the per-game-footer gap) -- HELD
 
 - components/network/NetworkFooter.js listed the game links HARDCODED (Marathon, DMZ, Wardogs, PUBG: DED.NET) and omitted Bodycam (added later, footer never updated) -- the recurring per-game hardcode gap (same class as the isNetworkChrome /methodology + /bodycam-comment gaps fixed earlier today).
