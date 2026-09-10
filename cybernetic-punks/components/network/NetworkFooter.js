@@ -7,6 +7,13 @@
 // from lib/network/networkTheme.js) -- no stats bar (network pages have no
 // game-specific live stats; see the Option C report).
 import Link from 'next/link';
+// Game links are DERIVED from ROOT_GAMES (the same registry that drives the homepage
+// routing tiles), not hardcoded -- so every game with a front-door tile (Marathon, DMZ,
+// Wardogs, PUBG: DED.NET, Bodycam, and any future game) appears in the footer automatically.
+// This kills the recurring per-game-footer hardcode gap (the same class as the isNetworkChrome
+// /methodology + /bodycam-comment gaps). The /about + /editors links below are network content
+// pages (not games), so they stay explicit.
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 export default function NetworkFooter() {
   return (
@@ -21,10 +28,9 @@ export default function NetworkFooter() {
           </div>
         </div>
         <div className="foot-links">
-          <Link href="/marathon">Marathon</Link>
-          <Link href="/dmz">DMZ</Link>
-          <Link href="/wardogs">Wardogs</Link>
-          <Link href="/pubg-dednet">PUBG: DED.NET</Link>
+          {ROOT_GAMES.map(function (g) {
+            return <Link key={g.slug} href={g.route}>{g.label}</Link>;
+          })}
           <Link href="/about">About</Link>
           <Link href="/editors">Editors</Link>
         </div>

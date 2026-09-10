@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Bodycam added to network footer -- DERIVED from registry (kills the per-game-footer gap) -- HELD
+
+- components/network/NetworkFooter.js listed the game links HARDCODED (Marathon, DMZ, Wardogs, PUBG: DED.NET) and omitted Bodycam (added later, footer never updated) -- the recurring per-game hardcode gap (same class as the isNetworkChrome /methodology + /bodycam-comment gaps fixed earlier today).
+- FIX (PREFERRED path -- derive, not hardcode): the footer now maps its game links over ROOT_GAMES (lib/network/rootGames.js -- the SAME registry that drives the homepage routing tiles, each entry carrying slug/label/route). Every game with a front-door tile appears automatically; a future 6th game needs ZERO footer edits. The /about + /editors links stay explicit (network content pages, not games).
+- INCLUSION RULE: the footer game set == the homepage-tile set (ROOT_GAMES). Bodycam is indexable:false (SEO/sitemap) but IS navigable (it has a live landing + a homepage tile), so it belongs in in-site footer navigation -- noindex gates crawling, not internal links. No filter needed; ROOT_GAMES already is the curated front-door set.
+- VERIFIED (production serve): /methodology, /about, and the homepage (app/page.js also renders NetworkFooter) all show 5 games -- Marathon, DMZ, Wardogs, PUBG: DED.NET, Bodycam -- plus About + Editors, in registry order. The homepage footer was missing Bodycam too; this fixed it as a correct side-effect. Build passes.
+- SCOPE: game-list fix ONLY. No other footer content touched -- the brand/whisper copy (incl. the "human-verified data moat / a human checks the numbers" line, which reads stronger than the corrected /about framing) is LEFT for the separate footer-rebuild task (structure/info/positioning). The methodology-badge revamp is also a separate next task.
+- PATTERN NOTE: this is the derive-from-registry hardening applied to the footer -- one of the three recurring per-path/per-game hardcode sites (isNetworkChrome, homepage tile, footer). isNetworkChrome itself is still a hand-maintained per-path list (logged earlier as future hardening).
+
+---
 ## 2026-09-10 - Fixed /methodology double-chrome (network registration gap) -- HELD
 
 - /methodology was in the (network) route group (so app/(network)/layout.js gave it NetworkNav + NetworkFooter) but was MISSING from lib/network/isNetworkChrome.js, so the global Marathon Nav (components/Nav.js) + LivePulseStrip (mounted after children -> reads as a bottom "footer") rendered ON TOP -- double chrome. /about and /editors were in the list and rendered correctly; /methodology was the only (network) page wrong.
