@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - DOCTRINE: internal data store per game = editor + advisor fuel (NOT public reference)
+
+- Recorded a LOCKED network-level principle in docs/network/internal-data-store-doctrine.md (new). Guides every game vertical. Articulated while deciding NOT to build public unlock-level tracking (would compete with wardogshub on their strength -- a losing fight).
+- THE PRINCIPLE: every game needs an INTERNAL data store (weapons/stats, economy, progression, meta) -- the way Marathon's does -- to (1) feed the editors, (2) feed the Build Advisor, (3) let editors check content against current data. CRITICAL DISTINCTION: internal FUEL, not a public REFERENCE feature. We do NOT build public reference tables (unlock/price/vendor catalogues) to out-reference entrenched hubs; we capture data INTERNALLY and point it at SYNTHESIS (the advisor: "here is the build and why") that reference sites refuse to build. Reference sites show the ingredients; our stores feed the cook. Build the store WITH the advisor (its data needs define the store), not standalone-before-it.
+- WARDOGS UNLOCK-LEVEL DECISION: the S1 unlock levels + economy/XP (Deagle Career L85, Artillery L90, Heavy Tank Driver L35, etc.) are real + valuable, but as INTERNAL advisor/editor fuel, NOT a public unlock-level reference feature. Already captured tiered in WARDOGS_LAUNCH_REFERENCE.md (the interim internal capture); the advisor's store formalizes it when built.
+- CORRECTION (supersedes the earlier note): "Deagle 90 -> 85" is an UNLOCK-LEVEL change (Career L90 -> L85, listed under "Season 1.0 Unlocks: Career"), NOT a damage/combat-stat change. There is NO Wardogs weapon combat-stat change in the S1 changelog (progression/economy/bugfixes only) -- so there is NO weapon_stats correction owed from it. The prior "Deagle weapon-stat correction" follow-up is retracted.
+- HONEST STRATEGIC STATE (~2h post-launch, 2026-09-10): Bulkhead has NOT published weapon combat stats or the full 37-gun named roster; community hubs RETAGGED beta vendor data as "Season 1" (a relabel, not a live scrape) -> treat as beta-observed, not launch-verified. Verified Wardogs weapon data still awaits genuine live in-game observation; the store's stat fields stay honest-null until then.
+- NEXT (Wardogs flagship): the Wardogs Build Advisor -- HYBRID (reuse Marathon advisor architecture + net-new COST engine + PROGRESSION-awareness), the wedge wardogshub refuses to build. Its data needs define the internal store's shape. High-value post-launch build, gated on live data for the weapon stats it reasons over (economy/progression available now; combat stats await live observation).
+
+---
 ## 2026-09-10 - Bodycam roster Phase 1 -- names + calibers enriched (operator DB action, rule 2)
 
 - Operator ran docs/migrations/2026-09-10-bodycam-roster-phase1.sql (commit b99b1e3). Bodycam weapon_stats: 20 -> 29 rows. Verified cross-game safe (re-checked 2026-09-10): bodycam 29 (was 20), wardogs 33 UNCHANGED, marathon 32 UNCHANGED (only bodycam touched).
