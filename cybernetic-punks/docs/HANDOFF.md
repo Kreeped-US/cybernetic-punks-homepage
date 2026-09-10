@@ -7,6 +7,13 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - v70a Rook starter-guide -- VERIFIED ALREADY CORRECTED (Rook-remediation loose end closed)
+
+- v70a (marathon-rook-shell-guide-the-best-first-shell-for-new-players, id 17be754e) was flagged during the Rook remediation as CORRECT-the-line (honest starter-shell thesis + one false Rook ranked-rating line "Solo B, Squad C"). On check 2026-09-10, the false line is GONE -- the live body carries the corrected honest rewrite ("The Rook is a learning shell, not a ranked shell -- it is not selectable in ranked play at all..."), which matches the Group-B correction that was greenlit. So v70a was corrected as part of the Group-B batch; it just was not separately closed in the record. Verified: 0 residual Rook-ranked-rating strings (Solo B / Squad C / ranked rating / etc.), thesis honest, is_published=true noindex=false. NO correction needed -- no-op, closing the item.
+- Rook-in-ranked remediation is now FULLY closed: 7 unpublished + 7 corrected (5 tier-guides + 97og + 1l61) + v70a verified-corrected. No open Rook-in-ranked content items remain.
+- (Same verify-the-premise pattern as /methodology-flip-indexable and the Marathon provenance-backfill: the "open" item was already done; verified and closed rather than re-editing correct content.)
+
+---
 ## 2026-09-10 - Unified arsenal badges (Option A, axis-aware) -- HELD (design review)
 
 - Brought the shared confidence marks to the GameArsenal badges, axis-honestly. One source (components/network/confidenceTiers.js) now drives Marathon ProvenanceBadge + GameArsenal + the /methodology legend -- fully unified, no drift.
