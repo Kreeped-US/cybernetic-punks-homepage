@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-09 - Correction-sweep FIRST PRODUCTION RUN -- Wardogs S1 economy supersession -- HELD
+
+- Registered wardogs-s1-economy-supersedes-beta in lib/corrections/registry.js (game_slug=wardogs, entity "economy"; keywords = smoking-gun old values "2,500"/"2500"/"838" + changed-item recall terms FOB / supply crate / air vehicle / Career 55 / Career 35 / Deagle / vendor) and ran scripts/correction-sweep.mjs on it -- the sweep's FIRST real-world use, ~a day before Wardogs EA.
+- RESULT: 3 candidates surfaced (wardogs-armory, wardogs-early-access-everything-confirmed, how-the-wardogs-economy-works), ALL matched only on BROAD terms (vendor / Deagle-as-name) -- NONE hit a smoking-gun old figure (2,500 / 838 / Career 55 / Career 35). Adjudicated each: ALL CLEAN, ZERO stale content. No published Wardogs article states a superseded Season-1 economy figure as current.
+  * how-the-wardogs-economy-works (the Sep 8 article, specifically checked): states "$10,000 once" (Tier-1 structure, unchanged) + "$10-$250 per box" ammo (beta-client-observed, NOT superseded by S1). No FOB $2,500, no air-vehicle/supply-crate XP, no tank gates, no 838k, no Deagle price. CLEAN.
+  * wardogs-armory: $200/$8,800 are WEAPON prices, all explicitly flagged "Playtest Vendor (Attributed - Not Confirmed)... subject to change... not the launch economy". Deagle is a name in a roster list. CLEAN.
+  * wardogs-early-access-everything-confirmed: $39.99/$49.99 (Tier-1); $10,000 starting cash labeled "recorded in the closed betas, observed, subject to change" and NOT in the superseded set. CLEAN.
+- WHY ZERO STALE (the real validation): the economy articles were written honest-null on the NUMBERS (structure-as-fact, numbers-as-beta-client-observed-subject-to-change, per WARDOGS_LAUNCH_REFERENCE discipline). So a supersession that would have created a Rook-style multi-article mess created NOTHING stale. The doctrine PRE-EMPTED the problem; the sweep confirmed it in one read-only pass instead of a manual hunt.
+- SWEEP VALIDATED: works in production (exit 1 candidates-found; high-recall review queue as designed; the broad hits are the operator-clears-quickly false positives it is meant to surface, not misses). The registry entry STAYS -- it protects future Wardogs economy content (publish-guard + re-sweep) against re-introducing the old beta figures once post-launch numbers land.
+- NOT a content-sweep target: the Deagle 90->85 change is a WEAPON STAT (weapon_stats), not article prose -- a separate DB correction, not this economy content sweep. Flagged, not actioned.
+- (Cosmetic: on the Windows dev box the sweep's process.exit surfaced as shell 127 again -- the documented libuv teardown quirk; the RESULT line shows the real exit-1/candidates-found. Linux/CI unaffected.)
+
+---
 ## 2026-09-09 - WARDOGS_LAUNCH_REFERENCE updated: Season 1 changelog + launch trailer (tiered, with supersessions) -- HELD
 
 - First real first-party systems doc (Bulkhead Season 1 changelog + launch trailer, Sep 9 2026, day before EA). Amended docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md IN PLACE, tier-labeled, with supersessions marked so the correction-sweep can find stale content. DOC only.
