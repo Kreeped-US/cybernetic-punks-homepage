@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-10 - Wardogs launch-day article SHIPPED (wardogs-early-access-is-live-what-to-know) -- EA LAUNCH 16:00 UTC
+
+- Operator DB action (rule 2): staged the draft (migration insert, is_published=false/noindex=true, created_at pinned 16:00 UTC), then flipped at launch via publish-drafts.mjs --commit --force. Now is_published=true, noindex=FALSE (indexable, live for the launch-hour search spike). Article "Wardogs Early Access Is Live: What to Know at Launch" -- game_slug=wardogs, NEXUS, field-intel (clustered w/ the launch overview). Confirmed live + rendering formatted at /wardogs/field-intel/wardogs-early-access-is-live-what-to-know. (Re-verified 2026-09-10: is_published=true, noindex=false, created_at 16:00:00+00.)
+- Grounded 100% in WARDOGS_LAUNCH_REFERENCE.md, tier-respecting: Tier-1 stated as fact (live now, $39.99/$49.99, PC-only consoles-2028, 100-player three-faction identity, 37-weapon count, Season 1 progression/economy -- FOB $7,500 not old $2,500, slower XP, tank gates, anti-cheat); Tier-4 NOT stated (full roster/live prices/Gold rate/factions framed as "resolves in-game"). Uses Season 1 official numbers, NOT superseded beta figures. Operator-reviewed.
+- PUBLISH-GUARD first production run: the correction-guard (piece 2, built 2026-09-09) FLAGGED this draft at publish (co-occurs the wardogs-s1-economy correction: FOB/supply-crate/vendor), HELD it, operator verified it uses the NEW S1 numbers (not superseded), --force acknowledged -> published. The prevent-new guard worked exactly as designed on its first real publish-time trigger, on launch day.
+- Wardogs content status at launch: launch-day piece live; overview + economy articles verified clean (correction-sweep, no stale figures); reference current through S1 changelog.
+- POST-LAUNCH (now that EA is live): Tier-4 items resolve from the live game -- full 37-gun named table (closes the 33-vs-37 roster gap), live vendor prices, whether $10k starting cash changed, Gold Bar rate, day-one faction split. Plus the Deagle 90->85 weapon-stat DB correction (weapon_stats). All now observable + protected by the correction system.
+
+---
 ## 2026-09-10 - v70a Rook starter-guide -- VERIFIED ALREADY CORRECTED (Rook-remediation loose end closed)
 
 - v70a (marathon-rook-shell-guide-the-best-first-shell-for-new-players, id 17be754e) was flagged during the Rook remediation as CORRECT-the-line (honest starter-shell thesis + one false Rook ranked-rating line "Solo B, Squad C"). On check 2026-09-10, the false line is GONE -- the live body carries the corrected honest rewrite ("The Rook is a learning shell, not a ranked shell -- it is not selectable in ranked play at all..."), which matches the Group-B correction that was greenlit. So v70a was corrected as part of the Group-B batch; it just was not separately closed in the record. Verified: 0 residual Rook-ranked-rating strings (Solo B / Squad C / ranked rating / etc.), thesis honest, is_published=true noindex=false. NO correction needed -- no-op, closing the item.
