@@ -91,6 +91,32 @@ export async function POST(req) {
     const solved = solveLoadout({ weapons, ttk, player, budget, playstyle: playstyleKey });
     const playstyleLabel = PLAYSTYLES[playstyleKey].label;
 
+    // Per-pick DETAIL surfaced from the ALREADY-LOADED stores (no extra query, no engine/solver
+    // change) -- the honest density from the real ballistics matrix: the armor-tier TTK curve at
+    // the pick's ammo, the FMJ/HP/AP ammo comparison, and weapon meta (fire rate/caliber/class).
+    const ARMOR_TIERS = [0, 1, 2, 3, 4];
+    const AMMOS = ['FMJ', 'HP', 'AP'];
+    const ttkAt = (name, ammo, tier) => {
+      const r = ttk.find((x) => x.weapon_name === name && x.ammo_type === ammo && x.armor_tier === tier);
+      return r && r.ttk_ms != null ? r.ttk_ms : null;
+    };
+    const pickDetail = (pk) => {
+      if (!pk || !pk.weapon_name) return null;
+      const w = weapons.find((x) => x.name === pk.weapon_name) || {};
+      return {
+        weapon_name: pk.weapon_name,
+        fire_rate: w.fire_rate != null ? w.fire_rate : null,
+        caliber: w.ammo_type || null,
+        weapon_class: w.category || w.weapon_type || null,
+        armor_curve: ARMOR_TIERS.map((t) => ({ tier: t, ttk_ms: ttkAt(pk.weapon_name, pk.ammo, t) })),
+        ammo_compare: AMMOS.map((a) => ({ ammo: a, ttk_ms: ttkAt(pk.weapon_name, a, 0) })),
+      };
+    };
+    const detail = {
+      primary: pickDetail(solved.recommendation && solved.recommendation.primary),
+      secondary: pickDetail(solved.recommendation && solved.recommendation.secondary),
+    };
+
     // --- stream: steps (real) -> meta (solver picks) -> analysis deltas -> done ---
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -101,7 +127,7 @@ export async function POST(req) {
           send({ type: 'steps', steps: solved.steps });
           // 2) the structured picks + provenance -- insight-first render scaffold
           send({ type: 'meta', recommendation: solved.recommendation, candidates: solved.candidates,
-                 provenance: solved.provenance, budget: solved.budget, playstyle: playstyleKey, faction });
+                 provenance: solved.provenance, budget: solved.budget, playstyle: playstyleKey, faction, detail });
           // 3) the streamed insight prose (the LLM explains the picks; it never picks)
           for await (const chunk of streamLoadoutAnalysis(solved, { careerLevel, budget, playstyleLabel })) {
             send({ type: 'delta', text: chunk });

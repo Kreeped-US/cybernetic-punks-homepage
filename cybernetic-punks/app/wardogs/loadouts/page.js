@@ -45,7 +45,7 @@ export default function LoadoutsPage() {
       <ViewTracker slug="loadouts" type="tool" gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <section style={{ background: '#0f1115', color: '#fff', borderBottom: '1px solid #1e2028', padding: '40px 24px 8px', fontFamily: 'system-ui, sans-serif' }}>
+      <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '40px 24px 8px', fontFamily: 'system-ui, sans-serif' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <h1 style={{ fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 14px' }}>
             Wardogs Best Loadouts
