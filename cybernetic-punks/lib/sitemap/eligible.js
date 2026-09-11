@@ -322,6 +322,11 @@ export async function computeEligible() {
     shippedTypeHubs().forEach(function (h) {
       add(BASE + '/wardogs/loadouts/best/' + h.slug, W, 'wardogs-section', undefined, 'weekly', 0.8);
     });
+
+    // The ARSENAL roster -- an indexable content page (the weapon list, service-key roster w/ TTK/
+    // ballistics summaries). The per-weapon DETAIL pages (/wardogs/arsenal/<slug>) stay NOINDEX + out
+    // of the sitemap (the Channel B leaf ramp). DB-driven -> no lastmod. type='wardogs-section'.
+    add(BASE + '/wardogs/arsenal', W, 'wardogs-section', undefined, 'weekly', 0.8);
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while
