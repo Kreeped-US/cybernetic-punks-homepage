@@ -195,24 +195,14 @@ export function unlockGate(weapons, player) {
   };
 }
 
-// --- step 2: effectiveness-rank --------------------------------------------
-
-// Rank weapons by playstyle-weighted TTK (ascending TTK -> descending score). Weapons with no TTK
-// data for the profile's ammo are returned UNRANKED (score null) and sorted last, flagged, never
-// dropped silently. score = round(100000 / weightedTtkMs) so lower TTK -> higher score (a stable,
-// human-facing effectiveness number). Deterministic tie-break by weapon_name.
 // --- ammo cost (E1: accurate budget + TTK-per-dollar) -----------------------
-// Per-life ammo cost is an ESTIMATE = cost_per_round x rounds_per_life, where rounds_per_life =
-// magazine_size x 3 (operator-locked N=3). magazine_size is null for every wardogs weapon today, so a
-// per-CATEGORY assumed magazine is the flat fallback -- the ammo cost is APPROXIMATE (~3 mags), never
-// precise. HP/AP cost more per round, so the SAME gun costs more to run with them. Single-type ordnance
-// (grenade/rocket/anti-tank/arrows) uses the 'Standard' ammo class. All PURE (ammo data passed in).
-const ROUNDS_MULT = 3;
-const CATEGORY_MAG_FALLBACK = {
-  'Assault Rifle': 30, 'Submachine Gun': 30, 'Light Machine Gun': 50, 'Shotgun': 8,
-  'Marksman Rifle': 10, 'Sniper Rifle': 5, 'Sidearm': 15, 'Launcher': 1, 'Bow': 1,
-};
-const DEFAULT_MAG = 30;
+// Ammo cost = the selected load's VENDOR BOX PRICE ("what you pay at the vendor for one box of that
+// load"). This is the honest unit: box is what Bulkhead's vendor sells; box SIZE is unstated so a
+// per-round figure only stacks unknowns -- per_round_derived is kept as a SEPARATE, labeled derived stat
+// (hub mag-delta method) and is NOT used for cost. HP/AP box prices are EXACT per-caliber (not a uniform
+// multiplier); honest-null where a load is not published (-> gun-only cost, flagged). Single-type
+// ordnance -> 'Standard'. Damage effects of ammo type live in wardogs_ballistics, not here (cost only).
+// All PURE (ammo data passed in).
 const AMMO_DOWNGRADE_PREF = ['FMJ', 'HP', 'AP']; // toward the cheapest / most likely ungated
 
 export function indexAmmo(ammoRows) {
@@ -222,14 +212,6 @@ export function indexAmmo(ammoRows) {
     (idx[r.caliber] = idx[r.caliber] || {})[r.ammo_type] = r;
   }
   return idx;
-}
-
-function assumedRounds(w) {
-  const mag = num(w.magazine_size);
-  const base = mag != null ? mag
-    : (CATEGORY_MAG_FALLBACK[w.weapon_type] != null ? CATEGORY_MAG_FALLBACK[w.weapon_type]
-      : (CATEGORY_MAG_FALLBACK[w.category] != null ? CATEGORY_MAG_FALLBACK[w.category] : DEFAULT_MAG));
-  return base * ROUNDS_MULT;
 }
 
 // Pick the ammo row to actually run: the desired class, DOWNGRADED past a career gate the player can't
@@ -252,24 +234,30 @@ export function selectAmmo(caliber, desiredAmmo, ammoIndex, careerLevel) {
   return null;
 }
 
-// Per-life ammo cost estimate for a weapon running desiredAmmo (or its gated downgrade). Honest-null cost
-// when the caliber/class is unknown or unpriced.
+// Ammo cost for a weapon running desiredAmmo (or its gated downgrade) = that load's BOX PRICE.
+// Honest-null cost when the caliber/class is unknown or the load's box price is unpublished.
 export function ammoCostFor(weapon, desiredAmmo, ammoIndex, careerLevel) {
-  const miss = { ammoType: desiredAmmo, ammoCost: null, rounds: null, downgraded: false, gateLevel: null, estimate: true };
+  const miss = { ammoType: desiredAmmo, ammoCost: null, perRoundDerived: null, downgraded: false, gateLevel: null, priceKnown: false };
   if (!weapon || !weapon.ammo_type) return miss;
   const sel = selectAmmo(weapon.ammo_type, desiredAmmo, ammoIndex, careerLevel);
   if (!sel) return miss;
-  const rounds = assumedRounds(weapon);
-  const cpr = num(sel.row.cost_per_round);
+  const box = num(sel.row.box_price);
   return {
     ammoType: sel.ammoType,
-    ammoCost: cpr == null ? null : Math.round(cpr * rounds),
-    rounds,
+    ammoCost: box,                                  // the vendor box price (null = unrecorded -> gun-only)
+    perRoundDerived: num(sel.row.per_round_derived), // separate derived stat, NOT used for cost
     downgraded: sel.downgraded,
     gateLevel: sel.gateLevel,
-    estimate: true,
+    priceKnown: box != null,
   };
 }
+
+// --- step 2: effectiveness-rank --------------------------------------------
+
+// Rank weapons by playstyle-weighted TTK (ascending TTK -> descending score). Weapons with no TTK
+// data for the profile's ammo are returned UNRANKED (score null) and sorted last, flagged, never
+// dropped silently. score = round(100000 / weightedTtkMs) so lower TTK -> higher score (a stable,
+// human-facing effectiveness number). Deterministic tie-break by weapon_name.
 
 // --- step 2: effectiveness-rank --------------------------------------------
 
@@ -282,21 +270,22 @@ export function rankByEffectiveness(weapons, ttkRows, { playstyle = DEFAULT_PLAY
     const score = wt ? Math.round(100000 / wt.weightedTtkMs) : null;
     const gunCost = num(w.credit_cost);
     const am = useAmmo ? ammoCostFor(w, profile.ammo, ammoIndex, careerLevel)
-      : { ammoType: profile.ammo, ammoCost: null, downgraded: false, gateLevel: null, estimate: false };
-    const totalCost = gunCost == null ? null : gunCost + (num(am.ammoCost) || 0); // ammo adds to gun -> HP/AP cost more
+      : { ammoType: profile.ammo, ammoCost: null, perRoundDerived: null, downgraded: false, gateLevel: null, priceKnown: false };
+    const totalCost = gunCost == null ? null : gunCost + (num(am.ammoCost) || 0); // + the load's box price -> HP/AP cost more
     return {
       weapon_name: w.name,
       slot: slotOf(w),
       ammo: profile.ammo,                 // the profile's ammo (TTK basis)
-      ammo_priced: am.ammoType,           // the class actually costed/available (may be a gated downgrade)
+      ammo_priced: am.ammoType,           // the load actually costed/available (may be a gated downgrade)
       ammo_downgraded: am.downgraded,
       ammo_gate_level: am.gateLevel,
-      ammo_estimate: am.estimate,
+      ammo_price_known: am.priceKnown,    // false -> box price unrecorded, cost is gun-only
+      ammo_per_round_derived: am.perRoundDerived, // separate derived stat (hub mag-delta), NOT the cost
       weighted_ttk_ms: wt ? Math.round(wt.weightedTtkMs * 10) / 10 : null,
       score,
       gun_cost: gunCost,
-      ammo_cost: am.ammoCost,
-      cost: totalCost,                    // gun + estimated ammo -> budgetSolve sums this
+      ammo_cost: am.ammoCost,             // the vendor box price (null = unrecorded)
+      cost: totalCost,                    // gun + ammo box price -> budgetSolve sums this
       value_per_cost: (score != null && totalCost) ? Math.round((score / totalCost) * 1000) / 1000 : null, // TTK-per-dollar proxy
       rankable: !!wt,
     };
@@ -309,7 +298,7 @@ export function rankByEffectiveness(weapons, ttkRows, { playstyle = DEFAULT_PLAY
   const rankedCount = scored.filter((s) => s.rankable).length;
   const unrankable = scored.length - rankedCount;
   const detail = 'Ranked ' + rankedCount + ' weapons by ' + profile.label + '-weighted TTK (ammo ' + profile.ammo + ')'
-    + (useAmmo ? ' -- cost incl. estimated ammo (~3 mags)' : '')
+    + (useAmmo ? ' -- cost incl. ammo box price' : '')
     + (unrankable ? ' -- ' + unrankable + ' had no TTK data (listed last)' : '');
   return {
     ranked: scored,

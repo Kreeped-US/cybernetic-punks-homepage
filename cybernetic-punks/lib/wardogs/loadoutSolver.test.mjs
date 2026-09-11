@@ -27,68 +27,82 @@ import {
   selectAmmo,
 } from './loadoutSolver.js';
 
-// --- ammo cost (E1) ---------------------------------------------------------
-// Synthetic ammo rows (clearly fake). caliber 'test-9' has FMJ/HP/AP; 'test-rkt' single-type.
+// --- ammo cost (E1: vendor BOX price) ---------------------------------------
+// Synthetic ammo rows (clearly fake). 'test-9' has exact per-load box prices (HP dearest here); 'test-9'
+// AP is gated; 'test-hpnull' has an existing-but-unpriced HP (honest-null); 'test-rkt' single-type.
 const AMMO = [
-  { caliber: 'test-9', ammo_type: 'FMJ', cost_per_round: 10, career_gate: null },
-  { caliber: 'test-9', ammo_type: 'HP',  cost_per_round: 30, career_gate: null },
-  { caliber: 'test-9', ammo_type: 'AP',  cost_per_round: 45, career_gate: 83 }, // gated
-  { caliber: 'test-rkt', ammo_type: 'Standard', cost_per_round: 500, career_gate: null },
+  { caliber: 'test-9', ammo_type: 'FMJ', box_price: 10, career_gate: null },
+  { caliber: 'test-9', ammo_type: 'HP',  box_price: 25, career_gate: null },
+  { caliber: 'test-9', ammo_type: 'AP',  box_price: 40, career_gate: 83 }, // official gate
+  { caliber: 'test-hpnull', ammo_type: 'FMJ', box_price: 10, career_gate: null },
+  { caliber: 'test-hpnull', ammo_type: 'HP',  box_price: null, career_gate: null }, // exists, unpriced
+  { caliber: 'test-rkt', ammo_type: 'Standard', box_price: 60, career_gate: null },
 ];
 
-test('ammo cost: same gun costs MORE with HP than FMJ (mag x 3 estimate)', () => {
+test('ammo cost: cost = the selected load BOX PRICE; HP box > FMJ box (per-caliber exact)', () => {
   const idx = indexAmmo(AMMO);
-  const gun = { name: 'G', ammo_type: 'test-9', weapon_type: 'Submachine Gun', magazine_size: 30 };
-  const fmj = ammoCostFor(gun, 'FMJ', idx, 99); // 30*3*10 = 900
-  const hp = ammoCostFor(gun, 'HP', idx, 99);  // 30*3*30 = 2700
-  assert.equal(fmj.ammoCost, 900);
-  assert.equal(hp.ammoCost, 2700);
-  assert.ok(hp.ammoCost > fmj.ammoCost, 'HP costs more per life than FMJ');
-  assert.equal(fmj.estimate, true);
+  const gun = { name: 'G', ammo_type: 'test-9' };
+  assert.equal(ammoCostFor(gun, 'FMJ', idx, 99).ammoCost, 10, 'FMJ box price');
+  assert.equal(ammoCostFor(gun, 'HP', idx, 99).ammoCost, 25, 'HP box price (exact, not a multiplier)');
+  assert.equal(ammoCostFor(gun, 'HP', idx, 99).priceKnown, true);
+  // no mag/rounds math -- box price is the unit regardless of weapon
 });
 
-test('ammo cost: null magazine_size -> per-category flat fallback (Sniper=5 x 3)', () => {
+test('ammo cost: existing-but-unpriced load -> honest-null cost, NOT downgraded (price unknown != gated)', () => {
   const idx = indexAmmo(AMMO);
-  const sniper = { name: 'S', ammo_type: 'test-9', weapon_type: 'Sniper Rifle', magazine_size: null };
-  assert.equal(ammoCostFor(sniper, 'FMJ', idx, 99).ammoCost, 5 * 3 * 10); // 150
+  const gun = { name: 'G', ammo_type: 'test-hpnull' };
+  const r = ammoCostFor(gun, 'HP', idx, 99);
+  assert.equal(r.ammoType, 'HP', 'keeps HP (it is available, just unpriced)');
+  assert.equal(r.ammoCost, null, 'honest-null cost');
+  assert.equal(r.priceKnown, false);
+  assert.equal(r.downgraded, false);
 });
 
-test('ammo gate: below the gate, AP downgrades to FMJ and flags the gate level', () => {
+test('ammo gate: below the official gate, AP downgrades to FMJ and flags the level', () => {
   const idx = indexAmmo(AMMO);
-  const gun = { name: 'G', ammo_type: 'test-9', weapon_type: 'Submachine Gun', magazine_size: 30 };
-  const low = ammoCostFor(gun, 'AP', idx, 20);  // career 20 < 83 -> downgrade
-  assert.equal(low.ammoType, 'FMJ', 'downgraded to FMJ');
+  const gun = { name: 'G', ammo_type: 'test-9' };
+  const low = ammoCostFor(gun, 'AP', idx, 20);  // 20 < 83 -> downgrade
+  assert.equal(low.ammoType, 'FMJ');
   assert.equal(low.downgraded, true);
-  assert.equal(low.gateLevel, 83, 'flags AP unlock level');
-  const high = ammoCostFor(gun, 'AP', idx, 90); // meets the gate
+  assert.equal(low.gateLevel, 83);
+  assert.equal(low.ammoCost, 10, 'costs the FMJ box it downgraded to');
+  const high = ammoCostFor(gun, 'AP', idx, 90);
   assert.equal(high.ammoType, 'AP');
-  assert.equal(high.downgraded, false);
+  assert.equal(high.ammoCost, 40);
 });
 
-test('ammo cost: single-type ordnance uses Standard; unknown caliber -> honest-null', () => {
+test('ammo cost: single-type ordnance uses Standard box; unknown caliber -> honest-null', () => {
   const idx = indexAmmo(AMMO);
-  const launcher = { name: 'L', ammo_type: 'test-rkt', weapon_type: 'Launcher', magazine_size: null };
-  const r = ammoCostFor(launcher, 'HP', idx, 99); // no HP -> Standard; Launcher mag 1 x3 x500 = 1500
+  const r = ammoCostFor({ name: 'L', ammo_type: 'test-rkt' }, 'HP', idx, 99); // no HP -> Standard box 60
   assert.equal(r.ammoType, 'Standard');
-  assert.equal(r.ammoCost, 1500);
-  const unknown = ammoCostFor({ name: 'U', ammo_type: 'test-none', weapon_type: 'Sidearm' }, 'FMJ', idx, 99);
-  assert.equal(unknown.ammoCost, null, 'unknown caliber -> honest-null cost');
+  assert.equal(r.ammoCost, 60);
+  assert.equal(ammoCostFor({ name: 'U', ammo_type: 'test-none' }, 'FMJ', idx, 99).ammoCost, null);
 });
 
-test('rankByEffectiveness: candidate.cost = gun + estimated ammo; value_per_cost computes', () => {
+test('rankByEffectiveness: candidate.cost = gun + ammo box price; value_per_cost computes', () => {
   const idx = indexAmmo(AMMO);
-  const ttk = [{ weapon_name: 'G', ammo_type: 'FMJ', armor_tier: 0, ttk_ms: 500 }];
-  const weapons = [{ name: 'G', ammo_type: 'test-9', weapon_type: 'Submachine Gun', magazine_size: 30, credit_cost: 1000, fire_rate: 600 }];
-  const r = rankByEffectiveness(weapons, ttk, { playstyle: 'balanced', ammoIndex: idx, careerLevel: 99 });
-  const c = r.ranked[0];
+  const ttk = [{ weapon_name: 'G', ammo_type: 'HP', armor_tier: 0, ttk_ms: 500 }];
+  const weapons = [{ name: 'G', ammo_type: 'test-9', credit_cost: 1000, fire_rate: 600 }];
+  const c = rankByEffectiveness(weapons, ttk, { playstyle: 'aggressive', ammoIndex: idx, careerLevel: 99 }).ranked[0];
   assert.equal(c.gun_cost, 1000);
-  assert.ok(c.ammo_cost > 0, 'ammo cost folded in');
-  assert.equal(c.cost, 1000 + c.ammo_cost, 'total = gun + ammo');
-  assert.ok(c.value_per_cost > 0, 'TTK-per-dollar computes');
+  assert.equal(c.ammo_cost, 25, 'aggressive -> HP box price 25');
+  assert.equal(c.cost, 1025, 'total = gun + HP box');
+  assert.equal(c.ammo_price_known, true);
+  assert.ok(c.value_per_cost > 0, 'TTK-per-dollar computes on total cost');
+});
+
+test('rankByEffectiveness: unpriced ammo -> gun-only cost, flagged (not faked)', () => {
+  const idx = indexAmmo(AMMO);
+  const ttk = [{ weapon_name: 'G', ammo_type: 'HP', armor_tier: 0, ttk_ms: 500 }];
+  const weapons = [{ name: 'G', ammo_type: 'test-hpnull', credit_cost: 1000, fire_rate: 600 }];
+  const c = rankByEffectiveness(weapons, ttk, { playstyle: 'aggressive', ammoIndex: idx, careerLevel: 99 }).ranked[0];
+  assert.equal(c.cost, 1000, 'gun-only when the load box price is unrecorded');
+  assert.equal(c.ammo_cost, null);
+  assert.equal(c.ammo_price_known, false);
 });
 
 test('rankByEffectiveness: no ammoIndex -> gun-only cost (backward compatible)', () => {
-  const ttk = [{ weapon_name: 'G', ammo_type: 'FMJ', armor_tier: 0, ttk_ms: 500 }];
+  const ttk = [{ weapon_name: 'G', ammo_type: 'HP', armor_tier: 0, ttk_ms: 500 }];
   const weapons = [{ name: 'G', ammo_type: 'test-9', credit_cost: 1000, fire_rate: 600 }];
   const c = rankByEffectiveness(weapons, ttk, { playstyle: 'balanced' }).ranked[0];
   assert.equal(c.cost, 1000, 'cost is gun-only when no ammo data');

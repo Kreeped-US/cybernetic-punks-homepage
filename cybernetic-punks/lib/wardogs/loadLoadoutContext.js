@@ -54,7 +54,7 @@ export async function loadLoadoutContext() {
       try {
         const { data, error } = await supabase
           .from('wardogs_ammo')
-          .select('caliber, ammo_type, cost_per_round, career_gate, tier, verified_source')
+          .select('caliber, ammo_type, box_price, per_round_derived, career_gate, gate_tier, tier, verified_source')
           .eq('game_slug', 'wardogs');
         return error ? [] : (data || []);
       } catch { return []; }
