@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs Channel B Phase B1 -- first type hub SHIPPED (proof)
+
+- /wardogs/loadouts/best/assault-rifle (commit 5192a30) -- ONE indexable synthesis hub, end-to-end, NOT a sprout. The proof of the Channel B type-hub pattern.
+- WHAT: ranks the class weapons by measured TTK (reuses assembleLoadout/loadoutSolver scoped by weapon_type -- real data: weapon_type 33/33, wardogs_ttk 450). Renders via shared components (SlotCard/RankTable/TheRead from LoadoutResult + WeaponImage). New: the [type] route, TypeHubResult.js, loadoutHubs.js registry.
+- HONEST + SEO-disciplined: front-loaded THE READ (answer-first "The best assault rifle loadout in Wardogs is the FAL...", NOT keyword-stuffed), "fastest TTK + class caveats" framing (THE CATCH: TTK ignores reload/range/recoil), attributed tier (Swoleguy), honest-null prices (PRICES TBD), register-CTA (funnel to the gated generator), real weapon images. Indexable, canonical, in sitemap, BreadcrumbList+ItemList JSON-LD, meshed from the loadouts landing (not orphaned).
+- DOMAIN-SILHOUETTE GUARD HELD: ONE hub shipped; other 4 type hubs staged shipped:false (404 until flipped); NO per-weapon leaf pages built. Evidence-ramp discipline -- grow, don't sprout, on a young mid-consolidation domain.
+- DECISIONS APPLIED: /wardogs/loadouts/best/[type] URLs (reserves bare segment for B2 class hubs); >=3-member type floor; RAMP the leaves (noindex-then-GSC-promote, NOT all-indexable); registry-light; one-hub-first-then-fan-out.
+- NEXT: (2) fan-out -- flip Sniper/SMG/Sidearm/Marksman shipped:true (inherit the pattern, near-zero net-new) + sitemap/mesh; (3) per-weapon leaf pages built NOINDEX, promoted on GSC evidence; (deferred) B2 grid (class x budget x level -- auto-activates when the economy-data pass populates unlock_class/credit_cost/unlock_career_level); arsenal revamp (consumes the per-weapon pages).
+
+---
 ## 2026-09-11 - Marathon URL-migration audit (CLEAN) + hygiene cleanup of stale old-URL refs -- COMPLETE
 
 - AUDIT (read-only): investigated the GSC impressions dip (~40% step-down ~8/31-9/1) + the /intel/ (old, 672 GSC pages) vs /marathon/ (new, 191) split. VERDICT: the Aug-20 route migration is CLEAN -- the dip is transition/consolidation lag, NOT an authority-split bug. Evidence: (1) canonical structure = /marathon/intel/<slug> (old app/intel + root app/uniques etc. dirs are GONE, all under app/marathon); (2) EVERY old namespace 308s to /marathon/* via next.config.mjs wildcards -- live-fired 8 old URLs, all 308 with correct Location, 1:1 path-preserved; (3) article generateMetadata rel=canonical = NEW, new pages serve 200 self-canonical NEW; (4) NO duplicate content -- old URLs 308 (do not serve 200); (5) sitemap NEW-only (sitemap-marathon-intel.xml = 360 URLs, 100% /marathon/intel/, ZERO bare /intel/; entities 143, zero bare old); (6) ~500 canonical pages vs GSC 672 old (decaying) + 191 new (ramping) = the crossover mid-flight. Do NOT block Channel B on the dip; it self-recovers as Google finishes crediting /marathon/*.
