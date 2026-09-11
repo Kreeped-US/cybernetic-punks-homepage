@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs weapon images LIVE: 33 mapped, real images render, honest fallback verified -- COMPLETE
+
+- Image wiring is COMPLETE. The operator ran the mapping SQL: all 33 wardogs weapon_stats rows now have image_filename (0 NULL, 0 broken). DB verify (service key): 33/33 set; every referenced file exists on disk; pp-19.webp -> PP-19 Vityaz confirmed (the one VERIFY mapping); cross-game untouched (marathon 30 rows with image_filename, bodycam 29 weapon rows -- unchanged).
+- LIVE RENDER VERIFIED (rendered DOM, not just "image_filename is set"): persisted two throwaway build rows via the real assembleLoadout and rendered the SSR pages on the dev server. IMG-OK row: the ACTUAL weapon images load -- img src=/images/wardogs/fal.webp complete=true naturalWidth=684 (real pixels, NOT the placeholder), secondary src=/images/wardogs/ggx-18.webp naturalWidth=208; zero "IMAGE PENDING" on the page. assembleLoadout now resolves detail.primary.image_filename=fal.webp.
+- HONEST FALLBACK VERIFIED: a second row with image_filename nulled rendered 0 weapon imgs, 2 "IMAGE PENDING" reticle placeholders, 0 broken images -- so a NULL/missing/mistyped file still degrades gracefully (intact for the arsenal and any weapon that lacks an image later).
+- SHARED COMPONENT, ONE FIELD: both slots (primary FAL + secondary GGX 18) rendered through the SAME components/wardogs/WeaponImage.js that LoadoutResult imports -- the single component the /arsenal will import on revamp. Populating image_filename once feeds every surface; the arsenal inherits working images day one with no further wiring.
+- OG CARD (honest scope note, unchanged): the dynamic share-card still renders the weapon by NAME (text) + CNP/Wardogs logos -- satori cannot use the React component. Putting the weapon image ON the OG card is an available FOLLOW-UP (read /images/wardogs/<image_filename> as a base64 data URI, same single field).
+- CLEANUP: deleted the two throwaway render-check rows (smoketest-imgok-*, smoketest-imgnull-*). Left intact: the operator's own FAL test saves (aggressive-fal-l20-kmd6e8, aggressive-fal-l20-z7jn40) -- not mine to remove.
+
+---
 ## 2026-09-11 - Wardogs weapon images wired: shared WeaponImage + path reconcile + prepared mapping SQL -- HELD
 
 - The operator dropped the weapon-image set in public/images/wardogs/, but they were not showing: path mismatch (WeaponImage built /images/weapons/, images live at /images/wardogs/) + image_filename NULL + the dir was UNTRACKED. Fixed the code/path + committed the images; prepared the mapping SQL for the operator to verify + run. Build passes, eslint clean (known <img> warning).
