@@ -14,6 +14,7 @@ const AG = 'var(--accent-glow)';
 const CARD = 'var(--bg-card)';
 const PAGE = 'var(--bg-page)';
 const LINE = 'var(--border)';
+const T1 = 'var(--text-primary)';
 const T2 = 'var(--text-secondary)';
 const T3 = 'var(--text-tertiary)';
 
@@ -33,10 +34,15 @@ export default function LoadoutsClient() {
   const [meta, setMeta] = useState(null);
   const [analysis, setAnalysis] = useState('');
   const [error, setError] = useState(null);
+  // save-on-action (Channel A): explicit save -> a public shareable /build/[slug] page + OG card
+  const [saveStatus, setSaveStatus] = useState('idle'); // idle | saving | saved | error
+  const [shareUrl, setShareUrl] = useState('');
+  const [copied, setCopied] = useState(false);
 
   // ── ENGINE: unchanged SSE reader ──────────────────────────────
   async function run() {
     setPhase('loading'); setSteps([]); setMeta(null); setAnalysis(''); setError(null);
+    setSaveStatus('idle'); setShareUrl(''); setCopied(false); // a new generation invalidates the last save
     setQueried({ careerLevel: careerLevel === '' ? null : Number(careerLevel), budget: budget === '' ? null : Number(budget), playstyle });
     track('loadouts_generate', { playstyle, hasLevel: !!careerLevel, hasBudget: !!budget });
     try {
@@ -66,6 +72,38 @@ export default function LoadoutsClient() {
         }
       }
     } catch (err) { setError(err.message); setPhase('error'); }
+  }
+
+  // ── SAVE & SHARE (save-on-action) ─────────────────────────────
+  async function saveShare() {
+    if (saveStatus === 'saving') return;
+    setSaveStatus('saving'); setCopied(false);
+    try {
+      const res = await fetch('/api/loadouts/save', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          careerLevel: queried ? queried.careerLevel : null,
+          budget: queried ? queried.budget : null,
+          playstyle: (queried && queried.playstyle) || playstyle,
+          analysis,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.slug) throw new Error(j.error || 'Save failed');
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      setShareUrl(origin + j.url);
+      setSaveStatus('saved');
+      track('loadouts_save', { playstyle: (queried && queried.playstyle) || playstyle });
+    } catch (e) { setSaveStatus('error'); }
+  }
+  function copyLink() {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => { setCopied(true); track('loadouts_share', { target: 'copy' }); }).catch(() => {});
+  }
+  function shareX() {
+    const text = 'My Wardogs loadout, ranked by measured time-to-kill:';
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(shareUrl), '_blank');
+    track('loadouts_share', { target: 'x' });
   }
 
   const wrap = { background: PAGE, minHeight: '60vh', color: '#fff', fontFamily: 'system-ui, sans-serif', padding: '24px' };
@@ -128,9 +166,37 @@ export default function LoadoutsClient() {
       queried={queried}
       streaming={phase === 'loading'}
       footer={
-        <button onClick={() => setPhase('input')} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid ' + LINE, borderRadius: 2, color: T2, cursor: 'pointer', fontSize: 12, letterSpacing: 1 }}>
-          ← New loadout
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {phase === 'result' && meta && saveStatus !== 'saved' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={saveShare} disabled={saveStatus === 'saving'}
+                style={{ padding: '12px 22px', background: A, color: PAGE, border: 'none', borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 1, cursor: saveStatus === 'saving' ? 'default' : 'pointer', opacity: saveStatus === 'saving' ? 0.7 : 1 }}>
+                {saveStatus === 'saving' ? 'SAVING…' : '⬦ SAVE & SHARE THIS LOADOUT'}
+              </button>
+              <span style={{ fontSize: 11, color: T3 }}>Get a public link with a preview card.</span>
+              {saveStatus === 'error' && <span style={{ fontSize: 12, color: '#ff9a86' }}>Save failed — try again.</span>}
+            </div>
+          )}
+
+          {saveStatus === 'saved' && (
+            <div style={{ background: AG, border: '1px solid ' + A, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>&#9698; SHAREABLE LINK — PUBLIC PAGE</div>
+              <input readOnly value={shareUrl} onFocus={(e) => e.target.select()}
+                style={{ width: '100%', boxSizing: 'border-box', background: PAGE, border: '1px solid ' + LINE, color: T1, fontSize: 12, padding: '9px 11px', borderRadius: 2, fontFamily: 'monospace', marginBottom: 10 }} />
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={copyLink} style={{ padding: '9px 16px', background: A, color: PAGE, border: 'none', borderRadius: 2, fontSize: 11, fontWeight: 800, letterSpacing: 1, cursor: 'pointer' }}>{copied ? 'COPIED ✓' : 'COPY LINK'}</button>
+                <button onClick={shareX} style={{ padding: '9px 16px', background: 'transparent', border: '1px solid ' + LINE, color: T2, borderRadius: 2, fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer' }}>POST TO X</button>
+                <a href={shareUrl} target="_blank" rel="noreferrer" style={{ padding: '9px 16px', background: 'transparent', border: '1px solid ' + LINE, color: T2, borderRadius: 2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textDecoration: 'none' }}>OPEN PAGE →</a>
+              </div>
+              <div style={{ fontSize: 11, color: T3, marginTop: 10, lineHeight: 1.5 }}>Anyone with the link can view it. Paste it in Discord or Reddit and it unfurls with a preview card.</div>
+            </div>
+          )}
+
+          <button onClick={() => { setPhase('input'); setSaveStatus('idle'); setShareUrl(''); }}
+            style={{ alignSelf: 'flex-start', padding: '10px 20px', background: 'transparent', border: '1px solid ' + LINE, borderRadius: 2, color: T2, cursor: 'pointer', fontSize: 12, letterSpacing: 1 }}>
+            ← New loadout
+          </button>
+        </div>
       }
     />
   );
