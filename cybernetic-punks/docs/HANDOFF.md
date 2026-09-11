@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Channel B / THE READ -- SEO refinement (front-load the answer, do NOT keyword-stuff)
+
+- For Channel B synthesis pages (and the loadout READ generally), refine the THE READ prompt to LEAD with the answer stated in natural, search-aligned terms -- e.g. open with "The best aggressive loadout at level 20 is the FAL with HP ammo..." (a natural, useful topic sentence that happens to contain the search phrase), rather than an oblique opening.
+- WHY: good writing that front-loads the answer serves the reader (immediate answer) AND SEO (the answer-in-search-terms is prominent). This is the sweet spot -- natural + useful + search-aligned.
+- HARD RULE -- NOT keyword-stuffing: do NOT insert/repeat keywords unnaturally ("best Wardogs FAL loadout aggressive Wardogs FAL..."). Google's helpful-content/spam systems PENALIZE stuffing, and it destroys the quality that IS the moat. THE READ is SEO-good BECAUSE it is genuine, specific analysis naturally about the searched loadout -- the terms are already there because the content is about the thing. Keep it that way.
+- SEO TARGETING lives in the page STRUCTURE (title tag e.g. "FAL Aggressive Wardogs Loadout at Level 20", H1/headings, meta description, query-shaped URL, intent-matching), NOT in stuffing THE READ prose. Title = "this page is about X"; THE READ = genuinely being about X (the quality/E-E-A-T signal). Consistent with the Fable-hardened strategy (verified synthesis with receipts ranks because it is genuinely good + sourced, not keyword-optimized).
+
+---
 ## 2026-09-11 - Wardogs OG share-card: CNP + official Wardogs logos + fan-made disclaimer -- HELD
 
 - Added the brand logos + the affiliation disclaimer to the loadout OG share-card (app/wardogs/loadouts/build/[slug]/opengraph-image.js). Build passes, eslint 0 errors, verified live: the card renders WITH both real logos + the disclaimer (NOT the generic fallback), real data (FAL / 391ms / AGGRESSIVE / LEVEL 20 / GGX 18 / attributed).
