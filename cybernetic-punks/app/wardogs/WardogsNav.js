@@ -67,6 +67,31 @@ export default function WardogsNav() {
             WebkitOverflowScrolling: 'touch',
           }}
         >
+          {/* TOOLS -- lead tabs before the editorial sections. A tool is a live generator
+              with its own route (NOT a section); it renders here so it's reachable from every
+              Wardogs page. "Loadouts" naming (never "Build Advisor"). Active on the tool URL
+              and anything beneath it (e.g. /wardogs/loadouts/build/<slug>). */}
+          {(wardogs.tools || []).map(function(tool) {
+            var tactive = pathname === tool.href || pathname.startsWith(tool.href + '/');
+            return (
+              <Link
+                key={tool.slug}
+                href={tool.href}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '0 14px', height: 52,
+                  flexShrink: 0,
+                  fontSize: 11, fontWeight: 600, letterSpacing: '1.5px',
+                  textTransform: 'uppercase', textDecoration: 'none',
+                  color: tactive ? '#fff' : 'var(--text-secondary)',
+                  borderBottom: tactive ? '2px solid var(--accent)' : '2px solid transparent',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {tool.label}
+              </Link>
+            );
+          })}
           {wardogs.sections.filter(function(sec) { return !sec.hideFromNav; }).map(function(sec) {
             var href = '/wardogs/' + sec.slug;
             // Prefix-match: a tab lights on its hub URL AND any article beneath it. The

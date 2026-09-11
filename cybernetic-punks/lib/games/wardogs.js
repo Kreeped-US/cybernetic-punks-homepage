@@ -78,6 +78,7 @@ export const wardogs = {
     ],
     links: {
       explore: [
+        { label: 'Loadouts',    href: '/wardogs/loadouts'    },
         { label: 'Field Intel', href: '/wardogs/field-intel' },
         { label: 'Economy',     href: '/wardogs/economy'     },
         { label: 'Systems',     href: '/wardogs/systems'     },
@@ -129,6 +130,22 @@ export const wardogs = {
 
   // No interactive build tool / structured entities yet -> no article CTA.
   buildToolCta: null,
+
+  // INTERACTIVE TOOLS -- surfaced in the nav + hub as discoverable entry-points, SEPARATE
+  // from `sections` (which are editorial/data verticals with their own page-rendering,
+  // Coverage cards, CollectionPage JSON-LD, and sitemap section-hub gate). A tool is a
+  // live generator with its OWN route; modelling it as a section would mis-type it. Read
+  // by app/wardogs/WardogsNav.js (lead nav tab) + app/wardogs/page.js (hub tool tile).
+  // NAMING (hard rule): user-facing label is "Loadouts" / "best loadout" (the community +
+  // search term), NEVER "Build Advisor" (zero search volume). INDEXABILITY: the tool
+  // LANDING (/wardogs/loadouts) is indexable (real value-prop + TTK-methodology content;
+  // inherits the subtree gate) and is emitted in the sitemap (lib/sitemap/eligible.js),
+  // matching /marathon/advisor + /bodycam/builder. The per-build share pages
+  // (/wardogs/loadouts/build/[slug]) stay noindex (Channel A artifacts).
+  tools: [
+    { slug: 'loadouts', label: 'Loadouts', href: '/wardogs/loadouts', status: 'live',
+      tagline: 'The best loadout for your level, budget, and playstyle - weapons ranked by measured time-to-kill, with the reasoning behind every pick.' },
+  ],
 };
 
 // WARDOGS ARTICLE -> SECTION ASSIGNMENT. feed_items has no section column, so (as with

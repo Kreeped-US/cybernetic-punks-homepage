@@ -243,6 +243,35 @@ export default async function WardogsLanding() {
         </div>
       </div>
 
+      {/* Tools -- live interactive tools (config-driven from wardogs.tools). A tool is a
+          live generator with its own route, surfaced here as a discoverable entry-point
+          (distinct from the editorial Coverage sections below). "Loadouts" naming. */}
+      {(wardogs.tools || []).length > 0 && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
+            <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Tools</h2>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14, marginBottom: 34 }}>
+            {wardogs.tools.map(function (tool, i) {
+              var code = 'TL-' + String(i + 1).padStart(2, '0');
+              return (
+                <Link key={tool.slug} href={tool.href} className="wd-dossier" style={cardBase}>
+                  <DossierHead code={code}><Pill text="Live" tone="live" /></DossierHead>
+                  <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                    <span className="wd-card-title" style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{tool.label}</span>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{tool.tagline}</span>
+                    <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: 'var(--accent)' }}>
+                      Open the finder &rarr;
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
+      )}
+
       {/* Coverage -- config-driven cards from wardogs.sections */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coverage</h2>

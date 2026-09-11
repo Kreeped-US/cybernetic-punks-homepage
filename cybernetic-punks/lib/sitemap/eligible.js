@@ -304,6 +304,15 @@ export async function computeEligible() {
 
     // The /wardogs landing itself (indexable while wardogs.indexable; DB-driven -> no lastmod).
     add(BASE + '/wardogs', W, 'wardogs-section', undefined, 'daily', 0.9);
+
+    // The LOADOUTS tool landing -- an indexable discoverable hub (real value-prop + TTK-
+    // methodology content; inherits the subtree robots gate), the same posture as
+    // /marathon/advisor + /bodycam/builder. No lastmod (tool page, DB-driven). The per-build
+    // share pages (/wardogs/loadouts/build/<slug>) stay noindex + out of the sitemap (Channel
+    // A artifacts). type='wardogs-section' -> partitions into the wardogs bucket unchanged.
+    (wardogs.tools || []).forEach(function (t) {
+      add(BASE + t.href, W, 'wardogs-section', undefined, 'weekly', 0.8);
+    });
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while
