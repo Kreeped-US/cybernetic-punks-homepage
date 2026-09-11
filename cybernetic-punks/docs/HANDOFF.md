@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs Channel B -- 5 type hubs live (fan-out + sniper contextualized)
+
+- Fanned out to all qualifying type hubs (commits 925fc29 + 4b7c517). 5 total INDEXABLE category hubs, all inheriting the proven AR pattern (sitemap + mesh via shippedTypeHubs()): Assault Rifle (FAL), SMG (Super-45), Sidearm (GGX 18), Marksman (BMR-308), Sniper Rifle (AMR 50 specialist-contextualized). Rankings operator-verified sensible.
+- SNIPER CONTEXTUALIZATION (the synthesis wedge demonstrated): AMR 50 wins by raw TTK (fastest-cadence one-shotter) but it's a heavy specialist anti-materiel rifle. THE READ leads with the honest fastest-TTK (AMR), flags it as a specialist, gives the CONVENTIONAL pick (SV98) -- "the AMR really is first on the trigger; the context is what it costs you to carry." Asterisk on the pick card + board row + a footnote. Board stays AMR-first (honest -- not re-ranked); the CONTEXT does the work. This is the advisor's value over a reference site (which would just list AMR #1) -- contextualize, don't just rank.
+- ARCHITECTURE: class-aware, not a special-case -- loadoutHubs.js optional specialists/specialistNote per hub (sniper declares ['AMR 50']; the other 4 declare neither -> READs byte-unchanged). buildRead has a specialist branch. Shared SlotCard/RankTable gained optional backward-compatible note props (the tool + saved-build pages unaffected). Reusable for any future class quirk.
+- FIXES surfaced by the fan-out: (1) Sidearm was broken -- slotOf buckets pistols to 'secondary' -> null primary -> would've 404'd; added slot-normalization (single-slot type hub -> remap to primary); Sidearm now ranks GGX 18 correctly. (2) SMG casing -- THE READ says "SMG" (acronym) not "smg".
+- DISCIPLINE HELD: 5 category hubs indexable (conservative, not a sprout); NO per-weapon leaves built; bogus types 404. Evidence-ramp intact.
+- NEXT: per-weapon leaf pages built NOINDEX, promoted on GSC evidence (the ramp -- the sprout-risk surface, handled with discipline). Deferred: B2 grid (economy-data pass), arsenal revamp (consumes leaves), buildToolCta.
+
+---
 ## 2026-09-11 - Wardogs Channel B Phase B1 -- first type hub SHIPPED (proof)
 
 - /wardogs/loadouts/best/assault-rifle (commit 5192a30) -- ONE indexable synthesis hub, end-to-end, NOT a sprout. The proof of the Channel B type-hub pattern.
