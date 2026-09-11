@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs OG share-card: CNP + official Wardogs logos + fan-made disclaimer -- HELD
+
+- Added the brand logos + the affiliation disclaimer to the loadout OG share-card (app/wardogs/loadouts/build/[slug]/opengraph-image.js). Build passes, eslint 0 errors, verified live: the card renders WITH both real logos + the disclaimer (NOT the generic fallback), real data (FAL / 391ms / AGGRESSIVE / LEVEL 20 / GGX 18 / attributed).
+- ASSETS (operator-placed, case-exact -- referenced EXACTLY as stored for the case-sensitive prod FS): CNP logo public/cnp-512.png (512x512 square); Wardogs official wordmark public/WD_Fullmark_White.png (2468x490, uppercase WD_Fullmark_White). Read via new URL(../../../../../public/<file>, import.meta.url) + node readFile -> base64 data URIs (the next/og local-asset pattern; the file tracer bundles them). Path resolution confirmed (both EXISTS). If a read fails the card falls back to text branding (no render error) -- but verified the REAL logos render.
+- CARD LAYOUT: CNP logo (brand hero) replaces the old amber CNP text-box top-left + CYBERNETIC PUNKS; the Wardogs wordmark (white, wide) top-right at ASPECT (height 38 x width 191 from 2468x490 -- NOT distorted), present-but-secondary. The loadout (weapon + measured TTK) stays the visual hero. Kept "COMMUNITY-TESTED BALLISTICS - ATTRIBUTED" (honest, never "verified"). ADDED a subtle bottom line: "Fan-made - not affiliated with or endorsed by Bulkhead. Wardogs is a trademark of its owner."
+- SITE FOOTER DISCLAIMER: ALREADY PRESENT (no change needed / not duplicated). lib/games/wardogs.js legal[] carries "CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY BULKHEAD OR TEAM17." + "WARDOGS IS A TRADEMARK OF ITS RESPECTIVE OWNER." rendered by components/Footer.js on every wardogs page (the per-game legal pattern, same as bodycam/dmz/pubg/marathon). Verified it renders on the loadout pages. So the task's footer-disclaimer ask was already satisfied.
+- HONESTY LAYERS all present: logo = game identification (not a claim of official data); "attributed" = the DATA is honest (community-tested, not owner-verified); "not affiliated" = the RELATIONSHIP is honest (card + footer).
+- eslint: added alt="" to the two satori <img> (jsx-a11y/alt-text) -- decorative in a rendered PNG; the only remaining warning is the known no-img-element (consistent with the codebase).
+- CLEANUP: my OG test row (smoketest-og-sfyta7) inserted for the screenshot was DELETED. NOTE: one REAL save remains in wardogs_loadout_pages -- aggressive-fal-l20-kmd6e8 (save-route slug format, created 2026-09-11 14:27 UTC) -- NOT my test artifact (appears to be an operator/real save from testing Channel A); left intact (not mine to delete). Flag for the operator if it was a test.
+- CARRY-FORWARD (out of scope, flagged): the operator dropped the full weapon-image set in public/images/wardogs/ (fal.webp, a-91.webp, ...), but (a) they are at /images/wardogs/ while the loadout WeaponImage convention expects /images/weapons/<image_filename>, and (b) weapon_stats.image_filename is still NULL -- so weapon images do not show yet. A future task: reconcile the path/convention + set image_filename (some names differ, e.g. mk-22 vs MK22, pp-19 vs PP-19 Vityaz, mp-43 vs MP43).
+- HELD for Justin (the OG card is the judgment-heavy piece -- is it enticing + on-brand with the logos). NEXT: surface the tool (nav/tile + root hub) -> Channel B hubs -> ramp.
+
+---
 ## 2026-09-11 - Wardogs Phase 1d Step 2 -- Channel A: save/share flow + dynamic OG share-card -- HELD
 
 - The near-term DA lever: user-facing SAVE & SHARE on the loadouts tool (save-on-action -> the proven Step-1 save route -> a public /wardogs/loadouts/build/[slug] page) + a dynamic OG image so shared links unfurl with a rich preview card. Build passes, verified live end-to-end (generate -> save -> shareable URL -> OG card with real data).
