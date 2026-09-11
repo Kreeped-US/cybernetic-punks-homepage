@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs advisor kill-map -- BodyPartViz reused in the recommendation (commit 729fcb6)
+
+- Closes "one component, two callers": the same BodyPartViz now renders the RECOMMENDED weapon's kill-map in the loadout recommendation ("WHERE TO AIM -- [weapon]"), PLAYSTYLE-DEFAULTED (aggressive->HP/tier-0, balanced->FMJ/tier-2, tactical->AP/tier-4) -- vs the weapon page's neutral FMJ/tier-0. The advisor now shows what to run AND where to aim, in the playstyle's context -- actionable synthesis a reference table can't give.
+- DATA FLOW (backward-compatible): loadLoadoutContext loads wardogs_ballistics (paginated, 3600 rows); assembleLoadout attaches the pick's ~120-row matrix to detail.primary.ballistics; both routes (stream + save) pass it through -> live result AND saved SSR pages carry the kill-map. Type hubs call assembleLoadout WITHOUT ballistics -> no kill-map there (unaffected). Old pre-change saves degrade gracefully (LoadoutResult renders BodyPartViz only when ballistics present). Same component, no fork. Attributed carried through. Solver tests 23/23 pass.
+- ARC COMPLETE: the Wardogs synthesis wedge is end-to-end -- arsenal roster -> weapon detail (BodyPartViz + real stats, better-than-reference, honest) -> loadout hubs + advisor (synthesis citing the substrate, showing where to aim). "Make ours better, honestly" realized: more informative than the competitor (ammo/armor-aware body-part viz from OUR richer data), honest (attributed/honest-null/never-copied), SEO-first, synthesis-actionable.
+- NEXT: economy-data pass (scoping next -- activates the dormant budget-solve -> cost-aware advisor + unblocks B2 grid; attributed/reconciled-against-Bulkhead/competitor-attribution-decision). Deferred: indexability ramp (GSC evidence), buildToolCta.
+
+---
 ## 2026-09-11 - Wardogs arsenal LIST revamp -- bug fixed + image-led roster (commit 761c2f1)
 
 - FIXED A LIVE BUG: /wardogs/arsenal showed the COMING-SOON SHELL (the old [section] re-export read RLS-on wardogs weapon_stats via the anon client -> empty -> shell). Now reads via the SERVICE KEY (the established loadouts/OG/detail pattern) -> the real 33-weapon roster renders.
