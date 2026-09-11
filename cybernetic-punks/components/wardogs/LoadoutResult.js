@@ -172,6 +172,21 @@ function Stat({ label, value, hero, muted }) {
   );
 }
 
+function fmtMoney(n) { return '$' + Number(n).toLocaleString('en-US'); }
+// Cost breakdown parts for a pick (gun + ammo box = total), honest-null aware. detail carries caliber.
+export function costParts(pick, detail) {
+  if (!pick) return null;
+  const gun = pick.gun_cost != null ? pick.gun_cost : (pick.cost != null && pick.ammo_cost == null ? pick.cost : null);
+  const total = pick.cost != null ? pick.cost : gun;
+  const cal = detail && detail.caliber ? detail.caliber : null;
+  const load = pick.ammo_priced || pick.ammo;
+  let line = null;
+  if (gun != null && pick.ammo_cost != null) line = 'gun ' + fmtMoney(gun) + ' + ' + (cal ? cal + ' ' : '') + load + ' box ' + fmtMoney(pick.ammo_cost);
+  else if (gun != null && pick.ammo_price_known === false) line = 'gun ' + fmtMoney(gun) + ' + ammo price unrecorded';
+  else if (gun != null) line = 'gun ' + fmtMoney(gun);
+  return { total, line };
+}
+
 export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp, note }) {
   if (!pick) {
     return (
@@ -183,6 +198,7 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
   }
   const armorRows = detail && detail.armor_curve ? detail.armor_curve.map((r) => ({ label: 'T' + r.tier, ttk_ms: r.ttk_ms })) : null;
   const ammoRows = detail && detail.ammo_compare ? detail.ammo_compare.map((r) => ({ label: r.ammo, ttk_ms: r.ttk_ms })) : null;
+  const cp = costParts(pick, detail);
   return (
     <div style={{ background: PAGE, border: '1px solid ' + (hero ? AD : LINE), borderLeft: '3px solid ' + (hero ? A : T3), borderRadius: '0 3px 3px 0', padding: '16px 18px' }}>
       <WeaponImage imageFilename={detail && detail.image_filename} name={pick.weapon_name} hero={hero} />
@@ -194,8 +210,19 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
         {pick.weighted_ttk_ms != null && <Stat label="TTK" value={pick.weighted_ttk_ms + 'ms'} hero={hero} />}
         {pick.ammo && <Stat label="AMMO" value={pick.ammo} />}
-        <Stat label="PRICE" value={pick.cost != null ? '$' + pick.cost : 'TBD'} muted={pick.cost == null} />
+        <Stat label="COST" value={cp && cp.total != null ? fmtMoney(cp.total) : 'TBD'} muted={!cp || cp.total == null} />
       </div>
+      {cp && cp.line && (
+        <div style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 10.5, color: T2, lineHeight: 1.5 }}>
+          {cp.line}
+          <span style={{ color: T3 }}> · community-recorded</span>
+        </div>
+      )}
+      {pick.ammo_downgraded && pick.ammo_gate_level != null && (
+        <div style={{ marginTop: 8, fontSize: 10.5, lineHeight: 1.5, color: A, fontFamily: 'monospace' }}>
+          ◢ {pick.ammo} unlocks at Career {pick.ammo_gate_level} — running {pick.ammo_priced} for now
+        </div>
+      )}
       {detail && (detail.fire_rate != null || detail.caliber || detail.weapon_class) && (
         <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + LSUB, display: 'flex', gap: 16, flexWrap: 'wrap', fontFamily: 'monospace', fontSize: 10, color: T2 }}>
           {detail.fire_rate != null && <span>FIRE RATE <b style={{ color: T1 }}>{detail.fire_rate} rpm</b></span>}
@@ -286,6 +313,36 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
             <SlotCard label="PRIMARY" pick={rec.primary} detail={det.primary} hero rank={pick ? 1 : null} total={primaries.length} gapMs={gapMs} runnerUp={runnerUp} />
             <SlotCard label="SECONDARY" pick={rec.secondary} detail={det.secondary} rank={rec.secondary ? 1 : null} total={secondaries.length} />
           </div>
+          {/* cost + budget summary (deterministic -- the economy work made visible) */}
+          {(() => {
+            const p = rec.primary, s = rec.secondary;
+            const pc = p && p.cost != null ? p.cost : null;
+            const sc = s && s.cost != null ? s.cost : null;
+            if (pc == null && sc == null) return null;
+            const totalCost = (pc || 0) + (sc || 0);
+            const budgetLimit = (queried && queried.budget != null) ? queried.budget : (bud && bud.limit != null ? bud.limit : null);
+            const priced = primaries.filter((c) => c.value_per_cost != null);
+            const bestVal = priced.length ? priced.reduce((a, b) => (b.value_per_cost > a.value_per_cost ? b : a)) : null;
+            return (
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid ' + AD, display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'baseline', fontFamily: 'monospace', fontSize: 11 }}>
+                <span style={{ color: T3, letterSpacing: 1.5, fontWeight: 800 }}>LOADOUT COST</span>
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{fmtMoney(totalCost)}</span>
+                <span style={{ color: T3 }}>
+                  ({p ? 'primary ' + (pc != null ? fmtMoney(pc) : 'TBD') : ''}{s ? ' + secondary ' + (sc != null ? fmtMoney(sc) : 'TBD') : ''})
+                </span>
+                {budgetLimit != null && (
+                  <span style={{ color: totalCost <= budgetLimit ? '#6bd18e' : A, fontWeight: 700 }}>
+                    {totalCost <= budgetLimit
+                      ? 'within your ' + fmtMoney(budgetLimit) + ' — ' + fmtMoney(budgetLimit - totalCost) + ' to spare'
+                      : 'over your ' + fmtMoney(budgetLimit)}
+                  </span>
+                )}
+                {bestVal && pick && bestVal.weapon_name !== pick.weapon_name && (
+                  <span style={{ color: T2 }}>· best TTK/$ of the set: <b style={{ color: T1 }}>{bestVal.weapon_name}</b></span>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -339,7 +396,7 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
 
       {meta && (
         <div style={{ background: PAGE, border: '1px dashed ' + LINE, borderRadius: 4, padding: '14px 18px', marginBottom: 16, fontSize: 12, color: T2, lineHeight: 1.7 }}>
-          <div><b style={{ color: T1 }}>Budget:</b> {bud.applied ? 'solved within $' + bud.limit + ' (spent $' + bud.total + ').' : 'ranked by effectiveness only — Bulkhead hasn’t published prices yet, so budget filtering is off. It switches on the moment prices land.'}</div>
+          <div><b style={{ color: T1 }}>Budget:</b> {bud.applied ? 'solved within $' + bud.limit + ' (spent $' + bud.total + ').' : 'no budget given — ranked by effectiveness; per-pick cost is shown from community-recorded prices (attributed, not Bulkhead-official). Add a budget to filter by affordability.'}</div>
           {prov.basis && <div style={{ marginTop: 6 }}><b style={{ color: T1 }}>Basis:</b> {prov.basis}.{prov.sources && prov.sources.length ? ' Source: ' + prov.sources[0] : ''}</div>}
         </div>
       )}

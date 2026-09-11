@@ -43,6 +43,15 @@ export function buildLoadoutPrompt(solved, inputs) {
   const cand = (solved && solved.candidates) || {};
   const prov = (solved && solved.provenance) || {};
   const budget = (solved && solved.budget) || {};
+  const detail = (solved && solved.detail) || {};
+  // cost breakdown string for a pick: "gun $X + <caliber> <load> box $Y = $total" / honest-null aware
+  const costBit = (pk, det) => {
+    if (!pk || pk.gun_cost == null) return pk && pk.cost != null ? ', cost $' + pk.cost : '';
+    const cal = det && det.caliber ? det.caliber + ' ' : '';
+    if (pk.ammo_cost != null) return ', cost = gun $' + pk.gun_cost + ' + ' + cal + (pk.ammo_priced || pk.ammo) + ' box $' + pk.ammo_cost + ' = $' + pk.cost;
+    if (pk.ammo_price_known === false) return ', cost = gun $' + pk.gun_cost + ' + ammo price unrecorded';
+    return ', cost = gun $' + pk.gun_cost;
+  };
 
   const primary = rec.primary || null;
   const secondary = rec.secondary || null;
@@ -61,22 +70,30 @@ export function buildLoadoutPrompt(solved, inputs) {
   lines.push('SOLVER PICKS (do NOT change these -- explain them):');
   if (primary) {
     lines.push('- PRIMARY: ' + primary.weapon_name
-      + ' (weighted TTK ' + primary.weighted_ttk_ms + 'ms with ' + primary.ammo + ' ammo, effectiveness score ' + primary.score + ')');
+      + ' (weighted TTK ' + primary.weighted_ttk_ms + 'ms with ' + primary.ammo + ' ammo, effectiveness score ' + primary.score + costBit(primary, detail.primary) + ')');
+    if (primary.ammo_downgraded && primary.ammo_gate_level != null) {
+      lines.push('  AMMO GATE: ' + primary.ammo + ' unlocks at Career ' + primary.ammo_gate_level
+        + ' -- recommended/costed on ' + primary.ammo_priced + ' for now (mention this as useful, not a downside).');
+    }
   }
   if (secondary) {
     lines.push('- SECONDARY: ' + secondary.weapon_name
-      + ' (weighted TTK ' + secondary.weighted_ttk_ms + 'ms with ' + secondary.ammo + ' ammo)');
+      + ' (weighted TTK ' + secondary.weighted_ttk_ms + 'ms with ' + secondary.ammo + ' ammo' + costBit(secondary, detail.secondary) + ')');
   }
   if (runnerUp && primary) {
-    lines.push('- IT BEAT: ' + runnerUp.weapon_name + ' (TTK ' + runnerUp.weighted_ttk_ms + 'ms)'
+    lines.push('- IT BEAT: ' + runnerUp.weapon_name + ' (TTK ' + runnerUp.weighted_ttk_ms + 'ms'
+      + costBit(runnerUp, null) + ')'
       + (gap != null ? ' -- about ' + gap + '% ' + (primary.weighted_ttk_ms < runnerUp.weighted_ttk_ms ? 'faster' : 'slower') + ' to kill' : ''));
   }
   lines.push('');
   lines.push('BASIS (state this honestly, do not overclaim):');
   lines.push('- Combat numbers: ' + (prov.basis || 'community-tested ballistics (Swoleguy), attributed') + '. Tier: ' + (prov.tier || 'attributed') + '.');
   lines.push('- Budget: ' + (budget.applied
-    ? 'solved within $' + budget.limit + ' (spent $' + budget.total + ').'
-    : 'NOT applied -- Bulkhead has published no prices, so this is ranked by effectiveness only, not budget-optimized. Say so plainly.'));
+    ? 'solved within $' + budget.limit + ' (spent $' + budget.total + ') -- an affordable pick was chosen; note how it fits the budget.'
+    : (inputs.budget == null
+        ? 'no budget given -- ranked by effectiveness. Per-pick cost IS shown above (community-recorded prices, attributed, NOT Bulkhead-official). You may comment on value/cost as info, but there is no budget to fit.'
+        : 'no affordable combo within $' + inputs.budget + ' -- best options shown may be over budget. Say so plainly.')));
+  lines.push('- Prices/ammo: COMMUNITY-RECORDED (attributed), NOT Bulkhead-official. Ammo cost = the load\'s vendor box price. Value = TTK-per-dollar WITHIN this recommendation only (not a universal ranking) -- do not overclaim.');
   lines.push('');
   lines.push('WRITE THE ANALYSIS (120-180 words total) as SHORT PARAGRAPHS separated by a BLANK LINE.');
   lines.push('No markdown, no headings, no lists, no JSON -- just plain paragraphs split by blank lines,');
@@ -87,8 +104,8 @@ export function buildLoadoutPrompt(solved, inputs) {
   lines.push('- Paragraph 2 (THE EDGE): why the primary beats the runner-up, using the real TTK gap above. 1-2 sentences.');
   lines.push('- Paragraph 3 (THE SIDEARM): why the secondary backs it up. 1 sentence.');
   lines.push('- FINAL paragraph (THE CAVEAT): it MUST begin with the exact token "CAVEAT:" and cover the honest');
-  lines.push('  tradeoff -- the ammo/armor assumption -- and, if budget was not applied, that prices are not');
-  lines.push('  published yet so verify in-game. 1-2 sentences. This is the ONLY paragraph that starts with a token.');
+  lines.push('  tradeoff -- the ammo/armor assumption -- and that prices/ammo are community-recorded (attributed),');
+  lines.push('  not Bulkhead-official, so verify in-game. 1-2 sentences. This is the ONLY paragraph that starts with a token.');
   lines.push('');
   lines.push('Be opinionated and specific. Never name a weapon not listed above. Separate every paragraph with a blank line.');
   return lines.join('\n');
