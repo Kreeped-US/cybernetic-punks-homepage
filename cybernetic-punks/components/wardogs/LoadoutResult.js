@@ -34,7 +34,7 @@ const PLAYSTYLES = [
 function tierMeta(key) { return CONFIDENCE_TIERS.find((t) => t.key === key) || CONFIDENCE_TIERS[2]; }
 function playstyleLabel(id) { const p = PLAYSTYLES.find((x) => x.id === id); return p ? p.label : (id || 'BALANCED').toUpperCase(); }
 
-const KEYFRAMES = `
+export const LOADOUT_KEYFRAMES = `
   @keyframes lsPulse{0%,100%{opacity:.35}50%{opacity:1}}
   @keyframes lsUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   @keyframes lsBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -52,7 +52,7 @@ function highlightNumbers(text) {
       : <span key={i}>{p}</span>);
 }
 
-function TheRead({ text, streaming }) {
+export function TheRead({ text, streaming }) {
   const raw = text || '';
   if (!raw) {
     return <div style={{ fontSize: 16, color: T3 }}>Reading the numbers<span className="ls-cursor">_</span></div>;
@@ -86,14 +86,14 @@ function TheRead({ text, streaming }) {
   );
 }
 
-function Chip({ children, accent }) {
+export function Chip({ children, accent }) {
   return (
     <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, fontFamily: 'monospace', padding: '4px 9px', borderRadius: 3,
       color: accent ? A : T2, background: accent ? AG : CARD, border: '1px solid ' + (accent ? A : LINE) }}>{children}</span>
   );
 }
 
-function RankTable({ rows, pickName }) {
+export function RankTable({ rows, pickName }) {
   const maxScore = Math.max(...rows.map((c) => c.score || 0), 1);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -160,7 +160,7 @@ function Stat({ label, value, hero, muted }) {
   );
 }
 
-function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp }) {
+export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp }) {
   if (!pick) {
     return (
       <div style={{ background: PAGE, border: '1px solid ' + LINE, borderRadius: 3, padding: '16px 18px' }}>
@@ -224,7 +224,7 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
 
   return (
     <div style={wrap}><div style={inner}>
-      <style>{KEYFRAMES}</style>
+      <style>{LOADOUT_KEYFRAMES}</style>
 
       {queried && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>

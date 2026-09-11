@@ -16,7 +16,7 @@ const AMMOS = ['FMJ', 'HP', 'AP'];
 
 // Per-pick DETAIL from the already-loaded stores -- the armor-tier TTK curve at the pick's ammo, the
 // FMJ/HP/AP comparison, and weapon meta. (Extracted verbatim from the loadouts route.)
-function pickDetail(pk, weapons, ttk) {
+export function pickDetail(pk, weapons, ttk) {
   if (!pk || !pk.weapon_name) return null;
   const w = weapons.find((x) => x.name === pk.weapon_name) || {};
   const ttkAt = (ammo, tier) => {

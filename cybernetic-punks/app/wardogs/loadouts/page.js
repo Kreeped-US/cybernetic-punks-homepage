@@ -4,8 +4,10 @@
 // (the community + search term), NEVER "Build Advisor" (zero search volume). The interactive
 // generator streams client-side; this static prose is what the page ranks on (same as Marathon).
 
+import Link from 'next/link';
 import LoadoutsClient from './LoadoutsClient';
 import ViewTracker from '@/components/ViewTracker';
+import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +84,24 @@ export default function LoadoutsPage() {
           </div>
         </div>
       </section>
+
+      {/* Channel B mesh: crawlable links to the WEAPON-TYPE loadout guides (indexable hubs). Only the
+          SHIPPED hubs render (lib/wardogs/loadoutHubs.js); this auto-populates as more hubs ship, and
+          keeps each hub reachable by crawl from this indexable page (not sitemap-only / orphaned). */}
+      {shippedTypeHubs().length > 0 && (
+        <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '18px 24px 20px', fontFamily: 'system-ui, sans-serif' }}>
+          <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>LOADOUT GUIDES BY WEAPON TYPE</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {shippedTypeHubs().map((h) => (
+                <Link key={h.slug} href={'/wardogs/loadouts/best/' + h.slug} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>
+                  Best {h.label} Loadout &rarr;
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <LoadoutsClient />
     </>

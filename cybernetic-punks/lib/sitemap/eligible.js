@@ -25,6 +25,7 @@ import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { wardogs, wardogsSectionForArticle } from '@/lib/games/wardogs';
+import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import { pubgDednet, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
 import { bodycam, bodycamSectionForArticle, bodycamArticleSlugsForSection } from '@/lib/games/bodycam';
 import { getIndexableGames } from '@/lib/games';
@@ -312,6 +313,14 @@ export async function computeEligible() {
     // A artifacts). type='wardogs-section' -> partitions into the wardogs bucket unchanged.
     (wardogs.tools || []).forEach(function (t) {
       add(BASE + t.href, W, 'wardogs-section', undefined, 'weekly', 0.8);
+    });
+
+    // Channel B WEAPON-TYPE loadout hubs (/wardogs/loadouts/best/<type>) -- INDEXABLE synthesis
+    // pages, only the SHIPPED ones (lib/wardogs/loadoutHubs.js: the ramp switch). Per-weapon LEAF
+    // pages stay NOINDEX + out of the sitemap until the GSC-evidence ramp promotes them (Channel B
+    // scope). DB-driven -> no lastmod. type='wardogs-section' -> wardogs bucket, partition unchanged.
+    shippedTypeHubs().forEach(function (h) {
+      add(BASE + '/wardogs/loadouts/best/' + h.slug, W, 'wardogs-section', undefined, 'weekly', 0.8);
     });
   }
 
