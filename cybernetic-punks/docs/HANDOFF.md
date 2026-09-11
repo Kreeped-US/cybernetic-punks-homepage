@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - DEFERRED: Wardogs economy-data pass = the advisor-capability UPGRADE (cost + progression + value reasoning)
+
+- SCOPE (deferred, not yet built): load the Wardogs economy/progression data -- weapon prices (weapon_stats.credit_cost) + the unlock ladders (career/class level gates AND the big-ticket CASH gates, e.g. the ~$9.86M top-end cash gates) -- into the store the solver already reads (the credit_cost / unlock_career_level / unlock_class / unlock_class_level columns were added in Phase 1a). Tiered HONESTLY: community/beta-attributed prices (NOT Bulkhead-official -- no first-party price list is published, launch-reference Tier 4), RECONCILED against the Bulkhead-CONFIRMED S1 changelog (Deagle Career L85, Artillery L90, Heavy Tank Driver L35, FOB $7,500, etc.). This is NOT a bare data dump -- it is built TOWARD the capability upgrade below.
+- THE VISION (why this COMPLETES the advisor, not just adds rows): today the advisor reasons on ONE dimension -- effectiveness / TTK from the Swoleguy ballistics = HALF the wedge. The economy data upgrades the CORE capability across the board:
+  1. COST-AWARENESS: budget-solve ACTIVATES -> "best loadout for $X" -- the question players actually ask in an economy game. Currently dormant (the solver honest-null-degrades because no prices are loaded).
+  2. PROGRESSION-AWARENESS: the unlock ladders (level gates + cash gates) -> "at YOUR level / unlocks / bankroll, here is what you can actually field."
+  3. VALUE / EFFICIENCY reasoning (the NEW dimension): cost + effectiveness together = "best TTK PER DOLLAR" -- best-VALUE loadouts. Neither axis alone yields this. wardogshub has prices AND stats but does NOT synthesize value -- THIS is the sharpened wedge (cost-effectiveness synthesis nobody else does).
+  4. ECONOMY-STRATEGY context: the persistent-cash model (dying with expensive gear = a real loss) -> budget-conscious recs ("broke after a wipe -> cheap effective recovery kit" vs "flush -> premium loadout").
+- REFRAME: effectiveness alone = HALF the wedge; effectiveness x cost x progression = the FULL wedge -- "the best loadout you can actually field AND afford right now," which no reference site synthesizes. This completes the advisor core value prop -- the ADVISOR to their ENCYCLOPEDIA, fully realized.
+- READY TO ACTIVATE (no re-architecture): the solver ALREADY SUPPORTS budget-solve -- built in Phase 1b, honest-null-degrading (loadoutSolver.budgetSolve returns effectiveness-only when credit_cost is null, flagged "budget filtering unavailable"). So loading prices ACTIVATES existing capability; a follow-on prompt/output pass then SURFACES the new value/cost reasoning ("best TTK per dollar", budget-conscious recs) in THE READ + the loadout card. The wedge sharpens the moment real economy data lands.
+- HONEST-TIERED throughout: value/cost reasoning inherits the tier of its inputs -- value computed from community-attributed prices is itself ATTRIBUTED (not owner-verified); first-party prices SUPERSEDE when Bulkhead publishes (a re-tier, not a rebuild). Prices/unlocks stay honest-null until loaded; the "fastest TTK, not best overall" framing still applies to the effectiveness half.
+- STATUS: DEFERRED / vision recorded. GATED ON genuine economy data at a usable tier (community-attributed is loadable now as attributed; first-party supersedes later). Sits alongside Phase 1d (distribution) + the /arsenal revamp as the Wardogs-advisor roadmap.
+
+---
 ## 2026-09-10 - Wardogs loadouts: structured THE READ (short paragraphs + distinct caveat callout, still streamed)
 
 - Operator: THE READ (the streamed LLM analysis) still read as a block of words. Fixed with a prompt + render change; ENGINE/streaming/solver/honest-null/provenance unchanged. Build passes, eslint clean (known <img> warning only), verified live.
