@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs arsenal LIST revamp -- bug fixed + image-led roster (commit 761c2f1)
+
+- FIXED A LIVE BUG: /wardogs/arsenal showed the COMING-SOON SHELL (the old [section] re-export read RLS-on wardogs weapon_stats via the anon client -> empty -> shell). Now reads via the SERVICE KEY (the established loadouts/OG/detail pattern) -> the real 33-weapon roster renders.
+- THE ROSTER: image-led cards (WeaponImage, all 33 images) grouped by class, each with name/caliber/rarity/fire-rate/baseline-TTK (FMJ/unarmored, attributed) -- 30 real TTK + 3 launchers "TTK pending" (honest-null). Each card links to /wardogs/arsenal/[slug] (the list -> detail -> advisor receipts chain). Wardogs theme, attributed banner, mobile-safe.
+- INDEXABILITY: LIST = indexable (real roster content, one hub -- consistent with the type-hubs/tool-landing indexable-on-attributed-data precedent; added to sitemap). DETAILS = noindex (the 33 leaves, GSC-evidence ramp -- intact). This reconciles the arsenal-scope's earlier conservative "noindex both" flag, which predated the type-hubs precedent.
+- REFERENCE SUBSTRATE COMPLETE: arsenal list (roster) -> weapon detail pages (BodyPartViz + real stats, better-than-reference, honest) -> the advisor/hubs (synthesis that cites them). The doctrine realized -- reference as the substrate that feeds synthesis. Honest throughout (attributed, honest-null, never-copied), SEO-first (crawlable), evidence-ramped (details noindex).
+- NEXT: (2) advisor reuse of BodyPartViz (playstyle-defaulted kill-map in the loadout recommendation -- closes "one component, two callers"); (3) indexability ramp (promote leaves on GSC evidence). Deferred: economy-data pass (B2 grid + the cost-aware advisor), buildToolCta.
+
+---
 ## 2026-09-11 - Wardogs weapon detail page + BodyPartViz -- shipped (better-than-reference, SEO-first, honest)
 
 - BodyPartViz (components/wardogs/BodyPartViz.js, commit 80a4e58): the net-new hero viz, SEO-FIRST -- crawlable server-rendered STK table (default FMJ/tier-0) is the ranking substance ("wardogs [weapon] shots to kill"); SVG silhouette (8 zones colored by shots-to-kill) + ammo/armor toggles (FMJ/HP/AP x tier 0-4) is the human layer on top. BETTER than the competitor's static hit-multiplier: ammo-and-armor-aware from OUR dense attributed matrix (surfaces insight like "vs heavy armor + HP, shoot unarmored zones not the torso" -- a reference chart can't). CSS-only motion (no LCP/CLS cost). Graceful no-data (launchers). Attributed (Swoleguy). Pure/reusable (weapon page + advisor). Built + proven in isolation from real data.
