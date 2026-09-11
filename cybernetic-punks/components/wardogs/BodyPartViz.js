@@ -45,15 +45,15 @@ const ZONES = [
 // Shots-to-kill HEAT ramp (fewer shots = deadlier = hotter). Absolute buckets so colors are comparable
 // across weapons + profiles (not relative to each weapon's own min/max). null -> cold "no data".
 function stkColor(stk) {
-  if (stk == null) return '#2b3038'; // no data -- cool slate
+  if (stk == null) return '#5b6675'; // no data -- neutral slate (low chroma -> figure stays grey)
   const s = Math.round(stk);
-  if (s <= 1) return '#ff3b30'; // one-shot -- vivid danger red
-  if (s === 2) return '#ff6a2c'; // orange
-  if (s === 3) return '#ff9e1b'; // amber
-  if (s === 4) return '#e3c24b'; // gold
-  if (s === 5) return '#9fae6a'; // fading
-  if (s <= 7) return '#5f7f88'; // steel
-  return '#43596a'; // 8+ -- cool (many shots / safe)
+  if (s <= 1) return '#ff2323'; // one-shot -- vivid red (hottest)
+  if (s === 2) return '#ff6a15'; // orange
+  if (s === 3) return '#ffab10'; // amber
+  if (s === 4) return '#ffd633'; // gold / white-hot
+  if (s === 5) return '#4fc6e6'; // cyan (heat-map midpoint -> cool)
+  if (s <= 7) return '#2f95e6'; // blue
+  return '#2f63d6'; // 8+ -- deep blue (many shots / safe)
 }
 function fmtStk(v) { return v == null ? null : Math.round(v); }
 function fmtDmg(v) { return v == null ? null : Math.round(v * 10) / 10; }
@@ -79,75 +79,50 @@ function Toggle({ options, value, onChange, ariaLabel }) {
   );
 }
 
-// ANATOMICAL silhouette. A designed body OUTLINE (smooth curves -- head, rounded shoulders, tapered
-// torso, legs) split as two clip paths: the axial body+legs (bpvCore) and the two arms (bpvArms). Each
-// hit zone is a horizontal BAND painted as a full-width rect CLIPPED to the anatomy, so the fill takes
-// the body's real contour (like a reference hit-zone chart) instead of blocky primitives. Bands recolor
-// by shots-to-kill on toggle (CSS fill transition). Depth sheen + a crisp light edge + thin segment
-// separators = a designed, AAA-stats-screen look, not programmer art.
-const CORE_D = 'M120,18 C137,18 149,32 149,50 C149,65 140,75 130,79 L130,91 C152,94 168,104 173,124 '
-  + 'C179,156 170,196 162,236 C160,248 158,256 156,263 L150,279 L146,432 C146,441 140,446 132,446 '
-  + 'C126,446 123,441 123,432 L121,286 L119,286 L117,432 C117,441 114,446 108,446 C100,446 94,441 94,432 '
-  + 'L90,279 L84,263 C82,256 80,248 78,236 C70,196 61,156 67,124 C72,104 88,94 110,91 L110,79 '
-  + 'C100,75 91,65 91,50 C91,32 103,18 120,18 Z';
-const ARM_R_D = 'M176,110 C186,113 194,124 196,140 C198,172 194,208 189,240 C188,252 185,262 184,270 '
-  + 'C184,276 180,278 176,278 C172,278 168,276 168,270 C167,262 165,252 164,240 C160,208 168,172 170,140 '
-  + 'C171,126 173,117 176,110 Z';
-const ARM_L_D = 'M64,110 C54,113 46,124 44,140 C42,172 46,208 51,240 C52,252 55,262 56,270 '
-  + 'C56,276 60,278 64,278 C68,278 72,276 72,270 C73,262 75,252 76,240 C80,208 72,172 70,140 '
-  + 'C69,126 67,117 64,110 Z';
-// Each zone as a horizontal band {key, clip, y, h}; EXTREMITY appears twice (feet on core, hands on arms).
-const BANDS = [
-  { key: 'HEAD',       clip: 'core', y: 16,  h: 72 },
-  { key: 'CHEST',      clip: 'core', y: 88,  h: 64 },
-  { key: 'U STOMACH',  clip: 'core', y: 152, h: 40 },
-  { key: 'L STOMACH',  clip: 'core', y: 192, h: 38 },
-  { key: 'GROIN',      clip: 'core', y: 230, h: 48 },
-  { key: 'LOWER LIMB', clip: 'core', y: 278, h: 156 },
-  { key: 'EXTREMITY',  clip: 'core', y: 434, h: 30 },   // feet
-  { key: 'UPPER LIMB', clip: 'arms', y: 88,  h: 164 },  // arms
-  { key: 'EXTREMITY',  clip: 'arms', y: 252, h: 34 },   // hands
+// SILHOUETTE = the operator's reference figure (public/silhouette.jpg -- a sleek athletic tactical
+// mannequin: real shoulders/chest/waist, muscled arms-slightly-out, hands, boots) rendered in GRAYSCALE
+// as the base, then RECOLORED per hit-zone by our shots-to-kill data via mix-blend-mode:'color' (the
+// overlay supplies the hue/chroma, the figure supplies the luminance -> 3D form-shading is preserved).
+// This matches the reference's proportions + premium look EXACTLY (it IS the reference) while staying
+// data-driven -- our wedge. Zones are geometric bands in the image's 1008x1792 space; 'color' blend over
+// the black background stays black, so straight rects conform to the real silhouette. Torso zones are the
+// centre column; arms are the side columns (so arm != torso colour). Recolour transitions via CSS.
+const IMG_W = 1008, IMG_H = 1792;
+// {key, rects:[[x,y,w,h],...]} in image coordinates. EXTREMITY = boots (centre-bottom) + both hands (sides).
+const ZONE_REGIONS = [
+  { key: 'HEAD',       rects: [[398, 88, 212, 252]] },
+  { key: 'CHEST',      rects: [[350, 340, 310, 220]] },
+  { key: 'U STOMACH',  rects: [[360, 560, 290, 100]] },
+  { key: 'L STOMACH',  rects: [[372, 660, 266, 110]] },
+  { key: 'GROIN',      rects: [[356, 770, 296, 165]] },
+  { key: 'LOWER LIMB', rects: [[320, 935, 370, 620]] },
+  { key: 'UPPER LIMB', rects: [[128, 330, 222, 535], [660, 330, 224, 535]] },
+  { key: 'EXTREMITY',  rects: [[320, 1555, 370, 188], [150, 865, 200, 168], [660, 865, 200, 168]] },
 ];
-const CORE_BOUNDS = [88, 152, 192, 230, 278, 434];
 
 function Silhouette({ colorOf, hover, setHover }) {
-  const clipUrl = (c) => 'url(#bpv' + (c === 'core' ? 'Core' : 'Arms') + ')';
   return (
-    <svg viewBox="0 0 240 470" width="100%" style={{ maxWidth: 240, display: 'block', margin: '0 auto' }} role="img" aria-label="Body-part lethality diagram">
-      <defs>
-        <clipPath id="bpvCore"><path d={CORE_D} /></clipPath>
-        <clipPath id="bpvArms"><path d={ARM_R_D + ' ' + ARM_L_D} /></clipPath>
-        <linearGradient id="bpvSheen" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#fff" stopOpacity="0.12" />
-          <stop offset="0.5" stopColor="#fff" stopOpacity="0" />
-          <stop offset="1" stopColor="#000" stopOpacity="0.28" />
-        </linearGradient>
-      </defs>
-
-      {/* zone bands -- full-width rects clipped to the anatomy -> contoured fills */}
-      {BANDS.map((b, i) => (
-        <rect key={i} x="0" y={b.y} width="240" height={b.h} fill={colorOf(b.key)} className="bpv-zone"
-          clipPath={clipUrl(b.clip)} onMouseEnter={() => setHover(b.key)} onMouseLeave={() => setHover(null)} style={{ cursor: 'pointer' }} />
-      ))}
-
-      {/* thin segment separators (within the body) */}
-      {CORE_BOUNDS.map((y) => <rect key={y} x="0" y={y - 0.6} width="240" height="1.2" fill="rgba(8,9,12,0.42)" clipPath="url(#bpvCore)" pointerEvents="none" />)}
-      <rect x="0" y="251.4" width="240" height="1.2" fill="rgba(8,9,12,0.42)" clipPath="url(#bpvArms)" pointerEvents="none" />
-
-      {/* depth sheen */}
-      <rect x="0" y="0" width="240" height="470" fill="url(#bpvSheen)" clipPath="url(#bpvCore)" pointerEvents="none" />
-      <rect x="0" y="0" width="240" height="470" fill="url(#bpvSheen)" clipPath="url(#bpvArms)" pointerEvents="none" />
-
-      {/* hover highlight (wash the hovered zone's band[s]) */}
-      {hover && BANDS.filter((b) => b.key === hover).map((b, i) => (
-        <rect key={'h' + i} x="0" y={b.y} width="240" height={b.h} fill="rgba(255,255,255,0.16)" clipPath={clipUrl(b.clip)} pointerEvents="none" />
-      ))}
-
-      {/* crisp light edge (no harsh black outline) */}
-      <path d={CORE_D} fill="none" stroke="rgba(255,255,255,0.20)" strokeWidth="1.4" pointerEvents="none" />
-      <path d={ARM_R_D} fill="none" stroke="rgba(255,255,255,0.20)" strokeWidth="1.4" pointerEvents="none" />
-      <path d={ARM_L_D} fill="none" stroke="rgba(255,255,255,0.20)" strokeWidth="1.4" pointerEvents="none" />
-    </svg>
+    <div style={{ position: 'relative', width: '100%', maxWidth: 264, margin: '0 auto', isolation: 'isolate' }}>
+      {/* base: the reference figure, desaturated -> a grey muscled mannequin on the dark ground */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/silhouette.jpg" alt="" aria-hidden="true" draggable="false"
+        style={{ display: 'block', width: '100%', filter: 'grayscale(1) brightness(1.14) contrast(1.05)' }} />
+      {/* overlay: per-zone STK colour, blended so the figure's form shows through */}
+      <svg viewBox={'0 0 ' + IMG_W + ' ' + IMG_H} preserveAspectRatio="xMidYMid meet"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        role="img" aria-label="Body-part lethality diagram">
+        {ZONE_REGIONS.map((z) => z.rects.map((r, i) => (
+          <rect key={z.key + i} x={r[0]} y={r[1]} width={r[2]} height={r[3]} fill={colorOf(z.key)} className="bpv-zone"
+            style={{ mixBlendMode: 'color', cursor: 'pointer' }}
+            onMouseEnter={() => setHover(z.key)} onMouseLeave={() => setHover(null)} />
+        )))}
+        {/* hover: brighten the hovered zone's region(s) */}
+        {hover && ZONE_REGIONS.filter((z) => z.key === hover).flatMap((z) => z.rects.map((r, i) => (
+          <rect key={'h' + z.key + i} x={r[0]} y={r[1]} width={r[2]} height={r[3]} fill="#ffffff"
+            style={{ mixBlendMode: 'soft-light' }} opacity="0.5" pointerEvents="none" />
+        )))}
+      </svg>
+    </div>
   );
 }
 
