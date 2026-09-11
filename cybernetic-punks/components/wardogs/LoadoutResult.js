@@ -14,6 +14,16 @@
 import { useState } from 'react';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 import WeaponImage from '@/components/wardogs/WeaponImage';
+import BodyPartViz from '@/components/wardogs/BodyPartViz';
+
+// Playstyle -> the kill-map's DEFAULT ammo/armor profile (the advisor context), vs the weapon page's
+// neutral FMJ/tier-0 reader default. Aggressive = soft targets / HP / low armor; tactical = armored /
+// AP / high; balanced = FMJ / mid. The user can still toggle inside BodyPartViz.
+const PS_KILLMAP = {
+  aggressive: { ammo: 'HP', tier: 0 },
+  balanced: { ammo: 'FMJ', tier: 2 },
+  tactical: { ammo: 'AP', tier: 4 },
+};
 
 const A = 'var(--accent)';
 const AG = 'var(--accent-glow)';
@@ -278,6 +288,26 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
           </div>
         </div>
       )}
+
+      {/* WHERE TO AIM -- the recommended primary's body-part kill-map (shared BodyPartViz, the SAME
+          component as the weapon page), defaulted to the playstyle's ammo/armor profile. Actionable
+          advice a reference table can't give. Renders only when the pick's ballistics were loaded. */}
+      {pick && det.primary && Array.isArray(det.primary.ballistics) && det.primary.ballistics.length > 0 && (() => {
+        const ps = PS_KILLMAP[(meta && meta.playstyle) || (queried && queried.playstyle)] || PS_KILLMAP.balanced;
+        return (
+          <div className="ls-up" style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>◢ WHERE TO AIM — {pick.weapon_name}</div>
+            <BodyPartViz
+              matrix={det.primary.ballistics}
+              weaponName={pick.weapon_name}
+              defaultAmmo={ps.ammo}
+              defaultTier={ps.tier}
+              tier={prov.tier}
+              sourceLabel={prov.sources && prov.sources[0]}
+            />
+          </div>
+        );
+      })()}
 
       {(analysis || !streaming) && (
         <div style={{ background: CARD, border: '1px solid ' + LINE, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '20px 22px', marginBottom: 14 }}>

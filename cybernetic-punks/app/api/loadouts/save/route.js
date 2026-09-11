@@ -59,8 +59,8 @@ export async function POST(req) {
     const analysis = typeof body.analysis === 'string' ? body.analysis.slice(0, 8000) : '';
 
     // server-authoritative structured build (identical assembly to the live tool)
-    const { weapons, ttk } = await loadLoadoutContext();
-    const assembled = assembleLoadout({ weapons, ttk }, { careerLevel, budget, playstyle: playstyleKey });
+    const { weapons, ttk, ballistics } = await loadLoadoutContext();
+    const assembled = assembleLoadout({ weapons, ttk, ballistics }, { careerLevel, budget, playstyle: playstyleKey });
     if (!assembled.recommendation || !assembled.recommendation.primary) {
       return Response.json({ error: 'Nothing to save -- no valid loadout.' }, { status: 400 });
     }

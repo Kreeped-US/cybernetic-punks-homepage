@@ -16,7 +16,7 @@ const AMMOS = ['FMJ', 'HP', 'AP'];
 
 // Per-pick DETAIL from the already-loaded stores -- the armor-tier TTK curve at the pick's ammo, the
 // FMJ/HP/AP comparison, and weapon meta. (Extracted verbatim from the loadouts route.)
-export function pickDetail(pk, weapons, ttk) {
+export function pickDetail(pk, weapons, ttk, ballistics = []) {
   if (!pk || !pk.weapon_name) return null;
   const w = weapons.find((x) => x.name === pk.weapon_name) || {};
   const ttkAt = (ammo, tier) => {
@@ -31,18 +31,21 @@ export function pickDetail(pk, weapons, ttk) {
     weapon_class: w.category || w.weapon_type || null,
     armor_curve: ARMOR_TIERS.map((t) => ({ tier: t, ttk_ms: ttkAt(pk.ammo, t) })),
     ammo_compare: AMMOS.map((a) => ({ ammo: a, ttk_ms: ttkAt(a, 0) })),
+    // The recommended weapon's body-part matrix (BodyPartViz fuel), sliced from the passed-in
+    // ballistics. Empty when ballistics weren't loaded (e.g. the type hubs) -> no kill-map rendered.
+    ballistics: (ballistics || []).filter((r) => r && r.weapon_name === pk.weapon_name),
   };
 }
 
 // Assemble the full structured build from the loaded stores + the runner inputs. Pure over its inputs
 // (no DB, no LLM) -- the caller loads {weapons, ttk} (loadLoadoutContext) and passes them in.
-export function assembleLoadout({ weapons = [], ttk = [] }, { careerLevel = null, budget = null, playstyle } = {}) {
+export function assembleLoadout({ weapons = [], ttk = [], ballistics = [] }, { careerLevel = null, budget = null, playstyle } = {}) {
   const playstyleKey = PLAYSTYLES[playstyle] ? playstyle : DEFAULT_PLAYSTYLE;
   const player = careerLevel != null ? { careerLevel } : null;
   const solved = solveLoadout({ weapons, ttk, player, budget, playstyle: playstyleKey });
   const detail = {
-    primary: pickDetail(solved.recommendation && solved.recommendation.primary, weapons, ttk),
-    secondary: pickDetail(solved.recommendation && solved.recommendation.secondary, weapons, ttk),
+    primary: pickDetail(solved.recommendation && solved.recommendation.primary, weapons, ttk, ballistics),
+    secondary: pickDetail(solved.recommendation && solved.recommendation.secondary, weapons, ttk, ballistics),
   };
   return {
     steps: solved.steps,
