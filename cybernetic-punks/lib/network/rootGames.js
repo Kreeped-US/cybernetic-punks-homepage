@@ -81,7 +81,8 @@ export const ROOT_GAMES = [
       onlineSource: 'steam',         // which live_stats source counts as "online"
       feed: { gameSlug: 'marathon' }, // feed_items scope for this game's column
       // Article URL builder for a pulse row (config-level, so the column stays
-      // game-agnostic). Marathon articles live at unprefixed /intel/<slug>.
+      // game-agnostic). Marathon articles live at /marathon/intel/<slug> (post the
+      // Ruling-2 route migration; the old unprefixed /intel/<slug> now 308s here).
       articleHref: function (slug) { return '/marathon/intel/' + slug; },
     },
   },

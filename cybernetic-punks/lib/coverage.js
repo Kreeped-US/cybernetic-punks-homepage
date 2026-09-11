@@ -81,22 +81,22 @@ const CANONICAL_PAIRS = [
   },
   {
     entity_type: 'shell', facet: 'guide',
-    route: function (slug) { return '/shells/' + slug; },
+    route: function (slug) { return '/marathon/shells/' + slug; },
     note: 'Shell entity/stat reference.',
   },
   {
     entity_type: 'mod_slot', facet: 'guide',
-    route: function (slug) { return '/mods/' + slug; },
+    route: function (slug) { return '/marathon/mods/' + slug; },
     note: 'The mod-guide consolidation canonical (Increment 5).',
   },
   {
     entity_type: 'weapon', facet: 'guide',
-    route: function (slug) { return '/weapons/' + slug; },
+    route: function (slug) { return '/marathon/weapons/' + slug; },
     note: 'Weapon entity reference.',
   },
   {
     entity_type: 'map', facet: 'guide',
-    route: function (slug) { return '/maps/' + slug; },
+    route: function (slug) { return '/marathon/maps/' + slug; },
     note: 'Map entity reference.',
   },
 ];

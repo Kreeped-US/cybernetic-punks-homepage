@@ -6,7 +6,7 @@
 // A discourse article is a feed_items row VANTAGE produced from a
 // directive_type='discourse' directive (tagged 'discourse'). Its canonical HOME
 // is its SUBJECT game (feed_items.game_slug):
-//   - marathon -> /intel/<slug>            (the Marathon article path)
+//   - marathon -> /marathon/intel/<slug>   (the Marathon article path, post Ruling-2 migration)
 //   - dmz      -> /dmz/discourse/<slug>    (the DMZ Discourse section)
 // Both render via the game-neutral components/DiscourseArticle renderer, branched
 // in AHEAD of each game's own template.

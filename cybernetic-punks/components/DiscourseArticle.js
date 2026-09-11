@@ -22,7 +22,7 @@ import ViewTracker from '@/components/ViewTracker';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody } from '@/lib/dmz/articleContent';
-import { discourseHome } from '@/lib/discourse';
+import { discourseHome, discourseHref } from '@/lib/discourse';
 
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
 var EXO = 'var(--font-orbitron), system-ui, sans-serif';
@@ -159,13 +159,14 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
   var ci = item.creator_info || {};
   var srcLabel = sourceLabelFor(item);
   var creatorProfileLinks = creatorLinks(ci); // visible follow-chips (populated links only)
-  // Canonical for the JSON-LD below, by subject game: marathon -> /intel/, dmz ->
-  // /dmz/discourse/ (existing routes, preserved exactly). An unknown slug returns null
-  // (mirrors discourseHref/discourseHome fail-safe) so we never emit a WRONG /intel/
-  // canonical for a non-marathon piece; the JSON-LD then omits url + mainEntityOfPage.
-  var canonical = item.game_slug === 'dmz' ? (CANONICAL_BASE + '/dmz/discourse/' + item.slug)
-    : item.game_slug === 'marathon' ? (CANONICAL_BASE + '/intel/' + item.slug)
-    : null;
+  // Canonical for the JSON-LD below, from the SHARED discourseHref() helper (the one
+  // source of a discourse row's home URL): marathon -> /marathon/intel/<slug>, dmz ->
+  // /dmz/discourse/<slug>. Using the helper keeps the JSON-LD url/@id in lockstep with
+  // rel=canonical (both new-structure, post the Ruling-2 migration) and with the
+  // breadcrumb/home links -- no drift. An unknown slug returns null (helper fail-safe),
+  // so the JSON-LD then omits url + mainEntityOfPage rather than emit a wrong canonical.
+  var href = discourseHref(item);
+  var canonical = href ? (CANONICAL_BASE + href) : null;
 
   // Source-bar text: attribute to the vetted creator + platform when known.
   var sourcedText = ci.name

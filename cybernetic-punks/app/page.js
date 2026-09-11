@@ -119,7 +119,11 @@ async function getNetworkPulse() {
         .order('created_at', { ascending: false })
         .limit(4);
       feeds[g.slug] = (res.data || []).map(function(it) {
-        var href = g.pulse.articleHref ? g.pulse.articleHref(it.slug) : ('/intel/' + it.slug);
+        // Every ROOT_GAMES entry defines pulse.articleHref (each returns the new
+        // /<game>/... structure). A game that omits it drops its rows here (null ->
+        // filtered below) rather than emit a dead root /intel/ URL -- a fail-safe,
+        // mirroring the per-game builders' own null-on-unmapped-slug pattern.
+        var href = g.pulse.articleHref ? g.pulse.articleHref(it.slug) : null;
         return { headline: it.headline, slug: it.slug, editor: it.editor, when: timeAgo(it.created_at), href: href };
       }).filter(function(it) { return it.href; });
     } catch (e) {
