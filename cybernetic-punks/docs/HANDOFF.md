@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - BodyPartViz silhouette redesign -- sleek, from the Grok reference (commit 19ea25b)
+
+- The original in-code silhouette (geometric primitives) + two hand-authored SVG attempts read as chunky/amateur ("crash-test dummy"). SOLUTION: use the operator's Grok-generated athletic figure (public/silhouette.jpg) as the base -- grayscale (keeps musculature/shading/form) -- recolored per hit-zone by shots-to-kill via mix-blend-mode:color (overlay = hue from the data, figure = luminance -> 3D form preserved). It IS the sleek reference figure AND fully data-driven -- got both (not the tradeoff first assumed).
+- LOOK: sleek AAA-stats-screen figure; FMJ/tier-0 default (head red 1-shot -> torso orange -> limbs gold -> extremities blue); HP/tier-2 toggle dramatically recolors (armored torso -> blue w/ armor-break, unarmored groin one-shots red) -- the ammo/armor insight on a premium figure. Crisp red->blue heat ramp.
+- KEPT INTACT (no regression): crawlable STK table (SEO substance -- the figure is aria-hidden/decorative, the table is the ranking content), ammo/armor toggles, attributed provenance, no-data graceful (launchers), mobile-safe. Lands on BOTH the weapon detail page AND the advisor kill-map (shared BodyPartViz).
+- NOTES: raster asset (silhouette.jpg, 316KB) -- a generic heat-mannequin reused for all 33 (the body's constant; only the data-coloring changes per weapon -- reasonable, one asset serves all). mix-blend-mode:color = evergreen browsers (negligible fallback). Zones = geometric bands over the figure (torso center / arms sides / extremities). Earlier hand-authored attempt 988ad34 fully superseded (no dead code).
+- ARC: the sleek data-driven body-part viz completes the weapon-page/advisor visual. NEXT: economy-data pass (cost-aware advisor + B2 grid).
+
+---
 ## 2026-09-11 - Wardogs advisor kill-map -- BodyPartViz reused in the recommendation (commit 729fcb6)
 
 - Closes "one component, two callers": the same BodyPartViz now renders the RECOMMENDED weapon's kill-map in the loadout recommendation ("WHERE TO AIM -- [weapon]"), PLAYSTYLE-DEFAULTED (aggressive->HP/tier-0, balanced->FMJ/tier-2, tactical->AP/tier-4) -- vs the weapon page's neutral FMJ/tier-0. The advisor now shows what to run AND where to aim, in the playstyle's context -- actionable synthesis a reference table can't give.
