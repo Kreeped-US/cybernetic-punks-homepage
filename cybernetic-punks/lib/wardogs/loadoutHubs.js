@@ -18,9 +18,18 @@
 // `label` = title-case display (H1/board headers). `lower` = the natural in-PROSE form for THE READ
 // and the hero lead -- lowercased for real words ("assault rifle") but kept as the acronym for SMG
 // (never "best smg loadout"). `plural` = prose plural. `weaponType` MUST match weapon_stats.weapon_type.
+//
+// SPECIALIST CONTEXT (optional, class-aware): `specialists` names weapons that top the TTK board but
+// are NOT what a searcher for this class typically wants (e.g. the AMR 50 tops snipers on cadence but
+// is a heavy anti-materiel rifle). When the #1-by-TTK is a specialist, THE READ leads with it honestly
+// (it IS the fastest TTK -- the board is NOT re-ranked), flags it as a specialist, and hands the reader
+// the top CONVENTIONAL pick; the board + hero card show `specialistNote` as an asterisk. Absent on the
+// other hubs -> the normal front-loaded READ. This keeps the shared pattern honest AND useful.
 export const WEAPON_TYPE_HUBS = [
   { slug: 'assault-rifle', weaponType: 'Assault Rifle', label: 'Assault Rifle', lower: 'assault rifle', plural: 'assault rifles', shipped: true },
-  { slug: 'sniper-rifle',  weaponType: 'Sniper Rifle',  label: 'Sniper Rifle',  lower: 'sniper rifle',  plural: 'sniper rifles',  shipped: true },
+  { slug: 'sniper-rifle',  weaponType: 'Sniper Rifle',  label: 'Sniper Rifle',  lower: 'sniper rifle',  plural: 'sniper rifles',  shipped: true,
+    specialists: ['AMR 50'],
+    specialistNote: 'a heavy .50-cal anti-materiel rifle: the fastest on the trigger, but slow to handle and situational -- not the conventional sniper most players run.' },
   { slug: 'smg',           weaponType: 'Submachine Gun', label: 'SMG',          lower: 'SMG',           plural: 'SMGs',           shipped: true },
   { slug: 'sidearm',       weaponType: 'Sidearm',        label: 'Sidearm',      lower: 'sidearm',       plural: 'sidearms',       shipped: true },
   { slug: 'marksman-rifle', weaponType: 'Marksman Rifle', label: 'Marksman Rifle', lower: 'marksman rifle', plural: 'marksman rifles', shipped: true },

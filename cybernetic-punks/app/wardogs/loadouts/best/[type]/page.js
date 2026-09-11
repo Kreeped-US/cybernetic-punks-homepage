@@ -63,6 +63,37 @@ const getHubData = cache(async function getHubData(slug) {
 function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
   if (!pick) return '';
   const paras = [];
+  const specialists = hub.specialists || [];
+  const pickIsSpecialist = specialists.indexOf(pick.weapon_name) !== -1;
+  const conventional = pickIsSpecialist
+    ? (ranked.find((c) => specialists.indexOf(c.weapon_name) === -1) || null)
+    : null;
+
+  if (pickIsSpecialist) {
+    // SPECIALIST #1 (e.g. sniper -> AMR 50): lead with the true fastest-TTK honestly, flag it as a
+    // specialist, then hand the reader the top CONVENTIONAL pick. The board is NOT re-ranked.
+    let lead = 'The fastest time-to-kill among ' + hub.plural + ' in Wardogs belongs to the ' + pick.weapon_name;
+    if (pick.weighted_ttk_ms != null) lead += ' -- about ' + pick.weighted_ttk_ms + 'ms on a balanced profile';
+    lead += '. But the ' + pick.weapon_name + ' is ' + (hub.specialistNote || 'a situational specialist, not the everyday pick') ;
+    paras.push(lead);
+    if (conventional) {
+      let prac = 'For the conventional ' + hub.lower + ' you would actually run in most fights, the '
+        + conventional.weapon_name + ' is the fastest-TTK standard ' + hub.lower;
+      if (conventional.weighted_ttk_ms != null) prac += ' at ' + conventional.weighted_ttk_ms + 'ms';
+      prac += ' -- that is the pick this guide would hand most players.';
+      paras.push(prac);
+    }
+    paras.push('The full board below scores ' + ranked.length + ' ' + hub.plural
+      + ' on measured time-to-kill from community ballistics testing, ranked honestly by raw kill speed -- '
+      + 'the ' + pick.weapon_name + ' really is first on the trigger; the context is what it costs you to carry.');
+    paras.push('CAVEAT: Time-to-kill measures raw killing speed at the trigger. It does not weigh reload time, '
+      + 'effective range, recoil control, or handling -- which is exactly why the fastest ' + hub.lower + ' on paper '
+      + 'is not always the one you should run. These figures are attributed to Swoleguy’s testing, not yet '
+      + 'Bulkhead-official, and prices are not published, so this ranks on effectiveness alone -- budget filtering '
+      + 'switches on when official numbers land.');
+    return paras.join('\n\n');
+  }
+
   let lead = 'The best ' + hub.lower + ' loadout in Wardogs right now is the ' + pick.weapon_name
     + '. It posts the fastest measured time-to-kill of any ' + hub.lower + ' in the game';
   if (pick.weighted_ttk_ms != null) lead += ' -- about ' + pick.weighted_ttk_ms + 'ms on a balanced profile';

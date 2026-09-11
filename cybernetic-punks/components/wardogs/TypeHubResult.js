@@ -41,6 +41,13 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
   const gapMs = pick && runnerUp && pick.weighted_ttk_ms != null && runnerUp.weighted_ttk_ms != null
     ? Math.round(Math.abs(runnerUp.weighted_ttk_ms - pick.weighted_ttk_ms)) : null;
 
+  // Specialist context (class-aware, e.g. sniper -> AMR 50): flag the specialist on the pick card +
+  // the board row, and footnote it under the board. The board is NOT re-ranked (honest); the note does
+  // the work. Absent on the other hubs -> nothing renders.
+  const specialists = (hub && hub.specialists) || [];
+  const pickNote = pick && specialists.indexOf(pick.weapon_name) !== -1 ? hub.specialistNote : null;
+  const boardHasSpecialist = ranked.some((c) => specialists.indexOf(c.weapon_name) !== -1);
+
   const wrap = { background: PAGE, color: '#fff', fontFamily: 'system-ui, sans-serif', padding: '8px 24px 40px' };
   const inner = { maxWidth: 1000, margin: '0 auto' };
 
@@ -58,7 +65,7 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-            <SlotCard label={hub.label.toUpperCase()} pick={rec.primary} detail={det.primary} hero rank={1} total={ranked.length} gapMs={gapMs} runnerUp={runnerUp} />
+            <SlotCard label={hub.label.toUpperCase()} pick={rec.primary} detail={det.primary} hero rank={1} total={ranked.length} gapMs={gapMs} runnerUp={runnerUp} note={pickNote} />
             {/* Runner-up alongside the pick -- fills the hero row and gives the head-to-head context
                 a category page wants (the #2 the pick is measured against). */}
             {runnerUp && <SlotCard label={'RUNNER-UP'} pick={runnerUp} detail={det.runnerUp} rank={2} total={ranked.length} />}
@@ -86,7 +93,13 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
               {pick.weapon_name} kills <b style={{ color: A }}>{gapMs}ms faster</b> than {runnerUp.weapon_name}, the next best {hub.lower || hub.label.toLowerCase()}.
             </div>
           )}
-          <RankTable rows={ranked} pickName={pick && pick.weapon_name} />
+          <RankTable rows={ranked} pickName={pick && pick.weapon_name} noteNames={specialists} />
+          {boardHasSpecialist && hub.specialistNote && (
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + LINE, fontSize: 11, lineHeight: 1.5, color: T2 }}>
+              <span style={{ color: A, fontWeight: 800, marginRight: 4 }}>*</span>
+              {specialists.filter((s) => ranked.some((c) => c.weapon_name === s)).join(', ')} &mdash; {hub.specialistNote}
+            </div>
+          )}
         </div>
       )}
 

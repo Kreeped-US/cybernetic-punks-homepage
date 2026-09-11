@@ -93,12 +93,13 @@ export function Chip({ children, accent }) {
   );
 }
 
-export function RankTable({ rows, pickName }) {
+export function RankTable({ rows, pickName, noteNames = [], noteSymbol = '*' }) {
   const maxScore = Math.max(...rows.map((c) => c.score || 0), 1);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
       {rows.map((c, i) => {
         const isPick = c.weapon_name === pickName;
+        const flagged = noteNames.indexOf(c.weapon_name) !== -1;
         const pctW = Math.max(5, Math.round(((c.score || 0) / maxScore) * 100));
         return (
           <div key={c.weapon_name} style={{ display: 'grid', gridTemplateColumns: '26px 1fr 70px', alignItems: 'center', gap: 10 }}>
@@ -107,6 +108,7 @@ export function RankTable({ rows, pickName }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                 <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: isPick ? 800 : 600, color: isPick ? '#fff' : T2 }}>
                   {isPick && <span style={{ color: A, marginRight: 5 }}>▸</span>}{c.weapon_name}
+                  {flagged && <span style={{ color: A, marginLeft: 4, fontWeight: 800 }}>{noteSymbol}</span>}
                 </span>
               </div>
               <div style={{ height: 8, background: PAGE, borderRadius: 4, overflow: 'hidden' }}>
@@ -160,7 +162,7 @@ function Stat({ label, value, hero, muted }) {
   );
 }
 
-export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp }) {
+export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp, note }) {
   if (!pick) {
     return (
       <div style={{ background: PAGE, border: '1px solid ' + LINE, borderRadius: 3, padding: '16px 18px' }}>
@@ -196,6 +198,11 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
       {hero && gapMs != null && runnerUp && (
         <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + LSUB, fontSize: 11, color: T2 }}>
           Edges <b style={{ color: T1 }}>{runnerUp.weapon_name}</b> by <b style={{ color: A }}>{gapMs}ms</b>
+        </div>
+      )}
+      {note && (
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + LSUB, fontSize: 11, lineHeight: 1.5, color: T2 }}>
+          <span style={{ color: A, fontWeight: 800, marginRight: 4 }}>*</span>{note}
         </div>
       )}
     </div>
