@@ -318,15 +318,17 @@ export function inheritProvenance({ ttkRows = [], weapons = [], budgetApplied = 
   }
   if (tiers.length === 0) tiers.push('attributed'); // effectiveness basis assumed attributed if unspecified
   if (budgetApplied) {
-    // prices, when used, are Bulkhead-official -- but the floor rule keeps the output at attributed.
+    // Prices are COMMUNITY-ATTRIBUTED (no Bulkhead per-weapon price list exists) -- the output stays at
+    // the attributed floor, never laundered as official. FUTURE: when Bulkhead publishes official prices,
+    // re-tier per value via a credit_cost_tier column and read it here instead of assuming attributed.
     for (const w of asArray(weapons)) {
-      if (num(w.credit_cost) != null) tiers.push('official');
+      if (num(w.credit_cost) != null) tiers.push('attributed');
     }
   }
   return {
     tier: floorTier(tiers),
     basis: 'community-tested ballistics (Swoleguy), attributed'
-      + (budgetApplied ? ' + official Season 1 prices' : ''),
+      + (budgetApplied ? ' + community-attributed prices' : ''),
     sources: Array.from(sources),
   };
 }

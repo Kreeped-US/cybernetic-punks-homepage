@@ -217,11 +217,12 @@ test('provenance inheritance: attributed ballistics -> attributed recommendation
   assert.ok(prov.sources.length >= 1, 'the attributed source is carried through');
 });
 
-test('provenance inheritance: adding OFFICIAL prices still floors to attributed (effectiveness is attributed)', () => {
+test('provenance inheritance: community-attributed prices stay attributed and are NOT laundered as official', () => {
   const weapons = [{ name: 'Test Soft Rifle', credit_cost: 500 }];
   const prov = inheritProvenance({ ttkRows: TTK, weapons, budgetApplied: true });
-  assert.equal(prov.tier, 'attributed', 'official price + attributed effectiveness -> floor is attributed');
-  assert.match(prov.basis, /official Season 1 prices/);
+  assert.equal(prov.tier, 'attributed', 'attributed price + attributed effectiveness -> floor is attributed');
+  assert.match(prov.basis, /community-attributed prices/);
+  assert.doesNotMatch(prov.basis, /official/, 'prices must never be laundered as official');
 });
 
 // --- the public entry point: solveLoadout -----------------------------------
