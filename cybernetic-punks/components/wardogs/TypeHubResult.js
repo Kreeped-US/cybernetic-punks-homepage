@@ -83,7 +83,7 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
           </div>
           {gapMs != null && runnerUp && pick && (
             <div style={{ fontSize: 12, color: T2, marginBottom: 14 }}>
-              {pick.weapon_name} kills <b style={{ color: A }}>{gapMs}ms faster</b> than {runnerUp.weapon_name}, the next best {hub.label.toLowerCase()}.
+              {pick.weapon_name} kills <b style={{ color: A }}>{gapMs}ms faster</b> than {runnerUp.weapon_name}, the next best {hub.lower || hub.label.toLowerCase()}.
             </div>
           )}
           <RankTable rows={ranked} pickName={pick && pick.weapon_name} />

@@ -33,6 +33,20 @@ const getHubData = cache(async function getHubData(slug) {
   const { weapons, ttk } = await getContext();
   const scoped = (weapons || []).filter((w) => w.weapon_type === hub.weaponType);
   const meta = assembleLoadout({ weapons: scoped, ttk }, { careerLevel: null, budget: null, playstyle: HUB_PLAYSTYLE });
+
+  // SLOT NORMALIZATION: solveLoadout buckets weapons by slot (slotOf) -- pistols/sidearms land in
+  // 'secondary', everything else in 'primary'. A TYPE hub is a single weapon_type, so its whole
+  // class sits in ONE slot; for a sidearm hub that slot is 'secondary'. Remap the occupied slot to
+  // 'primary' so the render (and the runner-up detail below) reads one slot uniformly across types.
+  if (!((meta.candidates.primary || []).some((c) => c.rankable)) && (meta.candidates.secondary || []).some((c) => c.rankable)) {
+    meta.candidates.primary = meta.candidates.secondary;
+    meta.candidates.secondary = [];
+    meta.recommendation.primary = meta.recommendation.secondary || null;
+    meta.recommendation.secondary = null;
+    meta.detail.primary = meta.detail.secondary || null;
+    meta.detail.secondary = null;
+  }
+
   const ranked = ((meta.candidates && meta.candidates.primary) || []).filter((c) => c.rankable && c.score != null);
   const pick = (meta.recommendation && meta.recommendation.primary) || null;
   const runnerUp = ranked.filter((c) => !pick || c.weapon_name !== pick.weapon_name)[0] || null;
@@ -49,8 +63,8 @@ const getHubData = cache(async function getHubData(slug) {
 function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
   if (!pick) return '';
   const paras = [];
-  let lead = 'The best ' + hub.label.toLowerCase() + ' loadout in Wardogs right now is the ' + pick.weapon_name
-    + '. It posts the fastest measured time-to-kill of any ' + hub.label.toLowerCase() + ' in the game';
+  let lead = 'The best ' + hub.lower + ' loadout in Wardogs right now is the ' + pick.weapon_name
+    + '. It posts the fastest measured time-to-kill of any ' + hub.lower + ' in the game';
   if (pick.weighted_ttk_ms != null) lead += ' -- about ' + pick.weighted_ttk_ms + 'ms on a balanced profile';
   if (runnerUp && gapMs != null) lead += ', ' + gapMs + 'ms clear of the ' + runnerUp.weapon_name + ', the next-fastest';
   lead += '.';
@@ -72,15 +86,15 @@ export async function generateMetadata({ params }) {
   if (!data) return { title: 'Loadout guide not found', robots: { index: false, follow: false } };
   const { hub, pick } = data;
   const title = 'Best ' + hub.label + ' Loadout in Wardogs - Ranked by TTK';
-  const description = 'The best ' + hub.label.toLowerCase() + ' loadout in Wardogs, '
+  const description = 'The best ' + hub.lower + ' loadout in Wardogs, '
     + (pick ? 'led by the ' + pick.weapon_name + ', ' : '')
     + 'ranked by measured time-to-kill from community ballistics testing. See the full board, per-weapon TTK, and the reasoning.';
   const url = BASE + '/wardogs/loadouts/best/' + hub.slug;
   return {
     title: { absolute: title + ' | Cybernetic Punks' },
     description,
-    keywords: 'best ' + hub.label.toLowerCase() + ' Wardogs, Wardogs ' + hub.label.toLowerCase() + ' loadout, best Wardogs '
-      + hub.plural + ', Wardogs ' + hub.label.toLowerCase() + ' TTK, Wardogs ' + hub.label.toLowerCase() + ' tier list',
+    keywords: 'best ' + hub.lower + ' Wardogs, Wardogs ' + hub.lower + ' loadout, best Wardogs '
+      + hub.plural + ', Wardogs ' + hub.lower + ' TTK, Wardogs ' + hub.lower + ' tier list',
     // Indexable: inherits index from the /wardogs subtree (wardogs.indexable). follow always.
     alternates: { canonical: url },
     openGraph: { title, description, url, siteName: 'Cybernetic Punks', type: 'article' },
@@ -144,9 +158,9 @@ export default async function TypeHubPage({ params }) {
           </h1>
 
           <p style={{ fontSize: 'clamp(15px, 1.6vw, 17px)', color: 'var(--text-primary)', lineHeight: 1.6, maxWidth: 730, margin: '0 0 20px', fontWeight: 500 }}>
-            The fastest-killing {hub.label.toLowerCase()} in Wardogs is the{' '}
+            The fastest-killing {hub.lower} in Wardogs is the{' '}
             <span style={{ color: 'var(--accent)', fontWeight: 800 }}>{pick.weapon_name}</span> &mdash; ranked here by
-            measured <span style={{ color: 'var(--accent)', fontWeight: 800 }}>time-to-kill</span> across every {hub.label.toLowerCase()} in
+            measured <span style={{ color: 'var(--accent)', fontWeight: 800 }}>time-to-kill</span> across every {hub.lower} in
             the game, with the reasoning and the full board below. Fastest TTK, not an unqualified &ldquo;best gun.&rdquo;
           </p>
 

@@ -15,12 +15,15 @@
 // `weaponType` MUST match weapon_stats.weapon_type verbatim (that column is the only populated taxonomy
 // axis today -- class/budget/level are null, so B2 is deferred to the economy-data pass).
 
+// `label` = title-case display (H1/board headers). `lower` = the natural in-PROSE form for THE READ
+// and the hero lead -- lowercased for real words ("assault rifle") but kept as the acronym for SMG
+// (never "best smg loadout"). `plural` = prose plural. `weaponType` MUST match weapon_stats.weapon_type.
 export const WEAPON_TYPE_HUBS = [
-  { slug: 'assault-rifle', weaponType: 'Assault Rifle', label: 'Assault Rifle', plural: 'assault rifles', shipped: true },
-  { slug: 'sniper-rifle',  weaponType: 'Sniper Rifle',  label: 'Sniper Rifle',  plural: 'sniper rifles',  shipped: false },
-  { slug: 'smg',           weaponType: 'Submachine Gun', label: 'SMG',          plural: 'SMGs',           shipped: false },
-  { slug: 'sidearm',       weaponType: 'Sidearm',        label: 'Sidearm',      plural: 'sidearms',       shipped: false },
-  { slug: 'marksman-rifle', weaponType: 'Marksman Rifle', label: 'Marksman Rifle', plural: 'marksman rifles', shipped: false },
+  { slug: 'assault-rifle', weaponType: 'Assault Rifle', label: 'Assault Rifle', lower: 'assault rifle', plural: 'assault rifles', shipped: true },
+  { slug: 'sniper-rifle',  weaponType: 'Sniper Rifle',  label: 'Sniper Rifle',  lower: 'sniper rifle',  plural: 'sniper rifles',  shipped: true },
+  { slug: 'smg',           weaponType: 'Submachine Gun', label: 'SMG',          lower: 'SMG',           plural: 'SMGs',           shipped: true },
+  { slug: 'sidearm',       weaponType: 'Sidearm',        label: 'Sidearm',      lower: 'sidearm',       plural: 'sidearms',       shipped: true },
+  { slug: 'marksman-rifle', weaponType: 'Marksman Rifle', label: 'Marksman Rifle', lower: 'marksman rifle', plural: 'marksman rifles', shipped: true },
 ];
 
 // The hubs that are LIVE + indexable now (drives the route's notFound gate, generateStaticParams, the
