@@ -39,10 +39,10 @@ export function pickDetail(pk, weapons, ttk, ballistics = []) {
 
 // Assemble the full structured build from the loaded stores + the runner inputs. Pure over its inputs
 // (no DB, no LLM) -- the caller loads {weapons, ttk} (loadLoadoutContext) and passes them in.
-export function assembleLoadout({ weapons = [], ttk = [], ballistics = [] }, { careerLevel = null, budget = null, playstyle } = {}) {
+export function assembleLoadout({ weapons = [], ttk = [], ballistics = [], ammo = [] }, { careerLevel = null, budget = null, playstyle } = {}) {
   const playstyleKey = PLAYSTYLES[playstyle] ? playstyle : DEFAULT_PLAYSTYLE;
   const player = careerLevel != null ? { careerLevel } : null;
-  const solved = solveLoadout({ weapons, ttk, player, budget, playstyle: playstyleKey });
+  const solved = solveLoadout({ weapons, ttk, ammo, player, budget, playstyle: playstyleKey });
   const detail = {
     primary: pickDetail(solved.recommendation && solved.recommendation.primary, weapons, ttk, ballistics),
     secondary: pickDetail(solved.recommendation && solved.recommendation.secondary, weapons, ttk, ballistics),

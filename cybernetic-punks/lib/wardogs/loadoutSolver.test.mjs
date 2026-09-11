@@ -22,7 +22,78 @@ import {
   ONE_SHOT_FALLBACK_INTERVAL_MS,
   PLAYSTYLES,
   TIER_ORDER,
+  indexAmmo,
+  ammoCostFor,
+  selectAmmo,
 } from './loadoutSolver.js';
+
+// --- ammo cost (E1) ---------------------------------------------------------
+// Synthetic ammo rows (clearly fake). caliber 'test-9' has FMJ/HP/AP; 'test-rkt' single-type.
+const AMMO = [
+  { caliber: 'test-9', ammo_type: 'FMJ', cost_per_round: 10, career_gate: null },
+  { caliber: 'test-9', ammo_type: 'HP',  cost_per_round: 30, career_gate: null },
+  { caliber: 'test-9', ammo_type: 'AP',  cost_per_round: 45, career_gate: 83 }, // gated
+  { caliber: 'test-rkt', ammo_type: 'Standard', cost_per_round: 500, career_gate: null },
+];
+
+test('ammo cost: same gun costs MORE with HP than FMJ (mag x 3 estimate)', () => {
+  const idx = indexAmmo(AMMO);
+  const gun = { name: 'G', ammo_type: 'test-9', weapon_type: 'Submachine Gun', magazine_size: 30 };
+  const fmj = ammoCostFor(gun, 'FMJ', idx, 99); // 30*3*10 = 900
+  const hp = ammoCostFor(gun, 'HP', idx, 99);  // 30*3*30 = 2700
+  assert.equal(fmj.ammoCost, 900);
+  assert.equal(hp.ammoCost, 2700);
+  assert.ok(hp.ammoCost > fmj.ammoCost, 'HP costs more per life than FMJ');
+  assert.equal(fmj.estimate, true);
+});
+
+test('ammo cost: null magazine_size -> per-category flat fallback (Sniper=5 x 3)', () => {
+  const idx = indexAmmo(AMMO);
+  const sniper = { name: 'S', ammo_type: 'test-9', weapon_type: 'Sniper Rifle', magazine_size: null };
+  assert.equal(ammoCostFor(sniper, 'FMJ', idx, 99).ammoCost, 5 * 3 * 10); // 150
+});
+
+test('ammo gate: below the gate, AP downgrades to FMJ and flags the gate level', () => {
+  const idx = indexAmmo(AMMO);
+  const gun = { name: 'G', ammo_type: 'test-9', weapon_type: 'Submachine Gun', magazine_size: 30 };
+  const low = ammoCostFor(gun, 'AP', idx, 20);  // career 20 < 83 -> downgrade
+  assert.equal(low.ammoType, 'FMJ', 'downgraded to FMJ');
+  assert.equal(low.downgraded, true);
+  assert.equal(low.gateLevel, 83, 'flags AP unlock level');
+  const high = ammoCostFor(gun, 'AP', idx, 90); // meets the gate
+  assert.equal(high.ammoType, 'AP');
+  assert.equal(high.downgraded, false);
+});
+
+test('ammo cost: single-type ordnance uses Standard; unknown caliber -> honest-null', () => {
+  const idx = indexAmmo(AMMO);
+  const launcher = { name: 'L', ammo_type: 'test-rkt', weapon_type: 'Launcher', magazine_size: null };
+  const r = ammoCostFor(launcher, 'HP', idx, 99); // no HP -> Standard; Launcher mag 1 x3 x500 = 1500
+  assert.equal(r.ammoType, 'Standard');
+  assert.equal(r.ammoCost, 1500);
+  const unknown = ammoCostFor({ name: 'U', ammo_type: 'test-none', weapon_type: 'Sidearm' }, 'FMJ', idx, 99);
+  assert.equal(unknown.ammoCost, null, 'unknown caliber -> honest-null cost');
+});
+
+test('rankByEffectiveness: candidate.cost = gun + estimated ammo; value_per_cost computes', () => {
+  const idx = indexAmmo(AMMO);
+  const ttk = [{ weapon_name: 'G', ammo_type: 'FMJ', armor_tier: 0, ttk_ms: 500 }];
+  const weapons = [{ name: 'G', ammo_type: 'test-9', weapon_type: 'Submachine Gun', magazine_size: 30, credit_cost: 1000, fire_rate: 600 }];
+  const r = rankByEffectiveness(weapons, ttk, { playstyle: 'balanced', ammoIndex: idx, careerLevel: 99 });
+  const c = r.ranked[0];
+  assert.equal(c.gun_cost, 1000);
+  assert.ok(c.ammo_cost > 0, 'ammo cost folded in');
+  assert.equal(c.cost, 1000 + c.ammo_cost, 'total = gun + ammo');
+  assert.ok(c.value_per_cost > 0, 'TTK-per-dollar computes');
+});
+
+test('rankByEffectiveness: no ammoIndex -> gun-only cost (backward compatible)', () => {
+  const ttk = [{ weapon_name: 'G', ammo_type: 'FMJ', armor_tier: 0, ttk_ms: 500 }];
+  const weapons = [{ name: 'G', ammo_type: 'test-9', credit_cost: 1000, fire_rate: 600 }];
+  const c = rankByEffectiveness(weapons, ttk, { playstyle: 'balanced' }).ranked[0];
+  assert.equal(c.cost, 1000, 'cost is gun-only when no ammo data');
+  assert.equal(c.ammo_cost, null);
+});
 
 // --- synthetic fixtures -----------------------------------------------------
 // Two rifles engineered so playstyle reorders them: "Soft" kills fast vs light armor (HP, low tiers),

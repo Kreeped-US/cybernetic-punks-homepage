@@ -88,8 +88,8 @@ export async function POST(req) {
 
     // --- reasoning: load stores -> SHARED assembly (server-authoritative; the SAVE route reuses this
     // SAME assembly so a saved page's structured build byte-matches what the live tool showed) ---
-    const { weapons, ttk, ballistics } = await loadLoadoutContext();
-    const assembled = assembleLoadout({ weapons, ttk, ballistics }, { careerLevel, budget, playstyle: playstyleKey });
+    const { weapons, ttk, ballistics, ammo } = await loadLoadoutContext();
+    const assembled = assembleLoadout({ weapons, ttk, ballistics, ammo }, { careerLevel, budget, playstyle: playstyleKey });
     const playstyleLabel = PLAYSTYLES[playstyleKey].label;
 
     // --- stream: steps (real) -> meta (solver picks) -> analysis deltas -> done ---

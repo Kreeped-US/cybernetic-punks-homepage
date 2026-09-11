@@ -22,7 +22,7 @@ function getSupabase() {
 export async function loadLoadoutContext() {
   const supabase = getSupabase();
 
-  const [weaponsRes, ttkRes, ballistics] = await Promise.all([
+  const [weaponsRes, ttkRes, ballistics, ammoRes] = await Promise.all([
     supabase
       .from('weapon_stats')
       .select('name, category, weapon_type, ammo_type, fire_rate, credit_cost, unlock_career_level, unlock_class, unlock_class_level, ranked_viable, verified, verified_source, image_filename')
@@ -47,11 +47,24 @@ export async function loadLoadoutContext() {
       }
       return rows;
     })(),
+    // Ammo economy (E1) -- per-caliber x FMJ/HP/AP cost_per_round + career gates. DEFENSIVE: the table
+    // does not exist until the economy migration runs, so a missing-table error degrades to [] (the
+    // solver then costs guns only, exactly as before). Activates automatically once wardogs_ammo lands.
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('wardogs_ammo')
+          .select('caliber, ammo_type, cost_per_round, career_gate, tier, verified_source')
+          .eq('game_slug', 'wardogs');
+        return error ? [] : (data || []);
+      } catch { return []; }
+    })(),
   ]);
 
   return {
     weapons: weaponsRes.data || [],
     ttk: ttkRes.data || [],
     ballistics: ballistics || [],
+    ammo: ammoRes || [],
   };
 }
