@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs economy -- weapon PRICES + ammo BOX PRICES loaded, cost-aware advisor LIVE
+
+- WEAPON PRICES (migration 2026-09-11-wardogs-economy.sql, operator-run): credit_cost (per-life) + unlock_class/unlock_class_level on all 33 weapons, COMMUNITY-ATTRIBUTED (tier "community-aggregated (multiple fan databases)", verified=false). Deagle unlock_career_level=85 BULKHEAD-OFFICIAL, untouched (mixed: official unlock + attributed price/track). Cross-game safe. Solver no-launder fix (826f38c): inheritProvenance 'official'->'attributed' for credit_cost, test-asserted. Budget-solve ACTIVATED: $2000 budget filters (MP43 $400, excludes FAL/AMR 50). Verified.
+- AMMO BOX PRICES (migration 2026-09-11-wardogs-ammo.sql, operator-run + E1 code 086a913/1cff7de): new wardogs_ammo table, 35 rows / 24 priced. BOX PRICE = the cost unit (vendor charge; per-round derived-and-conflicting kept separate, never used for cost). EXACT per-caliber box prices (5.56 15/25/40; .308 40/70/180 -- NOT a uniform multiplier), honest-null unpublished loads (9x19 HP, 7.62x54 HP/AP, .50 AE/.50 Cal HP/AP). Community-attributed EXCEPT the 2 AP career GATES (5.56 AP C83, 7.62x54 AP C82) = BULKHEAD-OFFICIAL (Steam S1 changelog 9 Sep) -- gate_tier='official', price attributed (mixed). Cross-game safe.
+- CAPABILITY LIVE (verified): loadout cost = gun + selected-load box price (HP>FMJ real recorded diff); honest-null ammo -> gun-only + ammo_price_known=false flag (price-unknown != gated); official AP gate -> downgrade+flag ("AP unlocks Career X"), never silent drop; TTK-per-dollar (value_per_cost, within-recommendation not cross-playstyle); provenance stays attributed (never 'official'). The cost-aware advisor -- effectiveness x cost -- is FUNCTIONAL.
+- PROGRESSION: career-gating works; CLASS-level gating loaded + solver-ready but assembleLoadout passes only careerLevel -> dormant until a wiring pass.
+- NOT YET VISIBLE: the budget-solve computes cost-awareness but THE READ/card don't SHOW it yet -> the SURFACE PASS is next (make gun+ammo cost / TTK-per-dollar / gate-flags visible).
+- NEXT: surface pass (visible), class-gating wiring, E2 (vehicles/equipment/facts -> Vera Sloan editor store, wardogs_vehicles/equipment/economy_facts), B2 grid, build-hardening (transient-timeout deploy fragility).
+
+---
 ## 2026-09-11 - BodyPartViz silhouette redesign -- sleek, from the Grok reference (commit 19ea25b)
 
 - The original in-code silhouette (geometric primitives) + two hand-authored SVG attempts read as chunky/amateur ("crash-test dummy"). SOLUTION: use the operator's Grok-generated athletic figure (public/silhouette.jpg) as the base -- grayscale (keeps musculature/shading/form) -- recolored per hit-zone by shots-to-kill via mix-blend-mode:color (overlay = hue from the data, figure = luminance -> 3D form preserved). It IS the sleek reference figure AND fully data-driven -- got both (not the tradeoff first assumed).
