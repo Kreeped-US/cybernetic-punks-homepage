@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs weapon detail page + BodyPartViz -- shipped (better-than-reference, SEO-first, honest)
+
+- BodyPartViz (components/wardogs/BodyPartViz.js, commit 80a4e58): the net-new hero viz, SEO-FIRST -- crawlable server-rendered STK table (default FMJ/tier-0) is the ranking substance ("wardogs [weapon] shots to kill"); SVG silhouette (8 zones colored by shots-to-kill) + ammo/armor toggles (FMJ/HP/AP x tier 0-4) is the human layer on top. BETTER than the competitor's static hit-multiplier: ammo-and-armor-aware from OUR dense attributed matrix (surfaces insight like "vs heavy armor + HP, shoot unarmored zones not the torso" -- a reference chart can't). CSS-only motion (no LCP/CLS cost). Graceful no-data (launchers). Attributed (Swoleguy). Pure/reusable (weapon page + advisor). Built + proven in isolation from real data.
+- WEAPON DETAIL PAGE (/wardogs/arsenal/[slug], commit 24670cc): composes BodyPartViz + real stat cards (caliber, type, fire_rate [attributed], TTK, rarity -- REAL fields only) + the armor-coverage EXPLAINER (the counterintuitive-but-true result read as insight -- synthesis-explains-the-data) + honest OMISSION of absent stats (velocity/MOA/handling/mag/reload/range -- one note, NO fabrication/copy) + provenance (attributed) + the synthesis FUNNEL (links to the best-[class] hub + the tool -- substrate feeds synthesis, bidirectional). = arsenal detail = Channel B per-weapon leaf = advisor receipts (one page, three roles). NOINDEX at ship (evidence-ramp -- the sprout-risk leaves stay out of the sitemap until GSC-promoted). Launcher = graceful no-viz; bogus = 404.
+- HONESTY BOUNDARY HELD: built BETTER from OUR data (the ballistics matrix, richer than their multiplier chart), OMITTED what we don't have (velocity/MOA/handling), NEVER copied the competitor's stats. "Learn and make ours better," honestly.
+- LIVE BUG FLAGGED (pre-existing, NOT this change): /wardogs/arsenal LIST shows the coming-soon shell because the anon Supabase client can't read RLS-on wardogs weapon_stats. The arsenal list revamp (next) fixes it via the service key + renders the real roster w/ images.
+- NEXT: (2) arsenal LIST revamp (service-key roster + WeaponImage + tiered summary -> links to detail; FIXES the coming-soon bug); (3) advisor reuse of BodyPartViz (playstyle-defaulted kill-map in recommendations); (4) indexability ramp (promote leaves on GSC evidence). Deferred: economy-data pass (B2 grid), buildToolCta.
+
+---
 ## 2026-09-11 - Wardogs Channel B -- 5 type hubs live (fan-out + sniper contextualized)
 
 - Fanned out to all qualifying type hubs (commits 925fc29 + 4b7c517). 5 total INDEXABLE category hubs, all inheriting the proven AR pattern (sitemap + mesh via shippedTypeHubs()): Assault Rifle (FAL), SMG (Super-45), Sidearm (GGX 18), Marksman (BMR-308), Sniper Rifle (AMR 50 specialist-contextualized). Rankings operator-verified sensible.
