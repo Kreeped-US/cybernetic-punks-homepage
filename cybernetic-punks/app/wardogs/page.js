@@ -21,6 +21,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { wardogs } from '@/lib/games/wardogs';
 import { isGameLive } from '@/lib/network/gameStatus';
+import WardogsCashTicker from '@/components/wardogs/WardogsCashTicker';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -79,7 +80,23 @@ async function getWardogsStats() {
       updatedDaysAgo = Math.max(0, Math.floor((Date.now() - new Date(data[0].updated_at).getTime()) / 86400000));
     }
   } catch (e) { /* honest-null */ }
-  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo };
+  // AVG LOADOUT COST for the economy ticker -- computed from OUR real price data:
+  //   primary (median of non-sidearm weapon credit_cost) + sidearm (avg) + ~2 ammo boxes (avg box_price).
+  // Falls back to a documented ~$2,800 if the reads fail (honest constant, same order of magnitude).
+  let avgLoadoutCost = 2800;
+  try {
+    const { data: ws } = await sb.from('weapon_stats').select('category, credit_cost').eq('game_slug', 'wardogs');
+    const priced = (ws || []).filter((w) => w.credit_cost != null && w.credit_cost > 0);
+    const primaries = priced.filter((w) => w.category !== 'Sidearm').map((w) => w.credit_cost).sort((a, b) => a - b);
+    const sidearms = priced.filter((w) => w.category === 'Sidearm').map((w) => w.credit_cost);
+    const { data: am } = await sb.from('wardogs_ammo').select('box_price').eq('game_slug', 'wardogs');
+    const boxes = (am || []).map((a) => a.box_price).filter((x) => x != null && x > 0);
+    const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+    const primaryMedian = primaries.length ? primaries[Math.floor(primaries.length / 2)] : 0;
+    const computed = Math.round(primaryMedian + avg(sidearms) + 2 * avg(boxes));
+    if (computed > 500) avgLoadoutCost = computed; // sanity gate; else keep the documented fallback
+  } catch (e) { /* honest fallback */ }
+  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo, avgLoadoutCost };
 }
 
 const A = 'var(--accent)';
@@ -184,6 +201,9 @@ export default async function WardogsLanding() {
           </div>
         </div>
       </section>
+
+      {/* ===== ECONOMY TICKER (honest live model) ===== */}
+      <WardogsCashTicker avgLoadoutCost={s.avgLoadoutCost || 2800} />
 
       {/* ===== PRODUCT CARDS ===== */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '44px 24px 20px' }}>
