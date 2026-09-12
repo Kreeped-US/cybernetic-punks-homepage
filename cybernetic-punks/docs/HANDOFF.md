@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - Per-game themed FOOTER + Wardogs variant (commit d4bbbfd)
+
+- Footer.js now delegates PER-GAME: game==='wardogs' -> WardogsFooter; every other game (marathon/dmz/pubg) renders the generic footer BYTE-IDENTICAL (verified unchanged). Theme-aware architecture -- scales one branch per game as they're themed. Rules-of-hooks handled (early return after the hook).
+- WARDOGS FOOTER: gritty press-kit tank/combat shot as a darkened atmospheric backdrop; official WD logo; MARKETABLE tagline ("The Wardogs loadouts, tier lists, and economy intel that actually help you win") -- the nerdy "confirmed-systems" copy GONE. EDITORS DROPPED (no "POWERED BY Cipher/Nexus/..." strip -- deprioritized). KEPT: nav (Loadouts/Field Intel/Economy/Systems/Arsenal/Tier List), community (Discord/X/email -- strategic), the press-kit legal disclaimer (not affiliated with Bulkhead/Team17, trademark -- REQUIRED). Amber, mobile-safe.
+- #5 SILHOUETTE VERIFY: DONE -- confirmed the advisor kill-map renders the current sleek Grok figure (BodyPartViz shared component), verified in the advisor result screenshots.
+- WARDOGS VERTICAL now cohesive/elite end-to-end: landing (Little Bird hero + real ticker) -> Build Advisor (cost-aware, kill-map, sleek silhouette) -> Tier List (prove-the-meta) -> Arsenal -> weapon detail -> themed footer (tank). Honest/attributed/SEO-first/shareable throughout.
+- NOTE: tank image 2.65MB + hero 1.5MB -> the deferred image-downscale/perf pass.
+- NEXT (#4 advisor polish): (1) FIX a LIVE FALSEHOOD -- the advisor input's "prices not published yet" placeholder + "budget filtering activates when they land" helper are STALE/FALSE (prices ARE loaded, the budget-solve WORKS) -- contradicts + hides the economy feature. (2) marketable voice on the input (still nerdy vs the elite landing). (3) premium framing/atmosphere on the advisor (content is tier-one -- frame it premium, don't touch the great guts: the viz/THE READ/board). Parked: real generation counter, ~48 schema + 7 orphans (audit export), image-downscale/perf, Wardogs nav mark, Scout Rifle TD anomaly, Economy tool (Phase 3).
+
+---
 ## 2026-09-12 - Wardogs Weapon TIER LIST -- shipped, the "prove the meta" flagship (commit abced0d)
 
 - /wardogs/tier-list -- every weapon tiered S-D by REAL measured TTK (balanced-profile weighted TTK, FMJ across armor tiers -- same metric as the loadout hubs, attributed community data). Thresholds SHOWN on-page (S<=250ms, A<=400, B<=550, C<=1100, D>1100). 30 ranked + 3 unranked (MAAWS/MGL-40/RPG-7 = no ballistics, honest-null, not forced onto the ladder).
