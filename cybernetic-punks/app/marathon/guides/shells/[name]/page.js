@@ -322,7 +322,7 @@ export default async function ShellGuidePage({ params }) {
     '@type': 'Organization',
     name: 'Cybernetic Punks',
     url: 'https://cyberneticpunks.com',
-    logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/og-image.png' }
+    logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' }
   },
   datePublished: GUIDES_PUBLISHED,
   // dateModified is attached BELOW, and only when the shell declares `updated`.
