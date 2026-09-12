@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-11 - Wardogs advisor SURFACE PASS -- cost-awareness now VISIBLE (commit b0edce6)
+
+- The economy work (prices/ammo/budget-solve/TTK-per-dollar) was LIVE but INVISIBLE. Surfaced deterministically (render) + woven into THE READ (prompt) -- no engine change.
+- NOW VISIBLE: per-pick cost breakdown ("gun $2600 + .45 ACP HP box $15, community-recorded"); loadout cost + budget-fit strip ("$2,930 within your $3,000 -- $70 to spare; best TTK/$ of set: A-91", shows only when budget given); ammo-gate note ("AP unlocks at Career 82 -- running FMJ for now"); honest-null ("ammo price unrecorded / price TBD"). Attributed throughout; TTK-per-dollar labeled within-recommendation (not universal).
+- FIXED A LIVE FALSEHOOD: the stale "Bulkhead hasn't published prices" claim (in the no-budget render line + the prompt) became FALSE once prices loaded -- corrected. (Stale honest-null after data lands = the correction discipline: when data changes, claims about it must change.)
+- KNOWN NUANCE (logged follow-up, optional): the card's AMMO stat shows the DESIRED ammo (e.g. AP) while cost+gate-note clarify you're running the downgraded load (FMJ); TTK stays on desired-ammo basis. Re-scoring TTK on the downgraded ammo so AMMO/TTK agree = a possible refinement.
+- ECONOMY ARC COMPLETE + VISIBLE: the advisor now shows what to run, where to aim (kill-map), what it costs (gun+ammo), value (TTK/$), budget fit, and unlock gates. The full wedge (effectiveness x cost x progression), realized + visible, honest.
+- NEXT: class-gating wiring; E2 (vehicles/equipment/facts -> Vera Sloan editor); build-hardening; B2 grid. Optional: TTK-on-downgraded-ammo refinement. DISTRIBUTION (get the complete vertical found -- launch window) is the honest priority now.
+
+---
 ## 2026-09-11 - Wardogs economy -- weapon PRICES + ammo BOX PRICES loaded, cost-aware advisor LIVE
 
 - WEAPON PRICES (migration 2026-09-11-wardogs-economy.sql, operator-run): credit_cost (per-life) + unlock_class/unlock_class_level on all 33 weapons, COMMUNITY-ATTRIBUTED (tier "community-aggregated (multiple fan databases)", verified=false). Deagle unlock_career_level=85 BULKHEAD-OFFICIAL, untouched (mixed: official unlock + attributed price/track). Cross-game safe. Solver no-launder fix (826f38c): inheritProvenance 'official'->'attributed' for credit_cost, test-asserted. Budget-solve ACTIVATED: $2000 budget filters (MP43 $400, excludes FAL/AMR 50). Verified.
