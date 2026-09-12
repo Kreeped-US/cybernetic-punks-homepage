@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - Economy ticker + BUILD HARDENING -- distribution readiness (commits f808426/daa80f9 + dd6b562)
+
+- ECONOMY TICKER (/wardogs, f808426 + daa80f9): "Est. in-game cash spent on loadouts (modeled, live)" -- ~$40B, ticking ~$227K/sec. HONEST + SOURCED: 1.25M copies (Bulkhead official @WARDOGS, as scale) + ~337K peak concurrent (SteamDB, cited as context) + a CONSERVATIVE ~170K sustained-average (~50% of peak -- rate basis, doesn't overcount) + $3,200 avg loadout (from OUR real price data). Labeled "in-game credits, not real money, not an official figure"; "how we model this" expander shows all assumptions. On-brand (rigorous/conservative, shows the work -- "NO HYPE. JUST INTEL." holds). Dials: loadoutsPerHour(1.5) + sustained-avg(170K).
+- BUILD HARDENING (dd6b562): the deploy-fragility that FAILED TWICE (transient Supabase Gateway Timeout in /marathon/tools/build/[shell] + [shell]/[weapon] generateStaticParams reading build_pages) is FIXED. lib/build/safeStaticParams.js wraps build-time DB reads -> on error OR 20s hang, logs + returns [] (never throws) -> build SUCCEEDS, pages generate on-demand. CAUGHT the subtle gotcha: both routes had dynamicParams=false (which would 404 the fallback pages) -> flipped to dynamicParams=true so fallbacks generate on-demand; 404 semantics preserved (notFound() on invalid rows). Full audit: these 2 were the ONLY DB-reading gSP that threw; all others safe (force-dynamic/hardcoded/returns-[]); sitemaps are ISR request-time, not build-blocking. No SEO regression (on-demand pages indexable). Deploys now bulletproof vs transient DB blips -- critical with distribution live.
+- DISTRIBUTION STARTED: first X post live (@Kreeped) -- the ticker as the hook ("Wardogs players spent ~$40B... we modeled it, we show the math"), tagged @WARDOGS + @Brammflakes (Bulkhead CEO), OG card unfurled clean (the OG-card prep paying off). Follow-up reply (-> the Loadout Finder) pending. Distribution is the priority (per Fable) -- the product is elite, fast, honest, shares well, and now live-distributed.
+- NEXT: watch the X post, post the follow-up, Economy tool (Phase 3). Parked: schema/orphans re-crawl, generation counter, Night Marsh variant image, og-image orphan delete.
+
+---
 ## 2026-09-12 - OG-CARD SYSTEM complete -- official game logos + CNP logo + marketable network card (commits 3099bee, 2ed1432, 28f2f94, f5d7cd3)
 
 - The whole OG-card system is now coherent, professional, marketable, IP-safe -- distribution-ready (every share sells the site):
