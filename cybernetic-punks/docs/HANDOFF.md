@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - Wardogs Weapon TIER LIST -- shipped, the "prove the meta" flagship (commit abced0d)
+
+- /wardogs/tier-list -- every weapon tiered S-D by REAL measured TTK (balanced-profile weighted TTK, FMJ across armor tiers -- same metric as the loadout hubs, attributed community data). Thresholds SHOWN on-page (S<=250ms, A<=400, B<=550, C<=1100, D>1100). 30 ranked + 3 unranked (MAAWS/MGL-40/RPG-7 = no ballistics, honest-null, not forced onto the ladder).
+- THE WEDGE (context-not-re-rank): counterintuitive tiers carry an info note -- MP43 (S, "close-range specialist, raw TTK flatters it"), snipers/bow (C/D, "one-shot/situational, TTK rewards sustained speed"), AMR 50, Scout Rifle TD (low-cadence anomaly 9750ms). "How we tier" block = thresholds + "fastest-TTK not best-overall" caveat + honest-null. Honest + explained = legitimate (vs a dumb ranked list).
+- Elite look (colored tier rails, weapon cards + images + TTK + notes), marketable voice. SSR-crawlable (33 weapons + notes + thresholds in raw HTML), indexable, in sitemap, SHAREABLE OG card (the distribution/DA artifact). Mobile-safe. 34/34 tests (4 new: thresholds/honest-null/notes). Cards -> weapon detail pages (tier -> detail -> advisor chain).
+- LANDING WIRED: the /wardogs Tier List card + hero secondary CTA now link LIVE to /wardogs/tier-list.
+- NEXT: #4 advisor visual polish (premium first impression), #5 silhouette verify. Parked: real generation counter, deferred ~48 schema + 7 orphans (audit export), hero downscale, Wardogs nav mark, Scout Rifle TD 9750ms source-row confirm, press-kit shots to theme card headers, #3 Economy tool (Phase 3).
+
+---
 ## 2026-09-12 - /wardogs REBUILT -- elite product-first hub (commits 6721e71 + 46a7b54)
 
 - Replaced the boring text-intro paragraph with a PREMIUM product-first landing (the Marathon model, better voice, Wardogs imagery). The Build Advisor is the propped-up flagship hero.
