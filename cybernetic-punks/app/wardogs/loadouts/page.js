@@ -72,7 +72,7 @@ export default function LoadoutsPage() {
             {[
               { k: 'MEASURED TTK', v: 'Ranked on real time-to-kill from community ballistics testing — not vibes.' },
               { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official — every pick says so.' },
-              { k: 'PRICES TBD', v: 'No official prices yet, so loadouts rank by effectiveness — budget filtering switches on when they land.' },
+              { k: 'COST-AWARE', v: 'Set a budget and loadouts are costed gun + ammo against the economy — prices community-recorded, not yet Bulkhead-official.' },
             ].map((item) => (
               <div key={item.k} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '12px 14px' }}>
                 <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: 5 }}>

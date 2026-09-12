@@ -89,8 +89,8 @@ function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
     paras.push('CAVEAT: Time-to-kill measures raw killing speed at the trigger. It does not weigh reload time, '
       + 'effective range, recoil control, or handling -- which is exactly why the fastest ' + hub.lower + ' on paper '
       + 'is not always the one you should run. These figures are attributed to Swoleguy’s testing, not yet '
-      + 'Bulkhead-official, and prices are not published, so this ranks on effectiveness alone -- budget filtering '
-      + 'switches on when official numbers land.');
+      + 'Bulkhead-official. This board ranks the class by time-to-kill; to solve within a cash budget '
+      + '(gun + ammo, community-recorded prices), use the Build Advisor.');
     return paras.join('\n\n');
   }
 
@@ -105,9 +105,9 @@ function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
     + 'Every number traces back to the same attributed data set, so the whole board is comparable like-for-like.');
   paras.push('CAVEAT: Time-to-kill measures raw killing speed at the trigger. It does not weigh reload time, '
     + 'effective range, recoil control, or handling -- a rifle that wins on paper can still lose a fight it '
-    + 'cannot keep on target. These figures are attributed to Swoleguy’s testing, not yet Bulkhead-official, '
-    + 'and prices are not published, so this ranks on effectiveness alone -- budget filtering switches on when '
-    + 'official numbers land.');
+    + 'cannot keep on target. These figures are attributed to Swoleguy’s testing, not yet Bulkhead-official. '
+    + 'This board ranks the class by time-to-kill; to solve within a cash budget (gun + ammo, '
+    + 'community-recorded prices), use the Build Advisor.');
   return paras.join('\n\n');
 }
 
@@ -199,7 +199,7 @@ export default async function TypeHubPage({ params }) {
             {[
               { k: 'MEASURED TTK', v: 'Ranked on real time-to-kill from community ballistics testing - not vibes.' },
               { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official.' },
-              { k: 'PRICES TBD', v: 'No official prices yet, so this ranks by effectiveness - budget filtering activates when they land.' },
+              { k: 'COST-AWARE', v: 'The Build Advisor solves within a cash budget (gun + ammo) - prices community-recorded, not yet Bulkhead-official.' },
             ].map((item) => (
               <div key={item.k} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '11px 13px' }}>
                 <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: 5 }}>

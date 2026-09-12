@@ -123,8 +123,8 @@ export default function LoadoutsClient() {
           </div>
           <div>
             <Label>Cash budget <span style={{ color: T3 }}>(optional)</span></Label>
-            <input type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="prices not published yet" style={inputStyle} />
-            <Hint>Prices aren&rsquo;t out yet -- budget filtering activates when they land.</Hint>
+            <input type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. $5,000" style={inputStyle} />
+            <Hint>Set a budget and we filter to what you can afford &mdash; gun + ammo. Prices are community-recorded, not yet Bulkhead-official.</Hint>
           </div>
         </div>
         <Label>Playstyle</Label>

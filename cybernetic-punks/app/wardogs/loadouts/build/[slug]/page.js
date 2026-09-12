@@ -88,8 +88,8 @@ export default async function SavedLoadoutPage({ params }) {
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 720, margin: 0 }}>
             Ranked by measured <strong>time-to-kill</strong> from community-tested ballistics (attributed to
-            Swoleguy, not yet Bulkhead-official). Prices aren&rsquo;t published yet, so this is ranked by
-            effectiveness -- fastest time-to-kill, not an unqualified &ldquo;best gun.&rdquo;
+            Swoleguy, not yet Bulkhead-official), and costed gun + ammo against the economy (prices
+            community-recorded). It&rsquo;s fastest time-to-kill for the money, not an unqualified &ldquo;best gun.&rdquo;
           </p>
         </div>
       </section>

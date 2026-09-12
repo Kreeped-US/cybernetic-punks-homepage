@@ -274,7 +274,7 @@ test('budget-solve HONEST-NULL: no prices -> degrades to effectiveness-only, no 
   assert.equal(res.applied, false, 'no known costs -> budget cannot be applied');
   assert.equal(res.picks.primary.weapon_name, 'A', 'falls back to the top-scored candidate per slot');
   assert.equal(res.totalCost, null);
-  assert.match(res.step.detail, /no prices published|unavailable/i, 'the honest-null reason is surfaced');
+  assert.match(res.step.detail, /no priced options|unavailable/i, 'the honest-null reason is surfaced');
   assert.equal(res.step.status, 'skipped');
 });
 

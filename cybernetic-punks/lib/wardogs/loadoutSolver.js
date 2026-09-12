@@ -331,7 +331,7 @@ export function budgetSolve(candidatesBySlot, budget, { slots } = {}) {
       step: { id: 'budget-solve', label: 'Solving within budget', status: 'skipped',
               detail: num(budget) == null
                 ? 'No budget given -- ranking by effectiveness only.'
-                : 'Budget filtering unavailable -- no prices published yet (honest-null). Ranking by TTK only.' },
+                : 'No priced options for these picks -- ranking by TTK only.' },
     };
   }
 
