@@ -6,14 +6,24 @@
 // it is a client-side simulation from real, citable inputs, clearly labeled as an estimate.
 //
 // MODEL (all inputs real + documented; props come from the server component):
-//   activePlayers        337,000  -- SteamDB peak concurrent (Wardogs EA launch, Sept 11 2026)
+//   peakConcurrent       337,000  -- SteamDB PEAK concurrent (Wardogs EA launch, Sept 11 2026,
+//                                     #2 on Steam). Cited as CONTEXT/scale, NOT the rate basis.
+//   sustainedPlayers     170,000  -- the RATE BASIS: a CONSERVATIVE sustained-average active
+//                                     concurrent (~half the 337K peak -- post-launch games
+//                                     typically day-average ~40-60% of peak across timezones;
+//                                     we take ~50%, deliberately conservative so the model does
+//                                     NOT overcount by assuming everyone is online at once)
 //   loadoutsPerHour      1.5      -- a re-kit roughly every 40 min (CONSERVATIVE for a combat
 //                                     shooter where death = re-kit); the tunable assumption
-//   avgLoadoutCost       ~$2,800  -- computed from OUR real price data (primary median +
+//   avgLoadoutCost       ~$3,200  -- computed from OUR real price data (primary median +
 //                                     sidearm avg + ~2 ammo boxes); "partly powered by our data"
 //   launchIso            2026-09-10T16:00:00Z  -- EA launch epoch (documented)
-// rate/sec = activePlayers * (loadoutsPerHour/3600) * avgLoadoutCost
+// rate/sec = sustainedPlayers * (loadoutsPerHour/3600) * avgLoadoutCost
 // value    = rate/sec * (now - launch)   [cumulative since launch, recomputed each frame]
+//
+// Why sustained-average and not peak: peak x total-elapsed overcounts (it assumes 337K online
+// every second since launch). Driving the rate off a conservative sustained average is more
+// rigorous + on-brand (CNP is conservative, not inflated) and moderates the number honestly.
 //
 // HONESTY (the moat): the currency is IN-GAME credits (the Wardogs cash economy), NOT real
 // money and NOT an official Bulkhead figure. The basis + sources + assumptions are shown on
@@ -23,13 +33,14 @@
 import { useEffect, useRef, useState } from 'react';
 
 export default function WardogsCashTicker({
-  activePlayers = 337000,
+  sustainedPlayers = 170000,
+  peakConcurrent = 337000,
   loadoutsPerHour = 1.5,
-  avgLoadoutCost = 2800,
+  avgLoadoutCost = 3200,
   copiesSold = 1250000,
   launchIso = '2026-09-10T16:00:00Z',
 }) {
-  const ratePerSec = activePlayers * (loadoutsPerHour / 3600) * avgLoadoutCost;
+  const ratePerSec = sustainedPlayers * (loadoutsPerHour / 3600) * avgLoadoutCost;
   const launchMs = new Date(launchIso).getTime();
 
   const compute = () => Math.floor((ratePerSec * (Date.now() - launchMs)) / 1000);
@@ -95,8 +106,9 @@ export default function WardogsCashTicker({
         {/* basis -- shown, not hidden: the sources + the honesty caveat */}
         <p style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.6, color: 'var(--text-tertiary, #8b929c)', maxWidth: 780 }}>
           Modeled from{' '}
-          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>1.25M copies sold</strong> (Bulkhead, official),{' '}
-          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>~337K concurrent players</strong> (SteamDB), and an average loadout cost of{' '}
+          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>1.25M copies sold</strong> (Bulkhead, official) and Wardogs&rsquo;{' '}
+          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>~337K peak concurrent</strong> (SteamDB) &mdash; driven off a{' '}
+          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>conservative ~{Math.round(sustainedPlayers / 1000)}K sustained average</strong> and an average loadout cost of{' '}
           <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>{fmt(avgLoadoutCost)}</strong> from our price data.{' '}
           <span style={{ color: 'rgba(255,255,255,0.6)' }}>Live estimate &mdash; in-game credits, not real money, and not an official spend figure.</span>{' '}
           <button
@@ -112,14 +124,15 @@ export default function WardogsCashTicker({
           <div style={{ marginTop: 14, border: '1px solid #262b33', borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', background: 'rgba(18,21,25,0.6)', padding: '14px 16px', maxWidth: 780 }}>
             <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 10, textTransform: 'uppercase' }}>The model &mdash; all inputs sourced</div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5, lineHeight: 1.55, color: 'var(--text-secondary,#b5bcc6)' }}>
-              <li><strong style={{ color: '#fff' }}>Active players:</strong> ~337,000 peak concurrent &mdash; SteamDB, Wardogs Early Access launch (Sept 11, 2026, #2 on Steam).</li>
+              <li><strong style={{ color: '#fff' }}>Peak (context):</strong> ~{Math.round(peakConcurrent / 1000)}K peak concurrent &mdash; SteamDB, Wardogs Early Access launch (Sept 11, 2026, #2 on Steam). Cited for scale &mdash; NOT the rate basis.</li>
+              <li><strong style={{ color: '#fff' }}>Rate basis:</strong> ~{Math.round(sustainedPlayers / 1000)}K sustained-average active (~{Math.round((sustainedPlayers / peakConcurrent) * 100)}% of peak) &mdash; a conservative day-average across timezones, so the model does NOT assume everyone is online at once.</li>
               <li><strong style={{ color: '#fff' }}>Scale:</strong> 1,250,000 copies sold &mdash; Bulkhead&rsquo;s official @WARDOGS announcement (Sept 10, 2026).</li>
               <li><strong style={{ color: '#fff' }}>Avg loadout:</strong> {fmt(avgLoadoutCost)} &mdash; from our real price data (primary median + sidearm + ammo).</li>
               <li><strong style={{ color: '#fff' }}>Purchase rate:</strong> {loadoutsPerHour} loadouts per active player per hour (a re-kit ~every {Math.round(60 / loadoutsPerHour)} min &mdash; a conservative assumption).</li>
-              <li><strong style={{ color: '#fff' }}>Formula:</strong> players &times; loadouts/hr &times; avg cost, accumulated since EA launch (Sept 10, 16:00 UTC) &asymp; {fmt(Math.round(ratePerSec))}/sec.</li>
+              <li><strong style={{ color: '#fff' }}>Formula:</strong> sustained players &times; loadouts/hr &times; avg cost, accumulated since EA launch (Sept 10, 16:00 UTC) &asymp; {fmt(Math.round(ratePerSec))}/sec.</li>
             </ul>
             <div style={{ marginTop: 10, fontSize: 11.5, color: 'var(--text-tertiary,#8b929c)', lineHeight: 1.5 }}>
-              An estimate, not a fact: it assumes sustained peak activity, so treat it as an economy-scale model &mdash; the kind of number the game&rsquo;s cash economy produces, not a measured total. No copies-sold figure is used to imply real-money revenue.
+              An estimate, not a fact: a deliberately conservative economy-scale model (sustained average, not peak) &mdash; the kind of number the game&rsquo;s cash economy produces, not a measured total. No copies-sold figure is used to imply real-money revenue.
             </div>
           </div>
         )}
