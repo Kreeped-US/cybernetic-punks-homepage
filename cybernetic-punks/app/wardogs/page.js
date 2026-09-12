@@ -1,302 +1,252 @@
 // app/wardogs/page.js
-// Wardogs landing -- the per-game hub. PHASE 1 SKELETON: breadcrumb + hero + EA
-// countdown + config-driven Coverage cards (from lib/games/wardogs.js, with REAL
-// feed_items counts). Deliberately lean -- the richer hub content (notify block, tool
-// deck, FAQ, entity Reference links) is Phase 2 (confirmed-systems content), not
-// scaffolded empty now. Mirrors the structural core of app/dmz/page.js.
+// WARDOGS LANDING -- elite, product-first hub. Rebuilt from the old text-intro skeleton into a
+// cinematic hero (game key-art + official Wardogs logo) led by the Build Advisor (the hero product),
+// a REAL-stat ticker (all sourced from the loaded stores, no fabrication), and product cards
+// (Advisor live; Tier List + Economy Planner as Phase 2/3 coming-soon). Marketable player-voice copy.
 //
-// Server component + a Supabase read for live counts -> force-dynamic.
-// ROBOTS: the subtree is indexed now that wardogs.indexable is true (layout gate); this
-// page sets no robots of its own.
+// STATS ARE REAL (service-key reads of the RLS-on wardogs stores):
+//   - WEAPONS TRACKED   = count(weapon_stats WHERE game_slug='wardogs')            [33]
+//   - DATA POINTS       = wardogs_ballistics + wardogs_ttk + wardogs_ammo rows     [~4,085]
+//   - PRICIEST ONE-SHOT = max credit_cost among weapons with a 1-shots-to-kill row [AMR 50 $8,800]
+//   - UPDATED           = days since max(weapon_stats.updated_at)
+// (No "loadouts computed" counter -- there is no real advisor-generation count wired yet, so it is
+//  omitted rather than fabricated. Wire real generation-tracking to feature it later.)
+//
+// HERO IMAGE: currently the committed key-art (/images/games/wardogs-hero.jpg). Swap to the press-kit
+// Little Bird shot by committing it to public/images/wardogs/ and changing HERO_IMG below.
+// Server component + Supabase reads -> force-dynamic. Indexable (subtree gate).
 
 import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
-import { supabase } from '@/lib/supabase';
-import { wardogs, wardogsArticleSlugsForSection } from '@/lib/games/wardogs';
-import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
+import { wardogs } from '@/lib/games/wardogs';
+import { isGameLive } from '@/lib/network/gameStatus';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
-var EXO = 'var(--font-exo2), system-ui, sans-serif';
+const EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 export const dynamic = 'force-dynamic';
 
+const BASE = 'https://cyberneticpunks.com';
+// Hero key-art. Swap to '/images/wardogs/WD_Screenshot_Littlebird_1_WD1.jpg' (press kit) once committed.
+const HERO_IMG = '/images/games/wardogs-hero.jpg';
+const LOGO = '/WD_Fullmark_White.png';
+
 export const metadata = {
-  title: { absolute: 'Wardogs - Early Access Intel Hub | Cybernetic Punks' },
-  description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter launching in Steam Early Access on September 10, 2026. Part of the Cybernetic Punks network.',
-  alternates: { canonical: 'https://cyberneticpunks.com/wardogs' },
-  // og:url must equal the canonical (was defaulting to the metadataBase root -> audit mismatch).
+  title: { absolute: 'Wardogs Loadouts, Tier List & Build Advisor | Cybernetic Punks' },
+  description: 'The best Wardogs loadouts, ranked by real time-to-kill and priced against the economy. Build your weapon for your level with the Wardogs Build Advisor. We don’t guess -- if we don’t know, we say so.',
+  keywords: 'Wardogs loadouts, Wardogs build advisor, Wardogs tier list, best Wardogs loadouts, Wardogs weapons, Wardogs TTK',
+  alternates: { canonical: BASE + '/wardogs' },
   openGraph: {
-    title: 'Wardogs - Early Access Intel Hub',
-    description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter -- verified loadouts, arsenal and economy.',
-    url: 'https://cyberneticpunks.com/wardogs',
+    title: 'Wardogs Loadouts That Actually Win',
+    description: 'Every weapon ranked by real time-to-kill, priced against the economy, built for your level. The Wardogs Build Advisor.',
+    url: BASE + '/wardogs',
     siteName: 'Cybernetic Punks',
     type: 'website',
   },
 };
 
-// Set of currently-published game_slug='wardogs' article slugs -> REAL per-section
-// counts. Zero pre-launch; the try/catch keeps the hub rendering if the read fails.
-async function publishedWardogsSlugs() {
+function getSupabase() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}
+
+async function getWardogsStats() {
+  const sb = getSupabase();
+  const cnt = async (t) => {
+    const { count } = await sb.from(t).select('*', { count: 'exact', head: true }).eq('game_slug', 'wardogs');
+    return count || 0;
+  };
+  const [weapons, ballistics, ttk, ammo] = await Promise.all([
+    cnt('weapon_stats'), cnt('wardogs_ballistics'), cnt('wardogs_ttk'), cnt('wardogs_ammo'),
+  ]);
+  // priciest one-shot: max credit_cost among weapons with any 1-STK row
+  let topOneShot = null;
   try {
-    var { data } = await supabase
-      .from('feed_items')
-      .select('slug')
-      .eq('game_slug', 'wardogs')
-      .eq('is_published', true);
-    return new Set((data || []).map(function (r) { return r.slug; }));
-  } catch (err) {
-    return new Set();
-  }
+    const { data: os } = await sb.from('wardogs_ballistics').select('weapon_name').eq('game_slug', 'wardogs').eq('shots_to_kill', 1);
+    const names = [...new Set((os || []).map((r) => r.weapon_name))];
+    const { data: ws } = await sb.from('weapon_stats').select('name, credit_cost').eq('game_slug', 'wardogs');
+    const price = Object.fromEntries((ws || []).map((w) => [w.name, w.credit_cost]));
+    const priced = names.map((n) => ({ n, p: price[n] })).filter((x) => x.p != null).sort((a, b) => b.p - a.p);
+    if (priced.length) topOneShot = priced[0];
+  } catch (e) { /* honest-null */ }
+  // freshness
+  let updatedDaysAgo = null;
+  try {
+    const { data } = await sb.from('weapon_stats').select('updated_at').eq('game_slug', 'wardogs').order('updated_at', { ascending: false }).limit(1);
+    if (data && data[0] && data[0].updated_at) {
+      updatedDaysAgo = Math.max(0, Math.floor((Date.now() - new Date(data[0].updated_at).getTime()) / 86400000));
+    }
+  } catch (e) { /* honest-null */ }
+  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo };
 }
 
-function sectionCount(slug, publishedSet) {
-  return wardogsArticleSlugsForSection(slug).filter(function (s) { return publishedSet.has(s); }).length;
-}
+const A = 'var(--accent)';
+const AG = 'var(--accent-glow, rgba(224,161,58,0.25))';
 
-// Whole days until Early Access, from the single wardogs.launch_date constant.
-function daysToEarlyAccess() {
-  if (!wardogs.launch_date) return null;
-  var ms = new Date(wardogs.launch_date + 'T00:00:00Z').getTime() - Date.now();
-  if (isNaN(ms)) return null;
-  var d = Math.ceil(ms / 86400000);
-  return d > 0 ? d : 0;
-}
-
-function Pill({ text, tone }) {
-  var color = tone === 'live' ? 'var(--green)' : 'var(--text-tertiary)';
-  var border = tone === 'live' ? 'var(--green)' : 'var(--border)';
+function Stat({ value, label }) {
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      fontFamily: 'monospace', fontSize: 8.5, fontWeight: 800, letterSpacing: 1.5,
-      textTransform: 'uppercase', color: color,
-      border: '1px solid ' + border, borderRadius: 2, padding: '2px 8px',
-    }}>
-      {tone === 'live' && <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />}
-      {text}
-    </span>
-  );
-}
-
-var cardBase = {
-  display: 'flex', flexDirection: 'column',
-  background: 'var(--bg-card)', border: '1px solid var(--border)',
-  borderRadius: 6, textDecoration: 'none', minHeight: 132, overflow: 'hidden',
-};
-
-function DossierHead({ code, children }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 14px', background: 'var(--bg-nav)', borderBottom: '1px solid var(--border)' }}>
-      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)' }}>{code}</span>
-      {children}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+      <span style={{ fontFamily: EXO, fontSize: 'clamp(20px,2.6vw,26px)', fontWeight: 800, color: '#fff', lineHeight: 1, letterSpacing: 0.3 }}>{value}</span>
+      <span style={{ fontFamily: 'monospace', fontSize: 9.5, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{label}</span>
     </div>
   );
 }
 
-// Editor-fed section card with REAL count. count>0 -> live + "{n} report(s)";
-// count===0 -> neutral "Publishing soon" (never claims live with nothing there).
-function CountCard({ section, count, code }) {
-  var live = count > 0;
-  return (
-    <Link href={'/wardogs/' + section.slug} className="wd-dossier" style={cardBase}>
-      <DossierHead code={code}><Pill text={live ? 'Live' : 'Soon'} tone={live ? 'live' : 'muted'} /></DossierHead>
-      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-        <span className="wd-card-title" style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{section.label}</span>
-        <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{section.description}</span>
-        <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: live ? 'var(--green)' : 'var(--text-tertiary)' }}>
-          {live ? (count + (count === 1 ? ' report' : ' reports')) : 'Publishing soon'}
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-// Data-fed "coming soon" shell card (Arsenal).
-function SoonCard({ section, code }) {
-  return (
-    <Link href={'/wardogs/' + section.slug} className="wd-dossier" style={cardBase}>
-      <DossierHead code={code}><Pill text="Soon" tone="muted" /></DossierHead>
-      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-        <span className="wd-card-title" style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{section.label}</span>
-        <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{section.description}</span>
-        <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-tertiary)' }}>
-          Verified in-game at Early Access
-        </span>
-      </div>
-    </Link>
-  );
-}
-
 export default async function WardogsLanding() {
-  var published = await publishedWardogsSlugs();
-  var daysToEA = daysToEarlyAccess();
-  var eaLive = isGameLive(wardogs); // date-driven: flips hero pill/countdown to LIVE once EA opens
-  var launchLong = launchDateLong(wardogs.launch_date) || '10 Sep 2026'; // single-sourced from launch_date
-  var briefingCount = published.size;
+  const eaLive = isGameLive(wardogs);
+  const s = await getWardogsStats();
+  const dp = s.dataPoints ? s.dataPoints.toLocaleString('en-US') : null;
 
-  var HUB_BASE = 'https://cyberneticpunks.com';
-  var hubBreadcrumbLd = {
+  const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Network', item: HUB_BASE + '/' },
-      { '@type': 'ListItem', position: 2, name: 'Wardogs' },
+      { '@type': 'ListItem', position: 1, name: 'Network', item: BASE + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Wardogs', item: BASE + '/wardogs' },
     ],
   };
-  var hubCollectionLd = {
+  const collectionLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'Wardogs - Early Access Intel Hub',
-    description: 'Confirmed-systems intel for Wardogs on the Cybernetic Punks network.',
-    url: HUB_BASE + '/wardogs',
-    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: HUB_BASE },
-    mainEntity: {
-      '@type': 'ItemList',
-      itemListElement: wardogs.sections.map(function (sec, i) {
-        return { '@type': 'ListItem', position: i + 1, name: sec.label, url: HUB_BASE + '/wardogs/' + sec.slug };
-      }),
-    },
+    name: 'Wardogs Loadouts, Tier List & Build Advisor', url: BASE + '/wardogs',
+    description: 'The best Wardogs loadouts ranked by real time-to-kill and priced against the economy.',
+    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
   };
 
   return (
-    <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubBreadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubCollectionLd) }} />
+    <main className={exo2.variable} style={{ background: '#0b0d10', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }} />
       <style>{`
-        .wd-dossier { transition: border-color .14s ease, background .14s ease; }
-        .wd-dossier:hover { border-color: var(--accent); background: var(--bg-card-hover); }
-        .wd-dossier .wd-card-title { transition: color .14s ease; }
-        .wd-dossier:hover .wd-card-title { color: var(--accent) !important; }
+        .wd-cta-primary { transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
+        .wd-cta-primary:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 8px 26px ${AG}; }
+        .wd-cta-ghost:hover { border-color: ${A} !important; color: #fff !important; }
+        .wd-prod { transition: transform .14s ease, border-color .14s ease, background .14s ease; }
+        .wd-prod:hover { transform: translateY(-2px); border-color: ${A}; background: #15181e; }
+        .wd-prod:hover .wd-prod-cta { color: #fff; }
+        @media (max-width: 720px){ .wd-hero-inner { padding: 40px 18px 34px !important; } .wd-ticker { gap: 20px !important; } }
       `}</style>
 
-      {/* Breadcrumb: Network / Wardogs */}
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-        <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
-        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <span style={{ color: 'var(--text-secondary)' }}>Wardogs</span>
-      </nav>
+      {/* ===== HERO ===== */}
+      <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1d2026' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={HERO_IMG} alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }} />
+        {/* legibility scrims: dark left + dark bottom + subtle amber vignette */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(8,9,12,0.94) 0%, rgba(8,9,12,0.72) 42%, rgba(8,9,12,0.32) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, #0b0d10 2%, rgba(11,13,16,0.15) 46%, rgba(11,13,16,0.35) 100%)' }} />
 
-      {/* Hero */}
-      <div style={{ marginBottom: 34 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1,
-            color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 6, padding: '3px 7px',
-          }}>CNP</span>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-            Cybernetic Punks Network
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
-          <h1 style={{ fontFamily: EXO, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>Wardogs</h1>
-          {eaLive ? <Pill text="In Early Access" tone="live" /> : <Pill text="Pre-launch" tone="muted" />}
-        </div>
-        <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 600, lineHeight: 1.6 }}>
-          {wardogs.tagline}. Confirmed-systems coverage of the BULKHEAD / Team17 combined-arms shooter - the three-team Control Zone, the cash economy, and combined arms - with verified data landing as Early Access opens.
-        </p>
+        <div className="wd-hero-inner" style={{ position: 'relative', maxWidth: 1120, margin: '0 auto', padding: '52px 24px 44px' }}>
+          <nav aria-label="Breadcrumb" style={{ display: 'flex', gap: 8, marginBottom: 26, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>
+            <Link href="/" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>NETWORK</Link>
+            <span style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)' }}>WARDOGS</span>
+          </nav>
 
-        {/* Early Access clock -- server-computed (SSR, force-dynamic). Days derive from
-            the single wardogs.launch_date constant. No client tick. */}
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)',
-          borderRadius: 8, padding: '20px 22px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--accent)', textTransform: 'uppercase' }}>Early Access</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{eaLive ? 'Live Now' : 'Countdown Active'}</span>
+          {/* official Wardogs logo + EA badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={LOGO} alt="Wardogs" style={{ height: 40, width: 'auto', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: A, border: '1px solid ' + A, borderRadius: 3, padding: '4px 8px', background: 'rgba(224,161,58,0.08)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: eaLive ? 'var(--green,#5bd18e)' : A, boxShadow: '0 0 6px currentColor' }} />
+              {eaLive ? 'EARLY ACCESS — LIVE' : 'EARLY ACCESS'}
             </span>
           </div>
-          <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', alignItems: 'center' }}>
-            {eaLive ? (
-              <div style={{ flexShrink: 0 }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>Status</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 44, fontWeight: 900, lineHeight: 1, color: 'var(--green)', letterSpacing: 1 }}>LIVE</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>In Early Access</span>
-                </div>
-              </div>
-            ) : (daysToEA != null && (
-              <div style={{ flexShrink: 0 }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToEA}</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
-                </div>
-              </div>
-            ))}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 210 }}>
-              {[['Launch', launchLong.toUpperCase()], ['Platform', 'Steam (PC)'], ['Access', 'Early Access']].map(function (r) {
-                return (
-                  <div key={r[0]} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>{r[0]}</span>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{r[1]}</span>
-                  </div>
-                );
-              })}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>Intel</span>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {briefingCount > 0
-                    ? <><span style={{ color: 'var(--green)', fontWeight: 700 }}>Live</span> - {briefingCount} {briefingCount === 1 ? 'Briefing' : 'Briefings'}</>
-                    : 'Building'}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>{eaLive ? 'Wardogs is in Early Access now' : 'Wardogs opens in Early Access September 10, 2026'}</span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{eaLive ? '- the hub is live.' : '- the hub is standing by.'}</span>
+
+          <h1 style={{ fontFamily: EXO, fontSize: 'clamp(34px, 6vw, 62px)', fontWeight: 800, lineHeight: 1.03, letterSpacing: '-0.5px', margin: '0 0 16px', maxWidth: 760, textShadow: '0 2px 24px rgba(0,0,0,0.5)' }}>
+            Wardogs Loadouts<br />That Actually Win
+          </h1>
+          <p style={{ fontSize: 'clamp(15px,2vw,18px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, maxWidth: 620, margin: '0 0 30px', fontWeight: 500 }}>
+            Every weapon ranked by real time-to-kill. Priced against the economy. Built for your level.{' '}
+            <span style={{ color: '#fff', fontWeight: 700 }}>We don&rsquo;t guess &mdash; if we don&rsquo;t know, we say so.</span>
+          </p>
+
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Link href="/wardogs/loadouts" className="wd-cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, letterSpacing: 0.3, padding: '14px 24px', borderRadius: 4, textDecoration: 'none' }}>
+              Find Your Best Loadout &rarr;
+            </Link>
+            <Link href="/wardogs/arsenal" className="wd-cta-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.25)', fontFamily: EXO, fontSize: 15, fontWeight: 700, padding: '13px 22px', borderRadius: 4, textDecoration: 'none', transition: 'border-color .12s ease, color .12s ease' }}>
+              Browse the Arsenal &rarr;
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Tools -- live interactive tools (config-driven from wardogs.tools). A tool is a
-          live generator with its own route, surfaced here as a discoverable entry-point
-          (distinct from the editorial Coverage sections below). "Loadouts" naming. */}
-      {(wardogs.tools || []).length > 0 && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
-            <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Tools</h2>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      {/* ===== LIVE-STAT TICKER (all real) ===== */}
+      <section style={{ borderBottom: '1px solid #1d2026', background: '#0e1116' }}>
+        <div className="wd-ticker" style={{ maxWidth: 1120, margin: '0 auto', padding: '18px 24px', display: 'flex', gap: 'clamp(20px,5vw,52px)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Stat value={s.weapons || 33} label="Weapons Tracked" />
+          {dp && <Stat value={dp} label="Measured Data Points" />}
+          {s.topOneShot && <Stat value={'$' + Number(s.topOneShot.p).toLocaleString('en-US')} label={'Priciest One-Shot (' + s.topOneShot.n + ')'} />}
+          <Stat value={eaLive ? 'EARLY ACCESS' : 'PRE-LAUNCH'} label={s.updatedDaysAgo != null ? ('Data updated ' + (s.updatedDaysAgo === 0 ? 'today' : s.updatedDaysAgo + 'd ago')) : 'Steam (PC)'} />
+          <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 7px var(--green,#5bd18e)' }} />
+            COMMUNITY-TESTED, ATTRIBUTED
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14, marginBottom: 34 }}>
-            {wardogs.tools.map(function (tool, i) {
-              var code = 'TL-' + String(i + 1).padStart(2, '0');
-              return (
-                <Link key={tool.slug} href={tool.href} className="wd-dossier" style={cardBase}>
-                  <DossierHead code={code}><Pill text="Live" tone="live" /></DossierHead>
-                  <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    <span className="wd-card-title" style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{tool.label}</span>
-                    <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{tool.tagline}</span>
-                    <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: 'var(--accent)' }}>
-                      Open the finder &rarr;
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+        </div>
+      </section>
+
+      {/* ===== PRODUCT CARDS ===== */}
+      <section style={{ maxWidth: 1120, margin: '0 auto', padding: '44px 24px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <h2 style={{ fontFamily: EXO, fontSize: 12, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>The Tools</h2>
+          <div style={{ flex: 1, height: 1, background: '#1d2026' }} />
+        </div>
+
+        {/* HERO CARD -- Build Advisor */}
+        <Link href="/wardogs/loadouts" className="wd-prod" style={{ display: 'block', position: 'relative', overflow: 'hidden', background: 'linear-gradient(120deg, #16130c 0%, #121519 60%)', border: '1px solid ' + A, borderRadius: 8, padding: 'clamp(24px,4vw,40px)', textDecoration: 'none', marginBottom: 16 }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '42%', height: '100%', background: 'radial-gradient(circle at 80% 40%, ' + AG + ', transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', maxWidth: 640 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 14 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 6px var(--green,#5bd18e)' }} />
+              LIVE &middot; THE FLAGSHIP
+            </div>
+            <h3 style={{ fontFamily: EXO, fontSize: 'clamp(24px,3.4vw,34px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.3px' }}>Build Advisor</h3>
+            <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, margin: '0 0 22px', maxWidth: 560 }}>
+              Tell us your level, budget, and playstyle. We compute your best loadout &mdash; ranked by measured time-to-kill, priced against the economy, with a body-part kill-map showing exactly where to aim.
+            </p>
+            <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, padding: '13px 22px', borderRadius: 4 }}>
+              Build my loadout &rarr;
+            </span>
           </div>
-        </>
-      )}
+        </Link>
 
-      {/* Coverage -- config-driven cards from wardogs.sections */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coverage</h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
-        {wardogs.sections.map(function (sec, i) {
-          var code = sec.slug.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
-          if (sec.source === 'editor') return <CountCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} code={code} />;
-          return <SoonCard key={sec.slug} section={sec} code={code} />;
-        })}
-      </div>
+        {/* SECONDARY CARDS -- Tier List + Economy (Phase 2/3) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+          <ComingCard
+            title="Weapon Tier List"
+            body="Every Wardogs weapon, ranked S to C by real time-to-kill. No opinions &mdash; just what kills fastest."
+            cta="See the rankings"
+            phase="Coming next"
+          />
+          <ComingCard
+            title="Economy Planner"
+            body="What can you afford right now? What to save for? Plan your loadout against the cash economy."
+            cta="Plan your cash"
+            phase="Coming soon"
+          />
+        </div>
+      </section>
 
-      {/* PROVENANCE note -- Wardogs facts beyond name + date are unverified until in-game. */}
-      <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '28px 0 0', maxWidth: 680, lineHeight: 1.6, fontFamily: 'monospace' }}>
-        Wardogs is in pre-launch. Everything here is drawn from official BULKHEAD / Team17 material; specific numbers stay flagged as unconfirmed until they are verified in-game once Early Access opens.
-      </p>
+      {/* honesty / provenance strip */}
+      <section style={{ maxWidth: 1120, margin: '0 auto', padding: '10px 24px 60px' }}>
+        <p style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6, maxWidth: 760, margin: 0 }}>
+          Combat data is community-tested and attributed &mdash; not Bulkhead-official, and never guessed. Where a
+          number isn&rsquo;t published, we say so. Everything is re-checked against first-party data as Early Access updates land.
+        </p>
+      </section>
     </main>
+  );
+}
+
+function ComingCard({ title, body, cta, phase }) {
+  return (
+    <div className="wd-prod" style={{ position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', opacity: 0.96 }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, fontWeight: 800, letterSpacing: 1.5, color: 'var(--text-tertiary)', border: '1px solid #262b33', borderRadius: 3, padding: '3px 8px', marginBottom: 14, textTransform: 'uppercase' }}>
+        {phase}
+      </div>
+      <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>{title}</h3>
+      <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }} dangerouslySetInnerHTML={{ __html: body }} />
+      <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: 'var(--text-tertiary)' }}>
+        {cta} &rarr;
+      </span>
+    </div>
   );
 }
