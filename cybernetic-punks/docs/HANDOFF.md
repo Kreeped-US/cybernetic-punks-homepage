@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - PLAN + STRATEGIC VISION (Fable-reviewed) -- tomorrow: SEO fixes + /wardogs rebuild + tier list, in the sharpened direction
+
+- THE VISION (operator, Fable-stress-tested): CNP = an AI-run, SEO-first, verified-legitimacy CONTENT MACHINE for competitive FPS games. Parts: tools (advisor/tier-list/arsenal) + data stores (fuel) + AI editors (content engine) + eventual AI video (horizon). In design/dev, building ground-up. NOT monetizing now -- perfect the experience/product first; legitimacy + revenue are downstream, earned.
+- FABLE STRESS-TEST -- key corrections (adopted):
+  1. "PERFECT SEO FIRST" IS THE WRONG #1. SEO at DA-23 is "a plan to wait." The REAL priority is EARNING AUTHORITY: distribution, links, community, creator relationships (Swoleguy is the template), shipping synthesis artifacts where arguments happen. (Matches the operator's live creator conversation.) SEO tech FIXES (broken images etc.) = table-stakes for legitimacy, still do them; "perfect SEO as strategy" = the trap.
+  2. THE MOAT'S SINGLE POINT OF FAILURE = one human's verification hours. Fails as stale-data-wearing-a-verified-label (worst outcome for the thesis). MUST scale verification beyond one human: trusted contributors / creator partnerships where their testing becomes attributed rows (Swoleguy model pushed further). -> the AGENTS direction below.
+  3. LEGITIMACY = RETENTION/TRUST, not acquisition (a stranger can't perceive verification before clicking). Pair it with a SPEED LANE: "correct AND early" -- first on patches/meta shifts, not just verified-eventually. The event-driven speed lane is half the moat.
+  4. MONETIZATION: keep off, but INSTRUMENT DEMAND NOW (saves, return visits, notify-list, refinement usage -- leading indicators). "Perfect" is unfinishable -> define done-states per game, let usage rank them.
+  5. AI EDITORS: keep as verified + specific + transparent; personas as BYLINES not headline. The AI VIDEO is the highest-risk item (persona talking-heads = the archetype this audience mocks) -- defer; if ever, reframe data-first (visualized patch deltas); the "cover the creators" part is a DISTRIBUTION/relationship play, not content.
+  6. MULTI-GAME: agnostic architecture (done, correct) + SEQUENTIAL FOCUS (one game owns verification hours at a time -- Wardogs now, DMZ Oct 23, Marathon maintenance). N-games-half-depth = zero games where CNP is best = kills the thesis. Pick WINNABLE niche fights (niche launches, not CoD-scale).
+  7. GSC guards: it LAGS + is noise at low volume (min-evidence thresholds + pre-registered criteria; protect FOUNDATIONAL commitments from the kill-reflex -- only reversible experiments get killed). GSC is BLIND to referrals/links/community (the actual DA bottleneck) -> add NON-GSC evidence (referral, links, Discord/Reddit).
+  8. THE COMPOUNDING MOAT (undersold): the durable exclusive = computed synthesis over an ACCUMULATED, patch-stamped history of verified data. Nobody can retroactively verify last season. It gets stronger every month by existing. LEAN INTO THIS.
+- VERBIAGE (locked): recalibrate copy to a HAPPY MEDIUM -- marketable but NOT gimmicky/cheap-ad, NOT nerdy/technical. Voice = confident, clear, player-to-player, credible ("the knowledgeable friend whose builds you trust" -- a top player/guide writer, not a marketer/professor/hype-YouTuber). Keep the honesty in player language ("we don't guess -- if we don't know, we say so" = the secret weapon: confident, not gimmicky, signals legitimacy hype sites can't copy). SEO-aligned (search terms align with player language). Gimmicky UNDERCUTS the moat; confident-credible REINFORCES it. Claude drafts /wardogs + advisor copy in this voice.
+- AGENTS (direction to scope, answers Fable #2): AI agents to scale the machine's THROUGHPUT (research, draft, monitor patches, flag) while KEEPING THE VERIFICATION GATE (nothing labeled "verified" without a check -- agents prepare, human/gate confirms). Scales the operation without breaching the moat. Bigger than a day-task -- scope separately.
+- TOMORROW (concrete, in priority order per the corrected strategy):
+  1. SEO tech FIXES (table-stakes for legitimacy): broken images (33, likely the weapon images 404ing -- diagnose cause/case first), OG tags incomplete (70 -- the sharing lever), schema.org errors (105 -- likely one bad JSON-LD template), og:url!=canonical (6), orphans (7). DEFER: perf (slow pages/AI-crawler), title/meta-length. DO NOT touch intentional noindex (evidence-ramp) or redirects (clean migration).
+  2. /WARDOGS REBUILD -- around the PRODUCT (advisor + tier list), not the old editorial-section framing. Product-first landing. Marketable copy (the locked voice). NOTE: this is the MARKETABLE PRODUCT presentation -- make it match the substance's quality.
+  3. WEAPON TIER LIST (new, the "prove the meta" flagship): S/A/B/C from real TTK data, honest, searchable + shareable. Scope: standalone /wardogs/tier-list vs section; TTK-tiered vs meta -- operator decides.
+  4. ADVISOR VISUAL POLISH -- premium/high-end first impression (productization -- the marketable product).
+  5. SILHOUETTE: confirm advisor's BodyPartViz uses the current sleek Grok figure (shared component -- likely done; verify).
+  - REFERENCE: /marathon = further-built-out but the operator's FIRST attempt (has mistakes). Learn its build-out; AVOID its errors. Operator to identify Marathon right-vs-wrong + show screenshots of /marathon, /wardogs, the advisor so Claude designs grounded (not blind).
+  - Distribution: parked (operator re-opens); creator conversation live. Per Fable, distribution/authority-earning is the REAL priority -- weigh it high.
+- Still parked (build refinements): class-gating wiring, E2 (Vera Sloan economy store), B2 grid, TTK-on-downgraded-ammo, unlock-fee column, indexability ramp, buildToolCta.
+
+---
 ## 2026-09-11 - Wardogs advisor SURFACE PASS -- cost-awareness now VISIBLE (commit b0edce6)
 
 - The economy work (prices/ammo/budget-solve/TTK-per-dollar) was LIVE but INVISIBLE. Surfaced deterministically (render) + woven into THE READ (prompt) -- no engine change.
