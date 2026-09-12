@@ -43,11 +43,11 @@ const GOLD = '#ffd700';
 const GHOST = '#00ff88';
 const CONTRABAND = '#ff2d55';
 
-// Maps that have a hero PNG at /public/images/maps/<slug>.png, keyed to the
-// real pixel dimensions of each PNG (used by the ImageObject JSON-LD). Only
+// Maps that have a hero image at /public/images/maps/<slug>.webp, keyed to the
+// real pixel dimensions of each image (used by the ImageObject JSON-LD). Only
 // slugs listed here render a banner AND advertise an image -- this prevents
 // broken-image icons, since a server component cannot use <img onError>.
-// Add an entry when a new map PNG lands (record its width/height).
+// Add an entry when a new map image lands (record its width/height).
 const MAP_HERO_IMAGES = {
   'cryo-archive': { width: 1174, height: 890 },
   'dire-marsh':   { width: 1114, height: 867 },
@@ -334,8 +334,8 @@ export default async function MapPage({ params, searchParams }) {
     var heroDims = MAP_HERO_IMAGES[slug];
     mapEntity.image = {
       '@type': 'ImageObject',
-      url: 'https://cyberneticpunks.com/images/maps/' + slug + '.png',
-      contentUrl: 'https://cyberneticpunks.com/images/maps/' + slug + '.png',
+      url: 'https://cyberneticpunks.com/images/maps/' + slug + '.webp',
+      contentUrl: 'https://cyberneticpunks.com/images/maps/' + slug + '.webp',
       width: heroDims.width,
       height: heroDims.height,
       caption: 'Marathon ' + displayName + ' map',
@@ -386,8 +386,10 @@ export default async function MapPage({ params, searchParams }) {
         {MAP_HERO_SLUGS.has(slug) && (
           <div style={{ marginBottom: 20, borderRadius: 4, overflow: 'hidden', border: '1px solid ' + BORDER }}>
             <img
-              src={'/images/maps/' + slug + '.png'}
+              src={'/images/maps/' + slug + '.webp'}
               alt={displayName + ' map'}
+              fetchPriority="high"
+              decoding="async"
               style={{ display: 'block', width: '100%', height: 'auto', maxHeight: 360, objectFit: 'cover' }}
             />
           </div>
