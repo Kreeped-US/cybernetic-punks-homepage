@@ -42,7 +42,9 @@ export default async function DmzEntityDetail({ entity, row, siblings }) {
   // Only emit facts as structured PropertyValues when the row is VERIFIED --
   // unconfirmed data must not be asserted as fact in machine-readable form.
   var props = confirmed ? facts.map(function (f) { return { '@type': 'PropertyValue', name: f.label, value: String(f.value) }; }) : [];
-  var thing = { '@type': 'Thing', name: row.name, description: row.description || (entity.singular + ' in DMZ (Modern Warfare 4).') };
+  // additionalProperty is a schema.org property of Product/Place (not Thing), so the entity's
+  // schemaType drives a VALID type: POIs -> Place, item-like entities -> Product (default).
+  var thing = { '@type': entity.schemaType || 'Product', name: row.name, description: row.description || (entity.singular + ' in DMZ (Modern Warfare 4).') };
   if (props.length > 0) thing.additionalProperty = props;
   var webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',

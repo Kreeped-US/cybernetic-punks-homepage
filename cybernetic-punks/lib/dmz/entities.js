@@ -103,6 +103,7 @@ export const DMZ_ENTITIES = {
     key: 'pois',
     table: 'dmz_pois',
     routeBase: '/dmz/pois',
+    schemaType: 'Place', // a POI is a Place (JSON-LD mainEntity type; additionalProperty is valid on Place)
     singular: 'Location',
     plural: 'Locations',
     // Hub H1 carries "Hajin Map & Locations". This index does NOT chase "hajin map"

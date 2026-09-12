@@ -95,6 +95,14 @@ export async function generateMetadata({ params }) {
     // NOINDEX at ship -- Channel B leaf ramp; promoted on GSC evidence, out of the sitemap until then.
     robots: { index: false, follow: true },
     alternates: { canonical: BASE + '/wardogs/arsenal/' + slug },
+    // og:url must match the canonical (was defaulting to the metadataBase root). noindex is unchanged.
+    openGraph: {
+      title: 'Wardogs ' + name + ' - Shots to Kill & Body-Part Damage',
+      description: 'Wardogs ' + name + ' (' + cls + '): measured shots-to-kill and body-part damage across ammo and armor.',
+      url: BASE + '/wardogs/arsenal/' + slug,
+      siteName: 'Cybernetic Punks',
+      type: 'website',
+    },
   };
 }
 

@@ -24,6 +24,14 @@ export const metadata = {
   title: { absolute: 'Wardogs - Early Access Intel Hub | Cybernetic Punks' },
   description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter launching in Steam Early Access on September 10, 2026. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/wardogs' },
+  // og:url must equal the canonical (was defaulting to the metadataBase root -> audit mismatch).
+  openGraph: {
+    title: 'Wardogs - Early Access Intel Hub',
+    description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter -- verified loadouts, arsenal and economy.',
+    url: 'https://cyberneticpunks.com/wardogs',
+    siteName: 'Cybernetic Punks',
+    type: 'website',
+  },
 };
 
 // Set of currently-published game_slug='wardogs' article slugs -> REAL per-section

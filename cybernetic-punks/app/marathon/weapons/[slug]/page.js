@@ -244,9 +244,10 @@ export default async function WeaponDetailPage({ params }) {
   if (weapon.firing_mode)                  weaponProps.push({ '@type': 'PropertyValue', name: 'Firing Mode', value: weapon.firing_mode });
   if (weapon.rarity)                       weaponProps.push({ '@type': 'PropertyValue', name: 'Rarity', value: weapon.rarity });
 
-  // The weapon itself, as the page's main entity. Carries the stat block.
+  // The weapon itself, as the page's main entity. Carries the stat block via additionalProperty,
+  // which schema.org defines on Product (not Thing) -- so the type is Product to keep the JSON-LD valid.
   var weaponEntity = {
-    '@type': 'Thing',
+    '@type': 'Product',
     name: weaponName,
     description: 'The ' + weaponName + ' is a ' + (weapon.weapon_type || 'weapon')
       + (weapon.ammo_type ? ' using ' + weapon.ammo_type : '')

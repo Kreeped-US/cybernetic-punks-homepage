@@ -150,7 +150,7 @@ export default async function UniqueDetailPage({ params }) {
     if (base.ammo_type) props.push({ '@type': 'PropertyValue', name: 'Ammo Type', value: base.ammo_type });
   }
   var thing = {
-    '@type': 'Thing',
+    '@type': 'Product',
     name: u.name,
     description: 'The ' + u.name + ' is a ' + (u.rarity ? u.rarity + ' ' : '') + 'unique variant of the '
       + (u.base_weapon || 'base weapon') + ' in Marathon, Bungie\'s extraction shooter, with permanently locked mods.',

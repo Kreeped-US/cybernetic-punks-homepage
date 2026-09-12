@@ -18,6 +18,14 @@ export const metadata = {
   title: { absolute: 'PUBG: DED.NET - Verified Intel Hub | Cybernetic Punks' },
   description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Release date TBA; closed beta incoming. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/pubg-dednet' },
+  // og:url must equal the canonical (was defaulting to the metadataBase root).
+  openGraph: {
+    title: 'PUBG: DED.NET - Verified Intel Hub',
+    description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026.',
+    url: 'https://cyberneticpunks.com/pubg-dednet',
+    siteName: 'Cybernetic Punks',
+    type: 'website',
+  },
 };
 
 async function publishedDednetSlugs() {
@@ -84,7 +92,7 @@ export default async function PubgDednetLanding() {
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 2, padding: '3px 8px' }}>Revealed</span>
         </div>
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 640, lineHeight: 1.6 }}>
-          {pubgDednet.tagline}. Confirmed-systems coverage of the PUBG Studios / KRAFTON roguelite FPS - the multi-match run, ROMs, injuries, and the GRUNGEHOUSE world of 1996 Cascadia - grounded in official material and the studio's own statements.
+          {pubgDednet.tagline}. Confirmed-systems coverage of the PUBG Studios / KRAFTON roguelite FPS - the multi-match run, ROMs, injuries, and the GRUNGEHOUSE world of 1996 Cascadia - grounded in official material and the studio&rsquo;s own statements.
         </p>
 
         {/* Status strip -- reveal facts, NO date/countdown. */}

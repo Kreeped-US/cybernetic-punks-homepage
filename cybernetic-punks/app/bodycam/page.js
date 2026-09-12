@@ -19,6 +19,14 @@ export const metadata = {
   title: { absolute: 'Bodycam - Verified Intel Hub | Cybernetic Punks' },
   description: 'Verified intel for Bodycam, the Reissad Studio body-camera tactical FPS live in Steam Early Access. Weapons, the real-parts attachment system, modes, and maps - structure confirmed, values verified in-game. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/bodycam' },
+  // og:url must equal the canonical (was defaulting to the metadataBase root).
+  openGraph: {
+    title: 'Bodycam - Verified Intel Hub',
+    description: 'Verified intel for Bodycam, the Reissad Studio body-camera tactical FPS -- weapons, the real-parts attachment system, modes and maps.',
+    url: 'https://cyberneticpunks.com/bodycam',
+    siteName: 'Cybernetic Punks',
+    type: 'website',
+  },
 };
 
 var FONT = 'Exo_2, system-ui, sans-serif';
