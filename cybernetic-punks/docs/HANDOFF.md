@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - Wardogs PROGRESSION PLANNER shipped -- the 3rd Wardogs tool, trio complete (commit 5390b13 + unlock-fee load 822c41e)
+
+- /wardogs/progression (NOT /wardogs/economy -- "economy" is a live content-section slug; static would shadow/double it in sitemap -- build caught this). The Economy tool, Phase 3. DISTINCT from the Loadout Finder: advisor = "best loadout now"; planner = "what to grind/save toward."
+- DATA: unlock_fee loaded (migration 2026-09-12-wardogs-unlock-fee, operator-run: 33/33 populated, ladder total $2,195,000, 7 free-starters $0, Deagle career-85 untouched, cross-game 0). Community-attributed (tier B). PLUS the existing track/level/per-life-price. Reads the same DB in prod.
+- FEATURES (all real data): per-weapon unlock path ("FAL: Assault 35, UNLOCK $200,000, PER LIFE $6,500"); per-track roadmaps + track totals ("Recon: 9 weapons, $775,000 to unlock the class"); grand total "$2,195,000 -- to unlock ALL WEAPONS" (precise, NOT "everything" -- gear/vehicles separate/not-loaded, honesty strip states it); plan-by-your-state calculator (level + cash -> unlock now / keep leveling / save for + next-cheapest). Honest-null (free starters "Free/default", 8 no-level "Level TBD", Deagle "Bulkhead-official 85"). Elite (amber, cash-HUD press-kit hero), marketable, SEO-targeted (Wardogs unlock guide/what to save for/progression), OG card, indexable, mobile-safe.
+- THE MOAT: unlock_fee (one-time "UNLOCK") and credit_cost (per-life "PER LIFE") NEVER conflated -- separate columns/labels/colors, honesty strip spells it out (8 tests, incl. one asserting distinctness). "all weapons" not "everything."
+- WARDOGS TRIO COMPLETE: Loadout Finder (best now, cost-aware, kill-map) + Tier List (TTK S-D) + Progression Planner (unlock/save-for) -- all on real attributed data. Plus arsenal -> weapon detail, the economy ticker, themed footer, elite landing. Every landing card LIVE. The vertical is COMPLETE + elite + honest + fast + shares-well + distribution-live.
+- NEXT: DISTRIBUTION is the priority (X post live, follow-up + community pending -- the product's done, get it found). Parked (refinements): generation counter, schema/orphans re-crawl, E2 (vehicles/armor/gear -> Vera editor store + fuller economy), Night Marsh variant image, og-image orphan delete.
+
+---
 ## 2026-09-12 - Economy ticker + BUILD HARDENING -- distribution readiness (commits f808426/daa80f9 + dd6b562)
 
 - ECONOMY TICKER (/wardogs, f808426 + daa80f9): "Est. in-game cash spent on loadouts (modeled, live)" -- ~$40B, ticking ~$227K/sec. HONEST + SOURCED: 1.25M copies (Bulkhead official @WARDOGS, as scale) + ~337K peak concurrent (SteamDB, cited as context) + a CONSERVATIVE ~170K sustained-average (~50% of peak -- rate basis, doesn't overcount) + $3,200 avg loadout (from OUR real price data). Labeled "in-game credits, not real money, not an official figure"; "how we model this" expander shows all assumptions. On-brand (rigorous/conservative, shows the work -- "NO HYPE. JUST INTEL." holds). Dials: loadoutsPerHour(1.5) + sustained-avg(170K).
