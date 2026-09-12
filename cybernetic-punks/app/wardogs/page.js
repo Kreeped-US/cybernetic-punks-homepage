@@ -164,8 +164,8 @@ export default async function WardogsLanding() {
             <Link href="/wardogs/loadouts" className="wd-cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, letterSpacing: 0.3, padding: '14px 24px', borderRadius: 4, textDecoration: 'none' }}>
               Find Your Best Loadout &rarr;
             </Link>
-            <Link href="/wardogs/arsenal" className="wd-cta-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.25)', fontFamily: EXO, fontSize: 15, fontWeight: 700, padding: '13px 22px', borderRadius: 4, textDecoration: 'none', transition: 'border-color .12s ease, color .12s ease' }}>
-              Browse the Arsenal &rarr;
+            <Link href="/wardogs/tier-list" className="wd-cta-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.25)', fontFamily: EXO, fontSize: 15, fontWeight: 700, padding: '13px 22px', borderRadius: 4, textDecoration: 'none', transition: 'border-color .12s ease, color .12s ease' }}>
+              See the Tier List &rarr;
             </Link>
           </div>
         </div>
@@ -210,14 +210,21 @@ export default async function WardogsLanding() {
           </div>
         </Link>
 
-        {/* SECONDARY CARDS -- Tier List + Economy (Phase 2/3) */}
+        {/* SECONDARY CARDS -- Tier List (live) + Economy (Phase 3) */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-          <ComingCard
-            title="Weapon Tier List"
-            body="Every Wardogs weapon, ranked S to C by real time-to-kill. No opinions &mdash; just what kills fastest."
-            cta="See the rankings"
-            phase="Coming next"
-          />
+          <Link href="/wardogs/tier-list" className="wd-prod" style={{ display: 'block', position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', textDecoration: 'none' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 14, textTransform: 'uppercase' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 6px var(--green,#5bd18e)' }} />
+              Live
+            </div>
+            <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>Weapon Tier List</h3>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              Every Wardogs weapon, ranked S to D by real time-to-kill. No opinions &mdash; just what kills fastest, with the specialists explained.
+            </p>
+            <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
+              See the rankings &rarr;
+            </span>
+          </Link>
           <ComingCard
             title="Economy Planner"
             body="What can you afford right now? What to save for? Plan your loadout against the cash economy."

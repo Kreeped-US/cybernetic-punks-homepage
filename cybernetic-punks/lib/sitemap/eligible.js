@@ -327,6 +327,9 @@ export async function computeEligible() {
     // ballistics summaries). The per-weapon DETAIL pages (/wardogs/arsenal/<slug>) stay NOINDEX + out
     // of the sitemap (the Channel B leaf ramp). DB-driven -> no lastmod. type='wardogs-section'.
     add(BASE + '/wardogs/arsenal', W, 'wardogs-section', undefined, 'weekly', 0.8);
+
+    // The TIER LIST -- indexable "prove the meta" flagship (every weapon ranked by measured TTK).
+    add(BASE + '/wardogs/tier-list', W, 'wardogs-section', undefined, 'weekly', 0.8);
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while
