@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - Marathon image perf pass -- 90% saved (commit 40a31dd)
+
+- 5 Marathon map PNGs -> WebP q88 (conservative -- maps are READ, zone labels must stay legible; verified crisp). No downscale (already native display size). References updated (extension change, app/marathon/maps/[slug]/page.js img + schema url/contentUrl). Cryo 1505->150KB, dire-marsh 1093->118, night-marsh 1093->118, outpost 804->79, perimeter 658->58 (-90%, maps 5154->523KB).
+- og-image.png: downscaled 2400x1260 -> 1200x630 (FIXED a pre-existing mismatch -- code declared 1200x630 but file was 2x), full-color recompress. 938->79KB (-92%). Kept .png (safe for social crawlers, ~10 refs). LCP hint on the map hero banner.
+- TOTAL both perf passes: ~11MB image weight shed (Wardogs 5.7MB + Marathon 5.4MB) -- closes the image side of the "slow pages" audit finding.
+- FLAGGED (not touched): (1) dire-marsh.png + night-marsh.png are BYTE-IDENTICAL duplicates -- either a data error (a map page showing the wrong image) or an unfinished placeholder -- worth a data-correctness check. (2) The og-image CARD CONTENT is STALE: "5 EDITORS ACTIVE" (editors deprioritized) + "BUILD ADVISOR" (renamed Loadout Finder) -- off-strategy on the most-shared asset; needs a content refresh (matters for distribution).
+- Parked: real generation counter, ~48 schema + 7 orphans (audit export/re-crawl), Wardogs nav mark, Scout Rifle TD anomaly, Economy tool (Phase 3), the 2 flags above. Strategic: distribution/authority-earning is the priority.
+
+---
 ## 2026-09-12 - Image-downscale/perf pass -- 3 Wardogs heroes optimized, 81% saved (commit 56d9335)
 
 - The 3 large press-kit heroes (Littlebird landing 1.5MB, Residential loadouts 3.15MB, Tank footer 2.65MB = 7.2MB) were 4K (3840x2160) -- overkill for darkened full-bleed backgrounds. Downscaled to 2560x1440 (retina-safe), re-encoded mozjpeg q78 progressive (WebP tested + rejected -- barely beat jpeg on these high-detail crops, not worth the reference-rename). Filenames unchanged (zero rename risk).
