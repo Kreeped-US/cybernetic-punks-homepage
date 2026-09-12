@@ -1119,7 +1119,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
           <>
             <div style={{
               position: 'absolute', inset: 0,
-              backgroundImage: 'url(' + (item.thumbnail || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg')) + ')',
+              backgroundImage: 'url(' + (item.thumbnail || ('https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg')) + ')',
               backgroundSize: 'cover', backgroundPosition: 'center',
               opacity: 0.15,
               filter: 'blur(8px)',
