@@ -50,8 +50,10 @@ export default function LoadoutsPage() {
       {/* Premium hero -- cinematic backdrop so the tool feels like the landing's continuation. */}
       <section style={{ position: 'relative', overflow: 'hidden', color: '#fff', borderBottom: '1px solid #1d2026', fontFamily: 'system-ui, sans-serif' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/games/wardogs-hero.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 26%', opacity: 0.9 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(11,13,16,0.95) 0%, rgba(11,13,16,0.78) 48%, rgba(11,13,16,0.5) 100%)' }} />
+        {/* First-person Super-45 POV, golden-hour street, cash HUD -- the press-kit shot for the Loadout Finder. */}
+        <img src="/images/wardogs/WD_Screenshot_ResidentialStreet_1_WD1.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 44%', opacity: 0.92 }} />
+        {/* left stays dark for the H1/intro; the golden POV shows through on the right */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(11,13,16,0.95) 0%, rgba(11,13,16,0.72) 44%, rgba(11,13,16,0.34) 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, #0b0d10 3%, rgba(11,13,16,0.2) 55%, rgba(11,13,16,0.4) 100%)' }} />
 
         <div style={{ position: 'relative', maxWidth: 1000, margin: '0 auto', padding: '46px 24px 30px' }}>
