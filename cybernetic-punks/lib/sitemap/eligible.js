@@ -330,6 +330,8 @@ export async function computeEligible() {
 
     // The TIER LIST -- indexable "prove the meta" flagship (every weapon ranked by measured TTK).
     add(BASE + '/wardogs/tier-list', W, 'wardogs-section', undefined, 'weekly', 0.8);
+    // Progression Planner (the Economy tool) -- indexable standalone tool, real unlock data.
+    add(BASE + '/wardogs/progression', W, 'wardogs-section', undefined, 'weekly', 0.8);
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while

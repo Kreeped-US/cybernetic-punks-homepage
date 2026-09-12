@@ -245,12 +245,19 @@ export default async function WardogsLanding() {
               See the rankings &rarr;
             </span>
           </Link>
-          <ComingCard
-            title="Economy Planner"
-            body="What can you afford right now? What to save for? Plan your loadout against the cash economy."
-            cta="Plan your cash"
-            phase="Coming soon"
-          />
+          <Link href="/wardogs/progression" className="wd-prod" style={{ display: 'block', position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', textDecoration: 'none' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 14, textTransform: 'uppercase' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 6px var(--green,#5bd18e)' }} />
+              Live
+            </div>
+            <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>Progression Planner</h3>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              What to unlock, what to save for, what it costs to run. Every weapon&rsquo;s unlock level, one-time cost, and per-life price &mdash; by class.
+            </p>
+            <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
+              Plan your grind &rarr;
+            </span>
+          </Link>
         </div>
       </section>
 
@@ -262,20 +269,5 @@ export default async function WardogsLanding() {
         </p>
       </section>
     </main>
-  );
-}
-
-function ComingCard({ title, body, cta, phase }) {
-  return (
-    <div className="wd-prod" style={{ position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', opacity: 0.96 }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, fontWeight: 800, letterSpacing: 1.5, color: 'var(--text-tertiary)', border: '1px solid #262b33', borderRadius: 3, padding: '3px 8px', marginBottom: 14, textTransform: 'uppercase' }}>
-        {phase}
-      </div>
-      <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>{title}</h3>
-      <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }} dangerouslySetInnerHTML={{ __html: body }} />
-      <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: 'var(--text-tertiary)' }}>
-        {cta} &rarr;
-      </span>
-    </div>
   );
 }
