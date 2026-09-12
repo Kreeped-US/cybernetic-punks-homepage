@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - Image-downscale/perf pass -- 3 Wardogs heroes optimized, 81% saved (commit 56d9335)
+
+- The 3 large press-kit heroes (Littlebird landing 1.5MB, Residential loadouts 3.15MB, Tank footer 2.65MB = 7.2MB) were 4K (3840x2160) -- overkill for darkened full-bleed backgrounds. Downscaled to 2560x1440 (retina-safe), re-encoded mozjpeg q78 progressive (WebP tested + rejected -- barely beat jpeg on these high-detail crops, not worth the reference-rename). Filenames unchanged (zero rename risk).
+- RESULT: 7.2MB -> 1.35MB (-81%, 5.7MB saved). Littlebird 1523->222KB, Residential 3078->604KB, Tank 2584->523KB. No visible degradation (verified zoomed on the strictest lighter-scrim edge).
+- SERVING: above-fold heroes (landing/loadouts) = fetchPriority=high + decoding=async (LCP); footer = loading=lazy. Proper LCP optimization -- addresses the "slow pages" audit finding + page-speed ranking + first impression before traffic.
+- FUTURE PERF (flagged, out of scope): Marathon map PNGs (cryo-archive 1.5MB, night/dire-marsh 1MB ea, etc. -- a Marathon perf pass), site og-image.png (938KB).
+- STRATEGIC (per Fable): distribution/authority-earning remains the priority over more building. Parked: real generation counter, ~48 schema + 7 orphans (audit export), Wardogs nav mark, Scout Rifle TD anomaly, Economy tool (Phase 3), press-kit shots on tier/economy cards.
+
+---
 ## 2026-09-12 - #4 Advisor polish COMPLETE -- naming + voice + premium framing + correct hero (commits 4cea8ec + 109c68e)
 
 - PART A NAMING: scrubbed user-facing "Build Advisor" (zero search volume, SEO dead-word) -> "Loadout Finder" / search-aligned everywhere (landing card, title/desc/keywords/OG/JSON-LD, type-hub caveats+card+TypeHubResult, loadouts OG). Grep-clean (only an internal code comment remains). Internal code names untouched.
