@@ -130,7 +130,7 @@ export default async function WardogsLanding() {
       {/* ===== HERO ===== */}
       <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1d2026' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={HERO_IMG} alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }} />
+        <img src={HERO_IMG} alt="" aria-hidden="true" fetchPriority="high" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }} />
         {/* legibility scrims: dark left + dark bottom + subtle amber vignette */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(8,9,12,0.94) 0%, rgba(8,9,12,0.72) 42%, rgba(8,9,12,0.32) 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, #0b0d10 2%, rgba(11,13,16,0.15) 46%, rgba(11,13,16,0.35) 100%)' }} />

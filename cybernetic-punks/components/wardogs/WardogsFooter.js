@@ -36,7 +36,7 @@ export default function WardogsFooter() {
   return (
     <footer style={{ position: 'relative', overflow: 'hidden', background: BG, borderTop: '1px solid #1d2026', marginTop: 40 }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={TANK} alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 42%', opacity: 0.9 }} />
+      <img src={TANK} alt="" aria-hidden="true" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 42%', opacity: 0.9 }} />
       {/* heavy scrims -- the shot is bright daylight, so darken hard for legibility */}
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(11,13,16,0.97) 0%, rgba(11,13,16,0.82) 40%, rgba(11,13,16,0.9) 100%)' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 90% at 15% 20%, rgba(224,161,58,0.06), transparent 60%)' }} />
