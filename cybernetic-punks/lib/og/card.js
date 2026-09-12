@@ -10,12 +10,17 @@
 //          headlineFontSize (px number, default 50) }. The per-article card passes a
 // length-derived headlineFontSize; the headline clamps to 3 lines either way.
 
-// The game-tag pill always renders gameTag as TEXT (e.g. 'MARATHON', 'DMZ', 'DED.NET'). NO
-// publisher game logo is ever rendered -- every card is CNP-text-branded in the game's accent
-// color, IP-safe for an unaffiliated fan site. (A prior marathonLogo prop that rendered the
-// Marathon wordmark inside the Marathon pill was removed in SEO Fix 2b -- the card is now
-// always CNP-text-branded.)
-export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50 }) {
+// Game identity on the card's top-right: by default the game-tag pill renders gameTag as
+// TEXT (e.g. 'DMZ', 'DED.NET'), CNP-text-branded in the game's accent color. When
+// `gameLogoSrc` (a base64 data URI) is passed, the card renders that game's OFFICIAL
+// press-kit logo there INSTEAD of the text pill -- used under the publisher's press-kit
+// terms, with the game's "not affiliated" disclaimer carried in that vertical's footer
+// (e.g. Marathon: lib/games/marathon.js footer.legal). The CNP lockup stays on the left,
+// so the card is clearly a Cybernetic Punks (fan-site) card that USES the logo to identify
+// the game -- it never impersonates an official card. The logo identifies the GAME only;
+// data/content stays honestly provenanced. (satori embeds images via data URI only -- see
+// lib/og/marathonLogo.js.)
+export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50, gameLogoSrc, gameLogoAlt, gameLogoHeight = 76, gameLogoWidth }) {
   return (
     <div
       style={{
@@ -68,7 +73,16 @@ export function Card({ accent, blockTextColor, gameTag, headline, tagline, headl
           </div>
         </div>
 
-        {gameTag ? (
+        {gameLogoSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={gameLogoSrc}
+            alt={gameLogoAlt || (gameTag ? gameTag + ' logo' : 'game logo')}
+            height={gameLogoHeight}
+            width={gameLogoWidth}
+            style={{ height: gameLogoHeight + 'px', width: (gameLogoWidth ? gameLogoWidth + 'px' : 'auto'), objectFit: 'contain', display: 'flex' }}
+          />
+        ) : gameTag ? (
           <div
             style={{
               display: 'flex',

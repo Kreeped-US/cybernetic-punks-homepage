@@ -27,7 +27,8 @@
 //   3. dateModified is OMITTED when there is no real date (was falling
 //      back to new Date() on every crawl - a false freshness signal).
 //   4. OG/Twitter image is the weapon's own art when it has one, falling
-//      back to og-image.png - better Reddit/Discord/X link shares.
+//      back to the Marathon weapons card (official-logo generated OG) -
+//      better Reddit/Discord/X link shares.
 // Page structure + WeaponDetailClient are unchanged.
 
 import { supabase } from '@/lib/supabase';
@@ -95,7 +96,7 @@ export async function generateMetadata({ params }) {
   // Per-weapon OG image when the weapon has art; generic fallback otherwise.
   var ogImage = weapon.image_filename
     ? 'https://cyberneticpunks.com/images/weapons/' + weapon.image_filename
-    : 'https://cyberneticpunks.com/og-image.png';
+    : 'https://cyberneticpunks.com/marathon/weapons/opengraph-image';
 
   return {
     // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars).

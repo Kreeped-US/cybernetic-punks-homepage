@@ -316,7 +316,7 @@ export default async function ShellGuidePage({ params }) {
   headline: shell.title,
   description: shell.description,
   url: 'https://cyberneticpunks.com/marathon/guides/shells/' + resolved.name,
-  image: shellImg ? 'https://cyberneticpunks.com' + shellImg : 'https://cyberneticpunks.com/og-image.png',
+  image: shellImg ? 'https://cyberneticpunks.com' + shellImg : 'https://cyberneticpunks.com/marathon/shells/opengraph-image',
   author: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
   publisher: {
     '@type': 'Organization',

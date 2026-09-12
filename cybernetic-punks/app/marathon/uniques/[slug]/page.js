@@ -44,7 +44,7 @@ export async function generateMetadata({ params }) {
   var baseSlug = entitySlugFor('weapon', u.base_weapon);
   // OG: prefer the base weapon's art (a unique is a modified base weapon), else
   // the site default. Uniques carry no art of their own.
-  var ogImage = 'https://cyberneticpunks.com/og-image.png';
+  var ogImage = 'https://cyberneticpunks.com/marathon/uniques/opengraph-image';
   if (u.base_weapon) {
     var { data: base } = await supabase.from('weapon_stats').select('image_filename').eq('name', u.base_weapon).maybeSingle();
     if (base && base.image_filename) ogImage = 'https://cyberneticpunks.com/images/weapons/' + base.image_filename;

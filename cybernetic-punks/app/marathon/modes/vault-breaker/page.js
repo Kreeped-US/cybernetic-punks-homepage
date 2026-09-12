@@ -157,14 +157,14 @@ export const metadata = {
     url: PAGE_URL,
     siteName: 'Cybernetic Punks',
     type: 'website',
-    images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://cyberneticpunks.com/marathon/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Vault Breaker - Dates, Vault Data & How It Works',
     description: 'July 21 - Aug 4. First experimental PvE mode: roguelite Vaults in Cryo Archive, Solo/Duo/Trio, any Runner Level.',
-    images: ['https://cyberneticpunks.com/og-image.png'],
+    images: ['https://cyberneticpunks.com/marathon/opengraph-image'],
   },
 };
 

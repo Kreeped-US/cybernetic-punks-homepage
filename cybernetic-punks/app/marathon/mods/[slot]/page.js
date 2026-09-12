@@ -108,14 +108,14 @@ export async function generateMetadata({ params }) {
       url: url,
       siteName: 'Cybernetic Punks',
       type: 'website',
-      images: [{ url: 'https://cyberneticpunks.com/og-image.png', width: 1200, height: 630 }],
+      images: [{ url: 'https://cyberneticpunks.com/marathon/mods/opengraph-image', width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
       title: 'Marathon ' + slot + ' Mods - Effects & Rarity',
       description: 'Effects, rarity tiers, and credit cost for all ' + count + ' Marathon ' + lower + ' mods.',
-      images: ['https://cyberneticpunks.com/og-image.png'],
+      images: ['https://cyberneticpunks.com/marathon/mods/opengraph-image'],
     },
     alternates: { canonical: url },
   };
