@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - Advisor stale "prices not published" falsehood FIXED across 6 surfaces (commit d6070e8, #4 Part 1)
+
+- The economy pass loaded prices + the budget-solve works, BUT the advisor still said "prices not published / aren't out / budget filtering activates when they land" -- a LIVE FALSEHOOD hiding the shipped cost-aware feature. Found via grep across the whole advisor; fixed ALL 6: input placeholder+helper, /wardogs/loadouts card (PRICES TBD -> COST-AWARE), type hubs (x2 caveats + card + TypeHubResult), saved-build page, solver step ("no prices published" -> "No priced options for these picks", now fires only for genuinely-unpriced picks). Copy-only (solver logic untouched); 34/34 tests.
+- HONESTY KEPT: copy says budget filtering WORKS but prices are community-recorded/ATTRIBUTED, not Bulkhead-official (no "official" overclaim). Left other games' honest-null price copy alone (correct for them, pre-data). The "assumed available" unlock line = separate concern, flagged.
+- Correction-discipline: when data changed (prices loaded), the stale CLAIMS about the data across the surface all needed fixing -- grep-everything caught all 6.
+- #4 REMAINING: Part 2 (marketable voice on the input H1/intro -- still nerdy "we rank every weapon by its measured time-to-kill" vs the elite landing "loadouts that actually win"), Part 3 (premium framing/atmosphere so the advisor matches the elite landing -- WITHOUT touching the excellent guts: the sleek kill-map viz, THE READ, the board, the cost breakdown). Reference = the /wardogs elite landing (seamless journey).
+- Parked: real generation counter, ~48 schema + 7 orphans (audit export), image-downscale/perf (hero 1.5MB + tank 2.65MB), Wardogs nav mark, Scout Rifle TD anomaly, Economy tool (Phase 3), press-kit shots to theme cards.
+
+---
 ## 2026-09-12 - Per-game themed FOOTER + Wardogs variant (commit d4bbbfd)
 
 - Footer.js now delegates PER-GAME: game==='wardogs' -> WardogsFooter; every other game (marathon/dmz/pubg) renders the generic footer BYTE-IDENTICAL (verified unchanged). Theme-aware architecture -- scales one branch per game as they're themed. Rules-of-hooks handled (early return after the hook).
