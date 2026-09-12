@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - #4 Advisor polish COMPLETE -- naming + voice + premium framing + correct hero (commits 4cea8ec + 109c68e)
+
+- PART A NAMING: scrubbed user-facing "Build Advisor" (zero search volume, SEO dead-word) -> "Loadout Finder" / search-aligned everywhere (landing card, title/desc/keywords/OG/JSON-LD, type-hub caveats+card+TypeHubResult, loadouts OG). Grep-clean (only an internal code comment remains). Internal code names untouched.
+- PART B VOICE: input H1 "Wardogs Best Loadouts" -> "Find Your Best Wardogs Loadout"; nerdy intro -> marketable player-voice matching the landing ("...the loadout that actually wins -- ranked by real time-to-kill, priced against the economy, with the reasoning and the receipts. We don't guess."). Honesty strip kept (MEASURED TTK / ATTRIBUTED / COST-AWARE).
+- PART C FRAMING: input got a cinematic darkened key-art backdrop + an elevated "YOUR SETUP" panel (amber border, shadow, full-width CTA) -- matches the landing, seamless journey. RESULT GUTS UNTOUCHED (LoadoutResult.js + BodyPartViz.js NOT in the diff -- the kill-map/THE READ/board/cost render identically, fresh-build verified). Frame-not-rebuild.
+- HERO SWAP (109c68e): the loadouts input hero was using the wrong image (wardogs-hero.jpg placeholder) -> corrected to the press-kit WD_Screenshot_ResidentialStreet_1_WD1.jpg (first-person Super-45 POV, golden-hour street, cash HUD -- on-theme for the Loadout Finder). Scrim tuned for legibility + landing parity. Case-exact, committed.
+- TODAY'S PLAN COMPLETE: #1 SEO fixes, #2 /wardogs rebuild (elite landing), #3 tier list, #4 advisor polish (this), #5 silhouette verify, + per-game themed footer. The Wardogs vertical is ELITE + COHESIVE end-to-end: landing (Little Bird hero) -> Loadout Finder (cost-aware, kill-map, premium) -> Tier List -> Arsenal -> weapon detail -> themed footer (tank). Honest/attributed/SEO-first/marketable/correctly-named throughout.
+- PARKED: image-downscale/perf pass (3 large heroes: landing 1.5MB + tank 2.65MB + loadouts 3.15MB -- a clean quick win, connects to the "slow pages" audit finding), real advisor-generation counter, ~48 schema + 7 orphans (audit export), Wardogs nav mark, Scout Rifle TD anomaly, Economy tool (Phase 3), press-kit shots to theme tier/economy cards.
+- STRATEGIC (per Fable): the vertical is BUILT -- DISTRIBUTION/authority-earning is the real priority now (creator conversation live, launch window). Not more building.
+
+---
 ## 2026-09-12 - Advisor stale "prices not published" falsehood FIXED across 6 surfaces (commit d6070e8, #4 Part 1)
 
 - The economy pass loaded prices + the budget-solve works, BUT the advisor still said "prices not published / aren't out / budget filtering activates when they land" -- a LIVE FALSEHOOD hiding the shipped cost-aware feature. Found via grep across the whole advisor; fixed ALL 6: input placeholder+helper, /wardogs/loadouts card (PRICES TBD -> COST-AWARE), type hubs (x2 caveats + card + TypeHubResult), saved-build page, solver step ("no prices published" -> "No priced options for these picks", now fires only for genuinely-unpriced picks). Copy-only (solver logic untouched); 34/34 tests.
