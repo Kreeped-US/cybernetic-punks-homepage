@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - OG-CARD SYSTEM complete -- official game logos + CNP logo + marketable network card (commits 3099bee, 2ed1432, 28f2f94, f5d7cd3)
+
+- The whole OG-card system is now coherent, professional, marketable, IP-safe -- distribution-ready (every share sells the site):
+  - NETWORK CARD (cold shares / apex, app/opengraph-image.js): the CNP BRAND STATEMENT -- CNP logo + "CYBERNETIC PUNKS" + identity line "Loadouts, tier lists, and meta for the games you play" (marketable/SEO, not nerdy) + the 5 games "MARATHON . WARDOGS . DMZ . BODYCAM . PUBG" (advertises coverage, as text) + slogan "NO HYPE. JUST INTEL." Burgundy, clean, premium. IP-safe (game names as text, no game logos on the network card; CNP logo = the brand). satori-safe (lib/og/cnpLogo.js loader).
+  - MARATHON cards: CNP logo (cnp-512.png) + official Marathon acid-green wordmark (MARATHON_LOGO_EN_COMPLEX.png, press kit). Bungie disclaimer present.
+  - WARDOGS cards: CNP logo + official Wardogs white lockup (WD_Fullmark_White.png, press kit). Bulkhead disclaimer present.
+  - Via gameLogoSrc prop (lib/og/card.js) + per-game section loaders; satori-safe base64 loaders (cnpLogo/marathonLogo), synchronous/module-cached -> all ~37 cards, zero prop threading, backward-compatible.
+- IP DISCIPLINE: each vertical's "not affiliated" disclaimer present + verified. CNP logo (brand) + game logo (game-ID) = clearly a Cybernetic Punks FAN-SITE card identifying the game, NEVER impersonating an official card. Honest (logo = game-ID, content honestly-provenanced).
+- CLEANUP: shells schema publisher-logo repointed og-image.png -> cnp-512.png (site convention); ZERO live og-image.png references remain (public/og-image.png now a fully-unreferenced stale orphan -- deletable in future cleanup). Superseded fix/og-image-stale-content branch dropped. feat/article-schema-logo = stale leftover (deletable).
+- DEFERRED (Option C): per-page CONTEXTUAL generated cards for the 6 Marathon static-ref pages (currently share their segment card) -- when Marathon gets focus.
+- Parked: schemas ~48 + orphans 7 (RE-CRAWL needed -- today's fixes may have cleared many), real generation counter, Wardogs nav mark, Scout Rifle TD anomaly, Economy tool (Phase 3), Night Marsh variant image, delete the og-image.png orphan. STRATEGIC: distribution is the priority -- the product is now elite, fast (11MB image weight shed), and shares well.
+
+---
 ## 2026-09-12 - Marathon image perf pass -- 90% saved (commit 40a31dd)
 
 - 5 Marathon map PNGs -> WebP q88 (conservative -- maps are READ, zone labels must stay legible; verified crisp). No downscale (already native display size). References updated (extension change, app/marathon/maps/[slug]/page.js img + schema url/contentUrl). Cryo 1505->150KB, dire-marsh 1093->118, night-marsh 1093->118, outpost 804->79, perimeter 658->58 (-90%, maps 5154->523KB).
