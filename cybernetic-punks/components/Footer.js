@@ -7,6 +7,7 @@ import { getAllEditors } from '@/lib/editors/roster';
 import { getGameConfig } from '@/lib/games';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { isGameLive } from '@/lib/network/gameStatus';
+import WardogsFooter from '@/components/wardogs/WardogsFooter';
 
 // Updated April 27, 2026:
 // - Colors aligned to design system (#0e1014 footer / #ff2222 / #00d4ff)
@@ -46,6 +47,11 @@ const NEXUS   = '#00d4ff';
 
 export default function Footer({ game = 'marathon' }) {
   const [year] = useState(function() { return new Date().getFullYear(); });
+  // Per-game themed footer: Wardogs gets its own variant; every other game keeps the generic
+  // network footer below (byte-identical). Early return AFTER hooks (rules-of-hooks). Add more
+  // branches here as other games are themed.
+  if (game === 'wardogs') return <WardogsFooter />;
+
   // Per-game footer config (Phase 1 data). Default game 'marathon' keeps every existing
   // <Footer /> call unchanged. description / legal / EXPLORE + DISCOVER links read from here.
   var fcfg = getGameConfig(game).footer;
