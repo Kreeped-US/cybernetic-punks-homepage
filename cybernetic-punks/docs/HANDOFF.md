@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-12 - /wardogs REBUILT -- elite product-first hub (commits 6721e71 + 46a7b54)
+
+- Replaced the boring text-intro paragraph with a PREMIUM product-first landing (the Marathon model, better voice, Wardogs imagery). The Build Advisor is the propped-up flagship hero.
+- HERO: full-bleed official press-kit Little Bird key-art (WD_Screenshot_Littlebird_1_WD1.jpg, golden hour) + official WD logo (WD_Fullmark_White) + EARLY ACCESS badge. H1 "Wardogs Loadouts That Actually Win" + honesty subhead ("We don't guess -- if we don't know, we say so"). Amber "Find Your Best Loadout ->" (to the advisor) + "Browse the Arsenal ->". Dark scrims keep text crisp.
+- LIVE-STAT TICKER -- ALL REAL/sourced (honesty held): 33 Weapons Tracked, 4,085 Measured Data Points (3600 ballistics + 450 ttk + 35 ammo), $8,800 Priciest One-Shot (AMR 50, real max credit_cost among 1-STK weapons -- on-theme economy stat), EARLY ACCESS/updated. OMITTED "Loadouts Computed" -- no real generation counter exists (only 2 saved builds), a big ticking number would be FABRICATED. TODO: wire a real advisor-generation counter (also = Fable's demand-instrumentation), then feature it.
+- PRODUCT CARDS: Build Advisor = amber flagship ("LIVE, THE FLAGSHIP", prominent) -> /wardogs/loadouts. Tier List "Coming next", Economy Planner "Coming soon". Editorial/editor sections REMOVED (product-first; editors deprioritized -- operator + Fable agree they lack substance).
+- VOICE: marketable player-to-player (nerdy "confirmed-systems coverage" gone). SEO-targeted (Wardogs loadouts/tier list/build advisor), indexable, mobile-safe. Official press-kit imagery only (footer carries not-affiliated disclaimer).
+- NOTES: hero image 3840x2160 ~1.5MB (downscale later for page weight -- perf pass). Global nav still CNP mark (shared layout -- optional Wardogs-scoped nav mark deferred). Press-kit Destruction/Ghillie shots available to theme the Tier List/Economy cards when built.
+- NEXT: #3 Weapon Tier List (makes the Tier List card + secondary CTA live) -- decisions: standalone /wardogs/tier-list vs section, pure-TTK vs meta-blend. #4 advisor visual polish. #5 silhouette verify. Plus: wire the real generation counter, the deferred ~48 schema + 7 orphans (await audit export).
+
+---
 ## 2026-09-12 - PLAN + STRATEGIC VISION (Fable-reviewed) -- tomorrow: SEO fixes + /wardogs rebuild + tier list, in the sharpened direction
 
 - THE VISION (operator, Fable-stress-tested): CNP = an AI-run, SEO-first, verified-legitimacy CONTENT MACHINE for competitive FPS games. Parts: tools (advisor/tier-list/arsenal) + data stores (fuel) + AI editors (content engine) + eventual AI video (horizon). In design/dev, building ground-up. NOT monetizing now -- perfect the experience/product first; legitimacy + revenue are downstream, earned.
