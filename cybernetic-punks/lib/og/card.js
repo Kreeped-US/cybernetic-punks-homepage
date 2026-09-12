@@ -3,8 +3,16 @@
 // default, per-game defaults, per-article dynamic). Rendered by next/og satori, which
 // supports flexbox + a CSS subset only -- every element with multiple children sets
 // display:flex, no CSS grid, no shorthand gaps on some versions (we use explicit
-// margins). The `accent` drives the top rule, the CNP block background, and the
-// game-tag pill; `blockTextColor` is the contrast color for the CNP block text.
+// margins). The `accent` drives the top rule + the game-tag pill; `blockTextColor` is
+// the contrast color for the CNP fallback block text.
+//
+// SITE BRAND (left): the real CNP LOGO IMAGE (public/cnp-512.png -- our own mark, no IP
+// concern), embedded as a base64 data URI. satori cannot fetch, so the bytes are read
+// ONCE at module scope with readFileSync(new URL(..., import.meta.url)) -- the same
+// tracer-bundled pattern as lib/og/{fonts,marathonLogo}.js, just sync so the presentational
+// Card stays sync and every caller gets the logo with NO prop threading. If the read ever
+// fails, Card falls back to the accent-colored "CNP" text block (never a render error).
+// All Card consumers are node-runtime OG routes, so the sync fs read is safe.
 //
 // Props: { accent, blockTextColor, gameTag (string|null), headline, tagline,
 //          headlineFontSize (px number, default 50) }. The per-article card passes a
@@ -20,7 +28,25 @@
 // the game -- it never impersonates an official card. The logo identifies the GAME only;
 // data/content stays honestly provenanced. (satori embeds images via data URI only -- see
 // lib/og/marathonLogo.js.)
+
+import { readFileSync } from 'node:fs';
+
+// CNP logo -> base64 data URI, read once. undefined = not tried, null = failed, string = uri.
+let _cnpLogo;
+function cnpLogoDataUri() {
+  if (_cnpLogo === undefined) {
+    try {
+      const buf = readFileSync(new URL('../../public/cnp-512.png', import.meta.url));
+      _cnpLogo = 'data:image/png;base64,' + buf.toString('base64');
+    } catch {
+      _cnpLogo = null;
+    }
+  }
+  return _cnpLogo;
+}
+
 export function Card({ accent, blockTextColor, gameTag, headline, tagline, headlineFontSize = 50, gameLogoSrc, gameLogoAlt, gameLogoHeight = 76, gameLogoWidth }) {
+  const cnpLogoSrc = cnpLogoDataUri();
   return (
     <div
       style={{
@@ -42,23 +68,34 @@ export function Card({ accent, blockTextColor, gameTag, headline, tagline, headl
       {/* header row: CNP lockup (left) + optional game tag (right) */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '88px',
-              height: '88px',
-              backgroundColor: accent,
-              borderRadius: '10px',
-              color: blockTextColor,
-              fontSize: '38px',
-              fontWeight: 800,
-              letterSpacing: '0.02em',
-            }}
-          >
-            CNP
-          </div>
+          {cnpLogoSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cnpLogoSrc}
+              alt="Cybernetic Punks"
+              width={88}
+              height={88}
+              style={{ width: '88px', height: '88px', borderRadius: '10px', display: 'flex' }}
+            />
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '88px',
+                height: '88px',
+                backgroundColor: accent,
+                borderRadius: '10px',
+                color: blockTextColor,
+                fontSize: '38px',
+                fontWeight: 800,
+                letterSpacing: '0.02em',
+              }}
+            >
+              CNP
+            </div>
+          )}
           <div
             style={{
               display: 'flex',
