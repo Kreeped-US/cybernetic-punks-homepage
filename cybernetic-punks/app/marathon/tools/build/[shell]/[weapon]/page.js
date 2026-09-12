@@ -15,9 +15,14 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BuildRefiner from '../BuildRefiner';
 import { weaponNameForSlug } from '@/lib/advisor/regenerateCanonical';
+import { safeStaticParams } from '@/lib/build/safeStaticParams';
 
 export const revalidate = false;      // static; the A5 poller does on-demand freshness
-export const dynamicParams = false;   // only generated variants resolve; else 404
+// dynamicParams:true so that if generateStaticParams falls back to [] on a transient Supabase
+// timeout (see safeStaticParams), variant pages still generate ON-DEMAND at first request
+// instead of 404ing. Unknown/invalid variants still 404s -- the page notFound()s any row that
+// is missing / non-indexable / has no build_json, so the 404 semantics are preserved.
+export const dynamicParams = true;
 
 const BASE = 'https://cyberneticpunks.com';
 const GAME = 'marathon';
@@ -62,22 +67,22 @@ async function fetchVariant(shellSlug, weaponSlug) {
   return data || null;
 }
 
-export async function generateStaticParams() {
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from('build_pages')
-    .select('shell, weapon_slug')
-    .eq('game_slug', GAME).is('goal', null).not('weapon_slug', 'is', null)
-    .eq('is_indexable', true).not('build_json', 'is', null);
-  // Read FAILED (error set) -> THROW so `next build` fails LOUDLY instead of shipping 0
-  // variant pages (all 404). A network-level reject propagates for the same reason (no
-  // try/catch to swallow it). A GENUINE empty result (error null, data []) returns [] and
-  // the build succeeds -- the legitimate no-variants / pre-seeding case (this route was
-  // correctly empty before WS1b seeded the 6). error-vs-empty, NOT zero-vs-nonzero.
-  // Build-time-only read (static, revalidate:false, dynamicParams:false) -- throw fails the
-  // build, never a live 500.
-  if (error) throw new Error('build_pages variant generateStaticParams read failed: ' + error.message);
-  return (data || []).map((r) => ({ shell: r.shell, weapon: r.weapon_slug }));
+export function generateStaticParams() {
+  // HARDENED against transient Supabase timeouts (this read hard-failed a deploy).
+  // safeStaticParams runs the read and, on ANY error or a hang, returns [] instead of
+  // throwing -> the build SUCCEEDS and variant pages generate on-demand (dynamicParams:true).
+  // A GENUINE empty result (error null, data []) still returns [] -- the legitimate
+  // no-variants / pre-seeding case. Query logic is UNCHANGED; only the throw is now caught.
+  return safeStaticParams('marathon/tools/build/[shell]/[weapon]', async () => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('build_pages')
+      .select('shell, weapon_slug')
+      .eq('game_slug', GAME).is('goal', null).not('weapon_slug', 'is', null)
+      .eq('is_indexable', true).not('build_json', 'is', null);
+    if (error) throw new Error('build_pages variant generateStaticParams read failed: ' + error.message);
+    return (data || []).map((r) => ({ shell: r.shell, weapon: r.weapon_slug }));
+  });
 }
 
 // Title <=60 (A2 cap). "[Shell] [Weapon] Build — Marathon". Longest of the seeded 6 is

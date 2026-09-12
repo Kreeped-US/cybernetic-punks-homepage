@@ -9,9 +9,14 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BuildRefiner from './BuildRefiner';
+import { safeStaticParams } from '@/lib/build/safeStaticParams';
 
 export const revalidate = false;      // static; on-demand revalidation is the A5 slice
-export const dynamicParams = false;   // unknown [shell] -> 404 (only generateStaticParams shells)
+// dynamicParams:true so that if generateStaticParams falls back to [] on a transient Supabase
+// timeout (see safeStaticParams), the shell pages still generate ON-DEMAND at first request
+// instead of 404ing. Unknown/invalid [shell] still 404s -- the page notFound()s any row that
+// is missing / non-indexable / has no build_json, so the 404 semantics are preserved.
+export const dynamicParams = true;
 
 const BASE = 'https://cyberneticpunks.com';
 const GAME = 'marathon';
@@ -58,21 +63,22 @@ function titleCase(slug) {
   return String(slug || '').charAt(0).toUpperCase() + String(slug || '').slice(1);
 }
 
-export async function generateStaticParams() {
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from('build_pages')
-    .select('slug')
-    .eq('game_slug', GAME).is('goal', null).is('weapon_slug', null)
-    .eq('is_indexable', true).not('build_json', 'is', null);
-  // Read FAILED (error set) -> THROW so `next build` fails LOUDLY instead of shipping a
-  // build with 0 static pages (all 404). A network-level reject propagates for the same
-  // reason (no try/catch to swallow it). A GENUINE empty result (error null, data []) is
-  // returned as [] and the build succeeds -- the legitimate case (e.g. pre-seeding). The
-  // distinction is error-vs-empty, NOT zero-vs-nonzero. Build-time-only read (static route,
-  // revalidate:false, dynamicParams:false), so a throw fails the build -- never a live 500.
-  if (error) throw new Error('build_pages generateStaticParams read failed: ' + error.message);
-  return (data || []).map((r) => ({ shell: r.slug }));
+export function generateStaticParams() {
+  // HARDENED against transient Supabase timeouts (this read hard-failed a deploy twice).
+  // safeStaticParams runs the read and, on ANY error or a hang, returns [] instead of
+  // throwing -> the build SUCCEEDS and shell pages generate on-demand (dynamicParams:true).
+  // A GENUINE empty result (error null, data []) still returns [] -- the legitimate
+  // pre-seeding case. Query logic is UNCHANGED; only the throw is now caught + logged.
+  return safeStaticParams('marathon/tools/build/[shell]', async () => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('build_pages')
+      .select('slug')
+      .eq('game_slug', GAME).is('goal', null).is('weapon_slug', null)
+      .eq('is_indexable', true).not('build_json', 'is', null);
+    if (error) throw new Error('build_pages generateStaticParams read failed: ' + error.message);
+    return (data || []).map((r) => ({ shell: r.slug }));
+  });
 }
 
 export async function generateMetadata({ params }) {
