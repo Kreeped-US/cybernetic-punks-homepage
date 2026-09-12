@@ -28,8 +28,10 @@ const EXO = 'var(--font-exo2), system-ui, sans-serif';
 export const dynamic = 'force-dynamic';
 
 const BASE = 'https://cyberneticpunks.com';
-// Hero key-art. Swap to '/images/wardogs/WD_Screenshot_Littlebird_1_WD1.jpg' (press kit) once committed.
-const HERO_IMG = '/images/games/wardogs-hero.jpg';
+// Hero key-art -- the official press-kit Little Bird shot (golden hour), used under press-kit terms
+// (the footer carries the "not affiliated with Bulkhead" disclaimer). Clean art (logo bottom-corner),
+// so the overlaid WD logo + scrim read well.
+const HERO_IMG = '/images/wardogs/WD_Screenshot_Littlebird_1_WD1.jpg';
 const LOGO = '/WD_Fullmark_White.png';
 
 export const metadata = {
