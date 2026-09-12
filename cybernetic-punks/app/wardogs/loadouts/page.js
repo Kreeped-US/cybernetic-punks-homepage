@@ -47,24 +47,29 @@ export default function LoadoutsPage() {
       <ViewTracker slug="loadouts" type="tool" gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '38px 24px 26px', fontFamily: 'system-ui, sans-serif' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+      {/* Premium hero -- cinematic backdrop so the tool feels like the landing's continuation. */}
+      <section style={{ position: 'relative', overflow: 'hidden', color: '#fff', borderBottom: '1px solid #1d2026', fontFamily: 'system-ui, sans-serif' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/games/wardogs-hero.jpg" alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 26%', opacity: 0.9 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(11,13,16,0.95) 0%, rgba(11,13,16,0.78) 48%, rgba(11,13,16,0.5) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, #0b0d10 3%, rgba(11,13,16,0.2) 55%, rgba(11,13,16,0.4) 100%)' }} />
+
+        <div style={{ position: 'relative', maxWidth: 1000, margin: '0 auto', padding: '46px 24px 30px' }}>
           {/* eyebrow */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 7px var(--accent-glow)' }} />
             <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace' }}>LOADOUT FINDER</span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 900, letterSpacing: '-0.6px', lineHeight: 1.05, margin: '0 0 14px' }}>
-            Wardogs Best Loadouts
+          <h1 style={{ fontSize: 'clamp(30px, 5vw, 46px)', fontWeight: 900, letterSpacing: '-0.6px', lineHeight: 1.03, margin: '0 0 16px', textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
+            Find Your Best Wardogs Loadout
           </h1>
 
-          {/* lead value-prop -- brighter + larger, the invitation */}
-          <p style={{ fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'var(--text-primary)', lineHeight: 1.6, maxWidth: 720, margin: '0 0 22px', fontWeight: 500 }}>
-            Your level, your budget, your playstyle &mdash; we rank every weapon by its measured{' '}
-            <span style={{ color: 'var(--accent)', fontWeight: 800 }}>time-to-kill</span> and hand back the
-            best loadout you can field right now, with the reasoning behind every pick. Not a spec dump:
-            the actual answer to &ldquo;what should I run?&rdquo;
+          {/* lead value-prop -- marketable, matches the landing */}
+          <p style={{ fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, maxWidth: 660, margin: '0 0 24px', fontWeight: 500 }}>
+            Tell us your level, budget, and how you play. We compute the loadout that actually wins &mdash; ranked by real{' '}
+            <span style={{ color: 'var(--accent)', fontWeight: 800 }}>time-to-kill</span>, priced against the economy, with the reasoning and the receipts.{' '}
+            <span style={{ color: '#fff', fontWeight: 700 }}>We don&rsquo;t guess.</span>
           </p>
 
           {/* the honesty / how-it-works strip -- distinct, amber-marked, not buried gray prose */}
@@ -74,7 +79,7 @@ export default function LoadoutsPage() {
               { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official — every pick says so.' },
               { k: 'COST-AWARE', v: 'Set a budget and loadouts are costed gun + ammo against the economy — prices community-recorded, not yet Bulkhead-official.' },
             ].map((item) => (
-              <div key={item.k} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '12px 14px' }}>
+              <div key={item.k} style={{ background: 'rgba(18,21,25,0.82)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '12px 14px', backdropFilter: 'blur(2px)' }}>
                 <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: 5 }}>
                   <span style={{ marginRight: 6 }}>&#9698;</span>{item.k}
                 </div>

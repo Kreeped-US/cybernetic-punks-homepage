@@ -105,7 +105,7 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
 
       {/* Honest-null / provenance note. */}
       <div style={{ background: PAGE, border: '1px dashed ' + LINE, borderRadius: 4, padding: '14px 18px', marginBottom: 16, fontSize: 12, color: T2, lineHeight: 1.7 }}>
-        <div><b style={{ color: T1 }}>Budget:</b> this is a class ranking by measured time-to-kill. To solve within a cash budget (gun + ammo, community-recorded prices), use the Build Advisor.</div>
+        <div><b style={{ color: T1 }}>Budget:</b> this is a class ranking by measured time-to-kill. To solve within a cash budget (gun + ammo, community-recorded prices), use the Loadout Finder.</div>
         {prov.basis && <div style={{ marginTop: 6 }}><b style={{ color: T1 }}>Basis:</b> {prov.basis}.{prov.sources && prov.sources.length ? ' Source: ' + prov.sources[0] : ''}</div>}
       </div>
 

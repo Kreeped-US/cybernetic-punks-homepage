@@ -1,6 +1,6 @@
 // app/wardogs/page.js
 // WARDOGS LANDING -- elite, product-first hub. Rebuilt from the old text-intro skeleton into a
-// cinematic hero (game key-art + official Wardogs logo) led by the Build Advisor (the hero product),
+// cinematic hero (game key-art + official Wardogs logo) led by the Loadout Finder (the flagship; the
 // a REAL-stat ticker (all sourced from the loaded stores, no fabrication), and product cards
 // (Advisor live; Tier List + Economy Planner as Phase 2/3 coming-soon). Marketable player-voice copy.
 //
@@ -35,13 +35,13 @@ const HERO_IMG = '/images/wardogs/WD_Screenshot_Littlebird_1_WD1.jpg';
 const LOGO = '/WD_Fullmark_White.png';
 
 export const metadata = {
-  title: { absolute: 'Wardogs Loadouts, Tier List & Build Advisor | Cybernetic Punks' },
-  description: 'The best Wardogs loadouts, ranked by real time-to-kill and priced against the economy. Build your weapon for your level with the Wardogs Build Advisor. We don’t guess -- if we don’t know, we say so.',
-  keywords: 'Wardogs loadouts, Wardogs build advisor, Wardogs tier list, best Wardogs loadouts, Wardogs weapons, Wardogs TTK',
+  title: { absolute: 'Wardogs Loadouts, Tier List & Loadout Finder | Cybernetic Punks' },
+  description: 'The best Wardogs loadouts, ranked by real time-to-kill and priced against the economy. Find your best loadout for your level with the Wardogs Loadout Finder. We don’t guess -- if we don’t know, we say so.',
+  keywords: 'Wardogs loadouts, Wardogs loadout finder, Wardogs tier list, best Wardogs loadouts, Wardogs weapons, Wardogs TTK',
   alternates: { canonical: BASE + '/wardogs' },
   openGraph: {
     title: 'Wardogs Loadouts That Actually Win',
-    description: 'Every weapon ranked by real time-to-kill, priced against the economy, built for your level. The Wardogs Build Advisor.',
+    description: 'Every weapon ranked by real time-to-kill, priced against the economy, built for your level. The Wardogs Loadout Finder.',
     url: BASE + '/wardogs',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -108,7 +108,7 @@ export default async function WardogsLanding() {
   };
   const collectionLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'Wardogs Loadouts, Tier List & Build Advisor', url: BASE + '/wardogs',
+    name: 'Wardogs Loadouts, Tier List & Loadout Finder', url: BASE + '/wardogs',
     description: 'The best Wardogs loadouts ranked by real time-to-kill and priced against the economy.',
     isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
   };
@@ -192,7 +192,7 @@ export default async function WardogsLanding() {
           <div style={{ flex: 1, height: 1, background: '#1d2026' }} />
         </div>
 
-        {/* HERO CARD -- Build Advisor */}
+        {/* HERO CARD -- Loadout Finder (the flagship) */}
         <Link href="/wardogs/loadouts" className="wd-prod" style={{ display: 'block', position: 'relative', overflow: 'hidden', background: 'linear-gradient(120deg, #16130c 0%, #121519 60%)', border: '1px solid ' + A, borderRadius: 8, padding: 'clamp(24px,4vw,40px)', textDecoration: 'none', marginBottom: 16 }}>
           <div style={{ position: 'absolute', top: 0, right: 0, width: '42%', height: '100%', background: 'radial-gradient(circle at 80% 40%, ' + AG + ', transparent 70%)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', maxWidth: 640 }}>
@@ -200,7 +200,7 @@ export default async function WardogsLanding() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 6px var(--green,#5bd18e)' }} />
               LIVE &middot; THE FLAGSHIP
             </div>
-            <h3 style={{ fontFamily: EXO, fontSize: 'clamp(24px,3.4vw,34px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.3px' }}>Build Advisor</h3>
+            <h3 style={{ fontFamily: EXO, fontSize: 'clamp(24px,3.4vw,34px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.3px' }}>Loadout Finder</h3>
             <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, margin: '0 0 22px', maxWidth: 560 }}>
               Tell us your level, budget, and playstyle. We compute your best loadout &mdash; ranked by measured time-to-kill, priced against the economy, with a body-part kill-map showing exactly where to aim.
             </p>

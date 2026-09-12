@@ -114,35 +114,41 @@ export default function LoadoutsClient() {
   if (phase === 'input') {
     return (
       <div style={wrap}><div style={inner}>
-        <style>{`.ls-opt:hover{background:var(--bg-card-hover) !important}`}</style>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 16, marginBottom: 20 }}>
-          <div>
-            <Label>Career level <span style={{ color: T3 }}>(optional)</span></Label>
-            <input type="number" min="0" value={careerLevel} onChange={(e) => setCareerLevel(e.target.value)} placeholder="e.g. 20" style={inputStyle} />
-            <Hint>Skip it and we rank the whole roster (no unlock-gate).</Hint>
+        <style>{`.ls-opt:hover{background:var(--bg-card-hover) !important}.ls-go:hover{filter:brightness(1.06);transform:translateY(-1px)}`}</style>
+        {/* the input as a designed panel -- elevated, amber-topped, inviting (not a bare stack) */}
+        <div style={{ maxWidth: 760, background: '#12151b', border: '1px solid ' + LINE, borderTop: '3px solid ' + A, borderRadius: 8, padding: 'clamp(20px,3.2vw,32px)', boxShadow: '0 14px 44px rgba(0,0,0,0.38)' }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, fontWeight: 800, color: A, fontFamily: 'monospace', marginBottom: 4 }}>YOUR SETUP</div>
+          <div style={{ fontSize: 13, color: T3, marginBottom: 22 }}>All optional &mdash; give what you know, we do the rest.</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 16, marginBottom: 20 }}>
+            <div>
+              <Label>Career level <span style={{ color: T3 }}>(optional)</span></Label>
+              <input type="number" min="0" value={careerLevel} onChange={(e) => setCareerLevel(e.target.value)} placeholder="e.g. 20" style={inputStyle} />
+              <Hint>Skip it and we rank the whole roster (no unlock-gate).</Hint>
+            </div>
+            <div>
+              <Label>Cash budget <span style={{ color: T3 }}>(optional)</span></Label>
+              <input type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. $5,000" style={inputStyle} />
+              <Hint>Set a budget and we filter to what you can afford &mdash; gun + ammo. Prices are community-recorded, not yet Bulkhead-official.</Hint>
+            </div>
           </div>
-          <div>
-            <Label>Cash budget <span style={{ color: T3 }}>(optional)</span></Label>
-            <input type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. $5,000" style={inputStyle} />
-            <Hint>Set a budget and we filter to what you can afford &mdash; gun + ammo. Prices are community-recorded, not yet Bulkhead-official.</Hint>
+          <Label>Playstyle</Label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 8, marginBottom: 26 }}>
+            {PLAYSTYLES.map((p) => {
+              const sel = playstyle === p.id;
+              return (
+                <div key={p.id} className="ls-opt" onClick={() => setPlaystyle(p.id)}
+                  style={{ background: sel ? AG : CARD, border: '1px solid ' + (sel ? A : LINE), borderLeft: '3px solid ' + (sel ? A : LINE), borderRadius: '0 3px 3px 0', padding: '12px 14px', cursor: 'pointer' }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: sel ? A : T2, fontFamily: 'monospace', marginBottom: 3 }}>{p.label}</div>
+                  <div style={{ fontSize: 12, color: T3, lineHeight: 1.4 }}>{p.desc}</div>
+                </div>
+              );
+            })}
           </div>
+          <button onClick={run} className="ls-go" style={{ width: '100%', padding: '15px 40px', background: A, color: PAGE, border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 900, letterSpacing: 1, cursor: 'pointer', transition: 'filter .12s ease, transform .12s ease' }}>
+            FIND MY BEST LOADOUT →
+          </button>
         </div>
-        <Label>Playstyle</Label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 8, marginBottom: 24 }}>
-          {PLAYSTYLES.map((p) => {
-            const sel = playstyle === p.id;
-            return (
-              <div key={p.id} className="ls-opt" onClick={() => setPlaystyle(p.id)}
-                style={{ background: sel ? AG : CARD, border: '1px solid ' + (sel ? A : LINE), borderLeft: '3px solid ' + (sel ? A : LINE), borderRadius: '0 3px 3px 0', padding: '12px 14px', cursor: 'pointer' }}>
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: sel ? A : T2, fontFamily: 'monospace', marginBottom: 3 }}>{p.label}</div>
-                <div style={{ fontSize: 12, color: T3, lineHeight: 1.4 }}>{p.desc}</div>
-              </div>
-            );
-          })}
-        </div>
-        <button onClick={run} style={{ padding: '14px 40px', background: A, color: PAGE, border: 'none', borderRadius: 2, fontSize: 13, fontWeight: 900, letterSpacing: 1, cursor: 'pointer' }}>
-          FIND MY BEST LOADOUT →
-        </button>
       </div></div>
     );
   }
