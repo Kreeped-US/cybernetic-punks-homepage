@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - WAVE 2 -- "Your Wardogs Economy" personalized viral stat, LIVE (commit b091b14)
+
+- /wardogs/economy/mine -- input hours/level/playstyle/vehicle-use -> personalized estimated spend + breakdown + branded shareable card. The Spotify-Wrapped-style viral play (personal stats spread -- people share themselves -> friends want theirs -> loop). The highest-viral-potential distribution piece.
+- MODEL REUSE (consistency -- operator's key requirement): personalSpend REUSES the recalibrated economyModel (NOT a reimplementation) -- scales the same per-category baseline by documented multipliers (playstyle/level/vehicle-use). PROOF: balanced+mid-level+sometimes = exactly the community $2,103/active-player-hr baseline. So personal stat is COHERENT with the community ticker, uses the CURRENT defensible numbers, and inherits any future recalibration (no drift). Test: 40h/L20/aggressive -> $109,982, 111 loadouts, 6.1 Havocs, $2,750/hr.
+- VIRAL LOOP: "What's your damage? Make your friends check theirs" + X-intent (pre-filled "I've burned an estimated $X... what's YOUR damage?") + Copy. Param-driven personalized OG card (a shared link unfurls THEIR number: amber $X, playstyle/level, loadouts/Havocs, "MODELED FROM YOUR INPUTS" + link) -- friends see their number -> want theirs -> loop. URL-synced state, "Your Wardogs Wrapped" hub CTA, funnel to loadouts/economy.
+- HONEST: "modeled estimate from YOUR inputs + our economy model -- in-game credits, not real money, we did NOT track you." Labeled throughout. Defensible (recalibrated model). SEO: clean landing indexable (Wardogs spending calculator / how much have I spent); share variants noindex+canonical.
+- PROXY FIX (side-effect of today's 410 work): /wardogs/economy/mine was wrongly 410'd by the dead-article proxy (saw economy section + non-article slug). Fixed via RESERVED_SECTION_SLUGS (real literal routes like economy/mine, economy/stat excluded from 410). Regression-tested: mine->200, dead economy article->still 410, real article->200. (Note: the 410 proxy must know real-routes vs dead-articles -- RESERVED_SECTION_SLUGS is the mechanism.)
+- PROCESS NOTE: Wave 2 was committed direct-to-local-main (branch skipped); caught, verified byte-identical to the reviewed commit, published as greenlit-authorized, flagged. Discipline reaffirmed: verify fresh feature branch at the start of each build.
+- OPERATOR GSC: request-index /wardogs/economy/mine.
+- DISTRIBUTION MACHINE now complete: community stats (ticker/breakdown) + personal stats (this) + shareable engine + timely news + early-authority pages -- all on the defensible recalibrated model, all honest/branded/shareable.
+- Parked: economy-items honest-null gaps, generation counter, schema re-crawl, live-ticker hydration warning. Post-Oct-6 Marathon refresh; Post-Dec-8 evolve /marathon/pve.
+
+---
 ## 2026-09-14 - /marathon/pve pre-launch hub -- built early for the PvE search wave (commit 21a3115)
 
 - Marathon's FIRST permanent PvE launches with Symbiosis Dec 8. Built /marathon/pve NOW (85 days early) to get indexed + gain authority BEFORE "Marathon PvE" searches peak. Template: modes/vault-breaker (Marathon's prior PvE hub -- same honesty discipline).
