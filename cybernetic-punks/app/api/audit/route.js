@@ -134,6 +134,7 @@ export async function POST() {
     const { data: weaponData } = await supabase
       .from('weapon_stats')
       .select('*')
+      .eq('game_slug', 'marathon') // scope: the Marathon loadout auditor -- weapon_stats is game-shared
       .in('name', weaponNames.length > 0 ? weaponNames : ['__none__']);
 
     const loadoutSummary = `

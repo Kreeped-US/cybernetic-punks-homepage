@@ -200,11 +200,11 @@ async function fetchShellContext() {
   }
 }
 
-async function fetchWeaponContext() {
+async function fetchWeaponContext(gameSlug) {
   try {
     const { data } = await supabase.from('weapon_stats').select(
       'name,category,ammo_type,damage,fire_rate,range_rating,ranked_viable,mod_slot_types,notes,verified,verified_source,patch_verified'
-    ).order('category');
+    ).eq('game_slug', gameSlug).order('category'); // scope: weapon_stats is game-shared -- only the producing game's weapons
     return data || [];
   } catch (err) {
     console.error('[miranda.js] Weapon context:', err.message);
@@ -258,7 +258,7 @@ export async function gatherMirandaData(config = getGameConfig()) {
     fetchSteamDevNews(),
     fetchDevRedditPosts(subreddits),
     fetchShellContext(),
-    fetchWeaponContext(),
+    fetchWeaponContext(config.slug),
     fetchModContext(),
     fetchRecentMirandaHeadlines(config.slug),
   ]);

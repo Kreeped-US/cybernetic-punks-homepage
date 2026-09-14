@@ -211,7 +211,7 @@ async function fetchWikiContent(wikiUrls) {
 // Pull current item rosters from Supabase. Identify which rows have NULL
 // in the fields we want to fill. Only those become extraction targets.
 
-async function fetchExtractionTargets() {
+async function fetchExtractionTargets(gameSlug) {
   const targets = { shells: [], weapons: [], cores: [], implants: [] };
 
   try {
@@ -224,7 +224,8 @@ async function fetchExtractionTargets() {
     // Weapons
     const { data: weapons } = await supabase
       .from('weapon_stats')
-      .select('name, damage, fire_rate, magazine_size, reload_speed');
+      .select('name, damage, fire_rate, magazine_size, reload_speed')
+      .eq('game_slug', gameSlug); // scope: weapon_stats is game-shared -- only the producing game's weapons
     targets.weapons = (weapons || [])
       .filter(w => !w.damage || !w.fire_rate || !w.magazine_size)
       .map(w => w.name);
@@ -608,7 +609,7 @@ export async function runDexterStatPipeline(existingData = {}, config = getGameC
   console.log('[dexter-stats] Starting extraction pipeline...');
 
   // -- BUILD TARGETS FROM DB --
-  const targets = await fetchExtractionTargets();
+  const targets = await fetchExtractionTargets(config.slug);
   if (
     targets.shells.length === 0 &&
     targets.weapons.length === 0 &&

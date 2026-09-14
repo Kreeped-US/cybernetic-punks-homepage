@@ -58,6 +58,7 @@ async function getRankedData() {
       supabase
         .from('weapon_stats')
         .select('name, weapon_type, image_filename, ranked_viable')
+        .eq('game_slug', 'marathon') // scope: Marathon weapons only (no wardogs/bodycam leak)
         .eq('ranked_viable', false)
         .limit(10),
 
@@ -88,7 +89,7 @@ async function getRankedData() {
 
       var [weaponImgRes, shellImgRes] = await Promise.all([
         weaponNames.length > 0
-          ? supabase.from('weapon_stats').select('name, image_filename').in('name', weaponNames)
+          ? supabase.from('weapon_stats').select('name, image_filename').eq('game_slug', 'marathon').in('name', weaponNames)
           : Promise.resolve({ data: [] }),
         shellNames.length > 0
           ? supabase.from('shell_stats').select('name, image_filename').in('name', shellNames)

@@ -46,7 +46,7 @@ export async function generateMetadata({ params }) {
   // the site default. Uniques carry no art of their own.
   var ogImage = 'https://cyberneticpunks.com/marathon/uniques/opengraph-image';
   if (u.base_weapon) {
-    var { data: base } = await supabase.from('weapon_stats').select('image_filename').eq('name', u.base_weapon).maybeSingle();
+    var { data: base } = await supabase.from('weapon_stats').select('image_filename').eq('name', u.base_weapon).eq('game_slug', 'marathon').maybeSingle();
     if (base && base.image_filename) ogImage = 'https://cyberneticpunks.com/images/weapons/' + base.image_filename;
   }
 
@@ -106,7 +106,7 @@ export default async function UniqueDetailPage({ params }) {
   // Base weapon stats (the substance) + sibling uniques (internal linking), in parallel.
   var [baseRes, siblingsRes] = await Promise.all([
     u.base_weapon
-      ? supabase.from('weapon_stats').select('*').eq('name', u.base_weapon).maybeSingle()
+      ? supabase.from('weapon_stats').select('*').eq('name', u.base_weapon).eq('game_slug', 'marathon').maybeSingle()
       : Promise.resolve({ data: null }),
     supabase.from('unique_weapons').select('name, slug, rarity, base_weapon').neq('slug', slug).order('rarity').limit(6),
   ]);

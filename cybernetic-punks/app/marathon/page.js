@@ -119,9 +119,9 @@ async function getHomepageData() {
         .order('name', { ascending: true })
         .limit(18),
 
-      supabase.from('weapon_stats').select('id', { count: 'exact', head: true }),
+      supabase.from('weapon_stats').select('id', { count: 'exact', head: true }).eq('game_slug', 'marathon'),
       supabase.from('shell_stats').select('id', { count: 'exact', head: true }),
-      supabase.from('weapon_stats').select('name, image_filename'),
+      supabase.from('weapon_stats').select('name, image_filename').eq('game_slug', 'marathon'),
       supabase.from('shell_stats').select('name, image_filename'),
 
       supabase

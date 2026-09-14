@@ -271,6 +271,7 @@ export default async function ShellGuidePage({ params }) {
     supabase
       .from('weapon_stats')
       .select('name, weapon_type, rarity, firepower_score, image_filename, ranked_viable')
+      .eq('game_slug', 'marathon') // scope: Marathon weapons only
       .eq('ranked_viable', true)
       .order('firepower_score', { ascending: false, nullsFirst: false })
       .limit(6),

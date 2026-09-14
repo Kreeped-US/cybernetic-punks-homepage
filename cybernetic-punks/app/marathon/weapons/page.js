@@ -47,7 +47,7 @@ export const metadata = {
 
 export default async function WeaponsIndexPage() {
   var [weaponsRes, metaTiersRes] = await Promise.all([
-    supabase.from('weapon_stats').select('name, weapon_type, ammo_type, rarity, ranked_viable, image_filename').order('name'),
+    supabase.from('weapon_stats').select('name, weapon_type, ammo_type, rarity, ranked_viable, image_filename').eq('game_slug', 'marathon').order('name'), // scope: weapon_stats is game-shared -- Marathon weapons ONLY (no wardogs/bodycam leak)
     supabase.from('meta_tiers').select('name, tier, trend').eq('type', 'weapon'),
   ]);
 

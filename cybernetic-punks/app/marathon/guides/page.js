@@ -270,7 +270,7 @@ export default async function GuidesPage({ searchParams }) {
       .limit(4),
 
     supabase.from('shell_stats').select('id', { count: 'exact', head: true }),
-    supabase.from('weapon_stats').select('id', { count: 'exact', head: true }),
+    supabase.from('weapon_stats').select('id', { count: 'exact', head: true }).eq('game_slug', 'marathon'), // scope: weapon_stats is game-shared -- count Marathon only
     supabase.from('mod_stats').select('id', { count: 'exact', head: true }),
 
     supabase.from('shell_stats').select('name, image_filename, role').order('name'),

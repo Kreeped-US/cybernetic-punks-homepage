@@ -43,7 +43,7 @@ export const dynamic = 'force-dynamic';
 // Fetch all weapon names + slugs once, find the one matching this URL slug.
 // Returns the exact DB name (e.g. "Magnum MC") or null.
 async function resolveWeaponName(slug) {
-  var { data } = await supabase.from('weapon_stats').select('name');
+  var { data } = await supabase.from('weapon_stats').select('name').eq('game_slug', 'marathon'); // scope: Marathon weapons only
   if (!data) return null;
   var match = data.find(function(w) { return entitySlugFor('weapon', w.name) === slug; });
   return match ? match.name : null;
@@ -69,6 +69,7 @@ export async function generateMetadata({ params }) {
     .from('weapon_stats')
     .select('name, weapon_type, rarity, ammo_type, notes, fire_rate, image_filename')
     .eq('name', weaponName)
+    .eq('game_slug', 'marathon')
     .single();
   if (!weapon) return { title: 'Weapon Not Found' };
 
@@ -132,7 +133,7 @@ export default async function WeaponDetailPage({ params }) {
   // builds + articles mentioning it, and the full weapon list for the
   // "other weapons" nav - all in parallel.
   var [weaponRes, metaTierRes, uniquesRes, dexterPicksRes, articlesRes, allWeaponsRes] = await Promise.all([
-    supabase.from('weapon_stats').select('*').eq('name', weaponName).single(),
+    supabase.from('weapon_stats').select('*').eq('name', weaponName).eq('game_slug', 'marathon').single(),
 
     supabase.from('meta_tiers').select('tier, trend, note, updated_at').eq('name', weaponName).eq('type', 'weapon').maybeSingle(),
 
@@ -161,7 +162,7 @@ export default async function WeaponDetailPage({ params }) {
       .order('created_at', { ascending: false })
       .limit(6),
 
-    supabase.from('weapon_stats').select('name, weapon_type'),
+    supabase.from('weapon_stats').select('name, weapon_type').eq('game_slug', 'marathon'),
   ]);
 
   var weapon = weaponRes.data;

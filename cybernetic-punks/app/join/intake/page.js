@@ -34,6 +34,7 @@ export default async function IntakePage() {
     supabase
       .from('weapon_stats')
       .select('name, category, weapon_type, mod_slot_types, image_filename')
+      .eq('game_slug', 'marathon') // scope: Marathon intake -- weapon_stats is game-shared (cores/implants below are Marathon-only)
       .order('category')
       .order('name'),
     supabase
