@@ -1,5 +1,27 @@
 // lib/seo/deadIntel.js
-// Shared SEO constant for the dead-intel 410 mechanism (proxy.js, Fix #1).
+// Shared SEO constants for the dead-article 410 mechanism (proxy.js, Fix #1 + the
+// all-games extension).
+//
+// ARTICLE_SECTIONS maps each game to the set of its EDITOR (feed_items-backed) section
+// slugs -- the ONLY sections under which a /<game>/<section>/<slug> URL is an article,
+// so the ONLY sections where a not-a-live-article slug should 410. This deliberately
+// EXCLUDES: data sections (dmz 'printer', wardogs/pubg 'arsenal' -- source!=='editor',
+// structured data not in feed_items), entity routes that share the /<game>/x/y shape
+// (dmz builds/items/keys/missions/pois), and tool routes (wardogs loadouts/tier-list/
+// economy-hub subtree). Because proxy.js only 410s when parts[1] is in this set AND the
+// slug is confirmed not-live, none of those live non-article pages can ever be 410'd.
+//
+// SINGLE SOURCE OF TRUTH: these MUST equal `sections.filter(s => s.source === 'editor')`
+// for each game config (lib/games/*). lib/seo/deadIntel.test.mjs imports the real configs
+// and asserts the match, so adding/removing an editor section without updating this map
+// fails the test loudly. (marathon has no lib/games config with a `sections` array; its
+// one article section is 'intel', asserted against app/marathon/intel/[slug] existing.)
+export const ARTICLE_SECTIONS = {
+  marathon: new Set(['intel']),
+  dmz: new Set(['field-intel', 'meta', 'loadouts', 'fob', 'regions', 'discourse']),
+  wardogs: new Set(['field-intel', 'economy', 'systems']),
+  'pubg-dednet': new Set(['field-intel', 'systems', 'world']),
+};
 //
 // MARATHON_INTEL_KEEPER_SOURCES is the set of /marathon/intel/<slug> paths that are
 // REDIRECT SOURCES in next.config.mjs -- retired articles that 301 to a keeper

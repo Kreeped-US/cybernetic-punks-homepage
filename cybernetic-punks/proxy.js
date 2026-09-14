@@ -9,19 +9,24 @@
 // /<game>/[section]/[slug]) -- which is exactly why the consultation lives in one middleware
 // rather than four routes.
 //
-// ── PART B: 410 GONE for dead Marathon intel URLs (Fix #1) ──────────────────────────
-// THE PROBLEM: ~1,200 legacy /intel/<slug> articles were generated -> indexed -> hard-deleted.
-// Each now hits the next.config `/intel/:path*` wildcard -> 301 -> /marathon/intel/<slug> ->
-// the route's notFound() -> 404. A 301->404 chain at scale (756 still "indexed" in Google)
-// taught the DA-23 domain it is low-value, so Google turned conservative and impressions
-// collapsed. A 404 says "maybe temporary, keep checking"; a 410 GONE says "permanently gone,
-// drop it" -- the correct, fast, penalty-free de-index signal for content that is truly gone.
+// ── PART B: 410 GONE for dead ARTICLE URLs (Fix #1 + all-games extension) ────────────
+// THE PROBLEM (found on Marathon): ~1,200 legacy /intel/<slug> articles were generated ->
+// indexed -> hard-deleted. Each now hits the next.config `/intel/:path*` wildcard -> 301 ->
+// /marathon/intel/<slug> -> the route's notFound() -> 404. A 301->404 chain at scale (756
+// still "indexed" in Google) taught the DA-23 domain it is low-value, so Google turned
+// conservative and impressions collapsed. A 404 says "maybe temporary, keep checking"; a 410
+// GONE says "permanently gone, drop it" -- the correct, fast, penalty-free de-index signal.
 //
-// So for /marathon/intel/<slug>, after Part A finds no survivor redirect, if <slug> is NOT a
-// live published Marathon article (and not a keeper source or editor lane), this returns 410
-// instead of letting the route 404. THE UNIFIED RETIRE CONTRACT (see the doctrine block at
-// the bottom): a retired article is EITHER 301'd to a survivor (a slug_redirects row) OR 410'd
-// as gone -- it is NEVER a silent 404. Live articles pass straight through.
+// So for an article-detail URL, after Part A finds no survivor redirect, if the slug is NOT a
+// live published article for that game, this returns 410 instead of letting the route 404. It
+// fires ONLY when parts[1] is a real EDITOR (feed_items-backed) section for the game
+// (ARTICLE_SECTIONS in lib/seo/deadIntel), so data sections (arsenal/printer), entity routes
+// (dmz builds/items/keys/missions/pois), and tool routes (wardogs loadouts/tier-list/economy
+// hub) are never touched. Marathon carries the confirmed 1,200-URL problem; dmz/wardogs/
+// pubg-dednet are near-zero-churn today and included for consistency + future-proofing.
+// THE UNIFIED RETIRE CONTRACT (see the doctrine block at the bottom): a retired article is
+// EITHER 301'd to a survivor (a slug_redirects row) OR 410'd as gone -- NEVER a silent 404.
+// Live articles pass straight through.
 //
 // SAFETY (this runs in the request path for the matched routes, so every choice is fail-safe):
 //  - FAIL-OPEN: ANY error (table not created yet, no env, fetch failure, bad JSON) returns
@@ -65,12 +70,12 @@
 // retirement happens via the Supabase dashboard / SQL). Either way the URL never 404s silently.
 
 import { NextResponse } from 'next/server';
-import { MARATHON_INTEL_KEEPER_SOURCES, MARATHON_INTEL_EDITOR_LANES } from '@/lib/seo/deadIntel';
+import { MARATHON_INTEL_KEEPER_SOURCES, MARATHON_INTEL_EDITOR_LANES, ARTICLE_SECTIONS } from '@/lib/seo/deadIntel';
 
 var REDIRECT_TTL_MS = 60000;   // 60s: redirect data is not latency-critical; staleness is harmless
 var LIVE_TTL_MS = 600000;      // 10min: the live-slug set is a hot-path accelerator, not correctness
 var _cache = { map: null, at: 0 };
-var _live = { set: null, at: 0 };
+var _live = {};                // game_slug -> { set, at }: per-game live-slug cache
 
 function supaBase() { return process.env.NEXT_PUBLIC_SUPABASE_URL; }
 function supaKey() { return process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; }
@@ -102,32 +107,36 @@ async function getRedirectMap() {
   }
 }
 
-// The live published Marathon intel slug set (one small query, ~360 slugs), cached with a TTL.
-// THROWS on a non-OK response so the caller treats "I don't know" as fail-open, never as "dead".
-async function getLiveMarathonSet() {
+// The live published article-slug set for ONE game (one small query), cached per game with a
+// TTL. THROWS on a non-OK response so the caller treats "I don't know" as fail-open, never as
+// "dead". Slug-only (section-agnostic): an article that exists but sits in a different section
+// than the URL is still LIVE (not gone) -> falls through to the route, which does its own
+// section-match 404. We only 410 content that is genuinely not a live article at all.
+async function getLiveSet(game) {
   var now = Date.now();
-  if (_live.set && (now - _live.at) < LIVE_TTL_MS) return _live.set;
+  var c = _live[game];
+  if (c && c.set && (now - c.at) < LIVE_TTL_MS) return c.set;
   var base = supaBase(), key = supaKey();
   if (!base || !key) throw new Error('no supabase env');
-  var res = await fetch(base + '/rest/v1/feed_items?select=slug&game_slug=eq.marathon&is_published=eq.true', {
+  var res = await fetch(base + '/rest/v1/feed_items?select=slug&game_slug=eq.' + encodeURIComponent(game) + '&is_published=eq.true', {
     headers: supaHeaders(key), cache: 'no-store',
   });
   if (!res.ok) throw new Error('live-set ' + res.status);
   var rows = await res.json();
   var set = new Set();
   for (var i = 0; i < (rows || []).length; i++) if (rows[i] && rows[i].slug) set.add(rows[i].slug);
-  _live = { set: set, at: now };
+  _live[game] = { set: set, at: now };
   return set;
 }
 
-// Point check for one slug -- run ONLY on a cache miss, before deciding to 410, so a
+// Point check for one (game, slug) -- run ONLY on a cache miss, before deciding to 410, so a
 // just-published article (not yet in the cached set) is never wrongly 410'd. Returns true
 // (LIVE -> fall through) on ANY error: fail OPEN, never 410 on infra trouble.
-async function isLiveMarathonSlug(slug) {
+async function isLiveSlug(game, slug) {
   try {
     var base = supaBase(), key = supaKey();
     if (!base || !key) return true;
-    var res = await fetch(base + '/rest/v1/feed_items?select=slug&game_slug=eq.marathon&is_published=eq.true&limit=1&slug=eq.' + encodeURIComponent(slug), {
+    var res = await fetch(base + '/rest/v1/feed_items?select=slug&game_slug=eq.' + encodeURIComponent(game) + '&is_published=eq.true&limit=1&slug=eq.' + encodeURIComponent(slug), {
       headers: supaHeaders(key), cache: 'no-store',
     });
     if (!res.ok) return true;
@@ -139,21 +148,34 @@ async function isLiveMarathonSlug(slug) {
 }
 
 // Minimal, self-contained 410 page. noindex so the tiny body is never itself indexed; the 410
-// STATUS is the signal that matters to crawlers. Cached an hour so a re-crawled dead URL is cheap.
-var GONE_HTML =
-  '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
-  '<meta name="robots" content="noindex"><meta name="viewport" content="width=device-width, initial-scale=1">' +
-  '<title>410 Gone</title><style>body{margin:0;background:#121418;color:#e8e8ec;' +
-  'font:15px/1.6 system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}' +
-  'main{max-width:32rem;padding:2rem}h1{font-size:2.25rem;margin:0 0 .5rem;letter-spacing:-.02em}' +
-  'p{color:#9aa0aa;margin:.25rem 0 1.25rem}a{color:#7cc4ff;text-decoration:none}a:hover{text-decoration:underline}</style>' +
-  '</head><body><main><h1>410 &mdash; Gone</h1>' +
-  '<p>This Marathon intel article has been permanently retired.</p>' +
-  '<p><a href="/marathon/intel">Browse current Marathon intel &rarr;</a></p>' +
-  '</main></body></html>';
+// STATUS is the signal that matters to crawlers. Cached an hour so a re-crawled dead URL is
+// cheap. The link points at the game's landing hub (always a live page) so a human who lands
+// here has a way back in.
+function goneHtml(hubHref, hubLabel) {
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+    '<meta name="robots" content="noindex"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>410 Gone</title><style>body{margin:0;background:#121418;color:#e8e8ec;' +
+    'font:15px/1.6 system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}' +
+    'main{max-width:32rem;padding:2rem}h1{font-size:2.25rem;margin:0 0 .5rem;letter-spacing:-.02em}' +
+    'p{color:#9aa0aa;margin:.25rem 0 1.25rem}a{color:#7cc4ff;text-decoration:none}a:hover{text-decoration:underline}</style>' +
+    '</head><body><main><h1>410 &mdash; Gone</h1>' +
+    '<p>This article has been permanently retired.</p>' +
+    '<p><a href="' + hubHref + '">' + hubLabel + ' &rarr;</a></p>' +
+    '</main></body></html>';
+}
 
-function goneResponse() {
-  return new NextResponse(GONE_HTML, {
+// Per-game landing link for the 410 body. Marathon points at the intel hub (its article home);
+// the others at the game landing. Any unlisted game falls back to the site root.
+var GAME_HUB = {
+  marathon: { href: '/marathon/intel', label: 'Browse current Marathon intel' },
+  dmz: { href: '/dmz', label: 'Browse DMZ' },
+  wardogs: { href: '/wardogs', label: 'Browse Wardogs' },
+  'pubg-dednet': { href: '/pubg-dednet', label: 'Browse PUBG: DED.NET' },
+};
+
+function goneResponse(game) {
+  var hub = GAME_HUB[game] || { href: '/', label: 'Go to the homepage' };
+  return new NextResponse(goneHtml(hub.href, hub.label), {
     status: 410,
     headers: {
       'content-type': 'text/html; charset=utf-8',
@@ -179,20 +201,29 @@ export async function proxy(req) {
       return NextResponse.redirect(new URL(to, req.url), 301);
     }
 
-    // PART B -- 410 GONE for dead MARATHON INTEL slugs only (the confirmed 1,200-URL problem).
-    // Other games have near-zero churn and are left on the Part A + route path unchanged.
-    if (parts[0] === 'marathon' && parts[1] === 'intel') {
+    // PART B -- 410 GONE for a dead ARTICLE slug in any game. Applies ONLY when parts[1] is a
+    // real EDITOR (feed_items-backed) section for the game (ARTICLE_SECTIONS) -- so data
+    // sections (arsenal/printer), entity routes (dmz builds/items/keys/missions/pois), and
+    // tool routes (wardogs loadouts/tier-list/economy-hub) are never touched: their slugs are
+    // not article slugs, and this only ever fires under an article section. Marathon carries
+    // the confirmed 1,200-URL problem; the other three are near-zero-churn future-proofing so
+    // the retire doctrine (never silent-404) holds everywhere.
+    var game = parts[0], section = parts[1];
+    var articleSections = ARTICLE_SECTIONS[game];
+    if (articleSections && articleSections.has(section)) {
       var decoded = slug;
       try { decoded = decodeURIComponent(slug); } catch (e) { decoded = slug; }
-      // Static/keeper slugs are never dead: editor lanes render from in-file config (no DB row),
-      // and keeper sources carry a next.config 301 to a survivor. Fall through for both.
-      if (MARATHON_INTEL_EDITOR_LANES.has(decoded.toLowerCase())) return NextResponse.next();
-      if (MARATHON_INTEL_KEEPER_SOURCES.has(decoded)) return NextResponse.next();
+      // Marathon-only static exclusions: editor lanes render from in-file config (no DB row),
+      // and keeper sources carry a next.config 301 to a survivor (Part A/next.config own them).
+      if (game === 'marathon') {
+        if (MARATHON_INTEL_EDITOR_LANES.has(decoded.toLowerCase())) return NextResponse.next();
+        if (MARATHON_INTEL_KEEPER_SOURCES.has(decoded)) return NextResponse.next();
+      }
       try {
-        var live = await getLiveMarathonSet();
+        var live = await getLiveSet(game);
         if (live.has(decoded)) return NextResponse.next();          // definitely live -> render
-        if (await isLiveMarathonSlug(decoded)) return NextResponse.next(); // fresh-publish safety net
-        return goneResponse();                                       // confirmed dead -> 410 GONE
+        if (await isLiveSlug(game, decoded)) return NextResponse.next(); // fresh-publish safety net
+        return goneResponse(game);                                   // confirmed dead -> 410 GONE
       } catch (e) {
         return NextResponse.next(); // live-set lookup failed -> fail open (route may 404, as today)
       }
