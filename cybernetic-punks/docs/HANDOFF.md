@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Admin panel REORG + Marathon Sept 14 news + churn drafts rejected (commit ad8faa6)
+
+- ADMIN REORG (ad8faa6): the /admin/content 1,243-line mega-page (6 panels + CRUD, broken GO-TO deep-links) split into purpose-built pages -- reorg not rebuild (reused panels/APIs). NEW /admin/review = the daily driver (Drafts approve/reject + Source Review + Directives/Generate, mounts only 3 panels). NEW /admin/seo = GSC Review + Demand Check + Keywords. /admin/content = CRUD-only now (Quality Metrics/Alerts folded into a collapsed lazy "Editorial QA" -- editors deprioritized). NAV consolidated 9 confusing cards (7 colliding on /admin/content, 4 bare) -> 5 deep-linked surfaces (Bridge/Review/Content&Data/SEO Tools/Email). Bridge "Needs Attention" -> /admin/review. Stale CLI help text fixed. Fixes the operator's admin confusion + the scroll-and-hunt.
+- MARATHON SEPT 14 NEWS published (live, complete): /marathon/intel/marathon-symbiosis-delay-october-nightfall-refresh-economy-reset -- Bungie dev update (Symbiosis delayed Sept 22->Dec 8; Oct 6 Nightfall Refresh = progression+economy reset, Rewards Pass, balance, Vault Breaker return; dropping strict seasonal schedule). NEXUS, sourced (Bungie official), honest-tiered (facts vs marked analysis), full Symbiosis feature list, 62-char SERP title, indexable. Verified live body COMPLETE (2678 chars, all 6 features). Speed-lane play (timely + lasting + sourced) -- catches search + aids SEO recovery (fresh content signals domain freshness).
+- CHURN DRAFTS REJECTED: 3 pending Marathon drafts assessed + REJECTED (2 Rook 1.1.9 near-dups, indexable, economy-specific -- Oct 6 reset invalidates -> would recreate 404s; 1 Recon held for post-Oct-6 evergreen revision). CONTENT DISCIPLINE lesson: the editorial pipeline churns patch/shell/meta snapshots that go stale fast (26 rejected drafts + the ~1200 deleted = same class). Publish DURABLE/evergreen/sourced content (like the news piece), NOT volatile snapshots -- keeps the SEO recovery from reversing.
+- OCT 6 FLAG: Bungie's Oct 6 reset (progression+economy+balance) will STALE Marathon economy/progression/tier data. Plan a fast post-Oct-6 data+content update (correct-and-early authority play).
+- NEXT: inline draft-edit-before-approve fast-follow (narrow POST /api/admin/drafts/edit, guarded is_published=false, headline/body only + textarea/Save in Drafts panel -- kills the script-round-trip friction). Parked: Wave-2 personalized stat, economy-items honest-null gaps, generation counter, schema re-crawl, the hydration warning.
+
+---
 ## 2026-09-14 - Wardogs NAV + surfacing fix (commit d7f5791)
 
 - The nav under-sold the built product; fixed (config-centric, no route migration -- routes were already consistent):
