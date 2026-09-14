@@ -15,10 +15,11 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { buildRoadmap } from '@/lib/wardogs/progression';
-import { computeBreakdown, economyInsights } from '@/lib/wardogs/economyModel';
+import { spendModel, shareStats } from '@/lib/wardogs/economyModel';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import WardogsCashTicker from '@/components/wardogs/WardogsCashTicker';
 import EconomyBreakdown from '@/components/wardogs/EconomyBreakdown';
+import EconomyShareStats from '@/components/wardogs/EconomyShareStats';
 import EconomyPlanner from '@/components/wardogs/EconomyPlanner';
 import ProgressionRoadmap from '@/components/wardogs/ProgressionRoadmap';
 
@@ -57,23 +58,12 @@ async function loadData() {
   return { weapons: w.data || [], ammo: a.data || [], items: i.data || [] };
 }
 
-function avgLoadout(weapons, ammo) {
-  const priced = weapons.filter((w) => w.credit_cost != null && w.credit_cost > 0);
-  const primaries = priced.filter((w) => w.category !== 'Sidearm').map((w) => w.credit_cost).sort((x, y) => x - y);
-  const sidearms = priced.filter((w) => w.category === 'Sidearm').map((w) => w.credit_cost);
-  const boxes = ammo.map((a) => a.box_price).filter((x) => x != null && x > 0);
-  const avg = (arr) => (arr.length ? arr.reduce((p, q) => p + q, 0) / arr.length : 0);
-  const pm = primaries.length ? primaries[Math.floor(primaries.length / 2)] : 0;
-  const c = Math.round(pm + avg(sidearms) + 2 * avg(boxes));
-  return c > 500 ? c : 3200;
-}
-
 export default async function WardogsEconomyHub() {
   const data = await loadData();
   const road = buildRoadmap(data.weapons);
-  const breakdown = computeBreakdown(data);
-  const insights = economyInsights({ weapons: data.weapons, items: data.items, breakdown });
-  const avgCost = avgLoadout(data.weapons, data.ammo);
+  const model = spendModel(data);          // reconciled: ticker total = sum of these categories
+  const breakdown = model.categories;
+  const stats = shareStats(data, model);
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -122,8 +112,8 @@ export default async function WardogsEconomyHub() {
         </div>
       </section>
 
-      {/* BIG TICKER (reanalyzed dials: 2.0 re-kit/hr) */}
-      <WardogsCashTicker loadoutsPerHour={2.0} avgLoadoutCost={avgCost} />
+      {/* BIG TICKER -- the SUM of the itemized breakdown (reconciled: ticker = total spend) */}
+      <WardogsCashTicker ratePerSec={model.totalPerSec} itemized />
 
       {/* BREAKDOWN -- where the money flows */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '30px 24px 8px' }}>
@@ -131,31 +121,26 @@ export default async function WardogsEconomyHub() {
           <h2 style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>Where the money flows</h2>
         </div>
         <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 760 }}>
-          Modeled spend by category &mdash; each weight is how often you buy it &times; its real price. The surprise: you spend more staying alive (armor) than on your gun, and ammo barely registers.
+          Modeled spend by category &mdash; each is how often you buy it &times; its real price. They <strong style={{ color: '#fff' }}>add up to the ticker above</strong>. Guns are half of it; vehicles and ammo are each a real chunk; gear barely registers.
         </p>
         <div style={{ background: '#0e1116', border: '1px solid #1d2026', borderRadius: 8, padding: 'clamp(16px,3vw,24px)' }}>
           <EconomyBreakdown categories={breakdown} />
           <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 8, marginTop: 16, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
             <TierIcon tier="attributed" size={12} />
-            <span>Modeled distribution (purchase frequency &times; representative price from our data), not a measured total. Shares are proportional. Prices community-attributed, Season 1.</span>
+            <span>Modeled (purchase frequency &times; representative price from our data). Each category&rsquo;s live total sums to the ticker. Prices community-attributed, Season 1 &mdash; per-use cost, not the one-time unlock fee.</span>
           </div>
         </div>
       </section>
 
-      {/* INSIGHTS */}
-      <section style={{ maxWidth: 1120, margin: '0 auto', padding: '24px 24px 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <h2 style={{ fontFamily: EXO, fontSize: 12, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Economy intel</h2>
-          <div style={{ flex: 1, height: 1, background: '#1d2026' }} />
+      {/* SHAREABLE STATS (the social hooks) */}
+      <section style={{ maxWidth: 1120, margin: '0 auto', padding: '30px 24px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <h2 style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>Economy stats worth sharing</h2>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-          {insights.map((s, i) => (
-            <div key={i} style={{ background: '#0e1116', border: '1px solid #1d2026', borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '16px 16px' }}>
-              <div style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,26px)', fontWeight: 800, color: A, lineHeight: 1, marginBottom: 6 }}>{s.stat}</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.45 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
+        <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 760 }}>
+          The numbers that make you go &ldquo;wait, <em>what?</em>&rdquo; &mdash; pulled straight from the prices and the model. Screenshot away.
+        </p>
+        <EconomyShareStats stats={stats} />
       </section>
 
       {/* PROGRESSION PLANNER (merged) */}

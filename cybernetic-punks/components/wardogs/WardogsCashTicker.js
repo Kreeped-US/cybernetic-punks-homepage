@@ -39,8 +39,12 @@ export default function WardogsCashTicker({
   avgLoadoutCost = 3200,
   copiesSold = 1250000,
   launchIso = '2026-09-10T16:00:00Z',
+  // When passed, the ticker IS this rate (the reconciled economy model's total $/sec, summed
+  // across every category). itemized=true switches the basis note to the itemized wording.
+  ratePerSec: ratePerSecProp = null,
+  itemized = false,
 }) {
-  const ratePerSec = sustainedPlayers * (loadoutsPerHour / 3600) * avgLoadoutCost;
+  const ratePerSec = ratePerSecProp != null ? ratePerSecProp : sustainedPlayers * (loadoutsPerHour / 3600) * avgLoadoutCost;
   const launchMs = new Date(launchIso).getTime();
 
   const compute = () => Math.floor((ratePerSec * (Date.now() - launchMs)) / 1000);
@@ -108,8 +112,10 @@ export default function WardogsCashTicker({
           Modeled from{' '}
           <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>1.25M copies sold</strong> (Bulkhead, official) and Wardogs&rsquo;{' '}
           <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>~337K peak concurrent</strong> (SteamDB) &mdash; driven off a{' '}
-          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>conservative ~{Math.round(sustainedPlayers / 1000)}K sustained average</strong> and an average loadout cost of{' '}
-          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>{fmt(avgLoadoutCost)}</strong> from our price data.{' '}
+          <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>conservative ~{Math.round(sustainedPlayers / 1000)}K sustained average</strong>
+          {itemized
+            ? <>, summed across <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>every purchase</strong> (weapons, ammo, armor, vehicles, gear) at our real prices &mdash; so the breakdown below adds up to this number. </>
+            : <> and an average loadout cost of <strong style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>{fmt(avgLoadoutCost)}</strong> from our price data. </>}
           <span style={{ color: 'rgba(255,255,255,0.6)' }}>Live estimate &mdash; in-game credits, not real money, and not an official spend figure.</span>{' '}
           <button
             type="button"
@@ -127,9 +133,13 @@ export default function WardogsCashTicker({
               <li><strong style={{ color: '#fff' }}>Peak (context):</strong> ~{Math.round(peakConcurrent / 1000)}K peak concurrent &mdash; SteamDB, Wardogs Early Access launch (Sept 11, 2026, #2 on Steam). Cited for scale &mdash; NOT the rate basis.</li>
               <li><strong style={{ color: '#fff' }}>Rate basis:</strong> ~{Math.round(sustainedPlayers / 1000)}K sustained-average active (~{Math.round((sustainedPlayers / peakConcurrent) * 100)}% of peak) &mdash; a conservative day-average across timezones, so the model does NOT assume everyone is online at once.</li>
               <li><strong style={{ color: '#fff' }}>Scale:</strong> 1,250,000 copies sold &mdash; Bulkhead&rsquo;s official @WARDOGS announcement (Sept 10, 2026).</li>
-              <li><strong style={{ color: '#fff' }}>Avg loadout:</strong> {fmt(avgLoadoutCost)} &mdash; from our real price data (primary median + sidearm + ammo).</li>
-              <li><strong style={{ color: '#fff' }}>Purchase rate:</strong> {loadoutsPerHour} loadouts per active player per hour (a re-kit ~every {Math.round(60 / loadoutsPerHour)} min &mdash; a conservative assumption).</li>
-              <li><strong style={{ color: '#fff' }}>Formula:</strong> sustained players &times; loadouts/hr &times; avg cost, accumulated since EA launch (Sept 10, 16:00 UTC) &asymp; {fmt(Math.round(ratePerSec))}/sec.</li>
+              {itemized ? (
+                <li><strong style={{ color: '#fff' }}>Itemized spend:</strong> each category is (how often you buy it &times; its real price); the ticker is the SUM across weapons, ammo, armor, vehicles, medical and gear &mdash; so the breakdown below reconciles to this number.</li>
+              ) : (
+                <li><strong style={{ color: '#fff' }}>Avg loadout:</strong> {fmt(avgLoadoutCost)} &mdash; from our real price data (primary median + sidearm + ammo).</li>
+              )}
+              <li><strong style={{ color: '#fff' }}>Purchase rate:</strong> re-kit ~every {Math.round(60 / (loadoutsPerHour || 2))} min; ammo every life; armor/medical/gear situational; vehicles occasional &mdash; conservative, documented frequencies.</li>
+              <li><strong style={{ color: '#fff' }}>Formula:</strong> sustained players &times; (frequency &times; price, per category), accumulated since EA launch (Sept 10, 16:00 UTC) &asymp; {fmt(Math.round(ratePerSec))}/sec.</li>
             </ul>
             <div style={{ marginTop: 10, fontSize: 11.5, color: 'var(--text-tertiary,#8b929c)', lineHeight: 1.5 }}>
               An estimate, not a fact: a deliberately conservative economy-scale model (sustained average, not peak) &mdash; the kind of number the game&rsquo;s cash economy produces, not a measured total. No copies-sold figure is used to imply real-money revenue.

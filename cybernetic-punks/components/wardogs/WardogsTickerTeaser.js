@@ -14,8 +14,10 @@ export default function WardogsTickerTeaser({
   loadoutsPerHour = 2.0,
   avgLoadoutCost = 3200,
   launchIso = '2026-09-10T16:00:00Z',
+  // When passed (from the reconciled economy model), the teaser matches the hub's big ticker.
+  ratePerSec: ratePerSecProp = null,
 }) {
-  const ratePerSec = sustainedPlayers * (loadoutsPerHour / 3600) * avgLoadoutCost;
+  const ratePerSec = ratePerSecProp != null ? ratePerSecProp : sustainedPlayers * (loadoutsPerHour / 3600) * avgLoadoutCost;
   const launchMs = new Date(launchIso).getTime();
   const compute = () => Math.floor((ratePerSec * (Date.now() - launchMs)) / 1000);
   const [value, setValue] = useState(compute);
