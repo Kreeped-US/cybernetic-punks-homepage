@@ -7,6 +7,13 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - /wardogs/economy/mine double-footer fixed (commit d22a78f)
+
+- The Wave 2 page (/wardogs/economy/mine) rendered TWO stacked footers: it self-rendered <Footer game="wardogs"/> AND app/wardogs/layout.js already renders the footer for the entire /wardogs/* subtree. Pattern: the footer belongs to the LAYOUT -- every other Wardogs page renders ZERO footers itself (inherits the layout's one); /economy/mine was the sole outlier (extra self-rendered footer from the Wave 2 build).
+- FIX: removed the page's self-rendered <Footer/> + its unused import. Layout footer untouched (no regression). Verified by <footer> count: /economy/mine = 1 (was 2), all other Wardogs pages still = 1, mobile = 1.
+- (Operator caught it visually -- two identical stacked WardogsFooters.)
+
+---
 ## 2026-09-14 - Marathon NAV streamlined (commit b53051d)
 
 - Marathon nav (hardcoded NAV_ITEMS in components/Nav.js) was overloaded (12 top-level) + still listed editors (off-strategy -- deprioritized network-wide). Streamlined 12 -> 7: WEAPONS . RANKED . META . PVE . DATABASE(dropdown) . TOOLS(dropdown) . INTEL(dropdown). HOME removed (wordmark links home).
