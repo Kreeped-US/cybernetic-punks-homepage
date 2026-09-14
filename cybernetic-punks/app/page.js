@@ -1,15 +1,16 @@
 // app/page.js
-// NEUTRAL ROOT (network front door) -- premium redesign PASS A (visual + structural).
-// Ports the approved v7 mock treatment (burgundy/black/gold, Chakra Petch/Inter/JetBrains
-// Mono, the crosshair signature, the editorial desk, image-ready game tiles) over the
-// proven live root. PASS A is COSMETIC + STRUCTURAL ONLY: the honesty-load-bearing data
-// (telemetry values, the REPORTS count, the countdown, the subscribe storage, the receipts
-// panel) is rendered INERT/PLACEHOLDER here and wired in PASS B. Data fns + SEO metadata +
-// JSON-LD are preserved byte-for-byte from the live page. See docs/cnp-root-mock-v7.html
-// (visual target) + docs/cnp-root-redesign-spec.md (blueprint).
+// NEUTRAL ROOT (network front door). Premium v7 treatment (burgundy/black/gold, Chakra
+// Petch/Inter/JetBrains Mono, the crosshair signature, image-ready game tiles). All data is
+// LIVE-wired (telemetry, game pulse feeds, the receipts chain, subscribe capture); SEO
+// metadata + JSON-LD live here too.
+//
+// VOICE: product-forward + marketable, matching the network OG card ("Loadouts, tier lists,
+// and meta for the games you play / NO HYPE. JUST INTEL."). The tools are the pitch; the
+// verified-data moat is the supporting proof, not the headline. Editors are a backend method
+// (produced-at-scale), deliberately NOT a hero section.
 //
 // Font loading is scoped to this page via next/font (no layout change). CSS is scoped
-// under `.cnp-root` so the mock's generic selectors cannot leak to other routes.
+// under `.cnp-root` so the generic selectors cannot leak to other routes.
 
 import Link from 'next/link';
 import { Chakra_Petch, Inter, JetBrains_Mono } from 'next/font/google';
@@ -19,15 +20,13 @@ import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { isGameLive } from '@/lib/network/gameStatus';
 import { getIndexableGames } from '@/lib/games';
-import { discourseHref } from '@/lib/discourse';
 import { entitySlugFor } from '@/lib/coverage';
 import AccountMenu from '@/components/AccountMenu';
 import HeroCrosshair from '@/components/network/HeroCrosshair';
 import ReceiptPanel from '@/components/network/ReceiptPanel';
 import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
 import NetworkFooter from '@/components/network/NetworkFooter';
-import { getEditorDisplay, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
-import EditorPortrait from '@/components/network/EditorPortrait';
+import { getEditorDisplay } from '@/lib/editors/roster';
 import { dmz } from '@/lib/games/dmz';
 import { wardogs } from '@/lib/games/wardogs';
 
@@ -43,8 +42,8 @@ const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--cnp-mono', disp
 // framing. Keeps the differentiator language ("verified", "first-party", "no hype", "checked
 // in-game"); no superlative/comparative reaches the SERP.
 export const metadata = {
-  title: { absolute: 'Cybernetic Punks - Verified FPS Intelligence' },
-  description: 'Verified FPS intelligence - tier lists, weapon stats, and guides for Marathon and extraction shooters, every stat checked in-game. First-party intel, no hype.',
+  title: { absolute: 'Cybernetic Punks - Loadouts, Tier Lists & Meta for the Games You Play' },
+  description: 'Loadouts, tier lists, weapon stats, and meta for Marathon, Wardogs, and extraction shooters - every stat checked in-game. No hype, just intel.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
 
@@ -155,45 +154,6 @@ async function getNetworkStats() {
   return out;
 }
 
-async function getNetworkVoice() {
-  try {
-    var { data } = await supabase
-      .from('network_brief')
-      .select('hero_line, brief, created_at')
-      .eq('skipped', false)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    return data || null;
-  } catch (e) {
-    return null;
-  }
-}
-
-async function getNetworkDeskFeed() {
-  try {
-    var { data } = await supabase
-      .from('feed_items')
-      .select('headline, slug, game_slug, created_at, creator_info, tags')
-      .eq('is_published', true)
-      .contains('tags', ['discourse'])
-      .order('created_at', { ascending: false })
-      .limit(6);
-    return (data || []).map(function(it) {
-      return {
-        headline: it.headline,
-        slug: it.slug,
-        game_slug: it.game_slug,
-        when: timeAgo(it.created_at),
-        creator: (it.creator_info && it.creator_info.name) || null,
-        href: discourseHref(it),
-      };
-    }).filter(function(it) { return it.href; });
-  } catch (e) {
-    return [];
-  }
-}
-
 // RECEIPTS: one REAL verified stat + its verified_source chain, for the receipts set piece.
 // Pulls the most-recently-verified weapon row that has a source AND a damage figure, and
 // resolves a TRAVERSABLE link to its entity page. FAIL-OPEN: any empty/malformed/thrown
@@ -247,20 +207,8 @@ const JSONLD = [
   },
 ];
 
-// -- EDITORIAL DESK (roster ground truth: 5 live + VANTAGE + BROKER) -
-// Order matches the approved mock. Cards render ONLY roster.js facts. BROKER (0 published)
-// is the locked/classified card; its "deploys with <game>" line reads from broker.coverage
-// (single source of truth), resolving the slug to the game display name -- no hardcoded date.
-const DESK_ORDER = ['nexus', 'cipher', 'dexter', 'ghost', 'miranda', 'vantage', 'broker'];
-
-function deskRankLabel(e, coverageLabel) {
-  if (e.status === 'network') return 'NETWORK';
-  if (e.status === 'incoming') return coverageLabel ? (coverageLabel + ' - INCOMING') : 'INCOMING';
-  return 'CORE';
-}
-
 export default async function NetworkRoot() {
-  var [data, voice, stats, deskFeed, receipt] = await Promise.all([getNetworkPulse(), getNetworkVoice(), getNetworkStats(), getNetworkDeskFeed(), getReceipt()]);
+  var [data, stats, receipt] = await Promise.all([getNetworkPulse(), getNetworkStats(), getReceipt()]);
 
   // Game tile meta + telemetry (real data, PASS B).
   var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
@@ -278,15 +226,6 @@ export default async function NetworkRoot() {
       updated: updatedLabel,
     };
   });
-
-  // BROKER coverage -> display name (single-sourced from the game config, never hardcoded).
-  var brokerCoverageLabel = null;
-  var brokerEntry = getEditorDisplay('broker');
-  if (brokerEntry && brokerEntry.coverage) {
-    brokerCoverageLabel = (brokerEntry.coverage === dmz.slug) ? dmz.displayName : String(brokerEntry.coverage).toUpperCase();
-  }
-
-  var deskCards = DESK_ORDER.map(function(k) { return getEditorDisplay(k); }).filter(Boolean);
 
   return (
     <div className={'cnp-root ' + chakra.variable + ' ' + inter.variable + ' ' + jbmono.variable}>
@@ -308,8 +247,8 @@ export default async function NetworkRoot() {
           <div className="nav-right">
             <div className="nav-links">
               <a href="#games">Games</a>
+              <a href="#tools">Tools</a>
               <a href="#proof">Why us</a>
-              <a href="#desk">Editors</a>
               <a href="#how">How it works</a>
             </div>
             <AccountMenu align="right" />
@@ -323,11 +262,11 @@ export default async function NetworkRoot() {
           <div className="wrap hero-grid">
             <div>
               <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
-              <h1>The verified intel network for <span className="hl">FPS players</span>.</h1>
-              <p className="sub">Every stat <b>checked by hand</b>, in-game. No AI slop, no reposted rumors, no hype cycles - just the real numbers, sourced and verified, for Marathon and MW4&apos;s DMZ, plus verified-source intel on Wardogs ahead of Early Access.</p>
+              <h1>Loadouts, tier lists, and meta for <span className="hl">the games you play</span>.</h1>
+              <p className="sub">The best loadouts, weapons ranked by real time-to-kill, and the meta that actually wins - for Marathon and Wardogs, with DMZ landing October 23. Every number checked in-game. <b>We don&apos;t guess</b> - if we don&apos;t know, we say so.</p>
               <div className="cta-row">
-                <a href="#join" className="btn btn-gold">Get the intel drops &rarr;</a>
-                <a href="#games" className="btn btn-ghost">Explore the network</a>
+                <a href="#games" className="btn btn-gold">Explore the network &rarr;</a>
+                <a href="#tools" className="btn btn-ghost">Jump to the tools</a>
               </div>
             </div>
             <HeroCrosshair />
@@ -376,19 +315,6 @@ export default async function NetworkRoot() {
           </div>
         </section>
 
-        {/* NETWORK VOICE (Vantage) -- PRESERVED live content, re-skinned */}
-        {voice && voice.hero_line && (
-          <section className="voice-sec">
-            <div className="wrap">
-              <figure className="voice">
-                <figcaption className="voice-by"><span className="voice-dot" aria-hidden="true" />Vivian Cross / Vantage <span className="voice-role">Network editor</span></figcaption>
-                <blockquote className="voice-line">{voice.hero_line}</blockquote>
-                {voice.brief && <p className="voice-brief">{voice.brief}</p>}
-              </figure>
-            </div>
-          </section>
-        )}
-
         {/* GAMES -- image-ready tiles (real art + real current meta) */}
         <section className="games" id="games">
           <div className="wrap">
@@ -407,15 +333,14 @@ export default async function NetworkRoot() {
                 <div className="meta">Call of Duty: MW4 extraction &middot; Hajin Exclusion Zone &middot; pre-launch intel building</div>
                 <div className="go">Get day-one coverage &rarr;</div>
               </Link>
-              {/* Wardogs -- LIVE tile. OUR COVERAGE is live (published confirmed-systems
-                  intel at /wardogs); the GAME is still pre-launch (EA Sep 10), so the pill
-                  leads with INTEL LIVE and keeps the EA date -- never implying the game
-                  launched. Clickable Link mirroring the Marathon/DMZ tile structure. */}
+              {/* Wardogs -- LIVE in Steam Early Access (EA opened Sep 10). The pill is date-driven
+                  (isGameLive), reading EARLY ACCESS - LIVE now; the tile leads with the products
+                  (Loadout Finder, Tier List, Economy Hub). Clickable Link mirroring the other tiles. */}
               <Link href="/wardogs" className="game wardogs" style={{ '--img': "url('/images/games/wardogs-hero.jpg')" }}>
                 <div className="art" aria-hidden="true" /><div className="scrim scrim-strong" aria-hidden="true" />
                 <div className="status wardogs-pill"><i aria-hidden="true" />{wardogsLive ? <>EARLY ACCESS &middot; LIVE</> : <>INTEL LIVE &middot; EA {wardogsEA || 'soon'}</>}</div>
-                <div className="meta">{wardogs.displayName} &middot; Steam Early Access</div>
-                <div className="go">Get the confirmed intel &rarr;</div>
+                <div className="meta">{wardogs.displayName} &middot; Loadout Finder, Tier List &amp; Economy Hub</div>
+                <div className="go">Find your best loadout &rarr;</div>
               </Link>
               {/* PUBG: DED.NET -- REVEALED, no release date (launch_date null). The pill states
                   "REVEALED / CLOSED BETA" honestly -- NO countdown, NO date (there is none). Blood-red
@@ -468,88 +393,16 @@ export default async function NetworkRoot() {
                         <p className="pcol-empty">{game.pulse.mode === 'live' ? 'Quiet cycle - nothing new to verify yet.' : 'Pre-launch intel building.'}</p>
                       )}
                     </div>
-                    {Array.isArray(game.keys) && game.keys.length > 0 && (
+                    {Array.isArray(game.keyRoutes) && game.keyRoutes.length > 0 && (
                       <div className="pkeys">
                         <span className="pkeys-label">{game.label} reference</span>
                         <span className="pkeys-row">
-                          {game.keys.map(function(k) { return <Link key={k.href} href={k.href} className="pkey">{k.label}</Link>; })}
+                          {game.keyRoutes.map(function(k) { return <Link key={k.href} href={k.href} className="pkey">{k.label}</Link>; })}
                         </span>
                       </div>
                     )}
                   </div>
                 );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* NETWORK DESK FEED -- PRESERVED discourse (real data), re-skinned */}
-        {deskFeed.length > 0 && (
-          <section className="deskfeed-sec">
-            <div className="wrap">
-              <div className="sec-eyebrow">From the network desk</div>
-              <ul className="deskfeed">
-                {deskFeed.map(function(a) {
-                  return (
-                    <li key={a.slug}>
-                      <Link href={a.href} className="deskfeed-row">
-                        <span className="deskfeed-meta"><span className="deskfeed-game">{a.game_slug}</span>{a.creator ? <span className="deskfeed-creator">on {a.creator}</span> : null}<span className="deskfeed-when">{a.when}</span></span>
-                        <span className="deskfeed-head">{a.headline}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </section>
-        )}
-
-        {/* THE EDITORIAL DESK -- roster ground truth */}
-        <section className="desk" id="desk">
-          <div className="wrap">
-            <div className="sec-eyebrow">The editorial desk</div>
-            <h2>An AI newsroom. A human on the numbers.</h2>
-            <p className="sec-sub">Specialist editors work the beats - meta, analysis, builds, community, field intel, and the cross-game view. Every number they publish is human-checked before it ships - against the game where it is live, against official sources where it is not. What can&apos;t be confirmed yet ships flagged. That is the difference between intel and noise.</p>
-            <div className="desk-grid">
-              {deskCards.map(function(e) {
-                var locked = e.status === 'incoming';
-                var isNetwork = e.status === 'network';
-                var rank = deskRankLabel(e, brokerCoverageLabel);
-                var lane = (!locked && !isNetwork) ? ('/marathon/intel/' + e.key) : null;
-                var beat = locked
-                  ? ('Beat - ' + e.role + (brokerCoverageLabel ? ' - deploys with ' + brokerCoverageLabel : ''))
-                  : ('Beat - ' + e.role);
-                var inner = (
-                  <>
-                    <div className="photo" style={{ '--op': e.color }}>
-                      <div className="cbar" aria-hidden="true" />
-                      {/* Portrait renders when a file exists (editorHasPortrait); onError or
-                          a missing file degrades to the initial badge. BROKER's clear face
-                          renders here even on the locked card -- redaction is on the name. */}
-                      <EditorPortrait
-                        src={editorHasPortrait(e.key) ? '/images/editors/' + e.key + '.jpg' : null}
-                        alt={e.key.toUpperCase() + ' - ' + e.fullName}
-                        imgClassName="ph-photo"
-                        fallback={<div className="ph-badge" aria-hidden="true">{editorInitial(e.key)}</div>}
-                      />
-                      {locked
-                        ? <div className="classified-stamp">Classified</div>
-                        : (!editorHasPortrait(e.key) ? <div className="ph-tag">{'// PORTRAIT PENDING'}</div> : null)}
-                    </div>
-                    <div className="body">
-                      <div className="rank">{rank}</div>
-                      <div className="code">{e.key.toUpperCase()}</div>
-                      <div className="handle">{e.role}</div>
-                      <div className="name">{locked ? <span className="redact">&nbsp;{e.fullName}&nbsp;</span> : e.fullName}</div>
-                      <div className="role">{e.bio}</div>
-                      <div className="beat" dangerouslySetInnerHTML={{ __html: beat.replace(/&/g, '&amp;') }} />
-                    </div>
-                  </>
-                );
-                var cls = 'op' + (locked ? ' locked' : '') + (isNetwork ? ' network' : '');
-                return lane
-                  ? <Link key={e.key} href={lane} className={cls} style={{ '--op': e.color }}>{inner}</Link>
-                  : <div key={e.key} className={cls} style={{ '--op': e.color }}>{inner}</div>;
               })}
             </div>
           </div>
@@ -579,19 +432,22 @@ export default async function NetworkRoot() {
           </div>
         </section>
 
-        {/* TOOLS & REFERENCES -- PRESERVED */}
-        <section className="tools-sec">
+        {/* TOOLS -- the products, both heavily-built verticals (Wardogs + Marathon), one click
+            away from the apex. Wardogs first (the flagship-built vertical + distribution funnel). */}
+        <section className="tools-sec" id="tools">
           <div className="wrap">
-            <div className="sec-eyebrow">Tools &amp; references</div>
-            <h2>The reference pages, one click away.</h2>
+            <div className="sec-eyebrow">The tools</div>
+            <h2>The tools that actually help you play.</h2>
             <div className="tools-grid">
               {[
-                { href: '/marathon/meta',         label: 'Tier list',      sub: 'Weapons and shells ranked' },
-                { href: '/marathon/leaderboard',  label: 'Leaderboard',    sub: 'Top runners tracked' },
-                { href: '/marathon/status',       label: 'Server status',  sub: 'Player activity and errors' },
-                { href: '/marathon/player-count', label: 'Player count',   sub: 'Live Steam concurrents' },
-                { href: '/marathon/weapons',      label: 'Weapons',        sub: 'Every stat, every gun' },
-                { href: '/marathon/mods',         label: 'Mods',           sub: 'Every mod, every slot' },
+                { href: '/wardogs/loadouts',  label: 'Wardogs Loadout Finder', sub: 'Your best loadout, by budget & level' },
+                { href: '/wardogs/tier-list', label: 'Wardogs Tier List',      sub: 'Every weapon ranked by real TTK' },
+                { href: '/wardogs/economy',   label: 'Wardogs Economy',        sub: 'Where the cash flows + what to save for' },
+                { href: '/wardogs/arsenal',   label: 'Wardogs Arsenal',        sub: 'Every gun, every stat' },
+                { href: '/marathon/meta',     label: 'Marathon Tier List',     sub: 'Weapons and shells ranked' },
+                { href: '/marathon/weapons',  label: 'Marathon Weapons',       sub: 'Every stat, every gun' },
+                { href: '/marathon/mods',     label: 'Marathon Mods',          sub: 'Every mod, every slot' },
+                { href: '/marathon/leaderboard', label: 'Marathon Leaderboard', sub: 'Top runners tracked' },
               ].map(function(t) {
                 return (
                   <Link key={t.href} href={t.href} className="tool">
@@ -608,7 +464,7 @@ export default async function NetworkRoot() {
         <section className="about-sec">
           <div className="wrap">
             <div className="sec-eyebrow">What is Cybernetic Punks?</div>
-            <p className="about-body">The verified intelligence network for FPS players - Marathon live now, Wardogs intel live ahead of its September 10 Early Access, and Call of Duty&apos;s DMZ landing October 23. Every stat is verified against the live game, never scraped or guessed. Our editorial desk tracks the meta, builds, and economy of each game around the clock, so you get first-party intel that general-purpose AI can&apos;t replicate. No hype. Just intel.</p>
+            <p className="about-body">The intel network for FPS players - loadouts, tier lists, weapon stats, and economy tools for the games you play. Marathon and Wardogs are live now (Wardogs in Steam Early Access), with Call of Duty&apos;s DMZ landing October 23. Every number is checked against the live game, never scraped or guessed - and where we don&apos;t know yet, we say so. Verified content, produced at scale. No hype. Just intel.</p>
             <Link href="/about" className="about-link">How the network works &rarr;</Link>
           </div>
         </section>
@@ -628,7 +484,7 @@ export default async function NetworkRoot() {
               )}
             </div>
             <h2>Get on the list before the next drop.</h2>
-            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - Marathon live now, Wardogs intel live ahead of Early Access, DMZ the day the Hajin Exclusion Zone opens, and PUBG: DED.NET as its closed beta and release firm up. No spam, no hype. Only when there is something real to send.</p>
+            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - Marathon and Wardogs live now, DMZ the day the Hajin Exclusion Zone opens, and PUBG: DED.NET as its closed beta and release firm up. No spam, no hype. Only when there is something real to send.</p>
             <div className="sub-form-slot">
               <NetworkSubscribeForm />
             </div>

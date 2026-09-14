@@ -127,13 +127,21 @@ export const ROOT_GAMES = [
     // issue on this source, so no imagePosition override -- the default crop is fine.
     heroImage: '/images/games/wardogs-hero.jpg',
     theme: { primary: wardogsGame.theme.primary, tint: 'rgba(224,161,58,0.08)' }, // amber (= WARDOGS_AMBER)
+    // Wardogs is the most-built vertical (Loadout Finder, Tier List, Economy Hub, Arsenal) --
+    // surface those tools from the apex (crawlable link + the front-door funnel during
+    // distribution), the same mechanism Marathon's keyRoutes use.
+    keyRoutes: [
+      { label: 'Loadout Finder', href: '/wardogs/loadouts' },
+      { label: 'Tier List',      href: '/wardogs/tier-list' },
+      { label: 'Economy',        href: '/wardogs/economy' },
+      { label: 'Arsenal',        href: '/wardogs/arsenal' },
+    ],
     pulse: {
-      // COVERAGE is live (6 published confirmed-systems articles) but the GAME is pre-launch
-      // (EA Sep 10), so mode stays 'pre-launch' (no live player count) while the feed key
-      // surfaces the published articles in the column -- the exact posture DMZ uses. `note`
-      // is the onboarding status pill + the column's zero-row empty-state.
-      mode: 'pre-launch',
-      note: 'Intel live, EA Sep 10',
+      // Wardogs is LIVE in Steam Early Access (EA opened Sep 10) -- mode 'live' so the column
+      // reads as a live game, and the feed key surfaces the published articles. `note` is the
+      // column's zero-row empty-state.
+      mode: 'live',
+      note: 'Live in Early Access',
       feed: { gameSlug: 'wardogs' },  // feed_items scope for this game's column
       // Resolve the section from WARDOGS_ARTICLE_SECTION (Stage 6 Track 2) and emit
       // /wardogs/<section>/<slug>. An unmapped slug returns null so the row is dropped
