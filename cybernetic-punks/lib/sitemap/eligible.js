@@ -307,11 +307,14 @@ export async function computeEligible() {
     // The /wardogs landing itself (indexable while wardogs.indexable; DB-driven -> no lastmod).
     add(BASE + '/wardogs', W, 'wardogs-section', undefined, 'daily', 0.9);
 
-    // The LOADOUTS tool landing -- an indexable discoverable hub (real value-prop + TTK-
-    // methodology content; inherits the subtree robots gate), the same posture as
-    // /marathon/advisor + /bodycam/builder. No lastmod (tool page, DB-driven). The per-build
-    // share pages (/wardogs/loadouts/build/<slug>) stay noindex + out of the sitemap (Channel
-    // A artifacts). type='wardogs-section' -> partitions into the wardogs bucket unchanged.
+    // The LIVE TOOL/PRODUCT landings -- the single source of truth is wardogs.tools (Loadouts,
+    // Tier List, Economy, Arsenal): each is an indexable discoverable hub (real value-prop
+    // content; inherits the subtree robots gate), the same posture as /marathon/advisor +
+    // /bodycam/builder. No lastmod (tool pages, DB-driven). Per-artifact leaves stay noindex +
+    // out of the sitemap (/wardogs/loadouts/build/<slug>, /wardogs/arsenal/<slug>,
+    // /wardogs/economy/stat/<key>). NOTE: /wardogs/economy is intentionally NOT emitted by the
+    // section loop above (skipped at 'economy') -- it comes from here, once, via this loop.
+    // type='wardogs-section' -> partitions into the wardogs bucket unchanged.
     (wardogs.tools || []).forEach(function (t) {
       add(BASE + t.href, W, 'wardogs-section', undefined, 'weekly', 0.8);
     });
@@ -323,18 +326,6 @@ export async function computeEligible() {
     shippedTypeHubs().forEach(function (h) {
       add(BASE + '/wardogs/loadouts/best/' + h.slug, W, 'wardogs-section', undefined, 'weekly', 0.8);
     });
-
-    // The ARSENAL roster -- an indexable content page (the weapon list, service-key roster w/ TTK/
-    // ballistics summaries). The per-weapon DETAIL pages (/wardogs/arsenal/<slug>) stay NOINDEX + out
-    // of the sitemap (the Channel B leaf ramp). DB-driven -> no lastmod. type='wardogs-section'.
-    add(BASE + '/wardogs/arsenal', W, 'wardogs-section', undefined, 'weekly', 0.8);
-
-    // The TIER LIST -- indexable "prove the meta" flagship (every weapon ranked by measured TTK).
-    add(BASE + '/wardogs/tier-list', W, 'wardogs-section', undefined, 'weekly', 0.8);
-    // Economy hub (spend tracker + breakdown + merged Progression Planner). Dedicated route that
-    // overrides the 'economy' section; /wardogs/progression 301s here. Added explicitly (skipped
-    // in the section loop above) so it is deterministically in the sitemap.
-    add(BASE + '/wardogs/economy', W, 'wardogs-section', undefined, 'weekly', 0.8);
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while

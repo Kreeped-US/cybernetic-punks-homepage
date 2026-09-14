@@ -16,6 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { buildRoadmap } from '@/lib/wardogs/progression';
 import { spendModel, shareStats, DEFAULT_PLAYERS } from '@/lib/wardogs/economyModel';
+import { wardogsArticleSlugsForSection } from '@/lib/games/wardogs';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import WardogsCashTicker from '@/components/wardogs/WardogsCashTicker';
 import EconomyBreakdown from '@/components/wardogs/EconomyBreakdown';
@@ -50,12 +51,19 @@ function getSupabase() {
 
 async function loadData() {
   const sb = getSupabase();
-  const [w, a, i] = await Promise.all([
+  // The economy-section article slugs (mapped in lib/games/wardogs.js). Surfaced as the
+  // "Economy Intel" list at the bottom of the hub so these published, indexed articles are
+  // browsable from here (the "Economy" nav tab opens THIS hub, not a section article list).
+  const econSlugs = wardogsArticleSlugsForSection('economy');
+  const [w, a, i, ar] = await Promise.all([
     sb.from('weapon_stats').select('name, category, weapon_type, image_filename, unlock_class, unlock_class_level, unlock_career_level, unlock_fee, credit_cost').eq('game_slug', 'wardogs'),
     sb.from('wardogs_ammo').select('box_price').eq('game_slug', 'wardogs'),
     sb.from('wardogs_economy_items').select('name, category, subcategory, cost').eq('game_slug', 'wardogs'),
+    econSlugs.length
+      ? sb.from('feed_items').select('slug, headline, created_at').eq('game_slug', 'wardogs').eq('is_published', true).in('slug', econSlugs).order('created_at', { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
-  return { weapons: w.data || [], ammo: a.data || [], items: i.data || [] };
+  return { weapons: w.data || [], ammo: a.data || [], items: i.data || [], econArticles: (ar && ar.data) || [] };
 }
 
 export default async function WardogsEconomyHub() {
@@ -64,6 +72,7 @@ export default async function WardogsEconomyHub() {
   const model = spendModel(data);          // reconciled: ticker total = sum of these categories
   const breakdown = model.categories;
   const stats = shareStats(data, model);
+  const econArticles = data.econArticles || [];
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -172,6 +181,35 @@ export default async function WardogsEconomyHub() {
         <div style={{ marginBottom: 18 }}><EconomyPlanner weapons={data.weapons} /></div>
         <ProgressionRoadmap road={road} />
       </section>
+
+      {/* ECONOMY INTEL -- the economy editorial articles, surfaced here (the "Economy" nav tab
+          opens this hub, so without this list these published + indexed pieces would only be
+          reachable by direct URL / search). They belong with the economy: read on. */}
+      {econArticles.length > 0 && (
+        <section style={{ maxWidth: 1120, margin: '0 auto', padding: '30px 24px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <h2 style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>Economy intel</h2>
+          </div>
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 760 }}>
+            The deeper reads on how the money actually works &mdash; persistent cash, loadout buys, payouts, and what the studio has confirmed.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+            {econArticles.map(function (a) {
+              return (
+                <Link key={a.slug} href={'/wardogs/economy/' + a.slug} className="wd-econ-row" style={{
+                  display: 'flex', flexDirection: 'column', gap: 8, textDecoration: 'none',
+                  background: '#0e1116', border: '1px solid #1d2026', borderLeft: '3px solid ' + A,
+                  borderRadius: 8, padding: '16px 18px',
+                }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: A }}>Economy</span>
+                  <span style={{ fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', lineHeight: 1.35 }}>{a.headline}</span>
+                  <span style={{ fontSize: 12, color: A, fontWeight: 700 }}>Read &rarr;</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ECONOMY CONTEXT (primer) + CTAs */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '20px 24px 60px' }}>

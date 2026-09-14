@@ -7,10 +7,11 @@
 //                      section via WARDOGS_ARTICLE_SECTION. Zero -> WardogsEmptyState.
 //   source 'data'   -> WardogsComingSoon shell (its own entity tables come post-EA).
 //
-// Phase 1 ships zero Wardogs articles, so editor sections always render the empty state
-// today; the article-card path is forward-ready for Phase 2. NOTE: the
-// /wardogs/[section]/[slug] article-detail route is DEFERRED (nothing to open yet) --
-// it must land together with the first published Wardogs article.
+// Editor sections list their published Wardogs articles (mapped via WARDOGS_ARTICLE_SECTION);
+// a section with zero mapped/published rows falls back to WardogsEmptyState. The
+// /wardogs/[section]/[slug] article-detail route is live. (The 'economy' section's articles are
+// ALSO surfaced on the /wardogs/economy hub, since the "Economy" nav tab opens that hub tool
+// rather than this section list.)
 //
 // Queries Supabase -> force-dynamic. `supabase` is the lazy anon proxy.
 // ROBOTS: the subtree is indexed now that wardogs.indexable is true (layout gate); this

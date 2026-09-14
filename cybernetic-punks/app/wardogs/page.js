@@ -227,7 +227,7 @@ export default async function WardogsLanding() {
           </div>
         </Link>
 
-        {/* SECONDARY CARDS -- Tier List (live) + Economy (Phase 3) */}
+        {/* SECONDARY CARDS -- the other live product landings: Tier List, The Economy, The Arsenal. */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
           <Link href="/wardogs/tier-list" className="wd-prod" style={{ display: 'block', position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', textDecoration: 'none' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 14, textTransform: 'uppercase' }}>
@@ -242,17 +242,30 @@ export default async function WardogsLanding() {
               See the rankings &rarr;
             </span>
           </Link>
-          <Link href="/wardogs/progression" className="wd-prod" style={{ display: 'block', position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', textDecoration: 'none' }}>
+          <Link href="/wardogs/economy" className="wd-prod" style={{ display: 'block', position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', textDecoration: 'none' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 14, textTransform: 'uppercase' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 6px var(--green,#5bd18e)' }} />
               Live
             </div>
-            <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>Progression Planner</h3>
+            <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Economy</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              What to unlock, what to save for, what it costs to run. Every weapon&rsquo;s unlock level, one-time cost, and per-life price &mdash; by class.
+              Where the cash flows, live. The spend tracker, the money-flow breakdown, and the unlock planner &mdash; every weapon&rsquo;s unlock cost and per-life price, by class.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
-              Plan your grind &rarr;
+              Follow the money &rarr;
+            </span>
+          </Link>
+          <Link href="/wardogs/arsenal" className="wd-prod" style={{ display: 'block', position: 'relative', background: '#121519', border: '1px solid #1d2026', borderRadius: 8, padding: '26px 24px', textDecoration: 'none' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9.5, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 14, textTransform: 'uppercase' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 6px var(--green,#5bd18e)' }} />
+              Live
+            </div>
+            <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Arsenal</h3>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              Every Wardogs weapon in one roster &mdash; class, ammo, and attributed ballistics with time-to-kill, so you can compare before you commit.
+            </p>
+            <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
+              Browse the roster &rarr;
             </span>
           </Link>
         </div>

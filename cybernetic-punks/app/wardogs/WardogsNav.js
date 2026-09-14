@@ -92,6 +92,16 @@ export default function WardogsNav() {
               </Link>
             );
           })}
+          {/* Divider: separates the live TOOLS group (above) from the INTEL/editorial sections
+              (below), so the strip reads as "tools | articles" rather than one blended row. Only
+              rendered when both groups are non-empty. */}
+          {(wardogs.tools || []).length > 0 && wardogs.sections.some(function(s) { return !s.hideFromNav; }) && (
+            <span aria-hidden="true" style={{
+              flexShrink: 0, alignSelf: 'center',
+              width: 1, height: 20, margin: '0 8px',
+              background: 'var(--border)',
+            }} />
+          )}
           {wardogs.sections.filter(function(sec) { return !sec.hideFromNav; }).map(function(sec) {
             var href = '/wardogs/' + sec.slug;
             // Prefix-match: a tab lights on its hub URL AND any article beneath it. The

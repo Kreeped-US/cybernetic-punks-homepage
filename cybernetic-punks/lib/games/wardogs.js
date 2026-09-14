@@ -121,30 +121,40 @@ export const wardogs = {
   // prices, payouts) stays out until verified in-game post-EA. EDITORIAL articles in
   // these sections MAY carry attributed playtest data when flagged unconfirmed (see
   // the armory piece). navLabel/hideFromNav behave as in DMZ.
+  // NAV NOTE: 'economy' and 'arsenal' carry hideFromNav:true -- they are surfaced in the nav as
+  // live TOOLS (see `tools` below), not as editorial-section tabs, so they must not ALSO render a
+  // section tab. They stay in `sections` because the routing still needs them: /wardogs/economy/<slug>
+  // resolves via [section]/[slug] and getGameSection('wardogs','economy') must be non-null for its 3
+  // articles to render; /wardogs/arsenal's descriptor backs the [section] data-branch + its metadata.
   sections: [
     { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on Wardogs and what Bulkhead has officially detailed so far.' },
-    { slug: 'economy',     label: 'Economy',                       source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The cash-economy structure - loadout buys, teamplay payouts, and match-to-match persistence - as the studio confirms it.' },
+    { slug: 'economy',     label: 'Economy',      hideFromNav: true,  source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The cash-economy structure - loadout buys, teamplay payouts, and match-to-match persistence - as the studio confirms it.' },
     { slug: 'systems',     label: 'Systems',                       source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The three-team Control Zone mode, combined arms, and building and destruction - the confirmed systems.' },
-    { slug: 'arsenal',     label: 'Arsenal',                       source: 'data',   contentFilter: null,                    description: 'Verified weapon, vehicle, and gear data. Structured tables are built against real in-game numbers once Early Access opens - not pre-launch guesses.' },
+    { slug: 'arsenal',     label: 'Arsenal',      hideFromNav: true,  source: 'data',   contentFilter: null,                    description: 'Verified weapon, vehicle, and gear data. Structured tables are built against real in-game numbers once Early Access opens - not pre-launch guesses.' },
   ],
 
   // No interactive build tool / structured entities yet -> no article CTA.
   buildToolCta: null,
 
-  // INTERACTIVE TOOLS -- surfaced in the nav + hub as discoverable entry-points, SEPARATE
-  // from `sections` (which are editorial/data verticals with their own page-rendering,
-  // Coverage cards, CollectionPage JSON-LD, and sitemap section-hub gate). A tool is a
-  // live generator with its OWN route; modelling it as a section would mis-type it. Read
-  // by app/wardogs/WardogsNav.js (lead nav tab) + app/wardogs/page.js (hub tool tile).
-  // NAMING (hard rule): user-facing label is "Loadouts" / "best loadout" (the community +
-  // search term), NEVER "Build Advisor" (zero search volume). INDEXABILITY: the tool
-  // LANDING (/wardogs/loadouts) is indexable (real value-prop + TTK-methodology content;
-  // inherits the subtree gate) and is emitted in the sitemap (lib/sitemap/eligible.js),
-  // matching /marathon/advisor + /bodycam/builder. The per-build share pages
-  // (/wardogs/loadouts/build/[slug]) stay noindex (Channel A artifacts).
+  // LIVE PRODUCT LANDINGS -- the built, live Wardogs tools/reference pages, surfaced as the
+  // lead nav group (app/wardogs/WardogsNav.js) and emitted in the sitemap as the single source
+  // of truth (lib/sitemap/eligible.js iterates this -- do NOT also add these hrefs explicitly
+  // there, or they double). SEPARATE from `sections` (editorial verticals with their own
+  // section-hub rendering + CollectionPage JSON-LD). Each has its OWN route and is indexable
+  // (real value-prop content; inherits the /wardogs subtree gate), matching /marathon/advisor +
+  // /bodycam/builder. Per-artifact leaves stay noindex + out of the sitemap
+  // (/wardogs/loadouts/build/[slug], /wardogs/arsenal/[slug], /wardogs/economy/stat/[key]).
+  // NAMING (hard rule): "Loadouts" / "best loadout" (the community + search term), NEVER
+  // "Build Advisor" (zero search volume).
   tools: [
     { slug: 'loadouts', label: 'Loadouts', href: '/wardogs/loadouts', status: 'live',
       tagline: 'The best loadout for your level, budget, and playstyle - weapons ranked by measured time-to-kill, with the reasoning behind every pick.' },
+    { slug: 'tier-list', label: 'Tier List', href: '/wardogs/tier-list', status: 'live',
+      tagline: 'Every Wardogs weapon ranked S to D by measured time-to-kill - no opinions, just what kills fastest.' },
+    { slug: 'economy', label: 'Economy', href: '/wardogs/economy', status: 'live',
+      tagline: 'The live spend tracker, the money-flow breakdown, and the unlock planner - where the cash goes and what to save for.' },
+    { slug: 'arsenal', label: 'Arsenal', href: '/wardogs/arsenal', status: 'live',
+      tagline: 'The full weapon roster with attributed ballistics and time-to-kill summaries.' },
   ],
 };
 
