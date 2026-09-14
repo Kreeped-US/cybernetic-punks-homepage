@@ -14,7 +14,6 @@ import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { PLAYSTYLE, VEHICLE_USE } from '@/lib/wardogs/economyModel';
 import PersonalEconomy from '@/components/wardogs/PersonalEconomy';
-import Footer from '@/components/Footer';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -105,8 +104,8 @@ export default async function WardogsEconomyMine({ searchParams }) {
       <section style={{ maxWidth: 760, margin: '0 auto', padding: '8px 20px 30px' }}>
         <PersonalEconomy data={data} initial={initial} />
       </section>
-
-      <Footer game="wardogs" />
+      {/* Footer comes from app/wardogs/layout.js (renders <Footer game="wardogs"/> for the whole
+          subtree). Do NOT self-render one here -- that caused the stacked double-footer bug. */}
     </main>
   );
 }
