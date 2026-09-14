@@ -327,6 +327,12 @@ export async function computeEligible() {
     shippedTypeHubs().forEach(function (h) {
       add(BASE + '/wardogs/loadouts/best/' + h.slug, W, 'wardogs-section', undefined, 'weekly', 0.8);
     });
+
+    // "Your Wardogs Economy" personalized-spend tool (Wave 2). The CLEAN landing is indexable
+    // (targets "Wardogs spending calculator / how much have I spent"); the ?params share variants
+    // are noindex + canonical -> here (set in the page's generateMetadata), so only this clean URL
+    // is emitted. DB-driven -> no lastmod.
+    add(BASE + '/wardogs/economy/mine', W, 'wardogs-section', undefined, 'weekly', 0.7);
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while

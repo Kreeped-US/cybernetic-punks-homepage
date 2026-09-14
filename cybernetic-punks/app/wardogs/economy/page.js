@@ -126,6 +126,19 @@ export default async function WardogsEconomyHub() {
           matches the rate the model actually computed (single source of truth). */}
       <WardogsCashTicker ratePerSec={model.totalPerSec} sustainedPlayers={DEFAULT_PLAYERS} itemized />
 
+      {/* YOUR ECONOMY -- the personalized "wrapped" hook (Wave 2). The community number is the
+          hook; THIS is the share loop -- people come for their own number. */}
+      <section style={{ maxWidth: 1120, margin: '0 auto', padding: '22px 24px 4px' }}>
+        <Link href="/wardogs/economy/mine" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(14px,3vw,26px)', flexWrap: 'wrap', background: 'linear-gradient(120deg, #17130b 0%, #0e1116 62%)', border: '1px solid ' + A, borderRadius: 8, padding: 'clamp(18px,3vw,26px)', textDecoration: 'none' }}>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 10 }}>YOUR WARDOGS WRAPPED</div>
+            <div style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', margin: '0 0 8px' }}>How much have <span style={{ color: A }}>you</span> burned?</div>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', lineHeight: 1.55, margin: 0, maxWidth: 560 }}>The number above is everyone. Enter your hours, level, and playstyle for <strong style={{ color: '#fff' }}>your</strong> estimated spend + breakdown &mdash; and find out what your friends&rsquo; damage is.</p>
+          </div>
+          <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, padding: '13px 22px', borderRadius: 4 }}>Get your number &rarr;</span>
+        </Link>
+      </section>
+
       {/* BREAKDOWN -- where the money flows */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '30px 24px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>

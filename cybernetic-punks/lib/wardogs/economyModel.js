@@ -204,6 +204,70 @@ export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
   return out;
 }
 
+// ── WAVE 2: PERSONALIZED "Your Wardogs Economy" ─────────────────────────────────────────────
+// A per-player estimate built ON the recalibrated community model: it scales the SAME per-category
+// baseline ($/hr from spendModel) by the player's own inputs. So a personal number is as
+// DEFENSIBLE as the community one -- same basket, just their hours/level/playstyle. HONEST: it is
+// modeled from their INPUTS, not tracked. Documented multipliers below.
+//
+// PLAYSTYLE scales the death-driven categories (aggressive dies + rebuys more; tactical extracts
+// more, sprays less). LEVEL scales the WEAPON kit (higher level fields pricier guns -- ties to the
+// population-weighted primary). VEHICLES scales the vehicle share (never = 0; often = well above
+// the population rate). Balanced + mid-level + sometimes == the community baseline (~$2,103/hr).
+export const PLAYSTYLE = {
+  aggressive: { label: 'Aggressive', blurb: 'You die, you rebuy, you do it again.', weapons: 1.4, ammo: 1.4, medical: 1.3, armor: 1.1, gear: 1.0 },
+  balanced:   { label: 'Balanced',   blurb: 'Steady hand, steady spend.',           weapons: 1.0, ammo: 1.0, medical: 1.0, armor: 1.0, gear: 1.0 },
+  tactical:   { label: 'Tactical',   blurb: 'You extract more than you respawn.',    weapons: 0.7, ammo: 0.8, medical: 0.8, armor: 1.0, gear: 1.2 },
+};
+export const VEHICLE_USE = {
+  never:     { label: 'Never',     mult: 0 },
+  sometimes: { label: 'Sometimes', mult: 1 },
+  often:     { label: 'Often',     mult: 4 },
+};
+// Level -> weapon-cost multiplier. Early-career runs free/budget guns; late-career fields premium.
+export function levelWeaponMult(level) {
+  const l = Number(level) || 0;
+  if (l < 10) return 0.7;   // free starters / T-21 / AMP-9
+  if (l < 30) return 1.0;   // the population-weighted mix (AK74/Galil-ish)
+  if (l < 60) return 1.4;   // mid-premium (M4, marksman)
+  return 1.8;               // premium / snipers
+}
+
+export function personalSpend(data, { hours = 0, level = 20, playstyle = 'balanced', vehicles = 'sometimes' } = {}) {
+  const base = spendModel(data);                       // community per-category $/hr (recalibrated)
+  const ps = PLAYSTYLE[playstyle] || PLAYSTYLE.balanced;
+  const vu = VEHICLE_USE[vehicles] || VEHICLE_USE.sometimes;
+  const lvlMult = levelWeaponMult(level);
+  const hrs = Math.max(0, Number(hours) || 0);
+
+  let cats = base.categories.map((c) => {
+    let mult = ps[c.key] != null ? ps[c.key] : 1;
+    if (c.key === 'weapons') mult *= lvlMult;
+    if (c.key === 'vehicles') mult *= vu.mult;
+    const perHour = c.spendPerHour * mult;
+    return { key: c.key, label: c.label, perHour, total: perHour * hrs };
+  });
+  const perHour = cats.reduce((a, c) => a + c.perHour, 0);
+  const total = perHour * hrs;
+  cats = cats
+    .map((c) => ({ ...c, sharePct: total ? (c.total / total) * 100 : 0 }))
+    .sort((a, b) => b.total - a.total);
+
+  // Fun, real comparisons (from actual prices).
+  const loadoutCost = representativeCosts(data).weapons || 992; // a typical weapon buy
+  const veh = (data.items || []).filter((r) => r.category === 'vehicle' && r.cost != null);
+  const havoc = veh.find((v) => /havoc/i.test(v.name));
+
+  return {
+    hours: hrs, level: Number(level) || 0, playstyle, vehicles,
+    playstyleLabel: ps.label, playstyleBlurb: ps.blurb,
+    perHour: Math.round(perHour), total: Math.round(total),
+    categories: cats, topCategory: cats[0] ? cats[0].label : null,
+    loadouts: loadoutCost ? Math.round(total / loadoutCost) : 0,
+    havocs: havoc ? Number((total / havoc.cost).toFixed(1)) : null,
+  };
+}
+
 // Look up a single stat by its key (for the per-stat OG card + share page). Accepts the legacy
 // 'avg-owner' key as an alias for the units-fixed 'per-active-hour' so any pre-shared link still
 // resolves (it now shows the corrected per-active-player-hour stat instead of the buggy figure).

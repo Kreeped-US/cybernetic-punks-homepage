@@ -58,3 +58,13 @@ export const MARATHON_INTEL_KEEPER_SOURCES = new Set([
 export const MARATHON_INTEL_EDITOR_LANES = new Set([
   'cipher', 'nexus', 'dexter', 'ghost', 'miranda',
 ]);
+
+// RESERVED literal routes that live UNDER an editor section but are NOT articles -- real pages
+// (their own app/ folders), so proxy.js must NEVER 410 them. game -> section -> first slug segment.
+// The 'economy' section is overloaded: it is an editor section (its articles render at
+// /wardogs/economy/<slug>) AND a literal route tree (/wardogs/economy hub, /economy/mine tool,
+// /economy/stat/<key> share carrier). Without this, /wardogs/economy/mine (3 segments, section=
+// economy, slug=mine, not a live article) would be wrongly 410'd as a dead economy article.
+export const RESERVED_SECTION_SLUGS = {
+  wardogs: { economy: new Set(['mine', 'stat']) },
+};

@@ -70,7 +70,7 @@
 // retirement happens via the Supabase dashboard / SQL). Either way the URL never 404s silently.
 
 import { NextResponse } from 'next/server';
-import { MARATHON_INTEL_KEEPER_SOURCES, MARATHON_INTEL_EDITOR_LANES, ARTICLE_SECTIONS } from '@/lib/seo/deadIntel';
+import { MARATHON_INTEL_KEEPER_SOURCES, MARATHON_INTEL_EDITOR_LANES, ARTICLE_SECTIONS, RESERVED_SECTION_SLUGS } from '@/lib/seo/deadIntel';
 
 var REDIRECT_TTL_MS = 60000;   // 60s: redirect data is not latency-critical; staleness is harmless
 var LIVE_TTL_MS = 600000;      // 10min: the live-slug set is a hot-path accelerator, not correctness
@@ -213,6 +213,10 @@ export async function proxy(req) {
     if (articleSections && articleSections.has(section)) {
       var decoded = slug;
       try { decoded = decodeURIComponent(slug); } catch (e) { decoded = slug; }
+      // Reserved literal routes under an editor section (e.g. /wardogs/economy/mine, .../stat) are
+      // real pages, not articles -- never 410 them.
+      var reserved = RESERVED_SECTION_SLUGS[game] && RESERVED_SECTION_SLUGS[game][section];
+      if (reserved && reserved.has(decoded)) return NextResponse.next();
       // Marathon-only static exclusions: editor lanes render from in-file config (no DB row),
       // and keeper sources carry a next.config 301 to a survivor (Part A/next.config own them).
       if (game === 'marathon') {
