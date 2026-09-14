@@ -24,6 +24,7 @@ var NAV_ITEMS = [
   { label: 'MODS',     href: '/marathon/mods' },
   { label: 'UNIQUES',  href: '/marathon/uniques' },
   { label: 'FACTIONS', href: '/marathon/factions' },
+  { label: 'PVE',      href: '/marathon/pve' },
   {
     label: 'INTEL',
     activeOn: ['/marathon/intel', '/marathon/sitrep', '/editors'],

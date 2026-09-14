@@ -82,6 +82,7 @@ export async function computeEligible() {
     [BASE + '/marathon/intel', undefined, 'hourly', 0.9],
     [BASE + '/marathon/matchups', mvd, 'weekly', 0.85],
     [BASE + '/marathon/modes/vault-breaker', facts, 'daily', 0.9],
+    [BASE + '/marathon/pve', '2026-09-14', 'daily', 0.9], // pre-launch PvE hub -- indexed early for the Dec 8 search wave
     [BASE + '/marathon/rising', undefined, 'daily', 0.8],
     [BASE + '/marathon/creators', undefined, 'weekly', 0.7],
     [BASE + '/marathon/stats', STATS_UPDATED, 'weekly', 0.75],
