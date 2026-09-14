@@ -37,20 +37,22 @@ export const FONTS = {
 
 // ── NAV SURFACE LIST ───────────────────────────────────────────────────────────
 // The single source of truth for BOTH the shell top-nav AND the Bridge "GO TO"
-// launcher grid. Today there are two real routes (/admin = Bridge, /admin/content =
-// the CRUD editor); Drafts / GSC Review / Stats are panels rendered at the top of the
-// content page, deep-linked here so the launcher reads as a full surface map. As those
-// become their own routes, change only their href.
+// launcher grid. Reorg (2026-09-14): the old /admin/content mega-page was split into
+// three PURPOSE-BUILT routes so every card deep-links to ONE real destination -- no more
+// bare-/admin/content collisions where "Drafts", "GSC Review", etc. all dumped you at the
+// top of a 1,243-line page to scroll-and-hunt.
+//   /admin/review -- the DAILY loop: draft review + approve, source review, generate.
+//   /admin/content -- reference-data CRUD (weapons/shells/mods/factions/world + directives
+//                     + keywords), used rarely; Editorial QA folded in (collapsed).
+//   /admin/seo    -- periodic SEO tools: GSC review + demand check (+ keywords link).
+// Sub-tools (Directives, Keywords, Drafts, GSC, Demand, Stats) are now sections of these
+// three pages, not separate cards -- fewer, clearer surfaces.
 export const ADMIN_NAV = [
-  { key: 'bridge',     label: 'Bridge',        href: '/admin',                               desc: 'Steering overview -- attention + vitals', color: '#9b5de5' },
-  { key: 'content',    label: 'Content & Data', href: '/admin/content',                      desc: 'CRUD -- weapons, shells, mods, factions, world', color: '#00f5ff' },
-  { key: 'directives', label: 'Directives',    href: '/admin/content?tab=editor_directives', desc: 'Editor topic queue', color: '#ff2d55' },
-  { key: 'keywords',   label: 'Keywords',      href: '/admin/content?tab=keyword_targets',   desc: 'Keyword-framing targets', color: '#ff8c00' },
-  { key: 'drafts',     label: 'Drafts',        href: '/admin/content',                       desc: 'Held drafts -- review + approve (panel)', color: '#00ff88' },
-  { key: 'gsc',        label: 'GSC Review',    href: '/admin/content',                       desc: 'Search-console keyword candidates (panel)', color: '#00f5ff' },
-  { key: 'demand',     label: 'Demand Check',  href: '/admin/content',                       desc: 'Authorize-before-building: committed demand + already-served (panel)', color: '#00ff88' },
-  { key: 'stats',      label: 'Stats',         href: '/admin/content',                       desc: 'Usage analytics (panel)', color: '#ffd700' },
-  { key: 'emails',     label: 'Email Signups', href: '/admin/email-signups',                 desc: 'Launch-email capture -- view + CSV export (read-only)', color: '#00ff88' },
+  { key: 'bridge',  label: 'Bridge',         href: '/admin',               desc: 'Steering overview -- attention + vitals', color: '#9b5de5' },
+  { key: 'review',  label: 'Review',         href: '/admin/review',        desc: 'The daily loop -- review + approve drafts, source review, generate', color: '#00ff88' },
+  { key: 'content', label: 'Content & Data', href: '/admin/content',       desc: 'Reference-data CRUD -- weapons, shells, mods, factions, world, directives, keywords', color: '#00f5ff' },
+  { key: 'seo',     label: 'SEO Tools',      href: '/admin/seo',           desc: 'GSC review, demand check, keyword targets', color: '#ff8c00' },
+  { key: 'emails',  label: 'Email Signups',  href: '/admin/email-signups', desc: 'Launch-email capture -- view + CSV export (read-only)', color: '#00ff88' },
 ];
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────

@@ -82,7 +82,7 @@ export default function BridgePage() {
         key: 'drafts',
         text: data.attention.draftsWaiting + ' draft' + (data.attention.draftsWaiting === 1 ? '' : 's') + ' waiting for approval',
         cta: 'Review',
-        href: '/admin/content',
+        href: '/admin/review',
       });
     }
     (data.attention.pendingDirectives || []).forEach((p) => {
@@ -90,7 +90,7 @@ export default function BridgePage() {
         key: 'dir-' + p.id,
         text: 'Directive pending ' + p.ageDays + 'd -- ' + (p.editor || '?') + (p.instruction ? ': ' + p.instruction : ''),
         cta: 'View',
-        href: '/admin/content?tab=editor_directives',
+        href: '/admin/review',
       });
     });
     // v2 (NOT built): cron heartbeat (from cron_runs) -- "daily generation last ran Xh ago",
