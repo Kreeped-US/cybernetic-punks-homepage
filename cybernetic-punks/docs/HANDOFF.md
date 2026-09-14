@@ -7,6 +7,24 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Arsenal<->Tier List cross-link + tomorrow's plan (commit cfa709e)
+
+- ARSENAL -> TIER LIST cross-link closed (the missing direction). Detail-page tier badges ("B Tier . Rankings ->" linking to the tier list; "Unranked . Tier list ->" for launchers) + arsenal-list CTA + per-card tier chips. NEW shared source of truth lib/wardogs/weaponTiers.js (computeWeaponTiers/tierMapFrom); the tier list itself refactored onto it -> both pages run the IDENTICAL computation -> tiers guaranteed consistent (verified 33/33, 0 mismatches). Pages KEPT SEPARATE (confirmed correct -- distinct SEO query sets, the tier list is the shareable flagship, mirrors Marathon Weapons+Ranked separate; merging would bury the flagship). Consistency trap caught: weightedTtk uses fire_rate for the one-shot floor but the tier list load never selects fire_rate -- the shared helper uses the SAME select (no fire_rate) so results match by construction.
+- FLAG (pre-existing, not fixed): the Wardogs tier list never loads fire_rate, so one-shot specialists (AMR 50, snipers) are tiered with the 150ms fallback instead of their real cadence floor (which the solver floor exists to prevent). Fixing it would SHIFT the flagship's live tiers -> a separate gated decision. Arsenal cross-link matches current behavior.
+
+---
+## 2026-09-15 (TOMORROW) - PLAN (prioritized)
+
+- 1. GSC (operator, 5 min -- seeds today's work + aids SEO recovery): request-index /marathon/pve, /marathon/weapons, /wardogs/economy/mine; re-submit sitemap.xml.
+- 2. DISTRIBUTION (the real growth lever -- product is built + elite; the priority per Fable): the X/Discord/community push in the separate distribution chat. The personal-economy tool (/wardogs/economy/mine) is the viral hook. Building is largely DONE; getting it FOUND is the growth.
+- 3. SYSTEMATIC SITE-AUDIT PASS (recommended if building): today surfaced drift one-at-a-time (stale telemetry, orphaned Maps, double footer, weapon-leak, editor leftovers). One focused session hunting ALL drift (stale counts, orphaned pages, cross-game leaks, off-strategy leftovers, dup renders) is higher-leverage than piecemeal.
+- 4. SMALL POLISH (whenever): Marathon "Build Advisor" -> search-aligned relabel; Marathon tools|intel divider; the one-shot fire_rate floor decision (would shift tiers).
+- 5. PREP FOR OCT 6 (the dated one): Marathon's Oct 6 reset (progression+economy+balance) stales Marathon economy/progression/tier data -> plan a fast post-reset data+content refresh (correct-and-early authority play).
+- CALENDAR: Oct 6 = Marathon reset (data refresh); Dec 8 = evolve /marathon/pve into the real PvE hub.
+- PARKED: live network player metric (needs Wardogs Steam appid + cron refactor); economy-items honest-null gaps; generation counter; schema re-crawl (~48 -- re-crawl first); live-ticker hydration warning.
+- SEO RECOVERY: waiting game -- monitor the trend (404s dropping, impressions climbing) over 2-4 weeks; GSC nudges + fresh content + distribution accelerate it.
+
+---
 ## 2026-09-14 - Network telemetry bar fixed -- was underselling (commit ab0d8f6)
 
 - The root-page NETWORK TELEMETRY bar was stale/underselling: "Games Covered: 4" (getIndexableGames -- SEO-indexability axis, wrong signal) + "Marathon Players (Steam): 2.0K" (Marathon-only live count -- live_stats is source-keyed, cron fetches only Marathon appid 3065800; hid Wardogs entirely).
