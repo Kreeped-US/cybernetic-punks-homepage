@@ -21,6 +21,7 @@ import WeaponImage from '@/components/wardogs/WeaponImage';
 import BodyPartViz from '@/components/wardogs/BodyPartViz';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 import { WEAPON_TYPE_HUBS } from '@/lib/wardogs/loadoutHubs';
+import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
 
 export const dynamic = 'force-dynamic';
 
@@ -133,6 +134,11 @@ export default async function WeaponDetailPage({ params }) {
   const base = baselineTtk(ttk);
   const hub = hubForType(weapon.weapon_type);
   const tm = CONFIDENCE_TIERS.find((t) => t.key === 'attributed');
+  // Tier grade via the shared single source of truth -- IDENTICAL to what /wardogs/tier-list shows
+  // for this weapon (same rankByEffectiveness(balanced)+tierWeapons path, same select). null when the
+  // weapon is unranked (the launchers -- no ballistics), matching the tier list's "Unranked" bucket.
+  const { byWeapon } = await computeWeaponTiers();
+  const tierInfo = byWeapon[name] || null;
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -167,7 +173,21 @@ export default async function WeaponDetailPage({ params }) {
                 <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace' }}>{cls.toUpperCase()}</span>
               </div>
               <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 44px)', fontWeight: 900, letterSpacing: '-0.6px', lineHeight: 1.02, margin: '0 0 14px' }}>{name}</h1>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
+                {/* TIER BADGE -> the tier list (the flagship). Grade + colour come from the SHARED
+                    tier logic, so it always matches /wardogs/tier-list for this weapon. */}
+                {tierInfo ? (
+                  <Link href="/wardogs/tier-list" title={'See the full Wardogs weapon tier list (' + tierInfo.meta.name + ')'}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 10px 4px 8px', borderRadius: 3, textDecoration: 'none', background: tierInfo.meta.color + '1f', border: '1px solid ' + tierInfo.meta.color + '66' }}>
+                    <span style={{ fontFamily: 'var(--font-exo2), system-ui, sans-serif', fontSize: 14, fontWeight: 800, color: tierInfo.meta.color, lineHeight: 1 }}>{tierInfo.tier}</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, fontFamily: 'monospace', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Tier &middot; Rankings &rarr;</span>
+                  </Link>
+                ) : (
+                  <Link href="/wardogs/tier-list" title="See the Wardogs weapon tier list"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 10px', borderRadius: 3, textDecoration: 'none', background: 'var(--bg-card)', border: '1px dashed var(--border)' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, fontFamily: 'monospace', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Unranked &middot; Tier list &rarr;</span>
+                  </Link>
+                )}
                 <Chip>{weapon.ammo_type || 'Caliber TBD'}</Chip>
                 <Chip>{cls}</Chip>
                 {weapon.rarity && <Chip>{weapon.rarity}</Chip>}

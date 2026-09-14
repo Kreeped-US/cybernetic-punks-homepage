@@ -11,8 +11,7 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
-import { rankByEffectiveness } from '@/lib/wardogs/loadoutSolver';
-import { tierWeapons } from '@/lib/wardogs/tierList';
+import { tierMapFrom } from '@/lib/wardogs/weaponTiers';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import { entitySlugFor } from '@/lib/coverage';
 import { TierIcon } from '@/components/network/confidenceTiers';
@@ -72,15 +71,11 @@ function WeaponCard({ w }) {
 
 export default async function WardogsTierList() {
   const { weapons, ttk } = await loadData();
-  const rank = rankByEffectiveness(weapons, ttk, { playstyle: 'balanced' });
-  const byName = Object.fromEntries(weapons.map((w) => [w.name, w]));
-  const rows = rank.ranked.map((c) => {
-    const w = byName[c.weapon_name] || {};
-    return { weapon_name: c.weapon_name, weighted_ttk_ms: c.weighted_ttk_ms, rankable: c.rankable, weapon_type: w.weapon_type || w.category, image_filename: w.image_filename };
-  });
-  const { tiers, unranked } = tierWeapons(rows);
+  // Tiering via the shared single source of truth (lib/wardogs/weaponTiers) -- the SAME path the
+  // arsenal's tier badge/chips use, so a weapon can never show a different tier across the two pages.
+  const { tiers, unranked } = tierMapFrom(weapons, ttk);
   const src = weapons.map((w) => w.verified_source).filter(Boolean)[0] || 'Swoleguy in-game ballistics testing (attributed)';
-  const total = rows.filter((r) => r.rankable).length;
+  const total = tiers.reduce((n, t) => n + t.weapons.length, 0);
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',

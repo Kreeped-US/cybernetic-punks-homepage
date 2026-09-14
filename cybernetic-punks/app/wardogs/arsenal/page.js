@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { entitySlugFor } from '@/lib/coverage';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import { TierIcon } from '@/components/network/confidenceTiers';
+import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +63,10 @@ function baselineLabel(ms) {
 export default async function WardogsArsenalListPage() {
   const { weapons, baseline } = await loadRoster();
   const total = weapons.length;
+  // Tier grade per weapon via the shared single source of truth -- IDENTICAL to /wardogs/tier-list
+  // (same rankByEffectiveness(balanced)+tierWeapons path). byWeapon[name] = { tier, meta } or absent
+  // when unranked (launchers). Powers the per-card tier chip + closes the arsenal->tier-list gap.
+  const { byWeapon } = await computeWeaponTiers();
 
   // group by weapon_type (class); preferred order first, then any extras
   const byType = {};
@@ -118,6 +123,13 @@ export default async function WardogsArsenalListPage() {
           </span>
         </div>
 
+        {/* Cross-link to the flagship rankings (the missing arsenal -> tier-list direction). */}
+        <div style={{ marginBottom: 28 }}>
+          <Link href="/wardogs/tier-list" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--accent)', color: 'var(--bg-page)', fontFamily: 'var(--font-exo2), system-ui, sans-serif', fontSize: 13, fontWeight: 800, letterSpacing: 0.3, padding: '11px 18px', borderRadius: 3, textDecoration: 'none' }}>
+            See the full weapon rankings &rarr;
+          </Link>
+        </div>
+
         {types.map((type) => {
           const guns = byType[type].slice().sort((a, b) => a.name.localeCompare(b.name));
           return (
@@ -130,11 +142,17 @@ export default async function WardogsArsenalListPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(230px, 100%), 1fr))', gap: 12 }}>
                 {guns.map((w) => {
                   const ttk = baselineLabel(baseline[w.name]);
+                  const tier = byWeapon[w.name]; // shared tier grade (matches the tier list); absent = unranked
                   return (
                     <Link key={w.name} href={'/wardogs/arsenal/' + entitySlugFor('weapon', w.name)} className="wd-ars-card"
                       style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '12px 14px', textDecoration: 'none' }}>
                       <WeaponImage imageFilename={w.image_filename} name={w.name} />
-                      <div className="wd-ars-name" style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: 0.3, marginBottom: 6, transition: 'color .14s ease' }}>{w.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <div className="wd-ars-name" style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: 0.3, transition: 'color .14s ease' }}>{w.name}</div>
+                        {tier && (
+                          <span title={tier.meta.name + ' tier'} style={{ flexShrink: 0, marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 3, fontFamily: 'var(--font-exo2), system-ui, sans-serif', fontSize: 12, fontWeight: 800, lineHeight: 1, color: tier.meta.color, background: tier.meta.color + '1f', border: '1px solid ' + tier.meta.color + '55' }}>{tier.tier}</span>
+                        )}
+                      </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
                         {w.ammo_type && <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{w.ammo_type}</span>}
                         {w.rarity && <span style={{ fontSize: 9, color: 'var(--text-tertiary)', fontFamily: 'monospace', letterSpacing: 1, textTransform: 'uppercase' }}>{w.rarity}</span>}
