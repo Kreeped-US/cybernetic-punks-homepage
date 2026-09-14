@@ -127,6 +127,14 @@ export const ROOT_GAMES = [
     // issue on this source, so no imagePosition override -- the default crop is fine.
     heroImage: '/images/games/wardogs-hero.jpg',
     theme: { primary: wardogsGame.theme.primary, tint: 'rgba(224,161,58,0.08)' }, // amber (= WARDOGS_AMBER)
+    // VERIFIED peak concurrent players (Steam), for the network-telemetry "Peak Players Tracked"
+    // cell (app/page.js). This is a PEAK, not a live count -- the label says so. Wardogs is the
+    // network's scale story: it peaked ~337K concurrent at its Sep 2026 Steam EA launch (SteamDB;
+    // Bulkhead reported 1.25M copies sold). We do NOT fetch a live Wardogs count (no Steam appid
+    // configured for it, and live_stats is source-keyed to the single Marathon steam row), so the
+    // honest representation of Wardogs' scale is this sourced, clearly-labelled peak. `asOf` and
+    // `source` make it traceable; revise upward if a higher peak is later cited.
+    verifiedPeak: { value: 337000, source: 'SteamDB', label: 'Steam concurrent', asOf: '2026-09', note: 'EA launch peak' },
     // Wardogs is the most-built vertical (Loadout Finder, Tier List, Economy Hub, Arsenal) --
     // surface those tools from the apex (crawlable link + the front-door funnel during
     // distribution), the same mechanism Marathon's keyRoutes use.

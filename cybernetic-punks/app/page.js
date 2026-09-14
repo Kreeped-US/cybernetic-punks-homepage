@@ -19,7 +19,6 @@ import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { isGameLive } from '@/lib/network/gameStatus';
-import { getIndexableGames } from '@/lib/games';
 import { entitySlugFor } from '@/lib/coverage';
 import AccountMenu from '@/components/AccountMenu';
 import HeroCrosshair from '@/components/network/HeroCrosshair';
@@ -212,7 +211,17 @@ export default async function NetworkRoot() {
 
   // Game tile meta + telemetry (real data, PASS B).
   var updatedLabel = stats.updated ? timeAgo(stats.updated) : null;
-  var marathonOnline = (data.pulse.marathon && typeof data.pulse.marathon.online === 'number') ? data.pulse.marathon.online : null;
+  // GAMES COVERED = the front-door network size (ROOT_GAMES), not the SEO-indexability count.
+  // Dynamic: adding a game to ROOT_GAMES updates this automatically.
+  var gamesCovered = ROOT_GAMES.length;
+  // PEAK PLAYERS TRACKED = the biggest VERIFIED peak-concurrent across the network (sourced
+  // ROOT_GAMES[].verifiedPeak; today Wardogs' ~337K SteamDB EA-launch peak dominates). A PEAK,
+  // not a live count (the cell label says so) -- the honest way to show the network's real scale
+  // when we only fetch ONE live Steam count (Marathon's ~2K). null -> the cell hides gracefully.
+  var networkPeak = ROOT_GAMES.reduce(function (max, g) {
+    var v = g.verifiedPeak && typeof g.verifiedPeak.value === 'number' ? g.verifiedPeak.value : 0;
+    return v > max ? v : max;
+  }, 0);
   var wardogsDays = daysUntil(wardogs.launch_date); // Sep 10 EA -- the nearer event
   var dmzDays = daysUntil(dmz.launch_date);         // Oct 23 launch -- the primary growth launch
   var wardogsEA = eaDateLabel(wardogs.launch_date); // "Sep 10", single-sourced from wardogs.launch_date
@@ -277,8 +286,8 @@ export default async function NetworkRoot() {
             <div className="telemetry">
               <div className="tel-head"><span>{'// NETWORK TELEMETRY'}</span><span className="rec"><i aria-hidden="true" />REC</span></div>
               <div className="tel-grid">
-                <div className="tel-cell"><div className="lbl">Games Covered</div><div className="val">{String(getIndexableGames().length)}</div></div>
-                <div className="tel-cell pop"><div className="lbl">Marathon Players (Steam)</div><div className="val">{marathonOnline != null ? formatNum(marathonOnline) : '--'}</div></div>
+                <div className="tel-cell"><div className="lbl">Games Covered</div><div className="val">{String(gamesCovered)}</div></div>
+                <div className="tel-cell pop"><div className="lbl">Peak Players Tracked</div><div className="val">{networkPeak > 0 ? formatNum(networkPeak) : '--'}</div></div>
                 <div className="tel-cell"><div className="lbl">Reports Published</div><div className="val">{stats.articles != null ? addCommas(stats.articles) : '--'}</div></div>
                 <div className="tel-cell"><div className="lbl">Last Verified Update</div><div className="val" style={{ fontSize: '22px' }}>{updatedLabel || '--'}</div></div>
               </div>
