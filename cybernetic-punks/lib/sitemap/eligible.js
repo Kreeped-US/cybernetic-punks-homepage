@@ -298,6 +298,7 @@ export async function computeEligible() {
     // Mirrors the DMZ section-hub emitter above.
     try {
       for (const sec of wardogs.sections) {
+        if (sec.slug === 'economy') continue; // dedicated hub route (app/wardogs/economy) -> added explicitly below
         if (!(await wardogsSectionHasContent(sec))) continue; // noindexed empty section -> excluded
         add(BASE + '/wardogs/' + sec.slug, W, 'wardogs-section', undefined, 'weekly', 0.8);
       }
@@ -330,8 +331,10 @@ export async function computeEligible() {
 
     // The TIER LIST -- indexable "prove the meta" flagship (every weapon ranked by measured TTK).
     add(BASE + '/wardogs/tier-list', W, 'wardogs-section', undefined, 'weekly', 0.8);
-    // Progression Planner (the Economy tool) -- indexable standalone tool, real unlock data.
-    add(BASE + '/wardogs/progression', W, 'wardogs-section', undefined, 'weekly', 0.8);
+    // Economy hub (spend tracker + breakdown + merged Progression Planner). Dedicated route that
+    // overrides the 'economy' section; /wardogs/progression 301s here. Added explicitly (skipped
+    // in the section loop above) so it is deterministically in the sitemap.
+    add(BASE + '/wardogs/economy', W, 'wardogs-section', undefined, 'weekly', 0.8);
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while

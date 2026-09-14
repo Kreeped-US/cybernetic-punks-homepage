@@ -21,7 +21,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { wardogs } from '@/lib/games/wardogs';
 import { isGameLive } from '@/lib/network/gameStatus';
-import WardogsCashTicker from '@/components/wardogs/WardogsCashTicker';
+import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -202,8 +202,8 @@ export default async function WardogsLanding() {
         </div>
       </section>
 
-      {/* ===== ECONOMY TICKER (honest live model) ===== */}
-      <WardogsCashTicker avgLoadoutCost={s.avgLoadoutCost || 2800} />
+      {/* ===== ECONOMY TICKER TEASER (compact hook -> the Economy hub) ===== */}
+      <WardogsTickerTeaser avgLoadoutCost={s.avgLoadoutCost || 3200} />
 
       {/* ===== PRODUCT CARDS ===== */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '44px 24px 20px' }}>

@@ -8,6 +8,12 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        // The Progression Planner was absorbed into the Economy hub (301 preserves its SEO).
+        source: '/wardogs/progression',
+        destination: '/wardogs/economy',
+        permanent: true,
+      },
+      {
         source: '/grid',
         destination: '/editors',
         permanent: true,
