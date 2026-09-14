@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Apex homepage CONTENT/VOICE REFRESH (commit 99c42e4)
+
+- Content refresh (not a rebuild -- design held, substance was stale). Net -191/+55 (editor sections came out).
+- BUG FIXED (SEO win): game.keys -> game.keyRoutes (field mismatch -- the reference-link block read the wrong field -> rendered for NO game -> apex passed zero inbound links to the hubs). Now renders: Marathon hubs (Shells/Matchups/Uniques/Factions/Ranked) + Wardogs tools get apex->hub links from the highest-authority page.
+- WARDOGS ELEVATED (was drastically under-represented -- funnel leak during distribution): added Wardogs keyRoutes; the Tools section (was 100% Marathon) now surfaces all 4 Wardogs tools first (Loadout Finder/Tier List/Economy Hub/Arsenal). Named in hero/About/tile.
+- VOICE product-forward: H1 "Loadouts, tier lists, and meta for the games you play" (matches the network OG card); verification kept as the MOAT ("we don't guess"), not the headline.
+- EDITORS DEPRIORITIZED: removed the editorial-desk section (7 cards), Vantage quote, "network desk" feed, nav "Editors" link -> folded to a "verified content, produced at scale" line. (Editors as backend method, not hero -- operator + Fable agree they lack substance.)
+- FACTUAL: "ahead of Early Access" -> live (EA launched Sep 10; verified zero "ahead of EA" remains); ROOT_GAMES Wardogs mode pre-launch->live. SEO: title/desc include Wardogs.
+- The highest-authority page + distribution-landing is now current, on-strategy, product-forward, funnels to the built Wardogs products.
+- NEXT: Wave-2 personalized "your contribution" stat (the viral play). Parked: unbounded-ticker framing, economy-items honest-null gaps, Vera editor wiring, generation counter, schema/orphans re-crawl (Monday).
+
+---
 ## 2026-09-14 - Wardogs ECONOMY HUB + SHAREABLE ENGINE (commits a0b479f, 350bba6, e8d4022, ebcd318)
 
 - ECONOMY-ITEMS LOAD (a0b479f, operator-run): wardogs_economy_items table -- 48 rows (20 vehicles, 5 armor, 5 helmet, 6 medical, 6 utility, 3 vest, 2 backpack, 1 grenade). One general table. 3 OFFICIAL (L2A6/SPH-2 gates, FOB $7500 -- S1 changelog), 45 community-attributed. Powers the breakdown + feeds the future Vera editor store (doctrine). cost (per-use) vs unlock_fee (one-time) distinct. HONEST-NULL gaps loaded as TBD (NOT guessed): armor/helmet per-item gates, backpack middle tiers, vest names, Verba SAM (unpriced), "etc" gear, some fees -- fill w/ real data later.
