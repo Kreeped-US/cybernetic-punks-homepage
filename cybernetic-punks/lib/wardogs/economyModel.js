@@ -6,33 +6,71 @@
 // (representative price) x (active players) / 3600 -> $/sec; the ticker is the sum of those, so
 // the category shares add up to 100% of the ticker. No more "two separate lenses".
 //
-// FREQUENCY MODEL (sanity-checked to pass a Wardogs player's smell test): it is a buy-your-kit-
-// every-life game, so AMMO is bought every life (a full combat load -- not 2 boxes) and reads as
-// SIGNIFICANT; WEAPONS are the big per-life buy (dominant); VEHICLES are occasional but pricey (a
-// real chunk); ARMOR is bought sometimes (persists until broken/death); MEDICAL/GEAR are
-// situational. Output: weapons ~49% > vehicles ~18% > ammo ~12% ~ armor ~12% > medical ~6% >
-// gear ~3% -- intuitive. Every frequency is documented; the whole thing is labeled MODELED.
+// RECALIBRATED (v3, 2026-09-14 -- COLDER, DEFENSIBLE BASKET): a knowledgeable critic (and real
+// Reddit players) showed v2 ran ~6x too HOT. The math was internally consistent, but the
+// frequency + price assumptions failed against official + recorded prices. v2 assumed every
+// online player re-bought an M4-class gun twice an hour (weapons ~49% at $3,090 x 2/hr) and
+// sprayed ~100 ammo boxes/hr -- true only for a try-hard, not the population (mostly ~Career 20,
+// running $0 starters / T-21 $600 / AK $1,600, and NOT rebuying a primary on every death). v3
+// recalibrates to a population-weighted, deaths-that-actually-rebuy basket that survives scrutiny
+// (on-brand: rigorous, not inflated). Every assumption is documented below and grounded in the
+// real price data. Result per active player-hour ~$2,100 (v2 was ~$12,600).
+//
+// THE v3 BASKET (per active player-hour; price x frequency, both documented):
+//   weapons  ~$992  x 1.2/hr = ~$1,190  (~57%)  population-weighted primary; NOT every death rebuys
+//   medical  ~$350  x 0.8/hr = ~$280    (~13%)  cheap heals dominate (Bandage/Stim), not Med Bags
+//   armor    ~$500  x 0.4/hr = ~$200    (~10%)  persists until broken/death; L1-L2, often 1 plate
+//   vehicles ~$2100 x 0.08/hr= ~$168    (~8%)   MOST players never spawn one; common cheap transport
+//   ammo     ~$110  x 1.5/hr = ~$165    (~8%)   a ~2-box top-up, NOT a 14-box LMG combat load
+//   gear     ~$200  x 0.5/hr = ~$100    (~5%)   grenade / utility, occasional
+//   TOTAL ~$2,103/player-hr -> at 130K time-avg CCU ~= $76k/sec.
 //
 // HONESTY: modeled + labeled; per-use cost is NEVER the one-time unlock_fee; prices are
 // community-attributed (Season 1) except the 3 official economy items + Deagle's career gate.
+// The number is deliberately CONSERVATIVE -- a defensible economy-scale estimate, not a fact.
 
 const median = (a) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
 const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 const round = (n) => Math.round(n);
 
-export const DEFAULT_PLAYERS = 170000;                 // 24h-avg sustained concurrent (~50% of the 337K peak)
+// RATE BASIS: a CONSERVATIVE time-average concurrent, NOT peak. v3 lowers this from 170K to 130K:
+// 170K x total-elapsed still treated CCU as ~24/7. 130K is ~39% of the 337K SteamDB launch peak
+// (~33% of Bulkhead's 400K claim) -- a defensible day-average across timezones for a launch-week
+// game, so the model does not assume everyone is online at once. Peak stays CONTEXT only.
+export const DEFAULT_PLAYERS = 130000;
 export const LAUNCH_ISO = '2026-09-10T16:00:00Z';      // EA launch epoch
-export const AMMO_BOXES_PER_LIFE = 14;                 // a full combat load across primary + sidearm
 
-// Buys per ACTIVE player per hour, by category (documented + conservative):
+// AMMO: a partial TOP-UP between buys (a couple of boxes for a fighting rifle), NOT a full 14-box
+// combat load. v2's 14-box load (~$770/buy x 2/hr) modeled LMG spray, not the average player.
+export const AMMO_BOXES_PER_TOPUP = 2;
+
+// Buys per ACTIVE player per hour, by category (v3 -- colder + documented):
 export const FREQ = {
-  weapons: 2.0,    // the loadout is re-bought every life (a life every ~30 min)
-  ammo: 2.0,       // rearmed every life -- a full combat load
-  vehicles: 0.35,  // occasional -- a vehicle spawn roughly every 3 hours per player
-  armor: 1.0,      // re-armored about half of lives (armor persists until broken/death)
-  medical: 1.2,    // a heal item most lives
-  gear: 1.0,       // grenades / utility ~once an hour
+  weapons: 1.2,    // deaths that actually re-buy a PRIMARY -- a life every ~20-30 min, but you keep
+                   //   your gun on extract/survival and often respawn on a free starter, so << 1/life
+  ammo: 1.5,       // a top-up roughly every 40 min (a fighting rifle, not an LMG sprayer)
+  vehicles: 0.08,  // a POPULATION rate: most players never spawn one; ~1 spawn per 12.5 player-hrs
+  armor: 0.4,      // armor persists until broken/death -> re-armored ~every 2.5 hrs, not per life
+  medical: 0.8,    // a heal buy roughly every 75 min
+  gear: 0.5,       // a grenade / utility buy roughly every 2 hrs
 };
+
+// Population weighting for the "typical PRIMARY a player fields" -- the v3 fix for the weapons
+// line (half the ticker). The playerbase skews to free + cheap guns: most are ~Career 20 and
+// class-gated out of the premium tiers, so a catalog median (v2 used $2,600) massively overstates
+// the typical buy. Bands are (prevMax, max]; weights favor free/budget. Applied to the REAL
+// primary prices, so it stays grounded + updates if prices change.
+export const WEAPON_POP_BANDS = [
+  { max: 0, weight: 0.40 },        // free starters (3 free ARs are viable)
+  { max: 1200, weight: 0.38 },     // budget early guns (T-21, AMP-9, MP43, Scout, PP-19...)
+  { max: 2800, weight: 0.17 },     // mid-progression (AK74, Galil, M4, SKS...)
+  { max: Infinity, weight: 0.05 }, // premium / late-unlock (snipers, MGL, BMR) -- rare
+];
+
+// Common-transport vehicle tier: most SPAWNS are the cheap ground transport (Bobcat/Dune Buggy/
+// Kodiak/Humvee, $500-$3,000), not the $18k Havoc. The catalog mean ($6,470) overstates a typical
+// spawn ~3x, so v3 prices vehicles at the mean of the common tier (cost <= this cap).
+export const VEHICLE_COMMON_MAX = 3000;
 
 const CATS = [
   { key: 'weapons', label: 'Weapons' },
@@ -43,23 +81,41 @@ const CATS = [
   { key: 'gear', label: 'Gear & Grenades' },
 ];
 
-// Representative price PER BUY, per category, from the real data. Weapons/ammo/vehicles are
-// computed directly; armor/medical/gear use a documented TYPICAL purchase (a mid-low tier, since
-// players do not run top-tier every time -- using the median-of-all-tiers would over-weight them).
+// Population-weighted typical primary from the REAL primary prices, banded per WEAPON_POP_BANDS.
+// Weights are re-normalized over the bands that actually have members, so an empty band never
+// silently undercounts (build-time resilience if the roster is thin).
+export function weightedPrimaryCost(primaries) {
+  const prices = primaries.filter((x) => x != null && x >= 0);
+  if (!prices.length) return 0;
+  let lo = -1, total = 0, wsum = 0;
+  for (const band of WEAPON_POP_BANDS) {
+    const inBand = prices.filter((c) => c > lo && c <= band.max);
+    lo = band.max;
+    if (!inBand.length) continue;
+    total += band.weight * mean(inBand);
+    wsum += band.weight;
+  }
+  return wsum ? round(total / wsum) : 0;
+}
+
+// Representative price PER BUY, per category. Weapons use the population-weighted primary; ammo a
+// partial top-up at real box prices; vehicles the common-transport tier mean; armor/medical/gear a
+// documented TYPICAL purchase (a mid-low tier -- players do not run top-tier every time, so a
+// median-of-all-tiers would over-weight them).
 export function representativeCosts({ weapons = [], ammo = [], items = [] }) {
-  const wc = (f) => weapons.filter(f).map((w) => w.credit_cost).filter((x) => x != null && x > 0);
+  const wc = (f) => weapons.filter(f).map((w) => w.credit_cost).filter((x) => x != null && x >= 0);
   const primary = wc((w) => w.category !== 'Sidearm');
-  const sidearm = wc((w) => w.category === 'Sidearm');
   const box = ammo.map((a) => a.box_price).filter((x) => x != null && x > 0);
-  const ic = (cats) => items.filter((r) => cats.includes(r.category)).map((r) => r.cost).filter((x) => x != null && x > 0);
+  const vehAll = items.filter((r) => r.category === 'vehicle').map((r) => r.cost).filter((x) => x != null && x > 0);
+  const vehCommon = vehAll.filter((c) => c <= VEHICLE_COMMON_MAX);
 
   return {
-    weapons: median(primary) + round(mean(sidearm)),          // one primary (median) + one sidearm (mean)
-    ammo: AMMO_BOXES_PER_LIFE * round(mean(box)),             // a full combat load (~14 boxes) at our box prices
-    vehicles: round(mean(ic(['vehicle']))),                  // one vehicle spawn (mean across all vehicles)
-    armor: 1500,                                             // TYPICAL: ~L2 armor ($1,000) + L2 helmet ($500) -- documented
-    medical: 600,                                            // TYPICAL heal item (below the median; common items are cheap)
-    gear: 400,                                               // TYPICAL grenade / utility purchase
+    weapons: weightedPrimaryCost(primary),                    // population-weighted primary (NOT catalog median)
+    ammo: AMMO_BOXES_PER_TOPUP * round(mean(box)),           // a ~2-box top-up at real box prices (~$110)
+    vehicles: round(mean(vehCommon.length ? vehCommon : vehAll)), // common-transport tier mean (~$2,100)
+    armor: 500,                                              // TYPICAL: L1-L2, often a single plate -- documented
+    medical: 350,                                            // TYPICAL heal (cheap Bandage/Stim/Field-Resus dominate)
+    gear: 200,                                               // TYPICAL grenade / utility purchase
   };
 }
 
@@ -88,7 +144,6 @@ export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
   const items = data.items || [];
   const weapons = (data.weapons || []).filter((w) => w.credit_cost != null && w.credit_cost > 0);
   const veh = items.filter((r) => r.category === 'vehicle' && r.cost != null);
-  const elapsedSec = Math.max(1, (Date.now() - new Date(LAUNCH_ISO).getTime()) / 1000);
   const usd = (n) => '$' + Math.round(n).toLocaleString('en-US');
 
   // 1. Ammo spend rate (the "you reload, therefore you spend" hook)
@@ -106,22 +161,25 @@ export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
     shareText: 'Wardogs players spawn an estimated ' + bigCount + ' vehicles a day — about ' + usd(vehCashPerDay) + ' torched on wheels & rotors 🚁 (modeled)',
   });
 
-  // 3. Havoc math -- one Havoc vs loadouts
+  // 3. Havoc math -- one Havoc vs a typical fielded loadout
   const havoc = veh.find((v) => /havoc/i.test(v.name));
   if (havoc) {
-    const avgLoadout = model.categories.find((c) => c.key === 'weapons')?.repCost || 3090;
+    const avgLoadout = cat('weapons').repCost || 992;
     const x = (havoc.cost / avgLoadout).toFixed(1);
     out.push({
-      key: 'havoc-loadouts', big: x + 'x', label: 'A single Havoc (' + usd(havoc.cost) + ') costs more than ' + x + ' full loadouts',
-      shareText: 'One Havoc in Wardogs (' + usd(havoc.cost) + ' to spawn) costs more than ' + x + ' full loadouts 🚁 (modeled from real prices)',
+      key: 'havoc-loadouts', big: x + 'x', label: 'A single Havoc (' + usd(havoc.cost) + ') costs more than ' + x + ' typical weapon buys',
+      shareText: 'One Havoc in Wardogs (' + usd(havoc.cost) + ' to spawn) costs more than ' + x + ' typical weapon buys 🚁 (modeled from real prices)',
     });
   }
 
-  // 4. Average owner spend since launch
-  const perOwner = (model.totalPerSec * elapsedSec) / copiesSold;
+  // 4. Per-active-player BURN RATE (v3 units fix). v2 divided the active-player-HOURS integral by
+  // ALL 1.25M owners (most idle) -> a units mismatch that overstated "the average owner". v3
+  // reports the model's native, units-correct figure: what one ACTIVE player burns per hour in
+  // the field. No division across idle owners.
+  const perHour = model.totalPerHourPerPlayer;
   out.push({
-    key: 'avg-owner', big: usd(perOwner), label: 'burned by the average owner since launch', sub: 'total spend / ' + (copiesSold / 1e6).toFixed(2) + 'M copies sold',
-    shareText: 'The average Wardogs player has burned an estimated ' + usd(perOwner) + ' in in-game cash since launch 💀 (modeled from real data)',
+    key: 'per-active-hour', big: usd(perHour) + '/hr', label: 'burned by the average ACTIVE player, per hour in the field', sub: 'modeled per-active-player spend rate — not divided across idle owners',
+    shareText: 'The average ACTIVE Wardogs player burns an estimated ' + usd(perHour) + ' in in-game cash every hour in the field 💀 (modeled from real prices)',
   });
 
   // 5. Most expensive loadout the game allows
@@ -146,9 +204,13 @@ export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
   return out;
 }
 
-// Look up a single stat by its key (for the per-stat OG card + share page).
+// Look up a single stat by its key (for the per-stat OG card + share page). Accepts the legacy
+// 'avg-owner' key as an alias for the units-fixed 'per-active-hour' so any pre-shared link still
+// resolves (it now shows the corrected per-active-player-hour stat instead of the buggy figure).
 export function statByKey(data, key, opts) {
-  return shareStats(data, spendModel(data, opts), opts).find((s) => s.key === key) || null;
+  const stats = shareStats(data, spendModel(data, opts), opts);
+  const wanted = key === 'avg-owner' ? 'per-active-hour' : key;
+  return stats.find((s) => s.key === wanted) || null;
 }
 
 // The current live modeled total spend ($), for the dynamic OG card ("and counting").

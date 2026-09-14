@@ -5,25 +5,33 @@
 // transparently-labeled live MODEL for the /wardogs landing. It is NOT a claimed hard fact:
 // it is a client-side simulation from real, citable inputs, clearly labeled as an estimate.
 //
-// MODEL (all inputs real + documented; props come from the server component):
+// MODEL (all inputs real + documented; props come from the server component). On the hub the
+// ticker is driven by the reconciled economy model's total $/sec (ratePerSec + itemized), so the
+// dials below are the fallback + the DISPLAYED sourcing figures -- kept in sync with the model:
 //   peakConcurrent       337,000  -- SteamDB PEAK concurrent (Wardogs EA launch, Sept 11 2026,
-//                                     #2 on Steam). Cited as CONTEXT/scale, NOT the rate basis.
-//   sustainedPlayers     170,000  -- the RATE BASIS: a CONSERVATIVE sustained-average active
-//                                     concurrent (~half the 337K peak -- post-launch games
-//                                     typically day-average ~40-60% of peak across timezones;
-//                                     we take ~50%, deliberately conservative so the model does
-//                                     NOT overcount by assuming everyone is online at once)
-//   loadoutsPerHour      1.5      -- a re-kit roughly every 40 min (CONSERVATIVE for a combat
-//                                     shooter where death = re-kit); the tunable assumption
-//   avgLoadoutCost       ~$3,200  -- computed from OUR real price data (primary median +
-//                                     sidearm avg + ~2 ammo boxes); "partly powered by our data"
+//                                     #2 on Steam; Bulkhead separately claimed ~400K). Cited as
+//                                     CONTEXT/scale, NOT the rate basis.
+//   sustainedPlayers     130,000  -- the RATE BASIS: a CONSERVATIVE time-average active concurrent
+//                                     (~39% of the 337K SteamDB peak). v3 lowered this from 170K:
+//                                     170K x total-elapsed still treated CCU as ~24/7; a day-average
+//                                     across timezones is lower, so the model does NOT assume
+//                                     everyone is online at once. Passed from the model's DEFAULT_PLAYERS.
+//   loadoutsPerHour      1.2      -- deaths that actually re-buy a PRIMARY (a life every ~20-30 min,
+//                                     but you keep your gun on extract/survival) -- v3 cold, tunable
+//   avgLoadoutCost       ~$990    -- v3 POPULATION-WEIGHTED typical primary from OUR real prices
+//                                     (most players ~Career 20 run free starters / cheap early guns,
+//                                     not an M4-class gun every life); "partly powered by our data"
 //   launchIso            2026-09-10T16:00:00Z  -- EA launch epoch (documented)
 // rate/sec = sustainedPlayers * (loadoutsPerHour/3600) * avgLoadoutCost
 // value    = rate/sec * (now - launch)   [cumulative since launch, recomputed each frame]
 //
 // Why sustained-average and not peak: peak x total-elapsed overcounts (it assumes 337K online
-// every second since launch). Driving the rate off a conservative sustained average is more
-// rigorous + on-brand (CNP is conservative, not inflated) and moderates the number honestly.
+// every second since launch). Driving the rate off a conservative time-average is more rigorous +
+// on-brand (CNP is conservative, not inflated) and moderates the number honestly.
+//
+// v3 RECALIBRATION (2026-09-14): the earlier dials ran ~6x too hot (weapons $3,090 x 2/hr, ammo
+// LMG-spray, 170K treated as 24/7) and got called out. The dials + the model are now a colder,
+// population-weighted, deaths-that-rebuy basket that survives scrutiny. See lib/wardogs/economyModel.js.
 //
 // HONESTY (the moat): the currency is IN-GAME credits (the Wardogs cash economy), NOT real
 // money and NOT an official Bulkhead figure. The basis + sources + assumptions are shown on
@@ -33,10 +41,10 @@
 import { useEffect, useRef, useState } from 'react';
 
 export default function WardogsCashTicker({
-  sustainedPlayers = 170000,
+  sustainedPlayers = 130000,
   peakConcurrent = 337000,
-  loadoutsPerHour = 1.5,
-  avgLoadoutCost = 3200,
+  loadoutsPerHour = 1.2,
+  avgLoadoutCost = 990,
   copiesSold = 1250000,
   launchIso = '2026-09-10T16:00:00Z',
   // When passed, the ticker IS this rate (the reconciled economy model's total $/sec, summed

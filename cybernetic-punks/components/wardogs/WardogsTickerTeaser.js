@@ -2,17 +2,19 @@
 
 // components/wardogs/WardogsTickerTeaser.js
 // A COMPACT ticking-number teaser for the /wardogs landing -- the hook that links to the full
-// Economy hub (/wardogs/economy), where the big ticker + breakdown live. Same model + dials as
-// the hub ticker (170K sustained, 2.0 re-kit/hr, avg loadout cost), just small + linked. Honest
-// framing preserved (modeled estimate, in-game credits) -- the full sourcing is on the hub.
+// Economy hub (/wardogs/economy), where the big ticker + breakdown live. The landing passes
+// ratePerSec (the reconciled model total), so the teaser matches the hub's big number exactly;
+// the dials below are only a fallback. v3 (2026-09-14) colds them to the recalibrated basket
+// (130K time-avg, 1.2 primary-rebuys/hr, ~$990 population-weighted primary) so even the fallback
+// is defensible. Honest framing preserved (modeled estimate, in-game credits).
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 export default function WardogsTickerTeaser({
-  sustainedPlayers = 170000,
-  loadoutsPerHour = 2.0,
-  avgLoadoutCost = 3200,
+  sustainedPlayers = 130000,
+  loadoutsPerHour = 1.2,
+  avgLoadoutCost = 990,
   launchIso = '2026-09-10T16:00:00Z',
   // When passed (from the reconciled economy model), the teaser matches the hub's big ticker.
   ratePerSec: ratePerSecProp = null,

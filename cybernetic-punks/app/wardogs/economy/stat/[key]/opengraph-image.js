@@ -1,6 +1,6 @@
 // app/wardogs/economy/stat/[key]/opengraph-image.js
 // Per-stat OG card: a shared /wardogs/economy/stat/<key> link unfurls with THAT stat's branded
-// big-number card. force-dynamic so live stats (rates, per-owner totals) are fresh at share time.
+// big-number card. force-dynamic so live stats (rates, per-active-player figures) are fresh at share time.
 
 import { createClient } from '@supabase/supabase-js';
 import { wardogsEconomyCard, OG_SIZE } from '@/lib/og/wardogsEconomyCard';

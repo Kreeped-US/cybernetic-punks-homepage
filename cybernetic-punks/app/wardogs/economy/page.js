@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { buildRoadmap } from '@/lib/wardogs/progression';
-import { spendModel, shareStats } from '@/lib/wardogs/economyModel';
+import { spendModel, shareStats, DEFAULT_PLAYERS } from '@/lib/wardogs/economyModel';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import WardogsCashTicker from '@/components/wardogs/WardogsCashTicker';
 import EconomyBreakdown from '@/components/wardogs/EconomyBreakdown';
@@ -77,7 +77,7 @@ export default async function WardogsEconomyHub() {
     '@context': 'https://schema.org', '@type': 'FAQPage',
     mainEntity: [
       { '@type': 'Question', name: 'How much does it cost to unlock all weapons in Wardogs?', acceptedAnswer: { '@type': 'Answer', text: 'Unlocking all ' + road.weaponCount + ' weapons costs ' + money(road.grandTotal) + ' in one-time unlock fees (community-attributed, Season 1). ' + road.freeStarters + ' are free by default. Weapons only — not the wider economy.' } },
-      { '@type': 'Question', name: 'Where do Wardogs players spend the most in-game cash?', acceptedAnswer: { '@type': 'Answer', text: 'By our model, ' + breakdown[0].label + ' are the biggest sink (~' + breakdown[0].sharePct.toFixed(0) + '% of spend), then ' + breakdown[1].label + '. Ammo is a rounding error — bought every life, but cheap.' } },
+      { '@type': 'Question', name: 'Where do Wardogs players spend the most in-game cash?', acceptedAnswer: { '@type': 'Answer', text: 'By our model, ' + breakdown[0].label + ' are the biggest sink (~' + breakdown[0].sharePct.toFixed(0) + '% of spend), then ' + breakdown[1].label + ' and ' + breakdown[2].label + '. Each category is how often you buy it times its real price, summed to the live tracker — a conservative, population-weighted estimate.' } },
     ],
   };
 
@@ -112,8 +112,10 @@ export default async function WardogsEconomyHub() {
         </div>
       </section>
 
-      {/* BIG TICKER -- the SUM of the itemized breakdown (reconciled: ticker = total spend) */}
-      <WardogsCashTicker ratePerSec={model.totalPerSec} itemized />
+      {/* BIG TICKER -- the SUM of the itemized breakdown (reconciled: ticker = total spend).
+          sustainedPlayers passed from the model's DEFAULT_PLAYERS so the DISPLAYED rate basis
+          matches the rate the model actually computed (single source of truth). */}
+      <WardogsCashTicker ratePerSec={model.totalPerSec} sustainedPlayers={DEFAULT_PLAYERS} itemized />
 
       {/* BREAKDOWN -- where the money flows */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '30px 24px 8px' }}>
@@ -121,7 +123,7 @@ export default async function WardogsEconomyHub() {
           <h2 style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>Where the money flows</h2>
         </div>
         <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 760 }}>
-          Modeled spend by category &mdash; each is how often you buy it &times; its real price. They <strong style={{ color: '#fff' }}>add up to the ticker above</strong>. Guns are half of it; vehicles and ammo are each a real chunk; gear barely registers.
+          Modeled spend by category &mdash; each is how often you buy it &times; its real price. They <strong style={{ color: '#fff' }}>add up to the ticker above</strong>. Guns are over half of it; medical, armor, ammo and vehicles split most of the rest; gear barely registers.
         </p>
         <div style={{ background: '#0e1116', border: '1px solid #1d2026', borderRadius: 8, padding: 'clamp(16px,3vw,24px)' }}>
           <EconomyBreakdown categories={breakdown} />

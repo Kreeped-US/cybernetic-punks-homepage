@@ -81,24 +81,9 @@ async function getWardogsStats() {
       updatedDaysAgo = Math.max(0, Math.floor((Date.now() - new Date(data[0].updated_at).getTime()) / 86400000));
     }
   } catch (e) { /* honest-null */ }
-  // AVG LOADOUT COST for the economy ticker -- computed from OUR real price data:
-  //   primary (median of non-sidearm weapon credit_cost) + sidearm (avg) + ~2 ammo boxes (avg box_price).
-  // Falls back to a documented ~$2,800 if the reads fail (honest constant, same order of magnitude).
-  let avgLoadoutCost = 2800;
-  try {
-    const { data: ws } = await sb.from('weapon_stats').select('category, credit_cost').eq('game_slug', 'wardogs');
-    const priced = (ws || []).filter((w) => w.credit_cost != null && w.credit_cost > 0);
-    const primaries = priced.filter((w) => w.category !== 'Sidearm').map((w) => w.credit_cost).sort((a, b) => a - b);
-    const sidearms = priced.filter((w) => w.category === 'Sidearm').map((w) => w.credit_cost);
-    const { data: am } = await sb.from('wardogs_ammo').select('box_price').eq('game_slug', 'wardogs');
-    const boxes = (am || []).map((a) => a.box_price).filter((x) => x != null && x > 0);
-    const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
-    const primaryMedian = primaries.length ? primaries[Math.floor(primaries.length / 2)] : 0;
-    const computed = Math.round(primaryMedian + avg(sidearms) + 2 * avg(boxes));
-    if (computed > 500) avgLoadoutCost = computed; // sanity gate; else keep the documented fallback
-  } catch (e) { /* honest fallback */ }
   // Economy ticker teaser rate -- the reconciled model total ($/sec), so the teaser matches the
-  // /wardogs/economy hub's big number. Best-effort; falls back to null (teaser uses its default).
+  // /wardogs/economy hub's big number exactly (the recalibrated v3 basket). Best-effort; falls
+  // back to null (teaser uses its own cold default dials).
   let economyRatePerSec = null;
   try {
     const [wRes, amRes, eiRes] = await Promise.all([
@@ -108,7 +93,7 @@ async function getWardogsStats() {
     ]);
     economyRatePerSec = spendModel({ weapons: wRes.data || [], ammo: amRes.data || [], items: eiRes.data || [] }).totalPerSec;
   } catch (e) { /* teaser falls back to its own dials */ }
-  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo, avgLoadoutCost, economyRatePerSec };
+  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo, economyRatePerSec };
 }
 
 const A = 'var(--accent)';
@@ -215,7 +200,7 @@ export default async function WardogsLanding() {
       </section>
 
       {/* ===== ECONOMY TICKER TEASER (compact hook -> the Economy hub; matches its total) ===== */}
-      <WardogsTickerTeaser ratePerSec={s.economyRatePerSec} avgLoadoutCost={s.avgLoadoutCost || 3200} />
+      <WardogsTickerTeaser ratePerSec={s.economyRatePerSec} />
 
       {/* ===== PRODUCT CARDS ===== */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '44px 24px 20px' }}>
