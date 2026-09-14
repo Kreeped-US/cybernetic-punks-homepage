@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - /marathon/pve pre-launch hub -- built early for the PvE search wave (commit 21a3115)
+
+- Marathon's FIRST permanent PvE launches with Symbiosis Dec 8. Built /marathon/pve NOW (85 days early) to get indexed + gain authority BEFORE "Marathon PvE" searches peak. Template: modes/vault-breaker (Marathon's prior PvE hub -- same honesty discipline).
+- HONEST PRE-LAUNCH: "What we know" (4 Bungie-confirmed cards + Symbiosis context) + "What's still unknown" (7 explicit TBD items: mechanics/missions/enemies/extraction-integration/rewards/groups/maps -- the credibility moat, NO guesses) + "What we'll cover at launch" (evolution promise + CTAs to the news piece + vault-breaker). ZERO fabricated PvE data -- all facts cite the one Bungie dev-update source. Same discipline as the news piece.
+- SSR countdown ("85 days away, Dec 8" -- server-computed, no client-ticker hydration issue). SEO: title/H1/meta target Marathon PvE / permanent PvE / Symbiosis PvE / PvE release date / when does Marathon PvE launch. FAQPage + BreadcrumbList JSON-LD (Bungie-sourced). PVE nav tab added. In sitemap (priority 0.9). OG card. Indexable, mobile-safe.
+- DURABLE content (right for SEO recovery -- sourced, high-intent, not churn). EVOLVES into the real PvE data hub post-Dec-8.
+- OPERATOR GSC: request-index /marathon/pve + re-submit sitemap.xml (seed early indexing).
+- NEXT: Wave-2 personalized "Your Wardogs Economy" stat (the viral swing, on the now-defensible recalibrated economy model). Post-Dec-8: evolve /marathon/pve to real data. Post-Oct-6: Marathon data refresh.
+
+---
 ## 2026-09-14 - Cross-game WEAPON LEAK fixed -- Wardogs/Bodycam weapons were showing on MARATHON pages (commit 32e0add)
 
 - BUG: weapon_stats is a SHARED table (32 marathon + 33 wardogs + 29 bodycam = 94 rows). ~18 Marathon weapon queries had NO game_slug filter -> pulled all 94 -> Wardogs + Bodycam weapons leaked onto Marathon pages (the /marathon/weapons list, Ranked tier list, detail pages, the landing WEAPON COUNT [showed 94 not 32], guides, intel article cards, uniques base_weapon, join intake, audit API). Wrong data on live crawlable pages -> violated the verified-data moat + hurt the Marathon SEO recovery. Operator caught it (Wardogs weapons on the Marathon weapons page + tier list).
