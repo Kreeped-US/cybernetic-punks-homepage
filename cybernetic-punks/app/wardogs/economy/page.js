@@ -33,9 +33,9 @@ const A = 'var(--accent)';
 const money = (n) => '$' + Number(n).toLocaleString('en-US');
 
 export const metadata = {
-  title: { absolute: 'Wardogs Economy — Live Spend Tracker, Unlock Guide & What to Save For | Cybernetic Punks' },
-  description: 'The Wardogs economy hub: where the in-game cash flows (weapons, armor, vehicles, gear), every weapon’s unlock cost, and what to save for. Modeled from real prices — $2,195,000 to unlock all weapons.',
-  keywords: 'Wardogs economy, Wardogs cash, Wardogs unlock guide, Wardogs what to save for, Wardogs progression, Wardogs unlock costs, Wardogs vehicle prices, Wardogs money',
+  title: { absolute: 'Wardogs Economy Stats — How Much Players Spend, Live Tracker & Unlock Costs | Cybernetic Punks' },
+  description: 'Wardogs economy stats: how much players spend, where the in-game cash flows (weapons, armor, vehicles, ammo, gear), every weapon’s unlock cost, and what to save for. Modeled from real prices — $2,195,000 to unlock all weapons.',
+  keywords: 'Wardogs economy, Wardogs economy stats, how much do Wardogs players spend, Wardogs spending, Wardogs cash, Wardogs unlock guide, Wardogs what to save for, Wardogs progression, Wardogs unlock costs, Wardogs vehicle prices, Wardogs money',
   alternates: { canonical: BASE + '/wardogs/economy' },
   openGraph: {
     title: 'Wardogs Economy: Where the Cash Flows',

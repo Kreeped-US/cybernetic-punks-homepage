@@ -92,25 +92,37 @@ export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
   const usd = (n) => '$' + Math.round(n).toLocaleString('en-US');
 
   // 1. Ammo spend rate (the "you reload, therefore you spend" hook)
-  if (cat('ammo').spendPerSec) out.push({ big: usd(cat('ammo').spendPerSec) + '/sec', label: 'spent on AMMO alone — you reload, therefore you spend', sub: '~' + cat('ammo').sharePct.toFixed(0) + '% of all spend' });
+  if (cat('ammo').spendPerSec) out.push({
+    key: 'ammo-rate', big: usd(cat('ammo').spendPerSec) + '/sec', label: 'spent on AMMO alone — you reload, therefore you spend', sub: '~' + cat('ammo').sharePct.toFixed(0) + '% of all spend',
+    shareText: 'Wardogs players spend an estimated ' + usd(cat('ammo').spendPerSec) + ' PER SECOND on ammo alone 🔫 (modeled from real prices)',
+  });
 
   // 2. Vehicles per day (community)
   const vehPerDay = model.players * FREQ.vehicles * 24;
   const vehCashPerDay = cat('vehicles').spendPerSec * 86400;
   const bigCount = vehPerDay >= 1e6 ? '~' + (vehPerDay / 1e6).toFixed(1) + 'M' : '~' + Math.round(vehPerDay / 1000) + 'K';
-  out.push({ big: bigCount, label: 'vehicles spawned across the community every day', sub: usd(vehCashPerDay) + '/day torched on wheels & rotors' });
+  out.push({
+    key: 'vehicles-day', big: bigCount, label: 'vehicles spawned across the community every day', sub: usd(vehCashPerDay) + '/day torched on wheels & rotors',
+    shareText: 'Wardogs players spawn an estimated ' + bigCount + ' vehicles a day — about ' + usd(vehCashPerDay) + ' torched on wheels & rotors 🚁 (modeled)',
+  });
 
   // 3. Havoc math -- one Havoc vs loadouts
   const havoc = veh.find((v) => /havoc/i.test(v.name));
   if (havoc) {
-    const loadout = (data.weapons || []);
     const avgLoadout = model.categories.find((c) => c.key === 'weapons')?.repCost || 3090;
-    out.push({ big: (havoc.cost / avgLoadout).toFixed(1) + 'x', label: 'A single Havoc (' + usd(havoc.cost) + ') costs more than ' + (havoc.cost / avgLoadout).toFixed(1) + ' full loadouts' });
+    const x = (havoc.cost / avgLoadout).toFixed(1);
+    out.push({
+      key: 'havoc-loadouts', big: x + 'x', label: 'A single Havoc (' + usd(havoc.cost) + ') costs more than ' + x + ' full loadouts',
+      shareText: 'One Havoc in Wardogs (' + usd(havoc.cost) + ' to spawn) costs more than ' + x + ' full loadouts 🚁 (modeled from real prices)',
+    });
   }
 
   // 4. Average owner spend since launch
   const perOwner = (model.totalPerSec * elapsedSec) / copiesSold;
-  out.push({ big: usd(perOwner), label: 'burned by the average owner since launch', sub: 'total spend / ' + (copiesSold / 1e6).toFixed(2) + 'M copies sold' });
+  out.push({
+    key: 'avg-owner', big: usd(perOwner), label: 'burned by the average owner since launch', sub: 'total spend / ' + (copiesSold / 1e6).toFixed(2) + 'M copies sold',
+    shareText: 'The average Wardogs player has burned an estimated ' + usd(perOwner) + ' in in-game cash since launch 💀 (modeled from real data)',
+  });
 
   // 5. Most expensive loadout the game allows
   const topWeapon = [...weapons].sort((a, b) => b.credit_cost - a.credit_cost)[0];
@@ -119,13 +131,31 @@ export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
   const topHelmet = Math.max(0, ...items.filter((r) => r.category === 'helmet').map((r) => r.cost || 0));
   if (topWeapon) {
     const maxKit = topWeapon.credit_cost + (topSidearm ? topSidearm.credit_cost : 0) + topArmor + topHelmet;
-    out.push({ big: usd(maxKit), label: 'Most expensive single loadout the economy allows', sub: topWeapon.name + ' + top sidearm + L4 armor & helmet, per life' });
+    out.push({
+      key: 'priciest-loadout', big: usd(maxKit), label: 'Most expensive single loadout the economy allows', sub: topWeapon.name + ' + top sidearm + L4 armor & helmet, per life',
+      shareText: 'The most expensive single loadout in Wardogs runs ' + usd(maxKit) + ' PER LIFE (' + topWeapon.name + ' + top sidearm + L4 armor) 💸 (real prices)',
+    });
   }
 
   // 6. Weapons share (the dominant sink)
-  if (cat('weapons').sharePct) out.push({ big: cat('weapons').sharePct.toFixed(0) + '%', label: 'of all in-game cash goes to WEAPONS — the single biggest money sink' });
+  if (cat('weapons').sharePct) out.push({
+    key: 'weapons-share', big: cat('weapons').sharePct.toFixed(0) + '%', label: 'of all in-game cash goes to WEAPONS — the single biggest money sink',
+    shareText: 'In Wardogs, an estimated ' + cat('weapons').sharePct.toFixed(0) + '% of all in-game cash is spent on WEAPONS — the biggest money sink (modeled)',
+  });
 
   return out;
+}
+
+// Look up a single stat by its key (for the per-stat OG card + share page).
+export function statByKey(data, key, opts) {
+  return shareStats(data, spendModel(data, opts), opts).find((s) => s.key === key) || null;
+}
+
+// The current live modeled total spend ($), for the dynamic OG card ("and counting").
+export function liveTotalSpend(data, opts) {
+  const m = spendModel(data, opts);
+  const elapsedSec = Math.max(1, (Date.now() - new Date(LAUNCH_ISO).getTime()) / 1000);
+  return { total: Math.floor(m.totalPerSec * elapsedSec), ratePerSec: m.totalPerSec };
 }
 
 // Legacy alias kept for any external caller (breakdown categories only).

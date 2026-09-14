@@ -4,6 +4,8 @@
 // screenshot brings the brand back to the site. Server-rendered (crawlable). HONEST: these are
 // real facts + model-derived rates, labeled as modeled where they come from the model.
 
+import StatShareButtons from '@/components/wardogs/StatShareButtons';
+
 const A = 'var(--accent)';
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
 
@@ -21,9 +23,12 @@ export default function EconomyShareStats({ stats = [] }) {
           <div style={{ position: 'relative', fontFamily: EXO, fontSize: 'clamp(28px,4.6vw,40px)', fontWeight: 800, color: A, lineHeight: 1.02, letterSpacing: '-0.5px', marginBottom: 8 }}>{s.big}</div>
           <div style={{ position: 'relative', fontSize: 13.5, color: 'rgba(255,255,255,0.88)', lineHeight: 1.45, fontWeight: 600, flex: 1 }}>{s.label}</div>
           {s.sub && <div style={{ position: 'relative', fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.4, marginTop: 8 }}>{s.sub}</div>}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, paddingTop: 10, borderTop: '1px solid #1d2026' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1, color: A, background: 'rgba(224,161,58,0.12)', border: '1px solid rgba(224,161,58,0.3)', borderRadius: 2, padding: '2px 6px' }}>CNP</span>
-            <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>cyberneticpunks.com/wardogs &middot; modeled</span>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid #1d2026', flexWrap: 'wrap' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1, color: A, background: 'rgba(224,161,58,0.12)', border: '1px solid rgba(224,161,58,0.3)', borderRadius: 2, padding: '2px 6px' }}>CNP</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>modeled</span>
+            </span>
+            {s.shareText && <StatShareButtons shareText={s.shareText} statKey={s.key} />}
           </div>
         </div>
       ))}
