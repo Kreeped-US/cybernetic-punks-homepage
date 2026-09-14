@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Wardogs ECONOMY HUB + SHAREABLE ENGINE (commits a0b479f, 350bba6, e8d4022, ebcd318)
+
+- ECONOMY-ITEMS LOAD (a0b479f, operator-run): wardogs_economy_items table -- 48 rows (20 vehicles, 5 armor, 5 helmet, 6 medical, 6 utility, 3 vest, 2 backpack, 1 grenade). One general table. 3 OFFICIAL (L2A6/SPH-2 gates, FOB $7500 -- S1 changelog), 45 community-attributed. Powers the breakdown + feeds the future Vera editor store (doctrine). cost (per-use) vs unlock_fee (one-time) distinct. HONEST-NULL gaps loaded as TBD (NOT guessed): armor/helmet per-item gates, backpack middle tiers, vest names, Verba SAM (unpriced), "etc" gear, some fees -- fill w/ real data later.
+- ECONOMY HUB (350bba6 + e8d4022): /wardogs/economy rebuilt from the section article-list -> elite economy dashboard (dedicated route overriding the section, no shadow). BIG TICKER (hero, ~$201B, ticking) RECONCILED = the SUM of the itemized breakdown (ratio 1.000, shares=100%). Dials: 170K sustained 24h-avg concurrent, 2.0 re-kit/hr, per-category freq x price. BREAKDOWN (smell-test-passing after v2): Weapons 49% / Vehicles 18% / Ammo 12% (full combat load every life) / Armor 12% / Medical 6% / Gear 3% (v1's absurd Armor-41%/Ammo-1.3% fixed). Merged PROGRESSION PLANNER ($2.195M to unlock all weapons + calculator + roadmaps); /wardogs/progression 301 -> /economy (SEO preserved); economy context; landing teaser matching. Honest (modeled/sourced/labeled, "how we model this" itemizes frequencies).
+- SHAREABLE ENGINE (ebcd318): the economy = a SOCIAL-GROWTH + SEO machine.
+  - PER-STAT SHARE buttons (X pre-filled + Copy) -- every share carries "modeled" (honest) + @Cybernetic87250 + the URL (brand-carrying). One-click branded honest posts.
+  - LIVE-NUMBER OG CARD (/wardogs/economy/opengraph-image, force-dynamic) -- shares unfurl with the CURRENT climbing total ("$201B and counting", CNP+Wardogs logos, "modeled estimate" footer).
+  - INDIVIDUALLY-SHAREABLE stats (/wardogs/economy/stat/[key], own OG card each, funnel to hub, NOINDEX -- share carriers not thin SEO pages; real route seg because opengraph-image can't read search params).
+  - SEO: hub targets "wardogs economy stats / how much do wardogs players spend / wardogs spending"; stats in crawlable HTML (hub indexable, stat pages noindex -- clean split of SEO surface vs share surface).
+- HONEST throughout: modeled/labeled/sourced even in viral formats; cost vs unlock_fee distinct; "all weapons $2.195M" precise; attributed. "NO HYPE JUST INTEL" holds (breakdown = intel; shares keep "modeled").
+- DISTRIBUTION: the stats are now ONE-CLICK shareable (branded) -- the economy is a renewable social-content engine feeding players back to the site.
+- OPEN: unbounded-cumulative ticker framing (grows ~$51B/day -- long-term rolling/per-season decision, fine near-term). Parked economy-items honest-null gaps. Parked: WAVE-2 personalized "your contribution" stat (Spotify-Wrapped-style viral play -- biggest viral potential, bigger build), generation counter, schema/orphans re-crawl, Vera editor wiring (economy-items store ready).
+
+---
 ## 2026-09-12 - Wardogs PROGRESSION PLANNER shipped -- the 3rd Wardogs tool, trio complete (commit 5390b13 + unlock-fee load 822c41e)
 
 - /wardogs/progression (NOT /wardogs/economy -- "economy" is a live content-section slug; static would shadow/double it in sitemap -- build caught this). The Economy tool, Phase 3. DISTINCT from the Loadout Finder: advisor = "best loadout now"; planner = "what to grind/save toward."
