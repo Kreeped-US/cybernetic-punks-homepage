@@ -142,11 +142,12 @@ export default function WardogsCashTicker({
               <li><strong style={{ color: '#fff' }}>Rate basis:</strong> ~{Math.round(sustainedPlayers / 1000)}K sustained-average active (~{Math.round((sustainedPlayers / peakConcurrent) * 100)}% of peak) &mdash; a conservative day-average across timezones, so the model does NOT assume everyone is online at once.</li>
               <li><strong style={{ color: '#fff' }}>Scale:</strong> 1,250,000 copies sold &mdash; Bulkhead&rsquo;s official @WARDOGS announcement (Sept 10, 2026).</li>
               {itemized ? (
-                <li><strong style={{ color: '#fff' }}>Itemized spend:</strong> each category is (how often you buy it &times; its real price); the ticker is the SUM across weapons, ammo, armor, vehicles, medical and gear &mdash; so the breakdown below reconciles to this number.</li>
+                <li><strong style={{ color: '#fff' }}>Itemized spend:</strong> each category is (how often you buy it &times; its real price); the ticker is the SUM across weapons, ammo, armor, vehicles, medical and gear &mdash; so the breakdown below reconciles to this number (its exact per-category frequency &times; price is shown there).</li>
               ) : (
-                <li><strong style={{ color: '#fff' }}>Avg loadout:</strong> {fmt(avgLoadoutCost)} &mdash; from our real price data (primary median + sidearm + ammo).</li>
+                <li><strong style={{ color: '#fff' }}>Avg loadout:</strong> {fmt(avgLoadoutCost)} &mdash; a <strong style={{ color: '#fff' }}>population-weighted</strong> typical primary from our real prices (most players run free/cheap guns, not top-tier), not a catalog median.</li>
               )}
-              <li><strong style={{ color: '#fff' }}>Purchase rate:</strong> re-kit ~every {Math.round(60 / (loadoutsPerHour || 2))} min; ammo every life; armor/medical/gear situational; vehicles occasional &mdash; conservative, documented frequencies.</li>
+              <li><strong style={{ color: '#fff' }}>Weapons (the biggest sink):</strong> a <strong style={{ color: '#fff' }}>population-weighted</strong> typical primary &mdash; banded across the roster&rsquo;s price tiers, since most players are early-career and run free / budget guns, not a top-tier buy every life &mdash; re-bought only on the deaths that actually lose the gun (~1.2/hr, not every life).</li>
+              <li><strong style={{ color: '#fff' }}>Other rates:</strong> ammo topped up between fights (a couple of boxes, not a full combat load); armor persists until broken; medical/gear situational; a vehicle is rare at the population level (most players never spawn one) &mdash; conservative, documented per-category frequencies.</li>
               <li><strong style={{ color: '#fff' }}>Formula:</strong> sustained players &times; (frequency &times; price, per category), accumulated since EA launch (Sept 10, 16:00 UTC) &asymp; {fmt(Math.round(ratePerSec))}/sec.</li>
             </ul>
             <div style={{ marginTop: 10, fontSize: 11.5, color: 'var(--text-tertiary,#8b929c)', lineHeight: 1.5 }}>
