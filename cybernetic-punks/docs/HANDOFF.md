@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Wardogs NAV + surfacing fix (commit d7f5791)
+
+- The nav under-sold the built product; fixed (config-centric, no route migration -- routes were already consistent):
+  - NAV now: Loadouts . Tier List . Economy . Arsenal | News . Systems (tools group + divider + intel group). ADDED Tier List/Economy/Arsenal (were missing/mislabeled); DROPPED Arsenal's stale "SOON" badge (it's the live 33-weapon roster). economy+arsenal kept in sections[] with hideFromNav (routing/validation intact, no duplicate tabs). wardogs.tools is now the single source of truth for live product landings.
+  - ORPHANED ECONOMY ARTICLES SURFACED: the 3 economy articles (wardogs-cash-economy, wardogs-economy, how-the-wardogs-economy-works -- 200 + indexed but invisible in nav) now list in an "Economy intel" section on the Economy Hub. SEO-positive.
+  - LANDING: 4 tool cards (Loadout Finder flagship, Weapon Tier List, The Economy -> direct to /economy killing the /progression 301 hop, The Arsenal -> new card).
+  - CLEANUP: stale "Progression Planner" card relabeled; stale [section] "zero articles" comment refreshed (11 articles live). eligible.js redundant sitemap adds removed (tools loop covers them).
+- Every nav destination live/direct; build passes; mobile-safe; no SEO regression (more internal links to live content). Well-timed (driving traffic -> nav now surfaces the built product).
+- OPTIONAL (not done): unified /wardogs/intel "all articles" hub -- skipped (per-section + economy-hub surfacing covers discoverability; revisit if editorial grows).
+
+---
 ## 2026-09-14 - SEO COLLAPSE -- root cause found + fixed (410 Gone + prune doctrine) (commit 80a64d1)
 
 - THE COLLAPSE: impressions fell ~437/day (8/30) -> ~15/day (9/7+) and did NOT recover over 3+ weeks. Earlier diagnosis (Sept 11: "clean migration, transient dip, will recover") was WRONG -- it audited the migration mechanics (which were clean) but NOT the GSC Page Indexing report (the ground truth). LESSON: for an impressions drop, pull GSC Page Indexing FIRST (not just migration/redirect checks); never give an "it'll recover" verdict on a severe/sustained drop without the indexing data.
