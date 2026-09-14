@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Marathon NAV streamlined (commit b53051d)
+
+- Marathon nav (hardcoded NAV_ITEMS in components/Nav.js) was overloaded (12 top-level) + still listed editors (off-strategy -- deprioritized network-wide). Streamlined 12 -> 7: WEAPONS . RANKED . META . PVE . DATABASE(dropdown) . TOOLS(dropdown) . INTEL(dropdown). HOME removed (wordmark links home).
+- NEW DATABASE dropdown groups the 5 entity pages (Shells/Matchups/Mods/Uniques/Factions) + surfaces orphaned Maps (/marathon/maps was in NO nav -- now linked, SEO-positive).
+- INTEL trimmed to All Intel + Sitrep -- 6 editor entries (Cipher/Nexus/Dexter/Ghost/Miranda lanes + Editors link + /editors from activeOn) DE-LINKED (pages stay live, not deleted -- consistent with editors removed from homepage/footers). Dead code removed (intelChild/getEditorDisplay).
+- One-file change; desktop+mobile both render from the one array; low-risk. Mirrors the Wardogs nav pass.
+- ON RECORD (operator's call, not done): relabel "Build Advisor" -> search-aligned ("Loadout Advisor"/"Best Loadouts" -- zero search volume for "build advisor", per the Wardogs rule); optional tools|intel divider.
+
+---
 ## 2026-09-14 - WAVE 2 -- "Your Wardogs Economy" personalized viral stat, LIVE (commit b091b14)
 
 - /wardogs/economy/mine -- input hours/level/playstyle/vehicle-use -> personalized estimated spend + breakdown + branded shareable card. The Spotify-Wrapped-style viral play (personal stats spread -- people share themselves -> friends want theirs -> loop). The highest-viral-potential distribution piece.
