@@ -59,10 +59,9 @@ function loadEnvLocal() {
 // THE FROZEN, REVIEWED ARTICLE. Straight hyphens / ASCII (house style). Facts strictly from
 // Bungie's dev update; the "What It Means for Players" block is clearly-marked analysis.
 //
-// NOTE FOR REVIEW: the task referenced a "full Symbiosis feature list" but did not paste it, so
-// the Symbiosis section below is reported at the level of the VERIFIED facts on hand (the
-// Sept 22 -> Dec 8 delay + that it is the next major update). No features are invented. To add
-// the full feature list, paste it into the SYMBIOSIS section of this body -- a one-block edit.
+// The Symbiosis section lists the Bungie-official feature set from the dev update (first PvE
+// experience, refreshed Perimeter, new Runner shell, social space + firing range, experimental
+// TDM, new-player onboarding), corroborated across coverage -- reported as Bungie stated them.
 const ARTICLE = {
   slug: 'marathon-symbiosis-delay-october-nightfall-refresh-economy-reset',
   headline: 'Marathon Delays Major Update to December, Resets Economy Oct 6',
@@ -74,6 +73,14 @@ const ARTICLE = {
 **Symbiosis Slips From September 22 to December 8**
 
 Symbiosis, Marathon's next major content update, was targeted for September 22. Bungie has now moved it to December 8. It remains the season's headline update; the October 6 Nightfall Refresh (below) bridges the roughly eleven-week gap the delay opens up.
+
+Per the dev update, Symbiosis brings:
+- Marathon's first permanent PvE experience -- a new way to explore and progress beyond the traditional PvPvE extraction loop
+- A refreshed Perimeter zone
+- A new Runner shell
+- A social space with a firing range
+- An experimental Team Deathmatch (TDM) mode
+- The first of several new-player onboarding improvements
 
 **The October 6 Nightfall Refresh**
 
