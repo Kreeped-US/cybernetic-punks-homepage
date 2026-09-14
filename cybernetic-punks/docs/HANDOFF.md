@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Network telemetry bar fixed -- was underselling (commit ab0d8f6)
+
+- The root-page NETWORK TELEMETRY bar was stale/underselling: "Games Covered: 4" (getIndexableGames -- SEO-indexability axis, wrong signal) + "Marathon Players (Steam): 2.0K" (Marathon-only live count -- live_stats is source-keyed, cron fetches only Marathon appid 3065800; hid Wardogs entirely).
+- FIX: Games Covered -> ROOT_GAMES.length = 5 (dynamic, front-door network count, never stale). Player metric -> "PEAK PLAYERS TRACKED: 337K" = Wardogs' SteamDB EA-launch peak, stored as sourced verifiedPeak {value:337000, source:SteamDB, asOf:2026-09, note:EA launch peak} on the Wardogs ROOT_GAMES entry, computed as network max, LABELED "peak" (honest, not live). Reports Published (388) + Last Verified Update unchanged (real/DB-computed).
+- HONESTY: no Wardogs Steam appid exists in-repo (only Marathon's), so a LIVE Wardogs count wasn't fakeable -- used the sourced+labeled PEAK instead of fabricating. The executor refused to invent an appid/count.
+- OPTIONAL FOLLOW-UP: a LIVE network-wide player count needs Wardogs' real Steam appid + a small live_stats/cron per-game refactor (separate gated task). If the operator finds Wardogs' appid, a live "players online now" is a nice upgrade over the peak.
+
+---
 ## 2026-09-14 - /wardogs/economy/mine double-footer fixed (commit d22a78f)
 
 - The Wave 2 page (/wardogs/economy/mine) rendered TWO stacked footers: it self-rendered <Footer game="wardogs"/> AND app/wardogs/layout.js already renders the footer for the entire /wardogs/* subtree. Pattern: the footer belongs to the LAYOUT -- every other Wardogs page renders ZERO footers itself (inherits the layout's one); /economy/mine was the sole outlier (extra self-rendered footer from the Wave 2 build).
