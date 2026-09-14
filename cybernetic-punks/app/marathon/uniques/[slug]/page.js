@@ -202,7 +202,7 @@ export default async function UniqueDetailPage({ params }) {
                 <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>
                   BASED ON{' '}
                   {baseSlug ? (
-                    <Link href={'/weapons/' + baseSlug} className="uq-link" style={{ color: color + 'cc', textDecoration: 'none', fontWeight: 700 }}>{u.base_weapon} &rarr;</Link>
+                    <Link href={'/marathon/weapons/' + baseSlug} className="uq-link" style={{ color: color + 'cc', textDecoration: 'none', fontWeight: 700 }}>{u.base_weapon} &rarr;</Link>
                   ) : (
                     <span style={{ color: color + 'cc', fontWeight: 700 }}>{u.base_weapon}</span>
                   )}
@@ -253,7 +253,7 @@ export default async function UniqueDetailPage({ params }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Base Weapon Stats</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              {baseSlug && <Link href={'/weapons/' + baseSlug} className="uq-link" style={{ fontSize: 9, color: color, textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>FULL {u.base_weapon ? u.base_weapon.toUpperCase() : 'WEAPON'} PAGE &rarr;</Link>}
+              {baseSlug && <Link href={'/marathon/weapons/' + baseSlug} className="uq-link" style={{ fontSize: 9, color: color, textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>FULL {u.base_weapon ? u.base_weapon.toUpperCase() : 'WEAPON'} PAGE &rarr;</Link>}
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 620 }}>
               The {u.name} inherits its performance from the {u.base_weapon || 'base weapon'}. These are the {u.base_weapon || 'base weapon'}&apos;s verified stats.
@@ -273,7 +273,7 @@ export default async function UniqueDetailPage({ params }) {
             ) : (
               <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + color, borderRadius: '0 3px 3px 0', padding: '14px 18px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
                 Detailed stats for the {u.base_weapon || 'base weapon'} haven&apos;t been published yet.{baseSlug ? ' See the ' : ''}
-                {baseSlug && <Link href={'/weapons/' + baseSlug} className="uq-link" style={{ color: color, textDecoration: 'none', fontWeight: 700 }}>{u.base_weapon} page</Link>}
+                {baseSlug && <Link href={'/marathon/weapons/' + baseSlug} className="uq-link" style={{ color: color, textDecoration: 'none', fontWeight: 700 }}>{u.base_weapon} page</Link>}
                 {baseSlug ? ' as the database is updated.' : ''}
               </div>
             )}
