@@ -89,6 +89,50 @@ export default function VantageDraftsPanel({ password }) {
   var [nonce, setNonce] = useState(0);
   var [busy, setBusy] = useState(null);   // id currently being approved
   var [note, setNote] = useState(null);   // transient status line
+  var [editingId, setEditingId] = useState(null); // draft id in inline-edit mode
+  var [editHeadline, setEditHeadline] = useState('');
+  var [editBody, setEditBody] = useState('');
+  var [saving, setSaving] = useState(false);
+
+  // Inline EDIT before approve. Opens the body (so the edit form shows) and prefills the
+  // current headline/body. Editing does NOT publish -- approve is still separate.
+  function startEdit(d) {
+    setEditingId(d.id);
+    setEditHeadline(d.headline || '');
+    setEditBody(d.body || '');
+    setOpen(function (o) { var n = { ...o }; n[d.id] = true; return n; });
+    setNote(null);
+  }
+
+  // Save the edit via the narrow /api/admin/drafts/edit endpoint (guarded is_published=false:
+  // can only ever edit a DRAFT). On success, patch the draft in-place in the list.
+  async function saveEdit(d) {
+    if (saving) return;
+    if (!editHeadline.trim() || !editBody.trim()) { setNote('Edit failed: headline and body are both required.'); return; }
+    setSaving(true); setNote(null);
+    try {
+      var res = await fetch('/api/admin/drafts/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+        body: JSON.stringify({ id: d.id, headline: editHeadline, body: editBody }),
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('Failed (' + res.status + ')'));
+      setDrafts(function (list) {
+        return list.map(function (x) {
+          return x.id === d.id ? { ...x, headline: data.data.headline, body: data.data.body, tags: data.data.tags } : x;
+        });
+      });
+      setEditingId(null);
+      var extra = data.normalized ? ' (auto-normalized to house style)' : '';
+      if (data.warnings && data.warnings.length) extra += ' [warn: ' + data.warnings.join('; ') + ']';
+      setNote('Saved: ' + data.data.headline + extra + ' -- still a draft; APPROVE to publish.');
+    } catch (err) {
+      setNote('Edit failed: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   // Approve = publish this ONE draft via the narrow endpoint (is_published->true,
   // noindex->false). On success it drops off this list (no longer a draft).
@@ -224,10 +268,34 @@ export default function VantageDraftsPanel({ password }) {
                   {d.creator_info && d.creator_info.name && <span style={{ fontFamily: mono, fontSize: 9, color: accent }}>creator: {d.creator_info.name}</span>}
                   {d.source_url && <a href={d.source_url} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
                   <button onClick={function () { setOpen(function (o) { var n = { ...o }; n[d.id] = !n[d.id]; return n; }); }} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: accent, background: 'transparent', border: '1px solid ' + accent + '44', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>{isOpen ? 'HIDE BODY' : 'READ BODY'}</button>
+                  <button onClick={function () { startEdit(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: '#00f5ff', background: 'transparent', border: '1px solid rgba(0,245,255,0.4)', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>EDIT</button>
                   <button onClick={function () { reject(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#ff4444', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'REJECT'}</button>
                   <button onClick={function () { approve(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : 'APPROVE + PUBLISH'}</button>
                 </div>
-                {isOpen && <DraftPreview draft={d} />}
+                {isOpen && (editingId === d.id ? (
+                  <div style={{ margin: '12px 0 0', padding: '14px 16px', background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 4 }}>
+                    <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>HEADLINE</div>
+                    <input
+                      value={editHeadline}
+                      onChange={function (e) { setEditHeadline(e.target.value); }}
+                      style={{ width: '100%', boxSizing: 'border-box', background: '#111', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontFamily: heading, fontSize: 13, fontWeight: 700, padding: '8px 10px', borderRadius: 4, marginBottom: 12 }}
+                    />
+                    <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>BODY &middot; markdown: **bold**, &ldquo;quotes&rdquo;, blank line between paragraphs</div>
+                    <textarea
+                      value={editBody}
+                      onChange={function (e) { setEditBody(e.target.value); }}
+                      rows={18}
+                      style={{ width: '100%', boxSizing: 'border-box', background: '#111', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.85)', fontFamily: mono, fontSize: 12, lineHeight: 1.6, padding: '10px 12px', borderRadius: 4, resize: 'vertical' }}
+                    />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button onClick={function () { saveEdit(d); }} disabled={saving} style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.5)', borderRadius: 3, padding: '6px 16px', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'SAVING...' : 'SAVE EDIT'}</button>
+                      <button onClick={function () { setEditingId(null); }} disabled={saving} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, color: 'rgba(255,255,255,0.5)', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 3, padding: '6px 16px', cursor: saving ? 'default' : 'pointer' }}>CANCEL</button>
+                      <span style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>Saving does NOT publish -- still needs APPROVE. Em-dashes / smart quotes auto-normalized to house style.</span>
+                    </div>
+                  </div>
+                ) : (
+                  <DraftPreview draft={d} />
+                ))}
               </div>
             );
           })}
