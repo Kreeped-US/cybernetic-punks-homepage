@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - Cross-game WEAPON LEAK fixed -- Wardogs/Bodycam weapons were showing on MARATHON pages (commit 32e0add)
+
+- BUG: weapon_stats is a SHARED table (32 marathon + 33 wardogs + 29 bodycam = 94 rows). ~18 Marathon weapon queries had NO game_slug filter -> pulled all 94 -> Wardogs + Bodycam weapons leaked onto Marathon pages (the /marathon/weapons list, Ranked tier list, detail pages, the landing WEAPON COUNT [showed 94 not 32], guides, intel article cards, uniques base_weapon, join intake, audit API). Wrong data on live crawlable pages -> violated the verified-data moat + hurt the Marathon SEO recovery. Operator caught it (Wardogs weapons on the Marathon weapons page + tier list).
+- FIX (32e0add): added .eq('game_slug','marathon') to all 18 Marathon weapon queries. One-directional leak (Wardogs/Bodycam were already scoped -> no reverse leak). Weapons-only (shell_stats/meta_tiers/mod_stats are Marathon-only). Content gatherers (dexter/miranda) threaded with the producing game's slug (multi-game-safe, not hardcoded). No name collisions -> was a pure wrong-data leak (not a crash). Sitemap only listed Marathon slugs (wrong pages weren't submitted, but were crawlable via internal links -- now stopped).
+- DOCTRINE LESSON (important, recurring risk): weapon_stats (and ANY shared multi-game table) queries MUST scope game_slug -- a missing filter leaks cross-game data. This is the SECOND shared-resource cross-game issue this session (economy section-route overlap was the first). RULE: every query against a shared multi-game table filters by game_slug; verify on any new data load / new query. Multi-game-agnostic build means game-scoping is mandatory, not optional.
+- OPERATOR GSC: re-request-index /marathon/weapons so Google refreshes the corrected data (supports SEO recovery). The wrong /marathon/weapons/<wardogs-slug> detail pages now correctly don't-resolve-as-marathon (fine -- they were wrong data).
+- NEXT: build /marathon/pve pre-launch hub (Symbiosis permanent PvE, Dec 8 -- get indexed early to catch the rising search wave, honest pre-launch framing, evolves into the real data hub post-launch).
+
+---
 ## 2026-09-14 - Admin panel REORG + Marathon Sept 14 news + churn drafts rejected (commit ad8faa6)
 
 - ADMIN REORG (ad8faa6): the /admin/content 1,243-line mega-page (6 panels + CRUD, broken GO-TO deep-links) split into purpose-built pages -- reorg not rebuild (reused panels/APIs). NEW /admin/review = the daily driver (Drafts approve/reject + Source Review + Directives/Generate, mounts only 3 panels). NEW /admin/seo = GSC Review + Demand Check + Keywords. /admin/content = CRUD-only now (Quality Metrics/Alerts folded into a collapsed lazy "Editorial QA" -- editors deprioritized). NAV consolidated 9 confusing cards (7 colliding on /admin/content, 4 bare) -> 5 deep-linked surfaces (Bridge/Review/Content&Data/SEO Tools/Email). Bridge "Needs Attention" -> /admin/review. Stale CLI help text fixed. Fixes the operator's admin confusion + the scroll-and-hunt.
