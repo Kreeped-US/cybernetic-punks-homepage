@@ -3,40 +3,29 @@ import Link from 'next/link';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
 import { usePathname } from 'next/navigation';
 import { useState, useRef } from 'react';
-import { getEditorDisplay } from '@/lib/editors/roster';
 import { isNetworkChrome } from '@/lib/network/isNetworkChrome';
 import AccountMenu from '@/components/AccountMenu';
 
-// INTEL-dropdown editor item, sourced from the display map: label = tag (proper
-// case, not raw uppercase), color from the map. Desc stays (editor flavor copy
-// not in the map). Null-safe -> degrade to the raw key.
-function intelChild(key, desc) {
-  var d = getEditorDisplay(key);
-  return { label: d ? (d.tag || d.fullName) : key, href: '/marathon/intel/' + key, desc: desc, color: d ? d.color : undefined };
-}
-
+// STREAMLINED (2026-09-14): 12 flat top-level items -> ~7. The 5 reference/entity pages moved
+// under a DATABASE dropdown (+ the previously-orphaned Maps); WEAPONS stays top-level (core).
+// HOME removed (the wordmark links /marathon). INTEL trimmed to All Intel + Sitrep -- the 5
+// editor lanes + the "Editors" link are DE-LINKED (editors were deprioritized network-wide;
+// pages stay live). Mirrors the Wardogs nav pass. Both desktop + mobile render from this array.
 var NAV_ITEMS = [
-  { label: 'HOME',     href: '/marathon' },
-  { label: 'META',     href: '/marathon/meta' },
-  { label: 'SHELLS',   href: '/marathon/shells' },
-  { label: 'MATCHUPS', href: '/marathon/matchups' },
-  { label: 'WEAPONS',  href: '/marathon/weapons' },
-  { label: 'MODS',     href: '/marathon/mods' },
-  { label: 'UNIQUES',  href: '/marathon/uniques' },
-  { label: 'FACTIONS', href: '/marathon/factions' },
-  { label: 'PVE',      href: '/marathon/pve' },
+  { label: 'WEAPONS', href: '/marathon/weapons' },
+  { label: 'RANKED',  href: '/marathon/ranked' },
+  { label: 'META',    href: '/marathon/meta' },
+  { label: 'PVE',     href: '/marathon/pve' },
   {
-    label: 'INTEL',
-    activeOn: ['/marathon/intel', '/marathon/sitrep', '/editors'],
+    label: 'DATABASE',
+    activeOn: ['/marathon/shells', '/marathon/matchups', '/marathon/mods', '/marathon/uniques', '/marathon/factions', '/marathon/maps'],
     children: [
-      { label: 'ALL INTEL', href: '/marathon/intel', desc: 'Every article, every editor' },
-      intelChild('cipher',  'Play analysis & grades'),
-      intelChild('nexus',   'Meta tracking & strategy'),
-      intelChild('dexter',  'Build analysis & loadouts'),
-      intelChild('ghost',   'Community pulse & sentiment'),
-      intelChild('miranda', 'Field guides & player development'),
-      { label: 'SITREP',    href: '/marathon/sitrep',        desc: 'Daily meta situation report',        color: '#00d4ff' },
-      { label: 'EDITORS',   href: '/editors',       desc: 'Meet the newsroom' },
+      { label: 'SHELLS',   href: '/marathon/shells',   desc: 'Runner shells & abilities' },
+      { label: 'MATCHUPS', href: '/marathon/matchups', desc: 'Shell-vs-shell matchups' },
+      { label: 'MODS',     href: '/marathon/mods',     desc: 'Weapon mods by slot' },
+      { label: 'UNIQUES',  href: '/marathon/uniques',  desc: 'Unique weapons' },
+      { label: 'FACTIONS', href: '/marathon/factions', desc: 'Factions & reputation' },
+      { label: 'MAPS',     href: '/marathon/maps',     desc: 'Maps, zones & bosses' },
     ],
   },
   {
@@ -51,7 +40,14 @@ var NAV_ITEMS = [
       { label: 'PERSONAL COACH ✦', href: '/join',    desc: 'AI loadout audit — closed beta',        color: '#00d4ff', beta: true },
     ],
   },
-  { label: 'RANKED', href: '/marathon/ranked' },
+  {
+    label: 'INTEL',
+    activeOn: ['/marathon/intel', '/marathon/sitrep'],
+    children: [
+      { label: 'ALL INTEL', href: '/marathon/intel',  desc: 'Every article' },
+      { label: 'SITREP',    href: '/marathon/sitrep', desc: 'Daily meta situation report', color: '#00d4ff' },
+    ],
+  },
 ];
 
 function isTabActive(item, pathname) {
