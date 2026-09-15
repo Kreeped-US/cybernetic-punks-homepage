@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-15 - Admin metrics tracking fixed: Wardogs->Marathon analytics leak closed (commit 84019cd)
+
+- The dashboard was BLIND to Wardogs + INFLATING Marathon (analytics mirror of the weapon-leak). 3 compounding bugs, empirically confirmed: (1) /api/track ALLOWED_GAMES hardcoded ['marathon','dmz','network'] -> rewrote wardogs/bodycam/pubg events to 'marathon' (37 /wardogs page-views all tagged marathon; 0 wardogs events in 30d). (2) ViewTracker on only 2 Wardogs pages (loadouts, loadouts/best) -- articles/economy/tier-list/arsenal/economy-mine had none. (3) loadouts_generate/save/share not in ALLOWED_EVENTS -> dropped (400).
+- FIX (P1-P3): P1 ALLOWED_GAMES now derived from ROOT_GAMES (leak stopped; only genuinely-unknown slugs fall back). P2 ViewTracker mounted on the 6 missing Wardogs surfaces (correct type; hub->tool bucketing fixed). P3 loadouts events added to ALLOWED_EVENTS + gameSlug='wardogs' at call sites + Bridge "Builds Created" per-game aware (advisor_generate marathon / loadouts_generate wardogs). END-TO-END PROOF: loaded /wardogs/tier-list -> first-ever wardogs-tagged site_events row (was 0/30d), not rewritten to marathon.
+- WHY IT MATTERED: about to drive distribution to Wardogs -> without this, the growth would've shown as Marathon or been dropped. Now measurable.
+- P4 (flagged, NOT done -- operator's call): historical /wardogs events tagged marathon can be backfilled (path data survives); Marathon's historical views inflated until then. Cosmetic for history; skip unless clean historical comparison wanted.
+- PATTERN (now 3x today/recently -- worth a systematic sweep): "shared resource hardcoded/scoped to a stale game subset instead of derived from ROOT_GAMES" -- weapon_stats (data leak), Bridge/telemetry (stale game lists), analytics (this). ALL fixed by "dynamic from ROOT_GAMES". The site-audit pass should grep for: hardcoded game lists + shared-table queries missing game_slug -- likely MORE lurking.
+
+---
 ## 2026-09-15 - Admin Bridge vitals toggle: all games dynamic (commit 5efe5d3)
 
 - The /admin Bridge "Ship Vitals" toggle only showed ALL/MARATHON/DMZ -- Wardogs (flagship), Bodycam, PUBG absent (couldn't see Wardogs stats). Same class as the telemetry "4 games" bug: two stale hardcoded lists (API GAMES=['marathon','dmz'] + UI GAME_TABS). Data existed (per-game game_slug reads) -- just never built/surfaced.
