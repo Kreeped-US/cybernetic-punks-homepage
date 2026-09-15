@@ -15,11 +15,16 @@
 //   node scripts/seed-gap-candidates.mjs --apply    # delete the test seeds + upsert the tranche
 //
 // "HAS A GUIDE" (coverage) = the entity NAME appears as a whole space-boundaried phrase
-// in a published Miranda survivor headline (primary-subject proxy -- guide headlines lead
-// with their subject). Deliberately CONSERVATIVE: a loose match marks an entity COVERED,
-// so we UNDER-seed rather than seed a near-dup (and the roster-wide dedup gate is the
-// backstop at generation anyway). Substance = verified store rows (substanceFloor's floor);
-// only entities that CLEAR the floor are seeded (substance is the warrant, per doctrine).
+// in ANY published survivor headline (WHOLE corpus, all editors -- not Miranda-only).
+// FIXED 2026-09-15: the coverage read was MIRANDA-only, but the cron's assignment gate
+// (runAssignmentGate -> checkNovelty) checks the WHOLE corpus. So a weapon NEXUS had already
+// covered was seeded as a Miranda-gap, then the gate REINFORCE-rejected it -- and because
+// selectQueued took the top-1 candidate, that reinforce head JAMMED the queue and Miranda
+// starved (no directive -> self-select -> corpus collision -> failed every run). Matching this
+// coverage read to the gate's whole-corpus novelty stops seeding those un-consumable reinforces.
+// Deliberately CONSERVATIVE: a loose match marks an entity COVERED, so we UNDER-seed rather than
+// seed a near-dup (the roster-wide dedup gate is the backstop at generation). Substance = verified
+// store rows (substanceFloor's floor); only entities that CLEAR the floor are seeded.
 
 import { readFileSync } from 'fs';
 import { createClient } from '@supabase/supabase-js';
@@ -64,15 +69,16 @@ async function pageAll(table, cols, scoped) {
   return out;
 }
 
-// Miranda's published-survivor guide headlines -> the coverage corpus.
-const mirRows = [];
+// The WHOLE published-survivor corpus (ALL editors) -> the coverage corpus. Matches the cron
+// assignment gate's whole-corpus novelty (was MIRANDA-only, which seeded corpus-reinforces).
+const corpusRows = [];
 { let from = 0; for (;;) {
   const { data } = await sb.from('feed_items').select('headline')
-    .eq('game_slug', GAME).eq('editor', 'MIRANDA').eq('is_published', true).not('noindex', 'is', true)
+    .eq('game_slug', GAME).eq('is_published', true).not('noindex', 'is', true)
     .range(from, from + 999);
-  if (!data || !data.length) break; mirRows.push(...data); if (data.length < 1000) break; from += 1000;
+  if (!data || !data.length) break; corpusRows.push(...data); if (data.length < 1000) break; from += 1000;
 } }
-const heads = mirRows.map(r => ' ' + String(r.headline || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ');
+const heads = corpusRows.map(r => ' ' + String(r.headline || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ');
 function covered(name) {
   const n = ' ' + String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
   if (n.trim().length < 3) return true;

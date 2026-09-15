@@ -56,20 +56,33 @@ export function buildCandidateDirectiveObject(candidate, verifiedBlock) {
   };
 }
 
-// Read-only: the top-priority status='queued' candidate for a game, or null.
-// Guarded (a lookup error returns null -- the observe pass is non-fatal).
-export async function selectQueuedCandidate(supabase, gameSlug) {
+// Read-only: the top-N status='queued' candidates for a game, priority desc (default 15).
+// The cron consumer walks these in order and assigns the FIRST that PASSES the assignment
+// gate -- so a top-priority candidate the gate would REINFORCE/GAP (e.g. a weapon already
+// covered elsewhere in the corpus) no longer JAMS the queue: selection moves past it to the
+// next assignable one instead of leaving MIRANDA with no directive (which forced her into a
+// self-select that collided with the corpus and failed the run). Guarded: a lookup error
+// returns [] (the observe/assign pass is non-fatal). See app/api/cron/route.js.
+export async function selectQueuedCandidates(supabase, gameSlug, limit) {
   try {
+    var n = (typeof limit === 'number' && limit > 0) ? limit : 15;
     var { data, error } = await supabase
       .from('content_candidate')
       .select('id, game_slug, entity, facet, target_phrase, priority')
       .eq('game_slug', gameSlug)
       .eq('status', 'queued')
       .order('priority', { ascending: false })
-      .limit(1);
-    if (error || !data || !data.length) return null;
-    return data[0];
+      .limit(n);
+    if (error || !data) return [];
+    return data;
   } catch (err) {
-    return null;
+    return [];
   }
+}
+
+// Back-compat single-candidate accessor (the top-priority queued row, or null). Retained for
+// any caller that wants just the head; the cron now uses selectQueuedCandidates + a gate scan.
+export async function selectQueuedCandidate(supabase, gameSlug) {
+  var rows = await selectQueuedCandidates(supabase, gameSlug, 1);
+  return rows.length ? rows[0] : null;
 }

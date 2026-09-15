@@ -20,7 +20,7 @@ import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { loadSurvivorCorpus, findCorpusDuplicate } from '@/lib/content/dedupGate';
 import { runGateLogPass } from '@/lib/content/gateLogPass';
 import { runAssignmentGate } from '@/lib/content/assignmentGate';
-import { buildCandidateDirectiveObject, selectQueuedCandidate } from '@/lib/content/candidateAssignment';
+import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/content/candidateAssignment';
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
 
@@ -1218,48 +1218,55 @@ export async function GET(req) {
     // See docs/CONTENT_PIPELINE_ARCHITECTURE.md step 2.
     var queueAssignObserve = null;
     try {
-      var topCandidate = await selectQueuedCandidate(supabase, PRODUCING_GAME_SLUG);
-      if (!topCandidate) {
-        console.log('[QUEUE-ASSIGN-LOG] no queued candidate for ' + PRODUCING_GAME_SLUG + ' -- nothing to observe');
+      // 2-ARM ASSIGNMENT with a GATE SCAN. Walk the top-N queued candidates in priority order
+      // and assign the FIRST that PASSES the gate to MIRANDA (grounded, held-for-review). A top
+      // candidate the gate REINFORCEs (already covered elsewhere in the corpus -- e.g. a weapon
+      // NEXUS wrote about) or GAPs is SKIPPED, not jammed on. THE BUG THIS FIXES: the old top-1
+      // selection stuck on a reinforce head forever, so MIRANDA never got a directive, fell into
+      // self-select, collided with the corpus, and FAILED every run (no feed_item since 2026-09-01).
+      // A HUMAN MIRANDA directive still always wins. The candidate is NOT marked done here -- the
+      // write-back is coupled to ACTUAL generation (after allSettled), so a skip/frozen/failed run
+      // leaves the queue untouched.
+      var queued = await selectQueuedCandidates(supabase, PRODUCING_GAME_SLUG, 15);
+      if (!queued.length) {
+        console.log('[QUEUE-ASSIGN-LOG] no queued candidate for ' + PRODUCING_GAME_SLUG + ' -- nothing to assign');
       } else {
-        var qGate = await runAssignmentGate(
-          { game_slug: topCandidate.game_slug, entity: topCandidate.entity, facet: topCandidate.facet },
-          supabase, PRODUCING_GAME
-        );
-        var wouldAssign = qGate.decision === 'pass';
-        // -- 2-ARM: turn the log-only observe into ASSIGNMENT. On a gate PASS, assign the
-        //    candidate to MIRANDA (the evergreen field-guide editor) via a synthesized
-        //    directive-ROW OBJECT -- the seam buildMirandaPrompt consumes (_directive), NOT the
-        //    string helper. A HUMAN MIRANDA directive always wins (never overwritten). gap/
-        //    reinforce -> not assigned (self-select fallback), unchanged. The candidate is NOT
-        //    marked done here; the write-back is coupled to ACTUAL generation (after allSettled).
-        //    So while MIRANDA is FROZEN (not in the active roster) she never runs -> the directive
-        //    is built + assigned but never applied/generated -> the candidate stays queued and
-        //    nothing is written. That is the observable-without-output verification surface.
-        var mirandaConfigured = (PRODUCING_GAME.editorial.editors || []).indexOf('MIRANDA') !== -1;
-        var humanMiranda = !!directiveMap['MIRANDA'];   // captured BEFORE we may assign (human wins)
-        var assigned = false;
-        if (wouldAssign && !humanMiranda) {
-          // GROUNDING: fetch the candidate entity's populated verified stat row (facet-general;
-          // verified=true only) and inject it into the directive so MIRANDA writes FROM ground
-          // truth, not the topic name alone. Null (no verified row) -> block omitted, non-fatal.
-          var vBlock = await fetchVerifiedStatBlock(supabase, PRODUCING_GAME_SLUG, topCandidate.entity, topCandidate.facet);
-          directiveMap['MIRANDA'] = buildCandidateDirectiveObject(topCandidate, vBlock);
-          assigned = true;
-          console.log('[QUEUE-ASSIGN] 2-ARM: candidate entity="' + topCandidate.entity + '" facet=' +
-            topCandidate.facet + ' priority=' + topCandidate.priority + ' decision=pass -> ASSIGNED to MIRANDA' +
-            ' (synthetic directive: "' + directiveMap['MIRANDA'].instruction + '"; grounding=' +
-            (vBlock ? 'verified-stats-injected' : 'NO-VERIFIED-ROW') + ')' +
-            (mirandaConfigured ? '' : ' [MIRANDA FROZEN: not in roster -> will NOT generate; candidate stays queued, no write-back]'));
-        } else {
-          console.log('[QUEUE-ASSIGN] candidate entity="' + topCandidate.entity + '" facet=' +
-            topCandidate.facet + ' priority=' + topCandidate.priority + ' decision=' + qGate.decision +
-            ' -> NOT assigned (' + (wouldAssign ? 'human MIRANDA directive already present' : qGate.decision + ' -> self-select fallback') + ')');
+        var chosen = null, chosenGate = null, skipped = [];
+        for (var qi = 0; qi < queued.length; qi++) {
+          var cand = queued[qi];
+          var g = await runAssignmentGate(
+            { game_slug: cand.game_slug, entity: cand.entity, facet: cand.facet },
+            supabase, PRODUCING_GAME
+          );
+          if (g.decision === 'pass') { chosen = cand; chosenGate = g; break; }
+          skipped.push(cand.entity + '[p' + cand.priority + ']=' + g.decision);
         }
-        queueAssignObserve = {
-          entity: topCandidate.entity, facet: topCandidate.facet, priority: topCandidate.priority,
-          decision: qGate.decision, assigned: assigned,
-        };
+        if (skipped.length) {
+          console.log('[QUEUE-ASSIGN] skipped ' + skipped.length + ' non-pass candidate(s): ' + skipped.join(', ') +
+            ' (already-covered/reinforce or gap -- moved past, not jamming the queue)');
+        }
+        var mirandaConfigured = (PRODUCING_GAME.editorial.editors || []).indexOf('MIRANDA') !== -1;
+        var humanMiranda = !!directiveMap['MIRANDA'];   // human directive always wins
+        var assigned = false;
+        if (!chosen) {
+          console.log('[QUEUE-ASSIGN] no PASS candidate in the top ' + queued.length + ' queued -> MIRANDA self-selects this cycle');
+        } else if (humanMiranda) {
+          console.log('[QUEUE-ASSIGN] PASS candidate entity="' + chosen.entity + '" facet=' + chosen.facet +
+            ' priority=' + chosen.priority + ' -> NOT assigned (human MIRANDA directive already present)');
+        } else {
+          // GROUNDING: inject the entity's verified stat block so MIRANDA writes FROM ground truth,
+          // not the topic name alone. Null (no verified row) -> block omitted, non-fatal.
+          var vBlock = await fetchVerifiedStatBlock(supabase, PRODUCING_GAME_SLUG, chosen.entity, chosen.facet);
+          directiveMap['MIRANDA'] = buildCandidateDirectiveObject(chosen, vBlock);
+          assigned = true;
+          console.log('[QUEUE-ASSIGN] 2-ARM: candidate entity="' + chosen.entity + '" facet=' + chosen.facet +
+            ' priority=' + chosen.priority + ' decision=pass -> ASSIGNED to MIRANDA (grounding=' +
+            (vBlock ? 'verified-stats-injected' : 'NO-VERIFIED-ROW') + ')' +
+            (mirandaConfigured ? '' : ' [MIRANDA FROZEN: not in roster -> will NOT generate; candidate stays queued]'));
+        }
+        queueAssignObserve = chosen
+          ? { entity: chosen.entity, facet: chosen.facet, priority: chosen.priority, decision: 'pass', assigned: assigned, skipped: skipped.length }
+          : { entity: null, decision: 'none-pass', assigned: false, skipped: skipped.length };
       }
     } catch (qErr) {
       console.log('[QUEUE-ASSIGN-LOG] observe pass failed (non-fatal): ' + (qErr && qErr.message));
