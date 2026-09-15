@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-14 - SEO collapse diagnosis CORRECTED (Fable challenge + GSC forensics)
+
+- Fable challenged the "deleted-article graveyard" diagnosis; GSC forensics (gsc_url_inspection + gsc_page_metrics, read-only) largely vindicate Fable. CORRECTED verdict: BOTH contributed, COMPOUND MIGRATION SHOCK is PRIMARY.
+- CORRECTIONS to the earlier diagnosis: (1) "437->15/day collapse" was overstated -- 437 was a 4-day spike; real baseline ~200-300/day held through Sept 6, then a CLIFF on Sept 7 (~17 days post-migration = Google finishing re-evaluation of stacked changes, not a graveyard bleed). (2) "849 crawled-not-indexed = legacy churn" was WRONG -- CNI is definitionally 200-returning pages; a deleted URL 301->404 CANNOT be CNI (it's in "Not found 404" = the 175). The 849 are almost certainly migrated /marathon/* under re-evaluation (new namespace indexes fine: 354/384). Fable right here.
+- BUT Fable's "deletions were index-neutral (pre-noindexed)" is ALSO wrong: Google still had ~1,100 old /intel INDEXED at delete time (hadn't processed the noindex), so hard-deleting dropped ~1,100 indexed URLs to 404 on a DA-23 domain = a real trust drag (surfaces in 404/redirect buckets, not the 849).
+- PRIMARY CAUSE: URL migration + root redesign + title change STACKED Aug 20-25; the 308 redirects FAILED to transfer authority for 3+ weeks (the real killer; fixed to 301 on 9/14); impressions cliff Sept 7. SECONDARY: the ~1,100 dead-URL drop.
+- CORRECTED DOCTRINE: (1) NEVER STACK sitewide structural changes (migration + title + redesign) in one window -- sequence + let each settle + watch deindex. (2) Use 301 NOT 308 for migrations (308 authority-stall was primary). (3) Confirm de-indexing (or 410) BEFORE hard-deleting (the noindex wasn't Google-processed yet); slow the generate/delete churn.
+- RECOVERY MECHANISM (corrected): the 301 authority transfer (shipped 9/14) + recrawl + FRESH content/links is what recovers RANKINGS -- NOT the 410s alone (410s are correct hygiene but don't reverse the cliff). So the fresh content (news, PvE) + distribution (links) + the 301 fix ARE the recovery. It's a ranking/authority problem (recoverable), not domain-distrust (new namespace indexes fine).
+- OPERATOR CONFIRM (2 min): export live GSC "Crawled - not indexed" URL list, check first path segment. Prediction: dominated by /marathon/* migrated + thin pages, little deleted /intel -> confirms compound-migration-shock primary. + Bing cross-check (added to Bing WMT -- if Bing indexes current pages cleanly, confirms site is healthy, migration-lag not distrust).
+
+---
 ## 2026-09-14 - Arsenal<->Tier List cross-link + tomorrow's plan (commit cfa709e)
 
 - ARSENAL -> TIER LIST cross-link closed (the missing direction). Detail-page tier badges ("B Tier . Rankings ->" linking to the tier list; "Unranked . Tier list ->" for launchers) + arsenal-list CTA + per-card tier chips. NEW shared source of truth lib/wardogs/weaponTiers.js (computeWeaponTiers/tierMapFrom); the tier list itself refactored onto it -> both pages run the IDENTICAL computation -> tiers guaranteed consistent (verified 33/33, 0 mismatches). Pages KEPT SEPARATE (confirmed correct -- distinct SEO query sets, the tier list is the shareable flagship, mirrors Marathon Weapons+Ranked separate; merging would bury the flagship). Consistency trap caught: weightedTtk uses fire_rate for the one-shot floor but the tier list load never selects fire_rate -- the shared helper uses the SAME select (no fire_rate) so results match by construction.
