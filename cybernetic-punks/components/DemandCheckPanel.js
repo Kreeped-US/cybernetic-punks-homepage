@@ -21,7 +21,12 @@ const DISPLAY_DEFAULT = 25;
 
 // Verdict presentation -- the three build/don't-build buckets.
 const VERDICTS = {
-  'build':          { label: 'BUILD',          color: '#00ff88', hint: 'committed demand, not served -> authorized + unserved' },
+  'build':          { label: 'BUILD',          color: '#00ff88', hint: 'committed demand, not served, entity present -> commit a framing target' },
+  // NO-ENTITY: deliberately humble, two-possibility wording -- an entity-less result can mean a
+  // genuinely editorial keyword OR a real entity not yet in the (known-incomplete, esp. Wardogs)
+  // vocab. It is NOT a confident "write a page." Muted gold reads "needs your judgment," distinct
+  // from BUILD green / NO-DEMAND grey (and softer than the served amber). Color is tunable.
+  'no-entity':      { label: 'NO ENTITY -- write a page or seed entity', color: '#c9a961', hint: 'real demand, unserved, but no entity name resolved -- editorial keyword OR entity not yet in vocab; write a page or seed the entity (your judgment)' },
   'already-served': { label: 'ALREADY-SERVED', color: '#e0a13a', hint: 'a page already ranks page-1 -> do not fork (cannibalization)' },
   'no-demand':      { label: 'NO-DEMAND',      color: '#888888', hint: 'no committed demand -> do not build on intuition' },
 };
@@ -70,7 +75,7 @@ export default function DemandCheckPanel({ password }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState('all');        // all | build | already-served | no-demand
+  const [filter, setFilter] = useState('all');        // all | build | no-entity | already-served | no-demand
   const [sortKey, setSortKey] = useState('demand');   // demand | impressions | position | clicks | volume
   const [showAll, setShowAll] = useState(false);
   // single-query lookup
@@ -126,7 +131,7 @@ export default function DemandCheckPanel({ password }) {
           {open ? 'v' : '>'} DEMAND CHECK - AUTHORIZE BEFORE BUILDING
         </div>
         <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
-          {counts ? counts.build + ' build / ' + counts.already_served + ' served / ' + counts.no_demand + ' no-demand' : ''}
+          {counts ? counts.build + ' build / ' + counts.no_entity + ' no-entity / ' + counts.already_served + ' served / ' + counts.no_demand + ' no-demand' : ''}
         </span>
       </div>
 
@@ -164,7 +169,7 @@ export default function DemandCheckPanel({ password }) {
 
           {/* verdict filter chips */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {[['all', 'ALL', allRows.length], ['build', 'BUILD', counts ? counts.build : 0], ['already-served', 'SERVED', counts ? counts.already_served : 0], ['no-demand', 'NO-DEMAND', counts ? counts.no_demand : 0]].map(([k, lbl, n]) => {
+            {[['all', 'ALL', allRows.length], ['build', 'BUILD', counts ? counts.build : 0], ['no-entity', 'NO-ENTITY', counts ? counts.no_entity : 0], ['already-served', 'SERVED', counts ? counts.already_served : 0], ['no-demand', 'NO-DEMAND', counts ? counts.no_demand : 0]].map(([k, lbl, n]) => {
               const c = k === 'all' ? '#ffffff' : (VERDICTS[k] ? VERDICTS[k].color : '#fff');
               const active = filter === k;
               return (

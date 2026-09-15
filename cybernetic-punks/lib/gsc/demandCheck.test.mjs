@@ -7,8 +7,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  deriveRow, buildDemandRows, lookupDemand,
-  VERDICT_BUILD, VERDICT_SERVED, VERDICT_NO_DEMAND,
+  deriveRow, buildDemandRows, lookupDemand, countVerdicts,
+  VERDICT_BUILD, VERDICT_NO_ENTITY, VERDICT_SERVED, VERDICT_NO_DEMAND,
 } from './demandCheck.js';
 import { aggregateByQuery } from './queryAggregate.js';
 
@@ -87,6 +87,52 @@ test('case-insensitive join between keyword_targets and GSC', () => {
   assert.equal(rows.length, 1);
   assert.equal(rows[0].verdict, VERDICT_SERVED);
   assert.equal(rows[0].position, 4);
+});
+
+// ── BUILD SPLIT: entity-bound 'build' vs entity-less 'no-entity' (Reading A) ──
+test('SPLIT: former-BUILD with an entity NAME present stays BUILD', () => {
+  const rows = buildDemandRows([kt('marathon vandal loadout', true, 400)], [], { isBindable: () => true });
+  assert.equal(rows[0].verdict, VERDICT_BUILD);
+  assert.equal(rows[0].bindable, true);
+});
+
+test('SPLIT: former-BUILD with NO entity name -> NO-ENTITY', () => {
+  const rows = buildDemandRows([kt('marathon game monetization bulkhead', true, 400)], [], { isBindable: () => false });
+  assert.equal(rows[0].verdict, VERDICT_NO_ENTITY);
+  assert.equal(rows[0].bindable, false);
+});
+
+test('SPLIT: served short-circuits regardless of bindability (ALREADY-SERVED unchanged)', () => {
+  const rows = buildDemandRows(
+    [kt('marathon best weapons', true, 900)],
+    [g('marathon best weapons', 'https://cyberneticpunks.com/marathon/meta', 3, 120, 10)],
+    { isBindable: () => false },
+  );
+  assert.equal(rows[0].verdict, VERDICT_SERVED);
+});
+
+test('SPLIT: bindability does not affect NO-DEMAND (below floor, uncommitted)', () => {
+  const one = lookupDemand('marathon hidden lore', [], [g('marathon hidden lore', 'https://x/x', 45, 2)], { isBindable: () => false });
+  assert.equal(one.verdict, VERDICT_NO_DEMAND);
+});
+
+test('SPLIT: absent bindability defaults to BUILD (back-compat, never a spurious no-entity)', () => {
+  const rows = buildDemandRows([kt('marathon whatever', true, 400)], []); // no isBindable supplied
+  assert.equal(rows[0].verdict, VERDICT_BUILD);
+  assert.equal(rows[0].bindable, true);
+});
+
+test('SPLIT: countVerdicts tallies no_entity separately (NOT absorbed into no_demand)', () => {
+  const rows = buildDemandRows(
+    [kt('marathon vandal guide', true, 100), kt('marathon monetization bulkhead', true, 100)],
+    [],
+    { isBindable: (k) => k.includes('vandal') },
+  );
+  const c = countVerdicts(rows);
+  assert.equal(c.build, 1, 'the vandal keyword is build');
+  assert.equal(c.no_entity, 1, 'the monetization keyword is no-entity');
+  assert.equal(c.no_demand, 0, 'no-entity must NOT fall into the no_demand else-bucket');
+  assert.equal(c.total, 2);
 });
 
 test('shared aggregator: minPos/bestPage/impressions match the hand-rolled reviewList math', () => {

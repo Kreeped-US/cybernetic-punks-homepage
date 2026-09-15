@@ -19,6 +19,7 @@ import {
   DEMAND_WINDOW_DAYS, DEMAND_MIN_IMPRESSIONS, SERVED_POSITION_MAX,
 } from '@/lib/gsc/demandCheck';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
+import { loadVocabulary, findMentions } from '@/lib/coverage';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,14 +84,35 @@ export async function GET(req) {
       'keyword, game_slug, is_active, volume, last_known_volume, difficulty, intent, source, studied_at, notes',
       (q) => q.eq('game_slug', game));
 
+    // 4. BINDABILITY (Reading A): does a keyword contain a real entity NAME for this game?
+    //    findMentions is exact word-boundary vocab matching (never guesses); >= 1 mention = an
+    //    entity is present -> a former-BUILD keyword stays 'build', else -> 'no-entity' (write a
+    //    page or seed the entity). The vocab is a DB read, so bindability is computed HERE and
+    //    passed as a function into the PURE deriveRow. FAIL-SAFE: if the vocab load fails,
+    //    isBindable stays null -> deriveRow defaults every row to bindable -> no spurious
+    //    'no-entity' when we could not check. (Vocab is known-incomplete for non-Marathon games;
+    //    that is exactly why the NO-ENTITY label is humble -- editorial keyword OR unseeded entity.)
+    let vocab = null;
+    try { vocab = await loadVocabulary(supabase, game); } catch (e) { vocab = null; }
+    const bindableCache = new Map();
+    const isBindable = vocab
+      ? (keyword) => {
+          const k = String(keyword == null ? '' : keyword);
+          if (bindableCache.has(k)) return bindableCache.get(k);
+          const b = findMentions(k, vocab).length > 0;
+          bindableCache.set(k, b);
+          return b;
+        }
+      : null;
+
     if (query != null && query.trim() !== '') {
-      // LOOKUP MODE -- the three-part verdict for one query.
-      const result = lookupDemand(query, ktRows, gscRows, { noindexedSlugs, game });
+      // LOOKUP MODE -- the four-part verdict for one query.
+      const result = lookupDemand(query, ktRows, gscRows, { noindexedSlugs, game, isBindable });
       return Response.json({ game, mode: 'lookup', query, served_position_max: SERVED_POSITION_MAX, result });
     }
 
     // BROWSER MODE -- the full per-game demand map.
-    const rows = buildDemandRows(ktRows, gscRows, { noindexedSlugs });
+    const rows = buildDemandRows(ktRows, gscRows, { noindexedSlugs, isBindable });
     return Response.json({
       game,
       mode: 'browser',

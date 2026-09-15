@@ -31,7 +31,8 @@ export const DEMAND_MIN_IMPRESSIONS = 5;
 export const DEMAND_WINDOW_DAYS = 28;
 
 // Verdict vocabulary (the three build/don't-build buckets).
-export const VERDICT_BUILD = 'build';                   // committed demand + not served -> authorized + unserved
+export const VERDICT_BUILD = 'build';                   // committed demand + not served + entity present -> commit a framing target
+export const VERDICT_NO_ENTITY = 'no-entity';           // committed demand + not served + NO entity name -> write a page or seed the entity
 export const VERDICT_SERVED = 'already-served';         // a page already ranks page-1 -> do not fork
 export const VERDICT_NO_DEMAND = 'no-demand';           // no committed demand -> do not build on intuition
 
@@ -81,11 +82,21 @@ export function deriveRow(input) {
   const hasForecast = (volume != null && volume > 0) || (lastKnownVolume != null && lastKnownVolume > 0);
   const hasCommittedDemand = committed === 'accepted' || (kt != null && hasForecast) || impressions >= DEMAND_MIN_IMPRESSIONS;
 
+  // BINDABILITY (Reading A). A former-BUILD keyword that contains a real entity NAME stays
+  // 'build' (there is an entity to commit a framing target for); one with NO entity name is
+  // 'no-entity' (write a page or seed the entity). `input.bindable` is supplied by the caller
+  // (the route computes it via findMentions against the loaded vocab) so deriveRow stays PURE /
+  // zero-I/O. UNDEFINED -> treated as bindable, so callers/tests that do not compute bindability
+  // keep the prior 3-verdict behavior and never emit a spurious no-entity. Facet is deliberately
+  // NOT required here -- name-presence is the signal; facet is the operator's commit-time choice.
+  const bindable = input.bindable !== false;
+
   // served short-circuits: if a page already ranks page-1, the answer is "do not fork"
-  // regardless of committed demand (that is the cannibalization guard).
+  // regardless of committed demand (that is the cannibalization guard). The bindability split
+  // fires ONLY inside the former-BUILD set (served and no-demand are unchanged).
   let verdict;
   if (served) verdict = VERDICT_SERVED;
-  else if (hasCommittedDemand) verdict = VERDICT_BUILD;
+  else if (hasCommittedDemand) verdict = bindable ? VERDICT_BUILD : VERDICT_NO_ENTITY;
   else verdict = VERDICT_NO_DEMAND;
 
   return {
@@ -100,6 +111,7 @@ export function deriveRow(input) {
     position, avg_position: avgPosition,
     best_page: bestPage,
     served,
+    bindable,                        // Reading A: an entity NAME appears in the keyword
     verdict,
   };
 }
@@ -119,6 +131,9 @@ function demandMagnitude(row) {
 export function buildDemandRows(ktRows, gscRows, opts) {
   const options = opts || {};
   const minImpr = options.minImpressions == null ? DEMAND_MIN_IMPRESSIONS : options.minImpressions;
+  // isBindable(keyword) -> boolean, supplied by the route (closed over the loaded vocab). Absent
+  // -> deriveRow defaults bindable=true (prior behavior). Pure here: the I/O lives in the caller.
+  const isBindable = typeof options.isBindable === 'function' ? options.isBindable : null;
   const aggMap = aggregateByQuery(gscRows || [], { noindexedSlugs: options.noindexedSlugs });
 
   // normalized lookup so keyword_targets casing and GSC query casing join cleanly.
@@ -132,7 +147,7 @@ export function buildDemandRows(ktRows, gscRows, opts) {
   for (const kt of (ktRows || [])) {
     const kw = normalizeKeyword(kt.keyword);
     if (!kw || seen.has(kw)) continue;
-    rows.push(deriveRow({ keyword: kt.keyword, game_slug: kt.game_slug, kt, agg: aggByNorm.get(kw) || null }));
+    rows.push(deriveRow({ keyword: kt.keyword, game_slug: kt.game_slug, kt, agg: aggByNorm.get(kw) || null, bindable: isBindable ? isBindable(kt.keyword) : undefined }));
     seen.add(kw);
   }
 
@@ -142,7 +157,7 @@ export function buildDemandRows(ktRows, gscRows, opts) {
     if (seen.has(kw)) continue;
     const servedUncommitted = agg.minPos !== Infinity && agg.minPos <= SERVED_POSITION_MAX;
     if (agg.impressions < minImpr && !servedUncommitted) continue;
-    rows.push(deriveRow({ keyword: agg.query, game_slug: agg.game_slug, kt: null, agg }));
+    rows.push(deriveRow({ keyword: agg.query, game_slug: agg.game_slug, kt: null, agg, bindable: isBindable ? isBindable(agg.query) : undefined }));
     seen.add(kw);
   }
 
@@ -154,19 +169,21 @@ export function buildDemandRows(ktRows, gscRows, opts) {
 export function lookupDemand(query, ktRows, gscRows, opts) {
   const options = opts || {};
   const kw = normalizeKeyword(query);
+  const isBindable = typeof options.isBindable === 'function' ? options.isBindable : null;
   const aggMap = aggregateByQuery(gscRows || [], { noindexedSlugs: options.noindexedSlugs });
   let agg = null;
   for (const a of aggMap.values()) { if (normalizeKeyword(a.query) === kw) { agg = a; break; } }
   let kt = null;
   for (const r of (ktRows || [])) { if (normalizeKeyword(r.keyword) === kw) { kt = r; break; } }
-  return deriveRow({ keyword: query, game_slug: options.game || (kt && kt.game_slug) || (agg && agg.game_slug) || null, kt, agg });
+  return deriveRow({ keyword: query, game_slug: options.game || (kt && kt.game_slug) || (agg && agg.game_slug) || null, kt, agg, bindable: isBindable ? isBindable(query) : undefined });
 }
 
 // Verdict tallies for the browser header.
 export function countVerdicts(rows) {
-  const c = { build: 0, already_served: 0, no_demand: 0, total: rows.length };
+  const c = { build: 0, no_entity: 0, already_served: 0, no_demand: 0, total: rows.length };
   for (const r of rows) {
     if (r.verdict === VERDICT_BUILD) c.build += 1;
+    else if (r.verdict === VERDICT_NO_ENTITY) c.no_entity += 1;   // explicit -- NOT absorbed into no_demand below
     else if (r.verdict === VERDICT_SERVED) c.already_served += 1;
     else c.no_demand += 1;
   }

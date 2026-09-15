@@ -312,7 +312,13 @@ function typeRank(t) {
 }
 
 // All entity mentions with position + role.
-function findMentions(text, vocab) {
+// EXPORTED (2026-09-15) for the demand-check bindability signal: a keyword is "entity-bound"
+// iff findMentions returns >= 1 mention (a real vocab entity NAME appears). deriveTuple is NOT
+// used for that test -- it returns `unclassified` even when an entity IS present but has no
+// confident facet, which would mislabel real entity keywords (e.g. "wardogs vandal loadout")
+// as entity-less. Name-presence is the correct, deterministic signal; facet is the operator's
+// commit-time judgment, not the classifier's. See lib/gsc/demandCheck.js + demand-check route.
+export function findMentions(text, vocab) {
   var t = (text || '');
   var lower = t.toLowerCase();
   var clauseEnd = firstClauseEnd(t);
