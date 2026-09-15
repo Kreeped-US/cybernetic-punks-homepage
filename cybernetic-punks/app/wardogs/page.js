@@ -22,7 +22,6 @@ import { Exo_2 } from 'next/font/google';
 import { wardogs } from '@/lib/games/wardogs';
 import { isGameLive } from '@/lib/network/gameStatus';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
-import { spendModel } from '@/lib/wardogs/economyModel';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -81,19 +80,9 @@ async function getWardogsStats() {
       updatedDaysAgo = Math.max(0, Math.floor((Date.now() - new Date(data[0].updated_at).getTime()) / 86400000));
     }
   } catch (e) { /* honest-null */ }
-  // Economy ticker teaser rate -- the reconciled model total ($/sec), so the teaser matches the
-  // /wardogs/economy hub's big number exactly (the recalibrated v3 basket). Best-effort; falls
-  // back to null (teaser uses its own cold default dials).
-  let economyRatePerSec = null;
-  try {
-    const [wRes, amRes, eiRes] = await Promise.all([
-      sb.from('weapon_stats').select('name, category, credit_cost').eq('game_slug', 'wardogs'),
-      sb.from('wardogs_ammo').select('box_price').eq('game_slug', 'wardogs'),
-      sb.from('wardogs_economy_items').select('name, category, subcategory, cost').eq('game_slug', 'wardogs'),
-    ]);
-    economyRatePerSec = spendModel({ weapons: wRes.data || [], ammo: amRes.data || [], items: eiRes.data || [] }).totalPerSec;
-  } catch (e) { /* teaser falls back to its own dials */ }
-  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo, economyRatePerSec };
+  // The economy teaser now leads with the OFFICIAL launch-weekend figure (static, verified), so it
+  // no longer needs the modeled rate computed here -- one fewer DB round-trip on the landing.
+  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo };
 }
 
 const A = 'var(--accent)';
@@ -200,7 +189,7 @@ export default async function WardogsLanding() {
       </section>
 
       {/* ===== ECONOMY TICKER TEASER (compact hook -> the Economy hub; matches its total) ===== */}
-      <WardogsTickerTeaser ratePerSec={s.economyRatePerSec} />
+      <WardogsTickerTeaser />
 
       {/* ===== PRODUCT CARDS ===== */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '44px 24px 20px' }}>

@@ -15,10 +15,10 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { buildRoadmap } from '@/lib/wardogs/progression';
-import { spendModel, shareStats, DEFAULT_PLAYERS } from '@/lib/wardogs/economyModel';
+import { spendModel, shareStats } from '@/lib/wardogs/economyModel';
 import { wardogsArticleSlugsForSection } from '@/lib/games/wardogs';
 import { TierIcon } from '@/components/network/confidenceTiers';
-import WardogsCashTicker from '@/components/wardogs/WardogsCashTicker';
+import { WardogsLaunchHero } from '@/components/wardogs/WardogsLaunchStats';
 import EconomyBreakdown from '@/components/wardogs/EconomyBreakdown';
 import EconomyShareStats from '@/components/wardogs/EconomyShareStats';
 import EconomyPlanner from '@/components/wardogs/EconomyPlanner';
@@ -123,10 +123,12 @@ export default async function WardogsEconomyHub() {
         </div>
       </section>
 
-      {/* BIG TICKER -- the SUM of the itemized breakdown (reconciled: ticker = total spend).
-          sustainedPlayers passed from the model's DEFAULT_PLAYERS so the DISPLAYED rate basis
-          matches the rate the model actually computed (single source of truth). */}
-      <WardogsCashTicker ratePerSec={model.totalPerSec} sustainedPlayers={DEFAULT_PLAYERS} itemized />
+      {/* OFFICIAL headline -- the verified Bulkhead launch-weekend figures ($562B spent / $1.3T
+          earned) REPLACE the old modeled live tick as the hero: verified beats modeled, and the
+          official number is unimpeachable + far larger. STATIC (a published snapshot never ticks).
+          The MODELED estimate lives on, clearly labeled, in the breakdown + personal-spend tools
+          below -- never blurred with this. See components/wardogs/WardogsLaunchStats.js. */}
+      <WardogsLaunchHero />
 
       {/* YOUR ECONOMY -- the personalized "wrapped" hook (Wave 2). The community number is the
           hook; THIS is the share loop -- people come for their own number. */}
@@ -135,7 +137,7 @@ export default async function WardogsEconomyHub() {
           <div style={{ flex: 1, minWidth: 260 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: A, marginBottom: 10 }}>YOUR WARDOGS WRAPPED</div>
             <div style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', margin: '0 0 8px' }}>How much have <span style={{ color: A }}>you</span> burned?</div>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', lineHeight: 1.55, margin: 0, maxWidth: 560 }}>The number above is everyone. Enter your hours, level, and playstyle for <strong style={{ color: '#fff' }}>your</strong> estimated spend + breakdown &mdash; and find out what your friends&rsquo; damage is.</p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', lineHeight: 1.55, margin: 0, maxWidth: 560 }}>Those are the official launch-weekend totals. Want <strong style={{ color: '#fff' }}>your</strong> number? Enter your hours, level, and playstyle for your estimated spend + breakdown &mdash; modeled from real prices &mdash; and find out what your friends&rsquo; damage is.</p>
           </div>
           <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, padding: '13px 22px', borderRadius: 4 }}>Get your number &rarr;</span>
         </Link>
@@ -233,8 +235,11 @@ export default async function WardogsEconomyHub() {
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: '0 0 10px', maxWidth: 840 }}>
             Wardogs runs on <strong style={{ color: '#fff' }}>persistent cash</strong>: you earn credits in-match and spend them to kit up. Most things &mdash; your weapon, armor, ammo, a vehicle &mdash; are bought <strong style={{ color: '#fff' }}>per life</strong>, so the money churns constantly. On top of that, weapons and vehicles have a <strong style={{ color: A }}>one-time unlock fee</strong> (the &ldquo;save for&rdquo; number, separate from the per-life price) gated behind class or career levels.
           </p>
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: '0 0 10px', maxWidth: 840 }}>
+            Two different numbers live on this page, and we keep them apart on purpose. The <strong style={{ color: 'var(--green,#5bd18e)' }}>headline</strong> ($562B spent / $1.3T earned) is <strong style={{ color: '#fff' }}>official</strong> &mdash; Bulkhead&rsquo;s own verified figures for the Early Access launch weekend, a bounded past snapshot. The <strong style={{ color: '#fff' }}>breakdown and personal-spend tools</strong> below are our own <strong style={{ color: '#fff' }}>model</strong> &mdash; an estimate of the <em>ongoing</em> sustained spend rate from real prices. They differ by a lot (the model reads far lower) because they measure different things: the official total is every player at the launch-weekend peak, spending fast while learning; our model is a deliberately conservative day-average of the current, already-declining playerbase. Neither is wrong &mdash; one is a launch snapshot, the other a sustained-rate estimate.
+          </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 840 }}>
-            The tracker and breakdown above are <strong style={{ color: '#fff' }}>models</strong> &mdash; sourced from Steam player counts and our real price data, labeled as estimates, in-game credits (not real money). Unlock ladder, prices, and gear costs are community-aggregated (Season 1), attributed, not Bulkhead-official; the L2A6/SPH-2 unlock gates, FOB cost, and Deagle&rsquo;s career gate are the Bulkhead-official values. Where a number isn&rsquo;t confirmed, it reads TBD.
+            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game credits (not real money). Unlock ladder, prices, and gear costs are community-aggregated (Season 1), attributed, not Bulkhead-official; the L2A6/SPH-2 unlock gates, FOB cost, and Deagle&rsquo;s career gate are the Bulkhead-official values. Where a number isn&rsquo;t confirmed, it reads TBD.
           </p>
         </div>
 

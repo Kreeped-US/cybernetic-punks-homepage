@@ -66,5 +66,5 @@ export const MARATHON_INTEL_EDITOR_LANES = new Set([
 // /economy/stat/<key> share carrier). Without this, /wardogs/economy/mine (3 segments, section=
 // economy, slug=mine, not a live article) would be wrongly 410'd as a dead economy article.
 export const RESERVED_SECTION_SLUGS = {
-  wardogs: { economy: new Set(['mine', 'stat']) },
+  wardogs: { economy: new Set(['mine', 'stat', 'launch-stats']) },
 };
