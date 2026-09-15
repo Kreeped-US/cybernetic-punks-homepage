@@ -44,9 +44,9 @@ async function resolveWeaponName(slug) {
 
 async function loadWeapon(name) {
   const sb = getSupabase();
-  const [wRes, bRes, tRes] = await Promise.all([
+  const [wRes, bRes, tRes, aRes] = await Promise.all([
     sb.from('weapon_stats')
-      .select('name, category, weapon_type, ammo_type, fire_rate, image_filename, rarity, shield_compatible, verified, verified_source')
+      .select('name, category, weapon_type, ammo_type, fire_rate, credit_cost, image_filename, rarity, shield_compatible, verified, verified_source')
       .eq('game_slug', GAME).eq('name', name).maybeSingle(),
     (async () => {
       let rows = [], from = 0;
@@ -60,8 +60,13 @@ async function loadWeapon(name) {
       return rows;
     })(),
     sb.from('wardogs_ttk').select('ammo_type, armor_tier, ttk_ms').eq('game_slug', GAME).eq('weapon_name', name),
+    // Weapon-specific attachments for this gun (compatible_weapons @> {name}). Phase-1 economy:
+    // name + slot + price (honest-null) -- NO effect scoring (effects are Phase 2, still NULL).
+    sb.from('wardogs_attachments')
+      .select('name, slot_type, price, image_filename, compatible_weapons')
+      .eq('game_slug', GAME).contains('compatible_weapons', [name]).order('slot_type').order('name'),
   ]);
-  return { weapon: wRes.data || null, matrix: bRes || [], ttk: (tRes && tRes.data) || [] };
+  return { weapon: wRes.data || null, matrix: bRes || [], ttk: (tRes && tRes.data) || [], attachments: (aRes && aRes.data) || [] };
 }
 
 function classOf(w) { return (w && (w.weapon_type || w.category)) || 'Weapon'; }
@@ -127,10 +132,20 @@ export default async function WeaponDetailPage({ params }) {
   const slug = (await params).slug;
   const name = await resolveWeaponName(slug);
   if (!name) notFound();
-  const { weapon, matrix, ttk } = await loadWeapon(name);
+  const { weapon, matrix, ttk, attachments } = await loadWeapon(name);
   if (!weapon) notFound();
 
   const cls = classOf(weapon);
+  // PHASE-1 ECONOMY (the differentiator): this weapon's compatible attachments + their attributed
+  // costs, and a "kitted cost" = base weapon price + the published-priced compatible attachments.
+  // COST only (no effect scoring -- Phase 2). Honest-null throughout: unpriced parts are excluded
+  // from the total and shown as "not published"; if the base weapon has no published price, the
+  // kitted total is omitted rather than guessed.
+  const attUsd = (n) => '$' + Number(n).toLocaleString('en-US');
+  const pricedAtt = (attachments || []).filter((a) => a.price != null);
+  const attTotal = pricedAtt.reduce((s, a) => s + a.price, 0);
+  const baseCost = weapon.credit_cost != null ? weapon.credit_cost : null;
+  const kitted = baseCost != null && pricedAtt.length ? baseCost + attTotal : null;
   const hasBallistics = matrix.length > 0;
   const base = baselineTtk(ttk);
   const hub = hubForType(weapon.weapon_type);
@@ -248,6 +263,46 @@ export default async function WeaponDetailPage({ params }) {
             <span style={{ color: tm ? tm.color : 'var(--accent)', fontWeight: 700, letterSpacing: 1 }}>ATTRIBUTED</span>
             <span>&mdash; ballistics + fire rate from {weapon.verified_source || SOURCE_LABEL}. Superseded by first-party data when Bulkhead publishes.</span>
           </div>
+
+          {/* KIT & COST (Phase-1 economy -- the differentiator). Compatible attachments + attributed
+              costs + a kitted total. COST only; effects are Phase 2 (not shown). */}
+          {attachments && attachments.length > 0 && (
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace' }}>KIT &amp; COST</span>
+                <TierIcon tier="attributed" size={10} />
+                <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>attributed prices &middot; cost only (no stat effects yet)</span>
+              </div>
+              {/* kitted-cost line -- honest-null aware */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 4px 4px 0', padding: '12px 15px', marginBottom: 12, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                {baseCost != null
+                  ? <>Base <strong style={{ color: '#fff' }}>{name}</strong> {attUsd(baseCost)}</>
+                  : <>Base <strong style={{ color: '#fff' }}>{name}</strong> <span style={{ color: 'var(--text-tertiary)' }}>(price not published)</span></>}
+                {pricedAtt.length > 0 && <> + {pricedAtt.length} published attachment{pricedAtt.length === 1 ? '' : 's'} {attUsd(attTotal)}</>}
+                {kitted != null
+                  ? <> = <strong style={{ color: 'var(--accent)' }}>{attUsd(kitted)}</strong> fully kitted</>
+                  : (baseCost == null && pricedAtt.length > 0 ? <> &mdash; kitted total pending the base price</> : null)}
+                {(attachments.length - pricedAtt.length) > 0 && <span style={{ color: 'var(--text-tertiary)' }}> &middot; {attachments.length - pricedAtt.length} more with no published price</span>}
+              </div>
+              {/* the compatible attachments themselves */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(150px, 100%), 1fr))', gap: 10 }}>
+                {attachments.map((a) => (
+                  <Link key={a.name} href="/wardogs/attachments" style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '10px 12px', textDecoration: 'none' }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 800, color: '#fff', marginBottom: 3, lineHeight: 1.2 }}>{a.name}</div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 9, color: 'var(--text-tertiary)', fontFamily: 'monospace', letterSpacing: 1, textTransform: 'uppercase' }}>{a.slot_type}</span>
+                      {a.price != null
+                        ? <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 700, fontFamily: 'monospace' }}>{attUsd(a.price)}</span>
+                        : <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>not published</span>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <Link href="/wardogs/attachments" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-secondary)', textDecoration: 'none' }}>All Wardogs attachments &rarr;</Link>
+              </div>
+            </div>
+          )}
 
           {/* SYNTHESIS FUNNEL -- the substrate feeds synthesis (not a dead table) */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>

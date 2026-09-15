@@ -84,6 +84,7 @@ export const wardogs = {
         { label: 'Your Spend',  href: '/wardogs/economy/mine' }, // the personalized "Your Wardogs Economy" viral hook
         { label: 'Systems',     href: '/wardogs/systems'     },
         { label: 'Arsenal',     href: '/wardogs/arsenal'     },
+        { label: 'Attachments', href: '/wardogs/attachments' },
       ],
     },
   },
@@ -160,6 +161,8 @@ export const wardogs = {
       tagline: 'Your personal Wardogs spend estimate - enter your hours, level, and playstyle to see what you have burned since launch.' },
     { slug: 'arsenal', label: 'Arsenal', href: '/wardogs/arsenal', status: 'live',
       tagline: 'The full weapon roster with attributed ballistics and time-to-kill summaries.' },
+    { slug: 'attachments', label: 'Attachments', href: '/wardogs/attachments', status: 'live',
+      tagline: 'The full attachment catalog by slot -- muzzles, optics, grips, mags -- with attributed prices, weights, and weapon fitment.' },
   ],
 };
 
