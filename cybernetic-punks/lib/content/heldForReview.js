@@ -13,9 +13,13 @@
 // FLAG OFF -> heldForReviewApplies is false -> no override -> byte-identical to today.
 // Pure + node-testable; the cron applies it at the inline insert in processEditor.
 
-// The reasoning editor(s) whose ARMED output is reviewed before going live. NEXUS is
-// the only active producer (roster freeze); scoped here so broadening is one edit.
-export const HELD_EDITORS = ['NEXUS'];
+// The editor(s) whose ARMED output is HELD-FOR-REVIEW before going live. MIRANDA added
+// 2026-09-15 (P2 gate turn-on): she is the evergreen demand-gated queue consumer and now the
+// ONLY active auto-editor (NEXUS frozen pre-Oct-6, lib/games/marathon.js). Previously her guides
+// AUTO-PUBLISHED (she was not in this list) -- the un-reviewed dup-mint risk. Now her durable
+// output lands as a DRAFT (is_published=false, gate_status='clear') for operator approval, closing
+// that gap. NEXUS stays listed so re-adding it to the roster restores its held-for-review behavior.
+export const HELD_EDITORS = ['NEXUS', 'MIRANDA'];
 
 // Does held-for-review apply to this article? True iff the flag is on AND the editor
 // is a reasoning editor. (recommendations-only narrowing is a deliberate later step.)

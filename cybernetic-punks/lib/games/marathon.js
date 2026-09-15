@@ -353,7 +353,15 @@ export const marathon = {
     // stat block (lib/content/grounding.js) + a hard claim boundary, so guides are
     // written FROM verified data, never the topic name alone; (3) the roster-wide dedup
     // gate still blocks near-duplicate headlines. CIPHER/DEXTER stay frozen (above).
-    editors: ['NEXUS', 'MIRANDA'],
+    // -- P1 CHURN FREEZE: 2026-09-15 (pre Oct-6 reset) -- NEXUS removed from `editors`. NEXUS was
+    // the last active patch-cycle editor (CIPHER/DEXTER/GHOST already frozen above); its patch/meta
+    // snapshots (1.1.9.1 reactions, Rook-1.1.9 pieces) are stale-fast AND wholesale-invalidated by
+    // the Oct-6 progression/economy reset, so it kept landing churn drafts the operator had to
+    // decline. Frozen pre-reset. MIRANDA (evergreen, demand-gated queue consumer) is the ONLY active
+    // auto-editor now; her output is HELD-FOR-REVIEW (HELD_EDITORS now includes MIRANDA -- see
+    // lib/content/heldForReview.js), so nothing auto-publishes. VANTAGE (separate /api/network-editor
+    // human-gated path) is untouched. REVERSAL: re-add 'NEXUS' post-Oct-6 for genuine patch coverage.
+    editors: ['MIRANDA'],
     // These run ONLY when the cycle detects a patch. Absent on other games ->
     // the cron's `|| []` makes the whole gate a no-op for them (e.g. DMZ).
     // NOTE 'DEXTER' deliberately REMAINS listed here while paused: the entry is
