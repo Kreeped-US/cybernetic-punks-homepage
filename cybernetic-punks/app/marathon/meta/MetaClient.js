@@ -606,7 +606,12 @@ export default function MetaClient({ metaTiers, weapons, shells, modCount, recen
         const { count } = await supabase
           .from('site_events')
           .select('*', { count: 'exact', head: true })
-          .eq('event_name', 'tierlist_share');
+          .eq('event_name', 'tierlist_share')
+          // site_events is a SHARED multi-game table; scope to Marathon so this Marathon
+          // usage counter can't be inflated by another game's tier-list shares (the
+          // shared-table-missing-game_slug leak class). Marathon's track() defaults game_slug
+          // to 'marathon', so these events carry it.
+          .eq('game_slug', 'marathon');
         if (count && count > 0) setUsageCount(count);
       } catch (_) {}
     }

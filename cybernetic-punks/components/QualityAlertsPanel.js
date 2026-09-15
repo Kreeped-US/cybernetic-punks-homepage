@@ -6,6 +6,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
+
+// GAME filter options, derived from ROOT_GAMES so a new game auto-appears (was a stale
+// ['all','marathon','dmz','network'] that missed wardogs/pubg/bodycam). 'all' + 'network'
+// (the VANTAGE network-level bucket) frame the real game slugs.
+var GAME_FILTER_OPTIONS = ['all'].concat(ROOT_GAMES.map(function (g) { return g.slug; })).concat(['network']);
 
 var mono = 'Share Tech Mono, monospace';
 var heading = 'Orbitron, monospace';
@@ -82,7 +88,7 @@ export default function QualityAlertsPanel({ password }) {
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         {filterLabel('STATUS', status, setStatus, ['all', 'new', 'reviewed', 'resolved'])}
         {filterLabel('SEVERITY', severity, setSeverity, ['all', 'high', 'medium'])}
-        {filterLabel('GAME', game, setGame, ['all', 'marathon', 'dmz', 'network'])}
+        {filterLabel('GAME', game, setGame, GAME_FILTER_OPTIONS)}
       </div>
 
       {loading ? (

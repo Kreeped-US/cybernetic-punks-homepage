@@ -11,9 +11,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
-const GAMES = ['marathon', 'dmz', 'wardogs', 'pubg-dednet'];
-const GAME_ACCENT = { marathon: '#00ff41', dmz: '#3f7d44', wardogs: '#e0a13a', 'pubg-dednet': '#cc2936' };
+// Derived from ROOT_GAMES (never a stale hardcoded subset) so a new game auto-appears; the accent
+// comes from each game's theme.primary -- byte-identical for the existing games, auto-covers bodycam.
+const GAMES = ROOT_GAMES.map(function (g) { return g.slug; });
+const GAME_ACCENT = Object.fromEntries(ROOT_GAMES.map(function (g) { return [g.slug, g.theme.primary]; }));
 const DISPLAY_DEFAULT = 25;
 
 // Verdict presentation -- the three build/don't-build buckets.

@@ -13,10 +13,14 @@ import {
   classifyReviewCandidates, GSC_REVIEW_WINDOW_DAYS,
   GSC_REVIEW_MIN_IMPRESSIONS, FRAMING_POSITION_LOW, FRAMING_POSITION_HIGH,
 } from '@/lib/gsc/reviewList';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_GAMES = ['marathon', 'dmz', 'wardogs', 'pubg-dednet'];
+// Derived from ROOT_GAMES so a new front-door game is validated automatically -- no stale
+// hardcoded subset (this list was ['marathon','dmz','wardogs','pubg-dednet'], silently missing
+// bodycam after it joined the network). A game with no GSC data simply returns an empty list.
+const ALLOWED_GAMES = ROOT_GAMES.map(function (g) { return g.slug; });
 
 function windowStartISO() {
   const d = new Date();

@@ -18,10 +18,14 @@ import {
   buildDemandRows, lookupDemand, countVerdicts,
   DEMAND_WINDOW_DAYS, DEMAND_MIN_IMPRESSIONS, SERVED_POSITION_MAX,
 } from '@/lib/gsc/demandCheck';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_GAMES = ['marathon', 'dmz', 'wardogs', 'pubg-dednet'];
+// Derived from ROOT_GAMES so a new front-door game is validated automatically -- no stale
+// hardcoded subset (was ['marathon','dmz','wardogs','pubg-dednet'], missing bodycam). A game
+// with no demand/GSC data simply returns an empty result.
+const ALLOWED_GAMES = ROOT_GAMES.map(function (g) { return g.slug; });
 
 function windowStartISO() {
   const d = new Date();

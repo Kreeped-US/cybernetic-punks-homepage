@@ -1092,6 +1092,7 @@ export async function GET(req) {
           .from('site_events')
           .select('id')
           .eq('event_name', 'patch_regrade')
+          .eq('game_slug', PRODUCING_GAME_SLUG)   // scope: site_events is shared -- a patch_key from another game must not dedup this one (the insert below sets game_slug)
           .eq('event_data->>patch_key', currentPatchKey)
           .limit(1);
         patchAlreadyRegraded = !!(priorPatchRegrade && priorPatchRegrade.length > 0);
@@ -1297,6 +1298,7 @@ export async function GET(req) {
           .from('site_events')
           .select('id')
           .eq('event_name', 'patch_discord')
+          .eq('game_slug', PRODUCING_GAME_SLUG)   // scope: site_events is shared -- dedup Discord notify per game (the insert below sets game_slug)
           .eq('event_data->>patch_key', currentPatchKey)
           .limit(1);
 
