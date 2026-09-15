@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import CoachCTA from '@/components/CoachCTA';
 import { Sep } from '@/components/Sep';
 import ProvenanceBadge from '@/components/marathon/ProvenanceBadge';
 
@@ -735,11 +734,6 @@ export default function ShellDetailClient({
             </div>
           </section>
         )}
-
-        {/* ══ COACH CTA ══════════════════════════════════════ */}
-        <section style={{ paddingTop: 32 }}>
-          <CoachCTA variant="banner" />
-        </section>
 
         {/* ══ FAQ ════════════════════════════════════════════ */}
         {/* Visible FAQ section. Renders the same `faqItems` data that the */}

@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getUserAvatars } from '@/lib/gather/twitch';
 import Footer from '@/components/Footer';
-import CoachCTA from '@/components/CoachCTA';
 import { Sep } from '@/components/Sep';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -1240,8 +1239,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
                 generic /advisor link). Shell-detected articles deep-link prefilled;
                 build-relevant articles get the generic link; unrelated -> nothing. */}
             <ToolCTA article={item} />
-
-            <CoachCTA variant="compact" />
 
           </article>
 

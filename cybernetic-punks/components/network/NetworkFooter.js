@@ -81,7 +81,6 @@ export default function NetworkFooter() {
             <h2 className="nf-h">Network</h2>
             <div className="nf-col">
               <Link href="/about">About</Link>
-              <Link href="/editors">Editors</Link>
               <Link href="/methodology">Methodology</Link>
             </div>
           </div>

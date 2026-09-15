@@ -1,6 +1,6 @@
 // app/FactionAdvisorCallout.js
 // Homepage callout for the Shell Faction Advisor tool.
-// Server component. Renders between Products and HomeEditorReactions.
+// Server component. Renders in the homepage Products area.
 
 import Link from 'next/link';
 import { editorByline } from '@/lib/editors/roster';

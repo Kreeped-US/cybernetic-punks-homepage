@@ -28,7 +28,6 @@ export default function NetworkNav() {
               return <Link key={g.slug} href={g.route}>{g.label}</Link>;
             })}
             <Link href="/about">About</Link>
-            <Link href="/editors">Editors</Link>
           </div>
           <AccountMenu align="right" />
         </div>

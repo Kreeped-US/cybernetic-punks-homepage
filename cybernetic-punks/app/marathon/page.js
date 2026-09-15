@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import { Sep } from '@/components/Sep';
-import HomeEditorReactions from '@/app/HomeEditorReactions';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { getUserAvatars } from '@/lib/gather/twitch';
@@ -317,7 +316,7 @@ export default async function Home() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase' }}>Products</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', letterSpacing: 1 }}>4 AVAILABLE</span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', letterSpacing: 1 }}>3 AVAILABLE</span>
             </div>
 
             <div className="hp-product-grid">
@@ -430,49 +429,6 @@ export default async function Home() {
                 </div>
               </Link>
 
-              {/* CARD 4: BUILD COACH */}
-              <Link href="#" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #9b5de5', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300, position: 'relative', cursor: 'default' }}>
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(155,93,229,0.015) 8px, rgba(155,93,229,0.015) 9px)', pointerEvents: 'none', borderRadius: '0 0 3px 3px' }} />
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
-                  <div>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#9b5de5', letterSpacing: 1, lineHeight: 1 }}>BUILD COACH</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>Already built? Get yours graded</div>
-                  </div>
-                  <span style={{ padding: '2px 7px', background: 'rgba(155,93,229,0.15)', color: '#9b5de5', border: '1px solid rgba(155,93,229,0.3)', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, borderRadius: 2, fontFamily: 'monospace', flexShrink: 0 }}>COMING SOON</span>
-                </div>
-                <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-around', gap: 8, position: 'relative', zIndex: 1 }}>
-                  {[
-                    { name: 'DEXTER', img: 'dexter', color: '#ff8800', label: 'Build Score' },
-                    { name: 'NEXUS', img: 'nexus', color: '#00d4ff', label: 'Meta Score' },
-                    { name: 'MIRANDA', img: 'miranda', color: '#9b5de5', label: 'Runner Type' },
-                  ].map(function(ed) {
-                    return (
-                      <div key={ed.name} style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid ' + ed.color + '50', background: '#0e1014', overflow: 'hidden', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img src={'/images/editors/' + ed.img + '.jpg'} alt={ed.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                        </div>
-                        <div style={{ fontSize: 8, color: ed.color, letterSpacing: 1, fontWeight: 700, marginTop: 5, fontFamily: 'monospace' }}>{ed.name}</div>
-                        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 0.5, fontWeight: 700, marginTop: 2, fontFamily: 'monospace' }}>{ed.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ marginTop: 14, padding: '12px', background: '#0e1014', border: '1px solid #22252e', borderLeft: '2px solid #9b5de5', borderRadius: '0 2px 2px 0', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5, position: 'relative', zIndex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ background: '#9b5de5', color: '#fff', padding: '4px 10px', fontSize: 18, fontWeight: 900, borderRadius: 2, fontFamily: 'Orbitron, monospace', lineHeight: 1 }}>A</div>
-                    <div>
-                      <div style={{ fontSize: 10, color: '#9b5de5', letterSpacing: 1, fontWeight: 800, fontFamily: 'monospace' }}>S-TIER SOLO</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 700, fontFamily: 'Orbitron, monospace', letterSpacing: 0.5 }}>"THE EXTRACTOR"</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginTop: 4, fontFamily: 'monospace', fontWeight: 600 }}>3 editors · 8 slot analysis · Live meta context</div>
-                </div>
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #22252e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>Bungie OAuth · Scored &amp; saved</span>
-                  <span style={{ fontSize: 10, color: '#9b5de5', letterSpacing: 1, fontWeight: 800, fontFamily: 'monospace' }}>COMING SOON</span>
-                </div>
-              </Link>
-
             </div>
           </div>
         </section>
@@ -519,12 +475,6 @@ export default async function Home() {
           </section>
         )}
 
-        {/* ══ WHERE THE EDITORS DISAGREE ══ */}
-        <section style={{ position: 'relative', zIndex: 1 }}>
-          <div className="hp-wrap" style={{ padding: '0 24px 32px' }}>
-            <HomeEditorReactions />
-          </div>
-        </section>
       </div>
 
       {/* Footer bar */}

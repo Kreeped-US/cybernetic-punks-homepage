@@ -3,7 +3,6 @@ import { DISCORD_INVITE, DISPLAY_DISCORD } from '@/lib/socialLinks';
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { getAllEditors } from '@/lib/editors/roster';
 import { getGameConfig } from '@/lib/games';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { isGameLive } from '@/lib/network/gameStatus';
@@ -17,20 +16,11 @@ import WardogsFooter from '@/components/wardogs/WardogsFooter';
 // - Discovery column added: Rising Runners, Leaderboard, Stats, Factions, Sitrep, Status
 // - Tagline standardized to one canonical form
 
-// The NETWORK editor desk -- all 6 (roster.js EDITOR_ORDER), identical on every game's footer
-// (the roster is a network asset, not per-game). LIVE editors get a lane/masthead chip + link;
-// an 'incoming' editor (Broker -- no lane yet) renders DIMMED with a small "incoming" marker and
-// is NOT linked. Compact chip shows the tag (proper case), not the raw uppercase codename.
-// Phase 2 decision (b): Broker is now shown (dimmed); the footer no longer filters to live-only.
-// The chip HREF is computed per game in the component (chipHref): Marathon links each live editor
-// to its lane (/marathon/intel/<key>); the other games have no per-game lanes, so they link to the
-// network editor masthead (/editors) -- Phase 3 decision (c).
-const DESK = getAllEditors().map(function(e) {
-  return {
-    key: e.key, symbol: e.symbol, color: e.color, name: e.tag || e.fullName,
-    status: e.status, live: e.status === 'live',
-  };
-});
+// EDITOR STRIP REMOVED (2026-09-15, tools-first repositioning): the "POWERED BY" editor-persona
+// row was dropped from this generic footer to match WardogsFooter and the network-wide editor
+// de-prioritization. Editors are a backend method, not a headline element. The /editors index +
+// per-editor lanes stay LIVE and article bylines are untouched; only the persona PROMOTION here
+// was removed. getAllEditors()/DESK/chipHref went with it.
 
 // EXPLORE + DISCOVER links, the brand description, and the legal lines now come from each game's
 // footer config (the footer object in lib/games/<game>.js), read via the game prop below. Marathon's
@@ -57,14 +47,6 @@ export default function Footer({ game = 'marathon' }) {
   var fcfg = getGameConfig(game).footer;
   var exploreLinks = (fcfg.links && fcfg.links.explore) || [];
   var discoverLinks = (fcfg.links && fcfg.links.discover) || [];
-
-  // Editor-chip href, GAME-DEPENDENT (Phase 3 decision c). An 'incoming' editor is never linked.
-  // Marathon links to the editor's own lane; the other games have no per-game lanes, so they link
-  // to the network editor masthead (/editors). Marathon is unchanged -> byte-identical.
-  function chipHref(ed) {
-    if (!ed.live) return null;
-    return game === 'marathon' ? ('/marathon/intel/' + ed.key) : '/editors';
-  }
 
   // Cross-game row peers: the OTHER games (this row INVERTS per game -- never shows itself).
   // Order + route + accent come from ROOT_GAMES (the network-root source of truth); the sublabel
@@ -96,96 +78,6 @@ export default function Footer({ game = 'marathon' }) {
       marginTop: 40,
       fontFamily: 'system-ui, sans-serif',
     }}>
-
-      {/* ── EDITORS ROW ── */}
-      <div style={{ borderBottom: '1px solid ' + BORDER_SUBTLE, padding: '20px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{
-            fontFamily: 'monospace',
-            fontSize: 9,
-            color: 'rgba(255,255,255,0.18)',
-            letterSpacing: 2,
-            marginRight: 8,
-            fontWeight: 700,
-          }}>
-            POWERED BY
-          </span>
-          {DESK.map(function(ed) {
-            if (ed.live) {
-              return (
-                <Link key={ed.name} href={chipHref(ed)} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  textDecoration: 'none',
-                  padding: '4px 10px',
-                  background: ed.color + '08',
-                  border: '1px solid ' + ed.color + '22',
-                  borderRadius: 2,
-                  transition: 'border-color 0.15s',
-                }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: ed.color }}>{ed.symbol}</span>
-                  <span style={{
-                    fontFamily: 'monospace',
-                    fontSize: 9,
-                    color: ed.color,
-                    opacity: 0.75,
-                    letterSpacing: 1,
-                    fontWeight: 700,
-                  }}>
-                    {ed.name}
-                  </span>
-                </Link>
-              );
-            }
-            // 'incoming' editor (Broker): DIMMED, NOT linked (no lane yet), + a small "incoming" marker.
-            return (
-              <span key={ed.name} title="Incoming editor" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '4px 10px',
-                background: ed.color + '05',
-                border: '1px dashed ' + ed.color + '20',
-                borderRadius: 2,
-                opacity: 0.5,
-              }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 11, color: ed.color }}>{ed.symbol}</span>
-                <span style={{
-                  fontFamily: 'monospace',
-                  fontSize: 9,
-                  color: ed.color,
-                  opacity: 0.75,
-                  letterSpacing: 1,
-                  fontWeight: 700,
-                }}>
-                  {ed.name}
-                </span>
-                <span style={{
-                  fontFamily: 'monospace',
-                  fontSize: 7,
-                  color: 'rgba(255,255,255,0.4)',
-                  letterSpacing: 1,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                }}>
-                  incoming
-                </span>
-              </span>
-            );
-          })}
-          <span style={{
-            fontFamily: 'monospace',
-            fontSize: 9,
-            color: 'rgba(255,255,255,0.15)',
-            letterSpacing: 1.5,
-            marginLeft: 'auto',
-            fontWeight: 700,
-          }}>
-            6 EDITORS · 6 SOURCES · AROUND THE CLOCK
-          </span>
-        </div>
-      </div>
 
       {/* ── MAIN FOOTER ── */}
       <div style={{

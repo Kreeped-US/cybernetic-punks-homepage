@@ -28,7 +28,6 @@ import { supabase } from '@/lib/supabase';
 import { resolveSession } from '@/lib/auth/resolveSession';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import CoachCTA from '@/components/CoachCTA';
 import { provenanceBadge } from '@/lib/marathon/provenanceBadge';
 import ShellDetailClient from './ShellDetailClient';
 
