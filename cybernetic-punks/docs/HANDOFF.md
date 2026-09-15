@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-15 - Distribution-blockers fixed (M3+M1) + systematic audit sweep done (commit 54e51ae)
+
+- SYSTEMATIC AUDIT SWEEP (read-only) done. HEADLINE: the dangerous bug class (cross-game DATA LEAKS) is CONTAINED -- every weapon_stats query game_scoped, feed_items/gsc_page_metrics/site_events scoped, no residual leaks (today's 3 fixes closed the live instances). What remains = staleness + off-strategy drift, NOT data-integrity.
+- FIXED (the 2 distribution-BLOCKERS): M3 -- surfaced the viral hook /wardogs/economy/mine as a "Your Spend" tab in WardogsNav + footer (was only linked from the economy hub; now one click from every Wardogs page -- critical for the viral push). Bonus: fixed a sitemap dedup (tool loop + Wave-2 explicit add -> single source). M1 -- the stale "pre-launch" Wardogs text was DEAD CODE (WardogsArsenal/WardogsComingSoon render only from the unreachable data-branch; /wardogs/arsenal is the live static page showing correct EA framing -- no user saw stale text); reworded date-agnostic anyway + flagged for deletion later.
+- REMAINING AUDIT BATCHES (NOT distribution-blocking -- do after/interleave): Batch 1 editor de-link (H1 generic Footer editor strip -- WardogsFooter dropped it, Marathon Footer didn't; H4 hub editor sections; M4 CoachCTA; M5 network /editors) -- the tools-first repositioning Fable endorsed. Batch 2 "Build Advisor"->search-aligned rename (H2 advisor title/H1/JSON-LD, H3 nav, L1 ~20 CTAs -- PICK THE TERM, lean "Loadout Finder"/"Loadout Advisor"). Batch 4 orphan /marathon/creators link. Batch 5 dynamic-from-ROOT_GAMES admin-list cleanup (M6 missing bodycam, L2 latent scoping).
+- PRE-DISTRIBUTION CHECKLIST COMPLETE: viral hook surfaced, live status correct, metrics working (Wardogs measured not misattributed), SEO recovering (distribution accelerates via links), product elite. READY TO DISTRIBUTE.
+- Minor cosmetic: /mine page highlights both Economy + Your Spend tabs (prefix-match) -- harmless, tighten whenever.
+
+---
 ## 2026-09-15 - Admin metrics tracking fixed: Wardogs->Marathon analytics leak closed (commit 84019cd)
 
 - The dashboard was BLIND to Wardogs + INFLATING Marathon (analytics mirror of the weapon-leak). 3 compounding bugs, empirically confirmed: (1) /api/track ALLOWED_GAMES hardcoded ['marathon','dmz','network'] -> rewrote wardogs/bodycam/pubg events to 'marathon' (37 /wardogs page-views all tagged marathon; 0 wardogs events in 30d). (2) ViewTracker on only 2 Wardogs pages (loadouts, loadouts/best) -- articles/economy/tier-list/arsenal/economy-mine had none. (3) loadouts_generate/save/share not in ALLOWED_EVENTS -> dropped (400).
