@@ -11,6 +11,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,10 +35,21 @@ const ALLOWED_EVENTS = [
   // Session-debounced page/article view (Part 2). event_data:
   // { slug, path, type: 'article'|'tool', headline }. One per path per tab-session.
   'page_view',
+  // Wardogs loadout-tool actions (P3): the tools-first vertical's core engagement --
+  // a generation is the "build created" signal, plus save/share. Were being DROPPED
+  // (not allowlisted) so Wardogs tool usage never recorded.
+  'loadouts_generate',
+  'loadouts_save',
+  'loadouts_share',
 ];
 
-// Known network games for the per-game analytics dimension. Anything else -> 'marathon'.
-const ALLOWED_GAMES = ['marathon', 'dmz', 'network'];
+// Known network games for the per-game analytics dimension, derived from ROOT_GAMES (+ the
+// synthetic 'network' scope) so EVERY live game records under its own slug -- adding a game to the
+// registry includes it automatically. Was hardcoded ['marathon','dmz','network'], which rewrote
+// wardogs/bodycam/pubg events to 'marathon' (mis-attribution: Wardogs traffic inflated Marathon).
+// A genuinely-unknown slug still falls back to 'marathon' below (defensive), but the live games no
+// longer do.
+const ALLOWED_GAMES = [...ROOT_GAMES.map((g) => g.slug), 'network'];
 
 // SECURITY (audit #7): /api/track stays UNAUTHENTICATED (anonymous analytics),
 // so the abuse controls are a per-IP rate limit + a payload size cap, not auth.

@@ -19,6 +19,7 @@ import { entitySlugFor } from '@/lib/coverage';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
+import ViewTracker from '@/components/ViewTracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,6 +93,7 @@ export default async function WardogsArsenalListPage() {
 
   return (
     <>
+      <ViewTracker slug="arsenal" type="tool" gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 16px 96px', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>

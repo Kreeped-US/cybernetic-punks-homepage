@@ -126,8 +126,11 @@ export async function GET(req) {
       const viewsPrev7d = await countRows(
         supabase.from('site_events').select('*', { count: 'exact', head: true }).eq('event_name', 'page_view').eq('game_slug', g).gte('created_at', prevFromT).lt('created_at', prevToT)
       );
+      // "Builds Created" = tool GENERATIONS, per-game aware: Marathon's advisor_generate AND
+      // Wardogs' loadouts_generate (a game fires only its own, so the union is the right unified
+      // signal). Was advisor_generate-only -> structurally 0 for the tools-first verticals.
       const actions7d = await countRows(
-        supabase.from('site_events').select('*', { count: 'exact', head: true }).eq('event_name', 'advisor_generate').eq('game_slug', g).gte('created_at', curFromT)
+        supabase.from('site_events').select('*', { count: 'exact', head: true }).in('event_name', ['advisor_generate', 'loadouts_generate']).eq('game_slug', g).gte('created_at', curFromT)
       );
       const published7d = await countRows(
         supabase.from('feed_items').select('*', { count: 'exact', head: true }).eq('is_published', true).eq('game_slug', g).gte('created_at', curFromT)

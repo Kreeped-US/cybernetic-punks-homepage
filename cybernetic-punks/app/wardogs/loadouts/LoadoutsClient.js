@@ -44,7 +44,7 @@ export default function LoadoutsClient() {
     setPhase('loading'); setSteps([]); setMeta(null); setAnalysis(''); setError(null);
     setSaveStatus('idle'); setShareUrl(''); setCopied(false); // a new generation invalidates the last save
     setQueried({ careerLevel: careerLevel === '' ? null : Number(careerLevel), budget: budget === '' ? null : Number(budget), playstyle });
-    track('loadouts_generate', { playstyle, hasLevel: !!careerLevel, hasBudget: !!budget });
+    track('loadouts_generate', { playstyle, hasLevel: !!careerLevel, hasBudget: !!budget }, 'wardogs');
     try {
       const res = await fetch('/api/loadouts', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -93,17 +93,17 @@ export default function LoadoutsClient() {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       setShareUrl(origin + j.url);
       setSaveStatus('saved');
-      track('loadouts_save', { playstyle: (queried && queried.playstyle) || playstyle });
+      track('loadouts_save', { playstyle: (queried && queried.playstyle) || playstyle }, 'wardogs');
     } catch (e) { setSaveStatus('error'); }
   }
   function copyLink() {
     if (!shareUrl) return;
-    navigator.clipboard.writeText(shareUrl).then(() => { setCopied(true); track('loadouts_share', { target: 'copy' }); }).catch(() => {});
+    navigator.clipboard.writeText(shareUrl).then(() => { setCopied(true); track('loadouts_share', { target: 'copy' }, 'wardogs'); }).catch(() => {});
   }
   function shareX() {
     const text = 'My Wardogs loadout, ranked by measured time-to-kill:';
     window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(shareUrl), '_blank');
-    track('loadouts_share', { target: 'x' });
+    track('loadouts_share', { target: 'x' }, 'wardogs');
   }
 
   const wrap = { background: PAGE, minHeight: '60vh', color: '#fff', fontFamily: 'system-ui, sans-serif', padding: '24px' };

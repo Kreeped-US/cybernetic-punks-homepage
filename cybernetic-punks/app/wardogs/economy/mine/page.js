@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { PLAYSTYLE, VEHICLE_USE } from '@/lib/wardogs/economyModel';
 import PersonalEconomy from '@/components/wardogs/PersonalEconomy';
+import ViewTracker from '@/components/ViewTracker';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -81,6 +82,7 @@ export default async function WardogsEconomyMine({ searchParams }) {
 
   return (
     <main className={exo2.variable} style={{ background: '#0b0d10', color: '#fff', fontFamily: 'system-ui, sans-serif', minHeight: '100vh' }}>
+      <ViewTracker slug="economy-mine" type="tool" gameSlug="wardogs" />
       <section style={{ maxWidth: 760, margin: '0 auto', padding: '40px 20px 20px' }}>
         <nav aria-label="Breadcrumb" style={{ display: 'flex', gap: 8, marginBottom: 18, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>
           <Link href="/wardogs" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>WARDOGS</Link>

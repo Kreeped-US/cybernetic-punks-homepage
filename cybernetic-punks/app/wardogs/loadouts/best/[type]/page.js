@@ -164,7 +164,7 @@ export default async function TypeHubPage({ params }) {
 
   return (
     <>
-      <ViewTracker slug={'loadouts-best-' + hub.slug} type="hub" gameSlug="wardogs" />
+      <ViewTracker slug={'loadouts-best-' + hub.slug} type="tool" gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
 

@@ -18,6 +18,7 @@ import { wardogsSectionForArticle } from '@/lib/games/wardogs';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/articleContent';
+import ViewTracker from '@/components/ViewTracker';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -112,6 +113,7 @@ export default async function WardogsArticlePage({ params }) {
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
+      <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',

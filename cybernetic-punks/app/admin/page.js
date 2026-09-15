@@ -171,7 +171,7 @@ export default function BridgePage() {
               </div>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <StatCard label="Article Views" value={fmt(v.engagement.views7d)} trendObj={trend(v.engagement.views7d, v.engagement.viewsPrev7d, false)} accent={gameAccent} />
-                <StatCard label="Builds Created" value={fmt(v.engagement.actions7d)} sub="advisor" accent={gameAccent} />
+                <StatCard label="Builds Created" value={fmt(v.engagement.actions7d)} sub="generations" accent={gameAccent} />
                 <StatCard label="Articles Published" value={fmt(v.engagement.published7d)} sub="this week" accent={gameAccent} />
               </div>
             </div>
