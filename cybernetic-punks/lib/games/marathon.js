@@ -93,7 +93,6 @@ export const marathon = {
         { label: 'SHELLS',         href: '/marathon/shells'  },
         { label: 'FIELD GUIDES',   href: '/marathon/guides'  },
         { label: 'RANKED GUIDE',   href: '/marathon/ranked'  },
-        { label: 'EDITORS',        href: '/editors' },
         { label: 'ABOUT',          href: '/about'   },
       ],
       discover: [

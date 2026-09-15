@@ -722,19 +722,6 @@ export default async function RisingPage() {
           }}>
             ◇ COMMUNITY INTEL
           </Link>
-          <Link href="/editors" style={{
-            fontFamily: 'Orbitron, monospace',
-            fontSize: 11,
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.5)',
-            padding: '8px 18px',
-            border: '1px solid ' + BORDER,
-            borderRadius: 3,
-            textDecoration: 'none',
-            letterSpacing: 1.5,
-          }}>
-            EDITORS →
-          </Link>
           <Link href="/marathon/intel" style={{
             fontFamily: 'Orbitron, monospace',
             fontSize: 11,

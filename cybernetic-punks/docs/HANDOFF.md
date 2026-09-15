@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-15 - Editor de-link FULLY CLOSED (footer + sitrep + rising /editors stragglers)
+- Removed the last user-facing /editors PROMOTION links the de-link batch (5be2741) missed: the Marathon footer EXPLORE "EDITORS" entry (lib/games/marathon.js), the sitrep "EDITOR COVERAGE" section's "ALL EDITORS ->" rightLink (app/marathon/sitrep/page.js), and the rising page's "EDITORS ->" CTA button (app/marathon/rising/page.js). grep-clean: NO user-facing href=/editors links remain on any surface.
+- The /editors page STAYS LIVE + indexable (sitemap eligible.js + isNetworkChrome untouched) -- de-linked from chrome/content, not deleted. This completes the editor de-link: editor PROMOTION removed everywhere; editor pages + article bylines intact. Build EXIT=0.
+- NOTE: the full Sept-15 cleanup arc (editor de-link 5be2741, Loadout Finder rename bc2c7d2, ROOT_GAMES/scoping sweep 17fd823, creators orphan-link d219a62) is ALREADY recorded in the prior HANDOFF entry (888c43f) -- deliberately NOT duplicated here; this entry records only the de-link closure.
+- MIRANDA / durable pipeline -- unchanged from the prior entry's VERIFIED note, restated to prevent drift: churn IS stopped (NEXUS durability-gated), but the durable half is STUCK, not working-as-designed. There is no cohort/next_fire_at mechanism (verified: grep=0 + schema dump); "attempted=0/flags_open=379" is the separate GSC inspect cron. MIRANDA is attempted every /api/cron run and FAILS (editors_failed; no feed_item since 2026-09-01) because selectQueuedCandidate jams on a reinforce top candidate -> self-select -> dedup-block. It NEEDS the queue-jam + seeder fix (parked); it is NOT "no fix needed."
+
+---
+
 ## 2026-09-15 - Site cleanup arc: editor de-link + Loadout Finder rename + ROOT_GAMES sweep + orphan link
 - EDITOR DE-LINK (5be2741, -604 lines): removed remaining editor-PROMOTION surfaces (tools-first, per Fable) -- generic footer editor strip, /editors nav+footer link (page stays live), CoachCTA (deleted), "where the editors disagree" hub newsroom section (deleted), BUILD COACH placeholder card (products grid now 3 real tools). KEPT: editor pages live + article bylines (transparency = "AI-assisted, human-verified", not scrubbed). "Five AI editors" footer desc reworded tools-first. LEFTOVER (flagged, not fixed): lib/games/marathon.js footer EXPLORE column still links EDITORS -> /editors (one-line removal to finish the batch).
 - LOADOUT FINDER RENAME (bc2c7d2): Marathon "Build Advisor" (zero search volume) -> "Loadout Finder" everywhere user-facing (title/H1/meta/keywords/OG/JSON-LD/share-card, nav, /me, ~18 CTAs, hub card, /methodology, Discord). Consistent with Wardogs' "Loadout Finder" (one tool name across games). SEO targets marathon loadout/loadouts/loadout-finder/best-marathon-loadout; "build(s)" vocab preserved in content where it has search value. Route /marathon/advisor unchanged.

@@ -594,7 +594,6 @@ export default async function SitrepPage() {
         <SectionHeader
           label="THIS CYCLE — EDITOR COVERAGE"
           color="rgba(255,255,255,0.25)"
-          rightLink={<Link href="/editors" style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>ALL EDITORS →</Link>}
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 6 }}>
