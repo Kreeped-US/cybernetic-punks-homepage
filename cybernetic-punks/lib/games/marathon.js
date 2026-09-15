@@ -353,15 +353,29 @@ export const marathon = {
     // stat block (lib/content/grounding.js) + a hard claim boundary, so guides are
     // written FROM verified data, never the topic name alone; (3) the roster-wide dedup
     // gate still blocks near-duplicate headlines. CIPHER/DEXTER stay frozen (above).
-    // -- P1 CHURN FREEZE: 2026-09-15 (pre Oct-6 reset) -- NEXUS removed from `editors`. NEXUS was
-    // the last active patch-cycle editor (CIPHER/DEXTER/GHOST already frozen above); its patch/meta
-    // snapshots (1.1.9.1 reactions, Rook-1.1.9 pieces) are stale-fast AND wholesale-invalidated by
-    // the Oct-6 progression/economy reset, so it kept landing churn drafts the operator had to
-    // decline. Frozen pre-reset. MIRANDA (evergreen, demand-gated queue consumer) is the ONLY active
-    // auto-editor now; her output is HELD-FOR-REVIEW (HELD_EDITORS now includes MIRANDA -- see
-    // lib/content/heldForReview.js), so nothing auto-publishes. VANTAGE (separate /api/network-editor
-    // human-gated path) is untouched. REVERSAL: re-add 'NEXUS' post-Oct-6 for genuine patch coverage.
-    editors: ['MIRANDA'],
+    // -- DURABILITY GATE (supersedes the 2026-09-15 P1 freeze) -- NEXUS is RESTORED.
+    // The blunt freeze (editors: ['MIRANDA']) was aimed wrong: it also killed NEXUS's
+    // GOOD durable output (the Symbiosis-delay announcement, the Wardogs Black Market
+    // explainer -- both NEXUS). The real churn source is NEXUS's CRON NEWS PATH: a
+    // detected patch forces a "cover this patch" snapshot (1.1.9.1), and self-select
+    // drifts to current-meta. So instead of freezing the editor, the churn is gated at
+    // the topic: while `resetDate` below is inside its window, the cron REROUTES the
+    // patch topic to durable-only + STEERS self-select durable, and an output backstop
+    // holds any stale-fast headline (app/api/cron/route.js + lib/content/durabilityGate.js).
+    // NEXUS is also in editorsRequiringPatch (below) so it only runs on patch/news-trigger
+    // days, and in HELD_EDITORS (lib/content/heldForReview.js) so its output is held-for-
+    // review, never auto-published. MIRANDA (evergreen, demand-gated queue consumer, also
+    // held) runs every cycle. VANTAGE (separate /api/network-editor human-gated path) is
+    // untouched. The gate AUTO-LIFTS when resetDate passes -- no manual re-enable.
+    editors: ['NEXUS', 'MIRANDA'],
+    // Reset window for the durability gate (isResetRestricted). While this date is in
+    // the future within RESET_WINDOW_DAYS, current-meta/economy/progression/tier topics
+    // are reset-invalidated churn -> gated out of NEXUS's cron news path; timeless
+    // mechanics + sourced announcements pass. Set/clear this as the season cadence
+    // changes; a past or absent date makes the gate a no-op. 2026-10-06 = the delayed
+    // major update's economy + progression reset (announced in the Symbiosis-delay piece).
+    resetDate: '2026-10-06',
+    resetLabel: 'the October 6 season reset (economy + progression wipe)',
     // These run ONLY when the cycle detects a patch. Absent on other games ->
     // the cron's `|| []` makes the whole gate a no-op for them (e.g. DMZ).
     // NOTE 'DEXTER' deliberately REMAINS listed here while paused: the entry is

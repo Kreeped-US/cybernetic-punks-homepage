@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { buildBlockRegistry, resolveCitedBlocks, storeRowCitationEnabled, validateRecommendations } from '@/lib/gather/blockId';
 import { heldForReviewApplies, heldPublishState } from '@/lib/content/heldForReview';
+import { classifyDurability, isResetRestricted, buildDurablePatchBlock, buildDurabilitySelfSelectBlock } from '@/lib/content/durabilityGate';
 import { getGameConfig, getGenerationGames } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
@@ -578,6 +579,27 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       var hp = heldPublishState();
       insertData.is_published = hp.is_published;
       insertData.gate_status = hp.gate_status;
+    }
+
+    // DURABILITY GATE (output backstop). The input reroute/steer steers NEXUS off
+    // churn, but if a stale-fast headline (patch-version reaction, current-meta /
+    // tier snapshot) slips through WHILE the game is reset-restricted, force it HELD
+    // so reset-invalidated churn can never auto-publish. Conservative: held (the
+    // operator still sees + can approve it), never a silent drop -- and it stays
+    // correct even if the editor later leaves HELD_EDITORS. No-op when the game is
+    // not restricted or the headline is durable. See lib/content/durabilityGate.js.
+    try {
+      if (isResetRestricted(PRODUCING_GAME)) {
+        var dcls = classifyDurability(insertData.headline, { game: PRODUCING_GAME_SLUG });
+        if (dcls.class === 'stale_fast' && insertData.is_published !== false) {
+          var hpD = heldPublishState();
+          insertData.is_published = hpD.is_published;
+          insertData.gate_status = hpD.gate_status;
+          console.log('[durability] ' + editorName + ' headline held (reset-restricted, ' + dcls.reason + '): "' + insertData.headline + '"');
+        }
+      }
+    } catch (dgErr) {
+      console.log('[durability] output backstop skipped (non-fatal): ' + dgErr.message);
     }
 
     if (editorName === 'CIPHER') {
@@ -1158,12 +1180,27 @@ export async function GET(req) {
     }
 
     if (typeof prompts.NEXUS === 'string') {
-      if (hasPatch) prompts.NEXUS = patchBlock + '\n\n' + prompts.NEXUS;
+      // DURABILITY GATE (input side). NEXUS = "Meta & News", the cron's churn
+      // source: a detected patch injects a "cover this patch, priority over all"
+      // override (the 1.1.9.1-style snapshots) and a directive-less cycle lets it
+      // self-select current-meta. While the producing game is inside a RESET WINDOW
+      // (editorial.resetDate within RESET_WINDOW_DAYS -- Marathon pre-Oct-6), REROUTE
+      // the patch topic to durable-only and STEER the self-select toward durable,
+      // so NEXUS keeps its GOOD output (sourced announcements, mechanics explainers
+      // -- the Symbiosis-delay + Black Market pieces) but stops minting churn that
+      // the reset would invalidate anyway. NOT restricted (other games, or after the
+      // reset auto-lifts) -> byte-identical to before. See lib/content/durabilityGate.js.
+      var nexusRestricted = isResetRestricted(PRODUCING_GAME);
+      if (hasPatch) {
+        var nexusPatchBlock = nexusRestricted ? buildDurablePatchBlock(patchItems, PRODUCING_GAME) : patchBlock;
+        prompts.NEXUS = nexusPatchBlock + '\n\n' + prompts.NEXUS;
+      }
       prompts.NEXUS += currentTierBlock;
       if (directiveMap['NEXUS']) {
         prompts.NEXUS += buildDirectiveBlock(directiveMap['NEXUS']);
       } else {
         prompts.NEXUS += buildNoRepeatBlock(recentHeadlines.NEXUS);
+        if (nexusRestricted) prompts.NEXUS += buildDurabilitySelfSelectBlock(PRODUCING_GAME);
       }
       prompts.NEXUS += historicalBlock;
     }
