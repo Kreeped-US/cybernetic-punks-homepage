@@ -188,6 +188,9 @@ export const WARDOGS_ARTICLE_SECTION = {
   // The pre-launch ECONOMY deep-dive (persist-wardogs-economy.mjs): the persistent
   // wallet, Gold Market, and monetization pledges -- the economy section.
   'wardogs-economy': 'economy',
+  // Black Market honest-status piece (2026-09-15 draft): what's live (Gold Exchange +
+  // gold-for-cosmetics) vs the pitched roadmap -- the economy section.
+  'wardogs-black-market-whats-live-vs-coming': 'economy',
   // Launch-week content #1 -- the EA launch overview, grounded in the tiered
   // docs/wardogs/WARDOGS_LAUNCH_REFERENCE.md. Operator runs
   // docs/migrations/2026-09-08-wardogs-article-launch-overview.sql.
