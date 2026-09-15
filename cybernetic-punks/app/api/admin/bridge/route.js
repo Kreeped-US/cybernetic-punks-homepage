@@ -2,7 +2,7 @@
 // THE BRIDGE (admin home) DATA. A read/display layer -- it aggregates NOTHING new: it
 // surfaces counts + windowed reads over tables that already exist.
 //   - NEEDS ATTENTION: held-draft count + non-consumed directives (with age).
-//   - SHIP VITALS per game (marathon / dmz / all):
+//   - SHIP VITALS per game (ALL + every ROOT_GAMES slug: marathon / dmz / wardogs / bodycam / pubg-dednet):
 //       DISCOVERY  = gsc_page_metrics WoW (impressions, clicks, impression-weighted
 //                    avg position) for the last 7 days of data vs the prior 7.
 //       ENGAGEMENT = site_events (page_view / advisor_generate) + feed_items published,
@@ -20,10 +20,14 @@
 // view-snapshot for long-range view trends, and a true GSC indexation-coverage delta.
 
 import { createClient } from '@supabase/supabase-js';
+import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 export const dynamic = 'force-dynamic';
 
-const GAMES = ['marathon', 'dmz'];
+// Ship Vitals covers EVERY front-door game, derived from ROOT_GAMES so it never goes stale as
+// games are added (was hardcoded ['marathon','dmz'] -- Wardogs/Bodycam/PUBG were invisible). A
+// game with no rows yet reads all-zero per game_slug (honest empty), never broken.
+const GAMES = ROOT_GAMES.map((g) => g.slug);
 const DAY = 86400000;
 
 // Paginated window sum over gsc_page_metrics -- PostgREST caps a select at 1000 rows, so a
@@ -134,16 +138,20 @@ export async function GET(req) {
       };
     }
 
-    // "All" = marathon + dmz combined (position re-weighted by impressions).
-    const m = perGame.marathon;
-    const d = perGame.dmz;
+    // "All" = EVERY game combined (position re-weighted by impressions), summed dynamically
+    // across GAMES so adding a game to ROOT_GAMES rolls into the total automatically.
+    const zeroDisc = { clicks: 0, impressions: 0, position: null };
+    const allEntries = GAMES.map((g) => perGame[g]);
     perGame.all = {
-      discovery: { cur: combineDiscovery(m.discovery.cur, d.discovery.cur), prev: combineDiscovery(m.discovery.prev, d.discovery.prev) },
+      discovery: {
+        cur: allEntries.reduce((acc, x) => combineDiscovery(acc, x.discovery.cur), zeroDisc),
+        prev: allEntries.reduce((acc, x) => combineDiscovery(acc, x.discovery.prev), zeroDisc),
+      },
       engagement: {
-        views7d: m.engagement.views7d + d.engagement.views7d,
-        viewsPrev7d: m.engagement.viewsPrev7d + d.engagement.viewsPrev7d,
-        actions7d: m.engagement.actions7d + d.engagement.actions7d,
-        published7d: m.engagement.published7d + d.engagement.published7d,
+        views7d: allEntries.reduce((a, x) => a + x.engagement.views7d, 0),
+        viewsPrev7d: allEntries.reduce((a, x) => a + x.engagement.viewsPrev7d, 0),
+        actions7d: allEntries.reduce((a, x) => a + x.engagement.actions7d, 0),
+        published7d: allEntries.reduce((a, x) => a + x.engagement.published7d, 0),
       },
     };
 
@@ -154,6 +162,8 @@ export async function GET(req) {
     return Response.json({
       attention: { draftsWaiting, pendingDirectives },
       vitals: perGame,
+      // The game toggle list, single-sourced from ROOT_GAMES so the UI never hardcodes a stale set.
+      games: ROOT_GAMES.map((g) => ({ key: g.slug, label: g.label.toUpperCase(), color: g.theme.primary })),
       gscThrough,
       generatedAt: new Date().toISOString(),
     });

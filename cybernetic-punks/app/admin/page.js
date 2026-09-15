@@ -3,7 +3,7 @@
 // One-stop steering view, three sections in priority order:
 //   1. NEEDS ATTENTION -- only ACTIONABLE signals, each linked (drafts waiting,
 //      directives pending + age). Prominent when present; quiet "all clear" otherwise.
-//   2. SHIP VITALS -- per-game toggle (Marathon | DMZ | All): DISCOVERY (GSC WoW) +
+//   2. SHIP VITALS -- per-game toggle (ALL + every live game, from ROOT_GAMES): DISCOVERY (GSC WoW) +
 //      ENGAGEMENT (views / builds / published this week).
 //   3. GO TO -- a launcher grid to every admin surface (shares ADMIN_NAV with the shell).
 // All data comes from GET /api/admin/bridge (read/display layer; no new aggregation).
@@ -12,11 +12,10 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAdminAuth, S, FONTS, ADMIN_NAV } from './adminShell';
 
-const GAME_TABS = [
-  { key: 'all', label: 'ALL', color: '#9b5de5' },
-  { key: 'marathon', label: 'MARATHON', color: '#00f5ff' },
-  { key: 'dmz', label: 'DMZ', color: '#00ff88' },
-];
+// The 'all' tab is always present; the per-game tabs come from the bridge API's `games` list
+// (single-sourced from ROOT_GAMES server-side), so the toggle covers every live game and never
+// goes stale as games are added. Falls back to just 'all' before data loads.
+const ALL_TAB = { key: 'all', label: 'ALL', color: '#9b5de5' };
 
 function fmt(n) {
   if (n == null) return '--';
@@ -98,7 +97,8 @@ export default function BridgePage() {
   }
 
   const v = data ? data.vitals[game] : null;
-  const gameAccent = (GAME_TABS.find((t) => t.key === game) || {}).color || S.accent;
+  const gameTabs = [ALL_TAB, ...((data && data.games) || [])];
+  const gameAccent = (gameTabs.find((t) => t.key === game) || {}).color || S.accent;
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 60px' }}>
@@ -143,7 +143,7 @@ export default function BridgePage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
           <div style={{ fontFamily: FONTS.mono, fontSize: 11, letterSpacing: 3, color: S.muted }}>SHIP VITALS</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            {GAME_TABS.map((t) => (
+            {gameTabs.map((t) => (
               <button key={t.key} onClick={() => setGame(t.key)} style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: 1, padding: '6px 14px', borderRadius: 4, cursor: 'pointer', border: '1px solid ' + (game === t.key ? t.color : S.border), background: game === t.key ? t.color + '22' : 'transparent', color: game === t.key ? t.color : S.muted }}>{t.label}</button>
             ))}
           </div>
