@@ -328,11 +328,10 @@ export async function computeEligible() {
       add(BASE + '/wardogs/loadouts/best/' + h.slug, W, 'wardogs-section', undefined, 'weekly', 0.8);
     });
 
-    // "Your Wardogs Economy" personalized-spend tool (Wave 2). The CLEAN landing is indexable
-    // (targets "Wardogs spending calculator / how much have I spent"); the ?params share variants
-    // are noindex + canonical -> here (set in the page's generateMetadata), so only this clean URL
-    // is emitted. DB-driven -> no lastmod.
-    add(BASE + '/wardogs/economy/mine', W, 'wardogs-section', undefined, 'weekly', 0.7);
+    // "Your Wardogs Economy" personalized-spend tool (Wave 2, the viral hook). It is now a
+    // first-class entry in wardogs.tools, so the tools loop above ALREADY emits its clean landing
+    // -- no separate add here (a second add would duplicate the URL and fail the partition dedup).
+    // The ?params share variants stay noindex + canonical -> this clean URL (page generateMetadata).
   }
 
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while

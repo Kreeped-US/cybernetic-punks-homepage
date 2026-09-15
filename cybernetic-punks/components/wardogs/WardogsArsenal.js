@@ -47,7 +47,7 @@ export default function WardogsArsenal({ weapons }) {
         Arsenal
       </h1>
       <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: '0 0 20px', maxWidth: 680, lineHeight: 1.6 }}>
-        The pre-launch weapon roster - {total} weapons across {groups.length} categories. Names and
+        The Wardogs weapon roster - {total} weapons across {groups.length} categories. Names and
         categories only; combat stats are not in yet.
       </p>
 
@@ -55,11 +55,11 @@ export default function WardogsArsenal({ weapons }) {
       <div style={{ background: 'rgba(255,180,0,0.06)', border: '1px solid ' + AMBER, borderRadius: 4, padding: '14px 16px', marginBottom: 24 }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: AMBER, marginBottom: 6 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: AMBER }} />
-          Unconfirmed - pre-launch
+          Unconfirmed - playtest data
         </div>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6, maxWidth: 720 }}>
           This roster is attributed to playtest captures, not the live vendor. {src}. The final roster,
-          calibers, and stats stay unconfirmed until they can be verified in-game at Early Access - none
+          calibers, and stats stay unconfirmed until they can be verified in-game - none
           of these numbers are stated as fact. The three official starters are marked.
         </p>
       </div>

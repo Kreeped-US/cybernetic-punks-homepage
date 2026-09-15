@@ -48,8 +48,8 @@ export default function WardogsComingSoon({ section }) {
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 auto', maxWidth: 460, lineHeight: 1.6 }}>
           This is a structured-data resource powered by its own dataset. It is verified
-          in-game and lands once Wardogs opens in Early Access - real numbers, not
-          pre-launch guesses.
+          in-game and lands as we confirm each dataset - real numbers, not
+          guesses.
         </p>
         <div style={{ marginTop: 24 }}>
           <Link href="/wardogs" style={{

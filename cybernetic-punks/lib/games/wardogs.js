@@ -81,6 +81,7 @@ export const wardogs = {
         { label: 'Loadouts',    href: '/wardogs/loadouts'    },
         { label: 'Field Intel', href: '/wardogs/field-intel' },
         { label: 'Economy',     href: '/wardogs/economy'     },
+        { label: 'Your Spend',  href: '/wardogs/economy/mine' }, // the personalized "Your Wardogs Economy" viral hook
         { label: 'Systems',     href: '/wardogs/systems'     },
         { label: 'Arsenal',     href: '/wardogs/arsenal'     },
       ],
@@ -153,6 +154,10 @@ export const wardogs = {
       tagline: 'Every Wardogs weapon ranked S to D by measured time-to-kill - no opinions, just what kills fastest.' },
     { slug: 'economy', label: 'Economy', href: '/wardogs/economy', status: 'live',
       tagline: 'The live spend tracker, the money-flow breakdown, and the unlock planner - where the cash goes and what to save for.' },
+    // The personalized "Your Wardogs Economy" tool -- the shareable/viral hook. Surfaced as its own
+    // nav tab (was only linked from the Economy hub) so it is one click from every Wardogs page.
+    { slug: 'economy-mine', label: 'Your Spend', href: '/wardogs/economy/mine', status: 'live',
+      tagline: 'Your personal Wardogs spend estimate - enter your hours, level, and playstyle to see what you have burned since launch.' },
     { slug: 'arsenal', label: 'Arsenal', href: '/wardogs/arsenal', status: 'live',
       tagline: 'The full weapon roster with attributed ballistics and time-to-kill summaries.' },
   ],
