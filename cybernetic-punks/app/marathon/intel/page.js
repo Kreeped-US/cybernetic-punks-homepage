@@ -166,7 +166,7 @@ var MARATHON_FAQS = [
   },
   {
     q: 'How do I build a competitive Marathon loadout?',
-    a: 'The Build Advisor at /advisor generates a complete loadout in seconds — pick your shell, playstyle, and rank goal, and get back weapons, mods, cores, and implants tuned to current meta. For step-by-step shell guides covering each Runner\'s strengths, weaknesses, and recommended cores, see /guides.',
+    a: 'The Loadout Finder at /advisor generates a complete loadout in seconds — pick your shell, playstyle, and rank goal, and get back weapons, mods, cores, and implants tuned to current meta. For step-by-step shell guides covering each Runner\'s strengths, weaknesses, and recommended cores, see /guides.',
   },
 ];
 

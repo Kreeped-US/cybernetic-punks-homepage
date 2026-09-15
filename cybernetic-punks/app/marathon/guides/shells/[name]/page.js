@@ -604,7 +604,7 @@ export default async function ShellGuidePage({ params }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <Link href={'/marathon/advisor?shell=' + shell.name} className="sg-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + ORANGE, borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
               <div>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: ORANGE, letterSpacing: 1, fontWeight: 700 }}>⬢ BUILD ADVISOR</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 10, color: ORANGE, letterSpacing: 1, fontWeight: 700 }}>⬢ LOADOUT FINDER</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>Get your {shell.name} loadout</div>
               </div>
               <span style={{ color: ORANGE, opacity: 0.5, fontSize: 13 }}>→</span>

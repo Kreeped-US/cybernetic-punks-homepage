@@ -108,7 +108,7 @@ function generateShareCard(build, shellConfig) {
   ctx.fillStyle = bg; ctx.fillRect(0,0,1200,3);
   ctx.fillStyle = color+'55'; ctx.fillRect(0,0,3,630);
   ctx.font='bold 11px monospace'; ctx.fillStyle=color+'aa'; ctx.textAlign='left';
-  ctx.fillText('DEXTER BUILD ADVISOR  //  CYBERNETICPUNKS.COM',48,52);
+  ctx.fillText('LOADOUT FINDER  //  CYBERNETICPUNKS.COM',48,52);
   var grade=build.loadout_grade||'A';
   ctx.font='bold 140px monospace'; ctx.fillStyle=(GRADE_COLORS[grade]||'#ff8800')+'dd'; ctx.textAlign='right';
   ctx.fillText(grade,1160,145);
@@ -154,7 +154,7 @@ function generateShareCard(build, shellConfig) {
   ctx.fillStyle=color+'18'; ctx.fillRect(0,590,1200,40);
   ctx.strokeStyle=color+'33'; ctx.beginPath(); ctx.moveTo(0,590); ctx.lineTo(1200,590); ctx.stroke();
   ctx.font='bold 11px monospace'; ctx.fillStyle=color+'aa'; ctx.textAlign='left'; ctx.fillText('CYBERNETICPUNKS.COM',48,613);
-  ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.textAlign='right'; ctx.fillText('AUTONOMOUS MARATHON INTELLIGENCE  -  DEXTER BUILD ADVISOR',1152,613);
+  ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.textAlign='right'; ctx.fillText('AUTONOMOUS MARATHON INTELLIGENCE  -  LOADOUT FINDER',1152,613);
   return canvas.toDataURL('image/png');
 }
 
@@ -830,7 +830,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
           {/* ══ HEADER ═══════════════════════════════════════ */}
           <div className="result-block" style={{ marginBottom: 18, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 4, fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase' }}>Build Advisor</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, marginBottom: 4, fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase' }}>Loadout Finder</div>
               <div style={{ fontSize: 12, fontWeight: 700, color: accentColor, letterSpacing: 2, fontFamily: 'monospace' }}>
                 {build.shell ? build.shell.toUpperCase() : ''} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(RANK_TARGETS.find(function(r) { return r.id === rankTarget; }) || {}).label}
               </div>

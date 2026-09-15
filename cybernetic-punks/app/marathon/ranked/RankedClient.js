@@ -794,7 +794,7 @@ export default function RankedClient({ data }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               { href: '/marathon/meta',        color: '#00d4ff', label: '⬡ LIVE TIER LIST',        desc: 'Updated daily by our meta AI' },
-              { href: '/marathon/advisor',     color: '#ff8800', label: '⬢ BUILD ADVISOR',          desc: 'Ranked-viable loadouts' },
+              { href: '/marathon/advisor',     color: '#ff8800', label: '⬢ LOADOUT FINDER',          desc: 'Ranked-viable loadouts' },
               { href: '/marathon/intel/nexus', color: '#00d4ff', label: '⬡ META ANALYSIS',    desc: 'Deep ranked breakdowns' },
               { href: '/marathon/intel/cipher', color: '#ff2222', label: '◈ PLAY ANALYSIS',   desc: 'Grade the best ranked plays' },
             ].map(function(l) {

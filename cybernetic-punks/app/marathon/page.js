@@ -13,12 +13,12 @@ import { cycleInfo } from '@/lib/cronCadence';
 // a noindex staging copy of the homepage.)
 export const metadata = {
   title: { absolute: 'Marathon Meta, Builds & Tier List - Updated Daily' },
-  description: 'Live Marathon tier list, build advisor, and Cradle build planner. Tier rankings, weapon and shell guides, and Season 2 progression tools - refreshed throughout the day.',
-  keywords: 'Marathon, Marathon meta, Marathon tier list, Marathon builds, Marathon loadouts, Marathon ranked, Marathon weapons, Marathon shells, Marathon guides, Marathon build advisor, Marathon cradle, Marathon cradle planner, best Marathon builds, what to run in Marathon, Bungie Marathon, Marathon intelligence',
+  description: 'Live Marathon tier list, Loadout Finder, and Cradle build planner. Tier rankings, weapon and shell guides, and Season 2 progression tools - refreshed throughout the day.',
+  keywords: 'Marathon, Marathon meta, Marathon tier list, Marathon loadouts, Marathon builds, Marathon loadout finder, best Marathon loadout, Marathon ranked, Marathon weapons, Marathon shells, Marathon guides, Marathon cradle, Marathon cradle planner, best Marathon builds, what to run in Marathon, Bungie Marathon, Marathon intelligence',
   alternates: { canonical: 'https://cyberneticpunks.com/marathon' },
   openGraph: {
     title: 'Marathon Meta, Builds & Tier List - Updated Daily',
-    description: 'Live Marathon tier list, build advisor, and Cradle build planner. Refreshed throughout the day.',
+    description: 'Live Marathon tier list, Loadout Finder, and Cradle build planner. Refreshed throughout the day.',
     url: 'https://cyberneticpunks.com/marathon',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -27,7 +27,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Meta, Builds & Tier List - Updated Daily',
-    description: 'Live Marathon tier list, build advisor, and Cradle build planner. Refreshed throughout the day.',
+    description: 'Live Marathon tier list, Loadout Finder, and Cradle build planner. Refreshed throughout the day.',
   },
 };
 
@@ -360,10 +360,10 @@ export default async function Home() {
                 </div>
               </Link>
 
-              {/* CARD 2: BUILD ADVISOR */}
+              {/* CARD 2: LOADOUT FINDER */}
               <Link href="/marathon/advisor" className="product-panel" style={{ display: 'flex', flexDirection: 'column', background: '#1a1d24', border: '1px solid #22252e', borderTop: '2px solid #ff8800', borderRadius: '0 0 3px 3px', padding: '20px 22px', textDecoration: 'none', minHeight: 300 }}>
                 <div>
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#ff8800', letterSpacing: 1, lineHeight: 1 }}>BUILD ADVISOR</div>
+                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 21, fontWeight: 900, color: '#ff8800', letterSpacing: 1, lineHeight: 1 }}>LOADOUT FINDER</div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4, marginTop: 7, fontWeight: 600 }}>Tell us your shell, we build the loadout</div>
                 </div>
                 <div style={{ marginTop: 16, display: 'flex', gap: 4, flexWrap: 'wrap' }}>

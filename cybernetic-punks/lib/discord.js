@@ -185,7 +185,7 @@ export async function notifyRankedIntel(feedItem, editorName) {
       fields: [
         {
           name: 'RANKED RESOURCES',
-          value: '[Ranked Guide](https://cyberneticpunks.com/marathon/ranked) · [Meta Tier List](https://cyberneticpunks.com/marathon/meta) · [Build Advisor](https://cyberneticpunks.com/marathon/advisor)',
+          value: '[Ranked Guide](https://cyberneticpunks.com/marathon/ranked) · [Meta Tier List](https://cyberneticpunks.com/marathon/meta) · [Loadout Finder](https://cyberneticpunks.com/marathon/advisor)',
           inline: false,
         },
       ],

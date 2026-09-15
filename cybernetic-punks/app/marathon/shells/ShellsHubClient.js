@@ -430,7 +430,7 @@ export default function ShellsHubClient(props) {
             fontSize: 11, fontWeight: 800, letterSpacing: 1, borderRadius: 2,
             textDecoration: 'none', flexShrink: 0,
           }}>
-            BUILD ADVISOR →
+            LOADOUT FINDER →
           </Link>
         </div>
       </section>
@@ -568,10 +568,10 @@ export default function ShellsHubClient(props) {
               /* No result found — fallback */
               <>
                 <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>
-                  No shell matched your answers perfectly. Try the Build Advisor for a custom loadout.
+                  No shell matched your answers perfectly. Try the Loadout Finder for a custom loadout.
                 </div>
                 <Link href="/marathon/advisor" style={{ display: 'block', padding: '12px', background: '#ff8800', borderRadius: 2, textDecoration: 'none', textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#000', letterSpacing: 1 }}>
-                  OPEN BUILD ADVISOR →
+                  OPEN LOADOUT FINDER →
                 </Link>
                 <button onClick={resetQuiz} style={{ marginTop: 12, background: 'none', border: 'none', fontSize: 10, color: 'rgba(255,255,255,0.35)', cursor: 'pointer', letterSpacing: 1, fontFamily: 'inherit', fontWeight: 700 }}>
                   ← Retake Quiz

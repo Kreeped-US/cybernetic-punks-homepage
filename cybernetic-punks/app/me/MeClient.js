@@ -66,7 +66,7 @@ var PLAYSTYLES = [
 
 var TOOLS = [
   { href: '/marathon/meta',     icon: '⬡', color: '#00ff41', label: 'Meta Tier List',  desc: 'Live weapon & shell rankings',    tag: 'LIVE' },
-  { href: '/marathon/advisor',  icon: '⬢', color: '#ff8800', label: 'Build Advisor',   desc: 'search-tuned loadouts',          tag: 'FREE' },
+  { href: '/marathon/advisor',  icon: '⬢', color: '#ff8800', label: 'Loadout Finder',   desc: 'search-tuned loadouts',          tag: 'FREE' },
   { href: '/marathon/builds',   icon: '⬢', color: '#ff8800', label: 'Builds & Loadouts',       desc: 'Full loadout browser',            tag: null },
   { href: '/marathon/shells',   icon: '◎', color: '#00d4ff', label: 'Shell Guide',     desc: 'Abilities, stats, tiers',         tag: null },
   { href: '/marathon/ranked',   icon: '◈', color: '#ffd700', label: 'Ranked Guide',    desc: 'Holotags, tiers, how to climb',   tag: null },

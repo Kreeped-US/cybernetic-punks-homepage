@@ -110,7 +110,7 @@ const SHELL_NAMES_LOWER = ['assassin','destroyer','recon','rook','thief','triage
 const BUILD_FAQS = [
   {
     q: 'What\'s the best Marathon build right now?',
-    a: 'The strongest Marathon builds shift with each patch and meta cycle. Currently, Vandal with high-mobility mid-range loadouts dominates solo ranked, while Triage support builds anchor squads. The Build Advisor at /advisor generates a complete loadout in seconds based on your shell, playstyle, and rank goal — weapons, mods, cores, and implants tuned to the current meta.',
+    a: 'The strongest Marathon builds shift with each patch and meta cycle. Currently, Vandal with high-mobility mid-range loadouts dominates solo ranked, while Triage support builds anchor squads. The Loadout Finder at /advisor generates a complete loadout in seconds based on your shell, playstyle, and rank goal — weapons, mods, cores, and implants tuned to the current meta.',
   },
   {
     q: 'Which Marathon shell should I main?',
@@ -1020,7 +1020,7 @@ export default async function BuildsPage() {
             Tell our build AI your shell and playstyle — get a complete loadout with weapons, mods, cores, and implants in seconds. Faction-aware. Ranked-viability flagged.
           </p>
           <Link href="/marathon/advisor" style={{ display: 'inline-block', padding: '12px 28px', background: ORANGE, color: '#000', fontFamily: 'monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, borderRadius: 2, textDecoration: 'none' }}>
-            LAUNCH BUILD ADVISOR →
+            LAUNCH LOADOUT FINDER →
           </Link>
         </div>
       </section>

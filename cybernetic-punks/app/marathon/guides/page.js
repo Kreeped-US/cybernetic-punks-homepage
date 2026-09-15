@@ -671,7 +671,7 @@ export default async function GuidesPage({ searchParams }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               { href: '/marathon/intel/miranda', label: '◎ ALL FIELD GUIDES',  sub: 'Full guide archive',       color: '#9b5de5' },
-              { href: '/marathon/advisor',       label: '⬢ BUILD ADVISOR',       sub: 'Get your ranked loadout',  color: '#ff8800' },
+              { href: '/marathon/advisor',       label: '⬢ LOADOUT FINDER',       sub: 'Get your ranked loadout',  color: '#ff8800' },
               { href: '/marathon/shells',        label: 'SHELL DATABASE',        sub: 'Full ability breakdowns',  color: '#00d4ff' },
               { href: '/marathon/ranked',        label: 'RANKED MODE',           sub: 'Tiers, Holotags, rewards', color: '#ffd700' },
             ].map(function(item) {

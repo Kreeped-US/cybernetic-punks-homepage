@@ -145,7 +145,7 @@ export default function WeaponDetailClient({
                   LIVE TIER LIST →
                 </Link>
                 <Link href="/marathon/advisor" style={{ padding: '11px 20px', background: 'transparent', border: '1px solid #22252e', color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: 1, borderRadius: 2, textDecoration: 'none' }}>
-                  BUILD ADVISOR →
+                  LOADOUT FINDER →
                 </Link>
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function WeaponDetailClient({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <span style={{ fontSize: 10, color: '#ff8800', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>⬢ Best Builds</span>
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
-              <Link href="/marathon/advisor" style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>BUILD ADVISOR →</Link>
+              <Link href="/marathon/advisor" style={{ fontSize: 9, color: '#ff8800', textDecoration: 'none', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>LOADOUT FINDER →</Link>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 6 }}>

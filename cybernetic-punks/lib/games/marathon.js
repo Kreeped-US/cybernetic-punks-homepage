@@ -65,7 +65,7 @@ export const marathon = {
   // NETWORK-LEVEL (the full desk, all 6 in roster.js EDITOR_ORDER), read from roster.js directly
   // by the footer and identical on all 4 games; there is no per-game footer.editors array.
   footer: {
-    description: 'Marathon intelligence hub. Autonomous editorial coverage from five AI editors. Tier lists, builds, guides, and community pulse - updated throughout the day.',
+    description: 'Marathon intelligence hub. Tier lists, the Loadout Finder, weapon and shell guides, Cradle planning, and community pulse - built on verified data, updated throughout the day.',
     // Phase 3 fields (inert until Phase 2's Footer.js is extended in Phase 3 to read them).
     // bottomTagline: this game's bottom-bar line. peerLabel + peerLifecycle: what OTHER games'
     // cross-game rows show for THIS game -- peerLabel is the franchise/dev/publisher token, and
@@ -89,7 +89,7 @@ export const marathon = {
       explore: [
         { label: 'INTEL FEED',     href: '/marathon/intel'   },
         { label: 'META TIER LIST', href: '/marathon/meta'    },
-        { label: 'BUILD ADVISOR',  href: '/marathon/advisor' },
+        { label: 'LOADOUT FINDER',  href: '/marathon/advisor' },
         { label: 'SHELLS',         href: '/marathon/shells'  },
         { label: 'FIELD GUIDES',   href: '/marathon/guides'  },
         { label: 'RANKED GUIDE',   href: '/marathon/ranked'  },
@@ -628,7 +628,7 @@ RULES:
     },
   },
 
-  // ARTICLE -> BUILD ADVISOR CTA (render-layer, game-agnostic). resolveBuildToolCta
+  // ARTICLE -> LOADOUT FINDER CTA (render-layer, game-agnostic). resolveBuildToolCta
   // in components/ToolCTA.js reads this per game: entities drive the CONTEXTUAL,
   // shell-prefilled deep-link; relevanceKeywords drive the GENERIC fallback; an
   // article that matches neither gets NO CTA. A game with buildToolCta:null (DMZ
@@ -640,7 +640,7 @@ RULES:
     href: function (slug) { return '/marathon/advisor?shell=' + slug; },
     copy: function (name) { return 'Plan your ' + name + ' build →'; },
     genericHref: '/marathon/advisor',
-    genericCopy: 'Want a build based on this intel? Open the Build Advisor →',
+    genericCopy: 'Want a build based on this intel? Open the Loadout Finder →',
     accent: '#ff8800',
   },
 };

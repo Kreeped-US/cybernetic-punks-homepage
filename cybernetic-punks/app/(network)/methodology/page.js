@@ -131,7 +131,7 @@ export default function MethodologyPage() {
         {/* ===================== BUILDS ===================== */}
         <Label>How builds are chosen</Label>
         <Body>
-          Two things wear the word "build". <strong style={{ color: 'var(--text)' }}>Best Builds</strong> on a weapon or shell page are reviewed write-ups - a specific loadout with the reasoning behind it. The <strong style={{ color: 'var(--text)' }}>Build Advisor</strong> is the interactive tool: you give it your shell, playstyle, and rank goal, and it assembles a full loadout - weapons, mods, cores, implants - by reasoning over the game&apos;s verified stat tables. It works from the same checked data everything else here uses; it cross-references real values and does not invent stats or item names. It is a starting point tuned to your inputs, not a decree.
+          Two things wear the word "build". <strong style={{ color: 'var(--text)' }}>Best Builds</strong> on a weapon or shell page are reviewed write-ups - a specific loadout with the reasoning behind it. The <strong style={{ color: 'var(--text)' }}>Loadout Finder</strong> is the interactive tool: you give it your shell, playstyle, and rank goal, and it assembles a full loadout - weapons, mods, cores, implants - by reasoning over the game&apos;s verified stat tables. It works from the same checked data everything else here uses; it cross-references real values and does not invent stats or item names. It is a starting point tuned to your inputs, not a decree.
         </Body>
 
         {/* ===================== THE DIFFERENCE ===================== */}

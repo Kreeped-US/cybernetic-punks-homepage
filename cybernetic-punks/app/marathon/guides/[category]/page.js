@@ -42,7 +42,7 @@ const CATEGORIES = {
     related: [
       { href: '/marathon/shells',  label: 'SHELL DATABASE',      desc: 'Full stats + abilities', color: '#00d4ff' },
       { href: '/marathon/builds',  label: 'BUILDS & LOADOUTS',           desc: 'Loadouts per shell',      color: '#ff8800' },
-      { href: '/marathon/advisor', label: 'BUILD ADVISOR',       desc: 'Get your ranked build',   color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'LOADOUT FINDER',       desc: 'Get your ranked build',   color: '#ff8800' },
     ],
     faqs: [
       { q: 'What is the best shell in Marathon?', a: 'The "best" shell depends on playstyle. Vandal and Thief dominate solo ranked with their speed and extraction tools. Triage and Recon excel in squads through support and information. Assassin rewards mechanical players. Check our live tier list for current meta positioning.' },
@@ -63,7 +63,7 @@ const CATEGORIES = {
     related: [
       { href: '/marathon/ranked',  label: 'RANKED HUB',     desc: 'Queue + tier list',       color: '#ffd700' },
       { href: '/marathon/meta',    label: 'META TIER LIST', desc: 'Live weapon/shell tiers', color: '#00d4ff' },
-      { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Ranked-viable loadouts',  color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'LOADOUT FINDER',  desc: 'Ranked-viable loadouts',  color: '#ff8800' },
     ],
     faqs: [
       { q: 'When is Marathon Ranked queue open?', a: 'In Season 2, Ranked is a weekend mode: the queue opens Saturday 10AM PT and closes Tuesday 10AM PT. Outside that window only Casual queues are available. Zones and Holotag targets rotate with each opening.' },
@@ -84,7 +84,7 @@ const CATEGORIES = {
     related: [
       { href: '/marathon/builds',  label: 'BUILDS & LOADOUTS',      desc: 'Full weapon arsenal',     color: '#ff8800' },
       { href: '/marathon/meta',    label: 'META TIER LIST', desc: 'Live weapon rankings',    color: '#00d4ff' },
-      { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Weapon pairings',         color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'LOADOUT FINDER',  desc: 'Weapon pairings',         color: '#ff8800' },
     ],
     faqs: [
       { q: 'What is the best weapon in Marathon?', a: 'Weapon strength depends on range and shell pairing. The WSTR Combat Shotgun is consistently S-tier at close range, the M77 Assault Rifle is the most forgiving mid-range pick, and the Stryder M1T excels at long range. Our live tier list ranks every weapon by current meta viability.' },
@@ -104,7 +104,7 @@ const CATEGORIES = {
     subhead: 'Mod slot analysis, best combinations, and synergies that turn mediocre loadouts into S-tier builds. Covers every mod rarity from Standard to Prestige.',
     related: [
       { href: '/marathon/builds',  label: 'BUILDS & LOADOUTS',     desc: 'Meta mods showcase',     color: '#ff8800' },
-      { href: '/marathon/advisor', label: 'BUILD ADVISOR', desc: 'Get modded loadouts',    color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'LOADOUT FINDER', desc: 'Get modded loadouts',    color: '#ff8800' },
       { href: '/marathon/factions', label: 'FACTIONS',     desc: 'Faction-locked mods',    color: '#ffd700' },
     ],
     faqs: [
@@ -146,7 +146,7 @@ const CATEGORIES = {
     subhead: 'New Runner essentials. Core mechanics, survival basics, first builds, and the do\'s and don\'ts every new player should know before their first drop.',
     related: [
       { href: '/marathon/shells',  label: 'SHELL DATABASE', desc: 'Learn the shells',     color: '#00d4ff' },
-      { href: '/marathon/advisor', label: 'BUILD ADVISOR',  desc: 'Start with a real build', color: '#ff8800' },
+      { href: '/marathon/advisor', label: 'LOADOUT FINDER',  desc: 'Start with a real build', color: '#ff8800' },
       { href: '/marathon/guides/extraction', label: 'EXTRACTION 101', desc: 'Learn to exfil safely', color: '#00d4ff' },
     ],
     faqs: [
@@ -167,7 +167,7 @@ const CATEGORIES = {
     subhead: 'Faction rank priorities, credit farming routes, material farming, and seasonal upgrade order. Hit your build goals faster by optimizing what you grind and when.',
     related: [
       { href: '/marathon/factions', label: 'FACTION INTEL', desc: 'All 6 factions',           color: '#ffd700' },
-      { href: '/marathon/advisor',  label: 'BUILD ADVISOR', desc: 'Your build goal',          color: '#ff8800' },
+      { href: '/marathon/advisor',  label: 'LOADOUT FINDER', desc: 'Your build goal',          color: '#ff8800' },
       { href: '/marathon/ranked',   label: 'RANKED HUB',    desc: 'Seasonal rewards',         color: '#ffd700' },
     ],
     faqs: [

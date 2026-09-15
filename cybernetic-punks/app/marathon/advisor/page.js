@@ -3,7 +3,7 @@
 // for richer Google search result presentation.
 //
 // SEO PASS June 1, 2026:
-// - Title leads with searcher intent ("Marathon Build Advisor") instead of
+// - Title leads with searcher intent ("Marathon Loadout Finder") instead of
 //   the unknown brand name (DEXTER). Brand identity lives inside the page.
 // - Description drops front-facing "AI-engineered" framing (AI-skeptical
 //   audience), uses concrete value language ("in seconds") and plain words
@@ -34,11 +34,11 @@ import ViewTracker from '@/components/ViewTracker';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: { absolute: 'Marathon Build Advisor - Loadout Generator' },
-  description: 'Marathon build generator. Pick your shell, playstyle, and rank goal — get a complete loadout with weapons, mods, cores, implants, and a Cradle stat plan in seconds.',
-  keywords: 'Marathon build generator, Marathon loadout advisor, best Marathon builds, Marathon shell builds, Marathon build advisor, Marathon mods cores implants, Marathon ranked builds, Marathon shell loadout, Marathon weapon builds, best Marathon loadout, Marathon loadout generator, Marathon Cradle build, Sentinel build Marathon',
+  title: { absolute: 'Marathon Loadout Finder - Best Loadouts & Builds' },
+  description: 'Marathon Loadout Finder. Pick your shell, playstyle, and rank goal — get the best loadout with weapons, mods, cores, implants, and a Cradle stat plan in seconds.',
+  keywords: 'Marathon loadout, Marathon loadouts, Marathon loadout finder, best Marathon loadout, Marathon loadout generator, Marathon builds, best Marathon builds, Marathon shell loadout, Marathon mods cores implants, Marathon ranked loadouts, Marathon weapon loadouts, Marathon Cradle build, Sentinel loadout Marathon',
   openGraph: {
-    title: 'Marathon Build Advisor - Loadout Generator | Cybernetic Punks',
+    title: 'Marathon Loadout Finder - Best Loadouts & Builds | Cybernetic Punks',
     description: 'Pick your shell, playstyle, and rank goal. Get a complete Marathon loadout in seconds — weapons, mods, cores, implants, and a Cradle stat plan.',
     url: 'https://cyberneticpunks.com/marathon/advisor',
     siteName: 'Cybernetic Punks',
@@ -47,7 +47,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Marathon Build Advisor - Loadout Generator',
+    title: 'Marathon Loadout Finder - Best Loadouts & Builds',
     description: 'Pick your shell, get a complete Marathon loadout in seconds.',
   },
   alternates: {
@@ -92,14 +92,14 @@ const breadcrumbSchema = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home',           item: 'https://cyberneticpunks.com' },
-    { '@type': 'ListItem', position: 2, name: 'Build Advisor',  item: 'https://cyberneticpunks.com/marathon/advisor' },
+    { '@type': 'ListItem', position: 2, name: 'Loadout Finder',  item: 'https://cyberneticpunks.com/marathon/advisor' },
   ],
 };
 
 const webApplicationSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'Marathon Build Advisor',
+  name: 'Marathon Loadout Finder',
   description: 'Marathon loadout generator. Pick your Runner shell, playstyle, and rank target, and get a complete build — primary weapon, secondary, mods, cores, implants, and a Cradle stat-track plan — drawn from live meta data.',
   url: 'https://cyberneticpunks.com/marathon/advisor',
   applicationCategory: 'GameApplication',
@@ -237,7 +237,7 @@ export default async function AdvisorPage({ searchParams }) {
               margin: '0 0 14px',
             }}
           >
-            Marathon Build Advisor — Loadout & Cradle Generator
+            Marathon Loadout Finder — Best Loadouts & Cradle Builds
           </h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 820, margin: '0 0 12px' }}>
             Build a complete Marathon loadout for any Runner shell in seconds. Pick your shell,

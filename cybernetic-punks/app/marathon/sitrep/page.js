@@ -689,7 +689,7 @@ export default async function SitrepPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               { label: '⬡ META TIER LIST',  href: '/marathon/meta',     color: '#00d4ff', desc: 'Full tier rankings' },
-              { label: '⬢ BUILD ADVISOR',   href: '/marathon/advisor',  color: '#ff8800', desc: 'Get your ranked loadout' },
+              { label: '⬢ LOADOUT FINDER',   href: '/marathon/advisor',  color: '#ff8800', desc: 'Get your ranked loadout' },
               { label: 'RANKED GUIDE',       href: '/marathon/ranked',   color: '#ffd700', desc: 'Season 2 intel' },
               { label: 'FACTION INTEL',      href: '/marathon/factions', color: '#ffd700', desc: 'All 6 factions' },
               { label: 'ALL INTEL',          href: '/marathon/intel',    color: '#9b5de5', desc: 'Every article archived' },
