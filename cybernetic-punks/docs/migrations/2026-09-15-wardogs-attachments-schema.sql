@@ -51,6 +51,12 @@ CREATE TABLE IF NOT EXISTS wardogs_attachments (
   compatible_weapons  text[],                        -- weapon-specific: parsed + roster-validated weapon names (e.g. {AK74}); NULL/{} = generic (fits by slot_type + caliber)
   rarity              text,                          -- if the source carries a rarity tier; nullable
 
+  -- IMAGE (the SLOT -- READY-BUT-NULL). The visual asset (bare filename, e.g. "ak74mbarrel.webp",
+  -- like weapon_stats.image_filename). Left NULL by the load: the 108 attachment .webp files do NOT
+  -- cleanly auto-map to attachment names, so the operator MATCHES names -> images MANUALLY later
+  -- (auto-guessing would be fabrication). Image DISPLAY stays DORMANT until this is populated.
+  image_filename      text,
+
   -- ---- EFFECT COLUMNS (PHASE 2 -- READY-BUT-NULL now; effects POPULATE here later, NO migration) ----
   -- CONVENTION (confirm when the effects arrive): the *_mod columns are MULTIPLIERS applied to the
   -- matching weapon_stats axis -> final = base * mod (e.g. 0.90 = -10% recoil, 1.10 = +10% ADS speed).

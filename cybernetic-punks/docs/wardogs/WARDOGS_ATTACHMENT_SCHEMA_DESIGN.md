@@ -45,6 +45,14 @@ name+slot only, price/weight NULL.
 **Compatibility (load now):** `caliber`, `weapon_class`, `compatibility_kind` ('weapon-specific'|'generic'),
 `compatible_weapons text[]`, `rarity`. See section 3.
 
+**Image (the slot -- READY-BUT-NULL):** `image_filename text`. The visual asset (bare filename, like
+`weapon_stats.image_filename`). Added 2026-09-15 (schema CREATE for fresh builds + a separate additive
+ALTER for the already-provisioned DB: `2026-09-15-wardogs-attachments-image-column.sql`). NOT populated
+by the load -- the 108 attachment `.webp` files in `public/images/wardogs/` do NOT cleanly auto-map to
+attachment names, so the operator MATCHES names -> `image_filename` MANUALLY in a later pass
+(auto-guessing = fabrication). Image DISPLAY stays DORMANT until this is populated AND a render is wired
+(a future task) -- same ready-but-null discipline as the effect columns.
+
 **Effect columns (Phase 2 -- READY-BUT-NULL now):** `recoil_v_mod, recoil_h_mod, ads_speed_mod,
 handling_mod, accuracy_mod, hipfire_mod, reload_mod, moving_accuracy_mod, aim_assist_mod, range_mod,
 equip_speed_mod, precision_mod, ergonomics_mod` (all `numeric`, nullable) + `mag_capacity_delta integer`
