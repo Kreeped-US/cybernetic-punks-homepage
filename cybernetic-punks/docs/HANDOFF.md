@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-15 - Admin Bridge vitals toggle: all games dynamic (commit 5efe5d3)
+
+- The /admin Bridge "Ship Vitals" toggle only showed ALL/MARATHON/DMZ -- Wardogs (flagship), Bodycam, PUBG absent (couldn't see Wardogs stats). Same class as the telemetry "4 games" bug: two stale hardcoded lists (API GAMES=['marathon','dmz'] + UI GAME_TABS). Data existed (per-game game_slug reads) -- just never built/surfaced.
+- FIX: API GAMES = ROOT_GAMES.map(slug) (builds vitals for every game; "all" sums across all dynamically; returns a games list as the single source). UI toggle builds from data.games + always-present ALL tab, per-game accent colors. Adding a game to ROOT_GAMES now flows through automatically (never stale). Honest empty states (0/-- for no-data games, not broken).
+- DATA SNAPSHOT (per-game, this fix surfaced): marathon 76 GSC-imp (down 94% = the collapse, now visible) / 1314 views / 361 articles; wardogs 0 GSC (new, not indexed yet -- expected) / 0 views / 3 published this week / 11 all-time; dmz/bodycam/pubg small/zero. NOTE: Wardogs has articles but 0 article-VIEWS -- worth checking whether Wardogs engagement is on the TOOLS (loadouts/economy) vs articles (the engagement metric may not capture tool usage).
+- Also on record: the SEO diagnosis is RESOLVED (compound migration shock primary; the 849 crawled-not-indexed = 93% harmless _next/static build-file noise + 5% already-410'd /intel + ~1% negligible marathon -- NOT a real problem). Recovery = 301 (done) + fresh content + distribution/links + time. Skew Protection stays ON (real UX protection during frequent deploys; the ?dpl= GSC noise is harmless/cosmetic).
+
+---
 ## 2026-09-15 - Economy ticker inputs updated: 2M copies + 365K peak, sanity-gated (commit 25f138f)
 
 - Wardogs numbers moved: Bulkhead official @WARDOGS announced 2 MILLION copies (was 1.25M); SteamDB peak now ~365,111 (Sept 11), all-time ~428,666 (tracker.gg); current concurrent ~286K and declining.
