@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-15 - Economy ticker inputs updated: 2M copies + 365K peak, sanity-gated (commit 25f138f)
+
+- Wardogs numbers moved: Bulkhead official @WARDOGS announced 2 MILLION copies (was 1.25M); SteamDB peak now ~365,111 (Sept 11), all-time ~428,666 (tracker.gg); current concurrent ~286K and declining.
+- UPDATED (Fable's sanity-gate applied): copies 1.25M -> 2M (VERIFIED/official, labeled distinct from modeled); cited peak 337K -> 365K (context only) + network telemetry "Peak Players Tracked" 337K -> 365K. RATE BASIS held at 130K (NOT inflated -- copies/peak are context, don't feed the rate). Rate unchanged ~$75,956/sec. Sanity-check: 130K = ~45% of current ~286K, ~36% of 365K peak -> conservative/defensible. modeled-vs-verified kept distinct in the explainer. Grep-clean (no 1.25M/337K in code). Tests 13/0.
+- Doctrine demonstrated (Fable's modeled-stats guards): keep verified anchors current, do NOT let bigger anchors re-inflate the modeled estimate, sanity-gate before shipping.
+- Files: economyModel.js, WardogsCashTicker.js, rootGames.js, app/page.js.
+
+---
 ## 2026-09-14 - SEO collapse diagnosis CORRECTED (Fable challenge + GSC forensics)
 
 - Fable challenged the "deleted-article graveyard" diagnosis; GSC forensics (gsc_url_inspection + gsc_page_metrics, read-only) largely vindicate Fable. CORRECTED verdict: BOTH contributed, COMPOUND MIGRATION SHOCK is PRIMARY.
