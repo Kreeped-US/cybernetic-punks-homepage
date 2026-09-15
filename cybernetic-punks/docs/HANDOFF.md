@@ -7,6 +7,89 @@ Newest entries on top.
 
 ---
 
+## 2026-09-15 - Demand-check verdict split: BUILD -> BUILD + NO-ENTITY (SHIPPED, awaiting live visual confirm)
+
+WHAT: The admin SEO Tools demand-check panel now emits a 4th verdict, NO-ENTITY,
+split out of BUILD. BUILD now means "real demand, nothing serves it, AND the
+keyword contains a bindable entity name -> commit a framing target." NO-ENTITY
+means "real demand, nothing serves it, but NO entity name is present -> write a
+page OR seed the entity (operator judgment)." served and no-demand are unchanged;
+the split fires only inside the former-BUILD set (hasCommittedDemand && !served).
+
+WHY: The panel was recommending BUILD for keywords that structurally cannot become
+active framing targets (e.g. "wardogs game monetization bulkhead" -- no
+shell/weapon/mod/map/mode/event to bind to). That mismatch was the source of
+operator confusion: BUILD told you to commit targets the framing model can never
+use. The split makes the panel tell the truth about each keyword's real path.
+
+HOW (Reading A -- entity NAME presence, not full tuple): bindability =
+findMentions(keyword, vocab).length > 0, via lib/coverage.js findMentions (now
+exported). Deliberately NOT deriveTuple(...).unclassified -- deriveTuple returns
+unclassified even when an entity IS present but the facet is not confidently
+detected (coverage.js:401-409), which would mislabel real entity keywords like
+"wardogs vandal loadout" as NO-ENTITY. Facet is the operator's commit-time
+judgment, not the classifier's job.
+
+FILES (commit aa7bb43, +113/-17, 5 files):
+- lib/coverage.js: export findMentions (was internal).
+- lib/gsc/demandCheck.js: VERDICT_NO_ENTITY='no-entity'; deriveRow takes
+  caller-supplied bindable (stays pure; undefined -> bindable for back-compat),
+  emits no-entity only inside former-BUILD when bindable===false;
+  buildDemandRows/lookupDemand accept opts.isBindable; countVerdicts gains an
+  explicit no_entity key.
+- app/api/admin/demand-check/route.js: loadVocabulary(supabase, game) once +
+  memoized isBindable per keyword, passed into both modes; fail-safe on vocab
+  error.
+- components/DemandCheckPanel.js: 4th VERDICTS entry (label, muted gold #c9a961,
+  hint), filter tab, summary count.
+- lib/gsc/demandCheck.test.mjs: +6 split cases.
+
+VERIFIED: 15/15 tests pass (8 prior 3-verdict assertions still green + 6 new).
+Production build EXIT=0. Both silent-absorb traps closed and TEST-PROVEN:
+countVerdicts has an explicit no_entity branch before the else (test asserts
+no_demand===0 when a no-entity row exists); panel VERDICTS map now resolves
+'no-entity' directly so the ||'no-demand' chip/card fallback no longer fires for
+it (fallback retained as a genuine safety net for unknown values).
+
+NOT YET CONFIRMED: live-panel render. Operator visual check pending -- NO-ENTITY
+tab/chip/summary render, humble label reads correctly, editorial keywords land
+NO-ENTITY and entity keywords land BUILD. Known-incomplete vocab for non-Marathon
+games (esp. Wardogs) means some real entities may surface as NO-ENTITY -- that is
+intended humility, not a bug; the label carries both possibilities on purpose.
+Cosmetic: the humble label is long, so the NO-ENTITY chip is a wide pill -- adjust
+later if it reads poorly (shorten chip, keep full text in hint).
+
+KEYWORD_TARGETS LIFECYCLE (proven this session, read-only trace -- record so it is
+never re-traced or wrongly assumed): a keyword_targets row is a PRESENTATION AND
+RANKING LENS, firewalled from generation. It is created BY A HUMAN in the admin
+KEYWORD TARGETS tab (or via GSC-review ACCEPT -> same form), validated so
+entity_slug resolves to a real entity. An ACTIVE framing target requires the full
+tuple entity_type+entity_slug+facet (is_active=true); a null-entity row is only
+creatable as is_active=false (page-gap) and is INERT for framing. It is read by:
+(a) the cron framing pass, which rewrites an already-written article's HEADLINE
+only if the article's entity tuple matches, and burns match_count -- it does NOT
+generate; (b) the seeder, which may stamp keyword_ref as ranking metadata on a
+candidate created from verified-substance gaps; (c) demand-check + GSC-review
+panels (read-only decision support); (d) heartbeat/staleness monitors. It has NO
+effect on what gets generated, on content_candidate row existence, on the sitemap,
+on routing, or on page rendering. keyword_targets -> content_candidate /
+generation: NO. The content_candidate.keyword_ref column carries an explicit
+FIREWALL comment: demand annotates and ranks only, it can never create a row;
+verified substance is the warrant. The "N committed targets" counter is per-game
+keyword_targets row count (was 0 on the wardogs tab only because all 15 targets
+are marathon).
+
+OPEN / PARKED from this thread:
+- Fable-worthy (parked, not yet sent): entity vocabulary is known-incomplete for
+  non-Marathon games; multiple features key on entity-bindability, so per-game
+  vocab completeness is a possible soft-foundation question. Pairs with the
+  already-written editor-pipeline fragility summary for a future strategy review.
+- Minor loose thread: GSC-review DECLINE write (is_active=false page-gap row) was
+  confirmed at line level this session (GscReviewPanel.js:122-141 POSTs to
+  /api/admin) -- resolved, noted for completeness.
+
+---
+
 ## 2026-09-15 - Editor de-link FULLY CLOSED (footer + sitrep + rising /editors stragglers)
 - Removed the last user-facing /editors PROMOTION links the de-link batch (5be2741) missed: the Marathon footer EXPLORE "EDITORS" entry (lib/games/marathon.js), the sitrep "EDITOR COVERAGE" section's "ALL EDITORS ->" rightLink (app/marathon/sitrep/page.js), and the rising page's "EDITORS ->" CTA button (app/marathon/rising/page.js). grep-clean: NO user-facing href=/editors links remain on any surface.
 - The /editors page STAYS LIVE + indexable (sitemap eligible.js + isNetworkChrome untouched) -- de-linked from chrome/content, not deleted. This completes the editor de-link: editor PROMOTION removed everywhere; editor pages + article bylines intact. Build EXIT=0.
