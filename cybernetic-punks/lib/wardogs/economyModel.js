@@ -33,10 +33,14 @@ const median = (a) => { if (!a.length) return 0; const s = [...a].sort((x, y) =>
 const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 const round = (n) => Math.round(n);
 
-// RATE BASIS: a CONSERVATIVE time-average concurrent, NOT peak. v3 lowers this from 170K to 130K:
-// 170K x total-elapsed still treated CCU as ~24/7. 130K is ~39% of the 337K SteamDB launch peak
-// (~33% of Bulkhead's 400K claim) -- a defensible day-average across timezones for a launch-week
-// game, so the model does not assume everyone is online at once. Peak stays CONTEXT only.
+// RATE BASIS: a CONSERVATIVE time-average concurrent, NOT peak. KEPT at 130K in the 2M-copies
+// update (2026-09-15) -- deliberately NOT inflated when copies/peak rose. 130K tracks CURRENT/
+// trending concurrency, not the launch spike: it is ~45% of the ~286K CURRENT concurrent
+// (tracker.gg, already DECLINING from launch -- extraction shooters fade by ~month 3) and ~36% of
+// the 365K SteamDB launch peak. A defensible day-average across timezones, so the model never
+// assumes everyone is online at once. Peak (365K) + copies (2M) stay CONTEXT only -- they do NOT
+// feed the rate, so a bigger headline number cannot balloon the ticker total. Sanity-gated vs the
+// anchors (2M copies / ~286K current / 365K peak): 130K sits below current -> conservative.
 export const DEFAULT_PLAYERS = 130000;
 export const LAUNCH_ISO = '2026-09-10T16:00:00Z';      // EA launch epoch
 
@@ -138,7 +142,7 @@ export function spendModel(data, { players = DEFAULT_PLAYERS } = {}) {
 
 // COOL, SHAREABLE stats -- real facts + model-derived rates, screenshot-friendly. Each returns
 // { big, label, sub? } where `big` is the headline number.
-export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
+export function shareStats(data, model, { copiesSold = 2000000 } = {}) {
   const out = [];
   const cat = (k) => model.categories.find((c) => c.key === k) || {};
   const items = data.items || [];
@@ -173,7 +177,7 @@ export function shareStats(data, model, { copiesSold = 1250000 } = {}) {
   }
 
   // 4. Per-active-player BURN RATE (v3 units fix). v2 divided the active-player-HOURS integral by
-  // ALL 1.25M owners (most idle) -> a units mismatch that overstated "the average owner". v3
+  // ALL owners (2M, most idle) -> a units mismatch that overstated "the average owner". v3
   // reports the model's native, units-correct figure: what one ACTIVE player burns per hour in
   // the field. No division across idle owners.
   const perHour = model.totalPerHourPerPlayer;

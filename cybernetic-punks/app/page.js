@@ -215,7 +215,7 @@ export default async function NetworkRoot() {
   // Dynamic: adding a game to ROOT_GAMES updates this automatically.
   var gamesCovered = ROOT_GAMES.length;
   // PEAK PLAYERS TRACKED = the biggest VERIFIED peak-concurrent across the network (sourced
-  // ROOT_GAMES[].verifiedPeak; today Wardogs' ~337K SteamDB EA-launch peak dominates). A PEAK,
+  // ROOT_GAMES[].verifiedPeak; today Wardogs' ~365K SteamDB EA-launch peak dominates). A PEAK,
   // not a live count (the cell label says so) -- the honest way to show the network's real scale
   // when we only fetch ONE live Steam count (Marathon's ~2K). null -> the cell hides gracefully.
   var networkPeak = ROOT_GAMES.reduce(function (max, g) {
