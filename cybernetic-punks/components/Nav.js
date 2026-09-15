@@ -18,7 +18,7 @@ var NAV_ITEMS = [
   { label: 'PVE',     href: '/marathon/pve' },
   {
     label: 'DATABASE',
-    activeOn: ['/marathon/shells', '/marathon/matchups', '/marathon/mods', '/marathon/uniques', '/marathon/factions', '/marathon/maps'],
+    activeOn: ['/marathon/shells', '/marathon/matchups', '/marathon/mods', '/marathon/uniques', '/marathon/factions', '/marathon/maps', '/marathon/creators'],
     children: [
       { label: 'SHELLS',   href: '/marathon/shells',   desc: 'Runner shells & abilities' },
       { label: 'MATCHUPS', href: '/marathon/matchups', desc: 'Shell-vs-shell matchups' },
@@ -26,6 +26,7 @@ var NAV_ITEMS = [
       { label: 'UNIQUES',  href: '/marathon/uniques',  desc: 'Unique weapons' },
       { label: 'FACTIONS', href: '/marathon/factions', desc: 'Factions & reputation' },
       { label: 'MAPS',     href: '/marathon/maps',     desc: 'Maps, zones & bosses' },
+      { label: 'CREATORS', href: '/marathon/creators', desc: 'YouTuber & streamer directory' },
     ],
   },
   {

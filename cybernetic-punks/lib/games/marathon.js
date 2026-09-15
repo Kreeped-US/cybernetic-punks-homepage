@@ -97,6 +97,7 @@ export const marathon = {
         { label: 'ABOUT',          href: '/about'   },
       ],
       discover: [
+        { label: 'CONTENT CREATORS', href: '/marathon/creators'   },
         { label: 'RISING CREATORS', href: '/marathon/rising'      },
         { label: 'LEADERBOARD',     href: '/marathon/leaderboard' },
         { label: 'STATS TRACKER',   href: '/marathon/stats'       },
