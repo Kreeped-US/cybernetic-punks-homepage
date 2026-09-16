@@ -13,6 +13,7 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
+import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 import { getGameSection } from '@/lib/games';
 import { wardogsSectionForArticle } from '@/lib/games/wardogs';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
@@ -67,7 +68,8 @@ export async function generateMetadata({ params }) {
   var canonical = CANONICAL_BASE + '/wardogs/' + section.slug + '/' + article.slug;
   // NO robots key -> inherits app/wardogs/layout.js's robots gate (wardogs.indexable).
   return {
-    title: { absolute: title },
+    // SERP <title> smart-truncated to <=60 chars; the on-page H1 keeps the full headline.
+    title: { absolute: truncateMetaTitle(title) },
     description: description,
     alternates: { canonical: canonical },
     openGraph: { title: title, description: description, url: canonical, siteName: 'Cybernetic Punks', type: 'article' },

@@ -11,6 +11,7 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
+import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 import { dednetSectionForArticle } from '@/lib/games/pubg-dednet';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
@@ -59,7 +60,8 @@ export async function generateMetadata({ params }) {
   var canonical = CANONICAL_BASE + '/pubg-dednet/' + section.slug + '/' + article.slug;
   // NO robots key -> inherits app/pubg-dednet/layout.js's indexable gate.
   return {
-    title: { absolute: title },
+    // SERP <title> smart-truncated to <=60 chars; the on-page H1 keeps the full headline.
+    title: { absolute: truncateMetaTitle(title) },
     description: description,
     alternates: { canonical: canonical },
     openGraph: { title: title, description: description, url: canonical, siteName: 'Cybernetic Punks', type: 'article' },

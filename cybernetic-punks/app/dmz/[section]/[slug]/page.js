@@ -27,6 +27,7 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
+import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
 import { DMZ_ARTICLE_SEO, dmzSectionForArticle, dmz } from '@/lib/games/dmz';
@@ -110,7 +111,8 @@ export async function generateMetadata({ params }) {
     // template). DMZ article titles are keyword-competitive in exactly the way
     // /intel articles are, so they follow the same rule: the 18-char suffix is
     // budget spent branding a domain the SERP already shows.
-    title: { absolute: title },
+    // SERP <title> smart-truncated to <=60 chars; the on-page H1 keeps the full headline.
+    title: { absolute: truncateMetaTitle(title) },
     description: description,
     alternates: { canonical: canonical },
     openGraph: {

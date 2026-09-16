@@ -13,6 +13,7 @@ import { isDiscourseArticle } from '@/lib/discourse';
 import { stripCitationTags } from '@/lib/gather/blockId';
 import ToolCTA from '@/components/ToolCTA';
 import { parseBody } from '@/lib/articleBody';
+import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
 // the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
@@ -222,7 +223,9 @@ export async function generateMetadata({ params }) {
     // SERP budget on every article -- 30% of the budget spent on branding the
     // domain already shows. Article titles are where keyword competition happens;
     // the homepage and non-keyword hubs keep the suffix.
-    title: { absolute: item.headline },
+    // SERP <title>: smart-truncated to <=60 chars (word boundary, leading keywords kept) so it
+    // does not get chopped mid-word in search. The on-page H1 below keeps the FULL headline.
+    title: { absolute: truncateMetaTitle(item.headline) },
     description: desc,
     openGraph: { title: item.headline, description: desc, url: 'https://cyberneticpunks.com/marathon/intel/' + item.slug, siteName: 'Cybernetic Punks', type: 'article', publishedTime: item.created_at },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: item.headline, description: desc },

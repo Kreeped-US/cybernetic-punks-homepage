@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic';
 const BASE = 'https://cyberneticpunks.com';
 
 export const metadata = {
-  title: { absolute: 'Wardogs Weapon Tier List — Every Weapon Ranked by TTK | Cybernetic Punks' },
+  title: { absolute: 'Wardogs Weapon Tier List - Every Weapon Ranked by TTK' },
   description: 'The Wardogs weapon tier list: every weapon ranked S to D by measured time-to-kill from community ballistics testing. No opinions -- just what kills fastest, with the specialists explained.',
   keywords: 'Wardogs tier list, best Wardogs weapons, Wardogs weapon rankings, Wardogs meta, Wardogs weapon tier list, Wardogs best guns',
   alternates: { canonical: BASE + '/wardogs/tier-list' },

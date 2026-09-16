@@ -122,7 +122,9 @@ export async function generateMetadata({ params }) {
     + 'ranked by measured time-to-kill from community ballistics testing. See the full board, per-weapon TTK, and the reasoning.';
   const url = BASE + '/wardogs/loadouts/best/' + hub.slug;
   return {
-    title: { absolute: title + ' | Cybernetic Punks' },
+    // Brand suffix dropped to keep the SERP <title> <=60 chars (e.g. "Best Marksman Rifle
+    // Loadout in Wardogs - Ranked by TTK" = 53); the keyword-carrying title stays intact.
+    title: { absolute: title },
     description,
     keywords: 'best ' + hub.lower + ' Wardogs, Wardogs ' + hub.lower + ' loadout, best Wardogs '
       + hub.plural + ', Wardogs ' + hub.lower + ' TTK, Wardogs ' + hub.lower + ' tier list',
