@@ -17,11 +17,15 @@
 //     description, bottomTagline, legal, links, peerLabel, peerLifecycle,  // existing
 //     themed: {
 //       enabled: true,                    // GATE. Omit/false -> generic footer (nothing ships).
-//       logo: {                           // REQUIRED when enabled.
+//       logo: {                           // REQUIRED when enabled. Rendered on its OWN row at
+//                                         //   the top of the footer (masthead).
 //         src: '/exact/case-sensitive/path.png',  // Vercel/Linux is case-sensitive.
 //         height: 34,                     // px. REQUIRED -- per-game (aspect ratios vary 1:1..5:1;
 //                                         //   a single constant looks uneven), so size each here.
+//                                         //   A 2:1 mark needs a bigger height than a 5:1 wordmark
+//                                         //   to read at the same width.
 //         maxWidth: 240,                  // px, optional cap.
+//         align: 'left',                  // optional 'left'|'center'|'right' (default 'left').
 //         alt: 'Wardogs',                 // optional; defaults to config.displayName.
 //       },
 //       color: '#e0a13a',                 // optional accent; defaults to config.theme.accent
@@ -88,17 +92,23 @@ export default function ThemedGameFooter({ config }) {
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 90% at 15% 20%, ' + accent + '10, transparent 60%)' }} />
 
       <div style={{ position: 'relative', maxWidth: 1120, margin: '0 auto', padding: '44px 24px 26px' }}>
-        {/* brand + tagline */}
+        {/* LOGO -- its own row at the TOP of the footer (masthead), mirroring the logo-led
+            top of WardogsFooter. On its own line (not sharing the brand row) so it reads as
+            a clear header and can be sized up per game regardless of aspect ratio without
+            crowding the columns. Alignment is config-driven (logo.align, default 'left'). */}
+        {logo.src && (
+          <div style={{ marginBottom: 28, textAlign: logo.align || 'left' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logo.src}
+              alt={logoAlt}
+              style={{ height: logo.height || 34, width: 'auto', maxWidth: logo.maxWidth || '100%', display: 'inline-block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7))' }}
+            />
+          </div>
+        )}
+        {/* brand description + columns */}
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 36 }}>
           <div style={{ maxWidth: 460 }}>
-            {logo.src && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={logo.src}
-                alt={logoAlt}
-                style={{ height: logo.height || 34, width: 'auto', maxWidth: logo.maxWidth || 'none', display: 'block', marginBottom: 16, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7))' }}
-              />
-            )}
             {fcfg.description && (
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5, margin: 0 }}>
                 {fcfg.description}
