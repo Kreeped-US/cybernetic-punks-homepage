@@ -7,6 +7,7 @@ import { getGameConfig } from '@/lib/games';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { isGameLive } from '@/lib/network/gameStatus';
 import WardogsFooter from '@/components/wardogs/WardogsFooter';
+import ThemedGameFooter from '@/components/game/ThemedGameFooter';
 
 // Updated April 27, 2026:
 // - Colors aligned to design system (#0e1014 footer / #ff2222 / #00d4ff)
@@ -44,7 +45,16 @@ export default function Footer({ game = 'marathon' }) {
 
   // Per-game footer config (Phase 1 data). Default game 'marathon' keeps every existing
   // <Footer /> call unchanged. description / legal / EXPLORE + DISCOVER links read from here.
-  var fcfg = getGameConfig(game).footer;
+  var cfg = getGameConfig(game);
+  var fcfg = cfg.footer;
+
+  // GENERALIZED THEMED FOOTER (Step 0 capability). A game opts into a Wardogs-quality
+  // themed footer (theme color + official logo + backdrop) by declaring footer.themed
+  // (see components/game/ThemedGameFooter.js for the config contract). This is a BRANCH,
+  // not a replacement: NO game declares footer.themed yet, so this never fires today and
+  // every hub keeps its exact current footer. A later rollout brief enables one game per
+  // window. Absent/false -> falls through to the generic network footer below, byte-identical.
+  if (fcfg && fcfg.themed && fcfg.themed.enabled) return <ThemedGameFooter config={cfg} />;
   var exploreLinks = (fcfg.links && fcfg.links.explore) || [];
   var discoverLinks = (fcfg.links && fcfg.links.discover) || [];
 
