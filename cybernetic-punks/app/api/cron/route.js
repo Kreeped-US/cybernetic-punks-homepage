@@ -2,6 +2,7 @@ import { callEditor, buildMirandaPrompt, generateArticleComments, getStoreRegist
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { sendOpsAlert } from '@/lib/opsNotify';
+import { emitDraftsDigest } from '@/lib/opsDigest';
 import { recordCronRun } from '@/lib/cronRunLog';
 import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
@@ -1499,6 +1500,24 @@ export async function GET(req) {
       articles_published: succeeded,
       failure_reasons: failureReasonsPayload,
       started_at: runStartedAt,
+    });
+
+    // DAILY DRAFTS DIGEST + DURABLE-DRAFT HEARTBEAT (Phase 1, Brief 2). Read-only: counts
+    // held-for-review drafts (network-wide, grouped by game) and how long since this game's
+    // DURABLE (daily/evergreen) producer last shipped, then sends the digest via the shared
+    // fail-safe sendOpsAlert (email + Discord ops) -- a daily login trigger + proof-of-life,
+    // escalating to an ALARM when the durable producer has gone quiet past the threshold
+    // (silent-death visibility). "durable editors" = roster minus patch-gated, so NEXUS's
+    // patch-day drafts cannot mask MIRANDA's silence. emitDraftsDigest NEVER throws, so this
+    // can neither block nor crash the cron. This success-path send is also the end-to-end
+    // proof the ops channel delivers.
+    var durableEditors = (PRODUCING_GAME.editorial.editors || []).filter(function (e) {
+      return editorsRequiringPatch.indexOf(e) === -1;
+    });
+    await emitDraftsDigest(supabase, {
+      producingGameSlug: PRODUCING_GAME_SLUG,
+      durableEditors: durableEditors,
+      run: { kind: (alertOutcome && alertOutcome.kind) || 'unknown', succeeded: succeeded, attempted: results.length, published: succeeded },
     });
 
     // Historical-context precompute (AI-quality roadmap #2/#3, Stage 1): refresh
