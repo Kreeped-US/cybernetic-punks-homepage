@@ -77,6 +77,19 @@ export const pubgDednet = {
         { label: 'Arsenal',     href: '/pubg-dednet/arsenal'     },
       ],
     },
+    // THEMED FOOTER (first rollout of the dormant capability, f0b73e9). Opting DED.NET in:
+    // components/Footer.js sees footer.themed.enabled and dispatches to ThemedGameFooter
+    // (theme color + official logo + backdrop). Chosen first because its logo is clean
+    // (transparent, dark-ready) and it is pre-launch (near-zero SEO exposure). Config
+    // contract: components/game/ThemedGameFooter.js header. color is OMITTED on purpose ->
+    // ThemedGameFooter derives it from theme.accent (#cc2936 blood-red), single source of
+    // truth. Logo is 608x303 (~2:1); height 34 (matching the Wardogs reference) reads clean
+    // at footer scale. Backdrop is the existing hero, scrimmed by the component.
+    themed: {
+      enabled: true,
+      logo: { src: '/images/ded.net/dednet.webp', height: 34, maxWidth: 200, alt: 'PUBG DED.NET' },
+      backdrop: { src: '/images/games/pubg-dednet-hero.jpg', opacity: 0.5, position: 'center 40%' },
+    },
   },
 
   // EDITORIAL ROSTER -- NEXUS only, mirroring DMZ/Wardogs. News / official-announcement tracking is
