@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-09-16 - MIRANDA ALIVE: queue-jam fix 5dc1bf3 proven on first real run
+
+VERDICT: MIRANDA is ALIVE. The queue-jam fix (5dc1bf3) works. This CORRECTS the
+prior "fix deployed, awaiting proof" status - critically, the fix landed 2026-09-15
+22:13 UTC, AFTER that day's cron, so NO run had ever included it until today. The
+2026-09-16 19:00 UTC run was its first real test, and it passed.
+
+EVIDENCE (read-only, SELECT-only):
+- cron_runs 2026-09-16T19:00:18 UTC: kind=all_succeeded, patch=true, attempted=2,
+  ok=2, fail=0, pub=2, alert=false. First all_succeeded in the window (prior 14 runs
+  each had MIRANDA fail=1; non-patch days were total_outage/pub=0).
+- feed_items: NEW MIRANDA held draft 2026-09-16T19:01:41 UTC, is_published=false,
+  gate=clear, "Marathon BR33 Volley Rifle: High-Fire-Rate Precision Guide". Previous
+  MIRANDA output was 2026-09-01 - the 15-day dead streak is broken.
+- content_candidate (marathon): now {done:2, queued:38} (was 39 queued / 1 done).
+  BR33 Volley Rifle (facet=weapon, by=MIRANDA) flipped queued->done at 19:01:50 UTC -
+  this was the top-priority p25 candidate the queue used to JAM on. Gate-scan assigned
+  it, MIRANDA generated it, marked done - exactly the intended fix behavior. Queue
+  advanced to p24 Biotoxic Disinjector.
+
+HONEST CAVEAT (not a problem, precision): today was a PATCH day (has_patch=true), so
+the roster was NEXUS + MIRANDA (both ran, both ok). The pure NON-PATCH-day path -
+where MIRANDA runs ALONE as the sole daily producer - has NOT been exercised
+post-fix yet. The verdict holds (the failure was the queue-jam in MIRANDA's
+candidate-assignment path, independent of the patch gate, and it clearly resolved),
+but the next non-patch day is the final confirmation of the solo path. Watch for it.
+
+OPERATOR STATE: a BR33 Volley Rifle draft is HELD (is_published=false) in the review
+panel, awaiting approve/decline - the first draft available for review in 15 days.
+
+WHY THIS MATTERS (the through-line): the pipeline that DMZ's Oct 23 launch depends on
+is producing again, with ~37 days of runway. But it came back to life invisibly - no
+working alert, no daily digest, no heartbeat - exactly as it died invisibly for two
+weeks. So the alive verdict does NOT close the pipeline thread; it opens Phase 1
+(heal it): daily "N drafts ready" digest (email + Discord), persist per-editor
+failure reasons (currently console-only), and a "days since last durable draft"
+heartbeat that escalates to an alarm. Phase 1 is now the highest-value work - it is
+BOTH the operator's requested "log in, see drafts, click publish" experience AND the
+insurance that MIRANDA cannot silently die again during the DMZ launch runway.
+
+---
+
 ## 2026-09-16 - DMZ hub cleanup (P1 polish + editor-persona recede) + launch dependency
 
 DMZ is an INDEXED, launch-critical hub (MW4 DMZ, Oct 23, ~37 days). A read-only
