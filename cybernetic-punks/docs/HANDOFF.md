@@ -7,6 +7,145 @@ Newest entries on top.
 
 ---
 
+## 2026-09-16 - Editor pipeline diagnostic + multi-game map + sequenced plan (findings CONFIRMED; MIRANDA run outcome PENDING)
+
+CORRECTS the prior "MIRANDA fix deployed, awaiting proof" line with the real
+picture, and banks the multi-game pipeline map so it is never re-traced.
+
+--- MIRANDA / DAILY RUN: half-dead, fix never actually tested yet ---
+Read-only diagnostic (cron_runs + feed_items + content_candidate, SELECT-only):
+- The cron fires daily (cron_runs has all 14 of last 14 days at ~19:00 UTC). But
+  the roster makes MIRANDA the SOLE daily producer: marathon editors=[NEXUS,
+  MIRANDA]; NEXUS is patch-gated (editorsRequiringPatch), so on a no-patch day the
+  active roster is just [MIRANDA].
+- MIRANDA failed=1 on every one of the last 14 recorded runs. Every non-patch day
+  = total_outage, 0 published. Only drafts produced were NEXUS on the 2 patch days
+  (Sept 2, Sept 15), both HELD. Last MIRANDA output of any kind: 2026-09-01. Last
+  MIRANDA published: 2026-08-30.
+- content_candidate (marathon) = 39 queued, 1 done. Queue is FULL and unconsumed,
+  not drained.
+- CRITICAL TIMING: the queue-jam fix 5dc1bf3 was committed 2026-09-15 22:13 UTC,
+  AFTER that day's 19:00 UTC cron. So NOT ONE recorded failing run included the
+  fix. The 2026-09-16 19:00 UTC run (12pm Pacific) is its FIRST real test. OUTCOME
+  PENDING as of this entry.
+- WHY MIRANDA fails each run is NOT persisted (console-only in Vercel logs:
+  [QUEUE-ASSIGN] / [CRON] MIRANDA failed). To confirm the fix, check the 09-16 run:
+  a new MIRANDA held draft in feed_items + a candidate flipped to done; if still
+  failing, read the Vercel function log for the failure arm.
+
+--- FAILURE EMAIL: not broken -- it has been correctly screaming for 2 weeks ---
+- sendCronFailureAlert (lib/alertEmail.js, Resend REST) is provisioned and sending:
+  every failing run recorded alert_sent=true (sent only on Resend res.ok). It has
+  accurately reported the ongoing MIRANDA outage daily.
+- The "not working properly" feeling = alarm fatigue: it fires every run with NO
+  healthy/positive counterpart, so a real alarm is indistinguishable from noise.
+- Real structural gaps (all confirmed, cited): email-only (no Discord; the 4
+  DISCORD_WEBHOOK_* are content-only, no ops webhook); the alert call is INSIDE the
+  try, so a hard throw jumps to catch and sends NO email (records cron_runs
+  kind=error only); freeze-suppression (freezeExplainsZero) could mask a genuinely
+  dead pipeline as a designed zero if MIRANDA were ever gated/removed; per-editor
+  failure reasons are not persisted (cron_runs stores counts + run-level error
+  only); no editor-output heartbeat ("days since last durable draft") exists
+  (keywordHeartbeat.js is a keyword-store probe, different question).
+
+--- MULTI-GAME PIPELINE MAP (expensive to reproduce; build on this) ---
+Goal: bring the other ROOT_GAMES into autonomous generation, each gated like
+marathon, each with its own per-game daily cadence cap (~1-2/day, tuned to domain
+authority; NO uncapped-on-demand -- volume on a young domain hurts SEO; demand is
+not warrant, the substance floor still governs).
+
+State: the pipeline is SINGLE-GAME-PER-INVOCATION, defaulting to marathon. It is
+mostly parameterized, not hardcoded (the ROOT_GAMES sweep 17fd823 already removed
+stale game literals; run-body queries are .eq('game_slug', PRODUCING_GAME_SLUG)).
+The lock is at three points: (a) only marathon has editorial.generateNews=true, so
+getGenerationGames() returns [marathon] and ?game= is fail-closed to it; (b)
+vercel.json schedules /api/cron ONCE, un-parameterized (no ?game=, no loop); (c)
+the run does not loop over games.
+
+Per-game scaffolding (present/absent):
+- marathon: full config, editors [NEXUS,MIRANDA], full feed sources, queue 39
+  queued, generateNews ON. The prototype.
+- dmz: config + [NEXUS]-only roster + prePublishGate; sources block is X-only
+  (shaped for a manual script, not the gatherAll contract); queue 0; no
+  generateNews.
+- wardogs: config + [NEXUS]-only; NO sources block (gatherAll would throw); queue
+  0; no generateNews.
+- pubg-dednet: as wardogs (no sources, queue 0, no generateNews).
+- bodycam: as wardogs (no sources, queue 0, no generateNews).
+The non-marathon games' existing feed_items were made by manual owner-reviewed
+scripts, not the cron.
+
+What each non-marathon game MISSES to run at all: generateNews switch; a scheduled
+?game= call (or a cron loop); MIRANDA (or some proven daily producer) in the
+roster; a seeded content_candidate queue (seed-gap-candidates.mjs is --game
+parameterized); and a real feed source (3 of 4 have none). Gates are largely
+agnostic; two need a per-game decision: prePublishGate is fail-closed for
+non-marathon (no store loader could hold 100% of output -- safe but blocking) and
+durability/churn no-ops without editorial.resetDate.
+
+Notification surfaces for multi-game: cron_runs is already game-aware (stamps
+game_slug). alertEmail is game-BLIND (no game in subject/body) -- 5 games would
+send 5 unlabeled emails/day. keywordHeartbeat is game-scoped.
+
+EFFICIENCY (design decision, not yet built): running 5 games sequentially in one
+invocation would almost certainly blow the Vercel function timeout (code notes a
+prior ~50-min GSC job killed at 60s, moved to its own route). Use 5 SEPARATE
+scheduled ?game= invocations, each its own timeout budget -- not an internal loop.
+Factor the shared GSC pulls / precompute OUT of the per-game path so they do not
+run 5x redundantly. Confirm Vercel plan cron-count ceiling before adding ~5 entries
+(6 crons exist; not readable from repo -- operator check).
+
+--- SEQUENCED PLAN (decided direction; each step gated, one change per window) ---
+Phase 0: prove MIRANDA produces on marathon (the 09-16 19:00 UTC run). Gates
+everything. If dead, fix the producer first AND persist the failure reason so it is
+never invisible again.
+Phase 1: central observability on marathon, one window each -- persist per-editor
+failure reasons; add editor-output heartbeat (days since last durable draft, per
+game, escalates a digest to an alarm); make the alert/digest game-aware + add
+Discord ops webhook + fire on the throw path too; add the daily "N drafts ready by
+game" digest (email + Discord). These are central: fixed once on marathon, every
+future game inherits the healed version. This is also the operator's requested
+"log in, see drafts, click publish" dinner-bell.
+Phase 2: fix the efficiency architecture (separate ?game= scheduled calls; GSC/
+precompute pulled out of per-game path) before wiring a 2nd game.
+Phase 3: wire games one at a time, each in its own window -- seed its queue from its
+verified entities, give it a feed, add a proven producer, decide its gate mode,
+flip generateNews, add its scheduled call. Wardogs first (flagship, most entity
+data to seed from).
+Rationale for not wiring now: wiring 4 games onto an unproven/broken producer with
+console-only failures multiplies the silent-failure surface 5x. Prove + heal
+marathon first.
+
+--- TOOL NAMING PRINCIPLE (doctrine; applies to every hub's advisor/tool) ---
+Name each hub's tool by ITS OWN GSC search demand, not a blanket house label. Same
+name across hubs does not compete or bonus in SEO (different game paths = different
+queries); the name's SEO value comes from matching that game's actual query. Where
+demand agrees across games (likely "Loadout Finder" in most), consistency is a
+happy side effect + a UX/trust win. Where a game's players search a different term,
+follow that term for that hub. Precedent: marathon Build Advisor -> Loadout Finder
+was a demand-driven rename ("build advisor" had zero volume). Use the demand-check
+panel to pick the winning term per game before any rename; a rename is a route
+change (301), sequence it deliberately.
+
+--- OPEN / PENDING (not recorded as done) ---
+- MIRANDA 09-16 run outcome: PENDING. Record the result (alive/dead + evidence)
+  when checked.
+- Hub-consistency work (themed footers + logos + back-to-network links + hub-to-hub
+  interlinking, using wardogs as the reference pattern): read-first NOT yet run;
+  nothing to record. Interlinking must be contextual, not boilerplate footer links;
+  structural changes must be sequenced (compound sitewide change = the SEO-collapse
+  shape).
+- Fable pipeline verdict: RECEIVED (autonomy costs more than it returns at this
+  volume; keep queue + gates, human-front the trigger). Informs the direction but
+  the operator's landed decision differs subtly -- KEEP the automation, make it
+  trustworthy (Phase 1), rather than turn the cron off. Not adopted as doctrine
+  verbatim.
+- Parked: per-game vocab completeness (Fable-worthy, now data-backed); mw3 signal
+  jammer GSC cross-game mis-scope (data-hygiene); demand-check NO-ENTITY chip is a
+  wide pill (cosmetic).
+
+---
+
 ## 2026-09-15 - SEO audit arc: titles + 4xx + H1 + HTML-size (+ alt false-positive)
 - A crawl (Ahrefs/SEMrush-style) flagged 5 issue types. Worked all; every item resolved or confirmed-false-positive.
 - TITLE TOO LONG (64 pages, commit 2ee05b3): systemic fix -- new lib/seo/metaTitle.js truncateMetaTitle (word-boundary <=60 chars, keeps leading keywords, short titles verbatim) applied to all 4 article-detail routes' meta title.absolute; H1 keeps the FULL headline (only SERP title truncates). 3 hub templates tightened (tier-list 53, economy 55, best/[type] 54, keywords kept). Covers 55 intel + 3 article-slug + future.
