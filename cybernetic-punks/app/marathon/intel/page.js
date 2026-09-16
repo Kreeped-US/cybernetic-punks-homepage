@@ -170,7 +170,24 @@ var MARATHON_FAQS = [
   },
 ];
 
-var ARCHIVE_PAGE_SIZE = 100;
+// Row excerpt. The card visually clamps the summary to 2 lines via CSS, but a
+// clamp only HIDES overflow -- the full body still ships in the HTML. At 100 rows
+// that shipped every article's entire body into one document ("HTML too large"
+// audit, 2026-09-16). Truncate server-side to a short summary so only ~180 chars
+// per row leave the server; the visual 2-line clamp stays as a belt-and-braces.
+function rowExcerpt(body, max) {
+  var s = stripCitationTags(body || '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
+  if (s.length <= max) return s;
+  var cut = s.slice(0, max);
+  var lastSpace = cut.lastIndexOf(' ');
+  if (lastSpace > 40) cut = cut.slice(0, lastSpace);
+  return cut.replace(/[\s,;:.\-]+$/, '') + '…';
+}
+
+// 60 rows/page (was 100): the first-page SSR document stays small while the FULL
+// archive remains crawlable -- there are ceil(total/60) pages, each a real
+// indexable URL walkable via the prev/next + numbered <Link>s below.
+var ARCHIVE_PAGE_SIZE = 60;
 
 export default async function IntelHubPage({ searchParams }) {
   var sp = (await searchParams) || {};
@@ -408,7 +425,7 @@ export default async function IntelHubPage({ searchParams }) {
                     </h3>
 
                     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {stripCitationTags(item.body || '').replace(/\*\*/g, '')}
+                      {rowExcerpt(item.body, 180)}
                     </p>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>

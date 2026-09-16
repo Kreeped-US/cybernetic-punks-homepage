@@ -255,6 +255,14 @@ export default async function Home() {
 
         {/* ══ HERO ══ */}
         <section style={{ position: 'relative', zIndex: 1, borderBottom: '1px solid #1e2028', background: '#0e1014' }}>
+          <div className="hp-wrap" style={{ padding: '20px 24px 4px', textAlign: 'center' }}>
+            <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(20px, 3.4vw, 30px)', fontWeight: 900, color: '#fff', letterSpacing: 0.5, lineHeight: 1.1, margin: 0 }}>
+              Marathon Meta, Builds &amp; <span style={{ color: '#00ff41' }}>Tier List</span>
+            </h1>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.42)', fontWeight: 600, lineHeight: 1.5, margin: '8px auto 0', maxWidth: 560 }}>
+              Weapon &amp; shell rankings, loadouts, and daily meta intel for Marathon &mdash; updated every day.
+            </p>
+          </div>
           <div className="hp-wrap" style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff41', boxShadow: '0 0 6px rgba(0,255,65,0.6)' }} />
