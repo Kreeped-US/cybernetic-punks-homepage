@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-09-15 - SEO audit arc: titles + 4xx + H1 + HTML-size (+ alt false-positive)
+- A crawl (Ahrefs/SEMrush-style) flagged 5 issue types. Worked all; every item resolved or confirmed-false-positive.
+- TITLE TOO LONG (64 pages, commit 2ee05b3): systemic fix -- new lib/seo/metaTitle.js truncateMetaTitle (word-boundary <=60 chars, keeps leading keywords, short titles verbatim) applied to all 4 article-detail routes' meta title.absolute; H1 keeps the FULL headline (only SERP title truncates). 3 hub templates tightened (tier-list 53, economy 55, best/[type] 54, keywords kept). Covers 55 intel + 3 article-slug + future.
+- HTTP 4xx (6 URLs, commit dddccf6): verified each empirically. 3 were LEAK-FALLOUT -- /marathon/weapons/{mp5,mp43,deagle} (Wardogs weapons indexed on Marathon URLs during the old cross-game weapon-leak; now 404 post-leak-fix) -> routed to 410 (MARATHON_WEAPONS_GONE in deadIntel.js + proxy.js, guarded to exact slugs; real weapons stay 200) so Google drops them (helps SEO recovery). Other 3 (wardogs-map-respawn, vandal-build, dmz-hajin) confirmed LIVE 200 -- stale crawl flags, no fix.
+- ALT MISSING (293 pages): FALSE POSITIVE -- verified every <img> has correct alt (descriptive for meaningful, empty for decorative/text-adjacent = correct WCAG). The crawler counts intentional alt="" as "missing". Mass-adding alt would REGRESS a11y -> correctly NOT fixed.
+- H1 MISSING (1, /marathon, commit 5efbe1c): the Marathon hub had ZERO h1 -> added one semantic "Marathon Meta, Builds & Tier List".
+- HTML SIZE (1, /marathon/intel, commit 5efbe1c): root cause = the row excerpt shipped the FULL item.body x100 rows (CSS line-clamp only hides, bytes still ship). Fix: truncate excerpt server-side ~180 chars + page size 100->60. SSR 2.81MB->1.24MB (-56%), crawlability preserved (numbered pagination, 7 pages). FLAGGED follow-up (not done): remaining size is duplicated inline-style objects -> CSS-class refactor (visual-regression risk, separate).
+- CHURN-BACKLOG NOTE (from the title work): many of the 55 intel long-title articles are stale-fast churn (patch/meta snapshots) -- legit 410-retirement candidates via the dead-article system; a deliberate retirement pass would shrink the set at the source (separate decision).
+- LESSON: verify audit flags empirically -- the alt "293" was a false-positive (fixing = a11y regression), and 3 of 6 "4xx" were stale-flag live-200s. Crawler counts != real defects.
+
+---
+
 ## 2026-09-15 - Demand-check verdict split: BUILD -> BUILD + NO-ENTITY (SHIPPED, awaiting live visual confirm)
 
 WHAT: The admin SEO Tools demand-check panel now emits a 4th verdict, NO-ENTITY,
