@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-09-16 - Sept-7 impressions cliff: forensics complete, cause is EXTERNAL (not on-site)
+
+INVESTIGATION (GSC exports + git + DB + live HTTP probes). Corrects the prior
+"migration shock / graveyard" framing with dated, ruled-out evidence.
+
+THE CLIFF: impressions ran ~220/day through Sept 6, cliffed to ~20/day Sept 7 onward
+(~90% overnight). CRITICAL SHAPE: it is a POSITION DEGRADATION, not a page loss - avg
+position went ~10 (pre) -> ~23-42 (post) while indexed page count held. Pages weren't
+removed; the pages you kept rank WORSE. That is the signature of a ranking demotion,
+not de-indexing or a technical flush.
+
+ON-SITE CAUSES - ALL RULED OUT (proven):
+- No code deploy Sept 3-7 (git gap: main jumps Sept 2 -> Sept 8).
+- No global noindex/canonical/robots regression (robots.index=true hardcoded, robots.js
+  static since March, no layout/metadata commit in window).
+- slug_redirects: only 5 rows, ALL Sept 1, all -> valid live survivors. No Sept 5-7 batch.
+- feed_items: no bulk noindex/unpublish near the cliff (noindexing clusters late-Aug +
+  1 on Sept 1; feed_items untouched Sept 3-8). Top trafficked articles still published +
+  indexed.
+- REDIRECT HEALTH (live-probed): /intel/:path* -> /marathon/intel/:path* is a clean
+  single 301 (next.config.mjs:196), slug preserved 1:1. 7 of top-8 old-URL impression
+  carriers = 301->200 (survivors, authority consolidates); 1 = 301->410 Gone (deleted,
+  correct deindex). No chains, no soft-404, no old-URL-200-bypass. NOTE: an old proxy.js
+  comment described a 301->404 chain for ~1,200 deleted articles - that was the OLD
+  problem statement; proxy.js was upgraded to emit 410 (proxy.js:12-40 "PART B"),
+  confirmed live. Nothing to repair.
+
+KEY STRUCTURAL FACT: 93% of search impressions (10,857 across 674 pages) still sit on
+the OLD /intel/ URL structure; the new /marathon/intel/ paths have only ~709. This is
+the EXPECTED signature of a large (~1,200-URL) migration Google hasn't finished
+reprocessing (Aug-20 migration, ~4 weeks old) - NOT a broken migration. 7 of top-8
+authority-carriers have a clean 301->200 path home, so authority WILL consolidate; Google
+is just slow.
+
+VERDICT: no on-site cause exists. The Sept-7 cliff is EXTERNAL - a Google ranking/algo
+demotion around Sept 2-8 (independent SEO trackers observed unconfirmed movement that
+window; Google did not confirm a core/spam update), layered on top of normal slow
+post-migration consolidation. Not self-inflicted.
+
+RESPONSE: PATIENCE + existing recovery work (durable content, distribution/inbound links,
+time) - NOT a code fix (there is nothing broken to fix). Reacting hard to an unconfirmed
+external wobble is the actual risk. One optional GSC check (not code): confirm the old
+/intel/ lost impressions concentrate on SURVIVING slugs (will consolidate) vs deleted
+ones (410, released) - the top-8 sample already shows survivors dominate.
+
+UNCHECKED RESIDUAL: Vercel env/settings/deploy-log (can't inspect here) - but no
+env-gated global-noindex path exists in code, so it's an unlikely lever; a glance at the
+Vercel activity log for Sept 5-7 would fully close it.
+
+NOT A FABLE ITEM (yet): SEO strategy is sound and executing (migrate -> 301-consolidate ->
+recover); no pending decision. The real forward lever is distribution/links (separate
+chat). If a strategic pass happens, "is recovery fast enough / is distribution happening"
+pairs with the ready editor-fragility Fable summary.
+
+---
+
 ## 2026-09-16 - A11 gate scoped to storeless/VANTAGE (unblocks weapon guides)
 
 PROBLEM: The A11 stat-hard-block (runA11Gate, lib/network/vantageGate.js) + the
