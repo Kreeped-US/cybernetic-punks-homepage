@@ -15,6 +15,7 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { checkLockout, recordFailure, clearFailures } from '@/lib/rateLimit';
 import { runA11Gate } from '@/lib/network/vantageGate';
+import { isDiscourseArticle } from '@/lib/discourse';
 // Correction guard (piece 2): warn (do not publish) when the draft body co-occurs a recorded
 // correction's entity+keywords, unless the caller explicitly acknowledges. Shared matcher --
 // same co-occurrence logic as the read-only sweep and the publish-drafts script.
@@ -83,15 +84,27 @@ export async function POST(req) {
   // read is scoped to is_published=false so this only ever gates a draft.
   var { data: draft, error: readErr } = await supabase
     .from('feed_items')
-    .select('id, headline, body, game_slug, creator_info, source_url, source, is_published')
+    .select('id, headline, body, game_slug, editor, directive_type, tags, creator_info, source_url, source, is_published')
     .eq('id', id)
     .eq('is_published', false)
     .maybeSingle();
   if (readErr) return Response.json({ error: readErr.message }, { status: 500 });
   if (!draft) return Response.json({ error: 'No draft found for that id (already published or missing).' }, { status: 404 });
 
+  // SCOPING (2026-09-16): A11's stat-hard-block + attribution-survival holds are VANTAGE
+  // discourse-honesty checks. Doctrine A11 scopes them to VANTAGE's STORELESS output
+  // (docs/doctrine-v3-amendments.md:110-129, ":126 runs on VANTAGE output ... structurally
+  // storeless"); this route had been over-applying them to EVERY editor, blocking store-backed
+  // editors' legitimately-sourced content (e.g. MIRANDA weapon guides). Store-backed editors
+  // have their own provenance -- generation stat-grounding + the corroboration gate + this
+  // mandatory human approval -- which VANTAGE lacks, so these two checks do NOT apply to their
+  // non-discourse articles. isDiscourseArticle covers VANTAGE's output (directive_type='discourse'
+  // / 'discourse' tag); editor==='VANTAGE' is the belt so a VANTAGE row can never be accidentally
+  // exempted. The correction guard + the actual publish below are UNCHANGED (apply to all).
+  var storelessOutput = isDiscourseArticle(draft) || draft.editor === 'VANTAGE';
+
   var verdict = runA11Gate(draft);
-  if (verdict.hardBlock) {
+  if (storelessOutput && verdict.hardBlock) {
     return Response.json({
       error: 'A11 honesty gate: HARD BLOCK (' + verdict.hardBlockCheck + '). VANTAGE is storeless -- a stat-shaped number in her voice is laundered or unverifiable, both disqualifying. Remove the figure(s) and regenerate; this cannot be published.',
       gate: 'hard-block',
@@ -99,7 +112,7 @@ export async function POST(req) {
       statHits: verdict.statHits,
     }, { status: 422 });
   }
-  if (verdict.reviewHolds.length > 0 && !overrideHolds) {
+  if (storelessOutput && verdict.reviewHolds.length > 0 && !overrideHolds) {
     return Response.json({
       error: 'A11 honesty gate: REVIEW HOLD (' + verdict.reviewHolds.join(', ') + '). Review the piece, then approve again with override to publish.',
       gate: 'review-hold',

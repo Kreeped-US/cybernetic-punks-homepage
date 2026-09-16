@@ -162,7 +162,12 @@ export function detectUnattributedClaims(body) {
 // Flag-for-review: the human confirms the source-verbatim question the flag raises.
 // ---------------------------------------------------------------------------
 var METRIC_NOUNS = 'players|concurrent|viewers|subscribers|subs|followers|wins|losses|kills|deaths|matches|games|hours|downloads|copies|units|k\\/d|kd|mmr|elo';
-var STAT_RE = new RegExp('(\\d[\\d,]*(?:\\.\\d+)?)(\\s?%|\\s?(?:k|m|million|thousand|billion|' + METRIC_NOUNS + '))?', 'gi');
+// FALSE-POSITIVE FIX (2026-09-16): bare single-letter "m" REMOVED from the magnitude suffixes.
+// It collided with METERS ("48m range" read as 48 million). Spelled-out "million" stays, and
+// "k"/"thousand"/"billion" are unaffected. Accepted tradeoff (per the fix brief): shorthand
+// magnitude like "5m" no longer flags on the suffix alone -- a laundered magnitude still flags
+// via "5 million" (spelled), comma-grouping ("5,000,000"), or the 4+ digit rule.
+var STAT_RE = new RegExp('(\\d[\\d,]*(?:\\.\\d+)?)(\\s?%|\\s?(?:k|million|thousand|billion|' + METRIC_NOUNS + '))?', 'gi');
 var MONTHS_RE = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*$/i;
 var LABEL_RE = /(season|phase|chapter|act|tier|week|day|version|patch|update|level|mw|cod|no\.|#)\s*$/i;
 
@@ -192,6 +197,16 @@ function scanStatShaped(body, srcKeys) {
     // Stat-shaped == has a %/unit/metric suffix, OR is comma-grouped, OR is a 4+ digit count.
     var statShaped = !!suffix || /,/.test(numPart) || key.length >= 4;
     if (!statShaped) continue;
+    // FALSE-POSITIVE FIX (2026-09-16): a bare EXACTLY-4-digit number (no unit, no comma)
+    // immediately preceded by a capitalized proper-noun word is a MODEL NAME, not a stat
+    // (e.g. "Misriah 2442", "Halo 3000"). Real stats keep flagging: comma-grouped ("50,000"),
+    // suffixed ("5000 players"/"45%"), and 5+ digit runs. RESIDUAL (accepted): a bare 4-digit
+    // unitless number opening a sentence after a capitalized word (e.g. "Averaging 2500 daily")
+    // is also exempted -- narrow, VANTAGE-discourse-only, and its comma/suffix forms still flag.
+    var beforeWord = (before.match(/([A-Za-z][A-Za-z]*)\s$/) || [])[1] || '';
+    var properNounModel = key.length === 4 && !suffix && !/,/.test(numPart)
+      && beforeWord.length >= 2 && /^[A-Z]/.test(beforeWord);
+    if (properNounModel) continue;
     out.push({ token: m[0].trim(), context: contextAround(text, m.index, m[0]) });
   }
   return out;
