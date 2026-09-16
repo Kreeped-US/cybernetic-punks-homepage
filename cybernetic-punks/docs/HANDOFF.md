@@ -7,6 +7,67 @@ Newest entries on top.
 
 ---
 
+## 2026-09-16 - DMZ hub cleanup (P1 polish + editor-persona recede) + launch dependency
+
+DMZ is an INDEXED, launch-critical hub (MW4 DMZ, Oct 23, ~37 days). A read-only
+diagnostic found it is well-built and SEO-ready overall - NOT a structural
+"disaster." The "disaster" feeling traced to (a) literal placeholder strings that
+rendered as broken, (b) a front-facing named editor roster (doctrine violation),
+and (c) the volume of honest "coming soon" scaffolding because the launch DATA does
+not exist yet.
+
+DONE this session (two separate gated windows, DMZ is indexed so not bundled):
+- P1 content polish (f576f39): removed literal placeholder tokens on the Operations
+  Deck "Best Weapons" card ("[weapon]", and a fabricated "Updated Nh ago . N changes
+  this week" freshness line - deleted, honest-null, no invented data; "[weapon]" ->
+  a decorative skeleton bar matching the MetaCard pattern). Fixed heading hierarchy:
+  promoted two <span> section labels ("Operations Deck", "How the Intel Is Made") to
+  <h2>, dropped the inner "Written, cross-checked, sourced" to <h3>. Result: clean
+  single H1 > H2 > H3.
+- Editor-persona recede (dad036a): removed the named editorial ROSTER (5 named
+  editors + Broker "[Classified]") from the "How the Intel Is Made" section. KEPT
+  the method/sourcing transparency prose (matches the homepage reference pattern -
+  method transparency, zero names). Pure -39 deletion.
+
+EDITOR-RECEDE DOCTRINE (cited, so it is not re-derived):
+- Rule (HANDOFF:655): "AI EDITORS: keep as verified + specific + transparent;
+  personas as BYLINES not headline." Prior de-link 5be2741 removed persona
+  PROMOTION (rosters, "where editors disagree" newsroom sections, POWERED-BY strips,
+  editor nav links) but KEPT article bylines + the /editors and /about pages
+  (de-linked, live). Principle in operator's words: editors are TOOLS, transparently
+  explained, NOT the celebrity of the show.
+- Network sweep result (so it is not re-swept): among the 5 game hubs, ONLY DMZ had
+  a named roster (now removed) - marathon/wardogs/pubg-dednet/bodycam hubs are clean.
+  Named personas ALSO live on /about (network desk roster) and /editors (staff page)
+  - these are INTENTIONALLY KEPT per operator decision (transparent tools, not
+  promoted); do NOT remove them. Article bylines (both templates) + HomeIntelFeed
+  codename tags are KEPT per doctrine. Reference compliant pattern: app/page.js:439
+  ("editorial desk writes only from verified data...", no names).
+- Open hygiene item (not done): FactionAdvisorCallout.js ("MAPPED BY Miranda
+  Malini") is an apparent ORPHAN (no render sites found in the sweep). If ever
+  touched, confirm-unused-then-delete as its own item - not confirmed unused, so
+  left alone.
+
+STILL OPEN for DMZ (blocked, not neglected):
+- P2 header logo + P3 themed footer: BLOCKED on the operator's transparent DMZ logo
+  re-export (current /images/DMZ/dmzlogo.webp is a black square). Each its own
+  window when the asset lands - do NOT bundle (DMZ is indexed).
+- P4 launch content: the entity hubs are EMPTY (dmz_keys/missions/items = 0, pois
+  unverified, weapons = 0) because the DMZ data does not exist publicly yet (blocked
+  on the game). Entity pages are sitemap-gated - they only enter the sitemap when
+  verified rows exist.
+
+LAUNCH DEPENDENCY (the thing that actually matters for Oct 23, easy to forget now
+the hub looks clean): DMZ's launch SEO rides on the CONTENT PIPELINE being healthy
+when the data drops (~October). The empty entity pages must be filled with verified
+rows, go live, AND get indexed BEFORE the launch search wave to rank. That content
+flows through the same editors ("me and editors") that have been DEAD for two weeks
+(MIRANDA). So proving + healing the pipeline is not separate from DMZ launch prep -
+it IS DMZ launch prep, with a ~37-day clock. The 12pm/19:00 UTC MIRANDA run is the
+first test of the fix and is now DMZ-launch-critical, not just housekeeping.
+
+---
+
 ## 2026-09-16 - Hub consistency: two-surface logo treatment (recipe + progress + blockers)
 
 WHAT: Standardizing every game hub to show its official logo on TWO surfaces,
