@@ -465,15 +465,16 @@ export default async function DmzLanding() {
       </div>
 
       {/* ══ 02 OPERATIONS DECK -- NET-NEW, non-ranking. Pre-launch "coming at launch"
-          tool cards; previews are ILLUSTRATIVE placeholders ([weapon], sample rows),
-          NOT real data -- the "Live at launch" badge keeps that honest. Card NAMES are
+          tool cards; previews are DECORATIVE SKELETONS (aria-hidden shape only, no data
+          and no literal placeholder tokens) -- the "Live at launch" badge keeps that
+          honest. Card NAMES are
           from committed demand (dmz gunsmith / best loadout / best weapon). Non-linking
           pre-launch (the tools are launch-gated -- no route to 404 into). Does NOT
           replace Coverage above. ══ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
           <span style={{ color: 'var(--accent)', marginRight: 8 }}>02</span>Operations Deck
-        </span>
+        </h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Tools go live with the zone</span>
       </div>
@@ -500,7 +501,10 @@ export default async function DmzLanding() {
           <div style={{ flex: 1 }} />
           <div style={opsFooter}>Saved builds</div>
         </div>
-        {/* 3. Best Weapons -- alive + shareable. Tier preview is ILLUSTRATIVE (placeholders). */}
+        {/* 3. Best Weapons -- alive + shareable. Tier preview is a DECORATIVE SKELETON
+            (aria-hidden, no data): tier + trend shape only, weapon names as skeleton bars,
+            matching the MetaCard skeleton pattern. No literal placeholder tokens, no fake
+            freshness/counts -- honest-null until weapon_stats exist at launch. */}
         <div style={opsCard}>
           <div style={opsHead}>
             <span style={opsName}>Best Weapons</span>
@@ -514,15 +518,11 @@ export default async function DmzLanding() {
               return (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', background: 'var(--bg-nav)', border: '1px solid var(--border)', borderRadius: 3 }}>
                   <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 900, color: 'var(--accent)', width: 14 }}>{row[0]}</span>
-                  <span style={{ flex: 1, fontFamily: 'monospace', fontSize: 10, color: 'var(--text-secondary)' }}>[weapon]</span>
+                  <span style={{ flex: 1, height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)' }} />
                   <span style={{ fontSize: 9, color: mc }}>{mark}</span>
                 </div>
               );
             })}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 9, color: 'var(--text-tertiary)', letterSpacing: 0.5 }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
-            Updated Nh ago &middot; N changes this week
           </div>
           <div style={{ ...opsFooter, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Live tier rankings</span>
@@ -534,14 +534,14 @@ export default async function DmzLanding() {
       {/* ══ 03 THE DESK -- how the intel is made. Function-forward; editors as bylines,
           not a persona lineup. NET-NEW, non-ranking. AI-assisted stated plainly. ══ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
           <span style={{ color: 'var(--accent)', marginRight: 8 }}>03</span>How the Intel Is Made
-        </span>
+        </h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Method</span>
       </div>
       <div style={{ display: 'grid', gap: 14, maxWidth: 680 }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3, letterSpacing: 0.2 }}>Written, cross-checked, sourced</h2>
+        <h3 style={{ fontFamily: EXO, fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3, letterSpacing: 0.2 }}>Written, cross-checked, sourced</h3>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Every briefing is traced to primary material - the official Deep Dive, patch notes, first-party reveals - before it publishes.</p>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Coverage is produced by our editorial desk and verified against primary sources. Nothing is invented; where the record is unconfirmed, we say so. The desk carries distinct roles - meta, analysis, builds, community, field guide - and signs its work.</p>
         {/* Editorial desk roster -- name-leads bylines per the LOCKED doctrine
