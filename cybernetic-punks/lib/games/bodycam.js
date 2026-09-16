@@ -71,6 +71,17 @@ export const bodycam = {
         { label: 'Maps',        href: '/bodycam/maps'        },
       ],
     },
+    // THEMED FOOTER opt-in (mirrors the DED.NET rollout: fe02d3d + abb4d9e). Bodycam is
+    // noindex (indexable:false) so bundling this with the header logo is SEO-safe. Config
+    // contract: components/game/ThemedGameFooter.js. color is OMITTED -> ThemedGameFooter
+    // derives it from theme.accent (#3d97b8 steel-cyan). Logo (512x196, ~2.6:1) at height 56
+    // renders ~146px wide -- masthead prominence comparable to DED.NET's (2:1 at 64 -> ~128px).
+    // Backdrop is the existing hero, scrimmed by the component.
+    themed: {
+      enabled: true,
+      logo: { src: '/images/Bodycam/bodycam.png', height: 56, maxWidth: 260, alt: 'Bodycam' },
+      backdrop: { src: '/images/games/bodycam-hero.jpg', opacity: 0.5, position: 'center 40%' },
+    },
   },
 
   // EDITORIAL ROSTER -- NEXUS only, mirroring DMZ/Wardogs/DED.NET. NO generateNews: Bodycam stays

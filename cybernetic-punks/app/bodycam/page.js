@@ -60,9 +60,14 @@ export default async function BodycamLanding() {
 
       {/* Hero -- LIVE game. NO countdown, NO date clock. */}
       <div style={{ marginBottom: 30 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, letterSpacing: 1, color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 6, padding: '3px 7px' }}>CNP</span>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Cybernetic Punks Network</span>
+        {/* Official Bodycam logo in the network-badge spot -- mirrors the Wardogs/DED.NET
+            hubs, which show the game logo here instead of the generic CNP pill. The network
+            link is preserved by the "Network" breadcrumb above (href="/"), so the pill +
+            label are redundant and replaced by the logo. Height 40 = the hub badge scale.
+            Plain img, not a link -- exactly like Wardogs/DED.NET. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/Bodycam/bodycam.png" alt="Bodycam" style={{ height: 40, width: 'auto', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
           <h1 style={{ fontFamily: FONT, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>Bodycam</h1>
