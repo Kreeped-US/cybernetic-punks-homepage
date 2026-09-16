@@ -1,6 +1,7 @@
 import { callEditor, buildMirandaPrompt, generateArticleComments, getStoreRegistry } from '@/lib/editorCore';
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
+import { sendOpsAlert } from '@/lib/opsNotify';
 import { recordCronRun } from '@/lib/cronRunLog';
 import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
@@ -1446,6 +1447,14 @@ export async function GET(req) {
     var succeeded = results.filter(function(r) { return r.success; }).length;
     var directivesUsed = results.filter(function(r) { return r.success && directiveMap[r.editor]; }).length;
 
+    // Per-editor failure reasons (Phase 1 observability) -- captured from the same results
+    // the alert reads, so "which editor failed and WHY" is PERSISTED (cron_runs.failure_reasons)
+    // instead of console-only. null when nothing failed. recordCronRun degrades gracefully if
+    // the migration adding the column has not run yet.
+    var failureReasons = results.filter(function(r) { return !r.success; })
+      .map(function(r) { return { editor: r.editor, reason: String(r.error || 'unknown').slice(0, 300) }; });
+    var failureReasonsPayload = failureReasons.length ? failureReasons : null;
+
     // End-of-run safety-net alert. Inert until Resend env is provisioned. Wrapped so
     // an alert failure can never affect the generation that just completed.
     //
@@ -1488,6 +1497,7 @@ export async function GET(req) {
       editors_failed: results.length - succeeded,
       alert_sent: !!(alertOutcome && alertOutcome.sent),
       articles_published: succeeded,
+      failure_reasons: failureReasonsPayload,
       started_at: runStartedAt,
     });
 
@@ -1586,6 +1596,25 @@ export async function GET(req) {
     // identical to a cron that never fired. `var` hoisting makes the counters readable
     // here even when the throw happened before they were assigned (they read as
     // undefined -> recorded as null, which is honest).
+    //
+    // THROW ALARM (Phase 1 observability): a run that THREW previously recorded a
+    // cron_runs row but sent NO alert -- a crashed cron looked identical to a healthy one
+    // in the inbox. Now it alerts on BOTH channels via the shared fail-safe helper. Wrapped
+    // so the alarm can never mask the original error or block the proof-of-life write below.
+    var throwAlarm = { emailSent: false, discordSent: false };
+    try {
+      throwAlarm = await sendOpsAlert({
+        subject: '[CyberneticPunks] Cron: run THREW (' + PRODUCING_GAME_SLUG + ')',
+        body: 'The /api/cron run threw before completing -- no editors finished this cycle.\n\n'
+          + 'game: ' + PRODUCING_GAME_SLUG + '\n'
+          + 'error: ' + (error && error.message ? error.message : String(error)) + '\n\n'
+          + '(Recorded as cron_runs kind=error. This is the crash path, distinct from a '
+          + 'total_outage where editors ran but all failed.)',
+      });
+    } catch (alarmErr) {
+      console.log('[CRON] throw-alarm dispatch error (non-fatal): ' + (alarmErr && alarmErr.message));
+    }
+
     await recordCronRun(supabase, {
       route: '/api/cron',
       game_slug: PRODUCING_GAME_SLUG, // Phase D: stamp the ACTUAL produced game, not hardcoded marathon
@@ -1597,7 +1626,7 @@ export async function GET(req) {
       editors_attempted: Array.isArray(results) ? results.length : null,
       editors_succeeded: null,
       editors_failed: null,
-      alert_sent: false,
+      alert_sent: !!(throwAlarm.emailSent || throwAlarm.discordSent),
       articles_published: null,
       error: error.message,
       started_at: runStartedAt,

@@ -18,7 +18,9 @@ const EDITOR_SYMBOLS = {
   MIRANDA: '◎',
 };
 
-async function sendWebhook(url, payload) {
+// EXPORTED (2026-09-16, Phase 1 observability): the shared ops send layer (lib/opsNotify.js)
+// and notifyOps below both reuse this fire-and-forget sender. Still never throws.
+export async function sendWebhook(url, payload) {
   if (!url) return;
   try {
     var res = await fetch(url, {
@@ -31,6 +33,37 @@ async function sendWebhook(url, payload) {
     }
   } catch (err) {
     console.log('[DISCORD] Webhook error: ' + err.message);
+  }
+}
+
+// ── OPS ALERTS -- the PRIVATE ops channel (NOT a content webhook) ──────────────
+// Phase 1 observability: pipeline health alarms + (Brief 2) the daily digest go here,
+// separate from the 4 content webhooks (INTEL/META/PATCH/RANKED). Reads its own env
+// var DISCORD_WEBHOOK_OPS. FAIL-SAFE: no webhook set -> log + skip; a send error is
+// swallowed by sendWebhook. Never throws (an alarm path that crashes the cron is
+// self-defeating). Returns { sent } so the caller can record alert_sent honestly --
+// sent:true means "dispatched without throwing" (webhooks are fire-and-forget; email
+// is the reliable channel for delivery proof).
+export async function notifyOps({ title, description }) {
+  var url = process.env.DISCORD_WEBHOOK_OPS;
+  if (!url) {
+    console.log('[ops] Discord NOT sent (DISCORD_WEBHOOK_OPS not set): ' + String(title || ''));
+    return { sent: false };
+  }
+  try {
+    await sendWebhook(url, {
+      embeds: [{
+        color: 0xff2222,
+        title: String(title || 'Ops alert').slice(0, 240),
+        description: String(description || '').slice(0, 3900),
+        footer: { text: 'cyberneticpunks.com ops' },
+        timestamp: new Date().toISOString(),
+      }],
+    });
+    return { sent: true };
+  } catch (err) {
+    console.log('[ops] Discord ops notify error (non-fatal): ' + (err && err.message));
+    return { sent: false };
   }
 }
 

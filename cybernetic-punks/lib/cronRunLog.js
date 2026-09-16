@@ -60,8 +60,23 @@ export async function recordCronRun(supabase, row) {
       started_at: row.started_at || new Date().toISOString(),
       finished_at: new Date().toISOString(),
     };
+    // Per-editor failure reasons (Phase 1 observability): [{ editor, reason }]. Only
+    // attached when provided (a run with failures); null/omitted otherwise. Persisting
+    // this is what makes "which editor failed and WHY" queryable instead of console-only.
+    if (row.failure_reasons != null) payload.failure_reasons = row.failure_reasons;
 
     var res = await supabase.from('cron_runs').insert(payload);
+    // GRACEFUL DEGRADE (migration-safe): if failure_reasons was attached but its column
+    // does not exist yet (the operator has not run the migration), the insert is rejected
+    // for the unknown column. Strip it and retry ONCE so the proof-of-life row (counts,
+    // status, error) still persists. This makes BOTH merge orders safe: code-then-migration
+    // (this path) and migration-then-code. The reasons simply are not stored until the
+    // column lands.
+    if (res && res.error && payload.failure_reasons !== undefined && /failure_reasons/i.test(String(res.error.message || ''))) {
+      console.log('[cron_runs] failure_reasons column absent (migration pending) -- retrying without it');
+      delete payload.failure_reasons;
+      res = await supabase.from('cron_runs').insert(payload);
+    }
     if (res && res.error) {
       // Loud, but non-fatal. If the table is missing (DDL not yet run) this is the
       // line that says so, rather than the run silently going unrecorded.

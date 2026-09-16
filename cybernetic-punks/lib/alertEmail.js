@@ -19,8 +19,42 @@
 
 import { formatDateTime } from './formatDate';
 import { classifyCronOutcome } from './cronOutcomeDecision.mjs';
+import { notifyOps } from './discord';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+
+// EXTRACTED PRIMITIVE (2026-09-16, Phase 1): the Resend send, factored out of
+// sendCronFailureAlert so the shared ops layer (lib/opsNotify.js) and the failure
+// alarm reuse ONE implementation (no duplicated fetch, no drift). Behavior-identical
+// to the inline path that has been sending for two weeks. FAIL-SAFE: missing env or a
+// non-ok response -> log + { sent:false }; never throws. Env: RESEND_API_KEY,
+// ALERT_EMAIL_TO, ALERT_EMAIL_FROM (optional).
+export async function sendResendEmail({ subject, text }) {
+  try {
+    var apiKey = process.env.RESEND_API_KEY;
+    var to = process.env.ALERT_EMAIL_TO;
+    if (!apiKey || !to) {
+      console.log('[ops] email NOT sent (RESEND_API_KEY/ALERT_EMAIL_TO not set): ' + subject);
+      return { sent: false };
+    }
+    var from = process.env.ALERT_EMAIL_FROM || 'Cybernetic Punks <onboarding@resend.dev>';
+    var res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: from, to: [to], subject: subject, text: text }),
+    });
+    if (!res.ok) {
+      var errTxt = await res.text().catch(function () { return ''; });
+      console.log('[ops] Resend send failed: ' + res.status + ' ' + errTxt.slice(0, 200));
+      return { sent: false };
+    }
+    console.log('[ops] email sent to ' + to + ': ' + subject);
+    return { sent: true };
+  } catch (err) {
+    console.log('[ops] email send threw (non-fatal): ' + (err && err.message));
+    return { sent: false };
+  }
+}
 
 // results: the cron's end-of-run array of { editor, success, error }.
 // context: { configuredRoster[], patchGated[], hasPatch, activeRoster[] } -- the freeze
@@ -82,26 +116,14 @@ export async function sendCronFailureAlert(results, context) {
       'FAILED:\n' + failLines + '\n\n' +
       '(In-cron safety-net alert. If the cron itself never runs, no email is sent - that needs an external watchdog.)';
 
-    var apiKey = process.env.RESEND_API_KEY;
-    var to = process.env.ALERT_EMAIL_TO;
-    if (!apiKey || !to) {
-      console.log('[ALERT] ' + subject + ' - email NOT sent (RESEND_API_KEY/ALERT_EMAIL_TO not set). Details:\n' + bodyText);
-      return { kind: decision.kind, alert: true, sent: false };
-    }
-    var from = process.env.ALERT_EMAIL_FROM || 'Cybernetic Punks <onboarding@resend.dev>';
-
-    var res = await fetch(RESEND_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: from, to: [to], subject: subject, text: bodyText }),
-    });
-    if (!res.ok) {
-      var errTxt = await res.text().catch(function() { return ''; });
-      console.log('[ALERT] Resend send failed: ' + res.status + ' ' + errTxt.slice(0, 200));
-      return { kind: decision.kind, alert: true, sent: false };
-    }
-    console.log('[ALERT] Cron failure alert emailed to ' + to + ': ' + subject);
-    return { kind: decision.kind, alert: true, sent: true };
+    // DUAL-CHANNEL (2026-09-16, Phase 1): the alarm now fires to BOTH the reliable email
+    // channel AND the private Discord ops channel, reusing the shared send primitives.
+    // The body (bodyText) already carries the per-editor FAILED reasons. Each channel is
+    // fail-safe on its own; sent = at least one channel dispatched.
+    var emailRes = await sendResendEmail({ subject: subject, text: bodyText });
+    var discordRes = await notifyOps({ title: subject, description: bodyText });
+    var sent = !!(emailRes && emailRes.sent) || !!(discordRes && discordRes.sent);
+    return { kind: decision.kind, alert: true, sent: sent };
   } catch (err) {
     console.log('[ALERT] sendCronFailureAlert error (non-fatal): ' + (err && err.message));
     return { kind: 'alert_error', alert: false, sent: false };
