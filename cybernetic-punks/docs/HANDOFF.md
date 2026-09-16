@@ -63,13 +63,15 @@ no_demand===0 when a no-entity row exists); panel VERDICTS map now resolves
 'no-entity' directly so the ||'no-demand' chip/card fallback no longer fires for
 it (fallback retained as a genuine safety net for unknown values).
 
-NOT YET CONFIRMED: live-panel render. Operator visual check pending -- NO-ENTITY
-tab/chip/summary render, humble label reads correctly, editorial keywords land
-NO-ENTITY and entity keywords land BUILD. Known-incomplete vocab for non-Marathon
-games (esp. Wardogs) means some real entities may surface as NO-ENTITY -- that is
-intended humility, not a bug; the label carries both possibilities on purpose.
-Cosmetic: the humble label is long, so the NO-ENTITY chip is a wide pill -- adjust
-later if it reads poorly (shorten chip, keep full text in hint).
+CONFIRMED 2026-09-16 (read-only production diagnostic, imported the real route
+functions against live gsc_query_metrics + keyword_targets, SELECT-only): the
+split classifies real data correctly. Counts reconcile on every ROOT_GAMES game
+(build + no_entity + served + no_demand == total; no silent-absorb). Origin case
+"wardogs game monetization bulkhead" -> no-entity as designed. Marathon (complete
+vocab) had 0 misclassifications -- no keyword landed no-entity while containing a
+real entity name; 4 Marathon no-entity rows are genuinely entity-less, 5 build
+rows have real entity hits (both sides populated). Browser chip/label cosmetics
+still an operator glance only (not blocking).
 
 KEYWORD_TARGETS LIFECYCLE (proven this session, read-only trace -- record so it is
 never re-traced or wrongly assumed): a keyword_targets row is a PRESENTATION AND
@@ -99,6 +101,14 @@ OPEN / PARKED from this thread:
 - Minor loose thread: GSC-review DECLINE write (is_active=false page-gap row) was
   confirmed at line level this session (GscReviewPanel.js:122-141 POSTs to
   /api/admin) -- resolved, noted for completeness.
+- Vocab gap is LATENT not active: diagnostic found 0 genuinely-bindable keywords
+  currently forced to no-entity, only because non-Marathon demand is tiny (dmz 10
+  / wardogs 11 / pubg 4 / bodycam 0 GSC rows). As non-Marathon demand grows,
+  keywords naming shells/mods/maps/modes/events (absent from non-Marathon vocab)
+  WILL be forced to no-entity. Reinforces the parked per-game vocab-completeness
+  Fable question with concrete data.
+- NEW data-hygiene item (separate thread, not urgent): GSC query "mw3 signal
+  jammer" is scoped game_slug='marathon'
 
 ---
 
