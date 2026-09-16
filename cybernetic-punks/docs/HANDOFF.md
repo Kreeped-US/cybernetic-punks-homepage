@@ -7,6 +7,61 @@ Newest entries on top.
 
 ---
 
+## 2026-09-16 - A11 gate scoped to storeless/VANTAGE (unblocks weapon guides)
+
+PROBLEM: The A11 stat-hard-block (runA11Gate, lib/network/vantageGate.js) + the
+attribution-survival review-hold were applied UNCONDITIONALLY by the approve route to
+every editor, but the ratified doctrine (doctrine-v3-amendments.md:110-129) scopes
+A11 to VANTAGE ONLY - "she is structurally storeless, so a number in her voice is
+laundered or unverifiable." The code over-applied a rule the doctrine already scoped
+narrowly. Concrete failure: MIRANDA's BR33 weapon guide hard-blocked on 3 hits, ALL
+false positives - "48m" x2 (meters, but the gate's "m" = million/magnitude) and
+"2442" (weapon name "Misriah 2442" read as a 4-digit stat). The real weapon stats
+(900 RPM, 14 damage, 27-round, 1.4x) already passed. So A11 was making weapon guides -
+the Marathon vertical's backbone - unpublishable, with no per-article workaround
+(a guide's stats ARE the content).
+
+FIX (1f3c93a, merged; 2 files, +32/-4, tests 15/15, build green):
+- SCOPING (approve/route.js): both the A11 hard-block AND the attribution-survival
+  hold now fire only when storelessOutput = isDiscourseArticle(draft) || editor===
+  'VANTAGE'. Store-backed editors (NEXUS/MIRANDA, directive_type='standard', no
+  discourse tag) skip both. runA11Gate left byte-identical (scoping is in the route,
+  so the gate + its tests don't move). SELECT widened to include editor/directive_type
+  /tags. This ALIGNS code with doctrine - not a weakening.
+- DETECTOR FALSE-POSITIVE FIX (scanStatShaped, affects everyone incl. VANTAGE - a
+  correctness bug): dropped bare "m" from magnitude suffixes (meters/million
+  collision; "million"/"k" still catch); exclude an exactly-4-digit unitless
+  non-comma number preceded by a capitalized proper noun (weapon model names).
+- PROVEN by real gate runs: BR33 now passes (hardBlock=false); Symbiosis (NEXUS)
+  passes; a fabricated VANTAGE/discourse row with "50,000 players + 48m + Misriah
+  2442" STILL hard-blocks on "50,000 players" only (protection intact, false positives
+  gone); a store-backed row with "50,000 credits" is exempted at the route. VANTAGE is
+  never exempted by the discriminator.
+
+WHY IT MATTERS: store-backed editors (NEXUS/MIRANDA) can now publish sourced stat
+content - weapon guides especially - through the pipeline. Combined with MIRANDA
+being proven alive + Phase 1 observability, the pipeline is now alive, watched, AND
+its output is publishable. A live producer whose content couldn't ship is no better
+than a dead one; this closes that gap.
+
+DOCTRINE PRINCIPLE TO RATIFY (flagged, not yet written): the fix formalizes
+"store-backed editors are trusted for in-store stats + human approval; storeless
+editors (VANTAGE) are gate-verified on every number." The doctrine already leans this
+way (it scoped A11 to VANTAGE on purpose), so the fix executes the existing ruling -
+but worth ratifying explicitly in doctrine since it will govern every future game's
+editors. Possible Fable/doctrine-edit item.
+
+STILL OPEN / WATCH:
+- BR33 Volley Rifle guide: now unblocked; approve it (first MIRANDA guide published
+  post-fix - eyeball the live render).
+- Phase 1 first live digest + MIRANDA solo path: next NON-patch cron day.
+- Two accepted A11 tradeoffs (documented in-code): bare "5m" shorthand no longer flags
+  on suffix alone (still catches via "million"/comma/4-digit); a 4-digit number opening
+  a sentence after a capitalized word is exempted (VANTAGE-discourse-only, comma/suffix
+  forms still flag).
+
+---
+
 ## 2026-09-16 - MIRANDA ALIVE: queue-jam fix 5dc1bf3 proven on first real run
 
 VERDICT: MIRANDA is ALIVE. The queue-jam fix (5dc1bf3) works. This CORRECTS the
