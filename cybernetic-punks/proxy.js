@@ -70,7 +70,7 @@
 // retirement happens via the Supabase dashboard / SQL). Either way the URL never 404s silently.
 
 import { NextResponse } from 'next/server';
-import { MARATHON_INTEL_KEEPER_SOURCES, MARATHON_INTEL_EDITOR_LANES, ARTICLE_SECTIONS, RESERVED_SECTION_SLUGS } from '@/lib/seo/deadIntel';
+import { MARATHON_INTEL_KEEPER_SOURCES, MARATHON_INTEL_EDITOR_LANES, ARTICLE_SECTIONS, RESERVED_SECTION_SLUGS, MARATHON_WEAPONS_GONE } from '@/lib/seo/deadIntel';
 
 var REDIRECT_TTL_MS = 60000;   // 60s: redirect data is not latency-critical; staleness is harmless
 var LIVE_TTL_MS = 600000;      // 10min: the live-slug set is a hot-path accelerator, not correctness
@@ -201,6 +201,16 @@ export async function proxy(req) {
       return NextResponse.redirect(new URL(to, req.url), 301);
     }
 
+    // PART A2 -- 410 GONE for dead ENTITY URLs that are NOT article slugs. Today: the Wardogs
+    // weapons Google indexed at /marathon/weapons/<slug> during the cross-game weapon-leak bug
+    // (fixed -- Marathon weapon queries scope to game_slug='marathon', so these now 404). They
+    // are NOT Marathon weapons and have no successor, so 410 GONE (not 404) drops them cleanly,
+    // the same doctrine Part B applies to articles. Guarded to the exact known slugs; every
+    // other /marathon/weapons/<slug> falls through to the route unchanged. See deadIntel.js.
+    if (parts[0] === 'marathon' && parts[1] === 'weapons' && MARATHON_WEAPONS_GONE.has(slug.toLowerCase())) {
+      return goneResponse('marathon');
+    }
+
     // PART B -- 410 GONE for a dead ARTICLE slug in any game. Applies ONLY when parts[1] is a
     // real EDITOR (feed_items-backed) section for the game (ARTICLE_SECTIONS) -- so data
     // sections (arsenal/printer), entity routes (dmz builds/items/keys/missions/pois), and
@@ -243,6 +253,7 @@ export async function proxy(req) {
 export const config = {
   matcher: [
     '/marathon/intel/:slug',
+    '/marathon/weapons/:slug',   // for the Part A2 leaked-Wardogs-weapon 410s (mp5/mp43/deagle)
     '/dmz/:section/:slug',
     '/wardogs/:section/:slug',
     '/pubg-dednet/:section/:slug',

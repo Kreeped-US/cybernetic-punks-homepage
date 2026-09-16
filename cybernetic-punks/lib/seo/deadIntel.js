@@ -68,3 +68,12 @@ export const MARATHON_INTEL_EDITOR_LANES = new Set([
 export const RESERVED_SECTION_SLUGS = {
   wardogs: { economy: new Set(['mine', 'stat', 'launch-stats']) },
 };
+
+// Dead ENTITY URLs (not article slugs) that must serve 410 GONE, not 404. These are the
+// WARDOGS weapons (mp5/mp43/deagle) Google indexed at /marathon/weapons/<slug> during the
+// cross-game weapon-leak bug (fixed 2026: Marathon weapon queries now scope to
+// game_slug='marathon', so these correctly 404). They are NOT Marathon weapons and have NO
+// successor, so 410 (permanently gone) drops them cleanly from the index -- the same retire
+// doctrine Part B applies to articles. Slugs are lowercase (matched case-insensitively in
+// proxy.js). Add a slug here only after confirming it is NOT a real Marathon weapon.
+export const MARATHON_WEAPONS_GONE = new Set(['mp5', 'mp43', 'deagle']);
