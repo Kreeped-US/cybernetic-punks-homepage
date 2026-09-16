@@ -7,6 +7,75 @@ Newest entries on top.
 
 ---
 
+## 2026-09-16 - Hub consistency: two-surface logo treatment (recipe + progress + blockers)
+
+WHAT: Standardizing every game hub to show its official logo on TWO surfaces,
+mirroring Wardogs (the reference): (1) the HEADER network-badge spot (logo replaces
+the "CNP" pill + "Cybernetic Punks Network" label; the Network -> / link stays in
+the breadcrumb), and (2) a THEMED FOOTER (logo on top / masthead + hero backdrop +
+theme-derived accent color). Operator-confirmed: this two-surface treatment is the
+uniform recipe for ALL hubs.
+
+THE RECIPE (per hub, repeatable):
+- Header: the CNP pill is PER-PAGE INLINE in app/<game>/page.js (NOT shared), so
+  editing one hub's page affects only that hub. Replace the pill + label with the
+  logo <img> (height ~40, plain img, not linked), mirroring
+  app/wardogs/page.js:142-156. Confirm the page already has a Network -> /
+  breadcrumb first (so no network link is lost).
+- Footer: opt in via the game config footer.themed { enabled:true, logo{src,
+  height,maxWidth,alt}, color?(derives from theme.accent/primary), backdrop? }. The
+  shared components/game/ThemedGameFooter.js (built dormant in f0b73e9, masthead
+  layout finalized in abb4d9e) renders it; un-opted hubs render the GENERIC footer
+  BYTE-IDENTICAL (the themed branch only fires when a game sets footer.themed.
+  enabled). Logo height is per-game (aspect ratios vary 1:1..5:1); pubg 2:1 used
+  height 64, bodycam 2.6:1 used 56.
+- Asset: commit the logo in the SAME window (untracked asset -> prod 404). Use
+  EXACT case-sensitive paths (Vercel/Linux): /images/ded.net/dednet.webp,
+  /images/Bodycam/bodycam.png. Note folder names diverge from slugs (ded.net !=
+  pubg-dednet; Bodycam capitalized).
+
+DONE:
+- pubg-dednet: both surfaces live. Footer fe02d3d, masthead abb4d9e, header badge
+  f3e83ce. Logo /images/ded.net/dednet.webp committed.
+- bodycam: both surfaces live (46c44af). Logo /images/Bodycam/bodycam.png committed.
+  Bodycam is noindex (indexable:false, bodycam.js) -- that is why both surfaces were
+  safely bundled in one window (near-zero SEO risk).
+- wardogs: the reference (bespoke WardogsFooter + header logo). Left as-is;
+  migrating it to the shared ThemedGameFooter was considered and DECLINED (works,
+  no user benefit, risk for tidiness only).
+
+BLOCKED / DO LATER:
+- dmz: BLOCKED on operator asset re-export. /images/DMZ/dmzlogo.webp is a solid-black
+  1:1 square with NO transparency -> renders as a black box on both surfaces. Needs
+  a transparent re-export before either surface can roll out.
+- marathon: DO LAST, its own careful multi-window brief. It is the ONLY INDEXED hub
+  in this set (highest-traffic, still SEO-recovering), AND a structural outlier: no
+  config.theme block (needs an EXPLICIT themed color, cannot derive), no layout.js
+  (renders global Nav + inline Footer), and NO CNP pill at all (different masthead,
+  so the header change is NOT a pill-swap). Do NOT bundle marathon's two surfaces in
+  one window the way bodycam's were bundled -- bodycam was safe ONLY because it is
+  noindex. Marathon is indexed, so split its surfaces into separate windows and let
+  each settle (the compound-sitewide-structural-change shape is what preceded the
+  SEO collapse).
+
+SEO-SAFETY (proven, not assumed): each hub's changes are isolated -- header pill is
+per-page inline; footer opt-in is per-config; the shared ThemedGameFooter change
+only affects opted-in hubs (generic-footer hubs never mount it). Verified on every
+rollout: after each change, at least two other hubs still showed their CNP pill +
+generic footer, no logo leak.
+
+INTERLINKING (still open, separate step -- NOT part of the footer work): the real
+SEO lever the operator wants is CONTEXTUAL hub-to-hub cross-links, not boilerplate
+footer links (Google discounts boilerplate; the existing footer peer-row is that
+low-value kind and is missing on Wardogs). This is its own contextual-design pass,
+not started.
+
+NAV DE-DUP (noted, not done): wardogs/dmz/pubg each ship a near-identical bespoke
+Nav where a shared GameNav already exists (bodycam uses it). Consolidating them is a
+non-SEO tidiness refactor, independent, later.
+
+---
+
 ## 2026-09-16 - Editor pipeline diagnostic + multi-game map + sequenced plan (findings CONFIRMED; MIRANDA run outcome PENDING)
 
 CORRECTS the prior "MIRANDA fix deployed, awaiting proof" line with the real
