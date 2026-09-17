@@ -67,6 +67,15 @@ export async function GET(req) {
   if (!auth.ok) return auth.response;
 
   var supabase = getSupabase();
+  // ?rejected=1 returns the DECLINED view instead of the active queue: WHERE rejected=true,
+  // rejected-SCOPED so it is never truncated by the active list's cap (the restore-declined UI
+  // needs every declined row, and there can be more declined than the active limit-100 allows).
+  // Its own limit (500) is comfortable headroom over the current declined count. Default (no
+  // param) is unchanged: the active queue, capped at 100, with the panel filtering rejected
+  // rows out client-side.
+  var rejectedOnly = false;
+  try { rejectedOnly = new URL(req.url).searchParams.get('rejected') === '1'; } catch (e) { rejectedOnly = false; }
+
   // select('*') (not an explicit column list) so the new feed_items.rejected column is
   // included WHEN it exists, without 400-ing before Justin runs the ALTER. The panel
   // filters rejected drafts out client-side (undefined -> shown), so this stays correct
@@ -75,13 +84,15 @@ export async function GET(req) {
   // verification worklist with their OWN release path (Ruling 5 -- per-article logged operator
   // release), NOT VANTAGE review drafts. Keeping them out of this list is what makes gate_status
   // a DISTINCT state -- a VANTAGE approve-flow can never accidentally publish a gate-held article.
-  var { data, error } = await supabase
+  var query = supabase
     .from('feed_items')
     .select('*')
     .eq('is_published', false)
     .neq('gate_status', 'held')
-    .order('created_at', { ascending: false })
-    .limit(100);
+    .order('created_at', { ascending: false });
+  query = rejectedOnly ? query.eq('rejected', true).limit(500) : query.limit(100);
+
+  var { data, error } = await query;
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ data });

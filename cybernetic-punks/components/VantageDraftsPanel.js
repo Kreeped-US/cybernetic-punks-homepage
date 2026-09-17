@@ -94,6 +94,10 @@ export default function VantageDraftsPanel({ password }) {
   var [editHeadline, setEditHeadline] = useState('');
   var [editBody, setEditBody] = useState('');
   var [saving, setSaving] = useState(false);
+  var [showDeclined, setShowDeclined] = useState(false); // declined-drafts view toggle
+  var [declined, setDeclined] = useState([]);
+  var [declinedLoading, setDeclinedLoading] = useState(false);
+  var [declinedError, setDeclinedError] = useState(null);
 
   // Inline EDIT before approve. Opens the body (so the edit form shows) and prefills the
   // current headline/body. Editing does NOT publish -- approve is still separate.
@@ -139,6 +143,16 @@ export default function VantageDraftsPanel({ password }) {
   // noindex->false). On success it drops off this list (no longer a draft).
   async function approve(d) {
     if (busy) return;
+    // UNSAVED-EDIT GUARD: the edit buffer (editHeadline/editBody) is SEPARATE from d, and
+    // approve publishes the SAVED row (server re-reads by id). If an edit form is open for
+    // this row, approving would silently publish the PRE-EDIT content and drop the operator's
+    // edit. Block it -- Save or Cancel first. (Not a gate change: gates still run on whatever
+    // actually publishes; this only stops an open buffer from being silently discarded.)
+    if (editingId === d.id) {
+      if (typeof window !== 'undefined') window.alert('You have unsaved edits open for this draft.\n\nSAVE EDIT (to persist and re-gate against the edited text) or CANCEL first, then approve.');
+      setNote('Approve blocked: unsaved edits open for "' + d.headline + '" -- Save or Cancel first.');
+      return;
+    }
     // A11 gate (client-side, for UX) -- the approve route re-runs it authoritatively.
     // SCOPED to storeless output to MATCH the server route exactly (approve/route.js:104:
     // storelessOutput = isDiscourseArticle(d) || editor === 'VANTAGE'). A11's stat checks
@@ -202,6 +216,58 @@ export default function VantageDraftsPanel({ password }) {
     }
   }
 
+  // Fetch the DECLINED view via the dedicated rejected-scoped fetch (?rejected=1), which is
+  // NOT subject to the active list's limit-100 truncation -- so every declined draft is
+  // restorable, however many there are.
+  async function fetchDeclined() {
+    if (!password) return;
+    setDeclinedLoading(true); setDeclinedError(null);
+    try {
+      var res = await fetch('/api/admin/drafts?rejected=1', { headers: { 'x-admin-password': password } });
+      if (!res.ok) throw new Error('Failed to fetch declined (' + res.status + ')');
+      var data = await res.json();
+      setDeclined((data.data || []).filter(function (x) { return x.rejected; }));
+    } catch (err) {
+      setDeclinedError(err.message);
+    } finally {
+      setDeclinedLoading(false);
+    }
+  }
+
+  // Toggle the declined view. Turning it ON fetches the declined rows; OFF hides them.
+  function toggleDeclined() {
+    setShowDeclined(function (on) {
+      var next = !on;
+      if (next) fetchDeclined();
+      return next;
+    });
+    setNote(null);
+  }
+
+  // Restore = clear rejected on a declined draft (rejected=false) via the narrow /restore
+  // endpoint (guarded is_published=false: can only restore a DRAFT). On success drop it from
+  // the declined list and refresh the active queue so the restored draft reappears there.
+  async function restore(d) {
+    if (busy) return;
+    setBusy(d.id); setNote(null);
+    try {
+      var res = await fetch('/api/admin/drafts/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+        body: JSON.stringify({ id: d.id }),
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('Failed (' + res.status + ')'));
+      setDeclined(function (list) { return list.filter(function (x) { return x.id !== d.id; }); });
+      setNonce(function (n) { return n + 1; }); // refresh the active queue -> restored draft reappears
+      setNote('Restored: ' + d.headline + ' -- back in the review queue.');
+    } catch (err) {
+      setNote('Restore failed: ' + err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   useEffect(function () {
     if (!password) return;
     var cancelled = false;
@@ -230,7 +296,8 @@ export default function VantageDraftsPanel({ password }) {
     <div style={{ marginBottom: 32 }}>
       <div style={{ fontFamily: heading, fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: 3, marginBottom: 4, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
         DRAFTS <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>&middot; INTERNAL &middot; REVIEW + APPROVE</span>
-        <button onClick={function () { setNonce(function (n) { return n + 1; }); }} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, letterSpacing: 1, color: 'rgba(255,255,255,0.4)', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>REFRESH</button>
+        <button onClick={toggleDeclined} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, letterSpacing: 1, color: showDeclined ? '#ff8800' : 'rgba(255,255,255,0.4)', background: showDeclined ? 'rgba(255,136,0,0.08)' : 'transparent', border: '1px solid ' + (showDeclined ? 'rgba(255,136,0,0.4)' : 'rgba(255,255,255,0.12)'), borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>{showDeclined ? 'HIDE DECLINED' : 'SHOW DECLINED'}</button>
+        <button onClick={function () { setNonce(function (n) { return n + 1; }); }} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: 'rgba(255,255,255,0.4)', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>REFRESH</button>
       </div>
       <div style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, margin: '8px 0 14px', lineHeight: 1.5 }}>
         Unpublished feed_items (is_published=false) -- includes VANTAGE discourse drafts awaiting review. Read the body and verify it is honest and drawn strictly from the source, THEN APPROVE to publish it live (is_published=true, indexable) at its subject-game home. Nothing else here can publish.
@@ -278,7 +345,7 @@ export default function VantageDraftsPanel({ password }) {
                   <button onClick={function () { setOpen(function (o) { var n = { ...o }; n[d.id] = !n[d.id]; return n; }); }} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: accent, background: 'transparent', border: '1px solid ' + accent + '44', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>{isOpen ? 'HIDE BODY' : 'READ BODY'}</button>
                   <button onClick={function () { startEdit(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: '#00f5ff', background: 'transparent', border: '1px solid rgba(0,245,255,0.4)', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>EDIT</button>
                   <button onClick={function () { reject(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#ff4444', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'REJECT'}</button>
-                  <button onClick={function () { approve(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : 'APPROVE + PUBLISH'}</button>
+                  <button onClick={function () { approve(d); }} disabled={busy === d.id || editingId === d.id} title={editingId === d.id ? 'Save or Cancel your edits first' : ''} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: (busy === d.id || editingId === d.id) ? 'default' : 'pointer', opacity: (busy === d.id || editingId === d.id) ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : (editingId === d.id ? 'SAVE/CANCEL FIRST' : 'APPROVE + PUBLISH')}</button>
                 </div>
                 {isOpen && (editingId === d.id ? (
                   <div style={{ margin: '12px 0 0', padding: '14px 16px', background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 4 }}>
@@ -307,6 +374,42 @@ export default function VantageDraftsPanel({ password }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {showDeclined && (
+        <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px solid rgba(255,136,0,0.2)' }}>
+          <div style={{ fontFamily: heading, fontSize: 11, fontWeight: 700, color: '#ff8800', letterSpacing: 2, marginBottom: 8 }}>
+            DECLINED <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>&middot; rejected=true &middot; RESTORE returns to the queue</span>
+          </div>
+          {declinedLoading ? (
+            <div style={{ padding: 12, fontFamily: mono, fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>LOADING DECLINED...</div>
+          ) : declinedError ? (
+            <div style={{ padding: 12, fontFamily: mono, fontSize: 10, color: '#ff4444', letterSpacing: 1 }}>ERROR: {declinedError}</div>
+          ) : declined.length === 0 ? (
+            <div style={{ padding: 12, fontFamily: mono, fontSize: 10, color: 'rgba(255,255,255,0.15)', letterSpacing: 2 }}>NO DECLINED DRAFTS</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 2 }}>{declined.length} DECLINED</div>
+              {declined.map(function (d) {
+                return (
+                  <div key={d.id} style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '2px solid rgba(255,136,0,0.5)', borderRadius: 4, padding: '10px 12px', opacity: 0.85 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
+                      <span style={{ ...chip, color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.12)' }}>{d.editor || '--'}</span>
+                      <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>{d.game_slug}</span>
+                      <span style={{ ...chip, color: '#ff8800', border: '1px solid rgba(255,136,0,0.4)' }}>DECLINED</span>
+                      <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto' }}>{when(d.created_at)}</span>
+                    </div>
+                    <div style={{ fontFamily: heading, fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 6 }}>{d.headline}</div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                      {d.source_url && <a href={d.source_url} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
+                      <button onClick={function () { restore(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'RESTORE'}</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
