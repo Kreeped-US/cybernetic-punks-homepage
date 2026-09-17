@@ -1555,21 +1555,34 @@ export async function GET(req) {
     //    any skipped day, and the upsert is idempotent. A missed day self-heals.
     //  - FAIL-OPEN, wrapped: runDailyGscPull never throws, and this try/catch contains
     //    it a second time, so a GSC outage cannot break the generation cron.
+    // MULTI-GAME DE-DUP (2026-09-17): both GSC pulls are NETWORK-WIDE (whole-property,
+    // no game arg) -- with a 2nd per-game cron (e.g. ?game=wardogs) they would run
+    // 2x/day for the same property. Guard them to the PRIMARY generation game only
+    // (GENERATION_SLUGS[0] = the default game = marathon, stable GAMES insertion order),
+    // so the property GSC pull happens exactly ONCE/day regardless of how many game crons
+    // fire. Marathon (primary) still runs both pulls -> Marathon behavior UNCHANGED. A
+    // secondary game's cron skips them (logged). precompute + the keyword heartbeat above
+    // stay PER-GAME (correct -- they are game-scoped).
+    var isPrimaryGscRunner = (PRODUCING_GAME_SLUG === GENERATION_SLUGS[0]);
     var gscPull = null;
-    try {
-      gscPull = await runDailyGscPull(supabase);
-    } catch (gscErr) {
-      console.error('[gsc] daily pull dispatch error (contained, non-fatal): ' + gscErr.message);
-    }
-
-    // GSC QUERY-LEVEL PULL (Consumer B, v8 step 4). Same placement rationale as the
-    // page pull -- outside the freeze branch, late, fail-open, self-healing. Feeds the
-    // keyword review surface, NOT the editor (nothing here enters a prompt).
     var gscQueryPull = null;
-    try {
-      gscQueryPull = await runQueryGscPull(supabase);
-    } catch (gscErr) {
-      console.error('[gsc] query pull dispatch error (contained, non-fatal): ' + gscErr.message);
+    if (!isPrimaryGscRunner) {
+      console.log('[gsc] skipped network-wide GSC pulls on secondary game "' + PRODUCING_GAME_SLUG + '" -- runs once/day on primary "' + GENERATION_SLUGS[0] + '"');
+    } else {
+      try {
+        gscPull = await runDailyGscPull(supabase);
+      } catch (gscErr) {
+        console.error('[gsc] daily pull dispatch error (contained, non-fatal): ' + gscErr.message);
+      }
+
+      // GSC QUERY-LEVEL PULL (Consumer B, v8 step 4). Same placement rationale as the
+      // page pull -- outside the freeze branch, late, fail-open, self-healing. Feeds the
+      // keyword review surface, NOT the editor (nothing here enters a prompt).
+      try {
+        gscQueryPull = await runQueryGscPull(supabase);
+      } catch (gscErr) {
+        console.error('[gsc] query pull dispatch error (contained, non-fatal): ' + gscErr.message);
+      }
     }
 
     // GSC URL Inspection (Consumer C) moved OFF the generation cron to its own dedicated

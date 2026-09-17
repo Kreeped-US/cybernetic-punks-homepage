@@ -98,6 +98,84 @@ export const wardogs = {
   editorial: {
     cadenceCron: '0 19 * * *',
     editors: ['NEXUS'],
+    // ON-SWITCH (2026-09-17): Wardogs joins autonomous generation as a NEXUS-news game.
+    // generateNews=true makes getGenerationGames() include 'wardogs', which (a) lets the
+    // scheduled /api/cron?game=wardogs invocation pass the fail-closed ?game= authorization,
+    // and (b) turns on generation for the roster above (NEXUS only). MIRANDA is deliberately
+    // NOT in the roster -- her evergreen grounding is a separate later build.
+    generateNews: true,
+  },
+
+  // FEED SOURCES (2026-09-17) -- the inputs gatherAll(config) reads. Shape mirrors
+  // lib/games/marathon.js so the shared gather path does not throw. Operator-supplied:
+  // Steam appid 1867240, r/WarDogs, @BULKHEAD (YouTube), Wardogs is a Bulkhead game.
+  // X (x.com/WARDOGS) is ingested separately via x_sources, not through gatherAll, so no
+  // `x` block is needed here. `wikiUrls` is omitted (DEXTER-only, and DEXTER is not in the
+  // roster). Several tuned lists (youtube queries, relevance tokens, twitch category,
+  // patchNotes keywords) are BEST-EFFORT and should be refined by the operator once the
+  // first runs show what the feeds return.
+  sources: {
+    steamAppId: '1867240',
+
+    reddit: {
+      subreddits: ['WarDogs'],
+    },
+
+    youtube: {
+      searchQueries: [
+        'Wardogs Bulkhead gameplay 2026',
+        'Wardogs game loadout build',
+        'Wardogs weapon tier list',
+        'Wardogs Control Zone gameplay',
+        'Wardogs tips tricks meta',
+        'Wardogs best guns early access',
+      ],
+      creatorChannels: ['BULKHEAD'],
+    },
+
+    twitch: {
+      // getGameId tries these against the Twitch category API; an unknown name resolves to
+      // null and gatherTwitchClips returns [] (safe). Refine to the real category at launch.
+      gameNames: ['WarDogs', 'War Dogs'],
+    },
+
+    // GATHER-SAFETY STUB ONLY. gatherMirandaData (lib/gather/index.js:88) runs
+    // UNCONDITIONALLY on every cron and reads config.sources.miranda.guideQueries UNGUARDED
+    // (lib/gather/miranda.js:252) -- so this key MUST EXIST or gatherAll throws. It is
+    // EMPTY on purpose: MIRANDA is NOT in editorial.editors, so she gathers nothing and
+    // generates nothing. When MIRANDA-Wardogs is built (separate brief) this gets real
+    // queries + she joins the roster. This block does NOT wire MIRANDA generation.
+    miranda: {
+      guideQueries: [],
+      subreddits: [],
+    },
+
+    // Official Wardogs news via the Steam news feed for the appid (same engine as Marathon's
+    // Bungie-via-Steam feed). Detection mirrors marathon's shape; keywords are best-effort.
+    patchNotes: {
+      type: 'steam-news',
+      appId: '1867240',
+      detection: {
+        officialFeedName: 'steam_community_announcements',
+        versionRe: /update\s+\d+(\.\d+)+/i,
+        keywords: ['hotfix', 'patch notes', 'update preview', 'patch notes'],
+        freshnessMs: 48 * 60 * 60 * 1000,
+      },
+      label: 'BULKHEAD NEWS',
+    },
+  },
+
+  // Relevance filter terms (filterGameVideos(config.relevance) + the X off-topic gate).
+  // REQUIRED -- absence throws in isGameContent. Best-effort Wardogs terms; tune at launch.
+  relevance: {
+    gameTokens: ['bulkhead', 'wardogs', 'war dogs', 'control zone', 'combined arms'],
+    ambiguousTokens: [],
+    contextTokens: [
+      'season', 'update', 'patch', 'build', 'loadout', 'weapon', 'meta', 'gameplay',
+      'tier', 'pvp', 'fps', 'shooter', 'gaming', 'video game', 'beta', 'playtest',
+      'steam', 'early access', 'crossplay', 'squad',
+    ],
+    ambiguousTerm: 'wardogs',
   },
 
   // Theme tokens -- reference values kept in sync with the .wardogs-theme block in
