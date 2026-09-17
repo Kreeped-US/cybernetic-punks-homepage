@@ -226,30 +226,20 @@ export default async function WeaponDetailPage({ params }) {
     || (articles[0] && articles[0].created_at)
     || null;
 
-  // Weapon stat block as schema.org PropertyValue pairs. Each stat is emitted
-  // only when present (same != null guards the client uses), so a weapon
-  // missing a stat omits that property rather than publishing a null.
-  //
-  // NOTE (June 4): these were previously wrapped in a Product schema, but
-  // Google rejects Product without commerce fields (offers/review/rating) -
-  // a game weapon has none, so it was flagged "invalid". The stats now live
-  // on the WebPage's mainEntity Thing instead, which validates cleanly and
-  // still exposes every stat as structured data for "[weapon] stats" queries.
-  var weaponProps = [];
-  if (weapon.damage != null)               weaponProps.push({ '@type': 'PropertyValue', name: 'Damage', value: weapon.damage });
-  if (weapon.fire_rate != null)            weaponProps.push({ '@type': 'PropertyValue', name: 'Fire Rate', value: weapon.fire_rate, unitText: 'RPM' });
-  if (weapon.magazine_size != null)        weaponProps.push({ '@type': 'PropertyValue', name: 'Magazine', value: weapon.magazine_size });
-  if (weapon.precision_multiplier != null) weaponProps.push({ '@type': 'PropertyValue', name: 'Precision Multiplier', value: weapon.precision_multiplier });
-  if (weapon.range_rating != null)         weaponProps.push({ '@type': 'PropertyValue', name: 'Range', value: weapon.range_rating });
-  if (weapon.aim_assist != null)           weaponProps.push({ '@type': 'PropertyValue', name: 'Aim Assist', value: weapon.aim_assist });
-  if (weapon.ammo_type)                    weaponProps.push({ '@type': 'PropertyValue', name: 'Ammo Type', value: weapon.ammo_type });
-  if (weapon.firing_mode)                  weaponProps.push({ '@type': 'PropertyValue', name: 'Firing Mode', value: weapon.firing_mode });
-  if (weapon.rarity)                       weaponProps.push({ '@type': 'PropertyValue', name: 'Rarity', value: weapon.rarity });
-
-  // The weapon itself, as the page's main entity. Carries the stat block via additionalProperty,
-  // which schema.org defines on Product (not Thing) -- so the type is Product to keep the JSON-LD valid.
+  // The weapon itself, as the page's main entity -- a plain schema.org Thing
+  // (name/description/image only). SCHEMA HISTORY (do not re-litigate): this
+  // ping-ponged Product -> Thing -> Product because it tried to carry a stat
+  // block via `additionalProperty`, and NEITHER single type works with it:
+  // Product without offers/review/aggregateRating is rejected ("needs commerce
+  // fields") and a game weapon has none (adding them would be fabricated data);
+  // `additionalProperty` is not valid on Thing (schema.org domain is Product/
+  // Place), so Thing+additionalProperty was rejected too. The durable fix is to
+  // DROP additionalProperty entirely -- the stats already render in visible HTML
+  // (WeaponDetailClient), Google never surfaced these PropertyValues as a rich
+  // result, and a bare Thing (name/description/image) validates with no
+  // requirements. No commerce fields, no fabricated rating/price/review.
   var weaponEntity = {
-    '@type': 'Product',
+    '@type': 'Thing',
     name: weaponName,
     description: 'The ' + weaponName + ' is a ' + (weapon.weapon_type || 'weapon')
       + (weapon.ammo_type ? ' using ' + weapon.ammo_type : '')
@@ -258,9 +248,6 @@ export default async function WeaponDetailPage({ params }) {
   };
   if (weapon.image_filename) {
     weaponEntity.image = 'https://cyberneticpunks.com/images/weapons/' + weapon.image_filename;
-  }
-  if (weaponProps.length > 0) {
-    weaponEntity.additionalProperty = weaponProps;
   }
 
   var webPageSchema = {

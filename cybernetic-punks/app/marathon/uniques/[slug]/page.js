@@ -137,25 +137,20 @@ export default async function UniqueDetailPage({ params }) {
     ],
   };
 
-  var props = [];
-  if (u.base_weapon) props.push({ '@type': 'PropertyValue', name: 'Base Weapon', value: u.base_weapon });
-  if (u.weapon_type) props.push({ '@type': 'PropertyValue', name: 'Weapon Type', value: u.weapon_type });
-  if (u.rarity) props.push({ '@type': 'PropertyValue', name: 'Rarity', value: u.rarity });
-  if (u.acquisition_source) props.push({ '@type': 'PropertyValue', name: 'Acquisition', value: acq });
-  // Base weapon's real stats, attributed as the base weapon's numbers.
-  if (base) {
-    if (base.damage != null) props.push({ '@type': 'PropertyValue', name: 'Base Damage', value: base.damage });
-    if (base.fire_rate != null) props.push({ '@type': 'PropertyValue', name: 'Base Fire Rate', value: base.fire_rate, unitText: 'RPM' });
-    if (base.magazine_size != null) props.push({ '@type': 'PropertyValue', name: 'Base Magazine', value: base.magazine_size });
-    if (base.ammo_type) props.push({ '@type': 'PropertyValue', name: 'Ammo Type', value: base.ammo_type });
-  }
+  // The unique itself, as the page's main entity -- a plain schema.org Thing
+  // (name/description only). It previously carried a stat block via
+  // `additionalProperty`, which forced an invalid type: Product needs commerce
+  // fields (offers/review/aggregateRating) a game weapon has none of, and
+  // `additionalProperty` is not valid on Thing. The durable fix drops the
+  // property -- the base stats already render in visible HTML below, Google
+  // never surfaced these PropertyValues, and a bare Thing validates cleanly.
+  // No fabricated price/rating/review.
   var thing = {
-    '@type': 'Product',
+    '@type': 'Thing',
     name: u.name,
     description: 'The ' + u.name + ' is a ' + (u.rarity ? u.rarity + ' ' : '') + 'unique variant of the '
       + (u.base_weapon || 'base weapon') + ' in Marathon, Bungie\'s extraction shooter, with permanently locked mods.',
   };
-  if (props.length > 0) thing.additionalProperty = props;
   var webPageSchema = {
     '@context': 'https://schema.org', '@type': 'WebPage',
     name: 'Marathon ' + u.name + ' - Unique Weapon',
