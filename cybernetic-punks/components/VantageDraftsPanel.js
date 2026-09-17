@@ -389,6 +389,12 @@ export default function VantageDraftsPanel({ password }) {
                       <button onClick={function () { setEditingId(null); }} disabled={saving} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, color: 'rgba(255,255,255,0.5)', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 3, padding: '6px 16px', cursor: saving ? 'default' : 'pointer' }}>CANCEL</button>
                       <span style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>Saving does NOT publish -- still needs APPROVE. Em-dashes / smart quotes auto-normalized to house style.</span>
                     </div>
+                    {/* LIVE PREVIEW of the UNSAVED edit buffer: the SAME parseBody the public
+                        article + the saved preview use, driven by editBody (re-renders on every
+                        keystroke via editBody state). Catches blob / run-on-list / header issues
+                        BEFORE saving. Purely a render of the buffer -- no writes, no gate change. */}
+                    <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: 2, color: '#00f5ff', margin: '14px 0 0' }}>LIVE PREVIEW &middot; reflects UNSAVED edits (real article parser)</div>
+                    <DraftPreview draft={{ ...d, headline: editHeadline, body: editBody }} />
                   </div>
                 ) : (
                   <DraftPreview draft={d} />
