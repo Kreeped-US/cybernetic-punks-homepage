@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Fixed spurious Product schema on weapon/unique pages (ended a ping-pong)
+
+GSC flagged one invalid structured-data item ("Product needs offers/review/
+aggregateRating") from Sept 13. Traced to commit 17166c4 (Sept 12) which flipped
+@type 'Thing' -> 'Product' on marathon weapon + unique detail templates. Scope was
+template-wide (~48 indexable pages: 16 uniques + ~32 weapons, is_published-gated, not
+noindex); the GSC "1" was just partial crawl surfacing - expected to grow.
+
+ROOT CAUSE (the useful finding): the schema had ping-ponged Product<->Thing since
+June because it tried to carry a stat block via additionalProperty. Neither single
+type works while additionalProperty is present: Product demands commerce fields we
+don't have; additionalProperty is genuinely invalid on Thing (its schema.org domain
+is Product/Place). So flipping the @type only ever MOVED the error. The cause was the
+property, not the type.
+
+FIX (850e3a8, live; 2 files, +22/-40): retype Product -> Thing AND remove
+additionalProperty, keeping name/description/image on a clean Thing mainEntity.
+- No offers/review/aggregateRating added (moat: these are reference pages with no
+  price/rating/reviews - never fabricate schema fields to satisfy Google).
+- No Thing error reintroduced (additionalProperty removed, not re-added).
+- JSON-LD-only: stats still render in visible HTML (WeaponDetailClient / base rows).
+- Live-validated: curled a real weapon + unique -> JSON-LD now WebPage/Thing/
+  BreadcrumbList/Organization, zero Product/offers/additionalProperty. Build EXIT 0.
+- GSC clears on recrawl; can expedite with "Validate Fix" in Rich Results.
+
+LATENT FOLLOW-UPS (not bugs today, will bite later):
+- DMZ schema: components/dmz/DmzEntityDetail.js still defaults keys/missions/items to
+  @type 'Product'. HARMLESS NOW (those tables have 0 rows), but will emit invalid
+  Product if/when they fill (e.g. at DMZ launch). NOT fixed here because DMZ's
+  additionalProperty is a deliberate verified-facts feature (POIs correctly use
+  'Place', which validly carries it) - so the weapon/unique fix (drop the property)
+  does NOT cleanly apply. Needs its own decision when those tables get data.
+- Detector URL-ID false positive (from the A11 arc): scanStatShaped flags long
+  numeric tweet IDs as stats - still live for VANTAGE/discourse tweet-sourced
+  articles (moot for NEXUS/MIRANDA, now scoped out client + server).
+
+---
+
 ## 2026-09-17 - Nightfall Refresh article + ranked page fix + A11 client-precheck bug
 
 CONTENT SHIPPED (Oct-6 Nightfall Refresh prep, partial):
