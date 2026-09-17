@@ -1,11 +1,11 @@
 // app/api/admin/drafts/edit/route.js
 // The NARROW edit action -- parallel to app/api/admin/drafts/approve + reject. POST
-// { id, headline?, body?, tags? } updates ONLY those three content columns on ONE feed_items
-// row, and NOTHING else. The WHERE is filtered .eq('is_published', false), so this can ONLY ever
-// edit a DRAFT -- it can never touch a live (published) article (headline/body/tags of published
-// content stay out of reach here, exactly like the approve/reject guards). It never changes
-// is_published, noindex, slug, source, editor, or game_slug -- editing a draft does NOT publish
-// it; the separate approve action still does that.
+// { id, headline?, body?, tags?, source_url? } updates ONLY those four content columns on ONE
+// feed_items row, and NOTHING else. The WHERE is filtered .eq('is_published', false), so this
+// can ONLY ever edit a DRAFT -- it can never touch a live (published) article (content of
+// published rows stays out of reach here, exactly like the approve/reject guards). It never
+// changes is_published, noindex, slug, source, editor, or game_slug -- editing a draft does NOT
+// publish it; the separate approve action still does that.
 //
 // WHY: the Drafts panel was review-only; fixing a draft's body meant round-tripping through a
 // persist script. This lets the operator edit inline before approving.
@@ -124,8 +124,25 @@ export async function POST(req) {
     updates.tags = body.tags.map(function (t) { return t.trim(); }).filter(Boolean);
   }
 
+  // source_url: a URL, NOT prose -- so it is URL-validated and stored RAW (no house-style
+  // ASCII normalization, which could corrupt a URL). null / empty string clears the source
+  // (a valid operation). A non-empty value must parse as an http(s) URL, else reject.
+  if (body.source_url !== undefined) {
+    if (body.source_url === null || (typeof body.source_url === 'string' && body.source_url.trim() === '')) {
+      updates.source_url = null;
+    } else if (typeof body.source_url !== 'string') {
+      return Response.json({ error: 'source_url must be a string or null' }, { status: 400 });
+    } else {
+      var su = body.source_url.trim();
+      var okUrl = false;
+      try { var parsed = new URL(su); okUrl = (parsed.protocol === 'http:' || parsed.protocol === 'https:'); } catch (e) { okUrl = false; }
+      if (!okUrl) return Response.json({ error: 'source_url must be a valid http(s) URL (or empty to clear)' }, { status: 400 });
+      updates.source_url = su;
+    }
+  }
+
   if (Object.keys(updates).length === 0) {
-    return Response.json({ error: 'Nothing to update (provide headline, body, and/or tags)' }, { status: 400 });
+    return Response.json({ error: 'Nothing to update (provide headline, body, tags, and/or source_url)' }, { status: 400 });
   }
 
   var supabase = getSupabase();
@@ -134,7 +151,7 @@ export async function POST(req) {
     .update(updates)
     .eq('id', id)
     .eq('is_published', false) // ONLY ever edit a DRAFT -- never touch a live row
-    .select('id, slug, headline, body, tags, is_published, noindex')
+    .select('id, slug, headline, body, tags, source_url, is_published, noindex')
     .maybeSingle();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
