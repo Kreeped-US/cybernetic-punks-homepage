@@ -13,14 +13,13 @@
 //   - after Dec 7          -> HISTORICAL (record of the Refresh + "Symbiosis is now live"
 //                             handoff to /marathon/pve). Same URL, no 301, no delete.
 //
-// SOURCE FIDELITY: the schedule is transcribed from the @MarathonDevTeam detail post
-// (the authoritative calendar) + Bungie's bungie.net dev update (the reset framing).
-// The source states WEEK NUMBERS + a few anchored dates (Oct 6 start, Cryo from Oct 15,
-// Dec 7 end, Symbiosis Dec 8). It does NOT publish per-week calendar date ranges, so
-// this page does NOT invent them -- it presents the rotation + items by the source's own
-// week numbers, and the "current week" is derived arithmetically from the Oct 6 anchor
-// (7-day blocks). If the operator's calendar image carries exact per-week dates, drop
-// them into WEEK_ITEMS -- do not guess them.
+// SOURCE FIDELITY: the schedule is transcribed VERBATIM from the @MarathonDevTeam
+// Nightfall Refresh CALENDAR IMAGE (operator-verified) + Bungie's bungie.net dev update
+// (the reset framing). The calendar gives the exact Mon-Sun week ranges (Week 1 =
+// Oct 6-12 ... Week 9 = Dec 1-7, MID REFRESH at Week 5) and the exact per-week item
+// list -- see WEEKS below, which holds them unchanged. currentWeekNum() is pinned to
+// those real ranges (not 7-day arithmetic). Nothing is inferred or added; only what the
+// calendar shows.
 //
 // NO fabricated content: every line below is Bungie-stated. LAST_UPDATED is a fixed
 // honest date, never new Date(). Design tokens match /marathon/pve + /marathon/modes/
@@ -77,15 +76,20 @@ const ALWAYS = [
 // repeats until Symbiosis. Index 0 = week 1 of each 3-week cycle.
 const ROTATION = ['Sponsored Perimeter', 'Sponsored Marsh', 'Sponsored Night Marsh'];
 
-// Week-anchored items, verbatim from the source's week numbers. No invented calendar
-// date ranges -- the source gives week numbers + the Oct 15 Cryo anchor.
-const WEEK_ITEMS = [
-  { name: 'Sponsored Queues', when: 'Every weekend (Thu - Mon), from Week 1', detail: 'Kit-only Extraction. 3-week rotation: Sponsored Perimeter (wk 1), Sponsored Marsh (wk 2), Sponsored Night Marsh (wk 3), then repeats until Symbiosis.', accent: ORANGE },
-  { name: 'Cryo Archive', when: 'Weekly from Thu, Oct 15', detail: 'Its window is extended by 24h each week -- it now runs all day Sunday too.', accent: CYAN },
-  { name: 'CARRI', when: 'Returns Week 3', detail: 'Back in rotation from the third week.', accent: GREEN },
-  { name: 'Vault Breaker', when: 'Weeks 3 - 5', detail: 'The limited PvE mode returns for the third through fifth weeks.', accent: ORANGE, href: '/marathon/modes/vault-breaker' },
-  { name: 'Enhanced Sponsored Kits', when: 'Week 5 through Symbiosis', detail: 'A raised gear floor -- responding to feedback that players want the baseline lifted after a few weeks.', accent: CYAN },
-  { name: 'Sponsored Survival', when: 'Weekly from Week 6', detail: 'Sponsored-kit PvE with Rooks, rotating: Perimeter, Day Marsh, Night Marsh, Outpost.', accent: GREEN },
+// The 9 weeks of the Refresh, VERBATIM from the @MarathonDevTeam calendar image
+// (operator-verified against the source). Each week: its real Mon-Sun date range, the
+// week-1-based startISO (00:00 PT = 07:00 UTC) used to map "today" to the current week,
+// and the exact per-week item list. Do NOT infer or add -- only what the calendar shows.
+const WEEKS = [
+  { n: 1, range: 'Oct 6 - 12',      startISO: '2026-10-06T07:00:00Z', items: ['Sponsored Map: Perimeter', 'Outpost Locked', 'Login Rewards 2'] },
+  { n: 2, range: 'Oct 13 - 19',     startISO: '2026-10-13T07:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Marsh', 'CARRI Phase I', 'Login Rewards 3', 'Double Runner XP'] },
+  { n: 3, range: 'Oct 20 - 26',     startISO: '2026-10-20T07:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Night Marsh', 'Vault Breaker', 'CARRI Phase I', 'Login Rewards 4'] },
+  { n: 4, range: 'Oct 27 - Nov 2',  startISO: '2026-10-27T07:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Perimeter', 'Vault Breaker', 'CARRI Phase II', 'Login Rewards 5', 'Double Faction Rep', 'Enhanced Sponsored Kits'] },
+  { n: 5, range: 'Nov 3 - 9',       startISO: '2026-11-03T08:00:00Z', mid: true, items: ['Cryo Archive', 'Sponsored Map: Marsh', 'Vault Breaker', 'CARRI Phase II', 'Login Rewards 6', 'Double Runner XP', 'Enhanced Sponsored Kits'] },
+  { n: 6, range: 'Nov 10 - 16',     startISO: '2026-11-10T08:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Night Marsh', 'Sponsored Survival: Perimeter', 'Firestorm Refresh', 'CARRI Phase II', 'Login Rewards 7', 'Enhanced Sponsored Kits'] },
+  { n: 7, range: 'Nov 17 - 23',     startISO: '2026-11-17T08:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Perimeter', 'Sponsored Survival: Marsh', 'Firestorm Refresh', 'CARRI Phase II', 'Enhanced Sponsored Kits'] },
+  { n: 8, range: 'Nov 24 - 30',     startISO: '2026-11-24T08:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Marsh', 'Sponsored Survival: Night Marsh', 'CARRI Phase III', 'Login Rewards 8', 'Double XP and Faction Rep', 'Enhanced Sponsored Kits'] },
+  { n: 9, range: 'Dec 1 - 7',       startISO: '2026-12-01T08:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Night Marsh', 'Sponsored Survival: Outpost', 'CARRI Phase III', 'Login Rewards 9', 'Double XP and Faction Rep', 'Enhanced Sponsored Kits'] },
 ];
 
 export const metadata = {
@@ -119,16 +123,31 @@ function computePhase() {
   return { phase: 'active', now: now, start: start, end: end };
 }
 function daysUntil(ms) { return Math.ceil((ms - Date.now()) / 86400000); }
-// Current week number derived from the Oct 6 anchor (7-day blocks). Week 1 = the first
-// 7 days. Used only for the ACTIVE-state "current week" highlight; the source uses week
-// numbers, so this stays in the source's own unit rather than inventing calendar dates.
-function currentWeek(startMs) { return Math.floor((Date.now() - startMs) / (7 * 86400000)) + 1; }
+// Current week number, PINNED to the calendar's real Mon-Sun ranges: the highest week
+// whose startISO is <= now. During the active window (Oct 6 .. Dec 8) this maps today
+// to weeks 1..9 exactly per the calendar image. Server-computed, no client ticker.
+function currentWeekNum() {
+  var now = Date.now();
+  var wk = WEEKS[0].n;
+  for (var i = 0; i < WEEKS.length; i++) {
+    if (now >= new Date(WEEKS[i].startISO).getTime()) wk = WEEKS[i].n;
+  }
+  return wk;
+}
+// The Sponsored Map for a given week, derived from that week's own item list (not a
+// separate rotation const) so the highlight can never drift from the transcribed data.
+function sponsoredZoneOf(week) {
+  if (!week) return null;
+  var m = week.items.find(function (x) { return x.indexOf('Sponsored Map:') === 0; });
+  return m ? 'Sponsored ' + m.replace('Sponsored Map: ', '') : null;
+}
 
 export default function NightfallPage() {
   var st = computePhase();
   var phase = st.phase;
-  var weekNum = phase === 'active' ? currentWeek(st.start) : null;
-  var featuredZone = weekNum ? ROTATION[(weekNum - 1) % 3] : null;
+  var weekNum = phase === 'active' ? currentWeekNum() : null;
+  var currentWeekObj = weekNum ? WEEKS[weekNum - 1] : null;
+  var featuredZone = sponsoredZoneOf(currentWeekObj);
 
   var citations = SOURCES.map(function (s) {
     return { '@type': 'CreativeWork', name: s.name, url: s.url, datePublished: s.date, publisher: { '@type': 'Organization', name: 'Bungie' } };
@@ -275,27 +294,33 @@ export default function NightfallPage() {
         </div>
       </section>
 
-      {/* WEEK-BY-WEEK ITEMS */}
+      {/* WEEK-BY-WEEK GRID -- the exact calendar */}
       <section style={sectionWrap}>
         <SectionHeader label="The Schedule, Week by Week" />
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 800, margin: '0 0 16px' }}>
-          Anchored to Bungie&rsquo;s stated week numbers and dates. The sponsored-queue rotation repeats every three weeks until Symbiosis.
+          The confirmed week-by-week calendar (Oct 6 - Dec 7). Vault Breaker links to its own page.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {WEEK_ITEMS.map(function (w) {
-            var inner = (
-              <>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap', marginBottom: 4 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: w.accent }}>{w.name}</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '2px 8px' }}>{w.when}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10 }}>
+          {WEEKS.map(function (w) {
+            var isNow = weekNum === w.n;
+            return (
+              <div key={w.n} className="nf-card" style={{ background: isNow ? ORANGE + '14' : CARD_BG, border: '1px solid ' + (isNow ? ORANGE + '80' : BORDER), borderTop: '2px solid ' + (isNow ? ORANGE : BORDER_SUBTLE), borderRadius: '0 0 2px 2px', padding: '14px 16px' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap', marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: isNow ? ORANGE : '#fff' }}>Week {w.n}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: 1 }}>{w.range}</span>
+                  {w.mid && <span style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 700, color: CYAN, background: CYAN + '14', border: '1px solid ' + CYAN + '40', borderRadius: 2, padding: '1px 6px', letterSpacing: 1 }}>MID REFRESH</span>}
+                  {isNow && <span style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 700, color: ORANGE, background: ORANGE + '18', border: '1px solid ' + ORANGE + '80', borderRadius: 2, padding: '1px 6px', letterSpacing: 1 }}>THIS WEEK</span>}
                 </div>
-                <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65 }}>{w.detail}</p>
-              </>
+                <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: 'rgba(255,255,255,0.62)', lineHeight: 1.7 }}>
+                  {w.items.map(function (it) {
+                    if (it === 'Vault Breaker') {
+                      return <li key={it}><Link href="/marathon/modes/vault-breaker" style={{ color: ORANGE, textDecoration: 'underline' }}>Vault Breaker</Link></li>;
+                    }
+                    return <li key={it}>{it}</li>;
+                  })}
+                </ul>
+              </div>
             );
-            var style = { background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + w.accent, borderRadius: '0 2px 2px 0', padding: '14px 16px', display: 'block', textDecoration: 'none' };
-            return w.href
-              ? <Link key={w.name} href={w.href} className="nf-card" style={style}>{inner}</Link>
-              : <div key={w.name} className="nf-card" style={style}>{inner}</div>;
           })}
         </div>
       </section>
