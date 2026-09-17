@@ -7,6 +7,75 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Nightfall Refresh article + ranked page fix + A11 client-precheck bug
+
+CONTENT SHIPPED (Oct-6 Nightfall Refresh prep, partial):
+- NEW ARTICLE LIVE: "Marathon Ranked Is Paused for the Nightfall Refresh (Oct 6 -
+  Dec 7)" at /marathon/intel/marathon-ranked-paused-nightfall-refresh-oct-6-dec-7-
+  what-to-play (feed_items 50c54c23-...). NEXUS, hand-placed via SQL, sourced to
+  @MarathonDevTeam Nightfall Refresh post (x.com/MarathonDevTeam/status/
+  2100253598609535344). Facts (mode schedule, ranked pause, free NuCaloric pass)
+  tiered from "Our read:" analysis. Tagged 'ranked' so it auto-surfaces on the
+  /marathon/ranked intel strip. Confirmed source: the Nightfall Refresh = the Oct 6
+  reset event; ranked UNAVAILABLE the entire Oct 6 - Dec 7 window (Bungie reworking
+  it); Vault Breaker returns wks 3-5; sponsored queues rotate Perimeter/Marsh/Night
+  Marsh; Cryo Archive weekly from Oct 15; Sponsored Survival from wk 6; CARRI wk 3;
+  Enhanced Sponsored Kits wk 5+.
+- RANKED PAGE CORRECTED (4b672ea, live): /marathon/ranked was ALREADY stale before
+  this - built around "Ranked returns June 14" (3 months past), and worse, the status
+  pill was client-only so the SSR HTML Google indexed said "RETURNS JUNE 14". Fixed:
+  every June-14/weekend-mode-as-current reference corrected (12 spots + metadata +
+  a stale Cryo "returns Jun 11"), added an SSR-visible "HEADS UP: Ranked pauses Oct 6
+  - Dec 7" banner (links to the new article), made the status pill SSR-correct (lazy
+  init), added a "tier data frozen as of last ranked season" freshness line. Kept the
+  tier ladder / shell grades / FAQ / rewards (durable reference). Notice is
+  forward-looking ("pauses Oct 6"), true now as an announcement.
+
+A11 BUG FOUND + FIXED - the important finding (0a337c9, live):
+- Approving the NEXUS Nightfall article HARD-BLOCKED on A11, which should have been
+  impossible after yesterday's server scoping (1f3c93a). Root cause (took 3
+  diagnostics): A11 had TWO enforcement points, not one. Yesterday's fix scoped the
+  SERVER route (approve/route.js) but there was ALSO an UNSCOPED client-side pre-check
+  in components/VantageDraftsPanel.js approve() (~:144-149) that ran runA11Gate on
+  EVERY editor and alerted/returned BEFORE the request reached the scoped server. The
+  client string ("...in her voice is disqualifying") differs from the server's, which
+  proved the block was client-side. FIX: scoped the client pre-check with the SAME
+  expression the server uses (isDiscourseArticle(d) || d.editor === 'VANTAGE'), so
+  store-backed NEXUS/MIRANDA drafts skip the client A11 check and reach the exempting
+  server. Client and server now identical; verified NEXUS passes, VANTAGE still
+  protected. This bug would have blocked EVERY future NEXUS/MIRANDA stat article at
+  the client.
+- The token that tripped it: the 19-digit X status ID in the source URL, read as a
+  stat-shaped number.
+
+LATENT DETECTOR ISSUE (not fixed - follow-up): scanStatShaped flags long numeric URL
+path segments (tweet status IDs) as stats. Now MOOT for NEXUS/MIRANDA (exempt both
+client + server), but still LIVE for VANTAGE/discourse articles sourced to a tweet URL
+- those would hard-block on the tweet ID. Future detector fix: exclude numeric tokens
+that are part of a URL from scanStatShaped.
+
+WORKFLOW LESSONS (bank so they don't repeat):
+- ENUMERATE A11/enforcement points across the WHOLE repo. The first diagnostic today
+  concluded "one enforcement point" because its grep searched only "app lib scripts"
+  and OMITTED "components/" - which is the entire reason the client pre-check was
+  missed and the fix looked complete when it wasn't. Grep the whole tree (gitignore-
+  respecting) for enforcement points, always.
+- BRANCH FROM main, not from a held branch. The ranked-page fix (4b672ea, HELD) went
+  live riding in on the A11 client fix's greenlight because the A11 branch was created
+  on top of the still-held ranked branch. Harmless here (the ranked fix was wanted +
+  verified), but a held change should never be able to ride out on an unrelated
+  greenlight. Return to main before branching.
+
+STILL OPEN / WATCH:
+- Noon (19:00 UTC) cron: first successful-run digest (ops-channel delivery proof) +
+  MIRANDA solo-path confirmation (if non-patch day). Check #ops-alerts + email.
+- Detector URL-ID false positive (above) - follow-up for VANTAGE.
+- Nightfall Refresh: a dedicated schedule/hub page was discussed as a possible next
+  build (the calendar as living reference, Oct 6 - Dec 7, transitions at Symbiosis
+  Dec 8) - not built.
+
+---
+
 ## 2026-09-16 - Sept-7 impressions cliff: forensics complete, cause is EXTERNAL (not on-site)
 
 INVESTIGATION (GSC exports + git + DB + live HTTP probes). Corrects the prior
