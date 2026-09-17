@@ -7,6 +7,67 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - MIRANDA-Wardogs grounded guides: code-complete (proof pending seed + first draft)
+
+Wardogs now has FULL autonomous parity with Marathon: NEXUS news (earlier today) +
+MIRANDA grounded evergreen guides (this arc). MIRANDA-Wardogs grounds in community-
+ATTRIBUTED data with a STRUCTURALLY-guaranteed caveat. Built as 3 gated briefs (caveat
+proven before flip). Also validated the agnostic onboarding machinery (used the
+grounding + seed registries), so game #3 is config + checklist.
+
+THE DOCTRINE (decided): MIRANDA-Wardogs may ground in community-attributed data
+(wardogs_ttk 450 + wardogs_ballistics 3600, verified=false, confidence_tier=
+'attributed', sourced to Swoleguy) BECAUSE the guides carry the "community-attributed,
+not owner-verified" caveat - matching the live tier list. The moat is transparency
+about provenance, not owner-verified-only. The caveat is STRUCTURAL (below), not
+prose-dependent, which is what makes attributed grounding safe.
+
+BUILT (3 briefs):
+- A (24c38a0): fetchWardogsWeaponBlock - grounds a Wardogs weapon from wardogs_ttk +
+  wardogs_ballistics (join by weapon_name, attributed bar confidence_tier='attributed'
+  AND superseded_by IS NULL, FMJ-across-armor-tiers balanced profile matching the tier
+  list, ~8 lines not the 450-row matrix). Registered in GAME_FACET_GROUNDING.wardogs.
+  weapon (Marathon never enters it - byte-identical). PLUS a seed-source override:
+  seed-gap-candidates.mjs seeds wardogs weapon candidates from wardogs_ttk's ~30
+  attributed names (the verified=true substance filter zeroed Wardogs). The grounding
+  block carries caveat LAYER 1 (prompt: header names the source + a claim boundary
+  mandating in-prose attribution) - hopeful, not the guarantee.
+- B (35b55ca): the STRUCTURAL caveat guarantee (moat-critical). DATA layer: MIRANDA-
+  wardogs grounded inserts set feed_items.verified_source = the attribution string
+  (tightly scoped: editor=MIRANDA && game=wardogs && directive._verifiedBlock has the
+  COMMUNITY-ATTRIBUTED header; NEXUS news + Marathon never enter it). RENDER layer (THE
+  GUARANTEE): the wardogs article route auto-appends the "community-attributed, not
+  Bulkhead-official" caveat + TierIcon(attributed), gated on editor==='MIRANDA' &&
+  verified_source (NOT bare verified_source - a wardogs NEXUS news article can carry a
+  news verified_source and must NOT get this caveat). PROVEN prose-independent: the
+  caveat JSX references only editor + verified_source, NEVER body - so a guide whose
+  prose omits attribution STILL renders the caveat. That is the guarantee.
+- C (2525b7f): rostered MIRANDA into wardogs.editorial.editors (['NEXUS','MIRANDA'])
+  + sources.miranda (8 best-effort guide queries [tunable, config-only, don't affect
+  grounding] + subreddit WarDogs). MIRANDA not patch-gated (daily evergreen producer),
+  in HELD_EDITORS (drafts land held for review). Marathon byte-identical.
+
+NOT YET PROVEN (operator, flip-on-then-watch - do NOT mark done until SEEN):
+1. RUN THE SEED (DB write): node scripts/seed-gap-candidates.mjs --game wardogs --apply
+   -> queues ~25-30 wardogs weapon candidates. Without it MIRANDA's queue is empty and
+   she produces nothing.
+2. WATCH the next ?game=wardogs cron: a MIRANDA-Wardogs HELD draft produced, a candidate
+   flipped queued->done. Then OPEN the draft and confirm the MOAT: (a) grounded in real
+   attributed numbers, (b) the caveat + TierIcon render on the page, (c) the prose
+   attributes the source.
+
+CARRIED FORWARD:
+- Best-effort guide queries in wardogs.js sources.miranda are tunable (config-only, no
+  grounding impact) - swap for preferred ones anytime.
+- Seeder non-weapon facets (mod/core/implant) are gameScoped:false - a future wardogs
+  NON-weapon seed would include marathon entities (inert now: weapons fill the tranche,
+  Wardogs has no such content). Fix if/when wardogs non-weapon seeding is needed.
+- loadWardogsStore (corroboration drift-check vs the grounded numbers) - optional future
+  hardening, NOT required for launch (attributed grounding + structural caveat + human
+  review is the honesty mechanism).
+
+---
+
 ## 2026-09-17 - Agnostic onboarding machinery: all 3 shared-code assumptions now registries
 
 MILESTONE: onboarding a game to autonomous articles is now CONFIG + CHECKLIST, not
