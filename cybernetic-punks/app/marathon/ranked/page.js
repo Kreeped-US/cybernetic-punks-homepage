@@ -1,6 +1,10 @@
 // app/ranked/page.js
 // Server component — fetches live ranked data from Supabase, hands to client.
 //
+// UPDATED Sep 17, 2026 (Nightfall Refresh): Ranked is UNAVAILABLE Oct 6 - Dec 7 while
+// Bungie reworks it. All "returns June 14" copy (3 months past) corrected to the pause;
+// the metadata/OG/twitter descriptions below now state the pause. See RankedClient.js.
+//
 // UPDATED June 2, 2026 (S2 / Update 1.019):
 // - Ranked is reworked for Season 2. Low + High Stakes merged into a single
 //   queue (5,000 loadout minimum); Holotag must match current rank; faster
@@ -14,10 +18,10 @@ import { supabase } from '@/lib/supabase';
 
 export const metadata = {
   title: { absolute: 'Marathon Ranked - Tiers, Skill Rating & Rank Push' },
-  description: 'Everything you need to climb Marathon Ranked in Season 2. Tier breakdowns, Holotag rules, the new single-queue 5,000 loadout minimum, live shell tier list, season rewards, and AI-graded ranked intel — updated throughout the day. Ranked returns June 14.',
+  description: 'Everything you need to climb Marathon Ranked in Season 2. Tier breakdowns, Holotag rules, the new single-queue 5,000 loadout minimum, live shell tier list, season rewards, and AI-graded ranked intel — updated throughout the day. Ranked is paused Oct 6 - Dec 7 for the Nightfall Refresh rework.',
   openGraph: {
     title: 'Marathon Ranked - Tiers, Skill Rating & Rank Push | Cybernetic Punks',
-    description: 'Ranked mode intel for Marathon Season 2. Six tiers, three subdivisions each. New single combined queue, live shell tier list, AI meta tracking, flagged weapons, and recent ranked intelligence. Returns June 14.',
+    description: 'Ranked mode intel for Marathon Season 2. Six tiers, three subdivisions each. New single combined queue, live shell tier list, AI meta tracking, flagged weapons, and recent ranked intelligence. Paused Oct 6 - Dec 7 for the Nightfall Refresh.',
     url: 'https://cyberneticpunks.com/marathon/ranked',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -26,7 +30,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Ranked - Tiers, Skill Rating & Rank Push | Cybernetic Punks',
-    description: 'Tier breakdowns, Holotag rules, shell picks, and season rewards for Marathon Ranked. Season 2 returns June 14.',
+    description: 'Tier breakdowns, Holotag rules, shell picks, and season rewards for Marathon Ranked. Paused Oct 6 - Dec 7 for the Nightfall Refresh.',
   },
   alternates: {
     canonical: 'https://cyberneticpunks.com/marathon/ranked',
