@@ -139,16 +139,10 @@ export const wardogs = {
       gameNames: ['WarDogs', 'War Dogs'],
     },
 
-    // GATHER-SAFETY STUB ONLY. gatherMirandaData (lib/gather/index.js:88) runs
-    // UNCONDITIONALLY on every cron and reads config.sources.miranda.guideQueries UNGUARDED
-    // (lib/gather/miranda.js:252) -- so this key MUST EXIST or gatherAll throws. It is
-    // EMPTY on purpose: MIRANDA is NOT in editorial.editors, so she gathers nothing and
-    // generates nothing. When MIRANDA-Wardogs is built (separate brief) this gets real
-    // queries + she joins the roster. This block does NOT wire MIRANDA generation.
-    miranda: {
-      guideQueries: [],
-      subreddits: [],
-    },
+    // No sources.miranda block: MIRANDA is not in the roster, and gatherMirandaData now
+    // guards a missing block (lib/gather/miranda.js) -> defaults to empty, no throw. When
+    // MIRANDA-Wardogs is built (separate brief), add her guideQueries + subreddits here and
+    // add MIRANDA to editorial.editors.
 
     // Official Wardogs news via the Steam news feed for the appid (same engine as Marathon's
     // Bungie-via-Steam feed). Detection mirrors marathon's shape; keywords are best-effort.

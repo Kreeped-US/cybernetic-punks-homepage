@@ -60,3 +60,23 @@ test('loadGateStore: dmz -> loadDMZStore; an unknown game -> empty store (no loa
   // game_slug is stamped on the returned store (game_slug boundary: runGate asserts store==draft game).
   assert.deepEqual(await loadGateStore(mockClient({}), 'valorant'), { entities: [], counts: {}, game_slug: 'valorant' });
 });
+
+// REGISTRY DISPATCH (2026-09-17): the if-switch became a slug->loader registry. These prove the
+// dispatch is byte-identical: marathon still routes to loadMarathonStore, and a game with no
+// registered loader (e.g. wardogs today) gets the empty store.
+const MARA = {
+  unique_weapons: [{ name: 'BR33 Victory Lap', verified: true, verified_source: 'bungie', patch_verified: 'S2' }],
+  shell_stats: [{ name: 'Vandal', verified: true, verified_source: 'bungie', patch_verified: 'S2' }],
+  weapon_stats: [{ name: 'M77', verified: true, verified_source: 'bungie', patch_verified: 'S2' }],
+};
+test('loadGateStore: marathon -> loadMarathonStore (registry dispatch, loader unchanged)', async () => {
+  const m = await loadGateStore(mockClient(MARA), 'marathon');
+  assert.equal(m.entities.length, 3, 'unique + shell + weapon');
+  assert.equal(m.game_slug, 'marathon');
+  assert.deepEqual(m.counts, { unique: 1, shell: 1, weapon: 1 });
+  const types = m.entities.map((e) => e.type).sort();
+  assert.deepEqual(types, ['shell', 'unique', 'weapon']);
+});
+test('loadGateStore: a game with no registered loader (wardogs) -> empty store', async () => {
+  assert.deepEqual(await loadGateStore(mockClient({}), 'wardogs'), { entities: [], counts: {}, game_slug: 'wardogs' });
+});

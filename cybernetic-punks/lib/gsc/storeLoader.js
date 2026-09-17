@@ -101,13 +101,28 @@ export async function loadDMZStore(client, gameSlug) {
   return { entities, counts: { recipe: recipes.length, ingredient: ingredients.length, lieutenant: lieutenants.length, weapon: weapons.length, attachment: attachments.length } };
 }
 
-// Per-game gate store dispatch (the cron gate calls this). Marathon -> loadMarathonStore
-// (fail-open, swallow); DMZ -> loadDMZStore (fail-closed, throw-on-error); other -> empty store.
+// Per-game gate-store REGISTRY (2026-09-17): a slug -> loader map replaces the hardcoded
+// marathon/dmz if-switch, so onboarding a game's corroboration store is a registry entry,
+// not a new code branch. The loader FUNCTIONS are UNCHANGED (dispatched by lookup): Marathon
+// -> loadMarathonStore (fail-open, swallow); DMZ -> loadDMZStore (fail-closed, throw-on-error).
+// A game with NO registered loader gets the empty store (byte-identical to the prior
+// fall-through) -- e.g. Wardogs today.
+const GATE_STORE_REGISTRY = {
+  marathon: loadMarathonStore,
+  dmz: loadDMZStore,
+};
+
 export async function loadGateStore(client, gameSlug) {
   // game_slug stamped on the returned store so runGate can assert the store belongs to the
   // draft's game (the game_slug boundary at the gate) -- a caller can no longer hand the
   // wrong game's store to a draft without runGate refusing it (fail-closed).
-  if (gameSlug === 'marathon') return { ...(await loadMarathonStore(client, gameSlug)), game_slug: gameSlug };
-  if (gameSlug === 'dmz') return { ...(await loadDMZStore(client, gameSlug)), game_slug: gameSlug };
+  var loader = GATE_STORE_REGISTRY[gameSlug];
+  if (loader) return { ...(await loader(client, gameSlug)), game_slug: gameSlug };
+  // DEFERRED declarative path: when a future game declares a DECLARATIVE corroborationStore
+  // in lib/games/<game>.js (a { tables:[{table,type}], strict } spec), that game's onboarding
+  // adds (a) `import { getGameConfig }`, (b) a generic loadDeclarativeStore(client, slug, spec),
+  // and (c) a dispatch branch here that reads getGameConfig(slug).corroborationStore. It is NOT
+  // built now (no game declares one; a half-built loader is worse than none). Until then an
+  // unregistered game correctly returns the empty store below -- never a silent half-load.
   return { entities: [], counts: {}, game_slug: gameSlug };
 }

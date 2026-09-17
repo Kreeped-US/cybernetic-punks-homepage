@@ -86,7 +86,20 @@ function renderRow(row, cfg) {
 // (header + populated fields + hard claim boundary), or null if no verified row exists.
 // verified=true ONLY. Fail-safe: any error -> null (the caller then omits the block and the
 // editor is told, elsewhere, to stay qualitative -- never a silent ungrounded generation).
+// Per-game grounding OVERRIDE registry (2026-09-17). EMPTY today: a game whose verified-stat
+// grounding differs from the shared FACET_TABLE_MAP/verified=true path (e.g. Wardogs, whose
+// data lives in wardogs_ttk/wardogs_ballistics under an attributed-not-verified model) registers
+// a { [gameSlug]: { [facet]: (supabase, entity) => Promise<string|null> } } builder here. The
+// builders themselves are DEFERRED (part of the MIRANDA-Wardogs grounding build). While this is
+// empty, the override never fires -> every game hits the existing path BYTE-IDENTICAL.
+const GAME_FACET_GROUNDING = {};
+
 export async function fetchVerifiedStatBlock(supabase, gameSlug, entity, facet) {
+  // Per-game override FIRST (empty registry today -> never fires). A registered builder owns the
+  // whole block (its own table/bar/rendering); absence falls through to the shared path below.
+  var override = GAME_FACET_GROUNDING[gameSlug] && GAME_FACET_GROUNDING[gameSlug][facet];
+  if (override && entity) return override(supabase, entity);
+
   var map = FACET_TABLE_MAP[facet];
   var cfg = FACET_GROUNDING[facet];
   if (!map || !cfg || !entity) return null;

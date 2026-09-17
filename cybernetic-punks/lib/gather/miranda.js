@@ -249,8 +249,13 @@ async function fetchRecentMirandaHeadlines(producingSlug) {
 export async function gatherMirandaData(config = getGameConfig()) {
   console.log('[miranda.js] Gathering...');
 
-  const guideQueries = config.sources.miranda.guideQueries;
-  const subreddits = config.sources.miranda.subreddits;
+  // GUARD (2026-09-17): gatherMirandaData runs UNCONDITIONALLY in gatherAll, but a
+  // NEXUS-only game has no need for a sources.miranda block. Default to empty so a game
+  // without one does not throw (fetchYouTubeGuides([])/fetchRedditGuides([]) -> []).
+  // Byte-identical for Marathon (real block) and any game with a real/empty block.
+  const mir = (config.sources && config.sources.miranda) || {};
+  const guideQueries = mir.guideQueries || [];
+  const subreddits = mir.subreddits || [];
 
   const [videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines] = await Promise.all([
     fetchYouTubeGuides(guideQueries),
