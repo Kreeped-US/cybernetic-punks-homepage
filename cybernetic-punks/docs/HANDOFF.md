@@ -7,6 +7,61 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Agnostic onboarding machinery: all 3 shared-code assumptions now registries
+
+MILESTONE: onboarding a game to autonomous articles is now CONFIG + CHECKLIST, not
+bespoke shared-code per game. All three shared-code Marathon-assumptions are converted
+to registries/guards, ADDITIVE (live games never enter the new paths, byte-identical):
+- GSC de-dup (20779d1, earlier today): network GSC pulls run only on the primary
+  generation game; secondary games skip. All games inherit.
+- gatherMirandaData guard (e35dec2): config.sources.miranda read guarded (|| []), so
+  NEXUS-only games need NO sources.miranda stub. Wardogs stub removed.
+- loadGateStore FUNCTION-REGISTRY (e35dec2): GATE_STORE_REGISTRY={marathon:
+  loadMarathonStore, dmz:loadDMZStore} + lookup, replacing the hardcoded if-switch.
+  Loader BODIES untouched (dispatch-only). storeLoader.test.mjs 6/6 green (dmz/unknown
+  still pass + new marathon/wardogs). corroborationStore config branch is fall-through-
+  to-empty (NOT built - no getGameConfig import added for a zero-hit path).
+- GAME_FACET_GROUNDING registry (e35dec2): empty {} + an override pre-check before the
+  FACET_TABLE_MAP/verified=true path. Marathon byte-identical (override never fires).
+
+SCOPE DISCIPLINE (minimal, from 2 real cases Marathon+Wardogs - NOT a speculative
+framework): built only the registries/guards + removed hardcoded switches. NO new game
+behavior. DEFERRED until a real game needs them:
+- loadDeclarativeStore (the generic declarative store builder) - build when a game
+  first declares a corroborationStore config (also adds the gsc->games import + the
+  spec branch). DMZ's store is a bespoke recipe->ingredient M:N join, so it stays a
+  FUNCTION in the registry, not declarative - some games need functions, that's fine.
+- The Wardogs grounding builder (fetchWardogsWeaponBlock) - part of the deferred
+  MIRANDA-Wardogs build; the GAME_FACET_GROUNDING registry is the vehicle, empty until
+  then.
+- Seed-source per-game extension (for non-FACET_TABLE_MAP entity tables like
+  wardogs_ttk) - defer to the MIRANDA-Wardogs build.
+- Game-type abstractions (extraction vs...) - explicitly NEVER build. Onboard by config
+  + checklist, not taxonomy.
+
+THE ONBOARDING CHECKLIST (bring any game to full autonomy):
+1. [config] Write lib/games/<game>.js: sources (all gatherAll keys), relevance,
+   editorial.{editors, editorsRequiringPatch, generateNews:false}, prePublishGate mode.
+   (NEXUS-only games need no sources.miranda now.)
+2. [config/code] If it has a corroboration store: declarative corroborationStore config
+   (+ build loadDeclarativeStore if first) OR register a loader function. If it needs
+   grounded evergreen guides: add a GAME_FACET_GROUNDING builder + the verified/
+   attributed bar.
+3. [operator DB] Seed content_candidate: seed-gap-candidates.mjs --game <slug> --apply.
+4. [code] Add vercel.json cron /api/cron?game=<slug> (offset schedule).
+5. [operator] Confirm Vercel cron ceiling (Pro=100; 8 used).
+6. [config] Flip editorial.generateNews:true (the on-switch).
+7. [verify - flip-on-then-watch] First run: a cron_runs row for the game, a produced
+   draft, the game's digest heartbeat. Do NOT mark done until a draft is SEEN.
+
+CONTRACT BOUNDARY (honest): a game's DECLARATIVE identity lives in lib/games/<game>.js;
+its IMPERATIVE per-game logic (bespoke store loader, custom grounding builder) lives in
+a subsystem registry keyed by slug (gsc/storeLoader.js, content/grounding.js) - because
+those subsystems import games/, not vice-versa. Do NOT force imperative loaders into
+config files (would create a circular dep).
+
+---
+
 ## 2026-09-17 - Wardogs NEXUS news wired + the multi-game onboarding direction (agnostic)
 
 SHIPPED (20779d1): Wardogs NEXUS news autonomy. wardogs.js got a feed sources block
