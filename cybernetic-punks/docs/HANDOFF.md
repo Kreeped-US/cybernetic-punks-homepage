@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Phase 1 PROVEN: MIRANDA solo-path alive + digest delivers end-to-end
+
+The 2026-09-17 19:00 UTC cron (NON-patch day) confirmed the two remaining Phase 1
+unknowns:
+
+- MIRANDA SOLO-PATH ALIVE: non-patch day, MIRANDA ran as the SOLE producer (NEXUS is
+  patch-gated), produced a grounded held draft ("Marathon CE Tactical Sidearm..."),
+  and the content_candidate flipped queued->done (select -> ground -> hold -> done all
+  worked solo). Yesterday's proof (09-16) was a patch day; this confirms the pure
+  daily solo path the pipeline actually depends on. cron_runs f33deb93: all_succeeded,
+  has_patch=false, 1 attempted / 1 ok / 0 failed, 1 held draft.
+- DIGEST DELIVERS END-TO-END (the thing built but never confirmed): the daily "drafts
+  ready" digest ARRIVED in BOTH #ops-alerts (Discord) AND email on this successful
+  run. Operator confirmed both. The ops channel is proven live. This is the piece that
+  makes the two-week silent death impossible to repeat - a clean run notifies, a
+  failed run alarms + persists the reason.
+
+STILL UNEXERCISED (armed, waiting): failure_reasons persistence - the column exists
+(migration run) but has never held a value because there's been no failure since the
+feature shipped. It'll be proven on the next real editor failure (should leave a
+queryable reason, not console-only). The failure ALARM delivery path is now proven
+(same sendOpsAlert path the digest just used), so only the reason-persistence remains
+to confirm on a live failure.
+
+NET: the pipeline is now alive (both patch + non-patch), observable (daily digest
+delivers), its output publishable (A11 scoped + all detector false-positives fixed)
+and trustworthy-at-a-glance (gate-provenance strip). The Phase 0->1 pipeline arc is
+complete.
+
+Minor cosmetic flag (not a bug): cron_runs.articles_published=1 counts the produced
+held feed_item, not public-live publication (the draft is is_published=false). Only
+matters if a metric later reads it as "went live."
+
+---
+
 ## 2026-09-17 - A11 URL-number false positive fixed (last detector false-positive class closed)
 
 FIX (cc58d77): scanStatShaped (lib/network/vantageGate.js) flagged numbers embedded
