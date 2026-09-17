@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Wardogs NEXUS news wired + the multi-game onboarding direction (agnostic)
+
+SHIPPED (20779d1): Wardogs NEXUS news autonomy. wardogs.js got a feed sources block
+(Steam appid 1867240, r/WarDogs, YouTube @BULKHEAD, X x.com/WARDOGS already read-
+ingested, relevance tokens, an EMPTY sources.miranda stub - see below), generateNews:
+true, and a 2nd cron /api/cron?game=wardogs @ 10 19 UTC (offset from marathon's 0 19).
+GSC de-dup added. Marathon untouched.
+
+GSC DE-DUP LANDED AS A GENERAL PATTERN (the network win, not a Wardogs hack): the two
+network-wide GSC pulls now run only when PRODUCING_GAME_SLUG === GENERATION_SLUGS[0]
+(the primary generation game = marathon). So GSC pulls once/day on marathon; every
+SECONDARY game's cron skips them automatically. DMZ/Bodycam/PUBG inherit this free -
+no per-game GSC change ever needed again. This is one of the 3 shared-code Marathon-
+assumptions now converted to config-logic.
+
+GATHER LANDMINE (fixed): gatherMirandaData runs UNCONDITIONALLY in gatherAll and reads
+config.sources.miranda.guideQueries UNGUARDED - so any game without a sources.miranda
+key THROWS, even NEXUS-only games. Fix here: an EMPTY sources.miranda stub
+(guideQueries:[], subreddits:[]) - gather-safety only, NOT roster wiring (editors stays
+[NEXUS], MIRANDA generates nothing). NOTE for the agnostic build: the cleaner fix is to
+GUARD gatherMirandaData's read so no stub is needed per game - do that in the machinery
+generalization.
+
+NOT YET PROVEN (flip-on-then-watch, per MIRANDA discipline):
+- OPERATOR: confirm Vercel plan allows 8 crons + a ?game= query-string path. If over
+  the plan limit, the wardogs cron won't register and Wardogs silently won't run.
+- The first NEWS-TRIGGERED ?game=wardogs run must actually produce (NEXUS is patch/
+  news-gated - needs a real Steam-news/patch event, not just any day). Verify: a
+  wardogs cron_runs row, NEXUS-Wardogs news from appid 1867240, a wardogs digest
+  heartbeat. Don't mark done until a Wardogs draft is SEEN.
+- Tune best-effort lists (youtube queries, relevance tokens, twitch category, patchNotes
+  keywords) once first runs show real feed output.
+
+THE DIRECTION (operator-set, explicit): this is a GAME NETWORK - onboarding every game
+to autonomous articles must be AGNOSTIC (config + a checklist), NOT bespoke per game
+(the recurring "shared resource hardcoded to a stale game subset" bug class). Wardogs is
+CASE #2 (Marathon = case #1); generalize from the two, not one (avoid premature over-
+abstraction from Marathon alone). NEXT ARCHITECTURAL BUILD (fresh session): the
+onboarding-contract read-first (already drafted this session) -> define per-game CONFIG
+(feed sources, roster, grounding source+verification model, gate mode, generateNews,
+seed source, schedule) vs game-agnostic MACHINERY -> convert the remaining 2 shared-code
+Marathon-assumptions to config-driven registries: (1) loadGateStore (marathon/dmz
+hardcoded switch -> per-game store registry), (2) grounding FACET_TABLE_MAP fixed table
++ verified=true -> per-game GAME_FACET_GROUNDING override (already designed for the
+attributed model). Then games 3/4/5 = supply config + run the checklist. Plus: guard
+gatherMirandaData so no empty-stub is needed per game.
+
+DEFERRED BUILD - MIRANDA-Wardogs evergreen grounding (designed, moat-critical): ground
+MIRANDA-Wardogs guides in community-ATTRIBUTED data (wardogs_ttk 450 + wardogs_ballistics
+3600 rows, verified=false/confidence_tier='attributed', sourced to Swoleguy). DOCTRINE
+DECIDED: attributed data is acceptable for MIRANDA guides IF they carry the "community-
+attributed, not owner-verified" caveat (matches the live tier list). Design: per-game
+grounding override (Marathon stays byte-identical, verified=true) + attributed bar
+(confidence_tier='attributed' AND superseded_by IS NULL) + STRUCTURAL caveat enforcement
+(data-level feed_items.verified_source + auto-appended render caveat + TierIcon badge -
+NOT prose-dependent). This build comes after the agnostic onboarding machinery (it IS
+the grounding-registry generalization, applied).
+
+---
+
 ## 2026-09-17 - Phase 1 PROVEN: MIRANDA solo-path alive + digest delivers end-to-end
 
 The 2026-09-17 19:00 UTC cron (NON-patch day) confirmed the two remaining Phase 1
