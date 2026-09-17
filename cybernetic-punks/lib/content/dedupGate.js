@@ -51,6 +51,29 @@ export async function loadSurvivorCorpus(supabase, gameSlug) {
     if (data.length < 1000) break;
     from += 1000;
   }
+  // ALSO include HELD-for-review drafts (2026-09-17): a new draft must dedup against drafts
+  // already queued, not only against published survivors -- otherwise two held drafts on the
+  // same topic coexist until the human catches it. EXTEND-ONLY: the published rows above are
+  // unchanged; held rows (is_published=false, gate_status='clear', not rejected) are ADDED.
+  // Game-scoped (.eq('game_slug', gameSlug)) like the published read -> every game inherits it.
+  // SELF-COLLISION SAFE: the corpus loads ONCE per run BEFORE any editor generates/inserts, so
+  // the current in-generation draft is not in it (a prior-run held draft on the same topic IS --
+  // exactly the intended catch); same-run siblings are handled separately via sessionHeadlines.
+  var heldFrom = 0;
+  for (;;) {
+    var heldRes = await supabase
+      .from('feed_items')
+      .select('headline, slug, editor')
+      .eq('game_slug', gameSlug)
+      .eq('is_published', false)
+      .eq('gate_status', 'clear')
+      .or('rejected.is.null,rejected.eq.false')
+      .range(heldFrom, heldFrom + 999);
+    if (heldRes.error || !heldRes.data) break;
+    for (var h = 0; h < heldRes.data.length; h++) corpus.push(heldRes.data[h]);
+    if (heldRes.data.length < 1000) break;
+    heldFrom += 1000;
+  }
   var idf = buildIdfMap(corpus.map(function (r) { return r.headline || ''; }));
   // Layer 1b: load THIS game's entities (all types, config-driven per game) and precompute the
   // (entity, overview) index over the SAME live survivors, so a new entity overview is caught

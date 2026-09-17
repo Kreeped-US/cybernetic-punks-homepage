@@ -78,6 +78,20 @@ const corpusRows = [];
     .range(from, from + 999);
   if (!data || !data.length) break; corpusRows.push(...data); if (data.length < 1000) break; from += 1000;
 } }
+// ALSO count HELD-for-review drafts as coverage (2026-09-17): a held draft
+// (is_published=false, gate_status='clear', not rejected) already owns its entity's topic
+// in the queue, so re-seeding it would mint a duplicate the human has to catch at approval.
+// EXTEND-ONLY: the published rows above are unchanged; held rows are ADDED. Game-scoped
+// (.eq('game_slug', GAME)) like the published read -> every game inherits it. gate_status
+// distinguishes a real held-for-review draft from a corroboration hold ('held'); rejected
+// is null OR false (never a declined draft).
+{ let from = 0; for (;;) {
+  const { data } = await sb.from('feed_items').select('headline')
+    .eq('game_slug', GAME).eq('is_published', false).eq('gate_status', 'clear')
+    .or('rejected.is.null,rejected.eq.false')
+    .range(from, from + 999);
+  if (!data || !data.length) break; corpusRows.push(...data); if (data.length < 1000) break; from += 1000;
+} }
 const heads = corpusRows.map(r => ' ' + String(r.headline || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ');
 function covered(name) {
   const n = ' ' + String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
