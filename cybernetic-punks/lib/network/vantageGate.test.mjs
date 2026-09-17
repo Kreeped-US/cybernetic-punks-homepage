@@ -77,6 +77,19 @@ test('tier3: dates/years/labels are NOT flagged', () => {
 test('tier3: small bare numbers (scores, counts <4 digits) are NOT stat-shaped -> NOT flagged', () => {
   assert.equal(detectUnverifiedStats('He went 3 and 0 in his last matches.', '').length, 0);
 });
+test('tier3: a numeric ID inside a bare URL (tweet status) is NOT flagged', () => {
+  const body = 'Source: Marathon Dev Team - https://x.com/MarathonDevTeam/status/2100253598609535344';
+  const flags = detectUnverifiedStats(body, '');
+  assert.equal(flags.length, 0, 'the 19-digit tweet ID in the URL is excluded, not a stat');
+});
+test('tier3: a real stat ADJACENT to a URL still flags; the URL number does NOT (surgical)', () => {
+  const body = 'Averaging 50,000 players (source: https://x.com/foo/status/123456789).';
+  const flags = detectUnverifiedStats(body, '');
+  const tokens = flags.map(f => f.token);
+  assert.ok(tokens.some(t => t.includes('50,000')), '50,000 still flags');
+  assert.ok(!tokens.some(t => t.includes('123456789')), 'the URL path number does NOT flag');
+  assert.equal(flags.length, 1, 'exactly one flag: the real stat, not the URL number');
+});
 
 // ── FULL GATE: clean attributed piece passes; a poisoned piece flags across tiers ──
 const CLEAN_ROW = {

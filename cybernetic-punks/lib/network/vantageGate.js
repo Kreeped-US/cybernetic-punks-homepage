@@ -180,6 +180,14 @@ var LABEL_RE = /(season|phase|chapter|act|tier|week|day|version|patch|update|lev
 // so ANY stat-shaped number in the prose survives. Returns [{ token, context }].
 function scanStatShaped(body, srcKeys) {
   var text = stripInline(body);
+  // FALSE-POSITIVE FIX (2026-09-17): strip BARE URL spans too. stripInline only unwraps
+  // markdown [text](url) links; a BARE "https://x.com/.../status/2100253598609535344" in
+  // the prose (e.g. a "Source: <url>" line) survived it, and the long numeric URL path
+  // segment (a tweet ID) hit the 4+-digit rule as a phantom stat. A number inside a URL is
+  // never a statistic. This removes http(s):// spans (up to the next whitespace) only, so a
+  // real stat ADJACENT to a URL (e.g. "50,000 players (source: https://.../123)") is
+  // untouched -- only the URL token itself is dropped. Detector-only; applies to all editors.
+  text = text.replace(/https?:\/\/\S+/gi, ' ');
   var out = [];
   var m;
   STAT_RE.lastIndex = 0;
