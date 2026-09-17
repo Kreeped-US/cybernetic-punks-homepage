@@ -94,19 +94,45 @@ function keywordFor(entity) {
   return (ktRows || []).find(r => r.entity_slug && slugify(r.entity_slug) === es) || null;
 }
 
+// PER-GAME SEED-SOURCE OVERRIDES (2026-09-17). Mirrors the grounding registry: a game whose
+// entity source differs from the shared FACET_TABLE_MAP (verified=true substance) supplies its
+// own candidate list here. Wardogs weapons live in wardogs_ttk under a community-ATTRIBUTED model
+// (verified=false, so the default verified=true filter would seed ZERO); seed from the attributed
+// wardogs_ttk weapon_names instead -- exactly the weapons that have a grounding block. Each entry
+// returns { byEnt: name->rows, substanceOf: rows->count } so the shared gap logic below is
+// unchanged. A game+facet with NO override (Marathon, all others) uses the default path, BYTE-
+// IDENTICAL.
+const SEED_SOURCE_OVERRIDES = {
+  wardogs: {
+    weapon: async () => {
+      const rows = await pageAll('wardogs_ttk', 'weapon_name, confidence_tier, superseded_by', true);
+      const attributed = rows.filter(r => r.confidence_tier === 'attributed' && r.superseded_by == null);
+      const byEnt = {};
+      for (const r of attributed) { const k = r.weapon_name; if (k == null) continue; (byEnt[k] = byEnt[k] || []).push(r); }
+      return { byEnt, substanceOf: (rs) => rs.length }; // attributed rows are the substance
+    },
+  },
+};
+
 // Build the gap list.
 const gaps = [];
 for (const facet of FACETS) {
-  const { table, matchCol, gameScoped } = FACET_TABLE_MAP[facet];
-  const rows = await pageAll(table, '*', gameScoped);
-  const hasVerified = rows[0] && ('verified' in rows[0]);
-  const byEnt = {};
-  for (const r of rows) { const k = r[matchCol]; if (k == null) continue; (byEnt[k] = byEnt[k] || []).push(r); }
+  const override = SEED_SOURCE_OVERRIDES[GAME] && SEED_SOURCE_OVERRIDES[GAME][facet];
+  let byEnt, substanceOf;
+  if (override) {
+    ({ byEnt, substanceOf } = await override());
+  } else {
+    const { table, matchCol, gameScoped } = FACET_TABLE_MAP[facet];
+    const rows = await pageAll(table, '*', gameScoped);
+    const hasVerified = rows[0] && ('verified' in rows[0]);
+    byEnt = {};
+    for (const r of rows) { const k = r[matchCol]; if (k == null) continue; (byEnt[k] = byEnt[k] || []).push(r); }
+    substanceOf = (rs) => hasVerified ? rs.filter(r => r.verified === true).length : rs.length;
+  }
   const thr = DEFAULT_SUBSTANCE_THRESHOLDS[facet];
   for (const e of Object.keys(byEnt)) {
     if (covered(e)) continue;
-    const rs = byEnt[e];
-    const substance = hasVerified ? rs.filter(r => r.verified === true).length : rs.length;
+    const substance = substanceOf(byEnt[e]);
     if (substance < thr) continue;
     const kt = keywordFor(e);
     gaps.push({ facet, entity: e, substance_count: substance, keyword_ref: kt ? kt.id : null, target_phrase: kt ? kt.keyword : null });

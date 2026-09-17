@@ -86,13 +86,68 @@ function renderRow(row, cfg) {
 // (header + populated fields + hard claim boundary), or null if no verified row exists.
 // verified=true ONLY. Fail-safe: any error -> null (the caller then omits the block and the
 // editor is told, elsewhere, to stay qualitative -- never a silent ungrounded generation).
-// Per-game grounding OVERRIDE registry (2026-09-17). EMPTY today: a game whose verified-stat
-// grounding differs from the shared FACET_TABLE_MAP/verified=true path (e.g. Wardogs, whose
-// data lives in wardogs_ttk/wardogs_ballistics under an attributed-not-verified model) registers
-// a { [gameSlug]: { [facet]: (supabase, entity) => Promise<string|null> } } builder here. The
-// builders themselves are DEFERRED (part of the MIRANDA-Wardogs grounding build). While this is
-// empty, the override never fires -> every game hits the existing path BYTE-IDENTICAL.
-const GAME_FACET_GROUNDING = {};
+// Per-game grounding OVERRIDE registry (2026-09-17). Shape: { [gameSlug]: { [facet]:
+// (supabase, entity) => Promise<string|null> } }. A game whose verified-stat grounding differs
+// from the shared FACET_TABLE_MAP/verified=true path registers a builder that OWNS its whole
+// block. Wardogs weapon is the first entry (community-attributed model, wardogs_ttk/ballistics).
+// A game+facet with NO entry (Marathon, all others) falls through to the shared path BYTE-
+// IDENTICAL -- the override only fires for a registered game+facet.
+// Wardogs weapon grounding builder (Brief A). Wardogs weapon stats live in wardogs_ttk +
+// wardogs_ballistics under a COMMUNITY-ATTRIBUTED model (verified=false, confidence_tier=
+// 'attributed', sourced to a named community tester) -- NOT the shared weapon_stats/verified=true
+// path. This override OWNS the whole block. Attributed bar: confidence_tier='attributed' AND
+// superseded_by IS NULL. Selection mirrors the live tier list's balanced profile (FMJ across
+// armor tiers), kept compact. The CLAIM BOUNDARY MANDATES in-prose attribution (caveat layer 1;
+// the data + render guarantee layers are Brief B). Returns null when no attributed rows exist.
+async function fetchWardogsWeaponBlock(supabase, entity) {
+  try {
+    var GAME = 'wardogs';
+    var results = await Promise.all([
+      supabase.from('wardogs_ttk').select('ammo_type, armor_tier, ttk_ms, verified_source')
+        .eq('game_slug', GAME).ilike('weapon_name', entity).eq('confidence_tier', 'attributed').is('superseded_by', null),
+      supabase.from('wardogs_ballistics').select('ammo_type, armor_tier, body_part, damage, shots_to_kill')
+        .eq('game_slug', GAME).ilike('weapon_name', entity).eq('confidence_tier', 'attributed').is('superseded_by', null),
+      supabase.from('weapon_stats').select('name, weapon_type, category, fire_rate, verified_source')
+        .eq('game_slug', GAME).ilike('name', entity).maybeSingle(),
+    ]);
+    var ttk = (results[0] && results[0].data) || [];
+    var bal = (results[1] && results[1].data) || [];
+    if (!ttk.length && !bal.length) return null;
+
+    var id = (results[2] && results[2].data) || {};
+    var displayName = id.name || entity;
+    var src = (ttk[0] && ttk[0].verified_source) || id.verified_source || 'community testing (attributed, not owner-verified)';
+
+    var lines = [];
+    if (id.weapon_type || id.category) lines.push('  Type: ' + (id.weapon_type || id.category));
+    if (id.fire_rate != null) lines.push('  Fire Rate (RPM): ' + id.fire_rate);
+    // FMJ TTK across armor tiers -- the balanced profile the tier list ranks on.
+    ttk.filter(function (r) { return r.ammo_type === 'FMJ'; })
+      .sort(function (a, b) { return (a.armor_tier || 0) - (b.armor_tier || 0); })
+      .forEach(function (r) { if (r.ttk_ms != null) lines.push('  TTK (FMJ, armor tier ' + r.armor_tier + '): ' + r.ttk_ms + 'ms'); });
+    // FMJ chest + head shots-to-kill at armor 0 (a representative body/head shot).
+    var fmj0 = bal.filter(function (r) { return r.ammo_type === 'FMJ' && (r.armor_tier === 0 || r.armor_tier == null); });
+    var chest = fmj0.find(function (r) { return r.body_part === 'CHEST'; });
+    var head = fmj0.find(function (r) { return r.body_part === 'HEAD'; });
+    if (chest && chest.damage != null) lines.push('  Chest Damage (FMJ, unarmored): ' + chest.damage);
+    if (chest && chest.shots_to_kill != null) lines.push('  Chest Shots-to-Kill (FMJ, unarmored): ' + chest.shots_to_kill);
+    if (head && head.shots_to_kill != null) lines.push('  Head Shots-to-Kill (FMJ, unarmored): ' + head.shots_to_kill);
+    if (!lines.length) return null;
+
+    return '--- COMMUNITY-ATTRIBUTED STATS FOR YOUR ASSIGNED WEAPON (' + displayName + ') ---\n' +
+      'SOURCE: ' + src + '\n' +
+      lines.join('\n') + '\n' +
+      'CLAIM BOUNDARY (hard): these numbers are COMMUNITY-TESTED and ATTRIBUTED to the source above -- ' +
+      'NOT Bulkhead-official and NOT owner-verified. You MUST present them as attributed (e.g. "community ' +
+      'testing measured...") and may NOT state them as confirmed or official fact. State ONLY the numbers ' +
+      'listed above; do NOT introduce, estimate, or infer any value not listed. A short list means a ' +
+      'shorter, honest guide -- never pad with invented numbers or mechanics.\n---';
+  } catch (e) {
+    return null;
+  }
+}
+
+const GAME_FACET_GROUNDING = { wardogs: { weapon: fetchWardogsWeaponBlock } };
 
 export async function fetchVerifiedStatBlock(supabase, gameSlug, entity, facet) {
   // Per-game override FIRST (empty registry today -> never fires). A registered builder owns the
