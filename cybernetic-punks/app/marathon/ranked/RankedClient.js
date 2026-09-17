@@ -576,7 +576,7 @@ export default function RankedClient({ data }) {
                   </div>
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                  Ranked is paused Oct 6 - Dec 7 for the Nightfall Refresh rework. In its place, Sponsored Queues rotate every weekend and Cryo Archive runs weekly (starting Oct 15), all bridging into the Symbiosis update on Dec 8.
+                  Ranked is paused Oct 6 - Dec 7 for the Nightfall Refresh rework. In its place, Sponsored Queues rotate every weekend and Cryo Archive runs weekly (starting Oct 15), all bridging into the Symbiosis update on Dec 8. See the <Link href="/marathon/nightfall" style={{ color: '#00d4ff', textDecoration: 'none', fontWeight: 700 }}>full Nightfall Refresh schedule</Link>.
                 </div>
               </div>
             </div>

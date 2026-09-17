@@ -235,6 +235,7 @@ export default function MarathonPveHub() {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
             <Link href="/marathon/intel" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: ORANGE, color: '#0b0d10', fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, padding: '12px 20px', borderRadius: 4, textDecoration: 'none' }}>Follow the news for updates &rarr;</Link>
             <Link href="/marathon/modes/vault-breaker" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'rgba(255,255,255,0.8)', border: '1px solid ' + BORDER, fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, padding: '11px 18px', borderRadius: 4, textDecoration: 'none' }}>Marathon&rsquo;s first PvE test: Vault Breaker &rarr;</Link>
+            <Link href="/marathon/nightfall" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'rgba(255,255,255,0.8)', border: '1px solid ' + BORDER, fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, padding: '11px 18px', borderRadius: 4, textDecoration: 'none' }}>What to play until Dec 8: Nightfall Refresh &rarr;</Link>
           </div>
         </div>
       </section>
