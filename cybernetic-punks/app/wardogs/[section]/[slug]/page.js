@@ -20,6 +20,7 @@ import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/ros
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/articleContent';
 import ViewTracker from '@/components/ViewTracker';
+import { TierIcon } from '@/components/network/confidenceTiers';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,7 @@ async function fetchArticle(slug) {
   try {
     var { data } = await supabase
       .from('feed_items')
-      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, game_slug, thumbnail')
+      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, verified_source, game_slug, thumbnail')
       .eq('slug', slug)
       .eq('game_slug', WARDOGS_GAME_SLUG)
       .eq('is_published', true)
@@ -187,6 +188,20 @@ export default async function WardogsArticlePage({ params }) {
       {article.source ? (
         <div style={{ marginTop: 28, fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
           Source: {article.source_url ? <a href={article.source_url} target="_blank" rel="noopener noreferrer" style={{ color: '#e0a13a' }}>{article.source}</a> : <span>{article.source}</span>}
+        </div>
+      ) : null}
+
+      {/* ATTRIBUTED-DATA CAVEAT (caveat layer 3 -- the structural GUARANTEE, Brief B).
+          Driven by the verified_source COLUMN, not the prose: a MIRANDA-Wardogs guide grounded
+          in community-attributed weapon data (verified_source set in the cron) ALWAYS shows this
+          caveat, even if the body never mentions attribution. Wording matches the tier list's
+          established phrasing; reuses the shared TierIcon 'attributed' tier. Gated on editor
+          MIRANDA so wardogs NEXUS news (which may carry a news verified_source) does NOT get the
+          "not Bulkhead-official" caveat. */}
+      {article.editor === 'MIRANDA' && article.verified_source ? (
+        <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, background: '#121519', border: '1px solid #1d2026', borderLeft: '3px solid #e0a13a', borderRadius: '0 3px 3px 0', padding: '9px 13px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: 720 }}>
+          <TierIcon tier="attributed" size={13} title="Attributed / community-tested" />
+          <span>Community-tested, attributed to {String(article.verified_source).split(',')[0]}. Not Bulkhead-official / not owner-verified.</span>
         </div>
       ) : null}
     </main>

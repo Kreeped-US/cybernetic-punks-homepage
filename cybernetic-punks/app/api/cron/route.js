@@ -682,6 +682,25 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       insertData.verified_source_url = null;
     }
 
+    // MIRANDA-WARDOGS ATTRIBUTED GROUNDING -> verified_source (caveat layer 2, Brief B).
+    // A Wardogs weapon guide is grounded in COMMUNITY-ATTRIBUTED data (wardogs_ttk/ballistics),
+    // which is NOT a cited-block, so resolveCitedBlocks above left verified_source null. Record
+    // the attribution on the row from the grounding block's own SOURCE line, so the render layer
+    // can auto-append the "attributed, not owner-verified" caveat REGARDLESS of the prose (the
+    // structural guarantee). TIGHTLY SCOPED: only MIRANDA + wardogs + the wardogs attributed
+    // grounding block was injected (directive._verifiedBlock carries the COMMUNITY-ATTRIBUTED
+    // header). Wardogs NEXUS news (no attributed grounding) and Marathon (different game) never
+    // enter this branch -- their resolveCitedBlocks verified_source is unchanged.
+    if (editorName === 'MIRANDA' && PRODUCING_GAME_SLUG === 'wardogs'
+        && directive && typeof directive._verifiedBlock === 'string'
+        && directive._verifiedBlock.indexOf('COMMUNITY-ATTRIBUTED STATS') !== -1) {
+      var wdSrc = directive._verifiedBlock.match(/\nSOURCE: ([^\n]+)\n/);
+      if (wdSrc) {
+        insertData.verified_source = wdSrc[1].trim();
+        console.log('[CRON][provenance] MIRANDA/wardogs attributed grounding -> verified_source set from grounding block (caveat layer 2)');
+      }
+    }
+
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
       if (!regradeContext.shouldRegrade) {
         console.log('[CRON] NEXUS tier regrade SKIPPED (last regrade: ' +
