@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - A11 URL-number false positive fixed (last detector false-positive class closed)
+
+FIX (cc58d77): scanStatShaped (lib/network/vantageGate.js) flagged numbers embedded
+in a BARE URL as stat-shaped - a 19-digit tweet status ID in a "Source: https://..."
+line hit the 4+-digit rule as a phantom stat. Root cause: stripInline only unwrapped
+markdown [text](url) links (and its comment falsely claimed URL tweet-IDs were
+handled); a bare https:// URL survived to the scan. Fix: strip bare URL spans
+(text.replace(/https?:\/\/\S+/gi, ' ')) after stripInline. One-liner + corrected
+comment + 2 regression tests. Proven surgical via the real gate: tweet URL -> no
+statHit; "50,000 players" -> still flags; "50,000 players (source: https://.../123)"
+-> flags 50,000 but NOT the URL 123. 17/17 tests pass. Detector-only (all editors);
+no A11-scoping/panel/route change.
+
+A11 DETECTOR - all known false-positive classes now CLOSED:
+- meters-as-millions ("48m") + weapon-model-numbers ("Misriah 2442") - fixed 1f3c93a
+  (Sept 17).
+- URL/tweet-IDs - fixed cc58d77 (this).
+The A11 stat detector now flags genuine laundered stats (comma-grouped, %/metric-
+suffixed, 4+-digit standalone) and no longer trips on measurements, proper-noun model
+numbers, or URL path segments. If a future A11 block looks like a false positive,
+check whether it is a NEW class before assuming these; these three are handled.
+
+Also closed today (A11 arc, Sept 17): A11 had TWO enforcement points (server route +
+client panel pre-check); both now scoped to storeless/VANTAGE (1f3c93a server,
+0a337c9 client), so store-backed NEXUS/MIRANDA content is exempt end-to-end.
+
+---
+
 ## 2026-09-17 - Nightfall Refresh schedule hub live (self-managing dated page)
 
 SHIPPED (26d9680): /marathon/nightfall - the Marathon Nightfall Refresh schedule hub.
