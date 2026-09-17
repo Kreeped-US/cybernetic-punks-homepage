@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Distribution: X presence started (scheduler, not a build - deliberate)
+
+DECISION: start minor X distribution NOW via a scheduler tool (Buffer/Typefully),
+NOT by building an integrated auto-poster. First post scheduled. This is the first
+real forward motion on distribution - the lever all three inputs (own GSC data, Fable,
+external audit) independently named as THE growth constraint (product good, ~140
+clicks/quarter, 7 X followers, nobody sees it).
+
+WHY SCHEDULER NOT BUILD (so this isn't re-opened): a read-first found the existing "X
+backend" is INGESTION-ONLY (lib/gather/x.js, app-only Bearer = read scope, "never
+posts") - there is NO posting code and NO tweet.write credentials. Posting would need
+a new OAuth user-context app + prepaid credits + a poster build + dedup + cron. Chose
+scheduler-first because: (1) operator's own principle - "start small, don't over-invest
+while the product is still evolving" (root page / site face not settled); (2) it keeps
+a human in the loop while the X voice is still being learned (a feature now, not a bug);
+(3) the channel is UNVALIDATED (7 followers) - validate cheaply before sinking
+engineering into it. GRADUATION PATH: build the integrated auto-poster ONLY IF a month
+of consistent scheduled posting shows the channel moves the numbers. Build after
+validation, not before.
+
+X COST REALITY (for when/if we build): official X API is credit-based, no free posting
+tier for new apps. Text-only post = ~$0.015; post WITH a link = ~$0.20 (13x). So the
+format rule below is both cheaper AND better-engagement.
+
+POSTING RULES (the operating doctrine):
+- ~1 post/week currently (operator's sustainable floor - sustainable beats
+  aspirational; dropping distribution is the recurring failure pattern). Ceiling ~3-4
+  in a big-event week. Event-triggered (patch / article publish / real meta shift /
+  a genuine take), NEVER scheduled filler.
+- TEXT-ONLY in the body. NO link in the post (cost + reads-as-ad + anti-AI audience).
+  Link goes in a REPLY only if someone asks. Minimal/no hashtags.
+- Human-voiced, opinion-flavored, verified-not-hype. Reads as an intel source, not a
+  content marketer.
+- REPLY to any engagement, every time - the conversion happens in the conversation,
+  not the broadcast (per audit + Fable). This matters more than post frequency.
+- Expectation: no fireworks at 7 followers - the point now is habit + voice + channel
+  validation, not instant growth.
+
+PARKED (the bigger distribution question, not this): the full Fable + external-audit
+distribution strategy (weekly digest cadence, creator play, public-correction program,
+hub pages) is recorded in areas/cnp-strategy-reviews - engage when the product's face
+settles and X is validated. Both reviews received, NOT fully adopted.
+
+---
+
 ## 2026-09-17 - Editable-approval feature complete (drafts panel, 3 briefs)
 
 WHY: the drafts approval panel (components/VantageDraftsPanel.js) caused 4 workflow
