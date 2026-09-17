@@ -82,6 +82,64 @@ function DraftPreview({ draft }) {
   );
 }
 
+// Honest per-draft GATE PROVENANCE strip. PURE-DERIVED from the row (no fetch; runA11Gate
+// runs ONLY for storeless rows, exactly as the old badge did -- store-backed rows are n/a and
+// never re-run a gate). It shows what a queued draft GENUINELY passed and is deliberately built
+// so corroboration CANNOT render as a pass:
+//  - GREEN checks are ONLY substance + dedup (enforcing gates the draft cleared BY EXISTING --
+//    a failure returns success:false and no row is inserted) and, for MIRANDA, store-grounding.
+//  - CORROBORATION is LOG-ONLY on Marathon (runs, logs to console, CANNOT hold; gate_status is
+//    'clear' by mode and gate_findings is null). It is a SEPARATE amber segment worded
+//    "measured (log-only)" -- structurally never in the green-check set, never the word "passed".
+//  - A11 is scoped to storeless/VANTAGE: store-backed -> gray "n/a (store-backed)"; storeless ->
+//    the enforced-on-approve verdict (reusing runA11Gate, as the prior badge did).
+function GateStrip({ draft }) {
+  var storeless = isDiscourseArticle(draft) || draft.editor === 'VANTAGE';
+  var isMarathon = draft.game_slug === 'marathon';
+  var GREEN = '#00ff88', AMBER = '#e0a030', GRAY = 'rgba(255,255,255,0.4)', RED = '#ff4444';
+
+  // GREEN segments = enforcing, passed-by-construction (never corroboration).
+  var segs = [
+    { t: 'substance ✓', c: GREEN },
+    { t: 'dedup ✓', c: GREEN },
+  ];
+  if (draft.editor === 'MIRANDA') segs.push({ t: 'store-grounded ✓', c: GREEN });
+  // CORROBORATION -- log-only on Marathon. Amber, never green, never "passed".
+  if (isMarathon) segs.push({ t: 'corroboration: measured (log-only)', c: AMBER });
+  // A11 -- only run the gate for storeless rows (store-backed = n/a, no re-run).
+  if (storeless) {
+    var v = runA11Gate(draft);
+    segs.push(
+      v.hardBlock ? { t: 'A11: BLOCK ' + v.hardBlockCheck + ' (enforced on approve)', c: RED }
+      : v.reviewHolds.length > 0 ? { t: 'A11: HOLD ' + v.reviewHolds.join(', ') + ' (enforced on approve)', c: AMBER }
+      : { t: 'A11: PASS (enforced on approve)', c: GREEN }
+    );
+  } else {
+    segs.push({ t: 'A11: n/a (store-backed)', c: GRAY });
+  }
+
+  return (
+    <div style={{ margin: '6px 0 0' }}>
+      <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: 1, lineHeight: 1.7 }}>
+        <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>GATES</span>
+        {segs.map(function (s, i) {
+          return (
+            <span key={i}>
+              <span style={{ color: 'rgba(255,255,255,0.2)' }}> {'·'} </span>
+              <span style={{ color: s.c }}>{s.t}</span>
+            </span>
+          );
+        })}
+      </div>
+      {isMarathon && (
+        <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: 0.5, color: 'rgba(255,255,255,0.3)', marginTop: 3, fontStyle: 'italic' }}>
+          You are the corroboration checkpoint here - corroboration is measured, not enforced. Read the body.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function VantageDraftsPanel({ password }) {
   var [drafts, setDrafts] = useState([]);
   var [loading, setLoading] = useState(true);
@@ -327,14 +385,8 @@ export default function VantageDraftsPanel({ password }) {
             var isOpen = !!open[d.id];
             var isVantage = d.editor === 'VANTAGE';
             var accent = isVantage ? '#c8d4e0' : 'rgba(255,255,255,0.35)';
-            // A11 verdict (row-only, same gate the approve route enforces): PASS / HARD-BLOCK
-            // (stat-shaped sentence, never publishes) / REVIEW-HOLD (overridable). Surfaced so
-            // the human sees WHY before approving. Only meaningful for VANTAGE discourse.
-            var gate = isVantage ? runA11Gate(d) : null;
-            var gateBadge = !gate ? null
-              : gate.hardBlock ? { label: 'A11 BLOCK: ' + gate.hardBlockCheck, color: '#ff4444' }
-              : gate.reviewHolds.length > 0 ? { label: 'A11 HOLD: ' + gate.reviewHolds.join(', '), color: '#ff8800' }
-              : { label: 'A11 PASS', color: '#00ff88' };
+            // A11 provenance moved into the all-editor GateStrip below (rendered after the
+            // headline). The strip reuses runA11Gate ONLY for storeless rows, as this badge did.
             return (
               <div key={d.id} style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderLeft: '2px solid ' + accent, borderRadius: 4, padding: '10px 12px' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
@@ -342,11 +394,11 @@ export default function VantageDraftsPanel({ password }) {
                   {d.directive_type && <span style={{ ...chip, color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.12)' }}>{d.directive_type}</span>}
                   <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>{d.game_slug}</span>
                   <span style={{ ...chip, color: '#ff8800', border: '1px solid rgba(255,136,0,0.4)' }}>DRAFT</span>
-                  {gateBadge && <span style={{ ...chip, color: gateBadge.color, border: '1px solid ' + gateBadge.color + '66' }}>{gateBadge.label}</span>}
                   {d.noindex && <span style={{ ...chip, color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>noindex</span>}
                   <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto' }}>{when(d.created_at)}</span>
                 </div>
                 <div style={{ fontFamily: heading, fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.35, marginBottom: 4 }}>{d.headline}</div>
+                <GateStrip draft={d} />
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   {d.creator_info && d.creator_info.name && <span style={{ fontFamily: mono, fontSize: 9, color: accent }}>creator: {d.creator_info.name}</span>}
                   {d.source_url && <a href={d.source_url} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
