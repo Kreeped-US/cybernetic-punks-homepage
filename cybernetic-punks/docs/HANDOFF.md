@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Nightfall Refresh schedule hub live (self-managing dated page)
+
+SHIPPED (26d9680): /marathon/nightfall - the Marathon Nightfall Refresh schedule hub.
+The exact 9-week calendar (Oct 6 - Dec 7) transcribed VERBATIM from the
+@MarathonDevTeam calendar image (x.com/MarathonDevTeam/status/2100253598609535344),
+operator-verified against the source image. Static consts (no DB - game_events/
+game_modes are a rotted path). Event JSON-LD with real dates, NO Product @type
+(today's schema-fix lesson applied), 2-level breadcrumb (no 404 crumb), sitemap 0.9
+daily, indexable, canonical set. Cross-linked from /marathon/ranked, /marathon/pve,
+/marathon/modes/vault-breaker.
+
+SELF-MANAGING DATE-GATED PATTERN (reusable - the durable thing here): the page
+auto-flips between three server-computed states with NO client ticker (no hydration
+mismatch), via Date.now() vs window ISO bounds:
+- pre (before Oct 6): countdown/preview - RENDERS TODAY.
+- active (Oct 6 - Dec 7): live "this week" calendar, current week highlighted
+  server-side (currentWeekNum pinned to real week ranges).
+- post (after Dec 7): auto-flips to a historical record + "Symbiosis is now live ->
+  /marathon/pve" handoff. Same URL, NEVER a redirect, NEVER deleted - retains
+  authority, no dead URL. Event JSON-LD keeps its real past dates.
+This is the transition-safe pattern for any DATED page: evolve-in-place, date-gated,
+never a redirect/delete. Reuse it (copy from app/marathon/nightfall/page.js) for
+future dated hubs (Symbiosis events, seasonal content). Placement rationale: built
+standalone (NOT folded into /marathon/pve) because their lifecycles are INVERSE - pve
+is pre-launch->live Dec 8, nightfall is live-now->obsolete Dec 8.
+
+CONFIRMED SCHEDULE FACTS (operator-verified vs the calendar image): Ranked UNAVAILABLE
+the entire window; free NuCaloric Reward Pass; Sponsored Maps rotate Perimeter/Marsh/
+Night Marsh weekly; Cryo Archive from Week 2 (starts Thu Oct 15); Vault Breaker wks
+3-5; CARRI Phase I (wks 2-3) -> II (wks 4-7) -> III (wks 8-9); Firestorm Refresh wks
+6-7; Sponsored Survival wks 6-9 (Perimeter/Marsh/Night Marsh/Outpost); Enhanced
+Sponsored Kits wks 4-9; Login Rewards 2-9 (starts at 2, Week 7 has none); Outpost
+Locked wk 1. Window Oct 6 - Dec 7, Symbiosis Dec 8.
+
+OPEN FOLLOW-UP (operator, minor): add a /marathon/nightfall cross-link into the
+ranked-paused article body (feed_items row marathon-ranked-paused-nightfall-refresh-
+oct-6-dec-7-what-to-play) via the drafts edit panel. NOTE: that article is PUBLISHED,
+not held - confirm the edit panel handles published rows, or the edit may need a
+different path (the edit endpoint guards .eq('is_published', false), so a published
+row may NOT be editable via the panel - if so, this cross-link needs a different
+mechanism or stays unlinked-from-article).
+
+---
+
 ## 2026-09-17 - Distribution: X presence started (scheduler, not a build - deliberate)
 
 DECISION: start minor X distribution NOW via a scheduler tool (Buffer/Typefully),
