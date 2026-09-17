@@ -11,6 +11,7 @@ import { parseBody } from '@/lib/articleBody';
 import { resolveBuildToolCta } from '@/lib/buildToolCta';
 import ToolCTAClient from '@/components/ToolCTAClient';
 import { runA11Gate } from '@/lib/network/vantageGate';
+import { isDiscourseArticle } from '@/lib/discourse';
 
 var mono = 'Share Tech Mono, monospace';
 var heading = 'Orbitron, monospace';
@@ -139,9 +140,16 @@ export default function VantageDraftsPanel({ password }) {
   async function approve(d) {
     if (busy) return;
     // A11 gate (client-side, for UX) -- the approve route re-runs it authoritatively.
-    // A hard-block never publishes (refuse here, do not hit the server). A review-hold is
-    // overridable: the human confirms, and we send overrideHolds:true so the route publishes.
-    var verdict = runA11Gate(d);
+    // SCOPED to storeless output to MATCH the server route exactly (approve/route.js:104:
+    // storelessOutput = isDiscourseArticle(d) || editor === 'VANTAGE'). A11's stat checks
+    // are VANTAGE storeless-honesty checks; store-backed editors (NEXUS/MIRANDA) are exempt
+    // server-side, so the client must not block them BEFORE the request is sent. For
+    // non-storeless drafts we skip the A11 pre-check entirely (empty verdict) and let the
+    // request proceed to the correctly-scoped server route. A hard-block never publishes
+    // (refuse here, do not hit the server). A review-hold is overridable: the human
+    // confirms, and we send overrideHolds:true so the route publishes.
+    var storelessOutput = isDiscourseArticle(d) || d.editor === 'VANTAGE';
+    var verdict = storelessOutput ? runA11Gate(d) : { hardBlock: false, hardBlockCheck: null, reviewHolds: [] };
     if (verdict.hardBlock) {
       if (typeof window !== 'undefined') window.alert('A11 HARD BLOCK (' + verdict.hardBlockCheck + ').\n\nVANTAGE is storeless; a stat-shaped number in her voice is disqualifying. Remove the figure(s) and regenerate. This cannot be published.');
       setNote('Blocked (A11 hard-block: ' + verdict.hardBlockCheck + '): ' + d.headline);
