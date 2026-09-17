@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-09-17 - Editable-approval feature complete (drafts panel, 3 briefs)
+
+WHY: the drafts approval panel (components/VantageDraftsPanel.js) caused 4 workflow
+pains across Sept 16-17: (1) could not fix a 90%-right draft (only approve/decline),
+(2) an accidental decline needed read-first + SQL to recover, (3) a CRLF-blob needed
+a SQL round-trip, (4) a wrong source_url needed SQL. A read-first found the panel was
+LESS broken than assumed - inline edit (headline+body, save-to-draft) and a real
+parseBody preview already shipped - so the work was FINISHING the gaps, not building
+fresh.
+
+SHIPPED (3 gated briefs, all live):
+- Brief 1 (b04be00): RESTORE-DECLINED + UNSAVED-EDIT GUARD.
+  * New /api/admin/drafts/restore (POST) - mirrors reject, sets rejected=false,
+    guarded .eq('is_published', false) (can only restore a held draft). Same auth
+    (SHA-256 constant-time + per-IP lockout).
+  * Dedicated declined fetch: /api/admin/drafts?rejected=1 (rejected-scoped, limit
+    500) so the declined view never truncates against the main list's limit-100.
+  * UI: SHOW DECLINED toggle + RESTORE button. NOTE: 31 declined drafts were sitting
+    hidden/restorable - now visible. (Active queue is currently empty, so the main
+    list shows "no drafts" while SHOW DECLINED reveals all 31 - expected.)
+  * UNSAVED-EDIT GUARD: APPROVE is disabled + relabeled "SAVE/CANCEL FIRST" while an
+    edit buffer is open (editingId===d.id), and approve() returns early in that state.
+    Prevents silently publishing pre-edit content over an unsaved edit. NOT a gate
+    hole (gates always matched what publishes) - it was silently dropping the edit.
+- Brief 2 (fd0b264): TAGS + SOURCE_URL EDITING.
+  * tags: endpoint already whitelisted it; added the UI input (comma-string <-> text[]).
+  * source_url: added to the edit whitelist with URL validation (new URL() + http(s)
+    check, rejects junk, allows empty-to-clear) and NO prose ASCII-normalization (a
+    URL must not be prose-normalized). Guarded is_published=false. + UI input.
+  * source_url feeds the attribution-survival check (storeless/VANTAGE) - so a wrong
+    source can now be fixed in-panel instead of via SQL.
+- Brief 3 (b4fe3fb): LIVE EDIT-BUFFER PREVIEW.
+  * While editing, renders parseBody(editBody) live under the form via the existing
+    DraftPreview - the SAME parser the public intel route uses - so formatting/blob/
+    list issues surface AS YOU TYPE, before save. Proven: LF buffer -> 6 clean
+    elements; same content as CRLF -> 2 blobbed, i.e. it visibly catches a CRLF-blob
+    pre-save. (Known acceptable divergence: item-mention cards don't render in preview;
+    paragraph/header/list fidelity is intact - that's what catches blobs.)
+
+NET: the panel now supports approve / edit-any-field(body,headline,tags,source_url)-
+then-approve / decline / restore-declined, with an unsaved-edit guard and a live
+preview. All 4 pains above are now in-UI, no SQL round-trips.
+
+GATE SAFETY (confirmed across all 3): edit saves to the row; approve re-reads by id and
+re-gates against the SAVED (edited) content, so edits are correctly re-gated. The A11
+client+server scoping (from the Sept 17 A11 fix) is untouched. No new gate holes.
+
+OPEN: none for this feature. Standing follow-ups elsewhere: the 31 declined drafts are
+now reviewable (restore any worth recovering); the detector URL-ID false positive
+(VANTAGE); the DMZ Product-schema latent risk (fires when DMZ tables fill ~Oct 23).
+
+---
+
 ## 2026-09-17 - Fixed spurious Product schema on weapon/unique pages (ended a ping-pong)
 
 GSC flagged one invalid structured-data item ("Product needs offers/review/
