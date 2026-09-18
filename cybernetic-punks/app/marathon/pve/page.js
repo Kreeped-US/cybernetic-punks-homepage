@@ -22,7 +22,6 @@
 // PvE pages read as one family.
 
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -257,7 +256,6 @@ export default function MarathonPveHub() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

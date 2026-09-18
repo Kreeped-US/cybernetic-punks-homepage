@@ -26,7 +26,6 @@
 // vault-breaker (the orange PvE/modes family).
 
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -376,7 +375,6 @@ export default function NightfallPage() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

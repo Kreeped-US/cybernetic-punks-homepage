@@ -24,7 +24,6 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import Footer from '@/components/Footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -689,7 +688,6 @@ export default async function GuidesPage({ searchParams }) {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

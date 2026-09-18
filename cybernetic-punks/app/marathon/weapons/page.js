@@ -11,7 +11,6 @@
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 import { Sep } from '@/components/Sep';
 
 export const dynamic = 'force-dynamic';
@@ -185,7 +184,6 @@ export default async function WeaponsIndexPage() {
         </Link>
       </section>
 
-      <Footer />
     </main>
   );
 }

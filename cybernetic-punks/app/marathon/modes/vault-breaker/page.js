@@ -56,7 +56,6 @@
 // facts move, not when a crawler calls.
 
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 import { FACTS_UPDATED } from '@/lib/vaultBreaker';
 
 export const dynamic = 'force-dynamic';
@@ -659,7 +658,6 @@ export default function VaultBreakerPage() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getUserAvatars } from '@/lib/gather/twitch';
-import Footer from '@/components/Footer';
 import { Sep } from '@/components/Sep';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -801,7 +800,6 @@ function EditorLanePage({ config, items }) {
         </div>
       </div>
 
-      <Footer />
     </main>
   );
 }
@@ -1304,7 +1302,6 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
           </div>
         )}
       </div>
-      <Footer />
     </main>
   );
 }

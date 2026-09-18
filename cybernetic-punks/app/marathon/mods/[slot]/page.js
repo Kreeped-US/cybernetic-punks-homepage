@@ -30,7 +30,6 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Footer from '@/components/Footer';
 import {
   MOD_ACCENT,
   SLOT_BLURB,
@@ -268,7 +267,6 @@ export default async function ModSlotPage({ params }) {
         </section>
       </div>
 
-      <Footer />
     </main>
   );
 }

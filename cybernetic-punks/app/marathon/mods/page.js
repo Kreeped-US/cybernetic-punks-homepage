@@ -35,7 +35,6 @@
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 import {
   MOD_ACCENT,
   SLOT_BLURB,
@@ -206,7 +205,6 @@ export default async function ModsIndexPage() {
         )}
       </div>
 
-      <Footer />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',

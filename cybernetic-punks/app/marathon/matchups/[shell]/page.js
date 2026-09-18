@@ -32,7 +32,6 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Footer from '@/components/Footer';
 import {
   MATCHUP_ACCENT,
   MATCHUP_VERIFIED_DATE,
@@ -314,7 +313,6 @@ export default async function ShellMatchupPage({ params }) {
         </section>
       </div>
 
-      <Footer />
     </main>
   );
 }

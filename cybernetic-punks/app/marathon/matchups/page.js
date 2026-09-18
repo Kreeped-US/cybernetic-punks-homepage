@@ -18,7 +18,6 @@
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 import {
   MATCHUP_ACCENT,
   SHELLS,
@@ -156,7 +155,6 @@ export default async function MatchupsIndexPage() {
         </p>
       </div>
 
-      <Footer />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',

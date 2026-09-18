@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Footer from '@/components/Footer';
 import { Sep } from '@/components/Sep';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
@@ -502,7 +501,6 @@ export default async function Home() {
         </span>
       </div>
 
-      <Footer />
     </div>
   );
 }
