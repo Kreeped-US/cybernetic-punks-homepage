@@ -5,9 +5,10 @@
 // operator gets a daily login trigger + proof-of-life, and a silent-but-not-crashing
 // pipeline (cron succeeds yet produces nothing over days) escalates to an ALARM.
 //
-// READ-ONLY. Counts held-for-review drafts (feed_items.is_published=false, network-wide,
-// grouped by game -- matches the admin drafts panel's "what's waiting for you") and the
-// age of the producing game's last DURABLE draft. No schema change, no writes.
+// READ-ONLY. Counts ACTIONABLE held-for-review drafts (is_published=false AND gate_status=
+// 'clear' AND NOT rejected, network-wide, grouped by game -- the SAME set the admin drafts
+// panel shows as reviewable, so the number equals "what's waiting for you") and the age of
+// the producing game's last DURABLE draft. No schema change, no writes.
 //
 // "DURABLE draft": produced by a roster editor that is NOT patch-gated -- i.e. a
 // daily/evergreen producer (for marathon: MIRANDA). Derived from config, NOT hardcoded.
@@ -41,12 +42,25 @@ export async function emitDraftsDigest(supabase, opts) {
     var durableEditors = Array.isArray(o.durableEditors) ? o.durableEditors : [];
     var run = o.run || {};
 
-    // 1. Held drafts (is_published=false) network-wide, grouped by game. Bounded set
-    //    (the review queue is cleared as drafts are approved/declined); cap defensively.
+    // 1. ACTIONABLE held-for-review drafts, network-wide, grouped by game. Bounded set (the
+    //    review queue is cleared as drafts are approved/declined); cap defensively.
+    //    "Actionable held" = is_published=false AND gate_status='clear' AND NOT rejected --
+    //    the SAME set the drafts panel shows as reviewable (app/api/admin/drafts/route.js:
+    //    is_published=false, gate_status not 'held', rejected filtered out) and the canonical
+    //    held definition (lib/content/heldForReview.js). Previously this counted EVERY
+    //    is_published=false row, so ~31 DECLINED drafts (rejected=true) inflated it to a static
+    //    "32 to review" every day -- noise the operator learns to ignore. Now the number equals
+    //    what is genuinely waiting in the panel. (gate_status='clear' equals the panel's
+    //    neq('held') today since every unpublished row is 'clear'; 'clear' is the canonical
+    //    held-for-review state, so it is the correct semantic.)
     var heldByGame = {};
     var totalHeld = 0;
     try {
-      var heldRes = await supabase.from('feed_items').select('game_slug').eq('is_published', false).limit(2000);
+      var heldRes = await supabase.from('feed_items').select('game_slug')
+        .eq('is_published', false)
+        .eq('gate_status', 'clear')
+        .or('rejected.is.null,rejected.eq.false')
+        .limit(2000);
       if (heldRes && !heldRes.error) {
         (heldRes.data || []).forEach(function (r) {
           var g = r.game_slug || 'unknown';
