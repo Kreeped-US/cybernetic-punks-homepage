@@ -139,18 +139,23 @@ export const marathon = {
     //            header pill/badge to swap -- Nav.js untouched). 1920x650 (~2.95:1) at height 48
     //            renders ~142px wide -- masthead prominence comparable to dednet (~128px) / bodycam
     //            (~146px). Transparent -> reads on the dark footer.
-    //   backdrop:vandal art (2026-09-18 swap from Sentinelred.jpg, which read too dark even at opacity
-    //            0.9; before that, the old square marathon-hero.jpg -- too dark + a right-edge wordmark).
-    //            vandal is 1920x1080 (16:9 = 1.78:1), matching the wide footer strip almost exactly ->
-    //            negligible crop, so position 'center'. opacity 0.7 (mid reset -- the new image is
-    //            brighter; tune from here), under the component's dark scrim.
-    //            SERVED PATH is /images/marathon/vandal.jpg (the file lives at public/images/marathon/,
-    //            NOT public/marathon/ -- exact lowercase).
+    //   backdrop:vandal art (/images/marathon/vandal.jpg, 1920x1080 16:9). position 'center top' biases
+    //            the cover-crop to the TOP of the image so the character's BODY shows, not just the legs
+    //            (the wide-short footer box crops a landscape image vertically). opacity 1.0 (maxed --
+    //            the marathon-only backdrop dial has a ceiling; the real brightness limiter is the
+    //            component scrim, dialed below).
+    //   scrimStrength:0.5 -- marathon-ONLY lighter scrim (ThemedGameFooter multiplies the default
+    //            heavy scrim's alpha by this; 1 = the shared default). Lightening the SHARED scrim
+    //            directly would wash out pubg-dednet + bodycam (their backdrops sit at opacity 0.5,
+    //            tuned to the heavy scrim), so this is a per-game dial: absent -> byte-identical for
+    //            them, only marathon reads brighter. Tune 0..1 to taste (lower = brighter backdrop,
+    //            but less text-legibility headroom).
     themed: {
       enabled: true,
       color: MARATHON_GREEN,
       logo: { src: '/MARATHON_LOGO_EN_COMPLEX.png', height: 48, maxWidth: 220, alt: 'Marathon' },
-      backdrop: { src: '/images/marathon/vandal.jpg', opacity: 0.7, position: 'center' },
+      backdrop: { src: '/images/marathon/vandal.jpg', opacity: 1.0, position: 'center top' },
+      scrimStrength: 0.5,
     },
   },
 

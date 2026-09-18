@@ -35,6 +35,10 @@
 //         opacity: 0.9,                   // optional (default 0.85).
 //         position: 'center 42%',         // optional object-position (default 'center').
 //       },
+//       scrimStrength: 0.5,               // optional 0..1. Scales the default heavy backdrop scrim's
+//                                         //   alpha for THIS game's footer only (1/absent = the shared
+//                                         //   default, byte-identical; lower = lighter scrim ->
+//                                         //   brighter backdrop, less text-legibility headroom).
 //     },
 //   }
 //
@@ -64,6 +68,18 @@ export default function ThemedGameFooter({ config }) {
   const logoAlt = logo.alt || cfg.displayName || 'Game';
   const backdrop = th.backdrop || null;
 
+  // Backdrop scrim (keeps text legible over any backdrop). The default is a HEAVY dark gradient,
+  // shared by every themed footer. A game may lighten ITS OWN footer's scrim via
+  // footer.themed.scrimStrength (1 = the default heavy scrim; a value < 1 scales every stop's alpha
+  // down -> lighter scrim -> brighter backdrop). ABSENT -> the EXACT literal default string renders,
+  // so games that do not set it (pubg-dednet, bodycam) are byte-identical to before. Only a game that
+  // opts in (marathon) gets a computed lighter scrim -- a per-game dial with no shared blast radius.
+  const scrimStrength = (typeof th.scrimStrength === 'number') ? th.scrimStrength : null;
+  const scrimA = (a) => Math.max(0, Math.min(1, a * scrimStrength)).toFixed(3);
+  const backdropScrim = scrimStrength == null
+    ? 'linear-gradient(180deg, rgba(8,9,12,0.97) 0%, rgba(8,9,12,0.82) 40%, rgba(8,9,12,0.9) 100%)'
+    : 'linear-gradient(180deg, rgba(8,9,12,' + scrimA(0.97) + ') 0%, rgba(8,9,12,' + scrimA(0.82) + ') 40%, rgba(8,9,12,' + scrimA(0.9) + ') 100%)';
+
   const explore = (fcfg.links && fcfg.links.explore) || [];
   const legal = fcfg.legal || [];
   const year = new Date().getFullYear();
@@ -84,8 +100,8 @@ export default function ThemedGameFooter({ config }) {
             decoding="async"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: backdrop.position || 'center', opacity: backdrop.opacity == null ? 0.85 : backdrop.opacity }}
           />
-          {/* heavy scrims so any backdrop stays legible behind text */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,9,12,0.97) 0%, rgba(8,9,12,0.82) 40%, rgba(8,9,12,0.9) 100%)' }} />
+          {/* heavy scrims so any backdrop stays legible behind text (per-game dial via scrimStrength) */}
+          <div style={{ position: 'absolute', inset: 0, background: backdropScrim }} />
         </>
       )}
       {/* accent glow (rendered whether or not there is a backdrop) */}
