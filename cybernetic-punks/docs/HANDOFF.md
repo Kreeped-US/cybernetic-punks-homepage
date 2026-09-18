@@ -7,6 +7,58 @@ Newest entries on top.
 
 ---
 
+## 2026-09-18 - PLANNED (Monday): agnostic article-layout enhancement, all verticals (SEO-paramount)
+
+NOT BUILT - mapped + designed, deferred to Monday for a fresh head (it touches the
+indexed recovering Marathon vertical; SEO-safety is the governing constraint, so it
+must NOT be rushed). Full read-first done; build starts fresh.
+
+GOAL: 3 article-layout improvements on ALL verticals, AGNOSTIC (shared component +
+per-game data, NOT Marathon-only):
+1. Conditional HERO STAT CARD (entity-guide articles only) - the subject weapon's stats
+   as a scannable card at the top. Per-game stat source: Marathon weapon_stats/
+   shell_stats; Wardogs wardogs_ttk/ballistics via the existing GAME_FACET_GROUNDING
+   builder; DMZ/Bodycam/PUBG TBD (honest-null until they have stat tables).
+2. TOC / jump-nav from the article's parsed headers (agnostic).
+3. Prominent PROVENANCE badge + OUR READ callout (both already SHIP from today's Build
+   1) - consistent placement across all routes.
+
+KEY ARCHITECTURAL FACT (from the read-first): there is NO shared article template - each
+vertical renders its OWN bespoke page. Scope = 5 render sites + 2 parsers:
+- marathon-intel (app/marathon/intel/[slug], lib/articleBody.js) - rich, has a grid +
+  a "DATA REFERENCE" rail already (80% of the hero card exists here - pin the subject
+  to the top). INDEXED/RECOVERING - highest care, roll LAST/most-carefully.
+- wardogs, dmz, pubg-dednet (bespoke, lib/dmz/articleContent.js).
+- components/game/GameArticle.js = the SHARED component newer games (bodycam+) use = the
+  CONSOLIDATION POINT: build the enhancements here once + new games inherit all 3 free;
+  retrofit the 4 legacy bespoke routes as a bounded checklist.
+
+MECHANISM (agnostic): build shared HeroStatCard + ArticleTOC components; each route
+imports/drops them in. Subject detection = article tag matching a game entity row (no
+match = news = no card = byte-identical). All 3 pieces are OPT-IN BY DATA (additive).
+
+SEO-SAFETY (governing - assess every piece): additive/byte-identical for existing
+articles (no subject -> no card; <2 headers -> no TOC; null tier -> no badge); NO URL/
+route/slug change; NO content removed; ZERO CLS (server-render, reserve space, no pop-
+in); NO slow per-article query (flag the hero-card stat query cost); structured-data
+intact (do not reintroduce the Product-schema mess); reversible + per-vertical rollout.
+ONE flagged non-literal-byte-identical item: the TOC needs id= attributes added to
+existing headers for anchor links - visually identical, SEO-inert (anchors are standard/
+mildly helpful), but a conscious call to make before merging on the indexed hub.
+
+SEQUENCE (SEO-risk-ordered, gated, one piece at a time, Marathon route last/most-careful
+per piece): (1) provenance-prominence (smallest, reuses today's components, lowest risk);
+(2) TOC (+ the header-id decision); (3) hero stat card (biggest - per-game stat sourcing
+is the real work). Prove byte-identical on a real existing Marathon article before each
+merge.
+
+DEFERRED (bigger, not now): full route unification (collapse all routes into
+GameArticle - clean end-state but a risky refactor on the indexed route); per-claim
+provenance (per-sentence tiering). DMZ/Bodycam/PUBG hero-card stat fields TBD (no stat
+data yet).
+
+---
+
 ## 2026-09-18 - Editor de-Marathoning + tiered provenance + self-select gate (Wardogs producing clean)
 
 BIG PICTURE: Wardogs (2nd autonomous game) now produces CLEAN, honest, publishable
