@@ -51,6 +51,23 @@ var PRODUCING_GAME_SLUG = PRODUCING_GAME.slug;
 
 var TIER_ORDINAL = { S: 5, A: 4, B: 3, C: 2, D: 1 };
 
+// GRACEFUL provenance_tier gate (Build 2): feed_items.provenance_tier is added by a SEPARATE
+// operator-run migration (docs/migrations/2026-09-18-feed-items-provenance-tier.sql). Setting a
+// column that does not exist yet would FAIL the whole draft insert, so we probe ONCE (cached) and
+// only write provenance_tier when the column is live. Before the migration this no-ops -- NEXUS still
+// produces normally, just without the tier set (the ArticleProvenanceBadge then renders nothing).
+var _provenanceColReady = null; // null = not yet probed; true/false once known
+async function provenanceColumnReady(sb) {
+  if (_provenanceColReady !== null) return _provenanceColReady;
+  try {
+    var r = await sb.from('feed_items').select('provenance_tier').limit(1);
+    _provenanceColReady = !r.error;
+  } catch (e) {
+    _provenanceColReady = false;
+  }
+  return _provenanceColReady;
+}
+
 function tierOrdinal(tier) {
   return TIER_ORDINAL[tier] || 0;
 }
@@ -610,7 +627,15 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       insertData.thumbnail = null;
       insertData.source_url = null;
     }
-    if (editorName === 'NEXUS')  insertData.ce_score = result.grid_pulse || 0;
+    if (editorName === 'NEXUS') {
+      insertData.ce_score = result.grid_pulse || 0;
+      // Provenance (Build 2): NEXUS is now SOURCE-BOUND -- it writes game-specific facts only from
+      // its ingested official news / patch notes / verified DB (its own analysis is marked OUR READ
+      // inline), so its articles carry the SOURCED tier. verified_source/_url (captured above from
+      // cited_blocks) already record WHICH source, so the SOURCED badge can name it. Guarded so it
+      // no-ops before the provenance_tier migration runs (see provenanceColumnReady).
+      if (await provenanceColumnReady(supabase)) insertData.provenance_tier = 'sourced';
+    }
     if (editorName === 'DEXTER') insertData.ce_score = result.ce_score || 0;
     if (editorName === 'GHOST') {
       insertData.source = 'REDDIT';
