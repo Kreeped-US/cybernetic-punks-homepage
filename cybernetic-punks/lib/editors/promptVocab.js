@@ -13,9 +13,13 @@
 // system prompt and the user prompt, so every assembled prompt (gather-built, Miranda-
 // built, and cron-appended blocks) is covered in one place.
 //
-// FAIL-CLOSED: a placeholder whose key is not mapped (a game whose config.vocabulary is
-// missing that key) THROWS -- it never silently emits the raw "{{cnp:...}}" text or an
-// empty string into a live prompt. A broken prompt is caught loudly, not shipped.
+// GRACEFUL DEGRADE (2026-09-18): a placeholder whose key is not mapped renders EMPTY and
+// the editor CONTINUES (logged, non-fatal) -- it never emits the raw "{{cnp:...}}" text,
+// but it no longer THROWS/aborts the whole run. Rationale: an unmapped token on ONE game
+// must not total-outage that game's cron (the wardogs failure), and every draft is
+// held-for-review, so a human sees any degraded output before it can publish. A game whose
+// vocabulary resolves every token it uses (e.g. Marathon) never hits this path and is
+// byte-identical. (Previously this THREW fail-closed, which caused the wardogs total_outage.)
 
 // The fixed token set (documented for review; resolveVocab supplies each from config).
 export var VOCAB_KEYS = [
@@ -56,17 +60,20 @@ var PLACEHOLDER_RE = /\{\{cnp:([a-zA-Z.]+)(\^?)\}\}/g;
 
 // Replace every {{cnp:KEY}} / {{cnp:KEY^}} in `text` with vocab[KEY] (upper-cased when the
 // "^" modifier is present). Text with no placeholder is returned unchanged (Layer-B prose
-// passes through untouched). An unmapped/empty key THROWS (fail-closed).
+// passes through untouched). An unmapped/empty key renders EMPTY and is LOGGED -- graceful
+// degrade, non-fatal (see the module header): the run continues instead of aborting.
 export function applyVocab(text, vocab) {
   if (text == null) return text;
   var v = vocab || {};
   return String(text).replace(PLACEHOLDER_RE, function (_m, key, up) {
     var val = v[key];
     if (val == null || val === '') {
-      throw new Error(
-        '[promptVocab] unmapped placeholder {{cnp:' + key + '}} -- config.vocabulary is ' +
-        'missing "' + key + '". Fail-closed: refusing to emit a broken prompt.'
-      );
+      // Degrade, do not throw: render empty + log so the gap is visible in cron logs. The
+      // held-for-review gate means a human reviews every draft, so a degraded token can
+      // never silently ship live. A game that maps all its tokens never reaches this branch.
+      console.warn('[promptVocab] unmapped token {{cnp:' + key + '}} -- config.vocabulary is '
+        + 'missing "' + key + '"; rendering EMPTY and continuing (graceful degrade).');
+      return '';
     }
     return up ? String(val).toUpperCase() : val;
   });
@@ -129,6 +136,14 @@ export function resolveKit(config) {
     genre: pk.genre,
     entityFocusList: Array.isArray(entityFocus) ? entityFocus.join('/') : undefined,
   };
+  // LAYER B (2026-09-18): the primary-tool CTA link+label lives in per-game
+  // config.editorial.primaryTool, NOT the {{cnp:link.cradle}} token -- so no game has to map
+  // a Marathon-named token. Exposed as {{kit:primaryTool.label}} / {{kit:primaryTool.href}}
+  // (render-empty if a game omits it). Marathon sets it to the Cradle Planner (byte-identical
+  // to the old link.cradle rendering); each other game points at its own primary tool.
+  var pt = e.primaryTool || {};
+  out['primaryTool.label'] = pt.label;
+  out['primaryTool.href'] = pt.href;
   // 2b-2: per-persona game-model prose. Dotted keys -> {{kit:progression.cipher}},
   // {{kit:economy.dexter}}, {{kit:seasonContext.ghostLandscape}},
   // {{kit:seasonContext.rankedNote.cipher}}. A game without gameModel/seasonContext

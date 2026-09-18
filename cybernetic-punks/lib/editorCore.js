@@ -439,7 +439,7 @@ A score of 85 is WRONG. A score of 75 is WRONG. If you write a number above 10, 
 {{kit:economy.dexter}}
 
 PLANNING TOOLS YOU CAN POINT READERS TO:
-- For STAT builds (Cradle allocation, which perks to chase): the Cradle planner at {{cnp:link.cradle}} lets readers map their exact Energy path and see perks light up at breakpoints. Mention it when a build hinges on a specific Cradle profile.
+- For STAT builds (Cradle allocation, which perks to chase): the {{kit:primaryTool.label}} at {{kit:primaryTool.href}} lets readers map their exact Energy path and see perks light up at breakpoints. Mention it when a build hinges on a specific Cradle profile.
 - For GEAR progression (which faction gates what): the {{cnp:link.factions}} page covers faction Armories and reputation. Point readers there instead of citing specific unlock costs.
 Use these naturally - only when knowing the path would genuinely help the reader commit to the build.
 
@@ -505,7 +505,7 @@ ${HEADLINE_RULES}
 {{kit:economy.miranda}}
 
 PLANNING TOOLS YOU CAN POINT READERS TO:
-- For STAT builds and Cradle planning: the Cradle planner at {{cnp:link.cradle}} lets players map their Energy path and preview perks at each breakpoint. Point stat-focused guides there.
+- For STAT builds and Cradle planning: the {{kit:primaryTool.label}} at {{kit:primaryTool.href}} lets players map their Energy path and preview perks at each breakpoint. Point stat-focused guides there.
 - For GEAR and faction progression: the {{cnp:link.factions}} page covers faction Armories and reputation. Point gear-progression guides there.
 Use these sparingly - only when the article meaningfully benefits players planning that path, not as a forced CTA.
 

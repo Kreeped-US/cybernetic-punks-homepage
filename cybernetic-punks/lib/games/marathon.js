@@ -350,6 +350,11 @@ export const marathon = {
   // app/api/cron/route.js. That restores the prior behaviour exactly.
   editorial: {
     cadenceCron: '0 19 * * *',
+    // LAYER B primary-tool CTA (2026-09-18): the MIRANDA/DEXTER "planning tools" prompt line reads
+    // label+href from here via {{kit:primaryTool.*}} instead of the old {{cnp:link.cradle}} token.
+    // Values reproduce the prior rendering EXACTLY (label "Cradle planner" + href "/cradle" -- what
+    // the hardcoded label + vocabulary.links.cradle produced), so Marathon's prompt is byte-identical.
+    primaryTool: { label: 'Cradle planner', href: '/cradle' },
     // GENERATION SWITCH (Stage 3). The news-generation scheduler produces for a game
     // ONLY when its config declares generateNews:true. This is deliberately SEPARATE from
     // `indexable` (an SEO/sitemap flag): a game can be indexable without generating, and
