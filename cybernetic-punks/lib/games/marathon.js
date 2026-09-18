@@ -139,18 +139,18 @@ export const marathon = {
     //            header pill/badge to swap -- Nav.js untouched). 1920x650 (~2.95:1) at height 48
     //            renders ~142px wide -- masthead prominence comparable to dednet (~128px) / bodycam
     //            (~146px). Transparent -> reads on the dark footer.
-    //   backdrop:Sentinelred art (2026-09-18 swap from the old square marathon-hero.jpg, which was
-    //            too dark and had a right-edge "MARATHON" wordmark the cover-crop could not evict).
-    //            Sentinelred is 3840x2160 (16:9 = 1.78:1), matching the wide footer strip almost
-    //            exactly -> negligible crop, so position 'center' (no wordmark to dodge). opacity 0.9
-    //            (raised 0.5 -> 0.6 -> 0.75 -> 0.9 across brighten passes), still under the component's dark scrim.
-    //            SERVED PATH is /images/marathon/Sentinelred.jpg (the file lives at
-    //            public/images/marathon/, NOT public/marathon/ -- exact case, capital S).
+    //   backdrop:vandal art (2026-09-18 swap from Sentinelred.jpg, which read too dark even at opacity
+    //            0.9; before that, the old square marathon-hero.jpg -- too dark + a right-edge wordmark).
+    //            vandal is 1920x1080 (16:9 = 1.78:1), matching the wide footer strip almost exactly ->
+    //            negligible crop, so position 'center'. opacity 0.7 (mid reset -- the new image is
+    //            brighter; tune from here), under the component's dark scrim.
+    //            SERVED PATH is /images/marathon/vandal.jpg (the file lives at public/images/marathon/,
+    //            NOT public/marathon/ -- exact lowercase).
     themed: {
       enabled: true,
       color: MARATHON_GREEN,
       logo: { src: '/MARATHON_LOGO_EN_COMPLEX.png', height: 48, maxWidth: 220, alt: 'Marathon' },
-      backdrop: { src: '/images/marathon/Sentinelred.jpg', opacity: 0.9, position: 'center' },
+      backdrop: { src: '/images/marathon/vandal.jpg', opacity: 0.7, position: 'center' },
     },
   },
 
