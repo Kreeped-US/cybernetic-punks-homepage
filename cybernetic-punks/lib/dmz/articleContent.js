@@ -87,6 +87,15 @@ export function parseBody(body) {
     if (bullets) { out.push({ type: 'ul', items: bullets, key: 'u-' + i }); return; }
 
     var oneLine = block.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // ANALYSIS / "OUR READ" callout: an editor marks a JUDGMENT passage with the literal all-caps
+    // prefix "OUR READ:" (specific enough to be intentional -- normal prose writes "Our read:").
+    // Emits a distinct 'analysis' block (opinion, not fact). ADDITIVE: no current article carries
+    // the marker; surfaces without an 'analysis' branch fall through to their default <p> render
+    // (the .text field matches), so text never vanishes.
+    var am = oneLine.match(/^OUR READ:\s*(.+)$/);
+    if (am) { out.push({ type: 'analysis', text: am[1].trim(), key: 'a-' + i }); return; }
+
     var q = wholeQuote(oneLine);
     if (q) { out.push({ type: 'quote', text: q, key: 'q-' + i }); return; }
 

@@ -24,6 +24,19 @@ export function parseBody(body) {
     var para = rawPara.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
     if (!para) return;
 
+    // Rule 0: ANALYSIS / "OUR READ" callout. An editor marks a JUDGMENT passage by starting the
+    // paragraph with the literal, all-caps prefix "OUR READ:" -- specific enough to be intentional
+    // (normal prose writes "Our read:", never the all-caps form), so it never false-fires on body
+    // text. Emits a distinct 'analysis' block the render styles as a callout (opinion, not fact).
+    // ADDITIVE: no existing article carries the marker, so nothing changes for current content;
+    // surfaces without an 'analysis' branch fall through to their default paragraph render (the
+    // .content field matches), so the text can never vanish.
+    var analysisMatch = para.match(/^OUR READ:\s*(.+)$/);
+    if (analysisMatch) {
+      elements.push({ type: 'analysis', content: analysisMatch[1].trim(), key: 'a-' + paraIdx });
+      return;
+    }
+
     // Rule 1: whole-paragraph bold header
     var fullHeader = para.match(/^\*\*\s*([^*]+?)\s*\*\*$/);
     if (fullHeader && fullHeader[1].length <= 120) {

@@ -21,6 +21,7 @@ import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/articleContent';
 import ViewTracker from '@/components/ViewTracker';
 import { TierIcon } from '@/components/network/confidenceTiers';
+import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -171,6 +172,12 @@ export default async function WardogsArticlePage({ params }) {
           if (blk.type === 'h2') return <h2 key={blk.key} style={{ fontFamily: EXO, fontSize: 20, fontWeight: 700, margin: '30px 0 10px', color: 'var(--text-primary)' }}>{stripMarkers(blk.text)}</h2>;
           if (blk.type === 'ul') return <ul key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 22 }}>{blk.items.map(function (it, i) { return <li key={i} style={{ margin: '4px 0' }}>{stripMarkers(it)}</li>; })}</ul>;
           if (blk.type === 'quote') return <blockquote key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 14, borderLeft: '3px solid #e0a13a', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{stripMarkers(blk.text)}</blockquote>;
+          if (blk.type === 'analysis') return (
+            <div key={blk.key} style={{ margin: '0 0 16px', padding: '12px 14px', background: 'rgba(167,139,250,0.06)', borderLeft: '3px solid #a78bfa', borderRadius: '0 4px 4px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#a78bfa' }}><TierIcon tier="analysis" size={11} /> Our Read</div>
+              <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.6 }}>{stripMarkers(blk.text)}</div>
+            </div>
+          );
           return <p key={blk.key} style={{ margin: '0 0 16px' }}>{stripMarkers(blk.text)}</p>;
         })}
       </article>
@@ -190,6 +197,11 @@ export default async function WardogsArticlePage({ params }) {
           Source: {article.source_url ? <a href={article.source_url} target="_blank" rel="noopener noreferrer" style={{ color: '#e0a13a' }}>{article.source}</a> : <span>{article.source}</span>}
         </div>
       ) : null}
+
+      {/* Article-level provenance badge (Build 1): renders from article.provenance_tier when set
+          (Build 2 sets it; column via the 2026-09-18 migration). NULL/absent -> nothing, so existing
+          articles are unchanged. Sits in the provenance zone alongside the attributed caveat below. */}
+      <ArticleProvenanceBadge tier={article.provenance_tier} />
 
       {/* ATTRIBUTED-DATA CAVEAT (caveat layer 3 -- the structural GUARANTEE, Brief B).
           Driven by the verified_source COLUMN, not the prose: a MIRANDA-Wardogs guide grounded

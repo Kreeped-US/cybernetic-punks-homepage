@@ -66,6 +66,16 @@ function DraftPreview({ draft }) {
             </blockquote>
           );
         }
+        if (el.type === 'analysis') {
+          // OUR READ callout in the reviewer preview -- visibly distinct so the operator sees which
+          // passages are editor judgment (not sourced fact) before approving.
+          return (
+            <div key={el.key} style={{ margin: '14px 0', padding: '10px 12px', background: 'rgba(167,139,250,0.06)', borderLeft: '3px solid #a78bfa', borderRadius: '0 4px 4px 0' }}>
+              <div style={{ fontFamily: mono, fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#a78bfa', marginBottom: 5 }}>Our Read (analysis)</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65, fontStyle: 'italic' }}><InlineText text={el.content} /></div>
+            </div>
+          );
+        }
         return (
           <p key={el.key} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65, margin: '0 0 1em', maxWidth: '72ch' }}>
             <InlineText text={el.content} />

@@ -24,6 +24,11 @@ export const CONFIDENCE_TIERS = [
   { key: 'partial',    label: 'Partially verified',    color: '#ffb400', desc: 'The row is confirmed, but one or more fields are still pending.' },
   { key: 'attributed', label: 'Attributed / beta-observed', color: '#c2933f', desc: 'Reported in a devlog or a beta build - usable, but not confirmed by us and subject to change at launch.' },
   { key: 'pending',    label: 'Pending',               color: '#9c908c', desc: 'Structure is known but the numbers are not published yet - shown blank, never guessed.' },
+  // ANALYSIS is a DIFFERENT AXIS from the confidence gradient above (like 'structure'): it does not
+  // rate how confirmed a FACT is -- it marks editorial JUDGMENT/opinion ("our read"), which is not a
+  // fact claim at all. Distinct violet (not attributed's bronze) so opinion never reads as sourced
+  // data. Used by the article-level provenance badge + the OUR READ callout (lib/articleBody.js).
+  { key: 'analysis',   label: 'Analysis',              color: '#a78bfa', desc: 'Editorial analysis and judgment - our read, not a confirmed fact.' },
 ];
 
 // tier -> icon. A 16x16 viewBox scaled to `size`; fill/stroke inherit currentColor. The check on the
@@ -53,6 +58,17 @@ export function TierIcon({ tier, size = 12, title }) {
     return (
       <svg {...common}>{t}
         <circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+  if (tier === 'analysis') {
+    // EDITORIAL-JUDGMENT mark -- a diamond (deliberately NOT a circle like the confidence tiers
+    // and NOT the green check) with a center dot: "a considered point / our read", clearly not a
+    // verified fact. Inherits currentColor (the badge/callout sets the violet analysis tone).
+    return (
+      <svg {...common}>{t}
+        <path d="M8 1.6 L14.4 8 L8 14.4 L1.6 8 Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <circle cx="8" cy="8" r="1.7" fill="currentColor" />
       </svg>
     );
   }

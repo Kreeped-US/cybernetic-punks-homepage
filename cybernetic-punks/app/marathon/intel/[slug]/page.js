@@ -12,6 +12,8 @@ import { isDiscourseArticle } from '@/lib/discourse';
 import { stripCitationTags } from '@/lib/gather/blockId';
 import ToolCTA from '@/components/ToolCTA';
 import { parseBody } from '@/lib/articleBody';
+import { TierIcon } from '@/components/network/confidenceTiers';
+import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 
 // Display rename (editor rework Step 3). Visible editor identity routes through
@@ -842,6 +844,20 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
             </blockquote>
           );
         }
+        if (el.type === 'analysis') {
+          // OUR READ callout -- editor JUDGMENT, styled visibly distinct from fact prose (violet
+          // analysis tone + labeled), so a reader/reviewer cannot mistake opinion for a sourced fact.
+          return (
+            <div key={el.key} style={{ margin: '24px 0', padding: '14px 16px', background: 'rgba(167,139,250,0.06)', borderLeft: '3px solid #a78bfa', borderRadius: '0 4px 4px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#a78bfa' }}>
+                <TierIcon tier="analysis" size={11} /> Our Read
+              </div>
+              <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, fontStyle: 'italic', maxWidth: '66ch' }}>
+                <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
+              </div>
+            </div>
+          );
+        }
         return (
           <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.84)', lineHeight: 1.6, margin: '0 0 1.5em', letterSpacing: 0.1, maxWidth: '66ch' }}>
             <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
@@ -1140,6 +1156,10 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
             </Link>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace' }}>{publishedAt} · {rt}</span>
             {item.source && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', border: '1px solid #22252e', padding: '3px 7px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{item.source}</span>}
+            {/* Article-level provenance badge (Build 1): renders from item.provenance_tier when set
+                (Build 2 sets it; column via 2026-09-18 migration). NULL/absent -> renders nothing, so
+                existing articles are byte-identical. */}
+            <ArticleProvenanceBadge tier={item.provenance_tier} />
           </div>
 
           <h1 style={{ fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 900, color: '#fff', lineHeight: 1.15, letterSpacing: '-0.5px', margin: '0 0 18px', maxWidth: 860 }}>
