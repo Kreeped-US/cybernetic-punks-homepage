@@ -20,6 +20,8 @@
 //   relevance.*            <- lib/gather/index.js MARATHON_GAME_TOKENS / GAME_CONTEXT_TOKENS
 //   editorial.*            <- app/api/cron/route.js editors[] + vercel.json cron
 
+import { MARATHON_GREEN } from '../brandColors.js';
+
 export const marathon = {
   slug: 'marathon',
   displayName: 'Marathon',
@@ -83,18 +85,36 @@ export const marathon = {
       'NOT AFFILIATED WITH BUNGIE',
       'MARATHON IS A TRADEMARK OF BUNGIE, INC.',
     ],
-    // EXPLORE + DISCOVER copied VERBATIM from Footer.js EXPLORE_LINKS / DISCOVER_LINKS (labels +
-    // hrefs unchanged) so Marathon's footer is byte-identical when Phase 2 renders it.
+    // (History: EXPLORE + DISCOVER were originally copied VERBATIM from Footer.js so Marathon's
+    // GENERIC footer rendered byte-identically. That verbatim invariant no longer holds -- EXPLORE
+    // is now curated for the THEMED footer, see below.)
+    // EXPLORE curated tools-first for the THEMED footer (2026-09-18). ThemedGameFooter renders
+    // links.explore ONLY (not discover, not per-peer cross-links) + its own single "Part of the
+    // Cybernetic Punks network ->" back-link, so this list IS marathon's entire footer link vote.
+    // Tools + reference hubs are prioritized (Loadout Finder / Cradle / Meta / Ranked first) to
+    // reinforce the highest-intent SEO-recovery pages; the S2-flagship Cradle Planner and the
+    // Uniques hub -- previously unlinked in the footer -- are now included. Title-case to match the
+    // themed footer's link style (the generic footer's uppercase style no longer applies once
+    // marathon is themed). Every href confirmed to resolve to a real /marathon route.
     links: {
       explore: [
-        { label: 'INTEL FEED',     href: '/marathon/intel'   },
-        { label: 'META TIER LIST', href: '/marathon/meta'    },
-        { label: 'LOADOUT FINDER',  href: '/marathon/advisor' },
-        { label: 'SHELLS',         href: '/marathon/shells'  },
-        { label: 'FIELD GUIDES',   href: '/marathon/guides'  },
-        { label: 'RANKED GUIDE',   href: '/marathon/ranked'  },
-        { label: 'ABOUT',          href: '/about'   },
+        { label: 'Loadout Finder', href: '/marathon/advisor' },
+        { label: 'Cradle Planner', href: '/marathon/cradle'  },
+        { label: 'Meta Tier List', href: '/marathon/meta'    },
+        { label: 'Ranked',         href: '/marathon/ranked'  },
+        { label: 'Weapons',        href: '/marathon/weapons' },
+        { label: 'Shells',         href: '/marathon/shells'  },
+        { label: 'Uniques',        href: '/marathon/uniques' },
+        { label: 'Field Guides',   href: '/marathon/guides'  },
+        { label: 'Intel Feed',     href: '/marathon/intel'   },
+        { label: 'Factions',       href: '/marathon/factions'},
       ],
+      // RETAINED but INERT under the themed footer: ThemedGameFooter ignores links.discover, so
+      // these render nowhere now. Kept (not deleted) deliberately -- (1) additive-only discipline on
+      // an indexed page, (2) it is the fallback if themed.enabled is ever toggled off (the generic
+      // Footer path would otherwise render an empty DISCOVER column). The 6 low-intent pages here
+      // (creators/rising/leaderboard/stats/sitrep/status) keep their global-nav links; only their
+      // FOOTER link is dropped by the curation. (Factions was promoted into explore above.)
       discover: [
         { label: 'CONTENT CREATORS', href: '/marathon/creators'   },
         { label: 'RISING CREATORS', href: '/marathon/rising'      },
@@ -104,6 +124,29 @@ export const marathon = {
         { label: 'SITREP',          href: '/marathon/sitrep'      },
         { label: 'SERVER STATUS',   href: '/marathon/status'      },
       ],
+    },
+
+    // THEMED FOOTER opt-in (2026-09-18, rollout: pubg-dednet + bodycam already themed; marathon is
+    // the indexed, SEO-recovering hub -- its own careful window). components/Footer.js sees
+    // footer.themed.enabled and dispatches marathon's inline <Footer/> (marathon has no layout.js;
+    // 11 pages render it) to components/game/ThemedGameFooter, byte-identically to the pubg/bodycam
+    // path. ADDITIVE THEMING ONLY: no URL/route/structure change, no header/Nav change. Config
+    // contract: ThemedGameFooter.js header.
+    //   color:   MARATHON_GREEN (#00ff41) -- marathon's single-source brand accent (lib/brandColors.js).
+    //            Set directly (not via a theme block, which marathon does not have and this rollout
+    //            does not add).
+    //   logo:    the official transparent green wordmark, footer masthead ONLY (marathon has no CNP
+    //            header pill/badge to swap -- Nav.js untouched). 1920x650 (~2.95:1) at height 48
+    //            renders ~142px wide -- masthead prominence comparable to dednet (~128px) / bodycam
+    //            (~146px). Transparent -> reads on the dark footer.
+    //   backdrop:the existing square hero. It carries a right-edge vertical "MARATHON" wordmark, so
+    //            position 'left center' biases the cover-crop left to keep that wordmark out of frame
+    //            and clear of the logo masthead; opacity 0.5 under the component's heavy scrim.
+    themed: {
+      enabled: true,
+      color: MARATHON_GREEN,
+      logo: { src: '/MARATHON_LOGO_EN_COMPLEX.png', height: 48, maxWidth: 220, alt: 'Marathon' },
+      backdrop: { src: '/images/games/marathon-hero.jpg', opacity: 0.5, position: 'left center' },
     },
   },
 
