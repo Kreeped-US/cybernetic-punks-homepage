@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-09-18 - Footer buildout complete (all hubs) + reusable per-game scrim dial
+
+Themed-footer buildout across the network is DONE, sequenced one-hub-per-window (the
+don't-stack-sitewide-structural doctrine held throughout):
+- wardogs: bespoke WardogsFooter (the reference).
+- pubg-dednet, bodycam: themed (earlier).
+- marathon: themed (this session) - the careful indexed/recovering hub, own window.
+- dmz: still on the generic footer (BLOCKED on the operator's transparent logo - its
+  current /images/DMZ/dmzlogo.webp is a black-box square).
+
+MARATHON FOOTER (fe5ec0b + swaps): accent MARATHON_GREEN #00ff41 (brandColors.js
+single-source), logo /MARATHON_LOGO_EN_COMPLEX.png (press-kit, footer masthead only -
+marathon has NO CNP pill/header badge, header is the shared Nav.js network wordmark,
+untouched), backdrop /images/marathon/vandal.jpg (compressed 545KB->180KB), curated
+tools-first explore links. Renders on the 11 marathon pages that inline the Footer
+component (marathon has no layout.js; ~12 other marathon routes render NO footer -
+pre-existing; adding app/marathon/layout.js would extend the footer + its curated links
+network-wide, a separate task).
+
+REUSABLE: per-game footer.themed.scrimStrength dial (ThemedGameFooter, this session).
+The footer backdrop had a hardcoded 3-stop dark gradient scrim (rgba(8,9,12,
+0.97/0.82/0.9)) - the real brightness CEILING (no backdrop-opacity value could override
+it; that caused the long "still too dark" tuning loop). Fix: a scrimStrength MULTIPLIER
+on those alphas. Default is absent (equivalent to 1.0) - it renders the exact literal
+default gradient, so pubg-dednet + bodycam are BYTE-IDENTICAL; marathon sets 0.5
+(lighter = brighter backdrop). Any future themed hub tunes its own scrim. Two backdrop
+dials for future hubs: scrimStrength (lower=brighter) + backdrop.position (crop slice,
+e.g. 'center top').
+
+SEO NOTE: marathon footer links curated tools-first (Loadout Finder, Cradle Planner,
+Meta Tier List, Ranked, Weapons, Shells, Uniques, Field Guides, Intel, Factions) -
+concentrates internal-link equity on the money/tool pages rather than diluting across
+low-intent pages (leaderboard/stats/creators/sitrep/status dropped from footer; their
+nav links remain). /marathon/factions is a real, content-rich page (Faction Intel, 6
+factions, live) and its footer link is KEPT. All links verified resolving (no footer
+404). Backdrop compressed so no Core-Web-Vitals load-speed hit on the indexed hub.
+
+---
+
 ## 2026-09-17 - MIRANDA-Wardogs grounded guides: code-complete (proof pending seed + first draft)
 
 Wardogs now has FULL autonomous parity with Marathon: NEXUS news (earlier today) +
