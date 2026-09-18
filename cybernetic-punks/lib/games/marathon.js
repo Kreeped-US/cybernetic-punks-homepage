@@ -142,15 +142,15 @@ export const marathon = {
     //   backdrop:Sentinelred art (2026-09-18 swap from the old square marathon-hero.jpg, which was
     //            too dark and had a right-edge "MARATHON" wordmark the cover-crop could not evict).
     //            Sentinelred is 3840x2160 (16:9 = 1.78:1), matching the wide footer strip almost
-    //            exactly -> negligible crop, so position 'center' (no wordmark to dodge). opacity 0.75
-    //            (raised 0.5 -> 0.6 -> 0.75 across brighten passes), still under the component's dark scrim.
+    //            exactly -> negligible crop, so position 'center' (no wordmark to dodge). opacity 0.9
+    //            (raised 0.5 -> 0.6 -> 0.75 -> 0.9 across brighten passes), still under the component's dark scrim.
     //            SERVED PATH is /images/marathon/Sentinelred.jpg (the file lives at
     //            public/images/marathon/, NOT public/marathon/ -- exact case, capital S).
     themed: {
       enabled: true,
       color: MARATHON_GREEN,
       logo: { src: '/MARATHON_LOGO_EN_COMPLEX.png', height: 48, maxWidth: 220, alt: 'Marathon' },
-      backdrop: { src: '/images/marathon/Sentinelred.jpg', opacity: 0.75, position: 'center' },
+      backdrop: { src: '/images/marathon/Sentinelred.jpg', opacity: 0.9, position: 'center' },
     },
   },
 
