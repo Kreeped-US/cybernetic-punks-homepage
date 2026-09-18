@@ -1405,6 +1405,21 @@ export async function GET(req) {
     // and re-add GHOST/MIRANDA to the config array.
     var editorsRequiringPatch = PRODUCING_GAME.editorial.editorsRequiringPatch || [];
     var activeRoster = PRODUCING_GAME.editorial.editors.filter(function (name) {
+      // MIRANDA SELF-SELECT GATE (2026-09-18). If MIRANDA has NO directive this cycle -- no queued
+      // candidate passed the assignment gate above AND no human directive -- she would fall into her
+      // DEFAULT prompt (buildMirandaPrompt with no _directive) = self-select. That default prompt is
+      // Marathon-hardcoded (editorCore.js:1093/1095/1123/1127), so for a game NOT configured for
+      // self-select we SKIP her cleanly (produce nothing) rather than emit an ungrounded, Marathon-
+      // contaminated topic (proven root cause: the wardogs "Triage Shell Guide"). Marathon sets
+      // editorial.allowSelfSelect=true -> byte-identical (never skipped here). The GROUNDED path
+      // (directiveMap['MIRANDA'] set by a passing candidate or a human) is unaffected -- she runs.
+      // NEXUS + all other editors are unaffected. This is a clean roster-filter skip (a no-op like
+      // the patch-freeze below), NOT an error/outage.
+      if (name === 'MIRANDA' && !directiveMap['MIRANDA'] && PRODUCING_GAME.editorial.allowSelfSelect !== true) {
+        console.log('[CRON] SKIP MIRANDA -- no passing candidate this cycle and "' + PRODUCING_GAME_SLUG +
+          '" is grounded-candidates-only (editorial.allowSelfSelect not set). Producing nothing rather than a self-selected ungrounded/Marathon-flavored topic.');
+        return false;
+      }
       if (editorsRequiringPatch.indexOf(name) === -1) return true;
       if (!hasPatch) {
         console.log('[CRON] FREEZE: skipping ' + name + ' -- gated to patch cycles and no patch detected this cycle');
