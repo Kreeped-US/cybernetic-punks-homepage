@@ -7,6 +7,86 @@ Newest entries on top.
 
 ---
 
+## 2026-09-18 - Editor de-Marathoning + tiered provenance + self-select gate (Wardogs producing clean)
+
+BIG PICTURE: Wardogs (2nd autonomous game) now produces CLEAN, honest, publishable
+content - source-bound editors, no Marathon-concept leaks, with a tiered provenance
+system that visibly separates fact from analysis. Proven on a real NEXUS Wardogs draft
+(patch 0.11 coverage, zero shells/Cradle/Triage, "Our Read" analysis section). All fixes
+are AGNOSTIC - DMZ/Bodycam/PUBG inherit clean-by-construction. Took FOUR diagnoses to
+find the real root (recorded below so it is never re-litigated).
+
+--- THE CONTAMINATION ROOT (verified, after 4 diagnoses) ---
+Symptom: a Wardogs MIRANDA draft titled "Wardogs Triage Shell Guide" (Triage/shells =
+MARATHON concepts Wardogs lacks). The root was NOT (as earlier diagnoses wrongly
+claimed): bad seed data, a Marathon seeder template, or a dirty MIRANDA grounded prompt.
+VERIFIED ROOT (raw trace, not summary): MIRANDA got NO passing candidate (route.js:1297
+self-select branch, feed_items.verified_source=null = ungrounded), fell to her DEFAULT
+prompt, which is Marathon-HARDCODED (editorCore.js:1093 "Triage kit...Vandal", :1095
+"Cradle...Season 2", :1123/:1127 "shells, mods, factions, Cradle perks") -> she wrote
+"Triage Shell Guide" from her own prompt's Marathon voice examples. The seeder is clean
+(writes {entity,facet} only, no titles). LESSON: when diagnoses conflict, demand ONE
+raw-data+code trace of the actual failing row before building - we churned ~1hr on 3
+wrong root-causes.
+
+--- SHIPPED TODAY (in order) ---
+1. Vocab tokens agnostic (ec07fb2): wardogs vocabulary block (Bulkhead/Merc-Mercs/grade
+   scale) + editorial.primaryTool (Layer B, marathon=Cradle Planner byte-identical,
+   wardogs=/wardogs/loadouts) + graceful DEGRADE (unresolved {{cnp:...}} tokens render
+   empty + editor continues, no more total-outage). Fixed the fail-closed total-outage.
+2. Provenance infra (5607874, Build 1): added 'analysis' tier to confidenceTiers
+   (distinct, "Our Read", violet); an OUR READ: callout block in parseBody -- the marker
+   is a paragraph beginning with the literal all-caps "OUR READ:" (there is NO ">>"
+   marker; the parser matches /^OUR READ:/) -> renders as a visibly-distinct violet
+   callout (modeled on the existing blockquote render); ArticleProvenanceBadge on
+   marathon-intel + wardogs. ADDITIVE - existing articles byte-identical (marathon safe).
+   Migration: docs/migrations/2026-09-18-feed-items-provenance-tier.sql (nullable
+   provenance_tier column) - OPERATOR RAN IT.
+3. Source-bound NEXUS (d4b7f88, Build 2): NEXUS writes ONLY from ingested source (patch
+   notes/feed) + general reasoning, NOT memory; honest-null when source doesn't cover
+   it ("light on weapon data" instead of inventing weapons); wraps its judgment in OUR
+   READ: callouts; sets provenance_tier='sourced'; removed a hardcoded Marathon roster.
+   MIRANDA/other editors untouched.
+4. MIRANDA self-select gate (c79f59a): the ROOT fix. editorial.allowSelfSelect config
+   (default FALSE). Marathon=true (self-selects as before, BYTE-IDENTICAL). Non-Marathon
+   games = grounded-candidates-ONLY: if no candidate passes the gate, MIRANDA is SKIPPED
+   cleanly (roster-filter exclusion like patch-freeze - no ungrounded/Marathon self-
+   select, no outage, cron continues). So Wardogs MIRANDA only ever writes GROUNDED
+   weapon guides (from the 25 queued candidates) or nothing. Decision rationale: self-
+   select was BOTH the Marathon-contamination path AND the ungrounded-content path;
+   gating it fixes both. Grounded-only fits the moat.
+
+--- PROVEN ---
+A manually-triggered wardogs NEXUS draft came back CLEAN: real Wardogs patch-0.11
+content, zero Marathon concepts, honest-null on thin coverage, an "Our Read (analysis)"
+section separating judgment from sourced fact. This is the first publishable clean
+Wardogs autonomous article.
+
+--- FLAGGED RESIDUALS / ONBOARDING CHECKLIST (do NOT skip for future games) ---
+- MIRANDA's DEFAULT prompt (buildMirandaPrompt, editorCore.js:1093/1095/1123/1127) is
+  STILL Marathon-hardcoded. Harmless NOW (only Marathon has allowSelfSelect=true, and
+  those are its own concepts). BUT: no future game may set allowSelfSelect:true until
+  that default prompt is de-Marathon-ified / made per-game. This is a hard onboarding
+  gate.
+- SPECIFIC-FIGURE SOURCING (minor, unverified): the clean NEXUS draft stated "2 million
+  copies", "400,000 peak concurrent" - confirm these come from the ingested source, not
+  NEXUS memory. If NEXUS still generates specific figures from memory, tighten the
+  source-binding to forbid unsourced numbers. Not contamination, a refinement.
+- ONBOARDING CHECKLIST for a new game's editors (config, not code): vocabulary block +
+  editorial.primaryTool + (leave allowSelfSelect off = grounded-only until the default
+  prompt is de-Marathon'd) + seed its content_candidate from its own verified entities.
+  Then editors produce clean game-X content by construction.
+
+--- STILL OPEN (Wardogs arc) ---
+- Wardogs generateNews was NOT paused (operator's call); the fixes are live so the next
+  cron produces clean.
+- The 25 wardogs weapon candidates remain queued; a grounded MIRANDA weapon guide (A-91
+  etc.) should produce when a candidate passes the gate. Verify on the next run.
+- Digest fix (3621123 earlier today): counts actionable-held only (32->1), so the digest
+  now reflects real reviewable drafts.
+
+---
+
 ## 2026-09-18 - Footer buildout complete (all hubs) + reusable per-game scrim dial
 
 Themed-footer buildout across the network is DONE, sequenced one-hub-per-window (the
