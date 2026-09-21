@@ -10,6 +10,7 @@ import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { JUSTIN_PERSON, PUBLISHER_ORG, approvalClause } from '@/lib/authorEntity';
+import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/articleContent';
 import Link from 'next/link';
@@ -21,7 +22,7 @@ async function fetchArticle(config, slug) {
   try {
     var { data } = await supabase
       .from('feed_items')
-      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, game_slug, thumbnail')
+      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, game_slug, thumbnail, provenance_tier')
       .eq('slug', slug).eq('game_slug', config.slug).eq('is_published', true)
       .maybeSingle();
     return data || null;
@@ -131,9 +132,12 @@ export default async function GameArticle({ config, sectionForArticle, params })
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.5 }}>/</span>
         <span>{rt}</span>
       </div>
-      {/* Authorship receipt (Brief 2a): AI-drafted, then verified in-game and approved by the
-          real operator. Desk shown above, so this clause omits it. */}
-      <div style={{ marginTop: -16, marginBottom: 28, fontSize: 12, color: 'var(--text-tertiary)' }}>{approvalClause(article.created_at)}</div>
+      {/* Authorship receipt (Brief 2a/2b): AI-drafted, then approved by the real operator.
+          Accountability only -- the verification claim lives in the tier badge below. Desk
+          shown above, so this clause omits it. */}
+      <div style={{ marginTop: -16, marginBottom: 12, fontSize: 12, color: 'var(--text-tertiary)' }}>{approvalClause(article.created_at)}</div>
+      {/* Chain of Custody tier badge (Brief 2b): renders from provenance_tier; null -> nothing. */}
+      <div style={{ marginBottom: 28 }}><ArticleProvenanceBadge tier={article.provenance_tier} /></div>
 
       {keyFacts && keyFacts.length > 0 ? (
         <ul style={{ margin: '0 0 28px', padding: '16px 18px', listStyle: 'none', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6 }}>

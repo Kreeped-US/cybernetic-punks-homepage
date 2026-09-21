@@ -37,7 +37,7 @@ async function fetchArticle(slug) {
   try {
     var { data } = await supabase
       .from('feed_items')
-      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, verified_source, game_slug, thumbnail')
+      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, verified_source, game_slug, thumbnail, provenance_tier')
       .eq('slug', slug)
       .eq('game_slug', WARDOGS_GAME_SLUG)
       .eq('is_published', true)
@@ -157,9 +157,13 @@ export default async function WardogsArticlePage({ params }) {
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.5 }}>/</span>
         <span>{rt}</span>
       </div>
-      {/* Authorship receipt (Brief 2a): AI-drafted, then verified in-game and approved by the
-          real operator. Desk shown above, so this clause omits it. */}
-      <div style={{ marginTop: -16, marginBottom: 28, fontSize: 12, color: 'var(--text-tertiary)' }}>{approvalClause(article.created_at)}</div>
+      {/* Authorship receipt (Brief 2a/2b): AI-drafted, then approved by the real operator.
+          Accountability only -- the verification claim lives in the tier badge below. Desk
+          shown above, so this clause omits it. */}
+      <div style={{ marginTop: -16, marginBottom: 12, fontSize: 12, color: 'var(--text-tertiary)' }}>{approvalClause(article.created_at)}</div>
+      {/* Chain of Custody tier badge (Brief 2b): moved up to the byline/receipt zone for the
+          standardized prominent placement; renders from provenance_tier, null -> nothing. */}
+      <div style={{ marginBottom: 28 }}><ArticleProvenanceBadge tier={article.provenance_tier} /></div>
 
       {/* Key facts (optional, from the body) */}
       {keyFacts && keyFacts.length > 0 ? (
@@ -202,11 +206,6 @@ export default async function WardogsArticlePage({ params }) {
         </div>
       ) : null}
 
-      {/* Article-level provenance badge (Build 1): renders from article.provenance_tier when set
-          (Build 2 sets it; column via the 2026-09-18 migration). NULL/absent -> nothing, so existing
-          articles are unchanged. Sits in the provenance zone alongside the attributed caveat below. */}
-      <ArticleProvenanceBadge tier={article.provenance_tier} />
-
       {/* ATTRIBUTED-DATA CAVEAT (caveat layer 3 -- the structural GUARANTEE, Brief B).
           Driven by the verified_source COLUMN, not the prose: a MIRANDA-Wardogs guide grounded
           in community-attributed weapon data (verified_source set in the cron) ALWAYS shows this
@@ -216,7 +215,7 @@ export default async function WardogsArticlePage({ params }) {
           "not Bulkhead-official" caveat. */}
       {article.editor === 'MIRANDA' && article.verified_source ? (
         <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, background: '#121519', border: '1px solid #1d2026', borderLeft: '3px solid #e0a13a', borderRadius: '0 3px 3px 0', padding: '9px 13px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: 720 }}>
-          <TierIcon tier="attributed" size={13} title="Attributed / community-tested" />
+          <TierIcon tier="attributed" size={13} title="Reported - community-tested" />
           <span>Community-tested, attributed to {String(article.verified_source).split(',')[0]}. Not Bulkhead-official / not owner-verified.</span>
         </div>
       ) : null}

@@ -25,6 +25,7 @@ import { getGameConfig } from '@/lib/games';
 import { getAllEditors, getEditorDisplay, editorByline } from '@/lib/editors/roster';
 import { networkGameStatus } from '@/lib/network/gameStatus';
 import { JUSTIN_PERSON, AUTHOR_URL } from '@/lib/authorEntity';
+import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
 
 // The Person entity for the accountable human (Justin), anchored at /about#justin -- this is the
 // SAME @id every article's author/reviewedBy points at (lib/authorEntity.js). Brief 2a.
@@ -140,11 +141,36 @@ export default function AboutPage() {
           </div>
         </div>
 
+        {/* Chain of Custody -- the provenance explainer + locked-vocabulary tier legend. The
+            #chain-of-custody anchor is the target of every article badge's "?" link. The 5 tiers
+            render from the SINGLE-SOURCE CONFIDENCE_TIERS so this legend and the badges can never
+            drift. Keeps the AI-disclosure + honest-null framing. */}
+        <div id="chain-of-custody" style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px', scrollMarginTop: 90 }}>
+          <Label>Chain of Custody</Label>
+          <Body>
+            Every claim we publish carries a Chain of Custody tier - a plain label, on the page, for how well we can stand behind it. It is the SAME vocabulary everywhere: on an article&apos;s byline badge, on a weapon&apos;s stat row, and in this legend. The desks are AI-drafted and every piece is approved by the operator; the tier is where the verification claim lives, so an approved article is never dressed up as more confirmed than it is. When we don&apos;t have a number, the field stays blank - honest-null - never guessed.
+          </Body>
+          <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {CONFIDENCE_TIERS.map(function (t) {
+              return (
+                <li key={t.key} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--surface)', border: '1px solid var(--line)', borderLeft: '2px solid ' + t.color, borderRadius: 4, padding: '12px 16px' }}>
+                  <span style={{ color: t.color, marginTop: 2, flexShrink: 0, display: 'inline-flex' }}><TierIcon tier={t.key} size={16} /></span>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ fontFamily: 'var(--display)', fontSize: 15, fontWeight: 700, color: t.color }}>{t.label}</span>
+                    <span style={{ fontSize: 13.5, color: 'var(--text-dim)' }}>{' - ' + t.caption}</span>
+                    <div style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--text-dim)', marginTop: 3 }}>{t.desc}</div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
         {/* The editorial desk - ROSTER-DRIVEN */}
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>The desks</Label>
           <Body>
-            Cybernetic Punks is organized into specialized desks - analysis, meta and news, builds, community, field guide, and economy - each owning a beat. The desks are AI-drafted: they interpret verified data, they don&apos;t invent it. Nothing publishes without review - every piece is checked in-game and approved by the operator before it goes live.
+            Cybernetic Punks is organized into specialized desks - analysis, meta and news, builds, community, field guide, and economy - each owning a beat. The desks are AI-drafted: they interpret verified data, they don&apos;t invent it. Nothing publishes without review - every piece is approved by the operator before it goes live, and each carries a Chain of Custody tier showing exactly how well we can stand behind it.
           </Body>
           <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {desk.map(function (ed) {

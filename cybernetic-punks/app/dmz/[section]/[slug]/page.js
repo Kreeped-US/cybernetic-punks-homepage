@@ -34,6 +34,7 @@ import { DMZ_ARTICLE_SEO, dmzSectionForArticle, dmz } from '@/lib/games/dmz';
 import { isGameLive } from '@/lib/network/gameStatus';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { JUSTIN_PERSON, PUBLISHER_ORG, approvalClause } from '@/lib/authorEntity';
+import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
 import ToolCTA from '@/components/ToolCTA';
@@ -58,7 +59,7 @@ async function fetchArticle(slug) {
   try {
     var { data } = await supabase
       .from('feed_items')
-      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, creator_info, directive_type, game_slug')
+      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, creator_info, directive_type, game_slug, provenance_tier')
       .eq('slug', slug)
       .eq('game_slug', DMZ_GAME_SLUG)
       .eq('is_published', true)
@@ -401,9 +402,12 @@ export default async function DmzArticlePage({ params }) {
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.5, fontWeight: 600, marginTop: 2 }}>
             {[pubDate, rt].filter(Boolean).join('  ·  ')}
           </div>
-          {/* Authorship receipt (Brief 2a): AI-drafted, then verified in-game and approved by
-              the real operator. Desk shown above, so this clause omits it. */}
+          {/* Authorship receipt (Brief 2a/2b): AI-drafted, then approved by the real operator.
+              Accountability only -- the verification claim lives in the tier badge below. Desk
+              shown above, so this clause omits it. */}
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.3, marginTop: 3 }}>{approvalClause(article.created_at)}</div>
+          {/* Chain of Custody tier badge (Brief 2b): renders from provenance_tier; null -> nothing. */}
+          <div style={{ marginTop: 8 }}><ArticleProvenanceBadge tier={article.provenance_tier} /></div>
         </div>
         <div style={{ marginLeft: 'auto' }}>
           <DmzShare url={canonical} title={article.headline} mode="row" />

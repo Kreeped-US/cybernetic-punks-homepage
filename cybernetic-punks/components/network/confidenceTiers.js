@@ -4,11 +4,12 @@
 // the /methodology legend, so the mark on a weapon page and the mark that explains it can never
 // drift (same discipline as the shared correction-matcher).
 //
-// THE GRADIENT (most -> least confident) -- shape encodes confidence, color reinforces it:
-//   verified   solid disc + check   green   -- confirmed in-game or in patch notes
-//   partial    half-filled disc     amber   -- row confirmed, a field still pending
-//   attributed hollow ring          bronze  -- reported (devlog/beta), not confirmed by us
-//   pending    dash                 dim     -- structure known, numbers not published (honest-null)
+// THE GRADIENT (most -> least confident) -- shape encodes confidence, color reinforces it. The
+// LABELS + COLORS are the locked Chain of Custody vocabulary (Brief 2b):
+//   verified   solid disc + check   "Verified"     green  -- confirmed in-game or in patch notes
+//   partial    half-filled disc     "Mixed"        blue   -- row confirmed, a field still pending
+//   attributed hollow ring          "Reported"     amber  -- reported (devlog/beta/community), not confirmed by us
+//   pending    dash                 "Unconfirmed"  slate  -- structure known, numbers not published (honest-null)
 //
 // REAL-TIER MAPPING (not invented): lib/marathon/provenanceBadge.js emits only 'verified' and
 // 'partial' (honest-null returns no badge), so Marathon entity pages show the top two marks. The
@@ -19,16 +20,24 @@
 // Icons take `color` from currentColor so a consumer sets it once on the wrapper (the badge already
 // colors its text per tone; the legend sets it per row). Server-safe, no state.
 
+// CHAIN OF CUSTODY -- the LOCKED label vocabulary + semantic colors (Brief 2b, 2026-09-21).
+// ONE vocabulary everywhere (article badge, entity/in-prose confidence marks, tooltips, /about,
+// /methodology): verified->"Verified", partial->"Mixed", attributed->"Reported",
+// pending->"Unconfirmed", analysis->"Our Read". Semantic color per tier:
+//   Verified=green, Mixed=blue, Reported=amber, Unconfirmed=slate, Our Read=violet.
+// Each carries a short plain-language `caption` (shown inline on the badge) AND a longer `desc`
+// (tooltip / legend copy). Icon keys are UNCHANGED (TierIcon still switches on key), so the shapes
+// are stable; only the label/color/caption vocabulary is locked here.
 export const CONFIDENCE_TIERS = [
-  { key: 'verified',   label: 'Verified',              color: '#00ff88', desc: 'Confirmed in-game or in official patch notes.' },
-  { key: 'partial',    label: 'Partially verified',    color: '#ffb400', desc: 'The row is confirmed, but one or more fields are still pending.' },
-  { key: 'attributed', label: 'Attributed / beta-observed', color: '#c2933f', desc: 'Reported in a devlog or a beta build - usable, but not confirmed by us and subject to change at launch.' },
-  { key: 'pending',    label: 'Pending',               color: '#9c908c', desc: 'Structure is known but the numbers are not published yet - shown blank, never guessed.' },
+  { key: 'verified',   label: 'Verified',    color: '#00ff88', caption: 'primary-source confirmed', desc: 'Confirmed in-game or in official patch notes - a primary source.' },
+  { key: 'partial',    label: 'Mixed',       color: '#4ea3ff', caption: 'some fields still pending', desc: 'The row is confirmed, but one or more fields are still pending.' },
+  { key: 'attributed', label: 'Reported',    color: '#e0a13a', caption: 'community-reported', desc: 'Reported in a devlog, a beta build, or by the community - usable, but not confirmed by us and subject to change.' },
+  { key: 'pending',    label: 'Unconfirmed', color: '#8b95a7', caption: 'not yet published', desc: 'Structure is known but the numbers are not published yet - shown blank, never guessed.' },
   // ANALYSIS is a DIFFERENT AXIS from the confidence gradient above (like 'structure'): it does not
   // rate how confirmed a FACT is -- it marks editorial JUDGMENT/opinion ("our read"), which is not a
-  // fact claim at all. Distinct violet (not attributed's bronze) so opinion never reads as sourced
+  // fact claim at all. Distinct violet (not Reported's amber) so opinion never reads as sourced
   // data. Used by the article-level provenance badge + the OUR READ callout (lib/articleBody.js).
-  { key: 'analysis',   label: 'Analysis',              color: '#a78bfa', desc: 'Editorial analysis and judgment - our read, not a confirmed fact.' },
+  { key: 'analysis',   label: 'Our Read',    color: '#a78bfa', caption: 'our reasoned call, not fact', desc: 'Editorial analysis and judgment - our read, not a confirmed fact.' },
 ];
 
 // tier -> icon. A 16x16 viewBox scaled to `size`; fill/stroke inherit currentColor. The check on the

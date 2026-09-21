@@ -39,18 +39,23 @@ function receiptDate(createdAt) {
 }
 
 // The approval CLAUSE alone (no desk label) -- used on article pages that ALREADY show
-// the desk in a byline chip, so the desk is not repeated: "Verified in-game and approved
-// by Justin on <date>". Date derives from feed_items.created_at (no DB column added).
+// the desk in a byline chip, so the desk is not repeated: "Approved by Justin on <date>".
+// Date derives from feed_items.created_at (no DB column added).
+//
+// CHAIN OF CUSTODY SPLIT (Brief 2b, 2026-09-21): the receipt is ACCOUNTABILITY only -- it no
+// longer claims "verified in-game". Every draft is human-approved, but not every article is a
+// primary-source VERIFICATION (an Attributed/Reported or Our Read piece is approved yet not
+// "verified in-game"). The verification CLAIM now lives solely in the per-article tier badge
+// (ArticleProvenanceBadge), so the receipt can never contradict the badge.
 export function approvalClause(createdAt) {
   var dateStr = receiptDate(createdAt);
   return dateStr
-    ? 'Verified in-game and approved by Justin on ' + dateStr
-    : 'Verified in-game and approved by Justin';
+    ? 'Approved by Justin on ' + dateStr
+    : 'Approved by Justin';
 }
 
-// The FULL per-article byline RECEIPT: "<Desk> - Verified in-game and approved by Justin
-// on <date>". For surfaces that do NOT separately show the desk. deskLabel comes from the
-// roster section label.
+// The FULL per-article byline RECEIPT: "<Desk> - Approved by Justin on <date>". For surfaces
+// that do NOT separately show the desk. deskLabel comes from the roster section label.
 export function verifiedReceipt(deskLabel, createdAt) {
   var desk = deskLabel || 'Editorial Desk';
   return desk + ' - ' + approvalClause(createdAt);

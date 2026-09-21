@@ -1160,13 +1160,13 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
               <span style={{ fontSize: 10, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{editorByline(item.editor)}</span>
             </Link>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace' }}>{publishedAt} · {rt}</span>
-            {/* Authorship receipt (Brief 2a): AI-drafted, then verified in-game and approved by the
-                real operator. Desk is shown in the chip above, so this clause omits it. */}
+            {/* Authorship receipt (Brief 2a/2b): AI-drafted, then approved by the real operator.
+                Accountability only -- the verification claim lives in the tier badge. Desk is shown
+                in the chip above, so this clause omits it. */}
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 }}>{approvalClause(item.created_at)}</span>
             {item.source && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', border: '1px solid #22252e', padding: '3px 7px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{item.source}</span>}
-            {/* Article-level provenance badge (Build 1): renders from item.provenance_tier when set
-                (Build 2 sets it; column via 2026-09-18 migration). NULL/absent -> renders nothing, so
-                existing articles are byte-identical. */}
+            {/* Chain of Custody tier badge (Brief 2b): renders from item.provenance_tier; the
+                verification claim lives here. NULL/absent -> renders nothing (honest-null). */}
             <ArticleProvenanceBadge tier={item.provenance_tier} />
           </div>
 

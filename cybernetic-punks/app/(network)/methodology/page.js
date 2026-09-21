@@ -74,7 +74,7 @@ export default function MethodologyPage() {
         </Body>
         <ul style={{ margin: '0 0 16px', paddingLeft: 4, listStyle: 'none', maxWidth: '68ch' }}>
           <li style={{ margin: '0 0 10px', paddingLeft: 18, position: 'relative', fontSize: 15, lineHeight: 1.7, color: 'var(--text-dim)' }}><span style={{ position: 'absolute', left: 0, color: 'var(--gold)' }}>&bull;</span> <strong style={{ color: 'var(--text)' }}>Confirmed</strong> - stated first-party by the developer or verified in-game.</li>
-          <li style={{ margin: '0 0 10px', paddingLeft: 18, position: 'relative', fontSize: 15, lineHeight: 1.7, color: 'var(--text-dim)' }}><span style={{ position: 'absolute', left: 0, color: 'var(--gold)' }}>&bull;</span> <strong style={{ color: 'var(--text)' }}>Attributed / beta-observed</strong> - real, but seen in a beta build or a community capture, and labeled as exactly that. It is not the launch record until the live game confirms it.</li>
+          <li style={{ margin: '0 0 10px', paddingLeft: 18, position: 'relative', fontSize: 15, lineHeight: 1.7, color: 'var(--text-dim)' }}><span style={{ position: 'absolute', left: 0, color: 'var(--gold)' }}>&bull;</span> <strong style={{ color: 'var(--text)' }}>Reported</strong> - real, but seen in a beta build or a community capture (or otherwise community-reported), and labeled as exactly that. It is not the launch record until the live game confirms it.</li>
           <li style={{ margin: '0 0 10px', paddingLeft: 18, position: 'relative', fontSize: 15, lineHeight: 1.7, color: 'var(--text-dim)' }}><span style={{ position: 'absolute', left: 0, color: 'var(--gold)' }}>&bull;</span> <strong style={{ color: 'var(--text)' }}>Honest-null</strong> - when a number is not published, the field stays empty. We do not fill it with a guess, a model&apos;s hallucination, or a competitor&apos;s estimate.</li>
         </ul>
         <Body>
@@ -131,7 +131,7 @@ export default function MethodologyPage() {
         {/* ===================== BUILDS ===================== */}
         <Label>How builds are chosen</Label>
         <Body>
-          Two things wear the word "build". <strong style={{ color: 'var(--text)' }}>Best Builds</strong> on a weapon or shell page are reviewed write-ups - a specific loadout with the reasoning behind it. The <strong style={{ color: 'var(--text)' }}>Loadout Finder</strong> is the interactive tool: you give it your shell, playstyle, and rank goal, and it assembles a full loadout - weapons, mods, cores, implants - by reasoning over the game&apos;s verified stat tables. It works from the same checked data everything else here uses; it cross-references real values and does not invent stats or item names. It is a starting point tuned to your inputs, not a decree.
+          Two things wear the word &quot;build&quot;. <strong style={{ color: 'var(--text)' }}>Best Builds</strong> on a weapon or shell page are reviewed write-ups - a specific loadout with the reasoning behind it. The <strong style={{ color: 'var(--text)' }}>Loadout Finder</strong> is the interactive tool: you give it your shell, playstyle, and rank goal, and it assembles a full loadout - weapons, mods, cores, implants - by reasoning over the game&apos;s verified stat tables. It works from the same checked data everything else here uses; it cross-references real values and does not invent stats or item names. It is a starting point tuned to your inputs, not a decree.
         </Body>
 
         {/* ===================== THE DIFFERENCE ===================== */}

@@ -7,6 +7,72 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Chain of Custody badge system STAGED + HELD (Brief 2b, stacks on 2a/2a-brand/2a-voice)
+
+STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand + 2a-voice), NOT merged. Same one-deploy
+bundle. Standardizes the article provenance badge sitewide, locks one label vocabulary, upgrades the
+badge visual, corrects the accountability receipt, and brands the system "Chain of Custody".
+Content/display/schema only -- no URL/route/<title>/structural change. No DB writes.
+
+READ-FIRST tier counts (read-only SELECTs over feed_items, all rows): the ONLY non-null tier present
+is `sourced` -- 3 rows total, 1 PUBLISHED (a wardogs NEXUS article). Everything else is NULL
+(432/435). No attributed/analysis/partial/pending rows exist yet. So today the badge renders on
+~nothing (honest-null); the vocabulary still covers all tiers for future rows.
+
+CHANGES:
+1. LOCKED vocabulary in components/network/confidenceTiers.js (the SINGLE source feeding the article
+   badge, entity/in-prose confidence marks, tooltips, /about + /methodology legends): verified->
+   "Verified", partial->"Mixed", attributed->"Reported", pending->"Unconfirmed", analysis->"Our Read".
+   Semantic colors: Verified=green, Mixed=blue(#4ea3ff), Reported=amber(#e0a13a), Unconfirmed=
+   slate(#8b95a7), Our Read=violet. Added a short plain-language `caption` per tier (kept `desc` as the
+   longer tooltip/legend copy). Icon keys unchanged (shapes stable).
+2. Badge standardized across ALL 5 article surfaces: added ArticleProvenanceBadge (+ widened the
+   fetch SELECT to include provenance_tier) on dmz, pubg-dednet, and GameArticle; moved wardogs' badge
+   up from the bottom "provenance zone" to the byline/receipt zone to match marathon/intel. marathon/
+   intel already selected `*`. Null/absent tier -> renders nothing (honest-null; never fabricated).
+3. Badge visual (components/network/ArticleProvenanceBadge.js rewritten): pulls label/color/caption
+   from the single source; shows icon + LABEL + caption; CSS-only mount motion (opacity + transform
+   ONLY -> zero layout shift; disabled under prefers-reduced-motion; inline <style> is a Fragment-level
+   sibling in flow content, display:none, so no CLS and valid nesting); a small "?" links to
+   /about#chain-of-custody.
+4. Receipt CORRECTED in lib/authorEntity.js: approvalClause() now returns "Approved by Justin on
+   <date>" (was "Verified in-game and approved by Justin on <date>"). Propagates to all 5 routes. The
+   VERIFICATION claim now lives ONLY in the tier badge, so the receipt can never contradict a
+   Reported / Our Read article. Also softened the same blanket "verified in-game" claim on /editors
+   meta + the /about desk line (the stale 2a receipt comments were updated on all 5 surfaces).
+5. "Chain of Custody" branded on /about: new #chain-of-custody section (the "?"-link anchor) defining
+   the 5 tiers from the SAME single source (label + caption + desc), keeping the AI-disclosure +
+   honest-null copy. Fixed the /methodology hardcoded prose "Attributed / beta-observed" -> "Reported"
+   so its prose matches its own CONFIDENCE_TIERS-driven legend (+ escaped a pre-existing unescaped-
+   quote lint error in that file).
+
+VERIFY (live, dev server):
+- /about#chain-of-custody renders all 5 tiers in the locked vocabulary with captions + colored marks;
+  no console errors.
+- A marathon intel article renders the corrected receipt "Approved by Justin on September 18, 2026"
+  (no "verified in-game"); badge honest-null (this article's tier is NULL -> no badge); no console errors.
+- CLS = 0 BY CONSTRUCTION: the mount animation touches only opacity + transform, the badge reserves
+  its box from first paint, the <style> is display:none, and reduced-motion disables the animation.
+  (A live Lighthouse CLS pass belongs on the deployed build; not run under stage-and-HOLD.)
+- eslint clean on all 11 changed files (only pre-existing <img> warnings). No <title>/H1/meta-
+  description/URL/route change.
+
+FLAGS (not touched; operator's call):
+- The one PUBLISHED `sourced` article (wardogs slug ...-6tpw, NEXUS news) is NOT in
+  WARDOGS_ARTICLE_SECTION, so it 404s -> no routable article currently carries a non-null tier, so the
+  badge could not be shown live with a real tier. Pre-existing content-routing gap, not a 2b bug; the
+  badge is wired + ready. NEXUS sets provenance_tier='sourced' via the cron (route.js) when the column
+  is live.
+- SEPARATE entity-badge systems still use the OLD labels and were left untouched (out of the brief's
+  named scope, and lib/marathon/* sits on the frozen Marathon vertical): lib/marathon/provenanceBadge.js
+  ("Verified"/"Partially verified") and components/game/GameArsenal.js ("Attributed"). Consider a
+  follow-up to fold them into the locked vocabulary.
+
+GATING STATE: 2b committed on feat/editorial-recovery (on top of 2a + 2a-brand + 2a-voice) and HELD.
+Awaiting 2c + Fable + the single one-deploy greenlight to merge the whole bundle.
+
+---
+
 ## 2026-09-21 - Generation voice de-personed STAGED + HELD (Brief 2a-voice, stacks on 2a/2a-brand)
 
 STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand), NOT merged. Same one-deploy bundle.

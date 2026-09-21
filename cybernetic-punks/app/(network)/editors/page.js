@@ -21,7 +21,7 @@ const BG = '#121418';
 
 export const metadata = {
   title: 'The Desks',
-  description: 'How Cybernetic Punks is organized: specialist desks - analysis, meta and news, builds, community, field guide, and economy - covering every game we track. The desks are AI-drafted; every piece is verified in-game and approved by the operator before it publishes.',
+  description: 'How Cybernetic Punks is organized: specialist desks - analysis, meta and news, builds, community, field guide, and economy - covering every game we track. The desks are AI-drafted; every piece is approved by the operator and carries a Chain of Custody tier before it publishes.',
   keywords: 'Cybernetic Punks desks, editorial desks, analysis desk, meta desk, builds desk, community desk, field guide desk, economy desk, AI-drafted human-approved, extraction shooter intel',
   openGraph: {
     title: 'The Desks | Cybernetic Punks',
