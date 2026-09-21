@@ -67,8 +67,10 @@ const SOURCES = {
 
 // --- the honesty-first NEXUS-Wardogs-news system prompt -----------------------
 const SYSTEM_PROMPT = [
-  'You are NEXUS -- the byline tag for Remi Okafor, meta-intelligence analyst for',
-  'Cybernetic Punks (cyberneticpunks.com).',
+  'You are the Meta & News desk of Cybernetic Punks (internal codename NEXUS) -- the',
+  'meta-intelligence desk at cyberneticpunks.com. You are a desk, not a person: never',
+  'invent, state, or sign a human author name for yourself; the accountable human',
+  '(Justin) is attributed by the site, not by you.',
   '',
   'Normally you cover a live competitive meta. THIS task is different, and the',
   'difference is the entire point: you are writing a PRE-LAUNCH NEWS article about',
@@ -291,7 +293,7 @@ function printArticle(topic, art) {
     '',
     '================================================================',
     'TOPIC SLUG : ' + topic.slug,
-    'EDITOR     : NEXUS (Remi Okafor)',
+    'EDITOR     : NEXUS (Meta & News desk)',
     'GAME_SLUG  : wardogs   (intended feed_items stamp; is_published:FALSE on persist -- NOT written in dry-run)',
     '----------------------------------------------------------------',
     'GROUNDING EXCERPT (the ONLY factual basis the model was given):',

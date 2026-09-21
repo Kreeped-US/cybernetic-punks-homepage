@@ -7,6 +7,64 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Generation voice de-personed STAGED + HELD (Brief 2a-voice, stacks on 2a/2a-brand)
+
+STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand), NOT merged. Same one-deploy bundle.
+2a fixed the RENDERED author identity; this fixes the GENERATION VOICE so new drafts speak as
+DESKS, never as fabricated people, and can never contradict the author=Justin surface. Backend,
+non-crawler-visible, freeze-safe. No DB writes. SCOPE: persona-name / fabricated-human identity
+ONLY -- the game-vocabulary layer (DATA_INTEGRITY Marathon nouns, MIRANDA's Marathon voice
+examples) was deliberately NOT touched (separate workstream).
+
+STEP 1 -- READ-ONLY recon over feed_items (SELECTs only, service-role so ALL rows incl drafts):
+- ZERO occurrences of any of the 7 full persona names (Remi Okafor, Miranda Malini, Marcus Vane,
+  Felix Andersen, Tariq Webb, Vera Sloan, Vivian Cross) in any headline or body.
+- ZERO authorial self-references (I'm <first>, signed sign-offs, "<first> here", etc.) for any
+  persona. The nonzero raw substring "mentions" were pure noise (Remi->"remind/remaining",
+  Vera->"several/coverage/average", Cross->"across/crosshair"); 0 authorial in every case.
+- CONCLUSION: no published or draft body self-references a fabricated person, so existing copy
+  does NOT contradict the new author=Justin surface. NO body cleanup needed (the pre-registered
+  "cleanup may be operator SQL or regeneration" is a no-op -- nothing to clean).
+
+STEP 2 -- CHANGE (staged): de-person the generation voice
+- lib/editorCore.js EDITOR_PROMPTS (CIPHER/NEXUS/DEXTER/GHOST/MIRANDA): identity rewritten from a
+  named human to the DESK ("You are the Analysis desk of Cybernetic Punks (internal codename
+  CIPHER)...", etc.); the "VOICE - you write as <Person>, the <role> behind the <tag> tag" line
+  is now "VOICE - you write as the <Desk> desk"; MIRANDA lost "senior enough that your name is
+  your byline." A shared NO_SELF_NAME_RULE is appended to every editor prompt (incl. the default
+  buildMirandaPrompt): write AS THE DESK, never invent/state/sign a human author name, Justin is
+  attributed by the SITE not by the desk. The editorial-stance voice bullets (evidence
+  absolutism, forward-lean, etc.) were KEPT -- they are the desk's voice, not a human bio.
+- COMMENT SYSTEM RETIRED: deleted COMMENT_VOICES (the 5 person-named comment voices),
+  COMMENT_AFFINITY, selectCommenters, and the comment integrity-rule consts. generateArticleComments
+  and sampleEditorComment are now inert, write-free RETIRED STUBS (return []/'') that keep their
+  exports so their importers stay build-clean WITHOUT editing them: app/api/cron/route.js (the call
+  is already gated off by EDITOR_COMMENTS_ENABLED=false from Brief 1b) and app/api/dev/sample-editor/
+  route.js. Removed the now-unused COMMENT_MODEL import. Removing those CALL SITES + the "panel
+  weighs in" display + purging the stored article_comments rows remains Brief 2c.
+- gen-*.mjs (wardogs/pubg-dednet/dmz) + lib/network/vantage.js: NEXUS/VANTAGE persona person-names
+  removed from the generation prompts and reframed to "the Meta & News desk" / "the Network desk"
+  (each with the no-self-name clause). pubg-dednet's proper-noun ALLOW list dropped "Remi Okafor"/
+  "Okafor". vantage.js header comments de-named (person identity retired).
+
+VERIFY:
+- grep over *.{js,mjs,jsx,ts,tsx}: zero persona person-names as an editor self-identity remain
+  (the only hits are this file's own retirement comment documenting what was removed).
+- No other module injects a persona name into a generation prompt: the shared
+  lib/generation/grounding.js buildSystemPrompt is fully parameterized (personaLines passed in),
+  carries no embedded persona.
+- eslint clean on all 5 changed files AND both consumer routes (imports still resolve). No
+  build-affecting import/export signature change (both comment functions still exported).
+
+KNOWN / DEFERRED (unchanged by this pass, flagged): MIRANDA's default buildMirandaPrompt still
+carries Marathon-specific VOICE examples (Triage/Vandal/Cradle) and DATA_INTEGRITY_RULES still
+names Marathon nouns -- that is the game-vocabulary workstream, explicitly out of 2a-voice scope.
+
+GATING STATE: 2a-voice committed on feat/editorial-recovery (on top of 2a + 2a-brand) and HELD.
+Awaiting 2b/2c + Fable + the single one-deploy greenlight to merge the whole bundle.
+
+---
+
 ## 2026-09-21 - Homepage brand copy STAGED + HELD (Brief 2a-brand, stacks on 2a)
 
 STAGED on feat/editorial-recovery (stacks on the 2a commit), NOT merged. Rides in the same

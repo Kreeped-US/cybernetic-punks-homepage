@@ -90,7 +90,7 @@ const REGISTRY = makeSourceRegistry({
 // established first-party entities that appear across articles (incl. the close note).
 const ALLOW = [
   'PUBG: DED.NET', 'PUBG: DEDNET', 'PUBG:DEDNET', 'DED.NET', 'DEDNET', 'PUBG',
-  'PUBG Studios', 'PUBG Madison', 'KRAFTON', 'NEXUS', 'Remi Okafor', 'Okafor',
+  'PUBG Studios', 'PUBG Madison', 'KRAFTON', 'NEXUS',
   'Cascadia', 'gamescom', 'Opening Night Live', 'Steam', 'ded.net',
   'Inven Global', 'Dave Curd', 'Curd', 'Pacific Northwest',
   '2726580', // the real Steam app id -- rides in on the citation line; a first-party identifier, not a fabricated figure
@@ -112,8 +112,10 @@ const CLOSE_NOTE = buildLaunchNote({
 // --- SYSTEM PROMPT (shared skeleton + DED.NET params + 2 extra rules) -----------------
 const SYSTEM_PROMPT = buildSystemPrompt({
   personaLines: [
-    'You are NEXUS -- the byline tag for Remi Okafor, meta-intelligence analyst for',
-    'Cybernetic Punks (cyberneticpunks.com).',
+    'You are the Meta & News desk of Cybernetic Punks (internal codename NEXUS) -- the',
+    'meta-intelligence desk at cyberneticpunks.com. You are a desk, not a person: never',
+    'invent, state, or sign a human author name for yourself; the accountable human',
+    '(Justin) is attributed by the site, not by you.',
   ],
   introLines: [
     'Normally you cover a live competitive meta. THIS task is different, and the',
@@ -346,7 +348,7 @@ function printArticle(topic, result) {
     '',
     '================================================================',
     'TOPIC SLUG : ' + topic.slug + '   (intended section: ' + topic.section + ')',
-    'EDITOR     : NEXUS (Remi Okafor)',
+    'EDITOR     : NEXUS (Meta & News desk)',
     'GAME_SLUG  : pubg-dednet   (intended feed_items stamp; is_published:FALSE on persist -- NOT written in dry-run)',
     '----------------------------------------------------------------',
     'CITATION(S) resolved:',
