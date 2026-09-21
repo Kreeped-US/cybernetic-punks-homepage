@@ -60,8 +60,7 @@ const DATA_INTEGRITY_RULES = `
 
 DATA INTEGRITY RULES - CRITICAL:
 - Every {{kit:entityList}} you reference MUST appear in the database injected below. Do not invent items.
-- Faction Armory specifics (item, rank required, Credit cost, material cost) may be cited ONLY when they appear in the VERIFIED ARMORY STOCK or VERIFIED FACTION RANK-GATING blocks injected below. For any faction or item NOT in those verified blocks, do not state a rank number, price, or cost - inventing it is a hallucination. When uncertain, name a gear item's source faction in general terms only.
-- {{kit:progressionSystem^}} perks, their stat tracks, and their Energy breakpoints MUST match the database EXACTLY. Do not invent perks or guess Energy costs.
+{{kit:gearSystemRule}}- {{kit:progressionSystem^}} perks, their stat tracks, and their {{kit:progressionMetric}} breakpoints MUST match the database EXACTLY. Do not invent perks or guess {{kit:progressionMetric}} costs.
 - Stat values (damage, fire rate, magazine size, health, shield, speed) MUST come from the database. Never estimate.
 - If you are not certain of a stat, unlock requirement, or {{kit:progressionSystem^}} breakpoint, OMIT it from the article rather than guess.
 - "+5% weapon handling" or "approximately 1500 credits" are HALLUCINATIONS unless those exact values appear in the database below.
@@ -84,7 +83,7 @@ VIDEO & STREAM CONTENT - CRITICAL:
 WORLD FACTS & GAME SYSTEMS - CRITICAL:
 - Game-world facts not held in the database below - map zones, named bosses, game modes, in-game events, currencies, seasonal mechanics, ability names, patch specifics - may ONLY be stated when they appear in the OFFICIAL {{cnp:dev^}} NEWS provided in this prompt or in the database blocks below.
 - NEVER invent a boss name, zone name, mode name, event name, currency amount, date, percentage, or ability name. If it is not in your verified sources, omit it.
-- {{kit:classNoun^}} ability names must match the SHELL STATS DATABASE exactly. If an ability is not listed there, do not name it.
+- {{kit:classNoun^}} ability names must match the {{kit:abilityDatabase}} exactly. If an ability is not listed there, do not name it.
 
 ARTICLE STRUCTURE & FORMATTING - CRITICAL:
 - Break the article into at least 3 sections. Each section begins with a short header.
@@ -107,7 +106,7 @@ Body text for the next section.
 
 READER ADDRESS - game-neutral:
 - Address the reader plainly as "you" (or "players" / "new players"). Do NOT address the reader, or refer to players in general, by an in-world noun such as "{{cnp:reader}}" - not "{{cnp:reader}}, do X", and not "advice for {{cnp:readers}}".
-- This applies ONLY to how you address the audience. Keep using "{{cnp:reader}}" where it names the game's actual entities and mechanics - Runner Shells, the Runner Grade, the eight Runners, Runner-vs-Runner - that is correct game vocabulary, not reader-address.`;
+- This applies ONLY to how you address the audience. Keep using "{{cnp:reader}}" where it names the game's actual entities and mechanics{{kit:entityVocabExamples}} - that is correct game vocabulary, not reader-address.`;
 
 // ===========================================================
 // CANONICAL TAG STANDARD - PERMANENT - APPLIES TO ALL EDITORS

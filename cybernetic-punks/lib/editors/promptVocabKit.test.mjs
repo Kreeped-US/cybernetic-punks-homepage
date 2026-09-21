@@ -28,6 +28,24 @@ test('marathon: meta-entity lists derive from toolEnums.metaTypes (weapon+shell)
   assert.equal(k.metaEntitiesAll, 'weapons and ALL shells');    // "ALL weapons and ALL shells"
 });
 
+test('Stage 2b-i marathon: DATA_INTEGRITY de-Marathon tokens resolve verbatim', () => {
+  const k = resolveKit(marathon);
+  assert.equal(k.progressionMetric, 'Energy');
+  assert.equal(k.abilityDatabase, 'SHELL STATS DATABASE');
+  // whole-phrase carves: byte-exact incl. leading " - " / trailing "\n"
+  assert.equal(k.entityVocabExamples, ' - Runner Shells, the Runner Grade, the eight Runners, Runner-vs-Runner');
+  assert.ok(k.gearSystemRule.startsWith('- Faction Armory specifics (item, rank required, Credit cost, material cost)'));
+  assert.ok(k.gearSystemRule.endsWith('general terms only.\n')); // carries its own trailing newline
+});
+
+test('Stage 2b-i no-vocab: standalone defaults + render-empty whole-phrase tokens', () => {
+  const k = resolveKit({ displayName: 'X', editorial: { promptKit: {} } });
+  assert.equal(k.progressionMetric, 'resource');       // "their resource breakpoints"
+  assert.equal(k.abilityDatabase, 'ability database'); // "match the ability database exactly"
+  assert.equal(k.entityVocabExamples, undefined);      // clause collapses: "mechanics - that is correct"
+  assert.equal(k.gearSystemRule, undefined);           // whole Faction Armory bullet drops
+});
+
 test('no promptKit.vocab: BARE grammatical defaults', () => {
   const k = resolveKit({ displayName: 'X', editorial: { promptKit: {} } });
   assert.equal(k.entityList, 'weapon, item, and system entity'); // bare (no leading "every")

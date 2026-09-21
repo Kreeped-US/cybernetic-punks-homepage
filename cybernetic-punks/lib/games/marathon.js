@@ -509,6 +509,13 @@ export const marathon = {
         // refined from "Holotag" -> "holotag".
         rankMetric: 'holotag',
         classRoster: 'Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel',
+        // Stage 2b-i: de-Marathon the shared DATA_INTEGRITY_RULES block.
+        progressionMetric: 'Energy',           // the Cradle resource (line 64 x2)
+        abilityDatabase: 'SHELL STATS DATABASE', // ability-DB label (line 87; loose label, no emitter)
+        // Whole-phrase carves (render-empty for other games). Byte-exact incl. leading/trailing
+        // whitespace so Marathon renders identical and armory-less games drop the clause cleanly.
+        entityVocabExamples: ' - Runner Shells, the Runner Grade, the eight Runners, Runner-vs-Runner',
+        gearSystemRule: `- Faction Armory specifics (item, rank required, Credit cost, material cost) may be cited ONLY when they appear in the VERIFIED ARMORY STOCK or VERIFIED FACTION RANK-GATING blocks injected below. For any faction or item NOT in those verified blocks, do not state a rank number, price, or cost - inventing it is a hallucination. When uncertain, name a gear item's source faction in general terms only.\n`,
       },
 
       // Structured tool-enum VALUES (values only; field names unchanged). entityFocus is

@@ -194,6 +194,22 @@ export function resolveKit(config) {
   out.metaEntitiesSingular = (Array.isArray(mt) && mt.length) ? mt.join(' and ') : 'entity';
   out.metaEntitiesAll      = mtPlural.length ? mtPlural.join(' and ALL ') : 'entities';
 
+  // STAGE 2b-i (2026-09-21): de-Marathon the shared DATA_INTEGRITY_RULES block.
+  // Two STANDALONE terms (grammatical agnostic default) + two WHOLE-PHRASE carves (render-empty:
+  // a game without the Marathon system drops the whole clause/bullet cleanly, so the Marathon-only
+  // block labels "VERIFIED ARMORY STOCK"/"VERIFIED FACTION RANK-GATING"/"SHELL STATS DATABASE" live
+  // ONLY inside Marathon's rendered value and never reach another game).
+  out.progressionMetric = vc.progressionMetric || 'resource'; // Marathon "Energy" (the Cradle resource)
+  out.abilityDatabase   = vc.abilityDatabase   || 'ability database'; // Marathon "SHELL STATS DATABASE" label
+  // entityVocabExamples: the game-vocab example appositive in the READER ADDRESS clause. Marathon
+  // carries " - Runner Shells, the Runner Grade, ...". A game without it -> render-empty, so the
+  // sentence reads "...actual entities and mechanics - that is correct game vocabulary..." (the
+  // second dash + tail stay in the template; no orphaned dash).
+  out.entityVocabExamples = vc.entityVocabExamples; // render-empty when absent
+  // gearSystemRule: the WHOLE Faction Armory citation bullet, incl. its own leading "- " and trailing
+  // newline, so an armory-less game drops the entire bullet with no blank line / orphaned dash.
+  out.gearSystemRule      = vc.gearSystemRule;      // render-empty when absent
+
   return out;
 }
 
