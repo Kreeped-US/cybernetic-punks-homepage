@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Removed duplicate Marathon intel article (operator DB)
+WHAT: Soft-unpublished a near-duplicate intel article after a Bing page-traffic report
+surfaced two live 200 articles on the same story (content-drought / tutorial-gap)
+competing with each other.
+OPERATOR DB (done 2026-09-21, Justin):
+UPDATE feed_items SET is_published = false WHERE game_slug = 'marathon' AND slug = 'content-drought-exposes-marathons-tutorial-gap-single-youtube-creator--l3a1';
+Verified: l3a1 -> is_published=false; keeper ap4h
+(marathon-free-trial-analysis-content-drought-exposes-tutorial-gap-ap4h) ->
+is_published=true, untouched. Reversible (set true to restore).
+EFFECT: /marathon/intel/<l3a1> now 404s via notFound(); drops from listings,
+homepage/sitrep feeds, related-articles, and the sitemap (all gate on is_published=true).
+Bare /intel/<l3a1> becomes a 301 -> 404 chain. Keeper stays 200. No 301/canonical change
+(freeze-restricted); 404 de-indexes cleanly. Freeze-safe: DB-only, no code or
+title/URL/canonical change to any surviving page.
+DEDUP-GATE NOTE (deferred, for threshold tuning): live example of a same-topic
+near-duplicate that cleared the dedup gate - two Marathon articles on the same story both
+published, likely scored in the 0.5-0.7 review-only band (logged, not blocked) or predates
+the gate. Concrete case for whether same-topic pairs should hard-block below 0.70.
+CONTEXT: surfaced via Bing Webmaster page report (site newly indexed in Bing); the bare
+pre-namespace URLs in that report are all clean 301s to their /marathon twins (stale Bing
+index, self-healing) - verified read-only, nothing to fix.
+
+---
+
 ## 2026-09-21 - Stage 2b-ii: de-Marathon the editor bodies (feat/prompt-vocab-2bii)
 WHAT: Carved the remaining Marathon vocab out of the NEXUS/DEXTER/MIRANDA/buildMiranda
 bodies. With 2b-i's shared block, the prompt de-Marathoning is complete except for the
