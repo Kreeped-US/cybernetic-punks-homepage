@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - OFF THE RECORD REMOVED from the bundle (Brief 2f; reverts 2c)
+
+STAGED on feat/editorial-recovery (stacks on 2a..2e), NOT merged. Fable/operator decision: drop the
+OFF THE RECORD personality register (Brief 2c, commit e0f2ed3) from the bundle entirely. Surgical
+removal from the CURRENT tree (not a git revert -- 2d/2e also touched some of the same files).
+
+REMOVED:
+- Parsers: the "OFF THE RECORD:" rule + 'offrecord' block from BOTH lib/articleBody.js and
+  lib/dmz/articleContent.js. An "OFF THE RECORD:" line now just renders as a normal paragraph.
+- Render: the 'offrecord' callout branch on marathon-intel + wardogs, and the OffRecordIcon import in
+  each. components/network/OffRecordIcon.js deleted.
+- Generation: the OFF_THE_RECORD_RULE const in lib/editorCore.js + its ${OFF_THE_RECORD_RULE}
+  reference in all 6 desk prompts (5 EDITOR_PROMPTS + buildMirandaPrompt).
+
+KEPT (untouched): OUR READ (the analysis callout) fully intact -- the parser 'analysis' rule in both
+parsers, the render branches on marathon-intel + wardogs, the NEXUS "MARK YOUR JUDGMENT (OUR READ)"
+prompt instruction, the VantageDraftsPanel reviewer preview, and the confidenceTiers 'analysis'/
+"Our Read" tier. NO_SELF_NAME_RULE and every other bundle piece (2a/2a-brand/2a-voice/2b/2d/2e)
+untouched.
+
+VERIFY:
+- grep over *.{js,jsx}: ZERO offrecord / OFF THE RECORD / OFF_THE_RECORD / OffRecordIcon / "Off the
+  Record" / f2a33c remnants.
+- Parser test (both paths): a body with OUR READ + OFF THE RECORD yields an 'analysis' block and NO
+  'offrecord' block (the OFF THE RECORD line degrades to a paragraph, text preserved). OUR READ renders.
+- eslint clean (only pre-existing <img> warnings); no dangling OffRecordIcon import; diff is
+  offrecord-only (net -76 lines); no <title>/H1/meta-description/URL/route/structural change; no DB writes.
+
+GATING STATE: 2f committed on feat/editorial-recovery (on top of 2a..2e) and HELD. The bundle's
+EFFECTIVE content is now 2a -> 2a-brand -> 2a-voice -> 2b -> 2d -> 2e (2c added by e0f2ed3, removed by
+2f). Awaiting the single one-deploy greenlight + the two operator SQL statements (2d: DELETE FROM
+article_comments; 2e: ALTER ... ADD operator_approved_at).
+
+---
+
 ## 2026-09-21 - Receipt/author honesty split (Brief 2e, Fable pre-deploy correction; revises 2a)
 
 STAGED on feat/editorial-recovery (stacks on 2a..2d), NOT merged. Fable correction: 2a wrongly

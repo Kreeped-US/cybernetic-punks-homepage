@@ -23,7 +23,6 @@ import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/ar
 import ViewTracker from '@/components/ViewTracker';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
-import OffRecordIcon from '@/components/network/OffRecordIcon';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -189,14 +188,6 @@ export default async function WardogsArticlePage({ params }) {
           if (blk.type === 'analysis') return (
             <div key={blk.key} style={{ margin: '0 0 16px', padding: '12px 14px', background: 'rgba(167,139,250,0.06)', borderLeft: '3px solid #a78bfa', borderRadius: '0 4px 4px 0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#a78bfa' }}><TierIcon tier="analysis" size={11} /> Our Read</div>
-              <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.6 }}>{stripMarkers(blk.text)}</div>
-            </div>
-          );
-          // OFF THE RECORD (Brief 2c): the FUN register, visually distinct from OUR READ -- warm
-          // amber + a DASHED rail + a speech-bubble glyph + "our take, not fact". Not fact, not provenance.
-          if (blk.type === 'offrecord') return (
-            <div key={blk.key} style={{ margin: '0 0 16px', padding: '12px 14px', background: 'rgba(242,163,60,0.06)', borderLeft: '3px dashed #f2a33c', borderRadius: '0 4px 4px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#f2a33c' }}><OffRecordIcon size={12} color="#f2a33c" /> Off the Record <span style={{ fontWeight: 600, letterSpacing: 0.5, opacity: 0.7, textTransform: 'none' }}>· our take, not fact</span></div>
               <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.6 }}>{stripMarkers(blk.text)}</div>
             </div>
           );
