@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Stage 2b-i: de-Marathon the shared DATA_INTEGRITY_RULES block (feat/prompt-vocab-2bi)
+WHAT: Carved the last Marathon literals out of DATA_INTEGRITY_RULES (the block appended
+to all 6 editors for every game) via 4 new tokens, so its Marathon vocab stops bleeding
+into every game's every generation.
+FILES: editorCore.js (4 substitutions in DATA_INTEGRITY_RULES); promptVocab.js (4 new
+resolveKit tokens: progressionMetric default "resource", abilityDatabase default
+"ability database", 2 render-empty whole-phrase tokens entityVocabExamples +
+gearSystemRule); marathon.js (verbatim Marathon values, incl. byte-exact leading " - "
+and trailing newline on the whole-phrase carves); promptVocabKit.test.mjs (2 new cases).
+SUBSTITUTIONS: whole Faction Armory bullet -> {{kit:gearSystemRule}}; "Energy" x2 ->
+{{kit:progressionMetric}}; "SHELL STATS DATABASE" -> {{kit:abilityDatabase}}; the
+Runner-roster appositive -> {{kit:entityVocabExamples}}.
+GATE 1 (HARD INVARIANT) PASS: all 6 Marathon prompts main vs branch = 0 of 6 differ.
+No intentional Marathon change this stage.
+GATE 2 PASS (in-scope): all 4 sites gone + grammatical in all 6 editors for wardogs -
+Faction Armory bullet drops with no blank line / orphan dash; Energy -> resource;
+SHELL STATS DATABASE -> ability database; reader clause collapses to a single-dash
+appositive, no orphan / double-space. Remaining Runner/Energy hits are editor-body
+(Stage 2b-ii), out of scope.
+GATE 3 PASS: 35/35 tests, eslint exit 0.
+SCOPE: freeze-safe (backend generation only; no field renames, no DB, no tool-schema).
+Diff 4 files, +44/-4.
+LATENT TRIPWIRE (future, not a today-bug): the Faction Armory citation rule now drops
+for non-Marathon games, but the VERIFIED ARMORY STOCK / RANK-GATING block emitters
+(editorCore.js:821/850) are gated on DATA not game. If a non-Marathon game ever
+populates faction_armory, its prompt drops the citation rule while the block still
+emits. Marathon-only data today, so inert.
+NEXT: Stage 2b-ii - editor-body residuals (NEXUS N1 line 385 "shell/class names";
+DEXTER roster + STAT CTA + lowercase runner/core; N2 "Holotag tier"; buildMiranda VOICE
+examples + "SHELL DATA:" header).
+
+---
+
 ## 2026-09-21 - Stage 2: migrate editor prompts to vocab tokens (feat/prompt-vocab-migrate)
 WHAT: Wired the Stage-1 tokens into DATA_INTEGRITY_RULES + editor bodies (13
 substitutions) so Marathon renders byte-identical and other games stop getting the
