@@ -7,6 +7,53 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - EDITORIAL-RECOVERY BUNDLE SHIPPED (merged + deployed + DB complete)
+
+Merged feat/editorial-recovery -> main (ff-only, bf481e5..3e47696), pushed, branch deleted,
+Vercel deployed. 9 commits, ~36 files, +1058/-650. Verified live on production.
+
+Contents:
+- 2a: retired 7 fictional author personas -> desk labels; real accountable author (Justin)
+  via lib/authorEntity.js.
+- 2a-brand: homepage social meta (og/twitter) -> extraction-shooter positioning; ranking
+  title/H1/meta-description untouched.
+- 2a-voice: de-personed generation prompts (desks, not people); deleted COMMENT_VOICES.
+  Recon: zero legacy bodies self-reference a persona.
+- 2b: Chain of Custody badge across all 5 verticals; locked vocab Verified/Mixed/Reported/
+  Our Read/Unconfirmed; receipt split from tier claim; NULL renders nothing.
+- 2c/2f: OFF THE RECORD added then removed (cut per Fable). OUR READ kept. Net zero on tip.
+- 2d: removed AI "panel weighs in" display + all public CE/GRID PULSE/LOADOUT GRADE chips +
+  ce_score-derived S/A/B/C grade columns. Kept ce_score column + homepage gate (internal).
+  Real ranked_tier tier list untouched.
+- 2e: receipt/author honesty split - author=Justin + "Approved by Justin on <date>" ONLY
+  where operator_approved_at is set; legacy = author=Org, no receipt; per-article AI
+  disclosure on-page. Also gated provenance_tier='sourced' on a real verified_source
+  (was unconditional for NEXUS - manufactured verification, fixed).
+- 2g: mapped the one sourced wardogs article (...-6tpw) into field-intel so it resolves 200
+  with its Verified badge.
+
+Operator DB actions (both executed by Justin, 2026-09-21):
+- ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS operator_approved_at timestamptz; (done)
+- article_comments_backup created; FK check clean; DELETE FROM article_comments; purged 783
+  dead AI-comment rows. (done)
+
+Live verification: legacy article = author=Org, no receipt, "Drafted with AI tooling";
+wardogs ...-6tpw = 200 + Verified badge; no CE chips, no comment panel, no persona names;
+title/meta/H1 clean.
+
+Known live miss (pending fix): homepage nf-tag still renders "Human-verified FPS
+intelligence..." - visible body copy, freeze-safe, missed by the 2a-brand grep. One-line swap
+queued.
+
+Queued post-deploy: (1) homepage tagline fix; (2) tier backfill - derive provenance_tier
+from real source path, NULL where ambiguous (lights up the badges); (3) Oct 20 checkpoint -
+track entity pages (pure reprocessing signal) vs article pages (confounded) separately.
+
+Freeze still in effect: this deploy is the only sitewide change in its window. Article-layout
+redesign and /author/justin page remain deferred.
+
+---
+
 ## 2026-09-21 - Tiered-but-404 wardogs article resolved (Brief 2g)
 
 STAGED on feat/editorial-recovery (stacks on 2a..2f), NOT merged. Fixes the one published wardogs
