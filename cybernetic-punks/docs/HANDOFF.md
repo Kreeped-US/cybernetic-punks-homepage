@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Marathon SEO recovery checkpoint + change freeze (migration reprocessing)
+
+PRE-REGISTERED RECOVERY CHECKPOINT: 2026-10-20. Recovery = BOTH (a) weekly /marathon/*
+impressions back to >= 50% of the ~230/day pre-collapse baseline, AND (b) the top-20
+Marathon pages' MEDIAN Google position under 15. Track WEEKLY in GSC: /marathon/*
+impressions + the top-20 median position. If both hold at the checkpoint, recovery is
+confirmed and the deferred article-layout redesign can be scheduled.
+
+CAUSE (forensics, not a penalty): the September collapse is mass-migration reprocessing
+-- the Aug 20 Marathon URL move shed ranking equity while Google reprocessed the moved
+URL set, coinciding with the confirmed Aug 18-21 spam update. NO domain spam label
+(Wardogs/DMZ rank fine); domain reputation intact. So the fix is TIME + stability, not a
+structural change.
+
+CHANGE FREEZE through the Oct 20 checkpoint: NO sitewide structural, URL, or title change
+while the migration reprocesses. The agnostic article-layout redesign (hero stat card /
+TOC / provenance-prominence -- the 2026-09-18 PLANNED entry) is DEFERRED BEHIND this
+checkpoint. Content/schema-only changes that touch NO URL, structure, or title MAY ship
+inside the freeze as a single deploy, assessed piece-by-piece for SEO safety -- e.g. the
+editorial-surface rework (real accountable author + verified receipts + sitewide
+provenance-badge standardization + AI editor-comment removal), mapped read-only in
+Brief 1 (2026-09-21), to be specified in a gated Brief 2. Backend, non-crawler-visible
+changes (e.g. halting the AI editor-comment GENERATOR, still firing on published
+articles) can be handled separately from the crawler-visible page work.
+
+---
+
 ## 2026-09-18 - PLANNED (Monday): agnostic article-layout enhancement, all verticals (SEO-paramount)
 
 NOT BUILT - mapped + designed, deferred to Monday for a fresh head (it touches the
