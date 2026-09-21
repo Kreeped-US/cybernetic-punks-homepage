@@ -23,8 +23,8 @@ export const metadata = {
   authors: [{ name: 'Cybernetic Punks' }],
   creator: 'Cybernetic Punks',
   openGraph: {
-    title: 'Cybernetic Punks - Verified FPS Intelligence Network',
-    description: 'Verified FPS intelligence - tier lists, weapon stats, and guides for Marathon and DMZ, every stat checked in-game. First-party intel, no hype.',
+    title: 'Cybernetic Punks - Extraction Shooter Loadouts, Tier Lists & Verified Stats',
+    description: 'Loadouts, tier lists, and verified stats for extraction shooters - Marathon, Wardogs, DMZ and more, every stat checked in-game. No hype, just intel.',
     url: 'https://cyberneticpunks.com',
     siteName: 'Cybernetic Punks',
     locale: 'en_US',
@@ -33,8 +33,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Cybernetic Punks - Verified FPS Intelligence Network',
-    description: 'First-party intel for Marathon and DMZ, verified against the live game. No hype, just intel.',
+    title: 'Cybernetic Punks - Extraction Shooter Loadouts, Tier Lists & Verified Stats',
+    description: 'Loadouts, tier lists, and verified stats for extraction shooters - Marathon, Wardogs, DMZ and more, every stat checked in-game. No hype, just intel.',
   },
   robots: {
     index: true,

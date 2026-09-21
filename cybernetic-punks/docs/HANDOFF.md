@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Homepage brand copy STAGED + HELD (Brief 2a-brand, stacks on 2a)
+
+STAGED on feat/editorial-recovery (stacks on the 2a commit), NOT merged. Rides in the same
+one-deploy bundle. Swaps the "Verified FPS Intelligence" positioning to the extraction-shooter
+anchor in the SOCIAL-SHARE meta only.
+
+CHANGED (app/layout.js only):
+- openGraph.title + twitter.title: "Cybernetic Punks - Verified FPS Intelligence Network"
+  -> "Cybernetic Punks - Extraction Shooter Loadouts, Tier Lists & Verified Stats".
+- openGraph.description + twitter.description -> "Loadouts, tier lists, and verified stats for
+  extraction shooters - Marathon, Wardogs, DMZ and more, every stat checked in-game. No hype,
+  just intel." (og and twitter now aligned to the same string.)
+
+FROZEN + UNTOUCHED (byte-identical): the document <title> (layout title.default AND the
+homepage's own title.absolute in app/page.js), the homepage H1 (app/page.js:274), and the
+name=description meta (layout default AND the homepage's own app/page.js:45). No URL/structural
+change. Content/schema-safe under the freeze.
+
+TWO BRIEF PREMISES DID NOT MATCH SOURCE -- reconciled with the operator before committing:
+1. The og/twitter strings live in the SHARED root layout.js default, not a homepage-scoped
+   file (app/page.js sets its own title/description/canonical but inherits og/twitter). So
+   editing layout.js also changes og/twitter for the ~handful of pages that inherit the default
+   (e.g. /join and utility pages; all 72 content pages set their own og). OPERATOR CHOSE: edit
+   the shared layout default (accepting that inheriting pages get the new copy) over a
+   homepage-only page.js override. Not strictly "homepage only," but the operator's call.
+2. Change #3 (hero subtitle swap) had a FROM string ("Human-verified FPS intelligence...") that
+   does NOT exist anywhere in the repo -- the homepage was already rebranded in a prior session.
+   The current subtitle (app/page.js:275) is already extraction-anchored (loadouts, TTK-ranked
+   weapons, meta, Marathon/Wardogs + DMZ Oct 23, checked in-game, "we don't guess"). OPERATOR
+   CHOSE: leave the current subtitle as-is. No page.js edit made. Change #3 dropped.
+
+KNOWN STALE COMMENT (flagged, NOT edited -- outside the operator-approved layout-only scope): the
+metadata comment at app/page.js:38-42 still says the description 'leads "Verified FPS
+intelligence"', which is stale -- the homepage's actual description (app/page.js:45) is already
+extraction-anchored. A grep for "FPS intelligence" on app/page.js still hits this comment (and
+the frozen layout.js:18/21 defaults), but NO served homepage copy carries the brand string.
+Fix the comment in a later pass if desired.
+
+VERIFY: eslint clean on layout.js. Served homepage social meta now carries the new positioning;
+served homepage title/H1/description unchanged and already brand-string-free.
+
+GATING STATE: 2a-brand committed on feat/editorial-recovery (on top of 2a) and HELD. Awaiting
+2b/2c + Fable + the single one-deploy greenlight to merge the whole bundle.
+
+---
+
 ## 2026-09-21 - Authorship layer STAGED + HELD (Brief 2a of the editorial-surface rework)
 
 STAGED on branch feat/editorial-recovery, NOT merged. This is part 2a of a THREE-part
