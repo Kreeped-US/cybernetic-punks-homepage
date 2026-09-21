@@ -7,6 +7,42 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Tiered-but-404 wardogs article resolved (Brief 2g)
+
+STAGED on feat/editorial-recovery (stacks on 2a..2f), NOT merged. Fixes the one published wardogs
+article that carried a Chain of Custody tier but 404'd.
+
+READ-FIRST (confirmed cause): slug `wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw`
+(NEXUS patch-news, is_published=true, noindex=false, provenance_tier='sourced', verified_source=BUNGIE)
+was NOT in WARDOGS_ARTICLE_SECTION, so wardogsSectionForArticle() returned null and the route called
+notFound() -> 404. feed_items has no section column, so that map is the ONLY source of an article's
+section; an unmapped published slug is unreachable.
+
+FIX (recommended map fix, per brief): added the slug -> 'field-intel' to WARDOGS_ARTICLE_SECTION.
+field-intel is the wardogs "News" section (label "Field Intel") where the other patch/launch/news
+pieces live -- the correct home for a Patch 0.11 news article. This is a NEW resolvable URL for an
+article that was 404; it changes NO existing page's URL/section (only one map entry ADDED, none
+modified). Did NOT unpublish -- the article is legitimate published, non-noindexed content that should
+resolve.
+
+VERIFY (live, dev server):
+- /wardogs/field-intel/wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw returns
+  HTTP 200 (was 404), not a not-found page.
+- Renders the Chain of Custody "Verified" badge (label + "primary-source confirmed" caption + the
+  "?" -> /about#chain-of-custody link), from provenance_tier='sourced'.
+- Authorship is the legacy state (Brief 2e): author=Organization, no "Approved by Justin" receipt,
+  "Drafted with AI tooling." disclosure -- correct (operator_approved_at absent).
+- No console errors; eslint clean; no existing URL/title/route/structural change; no DB writes.
+- Sitemap: the article is now emitted for wardogs field-intel; its INDEX exposure still follows
+  wardogs.indexable (unchanged) -- resolving 200 does not by itself change index status.
+
+GATING STATE: 2g committed on feat/editorial-recovery (on top of 2a..2f) and HELD. Bundle effective
+content: 2a -> 2a-brand -> 2a-voice -> 2b -> 2d -> 2e -> 2g (2c added by e0f2ed3, removed by 2f).
+Awaiting the single one-deploy greenlight + the two operator SQL statements (2d: DELETE FROM
+article_comments; 2e: ALTER ... ADD operator_approved_at).
+
+---
+
 ## 2026-09-21 - OFF THE RECORD REMOVED from the bundle (Brief 2f; reverts 2c)
 
 STAGED on feat/editorial-recovery (stacks on 2a..2e), NOT merged. Fable/operator decision: drop the

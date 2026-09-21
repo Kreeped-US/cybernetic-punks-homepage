@@ -312,6 +312,11 @@ export const WARDOGS_ARTICLE_SECTION = {
   // field-intel (with the launch overview). Operator runs
   // docs/migrations/2026-09-10-wardogs-article-launch-day.sql (staged draft; flip at 16:00 UTC).
   'wardogs-early-access-is-live-what-to-know': 'field-intel',
+  // Patch 0.11 news piece (NEXUS, published + provenance_tier='sourced', verified_source=BUNGIE).
+  // It was published but never added here, so wardogsSectionForArticle() returned null and the
+  // article 404'd -- the ONE badged wardogs article that could not resolve (Brief 2g). Mapped to
+  // field-intel (the "News" section) with the other patch/news pieces so it resolves at a real URL.
+  'wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw': 'field-intel',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).
