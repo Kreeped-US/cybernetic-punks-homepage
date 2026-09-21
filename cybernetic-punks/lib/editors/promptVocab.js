@@ -169,37 +169,55 @@ export function resolveKit(config) {
   // whereas a missing Layer-B BLOCK legitimately just disappears. classRoster is the one
   // exception-to-the-exception: it stays render-empty (undefined) so a game with no fixed roster
   // simply drops that line.
+  // Agnostic defaults are BARE (no leading article / "every"): the surrounding prompt text supplies
+  // "Every {{kit:entityList}}", "the {{kit:progressionSystem}}", etc., so a game that omits vocab
+  // renders grammatically without doubling articles.
   var vc = pk.vocab || {};
-  out.entityList        = vc.entityList        || 'every weapon, item, and system entity';
+  out.entityList        = vc.entityList        || 'weapon, item, and system entity';
   out.classNoun         = vc.classNoun         || 'class';
   out.classNounPlural   = vc.classNounPlural   || 'classes';
-  out.progressionSystem = vc.progressionSystem || 'the progression system';
-  out.gearSystem        = vc.gearSystem        || 'the gear/unlock system';
-  out.rankMetric        = vc.rankMetric        || 'ranked';
+  out.progressionSystem = vc.progressionSystem || 'progression system'; // bare; prompt supplies "the"
+  out.gearSystem        = vc.gearSystem        || 'gear/unlock system';  // bare; prompt supplies "the"
+  out.rankMetric        = vc.rankMetric        || 'ranked';              // lowercase base; ^ at cap sites
   out.classRoster       = vc.classRoster; // render-empty when absent (the roster line drops)
-  // metaEntitiesList is DERIVED from the SAME toolEnums.metaTypes single source (never a second
-  // copy): the singular enum values pluralized + joined. marathon ['weapon','shell'] -> "weapons
-  // and shells"; ['weapon'] -> "weapons"; absent -> agnostic "entities".
+  // meta-entity lists DERIVED from the SAME toolEnums.metaTypes single source (never a second copy).
+  // THREE structural forms so each prompt site renders byte-identical for Marathon:
+  //   metaEntitiesList     plural, joined " and "      -> "weapons and shells"        (Stage-1 contract)
+  //   metaEntitiesSingular singular, joined " and "    -> "weapon and shell"          (NEXUS "every weapon and shell")
+  //   metaEntitiesAll      plural, joined " and ALL "  -> "weapons and ALL shells"    (NEXUS "ALL weapons and ALL shells")
+  // A one-type game -> "weapons"/"weapon"/"weapons"; absent -> "entities".
   var mt = te.metaTypes;
-  out.metaEntitiesList = (Array.isArray(mt) && mt.length) ? mt.map(pluralizeNoun).join(' and ') : 'entities';
+  var mtPlural = (Array.isArray(mt) && mt.length) ? mt.map(pluralizeNoun) : [];
+  out.metaEntitiesList     = mtPlural.length ? mtPlural.join(' and ') : 'entities';
+  // singular form sits in "every {{kit:metaEntitiesSingular}}" -> default must be SINGULAR ("every
+  // entity"), not "entities". The plural/all forms sit in "ALL {{...}}" -> plural default.
+  out.metaEntitiesSingular = (Array.isArray(mt) && mt.length) ? mt.join(' and ') : 'entity';
+  out.metaEntitiesAll      = mtPlural.length ? mtPlural.join(' and ALL ') : 'entities';
 
   return out;
 }
 
-// KEY is a dotted identifier: {{kit:tagStandard}}, {{kit:genre}}, {{kit:progression.cipher}}.
-var KIT_PLACEHOLDER_RE = /\{\{kit:([a-zA-Z.]+)\}\}/g;
+// KEY is a dotted identifier, optionally followed by a "^" case modifier:
+// {{kit:tagStandard}}, {{kit:genre}}, {{kit:classNoun^}}.
+var KIT_PLACEHOLDER_RE = /\{\{kit:([a-zA-Z.]+)(\^?)\}\}/g;
 
-// Replace every {{kit:KEY}} in `text` with kit[KEY]. A missing/undefined/null value
+// Replace every {{kit:KEY}} / {{kit:KEY^}} in `text` with kit[KEY]. A missing/undefined/null value
 // renders EMPTY (render-empty: the optional Layer-B block does not appear). Text with no
 // placeholder is returned unchanged. Apply kit BEFORE vocab at the chokepoint so any
 // {{cnp:...}} token inside an injected block is still resolved by the later applyVocab pass.
+//
+// The "^" modifier capitalizes the FIRST LETTER ONLY (title case): {{kit:classNoun^}} -> "Shell",
+// {{kit:rankMetric^}} -> "Holotag". This is DELIBERATELY DIFFERENT from applyVocab's "^", which
+// upper-cases the WHOLE value ("BUNGIE"): the class/system-noun kit sites need title case
+// ("Shell ability names", "Runner Shells"), never all-caps, to render byte-identical.
 export function applyKit(text, kit) {
   if (text == null) return text;
   var k = kit || {};
-  return String(text).replace(KIT_PLACEHOLDER_RE, function (_m, key) {
+  return String(text).replace(KIT_PLACEHOLDER_RE, function (_m, key, up) {
     var val = k[key];
     if (val == null) return '';
-    return String(val);
+    val = String(val);
+    return up ? (val.charAt(0).toUpperCase() + val.slice(1)) : val;
   });
 }
 

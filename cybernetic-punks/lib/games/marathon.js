@@ -501,9 +501,13 @@ export const marathon = {
         entityList: 'weapon, mod, implant, core, shell, ammo type, and Cradle node',
         classNoun: 'shell',
         classNounPlural: 'shells',
-        progressionSystem: 'the Cradle',
+        // BARE proper noun (no article): prompt text supplies "the {{kit:progressionSystem}}" /
+        // "{{kit:progressionSystem^}} perks". Stage 2 refined from "the Cradle" -> "Cradle".
+        progressionSystem: 'Cradle',
         gearSystem: 'Faction Armory',
-        rankMetric: 'Holotag',
+        // lowercase base: use {{kit:rankMetric^}} -> "Holotag" at capitalized sites. Stage 2
+        // refined from "Holotag" -> "holotag".
+        rankMetric: 'holotag',
         classRoster: 'Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel',
       },
 
