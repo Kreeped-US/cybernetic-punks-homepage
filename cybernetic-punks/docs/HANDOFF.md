@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Stage 2b-ii: de-Marathon the editor bodies (feat/prompt-vocab-2bii)
+WHAT: Carved the remaining Marathon vocab out of the NEXUS/DEXTER/MIRANDA/buildMiranda
+bodies. With 2b-i's shared block, the prompt de-Marathoning is complete except for the
+low-bleed deferred residuals below.
+FILES: editorCore.js (reuse-swaps rankMetric^, progressionSystem^ x2 + progressionMetric,
+stub classNoun^; 5 new-token subs classActorPrefix, classRotationHint, classRosterLine,
+voiceExamples, classDataHeader; the N1 change; the MIRANDA-528 fold-in); promptVocab.js
+(+5 tokens, removed unused classRoster, updated comment); marathon.js (+5 verbatim
+values, removed classRoster, fixed comment); promptVocabKit.test.mjs (+ new-token cases,
+- classRoster cases).
+N1 (intentional, only Marathon diff): NEXUS source-discipline "shell/class names" ->
+"{{kit:classNoun}} names" - Marathon "shell names", other games "class names".
+GATE 1 PASS: 5/6 editors byte-identical; NEXUS's ONLY diff is the N1 line; MIRANDA
+stayed 0-diff after the 528 fold-in.
+GATE 2 PASS: wardogs renders clean for every in-scope site - "runner" prefix gone,
+Holotag->Ranked, Cradle/Energy->progression system/resource, rotation sentence + roster
+line drop with no dangling fragment, VOICE Marathon pair gone (generic example stays),
+SHELL DATA:->CLASS DATA:. No empty-token gaps.
+GATE 3 PASS: 37/37 tests, eslint exit 0.
+SCOPE: freeze-safe (backend generation only; no field renames, no DB, no tool-schema).
+DEFERRED (mild residual Marathon vocab, future items, not today-bugs):
+- DEXTER core/implant nouns (editorCore.js 429/442)
+- "faction Armories" prose (DEXTER 465 + MIRANDA 529)
+- primaryTool empty-gap for tool-less games (dmz/pubg/bodycam render "the  at ")
+QUALITY FOLLOW-UPS (separate from de-Marathoning): populate each game's promptKit
+(wardogs class terms, per-game VOICE examples, metaTypes); fetchGameContext
+block-header per-game naming.
+
+---
+
 ## 2026-09-21 - Stage 2b-i: de-Marathon the shared DATA_INTEGRITY_RULES block (feat/prompt-vocab-2bi)
 WHAT: Carved the last Marathon literals out of DATA_INTEGRITY_RULES (the block appended
 to all 6 editors for every game) via 4 new tokens, so its Marathon vocab stops bleeding
