@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Stage 1: prompt-vocab token scaffolding + verification harness (feat/prompt-vocab-scaffold)
+WHAT: Added the class/system-noun {{kit:...}} token family to the kit engine plus
+Marathon's verbatim values, and the byte-identical render-diff harness that gates
+Stage 2. Inert: no prompt text uses the new tokens yet.
+FILES: promptVocab.js resolveKit - new token family (entityList, classNoun/Plural,
+progressionSystem, gearSystem, rankMetric, classRoster, derived metaEntitiesList);
+grammatical agnostic defaults for the class-noun family, a documented exception to
+the render-empty rule; classRoster stays render-empty. marathon.js
+editorial.promptKit.vocab with verbatim Marathon values. editorCore.js: export
+EDITOR_PROMPTS (export only, prompt text untouched). promptVocabKit.test.mjs (new,
+6 tests). scripts/render-prompts.mjs + ext-resolve.hooks.mjs +
+ext-resolve.register.mjs (harness + node ESM resolve-shim for editorCore's
+extensionless imports).
+ALSO: fixed a pre-existing stale test (promptVocab.test.mjs:76) that asserted
+applyVocab throws on an unmapped token; applyVocab was changed to graceful-degrade
+(render empty + log, no throw) on 2026-09-18, so it had been red on main (6 pass /
+1 fail), unrelated to Stage 1. Updated it + the file header to assert the shipped
+graceful-degrade contract.
+VERIFY: all 6 Marathon prompts (CIPHER/NEXUS/DEXTER/GHOST/MIRANDA + buildMirandaPrompt)
+rendered through the real chokepoint, branch vs main = byte-identical (0 diff),
+proving the scaffolding is inert. 34/34 tests pass; eslint clean.
+SCOPE: freeze-safe (backend generation only; no prompt-text, tool-schema, field-name,
+or DB changes). Diff 8 files, +223/-11.
+STAGE-2 FLAGS (carry forward, not acted on): (1) progressionSystem value "the Cradle"
+but most prompt occurrences are bare "Cradle" (e.g. "Cradle perks") - Stage 2 needs a
+bare-noun form with articles left in prompt text to stay byte-identical. (2) rankMetric
+"Holotag" vs lowercase "holotag" at editorCore.js:342 - Stage 2 needs case handling
+(extend the ^ uppercase suffix to kit tokens, or a lowercase variant). These two config
+values may be refined in Stage 2 - expected, not rework.
+NEXT: Stage 2 - migrate DATA_INTEGRITY_RULES + editor bodies to the tokens (byte-diff
+harness is the merge gate), including the NEXUS :408 metaEntitiesList fix.
+
+---
+
 ## 2026-09-21 - Per-game news source label (fix/per-game-news-label)
 WHAT: Replaced the hardcoded news-source label in the block registry with a
 per-game value from config, so non-Marathon games stop resolving
