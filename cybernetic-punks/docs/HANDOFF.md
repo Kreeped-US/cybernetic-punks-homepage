@@ -7,6 +7,67 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - OFF THE RECORD voice callout STAGED + HELD (Brief 2c, stacks on 2a/2a-brand/2a-voice/2b)
+
+STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand + 2a-voice + 2b), NOT merged. Same
+one-deploy bundle. Adds the OFF THE RECORD inline callout -- the personality/fun register, distinct
+from OUR READ (reasoned analysis). Register gradient: sourced fact -> OUR READ (our reasoned call)
+-> OFF THE RECORD (our take / fun). Content/display render branch + a bounded backend generation
+instruction. No DB writes. Safety net: every draft is approved by Justin before publish, so a weak
+aside is caught at the gate.
+
+READ-FIRST: mirrored the existing OUR READ implementation exactly -- both parsers emit an 'analysis'
+block from a literal all-caps "OUR READ:" prefix (lib/articleBody.js for marathon-intel/admin;
+lib/dmz/articleContent.js for wardogs/dmz/pubg/GameArticle); the callout renders on marathon-intel +
+wardogs and DEGRADES to a normal paragraph on dmz/pubg/GameArticle (their default render uses the
+block's stripped text). OFF THE RECORD follows that same pattern.
+
+CHANGES:
+1. PARSERS: added an "OFF THE RECORD:" rule to BOTH parsers, emitting a distinct 'offrecord' block
+   (mirrors the 'analysis' rule; same intentional all-caps discipline). Additive + degrade-safe:
+   surfaces without an 'offrecord' branch fall through to their default paragraph render using the
+   stripped text, so the aside never vanishes.
+2. RENDER: added a VISUALLY DISTINCT 'offrecord' callout branch on marathon-intel + wardogs (mirrors
+   OUR READ's placement). OUR READ = solid VIOLET rail + diamond TierIcon + "Our Read". OFF THE
+   RECORD = warm AMBER (#f2a33c) + a DASHED rail + a NEW speech-bubble glyph (components/network/
+   OffRecordIcon.js, deliberately NOT a provenance TierIcon) + label "Off the Record" + a
+   "· our take, not fact" sub-label. Reads unmistakably as a personality aside, never fact, never a
+   provenance claim. Static (no animation) so CLS=0 and prefers-reduced-motion is moot, matching the
+   OUR READ callout.
+3. GENERATION (bounded): new OFF_THE_RECORD_RULE appended to every desk prompt (the 5 EDITOR_PROMPTS
+   + buildMirandaPrompt, via the shared ${NO_SELF_NAME_RULE} anchor). It permits AT MOST ONE short
+   OFF THE RECORD aside per article, grounded in the article's own data, optional + rare (omit if
+   nothing real to say), no fact dressed as fact, no unsourced game fact, stays in the desk voice
+   under the no-self-name rule (never a fabricated person), one-two sentences. Explicitly keeps the
+   three registers distinct (fact / OUR READ / OFF THE RECORD).
+4. It carries NO provenance tier and NEVER affects the article's badge (it is a body block only).
+
+VERIFY:
+- Parser test (both paths, pure functions, no DB): a body with "OUR READ:" and "OFF THE RECORD:"
+  yields a distinct 'analysis' block AND a distinct 'offrecord' block on BOTH lib/articleBody.js and
+  lib/dmz/articleContent.js, each with the prefix stripped (so the degrade path renders the aside as
+  a plain paragraph). Confirmed both markers coexist and are distinguishable.
+- Live: the marathon M77 article (no marker in its body) renders cleanly after the new import +
+  branch -- the OffRecordIcon import resolves, no app render errors (only dev HMR-websocket noise).
+- eslint clean on all changed files (only pre-existing <img> warnings). No <title>/H1/meta-
+  description/URL/route/structural change.
+
+NOTE (honest limit): no live render of the callout ITSELF was possible -- no article body currently
+contains "OFF THE RECORD:", and creating one would be a DB write (out of scope). The render branch is
+code-identical in structure to the proven-rendering OUR READ branch (differing only in color/icon/
+label), the parser recognition is proven live, and the imports resolve. The callout will be visually
+confirmed on the first generated + approved OFF THE RECORD aside.
+
+SCOPE: added the generation rule ONLY to the per-desk editor prompts (EDITOR_PROMPTS + buildMiranda
+Prompt). The gen-*.mjs pre-launch NEWS scripts and lib/network/vantage.js (network discourse) were
+left out -- those are news/discourse registers where a personality aside is a poorer fit, and their
+inputs are thin. Flag if OFF THE RECORD is wanted there too.
+
+GATING STATE: 2c committed on feat/editorial-recovery (on top of 2a + 2a-brand + 2a-voice + 2b) and
+HELD. Awaiting 2d + Fable + the single one-deploy greenlight to merge the whole bundle.
+
+---
+
 ## 2026-09-21 - Chain of Custody badge system STAGED + HELD (Brief 2b, stacks on 2a/2a-brand/2a-voice)
 
 STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand + 2a-voice), NOT merged. Same one-deploy

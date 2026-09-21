@@ -37,6 +37,17 @@ export function parseBody(body) {
       return;
     }
 
+    // Rule 0b: "OFF THE RECORD" personality aside (Brief 2c). Same intentional all-caps prefix
+    // discipline as OUR READ. Emits a distinct 'offrecord' block the render styles as the FUN
+    // register (a take/opinion), visually distinct from OUR READ (analysis) and carrying NO
+    // provenance. ADDITIVE + degrade-safe: surfaces without an 'offrecord' branch fall through to
+    // their default paragraph render (.content matches), so the text can never vanish.
+    var offRecordMatch = para.match(/^OFF THE RECORD:\s*(.+)$/);
+    if (offRecordMatch) {
+      elements.push({ type: 'offrecord', content: offRecordMatch[1].trim(), key: 'o-' + paraIdx });
+      return;
+    }
+
     // Rule 1: whole-paragraph bold header
     var fullHeader = para.match(/^\*\*\s*([^*]+?)\s*\*\*$/);
     if (fullHeader && fullHeader[1].length <= 120) {

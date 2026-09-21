@@ -96,6 +96,13 @@ export function parseBody(body) {
     var am = oneLine.match(/^OUR READ:\s*(.+)$/);
     if (am) { out.push({ type: 'analysis', text: am[1].trim(), key: 'a-' + i }); return; }
 
+    // OFF THE RECORD personality aside (Brief 2c): same intentional all-caps prefix discipline as
+    // OUR READ. Emits a distinct 'offrecord' block (the FUN register -- a take, NOT fact, NOT a
+    // provenance claim). ADDITIVE: surfaces without an 'offrecord' branch fall through to their
+    // default <p> render (.text matches), so text never vanishes.
+    var orm = oneLine.match(/^OFF THE RECORD:\s*(.+)$/);
+    if (orm) { out.push({ type: 'offrecord', text: orm[1].trim(), key: 'o-' + i }); return; }
+
     var q = wholeQuote(oneLine);
     if (q) { out.push({ type: 'quote', text: q, key: 'q-' + i }); return; }
 

@@ -15,6 +15,7 @@ import ToolCTA from '@/components/ToolCTA';
 import { parseBody } from '@/lib/articleBody';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
+import OffRecordIcon from '@/components/network/OffRecordIcon';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 
 // Display rename (editor rework Step 3; person identities retired Brief 2a). Visible
@@ -853,6 +854,22 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
             <div key={el.key} style={{ margin: '24px 0', padding: '14px 16px', background: 'rgba(167,139,250,0.06)', borderLeft: '3px solid #a78bfa', borderRadius: '0 4px 4px 0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#a78bfa' }}>
                 <TierIcon tier="analysis" size={11} /> Our Read
+              </div>
+              <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, fontStyle: 'italic', maxWidth: '66ch' }}>
+                <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
+              </div>
+            </div>
+          );
+        }
+        if (el.type === 'offrecord') {
+          // OFF THE RECORD callout (Brief 2c) -- the FUN register (a personality take), visually
+          // distinct from OUR READ: warm amber + a DASHED rail + a speech-bubble glyph + the "our
+          // take, not fact" sub-label, so it reads unmistakably as an aside, never fact or provenance.
+          return (
+            <div key={el.key} style={{ margin: '24px 0', padding: '14px 16px', background: 'rgba(242,163,60,0.06)', borderLeft: '3px dashed #f2a33c', borderRadius: '0 4px 4px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#f2a33c' }}>
+                <OffRecordIcon size={12} color="#f2a33c" /> Off the Record
+                <span style={{ fontWeight: 600, letterSpacing: 0.5, opacity: 0.7, textTransform: 'none' }}>· our take, not fact</span>
               </div>
               <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, fontStyle: 'italic', maxWidth: '66ch' }}>
                 <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
