@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - AI editor-comment GENERATOR halted (Brief 1b)
+
+The AI editor-comment generator is HALTED: app/api/cron/route.js now guards the
+generateArticleComments call behind EDITOR_COMMENTS_ENABLED=false, so no new
+article_comments rows are written for any published article, any game, any editor.
+Backend, non-crawler-visible (no page Google sees), inside the SEO freeze. The generator
+function is left intact; the display component ("panel weighs in") removal + the purge of
+the existing 783 article_comments rows remain for Brief 2 (operator-run SQL for the purge).
+
+---
+
 ## 2026-09-21 - Marathon SEO recovery checkpoint + change freeze (migration reprocessing)
 
 PRE-REGISTERED RECOVERY CHECKPOINT: 2026-10-20. Recovery = BOTH (a) weekly /marathon/*

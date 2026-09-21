@@ -51,6 +51,15 @@ var PRODUCING_GAME_SLUG = PRODUCING_GAME.slug;
 
 var TIER_ORDINAL = { S: 5, A: 4, B: 3, C: 2, D: 1 };
 
+// AI editor-comment generator: HALTED 2026-09-21 (Brief 1b). The AI editor-comment system is
+// being retired. This single flag stops generateArticleComments from firing, so NO new
+// article_comments rows are written for any published article, any game, any editor. Backend,
+// non-crawler-visible -- inside the SEO freeze envelope (changes no page Google sees). The
+// display component (the "panel weighs in" section) and the purge of the existing 783
+// article_comments rows are Brief 2. The generateArticleComments function is left intact so
+// Brief 2 removes it cleanly. Flip to true only to restore the (deprecated) system.
+var EDITOR_COMMENTS_ENABLED = false;
+
 // GRACEFUL provenance_tier gate (Build 2): feed_items.provenance_tier is added by a SEPARATE
 // operator-run migration (docs/migrations/2026-09-18-feed-items-provenance-tier.sql). Setting a
 // column that does not exist yet would FAIL the whole draft insert, so we probe ONCE (cached) and
@@ -959,7 +968,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // A HELD-FOR-REVIEW article is unpublished + awaiting human approval: do NOT
     // generate comments and do NOT broadcast it to Discord -- both would surface an
     // article no one has approved yet. They run only for the normal (published) path.
-    if (feedItem && !heldForReview) {
+    if (EDITOR_COMMENTS_ENABLED && feedItem && !heldForReview) {
       generateArticleComments(
         { id: feedItem.id, headline: feedItem.headline, body: feedItem.body, directive_type: insertData.directive_type || 'standard' },
         editorName,
