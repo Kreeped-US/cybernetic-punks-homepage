@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Receipt/author honesty split (Brief 2e, Fable pre-deploy correction; revises 2a)
+
+STAGED on feat/editorial-recovery (stacks on 2a..2d), NOT merged. Fable correction: 2a wrongly
+applied author=Justin + "Approved by Justin on <date>" to EVERY article, incl. 435 legacy rows Justin
+never individually reviewed -- manufactured authority. This SPLITS it: Justin authorship only on rows
+he genuinely approved. Content/schema only; the new column = operator SQL. No DB writes by executor.
+
+READ-FIRST finding: NO existing per-article human-approval signal. feed_items has no approved_by/
+approved_at; gate_status is all 'clear' (an AUTOMATED quality gate, not human approval); is_published
+is set by BOTH the admin approve action AND the cron auto-publish, so it cannot distinguish them.
+The genuine approval action is app/api/admin/drafts/approve/route.js (a human clicks approve) but it
+stamped nothing. => a NEW nullable column is required.
+
+CHANGE:
+1. Approval signal: NEW nullable column feed_items.operator_approved_at (operator SQL below). Wired
+   the approve route to stamp it = now() going forward, GUARDED by an operator_approved_at column-ready
+   probe (mirrors 2b's provenance gate) so approvals never break pre-ALTER.
+2. Conditional author/receipt via the single resolveArticleAuthorship(article) in lib/authorEntity.js,
+   used by all 5 article routes:
+   - operator_approved (has operator_approved_at): author = Justin Person, reviewedBy = Justin,
+     publisher = Org, visible receipt "Approved by Justin on <APPROVAL date>" (the approval timestamp,
+     NOT created_at).
+   - legacy/auto (null): author = Organization (Cybernetic Punks), NO reviewedBy, NO receipt,
+     publisher = Org. The DESK label still renders (it is a section, not an author).
+   JSON-LD reviewedBy is added only when approved (object-spread). All 5 routes now select('*') so the
+   column is read whether or not the ALTER has run yet -- NO deploy-ordering hazard (a missing column
+   just reads as legacy; matches the marathon-intel fetch pattern).
+3. Per-article AI disclosure on the page in BOTH cases: approved -> "Drafted with AI tooling; reviewed
+   and approved by Justin."; legacy -> "Drafted with AI tooling." (/about disclosure kept.)
+4. VERIFIED-tier drift FOUND + FIXED: the cron set provenance_tier='sourced' for EVERY NEXUS article
+   unconditionally (not gated on verified_source), so a NEXUS row that resolved to honest-unknown
+   (verified_source=null) still got the "Verified" badge. Moved the assignment AFTER the verified_source
+   capture and gated it: NEXUS 'sourced' now requires insertData.verified_source. "Verified" maps only
+   to a real source chain -- no drift.
+
+DB -- OPERATOR-RUN SQL (pending; executor did NOT run it):
+    ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS operator_approved_at timestamptz;
+  BACKFILL: NONE recommended. There is no reliable record of which legacy rows Justin genuinely
+  approved (no stamp ever existed; approved and auto-published rows are indistinguishable), so all
+  rows stay NULL = Org author. That is the honest deploy state. If Justin KNOWS specific slugs he
+  personally approved and wants them credited, backfill only those, e.g.:
+    UPDATE feed_items SET operator_approved_at = now() WHERE slug IN ('<slug1>', '<slug2>');
+  (Do NOT bulk-backfill the corpus -- that would recreate the manufactured-authority problem.)
+  >>> STATUS: ALTER PENDING OPERATOR RUN. The code is order-independent (select('*') + column-ready
+  probe), so it is safe to deploy before or after the ALTER; approvals only start stamping once the
+  column exists. Record the run here once Justin executes it. <<<
+
+VERIFY (live, dev server; column NOT yet added):
+- marathon M77 (legacy) AND dmz-vs-warzone (legacy) render: desk chip intact, NO "Approved by Justin"
+  receipt, "Drafted with AI tooling." disclosure; JSON-LD author=Organization, reviewedBy absent,
+  publisher=Org. Schema matches the visible state. No stray "Approved by Justin" anywhere.
+- At deploy state (nothing approved-since): the whole corpus renders author=Org (as intended).
+- The approved path (author=Justin + approval-date receipt) is symmetric in resolveArticleAuthorship
+  and stamped by the approve route going forward; it could not be live-rendered yet (no column + no
+  approved row without a DB write).
+- eslint clean (only pre-existing <img> warnings); no <title>/H1/meta-description/URL/route/structural
+  change; no DB writes by executor.
+
+GATING STATE: 2e committed on feat/editorial-recovery (on top of 2a..2d) and HELD. Bundle order is now
+2a -> 2a-brand -> 2a-voice -> 2b -> 2c -> 2d -> 2e. Awaiting the single one-deploy greenlight + the two
+operator SQL statements (2d: DELETE FROM article_comments; 2e: ALTER ... ADD operator_approved_at).
+
+---
+
 ## 2026-09-21 - Comment display + CE chips removed + comment subsystem purge (Brief 2d, final of the bundle)
 
 STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand + 2a-voice + 2b + 2c), NOT merged. Final

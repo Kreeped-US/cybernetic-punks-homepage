@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
-import { JUSTIN_PERSON, PUBLISHER_ORG, approvalClause } from '@/lib/authorEntity';
+import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/articleContent';
@@ -22,7 +22,9 @@ async function fetchArticle(config, slug) {
   try {
     var { data } = await supabase
       .from('feed_items')
-      .select('id, headline, body, editor, tags, slug, created_at, source, source_url, game_slug, thumbnail, provenance_tier')
+      // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet
+      // -- no deploy-ordering hazard (missing column reads as legacy). Matches marathon-intel.
+      .select('*')
       .eq('slug', slug).eq('game_slug', config.slug).eq('is_published', true)
       .maybeSingle();
     return data || null;
@@ -85,12 +87,14 @@ export default async function GameArticle({ config, sectionForArticle, params })
   var description = metaDescription(article.body, article.headline);
   var canonical = CANONICAL_BASE + config.basePath + '/' + section.slug + '/' + article.slug;
 
+  // Brief 2e: author/receipt honesty split -- Justin only on rows he individually approved.
+  var auth = resolveArticleAuthorship(article);
   var jsonLd = {
     '@context': 'https://schema.org', '@type': 'NewsArticle',
     headline: article.headline, description: description,
-    author: JUSTIN_PERSON,
-    reviewedBy: JUSTIN_PERSON,
-    publisher: PUBLISHER_ORG,
+    author: auth.author,
+    ...(auth.reviewedBy ? { reviewedBy: auth.reviewedBy } : {}),
+    publisher: auth.publisher,
     datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: tags.length ? tags.join(', ') : config.displayName,
@@ -132,10 +136,10 @@ export default async function GameArticle({ config, sectionForArticle, params })
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.5 }}>/</span>
         <span>{rt}</span>
       </div>
-      {/* Authorship receipt (Brief 2a/2b): AI-drafted, then approved by the real operator.
-          Accountability only -- the verification claim lives in the tier badge below. Desk
-          shown above, so this clause omits it. */}
-      <div style={{ marginTop: -16, marginBottom: 12, fontSize: 12, color: 'var(--text-tertiary)' }}>{approvalClause(article.created_at)}</div>
+      {/* Authorship receipt (Brief 2e): only on rows Justin individually approved (approval date);
+          legacy/auto rows show no receipt. AI disclosure shows on BOTH. */}
+      {auth.receipt && <div style={{ marginTop: -16, marginBottom: 6, fontSize: 12, color: 'var(--text-tertiary)' }}>{auth.receipt}</div>}
+      <div style={{ marginTop: auth.receipt ? 0 : -16, marginBottom: 12, fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>{auth.disclosure}</div>
       {/* Chain of Custody tier badge (Brief 2b): renders from provenance_tier; null -> nothing. */}
       <div style={{ marginBottom: 28 }}><ArticleProvenanceBadge tier={article.provenance_tier} /></div>
 

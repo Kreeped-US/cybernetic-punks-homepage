@@ -33,6 +33,21 @@ function getSupabase() {
   );
 }
 
+// Brief 2e: this approve action is the GENUINE human-approval signal. Going forward it stamps
+// feed_items.operator_approved_at = now(), which the article routes read to decide author=Justin +
+// the "Approved by Justin" receipt (vs Org author + no receipt for legacy/auto rows). GRACEFUL:
+// probe the column first so approvals never break if the operator has not yet run the ALTER (the
+// column is added by operator SQL as part of this bundle's deploy). Mirrors the provenance_tier
+// column-ready gate from Brief 2b.
+async function operatorApprovalColumnReady(supabase) {
+  try {
+    var r = await supabase.from('feed_items').select('operator_approved_at').limit(1);
+    return !r.error;
+  } catch (e) {
+    return false;
+  }
+}
+
 function safeEqual(provided, expected) {
   if (!expected) return false;
   const a = crypto.createHash('sha256').update(String(provided)).digest();
@@ -141,6 +156,14 @@ export async function POST(req) {
     }, { status: 409 });
   }
 
+  // Brief 2e: stamp the genuine human-approval timestamp so the article routes can credit
+  // author=Justin (vs Org for legacy/auto rows). Only include it when the column exists, so a
+  // pre-ALTER deploy still approves cleanly (the field is simply not set until the column lands).
+  var publishUpdate = { is_published: true, noindex: false, noindexed_at: null };
+  if (await operatorApprovalColumnReady(supabase)) {
+    publishUpdate.operator_approved_at = new Date().toISOString();
+  }
+
   var { data, error } = await supabase
     .from('feed_items')
     // noindexed_at MUST be cleared alongside noindex. The stamp marks a de-index
@@ -148,7 +171,7 @@ export async function POST(req) {
     // those pages leave Google's index. Flipping noindex without clearing the stamp
     // leaves the page reading as pruned FOREVER, so every future cohort query counts
     // it wrongly -- invisible until it produces a wrong answer.
-    .update({ is_published: true, noindex: false, noindexed_at: null })
+    .update(publishUpdate)
     .eq('id', id)
     .eq('is_published', false) // ONLY ever publish a draft -- never touch a live row
     .select('id, slug, game_slug, is_published, noindex')

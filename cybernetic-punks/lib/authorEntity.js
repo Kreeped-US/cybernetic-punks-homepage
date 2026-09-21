@@ -29,6 +29,15 @@ export const PUBLISHER_ORG = {
   sameAs: ['https://x.com/Cybernetic87250'],
 };
 
+// The ORG author for legacy / auto-published articles (Brief 2e). An article Justin did NOT
+// individually approve must NOT credit him as author -- that would be manufactured authority on a
+// row he never reviewed. It is authored by the Organization instead.
+export const ORG_AUTHOR = {
+  '@type': 'Organization',
+  name: 'Cybernetic Punks',
+  url: 'https://cyberneticpunks.com',
+};
+
 // Shared date formatter for the receipt (UTC, en-US long date). Returns null on a
 // missing/invalid date rather than guessing.
 function receiptDate(createdAt) {
@@ -59,4 +68,41 @@ export function approvalClause(createdAt) {
 export function verifiedReceipt(deskLabel, createdAt) {
   var desk = deskLabel || 'Editorial Desk';
   return desk + ' - ' + approvalClause(createdAt);
+}
+
+// RECEIPT / AUTHOR HONESTY SPLIT (Brief 2e, 2026-09-21) -- the single decision point every article
+// route uses. 2a wrongly applied author=Justin + "Approved by Justin" to EVERY article, including
+// 435 legacy rows Justin never individually reviewed. That is manufactured authority. An article is
+// treated as operator-approved ONLY when it carries an operator_approved_at timestamp (set by the
+// admin approve action going forward; legacy/auto rows are null).
+//
+//   approved (operator_approved_at present):
+//     author = Justin Person, reviewedBy = Justin, publisher = Org,
+//     visible receipt "Approved by Justin on <APPROVAL date>" (the approval date, not created_at),
+//     disclosure "Drafted with AI tooling; reviewed and approved by Justin."
+//   legacy / auto (operator_approved_at null/absent):
+//     author = Organization, NO reviewedBy, NO receipt, publisher = Org,
+//     disclosure "Drafted with AI tooling."
+//
+// The DESK label (a section, not an author) still renders in both cases -- the route owns that.
+export function resolveArticleAuthorship(article) {
+  var approvedAt = (article && article.operator_approved_at) || null;
+  if (approvedAt) {
+    return {
+      approved: true,
+      author: JUSTIN_PERSON,
+      reviewedBy: JUSTIN_PERSON,
+      publisher: PUBLISHER_ORG,
+      receipt: approvalClause(approvedAt), // uses the APPROVAL timestamp, not created_at
+      disclosure: 'Drafted with AI tooling; reviewed and approved by Justin.',
+    };
+  }
+  return {
+    approved: false,
+    author: ORG_AUTHOR,
+    reviewedBy: null,
+    publisher: PUBLISHER_ORG,
+    receipt: null,
+    disclosure: 'Drafted with AI tooling.',
+  };
 }

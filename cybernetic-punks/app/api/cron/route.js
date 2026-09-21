@@ -631,12 +631,9 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     }
     if (editorName === 'NEXUS') {
       insertData.ce_score = result.grid_pulse || 0;
-      // Provenance (Build 2): NEXUS is now SOURCE-BOUND -- it writes game-specific facts only from
-      // its ingested official news / patch notes / verified DB (its own analysis is marked OUR READ
-      // inline), so its articles carry the SOURCED tier. verified_source/_url (captured above from
-      // cited_blocks) already record WHICH source, so the SOURCED badge can name it. Guarded so it
-      // no-ops before the provenance_tier migration runs (see provenanceColumnReady).
-      if (await provenanceColumnReady(supabase)) insertData.provenance_tier = 'sourced';
+      // Provenance: NEXUS is SOURCE-BOUND. The SOURCED ('Verified') tier is assigned BELOW, AFTER
+      // verified_source is resolved, and ONLY when a real source chain exists -- never on a row that
+      // resolved to honest-unknown (Brief 2e: no "Verified" badge without a source chain).
     }
     if (editorName === 'DEXTER') insertData.ce_score = result.ce_score || 0;
     if (editorName === 'GHOST') {
@@ -726,6 +723,14 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
         insertData.verified_source = wdSrc[1].trim();
         console.log('[CRON][provenance] MIRANDA/wardogs attributed grounding -> verified_source set from grounding block (caveat layer 2)');
       }
+    }
+
+    // SOURCED-TIER GATE (Brief 2e): the "Verified" badge (provenance_tier='sourced') is assigned
+    // ONLY when this NEXUS row actually resolved a verified_source chain -- never on an honest-unknown
+    // (verified_source=null) row. Ties the "Verified" tier strictly to a real source, no drift.
+    // Column-guarded so it no-ops before the provenance_tier migration.
+    if (editorName === 'NEXUS' && insertData.verified_source && await provenanceColumnReady(supabase)) {
+      insertData.provenance_tier = 'sourced';
     }
 
     if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {

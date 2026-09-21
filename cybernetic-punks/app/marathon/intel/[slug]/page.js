@@ -5,7 +5,7 @@ import { Sep } from '@/components/Sep';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorByline, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
-import { JUSTIN_PERSON, PUBLISHER_ORG, approvalClause } from '@/lib/authorEntity';
+import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import ViewTracker from '@/components/ViewTracker';
 import DiscourseArticle from '@/components/DiscourseArticle';
@@ -1076,13 +1076,15 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
   var shareX = 'https://x.com/intent/tweet?text=' + encodeURIComponent(item.headline + ' — via @Cybernetic87250') + '&url=' + encodeURIComponent(articleUrl);
   var shareReddit = 'https://www.reddit.com/submit?url=' + encodeURIComponent(articleUrl) + '&title=' + encodeURIComponent(item.headline);
 
+  // Brief 2e: author/receipt honesty split -- Justin only on rows he individually approved.
+  var auth = resolveArticleAuthorship(item);
   var jsonLd = {
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
-    author: JUSTIN_PERSON,
-    reviewedBy: JUSTIN_PERSON,
-    publisher: PUBLISHER_ORG,
+    author: auth.author,
+    ...(auth.reviewedBy ? { reviewedBy: auth.reviewedBy } : {}),
+    publisher: auth.publisher,
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.updated_at || item.created_at),
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',
@@ -1163,10 +1165,11 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
               <span style={{ fontSize: 10, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{editorByline(item.editor)}</span>
             </Link>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace' }}>{publishedAt} · {rt}</span>
-            {/* Authorship receipt (Brief 2a/2b): AI-drafted, then approved by the real operator.
-                Accountability only -- the verification claim lives in the tier badge. Desk is shown
-                in the chip above, so this clause omits it. */}
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 }}>{approvalClause(item.created_at)}</span>
+            {/* Authorship receipt (Brief 2e): shown ONLY on rows Justin individually approved
+                (operator_approved_at present); uses the APPROVAL date. Legacy/auto rows show no
+                receipt. The AI disclosure below shows on BOTH. */}
+            {auth.receipt && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 }}>{auth.receipt}</span>}
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 0.3, fontStyle: 'italic' }}>{auth.disclosure}</span>
             {item.source && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', border: '1px solid #22252e', padding: '3px 7px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{item.source}</span>}
             {/* Chain of Custody tier badge (Brief 2b): renders from item.provenance_tier; the
                 verification claim lives here. NULL/absent -> renders nothing (honest-null). */}
