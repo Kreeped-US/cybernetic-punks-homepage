@@ -473,14 +473,8 @@ export default async function ShellGuidePage({ params }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 6 }}>
             {dexterBuilds.map(function(build) {
-              var grade = build.ce_score >= 9 ? 'S' : build.ce_score >= 7 ? 'A' : build.ce_score >= 5 ? 'B' : 'C';
-              var gradeColor = TIER_COLORS[grade] || ORANGE;
               return (
                 <Link key={build.id} href={'/marathon/intel/' + build.slug} className="sg-card" style={{ display: 'flex', gap: 12, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + ORANGE, borderRadius: '0 2px 2px 0', padding: 12, textDecoration: 'none' }}>
-                  <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 22, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{grade}</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: 6, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>CE</div>
-                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{build.headline}</div>
                     <span style={{ fontFamily: 'monospace', fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700 }}>{timeAgo(build.created_at)}</span>

@@ -745,7 +745,6 @@ export default async function CategoryPage({ params }) {
                     return (
                       <Link key={b.id} href={'/marathon/intel/' + b.slug} className="gc-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #ff8800', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                         <div style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.35 }}>{b.headline}</div>
-                        {b.ce_score > 0 && <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', background: 'rgba(255,136,0,0.14)', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, padding: '1px 6px', fontWeight: 800 }}>{b.ce_score}</span>}
                       </Link>
                     );
                   })}
@@ -763,7 +762,6 @@ export default async function CategoryPage({ params }) {
                     return (
                       <Link key={m.id} href={'/marathon/intel/' + m.slug} className="gc-link" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #00d4ff', borderRadius: '0 2px 2px 0', textDecoration: 'none' }}>
                         <div style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.35 }}>{m.headline}</div>
-                        {m.ce_score > 0 && <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.14)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '1px 6px', fontWeight: 800 }}>{m.ce_score}</span>}
                       </Link>
                     );
                   })}

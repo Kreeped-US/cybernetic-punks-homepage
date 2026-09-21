@@ -363,11 +363,6 @@ export default function ShellDetailClient({
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <span style={{ fontSize: 9, color: '#00d4ff', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>⬡ NEXUS</span>
-                      {article.ce_score > 0 && (
-                        <span style={{ fontSize: 9, color: '#00d4ff', background: 'rgba(0,212,255,0.14)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '1px 6px', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 800 }}>
-                          GP {article.ce_score}
-                        </span>
-                      )}
                       <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1, fontWeight: 700 }}>{timeAgo(article.created_at)}</span>
                     </div>
                     <h3 style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 800, color: '#fff', margin: '0 0 8px', lineHeight: 1.35 }}>{article.headline}</h3>

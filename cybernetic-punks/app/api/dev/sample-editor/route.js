@@ -8,17 +8,16 @@
 // WRITE-FREE BY CONSTRUCTION:
 //   - article  = callEditor(editor, fixedPrompt, null)  -> no keyword read, and
 //                callEditor itself never writes (persistence lives in the cron).
-//   - comment  = sampleEditorComment(editor, article)   -> write-free helper, no
-//                DB client, no insert.
-//   No feed_items write, no article_comments write, no cron trigger.
+//   No feed_items write, no cron trigger. (The comment sampler was removed with the comment
+//   subsystem in Brief 2d.)
 //
 // DEPLOY SAFETY: allowed ONLY when NODE_ENV === 'development' (local `next dev`).
 // This 404s in production AND in Vercel preview/branch deploys (which build as
 // NODE_ENV='production') -- so it is never reachable on any deployment, only on
 // a local dev server. Intended to be removed (or kept dev-gated) after Step 5b.
 
-import { callEditor, sampleEditorComment } from '@/lib/editorCore';
-import { ARTICLE_MODEL, COMMENT_MODEL } from '@/lib/models';
+import { callEditor } from '@/lib/editorCore';
+import { ARTICLE_MODEL } from '@/lib/models';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +45,7 @@ export async function GET(req) {
     'TOPIC / CONTEXT FOR THIS ARTICLE:\n' + topic +
     '\n\nWrite a single article on this topic, in your editorial lane and voice.';
 
-  var out = { editor: editor, topic: topic, model_article: ARTICLE_MODEL, model_comment: COMMENT_MODEL };
+  var out = { editor: editor, topic: topic, model_article: ARTICLE_MODEL };
 
   // ARTICLE (real path, null client -> no writes)
   try {
@@ -55,16 +54,8 @@ export async function GET(req) {
     out.article = { _error: 'callEditor threw', _message: e.message };
   }
 
-  // COMMENT (write-free per-editor sampler; reacts to the just-generated article)
-  var reactTo = (out.article && out.article.headline)
-    ? { headline: out.article.headline, body: out.article.body || '' }
-    : { headline: topic, body: '' };
-  try {
-    out.comment = await sampleEditorComment(editor, reactTo);
-  } catch (e) {
-    out.comment = '[comment sample error: ' + e.message + ']';
-  }
+  // (The per-editor comment sampler was removed with the comment subsystem -- Brief 2d.)
 
-  out._note = 'DEV SAMPLE — generated, NOT persisted. No feed_items / article_comments write, no cron.';
+  out._note = 'DEV SAMPLE — generated, NOT persisted. No feed_items write, no cron.';
   return Response.json(out);
 }

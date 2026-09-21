@@ -1,4 +1,4 @@
-import { callEditor, buildMirandaPrompt, generateArticleComments, getStoreRegistry } from '@/lib/editorCore';
+import { callEditor, buildMirandaPrompt, getStoreRegistry } from '@/lib/editorCore';
 import { notifyIntelFeed, notifyMetaUpdate, notifyPatchNotes, notifyRankedIntel } from '@/lib/discord';
 import { sendCronFailureAlert } from '@/lib/alertEmail';
 import { sendOpsAlert } from '@/lib/opsNotify';
@@ -51,14 +51,9 @@ var PRODUCING_GAME_SLUG = PRODUCING_GAME.slug;
 
 var TIER_ORDINAL = { S: 5, A: 4, B: 3, C: 2, D: 1 };
 
-// AI editor-comment generator: HALTED 2026-09-21 (Brief 1b). The AI editor-comment system is
-// being retired. This single flag stops generateArticleComments from firing, so NO new
-// article_comments rows are written for any published article, any game, any editor. Backend,
-// non-crawler-visible -- inside the SEO freeze envelope (changes no page Google sees). The
-// display component (the "panel weighs in" section) and the purge of the existing 783
-// article_comments rows are Brief 2. The generateArticleComments function is left intact so
-// Brief 2 removes it cleanly. Flip to true only to restore the (deprecated) system.
-var EDITOR_COMMENTS_ENABLED = false;
+// AI editor-comment generator: FULLY REMOVED (Brief 2d, 2026-09-21). Halted in Brief 1b, then the
+// generator + voices were deleted (Brief 2a-voice) and the display + call site removed here. The
+// stored article_comments rows are purged by operator SQL. No comment code remains.
 
 // GRACEFUL provenance_tier gate (Build 2): feed_items.provenance_tier is added by a SEPARATE
 // operator-run migration (docs/migrations/2026-09-18-feed-items-provenance-tier.sql). Setting a
@@ -400,8 +395,6 @@ function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
 // between paths; see that module for the choke-point reasoning.
 
 async function processEditor(editorName, prompt, rawData, supabase, regradeContext, directive) {
-  var tierChangeContext = null;
-
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
   }
@@ -853,20 +846,8 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
                 console.log('[CRON] tier-snapshot append error (non-fatal): ' + snapEx.message);
               }
 
-              if (movers.length > 0) {
-                tierChangeContext = {
-                  isTierRegrade: true,
-                  movers: movers.map(function(m) {
-                    return {
-                      name: m.name,
-                      type: m.type,
-                      oldTier: existingTierMap.get(m.name + ':' + m.type) || null,
-                      newTier: m.tier,
-                      trend: m.trend,
-                    };
-                  }),
-                };
-              }
+              // (The tier-change context object built here previously fed the AI editor-comment
+              // generator, which was fully removed in Brief 2d. Movers still drive the snapshot above.)
             }
           }
         } catch (metaErr) {
@@ -965,21 +946,10 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // are audit and the article already exists.
     await finalizeKeywordMatch(supabase, framing, feedItem ? feedItem.id : null);
 
-    // A HELD-FOR-REVIEW article is unpublished + awaiting human approval: do NOT
-    // generate comments and do NOT broadcast it to Discord -- both would surface an
-    // article no one has approved yet. They run only for the normal (published) path.
-    if (EDITOR_COMMENTS_ENABLED && feedItem && !heldForReview) {
-      generateArticleComments(
-        { id: feedItem.id, headline: feedItem.headline, body: feedItem.body, directive_type: insertData.directive_type || 'standard' },
-        editorName,
-        supabase,
-        tierChangeContext,
-        PRODUCING_GAME
-      ).catch(function(err) {
-        console.log('[CRON] comment generation error for ' + editorName + ': ' + err.message);
-      });
-    }
-
+    // A HELD-FOR-REVIEW article is unpublished + awaiting human approval: do NOT broadcast it
+    // to Discord -- that would surface an article no one has approved yet. Runs only for the
+    // normal (published) path. (The AI editor-comment generator that also lived here was fully
+    // removed in Brief 2d.)
     if (feedItem && !heldForReview) {
       if (editorName === 'MIRANDA') {
         notifyIntelFeed(feedItem, editorName).catch(function(e) { console.log('[DISCORD] intel notify error: ' + e.message); });

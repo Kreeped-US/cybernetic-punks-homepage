@@ -429,11 +429,6 @@ export default async function IntelHubPage({ searchParams }) {
                     </p>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                      {item.ce_score > 0 && (
-                        <span style={{ fontSize: 10, fontWeight: 800, color: editor.color, background: editor.color + '15', border: '1px solid ' + editor.color + '30', borderRadius: 2, padding: '2px 7px', letterSpacing: 1 }}>
-                          {item.ce_score}
-                        </span>
-                      )}
                       {item.tags && item.tags.length > 0 && item.tags.slice(0, 3).map(function(tag) {
                         return (
                           <span key={tag} style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', padding: '2px 7px', background: '#0e1014', border: '1px solid #22252e', borderRadius: 2, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>

@@ -141,11 +141,6 @@ export default function HomeIntelFeed(props) {
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 0%, ' + color + '22 60%, ' + color + '44 100%)' }} />
                       </>
                     )}
-                    {article.ce_score && (
-                      <div style={{ position: 'absolute', top: 8, right: 8, padding: '2px 7px', background: color, color: color === '#00d4ff' || color === '#ff8800' || color === '#00ff88' ? '#000' : '#fff', fontSize: 10, fontWeight: 800, borderRadius: 2, fontFamily: 'monospace', letterSpacing: 0.5 }}>
-                        {article.ce_score}
-                      </div>
-                    )}
                   </div>
 
                   {/* Content */}

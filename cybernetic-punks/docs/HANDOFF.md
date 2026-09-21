@@ -7,6 +7,64 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Comment display + CE chips removed + comment subsystem purge (Brief 2d, final of the bundle)
+
+STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand + 2a-voice + 2b + 2c), NOT merged. Final
+brief of the editorial-recovery bundle. Removes the two manufactured-signal displays (the AI "panel
+weighs in" comments + the public CE score chips) and the now-dead comment code. Display removal is
+content-only (freeze-safe). The row purge is the ONE DB write in the whole bundle -- OPERATOR-RUN SQL
+(handed to Justin below), NOT executed here.
+
+CODE CHANGES:
+1. "Panel weighs in" comment display removed entirely from app/marathon/intel/[slug]/page.js -- the
+   <section> block, the article_comments FETCH, the `comments` prop, and the now-unused
+   edColor/edRole/edSymbol helpers.
+2. Public CE / GRID PULSE / LOADOUT GRADE renders removed from ALL sites (operator chose "remove ALL
+   public CE renders"): the article-header chip (marathon-intel), the lane featured + list card chips
+   + the Avg/Top Score lane stats (marathon-intel), the intel-hub card chip (marathon/intel/page.js),
+   HomeIntelFeed's thumbnail chip, factions/ranked/sitrep byline chips, ShellDetailClient's "GP"
+   chip, the guides + guides/[category] inline chips, AND the S/A/B/C letter-grade columns on
+   builds/page.js (x2) + guides/shells (derived from ce_score, labeled "CE"/"GRADE"). Each card
+   reflows cleanly to the content column (verified: builds cards render headline+shell+time, no broken
+   grid). The REAL weapon/shell tier list (A/S letters from ranked_tier) is untouched -- it is not a
+   CE render.
+3. ce_score COLUMN + the homepage .gt('ce_score',0) gate (app/api/homepage-data/route.js:72) are KEPT
+   intact as an internal-only signal (the sitrep .gt('ce_score',0) internal filter is also kept). Only
+   the public RENDER of CE was removed.
+4. Comment subsystem FULLY removed (it landed build-clean, so the full removal per the brief): deleted
+   the inert generateArticleComments/sampleEditorComment stubs from lib/editorCore.js AND their call
+   sites -- the guarded block + EDITOR_COMMENTS_ENABLED flag + the now-orphan tierChangeContext in
+   app/api/cron/route.js, and the comment sampler + COMMENT_MODEL import in app/api/dev/sample-editor/
+   route.js. Zero references to the removed symbols remain anywhere in code. The Discord broadcast block
+   in the cron was left intact (separate feature).
+
+DB -- OPERATOR-RUN SQL (pending; executor did NOT run it):
+    DELETE FROM article_comments;
+  Purges the 783 dead AI-generated comment rows. Once the display (change #1) was removed the rows are
+  already invisible, so this is hygiene. A pre-delete snapshot is optional (disposable AI content).
+  >>> STATUS: PENDING OPERATOR RUN. Record the run here once Justin executes it. <<<
+
+VERIFY:
+- Live (dev server): /marathon/builds cards reflow cleanly with the grade column gone (headline + shell
+  + time), the real weapon/shell tier list intact; homepage renders with the HomeIntelFeed CE chip
+  gone; no app console errors (only dev HMR-websocket noise). Comment display + fetch gone from the
+  article render.
+- eslint: my changes introduce ZERO new lint errors (confirmed: the react/no-unescaped-entities errors
+  in builds/ranked/sitrep/ShellDetailClient are PRE-EXISTING -- identical counts at HEAD before any 2d
+  edit -- unrelated prose in lines I did not touch; they also exist on main and do not block the
+  operator's build). No <title>/H1/meta-description/URL/route/structural change. No DB writes by executor.
+
+FLAG (pre-existing, NOT fixed -- out of 2d scope + freeze): builds(2)/ranked(5)/sitrep(2)/
+ShellDetailClient(6) carry pre-existing react/no-unescaped-entities lint errors in prose (straight
+quotes/apostrophes), present on main. Left untouched to avoid unrelated churn on the frozen indexed
+vertical; worth a separate lint-hygiene pass.
+
+GATING STATE: 2d committed on feat/editorial-recovery (on top of 2a + 2a-brand + 2a-voice + 2b + 2c)
+and HELD. The bundle is now COMPLETE (2a -> 2d). Awaiting the Fable pass + the single one-deploy
+greenlight to merge, plus the operator-run purge SQL.
+
+---
+
 ## 2026-09-21 - OFF THE RECORD voice callout STAGED + HELD (Brief 2c, stacks on 2a/2a-brand/2a-voice/2b)
 
 STAGED on feat/editorial-recovery (stacks on 2a + 2a-brand + 2a-voice + 2b), NOT merged. Same

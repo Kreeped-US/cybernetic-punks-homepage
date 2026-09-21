@@ -25,9 +25,7 @@ import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 // EDITORS/EDITOR_STYLES routing) are untouched. JSON-LD author is now the real operator
 // (lib/authorEntity.js), not the editor codename.
 function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
-function edRole(key) { var d = getEditorDisplay(key); return d ? d.role : ''; }
-function edSymbol(key) { var d = getEditorDisplay(key); return d ? d.symbol : ''; }
-function edColor(key) { var d = getEditorDisplay(key); return d ? d.color : '#888'; }
+// edRole/edSymbol/edColor were removed with the "panel weighs in" comment display (Brief 2d).
 
 const EDITORS = {
   cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'Marathon Play Analysis & Runner Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
@@ -572,12 +570,6 @@ function EditorLanePage({ config, items }) {
   var featured = items[0] || null;
   var rest = items.slice(1);
 
-  var avgScore = items.length > 0
-    ? (items.reduce(function(sum, i) { return sum + (i.ce_score || 0); }, 0) / items.length).toFixed(1)
-    : null;
-  var topScore = items.length > 0
-    ? Math.max.apply(null, items.map(function(i) { return i.ce_score || 0; }))
-    : null;
   var allTags = [];
   items.forEach(function(i) { (i.tags || []).forEach(function(t) { allTags.push(t); }); });
   var tagCounts = {};
@@ -659,8 +651,6 @@ function EditorLanePage({ config, items }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 1, background: '#1e2028', marginTop: 24 }}>
             {[
               { label: 'Articles',  value: items.length },
-              avgScore > 0 && { label: 'Avg Score', value: avgScore },
-              topScore > 0 && { label: 'Top Score', value: topScore },
               topTag && { label: 'Top Topic', value: topTag.toUpperCase().slice(0, 12) },
             ].filter(Boolean).map(function(stat) {
               return (
@@ -702,9 +692,6 @@ function EditorLanePage({ config, items }) {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 8, color: config.color, background: config.color + '18', border: '1px solid ' + config.color + '35', borderRadius: 2, padding: '2px 7px', letterSpacing: 1.5, fontWeight: 700 }}>LATEST</span>
-                          {featured.ce_score > 0 && (
-                            <span style={{ fontSize: 16, fontWeight: 900, color: config.color, fontFamily: 'Orbitron, monospace' }}>{featured.ce_score}</span>
-                          )}
                           <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(featured.created_at)}</span>
                         </div>
                         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', lineHeight: 1.3, margin: '0 0 10px' }}>{featured.headline}</h2>
@@ -743,7 +730,6 @@ function EditorLanePage({ config, items }) {
                         )}
                         <div style={{ padding: '12px 14px', flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-                            {item.ce_score > 0 && <span style={{ fontSize: 11, fontWeight: 900, color: config.color, flexShrink: 0, fontFamily: 'Orbitron, monospace' }}>{item.ce_score}</span>}
                             {item.tags?.[0] && <span style={{ fontSize: 7, color: config.color + 'aa', background: config.color + '15', borderRadius: 2, padding: '1px 5px', letterSpacing: 1, fontWeight: 700 }}>{item.tags[0].toUpperCase()}</span>}
                             <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', flexShrink: 0, fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(item.created_at)}</span>
                           </div>
@@ -1025,7 +1011,7 @@ var ARTICLE_CANONICAL_MAP = {
 // ARTICLE PAGE
 // ═══════════════════════════════════════════════════════════
 
-function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques, comments, related, creatorAvatar }) {
+function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques, related, creatorAvatar }) {
   // Canonical map back-link for this article (undefined for all but the curated slugs).
   // DEDUP: the article renders no other link to a /maps/ entity (Related Intel is article->
   // article; the Data Reference sidebar is shells/weapons/mods/implants only), so this is the
@@ -1191,14 +1177,8 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
             {item.headline}
           </h1>
 
-          {(item.ce_score > 0 || (item.tags && item.tags.length > 0) || canonicalMap) && (
+          {((item.tags && item.tags.length > 0) || canonicalMap) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              {item.ce_score > 0 && (
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '5px 12px' }}>
-                  <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, fontWeight: 700, fontFamily: 'monospace' }}>{item.editor === 'NEXUS' ? 'GRID PULSE' : item.editor === 'DEXTER' ? 'LOADOUT GRADE' : 'CE SCORE'}</span>
-                  <span style={{ fontSize: 18, fontWeight: 900, color: editor.color, fontFamily: 'Orbitron, monospace' }}>{item.ce_score}</span>
-                </div>
-              )}
               {item.tags && item.tags.slice(0, 4).map(function(tag, i) {
                 return <span key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', border: '1px solid #22252e', background: 'rgba(255,255,255,0.02)', padding: '4px 9px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{tag}</span>;
               })}
@@ -1237,38 +1217,9 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
               <BodyRenderer parsed={parsed} editorColor={editor.color} allItems={allMentionedItems} />
             </div>
 
-            {comments && comments.length > 0 && (
-              <section id="editor-reactions" aria-labelledby="editor-panel-heading" style={{ marginTop: 36 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-                  <h2 id="editor-panel-heading" style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.2px' }}>The panel weighs in</h2>
-                  <div style={{ flex: 1, height: 1, background: '#1e2028', minWidth: 20 }} />
-                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{comments.length} {comments.length === 1 ? 'TAKE' : 'TAKES'}</span>
-                </div>
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {comments.map(function(comment, i) {
-                    var color = edColor(comment.editor);
-                    var role = edRole(comment.editor);
-                    return (
-                      <li key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + color, borderRadius: '0 3px 3px 0' }}>
-                        {editorHasPortrait(comment.editor) ? (
-                          <img src={'/images/editors/' + comment.editor.toLowerCase() + '.jpg'} alt="" width={36} height={36} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', border: '1px solid ' + color + '55', background: '#0e1014', flexShrink: 0, display: 'block' }} />
-                        ) : (
-                          <div aria-hidden="true" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid ' + color + '55', background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'Orbitron, monospace', fontWeight: 800, fontSize: 14, color: color }}>{editorInitial(comment.editor)}</div>
-                        )}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1.5 }}>{edSymbol(comment.editor)} {edTag(comment.editor)}</span>
-                            {role && <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{role}</span>}
-                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto', fontFamily: 'monospace', letterSpacing: 1 }}>{timeAgo(comment.created_at)}</span>
-                          </div>
-                          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.84)', lineHeight: 1.6 }}>{comment.body}</div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            )}
+            {/* The AI "panel weighs in" comment display was removed (Brief 2d): manufactured
+                multi-editor signal, retired. The comment generator was halted in Brief 1b and
+                the subsystem removed in Brief 2a-voice/2d; stored rows are purged by operator SQL. */}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 24, marginTop: 32, borderTop: '1px solid #1e2028', flexWrap: 'wrap' }}>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginRight: 4, fontWeight: 700, fontFamily: 'monospace' }}>SHARE</div>
@@ -1399,21 +1350,14 @@ export default async function IntelPage({ params }) {
   // VANTAGE discourse pieces render via the game-neutral DiscourseArticle renderer,
   // branched in BEFORE the Marathon-coupled ArticlePage (which is never touched --
   // no stat-card injection, editor lane, or portrait). Canonical home stays
-  // /intel/<slug> for a marathon-subject discourse piece. Skips the comments /
-  // avatar / related fetches below (they assume Marathon editorial).
+  // /intel/<slug> for a marathon-subject discourse piece. Skips the avatar /
+  // related fetches below (they assume Marathon editorial).
   if (isDiscourseArticle(itemResult.data)) {
     return <DiscourseArticle item={itemResult.data} ogImageUrl={'https://cyberneticpunks.com/marathon/intel/' + itemResult.data.slug + '/opengraph-image'} />;
   }
 
-  var comments = [];
-  if (itemResult.data) {
-    var { data: commentData } = await supabase
-      .from('article_comments')
-      .select('editor, body, created_at')
-      .eq('article_id', itemResult.data.id)
-      .order('created_at', { ascending: true });
-    comments = commentData || [];
-  }
+  // The AI editor-comment fetch was removed (Brief 2d): the "panel weighs in" display is gone and
+  // the article_comments rows are purged by operator SQL, so the article no longer reads them.
 
   // Creator-spotlight avatar: only fetch when this article is a spotlight with a
   // twitch handle. Normal articles skip this entirely (zero added cost). Never throws.
@@ -1471,7 +1415,6 @@ export default async function IntelPage({ params }) {
       implants={implantResult.data || []}
       factions={factionResult.data || []}
       uniques={uniqueResult.data || []}
-      comments={comments}
       related={related}
       creatorAvatar={creatorAvatar}
     />

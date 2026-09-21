@@ -1253,24 +1253,10 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
 }
 
 // ===========================================================
-// COMMENT SYSTEM - RETIRED (Brief 2a-voice, 2026-09-21)
+// COMMENT SYSTEM - FULLY REMOVED (Brief 2d, 2026-09-21)
 // ===========================================================
-// The AI editor-comment system is retired. Brief 1b (2026-09-21) DISABLED the generator at
-// the cron call site (EDITOR_COMMENTS_ENABLED=false); this pass removes its VOICE definitions
-// (which carried fabricated person names: Marcus Vane / Remi Okafor / Felix Andersen / Tariq
-// Webb / Miranda Malini) and all comment-generation logic (COMMENT_VOICES, COMMENT_AFFINITY,
-// selectCommenters, the comment integrity rules). The two exported entry points are kept as
-// inert, write-free stubs so their existing importers (app/api/cron/route.js, app/api/dev/
-// sample-editor/route.js) still resolve and the build stays clean; extra args are ignored.
-// Removing the call sites + the "panel weighs in" display + purging the stored article_comments
-// rows is Brief 2c.
-
-export async function generateArticleComments() {
-  // Retired (Brief 2a-voice): generates and persists nothing.
-  return [];
-}
-
-export async function sampleEditorComment() {
-  // Retired (Brief 2a-voice): comment voices removed; dev sampling disabled.
-  return '';
-}
+// The AI editor-comment system is gone. Timeline: Brief 1b halted the generator; Brief 2a-voice
+// deleted its voices/logic and left inert stubs; Brief 2d removed the stubs AND their call sites
+// (app/api/cron/route.js comment block + app/api/dev/sample-editor/route.js comment sampler) and
+// the "panel weighs in" display. The stored article_comments rows are purged by operator SQL. No
+// comment-generation code remains in this module.
