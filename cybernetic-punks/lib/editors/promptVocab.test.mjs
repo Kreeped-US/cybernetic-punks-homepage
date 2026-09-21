@@ -1,8 +1,8 @@
 // lib/editors/promptVocab.test.mjs
 // Stage 2a: the token-swap mechanism. Marathon vocab reproduces the exact original
 // tokens (byte-identity of the templated portions); a non-Marathon vocab produces NO
-// "Marathon"/"Bungie"/"Runner" in the templated portions; an UNMAPPED placeholder fails
-// LOUDLY (fail-closed), never silently emitting the raw placeholder or empty string.
+// "Marathon"/"Bungie"/"Runner" in the templated portions; an UNMAPPED placeholder gracefully
+// degrades to empty + logs (behavior changed 2026-09-18), never emitting the raw placeholder.
 //   Run: node --test lib/editors/promptVocab.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -73,15 +73,22 @@ test('non-Marathon vocab: NO Marathon/Bungie/Runner in the TEMPLATED portions', 
   assert.equal(/Runner/.test(templated), false, 'no "Runner" in templated portion');
 });
 
-test('unmapped placeholder FAILS LOUDLY (fail-closed) -- never silent/empty', () => {
+test('unmapped placeholder GRACEFULLY DEGRADES to empty (never the raw token) and logs', () => {
+  // Behavior changed 2026-09-18 (see module header): an unmapped/empty token renders EMPTY and
+  // LOGS a warning -- it no longer THROWS (a single unmapped token must not total-outage a game's
+  // cron; every draft is held for review). It must still NEVER emit the raw "{{cnp:...}}" text.
   const missing = { game: 'X' }; // dev/reader/grades/links absent
-  assert.throws(
-    () => applyVocab('a {{cnp:dev}} b', missing),
-    /unmapped placeholder \{\{cnp:dev\}\}/,
-    'a missing key throws with a clear message',
-  );
-  // empty-string value is also treated as unmapped (fail-closed):
-  assert.throws(() => applyVocab('{{cnp:reader}}', { reader: '' }), /unmapped placeholder/);
+  const origWarn = console.warn;
+  let warned = 0;
+  console.warn = () => { warned++; };
+  try {
+    assert.equal(applyVocab('a {{cnp:dev}} b', missing), 'a  b'); // token -> '' (no throw)
+    assert.equal(applyVocab('{{cnp:reader}}', { reader: '' }), ''); // empty-string value also degrades
+    assert.equal(/\{\{cnp:/.test(applyVocab('x {{cnp:dev}} y', missing)), false, 'raw placeholder never emitted');
+  } finally {
+    console.warn = origWarn;
+  }
+  assert.ok(warned >= 1, 'an unmapped/empty token is logged so the gap is visible in cron logs');
 });
 
 test('uppercase modifier: {{cnp:KEY^}} upper-cases one natural-case value at UPPER sites', () => {

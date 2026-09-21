@@ -488,6 +488,25 @@ export const marathon = {
       // pluralized in prose as {{kit:genre}}s -> "extraction shooters").
       genre: 'extraction shooter',
 
+      // CLASS/SYSTEM-NOUN VOCAB (Stage 1 scaffolding, 2026-09-21). Marathon's hardcoded prompt
+      // nouns lifted VERBATIM as the exact substrings Stage 2 will tokenize -- byte-for-byte the
+      // current literals (entityList from DATA_INTEGRITY_RULES line "Every weapon, mod, implant,
+      // core, shell, ammo type, and Cradle node"; classNoun/Plural "shell"/"shells";
+      // progressionSystem "the Cradle"; gearSystem "Faction Armory"; rankMetric "Holotag";
+      // classRoster the DEXTER 8-shell roster IN ITS EXISTING ORDER, which differs from the
+      // alphabetical toolEnums.entityFocus above -- so it is a separate verbatim value, not derived).
+      // metaEntitiesList is intentionally NOT here: it derives from toolEnums.metaTypes (single source).
+      // INERT until Stage 2 (no prompt references these tokens yet).
+      vocab: {
+        entityList: 'weapon, mod, implant, core, shell, ammo type, and Cradle node',
+        classNoun: 'shell',
+        classNounPlural: 'shells',
+        progressionSystem: 'the Cradle',
+        gearSystem: 'Faction Armory',
+        rankMetric: 'Holotag',
+        classRoster: 'Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel',
+      },
+
       // Structured tool-enum VALUES (values only; field names unchanged). entityFocus is
       // the shell_focus enum WITHOUT the trailing null (applyToolEnums appends null since
       // shell_focus is nullable); it also single-sources the youtube prose shell list via

@@ -125,6 +125,11 @@ function flattenInto(target, prefix, obj) {
   }
 }
 
+// Naive pluralizer for metaEntitiesList only: metaTypes are simple singular nouns
+// (weapon/shell -> weapons/shells). An already-plural token is left unchanged. Sufficient for
+// current metaTypes; a game with an irregular class noun supplies its own classNounPlural.
+function pluralizeNoun(w) { return /s$/i.test(String(w)) ? String(w) : String(w) + 's'; }
+
 export function resolveKit(config) {
   var c = config || {};
   var e = c.editorial || {};
@@ -154,6 +159,30 @@ export function resolveKit(config) {
   flattenInto(out, 'seasonContext.', pk.seasonContext || {});
   // 2b-4: comment-path game-model prose -> {{kit:commentModel.durableFacts}}.
   flattenInto(out, 'commentModel.', pk.commentModel || {});
+
+  // CLASS/SYSTEM-NOUN VOCAB (Stage 1 scaffolding, 2026-09-21). Carves Marathon's hardcoded
+  // class/system nouns (shell / Cradle / Faction Armory / Holotag / ...) out to per-game
+  // config.editorial.promptKit.vocab, so Stage 2 can tokenize the raw prompt text without leaking
+  // Marathon vocab into other games. DELIBERATE, DOCUMENTED EXCEPTION to the render-empty rule:
+  // these tokens return a GRAMMATICAL AGNOSTIC DEFAULT (not '') when a game omits vocab -- an empty
+  // class noun would break sentence grammar ("Every weapon, , ammo type, and ... you reference"),
+  // whereas a missing Layer-B BLOCK legitimately just disappears. classRoster is the one
+  // exception-to-the-exception: it stays render-empty (undefined) so a game with no fixed roster
+  // simply drops that line.
+  var vc = pk.vocab || {};
+  out.entityList        = vc.entityList        || 'every weapon, item, and system entity';
+  out.classNoun         = vc.classNoun         || 'class';
+  out.classNounPlural   = vc.classNounPlural   || 'classes';
+  out.progressionSystem = vc.progressionSystem || 'the progression system';
+  out.gearSystem        = vc.gearSystem        || 'the gear/unlock system';
+  out.rankMetric        = vc.rankMetric        || 'ranked';
+  out.classRoster       = vc.classRoster; // render-empty when absent (the roster line drops)
+  // metaEntitiesList is DERIVED from the SAME toolEnums.metaTypes single source (never a second
+  // copy): the singular enum values pluralized + joined. marathon ['weapon','shell'] -> "weapons
+  // and shells"; ['weapon'] -> "weapons"; absent -> agnostic "entities".
+  var mt = te.metaTypes;
+  out.metaEntitiesList = (Array.isArray(mt) && mt.length) ? mt.map(pluralizeNoun).join(' and ') : 'entities';
+
   return out;
 }
 
