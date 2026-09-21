@@ -7,6 +7,28 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - TIER BACKFILL COMPLETE (operator-run) + homepage tagline fix
+
+Operator ran the provenance_tier honest backfill (rule-based, idempotent, NULL-where-
+ambiguous; pre-update backup feed_items_provbackup_20260921 created). Post-run: sourced 33,
+analysis 1, NULL ~401 (435 total; drifts with cron). All 33 'sourced' rows vetted - every
+verified_source is a genuine primary source: BUNGIE / Bungie patch notes / MARATHON DEV TEAM
+(official) or owner-verified-in-game (Justin). Zero placeholders, zero community/attributed.
+Chain of Custody badges now render on the ~34 articles with a real evidence chain; the rest
+are honest-null. Rules: (1) attributed if community/beta-marked [0]; (2) sourced if
+verified_source present [33]; (3) analysis if directive_type=discourse and no source [1];
+(4) else NULL. Rollback source: feed_items_provbackup_20260921.
+
+Also shipped: fix/homepage-tagline (fce240f) - NetworkFooter nf-tag "Human-verified FPS
+intelligence." -> "No hype. Just intel." across homepage + all network pages. Retired-brand
+phrase now gone everywhere (queued item #1 DONE).
+
+Queued post-Oct-20-checkpoint: real tier-list rebuild (decoupled from ce_score),
+/author/justin page, article-layout redesign, thin-corpus refresh-or-cut, badge-source-on-
+hover enhancement.
+
+---
+
 ## 2026-09-21 - EDITORIAL-RECOVERY BUNDLE SHIPPED (merged + deployed + DB complete)
 
 Merged feat/editorial-recovery -> main (ff-only, bf481e5..3e47696), pushed, branch deleted,
