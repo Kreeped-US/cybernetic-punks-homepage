@@ -62,7 +62,7 @@ export default function NetworkFooter() {
               <span className="nf-wm">CYBERNETIC <b>PUNKS</b></span>
             </div>
             <p className="nf-tag">
-              <b>Human-verified FPS intelligence.</b> Every stat checked in the game itself &mdash; sourced, tiered by confidence, and never scraped.
+              <b>No hype. Just intel.</b> Every stat checked in the game itself &mdash; sourced, tiered by confidence, and never scraped.
             </p>
           </div>
 
