@@ -12,6 +12,10 @@ import { DMZ_FOREST } from '../brandColors.js';
 
 export const dmz = {
   slug: 'dmz',
+  // News-source provenance for cited news/patch-notes blocks. READY BUT UNUSED: DMZ has no cron
+  // news channel wired yet (no patchNotes/steamAppId in this config), so nothing stamps this today;
+  // set for when a channel lands. (Brief per-game news label, 2026-09-21.)
+  newsSourceLabel: 'CALL OF DUTY',
   displayName: 'DMZ',   // was `label`; unified with marathon.js's field name (the
                         // top-level game display name). Section entries below keep
                         // their own `label` -- a different, per-section concept.

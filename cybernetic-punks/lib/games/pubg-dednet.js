@@ -19,6 +19,10 @@ import { DEDNET_BLOOD } from '../brandColors.js';
 
 export const pubgDednet = {
   slug: 'pubg-dednet',
+  // News-source provenance for cited news/patch-notes blocks. READY BUT UNUSED: pre-launch, news
+  // comes via the gen-pubg-dednet scripts, not the cron bungieNews channel; set for when the cron
+  // news channel is wired. (Brief per-game news label, 2026-09-21.)
+  newsSourceLabel: 'KRAFTON',
   displayName: 'PUBG: DED.NET',   // top-level game display name (root tile reads this)
   tagline: 'Verified intel for the roguelite bloodsport',
   basePath: '/pubg-dednet',

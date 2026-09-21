@@ -8,12 +8,34 @@
 // caps. The URL in the registry comes from PIPELINE METADATA (rawData), NEVER from
 // anything the LLM wrote -- the model only SELECTS an ID from a closed set.
 
+// getGameConfig via a RELATIVE import (not the @/ alias) so blockId.js still resolves under plain
+// node -- its .mjs tests + scripts import it relatively, and the games registry + configs are pure
+// data with only relative imports, so this adds no cycle and no Next-only dependency.
+import { getGameConfig } from '../games/index.js';
+
 // Per-source prompt cap: each formatter shows the top-N of its source, so only the
 // top-N get citable IDs. The resolver slices to the SAME N so the ids line up. These
 // caps mirror the formatters' existing slices (patchnotes engine 6, youtube 5).
 export const BLOCK_CAP = { bungie: 6, youtube: 5 };
 const PREFIX = { bungie: 'BN', youtube: 'YT' };
+// LABEL.bungie is the FALLBACK news-source label only; the real label is now per-game (see
+// newsLabelFor). LABEL.youtube is unchanged (creator coverage is game-agnostic).
 const LABEL = { bungie: 'BUNGIE', youtube: 'YOUTUBE' };
+
+// Resolve the news-source provenance label for a game (Brief per-game news label, 2026-09-21).
+// The former hardcoded LABEL.bungie mislabeled every non-Marathon game's Steam news as "BUNGIE"
+// (e.g. Wardogs, whose news is Bulkhead's Steam feed). Reads config.newsSourceLabel via the
+// gameSlug buildBlockRegistry already receives. FALLBACK to LABEL.bungie so an unknown/unconfigured
+// game never breaks: getGameConfig throws on an unknown slug (caught), and a config missing the
+// field falls back too. A null/undefined gameSlug resolves to the default (marathon) config -> the
+// same "BUNGIE" as before, preserving prior no-gameSlug behavior + the existing tests.
+function newsLabelFor(gameSlug) {
+  try {
+    var cfg = getGameConfig(gameSlug);
+    if (cfg && cfg.newsSourceLabel) return cfg.newsSourceLabel;
+  } catch (e) { /* unknown slug -> fall through to the default label */ }
+  return LABEL.bungie;
+}
 // Primary-source precedence when an editor cites more than one source: official
 // Bungie notes outrank creator (YouTube) coverage as the fact-source of record.
 const SOURCE_PRIORITY = { BUNGIE: 0, YOUTUBE: 1 };
@@ -85,8 +107,11 @@ export function buildBlockRegistry(rawData, gameSlug) {
   const reg = new Map();
   const rd = rawData || {};
   const gs = gameSlug || null;
+  // Per-game news-source label (was the hardcoded LABEL.bungie). game_slug stamping + URL capture
+  // are UNCHANGED -- label only. Resolved once per registry build from the gameSlug already passed.
+  const newsLabel = newsLabelFor(gameSlug);
   (rd.bungieNews || []).slice(0, BLOCK_CAP.bungie).forEach((it, i) => {
-    reg.set(blockId('bungie', i + 1), { source: LABEL.bungie, url: (it && it.url) || null, game_slug: gs });
+    reg.set(blockId('bungie', i + 1), { source: newsLabel, url: (it && it.url) || null, game_slug: gs });
   });
   (rd.youtubeVideos || []).slice(0, BLOCK_CAP.youtube).forEach((v, i) => {
     const url = v && v.youtube_id ? 'https://www.youtube.com/watch?v=' + v.youtube_id : null;

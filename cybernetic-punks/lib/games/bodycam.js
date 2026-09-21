@@ -16,6 +16,9 @@
 
 export const bodycam = {
   slug: 'bodycam',
+  // News-source provenance for cited news/patch-notes blocks. READY BUT UNUSED: no cron news
+  // channel wired for Bodycam; set for when one lands. (Brief per-game news label, 2026-09-21.)
+  newsSourceLabel: 'REISSAD STUDIO',
   displayName: 'Bodycam',
   tagline: 'Verified intel for the body-cam tactical FPS',
   basePath: '/bodycam',

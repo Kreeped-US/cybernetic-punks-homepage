@@ -24,6 +24,11 @@ import { MARATHON_GREEN } from '../brandColors.js';
 
 export const marathon = {
   slug: 'marathon',
+  // News-source provenance label stamped on cited news/patch-notes blocks (verified_source) for
+  // this game, resolved in lib/gather/blockId.js via gameSlug. DECOUPLED from the display
+  // developer/peerLabel on purpose (provenance, not chrome). Marathon MUST stay "BUNGIE" --
+  // behavior unchanged from the former hardcoded label (Brief per-game news label, 2026-09-21).
+  newsSourceLabel: 'BUNGIE',
   displayName: 'Marathon',
 
   // EDITOR-PROMPT VOCABULARY (content-engine generalization Stage 2a, Layer A tokens).

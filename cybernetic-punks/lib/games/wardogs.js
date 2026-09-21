@@ -23,6 +23,11 @@ import { WARDOGS_AMBER } from '../brandColors.js';
 
 export const wardogs = {
   slug: 'wardogs',
+  // News-source provenance for cited news/patch-notes blocks (verified_source). Wardogs news is the
+  // official Steam news feed for appid 1867240 -- authored by BULKHEAD (dev; Team17 is publisher),
+  // NOT Bungie. The "Bungie-via-Steam feed" note below describes the shared gather ENGINE, not the
+  // source. Fixes the former hardcoded "BUNGIE" mislabel on Wardogs (Brief per-game news label).
+  newsSourceLabel: 'BULKHEAD',
   displayName: 'Wardogs',       // top-level game display name (root tile reads this)
   tagline: 'Verified intel for the cash economy',
   basePath: '/wardogs',
