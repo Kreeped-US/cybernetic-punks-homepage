@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Per-game news source label (fix/per-game-news-label)
+WHAT: Replaced the hardcoded news-source label in the block registry with a
+per-game value from config, so non-Marathon games stop resolving
+verified_source to "BUNGIE".
+FILES: lib/gather/blockId.js - new newsLabelFor(gameSlug) via getGameConfig,
+try/catch fallback to "BUNGIE"; label only, game_slug boundary + URL capture
+unchanged. Added newsSourceLabel to 5 configs: marathon "BUNGIE" (unchanged),
+wardogs "BULKHEAD", dmz "CALL OF DUTY" (inert), pubg "KRAFTON" (inert),
+bodycam "REISSAD STUDIO" (inert). Diff 6 files, +47/-1.
+TESTS: 41 pass (blockId + gameSlugBoundary + storeCitation); Marathon
+byte-identical; eslint clean. Trace: marathon BN -> "BUNGIE", wardogs BN ->
+"BULKHEAD".
+SCOPE: new generations only; existing rows unchanged. Freeze-safe
+(backend/metadata, nothing crawler-facing). Only wardogs is live (only game
+with a wired cron news channel); dmz/pubg/bodycam labels unused until each
+news channel is wired.
+OPERATOR DB (pending, Justin's call): 5 existing wardogs rows still carry
+verified_source "BUNGIE" (1 published ...-6tpw, 4 drafts). Optional:
+UPDATE feed_items SET verified_source='BULKHEAD' WHERE game_slug='wardogs' AND verified_source='BUNGIE';
+NEXT: #2 - de-Marathon the prompt vocab to stop "shells"/Cradle being ordered
+into every game; then #3 bannedVocab scan backstop.
+
+---
+
 ## 2026-09-21 - TIER BACKFILL COMPLETE (operator-run) + homepage tagline fix
 
 Operator ran the provenance_tier honest backfill (rule-based, idempotent, NULL-where-
