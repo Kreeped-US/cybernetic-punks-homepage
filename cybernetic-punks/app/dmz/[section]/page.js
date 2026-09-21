@@ -109,7 +109,7 @@ function ArticleCard({ section, article }) {
         <span style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.55 }}>{snippet}</span>
       )}
       <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-        {isDiscourse ? 'Network desk -- Vivian Cross / Vantage' : 'Sourced from the official Call of Duty blog'}
+        {isDiscourse ? 'Network desk' : 'Sourced from the official Call of Duty blog'}
       </span>
     </Link>
   );

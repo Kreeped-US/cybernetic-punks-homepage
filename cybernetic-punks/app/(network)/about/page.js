@@ -24,6 +24,18 @@ import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { getGameConfig } from '@/lib/games';
 import { getAllEditors, getEditorDisplay, editorByline } from '@/lib/editors/roster';
 import { networkGameStatus } from '@/lib/network/gameStatus';
+import { JUSTIN_PERSON, AUTHOR_URL } from '@/lib/authorEntity';
+
+// The Person entity for the accountable human (Justin), anchored at /about#justin -- this is the
+// SAME @id every article's author/reviewedBy points at (lib/authorEntity.js). Brief 2a.
+var JUSTIN_PERSON_LD = Object.assign(
+  {
+    '@context': 'https://schema.org',
+    '@id': AUTHOR_URL,
+    description: 'Solo operator of Cybernetic Punks; approves every draft and verifies stats in-game.',
+  },
+  JUSTIN_PERSON
+);
 
 export const metadata = {
   title: 'About the Network',
@@ -130,9 +142,9 @@ export default function AboutPage() {
 
         {/* The editorial desk - ROSTER-DRIVEN */}
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
-          <Label>The editorial desk</Label>
+          <Label>The desks</Label>
           <Body>
-            Cybernetic Punks runs on an autonomous AI editorial system - a desk of specialized editors, each owning a beat, each with a distinct voice. They don&apos;t replace verified data; they interpret it, and they weigh in on each other&apos;s calls.
+            Cybernetic Punks is organized into specialized desks - analysis, meta and news, builds, community, field guide, and economy - each owning a beat. The desks are AI-drafted: they interpret verified data, they don&apos;t invent it. Nothing publishes without review - every piece is checked in-game and approved by the operator before it goes live.
           </Body>
           <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {desk.map(function (ed) {
@@ -175,11 +187,13 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Who's behind it (prose deepened in Phase 3) */}
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px 60px' }}>
+        {/* Who's behind it -- the accountable-human anchor (#justin). This is the entity every
+            article's author/reviewedBy resolves to; the Person JSON-LD below shares its @id. */}
+        <div id="justin" style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px 60px', scrollMarginTop: 90 }}>
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JUSTIN_PERSON_LD) }} />
           <Label>Who&apos;s behind it</Label>
           <Body>
-            One person builds this. I&apos;ve been gaming since the Commodore 64 - RTS, FPS, MMOs, decades of it - and I got tired of watching AI content farms flood the games I love with fake tier lists and broken scraped data. So I built the site I wanted to exist: real numbers, checked in the actual game, no hype. I don&apos;t put my name on it - I put the receipts on it. If you want to know who&apos;s behind the data, I&apos;m <a href="https://x.com/Kreeped" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped</a>.
+            One person builds this. I&apos;m Justin, the solo operator of Cybernetic Punks: I approve every draft and verify the stats in-game before anything publishes. I&apos;ve been gaming since the Commodore 64 - RTS, FPS, MMOs, decades of it - and I got tired of watching AI content farms flood the games I love with fake tier lists and broken scraped data. So I built the site I wanted to exist: real numbers, checked in the actual game, no hype. The desks draft; I&apos;m the one who signs off. If you want to know who&apos;s behind the data, I&apos;m <a href="https://x.com/Kreeped" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped</a> (<a href="https://github.com/Kreeped-US" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped-US</a> on GitHub).
           </Body>
           <div style={{ marginTop: 22 }}>
             <Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>Explore the network &rarr;</Link>

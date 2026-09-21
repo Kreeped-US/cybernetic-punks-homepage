@@ -7,6 +7,72 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Authorship layer STAGED + HELD (Brief 2a of the editorial-surface rework)
+
+STAGED on branch feat/editorial-recovery, NOT merged. This is part 2a of a THREE-part
+bundle (2a/2b/2c) that stacks on ONE branch and merges ONCE, later, on explicit greenlight.
+Do NOT merge feat/editorial-recovery yet -- 2b and 2c commit on top of it first.
+
+WHAT 2a DOES (retire the fictional-persona authorship; put the real accountable human on
+every article, in copy AND schema):
+- lib/authorEntity.js (NEW): single source of truth for the real author. JUSTIN_PERSON
+  (schema.org Person: name "Justin", url the /about#justin anchor, sameAs x.com/Kreeped +
+  github.com/Kreeped-US), PUBLISHER_ORG (Cybernetic Punks Org + logo + sameAs the business
+  account x.com/Cybernetic87250), and approvalClause()/verifiedReceipt() for the byline
+  receipt. Both sameAs verified to resolve 2026-09-21 (x.com/Kreeped 200; github 200).
+- lib/editors/roster.js: person identities RETIRED. Each codename is now a DESK LABEL, not
+  a person -- fullName is the desk (Analysis, Meta & News, Builds, Community, Field Guide,
+  Economy, Network), tag is null, bio is a desk-beat description, hasPortrait is false for
+  every desk. The ~17 byline / masthead / lane / footer sites INHERIT desk labels with no
+  per-site edit (they read the same fields). Portrait FACES stop rendering everywhere
+  (consumers fall back to the existing glyph/monogram badge). The /images/editors/*.jpg
+  files are left on disk for a later asset cleanup; nothing references them while
+  hasPortrait is false.
+- Article JSON-LD on all FIVE article surfaces (the 4 enumerated routes + the shared
+  GameArticle component that powers Bodycam and future games): author and reviewedBy are now
+  the Justin Person; publisher is the PUBLISHER_ORG. The former author was an Organization
+  named "<EDITOR> - Cybernetic Punks" pointing at the intel lane -- that fabricated-author
+  shape is gone. Routes: app/marathon/intel/[slug], app/wardogs/[section]/[slug],
+  app/pubg-dednet/[section]/[slug], app/dmz/[section]/[slug], components/game/GameArticle.js.
+- Per-article byline RECEIPT (visible): each article now shows "Verified in-game and approved
+  by Justin on <date>" under the desk chip (date from feed_items.created_at; no DB column
+  added). The desk is shown in the chip, so the clause omits it. Where the desk label used to
+  duplicate the byline (the old role span, now equal to the desk), the redundant span was
+  removed.
+- /editors ("The Newsroom") rewritten to "The Desks": metadata/masthead/cards no longer name
+  fabricated people (Marcus Vane, Remi Okafor, etc.); H1 is "Six desks. One operator.";
+  Justin is named as the accountable human with a link to /about#justin.
+- /about: the editorial-desk section reframed to "The desks" (removed the persona-council line
+  "they weigh in on each other's calls"); the AI-disclosure + tiering explainer KEPT; the
+  "Who's behind it" section is now the #justin anchor and carries the Person JSON-LD (same @id
+  the article author/reviewedBy point at) + names Justin explicitly.
+- Straggler fixed: app/dmz/[section]/page.js rendered a hardcoded persona literal ("Network
+  desk -- Vivian Cross / Vantage") -> now just "Network desk".
+
+FABLE-FLAG A resolved: the author-entity URL is the /about#justin ANCHOR, not a new
+/author/justin route -- zero new routes, honoring the freeze's "no URL/structural change"
+guarantee. (The anchor is the canonical @id shared by every article's author/reviewedBy and
+the /about Person schema.)
+
+NOT in 2a (parked): 2b = provenance badge sitewide + OFF THE RECORD callout; 2c = remove the
+"panel weighs in" display + the CE chips + purge the 783 article_comments rows (operator SQL).
+
+KNOWN GAP (flagged, out of 2a scope): the AI GENERATION voice layer still references persona
+person-names -- lib/editorCore.js (EDITOR_PROMPTS / COMMENT_VOICES), the gen-*.mjs scripts,
+lib/network/vantage.js. Those shape the model's voice, not the rendered author schema, but a
+draft could still self-reference a fabricated name in body copy. De-personing the generation
+voice is a separate follow-up (not display/schema); recommend scheduling it before the bundle
+ships so no drafted body contradicts the new author=Justin surface.
+
+VERIFY: eslint clean on all 12 changed files (0 errors; only pre-existing <img> warnings).
+Freeze-safe: no URL, no route, no <title>/structure change -- content + schema only.
+
+GATING STATE: 2a committed on feat/editorial-recovery and HELD. Awaiting review, then 2b/2c
+on the same branch, then the Fable pass, then a single one-deploy greenlight to merge the
+whole bundle.
+
+---
+
 ## 2026-09-21 - AI editor-comment GENERATOR halted (Brief 1b)
 
 The AI editor-comment generator is HALTED: app/api/cron/route.js now guards the

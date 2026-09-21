@@ -33,6 +33,7 @@ import { getGameSection } from '@/lib/games';
 import { DMZ_ARTICLE_SEO, dmzSectionForArticle, dmz } from '@/lib/games/dmz';
 import { isGameLive } from '@/lib/network/gameStatus';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
+import { JUSTIN_PERSON, PUBLISHER_ORG, approvalClause } from '@/lib/authorEntity';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
 import ToolCTA from '@/components/ToolCTA';
@@ -333,8 +334,9 @@ export default async function DmzArticlePage({ params }) {
     '@context': 'https://schema.org', '@type': 'NewsArticle',
     headline: article.headline,
     description: description,
-    author: { '@type': 'Organization', name: article.editor + ' — Cybernetic Punks', url: 'https://cyberneticpunks.com/marathon/intel/' + (article.editor || '').toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
+    author: JUSTIN_PERSON,
+    reviewedBy: JUSTIN_PERSON,
+    publisher: PUBLISHER_ORG,
     datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: article.tags ? article.tags.join(', ') : 'DMZ, Call of Duty',
@@ -397,8 +399,11 @@ export default async function DmzArticlePage({ params }) {
         <div style={{ flex: 1, minWidth: 160 }}>
           <div style={{ fontFamily: EXO, fontSize: 14, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{byline}</div>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.5, fontWeight: 600, marginTop: 2 }}>
-            {[role, pubDate, rt].filter(Boolean).join('  ·  ')}
+            {[pubDate, rt].filter(Boolean).join('  ·  ')}
           </div>
+          {/* Authorship receipt (Brief 2a): AI-drafted, then verified in-game and approved by
+              the real operator. Desk shown above, so this clause omits it. */}
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.3, marginTop: 3 }}>{approvalClause(article.created_at)}</div>
         </div>
         <div style={{ marginLeft: 'auto' }}>
           <DmzShare url={canonical} title={article.headline} mode="row" />

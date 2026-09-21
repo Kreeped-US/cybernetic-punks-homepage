@@ -82,12 +82,8 @@ function CardBody({ editor }) {
           )}
         </div>
 
-        {/* Role */}
-        <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginTop: 8 }}>
-          {editor.role}
-        </div>
-
-        {/* In-character bio */}
+        {/* Desk beat description (editor.fullName above is already the desk label, so the
+            role line is not repeated here). */}
         <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.62)', lineHeight: 1.6, margin: '10px 0 0' }}>
           {editor.bio}
         </p>
@@ -95,11 +91,11 @@ function CardBody({ editor }) {
         {/* Footer: live -> read-lane affordance; incoming -> honest "joining" note */}
         {isLive ? (
           <div style={{ marginTop: 12, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: accent }}>
-            READ {editor.tag || editor.fullName} &rarr;
+            READ {editor.fullName} &rarr;
           </div>
         ) : (
           <div style={{ marginTop: 12, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: 'rgba(255,255,255,0.35)' }}>
-            A sixth analyst is joining the newsroom.
+            A sixth desk is joining the network.
           </div>
         )}
       </div>

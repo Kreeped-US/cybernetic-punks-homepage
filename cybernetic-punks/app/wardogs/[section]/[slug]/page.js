@@ -17,6 +17,7 @@ import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 import { getGameSection } from '@/lib/games';
 import { wardogsSectionForArticle } from '@/lib/games/wardogs';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
+import { JUSTIN_PERSON, PUBLISHER_ORG, approvalClause } from '@/lib/authorEntity';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/articleContent';
 import ViewTracker from '@/components/ViewTracker';
@@ -104,8 +105,9 @@ export default async function WardogsArticlePage({ params }) {
     '@context': 'https://schema.org', '@type': 'NewsArticle',
     headline: article.headline,
     description: description,
-    author: { '@type': 'Organization', name: article.editor + ' — Cybernetic Punks', url: 'https://cyberneticpunks.com/marathon/intel/' + (article.editor || '').toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
+    author: JUSTIN_PERSON,
+    reviewedBy: JUSTIN_PERSON,
+    publisher: PUBLISHER_ORG,
     datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: tags.length ? tags.join(', ') : 'Wardogs, Bulkhead',
@@ -150,12 +152,14 @@ export default async function WardogsArticlePage({ params }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28, flexWrap: 'wrap', fontSize: 13, color: 'var(--text-secondary)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: '50%', background: editorColor, color: '#08090c', fontFamily: EXO, fontWeight: 800, fontSize: 12 }}>{initial}</span>
         <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{byline}</span>
-        {role ? <span style={{ color: 'var(--text-tertiary)' }}>{role}</span> : null}
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.5 }}>/</span>
         <span>{pubDate}</span>
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.5 }}>/</span>
         <span>{rt}</span>
       </div>
+      {/* Authorship receipt (Brief 2a): AI-drafted, then verified in-game and approved by the
+          real operator. Desk shown above, so this clause omits it. */}
+      <div style={{ marginTop: -16, marginBottom: 28, fontSize: 12, color: 'var(--text-tertiary)' }}>{approvalClause(article.created_at)}</div>
 
       {/* Key facts (optional, from the body) */}
       {keyFacts && keyFacts.length > 0 ? (

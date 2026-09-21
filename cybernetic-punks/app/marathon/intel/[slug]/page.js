@@ -5,6 +5,7 @@ import { Sep } from '@/components/Sep';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorByline, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
+import { JUSTIN_PERSON, PUBLISHER_ORG, approvalClause } from '@/lib/authorEntity';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import ViewTracker from '@/components/ViewTracker';
 import DiscourseArticle from '@/components/DiscourseArticle';
@@ -16,11 +17,12 @@ import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
 
-// Display rename (editor rework Step 3). Visible editor identity routes through
-// the canonical map: editorByline() for full bylines ("Marcus Vane / Cipher";
-// Miranda -> "Miranda Malini"); edTag() for compact labels. Null-safe -> raw
-// key, never a silent Cipher. KEYS (item.editor, EDITORS/EDITOR_STYLES routing,
-// JSON-LD author) are untouched.
+// Display rename (editor rework Step 3; person identities retired Brief 2a). Visible
+// editor identity routes through the canonical map: editorByline() now returns the DESK
+// LABEL ("Analysis", "Meta & News", ...) since desks have no person name/tag; edTag() for
+// compact labels. Null-safe -> raw key, never a silent Cipher. KEYS (item.editor,
+// EDITORS/EDITOR_STYLES routing) are untouched. JSON-LD author is now the real operator
+// (lib/authorEntity.js), not the editor codename.
 function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.fullName) : key; }
 function edRole(key) { var d = getEditorDisplay(key); return d ? d.role : ''; }
 function edSymbol(key) { var d = getEditorDisplay(key); return d ? d.symbol : ''; }
@@ -1075,8 +1077,9 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
     description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
-    author: { '@type': 'Organization', name: item.editor + ' - Cybernetic Punks', url: 'https://cyberneticpunks.com/marathon/intel/' + item.editor.toLowerCase() },
-    publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com', logo: { '@type': 'ImageObject', url: 'https://cyberneticpunks.com/cnp-512.png' } },
+    author: JUSTIN_PERSON,
+    reviewedBy: JUSTIN_PERSON,
+    publisher: PUBLISHER_ORG,
     datePublished: toISOWithPTOffset(item.created_at), dateModified: toISOWithPTOffset(item.updated_at || item.created_at),
     url: articleUrl, mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     keywords: item.tags ? item.tags.join(', ') : 'Marathon, gaming',
@@ -1149,12 +1152,17 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '36px 24px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
             <Link href={'/marathon/intel/' + item.editor.toLowerCase()} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '4px 10px', textDecoration: 'none' }}>
-              <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '50', background: '#0e1014' }}>
-                <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={edTag(item.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '50', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {editorHasPortrait(item.editor)
+                  ? <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={edTag(item.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                  : <span aria-hidden="true" style={{ color: editor.color, fontSize: 11, lineHeight: 1 }}>{editor.symbol || editorInitial(item.editor)}</span>}
               </div>
               <span style={{ fontSize: 10, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{editorByline(item.editor)}</span>
             </Link>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace' }}>{publishedAt} · {rt}</span>
+            {/* Authorship receipt (Brief 2a): AI-drafted, then verified in-game and approved by the
+                real operator. Desk is shown in the chip above, so this clause omits it. */}
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 }}>{approvalClause(item.created_at)}</span>
             {item.source && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', border: '1px solid #22252e', padding: '3px 7px', borderRadius: 2, letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase' }}>{item.source}</span>}
             {/* Article-level provenance badge (Build 1): renders from item.provenance_tier when set
                 (Build 2 sets it; column via 2026-09-18 migration). NULL/absent -> renders nothing, so

@@ -1,143 +1,130 @@
 // lib/editors/roster.js
 // ============================================================
-// CANONICAL EDITOR DISPLAY MAP — single source of truth for how editors are
-// SHOWN to users (full name, tag, role, accent, bio, portrait).
+// CANONICAL EDITOR-DESK DISPLAY MAP -- single source of truth for how the
+// editorial DESKS are SHOWN to users (desk label, section role, accent, beat
+// description, glyph).
 // ============================================================
-// Step 1 of the editor rework (see docs/network/EDITOR_REWORK_AUDIT.md, Q4).
+// Brief 2a (2026-09-21): the roster no longer carries FICTIONAL PERSON identities.
+// Articles are AI-DRAFTED and then verified in-game + approved by Justin (the solo
+// operator; see lib/authorEntity.js). The former per-persona human names, personal
+// bios, and portrait FACES have been retired: each codename is now a DESK LABEL, not
+// a person. The ~17 byline / masthead / lane / footer sites that consume this map
+// INHERIT the desk labels with no per-site change, because they read the same fields
+// (fullName is now the desk label; tag is null; bio is a beat description).
 //
-// WIRED TO NOTHING YET. This module is additive + inert: no render site imports
-// it, no behavior changes on creation. Step 3 (display rename) routes the
-// existing byline/nav/footer/lane/comment sites through getEditorDisplay();
-// Step 2 builds the new "our editors" surfaces off it.
+// KEYS STAY THE EXISTING CODENAMES (cipher/nexus/dexter/ghost/miranda + broker +
+// vantage). The DB `feed_items.editor` column is unchanged (it stores the UPPERCASE
+// codename). Look up via getEditorDisplay(), which normalizes case, so callers can
+// pass either the DB value ('CIPHER') or the URL slug ('cipher').
 //
-// KEYS STAY THE EXISTING CODENAMES (cipher/nexus/dexter/ghost/miranda + broker).
-// The DB `feed_items.editor` column is unchanged (it stores the UPPERCASE
-// codename). Look up via getEditorDisplay(), which normalizes case, so callers
-// can pass either the DB value ('CIPHER') or the URL slug ('cipher').
+// DESK LABELS (the byline surface): cipher=Analysis, nexus=Meta & News,
+// dexter=Builds, ghost=Community, miranda=Field Guide, broker=Economy, vantage=Network.
 //
-// Data source: docs/network/editorial-staff-model.md (locked roster, tags,
-// roles, accent colors, character notes). Bios are composed in-character from
-// the locked character notes; refine in the newsroom-branding pass.
-//
-// PORTRAITS: `image` points to where each portrait WILL live
-// (/images/editors/<key>.jpg). The new imaging pass (editorial-staff-model.md
-// "LOCKED IMAGING SPEC") has NOT run yet — broker.jpg does not exist, and the
-// existing five are the OLD portraits pending replacement. CONSUMERS MUST
-// DEGRADE GRACEFULLY when a portrait is missing (e.g. fall back to an initial
-// badge via editorInitial()); do NOT assume the file is present. (Server
-// components can't use <img onError> — use a presence-safe fallback instead.)
+// PORTRAITS RETIRED: hasPortrait is now false for every desk -- desks do not have a
+// human face. Consumers already degrade gracefully to a glyph/monogram badge when a
+// portrait is absent (editorInitial()/symbol), so no render site breaks. The
+// /images/editors/*.jpg files are left on disk for now (a later cleanup removes the
+// unreferenced assets); nothing renders them while hasPortrait is false.
 
 export const EDITORS = {
   cipher: {
     key:      'cipher',
     status:   'live',      // producing now; has an /intel/cipher lane
-    fullName: 'Marcus Vane',
-    tag:      'Cipher',
+    fullName: 'Analysis',  // DESK LABEL (was a person name; retired Brief 2a)
+    tag:      null,        // no person side-name; byline is the desk alone
     role:     'Analysis',
     color:    '#ff2222', // red (existing)
-    symbol:   '◈',  // ◈ (existing)
-    bio:      "Evidence absolutist. Would rather publish “insufficient data to call this” than guess — the slowest to commit, the hardest to refute. Authority from rigor.",
+    symbol:   '◈',
+    bio:      'Deep-dive analysis desk. Evidence first: publishes the call only when the data supports it, and says so plainly when it does not.',
     image:    '/images/editors/cipher.jpg',
-    hasPortrait: true,
+    hasPortrait: false,
   },
   nexus: {
     key:      'nexus',
     status:   'live',
-    fullName: 'Remi Okafor',
-    tag:      'Nexus',
+    fullName: 'Meta & News',
+    tag:      null,
     role:     'Meta & News',
     color:    '#00d4ff', // cyan (existing)
-    symbol:   '⬡',  // ⬡ (existing)
-    bio:      'Lives a week ahead of the lobby. Makes the aggressive early call and owns the misses — first, even when wrong. Authority from currency.',
+    symbol:   '⬡',
+    bio:      'Meta and news desk. Tracks patch notes, tier shifts, and what the lobby is running right now.',
     image:    '/images/editors/nexus.jpg',
-    hasPortrait: true,
+    hasPortrait: false,
   },
   dexter: {
     key:      'dexter',
     status:   'live',
-    fullName: 'Felix Andersen',
-    tag:      'Dexter',
+    fullName: 'Builds',
+    tag:      null,
     role:     'Builds',
     color:    '#ff8800', // orange (existing)
-    symbol:   '⬢',  // ⬢ (existing)
-    bio:      "Compulsive optimizer who can’t call a loadout “done” — there’s always another 2% to find. “Good enough” is an insult. Authority from craft.",
+    symbol:   '⬢',
+    bio:      'Builds desk. Loadouts, attachments, and setups tuned for the current meta.',
     image:    '/images/editors/dexter.jpg',
-    hasPortrait: true,
+    hasPortrait: false,
   },
   ghost: {
     key:      'ghost',
     status:   'live',
-    fullName: 'Tariq Webb',
-    tag:      'Ghost',
+    fullName: 'Community',
+    tag:      null,
     role:     'Community',
     color:    '#00ff88', // green (existing)
-    symbol:   '◇',  // ◇ (existing)
-    bio:      'In the trenches, not the lab. Trusts the lived reality of the lobby over any spreadsheet. Authority from below.',
+    symbol:   '◇',
+    bio:      'Community desk. What players are actually doing in the lobby, surfaced from the ground.',
     image:    '/images/editors/ghost.jpg',
-    hasPortrait: true,
+    hasPortrait: false,
   },
   miranda: {
     key:      'miranda',
     status:   'live',
-    fullName: 'Miranda Malini',
-    // Litigator -- her side-name / tag, resolved 2026-08 (the roster was
-    // provisionally name-only pending her handle). ROLE is unchanged (Field
-    // Guide); only the tag/side-name is now set, so she formats like the others.
-    tag:      'Litigator',
+    fullName: 'Field Guide',
+    tag:      null,
     role:     'Field Guide',
     color:    '#9b5de5', // purple (existing)
-    symbol:   '◎',  // ◎ (existing)
-    bio:      'The formidable oracle. Rarely issues a verdict, but it lands hard — and she remembers every season that came before. Authority from above.',
+    symbol:   '◎',
+    bio:      'Field guide desk. Practical, in-game how-to for the current season.',
     image:    '/images/editors/miranda.jpg',
-    hasPortrait: true,
+    hasPortrait: false,
   },
   broker: {
     key:      'broker',
-    status:   'incoming',  // NOT producing yet; no /intel/broker lane (wired in Step 6)
+    status:   'incoming',  // NOT producing yet; no /intel/broker lane
     // COVERAGE (operator-confirmed 2026-08-25): the game whose economy this incoming
-    // editor deploys with. SINGLE SOURCE OF TRUTH for the root CLASSIFIED card's
-    // "deploys with <game>" line. The card resolves this slug to the game display name
-    // (and any date derives from that game's launch_date constant in lib/games/<slug>.js,
-    // never a hardcoded date on the card). Absent means the card falls back to "Incoming"
-    // with no game tie. Value 'dmz' is the DMZ extraction economy Broker covers at launch.
+    // desk deploys with. SINGLE SOURCE OF TRUTH for the root card's "deploys with <game>"
+    // line. The card resolves this slug to the game display name (date derives from that
+    // game's launch_date constant in lib/games/<slug>.js). Value 'dmz' is the DMZ
+    // extraction economy the Economy desk covers at launch.
     coverage: 'dmz',
-    fullName: 'Vera Sloan',
-    tag:      'Broker',
-    role:     'Economy & Market',
-    color:    '#8b95a7', // slate / silver-grey (PROPOSED — see note below; not yet a live token)
-    symbol:   '$',  // $ — economy / market lane
-    bio:      "Unsentimental EV accountant. The game is a ledger; she only cares whether it pays — and will call your favorite meta a value trap. Authority from the ledger.",
-    image:    '/images/editors/broker.jpg', // portrait file shipped 2026-08-25
-    // BROKER's CLEAR face renders on the CLASSIFIED card -- the redaction is on her
-    // NAME/identity, not her photo. hasPortrait is decoupled from status: an 'incoming'
-    // editor can still have a portrait file.
-    hasPortrait: true,
+    fullName: 'Economy',
+    tag:      null,
+    role:     'Economy',
+    color:    '#8b95a7', // slate / silver-grey
+    symbol:   '$',
+    bio:      'Economy desk. Value, cost, and what actually pays in the in-game market. Deploys with DMZ.',
+    image:    '/images/editors/broker.jpg',
+    hasPortrait: false,
   },
-  // VANTAGE / Vivian Cross -- the NETWORK editor-in-chief (persona in
-  // lib/network/vantage.js). Added here so a feed_items row with editor='VANTAGE'
-  // (her discourse articles) resolves a real byline / accent / initial via the
+  // VANTAGE -- the NETWORK desk (persona logic in lib/network/vantage.js). Kept here so a
+  // feed_items row with editor='VANTAGE' resolves a real byline / accent / initial via the
   // same helpers every article renderer uses. status:'network' (NOT 'live') -> no
-  // /intel/<lane>; she has a portrait (hasPortrait:true) so her face renders on the
-  // root desk. Deliberately KEPT OUT of EDITOR_ORDER below, so the /editors masthead
-  // + /about desk (which lists her separately) are unchanged. Silver accent matches
-  // the homepage --nr-vantage structural color.
+  // /intel/<lane>. Deliberately KEPT OUT of EDITOR_ORDER below.
   vantage: {
     key:      'vantage',
     status:   'network',
-    fullName: 'Vivian Cross',
-    tag:      'Vantage',
-    role:     'Network editor',
+    fullName: 'Network',
+    tag:      null,
+    role:     'Network',
     color:    '#c8d4e0', // silver (network structural accent; matches --nr-vantage)
     symbol:   '◆',
-    bio:      "The network editor-in-chief. Frames what matters across every game and covers the discourse around them -- never a single game's in-game facts.",
-    image:    '/images/editors/vantage.jpg', // portrait file shipped 2026-08-25
-    hasPortrait: true,
+    bio:      "Network desk. Frames what matters across every game and the discourse around them, never a single game's in-game facts.",
+    image:    '/images/editors/vantage.jpg',
+    hasPortrait: false,
   },
 };
 
-// Display order for roster/masthead surfaces (Step 2). Broker last (newest lane).
-// VANTAGE is intentionally ABSENT: she is the network editor, surfaced on /about
-// separately, not part of the per-game editor masthead.
+// Display order for roster/masthead surfaces. Broker last (newest desk).
+// VANTAGE is intentionally ABSENT: it is the network desk, surfaced on /about separately.
 export const EDITOR_ORDER = ['cipher', 'nexus', 'dexter', 'ghost', 'miranda', 'broker'];
 
 // Case-normalized lookup. Accepts the DB value ('CIPHER') or the slug ('cipher').
@@ -147,34 +134,30 @@ export function getEditorDisplay(key) {
   return EDITORS[key.toLowerCase()] || null;
 }
 
-// Roster in display order (for masthead / "our editors" page).
+// Roster in display order (for masthead / desks page).
 export function getAllEditors() {
   return EDITOR_ORDER.map(function(k) { return EDITORS[k]; });
 }
 
-// Graceful-fallback helper: first initial of the full name, for an avatar badge
-// when the portrait image is missing (broker.jpg, or any not-yet-generated
-// portrait). Lets consumers degrade without assuming the file exists.
+// Graceful-fallback helper: first initial of the desk label, for a monogram badge
+// (desks have no portrait, so this is the common path). Never throws.
 export function editorInitial(key) {
   var e = getEditorDisplay(key);
   return e ? e.fullName.charAt(0).toUpperCase() : '?';
 }
 
-// Whether an editor has a portrait file on disk -- DECOUPLED from publish-status
-// (the hasPortrait flag is the single source of truth, like coverage:'dmz'). All 7
-// current editors have portraits; a future editor defaults hasPortrait absent -> false
-// until their file lands. This is used ONLY to choose portrait-vs-badge rendering
-// (verified: no live-status proxy usage), so widening it from status to hasPortrait is
-// safe. Consumers still fall back to an editorInitial() badge (server components have no
-// <img onError>; client render sites additionally onError-swap to the badge).
+// Whether a desk has a portrait FACE to render. Retired in Brief 2a: desks are not
+// people, so this is false for every desk and consumers render the glyph/monogram
+// badge instead. Kept as the single flag consumers check (do not reintroduce a
+// status/name proxy).
 export function editorHasPortrait(key) {
   var e = getEditorDisplay(key);
   return !!(e && e.hasPortrait);
 }
 
-// How to render the byline name from a display entry (helper, not yet wired):
-// tagged entries -> "Marcus Vane / Cipher"; a tagless entry -> the name alone.
-// (Miranda now has a tag -- "Litigator" -- so she formats like the others.)
+// How to render the byline name from a display entry. Post-Brief-2a every desk has
+// tag=null, so this returns the desk label alone (e.g. "Meta & News"). The tag branch
+// is retained only so a future tagged entry would still format.
 export function editorByline(key) {
   var e = getEditorDisplay(key);
   if (!e) return null;

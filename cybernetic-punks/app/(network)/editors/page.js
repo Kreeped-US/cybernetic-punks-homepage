@@ -20,12 +20,12 @@ import StaffCard from './StaffCard';
 const BG = '#121418';
 
 export const metadata = {
-  title: 'The Newsroom - Meet the Editors',
-  description: 'The Cybernetic Punks newsroom: six role-specialist analysts — Marcus Vane (Cipher), Remi Okafor (Nexus), Felix Andersen (Dexter), Tariq Webb (Ghost), Miranda Malini, and Vera Sloan (Broker) — covering analysis, meta, builds, community, field guides, and economy across the network.',
-  keywords: 'Cybernetic Punks editors, the newsroom, Marcus Vane Cipher, Remi Okafor Nexus, Felix Andersen Dexter, Tariq Webb Ghost, Miranda Malini, Vera Sloan Broker, extraction shooter analysts',
+  title: 'The Desks',
+  description: 'How Cybernetic Punks is organized: specialist desks - analysis, meta and news, builds, community, field guide, and economy - covering every game we track. The desks are AI-drafted; every piece is verified in-game and approved by the operator before it publishes.',
+  keywords: 'Cybernetic Punks desks, editorial desks, analysis desk, meta desk, builds desk, community desk, field guide desk, economy desk, AI-drafted human-approved, extraction shooter intel',
   openGraph: {
-    title: 'The Newsroom - Meet the Editors | Cybernetic Punks',
-    description: 'Six role-specialist analysts. One network. We don\'t agree, and we don\'t guess.',
+    title: 'The Desks | Cybernetic Punks',
+    description: 'Specialist desks, one network. AI-drafted, verified in-game, approved by a human.',
     url: 'https://cyberneticpunks.com/editors',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -33,8 +33,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'The Newsroom - Meet the Editors',
-    description: 'Six role-specialist analysts. One network. We don\'t agree, and we don\'t guess.',
+    title: 'The Desks | Cybernetic Punks',
+    description: 'Specialist desks, one network. AI-drafted, verified in-game, approved by a human.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/editors' },
 };

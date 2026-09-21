@@ -4,6 +4,7 @@
 // canonical display map (lib/editors/roster.js) — accent dot + name/tag + lane
 // per editor. Server component, presentational.
 
+import Link from 'next/link';
 import { getAllEditors } from '@/lib/editors/roster';
 
 const BORDER = '#22252e';
@@ -13,16 +14,23 @@ export default function NewsroomMasthead() {
   return (
     <section style={{ padding: '56px 24px 8px', maxWidth: 1100, margin: '0 auto' }}>
       <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 4, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
-        The Newsroom
+        The Desks
       </div>
       <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '10px 0 12px', lineHeight: 1.05 }}>
-        Six analysts.<br />One network.
+        Six desks.<br />One operator.
       </h1>
       <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic', letterSpacing: 0.3 }}>
-        &ldquo;We don&rsquo;t agree, and we don&rsquo;t guess.&rdquo;
+        &ldquo;AI-drafted. Verified in-game. Approved by a human.&rdquo;
       </div>
+      {/* Accountable human -- named, with the canonical author-entity anchor. */}
+      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '14px 0 0', maxWidth: '68ch' }}>
+        The work is organized into specialist desks, each owning a beat. The desks are AI-drafted;
+        {' '}
+        <Link href="/about#justin" style={{ color: 'var(--red)', fontWeight: 700, textDecoration: 'underline' }}>Justin</Link>
+        , the solo operator, verifies every stat in-game and approves every piece before it publishes.
+      </p>
 
-      {/* Lineup: accent dot + name/tag + lane */}
+      {/* Lineup: accent dot + desk label */}
       <div style={{ marginTop: 26, display: 'flex', flexWrap: 'wrap', gap: '10px 22px', paddingTop: 18, borderTop: '1px solid ' + BORDER }}>
         {editors.map(function(e) {
           return (
@@ -30,10 +38,6 @@ export default function NewsroomMasthead() {
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: e.color, flexShrink: 0 }} />
               <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>
                 {e.fullName}
-                {e.tag && <span style={{ color: e.color, fontWeight: 700 }}>{' / ' + e.tag}</span>}
-              </span>
-              <span style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.32)', letterSpacing: 1, textTransform: 'uppercase' }}>
-                {e.role}
               </span>
             </div>
           );
