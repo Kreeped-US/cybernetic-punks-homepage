@@ -166,9 +166,10 @@ export function resolveKit(config) {
   // Marathon vocab into other games. DELIBERATE, DOCUMENTED EXCEPTION to the render-empty rule:
   // these tokens return a GRAMMATICAL AGNOSTIC DEFAULT (not '') when a game omits vocab -- an empty
   // class noun would break sentence grammar ("Every weapon, , ammo type, and ... you reference"),
-  // whereas a missing Layer-B BLOCK legitimately just disappears. classRoster is the one
-  // exception-to-the-exception: it stays render-empty (undefined) so a game with no fixed roster
-  // simply drops that line.
+  // whereas a missing Layer-B BLOCK legitimately just disappears. The WHOLE-PHRASE carve tokens
+  // (gearSystemRule, entityVocabExamples, classRotationHint, classRosterLine, voiceExamples) are the
+  // exception-to-the-exception: they stay render-empty (undefined) so a game without that Marathon
+  // system/roster simply drops the whole clause, sentence, or block.
   // Agnostic defaults are BARE (no leading article / "every"): the surrounding prompt text supplies
   // "Every {{kit:entityList}}", "the {{kit:progressionSystem}}", etc., so a game that omits vocab
   // renders grammatically without doubling articles.
@@ -179,7 +180,6 @@ export function resolveKit(config) {
   out.progressionSystem = vc.progressionSystem || 'progression system'; // bare; prompt supplies "the"
   out.gearSystem        = vc.gearSystem        || 'gear/unlock system';  // bare; prompt supplies "the"
   out.rankMetric        = vc.rankMetric        || 'ranked';              // lowercase base; ^ at cap sites
-  out.classRoster       = vc.classRoster; // render-empty when absent (the roster line drops)
   // meta-entity lists DERIVED from the SAME toolEnums.metaTypes single source (never a second copy).
   // THREE structural forms so each prompt site renders byte-identical for Marathon:
   //   metaEntitiesList     plural, joined " and "      -> "weapons and shells"        (Stage-1 contract)
@@ -209,6 +209,15 @@ export function resolveKit(config) {
   // gearSystemRule: the WHOLE Faction Armory citation bullet, incl. its own leading "- " and trailing
   // newline, so an armory-less game drops the entire bullet with no blank line / orphaned dash.
   out.gearSystemRule      = vc.gearSystemRule;      // render-empty when absent
+
+  // STAGE 2b-ii (2026-09-21): editor-body residuals (DEXTER lane/roster + MIRANDA VOICE + data header).
+  out.classActorPrefix = vc.classActorPrefix || ''; // Marathon "runner " (trailing space); default DROPS
+  out.classDataHeader  = vc.classDataHeader  || 'CLASS DATA:'; // Marathon "SHELL DATA:" (all-caps label)
+  // Whole-phrase carves (render-empty for other games; each carries its own surrounding whitespace so
+  // the sentence / line / block drops with no dangling fragment):
+  out.classRotationHint = vc.classRotationHint; // Marathon "Rotate through ALL 8 shells (...). "
+  out.classRosterLine   = vc.classRosterLine;   // Marathon "The 8 Runner Shells are: ...\n\n" (whole line)
+  out.voiceExamples     = vc.voiceExamples;     // Marathon's two example paragraphs (generic one stays)
 
   return out;
 }

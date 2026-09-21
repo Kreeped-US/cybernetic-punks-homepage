@@ -492,9 +492,7 @@ export const marathon = {
       // nouns lifted VERBATIM as the exact substrings Stage 2 will tokenize -- byte-for-byte the
       // current literals (entityList from DATA_INTEGRITY_RULES line "Every weapon, mod, implant,
       // core, shell, ammo type, and Cradle node"; classNoun/Plural "shell"/"shells";
-      // progressionSystem "the Cradle"; gearSystem "Faction Armory"; rankMetric "Holotag";
-      // classRoster the DEXTER 8-shell roster IN ITS EXISTING ORDER, which differs from the
-      // alphabetical toolEnums.entityFocus above -- so it is a separate verbatim value, not derived).
+      // progressionSystem "the Cradle"; gearSystem "Faction Armory"; rankMetric "Holotag").
       // metaEntitiesList is intentionally NOT here: it derives from toolEnums.metaTypes (single source).
       // INERT until Stage 2 (no prompt references these tokens yet).
       vocab: {
@@ -508,7 +506,6 @@ export const marathon = {
         // lowercase base: use {{kit:rankMetric^}} -> "Holotag" at capitalized sites. Stage 2
         // refined from "Holotag" -> "holotag".
         rankMetric: 'holotag',
-        classRoster: 'Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel',
         // Stage 2b-i: de-Marathon the shared DATA_INTEGRITY_RULES block.
         progressionMetric: 'Energy',           // the Cradle resource (line 64 x2)
         abilityDatabase: 'SHELL STATS DATABASE', // ability-DB label (line 87; loose label, no emitter)
@@ -516,6 +513,14 @@ export const marathon = {
         // whitespace so Marathon renders identical and armory-less games drop the clause cleanly.
         entityVocabExamples: ' - Runner Shells, the Runner Grade, the eight Runners, Runner-vs-Runner',
         gearSystemRule: `- Faction Armory specifics (item, rank required, Credit cost, material cost) may be cited ONLY when they appear in the VERIFIED ARMORY STOCK or VERIFIED FACTION RANK-GATING blocks injected below. For any faction or item NOT in those verified blocks, do not state a rank number, price, or cost - inventing it is a hallucination. When uncertain, name a gear item's source faction in general terms only.\n`,
+        // Stage 2b-ii: editor-body residuals (DEXTER lane/roster + MIRANDA VOICE + data header).
+        classActorPrefix: 'runner ',            // "You analyze runner shells" (trailing space)
+        classDataHeader: 'SHELL DATA:',         // MIRANDA data-section header (all-caps label)
+        classRotationHint: 'Rotate through ALL 8 shells (including Sentinel). ', // DEXTER CONTENT VARIETY (trailing space)
+        classRosterLine: 'The 8 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel.\n\n', // whole line + trailing blank
+        // The two Marathon VOICE example paragraphs (incl. their leading blank lines); the generic
+        // extraction-timer example above them stays for every game.
+        voiceExamples: `\n\n"The Triage kit is the kindest shell to a new player. Active heal cuts squad mistakes. Passive ammo regen forgives ammo discipline you haven't learned yet. Start here. Earn the right to play Vandal."\n\n"The Cradle is where your stats come from in Season 2. Pick one or two tracks and commit your Energy - and because respec is free, never be afraid to experiment with a different path."`,
       },
 
       // Structured tool-enum VALUES (values only; field names unchanged). entityFocus is

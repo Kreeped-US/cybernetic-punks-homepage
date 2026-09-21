@@ -18,7 +18,6 @@ test('marathon: each token resolves to its verbatim (Stage-2-refined) value', ()
   assert.equal(k.progressionSystem, 'Cradle');   // bare (prompt supplies "the"/"^ perks")
   assert.equal(k.gearSystem, 'Faction Armory');
   assert.equal(k.rankMetric, 'holotag');          // lowercase base (^ at capitalized sites)
-  assert.equal(k.classRoster, 'Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel');
 });
 
 test('marathon: meta-entity lists derive from toolEnums.metaTypes (weapon+shell), 3 forms', () => {
@@ -46,6 +45,25 @@ test('Stage 2b-i no-vocab: standalone defaults + render-empty whole-phrase token
   assert.equal(k.gearSystemRule, undefined);           // whole Faction Armory bullet drops
 });
 
+test('Stage 2b-ii marathon: editor-body residual tokens resolve verbatim', () => {
+  const k = resolveKit(marathon);
+  assert.equal(k.classActorPrefix, 'runner ');         // "You analyze runner shells" (trailing space)
+  assert.equal(k.classDataHeader, 'SHELL DATA:');       // all-caps label, not classNoun^ title-case
+  assert.equal(k.classRotationHint, 'Rotate through ALL 8 shells (including Sentinel). ');
+  assert.equal(k.classRosterLine, 'The 8 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel.\n\n');
+  assert.ok(k.voiceExamples.startsWith('\n\n"The Triage kit is the kindest shell'));
+  assert.ok(k.voiceExamples.endsWith('experiment with a different path."')); // no trailing newline
+});
+
+test('Stage 2b-ii no-vocab: prefix/header defaults + render-empty carves', () => {
+  const k = resolveKit({ displayName: 'X', editorial: { promptKit: {} } });
+  assert.equal(k.classActorPrefix, '');            // prefix drops: "You analyze classes"
+  assert.equal(k.classDataHeader, 'CLASS DATA:');  // generic header
+  assert.equal(k.classRotationHint, undefined);    // rotation sentence drops
+  assert.equal(k.classRosterLine, undefined);      // roster line + trailing blank drop
+  assert.equal(k.voiceExamples, undefined);        // Marathon pair drops (generic example stays in prompt)
+});
+
 test('no promptKit.vocab: BARE grammatical defaults', () => {
   const k = resolveKit({ displayName: 'X', editorial: { promptKit: {} } });
   assert.equal(k.entityList, 'weapon, item, and system entity'); // bare (no leading "every")
@@ -54,7 +72,6 @@ test('no promptKit.vocab: BARE grammatical defaults', () => {
   assert.equal(k.progressionSystem, 'progression system'); // bare
   assert.equal(k.gearSystem, 'gear/unlock system');        // bare
   assert.equal(k.rankMetric, 'ranked');
-  assert.equal(k.classRoster, undefined); // render-empty: roster line drops
   assert.equal(k.metaEntitiesSingular, 'entity');  // singular default -> "every entity"
   assert.equal(k.metaEntitiesAll, 'entities');     // plural default -> "ALL entities"
   assert.equal(k.metaEntitiesList, 'entities');
