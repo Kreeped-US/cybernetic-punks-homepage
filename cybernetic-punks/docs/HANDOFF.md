@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-09-21 - Stage 2: migrate editor prompts to vocab tokens (feat/prompt-vocab-migrate)
+WHAT: Wired the Stage-1 tokens into DATA_INTEGRITY_RULES + editor bodies (13
+substitutions) so Marathon renders byte-identical and other games stop getting the
+worst Marathon class-noun bleed. Fixes the confirmed NEXUS "grade all shells" line.
+FILES: editorCore.js (13 substitutions); promptVocab.js (kit ^ modifier =
+capitalize-first-letter, deliberately UNLIKE applyVocab's all-caps ^, forced by
+byte-identity - documented at the handler; bare defaults; 3 metaEntities forms);
+promptVocabKit.test.mjs; marathon.js ("the Cradle"->"Cradle", "Holotag"->"holotag").
+GATE 1 (HARD INVARIANT) PASS: all 6 Marathon prompts rendered main vs branch = 0 of 6
+differ. Byte-identical, including the NEXUS :408/:411 metaEntities fix (join on
+" and ALL " reproduces "ALL weapons and ALL shells" exactly for marathon; one-class
+game -> "ALL weapons").
+GATE 2 PARTIAL (as designed): the 13 swapped sites render agnostic + grammatical for
+wardogs (NEXUS now "every entity"/"ALL entities" - the live shell-grading bleed is
+GONE). A mapped residual of Marathon literals remains, deferred to Stage 2b.
+GATE 3 PASS: 12/12 kit+promptVocab tests, 21/21 prior suites, eslint exit 0.
+SCOPE: freeze-safe (backend generation only; no tool-schema, field renames, or DB).
+STAGE 2b NEEDS-DECISION (residual Marathon vocab in prompts):
+- DATA_INTEGRITY :63 Faction Armory + labels "VERIFIED ARMORY STOCK"/"VERIFIED FACTION
+  RANK-GATING" + "Credit cost"
+- :64 "Energy" (x2); :87 label "SHELL STATS DATABASE"
+- :110 whole clause "Runner Shells, the Runner Grade, the eight Runners,
+  Runner-vs-Runner" (hardcoded "eight") - bleeds to ALL editors via the shared block
+- DEXTER roster :469/:471 ("ALL 8 shells (including Sentinel)" + the 8-shell list)
+- buildMiranda VOICE :1106/:1108 (Triage/Vandal/Cradle example paragraphs)
+- residual lowercase "runner"/"core" (DEXTER :430)
+- N1 source-discipline example "shell/class names"; N2 DEXTER "Holotag tier"; N3 DEXTER
+  STAT CTA (Cradle/Energy + /wardogs/loadouts nav-literal); N4 buildMiranda header
+  "SHELL DATA:" + stub
+NEXT: Stage 2b - new tokens (Energy, block labels, section headers) + whole-block
+carves (roster, VOICE, :110, DEXTER CTA) to finish de-Marathoning.
+
+---
+
 ## 2026-09-21 - Stage 1: prompt-vocab token scaffolding + verification harness (feat/prompt-vocab-scaffold)
 WHAT: Added the class/system-noun {{kit:...}} token family to the kit engine plus
 Marathon's verbatim values, and the byte-identical render-diff harness that gates
