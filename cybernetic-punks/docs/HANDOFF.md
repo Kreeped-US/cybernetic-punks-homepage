@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Operator DB: content-audit stat/provenance corrections (weapon_stats + feed_items)
+Following the two-pass read-only content audit (moat verified sound). Operator (Justin) ran all SQL.
+1. V22 Volt Thrower (weapon_stats id ab7bcb09-f448-47c5-9f4f-17721fd1be94): stale S2 stats
+   corrected to current values.
+   UPDATE weapon_stats SET damage = 18, fire_rate = 507 WHERE id = 'ab7bcb09-...';  (was 14.4 / 540)
+   verified_source set to 'S2 third-party consensus (MarathonMeta / TauCeti / Fandom), 2026-09'
+   (was 'owner in-game visual verification (Justin), S2 2026-08' - stale after the value change).
+   The weapon page renders from weapon_stats, so it now shows 18 / 507.
+2. Twin Tap HBR stat fix in demolition-hmg-emerges-heavy-rounds-meta-defines-post-patch-combat-lan-pjn1:
+   PRECISION RIFLE ADJUSTMENT passage stated 13 dmg / 420 RPM; verified 24 / 600 (mag 20 was correct).
+   UPDATE feed_items SET body = replace(body,'Its 13 damage per shot at 420 RPM','Its 24 damage per shot at 600 RPM') WHERE slug = '...pjn1';  (UPDATE 1)
+3. Hardline HPR -> Hardline PR (erroneous class suffix), case/space-tolerant:
+   UPDATE feed_items SET body = regexp_replace(body,'Hardline\s+HPR','Hardline PR','gi') WHERE body ~* 'Hardline\s+HPR';  (verified 0 remaining)
+LEFT AS-IS (verified correct):
+- Demolition HMG article (31 / 225) - the pass-2 "contradiction" was a two-entity parser
+  misattribution; the 13/420 belonged to Twin Tap HBR (fixed in #2).
+- V22 downstream: geid/thms "540" = Bully SMG / Conquest LMG (other weapons); yo4b/gyt6 "14.4"
+  = accurate point-in-time history (V22 nerf then partial revert is real per Bungie update
+  1.1.5.2, owner-confirmed) - left as historical patch coverage.
+AUDIT RESULT: across 399 published articles - 1 stale DB value, 1 article stat error, 1 typo;
+zero fabricated entities, zero "Verified"-with-null-source, zero game-mismatched sources,
+zero real cross-game contamination. Moat sound.
+
+---
+
 ## 2026-09-22 - Batch A: finish public persona de-personing + index schema fix (fix/persona-tail-batch-a)
 WHAT: De-personed the remaining public persona surfaces (intel index, sitrep, hub image
 tails) and fixed the one real structured-data leak - the index ItemList JSON-LD emitting
