@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 -- Operator DB write: removed stray Marathon tag "shells" from wardogs-patch-011
+- Removed the stray Marathon tag "shells" from
+  wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw (array_remove; the body
+  never used "shell"). Tags now: squad, solo, progression, extraction, weapons, pvp.
+- Complements the code fix in feat/article-related-tags (91ea64b), which removed "shells" from the
+  wardogs tag -> route map in lib/relatedLinks.js. The article's Related links are unchanged (its
+  "weapons" tag already yields the tier list + arsenal).
+
 ## 2026-09-22 -- Tag-driven Related block on wardogs/dmz/pubg articles (feat/article-related-tags)
 Adds a compact, tag-driven "Related" block to the article path shared by wardogs / dmz / pubg-dednet
 (lib/dmz/articleContent). Marathon's renderer (lib/articleBody, app/marathon/intel) is NOT touched.
