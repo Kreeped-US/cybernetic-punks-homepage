@@ -23,10 +23,11 @@ import { assertPartition } from '@/lib/sitemap/partition';
 import { supabase } from '@/lib/supabase';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
-import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
-import { wardogs, wardogsSectionForArticle } from '@/lib/games/wardogs';
+import { dmz } from '@/lib/games/dmz';
+import { wardogs } from '@/lib/games/wardogs';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
-import { pubgDednet, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
+import { pubgDednet } from '@/lib/games/pubg-dednet';
+import { sectionForArticle } from '@/lib/games/articleSection';
 import { bodycam, bodycamSectionForArticle, bodycamArticleSlugsForSection } from '@/lib/games/bodycam';
 import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
@@ -234,8 +235,11 @@ export async function computeEligible() {
       const { data: dmzRows } = await supabase.from('feed_items')
         .select('slug, created_at, updated_at, tags').eq('game_slug', D).eq('is_published', true)
         .order('created_at', { ascending: false });
-      (dmzRows || []).map((r) => ({ r, section: dmzSectionForArticle(r) })).filter((x) => x.section)
-        .forEach((x) => add(BASE + '/dmz/' + x.section + '/' + x.r.slug, D, 'dmz-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
+      (dmzRows || []).forEach((r) => {
+        const section = sectionForArticle(D, r);
+        if (!section) { console.warn('[sitemap] unmapped published article skipped -- ' + D + ' / ' + r.slug); return; }
+        add(BASE + '/dmz/' + section + '/' + r.slug, D, 'dmz-article', lm(r.updated_at || r.created_at), 'monthly', 0.6);
+      });
     } catch (err) { console.error('[sitemap] dmz feed fetch threw:', err); }
 
     // DMZ entity hubs + verified detail pages (type='dmz-entity'), row-count gated.
@@ -291,8 +295,11 @@ export async function computeEligible() {
       const { data: wdRows } = await supabase.from('feed_items')
         .select('slug, created_at, updated_at, tags').eq('game_slug', W).eq('is_published', true)
         .order('created_at', { ascending: false });
-      (wdRows || []).map((r) => ({ r, section: wardogsSectionForArticle(r) })).filter((x) => x.section)
-        .forEach((x) => add(BASE + '/wardogs/' + x.section + '/' + x.r.slug, W, 'wardogs-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
+      (wdRows || []).forEach((r) => {
+        const section = sectionForArticle(W, r);
+        if (!section) { console.warn('[sitemap] unmapped published article skipped -- ' + W + ' / ' + r.slug); return; }
+        add(BASE + '/wardogs/' + section + '/' + r.slug, W, 'wardogs-article', lm(r.updated_at || r.created_at), 'monthly', 0.6);
+      });
     } catch (err) { console.error('[sitemap] wardogs feed fetch threw:', err); }
 
     // Section hubs (type='wardogs-section'), gated on the SHARED sectionHasContent predicate -- the
@@ -345,8 +352,11 @@ export async function computeEligible() {
       const { data: pdRows } = await supabase.from('feed_items')
         .select('slug, created_at, updated_at, tags').eq('game_slug', PD).eq('is_published', true)
         .order('created_at', { ascending: false });
-      (pdRows || []).map((r) => ({ r, section: dednetSectionForArticle(r) })).filter((x) => x.section)
-        .forEach((x) => add(BASE + '/pubg-dednet/' + x.section + '/' + x.r.slug, PD, 'pubg-dednet-article', lm(x.r.updated_at || x.r.created_at), 'monthly', 0.6));
+      (pdRows || []).forEach((r) => {
+        const section = sectionForArticle(PD, r);
+        if (!section) { console.warn('[sitemap] unmapped published article skipped -- ' + PD + ' / ' + r.slug); return; }
+        add(BASE + '/pubg-dednet/' + section + '/' + r.slug, PD, 'pubg-dednet-article', lm(r.updated_at || r.created_at), 'monthly', 0.6);
+      });
     } catch (err) { console.error('[sitemap] pubg-dednet feed fetch threw:', err); }
 
     // Section hubs + landing, SAME shape as the Wardogs/DMZ emitters. This whole block is gated on

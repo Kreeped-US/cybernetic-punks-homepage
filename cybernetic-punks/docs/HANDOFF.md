@@ -7,6 +7,42 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Unmapped-article guard for section-mapped games (feat/unmapped-article-guard)
+WHAT: A guard so a published wardogs / dmz / pubg-dednet article that was never added to its
+per-slug section map (the silent 404 that hit wardogs 3x: patch-011, week-one, smg-tier) is
+caught by a manual check and never enters the sitemap.
+FILES:
+- lib/games/articleSection.js (new): one shared sectionForArticle(game, article) wrapping the
+  existing wardogs/dmz/dednet resolvers. NO new mapping data, NO default/fallback (unmapped ->
+  null -> stays hidden). Takes the article ROW, not a bare slug (dmz reads .tags for its
+  'discourse' fallback, so a bare slug would mis-report tag-mapped DMZ articles). Exports
+  SECTION_MAPPED_GAMES (wardogs, dmz, pubg-dednet; Marathon excluded - its /marathon/intel/<slug>
+  route needs no per-slug mapping).
+- lib/sitemap/eligible.js: the dmz/wardogs/pubg article emitters now resolve via the shared
+  helper and console.warn + skip any unmapped published slug (was a silent filter); mapped URLs
+  are unchanged, built from the resolved section. Non-throwing - a missing mapping never freezes
+  the sitemap build.
+- scripts/check-article-sections.mjs (new): READ-ONLY (provenance-check.mjs style, "REPORTS,
+  NEVER WRITES"). Paginated query of published feed_items for the 3 games, resolves each via the
+  shared helper, prints per-game published/mapped/unmapped + the unmapped slug list, exits 1 if
+  any unmapped else 0. Deliberately NOT wired into the Vercel build.
+WHY NOT BUILD-TIME ONLY: an article goes live via a DB INSERT, which does not trigger a Vercel
+  build - so a build-time assertion never runs at the moment a new article publishes. This is a
+  manual gate run after the INSERT.
+VERIFY: prod run clean (wardogs 15/15, dmz 8/8, pubg 6/6, exit 0). Failure path proven with a
+  temporary local un-map (reverted, never committed): the check exited 1 naming the slug; the
+  sitemap omitted its URL and logged "[sitemap] unmapped published article skipped -- wardogs /
+  <slug>"; mapped articles still emitted at their correct /wardogs/field-intel/<slug> paths.
+  eslint clean, byte-clean.
+STANDING PROCEDURE: after any wardogs / dmz / pubg-dednet article INSERT, run
+  node scripts/check-article-sections.mjs - a nonzero exit means add the slug to that game's
+  section map (WARDOGS_ARTICLE_SECTION / DMZ_ARTICLE_SECTION / DEDNET_ARTICLE_SECTION) before
+  calling the article live.
+SCOPE: freeze-safe (no title/URL/canonical change; the sitemap emits the same URLs for every
+  mapped article, only adds a warn+skip for unmapped). No DB writes.
+
+---
+
 ## 2026-09-22 - Map the unmapped published wardogs SMG tier article (fix/wardogs-smg-tier-section-map)
 WHAT: Mapped the last unmapped published wardogs article to a section so it stops 404ing.
   Third instance of the unmapped-slug 404 (after patch-011 / Brief 2g and week-one / k9rt).
