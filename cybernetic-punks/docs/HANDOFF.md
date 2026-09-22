@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Retire persona framing on the 5 intel hub pages (fix/retire-persona-hubs)
+WHAT: Content-only de-personing of the 5 /marathon/intel/<name> editor hub pages
+(cipher/nexus/dexter/ghost/miranda) to topic-desk framing - the SEO/public tail of the
+2026-09-21 persona retirement (which fixed article bylines but not these hubs).
+FILES: app/marathon/intel/[slug]/page.js only. Body-copy changes: EDITORS[*].role (job
+titles -> desk labels), EDITORS[*].desc (first-person bios -> neutral topic descriptions),
+OTHER_EDITOR_CONFIG[*].role, eyebrow "EDITOR . CYBERNETICPUNKS" -> "DESK . CYBERNETICPUNKS",
+header "Other Editors" -> "Other Desks", portrait headshot -> desk symbol/color glyph
+(config.symbol in config.color; glyph rendered cleanly - no fallback removal needed).
+DESK LABELS: cipher=Ranked Analysis, nexus=Meta & News, dexter=Build Analysis,
+ghost=Community Sentiment, miranda=Field Guides. ACCURACY FIX: cipher's drafted "Ranked
+Play Analysis / every play graded D to S+" overstated - its live feed is all ranked
+(outlook, patch impact, holotag tier benchmarks, counters, climb playbooks), no
+play-grading. Tightened to role "Ranked Analysis" + desc "Marathon ranked analysis -
+patch impact, holotag tier benchmarks, matchup counters, and climb playbooks."
+KEPT BYTE-IDENTICAL: <title>/metaTitle, H1 (desk label), URL, canonical, robots
+(index,follow), full article feed + every internal Link href, "N Articles" stat, metaDesc.
+No schema.org/Person on these hubs (article-page Person schema for real covered creators
+untouched).
+VERIFY: live dev render of all 5 hubs - framing gone, glyphs render, title/H1/canonical/
+robots + listings unchanged; article pages unaffected (EDITORS const hub-local); eslint clean.
+SCOPE: freeze-safe (no title/URL/canonical change) + SEO-safe (indexed, listings
+preserved). regenv2-test-alert already handled (410); "24032" historical only.
+FOLLOW-UP (persona tail still live, NOT in this change): /marathon/intel index page
+persona-role const (page.js:120, most SEO-visible); ask-editor API live persona chat
+(app/api/ask-editor/route.js:36, brand/honesty - product decision); sitrep EDITOR_ROLES
+(:58); audit API persona prompts (:177); and on these same hubs the faint hero-bg headshot
+(:607, opacity 0.12) + the "Other Desks" grid thumbnails (:781) still load /images/editors
+- a minor persona-image tail not swapped this pass.
+
+---
+
 ## 2026-09-21 - Removed duplicate Marathon intel article (operator DB)
 WHAT: Soft-unpublished a near-duplicate intel article after a Bing page-traffic report
 surfaced two live 200 articles on the same story (content-drought / tutorial-gap)
