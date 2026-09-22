@@ -37,6 +37,7 @@ import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
+import { relatedLinksFor } from '@/lib/relatedLinks';
 import ToolCTA from '@/components/ToolCTA';
 import { fetchPoiLinkTargets } from '@/lib/dmz/entities';
 import DiscourseArticle from '@/components/DiscourseArticle';
@@ -312,6 +313,7 @@ export default async function DmzArticlePage({ params }) {
   var pubDate = formatPublishDate(article.created_at);
   var rt = readTime(article.body);
   var tags = Array.isArray(article.tags) ? article.tags : [];
+  var related = relatedLinksFor('dmz', tags);   // tag-driven Related links (live tool/hub routes)
 
   // POI linkify targets (spoke 2): live dmz_pois rows, longest-name-first. Fetched
   // only for the news template (past the discourse early-return above). Empty/failed
@@ -466,6 +468,18 @@ export default async function DmzArticlePage({ params }) {
       {/* Game-agnostic build-tool CTA. dmz.buildToolCta is null today -> renders
           nothing; auto-lights when DMZ gets a tool + entities (config edit only). */}
       <ToolCTA article={article} />
+
+      {/* Related: tag-driven links to DMZ's live tools/hubs (deduped, <=4; hidden when empty). */}
+      {related.length > 0 && (
+        <div style={{ marginTop: 30, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {related.map(function (r) {
+              return <Link key={r.href} href={r.href} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>{r.label}</Link>;
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 8. Tags */}
       {tags.length > 0 && (

@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 -- Tag-driven Related block on wardogs/dmz/pubg articles (feat/article-related-tags)
+Adds a compact, tag-driven "Related" block to the article path shared by wardogs / dmz / pubg-dednet
+(lib/dmz/articleContent). Marathon's renderer (lib/articleBody, app/marathon/intel) is NOT touched.
+No DB writes, no schema change. Body rendering is byte-identical (parseBody output unchanged) -- the
+block is appended AFTER the rendered <article>.
+
+WHAT SHIPPED:
+- lib/relatedLinks.js (NEW, pure): per-game tag -> live-route config + relatedLinksFor(gameSlug, tags)
+  -> 0..4 { href, label }, deduped, DETERMINISTIC order (config order), each game's primary tool
+  always first. Only routes verified live (200) are listed; unmapped tags are ignored; a game with
+  no primary tool and no matched tags yields [] (no block ever renders empty).
+    wardogs: loadouts (primary); weapons/weapon/armory -> tier-list + arsenal;
+      economy/cash economy/monetization/gold market/gold exchange/black market/progression/cosmetics
+      -> economy; sales/player-count/launch/season 1/season-1/steam -> economy/launch-stats.
+      ("shells" was deliberately NOT mapped -- it is Marathon vocabulary and must not live in wardogs
+      config; the one published wardogs article tagged "shells" (patch-011-...-6tpw) is unaffected --
+      its "weapons" tag already yields tier-list + arsenal.)
+    dmz: builds (primary); missions/story missions/side ops/dynamic operations -> missions;
+      hajin/exclusion zone/map -> pois; crafting/3d printer -> items.
+    pubg-dednet: NO config -- it has no live tool/hub routes (only the game hub + section article
+      lists), so its articles render NO block today. Wired (relatedLinksFor called in the page) so
+      adding a pubg entry later lights it up.
+- app/wardogs/[section]/[slug]/page.js, app/dmz/[section]/[slug]/page.js,
+  app/pubg-dednet/[section]/[slug]/page.js: import relatedLinksFor, compute `related` from the
+  article tags, render the compact block after the body (hidden when empty).
+
+VERIFY (dev-render every published article + content-only crawl, main=before vs branch=after):
+- Per-article blocks: wardogs 14/14, dmz 8/8 render a block (1-4 links, loadouts/builds always
+  present); pubg 0/6 (no block -- no tools). Examples: wardogs-armory -> loadouts+tier-list+arsenal;
+  wardogs-black-market -> loadouts+economy; dmz-hajin -> builds+pois; dmz-3d-printer -> builds+items.
+- All 9 distinct Related targets return 200 (wardogs loadouts/tier-list/arsenal/economy/
+  economy-launch-stats; dmz builds/missions/pois/items).
+- Tool-page inlinks before -> after: wardogs loadouts 11->25, economy 12->20, tier-list 10->12,
+  arsenal 10->12, economy/launch-stats 1->4; dmz builds 1->9, items 1->4, missions 1->2, pois 1->2.
+- MARATHON outbound link sets UNCHANGED: 512 marathon pages crawled, 0 real changes (the single
+  crawl "diff", /marathon/shells/assassin, was a dev cold-compile timeout with after=0; warm re-check
+  is byte-identical 21==21 main vs branch). dmz/pubg depth-3 article pages changed = 8 (EXPECTED --
+  the dmz articles gained their Related block; pubg unchanged).
+- eslint clean; byte-clean.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report. (Cause: a stash pop during verification
+left 7 files unstaged; af5ddcb shipped HANDOFF-only, repaired by 0a96705. No force-push.)
+
 ## 2026-09-22 -- Wardogs tool/hub internal link mesh (feat/wardogs-link-mesh)
 De-silos the Wardogs tool ecosystem (from the link-graph audit). Wardogs pages ONLY -- no nav/
 footer/layout change, no component Marathon renders, no title/meta/route/canonical change. One

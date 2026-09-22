@@ -20,6 +20,7 @@ import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/ros
 import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/articleContent';
+import { relatedLinksFor } from '@/lib/relatedLinks';
 import ViewTracker from '@/components/ViewTracker';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
@@ -101,6 +102,7 @@ export default async function WardogsArticlePage({ params }) {
   var rt = readTime(article.body);
   var tags = Array.isArray(article.tags) ? article.tags : [];
   var keyFacts = extractKeyFacts(article.body);
+  var related = relatedLinksFor('wardogs', tags);   // tag-driven Related links (live tool/hub routes)
   var description = metaDescription(article.body, article.headline);
   var canonical = CANONICAL_BASE + '/wardogs/' + section.slug + '/' + article.slug;
 
@@ -194,6 +196,18 @@ export default async function WardogsArticlePage({ params }) {
           return <p key={blk.key} style={{ margin: '0 0 16px' }}>{stripMarkers(blk.text)}</p>;
         })}
       </article>
+
+      {/* Related: tag-driven links to this game's live tools/hubs (deduped, <=4; hidden when empty). */}
+      {related.length > 0 ? (
+        <div style={{ marginTop: 34, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {related.map(function (r) {
+              return <Link key={r.href} href={r.href} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>{r.label}</Link>;
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {/* Tags */}
       {tags.length > 0 ? (
