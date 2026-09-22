@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - /wardogs/economy/launch-stats reconciled + week-one article 404 fixed (feat/wardogs-launch-stats-reconcile)
+WHAT: launch-stats - card figures verified exact (no change); added a "Precise figures
+(press release)" block (window Sep 10 17:00 - Sep 14 05:00, release decimals, release-only
+86.1M headshots / 212.8M spots / 188.9B XP, role decimals, the rounding + Infantry=Assault
+note, Steam source URL); removed the FAQPage JSON-LD per doctrine A1 (BreadcrumbList kept);
+added an internal link to the week-one article. Title/canonical/route unchanged; byte-clean;
+eslint exit 0.
+FILES: app/wardogs/economy/launch-stats/page.js; lib/wardogs/launchStats.js (pressRelease
+data - precise decimals + Steam source URL); lib/games/wardogs.js (week-one slug mapping).
+404 FIX: lib/games/wardogs.js mapped the week-one slug
+(wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt) -> field-intel.
+The article was published 2026-09-22 but 404'd at every path until this mapping (same
+unmapped-slug bug as patch-011, Brief 2g). It resolves 200 now, at
+/wardogs/field-intel/<slug>, which is what the launch-stats link targets. The earlier
+"published corpus 15" count was true in the DB, but the page was unreachable until this commit.
+SCOPE: freeze-safe (Wardogs page; no title/URL/canonical change; the mapping surfaces an
+already-published article, not a newly-created indexed page). No DB writes.
+
+---
+
 ## 2026-09-22 - Operator DB: Wardogs week-one article reconciled with official @WARDOGS stat card (feed_items UPDATE)
 WHAT: Operator (Justin) ran 3 guarded UPDATEs (each once) on the Wardogs week-one article.
   slug: wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt.
