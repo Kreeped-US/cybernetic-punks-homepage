@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Operator DB: Wardogs week-one article reconciled with official @WARDOGS stat card (feed_items UPDATE)
+WHAT: Operator (Justin) ran 3 guarded UPDATEs (each once) on the Wardogs week-one article.
+  slug: wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt.
+  1. body: added a paragraph after "- XP earned: 188.9 billion" - the official card figures
+     match the press-release totals rounded up (1.3T / 562B / 123M kills / 61M / 28M / 5M /
+     112M / 52M = the same counts at fewer digits, not a second tally); added card-only stats
+     33M headshot kills and 63M spotted-target kills (Bulkhead labels these separately from
+     the release's 86.1M headshots and 212.8M spots).
+  2. body: "- Assault: 20.54 percent" -> "- Assault (labeled Infantry on the official card):
+     20.54 percent" - two first-party labels for the same role slot.
+  3. verified_source: appended ", plus @WARDOGS launch-weekend stat card".
+FINDING: card vs press release = NO contradiction (8 of 8 shared figures are ceiling rounds
+  of the release decimals). The earlier suspected kills mismatch (123M vs 122.2M) was rounding,
+  not error.
+PROCESS NOTE: the first single-statement version tripped the Supabase editor's "UPDATE without
+  WHERE" warning (the WHERE was present; likely a parser misread of the nested replace or a
+  semicolon inside a string literal). Operator cancelled, re-issued as 3 simple statements,
+  each with its own WHERE plus a NOT LIKE idempotency guard. Verified: card_para true,
+  role_note true, verified_source updated.
+SCOPE: content-only, Wardogs page, freeze-safe (no title/URL/canonical change). Provenance
+  strengthened (verified_source now cites both the press release and the @WARDOGS stat card).
+  No code/branch/commit for this action (DB-only).
+
+---
+
 ## 2026-09-22 - Operator DB: Wardogs Patch 0.11 article single-word de-Marathon de-bleed (feed_items UPDATE)
 WHAT: Operator (Justin) ran a content-only body edit on the published Wardogs Patch 0.11 article.
   slug: wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw (game_slug wardogs,
