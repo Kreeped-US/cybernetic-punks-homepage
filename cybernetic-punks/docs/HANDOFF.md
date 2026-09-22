@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Map the unmapped published wardogs SMG tier article (fix/wardogs-smg-tier-section-map)
+WHAT: Mapped the last unmapped published wardogs article to a section so it stops 404ing.
+  Third instance of the unmapped-slug 404 (after patch-011 / Brief 2g and week-one / k9rt).
+FILE: lib/games/wardogs.js - one WARDOGS_ARTICLE_SECTION entry:
+  'wardogs-smg-tier-breakdown-which-one-should-you-run-zoxz' -> 'field-intel'.
+WHY field-intel: it is weapon-meta analysis, belonging with the other editorial pieces
+  (patch-011, week-one, factions). arsenal is entity/data-only (per-weapon pages from
+  weapon_stats, not feed_items articles), and there is no dedicated meta/tier ARTICLE
+  section (tier-list is a data tool). economy/systems are topic-specific.
+FOUND BY: the 2026-09-22 read-only unmapped-slug audit - 15 published wardogs articles:
+  14 mapped, 1 unmapped (this one, published 2026-09-20, is_published=true/noindex=false,
+  unreachable at every path until this commit). dmz 8/8 and pubg-dednet 6/6 were clean.
+VERIFY: dev render - /wardogs/field-intel/<slug> now 200 (article body renders);
+  economy/systems/arsenal still 404; a mapped control (patch-011) still 200. eslint exit 0.
+SCOPE: freeze-safe (surfaces an already-published article; no title/URL/canonical change to
+  any existing page). No DB writes.
+SYSTEMIC NOTE: this trap has now bitten wardogs 3x. All three network games (wardogs, dmz,
+  pubg-dednet) use the same manual per-slug ARTICLE_SECTION map with no default/fallback -
+  an unmapped published slug 404s silently. A guard (a test that every is_published
+  network-game article resolves to a section) would catch the next one at build time.
+
+---
+
 ## 2026-09-22 - /wardogs/economy/launch-stats reconciled + week-one article 404 fixed (feat/wardogs-launch-stats-reconcile)
 WHAT: launch-stats - card figures verified exact (no change); added a "Precise figures
 (press release)" block (window Sep 10 17:00 - Sep 14 05:00, release decimals, release-only

@@ -327,6 +327,11 @@ export const WARDOGS_ARTICLE_SECTION = {
   // wardogsSectionForArticle() returned null and it 404'd at every path. Mapped to field-intel
   // (the "News" section) so it resolves at /wardogs/field-intel/<slug> and the launch-stats link works.
   'wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt': 'field-intel',
+  // SMG tier-breakdown piece (NEXUS, published 2026-09-20). Same unmapped-slug 404 as patch-011
+  // and week-one: published but absent here, so wardogsSectionForArticle() returned null and it
+  // 404'd everywhere until this mapping. Weapon-meta analysis -> field-intel (arsenal is entity/
+  // data-only, not an article section). Resolves 200 at /wardogs/field-intel/<slug> now.
+  'wardogs-smg-tier-breakdown-which-one-should-you-run-zoxz': 'field-intel',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).
