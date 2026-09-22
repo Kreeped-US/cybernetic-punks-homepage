@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - FAQPage sweep + parked post-freeze cleanup (docs/handoff-post-freeze-faqpage)
+FAQPAGE SWEEP (2026-09-22, read-only, app/ + components/): exactly 1 active FAQPage emitter
+sitewide - app/marathon/pve/page.js (faqSchema :138, rendered at script :153). Non-Marathon:
+0 active emitters (wardogs/dmz/pubg/bodycam clean; the two wardogs economy pages were fixed
+2026-09-22). Every other "FAQPage" match is a comment (removal notes / "never FAQPage"), not
+emitted schema.
+POST-OCT-20 TODO (do AFTER the recovery checkpoint read, not before): remove pve's FAQPage
+JSON-LD per doctrine A1; keep its visible FAQ + BreadcrumbList. Deferred for measurement
+hygiene - schema edits are freeze-permitted, but any edit to a migrated page muddies the
+Oct 20 read, so hold it until the checkpoint is taken.
+OPPORTUNISTIC COMMENT TIDIES (do at the same time; NOT violations, just stale doc drift):
+- app/marathon/stats/page.js header (:22 / :44) says the FAQPage schema is preserved /
+  generated from FAQS - it is NOT emitted (only BreadcrumbList is).
+- components/dmz/DmzEntityDetail.js:4 says "FAQPage ONLY when there are real Q&As" - it emits
+  WebPage + BreadcrumbList only, no FAQPage.
+No code changes in this entry - parked follow-up only.
+
+---
+
 ## 2026-09-22 - /wardogs/economy: drop "LIVE" overstatement + derive unlock total from DB (fix/wardogs-economy-live-wording)
 WHAT: Closes the 2026-09-22 economy-review items. The modeled breakdown is an estimate
 recomputed from current DB prices, not a live feed - reworded every "live" that implied
