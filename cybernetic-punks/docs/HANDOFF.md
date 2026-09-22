@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 -- Draft review session: operator DB/admin actions + open follow-ups
+
+- REJECTED (admin): Wardogs draft "Wardogs Season 2 is Coming: What the Teaser Signals"
+    (NEXUS). Marathon contamination: shells Destroyer/Triage/Thief, weapons V66 Lookout/
+    Longshot, "ranked" framing (Wardogs has no ranked mode). Gate had shown clear; root
+    causes traced and fixed same day (see game-aware gate a5d65bb, headline rules a6aaf43).
+- FIXED + PUBLISHED: marathon-copperhead-rf-cqb-smg-build-guide-ippf (MIRANDA). Read-only
+    verify: core stats, 1.1.0 history, mods, shells, Cradle, 3 maps all MATCH store.
+    3 guarded UPDATEs (each with not-like guard): Feather Mag effect corrected to store
+    ("greatly increases reload speed and also adds magazine size"); unsourced zones
+    Dormitories/Processing removed; planner link /cradle -> /marathon/cradle (avoid
+    redirect). Verified false/false/false/true, then operator approved + published.
+    Note: an earlier "HOLD for Season 3" call was wrong -- no S3 patch shipped 2026-09-22.
+- RETIRED: wardogs-smg-tier-breakdown-which-one-should-you-run-zoxz. Found by the new
+    CROSS_GAME_ENTITY detector as a TRUE positive in the published corpus (names Marathon
+    BRRT SMG + Bully SMG in a Wardogs tier list). Unpublished, then is_published=false,
+    rejected=true. Was reachable ~1 hour after the 5d04f7c mapping; no redirect needed.
+- OPEN FOLLOW-UPS:
+    1. Week-one article (...-k9rt) says Season 2 has no date. Bulkhead dated S2 for
+       Oct 15 on 2026-09-22 (teaser; press coverage confirms). Needs a dated correction
+       line citing the first-party @WARDOGS/Steam source -- pending operator URL.
+    2. lib/games/wardogs.js still maps the retired zoxz slug -> field-intel. Dead entry,
+       harmless; remove in a future cleanup.
+    3. weapon_stats Copperhead RF row: notes field still says magazine 21; column
+       correctly reads 30. Hygiene only, not user-facing.
+    4. Watch CROSS_GAME_ENTITY for sentence-start false holds on single-word shell names
+       (e.g. "Destroyer" in a Wardogs vehicle name, "Triage" in medic prose). Holds, not
+       rejects; release via operator if clean.
+
+No code changes.
+
 ## 2026-09-22 - De-Marathon lib/headlineRules.js: close headline priming (fix/headline-rules-de-marathon)
 Closes ROOT CAUSE #2 of the Marathon->Wardogs contamination trace. HEADLINE_RULES rendered
 hardcoded Marathon headline examples ("Marathon Assassin Build", "New Runners", "Marathon's
