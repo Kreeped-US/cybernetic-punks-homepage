@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Batch A: finish public persona de-personing + index schema fix (fix/persona-tail-batch-a)
+WHAT: De-personed the remaining public persona surfaces (intel index, sitrep, hub image
+tails) and fixed the one real structured-data leak - the index ItemList JSON-LD emitting
+fictional persona codenames as schema.org/Person authors.
+FILES:
+- app/marathon/intel/page.js: ItemList JSON-LD author {Person, name:item.editor} ->
+  resolveArticleAuthorship(item).author (approved -> Person "Justin", else Organization
+  "Cybernetic Punks"); EDITOR_INFO.role -> desk topic labels; EditorAvatar headshot ->
+  desk symbol/color glyph; "FILTER BY EDITOR" -> "FILTER BY DESK".
+- app/marathon/sitrep/page.js: all 3 persona clusters (loop card, rising-intel cards,
+  hardcoded ghost block) - codename -> desk label (roster getEditorDisplay), EDITOR_ROLES
+  -> desk topics, headshots (incl hardcoded ghost.jpg) -> glyph; "EDITOR COVERAGE" ->
+  "DESK COVERAGE". Also escaped a pre-existing JSX apostrophe lint error (:684, zero
+  render change).
+- app/marathon/intel/[slug]/page.js: dropped hero-bg headshot (:607); Other Desks grid
+  thumbnails (:781) -> glyph.
+DESK LABELS (matching shipped hubs): Ranked Analysis / Meta & News / Build Analysis /
+Community Sentiment / Field Guides.
+VERIFY: live dev render of index + sitrep + hub. Index ItemList author now Person "Justin"
+/ Organization - zero persona codenames (priority fix). Filter strip + sitrep cards show
+glyphs + desk labels + topic roles, no headshots, no codenames. title/H1/canonical/robots
+unchanged on all touched pages; every internal link + listing preserved. eslint exit 0.
+SCOPE: freeze-safe (no title/URL/canonical/robots change) + SEO-safe (structured data
+IMPROVED: fictional persona -> real authorship). Content/display + schema only. Diff 3 files.
+FOLLOW-UP: (a) DATA - some article rows have thumbnail = /images/editors/<editor>.jpg, so
+those article cards still show an editor headshot in feeds (feed_items data, operator
+territory, not code). (b) ask-editor API persona chat (dormant/unwired - reframe vs retire,
+operator decision). (c) audit API persona prompts (internal, low priority).
+
+---
+
 ## 2026-09-22 - Retire persona framing on the 5 intel hub pages (fix/retire-persona-hubs)
 WHAT: Content-only de-personing of the 5 /marathon/intel/<name> editor hub pages
 (cipher/nexus/dexter/ghost/miranda) to topic-desk framing - the SEO/public tail of the
