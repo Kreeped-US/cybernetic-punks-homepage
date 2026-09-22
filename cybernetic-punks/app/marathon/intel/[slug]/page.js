@@ -27,11 +27,11 @@ function edTag(key) { var d = getEditorDisplay(key); return d ? (d.tag || d.full
 // edRole/edSymbol/edColor were removed with the "panel weighs in" comment display (Brief 2d).
 
 const EDITORS = {
-  cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Play Analyst',    desc: 'Watches Marathon gameplay and tells you exactly what went right and wrong. Every play gets a Runner Grade from D to S+.', metaTitle: 'Marathon Play Analysis & Runner Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
-  nexus:   { name: 'NEXUS',   symbol: '⬡', color: '#00d4ff', role: 'Meta Strategist', desc: 'Tracks what weapons and strategies are actually winning right now.', metaTitle: 'Marathon Meta Tracking & Strategy Intel',  metaDesc: 'Live Marathon meta intelligence. What weapons and loadouts are winning - tracked throughout the day.' },
-  ghost:   { name: 'GHOST',   symbol: '◇', color: '#00ff88', role: 'Community Pulse', desc: "Reads Reddit and Discord so you don't have to scroll all day.", metaTitle: 'Marathon Community Sentiment & Pulse', metaDesc: 'What Marathon players actually think. Community sentiment from Reddit and Discord.' },
-  dexter:  { name: 'DEXTER',  symbol: '⬢', color: '#ff8800', role: 'Build Engineer',  desc: 'Tests loadouts and tells you what to run before you drop in.', metaTitle: 'Marathon Build Analysis & Loadout Grades', metaDesc: 'Best Marathon builds and loadouts graded F to S.' },
-  miranda: { name: 'MIRANDA', symbol: '◎', color: '#9b5de5', role: 'Field Guide',     desc: 'Deep-dive guides on shells, weapons, mods, and extraction strategy.', metaTitle: 'Marathon Field Guides', metaDesc: 'Shell breakdowns, weapon analysis, and ranked prep for Marathon Runners.' },
+  cipher:  { name: 'CIPHER',  symbol: '◈', color: '#ff2222', role: 'Ranked Analysis', desc: 'Marathon ranked analysis - patch impact, holotag tier benchmarks, matchup counters, and climb playbooks.', metaTitle: 'Marathon Play Analysis & Runner Grades',  metaDesc: 'AI-powered Marathon gameplay analysis. Every play graded D to S+ with transcript breakdowns.' },
+  nexus:   { name: 'NEXUS',   symbol: '⬡', color: '#00d4ff', role: 'Meta & News', desc: 'Marathon meta and news intel - what weapons and strategies are winning right now, tracked each cycle.', metaTitle: 'Marathon Meta Tracking & Strategy Intel',  metaDesc: 'Live Marathon meta intelligence. What weapons and loadouts are winning - tracked throughout the day.' },
+  ghost:   { name: 'GHOST',   symbol: '◇', color: '#00ff88', role: 'Community Sentiment', desc: 'Marathon community sentiment - what players are saying across Reddit and Discord, summarized.', metaTitle: 'Marathon Community Sentiment & Pulse', metaDesc: 'What Marathon players actually think. Community sentiment from Reddit and Discord.' },
+  dexter:  { name: 'DEXTER',  symbol: '⬢', color: '#ff8800', role: 'Build Analysis', desc: 'Marathon build and loadout analysis - graded, sourced, updated each cycle.', metaTitle: 'Marathon Build Analysis & Loadout Grades', metaDesc: 'Best Marathon builds and loadouts graded F to S.' },
+  miranda: { name: 'MIRANDA', symbol: '◎', color: '#9b5de5', role: 'Field Guides', desc: 'Marathon field guides - shells, weapons, mods, and extraction strategy for new and improving players.', metaTitle: 'Marathon Field Guides', metaDesc: 'Shell breakdowns, weapon analysis, and ranked prep for Marathon Runners.' },
 };
 
 const EDITOR_STYLES = {
@@ -577,11 +577,11 @@ function EditorLanePage({ config, items }) {
 
   var OTHER_EDITORS = ['cipher','nexus','dexter','ghost','miranda'].filter(function(e) { return e !== config.name.toLowerCase(); });
   var OTHER_EDITOR_CONFIG = {
-    cipher:  { symbol: '◈', color: '#ff2222', role: 'Play Analyst' },
-    nexus:   { symbol: '⬡', color: '#00d4ff', role: 'Meta Strategist' },
-    dexter:  { symbol: '⬢', color: '#ff8800', role: 'Build Engineer' },
-    ghost:   { symbol: '◇', color: '#00ff88', role: 'Community Pulse' },
-    miranda: { symbol: '◎', color: '#9b5de5', role: 'Field Guide' },
+    cipher:  { symbol: '◈', color: '#ff2222', role: 'Ranked Analysis' },
+    nexus:   { symbol: '⬡', color: '#00d4ff', role: 'Meta & News' },
+    dexter:  { symbol: '⬢', color: '#ff8800', role: 'Build Analysis' },
+    ghost:   { symbol: '◇', color: '#00ff88', role: 'Community Sentiment' },
+    miranda: { symbol: '◎', color: '#9b5de5', role: 'Field Guides' },
   };
 
   return (
@@ -628,12 +628,12 @@ function EditorLanePage({ config, items }) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
             <div style={{ width: 92, height: 92, borderRadius: '50%', overflow: 'hidden', border: '2px solid ' + config.color + '60', background: '#1a1d24', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={'/images/editors/' + config.name.toLowerCase() + '.jpg'} alt={edTag(config.name)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+              <span style={{ fontSize: 44, color: config.color, lineHeight: 1 }}>{config.symbol}</span>
             </div>
 
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ fontSize: 9, color: config.color + '88', letterSpacing: 3, marginBottom: 6, fontWeight: 700, fontFamily: 'monospace' }}>
-                EDITOR · CYBERNETICPUNKS
+                DESK · CYBERNETICPUNKS
               </div>
               <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, color: config.color, letterSpacing: '3px', margin: '0 0 6px', lineHeight: 1 }}>
                 {editorByline(config.name)}
@@ -764,7 +764,7 @@ function EditorLanePage({ config, items }) {
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '32px 0 12px' }}>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Other Editors</span>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Other Desks</span>
           <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 6, marginBottom: 40 }}>
