@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Operator DB: Wardogs Patch 0.11 article single-word de-Marathon de-bleed (feed_items UPDATE)
+WHAT: Operator (Justin) ran a content-only body edit on the published Wardogs Patch 0.11 article.
+  slug: wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw (game_slug wardogs,
+  is_published true).
+  UPDATE feed_items SET body = replace(body, 'weapon or shell data', 'weapon or balance data') WHERE slug = '...6tpw';  (single occurrence, replace() exact-once)
+REASON: the 2026-09-22 read-only Marathon-vocab re-verify returned MIXED - the article is
+  genuinely Wardogs, BULKHEAD-sourced, zero Marathon entities; the one ambiguous phrase
+  "weapon or shell data" paired shell with weapon as a peer stat category (Marathon's
+  weapon-stats / shell-stats model) - a leftover template echo, not ordnance usage. Wardogs
+  has no shell-data category. Swapped to "balance" to match sentence intent (the patch was
+  infrastructure-heavy, light on combat/balance content). (Recon had proposed "vehicle";
+  operator chose "balance".)
+SCOPE: content-only edit to a published Wardogs page; freeze-safe (no title/URL/canonical
+  change). Provenance untouched (verified_source BULKHEAD, provenance_tier sourced).
+EFFECT: closes the last visible Marathon-pattern echo in the published wardogs corpus.
+  No code/branch/commit for this action (DB-only, on top of the prior read-only verify).
+
+---
+
 ## 2026-09-22 - Operator DB: Wardogs week-one news article published (feed_items INSERT)
 WHAT: Operator (Justin) INSERTed a new Wardogs first-party news article into feed_items.
   slug: wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt
