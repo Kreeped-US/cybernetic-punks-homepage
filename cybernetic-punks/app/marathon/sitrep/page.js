@@ -22,7 +22,11 @@
 
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
+import { getEditorDisplay } from '@/lib/editors/roster';
 import Link from 'next/link';
+
+// Desk label (single source: roster.js, already de-personed). Never a codename.
+function deskLabel(key) { var d = getEditorDisplay(key); return d ? d.fullName : (key || ''); }
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +59,7 @@ const BORDER = '#22252e';
 
 const EDITOR_COLORS = { CIPHER: '#ff2222', NEXUS: '#00d4ff', DEXTER: '#ff8800', GHOST: '#00ff88', MIRANDA: '#9b5de5' };
 const EDITOR_SYMBOLS = { CIPHER: '◈', NEXUS: '⬡', DEXTER: '⬢', GHOST: '◇', MIRANDA: '◎' };
-const EDITOR_ROLES  = { CIPHER: 'Play Analyst', NEXUS: 'Meta Strategist', DEXTER: 'Build Engineer', GHOST: 'Community Pulse', MIRANDA: 'Field Guides' };
+const EDITOR_ROLES  = { CIPHER: 'Ranked Analysis', NEXUS: 'Meta & News', DEXTER: 'Build Analysis', GHOST: 'Community Sentiment', MIRANDA: 'Field Guides' };
 const TIER_COLORS   = { S: '#ff2222', A: '#ff8800', B: '#ffd700', C: '#00d4ff', D: '#444' };
 
 const FACTION_COLORS = {
@@ -421,7 +425,6 @@ export default async function SitrepPage() {
             {risingIntel.map(function(article) {
               var color = EDITOR_COLORS[article.editor] || '#888';
               var symbol = EDITOR_SYMBOLS[article.editor] || '·';
-              var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               return (
                 <Link key={article.id} href={'/marathon/intel/' + article.slug} className="s-card" style={{ display: 'block', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
                   {article.thumbnail && (
@@ -432,10 +435,10 @@ export default async function SitrepPage() {
                   )}
                   <div style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + color + '40', flexShrink: 0 }}>
-                        <img src={portrait} alt={article.editor} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid ' + color + '40', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 11, color: color, lineHeight: 1 }}>{symbol}</span>
                       </div>
-                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: color }}>{symbol} {article.editor}</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: color }}>{symbol} {deskLabel(article.editor)}</span>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', lineHeight: 1.35, marginBottom: 6 }}>
                       {article.headline}
@@ -591,7 +594,7 @@ export default async function SitrepPage() {
       {/* ══ EDITOR COVERAGE ═════════════════════════════════ */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <SectionHeader
-          label="THIS CYCLE — EDITOR COVERAGE"
+          label="THIS CYCLE — DESK COVERAGE"
           color="rgba(255,255,255,0.25)"
         />
 
@@ -600,17 +603,16 @@ export default async function SitrepPage() {
             var article = latestPerEditor[editor];
             var color   = EDITOR_COLORS[editor];
             var symbol  = EDITOR_SYMBOLS[editor];
-            var portrait = '/images/editors/' + editor.toLowerCase() + '.jpg';
 
             return (
               <div key={editor} className="s-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', padding: '14px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + color + '44', flexShrink: 0 }}>
-                    <img src={portrait} alt={editor} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid ' + color + '44', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 13, color: color, lineHeight: 1 }}>{symbol}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: color, letterSpacing: 1 }}>{symbol} {editor}</span>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: color, letterSpacing: 1 }}>{symbol} {deskLabel(editor)}</span>
                     </div>
                     <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>{EDITOR_ROLES[editor].toUpperCase()}</div>
                   </div>
@@ -649,12 +651,12 @@ export default async function SitrepPage() {
 
           <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid #00ff88', borderRadius: '0 2px 2px 0', padding: '20px 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(0,255,136,0.4)', flexShrink: 0 }}>
-                <img src="/images/editors/ghost.jpg" alt="GHOST" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(0,255,136,0.4)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 15, color: '#00ff88', lineHeight: 1 }}>◇</span>
               </div>
               <div style={{ flex: 1 }}>
-                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: '#00ff88', letterSpacing: 2 }}>◇ GHOST</span>
-                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>COMMUNITY PULSE · {timeAgo(latestPerEditor['GHOST'].created_at).toUpperCase()}</div>
+                <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 900, color: '#00ff88', letterSpacing: 2 }}>◇ {deskLabel('GHOST')}</span>
+                <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>COMMUNITY SENTIMENT · {timeAgo(latestPerEditor['GHOST'].created_at).toUpperCase()}</div>
               </div>
             </div>
             <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)', margin: '0 0 8px', lineHeight: 1.4 }}>
@@ -681,7 +683,7 @@ export default async function SitrepPage() {
               DROP IN<br /><span style={{ color: '#00d4ff' }}>INFORMED.</span>
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-              This sitrep refreshes throughout the day. Bookmark it, check before each session, and you'll always know what's shifted since you last played.
+              This sitrep refreshes throughout the day. Bookmark it, check before each session, and you&apos;ll always know what&apos;s shifted since you last played.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

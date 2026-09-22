@@ -603,14 +603,6 @@ function EditorLanePage({ config, items }) {
       <section style={{ position: 'relative', overflow: 'hidden', background: '#0e1014', borderBottom: '1px solid #1e2028' }}>
         <div style={{
           position: 'absolute', right: 0, top: 0, bottom: 0,
-          width: '40%',
-          backgroundImage: 'url(/images/editors/' + config.name.toLowerCase() + '.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'right center',
-          opacity: 0.12,
-        }} />
-        <div style={{
-          position: 'absolute', right: 0, top: 0, bottom: 0,
           width: '50%',
           background: 'linear-gradient(to right, #0e1014 0%, transparent 100%)',
         }} />
@@ -777,8 +769,8 @@ function EditorLanePage({ config, items }) {
                 borderRadius: '0 0 3px 3px', padding: '10px 14px',
                 transition: 'background 0.1s',
               }}>
-                <div style={{ width: 30, height: 30, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + e.color + '40', flexShrink: 0, background: '#0e1014' }}>
-                  <img src={'/images/editors/' + slug + '.jpg'} alt={edTag(slug)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                <div style={{ width: 30, height: 30, borderRadius: '50%', border: '1px solid ' + e.color + '40', flexShrink: 0, background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 15, color: e.color, lineHeight: 1 }}>{e.symbol}</span>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: e.color, letterSpacing: 2 }}>{edTag(slug)}</div>

@@ -29,7 +29,8 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEditorDisplay, editorHasPortrait, editorInitial } from '@/lib/editors/roster';
+import { getEditorDisplay, editorInitial } from '@/lib/editors/roster';
+import { resolveArticleAuthorship } from '@/lib/authorEntity';
 
 // Portrait or initial badge. lib/editors/roster.js already exposes
 // editorHasPortrait() precisely because server components have no <img onError>,
@@ -37,19 +38,15 @@ import { getEditorDisplay, editorHasPortrait, editorInitial } from '@/lib/editor
 // '/images/editors/<name>.jpg'. VANTAGE has no portrait file, so /intel served a
 // 404 for vantage.jpg on every render -- one of the 4xx entries in the 2026-07-17
 // Ahrefs audit. broker.jpg never leaked because BROKER is not rendered here.
-// Fix the guard, not the asset: an editor without a portrait gets an initial.
-function EditorAvatar({ name, color, size }) {
+// Desk glyph: the desk's symbol in its color (persona headshots retired 2026-09-22).
+// Initial-fallback kept for any symbol-less caller.
+function EditorAvatar({ name, color, symbol, size }) {
   var initialFontSize = size >= 30 ? 12 : 9;
-  if (!editorHasPortrait(name)) {
-    return (
-      <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + color + '40', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: initialFontSize, fontWeight: 800, color: color, fontFamily: 'Orbitron, monospace' }}>{editorInitial(name)}</span>
-      </div>
-    );
-  }
   return (
     <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + color + '40', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <img src={'/images/editors/' + name.toLowerCase() + '.jpg'} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+      {symbol
+        ? <span style={{ fontSize: size >= 30 ? 15 : 11, color: color, lineHeight: 1 }}>{symbol}</span>
+        : <span style={{ fontSize: initialFontSize, fontWeight: 800, color: color, fontFamily: 'Orbitron, monospace' }}>{editorInitial(name)}</span>}
     </div>
   );
 }
@@ -117,11 +114,11 @@ function pageWindow(cur, total) {
 function pageHref(p) { return p <= 1 ? '/marathon/intel' : '/marathon/intel?page=' + p; }
 
 var EDITOR_INFO = {
-  CIPHER:  { symbol: '◈', color: '#ff2222', role: 'Play Analyst' },
-  NEXUS:   { symbol: '⬡', color: '#00d4ff', role: 'Meta Strategist' },
-  DEXTER:  { symbol: '⬢', color: '#ff8800', role: 'Build Engineer' },
-  GHOST:   { symbol: '◇', color: '#00ff88', role: 'Community Pulse' },
-  MIRANDA: { symbol: '◎', color: '#9b5de5', role: 'Field Guide' },
+  CIPHER:  { symbol: '◈', color: '#ff2222', role: 'Ranked Analysis' },
+  NEXUS:   { symbol: '⬡', color: '#00d4ff', role: 'Meta & News' },
+  DEXTER:  { symbol: '⬢', color: '#ff8800', role: 'Build Analysis' },
+  GHOST:   { symbol: '◇', color: '#00ff88', role: 'Community Sentiment' },
+  MIRANDA: { symbol: '◎', color: '#9b5de5', role: 'Field Guides' },
 };
 
 function timeAgo(dateStr) {
@@ -267,10 +264,9 @@ export default async function IntelHubPage({ searchParams }) {
           name:           item.headline,
           url:            'https://cyberneticpunks.com/marathon/intel/' + item.slug,
           datePublished:  toISOWithPTOffset(item.created_at),
-          author: {
-            '@type': 'Person',
-            name: item.editor,
-          },
+          // Real authorship (matches the article-page JSON-LD): Justin on rows he
+          // approved, else the publisher Org - never the fictional editor codename.
+          author: resolveArticleAuthorship(item).author,
         },
       };
     }),
@@ -339,7 +335,7 @@ export default async function IntelHubPage({ searchParams }) {
       {/* ══ EDITOR FILTER STRIP ═════════════════════════════ */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Filter by Editor</span>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontWeight: 700, textTransform: 'uppercase' }}>Filter by Desk</span>
           <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
@@ -359,7 +355,7 @@ export default async function IntelHubPage({ searchParams }) {
                   textDecoration: 'none',
                   transition: 'background 0.1s',
                 }}>
-                <EditorAvatar name={editorName} color={info.color} size={30} />
+                <EditorAvatar name={editorName} color={info.color} symbol={info.symbol} size={30} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 11, color: info.color, letterSpacing: 2, fontWeight: 700 }}>{edTag(editorName)}</div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>{info.role}</div>
