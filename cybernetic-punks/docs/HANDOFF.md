@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 -- Wardogs tool/hub internal link mesh (feat/wardogs-link-mesh)
+De-silos the Wardogs tool ecosystem (from the link-graph audit). Wardogs pages ONLY -- no nav/
+footer/layout change, no component Marathon renders, no title/meta/route/canonical change. One
+compact "Related" block per page (3-6 links) + contextual in-content links; every anchor names its
+real destination; shipped-hub-gated so nothing links a 404/3xx or a non-shipped hub type.
+
+WHAT SHIPPED:
+- lib/wardogs/loadoutHubs.js: new shippedHubForWeaponType(weaponType) -> the LIVE hub for a
+  weapon_stats.weapon_type, or null (Shotgun/LMG/Launcher/Bow -> caller falls back to arsenal/
+  loadouts; never a non-shipped 404 hub).
+- app/wardogs/loadouts/best/[type]/page.js: footer gains a RELATED block (tier-list, economy,
+  arsenal) + an in-content "WEAPON DETAILS" row linking every weapon the hub ranks to its
+  /wardogs/arsenal/<slug> page (entitySlugFor).
+- app/wardogs/tier-list/page.js: RELATED block -> the 5 shipped best/[type] hubs + economy.
+- app/wardogs/arsenal/page.js: each weapon-type SECTION header gains a contextual
+  "Best <type> loadouts ->" link (shipped types only) + a RELATED block (economy, attachments).
+- app/wardogs/economy/page.js: RELATED block -> the 5 hubs + attachments.
+- app/wardogs/loadouts/page.js: RELATED block -> tier-list, economy, arsenal, attachments,
+  field-intel (news), systems (the 5-hub mesh section already existed).
+- app/wardogs/loadouts/build/[slug]/page.js: footer gains the saved loadout's MATCHING class hub
+  (weapon_stats weapon_type lookup -> shippedHubForWeaponType; fallback /wardogs/arsenal).
+
+VERIFY (same content-only crawler, main=before vs branch=after; nav/footer stripped):
+  content inlinks     before -> after
+  5 best/[type] hubs   5 ->  8  (each)
+  /wardogs/tier-list   4 -> 10
+  /wardogs/economy     4 -> 12
+  /wardogs/arsenal     4 -> 10
+  /wardogs/attachments 0 ->  3
+  /wardogs/field-intel 0 ->  1
+  /wardogs/systems     0 ->  1
+  /wardogs/loadouts   11 -> 11 (unchanged; it already had inlinks -- we added its OUTBOUND mesh)
+- Zero new links to 3xx/404: the after crawl still shows exactly 2 pre-existing 3xx targets
+  (/advisor from Marathon build pages; /api/auth/discord on /join) -- the mesh added none.
+- Marathon/DMZ/PUBG/Bodycam outbound sets UNCHANGED: 540 non-wardogs pages crawled, 537 byte-
+  identical; the 3 "diffs" (marathon/shells/destroyer, /shells/sentinel, /tools/build/recon) each
+  had before=0 -- dev first-hit compile timeouts in the BEFORE pass, not edits (their after-links
+  are ordinary Marathon links; no wardogs page or shared component was touched). Root "/" unchanged.
+- eslint: 0 errors (2 PRE-EXISTING <img> warnings in loadouts hero, untouched). byte-clean.
+
+POST-OCT-20 PARKED (out of scope here; Marathon / sitewide):
+  (a) 6 orphan /marathon/tools/build/[shell]/[weapon] leaves -- indexable + sitemapped, 0 inlinks.
+  (b) "CUSTOMIZE THIS BUILD" CTA on 12 Marathon /tools/build/[shell] pages links /advisor (301) ->
+      change to /marathon/advisor?shell=<slug>.
+  (c) 16 orphan Marathon intel articles -- decide CUT vs LINK during the corpus cut; do NOT link
+      them first.
+  (d) legacy /tools/build/* URLs still in Google's index (no internal links point at them; verify
+      the redirect + let them drop or 301-consolidate).
+  (e) shared-article-template entity auto-linker (would inline-link store entities in article
+      bodies; sitewide template -> deferred).
+
+No DB writes.
+
 ## 2026-09-22 -- Week-one article (...-k9rt): Season 2 date correction (operator DB write)
 - Bulkhead dated Season 2 for Oct 15, 2026 in a weather/rain teaser on X, posted
     2026-09-22 ~09:52 PT (x.com/WARDOGS/status/2102440935816561056; time decoded from
