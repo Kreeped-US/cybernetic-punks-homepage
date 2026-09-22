@@ -110,6 +110,21 @@ export default function LoadoutsPage() {
         </section>
       )}
 
+      {/* Related tools/pages -- rounds out the mesh (tier-list/economy/arsenal + attachments, news, systems). */}
+      <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '18px 24px 22px', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Link href="/wardogs/tier-list" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>Weapon tier list by TTK</Link>
+            <Link href="/wardogs/economy" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>Economy &amp; unlocks</Link>
+            <Link href="/wardogs/arsenal" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>Full weapon arsenal</Link>
+            <Link href="/wardogs/attachments" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>Attachments catalog</Link>
+            <Link href="/wardogs/field-intel" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>Wardogs news</Link>
+            <Link href="/wardogs/systems" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>Game systems</Link>
+          </div>
+        </div>
+      </section>
+
       <LoadoutsClient />
     </>
   );

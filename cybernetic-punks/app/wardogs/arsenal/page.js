@@ -19,6 +19,7 @@ import { entitySlugFor } from '@/lib/coverage';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
+import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
 import ViewTracker from '@/components/ViewTracker';
 
 export const dynamic = 'force-dynamic';
@@ -134,12 +135,19 @@ export default async function WardogsArsenalListPage() {
 
         {types.map((type) => {
           const guns = byType[type].slice().sort((a, b) => a.name.localeCompare(b.name));
+          // Contextual class -> hub link (only for a SHIPPED hub; unshipped types omit it -- never 404).
+          const typeHub = shippedHubForWeaponType(type);
           return (
             <section key={type} style={{ marginBottom: 30 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 14px' }}>
                 <h2 style={{ fontFamily: 'var(--font-exo2), system-ui, sans-serif', fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{type}</h2>
                 <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--text-tertiary)' }}>{guns.length}</span>
                 <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+                {typeHub && (
+                  <Link href={'/wardogs/loadouts/best/' + typeHub.slug} style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: 'var(--accent)', textDecoration: 'none', fontFamily: 'monospace', letterSpacing: 0.3 }}>
+                    Best {typeHub.label} loadouts &rarr;
+                  </Link>
+                )}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(230px, 100%), 1fr))', gap: 12 }}>
                 {guns.map((w) => {
@@ -183,6 +191,15 @@ export default async function WardogsArsenalListPage() {
           <Link href="/wardogs/loadouts" style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 2, padding: '10px 16px' }}>
             Build a loadout with these weapons &rarr;
           </Link>
+        </div>
+
+        {/* Related: spend/unlock context + the attachment catalog for these weapons. */}
+        <div style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Link href="/wardogs/economy" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 3, padding: '7px 12px' }}>Weapon economy &amp; unlocks</Link>
+            <Link href="/wardogs/attachments" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 3, padding: '7px 12px' }}>Attachments catalog</Link>
+          </div>
         </div>
       </main>
     </>

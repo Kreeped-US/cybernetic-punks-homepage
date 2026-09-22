@@ -15,6 +15,7 @@ import { notFound } from 'next/navigation';
 import { loadLoadoutContext } from '@/lib/wardogs/loadLoadoutContext';
 import { assembleLoadout, pickDetail } from '@/lib/wardogs/assembleLoadout';
 import { typeHubBySlug, isShippedTypeHub, shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
+import { entitySlugFor } from '@/lib/coverage';
 import TypeHubResult from '@/components/wardogs/TypeHubResult';
 import ViewTracker from '@/components/ViewTracker';
 
@@ -243,6 +244,30 @@ export default async function TypeHubPage({ params }) {
                 ))}
               </div>
             </div>
+
+            {/* Related tools (the missing hub -> tier-list / economy / arsenal direction). */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+              <div style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link href="/wardogs/tier-list" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 3, padding: '7px 12px' }}>Weapon tier list by TTK</Link>
+                <Link href="/wardogs/economy" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 3, padding: '7px 12px' }}>Weapon economy &amp; unlocks</Link>
+                <Link href="/wardogs/arsenal" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 3, padding: '7px 12px' }}>Full weapon arsenal</Link>
+              </div>
+            </div>
+
+            {/* In-content: every weapon this hub ranks -> its arsenal detail page (the page already names them). */}
+            {data.ranked.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+                <div style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>WEAPON DETAILS ({hub.label.toUpperCase()})</div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {data.ranked.map((c) => (
+                    <Link key={c.weapon_name} href={'/wardogs/arsenal/' + entitySlugFor('weapon', c.weapon_name)} style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 3, padding: '7px 12px' }}>
+                      {c.weapon_name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         }
       />

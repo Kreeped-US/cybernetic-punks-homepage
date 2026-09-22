@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import LoadoutResult from '@/components/wardogs/LoadoutResult';
+import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,19 @@ async function fetchLoadout(slug) {
     .eq('game_slug', 'wardogs').eq('slug', slug)
     .maybeSingle();
   return data || null;
+}
+
+// The saved loadout's primary weapon -> its LIVE class hub (loadout_json has no weapon_type, so we
+// look it up). Returns a shipped hub or null (caller falls back to /wardogs/arsenal). Never a 404.
+async function hubForWeapon(weaponName) {
+  if (!weaponName) return null;
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from('weapon_stats').select('weapon_type')
+      .eq('game_slug', 'wardogs').eq('name', weaponName).maybeSingle();
+    return shippedHubForWeaponType(data && data.weapon_type);
+  } catch (e) { return null; }
 }
 
 function titleFor(row) {
@@ -76,6 +90,9 @@ export default async function SavedLoadoutPage({ params }) {
     budget: j.budget || {},
     playstyle: j.playstyle || row.playstyle || null,
   };
+  const primaryName = j.recommendation && j.recommendation.primary && j.recommendation.primary.weapon_name;
+  const typeHub = await hubForWeapon(primaryName);   // matching class hub, or null -> arsenal fallback
+  const ghostLink = { display: 'inline-block', padding: '12px 22px', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 2, fontSize: 12, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' };
 
   return (
     <>
@@ -101,9 +118,14 @@ export default async function SavedLoadoutPage({ params }) {
         queried={j.queried || null}
         streaming={false}
         footer={
-          <Link href="/wardogs/loadouts" style={{ display: 'inline-block', padding: '12px 22px', background: 'var(--accent)', color: 'var(--bg-page)', borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 1, textDecoration: 'none' }}>
-            GENERATE YOUR OWN CUSTOM LOADOUT →
-          </Link>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Link href="/wardogs/loadouts" style={{ display: 'inline-block', padding: '12px 22px', background: 'var(--accent)', color: 'var(--bg-page)', borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 1, textDecoration: 'none' }}>
+              GENERATE YOUR OWN CUSTOM LOADOUT &rarr;
+            </Link>
+            {typeHub
+              ? <Link href={'/wardogs/loadouts/best/' + typeHub.slug} style={ghostLink}>Best {typeHub.label} loadouts &rarr;</Link>
+              : <Link href="/wardogs/arsenal" style={ghostLink}>Browse the arsenal &rarr;</Link>}
+          </div>
         }
       />
     </>

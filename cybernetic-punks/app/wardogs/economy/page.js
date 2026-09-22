@@ -18,6 +18,7 @@ import { Exo_2 } from 'next/font/google';
 import { buildRoadmap } from '@/lib/wardogs/progression';
 import { spendModel, shareStats } from '@/lib/wardogs/economyModel';
 import { wardogsArticleSlugsForSection } from '@/lib/games/wardogs';
+import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import { WardogsLaunchHero } from '@/components/wardogs/WardogsLaunchStats';
 import EconomyBreakdown from '@/components/wardogs/EconomyBreakdown';
@@ -261,6 +262,17 @@ export default async function WardogsEconomyHub() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 18 }}>
           <Link href="/wardogs/loadouts" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 14, fontWeight: 800, padding: '12px 20px', borderRadius: 4, textDecoration: 'none' }}>Find your best loadout &rarr;</Link>
           <Link href="/wardogs/tier-list" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'var(--text-secondary)', border: '1px solid #262b33', fontFamily: EXO, fontSize: 14, fontWeight: 700, padding: '11px 18px', borderRadius: 4, textDecoration: 'none' }}>See the tier list &rarr;</Link>
+        </div>
+
+        {/* Related: the per-class best-loadout hubs (what to save for) + the attachment catalog. */}
+        <div style={{ marginTop: 24, borderTop: '1px solid #1d2026', paddingTop: 16 }}>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {shippedTypeHubs().map((h) => (
+              <Link key={h.slug} href={'/wardogs/loadouts/best/' + h.slug} style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid #262b33', borderRadius: 3, padding: '7px 12px' }}>Best {h.label} loadouts</Link>
+            ))}
+            <Link href="/wardogs/attachments" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid #262b33', borderRadius: 3, padding: '7px 12px' }}>Attachments catalog</Link>
+          </div>
         </div>
       </section>
     </main>

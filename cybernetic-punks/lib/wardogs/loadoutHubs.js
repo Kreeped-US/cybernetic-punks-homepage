@@ -49,3 +49,13 @@ export function isShippedTypeHub(slug) {
   const h = typeHubBySlug(slug);
   return !!(h && h.shipped);
 }
+
+// Map a weapon_stats.weapon_type (e.g. "Assault Rifle", "Submachine Gun") to its LIVE type hub, or
+// null when that type has no shipped hub (Shotgun/LMG/Launcher/Bow -> caller falls back to
+// /wardogs/arsenal or /wardogs/loadouts; NEVER link a non-shipped hub, which 404s). Used by the
+// arsenal per-class sections and the saved-loadout page to link a weapon to its class hub.
+export function shippedHubForWeaponType(weaponType) {
+  if (!weaponType) return null;
+  const h = WEAPON_TYPE_HUBS.find((x) => x.weaponType === weaponType);
+  return h && h.shipped ? h : null;
+}
