@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - /wardogs/economy: drop "LIVE" overstatement + derive unlock total from DB (fix/wardogs-economy-live-wording)
+WHAT: Closes the 2026-09-22 economy-review items. The modeled breakdown is an estimate
+recomputed from current DB prices, not a live feed - reworded every "live" that implied
+otherwise, and made the "$X to unlock all weapons" meta figure DB-derived instead of hardcoded.
+WORDING (before -> after), all on the economy hub + its OG cards:
+- app/wardogs/economy/page.js: "THE ECONOMY, LIVE" -> "THE ECONOMY, MODELED"; hero sub
+  "A live model of the Wardogs economy - built on real prices, shown with the math" -> "A model
+  of the Wardogs economy, recomputed from current prices and shown with the math"; FAQ "summed to
+  the live tracker" -> "summed to the model total"; breakdown caption "Each category's live total
+  sums to the ticker" -> "modeled total"; OG description "Live spend tracker + ..." -> "Spend
+  model + ..."; header comment "the live economy-intelligence dashboard" -> "modeled".
+- app/wardogs/economy/opengraph-image.js: "our live spend breakdown" -> "our modeled spend breakdown".
+- app/wardogs/economy/stat/[key]/opengraph-image.js: OG label "Live spend tracker + unlock guide"
+  -> "Spend model + unlock guide".
+LEFT ALONE (genuinely live / not the figures): page.js "two different numbers live on this page"
+(reside); the :147 historical comment "the old modeled live tick" (accurate - describes what the
+static official hero replaced); WardogsLaunchStats (asserts the official figures are NOT live);
+WardogsFooter/WeaponImage/WardogsArsenal ("live Tier List/vendor", "images live in").
+ANIMATION: EconomyBreakdown still ticks each category's $ (requestAnimationFrame) - kept; it sits
+between "Modeled spend by category" (above) and "Modeled (purchase frequency x representative
+price...)" (below) + per-row "~$X x N/hr", so the estimate is labeled next to the number.
+UNLOCK TOTAL FROM DB: metadata converted from a static export to generateMetadata(). loadData is
+now wrapped in React cache(), so generateMetadata and the page body share ONE weapon_stats query
+(same source, not a second query shape). Figure = sum(unlock_fee) over wardogs weapons, formatted
+"$2,195,000". Guards: any null unlock_fee -> omit the figure (a partial sum shown as "all weapons"
+would be false); query error -> omit; generateMetadata never throws.
+VERIFY: dev render - happy path meta shows the DB-derived "$2,195,000 to unlock all weapons"
+(current DB: 33 weapons, no nulls); title + canonical unchanged; eyebrow reads MODELED; no
+model-referring "live" remains. Null fallback proven with a temporary local stub (reverted, never
+committed): the figure was omitted, the page still rendered 200, generateMetadata did not throw.
+eslint clean, byte-clean (ASCII in added text).
+SCHEMA: removed the hub's FAQPage JSON-LD (doctrine A1; same as launch-stats) - it had no
+visible FAQ section, so nothing user-facing is lost. BreadcrumbList remains the only structured
+data on the hub.
+SCOPE: freeze-safe (no route/canonical/title change; content + meta-description wording only).
+No DB writes.
+
+---
+
 ## 2026-09-22 - Unmapped-article guard for section-mapped games (feat/unmapped-article-guard)
 WHAT: A guard so a published wardogs / dmz / pubg-dednet article that was never added to its
 per-slug section map (the silent 404 that hit wardogs 3x: patch-011, week-one, smg-tier) is

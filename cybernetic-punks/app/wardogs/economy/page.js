@@ -1,5 +1,5 @@
 // app/wardogs/economy/page.js
-// THE WARDOGS ECONOMY HUB -- the live economy-intelligence dashboard. A dedicated static route
+// THE WARDOGS ECONOMY HUB -- the modeled economy-intelligence dashboard. A dedicated static route
 // that OVERRIDES the /wardogs/[section] 'economy' article-list (the same static-over-dynamic
 // pattern as /wardogs/arsenal + /wardogs/loadouts). Consolidates: the big spend TICKER (the
 // hook) + the spend BREAKDOWN by category (the intel that legitimizes the number) + shareable
@@ -12,6 +12,7 @@
 // economy items + Deagle's career gate. "NO HYPE. JUST INTEL." holds -- the breakdown IS intel.
 
 import Link from 'next/link';
+import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { buildRoadmap } from '@/lib/wardogs/progression';
@@ -34,23 +35,42 @@ const HERO_IMG = '/images/wardogs/WD_Screenshot_ResidentialStreet_1_WD1.jpg';
 const A = 'var(--accent)';
 const money = (n) => '$' + Number(n).toLocaleString('en-US');
 
-export const metadata = {
-  title: { absolute: 'Wardogs Economy - How Much Players Spend & Unlock Costs' },
-  description: 'Wardogs economy stats: how much players spend, where the in-game cash flows (weapons, armor, vehicles, ammo, gear), every weapon’s unlock cost, and what to save for. Modeled from real prices — $2,195,000 to unlock all weapons.',
-  keywords: 'Wardogs economy, Wardogs economy stats, how much do Wardogs players spend, Wardogs spending, Wardogs cash, Wardogs unlock guide, Wardogs what to save for, Wardogs progression, Wardogs unlock costs, Wardogs vehicle prices, Wardogs money',
-  alternates: { canonical: BASE + '/wardogs/economy' },
-  openGraph: {
-    title: 'Wardogs Economy: Where the Cash Flows',
-    description: 'Live spend tracker + the breakdown by category + every unlock cost. Modeled from real prices, honestly labeled.',
-    url: BASE + '/wardogs/economy', siteName: 'Cybernetic Punks', type: 'website',
-  },
-};
+// The "unlock all weapons" figure is DERIVED from the DB (weapon_stats.unlock_fee, wardogs) via the
+// same cached loadData the body uses -- never hardcoded. If ANY weapon row has a null unlock_fee the
+// figure is omitted (a partial sum shown as "all weapons" would be a false claim); a query error also
+// omits it. generateMetadata never throws.
+const ECON_DESC_PREFIX = "Wardogs economy stats: how much players spend, where the in-game cash flows (weapons, armor, vehicles, ammo, gear), every weapon's unlock cost, and what to save for. Modeled from real prices";
+
+export async function generateMetadata() {
+  let figure = null;
+  try {
+    const { weapons } = await loadData();
+    if (weapons.length && !weapons.some((w) => w.unlock_fee == null)) {
+      const total = weapons.reduce((s, w) => s + Number(w.unlock_fee), 0);
+      if (Number.isFinite(total)) figure = money(total);   // e.g. "$2,195,000"
+    }
+  } catch { figure = null; }
+  return {
+    title: { absolute: 'Wardogs Economy - How Much Players Spend & Unlock Costs' },
+    description: figure ? (ECON_DESC_PREFIX + ' - ' + figure + ' to unlock all weapons.') : (ECON_DESC_PREFIX + '.'),
+    keywords: 'Wardogs economy, Wardogs economy stats, how much do Wardogs players spend, Wardogs spending, Wardogs cash, Wardogs unlock guide, Wardogs what to save for, Wardogs progression, Wardogs unlock costs, Wardogs vehicle prices, Wardogs money',
+    alternates: { canonical: BASE + '/wardogs/economy' },
+    openGraph: {
+      title: 'Wardogs Economy: Where the Cash Flows',
+      description: 'Spend model + the breakdown by category + every unlock cost. Modeled from real prices, honestly labeled.',
+      url: BASE + '/wardogs/economy', siteName: 'Cybernetic Punks', type: 'website',
+    },
+  };
+}
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
 
-async function loadData() {
+// cache() so generateMetadata + the page component share ONE execution per request -- the
+// unlock-total figure in the metadata is derived from the SAME weapon_stats query the body uses,
+// never a second query shape.
+const loadData = cache(async function loadData() {
   const sb = getSupabase();
   // The economy-section article slugs (mapped in lib/games/wardogs.js). Surfaced as the
   // "Economy Intel" list at the bottom of the hub so these published, indexed articles are
@@ -65,7 +85,7 @@ async function loadData() {
       : Promise.resolve({ data: [] }),
   ]);
   return { weapons: w.data || [], ammo: a.data || [], items: i.data || [], econArticles: (ar && ar.data) || [] };
-}
+});
 
 export default async function WardogsEconomyHub() {
   const data = await loadData();
@@ -83,19 +103,14 @@ export default async function WardogsEconomyHub() {
       { '@type': 'ListItem', position: 3, name: 'Economy', item: BASE + '/wardogs/economy' },
     ],
   };
-  const faqLd = {
-    '@context': 'https://schema.org', '@type': 'FAQPage',
-    mainEntity: [
-      { '@type': 'Question', name: 'How much does it cost to unlock all weapons in Wardogs?', acceptedAnswer: { '@type': 'Answer', text: 'Unlocking all ' + road.weaponCount + ' weapons costs ' + money(road.grandTotal) + ' in one-time unlock fees (community-attributed, Season 1). ' + road.freeStarters + ' are free by default. Weapons only — not the wider economy.' } },
-      { '@type': 'Question', name: 'Where do Wardogs players spend the most in-game cash?', acceptedAnswer: { '@type': 'Answer', text: 'By our model, ' + breakdown[0].label + ' are the biggest sink (~' + breakdown[0].sharePct.toFixed(0) + '% of spend), then ' + breakdown[1].label + ' and ' + breakdown[2].label + '. Each category is how often you buy it times its real price, summed to the live tracker — a conservative, population-weighted estimate.' } },
-    ],
-  };
+  // FAQPage JSON-LD removed (doctrine A1: no FAQPage schema). There is no visible FAQ section on
+  // this hub, so nothing user-facing is lost; BreadcrumbList (valid, sourced) remains the only
+  // structured data here.
 
   return (
     <main className={exo2.variable} style={{ background: '#0b0d10', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
       <ViewTracker slug="economy" type="tool" gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
       <style>{'.wd-econ-row:hover{background:#12151b}'}</style>
 
       {/* HERO */}
@@ -112,13 +127,13 @@ export default async function WardogsEconomyHub() {
           </nav>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: A, boxShadow: '0 0 7px var(--accent-glow,rgba(224,161,58,0.4))' }} />
-            <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 800, color: A, fontFamily: 'monospace' }}>THE ECONOMY, LIVE</span>
+            <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 800, color: A, fontFamily: 'monospace' }}>THE ECONOMY, MODELED</span>
           </div>
           <h1 style={{ fontFamily: EXO, fontSize: 'clamp(30px,5.4vw,52px)', fontWeight: 800, letterSpacing: '-0.6px', lineHeight: 1.03, margin: '0 0 14px', maxWidth: 800, textShadow: '0 2px 22px rgba(0,0,0,0.5)' }}>
             The Wardogs Cash Economy
           </h1>
           <p style={{ fontSize: 'clamp(15px,1.9vw,18px)', color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, maxWidth: 660, margin: 0, fontWeight: 500 }}>
-            Where the money flows, what to save for, and what it all costs to run. A live model of the Wardogs economy &mdash; built on real prices, shown with the math.
+            Where the money flows, what to save for, and what it all costs to run. A model of the Wardogs economy, recomputed from current prices and shown with the math.
           </p>
         </div>
       </section>
@@ -155,7 +170,7 @@ export default async function WardogsEconomyHub() {
           <EconomyBreakdown categories={breakdown} />
           <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 8, marginTop: 16, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
             <TierIcon tier="attributed" size={12} />
-            <span>Modeled (purchase frequency &times; representative price from our data). Each category&rsquo;s live total sums to the ticker. Prices community-attributed, Season 1 &mdash; per-use cost, not the one-time unlock fee.</span>
+            <span>Modeled (purchase frequency &times; representative price from our data). Each category&rsquo;s modeled total sums to the ticker. Prices community-attributed, Season 1 &mdash; per-use cost, not the one-time unlock fee.</span>
           </div>
         </div>
       </section>

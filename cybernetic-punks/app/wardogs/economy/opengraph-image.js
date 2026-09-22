@@ -17,7 +17,7 @@ export default async function Image() {
   return wardogsEconomyCard({
     big: S.cash.spent.display + ' spent',
     label: 'in-game cash Wardogs players spent over the Early Access launch weekend (' + S.cash.earned.display + ' earned)',
-    sub: 'Official Bulkhead figures — plus our live spend breakdown + unlock guide',
+    sub: 'Official Bulkhead figures — plus our modeled spend breakdown + unlock guide',
     footer: 'OFFICIAL · BULKHEAD @WARDOGS · cyberneticpunks.com/wardogs/economy',
   });
 }

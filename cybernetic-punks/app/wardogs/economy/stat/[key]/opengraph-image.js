@@ -30,7 +30,7 @@ export default async function Image({ params }) {
   } catch (e) { /* fallback below */ }
 
   if (!stat) {
-    return wardogsEconomyCard({ big: 'The Wardogs Economy', label: 'Live spend tracker + unlock guide' });
+    return wardogsEconomyCard({ big: 'The Wardogs Economy', label: 'Spend model + unlock guide' });
   }
   return wardogsEconomyCard({ big: stat.big, label: stat.label, sub: stat.sub || 'Modeled from real Wardogs prices' });
 }
