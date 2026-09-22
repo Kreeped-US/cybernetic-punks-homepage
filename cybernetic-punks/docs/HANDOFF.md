@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Operator DB: Wardogs week-one news article published (feed_items INSERT)
+WHAT: Operator (Justin) INSERTed a new Wardogs first-party news article into feed_items.
+  slug: wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt
+  editor NEXUS, game_slug wardogs, directive_type standard, is_published true,
+  noindex false, gate_status clear, provenance_tier sourced, operator_approved_at +
+  created_at = now() at insert.
+CONTENT: week-one record - sales trajectory (1.25M day-one, 2M under 5 days); concurrency
+  tiered (400,000 studio-stated vs 428,666 SteamDB-attributed); weekend in-game snapshot,
+  window Sep 10 17:00 - Sep 14 05:00 (cash earned $1.28T, cash spent $561.9B, 122.2M kills,
+  86.1M headshots, 60.7M revives, XP earned 188.9B); XP-by-role (Support 21.42% leading);
+  progression/economy (start bank $10,000, 37 weapons / 21 vehicles / 3 maps, FOB $7,500,
+  artillery Career 90, heavy tank Driver 35, median ~level 20 at 20-25 hrs); honest-null on
+  Season 2 (weather teaser + underway, no date/list/wipe).
+DELIBERATE EXCLUSIONS (operator constraint): SteamDB review percentage, third-party
+  "5.9M sold" figure, any concurrency-ticker model.
+PROVENANCE CORRECTION SEQUENCE (recorded because it hit the DB):
+  1. INSERT ran with verified_source_url = a literal placeholder (error, not a real URL).
+  2. UPDATE to set verified_source_url = NULL was offered; operator supplied the real URL instead.
+  3. UPDATE set verified_source_url to the verified first-party Steam post:
+     https://store.steampowered.com/news/app/1867240/view/701027323413006037
+     (WARDOGS - 2 MILLION COPIES SOLD, Sep 15 2026; confirmed carries the 2M figure and a
+     self-described numbers snapshot; detailed stat block is image-embedded).
+  verified_source text (unchanged): Team17/Bulkhead Wardogs EA week-one press release
+  (Sep 2026); Bulkhead Steam news posts (Sep 10 and Sep 15) and Patch 0.11 notes (Sep 12).
+NOTES: feed_items has no unique key on (game_slug, slug); INSERT run once. No code/branch/
+  commit for this action (DB-only, on top of the prior read-only schema recon). Wardogs
+  published corpus now 15 (was 14).
+
+---
+
 ## 2026-09-22 - Operator DB: content-audit stat/provenance corrections (weapon_stats + feed_items)
 Following the two-pass read-only content audit (moat verified sound). Operator (Justin) ran all SQL.
 1. V22 Volt Thrower (weapon_stats id ab7bcb09-f448-47c5-9f4f-17721fd1be94): stale S2 stats
