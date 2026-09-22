@@ -54,6 +54,40 @@ export const WARDOGS_LAUNCH_STATS = {
     { label: 'Pilot',    pct: 9  },
   ],
   roleNote: 'Wardogs rewards role XP based on item usage, not fixed classes.',
+
+  // PRESS RELEASE (Team17/Bulkhead Early Access week-one release) -- the PRECISE decimal totals the
+  // card figures above round up from (8 of 8 shared figures are ceiling rounds, not a second tally).
+  // Bounded window Sep 10 17:00 - Sep 14 05:00. Card "Infantry" and release "Assault" are the same
+  // role slot. This is the same first-party event, stated to more digits; keep it clearly labeled.
+  pressRelease: {
+    window: 'Sep 10 17:00 - Sep 14 05:00',
+    url: 'https://store.steampowered.com/news/app/1867240/view/701027323413006037',
+    source: 'Team17/Bulkhead Wardogs Early Access week-one press release',
+    cash: { earned: '$1.28T', spent: '$561.9B' },
+    stats: [
+      { label: 'Total Kills',    display: '122.2M' },
+      { label: 'Total Revives',  display: '60.7M'  },
+      { label: 'Total Heals',    display: '27.7M'  },
+      { label: 'Tower Caps',     display: '4.6M'   },
+      { label: 'Total Tips',     display: '111.8M' },
+      { label: 'Total Drop-offs', display: '51.1M' },
+    ],
+    // Stated in the release but not on the card (distinct metrics from the card's headshot/spot
+    // KILLS): total headshots, total spots, and total XP earned.
+    releaseOnly: [
+      { label: 'Headshots', display: '86.1M'  },
+      { label: 'Spots',     display: '212.8M' },
+      { label: 'XP Earned', display: '188.9B' },
+    ],
+    roles: [
+      { label: 'Support', pct: 21.42 },
+      { label: 'Assault', pct: 20.54 },
+      { label: 'Medic',   pct: 19.97 },
+      { label: 'Recon',   pct: 18.66 },
+      { label: 'Driver',  pct: 10.57 },
+      { label: 'Pilot',   pct: 8.70  },
+    ],
+  },
 };
 
 // A one-line citation string for footers / captions.

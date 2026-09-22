@@ -322,6 +322,11 @@ export const WARDOGS_ARTICLE_SECTION = {
   // article 404'd -- the ONE badged wardogs article that could not resolve (Brief 2g). Mapped to
   // field-intel (the "News" section) with the other patch/news pieces so it resolves at a real URL.
   'wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw': 'field-intel',
+  // Week-one news piece (NEXUS, published + provenance_tier='sourced', verified_source=BULKHEAD).
+  // Same class of gap as patch-011 above: INSERTed + published but never mapped, so
+  // wardogsSectionForArticle() returned null and it 404'd at every path. Mapped to field-intel
+  // (the "News" section) so it resolves at /wardogs/field-intel/<slug> and the launch-stats link works.
+  'wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt': 'field-intel',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).

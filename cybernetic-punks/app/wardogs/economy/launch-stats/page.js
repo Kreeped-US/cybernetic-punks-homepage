@@ -39,20 +39,13 @@ export default function WardogsLaunchStatsPage() {
       { '@type': 'ListItem', position: 3, name: 'Launch Stats', item: BASE + '/wardogs/economy/launch-stats' },
     ],
   };
-  // FAQ: the exact question the surface answers, with the verified figure (rich-result eligible).
-  const faqLd = {
-    '@context': 'https://schema.org', '@type': 'FAQPage',
-    mainEntity: [
-      { '@type': 'Question', name: 'How much did Wardogs players spend at launch?', acceptedAnswer: { '@type': 'Answer', text: 'Over the Wardogs Early Access launch weekend, players spent ' + S.cash.spent.display + ' and earned ' + S.cash.earned.display + ' in in-game cash, according to official figures from developer Bulkhead (@WARDOGS).' } },
-      { '@type': 'Question', name: 'What are the official Wardogs launch stats?', acceptedAnswer: { '@type': 'Answer', text: 'Bulkhead reported ' + S.stats.map((s) => s.display + ' ' + s.label.replace(/^Total /, '').toLowerCase()).join(', ') + ' over the Early Access launch weekend, alongside ' + S.cash.spent.display + ' spent and ' + S.cash.earned.display + ' earned in in-game cash.' } },
-    ],
-  };
+  // FAQPage JSON-LD removed (doctrine A1: no FAQPage schema). BreadcrumbList (valid, sourced)
+  // is retained as the only structured data on this surface.
 
   return (
     <main className={exo2.variable} style={{ background: '#0b0d10', minHeight: '100vh', color: '#fff' }}>
       <ViewTracker slug="economy-launch-stats" type="article" gameSlug="wardogs" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
 
       {/* HERO */}
       <section style={{ borderBottom: '1px solid #1d2026', background: 'radial-gradient(120% 140% at 12% 0%, #17130b 0%, #0e1116 60%)' }}>
@@ -82,6 +75,41 @@ export default function WardogsLaunchStatsPage() {
       {/* THE BOARD */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '30px 24px 20px' }}>
         <WardogsLaunchStatsBoard />
+      </section>
+
+      {/* PRECISE FIGURES (press release) -- the decimal totals the card rounds up from */}
+      <section style={{ maxWidth: 1120, margin: '0 auto', padding: '10px 24px 10px' }}>
+        <div style={{ background: '#0e1116', border: '1px solid #1d2026', borderRadius: 8, padding: '20px 22px' }}>
+          <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 6px' }}>Precise figures (press release)</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.65, margin: '0 0 16px', maxWidth: 860 }}>
+            The card figures above are these Team17/Bulkhead totals rounded up - the same first-party event, stated to more digits. Window {S.pressRelease.window}. Card Infantry and release Assault are the same role slot.{' '}
+            <a href={S.pressRelease.url} target="_blank" rel="noopener noreferrer" style={{ color: A, fontWeight: 700 }}>Source</a>. See the{' '}
+            <Link href="/wardogs/field-intel/wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt" style={{ color: A, fontWeight: 700 }}>week-one report</Link>{' '}for the confirmed-and-unsaid breakdown.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+            {[
+              { label: 'Total Cash Earned', display: S.pressRelease.cash.earned },
+              { label: 'Total Cash Spent', display: S.pressRelease.cash.spent },
+              ...S.pressRelease.stats,
+              ...S.pressRelease.releaseOnly,
+            ].map((s) => (
+              <div key={s.label} style={{ background: '#0b0d10', border: '1px solid #1d2026', borderRadius: 6, padding: '10px 12px' }}>
+                <div style={{ fontFamily: EXO, fontSize: 18, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>{s.display}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary,#8b929c)', textTransform: 'uppercase', marginTop: 4 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: 'var(--text-tertiary,#8b929c)', textTransform: 'uppercase', marginBottom: 8 }}>Earned XP by role</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {S.pressRelease.roles.map((r) => (
+                <span key={r.label} style={{ fontSize: 12, color: 'var(--text-secondary)', border: '1px solid #262b33', borderRadius: 999, padding: '4px 11px' }}>
+                  {r.label} <strong style={{ color: '#fff' }}>{r.pct.toFixed(2)}%</strong>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* CTA back into the tooling */}
