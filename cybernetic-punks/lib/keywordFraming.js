@@ -45,6 +45,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { deriveTuple, loadVocabulary } from './coverage.js';
 import { HEADLINE_RULES, HEADLINE_MAX_CHARS } from './headlineRules.js';
 import { HEADLINE_REWRITE_MODEL } from './models.js';
+// De-Marathoned HEADLINE_RULES carries {{cnp:...}}/{{kit:...}} tokens (2026-09-22). editorCore
+// resolves them at its applyKit/applyVocab chokepoint; THIS pass builds its own system prompt and
+// must resolve them itself (same kit-then-vocab order) so Marathon stays byte-identical here and
+// no game leaks raw token text to the model.
+import { applyKit, applyVocab, resolveKit, resolveVocab } from './editors/promptVocab.js';
+import { getGameConfig } from './games/index.js';
 
 // THE CODE CEILING IS THE PROMPT CEILING -- literally the same constant.
 // HEADLINE_MAX_CHARS is defined once in lib/headlineRules.js and imported here; the
@@ -122,7 +128,11 @@ export async function findKeywordTarget(supabase, gameSlug, tuple) {
 // Returns { ok:true, headline } | { ok:false, error }
 export async function rewriteHeadline(opts) {
   var o = opts || {};
-  var system = HEADLINE_RULES + '\n\n'
+  // Resolve the game-aware tokens in HEADLINE_RULES (kit BEFORE vocab, matching editorCore's
+  // chokepoint). o.config is the game config from frameHeadline; if absent (unknown slug, fail-
+  // open), tokens degrade to the neutral defaults / empty game name rather than leaking raw text.
+  var rules = applyVocab(applyKit(HEADLINE_RULES, resolveKit(o.config)), resolveVocab(o.config));
+  var system = rules + '\n\n'
     + 'You are rewriting ONE headline for an article that is already written and will\n'
     + 'not change. Reframe the EXISTING headline so it leads with the target search\n'
     + 'term, keeping the same subject, the same claim, and the same editorial voice.\n'
@@ -266,7 +276,12 @@ export async function frameHeadline(supabase, opts, deps) {
   out.priorCount = target.match_count || 0;
 
   // --- pass 2 -------------------------------------------------------------
-  var rw = await rewrite({ headline: original, keyword: target.keyword, body: o.body });
+  // Resolve the game config for HEADLINE_RULES token resolution in the rewrite. getGameConfig
+  // throws on an unknown slug; this feature is FAIL-OPEN, so a resolution failure degrades to
+  // neutral rules (null config) rather than blocking publication.
+  var config = null;
+  try { config = getGameConfig(gameSlug); } catch (cfgErr) { config = null; }
+  var rw = await rewrite({ headline: original, keyword: target.keyword, body: o.body, config: config });
   if (!rw.ok) {
     // TRANSIENT. Distinct from rejected_rules on purpose: a failed call is an
     // infrastructure event, an over-long rewrite is a prompt problem. Collapsing

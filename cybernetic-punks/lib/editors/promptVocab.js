@@ -219,6 +219,26 @@ export function resolveKit(config) {
   out.classRosterLine   = vc.classRosterLine;   // Marathon "The 8 Runner Shells are: ...\n\n" (whole line)
   out.voiceExamples     = vc.voiceExamples;     // Marathon's two example paragraphs (generic one stays)
 
+  // HEADLINE RULES de-Marathoning (2026-09-22). The lore-jargon example and the BAD/GOOD example
+  // block in lib/headlineRules.js were hardcoded to Marathon (Assassin/Runners/Season 2), priming
+  // every game's editors toward Marathon vocabulary. Now tokens with GAME-NEUTRAL defaults (like
+  // entityList above, NOT render-empty): an example headline is text the model imitates, so a game
+  // without its own examples must still get VALID neutral ones, never empty and never Marathon.
+  // The defaults use {{cnp:game}} for the real game name (resolved by the later applyVocab pass --
+  // not an invented fact) and [bracket] placeholders for specifics; the BAD-then-GOOD structure
+  // and the rules being taught (no all-caps, game + search term first, colon separator, short GOOD)
+  // are identical to Marathon's. Marathon supplies its CURRENT text verbatim via config, so it
+  // renders byte-identical.
+  out.headlineLoreExample = vc.headlineLoreExample || '[in-universe term]';
+  out.headlineExamples    = vc.headlineExamples || (
+    '- BAD: ALL-CAPS CLICKBAIT ABOUT A [weapon] THAT RUNS WELL PAST THE LIMIT: Overstuffed Subtitle Repeating The Same Point\n' +
+    '  GOOD: {{cnp:game}} [weapon] Build: The One Change That Matters\n' +
+    '- BAD: A Deep-Dive Explainer On The [feature] Meta: The Overlong Subtitle That Buries The Search Term Readers Typed\n' +
+    '  GOOD: {{cnp:game}} [feature] Guide: What Changed And Why\n' +
+    '- BAD: Essential [topic] Tips For New Players: Start Here Before You Go Any Further Into The Grind\n' +
+    '  GOOD: {{cnp:game}} [topic] Guide: Essential Beginner Tips'
+  );
+
   return out;
 }
 

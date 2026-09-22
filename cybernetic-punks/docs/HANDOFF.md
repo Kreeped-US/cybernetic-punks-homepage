@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - De-Marathon lib/headlineRules.js: close headline priming (fix/headline-rules-de-marathon)
+Closes ROOT CAUSE #2 of the Marathon->Wardogs contamination trace. HEADLINE_RULES rendered
+hardcoded Marathon headline examples ("Marathon Assassin Build", "New Runners", "Marathon's
+Tutorial Gap", Season 2 / Knife) into EVERY game's editor prompts. An example headline is a claim
+the model imitates, so it primed non-Marathon editors toward Marathon vocabulary -- the last
+prompt-side leak after Stage 2a/2b de-Marathoned the editor bodies.
+
+WHAT SHIPPED (same token/config pattern as Stage 2b):
+- lib/headlineRules.js: the game name ("Marathon") -> {{cnp:game}}; the lore-jargon example
+  ("Runners") -> {{kit:headlineLoreExample}}; the whole BAD/GOOD example block -> {{kit:headlineExamples}}.
+  Header note rewritten (the old "game name still hardcoded, parameterising deferred" note is done).
+- lib/editors/promptVocab.js (resolveKit): headlineLoreExample + headlineExamples with GAME-NEUTRAL
+  defaults (bracket placeholders + {{cnp:game}} for the real game name; BAD-then-GOOD structure and
+  the rules taught are identical to Marathon; NO invented game facts). Neutral, never render-empty --
+  an editor without examples must still get valid ones.
+- lib/games/marathon.js (promptKit.vocab): headlineExamples (the 6 lines VERBATIM, \n line breaks +
+  2-space GOOD indent, no trailing newline) + headlineLoreExample: 'Runners'.
+- lib/keywordFraming.js: SECOND consumer. The headline-rewrite pass (rewriteHeadline) builds its own
+  system prompt and does NOT go through editorCore's applyKit/applyVocab chokepoint -- so it now
+  resolves HEADLINE_RULES itself (kit then vocab) from the game config, which frameHeadline passes
+  down (getGameConfig guarded -> fail-open to neutral rules on an unknown slug). Without this the
+  tokens would leak raw to the model AND Marathon's rewrite prompt would regress.
+
+VERIFICATION (byte-identical render harness scripts/render-prompts.mjs, main=before vs branch=after):
+- MARATHON: all 6 editor prompts BYTE-IDENTICAL before/after (diff -r empty). Byte-identical is
+  guaranteed for both consumers -- resolving the new tokenized string with Marathon's config
+  reproduces the old constant exactly.
+- NON-MARATHON literal grep (Assassin|Runner|Marathon) across the 6 rendered prompts:
+  wardogs 40->0, dmz 40->0, pubg-dednet 40->0.
+- NON-MARATHON detectCrossGameEntities (lib/gsc/crossGameEntities.js) on the rendered prompts:
+  wardogs 20->0, dmz 20->0, pubg-dednet 20->0 (before: Runners<marathon>, Assassin<marathon>;
+  after: none). The game-aware gate's own detector was flagging the PROMPT text before this fix --
+  the prompt was priming the exact contamination the gate holds on.
+- eslint clean; byte-clean (added lines ASCII; straight quotes / ASCII hyphens).
+
+This was the last item from the game-aware-gate root-cause trace. Remaining follow-up from that
+trace: de-Marathon / pull the published wardogs-smg-tier-breakdown...zoxz article (names BRRT/Bully
+SMG) -- a CONTENT fix, separate from prompt/gate hardening. No DB writes.
+
 ## 2026-09-22 - Game-aware gate: per-game substance + cross-game entity hold (feat/game-aware-gate)
 Closes the Marathon->Wardogs contamination path traced this session. Two root causes addressed
 (a third, HEADLINE_RULES prompt leak, is deferred to its own brief -- see below).

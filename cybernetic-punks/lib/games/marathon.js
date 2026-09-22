@@ -521,6 +521,13 @@ export const marathon = {
         // The two Marathon VOICE example paragraphs (incl. their leading blank lines); the generic
         // extraction-timer example above them stays for every game.
         voiceExamples: `\n\n"The Triage kit is the kindest shell to a new player. Active heal cuts squad mistakes. Passive ammo regen forgives ammo discipline you haven't learned yet. Start here. Earn the right to play Vandal."\n\n"The Cradle is where your stats come from in Season 2. Pick one or two tracks and commit your Energy - and because respec is free, never be afraid to experiment with a different path."`,
+        // HEADLINE RULES de-Marathoning (2026-09-22). The "not lore jargon" example and the whole
+        // BAD/GOOD example block, lifted VERBATIM from lib/headlineRules.js so the resolved rules
+        // stay byte-identical for Marathon. headlineExamples uses \n line breaks + a 2-space indent
+        // before each GOOD (matching the original template) and NO trailing newline. A game without
+        // these gets resolveKit's game-neutral bracket-placeholder defaults (no Marathon leak).
+        headlineLoreExample: 'Runners',
+        headlineExamples: `- BAD: CONTENT DROUGHT EXPOSES MARATHON'S TUTORIAL GAP: Single YouTube Creator Highlights Community's Learning Crisis\n  GOOD: Marathon's Tutorial Gap: The Content Drought Signal\n- BAD: Assassin Shadow Strike Engine: The Season 2 Invisibility Meta That Turns Knife Combat Into Silent Elimination Mastery\n  GOOD: Marathon Assassin Build: Shadow Strike Knife Guide (S2)\n- BAD: Essential Weapon Mod Builds for New Runners: Start Here Before You Specialize\n  GOOD: Marathon Weapon Mods Guide: Essential Beginner Builds`,
       },
 
       // Structured tool-enum VALUES (values only; field names unchanged). entityFocus is
