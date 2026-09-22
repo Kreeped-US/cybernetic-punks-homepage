@@ -287,12 +287,16 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
       experienceLevel:  cfg.experienceLevel || experienceLevel,
     };
     setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null);
+    // httpStatus captures the outcome for the failure event: the HTTP code once the response
+    // returns, or 'network' if fetch itself rejects (offline / DNS / CORS) before a response.
+    var httpStatus = 'network';
     try {
       var res = await fetch('/api/advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      httpStatus = res.status;
       var json = await res.json();
       if (json.error) throw new Error(json.error);
       clearInterval(scanRef.current);
@@ -303,6 +307,9 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
       track('advisor_generate', { shell: body.shell, playstyle: body.playstyle, rankTarget: body.rankTarget, teamSize: body.teamSize, surprise: !!cfg._surprise });
     } catch (err) {
       clearInterval(scanRef.current);
+      // Failure event: HTTP status (or 'network') + shell ONLY -- no prompt text, no user data.
+      // Splits the engaged->generate gap into abandon vs error (advisor_generate is success-only).
+      track('advisor_generate_failed', { status: httpStatus, shell: shellToUse });
       setError(err.message);
       setPhase('input');
     }

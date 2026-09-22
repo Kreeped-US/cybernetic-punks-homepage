@@ -7,6 +7,79 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 -- Week-one article (...-k9rt): Season 2 date correction (operator DB write)
+- Bulkhead dated Season 2 for Oct 15, 2026 in a weather/rain teaser on X, posted
+    2026-09-22 ~09:52 PT (x.com/WARDOGS/status/2102440935816561056; time decoded from
+    the status ID). No Steam news post carries the date.
+- The article, published ~11:00 PT the same day, said S2 had no date and placed the
+    teaser in the Sep 18 post. Both were wrong at publication: the source was in hand
+    and its date was not checked.
+- Guarded UPDATEs: S2 paragraph rewritten (Sep 18 = work underway; Sep 22 teaser =
+    Oct 15 date; content list + progression wipe still honest-null), dated correction
+    note appended, verified_source += ", plus @WARDOGS Season 2 teaser on X (Sep 22)".
+    Verified false/true/true. patch-011 checked: its S2 line predates the teaser and
+    makes no date claim -- left as is.
+- Lesson: date-check every social source before citing it (X status IDs encode post time).
+
+## 2026-09-22 - Measurement for distribution: funnel + referral attribution (feat/distribution-measurement)
+Page-level tracking only (no layout/nav/footer or root title/meta/canonical change). Closes the
+measurement gaps found in the root + Build Advisor recon: root traffic was uninstrumented, the
+Wardogs funnel had no "engaged" step, the CTA had clicks but no impressions (click-through
+unmeasurable), advisor_surprise was firing but dropped 400, and no page recorded its referrer.
+
+SHIPPED (all events flow through the existing track() -> /api/track -> site_events pipeline):
+1. ROOT page_view: app/page.js renders <ViewTracker slug="home" type="home" gameSlug="network"/>.
+   Import only; JSON-LD, title, meta, canonical, nav and footer untouched.
+2. WARDOGS loadout funnel: new loadouts_engaged (LoadoutsClient, ref-guarded, on first input change
+   to career level / budget / playstyle, and defensively at generate). page_view already fired from
+   the SSR frame; loadouts_generate/save/share already existed. Added loadouts_engaged to the
+   api/track allowlist.
+3. advisor_surprise added to the allowlist (was fired by AdvisorClient.surpriseMe but dropped 400).
+4. REFERRAL ATTRIBUTION (host only, privacy-preserving) on every page_view (added in ViewTracker):
+   - ref_host: document.referrer HOST, lowercased, "www." stripped; same-host -> "internal";
+     no referrer -> null. No full URL, no path, no query string, no PII.
+   - ref_tag: ?ref=<tag> from THIS page's URL, sanitized to [a-z0-9_-], max 32 chars, else null.
+   BEFORE page_view event_data: { slug, path, type, headline }.
+   AFTER  page_view event_data: { slug, path, type, headline, ref_host, ref_tag }.
+5. advisor_cta_impression: ToolCTAClient fires it ONCE when the article->advisor CTA scrolls into
+   view (IntersectionObserver, threshold 0.5, disconnect after first hit), event_data { source,
+   shell } matching advisor_cta_click -> CTA click-through (clicks / impressions) is now measurable.
+   Added to the allowlist.
+6. ENV TAG: api/track stamps every stored row with event_data.env = process.env.VERCEL_ENV ||
+   'development' (prod -> 'production', local next dev -> 'development'), so production analytics can
+   exclude local/dev-verify noise. Rows written BEFORE this change carry no env key and are treated
+   as 'production' when querying.
+7. advisor_generate_failed (allowlisted): fired in AdvisorClient's generate catch with { status:
+   <HTTP code>|'network', shell } ONLY -- no prompt text, no user data. advisor_generate stays
+   success-only, so engaged -> generate now splits into abandon vs error. (Closes the gap noted in
+   the recon.)
+
+FULL FUNNELS NOW:
+  Marathon: article page_view -> advisor_cta_impression -> advisor_cta_click -> page_view(advisor)
+            -> advisor_engaged -> advisor_generate (+ advisor_surprise / advisor_share).
+  Wardogs:  page_view(loadouts) -> loadouts_engaged -> loadouts_generate -> loadouts_save/share.
+
+DEV-VERIFIED (npm run dev, real interactions, confirmed rows in site_events):
+  page_view[network]{slug:home}; page_view[wardogs]{slug:loadouts, ref_tag:"reddit_test"};
+  loadouts_engaged[wardogs]; page_view[marathon article]; advisor_cta_impression + advisor_cta_click
+  [marathon]{shell:Thief, source:<article slug>}; page_view[marathon]{slug:advisor};
+  advisor_engaged; advisor_surprise[marathon]{shell:Vandal}. ref_host extraction unit-checked:
+  reddit.com/x.com/discord.com/google.com resolve to the bare host, same-host->"internal",
+  empty->null. (The dev-verify appended ~8 telemetry rows to site_events -- inherent to confirming
+  the events land; no content/stat/schema writes.)
+
+RE-VERIFIED (env tag + failure event): new dev rows carry env='development'; a generate attempt
+while unauthenticated recorded advisor_generate_failed [marathon] { env:'development', shell:'Thief',
+status:401 }. The ~14 dev-verify rows created today are listed for the operator to delete (they are
+identifiable: the 3 post-change rows carry env='development'; the earlier ones match the exact
+verify actions).
+Operator deleted all 14 dev-verify/operator-test rows from site_events on 2026-09-22 (12 by exact id
++ 2 operator build-test rows at 21:24 UTC). From this deploy on, test rows carry env='development'.
+
+eslint: this change adds no lint errors (AdvisorClient has 3 PRE-EXISTING react/no-unescaped-entities
+errors in unrelated render JSX, present on main, left as-is). byte-clean. Freeze respected: page-level
+tracking only.
+
 ## 2026-09-22 -- Draft review session: operator DB/admin actions + open follow-ups
 
 - REJECTED (admin): Wardogs draft "Wardogs Season 2 is Coming: What the Teaser Signals"

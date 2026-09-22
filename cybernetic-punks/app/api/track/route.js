@@ -27,6 +27,18 @@ const ALLOWED_EVENTS = [
   // advisor_generate.
   'advisor_engaged',
   'advisor_cta_click',
+  // advisor_generate_failed: the advisor generate error path (AdvisorClient catch). event_data
+  // { status: <HTTP code>|'network', shell } ONLY -- no prompt text, no user data. Splits the
+  // "engaged -> generate" gap into abandon vs error (advisor_generate is success-only).
+  'advisor_generate_failed',
+  // advisor_surprise: the "SURPRISE ME" one-tap build. Was already FIRED client-side
+  // (AdvisorClient.surpriseMe) but never allowlisted -> dropped 400. Allowlisted so the
+  // surprise path is recorded (it also calls generateBuild -> advisor_generate on success).
+  'advisor_surprise',
+  // advisor_cta_impression: fired ONCE per page when the article->advisor CTA actually
+  // scrolls into view (IntersectionObserver in ToolCTAClient). Pairs with advisor_cta_click
+  // so CTA click-through (clicks / impressions) becomes measurable. event_data { source, shell }.
+  'advisor_cta_impression',
   // /welcome intent-card selection (build|meta|intel|skip). The flow always
   // emitted this but it was missing from the allowlist (stale drift) -> dropped.
   // Added so the intent/bounce funnel is recorded as a time series (the latest
@@ -41,6 +53,10 @@ const ALLOWED_EVENTS = [
   'loadouts_generate',
   'loadouts_save',
   'loadouts_share',
+  // loadouts_engaged: first meaningful interaction with the Wardogs loadout finder (first input
+  // change), ref-guarded once per session -- the Wardogs analogue of advisor_engaged. Completes the
+  // funnel page_view(loadouts) -> loadouts_engaged -> loadouts_generate -> loadouts_save/share.
+  'loadouts_engaged',
 ];
 
 // Known network games for the per-game analytics dimension, derived from ROOT_GAMES (+ the
@@ -116,9 +132,16 @@ export async function POST(req) {
     // Tracking stays NON-FATAL by design (never break the UI for analytics), but
     // a failed insert must not be SILENT: log it server-side so a systematic
     // failure is visible instead of disappearing behind {ok:true}.
+    // ENV TAG: stamp every row with the deploy environment so production analytics can exclude
+    // local/dev-verify noise. process.env.VERCEL_ENV is 'production' | 'preview' | 'development'
+    // on Vercel, and undefined in local `next dev` -> 'development'. Rows written BEFORE this
+    // change carry no env key and should be treated as 'production' when querying (all prior rows
+    // came from the deployed site). Merged into event_data (its own column would need a migration).
+    var base = (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+    var eventData = { ...base, env: process.env.VERCEL_ENV || 'development' };
     var ins = await supabase.from('site_events').insert({
       event_name: event,
-      event_data: data || null,
+      event_data: eventData,
       game_slug: gameSlug,
     });
     if (ins.error) {

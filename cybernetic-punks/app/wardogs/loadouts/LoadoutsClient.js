@@ -5,7 +5,7 @@
 // persisted SSR page /wardogs/loadouts/build/[slug]. The SSE engine (run()) is byte-identical to before
 // -- only the result JSX moved out. Naming: "loadouts" everywhere; never "Build Advisor".
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { track } from '@/lib/useTrack';
 import LoadoutResult from '@/components/wardogs/LoadoutResult';
 
@@ -39,11 +39,22 @@ export default function LoadoutsClient() {
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
 
+  // Funnel: "started using it" (engaged) -- fires ONCE on the first meaningful input change,
+  // distinct from land (page_view, on the SSR frame) and complete (loadouts_generate). Ref-guarded
+  // so it fires once per session. Mirrors AdvisorClient.markEngaged (the Wardogs analogue).
+  const engagedRef = useRef(false);
+  function markEngaged() {
+    if (engagedRef.current) return;
+    engagedRef.current = true;
+    track('loadouts_engaged', { playstyle }, 'wardogs');
+  }
+
   // ── ENGINE: unchanged SSE reader ──────────────────────────────
   async function run() {
     setPhase('loading'); setSteps([]); setMeta(null); setAnalysis(''); setError(null);
     setSaveStatus('idle'); setShareUrl(''); setCopied(false); // a new generation invalidates the last save
     setQueried({ careerLevel: careerLevel === '' ? null : Number(careerLevel), budget: budget === '' ? null : Number(budget), playstyle });
+    markEngaged(); // completion implies engagement (covers a generate with no manual input change)
     track('loadouts_generate', { playstyle, hasLevel: !!careerLevel, hasBudget: !!budget }, 'wardogs');
     try {
       const res = await fetch('/api/loadouts', {
@@ -123,12 +134,12 @@ export default function LoadoutsClient() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 16, marginBottom: 20 }}>
             <div>
               <Label>Career level <span style={{ color: T3 }}>(optional)</span></Label>
-              <input type="number" min="0" value={careerLevel} onChange={(e) => setCareerLevel(e.target.value)} placeholder="e.g. 20" style={inputStyle} />
+              <input type="number" min="0" value={careerLevel} onChange={(e) => { markEngaged(); setCareerLevel(e.target.value); }} placeholder="e.g. 20" style={inputStyle} />
               <Hint>Skip it and we rank the whole roster (no unlock-gate).</Hint>
             </div>
             <div>
               <Label>Cash budget <span style={{ color: T3 }}>(optional)</span></Label>
-              <input type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. $5,000" style={inputStyle} />
+              <input type="number" min="0" value={budget} onChange={(e) => { markEngaged(); setBudget(e.target.value); }} placeholder="e.g. $5,000" style={inputStyle} />
               <Hint>Set a budget and we filter to what you can afford &mdash; gun + ammo. Prices are community-recorded, not yet Bulkhead-official.</Hint>
             </div>
           </div>
@@ -137,7 +148,7 @@ export default function LoadoutsClient() {
             {PLAYSTYLES.map((p) => {
               const sel = playstyle === p.id;
               return (
-                <div key={p.id} className="ls-opt" onClick={() => setPlaystyle(p.id)}
+                <div key={p.id} className="ls-opt" onClick={() => { markEngaged(); setPlaystyle(p.id); }}
                   style={{ background: sel ? AG : CARD, border: '1px solid ' + (sel ? A : LINE), borderLeft: '3px solid ' + (sel ? A : LINE), borderRadius: '0 3px 3px 0', padding: '12px 14px', cursor: 'pointer' }}>
                   <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: sel ? A : T2, fontFamily: 'monospace', marginBottom: 3 }}>{p.label}</div>
                   <div style={{ fontSize: 12, color: T3, lineHeight: 1.4 }}>{p.desc}</div>

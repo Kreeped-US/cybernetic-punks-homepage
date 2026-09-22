@@ -25,6 +25,7 @@ import HeroCrosshair from '@/components/network/HeroCrosshair';
 import ReceiptPanel from '@/components/network/ReceiptPanel';
 import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
 import NetworkFooter from '@/components/network/NetworkFooter';
+import ViewTracker from '@/components/ViewTracker';
 import { getEditorDisplay } from '@/lib/editors/roster';
 import { dmz } from '@/lib/games/dmz';
 import { wardogs } from '@/lib/games/wardogs';
@@ -238,6 +239,10 @@ export default async function NetworkRoot() {
 
   return (
     <div className={'cnp-root ' + chakra.variable + ' ' + inter.variable + ' ' + jbmono.variable}>
+      {/* Page-level analytics only (no layout/nav/footer or title/meta change): record a root
+          page_view (with referrer host) so root traffic + its distribution source is measurable,
+          matching every other page. Renders nothing. */}
+      <ViewTracker slug="home" type="home" gameSlug="network" />
       {JSONLD.map(function(node, i) {
         return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }} />;
       })}
