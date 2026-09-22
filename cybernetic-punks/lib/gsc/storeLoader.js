@@ -10,6 +10,8 @@
 // a short-form mention is under-reported (silence), never a false finding. Alias curation is the
 // recall lever, banked as a follow-on -- extracting the loader does not change that posture.
 
+import { buildCrossGameVocab } from './crossGameEntities.js';
+
 // Page through a table in 1000-row slices (PostgREST's hard cap), applying an optional filter.
 // Returns what it has (and logs) on a read error -- it never throws, so a store read cannot crash
 // its caller: the gate must fail-open, and the batch prefers a partial store to a hard stop.
@@ -112,17 +114,45 @@ const GATE_STORE_REGISTRY = {
   dmz: loadDMZStore,
 };
 
+// CROSS-GAME VOCABULARY (game-aware gate, 2026-09-22). The name list of every OTHER game's
+// entities that a draft in `ownGame` must not name (see lib/gsc/crossGameEntities.js for the
+// precision rules). Sourced from the three SHARED roster tables (weapon_stats / shell_stats /
+// unique_weapons), which carry rows for every game (game_slug). Read with pageAll (swallow-to-
+// partial, NOT strict): this is an ADDITIONAL detection layer, so a read error degrades to the
+// pre-existing behaviour (no cross-game finding) rather than throwing -- byte-identical to the
+// wardogs status quo (empty entity store) on failure. Attached to EVERY game's gate store,
+// including games with no registered entity loader (wardogs/pubg/bodycam) -- that is precisely
+// where the contamination was clearing, so the cross-game check must not depend on the registry.
+async function loadCrossGameVocab(client, ownGame) {
+  const [weapons, shells, uniques] = await Promise.all([
+    pageAll(client, 'weapon_stats', 'name, game_slug'),
+    pageAll(client, 'shell_stats', 'name, game_slug'),
+    pageAll(client, 'unique_weapons', 'name, game_slug'),
+  ]);
+  const rows = []
+    .concat(weapons.map((r) => ({ name: r.name, game_slug: r.game_slug, kind: 'weapon' })))
+    .concat(shells.map((r) => ({ name: r.name, game_slug: r.game_slug, kind: 'shell' })))
+    .concat(uniques.map((r) => ({ name: r.name, game_slug: r.game_slug, kind: 'unique' })));
+  return buildCrossGameVocab(ownGame, rows);
+}
+
 export async function loadGateStore(client, gameSlug) {
   // game_slug stamped on the returned store so runGate can assert the store belongs to the
   // draft's game (the game_slug boundary at the gate) -- a caller can no longer hand the
   // wrong game's store to a draft without runGate refusing it (fail-closed).
+  //
+  // crossGameEntities is loaded for EVERY game (registry hit or not) so the cross-game
+  // contamination check in runGate has its vocabulary regardless of whether the game has a
+  // registered entity store. An unregistered game (wardogs today) still gets the empty ENTITY
+  // store below, but now also gets the cross-game vocabulary.
+  var crossGameEntities = await loadCrossGameVocab(client, gameSlug);
   var loader = GATE_STORE_REGISTRY[gameSlug];
-  if (loader) return { ...(await loader(client, gameSlug)), game_slug: gameSlug };
+  if (loader) return { ...(await loader(client, gameSlug)), game_slug: gameSlug, crossGameEntities };
   // DEFERRED declarative path: when a future game declares a DECLARATIVE corroborationStore
   // in lib/games/<game>.js (a { tables:[{table,type}], strict } spec), that game's onboarding
   // adds (a) `import { getGameConfig }`, (b) a generic loadDeclarativeStore(client, slug, spec),
   // and (c) a dispatch branch here that reads getGameConfig(slug).corroborationStore. It is NOT
   // built now (no game declares one; a half-built loader is worse than none). Until then an
   // unregistered game correctly returns the empty store below -- never a silent half-load.
-  return { entities: [], counts: {}, game_slug: gameSlug };
+  return { entities: [], counts: {}, game_slug: gameSlug, crossGameEntities };
 }

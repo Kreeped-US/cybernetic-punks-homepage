@@ -16,12 +16,15 @@
 
 import { classifyCorroboration } from './corroboration.js';
 import { detectUnparseable } from './hardStatDetector.js';
+import { detectCrossGameEntities } from './crossGameEntities.js';
 import { decideGate } from './prePublishGate.js';
 import { getGameConfig } from '../games/index.js';
 
-// runGate(store, draft, opts) -> { mode, decision, findings, unparseable, corroborations, gap, threw }
-//   store: { entities } (loaded by the caller -- FULL store, recognition-preserving; the verified-only
-//          bar is the classifier opt, NOT a row-filtered store -- see the 3a amendment).
+// runGate(store, draft, opts) -> { mode, decision, findings, unparseable, crossGame, corroborations, gap, threw }
+//   store: { entities, crossGameEntities } (loaded by the caller -- FULL store, recognition-
+//          preserving; the verified-only bar is the classifier opt, NOT a row-filtered store --
+//          see the 3a amendment. crossGameEntities is the cross-game contamination vocabulary
+//          from loadGateStore; absent -> the cross-game stage no-ops, byte-identical).
 //   draft: { slug, editor, created_at, body, game_slug }
 //   opts:  { runDate } (optional; the classifier's as_of stamp -- does NOT affect hold/publish).
 // decision = decideGate output: { hold, is_published, gate_status, gate_findings }.
@@ -67,6 +70,7 @@ export function runGate(store, draft, opts) {
   // provisional-anchor claim is UNCORROBORATED-held, never echo-released (recognition preserved).
   let findings = [];
   let unparseable = [];
+  let crossGame = [];
   let corroborations = [];
   let gap = null;
   let threw = false;
@@ -78,10 +82,16 @@ export function runGate(store, draft, opts) {
     const det = detectUnparseable([draft], { entities });
     unparseable = det.unparseable || [];
     gap = det.gap || null;
+    // CROSS-GAME ENTITY stage: does the draft name an entity that belongs to a DIFFERENT game?
+    // Vocabulary is pre-loaded (store.crossGameEntities); absent -> no findings (byte-identical).
+    // A CROSS_GAME_ENTITY finding is a hold-class (prePublishGate.HOLD_CLASSES), so a fail-closed
+    // draft holds on it while Marathon (log-only) only observes -- the observe-then-arm pattern.
+    const cg = detectCrossGameEntities([draft], (store && store.crossGameEntities) || []);
+    crossGame = cg.findings || [];
   } catch (e) {
     threw = true;   // classifier/detector infra failure -> fail-closed hold (decideGate below)
   }
 
-  const decision = decideGate(findings.concat(unparseable), mode, threw);
-  return { mode, decision, findings, unparseable, corroborations, gap, threw };
+  const decision = decideGate(findings.concat(unparseable).concat(crossGame), mode, threw);
+  return { mode, decision, findings, unparseable, crossGame, corroborations, gap, threw };
 }

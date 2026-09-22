@@ -29,7 +29,11 @@
 // (decideGate never holds), so it is OBSERVED first -- same observe-then-arm pattern as
 // UNCORROBORATED/UNPARSEABLE. And it only ever fires when STORE_ROW_CITATION_ENABLED is
 // on (the recommendations field is flag-gated), so staged-OFF the class is inert.
-export const HOLD_CLASSES = ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE', 'UNSUPPORTED-RECOMMENDATION'];
+// GAME-AWARE GATE (2026-09-22): CROSS_GAME_ENTITY -- the draft names an entity that belongs to a
+// DIFFERENT game (Marathon bleed into a Wardogs draft, etc.; see lib/gsc/crossGameEntities.js).
+// A fail-closed draft (wardogs/dmz/pubg-dednet) holds on it; Marathon is log-only (decideGate
+// never holds), so it is OBSERVED there -- the same observe-then-arm posture as the classes above.
+export const HOLD_CLASSES = ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE', 'UNSUPPORTED-RECOMMENDATION', 'CROSS_GAME_ENTITY'];
 
 function holdClassFindings(findings) {
   return (findings || []).filter((f) => HOLD_CLASSES.indexOf(f.class) !== -1);

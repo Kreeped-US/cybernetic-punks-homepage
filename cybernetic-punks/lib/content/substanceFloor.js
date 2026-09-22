@@ -15,9 +15,14 @@
 
 // facet -> store table. Columns/semantics lifted from fetchGameContext
 // (lib/editorCore.js): every table below carries a `verified` boolean. `gameScoped`
-// tables filter on game_slug (the marathon-implicit tables -- weapon/shell/mod/core/
-// implant -- do not have one). `matchCol` is the column an `entity` string is matched
-// against (case-insensitive).
+// tables filter on game_slug. ALL of these tables now carry a game_slug (the stat
+// tables -- weapon/shell/mod/core/implant -- were Marathon-implicit historically, but
+// weapon_stats/shell_stats/mod_stats/core_stats/implant_stats all have a game_slug
+// column today, so they are game-scoped like the rest -- verified 2026-09-22). Leaving
+// them unscoped counted rows from OTHER games (a bodycam/marathon weapon name would
+// satisfy a wardogs substance check), which is exactly the cross-game leak this pass
+// closes. `matchCol` is the column an `entity` string is matched against
+// (case-insensitive).
 //
 // NOTE ON patch_verified (increment 1a fix, DECISION = Option 1): the stat tables
 // ALSO carry a `patch_verified` column, but it is a SEASON STRING ('S2'), NOT a
@@ -28,11 +33,11 @@
 // regardless of season. patch_verified is FRESHNESS metadata, never a substance
 // filter. Do NOT re-add a patch_verified filter to the count query.
 export const FACET_TABLE_MAP = {
-  weapon:  { table: 'weapon_stats',    matchCol: 'name',         gameScoped: false },
-  shell:   { table: 'shell_stats',     matchCol: 'name',         gameScoped: false },
-  mod:     { table: 'mod_stats',       matchCol: 'name',         gameScoped: false },
-  core:    { table: 'core_stats',      matchCol: 'name',         gameScoped: false },
-  implant: { table: 'implant_stats',   matchCol: 'name',         gameScoped: false },
+  weapon:  { table: 'weapon_stats',    matchCol: 'name',         gameScoped: true  },
+  shell:   { table: 'shell_stats',     matchCol: 'name',         gameScoped: true  },
+  mod:     { table: 'mod_stats',       matchCol: 'name',         gameScoped: true  },
+  core:    { table: 'core_stats',      matchCol: 'name',         gameScoped: true  },
+  implant: { table: 'implant_stats',   matchCol: 'name',         gameScoped: true  },
   cradle:  { table: 'cradle_nodes',    matchCol: 'stat_track',   gameScoped: true  },
   armory:  { table: 'faction_armory',  matchCol: 'faction_slug', gameScoped: true  },
   map:     { table: 'game_maps',       matchCol: 'name',         gameScoped: true  },

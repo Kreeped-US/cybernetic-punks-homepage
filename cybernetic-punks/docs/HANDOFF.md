@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-09-22 - Game-aware gate: per-game substance + cross-game entity hold (feat/game-aware-gate)
+Closes the Marathon->Wardogs contamination path traced this session. Two root causes addressed
+(a third, HEADLINE_RULES prompt leak, is deferred to its own brief -- see below).
+
+ROOT CAUSES (from the read-only trace):
+- Wardogs has NO registered gate entity store (loadGateStore returns empty entities), so the
+  corroboration classifier had nothing to contradict -- all 7 contaminated drafts cleared with
+  gate_findings=null despite fail-closed mode. The gate was blind to cross-game bleed.
+- substanceFloor's stat tables (weapon/shell/mod/core/implant) were gameScoped:false (a stale
+  "Marathon-implicit, no game_slug" assumption). All five carry game_slug today, so an unscoped
+  count let an OTHER game's entity name satisfy a substance check.
+
+WHAT SHIPPED:
+1. lib/content/substanceFloor.js -- flipped weapon/shell/mod/core/implant to gameScoped:true
+   (all five verified to have game_slug: weapon_stats bodycam/marathon/wardogs, shell/mod/core/
+   implant marathon). Updated the stale header comment. (substanceFloor is still LOG-ONLY --
+   correctness fix to the logged counts, no live gating change.)
+2. lib/gsc/crossGameEntities.js (NEW, pure) -- buildCrossGameVocab + detectCrossGameEntities.
+   Vocabulary = every OTHER game's roster entity (weapon_stats/shell_stats/unique_weapons), with
+   precision rules: MULTI-WORD names matched case-insensitively; SINGLE-WORD names ONLY when a
+   shell (case-sensitive proper noun); single-word weapon names DROPPED (real-gun token overlap
+   like M4/AK74/Knife/Longshot); names shared with the draft's OWN roster subtracted; curated
+   AMBIGUOUS_EXCLUDE (recon/knife/longshot/outland + shell/shells/ranked + wardogs roles) never a
+   bare hit; curated MARATHON_SYSTEM_NOUNS (Cradle, Runner(s), Holotag, Vault Breaker, Cryo
+   Archive) added for non-Marathon drafts, case-sensitive. Finding class CROSS_GAME_ENTITY.
+3. lib/gsc/storeLoader.js -- loadCrossGameVocab reads the three shared roster tables (all games,
+   swallow-to-partial) and loadGateStore attaches store.crossGameEntities for EVERY game,
+   registry hit or not (that is exactly where wardogs was leaking).
+4. lib/gsc/runGate.js -- new cross-game stage inside the try (absent vocab -> no-op, byte-
+   identical); its findings concat into decideGate; returns crossGame.
+5. lib/gsc/prePublishGate.js -- CROSS_GAME_ENTITY added to HOLD_CLASSES. Fail-closed games
+   (wardogs/dmz/pubg-dednet) hold on it; Marathon (log-only) observes only -- observe-then-arm.
+
+GOLDEN CORPUS (scratchpad harness against the live DB, read-only):
+- MUST HOLD: all 7 rejected wardogs drafts (fqju/g3d1/p6bw/pckk/j6mn/fjkn/vpfs) HOLD -- caught on
+  Marathon shells (Destroyer/Triage/Thief/Assassin/Vandal/Sentinel) and multi-word Marathon
+  weapons (BR33 Volley Rifle, BRRT SMG, Bully SMG, V66 Lookout, Twin Tap HBR, WSTR Combat Shotgun,
+  Misriah 2442).
+- MUST PASS: 14/14 published wardogs (excl zoxz), 8/8 dmz, 6/6 pubg-dednet -- all PASS. Wardogs
+  role "Recon" and ordnance "shell" do NOT trigger.
+- MARATHON: last 30 published, 0 cross-game log findings, none hold -- outcomes unchanged.
+- Vocab sizes: wardogs 61, dmz 70, marathon 14.
+
+CONTENT FINDING (separate from the gate): the PUBLISHED, operator-mapped article
+wardogs-smg-tier-breakdown-which-one-should-you-run-zoxz names two Marathon weapons (BRRT SMG,
+Bully SMG) -- it is genuinely contaminated and the detector correctly HOLDS it (true positive).
+Operator decision this session: treat zoxz as contamination (dropped from MUST-PASS, no detector
+loosening). FOLLOW-UP: de-Marathon or pull zoxz (replace BRRT/Bully SMG with real Wardogs SMGs).
+
+NEXT (separate brief): HEADLINE_RULES (lib/headlineRules.js) still renders hardcoded MARATHON
+headline BAD/GOOD examples ("Assassin Shadow Strike Engine", "New Runners", "Marathon Assassin
+Build") into every editor prompt for every game -- root cause #2 of the bleed (primes the model
+toward Marathon vocab). De-Marathoning it is its own change.
+
+eslint clean; byte-clean (ASCII hyphens, straight quotes). No DB writes.
+
 ## 2026-09-22 - FAQPage sweep + parked post-freeze cleanup (docs/handoff-post-freeze-faqpage)
 FAQPAGE SWEEP (2026-09-22, read-only, app/ + components/): exactly 1 active FAQPage emitter
 sitewide - app/marathon/pve/page.js (faqSchema :138, rendered at script :153). Non-Marathon:
