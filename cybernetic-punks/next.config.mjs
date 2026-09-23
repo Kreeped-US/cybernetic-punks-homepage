@@ -168,39 +168,64 @@ const nextConfig = {
       // Root-route migration STAGE 2 (2026-08-20): the remaining single-page Marathon
       // routes + /modes/vault-breaker, game-scoped under /marathon/* (Ruling 2). Same
       // atomic-commit pattern as Stage 1 (move + redirect + links + sitemap + canonicals).
-      // Stage 1 proved /<route>/:path* catches the bare path too, so ONE wildcard rule
-      // per route (not exact + wildcard).
+      // ONE-HOP FIX (2026-09-23): each wildcard-only route below gets an EXACT bare-path rule
+      // placed BEFORE its wildcard. On Vercel (prod), a bare hit like /ranked matched only the
+      // wildcard, whose empty :path* expanded to /marathon/ranked/ (trailing slash) -> a second
+      // 308 -> /marathon/ranked. The exact rule emits /marathon/ranked directly = one hop. The
+      // wildcard is unchanged and still catches every deeper path. (Local dev never showed the
+      // extra hop; it is a production-routing artifact.)
+      { source: '/ranked', destination: '/marathon/ranked', statusCode: 301 },
       { source: '/ranked/:path*', destination: '/marathon/ranked/:path*', statusCode: 301 },
+      { source: '/status', destination: '/marathon/status', statusCode: 301 },
       { source: '/status/:path*', destination: '/marathon/status/:path*', statusCode: 301 },
+      { source: '/builds', destination: '/marathon/builds', statusCode: 301 },
       { source: '/builds/:path*', destination: '/marathon/builds/:path*', statusCode: 301 },
+      { source: '/player-count', destination: '/marathon/player-count', statusCode: 301 },
       { source: '/player-count/:path*', destination: '/marathon/player-count/:path*', statusCode: 301 },
+      { source: '/factions', destination: '/marathon/factions', statusCode: 301 },
       { source: '/factions/:path*', destination: '/marathon/factions/:path*', statusCode: 301 },
+      { source: '/meta', destination: '/marathon/meta', statusCode: 301 },
       { source: '/meta/:path*', destination: '/marathon/meta/:path*', statusCode: 301 },
+      { source: '/stats', destination: '/marathon/stats', statusCode: 301 },
       { source: '/stats/:path*', destination: '/marathon/stats/:path*', statusCode: 301 },
+      { source: '/rising', destination: '/marathon/rising', statusCode: 301 },
       { source: '/rising/:path*', destination: '/marathon/rising/:path*', statusCode: 301 },
+      { source: '/advisor', destination: '/marathon/advisor', statusCode: 301 },
       { source: '/advisor/:path*', destination: '/marathon/advisor/:path*', statusCode: 301 },
+      { source: '/modes/vault-breaker', destination: '/marathon/modes/vault-breaker', statusCode: 301 },
       { source: '/modes/vault-breaker/:path*', destination: '/marathon/modes/vault-breaker/:path*', statusCode: 301 },
       // Root-route migration STAGE 3 (2026-08-20): the five mid-tier Marathon TREES,
       // game-scoped under /marathon/* (Ruling 2). One wildcard rule per tree covers
       // the hub AND every depth of dynamic child; for /guides the single rule also
       // covers /guides/[category] and the nested /guides/shells/[name]. (/uniques,
       // /leaderboard, /tools/build, /intel stay at root - Stage 4 / deferred.)
+      // exact bare-path rule before each wildcard (one-hop fix, see STAGE 2 note above)
+      { source: '/shells', destination: '/marathon/shells', statusCode: 301 },
       { source: '/shells/:path*', destination: '/marathon/shells/:path*', statusCode: 301 },
+      { source: '/maps', destination: '/marathon/maps', statusCode: 301 },
       { source: '/maps/:path*', destination: '/marathon/maps/:path*', statusCode: 301 },
+      { source: '/mods', destination: '/marathon/mods', statusCode: 301 },
       { source: '/mods/:path*', destination: '/marathon/mods/:path*', statusCode: 301 },
+      { source: '/weapons', destination: '/marathon/weapons', statusCode: 301 },
       { source: '/weapons/:path*', destination: '/marathon/weapons/:path*', statusCode: 301 },
+      { source: '/guides', destination: '/marathon/guides', statusCode: 301 },
       { source: '/guides/:path*', destination: '/marathon/guides/:path*', statusCode: 301 },
       // Root-route migration STAGE 4 (2026-08-20): the final in-scope routes, held for
       // last (highest authority) - /uniques (top in-scope tree) + /leaderboard (single
       // page, 2nd-highest click earner). One wildcard rule each. Root now holds only
       // network identity + /tools/build (deferred) + /intel (separate project).
+      // exact bare-path rule before each wildcard (one-hop fix, see STAGE 2 note above)
+      { source: '/uniques', destination: '/marathon/uniques', statusCode: 301 },
       { source: '/uniques/:path*', destination: '/marathon/uniques/:path*', statusCode: 301 },
+      { source: '/leaderboard', destination: '/marathon/leaderboard', statusCode: 301 },
       { source: '/leaderboard/:path*', destination: '/marathon/leaderboard/:path*', statusCode: 301 },
       // /intel migration (2026-08-20): the last Marathon namespace -> /marathon/intel
       // (Ruling 2). Flat namespace, so ONE wildcard covers the hub + every /intel/[slug]
       // article + the 5 editor lanes (cipher/nexus/dexter/ghost/miranda). Placed LAST so the
       // specific /intel/<old-slug> consolidation rules above (faction/BR33/Rook/V85) still
       // match first; their destinations were repointed to /marathon/* to stay one-hop.
+      // exact bare-path rule before the wildcard (one-hop fix, see STAGE 2 note above)
+      { source: '/intel', destination: '/marathon/intel', statusCode: 301 },
       { source: '/intel/:path*', destination: '/marathon/intel/:path*', statusCode: 301 },
       // /tools/build migration (2026-08-20): the LAST deferred Marathon root route (the
       // shell build tool) -> /marathon/tools/build, completing Ruling 2 (no game squats on

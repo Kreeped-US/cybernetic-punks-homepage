@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-09-23 -- One-hop redirects for bare migration hubs (fix/one-hop-migration-hubs)
+FINDING (production-only): every wildcard-only Marathon migration source, hit at its BARE path on
+Vercel, took TWO hops: e.g. /advisor -> 301 /marathon/advisor/ (trailing slash) -> 308
+/marathon/advisor -> 200. The trailing slash comes from the wildcard's EMPTY :path* expanding to
+".../" ; the query string is irrelevant (bare /advisor with no query also 2-hopped; /advisor/build
+with a non-empty :path* was always 1 hop). Exact-source rules (/creators, /cradle, /matchups) were
+already 1 hop. Affected the 18 wildcard-only sources: /advisor /ranked /builds /status /factions
+/meta /stats /rising /player-count /modes/vault-breaker /shells /maps /mods /weapons /guides /uniques
+/leaderboard /intel. (/tools/build not fixed here -- not on the operator's list; its bare hub also
+404s, a separate issue.)
+
+FIX: next.config.mjs -- added an EXACT bare-path rule immediately BEFORE each of those 18 wildcard
+rules, same destination stem and same statusCode:301 (e.g. { source:'/leaderboard',
+destination:'/marathon/leaderboard', statusCode:301 } before /leaderboard/:path*). First-match-wins
+means a bare hit takes the exact rule -> /marathon/<x> directly (no trailing slash, one hop); the
+wildcard is UNCHANGED and still catches every deeper path. No destination, status code, or wildcard
+rule was modified. Total redirect rules 54 -> 72 (+18 exact).
+
+DESTINATIONS UNCHANGED (freeze-compatible): every final URL + status is identical to before -- the
+fix only removes the redundant intermediate 308 hop. No URL, destination, title, or structural change.
+
+VERIFICATION (production-like, per the task) -- INCONCLUSIVE LOCALLY, needs a Vercel preview:
+- Built UNFIXED (git stash the config) with `next build && next start` and traced all 18 bare paths
+  (with and without a query) + deep paths. The local production build did NOT reproduce the 2-hop:
+  every bare source was already 1 hop with NO trailing slash (e.g. /advisor -> /marathon/advisor ->
+  200), identical to `next dev`. So the trailing-slash extra hop is a VERCEL-ONLY routing artifact
+  that a local `next start` does not exhibit -- meaning a local build can neither reproduce the bug
+  nor prove the fix. Per the task's stop-clause (2b), local verification stops here.
+- Restored the fixed config and ran `next build` -> exit 0, no redirect-validation errors (Next
+  validates redirect rules at build time), so the 18 added exact rules are structurally valid and do
+  not conflict. eslint clean; config parses (redirects() returns 72 well-formed rules).
+- DECISION FOR OPERATOR: push this branch for a Vercel PREVIEW and trace the 18 bare paths there
+  (expect 2 hops on current prod/main, 1 hop on the preview). That is the only environment that
+  reproduces the behavior, so it is the only place the fix can be confirmed.
+
+2026-09-23 -- Operator DB write: slug_redirects repointed. Two retired content-drought articles
+(from_slug ...-7rv9 and ...-6j3h) pointed at survivor ...-l3a1, now unpublished (410), so they 301'd
+to a Gone page. Both to_path set to /marathon/intel. If ...-l3a1 is republished later, these can be
+pointed back at it.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-23 -- Small cleanups batch (chore/small-cleanups-batch)
 Five unrelated janitorial fixes; no behavior change beyond the /editors retirement. No Marathon page,
 nav, footer, or layout changes. No DB writes.
