@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-09-23 -- Marathon advisor: anonymous path (feat/advisor-anon-path)
+Turns the advisor's dead-end 401 ("ERROR - Not authenticated") into a real anonymous experience.
+Freeze honored: /marathon/advisor title/meta/H1/canonical/route unchanged; all new UI is client-side
+(gated on a post-mount session check), so the page's SERVER HTML is byte-identical. No change to
+/api/advisor auth/cost/model. lib/auth/oauth.js NOT touched (operator decision -- return via
+sessionStorage, not an OAuth next=).
+
+WHAT SHIPPED:
+- app/marathon/advisor/AdvisorClient.js:
+  * Client session check (fetch /api/account/me on mount) -> signedIn state. SSR unaffected
+    (signedIn starts null -> nothing new renders server-side).
+  * Anon PRE-INPUT NOTICE (signedIn===false, above the inputs): "Personalized builds need a free
+    account (Discord or Bungie). Sign in" + ", or see the standard <shell> build" once a shell is
+    chosen (-> /marathon/tools/build/<shell>). Signed-in users see nothing new.
+  * 401 FALLBACK (replaces the error box on a 401 generate): "Sign in free to tailor this to your
+    playstyle, rank and team size" + "Sign in free" (-> /join?intent=marathon) + "See the standard
+    <shell> build" (-> the public canonical page for the attempted shell). Non-401 errors keep the
+    readable error message.
+  * sessionStorage DRAFT (key cnp_advisor_draft, every access try/catch): saved on a sign-in click
+    (notice or fallback) so the chosen inputs survive the OAuth round-trip; restored on the next
+    advisor visit (all 7 inputs), then cleared (also cleared on a successful generate). No OAuth
+    next= / return URL.
+- components/AdvisorResumeLink.js (NEW, client island): renders null on the server (SSR unchanged)
+  and, only if a draft is pending, shows one "Finish your Marathon build ->" link to the advisor.
+  Dropped on the OAuth landing pages: app/page.js (/) and app/join/welcome/page.js. No auto-redirect
+  (onboarding is never hijacked).
+- app/api/track/route.js: allowlisted advisor_anon_notice_shown, advisor_anon_fallback_shown {shell},
+  advisor_signin_click {from: notice|fallback}, advisor_draft_resumed {shell}. (env tag applies.)
+
+VERIFY (dev):
+- Advisor SSR markup byte-identical before/after (scriptless diff of /marathon/advisor, branch vs main).
+- Anon flow end-to-end: notice shows -> pick Destroyer -> notice gains "see the standard Destroyer
+  build" -> generate -> 401 fallback (Sign in free + See the standard Destroyer build ->
+  /marathon/tools/build/destroyer) -> click Sign in free saves the draft to sessionStorage ->
+  /join?intent=marathon -> "/" shows "Finish your Marathon build ->" -> advisor restores the inputs
+  (button reads ENGINEER DESTROYER BUILD) and CLEARS the draft.
+- Events landed with env=development: advisor_anon_notice_shown, advisor_anon_fallback_shown
+  {shell:Destroyer}, advisor_signin_click {from:fallback}, advisor_draft_resumed {shell:Destroyer}.
+- Signed-in flow: unchanged by construction (notice/fallback gated on signedIn===false / 401; the
+  generate path adds only setFallbackShell(null) at start + clearDraft() on success, both no-ops for
+  a signed-in generate). Not exercised live -- the dev preview is anonymous.
+- eslint: my additions add no new problems (AdvisorClient still has the 3 PRE-EXISTING result-phase
+  react/no-unescaped-entities errors, present on main, untouched); byte-clean.
+
+FOLLOW-UP (parked): a true OAuth return URL (next= with an open-redirect guard, across the shared
+Discord flow lib/auth/oauth.js AND the separate Bungie flow) is a later, separate change; today the
+sessionStorage draft + resume link cover the return without touching auth.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-22 -- Operator DB write: removed stray Marathon tag "shells" from wardogs-patch-011
 - Removed the stray Marathon tag "shells" from
   wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw (array_remove; the body

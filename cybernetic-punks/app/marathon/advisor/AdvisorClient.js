@@ -175,6 +175,10 @@ function SectionHeader({ num, label, sub }) {
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
+// sessionStorage key for the anonymous sign-in draft (mirrored in components/AdvisorResumeLink.js).
+// Saved when an anon visitor clicks sign-in; restored on the next /marathon/advisor visit, then cleared.
+var ADVISOR_DRAFT_KEY = 'cnp_advisor_draft';
+
 export default function AdvisorClient({ urlShell, profilePrefill, shells, initialBuild }) {
   // Shells are DB-driven via prop; fall back to the static list if empty.
   var SHELLS = (shells && shells.length) ? shells : FALLBACK_SHELLS;
@@ -210,6 +214,13 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   var [scanStep, setScanStep] = useState(0);
   var [scanProgress, setScanProgress] = useState(0);
   var [stickyVisible, setStickyVisible] = useState(false);
+  // Anonymous path (client-side only; SSR renders neither, so the page's server HTML is unchanged):
+  //   signedIn: null = unknown/SSR, true, false (from /api/account/me on mount) -> gates the anon notice.
+  //   fallbackShell: set on a 401 generate -> shows the canonical-build + sign-in fallback for that shell.
+  var [signedIn, setSignedIn] = useState(null);
+  var [fallbackShell, setFallbackShell] = useState(null);
+  var noticeShownRef = useRef(false);
+  var draftRestoredRef = useRef(false);
 
   var scanRef = useRef(null);
 
@@ -223,6 +234,20 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
     engagedRef.current = true;
     track('advisor_engaged', { shell: selectedShell || null });
   }
+
+  // Anon sign-in DRAFT (sessionStorage; every access try/catch-guarded so a blocked store just
+  // skips restore). Saved before a sign-in click so the chosen inputs survive the OAuth round-trip;
+  // restored on the next visit; cleared once restored or once a build generates.
+  function saveDraft() {
+    try {
+      window.sessionStorage.setItem(ADVISOR_DRAFT_KEY, JSON.stringify({
+        shell: selectedShell, playstyle: playstyle, rankTarget: rankTarget, weaponPref: weaponPref,
+        teamSize: teamSize, priority: priority, experienceLevel: experienceLevel,
+      }));
+    } catch (e) { /* storage unavailable -> flow still works, just no restore */ }
+  }
+  function clearDraft() { try { window.sessionStorage.removeItem(ADVISOR_DRAFT_KEY); } catch (e) {} }
+  function onSignIn(from) { saveDraft(); track('advisor_signin_click', { from: from }); }
 
   var isMobile = useIsMobile(640);
   var monetizationOn = isMonetizationEnabled();
@@ -272,6 +297,44 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
     return function() { window.removeEventListener('scroll', onScroll); };
   }, [phase, selectedShell]);
 
+  // Client-side session check (drives the anon-only UI). Runs after mount, so the SSR HTML is
+  // unchanged; signedIn stays null until it resolves, so nothing new renders server-side.
+  useEffect(function() {
+    var alive = true;
+    fetch('/api/account/me')
+      .then(function(r) { return r.json(); })
+      .then(function(j) { if (alive) setSignedIn(!!(j && j.authenticated)); })
+      .catch(function() { if (alive) setSignedIn(false); });
+    return function() { alive = false; };
+  }, []);
+
+  // Restore an anon sign-in draft (post-OAuth return), then clear it. Once per mount.
+  useEffect(function() {
+    if (draftRestoredRef.current) return;
+    var d = null;
+    try { var raw = window.sessionStorage.getItem(ADVISOR_DRAFT_KEY); d = raw ? JSON.parse(raw) : null; } catch (e) { d = null; }
+    if (!d) return;
+    draftRestoredRef.current = true;
+    if (d.shell) { var m = SHELLS.find(function(s) { return s.name === d.shell; }); if (m) setSelectedShell(m.name); }
+    if (d.playstyle) setPlaystyle(d.playstyle);
+    if (d.rankTarget) setRankTarget(d.rankTarget);
+    if (typeof d.weaponPref === 'string') setWeaponPref(d.weaponPref);
+    if (d.teamSize) setTeamSize(d.teamSize);
+    if (d.priority) setPriority(d.priority);
+    if (d.experienceLevel) setExperienceLevel(d.experienceLevel);
+    track('advisor_draft_resumed', { shell: d.shell || null });
+    clearDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only restore, ref-guarded
+  }, []);
+
+  // Fire advisor_anon_notice_shown once, when the anon notice first becomes visible.
+  useEffect(function() {
+    if (signedIn === false && !noticeShownRef.current) {
+      noticeShownRef.current = true;
+      track('advisor_anon_notice_shown', {});
+    }
+  }, [signedIn]);
+
   async function generateBuild(overrides) {
     var cfg = overrides || {};
     var shellToUse = cfg.shell || selectedShell;
@@ -286,7 +349,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
       priority:         cfg.priority || priority,
       experienceLevel:  cfg.experienceLevel || experienceLevel,
     };
-    setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null);
+    setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null); setFallbackShell(null);
     // httpStatus captures the outcome for the failure event: the HTTP code once the response
     // returns, or 'network' if fetch itself rejects (offline / DNS / CORS) before a response.
     var httpStatus = 'network';
@@ -304,13 +367,21 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
       await new Promise(function(r) { setTimeout(r, 400); });
       setBuild(json.build);
       setPhase('result');
+      clearDraft(); // a successful build supersedes any saved anon draft
       track('advisor_generate', { shell: body.shell, playstyle: body.playstyle, rankTarget: body.rankTarget, teamSize: body.teamSize, surprise: !!cfg._surprise });
     } catch (err) {
       clearInterval(scanRef.current);
       // Failure event: HTTP status (or 'network') + shell ONLY -- no prompt text, no user data.
       // Splits the engaged->generate gap into abandon vs error (advisor_generate is success-only).
       track('advisor_generate_failed', { status: httpStatus, shell: shellToUse });
-      setError(err.message);
+      if (httpStatus === 401) {
+        // Anonymous: no error box -- show the canonical-build + sign-in fallback for this shell.
+        setFallbackShell(shellToUse);
+        setError(null);
+        track('advisor_anon_fallback_shown', { shell: shellToUse });
+      } else {
+        setError(err.message);
+      }
       setPhase('input');
     }
   }
@@ -432,6 +503,32 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
               Not sure where to start? Let the build engine pick a shell and engineer a build instantly.
             </span>
           </div>
+
+          {/* Anon pre-input notice (client-side only; renders after the session check, so SSR is
+              unchanged). Signed-in users (signedIn === true) and the unknown/SSR state see nothing. */}
+          {signedIn === false && !fallbackShell && (
+            <div style={{ marginTop: 16, padding: '11px 15px', background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.25)', borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0', fontSize: 12.5, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
+              Personalized builds need a free account (Discord or Bungie).{' '}
+              <Link href="/join?intent=marathon" onClick={function() { onSignIn('notice'); }} style={{ color: '#ff8800', fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
+              {selectedShell ? (
+                <>{', or '}<Link href={'/marathon/tools/build/' + selectedShell.toLowerCase()} style={{ color: '#ff8800', fontWeight: 700, textDecoration: 'none' }}>see the standard {selectedShell} build</Link>{'.'}</>
+              ) : '.'}
+            </div>
+          )}
+
+          {/* 401 fallback: an anonymous generate attempt -> the verified canonical build for the
+              chosen shell + a sign-in CTA (inputs are saved to sessionStorage on the click). */}
+          {fallbackShell && (
+            <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(255,136,0,0.07)', border: '1px solid rgba(255,136,0,0.3)', borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0' }}>
+              <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, marginBottom: 12 }}>
+                Sign in free to tailor this to your playstyle, rank and team size. Meanwhile, view the standard {fallbackShell} build.
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link href="/join?intent=marathon" onClick={function() { onSignIn('fallback'); }} style={{ padding: '10px 18px', background: '#ff8800', color: '#121418', borderRadius: 2, fontSize: 11, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' }}>Sign in free &rarr;</Link>
+                <Link href={'/marathon/tools/build/' + fallbackShell.toLowerCase()} style={{ padding: '10px 18px', background: 'transparent', color: '#ff8800', border: '1px solid rgba(255,136,0,0.4)', borderRadius: 2, fontSize: 11, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' }}>See the standard {fallbackShell} build &rarr;</Link>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div style={{ padding: '12px 16px', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.3)', borderLeft: '3px solid #ff2222', borderRadius: '0 3px 3px 0', fontSize: 11, color: '#ff4444', letterSpacing: 1, fontWeight: 700, marginTop: 16 }}>

@@ -26,6 +26,7 @@ import ReceiptPanel from '@/components/network/ReceiptPanel';
 import NetworkSubscribeForm from '@/components/network/NetworkSubscribeForm';
 import NetworkFooter from '@/components/network/NetworkFooter';
 import ViewTracker from '@/components/ViewTracker';
+import AdvisorResumeLink from '@/components/AdvisorResumeLink';
 import { getEditorDisplay } from '@/lib/editors/roster';
 import { dmz } from '@/lib/games/dmz';
 import { wardogs } from '@/lib/games/wardogs';
@@ -243,6 +244,9 @@ export default async function NetworkRoot() {
           page_view (with referrer host) so root traffic + its distribution source is measurable,
           matching every other page. Renders nothing. */}
       <ViewTracker slug="home" type="home" gameSlug="network" />
+      {/* Client-only: shows a "Finish your Marathon build" link if an anon advisor draft is pending
+          (renders null on the server, so this page's SSR HTML is unchanged). */}
+      <AdvisorResumeLink />
       {JSONLD.map(function(node, i) {
         return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }} />;
       })}

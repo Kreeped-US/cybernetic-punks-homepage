@@ -31,6 +31,13 @@ const ALLOWED_EVENTS = [
   // { status: <HTTP code>|'network', shell } ONLY -- no prompt text, no user data. Splits the
   // "engaged -> generate" gap into abandon vs error (advisor_generate is success-only).
   'advisor_generate_failed',
+  // Advisor ANONYMOUS-PATH funnel (2026-09-23): the anon pre-input notice shown, the 401->canonical
+  // fallback shown, a sign-in CTA click (from: notice|fallback), and a post-OAuth draft restore.
+  // event_data carries { shell } / { from } only -- no user data.
+  'advisor_anon_notice_shown',
+  'advisor_anon_fallback_shown',
+  'advisor_signin_click',
+  'advisor_draft_resumed',
   // advisor_surprise: the "SURPRISE ME" one-tap build. Was already FIRED client-side
   // (AdvisorClient.surpriseMe) but never allowlisted -> dropped 400. Allowlisted so the
   // surprise path is recorded (it also calls generateBuild -> advisor_generate on success).

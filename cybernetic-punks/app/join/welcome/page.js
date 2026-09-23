@@ -12,6 +12,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import OnboardingClient from './OnboardingClient';
+import AdvisorResumeLink from '@/components/AdvisorResumeLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,5 +65,13 @@ export default async function JoinWelcomePage() {
 
   var preselected = Array.isArray(account.games_interested) ? account.games_interested : [];
 
-  return <OnboardingClient options={options} preselected={preselected} />;
+  // AdvisorResumeLink is client-only + renders null on the server, so this page's SSR HTML is
+  // unchanged; it surfaces a "Finish your Marathon build" link only if an anon advisor draft is
+  // pending (no auto-redirect -- onboarding is never hijacked).
+  return (
+    <>
+      <AdvisorResumeLink />
+      <OnboardingClient options={options} preselected={preselected} />
+    </>
+  );
 }
