@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-09-23 -- Wardogs loadout finder: make the anon sign-in prompt noticeable (feat/loadouts-anon-prompt)
+Follow-up to feat/loadouts-anon-path. The anon deterministic result had ONE sign-in CTA at the very
+bottom -- easy to miss. This surfaces the prompt at three points on the anon result and adds anon
+Save/Share affordances, all ANON-ONLY. Signed-in path and the stored SSR build page are unchanged by
+construction (every new block gates on `anon`; `onSignIn` is referenced only inside anon blocks, and
+neither prop is passed by the stored /build/[slug] page). No new events, no DB writes.
+
+WHAT SHIPPED:
+- components/wardogs/LoadoutResult.js:
+  - New prop `onSignIn(from)` (default null) + local `anonPrompt` state ('save'|'share'|null).
+  - TOP line directly UNDER the headline pick block: "Quick read shown. Sign in free -> for the full
+    breakdown and a shareable link." Placed after the pick in DOM order, so it can never push the pick
+    below the fold.
+  - Save + Share buttons in that same top block. Click toggles an INLINE, dismissible prompt next to
+    the button ("Sign in free to save/share this build. Sign in ->  x") -- no modal, no overlay,
+    nothing blocks the results. A second click on the same button (or the x) dismisses it.
+  - READ slot: under the calculated quick read, a teaser "The full written analysis adds why this
+    beats the runner-up, where it loses, and what to watch for. Sign in free ->". The old duplicate
+    "Sign in for the full written analysis" subnote above the read was trimmed to just "A deterministic
+    read from the numbers." (anon-only line).
+  - Shared helpers SignInInline / AnonInlinePrompt; all links -> /join?intent=wardogs and fire onSignIn.
+- app/wardogs/loadouts/LoadoutsClient.js: passes onSignIn to LoadoutResult; the existing BOTTOM CTA's
+  click now reports from:'bottom' (was 'result') to fit the top|read|save|share|bottom set.
+
+EVENTS: loadouts_signin_click now carries { from: 'top' | 'read' | 'save' | 'share' | 'bottom' } so we
+can attribute which prompt drove the click. No allowlist change (the event already exists).
+
+VERIFY (dev, anonymous preview):
+- Full anon result (MP43 pick, Balanced/FMJ): the top line + SAVE/SHARE render directly under the pick;
+  the read teaser renders under the CALCULATED QUICK READ; the bottom CTA is still present. NO model
+  call (the read is the deterministicSummary verbatim + THE CATCH caveat).
+- SAVE click -> inline prompt "Sign in free to save this build. Sign in -> x" appears next to the
+  button; Dismiss removes it. (Share is the same pattern.)
+- Top "Sign in free" click saved cnp_wardogs_loadout_draft and navigated to /join?intent=wardogs;
+  site_events recorded loadouts_signin_click { env:'development', from:'top' } on game_slug wardogs.
+- Mobile 375px: the pick stays above its prompt (line is after the pick); top line, SAVE/SHARE, and the
+  inline prompt all wrap cleanly with no overflow.
+- Signed-in unchanged: not re-tested by design -- all new markup is gated on anon and onSignIn is only
+  used in anon blocks; the stored /build/[slug] page passes neither prop (defaults false/null).
+- eslint clean; byte-clean (added lines ASCII-only).
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-23 -- Wardogs loadout finder: anonymous deterministic path (feat/loadouts-anon-path)
 Turns the loadout finder's anonymous dead-end (401 -> "Not authenticated" error box) into a full
 DETERMINISTIC result with NO model call and NO entitlement consumption. Signed-in path unchanged

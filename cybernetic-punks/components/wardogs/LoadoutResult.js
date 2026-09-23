@@ -12,6 +12,7 @@
 //   queried = { careerLevel, budget, playstyle } ; footer = a trailing action node (New loadout / CTA)
 
 import { useState, Fragment } from 'react';
+import Link from 'next/link';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import BodyPartViz from '@/components/wardogs/BodyPartViz';
@@ -43,6 +44,31 @@ const PLAYSTYLES = [
 ];
 function tierMeta(key) { return CONFIDENCE_TIERS.find((t) => t.key === key) || CONFIDENCE_TIERS[2]; }
 function playstyleLabel(id) { const p = PLAYSTYLES.find((x) => x.id === id); return p ? p.label : (id || 'BALANCED').toUpperCase(); }
+
+// Anon sign-in link -- all anon prompts route to /join?intent=wardogs and fire onSignIn(from) so the
+// draft is saved before the OAuth round-trip and we can attribute which prompt drove the click.
+// Anon-only: rendered nowhere when signed in or on the stored SSR page (onSignIn is not passed there).
+function SignInInline({ from, onSignIn, children }) {
+  return (
+    <Link href="/join?intent=wardogs" onClick={() => { if (onSignIn) onSignIn(from); }}
+      style={{ color: A, fontWeight: 800, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+      {children} &rarr;
+    </Link>
+  );
+}
+
+// Inline, dismissible prompt shown next to an anon Save/Share button (no modal, no overlay -- never
+// blocks the results). `action` is 'save' | 'share'.
+function AnonInlinePrompt({ action, onSignIn, onDismiss }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: T2,
+      background: CARD, border: '1px solid ' + LINE, borderRadius: 3, padding: '6px 10px' }}>
+      Sign in free to {action} this build. <SignInInline from={action} onSignIn={onSignIn}>Sign in</SignInInline>
+      <button type="button" onClick={onDismiss} aria-label="Dismiss"
+        style={{ background: 'transparent', border: 'none', color: T3, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 0 }}>&times;</button>
+    </span>
+  );
+}
 
 export const LOADOUT_KEYFRAMES = `
   @keyframes lsPulse{0%,100%{opacity:.35}50%{opacity:1}}
@@ -288,7 +314,10 @@ function ComparisonTable({ comparison }) {
   );
 }
 
-export default function LoadoutResult({ steps = [], meta = null, analysis = '', queried = null, streaming = false, footer = null, comparison = null, anon = false }) {
+export default function LoadoutResult({ steps = [], meta = null, analysis = '', queried = null, streaming = false, footer = null, comparison = null, anon = false, onSignIn = null }) {
+  // Which anon Save/Share inline prompt is open ('save' | 'share' | null). Anon-only; a toggle, so a
+  // second click on the same button dismisses it. Never affects the signed-in render.
+  const [anonPrompt, setAnonPrompt] = useState(null);
   const rec = (meta && meta.recommendation) || {};
   const cand = (meta && meta.candidates) || {};
   const det = (meta && meta.detail) || {};
@@ -388,6 +417,24 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
         </div>
       )}
 
+      {/* ANON: prominent sign-in prompt directly UNDER the headline pick (never pushes the pick down),
+          plus Save/Share buttons that reveal an inline, dismissible prompt (no modal). Anon-only. */}
+      {anon && meta && (
+        <div className="ls-up" style={{ background: AG, border: '1px solid ' + A, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '12px 16px', marginBottom: 14 }}>
+          <div style={{ fontSize: 13, color: T1, lineHeight: 1.6, marginBottom: 10 }}>
+            <b style={{ color: '#fff' }}>Quick read shown.</b> <SignInInline from="top" onSignIn={onSignIn}>Sign in free</SignInInline> for the full breakdown and a shareable link.
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button type="button" onClick={() => setAnonPrompt((p) => (p === 'save' ? null : 'save'))}
+              style={{ padding: '8px 16px', background: 'transparent', border: '1px solid ' + A, color: A, borderRadius: 2, fontSize: 11, fontWeight: 900, letterSpacing: 1, cursor: 'pointer' }}>&#9698; SAVE</button>
+            {anonPrompt === 'save' && <AnonInlinePrompt action="save" onSignIn={onSignIn} onDismiss={() => setAnonPrompt(null)} />}
+            <button type="button" onClick={() => setAnonPrompt((p) => (p === 'share' ? null : 'share'))}
+              style={{ padding: '8px 16px', background: 'transparent', border: '1px solid ' + A, color: A, borderRadius: 2, fontSize: 11, fontWeight: 900, letterSpacing: 1, cursor: 'pointer' }}>SHARE</button>
+            {anonPrompt === 'share' && <AnonInlinePrompt action="share" onSignIn={onSignIn} onDismiss={() => setAnonPrompt(null)} />}
+          </div>
+        </div>
+      )}
+
       {/* PER-TIER HONEST BREAKDOWN -- deterministic, renders with the meta (never waits on the model). */}
       <ComparisonTable comparison={comparison} />
 
@@ -414,8 +461,13 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
       {(analysis || streaming) && (
         <div style={{ background: CARD, border: '1px solid ' + LINE, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '20px 22px', marginBottom: 14 }}>
           <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: anon ? 4 : 12 }}>&#9698; {anon ? 'CALCULATED QUICK READ' : 'THE READ'}</div>
-          {anon && <div style={{ fontSize: 11, color: T3, marginBottom: 12, lineHeight: 1.5 }}>A deterministic read from the numbers. Sign in for the full written analysis.</div>}
+          {anon && <div style={{ fontSize: 11, color: T3, marginBottom: 12, lineHeight: 1.5 }}>A deterministic read from the numbers.</div>}
           <TheRead text={analysis} streaming={streaming} />
+          {anon && (
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid ' + LSUB, fontSize: 13, color: T2, lineHeight: 1.6 }}>
+              The full written analysis adds why this beats the runner-up, where it loses, and what to watch for. <SignInInline from="read" onSignIn={onSignIn}>Sign in free</SignInInline>
+            </div>
+          )}
         </div>
       )}
 

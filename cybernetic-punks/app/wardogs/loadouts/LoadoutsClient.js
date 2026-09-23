@@ -215,6 +215,7 @@ export default function LoadoutsClient() {
       queried={queried}
       streaming={phase === 'loading'}
       anon={anon}
+      onSignIn={onSignIn}
       footer={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {anon && phase === 'result' && (
@@ -222,7 +223,7 @@ export default function LoadoutsClient() {
               <div style={{ fontSize: 13, color: T1, lineHeight: 1.6, marginBottom: 12 }}>
                 This is the calculated quick read. Sign in free for the full written analysis and to save or share this build.
               </div>
-              <Link href="/join?intent=wardogs" onClick={() => onSignIn('result')}
+              <Link href="/join?intent=wardogs" onClick={() => onSignIn('bottom')}
                 style={{ display: 'inline-block', padding: '12px 22px', background: A, color: PAGE, borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 1, textDecoration: 'none' }}>
                 Sign in free &rarr;
               </Link>
