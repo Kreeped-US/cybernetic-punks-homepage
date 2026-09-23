@@ -47,6 +47,9 @@ export default function LoadoutsClient() {
   // Anonymous result: the deterministic path (no model, no save). Drives the "calculated quick read"
   // label + the sign-in CTA in place of save/share. Set from the meta event's anon flag.
   const [anon, setAnon] = useState(false);
+  // Whether the error phase offers "Try again". True for transient failures (outage, stream error);
+  // false for a normal "no weapon fits your filters" notice, where retrying the same inputs is futile.
+  const [canRetry, setCanRetry] = useState(true);
   const draftRestoredRef = useRef(false);
 
   // Anon sign-in DRAFT (sessionStorage, try/catch): saved before a sign-in click so the inputs survive
@@ -82,7 +85,7 @@ export default function LoadoutsClient() {
 
   // ── ENGINE: unchanged SSE reader ──────────────────────────────
   async function run() {
-    setPhase('loading'); setSteps([]); setMeta(null); setAnalysis(''); setError(null); setAnon(false);
+    setPhase('loading'); setSteps([]); setMeta(null); setAnalysis(''); setError(null); setAnon(false); setCanRetry(true);
     setSaveStatus('idle'); setShareUrl(''); setCopied(false); // a new generation invalidates the last save
     setQueried({ careerLevel: careerLevel === '' ? null : Number(careerLevel), budget: budget === '' ? null : Number(budget), playstyle });
     markEngaged(); // completion implies engagement (covers a generate with no manual input change)
@@ -109,6 +112,7 @@ export default function LoadoutsClient() {
           if (evt.type === 'steps') setSteps(evt.steps || []);
           else if (evt.type === 'meta') { setMeta(evt); if (evt.anon) { setAnon(true); track('loadouts_anon_result', { playstyle }, 'wardogs'); } if (!gotMeta) { gotMeta = true; setPhase('result'); } }
           else if (evt.type === 'delta') setAnalysis((a) => a + evt.text);
+          else if (evt.type === 'notice') { setError(evt.message); setCanRetry(false); setPhase('error'); }
           else if (evt.type === 'error') throw new Error(evt.error || 'Stream error');
           else if (evt.type === 'done') setPhase('result');
         }
@@ -195,12 +199,19 @@ export default function LoadoutsClient() {
     );
   }
 
-  // ── ERROR ─────────────────────────────────────────────────────
+  // ── ERROR / NOTICE ────────────────────────────────────────────
+  // A transient failure (e.g. "Loadout data is temporarily unavailable...") renders here with a
+  // one-click Try again (re-runs the same inputs), NEVER a silent empty build. A "no weapon fits your
+  // filters" notice (canRetry=false) drops Try again -- retrying the same inputs is futile -- and
+  // shows only Change inputs. Either way, a clear message, never an empty result.
   if (phase === 'error') {
     return (
       <div style={wrap}><div style={inner}>
         <div style={{ padding: '14px 18px', background: 'rgba(224,86,58,0.1)', border: '1px solid var(--red)', borderLeft: '3px solid var(--red)', borderRadius: '0 3px 3px 0', color: '#ff9a86', fontSize: 13 }}>{error}</div>
-        <button onClick={() => setPhase('input')} style={{ marginTop: 16, padding: '10px 20px', background: 'transparent', border: '1px solid ' + LINE, borderRadius: 2, color: T2, cursor: 'pointer', fontSize: 12 }}>← Try again</button>
+        <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+          {canRetry && <button onClick={run} style={{ padding: '10px 22px', background: A, color: PAGE, border: 'none', borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 1, cursor: 'pointer' }}>Try again</button>}
+          <button onClick={() => setPhase('input')} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid ' + LINE, borderRadius: 2, color: T2, cursor: 'pointer', fontSize: 12 }}>&larr; Change inputs</button>
+        </div>
       </div></div>
     );
   }

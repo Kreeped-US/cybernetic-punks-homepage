@@ -7,6 +7,71 @@ Newest entries on top.
 
 ---
 
+## 2026-09-23 -- Loud failure instead of a silent empty loadout (feat/loadouts-loud-failure)
+The loadout finder's cold-start "0 weapons -> confident No pick build" was caused by the context
+loader swallowing Supabase query errors (`return res.data || []`): a transient DB blip (cold pooler
+connection, statement timeout) was indistinguishable from "no data" and rendered as a real-looking
+empty build with nothing logged. Now a query error is LOUD end to end.
+
+WHAT SHIPPED:
+- lib/wardogs/loadLoadoutContext.js: new unwrap(res, table) checks res.error on EVERY query and throws
+  (with the table name) instead of returning []. Applied to weapon_stats, wardogs_ttk, and each
+  wardogs_ballistics page. The ONE deliberate exception stays: wardogs_ammo still degrades to [] on
+  error (absent ammo data is not a failure -- the solver costs guns only, as before).
+- app/api/loadouts/route.js: loadContextWithRetry() retries the context load ONCE on error (transient
+  blips usually clear immediately). TWO distinct empty cases, split by cause:
+  * DATA FAILURE -- 0 weapons LOADED (store empty/degraded; loader threw + we retried) -> 503
+    { error: 'Loadout data is temporarily unavailable, try again in a moment.' }, both attempts logged.
+  * FILTERS LEAVE NOTHING USABLE -- weapons loaded but every one gated out by career level (0
+    candidates), OR a budget too low for any priced candidate (would otherwise degrade to over-budget
+    picks) -> a normal 200 SSE { type:'notice', message } using the real inputs ("No weapon fits a
+    $<budget> budget at career level <level>. Try a higher budget or level."). NOT an outage, no retry.
+  Never streams a confident empty "No pick" build. Both checks are pre-stream; the signed-in stream
+  branch is untouched.
+- app/wardogs/loadouts/LoadoutsClient.js: the error phase handles a new canRetry flag. Transient
+  failures (503 / stream error) show a one-click "Try again" (re-runs the same inputs) + "Change
+  inputs". The 'notice' event (canRetry=false) shows the message + only "Change inputs" -- retrying the
+  same inputs is futile. Either way a clear message, never an empty build.
+
+FOLLOW-UP -- other loaders with the same data || [] swallow on user-facing reads (NOT fixed here),
+prioritized:
+(a) NEXT -- app/wardogs/tier-list/page.js:49 (weapons + ttk, the SAME tables as the loadout finder;
+    freeze-safe). Same class of silent-empty bug; do this one next.
+(b) BEFORE OCT 23 LAUNCH -- lib/dmz/entities.js:196 (feeds DMZ pages). Fix by routing through the
+    existing lib/dmz/dataOrThrow.js (already the intended pattern for that module).
+(c) WARDOGS ECONOMY pages -- app/wardogs/economy/page.js:88 ; economy/stat/[key]/page.js:32 ;
+    economy/mine/page.js:36 ; economy/mine/card/route.js:49 ; economy/stat/[key]/opengraph-image.js:29
+(d) POST-OCT-20 -- Marathon + homepage loaders: app/marathon/page.js:152-170 ;
+    marathon/weapons/page.js:53-55 ; marathon/weapons/[slug]/page.js:177-184 ; marathon/uniques/page.js:48 ;
+    marathon/uniques/[slug]/page.js:114 ; marathon/status/page.js:188-189 ; marathon/sitrep/page.js:185-193
+    (+ app/api/sitrep-data/route.js:65-100) ; marathon/factions/page.js:68-69 ; app/page.js:121
+    (+ app/api/homepage-data/route.js:101-134).
+(Admin/cron/agent/gather internals with the pattern are excluded -- not user-facing reader results.)
+
+VERIFY (dev):
+- DATA FAILURE: simulated a failed weapons query with a dev-only, UNCOMMITTED stub (weapon_stats ->
+  weapon_stats_STUBFAIL). Anon POST logged "context load failed (attempt 1)" then "failed after retry"
+  (both naming the table) and returned HTTP 503 with the outage message. The UI showed the red box +
+  "Try again" / "Change inputs" -- no empty build. Reverted; "Try again" recovered to a normal result
+  (30 weapons scored). Confirmed no STUBFAIL remains in source (only the gitignored .next cache).
+- FILTERS EMPTY: budget $1 + career 20 returned HTTP 200 with { type:'notice', message:'No weapon fits
+  a $1 budget at career level 20. Try a higher budget or level.' }; the UI showed that message with
+  ONLY "Change inputs" (no Try again) -- the outage copy was NOT shown. A normal budget ($5000) still
+  streams steps + meta + deltas + done.
+- Normal generation unchanged: anon verified live; the signed-in path is unchanged by construction
+  (retry + empty-split are pre-stream and shared; the signed-in stream branch is untouched).
+- eslint clean; byte-clean.
+
+2026-09-23 -- Operator DB write: wardogs_ttk fixes from the consistency audit (4 of 450 rows flagged):
+MP43 FMJ T3 3->180 and T4 4->270 (STK typed into ms column); PKM HP T0 100->0 (one-shot; corroborated
+by Derp Company sheet, 127 dmg); M1911 AP T4 511->638 (T3 copy-down; Derp Company sheet confirms 6
+chest hits vs T4). Values derived from Swoleguy's own STK x fire interval. MP43 remains #1 on the
+balanced board; its lead over the FAL drops from ~149ms to ~60ms. Scout Rifle TD fire_rate 16 rpm
+flagged for in-game verification (bolt-action peers 45-55), not changed.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-23 -- Wardogs loadout finder: make the anon sign-in prompt noticeable (feat/loadouts-anon-prompt)
 Follow-up to feat/loadouts-anon-path. The anon deterministic result had ONE sign-in CTA at the very
 bottom -- easy to miss. This surfaces the prompt at three points on the anon result and adds anon

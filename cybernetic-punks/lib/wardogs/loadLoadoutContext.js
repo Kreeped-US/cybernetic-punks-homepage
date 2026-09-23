@@ -19,6 +19,16 @@ function getSupabase() {
 // Ballistics (per-body-part damage/STK) is available in the store but the solver ranks on TTK, so we
 // load only what the solver reads (keeps the payload small -- the body-part matrix stays server-side
 // fuel, per the internal-data-store doctrine).
+// Raise on a Supabase query error instead of silently returning []. A swallowed error used to
+// collapse to an empty candidate set, which the solver renders as a confident "No pick" build (a
+// transient DB blip is indistinguishable from "no data"). The caller (/api/loadouts) catches this,
+// retries once, and surfaces a real error to the user. The table name is included so logs pinpoint
+// which read failed. NOT used for wardogs_ammo, which degrades on purpose (see below).
+function unwrap(res, table) {
+  if (res.error) throw new Error('loadLoadoutContext: ' + table + ' query failed: ' + res.error.message);
+  return res.data || [];
+}
+
 export async function loadLoadoutContext() {
   const supabase = getSupabase();
 
@@ -34,15 +44,17 @@ export async function loadLoadoutContext() {
       .eq('game_slug', 'wardogs'),
     // Body-part matrix -- lean columns, for the recommendation's kill-map (BodyPartViz). 3600 rows
     // (30 weapons x 8 zones x 3 ammo x 5 tiers) -> paginated past the 1000-row default. assembleLoadout
-    // slices the recommended weapon's ~120 rows into detail; the full set stays server-side.
+    // slices the recommended weapon's ~120 rows into detail; the full set stays server-side. A page
+    // error throws (with the table name) rather than returning a truncated matrix silently.
     (async () => {
       let rows = [], from = 0;
       for (;;) {
-        const { data } = await supabase
+        const res = await supabase
           .from('wardogs_ballistics')
           .select('weapon_name, body_part, ammo_type, armor_tier, damage, shots_to_kill, armor_break_shots')
           .eq('game_slug', 'wardogs').range(from, from + 999);
-        if (!data || !data.length) break;
+        const data = unwrap(res, 'wardogs_ballistics');
+        if (!data.length) break;
         rows = rows.concat(data); if (data.length < 1000) break; from += 1000;
       }
       return rows;
@@ -50,6 +62,7 @@ export async function loadLoadoutContext() {
     // Ammo economy (E1) -- per-caliber x FMJ/HP/AP cost_per_round + career gates. DEFENSIVE: the table
     // does not exist until the economy migration runs, so a missing-table error degrades to [] (the
     // solver then costs guns only, exactly as before). Activates automatically once wardogs_ammo lands.
+    // This is the ONE query that legitimately swallows its error -- absent ammo data is not a failure.
     (async () => {
       try {
         const { data, error } = await supabase
@@ -62,8 +75,8 @@ export async function loadLoadoutContext() {
   ]);
 
   return {
-    weapons: weaponsRes.data || [],
-    ttk: ttkRes.data || [],
+    weapons: unwrap(weaponsRes, 'weapon_stats'),
+    ttk: unwrap(ttkRes, 'wardogs_ttk'),
     ballistics: ballistics || [],
     ammo: ammoRes || [],
   };

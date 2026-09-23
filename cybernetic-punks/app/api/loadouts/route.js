@@ -75,6 +75,53 @@ function sse(obj) {
   return 'data: ' + JSON.stringify(obj) + '\n\n';
 }
 
+// User-facing message when the loadout data cannot be read (context-load error or an empty set). The
+// client renders it with a Try again button -- never a silent "No pick" build.
+const DATA_UNAVAILABLE = 'Loadout data is temporarily unavailable, try again in a moment.';
+
+// Load the solver context, retrying ONCE on error (a transient DB blip -- cold pooler connection,
+// statement timeout -- often clears on an immediate retry). loadLoadoutContext now THROWS on any
+// query error (it no longer collapses to []), so a real failure reaches here instead of rendering an
+// empty build. Throws if the second attempt also fails; the caller turns that into DATA_UNAVAILABLE.
+async function loadContextWithRetry() {
+  try {
+    return await loadLoadoutContext();
+  } catch (e1) {
+    console.error('[loadouts] context load failed (attempt 1):', e1 && e1.message);
+    return await loadLoadoutContext(); // one retry; a second throw propagates
+  }
+}
+
+// The data loaded fine but the user's filters (career level / budget) leave nothing usable. This is
+// NOT an outage -- it is a normal answer, so the client shows this message (with Change inputs, no
+// retry), never the "temporarily unavailable" outage copy. Uses the real inputs.
+function noFitMessage(budget, careerLevel) {
+  const hasB = budget != null, hasL = careerLevel != null;
+  if (hasB && hasL) return 'No weapon fits a $' + budget + ' budget at career level ' + careerLevel + '. Try a higher budget or level.';
+  if (hasB) return 'No weapon fits a $' + budget + ' budget. Try a higher budget.';
+  if (hasL) return 'No weapon is available at career level ' + careerLevel + '. Try a higher level.';
+  return 'No weapon fits those filters. Try adjusting your inputs.';
+}
+
+// A 200 SSE response carrying a single non-retryable notice (the client renders it as a message, not
+// an error/outage). Same content-type as the main stream so the client's reader handles it uniformly.
+function sseNotice(message) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(sse({ type: 'notice', message })));
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store, no-transform',
+      'Connection': 'keep-alive',
+    },
+  });
+}
+
 export async function POST(req) {
   try {
     // --- untrusted-input boundary (mirrors the Marathon advisor route) ---
@@ -121,8 +168,36 @@ export async function POST(req) {
 
     // --- reasoning: load stores -> SHARED assembly (server-authoritative; the SAVE route reuses this
     // SAME assembly so a saved page's structured build byte-matches what the live tool showed) ---
-    const { weapons, ttk, ballistics, ammo } = await loadLoadoutContext();
+    // LOUD FAILURE: a context-load error (after one retry) returns a real error, never an empty build.
+    let weapons, ttk, ballistics, ammo;
+    try {
+      ({ weapons, ttk, ballistics, ammo } = await loadContextWithRetry());
+    } catch (ctxErr) {
+      console.error('[loadouts] context load failed after retry:', ctxErr && ctxErr.message);
+      return Response.json({ error: DATA_UNAVAILABLE }, { status: 503 });
+    }
+    // DATA FAILURE: 0 weapons LOADED means the store is empty/degraded (the loader already threw on a
+    // query error and we retried) -- an outage, not a valid "No pick" build. Surface it loudly.
+    if (!weapons.length) {
+      console.error('[loadouts] empty store -- 0 weapons loaded');
+      return Response.json({ error: DATA_UNAVAILABLE }, { status: 503 });
+    }
+
     const assembled = assembleLoadout({ weapons, ttk, ballistics, ammo }, { careerLevel, budget, playstyle: playstyleKey });
+
+    // FILTERS LEAVE NOTHING USABLE (not an outage): every weapon gated out by career level (0
+    // candidates), OR a budget so low that no priced candidate fits (the solver would otherwise
+    // degrade to over-budget picks). Return a normal 200 notice the client renders as a clear message
+    // with Change inputs -- no retry wording.
+    const candidateTotal = ((assembled.candidates && assembled.candidates.primary) || []).length
+      + ((assembled.candidates && assembled.candidates.secondary) || []).length;
+    const slotList = ['primary', 'secondary'];
+    const anyCostKnown = slotList.some((s) => ((assembled.candidates && assembled.candidates[s]) || []).some((c) => c.cost != null));
+    const anyAffordable = slotList.some((s) => ((assembled.candidates && assembled.candidates[s]) || []).some((c) => c.cost != null && c.cost <= budget));
+    const budgetUnmet = budget != null && anyCostKnown && !anyAffordable;
+    if (candidateTotal === 0 || budgetUnmet) {
+      return sseNotice(noFitMessage(budget, careerLevel));
+    }
     const playstyleLabel = PLAYSTYLES[playstyleKey].label;
     const armorWeights = PLAYSTYLES[playstyleKey].armorWeights;
 
