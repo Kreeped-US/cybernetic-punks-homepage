@@ -5,9 +5,15 @@
 // persisted SSR page /wardogs/loadouts/build/[slug]. The SSE engine (run()) is byte-identical to before
 // -- only the result JSX moved out. Naming: "loadouts" everywhere; never "Build Advisor".
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { track } from '@/lib/useTrack';
 import LoadoutResult from '@/components/wardogs/LoadoutResult';
+
+// sessionStorage key for the anonymous loadout draft (read by components/AdvisorResumeLink.js to show
+// a "Finish your Wardogs loadout" link after sign-in). Saved on a sign-in CTA click; restored + cleared
+// on the next visit. Distinct from the Marathon advisor's cnp_advisor_draft.
+const WD_DRAFT_KEY = 'cnp_wardogs_loadout_draft';
 
 const A = 'var(--accent)';
 const AG = 'var(--accent-glow)';
@@ -38,6 +44,31 @@ export default function LoadoutsClient() {
   const [saveStatus, setSaveStatus] = useState('idle'); // idle | saving | saved | error
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  // Anonymous result: the deterministic path (no model, no save). Drives the "calculated quick read"
+  // label + the sign-in CTA in place of save/share. Set from the meta event's anon flag.
+  const [anon, setAnon] = useState(false);
+  const draftRestoredRef = useRef(false);
+
+  // Anon sign-in DRAFT (sessionStorage, try/catch): saved before a sign-in click so the inputs survive
+  // the OAuth round-trip; restored on the next visit; cleared once restored.
+  function saveDraft() {
+    try { window.sessionStorage.setItem(WD_DRAFT_KEY, JSON.stringify({ careerLevel, budget, playstyle })); } catch (e) { /* no storage -> no restore */ }
+  }
+  function onSignIn(from) { saveDraft(); track('loadouts_signin_click', { from }, 'wardogs'); }
+
+  // Restore an anon draft (post-OAuth return), then clear it. Once per mount.
+  useEffect(function () {
+    if (draftRestoredRef.current) return;
+    let d = null;
+    try { const r = window.sessionStorage.getItem(WD_DRAFT_KEY); d = r ? JSON.parse(r) : null; } catch (e) { d = null; }
+    if (!d) return;
+    draftRestoredRef.current = true;
+    if (d.careerLevel != null) setCareerLevel(String(d.careerLevel));
+    if (d.budget != null) setBudget(String(d.budget));
+    if (d.playstyle) setPlaystyle(d.playstyle);
+    track('loadouts_draft_resumed', { playstyle: d.playstyle || null }, 'wardogs');
+    try { window.sessionStorage.removeItem(WD_DRAFT_KEY); } catch (e) { /* ignore */ }
+  }, []);
 
   // Funnel: "started using it" (engaged) -- fires ONCE on the first meaningful input change,
   // distinct from land (page_view, on the SSR frame) and complete (loadouts_generate). Ref-guarded
@@ -51,7 +82,7 @@ export default function LoadoutsClient() {
 
   // ── ENGINE: unchanged SSE reader ──────────────────────────────
   async function run() {
-    setPhase('loading'); setSteps([]); setMeta(null); setAnalysis(''); setError(null);
+    setPhase('loading'); setSteps([]); setMeta(null); setAnalysis(''); setError(null); setAnon(false);
     setSaveStatus('idle'); setShareUrl(''); setCopied(false); // a new generation invalidates the last save
     setQueried({ careerLevel: careerLevel === '' ? null : Number(careerLevel), budget: budget === '' ? null : Number(budget), playstyle });
     markEngaged(); // completion implies engagement (covers a generate with no manual input change)
@@ -76,7 +107,7 @@ export default function LoadoutsClient() {
           if (!frame.startsWith('data:')) continue;
           const evt = JSON.parse(frame.slice(5).trim());
           if (evt.type === 'steps') setSteps(evt.steps || []);
-          else if (evt.type === 'meta') { setMeta(evt); if (!gotMeta) { gotMeta = true; setPhase('result'); } }
+          else if (evt.type === 'meta') { setMeta(evt); if (evt.anon) { setAnon(true); track('loadouts_anon_result', { playstyle }, 'wardogs'); } if (!gotMeta) { gotMeta = true; setPhase('result'); } }
           else if (evt.type === 'delta') setAnalysis((a) => a + evt.text);
           else if (evt.type === 'error') throw new Error(evt.error || 'Stream error');
           else if (evt.type === 'done') setPhase('result');
@@ -183,9 +214,21 @@ export default function LoadoutsClient() {
       analysis={analysis}
       queried={queried}
       streaming={phase === 'loading'}
+      anon={anon}
       footer={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {phase === 'result' && meta && saveStatus !== 'saved' && (
+          {anon && phase === 'result' && (
+            <div style={{ background: AG, border: '1px solid ' + A, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '14px 16px' }}>
+              <div style={{ fontSize: 13, color: T1, lineHeight: 1.6, marginBottom: 12 }}>
+                This is the calculated quick read. Sign in free for the full written analysis and to save or share this build.
+              </div>
+              <Link href="/join?intent=wardogs" onClick={() => onSignIn('result')}
+                style={{ display: 'inline-block', padding: '12px 22px', background: A, color: PAGE, borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 1, textDecoration: 'none' }}>
+                Sign in free &rarr;
+              </Link>
+            </div>
+          )}
+          {!anon && phase === 'result' && meta && saveStatus !== 'saved' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <button onClick={saveShare} disabled={saveStatus === 'saving'}
                 style={{ padding: '12px 22px', background: A, color: PAGE, border: 'none', borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 1, cursor: saveStatus === 'saving' ? 'default' : 'pointer', opacity: saveStatus === 'saving' ? 0.7 : 1 }}>

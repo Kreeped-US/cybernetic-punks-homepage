@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-09-23 -- Wardogs loadout finder: anonymous deterministic path (feat/loadouts-anon-path)
+Turns the loadout finder's anonymous dead-end (401 -> "Not authenticated" error box) into a full
+DETERMINISTIC result with NO model call and NO entitlement consumption. Signed-in path unchanged
+(model analysis + save/share + existing limits). Wardogs-only; no DB writes.
+
+WHAT SHIPPED:
+- app/api/loadouts/route.js: no more 401 for anon. If no session -> IP-keyed rate limit
+  (loadouts-anon:<ip>, 20 / 10 min) then the SAME assembly + perTierComparison, streamed as
+  steps + meta{anon:true, comparison} + the deterministicSummary as the read -- the model
+  (streamLoadoutAnalysis) is NOT called and no entitlement is consumed on this path. Signed-in:
+  user-keyed limit + entitlement + buffer/guard/model exactly as before.
+- app/wardogs/loadouts/LoadoutsClient.js: anon state (from meta.anon); the read is labeled a
+  calculated quick read; save/share replaced by ONE CTA "Sign in free for the full written analysis
+  and to save or share this build" -> /join?intent=wardogs (saves a sessionStorage draft on click).
+  Draft restore on next visit (level/budget/playstyle), then cleared. Events fired.
+- components/wardogs/LoadoutResult.js: `anon` prop -> THE READ header becomes "CALCULATED QUICK READ"
+  + a "sign in for the full written analysis" subnote. Table/board unchanged.
+- components/AdvisorResumeLink.js: GENERALIZED to iterate a draft list (Marathon advisor +
+  Wardogs loadout) -- a link per pending draft, Marathon FIRST. Marathon render is byte-identical
+  when only the advisor draft exists (verified: outerHTML main == branch).
+- app/api/track/route.js: allowlist loadouts_anon_result, loadouts_signin_click, loadouts_draft_resumed.
+
+VERIFY (dev, anonymous preview):
+- Anon POST /api/loadouts returns the full deterministic SSE (steps + meta anon:true + comparison +
+  the calculated summary as 4 deltas). NO model call: the read is the deterministicSummary verbatim
+  ("... weighted TTK for the Tactical profile", "CAVEAT: TTK is community-tested ballistics"), and
+  loadouts_analysis_rejected stayed 0 (the guard only runs on the model path).
+- Rate limit trips at 20/10 min per IP (20x200 then 429 { "Rate limit exceeded ..." }).
+- UI: the per-tier table (MP43 vs FAL), "CALCULATED QUICK READ", and the sign-in CTA render for anon.
+- CTA -> /join?intent=wardogs and saves cnp_wardogs_loadout_draft; "/" shows "Finish your Wardogs
+  loadout ->"; returning to /wardogs/loadouts restores level 35 + budget 5000 and clears the draft.
+- Marathon advisor resume BYTE-IDENTICAL: the generalized AdvisorResumeLink renders the same
+  marathon link outerHTML as main when only cnp_advisor_draft is present (asserted identical).
+- Events land env=development: loadouts_anon_result {playstyle}, loadouts_signin_click {from:result},
+  loadouts_draft_resumed {playstyle}.
+- eslint clean; byte-clean.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-23 -- Honest weapon comparisons in the Wardogs loadout finder (feat/loadout-honest-comparison)
 Fixes the "kills about 5% faster than the BMR-308" problem: the weighted TTK is an average across armor
 tiers, so a single "X% faster" can hide a WINNER FLIP (FAL wins T0+T4 on AP; the BMR-308 is faster at

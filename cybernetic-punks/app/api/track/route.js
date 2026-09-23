@@ -60,6 +60,11 @@ const ALLOWED_EVENTS = [
   'loadouts_generate',
   'loadouts_save',
   'loadouts_share',
+  // Wardogs loadout ANON-PATH funnel (2026-09-23): an anonymous deterministic result was shown, a
+  // sign-in CTA click (from: result), and a post-OAuth draft restore. event_data { playstyle } / { from }.
+  'loadouts_anon_result',
+  'loadouts_signin_click',
+  'loadouts_draft_resumed',
   // loadouts_analysis_rejected: the number-guard discarded a model analysis (unmatched %/ms/rpm/$) and
   // showed/stored the deterministic summary instead. Written server-side by the loadouts + save routes
   // (env-stamped there); allowlisted here so the name is a first-class event. event_data has no user data.

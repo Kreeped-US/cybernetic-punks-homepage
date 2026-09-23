@@ -37,6 +37,17 @@ export const dynamic = 'force-dynamic';
 
 const RATE_LIMIT = 10;
 const RATE_WINDOW_MS = 60 * 1000;
+// Anonymous callers get the DETERMINISTIC path (solver + table + calculated summary, NO model call,
+// NO entitlement). Keyed by IP (the in-memory limiter's known caveat applies) -- generous but stops a
+// tight loop hammering the free path.
+const ANON_RATE_LIMIT = 20;
+const ANON_RATE_WINDOW_MS = 10 * 60 * 1000;
+
+// Client IP for anon rate-limit keying (Vercel sets x-forwarded-for; fallbacks for local dev).
+function clientIp(req) {
+  const xff = req.headers.get('x-forwarded-for') || '';
+  return xff.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
+}
 
 // Same hardening as the Marathon route: strip control chars/newlines so a free-text value can't
 // inject prompt lines, collapse whitespace, hard-cap length. (Char-code loop on purpose -- no
@@ -67,27 +78,36 @@ function sse(obj) {
 export async function POST(req) {
   try {
     // --- untrusted-input boundary (mirrors the Marathon advisor route) ---
+    // ANON PATH: no 401. An anonymous caller gets the DETERMINISTIC result (solver + per-tier table +
+    // calculated summary) with NO model call and NO entitlement consumption -- only an IP rate limit.
+    // The paid model analysis (+ save/share) stays behind the session for signed-in callers.
     const session = await resolveSession({
       validate: true,
       supabase: createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY),
     });
-    if (!session || (!session.accountId && !session.playerProfileId)) {
-      return Response.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-    const userId = session.accountId || session.playerProfileId;
+    const isAnon = !session || (!session.accountId && !session.playerProfileId);
 
-    const rl = checkRateLimit('loadouts:' + userId, RATE_LIMIT, RATE_WINDOW_MS);
-    if (!rl.ok) {
-      return Response.json({ error: 'Rate limit exceeded -- slow down and try again shortly.' },
-        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } });
-    }
-
-    const gateSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-    const access = await checkFeatureAccess(gateSupabase, userId, 'loadouts_generate');
-    if (!access.allowed) {
-      return Response.json(
-        { error: 'limit_reached', feature: 'loadouts_generate', tier: access.tier, limit: access.limit, used: access.used, upgrade_to: access.upgrade_to ?? null },
-        { status: 402 });
+    let gateSupabase = null; // only the signed-in path needs it (entitlement + rejection logging)
+    if (isAnon) {
+      const rl = checkRateLimit('loadouts-anon:' + clientIp(req), ANON_RATE_LIMIT, ANON_RATE_WINDOW_MS);
+      if (!rl.ok) {
+        return Response.json({ error: 'Rate limit exceeded -- slow down and try again shortly.' },
+          { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } });
+      }
+    } else {
+      const userId = session.accountId || session.playerProfileId;
+      const rl = checkRateLimit('loadouts:' + userId, RATE_LIMIT, RATE_WINDOW_MS);
+      if (!rl.ok) {
+        return Response.json({ error: 'Rate limit exceeded -- slow down and try again shortly.' },
+          { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } });
+      }
+      gateSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+      const access = await checkFeatureAccess(gateSupabase, userId, 'loadouts_generate');
+      if (!access.allowed) {
+        return Response.json(
+          { error: 'limit_reached', feature: 'loadouts_generate', tier: access.tier, limit: access.limit, used: access.used, upgrade_to: access.upgrade_to ?? null },
+          { status: 402 });
+      }
     }
 
     const body = await req.json().catch(() => ({}));
@@ -130,31 +150,37 @@ export async function POST(req) {
           //    all deterministic, so the client renders them immediately (the model has not run yet)
           send({ type: 'meta', recommendation: assembled.recommendation, candidates: assembled.candidates,
                  provenance: assembled.provenance, budget: assembled.budget, playstyle: assembled.playstyle,
-                 detail: assembled.detail, comparison, faction });
-          // 3) BUFFER the model prose, then run the NUMBER GUARD before showing any of it. On a failed
-          //    guard (or a model error/empty), stream the deterministic summary instead + log it. The
-          //    client shows a placeholder in the read slot while this buffers.
-          let full = '';
-          try {
-            for await (const chunk of streamLoadoutAnalysis(assembled, { careerLevel, budget, playstyleLabel, comparison, armorWeights })) {
-              full += chunk;
-            }
-          } catch (genErr) {
-            console.error('[loadouts] analysis generation error:', genErr);
-            full = '';
-          }
-          const verdict = validateAnalysisNumbers(full, facts);
-          let finalText = full;
-          if (!full.trim() || !verdict.ok) {
+                 detail: assembled.detail, comparison, faction, anon: isAnon });
+          // 3) THE READ.
+          //    ANON: stream the deterministic (calculated) summary -- NO model call, NO entitlement.
+          //    SIGNED-IN: BUFFER the model prose, run the NUMBER GUARD before showing any of it, and on a
+          //    failed guard (or a model error/empty) stream the deterministic summary instead + log it.
+          let finalText;
+          if (isAnon) {
             finalText = summary;
-            await logAnalysisRejected(gateSupabase, {
-              weapon: primaryPick ? primaryPick.weapon_name : null, playstyle: playstyleKey,
-              stage: 'stream', reason: !full.trim() ? 'empty_or_model_error' : 'number_guard',
-              unmatched: (verdict.unmatched || []).slice(0, 6),
-            });
+          } else {
+            let full = '';
+            try {
+              for await (const chunk of streamLoadoutAnalysis(assembled, { careerLevel, budget, playstyleLabel, comparison, armorWeights })) {
+                full += chunk;
+              }
+            } catch (genErr) {
+              console.error('[loadouts] analysis generation error:', genErr);
+              full = '';
+            }
+            const verdict = validateAnalysisNumbers(full, facts);
+            finalText = full;
+            if (!full.trim() || !verdict.ok) {
+              finalText = summary;
+              await logAnalysisRejected(gateSupabase, {
+                weapon: primaryPick ? primaryPick.weapon_name : null, playstyle: playstyleKey,
+                stage: 'stream', reason: !full.trim() ? 'empty_or_model_error' : 'number_guard',
+                unmatched: (verdict.unmatched || []).slice(0, 6),
+              });
+            }
           }
-          // stream the validated (or fallback) text as paragraph deltas
-          for (const para of finalText.split(/\n\s*\n/)) {
+          // stream the read (validated model prose, or the calculated summary) as paragraph deltas
+          for (const para of (finalText || '').split(/\n\s*\n/)) {
             if (para.trim()) send({ type: 'delta', text: para.trim() + '\n\n' });
           }
           send({ type: 'done' });

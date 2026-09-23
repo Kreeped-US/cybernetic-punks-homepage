@@ -288,7 +288,7 @@ function ComparisonTable({ comparison }) {
   );
 }
 
-export default function LoadoutResult({ steps = [], meta = null, analysis = '', queried = null, streaming = false, footer = null, comparison = null }) {
+export default function LoadoutResult({ steps = [], meta = null, analysis = '', queried = null, streaming = false, footer = null, comparison = null, anon = false }) {
   const rec = (meta && meta.recommendation) || {};
   const cand = (meta && meta.candidates) || {};
   const det = (meta && meta.detail) || {};
@@ -413,7 +413,8 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
 
       {(analysis || streaming) && (
         <div style={{ background: CARD, border: '1px solid ' + LINE, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '20px 22px', marginBottom: 14 }}>
-          <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: 12 }}>◢ THE READ</div>
+          <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: anon ? 4 : 12 }}>&#9698; {anon ? 'CALCULATED QUICK READ' : 'THE READ'}</div>
+          {anon && <div style={{ fontSize: 11, color: T3, marginBottom: 12, lineHeight: 1.5 }}>A deterministic read from the numbers. Sign in for the full written analysis.</div>}
           <TheRead text={analysis} streaming={streaming} />
         </div>
       )}
