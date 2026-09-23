@@ -359,6 +359,10 @@ POST-OCT-20 PARKED (out of scope here; Marathon / sitewide):
   (a) 6 orphan /marathon/tools/build/[shell]/[weapon] leaves -- indexable + sitemapped, 0 inlinks.
   (b) "CUSTOMIZE THIS BUILD" CTA on 12 Marathon /tools/build/[shell] pages links /advisor (301) ->
       change to /marathon/advisor?shell=<slug>.
+      Ahrefs duplicate-content report 2026-09-23 flags 7 pairs of /marathon/advisor?shell=X vs ?shell=x
+      (case variants). All non-indexable, canonical -> /marathon/advisor (200), so no search impact.
+      When fixing this CTA, normalize EVERY internal advisor link to lowercase ?shell=<slug> so only one
+      variant exists.
   (c) 16 orphan Marathon intel articles -- decide CUT vs LINK during the corpus cut; do NOT link
       them first.
   (d) legacy /tools/build/* URLs still in Google's index (no internal links point at them; verify
