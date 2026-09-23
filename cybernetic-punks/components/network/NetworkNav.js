@@ -3,7 +3,7 @@
 // network pages). Reuses the homepage nav's visual pattern (.nav-in/.brand/
 // .nav-right/.nav-links from lib/network/networkTheme.js) but links CROSS-PAGE to
 // the network surfaces -- Home, the four games (from ROOT_GAMES, the single source),
-// About, Editors -- NOT Marathon's game sections. Renders a bare <nav> and relies
+// About -- NOT Marathon's game sections. Renders a bare <nav> and relies
 // on an ancestor .cnp-root for styling (nav is position:sticky there, so it
 // reserves its own space -- no content padding needed on the pages).
 //

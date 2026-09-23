@@ -13,14 +13,22 @@ const nextConfig = {
         destination: '/wardogs/economy',
         permanent: true,
       },
+      // /editors was retired -> 301 to /about (its "The desks" section carries the same content).
+      // The legacy /grid rules point HERE too (repointed from /editors) so nothing chains through
+      // the now-redirected /editors.
+      {
+        source: '/editors',
+        destination: '/about',
+        statusCode: 301,
+      },
       {
         source: '/grid',
-        destination: '/editors',
+        destination: '/about',
         permanent: true,
       },
       {
         source: '/grid/:slug*',
-        destination: '/editors',
+        destination: '/about',
         permanent: true,
       },
       {

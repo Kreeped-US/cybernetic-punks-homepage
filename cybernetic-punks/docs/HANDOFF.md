@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-09-23 -- Small cleanups batch (chore/small-cleanups-batch)
+Five unrelated janitorial fixes; no behavior change beyond the /editors retirement. No Marathon page,
+nav, footer, or layout changes. No DB writes.
+
+1. /editors RETIRED -> 301 /about (it was orphaned: 0 internal inlinks, 0 GSC impressions in 30d, and
+   /about's "The desks" section already carries the same content).
+   - next.config.mjs: new { source:'/editors', destination:'/about', statusCode:301 }. The legacy
+     /grid and /grid/:slug* rules (which pointed at /editors, 308) were REPOINTED to /about so nothing
+     chains through the now-redirected /editors.
+   - lib/sitemap/eligible.js: removed the /editors staticPages row and the now-unused EDITORS_UPDATED
+     const. (The app/(network)/editors/* route files are left in place but are now dead code shadowed
+     by the redirect -- a later cleanup can delete them; out of scope here.)
+   - Verify (dev): GET /editors -> 301 -> /about; /grid + /grid/foo -> 308 -> /about (no chain);
+     /editors absent from every child sitemap (was in sitemap-marathon-entities.xml), /about still present.
+2. components/network/NetworkNav.js: removed the stale "Editors" from the nav's link-list comment (the
+   link itself was removed earlier; the nav renders Home + the four games + About). Comment-only.
+3. lib/wardogs/loadoutHubs.js: fixed the stale "This PROOF ships ONE hub: assault-rifle. The other four
+   are staged" header -- all FIVE type hubs now ship (shipped:true). Comment-only.
+4. lib/games/wardogs.js: removed the dead WARDOGS_ARTICLE_SECTION mapping for the retired article
+   wardogs-smg-tier-breakdown-which-one-should-you-run-zoxz (rejected + unpublished). The guard only
+   checks PUBLISHED articles, so an unpublished slug needs no mapping. node scripts/check-article-sections.mjs
+   still exits 0 (wardogs 14/14, dmz 8/8, pubg 6/6 mapped).
+5. eslint clean; byte-clean.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-23 -- Loud failure instead of a silent empty loadout (feat/loadouts-loud-failure)
 The loadout finder's cold-start "0 weapons -> confident No pick build" was caused by the context
 loader swallowing Supabase query errors (`return res.data || []`): a transient DB blip (cold pooler

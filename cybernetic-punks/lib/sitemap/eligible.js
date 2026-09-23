@@ -67,7 +67,7 @@ export async function computeEligible() {
 
   // ── STATIC (Marathon/network; game='marathon', type='static') ──────────────
   // (b) DB-driven -> no lastmod; (a/c) fact-dated -> a literal 'YYYY-MM-DD' string.
-  const EDITORS_UPDATED = '2026-07-09', STATS_UPDATED = '2026-07-20',
+  const STATS_UPDATED = '2026-07-20',
         LEADERBOARD_UPDATED = '2026-07-20', JOIN_UPDATED = '2026-07-20';
   const mvd = typeof MATCHUP_VERIFIED_DATE === 'string' ? MATCHUP_VERIFIED_DATE : lm(MATCHUP_VERIFIED_DATE);
   const facts = typeof FACTS_UPDATED === 'string' ? FACTS_UPDATED : lm(FACTS_UPDATED);
@@ -91,7 +91,6 @@ export async function computeEligible() {
     [BASE + '/marathon/leaderboard', LEADERBOARD_UPDATED, 'daily', 0.75],
     [BASE + '/marathon/status', undefined, 'hourly', 0.7],
     [BASE + '/marathon/player-count', undefined, 'hourly', 0.8],
-    [BASE + '/editors', EDITORS_UPDATED, 'weekly', 0.7],
     [BASE + '/about', undefined, 'monthly', 0.6],
     [BASE + '/marathon/intel/cipher', undefined, 'daily', 0.7],
     [BASE + '/marathon/intel/nexus', undefined, 'daily', 0.7],

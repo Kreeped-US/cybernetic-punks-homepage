@@ -10,7 +10,8 @@
 //     for the future B2 class hubs).
 //   - Floor: only types with >= 3 TTK-ranked members ship (AR/Sniper/SMG/Sidearm/Marksman qualify;
 //     Shotgun/LMG/Launcher/Bow are too thin -> held, not listed as qualifying).
-//   - This PROOF ships ONE hub: assault-rifle. The other four are staged (shipped:false) for fan-out.
+//   - All FIVE qualifying hubs ship (assault-rifle, sniper-rifle, smg, sidearm, marksman-rifle);
+//     the fan-out is complete. Flip a new `shipped: true` here if another type later qualifies.
 //
 // `weaponType` MUST match weapon_stats.weapon_type verbatim (that column is the only populated taxonomy
 // axis today -- class/budget/level are null, so B2 is deferred to the economy-data pass).
