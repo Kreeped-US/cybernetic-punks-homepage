@@ -179,6 +179,7 @@ export default function LoadoutsClient() {
     <LoadoutResult
       steps={steps}
       meta={meta}
+      comparison={meta && meta.comparison}
       analysis={analysis}
       queried={queried}
       streaming={phase === 'loading'}

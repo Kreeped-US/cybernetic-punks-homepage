@@ -60,6 +60,10 @@ const ALLOWED_EVENTS = [
   'loadouts_generate',
   'loadouts_save',
   'loadouts_share',
+  // loadouts_analysis_rejected: the number-guard discarded a model analysis (unmatched %/ms/rpm/$) and
+  // showed/stored the deterministic summary instead. Written server-side by the loadouts + save routes
+  // (env-stamped there); allowlisted here so the name is a first-class event. event_data has no user data.
+  'loadouts_analysis_rejected',
   // loadouts_engaged: first meaningful interaction with the Wardogs loadout finder (first input
   // change), ref-guarded once per session -- the Wardogs analogue of advisor_engaged. Completes the
   // funnel page_view(loadouts) -> loadouts_engaged -> loadouts_generate -> loadouts_save/share.

@@ -11,7 +11,7 @@
 //   meta = { recommendation, candidates, detail, provenance, budget, playstyle }
 //   queried = { careerLevel, budget, playstyle } ; footer = a trailing action node (New loadout / CTA)
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import BodyPartViz from '@/components/wardogs/BodyPartViz';
@@ -65,7 +65,7 @@ function highlightNumbers(text) {
 export function TheRead({ text, streaming }) {
   const raw = text || '';
   if (!raw) {
-    return <div style={{ fontSize: 16, color: T3 }}>Reading the numbers<span className="ls-cursor">_</span></div>;
+    return <div style={{ fontSize: 16, color: T3 }}>Writing the read<span className="ls-cursor">_</span></div>;
   }
   const paras = raw.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
   const body = [];
@@ -246,7 +246,49 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
   );
 }
 
-export default function LoadoutResult({ steps = [], meta = null, analysis = '', queried = null, streaming = false, footer = null }) {
+// PER-TIER COMPARISON (the honest breakdown): primary vs runner-up TTK at each armor tier, at the
+// pick's ammo, with the winner marked -- deterministic, so the weighted-average headline can never
+// hide a winner flip. Computed at render from current data (both live + saved pages get it).
+function ComparisonTable({ comparison }) {
+  if (!comparison || !Array.isArray(comparison.rows) || !comparison.rows.some((r) => r.primaryMs != null || r.runnerUpMs != null)) return null;
+  const { primaryName, runnerUpName, ammo, rows, flips, primaryWinsTiers, runnerUpWinsTiers } = comparison;
+  const cell = (ms) => ms == null ? 'n/a' : ms === 0 ? '1-shot' : ms + 'ms';
+  const tierList = (ts) => ts.map((t) => 'T' + t).join(', ');
+  const summary = flips
+    ? primaryName + ' wins ' + tierList(primaryWinsTiers) + '; ' + runnerUpName + ' wins ' + tierList(runnerUpWinsTiers) + '. The edge flips with armor, so pick by the armor you expect.'
+    : primaryWinsTiers.length >= runnerUpWinsTiers.length
+      ? primaryName + ' is faster at every tier with data.'
+      : runnerUpName + ' is faster at every tier with data.';
+  return (
+    <div className="ls-up" style={{ background: CARD, border: '1px solid ' + LINE, borderRadius: 4, padding: '16px 18px', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace' }}>&#9698; {primaryName.toUpperCase()} vs {runnerUpName.toUpperCase()} BY ARMOR TIER</div>
+        <div style={{ fontSize: 10, color: T3, fontFamily: 'monospace' }}>{ammo} ammo &middot; lower = faster</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 1fr 78px', gap: 6, fontFamily: 'monospace', fontSize: 12 }}>
+        <div style={{ color: T3, fontSize: 9, letterSpacing: 1, fontWeight: 800 }}>ARMOR</div>
+        <div style={{ color: T3, fontSize: 9, letterSpacing: 1, fontWeight: 800 }}>{primaryName}</div>
+        <div style={{ color: T3, fontSize: 9, letterSpacing: 1, fontWeight: 800 }}>{runnerUpName}</div>
+        <div style={{ color: T3, fontSize: 9, letterSpacing: 1, fontWeight: 800, textAlign: 'right' }}>FASTER</div>
+        {rows.map((r) => {
+          const pWin = r.winner === 'primary', rWin = r.winner === 'runnerup';
+          const win = r.winner === 'tie' ? 'tie' : pWin ? primaryName : rWin ? runnerUpName : '-';
+          return (
+            <Fragment key={r.tier}>
+              <div style={{ color: T2, fontWeight: 700 }}>T{r.tier}</div>
+              <div style={{ color: pWin ? A : T2, fontWeight: pWin ? 800 : 600 }}>{cell(r.primaryMs)}</div>
+              <div style={{ color: rWin ? A : T2, fontWeight: rWin ? 800 : 600 }}>{cell(r.runnerUpMs)}</div>
+              <div style={{ color: r.winner && r.winner !== 'tie' ? A : T3, textAlign: 'right', fontWeight: 700 }}>{win}</div>
+            </Fragment>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px solid ' + LSUB, fontSize: 12, color: T2, lineHeight: 1.5 }}>{summary}</div>
+    </div>
+  );
+}
+
+export default function LoadoutResult({ steps = [], meta = null, analysis = '', queried = null, streaming = false, footer = null, comparison = null }) {
   const rec = (meta && meta.recommendation) || {};
   const cand = (meta && meta.candidates) || {};
   const det = (meta && meta.detail) || {};
@@ -346,6 +388,9 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
         </div>
       )}
 
+      {/* PER-TIER HONEST BREAKDOWN -- deterministic, renders with the meta (never waits on the model). */}
+      <ComparisonTable comparison={comparison} />
+
       {/* WHERE TO AIM -- the recommended primary's body-part kill-map (shared BodyPartViz, the SAME
           component as the weapon page), defaulted to the playstyle's ammo/armor profile. Actionable
           advice a reference table can't give. Renders only when the pick's ballistics were loaded. */}
@@ -366,7 +411,7 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
         );
       })()}
 
-      {(analysis || !streaming) && (
+      {(analysis || streaming) && (
         <div style={{ background: CARD, border: '1px solid ' + LINE, borderLeft: '3px solid ' + A, borderRadius: '0 4px 4px 0', padding: '20px 22px', marginBottom: 14 }}>
           <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace', marginBottom: 12 }}>◢ THE READ</div>
           <TheRead text={analysis} streaming={streaming} />

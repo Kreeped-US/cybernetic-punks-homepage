@@ -83,9 +83,30 @@ export function buildLoadoutPrompt(solved, inputs) {
   if (runnerUp && primary) {
     lines.push('- IT BEAT: ' + runnerUp.weapon_name + ' (TTK ' + runnerUp.weighted_ttk_ms + 'ms'
       + costBit(runnerUp, null) + ')'
-      + (gap != null ? ' -- about ' + gap + '% ' + (primary.weighted_ttk_ms < runnerUp.weighted_ttk_ms ? 'faster' : 'slower') + ' to kill' : ''));
+      + (gap != null ? ' -- about ' + gap + '% ' + (primary.weighted_ttk_ms < runnerUp.weighted_ttk_ms ? 'faster' : 'slower') + ' on the ' + (inputs.playstyleLabel || 'Balanced') + ' weighted average' : ''));
   }
   lines.push('');
+
+  // PER-TIER TRUTH (the flip check): the weighted number above is an AVERAGE across armor tiers, so it
+  // can hide the runner-up winning some tiers. Give the model the raw per-tier result + the profile
+  // weights + an explicit flips flag, so it must be honest about WHERE each gun wins.
+  const cmp = inputs.comparison || null;
+  if (cmp && cmp.rows && runnerUp && primary) {
+    const label = (w) => w === 'primary' ? primary.weapon_name : w === 'runnerup' ? runnerUp.weapon_name : (w === 'tie' ? 'tie' : 'n/a');
+    lines.push('PER-TIER TTK (' + primary.weapon_name + ' vs ' + runnerUp.weapon_name + ' at ' + cmp.ammo + ' ammo) -- THE HONEST BREAKDOWN:');
+    for (const r of cmp.rows) {
+      const p = r.primaryMs == null ? 'n/a' : (r.primaryMs === 0 ? '1-shot' : r.primaryMs + 'ms');
+      const u = r.runnerUpMs == null ? 'n/a' : (r.runnerUpMs === 0 ? '1-shot' : r.runnerUpMs + 'ms');
+      lines.push('- T' + r.tier + ': ' + primary.weapon_name + ' ' + p + ' vs ' + runnerUp.weapon_name + ' ' + u + ' -> ' + label(r.winner) + ' wins');
+    }
+    if (Array.isArray(inputs.armorWeights)) {
+      lines.push('- Profile armor weights T0-T4: [' + inputs.armorWeights.join(', ') + '] -- the weighted TTK is this average, so a high-weight tier dominates it.');
+    }
+    lines.push('- WINNER FLIPS ACROSS TIERS: ' + (cmp.flips ? 'YES' : 'no')
+      + ' -- ' + primary.weapon_name + ' is faster at [' + (cmp.primaryWinsTiers.map((t) => 'T' + t).join(', ') || 'none')
+      + '], ' + runnerUp.weapon_name + ' is faster at [' + (cmp.runnerUpWinsTiers.map((t) => 'T' + t).join(', ') || 'none') + '].');
+    lines.push('');
+  }
   lines.push('BASIS (state this honestly, do not overclaim):');
   lines.push('- Combat numbers: ' + (prov.basis || 'community-tested ballistics (Swoleguy), attributed') + '. Tier: ' + (prov.tier || 'attributed') + '.');
   lines.push('- Budget: ' + (budget.applied
@@ -101,12 +122,18 @@ export function buildLoadoutPrompt(solved, inputs) {
   lines.push('');
   lines.push('- Paragraph 1 (THE PICK): lead with the single sharpest insight -- the one thing that makes the');
   lines.push('  primary the call -- and the key number. 1-2 sentences.');
-  lines.push('- Paragraph 2 (THE EDGE): why the primary beats the runner-up, using the real TTK gap above. 1-2 sentences.');
+  lines.push('- Paragraph 2 (THE EDGE): why the primary is the call over the runner-up, using the PER-TIER');
+  lines.push('  breakdown above. If WINNER FLIPS ACROSS TIERS is YES, you MUST say where EACH gun wins (name the');
+  lines.push('  tiers) and you MUST NOT state a flat "X% faster than ' + (runnerUp ? runnerUp.weapon_name : 'the runner-up') + '"; frame it as the armor-dependent');
+  lines.push('  tradeoff it is. If no flip, a single gap is fine. 1-2 sentences.');
   lines.push('- Paragraph 3 (THE SIDEARM): why the secondary backs it up. 1 sentence.');
   lines.push('- FINAL paragraph (THE CAVEAT): it MUST begin with the exact token "CAVEAT:" and cover the honest');
   lines.push('  tradeoff -- the ammo/armor assumption -- and that prices/ammo are community-recorded (attributed),');
   lines.push('  not Bulkhead-official, so verify in-game. 1-2 sentences. This is the ONLY paragraph that starts with a token.');
   lines.push('');
+  lines.push('NUMBER RULES (hard): use ONLY numbers that appear above -- every %, ms, rpm, or $ you write must');
+  lines.push('match one. Any single % or ms comparing the two guns MUST name its scenario (e.g. "weighted toward');
+  lines.push('T3-T4", "at T4", "on the ' + (inputs.playstyleLabel || 'Balanced') + ' average") -- never an unscoped "X% faster".');
   lines.push('Be opinionated and specific. Never name a weapon not listed above. Separate every paragraph with a blank line.');
   return lines.join('\n');
 }

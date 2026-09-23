@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-09-23 -- Honest weapon comparisons in the Wardogs loadout finder (feat/loadout-honest-comparison)
+Fixes the "kills about 5% faster than the BMR-308" problem: the weighted TTK is an average across armor
+tiers, so a single "X% faster" can hide a WINNER FLIP (FAL wins T0+T4 on AP; the BMR-308 is faster at
+T1-T3 -- the FAL only wins the average because the Tactical profile weights T3-T4). Wardogs loadout
+finder + saved build page only; no DB writes (operator runs any SQL); freeze-safe.
+
+WHAT SHIPPED:
+- lib/wardogs/loadoutAnalysisGuard.js (NEW, pure): perTierComparison (primary vs runner-up raw TTK at
+  each armor tier + flip flags), buildAnalysisFacts (the allowed-number set), validateAnalysisNumbers
+  (the NUMBER GUARD -- every %/ms/rpm/$ in the prose must match a fact; $/rpm exact, %/ms +-1),
+  deterministicSummary (fact-only fallback that passes the guard by construction).
+- components/wardogs/LoadoutResult.js: a deterministic PER-TIER comparison table (winner marked per
+  tier, flip summary) that renders WITH the meta (never waits on the model); "Writing the read"
+  placeholder while the analysis buffers.
+- lib/wardogs/generateLoadout.js: the prompt now carries the per-tier result + profile weights + an
+  explicit "WINNER FLIPS" flag, and REQUIRES: if it flips, say where each gun wins and never a flat
+  "X% faster"; every % / ms must name its scenario; use only numbers given.
+- app/api/loadouts/route.js: BUFFER the model prose -> run the guard -> stream the validated text (or
+  the deterministic summary on fail/empty) as deltas; the steps + meta + comparison table stream
+  first. Logs loadouts_analysis_rejected (server-side, env-stamped).
+- app/api/loadouts/save/route.js: re-validates the submitted analysis (persistence backstop) and
+  substitutes the summary if it fails; logs the rejection.
+- app/wardogs/loadouts/build/[slug]/page.js: computes the per-tier table from CURRENT wardogs_ttk
+  (not the stored snapshot), so saved pages reflect data fixes.
+- app/api/track/route.js: allowlist loadouts_analysis_rejected.
+
+KEY NUANCE: the number guard catches FABRICATED numbers, not dishonest FRAMING -- the stored
+tactical-FAL "5% faster ... every time armor is in the equation" PASSES the number guard (5%/9ms/$500
+are all grounded) but VIOLATES the flip-honesty rule. Flip-honesty is enforced by (a) the deterministic
+per-tier TABLE (always shows the truth regardless of prose), (b) the prompt rules (future gens), and
+(c) regeneration of the one existing violator.
+
+BUG CAUGHT BY TESTING: the guard's number regex used `\b` after the unit, which silently dropped every
+"N% ..." token (no word boundary before a space) -- the guard was inert for percentages. Fixed to a
+"(?![A-Za-z0-9])" boundary; unit-verified that "42%"/"999ms" now trip it and grounded numbers pass.
+
+VERIFY:
+- Guard unit test: good text (170ms/25%/34% all grounded) PASS; fabricated "42%" and "999ms" FAIL;
+  deterministicSummary passes its own guard.
+- tactical-FAL-L35: per-tier table renders on the public saved page (FAL wins T0,T4; BMR-308 wins
+  T1,T2,T3; "the edge flips with armor"), computed from current data. Prompt facts block confirmed
+  (per-tier rows + weights [0,0.1,0.2,0.3,0.4] + FLIPS: YES + rules). Regenerated analysis via the
+  model states the flip and passes the guard. (Live stream path is auth-gated; the dev preview is
+  anonymous, so the table/guard/summary were verified at the unit + saved-page + module level and the
+  route wiring by review -- the live table uses the SAME LoadoutResult + comparison as the saved page.)
+- eslint clean; byte-clean.
+
+ITEM 4 -- audit of the 3 saved builds (wardogs_loadout_pages):
+- aggressive-fal-l20-kmd6e8: flips=false, number-guard PASS -> compliant (flat % OK with no flip).
+- aggressive-fal-l20-z7jn40: flips=false, number-guard PASS -> compliant.
+- tactical-fal-l35-zlukg1: flips=TRUE + flat "5% faster" -> VIOLATES the flip rule. Regenerated a
+  guard-passing, flip-honest analysis in dev; operator SQL provided at the HOLD (do NOT auto-run).
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-23 -- Marathon advisor: anonymous path (feat/advisor-anon-path)
 Turns the advisor's dead-end 401 ("ERROR - Not authenticated") into a real anonymous experience.
 Freeze honored: /marathon/advisor title/meta/H1/canonical/route unchanged; all new UI is client-side

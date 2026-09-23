@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import LoadoutResult from '@/components/wardogs/LoadoutResult';
 import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
+import { perTierComparison } from '@/lib/wardogs/loadoutAnalysisGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,23 @@ async function hubForWeapon(weaponName) {
       .from('weapon_stats').select('weapon_type')
       .eq('game_slug', 'wardogs').eq('name', weaponName).maybeSingle();
     return shippedHubForWeaponType(data && data.weapon_type);
+  } catch (e) { return null; }
+}
+
+// Per-tier primary-vs-runner-up comparison from CURRENT wardogs_ttk (the two weapons at the pick's
+// ammo). Reads live data so a saved page reflects data fixes; null on any miss (the table just hides).
+async function currentComparison(j) {
+  const prim = j && j.recommendation && j.recommendation.primary;
+  const cand = (j && j.candidates && j.candidates.primary) || [];
+  const ru = prim ? cand.find((c) => c.weapon_name !== prim.weapon_name) : null;
+  if (!prim || !ru || !prim.ammo) return null;
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from('wardogs_ttk').select('weapon_name, ammo_type, armor_tier, ttk_ms')
+      .eq('game_slug', 'wardogs').eq('ammo_type', prim.ammo)
+      .in('weapon_name', [prim.weapon_name, ru.weapon_name]);
+    return perTierComparison({ ttk: data || [], primaryName: prim.weapon_name, runnerUpName: ru.weapon_name, ammo: prim.ammo });
   } catch (e) { return null; }
 }
 
@@ -92,6 +110,9 @@ export default async function SavedLoadoutPage({ params }) {
   };
   const primaryName = j.recommendation && j.recommendation.primary && j.recommendation.primary.weapon_name;
   const typeHub = await hubForWeapon(primaryName);   // matching class hub, or null -> arsenal fallback
+  // Per-tier comparison computed from CURRENT wardogs_ttk (not the stored snapshot), so a saved page's
+  // honest breakdown reflects any later data correction. Reads the two weapons at the pick's ammo.
+  const comparison = await currentComparison(j);
   const ghostLink = { display: 'inline-block', padding: '12px 22px', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 2, fontSize: 12, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' };
 
   return (
@@ -114,6 +135,7 @@ export default async function SavedLoadoutPage({ params }) {
       <LoadoutResult
         steps={j.steps || []}
         meta={meta}
+        comparison={comparison}
         analysis={j.analysis || ''}
         queried={j.queried || null}
         streaming={false}

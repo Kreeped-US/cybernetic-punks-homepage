@@ -15,6 +15,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { loadLoadoutContext } from '@/lib/wardogs/loadLoadoutContext';
 import { assembleLoadout } from '@/lib/wardogs/assembleLoadout';
 import { PLAYSTYLES, DEFAULT_PLAYSTYLE } from '@/lib/wardogs/loadoutSolver';
+import { perTierComparison, buildAnalysisFacts, validateAnalysisNumbers, deterministicSummary } from '@/lib/wardogs/loadoutAnalysisGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,13 +57,40 @@ export async function POST(req) {
     const careerLevel = toIntOrNull(body.careerLevel);
     const budget = toIntOrNull(body.budget);
     // the ONLY client-provided content that cannot be re-derived: the LLM analysis prose (escaped on render)
-    const analysis = typeof body.analysis === 'string' ? body.analysis.slice(0, 8000) : '';
+    let analysis = typeof body.analysis === 'string' ? body.analysis.slice(0, 8000) : '';
 
     // server-authoritative structured build (identical assembly to the live tool)
     const { weapons, ttk, ballistics, ammo } = await loadLoadoutContext();
     const assembled = assembleLoadout({ weapons, ttk, ballistics, ammo }, { careerLevel, budget, playstyle: playstyleKey });
     if (!assembled.recommendation || !assembled.recommendation.primary) {
       return Response.json({ error: 'Nothing to save -- no valid loadout.' }, { status: 400 });
+    }
+
+    // NUMBER GUARD (persistence backstop): the client submits the prose it received, but a public,
+    // crawlable page must not persist ungrounded numbers. Re-derive the facts server-side and, if the
+    // submitted analysis has any unmatched %/ms/rpm/$ (or is empty), replace it with the deterministic
+    // fact-only summary before storing. Logged (server-authoritative, allowlisted event name).
+    {
+      const primaryPick = assembled.recommendation.primary;
+      const runnerUpPick = (assembled.candidates.primary || []).find((c) => c.weapon_name !== primaryPick.weapon_name) || null;
+      const comparison = runnerUpPick
+        ? perTierComparison({ ttk, primaryName: primaryPick.weapon_name, runnerUpName: runnerUpPick.weapon_name, ammo: primaryPick.ammo })
+        : null;
+      const facts = buildAnalysisFacts({ assembled, comparison });
+      const wasEmpty = !analysis.trim();
+      const verdict = validateAnalysisNumbers(analysis, facts);
+      if (wasEmpty || !verdict.ok) {
+        analysis = deterministicSummary({ assembled, comparison, playstyleLabel: PLAYSTYLES[playstyleKey].label });
+        try {
+          await svc.from('site_events').insert({
+            event_name: 'loadouts_analysis_rejected',
+            event_data: { weapon: primaryPick.weapon_name, playstyle: playstyleKey, stage: 'save',
+              reason: wasEmpty ? 'empty' : 'number_guard', unmatched: (verdict.unmatched || []).slice(0, 6),
+              env: process.env.VERCEL_ENV || 'development' },
+            game_slug: 'wardogs',
+          });
+        } catch (e) { /* non-fatal */ }
+      }
     }
 
     const loadout_json = {

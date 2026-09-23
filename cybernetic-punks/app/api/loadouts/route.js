@@ -19,6 +19,19 @@ import { loadLoadoutContext } from '@/lib/wardogs/loadLoadoutContext';
 import { PLAYSTYLES, DEFAULT_PLAYSTYLE } from '@/lib/wardogs/loadoutSolver';
 import { assembleLoadout } from '@/lib/wardogs/assembleLoadout';
 import { streamLoadoutAnalysis } from '@/lib/wardogs/generateLoadout';
+import { perTierComparison, buildAnalysisFacts, validateAnalysisNumbers, deterministicSummary } from '@/lib/wardogs/loadoutAnalysisGuard';
+
+// Log a guard rejection to site_events (server-authoritative; env-stamped like /api/track, which also
+// allowlists this event name). Never throws -- logging must not break the response.
+async function logAnalysisRejected(svc, data) {
+  try {
+    await svc.from('site_events').insert({
+      event_name: 'loadouts_analysis_rejected',
+      event_data: { ...data, env: process.env.VERCEL_ENV || 'development' },
+      game_slug: 'wardogs',
+    });
+  } catch (e) { /* non-fatal */ }
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -91,8 +104,21 @@ export async function POST(req) {
     const { weapons, ttk, ballistics, ammo } = await loadLoadoutContext();
     const assembled = assembleLoadout({ weapons, ttk, ballistics, ammo }, { careerLevel, budget, playstyle: playstyleKey });
     const playstyleLabel = PLAYSTYLES[playstyleKey].label;
+    const armorWeights = PLAYSTYLES[playstyleKey].armorWeights;
 
-    // --- stream: steps (real) -> meta (solver picks) -> analysis deltas -> done ---
+    // Deterministic per-tier comparison (primary vs runner-up at the pick's ammo) -- computed here so
+    // it renders WITH the meta (never waits on the model), grounds the prompt, and seeds the guard.
+    const primaryPick = assembled.recommendation && assembled.recommendation.primary;
+    const runnerUpPick = primaryPick
+      ? (assembled.candidates.primary || []).find((c) => c.weapon_name !== primaryPick.weapon_name) || null
+      : null;
+    const comparison = (primaryPick && runnerUpPick)
+      ? perTierComparison({ ttk, primaryName: primaryPick.weapon_name, runnerUpName: runnerUpPick.weapon_name, ammo: primaryPick.ammo })
+      : null;
+    const facts = buildAnalysisFacts({ assembled, comparison });
+    const summary = deterministicSummary({ assembled, comparison, playstyleLabel });
+
+    // --- stream: steps (real) -> meta (picks + comparison) -> guarded analysis deltas -> done ---
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -100,13 +126,36 @@ export async function POST(req) {
         try {
           // 1) the solver's REAL ordered steps -- honest narration source (not a fake timer)
           send({ type: 'steps', steps: assembled.steps });
-          // 2) the structured picks + provenance + per-pick detail -- insight-first render scaffold
+          // 2) the structured picks + provenance + per-pick detail + the per-tier comparison table --
+          //    all deterministic, so the client renders them immediately (the model has not run yet)
           send({ type: 'meta', recommendation: assembled.recommendation, candidates: assembled.candidates,
                  provenance: assembled.provenance, budget: assembled.budget, playstyle: assembled.playstyle,
-                 detail: assembled.detail, faction });
-          // 3) the streamed insight prose (the LLM explains the picks; it never picks)
-          for await (const chunk of streamLoadoutAnalysis(assembled, { careerLevel, budget, playstyleLabel })) {
-            send({ type: 'delta', text: chunk });
+                 detail: assembled.detail, comparison, faction });
+          // 3) BUFFER the model prose, then run the NUMBER GUARD before showing any of it. On a failed
+          //    guard (or a model error/empty), stream the deterministic summary instead + log it. The
+          //    client shows a placeholder in the read slot while this buffers.
+          let full = '';
+          try {
+            for await (const chunk of streamLoadoutAnalysis(assembled, { careerLevel, budget, playstyleLabel, comparison, armorWeights })) {
+              full += chunk;
+            }
+          } catch (genErr) {
+            console.error('[loadouts] analysis generation error:', genErr);
+            full = '';
+          }
+          const verdict = validateAnalysisNumbers(full, facts);
+          let finalText = full;
+          if (!full.trim() || !verdict.ok) {
+            finalText = summary;
+            await logAnalysisRejected(gateSupabase, {
+              weapon: primaryPick ? primaryPick.weapon_name : null, playstyle: playstyleKey,
+              stage: 'stream', reason: !full.trim() ? 'empty_or_model_error' : 'number_guard',
+              unmatched: (verdict.unmatched || []).slice(0, 6),
+            });
+          }
+          // stream the validated (or fallback) text as paragraph deltas
+          for (const para of finalText.split(/\n\s*\n/)) {
+            if (para.trim()) send({ type: 'delta', text: para.trim() + '\n\n' });
           }
           send({ type: 'done' });
         } catch (err) {
