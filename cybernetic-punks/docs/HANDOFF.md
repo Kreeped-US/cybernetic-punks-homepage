@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Remove leftover editor persona portraits from Marathon surfaces (fix/related-intel-depersona)
+Recovery-bundle (Brief 2a) follow-up. The de-person bundle switched bylines to desk labels, but four
+MARATHON surfaces still rendered /images/editors/<name>.jpg persona portraits (Ahrefs 2026-09-22: 902
+image refs alt=desk label, 2 alt="NEXUS"). Removed the portrait <img> from every ungated render site;
+kept the desk-label text + color. Game-agnostic already: the shared components/game/GameArticle.js
+(wardogs/dmz/pubg/bodycam) renders an initial badge, no portrait -- untouched.
+
+WHAT SHIPPED (5 files):
+- app/marathon/intel/[slug]/page.js: (a) Related Intel card -- removed the circle-avatar <img>, kept the
+  edTag(rel.editor) desk-label span + color. (b) Article byline -- removed the DEAD editorHasPortrait
+  <img> branch (hasPortrait is false for every desk, so it already rendered the symbol/initial); now
+  renders the glyph span directly. Dropped the now-unused editorHasPortrait import.
+- app/marathon/ranked/RankedClient.js: removed the 24px circle-avatar <img>; label {article.editor}
+  (raw codename) -> {editorByline(article.editor)} (desk label). Dropped the unused portrait var; added
+  the editorByline import.
+- app/marathon/factions/FactionClient.js: same as Ranked (22px avatar removed; label -> editorByline;
+  portrait var dropped; import added).
+- app/HomeIntelFeed.js: the no-thumbnail hero FALLBACK was a persona portrait <img alt={codename}>;
+  replaced with a de-personed desk-glyph badge (symbol on a desk-colored gradient). Dropped the unused
+  portrait var. (The label already used edTag -> desk label.)
+
+VERIFY:
+- npm run build -> exit 0.
+- grep app/ + components/ for /images/editors/: only a COMMENT remains (app/marathon/intel/page.js:38);
+  ZERO editor-portrait <img> render sites. The only path that could render one is the gated
+  components/network/EditorPortrait.js, whose sole caller (StaffCard, /editors -> 301 /about) passes
+  src=null because editorHasPortrait is false for every desk. Built-output /images/editors/ strings are
+  the inert roster `image:` data + that gated path + comments, not renders.
+- alt="NEXUS" eliminated: the raw-codename alt came from HomeIntelFeed/Ranked/Faction (alt={article.editor});
+  all such <img> are gone. On /marathon/intel/[slug], alt was already edTag (all 6 feed_items.editor
+  values resolve to desk labels).
+
+CONSTRAINTS HONORED: kept desk-label text + color; did NOT delete /public/images/editors/*.jpg
+(external/cached refs); no URL/title/canonical/route changes; no roster data changes;
+GameArticle.js + StaffCard.js untouched.
+
+NOTE (pre-existing, not mine, not build-blocking): RankedClient.js carries 5 pre-existing
+react/no-unescaped-entities eslint errors (lines 265/430/494/769) in prose text, far from this change;
+the added lines are clean and the build passes.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Audit: Ahrefs 2026-09-22 crawl + GSC demand check (read-only, no code change)
 LINKS-TO-REDIRECTS: STALE. The /advisor exact-source rule (c28edc1, deployed 2026-09-23) makes
 /advisor?shell=X one hop (301, query preserved), verified on production. No action.

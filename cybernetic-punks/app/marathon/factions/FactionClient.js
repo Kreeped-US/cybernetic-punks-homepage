@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { editorByline } from '@/lib/editors/roster'; // desk label (de-personed byline), not the raw codename
 
 // Visual styling only (not data). Faction identity now comes from the DB.
 var FACTION_ORDER = ['Cyberacme', 'Nucaloric', 'Traxus', 'Mida', 'Arachne', 'Sekiguchi'];
@@ -271,7 +272,6 @@ export default function FactionClient({ data }) {
             {factionArticles.map(function(article) {
               var color = EDITOR_COLORS[article.editor] || '#888';
               var symbol = EDITOR_SYMBOLS[article.editor] || '·';
-              var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               return (
                 <Link key={article.id} href={'/marathon/intel/' + article.slug} className="f-card"
                   style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', overflow: 'hidden', textDecoration: 'none' }}>
@@ -283,10 +283,8 @@ export default function FactionClient({ data }) {
                   )}
                   <div style={{ padding: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + color + '40', flexShrink: 0 }}>
-                        <img src={portrait} alt={article.editor} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: color }}>{symbol} {article.editor}</span>
+                      {/* De-personed: desk label + glyph, no persona portrait avatar (Brief 2a follow-up). */}
+                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: color }}>{symbol} {editorByline(article.editor)}</span>
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 6 }}>
                       {article.headline}

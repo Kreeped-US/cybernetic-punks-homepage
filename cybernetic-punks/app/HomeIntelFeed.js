@@ -112,7 +112,6 @@ export default function HomeIntelFeed(props) {
             {curated.map(function(article) {
               var color = edColor(article.editor);
               var symbol = edSymbol(article.editor);
-              var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               var thumb = article.thumbnail || null;
 
               return (
@@ -131,15 +130,14 @@ export default function HomeIntelFeed(props) {
                     minHeight: 180,
                   }}>
 
-                  {/* Thumbnail or editor portrait fallback */}
+                  {/* Thumbnail, or a de-personed desk-glyph badge fallback (no persona portrait -- Brief 2a). */}
                   <div style={{ position: 'relative', height: 90, background: '#0e1014', overflow: 'hidden', flexShrink: 0 }}>
                     {thumb ? (
                       <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <>
-                        <img src={portrait} alt={article.editor} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 0%, ' + color + '22 60%, ' + color + '44 100%)' }} />
-                      </>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg, ' + color + '18 0%, ' + color + '3a 100%)' }}>
+                        <span aria-hidden="true" style={{ color: color, fontSize: 34, fontWeight: 800, fontFamily: 'Orbitron, monospace', lineHeight: 1 }}>{symbol}</span>
+                      </div>
                     )}
                   </div>
 

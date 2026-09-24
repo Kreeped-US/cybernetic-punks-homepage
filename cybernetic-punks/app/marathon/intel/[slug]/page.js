@@ -4,7 +4,7 @@ import { getUserAvatars } from '@/lib/gather/twitch';
 import { Sep } from '@/components/Sep';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEditorDisplay, editorByline, editorInitial, editorHasPortrait } from '@/lib/editors/roster';
+import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import ViewTracker from '@/components/ViewTracker';
@@ -1133,9 +1133,8 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
             <Link href={'/marathon/intel/' + item.editor.toLowerCase()} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: editor.color + '15', border: '1px solid ' + editor.color + '35', borderRadius: 2, padding: '4px 10px', textDecoration: 'none' }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + editor.color + '50', background: '#0e1014', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {editorHasPortrait(item.editor)
-                  ? <img src={'/images/editors/' + item.editor.toLowerCase() + '.jpg'} alt={edTag(item.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                  : <span aria-hidden="true" style={{ color: editor.color, fontSize: 11, lineHeight: 1 }}>{editor.symbol || editorInitial(item.editor)}</span>}
+                {/* De-personed: desk glyph/initial only -- no persona portrait (Brief 2a follow-up). */}
+                <span aria-hidden="true" style={{ color: editor.color, fontSize: 11, lineHeight: 1 }}>{editor.symbol || editorInitial(item.editor)}</span>
               </div>
               <span style={{ fontSize: 10, color: editor.color, letterSpacing: 2, fontWeight: 700 }}>{editorByline(item.editor)}</span>
             </Link>
@@ -1262,9 +1261,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
                     transition: 'background 0.1s',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid ' + relEditor.color + '40', background: '#0e1014' }}>
-                        <img src={'/images/editors/' + rel.editor.toLowerCase() + '.jpg'} alt={edTag(rel.editor)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                      </div>
+                      {/* De-personed: desk label only -- no persona portrait avatar (Brief 2a follow-up). */}
                       <span style={{ fontSize: 8, color: relEditor.color, letterSpacing: 2, fontWeight: 700 }}>{edTag(rel.editor)}</span>
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.8)', lineHeight: 1.4, marginBottom: 6 }}>{rel.headline}</div>

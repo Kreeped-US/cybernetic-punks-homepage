@@ -26,6 +26,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Sep } from '@/components/Sep';
+import { editorByline } from '@/lib/editors/roster'; // desk label (de-personed byline), not the raw codename
 
 // -- STATIC CONFIG ----------------------------------------------
 const TIERS = [
@@ -680,7 +681,6 @@ export default function RankedClient({ data }) {
             {data.rankedArticles.slice(0, 8).map(function(article) {
               var color = EDITOR_COLORS[article.editor] || '#888';
               var symbol = EDITOR_SYMBOLS[article.editor] || '·';
-              var portrait = '/images/editors/' + (article.editor || '').toLowerCase() + '.jpg';
               var thumb = article.thumbnail;
               return (
                 <Link key={article.id} href={'/marathon/intel/' + article.slug} className="r-card" style={{
@@ -702,10 +702,8 @@ export default function RankedClient({ data }) {
                   )}
                   <div style={{ padding: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', overflow: 'hidden', border: '1px solid ' + color + '40', flexShrink: 0 }}>
-                        <img src={portrait} alt={article.editor} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: color }}>{symbol} {article.editor}</span>
+                      {/* De-personed: desk label + glyph, no persona portrait avatar (Brief 2a follow-up). */}
+                      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: color }}>{symbol} {editorByline(article.editor)}</span>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 8 }}>
                       {article.headline}
