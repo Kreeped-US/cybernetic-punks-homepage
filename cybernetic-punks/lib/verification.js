@@ -18,7 +18,10 @@
 //                     neither assert it as fact nor throw it away.
 //   UNCHECKED      not CONFIRMED, AND patch_verified is null/empty or "s1".
 //                  Raw, unchecked ingest — or a flag with nothing behind it.
-//                  -> HARD hedge: do NOT state the number; talk strategy, not figures.
+//                  -> HONEST-NULL (2026-09-24): the NUMBER is withheld from the prompt entirely
+//                     (renderers omit it, e.g. editorCore.renderCradlePerkLine) rather than passed
+//                     with an "unconfirmed" label the model then narrates. Talk strategy, not figures;
+//                     the model never sees the number, so it cannot leak pipeline/meta talk about it.
 //
 // Note: a verified=true row with NO source is no longer CONFIRMED — it falls
 // through to the patch_verified branch like any other unconfirmed row, landing
@@ -89,9 +92,10 @@ export function verificationTag(row) {
 export const VERIFICATION_NOTE =
   '--- DATA CONFIDENCE NOTE (three registers - honor exactly) ---\n' +
   'Stat lines below may carry a confidence marker. Treat each register differently:\n' +
-  '1. [UNVERIFIED] - NOBODY has confirmed this value; it is raw, unchecked ingest. ' +
-  'You MUST NOT state its precise numbers (damage, HP, RPM, magazine size, percentages, durations, credits) as fact. ' +
-  'Describe its role/strategy qualitatively and say the exact values are unconfirmed.\n' +
+  '1. [UNVERIFIED] - NOBODY has confirmed this value; it is raw, unchecked ingest, and its precise ' +
+  'numbers (damage, HP, RPM, magazine size, percentages, durations, credits) are WITHHELD from the ' +
+  'data below (honest-null). Describe its role/strategy qualitatively from the non-numeric facts you ' +
+  'were given; do NOT state or estimate a number for it, and do NOT remark on its data status in the article.\n' +
   '2. [SOURCE-LISTED] - sources agree and are current, but no human has confirmed it in-game. ' +
   'ATTRIBUTE the number; do NOT assert it as fact and do NOT throw it away. ' +
   'Use phrasing like "reported as ~150 HP", "sources list it at 450 RPM", "listed at 24 damage". ' +

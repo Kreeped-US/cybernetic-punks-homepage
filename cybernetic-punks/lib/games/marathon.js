@@ -21,6 +21,7 @@
 //   editorial.*            <- app/api/cron/route.js editors[] + vercel.json cron
 
 import { MARATHON_GREEN } from '../brandColors.js';
+import { MARATHON_ROUTES } from './marathonRoutes.js';
 
 export const marathon = {
   slug: 'marathon',
@@ -44,7 +45,10 @@ export const marathon = {
     readerTerm: 'Runner',
     readerTermPlural: 'Runners',
     grades: { cipher: 'Runner Grade', nexus: 'Grid Pulse', dexter: 'Loadout Grade' },
-    links: { cradle: '/cradle', factions: '/factions', meta: '/meta' },
+    // CANONICAL /marathon/* routes from the app-router allowlist (2026-09-24). Previously bare
+    // ('/cradle' etc.), which only resolved via a next.config 301 AND trained the writer to emit bare
+    // route literals in prose (PIPELINE_LEAK). Prompt-path only -- no page renders these (verified).
+    links: { cradle: MARATHON_ROUTES.cradle, factions: MARATHON_ROUTES.factions, meta: MARATHON_ROUTES.meta },
   },
 
   // Pre-publish corroboration gate mode (lib/gsc/prePublishGate.js). 'log-only' = fail-OPEN:
@@ -365,10 +369,10 @@ export const marathon = {
   editorial: {
     cadenceCron: '0 19 * * *',
     // LAYER B primary-tool CTA (2026-09-18): the MIRANDA/DEXTER "planning tools" prompt line reads
-    // label+href from here via {{kit:primaryTool.*}} instead of the old {{cnp:link.cradle}} token.
-    // Values reproduce the prior rendering EXACTLY (label "Cradle planner" + href "/cradle" -- what
-    // the hardcoded label + vocabulary.links.cradle produced), so Marathon's prompt is byte-identical.
-    primaryTool: { label: 'Cradle planner', href: '/cradle' },
+    // label+href from here via {{kit:primaryTool.*}}. Href is the CANONICAL /marathon/cradle route
+    // from the app-router allowlist (2026-09-24) -- the CTA is emitted as a markdown link, never a
+    // bare path (was '/cradle', which trained the model to leak bare route literals; PIPELINE_LEAK).
+    primaryTool: { label: 'Cradle planner', href: MARATHON_ROUTES.cradle },
     // GENERATION SWITCH (Stage 3). The news-generation scheduler produces for a game
     // ONLY when its config declares generateNews:true. This is deliberately SEPARATE from
     // `indexable` (an SEO/sitemap flag): a game can be indexable without generating, and
@@ -576,13 +580,13 @@ In Season 2, a shell's STATS are tuned through THE CRADLE, not faction ranks. Th
 In Season 2, Runner shell stats are improved through THE CRADLE, not faction ranks. Players spend Energy (about one per level) across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passives and named perks at Energy breakpoints. It is shared across all shells, fully re-spec-able at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below has the real tracks, perks, and breakpoints - teach only those. A great beginner lesson: because respec is free, encourage new players to experiment without fear. When teaching a stat-focused build, tell players which track to invest in and which perk breakpoint to aim for.`,
           // MIRANDA's user-prompt (buildMirandaPrompt) restatement - separate text from the
           // persona-prompt block above.
-          mirandaGuide: `SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec, seasonal reset), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the planner at {{cnp:link.cradle}}. Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to {{cnp:link.factions}}. Use both links sparingly and only when they genuinely help the reader.`,
+          mirandaGuide: `SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec, seasonal reset), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the [Cradle planner]({{cnp:link.cradle}}) (write it as that markdown link, never a bare path). Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to the [Factions]({{cnp:link.factions}}) page (same markdown-link rule). Use both links sparingly and only when they genuinely help the reader.`,
         },
         economy: {
           dexter: `FACTION GEAR AWARENESS (S2 model):
 Factions in Season 2 are about GEAR ACCESS and reputation, not stat power. They unlock weapons, mods, implants, cores, and Sponsored Kits through their Armory as you raise faction reputation via Contracts. Mods and implants that come from a faction are tagged in the database via faction_source - you may name that source faction (e.g. "this mod comes from the Arachne Armory").
-CITING FACTION SPECIFICS - VERIFIED ONLY: A partial set of verified S2 faction Armory data is injected below (VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks). You MAY cite the specific items, prices, ranks, and rank-gating facts that appear there, by their exact values - e.g. naming a verified item and the rank that unlocks it. For any faction or item NOT in those verified blocks (factions with no rows, or items shown as "unnamed"), you must NOT state a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination. Speak about those in general terms and point readers to {{cnp:link.factions}}. Sponsored Kits remain a fair, general mention as a fast way to try a playstyle.`,
-          miranda: `FACTION GUIDE RESPONSIBILITY (S2 model): In Season 2, factions are about GEAR and reputation, not stats. You may tell players which faction's Armory a piece of gear comes from and explain that factions gate gear behind reputation built through Contracts. A partial set of VERIFIED faction Armory data is injected below - you MAY cite the specific items, prices, and rank-gates that appear in the VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks, by their exact values. For any faction or item NOT in those verified blocks, do NOT cite a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination; speak generally and point players to {{cnp:link.factions}}. Do not tell players to grind factions for stat bonuses - that S1 system is gone; stats come from the Cradle now. You can point new players to Sponsored Kits as a low-risk way to try a faction's playstyle before committing.`,
+CITING FACTION SPECIFICS - VERIFIED ONLY: A partial set of verified S2 faction Armory data is injected below (VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks). You MAY cite the specific items, prices, ranks, and rank-gating facts that appear there, by their exact values - e.g. naming a verified item and the rank that unlocks it. For any faction or item NOT in those verified blocks (factions with no rows, or items shown as "unnamed"), you must NOT state a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination. Speak about those in general terms and point readers to the [Factions]({{cnp:link.factions}}) page (write it as that markdown link, never a bare path). Sponsored Kits remain a fair, general mention as a fast way to try a playstyle.`,
+          miranda: `FACTION GUIDE RESPONSIBILITY (S2 model): In Season 2, factions are about GEAR and reputation, not stats. You may tell players which faction's Armory a piece of gear comes from and explain that factions gate gear behind reputation built through Contracts. A partial set of VERIFIED faction Armory data is injected below - you MAY cite the specific items, prices, and rank-gates that appear in the VERIFIED ARMORY STOCK and VERIFIED FACTION RANK-GATING blocks, by their exact values. For any faction or item NOT in those verified blocks, do NOT cite a rank number, Credit cost, or material cost - that data is uncaptured and inventing it is a hallucination; speak generally and point players to the [Factions]({{cnp:link.factions}}) page (write it as that markdown link, never a bare path). Do not tell players to grind factions for stat bonuses - that S1 system is gone; stats come from the Cradle now. You can point new players to Sponsored Kits as a low-risk way to try a faction's playstyle before committing.`,
         },
       },
 
@@ -615,29 +619,30 @@ When the community reacts to any of these, that's your lane. Do NOT reference th
       // fetchGameContext comment and docs/HANDOFF.md.) Faction sub-labels (FACTIONS /
       // VERIFIED ARMORY STOCK / VERIFIED FACTION RANK-GATING) are deliberately LEFT in code
       // - they are welded to Marathon-shaped faction queries and move with the future
-      // faction-model generalization. The fence's "/factions" is a known G2 nav-literal,
-      // left as-is (not tokenized here).
+      // faction-model generalization. The fence's faction link now uses the canonical
+      // MARATHON_ROUTES.factions path as a markdown link (2026-09-24; was the bare "/factions"
+      // nav-literal that trained the model to emit bare route paths -- PIPELINE_LEAK).
       contextBlocks: {
-        cradleHeader: `\n\n--- CRADLE PROGRESSION DATABASE (Season 2 shell stat system) ---`,
+        cradleHeader: `\n\n--- CRADLE PROGRESSION (Season 2 shell stat system -- internal reference, do not name in the article) ---`,
         cradleIntro: `\nIn Season 2, shell STATS come from the Cradle. Players spend Energy (about one per Runner level) across six stat tracks. Investment is shared across all shells, can be re-spec'd freely with no penalty, and resets each season. Named PERKS unlock at specific Energy breakpoints. Use ONLY the tracks, perks, and breakpoints below. Do not invent perks or Energy costs.\n`,
         cradleEnd: `--- END CRADLE ---`,
-        factionHeader: `\n\n--- FACTION SYSTEM DATABASE ---`,
+        factionHeader: `\n\n--- FACTION SYSTEM (internal reference, do not name in the article) ---`,
         factionIntro: `\nMarathon has 6 factions. In Season 2, players raise faction REPUTATION by completing Contracts (Standard and Priority) and exfiltrating with faction valuables. Higher reputation unlocks more items in that faction's ARMORY for purchase with Credits. Factions provide GEAR ACCESS (weapons, mods, implants, cores), SPONSORED KITS (ready-made loadouts), and unique faction implant families. Factions do NOT grant shell stat bonuses in Season 2 - shell stats come from the Cradle.\n`,
-        factionFence: `\nFENCE - READ CAREFULLY: The verified data above is PARTIAL. You may cite the specific items, prices, ranks, and rank-gating facts shown above by their exact values. For any faction or item NOT listed above (e.g. factions with no rows, or items shown only as "unnamed"), you MUST speak in general terms only - do NOT invent an item name, price, rank, or cost. Point readers to /factions for fuller progression. Inventing a faction specific not shown above is a hallucination.\n`,
+        factionFence: `\nFENCE - READ CAREFULLY: The verified data above is PARTIAL. You may cite the specific items, prices, ranks, and rank-gating facts shown above by their exact values. For any faction or item NOT listed above (e.g. factions with no rows, or items shown only as "unnamed"), you MUST speak in general terms only - do NOT invent an item name, price, rank, or cost. Point readers to the [Factions](${MARATHON_ROUTES.factions}) page for fuller progression (write it as that markdown link, never a bare path). Inventing a faction specific not shown above is a hallucination.\n`,
         factionEnd: `--- END FACTION SYSTEM ---`,
         worldHeader: `\n\n--- GAME WORLD: MAPS, ZONES, BOSSES, EVENTS ---\n`,
         worldModesHeader: `\n\n--- GAME MODES ---\n`,
         worldFence: `\nFENCE - READ CAREFULLY: The maps, zones, bosses, events, and modes above are the COMPLETE set of verified game-world facts. Cite ONLY these by their exact names and descriptions. Do NOT invent map names, zone names, boss names (e.g. there is no "Upper Complex Warden" - the Night Marsh boss is the Frost Warden), event names, or mode mechanics not listed here. If a map is marked a variant, it shares its parent map's zones. If something is not listed, say it is not yet confirmed rather than inventing it.\n`,
         worldEnd: `--- END GAME WORLD ---`,
-        modsHeader: `\n\n--- WEAPON MODS DATABASE (use exact names only) ---\n`,
+        modsHeader: `\n\n--- WEAPON MODS (use exact names only; internal reference, do not name in the article) ---\n`,
         modsEnd: `\n--- END MODS ---`,
-        coresHeader: `\n\n--- SHELL CORES DATABASE (shell-specific upgrades, use exact names) ---\n`,
+        coresHeader: `\n\n--- SHELL CORES (shell-specific upgrades, use exact names; internal reference, do not name in the article) ---\n`,
         coresEnd: `\n--- END CORES ---`,
-        implantsHeader: `\n\n--- IMPLANTS DATABASE (slot upgrades) ---\n`,
+        implantsHeader: `\n\n--- IMPLANTS (slot upgrades; internal reference, do not name in the article) ---\n`,
         implantsEnd: `\n--- END IMPLANTS ---`,
-        weaponsHeader: `\n\n--- WEAPON STATS DATABASE ---\n`,
+        weaponsHeader: `\n\n--- WEAPON STATS (internal reference, do not name in the article) ---\n`,
         weaponsEnd: `\n--- END WEAPONS ---`,
-        shellsHeader: `\n\n--- SHELL ABILITIES DATABASE (S2 four-part kit: Prime / Tactical / two Traits. Use ONLY these ability names and effects. If a slot says "not yet revealed," say so - do not invent the ability.) ---\n`,
+        shellsHeader: `\n\n--- SHELL ABILITIES (S2 four-part kit: Prime / Tactical / two Traits. Use ONLY these ability names and effects. If a slot says "not yet revealed," say so - do not invent the ability. Internal reference, do not name in the article.) ---\n`,
         shellsEnd: `\n--- END SHELLS ---`,
       },
 
@@ -705,7 +710,7 @@ RULES:
 - No -guide suffix on any canonical category tag
 - No plural variants of canonical category tags
 - Each article should have 3-7 tags total
-- Always include at least 1 canonical category tag so your article appears on the appropriate /guides/[category] page`,
+- Always include at least 1 canonical category tag so your article appears on the appropriate Field Guides category page`,
     },
   },
 

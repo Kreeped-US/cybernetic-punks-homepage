@@ -7,6 +7,81 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Writer-template fix: stop PIPELINE_LEAK at the source (fix/writer-no-leaks)
+The PIPELINE_LEAK gate (0f22d4b) HOLDS pipeline/meta text + bare route paths; 56/370 published Marathon
+articles carried them. This fixes GENERATION so drafts stop being held: the prompt no longer teaches the
+model to emit bare paths or to narrate data provenance.
+
+DOCTRINE SHIFT (recorded): UNVERIFIED (UNCHECKED) numbers are now OMITTED from the prompt, NOT NARRATED.
+Previously an [UNVERIFIED] value was passed WITH its number and the model was told to "say the exact values
+are unconfirmed" -- which is exactly the leak. Now the number never reaches the prompt (honest-null): the
+model cannot narrate a figure it never saw. SOURCE-LISTED attribution ("reported as ~150 HP") is UNCHANGED;
+the never-inflate STATUS RULE is UNCHANGED.
+
+ROUTES -> markdown-only, from an app-router allowlist:
+- NEW lib/games/marathonRoutes.js -- hand-listed MARATHON_ROUTES {cradle,factions,meta} -> canonical
+  /marathon/<seg> (was bare /cradle etc., which only resolved via a next.config 301 AND trained bare-path
+  emission). Companion test asserts each entry has a real app/marathon/<seg>/page.js (router-backed).
+- lib/games/marathon.js: vocabulary.links + editorial.primaryTool.href now read from MARATHON_ROUTES.
+  CONDITION-1 GATE (verified before editing): the ONLY consumers of links.*/primaryTool.* are
+  promptVocab.resolveVocab/resolveKit (prompt path) via editorCore chokepoint + keywordFraming + the render
+  harness + tests. NO page/component renders them (the Footer 'links' is a different config key). So changing
+  the values changes only what the prompt teaches, never a live page link.
+- CTA wording (shared, editorCore.js:404/464/465/528/529 + marathon.js mirandaGuide/faction blocks/
+  factionFence) rewritten to emit [label](/path) MARKDOWN links, never "the tool at /path". Global rule added
+  to DATA_INTEGRITY_RULES: internal links are markdown-only, never a bare slash-path in prose.
+
+META-TALK removed (item 3c):
+- Deleted "say the exact values are unconfirmed" + "in your data" from all five persona clauses
+  (editorCore.js) and from VERIFICATION_NOTE's [UNVERIFIED] register (verification.js). Added a global
+  DATA_INTEGRITY rule: never mention your data, "the database", sources, context, or a value's verification
+  status in the article body.
+- Reworded DATA_INTEGRITY_RULES "the database" -> "the reference data" (priming word the model echoed as
+  "in the database"), and renamed the 7 Marathon contextBlocks "... DATABASE" headers -> "(internal
+  reference, do not name in the article)".
+
+HONEST-NULL renderer: extracted editorCore.renderCradlePerkLine(n) (exported, unit-tested). UNCHECKED perk
+-> "@ breakpoint", NO number, NO [UNVERIFIED] tag. CONFIRMED/SOURCE-LISTED unchanged (number kept;
+SOURCE-LISTED keeps its attribution marker). NOTE: honest-null number-omission is applied to the CRADLE PERK
+(the identified construction + condition-4 test target). The narration-clause removal stops the leak PHRASE
+for ALL stat types; extending literal number-omission to the weapon/mod/core/implant/shell inline stat lines
+(editorCore.js ~660-975, ~8 field-specific format strings, NOT harness-verifiable) is a scoped FOLLOW-UP.
+
+DISCOVERED + neutralized (additional bare-path sites beyond the CTA scope, same leak class):
+- editorCore.js:321 "/about" (authorship/schema ref) -> "the About page".
+- marathon.js tagStandard "/guides/[category]" -> "the Field Guides category page".
+Both are site-mechanics references (not reader CTAs), reworded to remove the bare path (condition-4 requires
+zero bare paths in any rendered Marathon prompt).
+
+VERIFICATION (conditions 2-5):
+- Cond 2: marathonRoutes.test.mjs asserts each allowlist entry has app/marathon/<seg>/page.js. PASS.
+- Cond 3: rendered ALL games before/after (scripts/render-prompts.mjs). Marathon: intended lines change.
+  Non-marathon (wardogs/dmz/pubg-dednet/bodycam): every diff line is one of the intended SHARED edits
+  (provenance-clause reword, VERIFICATION_NOTE honest-null, reference-data/no-meta-talk, no-bare-path markdown
+  rewrite, /about reword). No unexpected line. (Header renames are runtime contextBlocks -> not in the harness
+  render, correct.) PRE-EXISTING DEBT surfaced: for games without a primaryTool (dmz/pubg/bodycam) the
+  Marathon-shaped STAT/GEAR CTA lines render empty tokens ("[]()") -- unchanged in nature, those games are
+  not generating yet; real fix is CTA generalization (separate).
+- Cond 4: editorCore.writerLeaks.test.mjs -- no rendered Marathon prompt contains a bare /segment outside a
+  markdown link; UNCHECKED cradle perk renders with no number. PASS.
+- Cond 5: the rendered CTA markdown-link lines PASS the PIPELINE_LEAK detector (0 findings). PASS.
+- npm run build -> exit 0. node --test (gate + marathonRoutes + writerLeaks + promptVocab) -> 175 pass / 0 fail.
+
+OUT OF SCOPE (next brief): generateBuild.js (advisor) shares the same [UNVERIFIED]/"exact values are
+unconfirmed" + cradle-DATABASE pattern and its output is public too -- separate brief.
+
+DMZ PRE-GENERATION BLOCKER: games WITHOUT primaryTool/factions (dmz/pubg-dednet/bodycam) render the
+Marathon-shaped STAT/GEAR CTA lines with EMPTY markdown-link tokens ("[]()"). The CTA lines must be made
+game-aware (render-empty when a game has no such tool/page) BEFORE dmz generateNews is enabled, or dmz drafts
+will carry broken empty links.
+FOLLOW-UP: extend honest-null number omission from the cradle perk to the NON-CRADLE stat lines
+(weapon/mod/core/implant/shell, editorCore.js ~660-990). Those UNCHECKED lines currently still pass the number
+WITH the [UNVERIFIED] marker (the prohibition "never state its precise numbers" + the global no-meta-talk rule
+cover the narration; number-omission is the remaining honest-null step).
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare it to
+the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- PIPELINE_LEAK pre-publish gate stage (feat/gate-pipeline-leak)
 New game-agnostic gate stage that HOLDS a draft when PIPELINE/META vocabulary or a BARE ROUTE PATH
 leaks into reader-facing text -- the dominant driver of operator draft rejections (2026-09-24 noon

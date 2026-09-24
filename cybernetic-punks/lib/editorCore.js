@@ -1,12 +1,29 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL } from './models';
-import { verificationTag, VERIFICATION_NOTE } from './verification';
+import { verificationTag, verificationState, VERIFICATION_NOTE } from './verification';
 import { availableOnMap } from './availability';
 import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
 import { HEADLINE_RULES, HEADLINE_MAX_CHARS } from './headlineRules';
 import { makeStoreMinter, storeRowCitationEnabled, toolWithStoreCites, renderRelationLine } from './gather/blockId';
 import { applyVocab, resolveVocab, applyKit, resolveKit, applyToolEnums } from './editors/promptVocab';
+
+// HONEST-NULL cradle perk renderer (doctrine 2026-09-24). Renders one Cradle PERK line for the
+// editor prompt. For an UNCHECKED (raw, unconfirmed) perk the Energy NUMBER never reaches the prompt:
+// the model cannot narrate "the exact values are unconfirmed" about a number it never saw. The perk
+// NAME and its qualitative EFFECT still render (recognition preserved); only the unverified figure is
+// withheld, and no [UNVERIFIED] hedge marker is appended (there is nothing left to hedge). CONFIRMED
+// and SOURCE-LISTED perks are UNCHANGED: they render their cumulative Energy, and SOURCE-LISTED keeps
+// its attribution marker via verificationTag. Extracted + exported so it is unit-testable in
+// isolation (the surrounding getGameContext needs a live DB). PURE.
+export function renderCradlePerkLine(n) {
+  var unchecked = verificationState(n) === 'UNCHECKED';
+  // honest-null: suppress the Energy figure for an unchecked perk; it renders "@ breakpoint" instead.
+  var energy = (!unchecked && n.cumulative_energy != null) ? (n.cumulative_energy + ' Energy') : 'breakpoint';
+  // no hedge marker on an omitted number (the tag would be meta-talk with nothing to qualify).
+  var tag = unchecked ? '' : verificationTag(n);
+  return '  PERK "' + n.node_name + '" @ ' + energy + (n.effect ? ' - ' + n.effect : '') + tag;
+}
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
 // instantiation until runtime. Next.js 16 evaluates module-scope code
@@ -59,13 +76,15 @@ const GAME_CONTEXT_TTL_MS = 5 * 60 * 1000;
 const DATA_INTEGRITY_RULES = `
 
 DATA INTEGRITY RULES - CRITICAL:
-- Every {{kit:entityList}} you reference MUST appear in the database injected below. Do not invent items.
-{{kit:gearSystemRule}}- {{kit:progressionSystem^}} perks, their stat tracks, and their {{kit:progressionMetric}} breakpoints MUST match the database EXACTLY. Do not invent perks or guess {{kit:progressionMetric}} costs.
-- Stat values (damage, fire rate, magazine size, health, shield, speed) MUST come from the database. Never estimate.
+- Every {{kit:entityList}} you reference MUST appear in the reference data injected below. Do not invent items.
+{{kit:gearSystemRule}}- {{kit:progressionSystem^}} perks, their stat tracks, and their {{kit:progressionMetric}} breakpoints MUST match the reference data below EXACTLY. Do not invent perks or guess {{kit:progressionMetric}} costs.
+- Stat values (damage, fire rate, magazine size, health, shield, speed) MUST come from the reference data below. Never estimate.
 - If you are not certain of a stat, unlock requirement, or {{kit:progressionSystem^}} breakpoint, OMIT it from the article rather than guess.
-- "+5% weapon handling" or "approximately 1500 credits" are HALLUCINATIONS unless those exact values appear in the database below.
+- "+5% weapon handling" or "approximately 1500 credits" are HALLUCINATIONS unless those exact values appear in the reference data below.
 - It is better to write a shorter article with verified facts than a longer article with invented details.
 - SOURCE CITATION: in cited_blocks, list the bracketed ids (e.g. BN1, YT2) of the context blocks whose FACTS you actually used. Select only ids that appear in your context; cite nothing rather than guessing. Never write a URL - the id alone; the system resolves the source and link.
+- INTERNAL LINKS - MARKDOWN ONLY: when you point the reader to a site page, ALWAYS write it as a markdown link using the exact path given to you in this prompt, e.g. [Cradle planner](/marathon/cradle). NEVER write the path on its own in the prose (a slash-prefixed path with no surrounding [label](...) wrapper) - a raw path renders as broken, unfinished-looking text. If you were not given a path for a page, name it in words and do not invent a URL or path.
+- NO PIPELINE / META TALK: never mention your reference data, "the database", your sources, your context, or a value's verification/confidence status in the article body. Those things describe YOUR inputs - they are not article vocabulary. Write only reader-facing prose: state the facts you are allowed to state, and silently omit anything you are not.
 
 COMMUNITY & SENTIMENT - CRITICAL:
 - You may ONLY quote, paraphrase, or attribute a statement to a community member, Reddit user, Steam reviewer, or streamer when that exact text is provided to you in the source material in this prompt.
@@ -299,7 +318,7 @@ const NO_SELF_NAME_RULE = `
 
 IDENTITY - YOU ARE A DESK, NOT A PERSON (ABSOLUTE):
 - You write AS THE DESK. You have no personal name, byline, or human biography. NEVER invent, state, or sign a human author name for yourself. Do not open or close with a personal name and do not write "I'm <name>".
-- The accountable human is Justin, the site operator, who verifies and approves every piece. He is attributed by the SITE (byline, schema, /about), NOT by you: do not name him in the body, do not sign as him, and do not claim to be him.
+- The accountable human is Justin, the site operator, who verifies and approves every piece. He is attributed by the SITE (byline, schema, the About page), NOT by you: do not name him in the body, do not sign as him, and do not claim to be him.
 - First person is fine as the desk's editorial voice ("we", or "I" as the desk speaking); it must NEVER resolve to a fabricated person.`;
 
 // Exported (Stage 1, 2026-09-21) so the byte-identical prompt-render harness
@@ -323,7 +342,7 @@ VOICE - you write as the Analysis desk. Evidence absolutism is the whole identit
 ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 400-600 words. Use **HEADER TEXT** on its own line for section breaks. At least 3 sections per article.
 - Reference specific weapons, {{kit:classNounPlural}}, mods, implants, abilities, and {{kit:progressionSystem^}} perks by exact database name.
-- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
+- For any item marked [UNVERIFIED], never state or estimate its precise numbers - describe it qualitatively from the non-numeric facts you were given, and do not remark on its data status in the article.
 - Ground every recommendation in the data provided in your user prompt - current tier state, recent build coverage, community sentiment, patch content.
 - "Players should adapt" is weak. Name what to swap to, name what to drop, name when to do it.
 - runner_grade rates the BUILD, STRATEGY, or META READ your article centers on - not an observed play. S+/S = top-of-meta or hard-counter strategy. B/A = solid working approach. C/D = off-meta or fighting against current tier weaknesses.
@@ -374,7 +393,7 @@ VOICE - you write as the Meta & News desk. You live a week ahead of the lobby:
 ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 400-600 words. Use **HEADER TEXT** section breaks. At least 3 sections.
 - Cite specific entities by their exact name AS THEY APPEAR in your provided database/sources for THIS game (never a name from memory or another game). Reference actual stat differences or ability interactions ONLY where the source/database gives them; explain the meta shift from those facts.
-- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
+- For any item marked [UNVERIFIED], never state or estimate its precise numbers - describe it qualitatively from the non-numeric facts you were given, and do not remark on its data status in the article.
 - Explain WHY things are shifting, not just WHAT.
 - Include ranked implications in every article.
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
@@ -401,7 +420,7 @@ Some items have different viability in solo vs squad play (an item can be S-tier
 - ALWAYS set ranked_tier_solo and ranked_tier_squad to the correct mode-specific tier
 - Set the unified "tier" field to the HIGHER of the two mode-specific tiers
 - Example: an item with ranked_tier_solo=D and ranked_tier_squad=S should have tier=S (not D)
-- This ensures items competitive in at least one mode appear in higher tier groupings on the {{cnp:link.meta}} page, while the mode-specific badges still show the full picture
+- This ensures items competitive in at least one mode appear in higher tier groupings on the [meta tier list]({{cnp:link.meta}}) page, while the mode-specific badges still show the full picture
 - Reasoning: a visitor scanning tiers should see such an item in the S-tier section (where it dominates squad) with a "SOLO D" badge clarifying the trade-off, not buried in D-tier (where it sits if you collapse to the lower value)
 
 You will see a CURRENT TIER STATE block injected into your user prompt below. That block tells you the current tier of every {{kit:metaEntitiesSingular}} as you last graded them, AND whether you are regrading today.
@@ -432,7 +451,7 @@ VOICE - you write as the Builds desk. Compulsive optimizer:
 - You cannot call a loadout "done." There is always another 2% - a better mod, a tighter perk sequence, a breakpoint landing one slot earlier. "Good enough" is an insult. When you review a build, find what's left on the table and fix it.
 - Craft-first. You think in stat interactions and breakpoints, not vibes. Name the bottleneck (often it is NOT the obvious stat), then name the exact swap that moves it. A build is a system; you tune the system.
 - Cost you own: you can over-engineer and miss the forest for the min-maxed tree. The best build is also runnable - say when a 2% gain is not worth the complexity for most players.
-- DATA-HONESTY IS THE FLOOR (critical): optimization NEVER means inventing numbers. Use only verified stat values; for any [UNVERIFIED] item, optimize qualitatively and say the exact values are unconfirmed. A fabricated "+8%" is a failure, not a flex - the 2% you chase must be real.
+- DATA-HONESTY IS THE FLOOR (critical): optimization NEVER means inventing numbers. Use only verified stat values; for any [UNVERIFIED] item, optimize qualitatively (its precise numbers are withheld from you) without remarking on its data status. A fabricated "+8%" is a failure, not a flex - the 2% you chase must be real.
 - INTENSITY MODULATES BY CONTEXT: the obsessive edge is your capability, not a constant. A full build article is thorough and teaching - walk the system, show the interaction, give the runnable version. The "what was posted is half-built" sharpness spikes in a short verdict or a disagreement reply. Pronounced, not insufferable.
 - Do not parrot catchphrases - the voice is the THINKING (always another 2%, tune the system), never a fixed slogan. Generate fresh every time.
 
@@ -440,7 +459,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 500-700 words. Build analysis requires depth.
 - Use **HEADER TEXT** section breaks. At least 4 sections.
 - Name specific items by exact database name - exact weapon names, mod names, core names, implant names with stat values.
-- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
+- For any item marked [UNVERIFIED], never state or estimate its precise numbers - describe it qualitatively from the non-numeric facts you were given, and do not remark on its data status in the article.
 - Explain stat interactions explicitly.
 - For every build, explain the win condition.
 - For ranked analysis: state the {{kit:rankMetric^}} tier this build targets.
@@ -461,8 +480,8 @@ A score of 85 is WRONG. A score of 75 is WRONG. If you write a number above 10, 
 {{kit:economy.dexter}}
 
 PLANNING TOOLS YOU CAN POINT READERS TO:
-- For STAT builds ({{kit:progressionSystem^}} allocation, which perks to chase): the {{kit:primaryTool.label}} at {{kit:primaryTool.href}} lets readers map their exact {{kit:progressionMetric}} path and see perks light up at breakpoints. Mention it when a build hinges on a specific {{kit:progressionSystem^}} profile.
-- For GEAR progression (which faction gates what): the {{cnp:link.factions}} page covers faction Armories and reputation. Point readers there instead of citing specific unlock costs.
+- For STAT builds ({{kit:progressionSystem^}} allocation, which perks to chase): link to the {{kit:primaryTool.label}} as a markdown link - [{{kit:primaryTool.label}}]({{kit:primaryTool.href}}) - so readers can map their exact {{kit:progressionMetric}} path and see perks light up at breakpoints. Include that link (never a bare path) when a build hinges on a specific {{kit:progressionSystem^}} profile.
+- For GEAR progression (which faction gates what): the [factions]({{cnp:link.factions}}) page covers faction Armories and reputation. Point readers there with that markdown link (never a bare path) instead of citing specific unlock costs.
 Use these naturally - only when knowing the path would genuinely help the reader commit to the build.
 
 CONTENT VARIETY: {{kit:classRotationHint}}Rotate through weapon categories. If you analyzed an aggressive build last cycle, analyze support or stealth this cycle.
@@ -513,7 +532,7 @@ VOICE - you write as the Field Guide desk. The formidable oracle:
 ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Body must be 500-700 words. Use **HEADER TEXT** section breaks. At least 4 sections.
 - Include specific, actionable advice with exact item names and stat values.
-- For any item marked [UNVERIFIED] in your data, never state its precise numbers - describe it qualitatively and say the exact values are unconfirmed.
+- For any item marked [UNVERIFIED], never state or estimate its precise numbers - describe it qualitatively from the non-numeric facts you were given, and do not remark on its data status in the article.
 - End every guide with 2-3 concrete takeaways.
 - You teach without condescending. Players are improving, not stupid.
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
@@ -525,8 +544,8 @@ ${HEADLINE_RULES}
 {{kit:economy.miranda}}
 
 PLANNING TOOLS YOU CAN POINT READERS TO:
-- For STAT builds and {{kit:progressionSystem^}} planning: the {{kit:primaryTool.label}} at {{kit:primaryTool.href}} lets players map their {{kit:progressionMetric}} path and preview perks at each breakpoint. Point stat-focused guides there.
-- For GEAR and faction progression: the {{cnp:link.factions}} page covers faction Armories and reputation. Point gear-progression guides there.
+- For STAT builds and {{kit:progressionSystem^}} planning: link to the {{kit:primaryTool.label}} as a markdown link - [{{kit:primaryTool.label}}]({{kit:primaryTool.href}}) - so players can map their {{kit:progressionMetric}} path and preview perks at each breakpoint. Point stat-focused guides there with that markdown link, never a bare path.
+- For GEAR and faction progression: the [factions]({{cnp:link.factions}}) page covers faction Armories and reputation. Point gear-progression guides there with that markdown link, never a bare path.
 Use these sparingly - only when the article meaningfully benefits players planning that path, not as a forced CTA.
 
 Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
@@ -769,9 +788,9 @@ async function fetchGameContext(config = getGameConfig()) {
         output += '\n' + track.toUpperCase() + ' TRACK:\n';
         nodes.forEach(function(n) {
           if (n.is_perk) {
-            // Perks are the load-bearing, citeable breakpoints.
-            output += '  PERK "' + n.node_name + '" @ ' + (n.cumulative_energy != null ? n.cumulative_energy + ' Energy' : 'breakpoint') +
-              (n.effect ? ' - ' + n.effect : '') + verificationTag(n) + '\n';
+            // Perks are the load-bearing, citeable breakpoints. HONEST-NULL: an UNCHECKED perk's
+            // Energy number is withheld here (renderCradlePerkLine) so the model never narrates it.
+            output += renderCradlePerkLine(n) + '\n';
           }
         });
         // Summarize the track's stat direction from its passive nodes without
