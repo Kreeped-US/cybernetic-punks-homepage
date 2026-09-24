@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Audit: Ahrefs 2026-09-22 crawl + GSC demand check (read-only, no code change)
+LINKS-TO-REDIRECTS: STALE. The /advisor exact-source rule (c28edc1, deployed 2026-09-23) makes
+/advisor?shell=X one hop (301, query preserved), verified on production. No action.
+
+ORPHAN PAGES: /editors (301 to /about since the crawl) + 6 /marathon/tools/build leaves (the existing
+POST-OCT-20 item). No action.
+
+LINKS-TO-NOINDEX: 86 targets, ALL intentional. Bodycam (not depth-complete); DMZ hub stubs and PUBG
+arsenal (SOON pages); DMZ POIs (noindex until dmz_pois.verified=true, all 9 currently false); Wardogs
+arsenal 33 leaves (hardcoded noindex app/wardogs/arsenal/[slug]/page.js:103, excluded in
+lib/sitemap/eligible.js:322).
+
+FINDING: the Wardogs evidence-ramp has NO operational definition. No metric, threshold, source, or
+checker is written in HANDOFF or WARDOGS_CHANNEL_B_SCOPE.md. Nothing ever writes is_indexable=true.
+Arsenal leaves do not read is_indexable (hardcoded). GSC 28d: 3 Wardogs queries, 48 impressions, zero
+weapon-name queries.
+
+DECISION: arsenal leaves stay noindex. Decide at the Oct 20 checkpoint: if recovering, promote all 33
+as substantive pages (page.js:103 + eligible.js, one brief); the demand gate stays ONLY for
+combinatorial leaves (loadouts/build, economy/stat). This SUPERSEDES the undefined "promote on GSC
+evidence" for arsenal.
+
+LAUNCH TODO (Oct 23): verify DMZ POIs in-game; operator sets dmz_pois.verified=true per POI.
+
+GSC: gsc_query_metrics pull continuous through 2026-09-20 (normal lag). GSC UI sitewide impressions/
+day: 150-220 Sep 1-6, 52 Sep 7, 5-38 Sep 8-21 (known collapse). Sep 16-21 avg ~6/day sitewide. Logged
+as weekly tracking, no action.
+
 ## 2026-09-24 -- Operator DB write: meta_tiers shell restore
 The 2026-09-23 wardogs NEXUS regrade (onConflict 'name' upsert) overwrote Marathon's 8 shell rows and
 relabeled them game_slug='wardogs'. Restored: UPDATE game_slug='marathon' for Assassin, Destroyer,
