@@ -293,7 +293,7 @@ export default function CradleClient({ nodes }) {
 
       {/* ── NOTE ON DATA ─────────────────────────────────── */}
       <div style={{ marginTop: 12, fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 0.5, lineHeight: 1.6 }}>
-        Perk breakpoints and effects are verified from Season 2. Each Energy point also adds a gradual passive stat increase toward {''}
+        Perk breakpoints and effects verified in-game for Season 2 (Sep 24, 2026). Per-tier stat bonuses are not yet verified. Each Energy point also adds a gradual passive stat increase toward {''}
         each track\u2019s focus; exact per-point passive values are shown in-game when you allocate. Planner reflects perk milestones, which is where the meaningful power spikes are.
       </div>
     </div>

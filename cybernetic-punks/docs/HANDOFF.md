@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Cradle perks verified in-game + /marathon/cradle copy narrowed (fix/cradle-verified-copy)
+OPERATOR DB WRITE (in-game verification, 2026-09-24): cradle_nodes PERK rows set verified=true with source
+-> 18 of 18 perks now CONFIRMED (verified + verified_source present; confirmed read-only). Includes the two
+that were open: Endurance-14 "Heat Purge" and Support-14 "Optimal Support", both confirmed in-game. The
+Runner Terminal's "Heat Death" / "Hush" names are treated as SOURCE ERRORS (in-game truth wins). The 66
+NON-PERK per-tier stat-bump rows remain UNCHECKED (not individually datamined; deferred).
+
+This PARTIALLY resolves the 100%-UNCHECKED cradle state recorded in 0fb70c5 (option 3). Downstream, with NO
+code change: renderCradlePerkLine (honest-null, bb34280) reads verificationState at render time, so the 18
+CONFIRMED perks now render their Energy breakpoint numbers again in BOTH generators (news writer + advisor);
+the 66 UNCHECKED non-perk tiers stay withheld. The load-bearing breakpoints are back; the un-datamined
+per-tier passives stay honest-null. (Nightfall Refresh early-Oct + March Cradle refactor still argue against
+verifying the non-perk tiers now.)
+
+COPY CHANGE (copy-only, styling untouched): app/marathon/cradle/CradleClient.js:296 on-page data note.
+  WAS: "Perk breakpoints and effects are verified from Season 2."
+  NOW: "Perk breakpoints and effects verified in-game for Season 2 (Sep 24, 2026). Per-tier stat bonuses are
+       not yet verified."
+The following explanatory sentence ("Each Energy point also adds a gradual passive stat increase ... shown
+in-game when you allocate. Planner reflects perk milestones ...") is unchanged. Title, metadata, canonical,
+and URL untouched (per brief). No other on-page "verified" overclaim found: CradleClient.js:18/:19 are code
+COMMENTS (not rendered); app/marathon/cradle/page.js has no verified/confirmed/official on-page claim.
+
+VERIFY: npm run build -> exit 0.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare it to
+the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Advisor + editors: honest-null + no-meta-talk across both generators (fix/advisor-honest-null)
 Extends the writer-template fix (bb34280) to the ADVISOR build generator (public indexed build pages) and
 closes bb34280's non-cradle honest-null follow-up. generateLoadout.js (Wardogs) untouched -- clean by design.
