@@ -24,7 +24,7 @@
 //    wrapped too (defense in depth) -> a broken re-pass NEVER releases.
 
 import { loadGateStore } from './storeLoader.js';
-import { runGate } from './runGate.js';
+import { gateDraftForInsert } from './insertGate.js';
 
 // Build entity-name -> { verified, verified_source } from a loaded store, for the release
 // certificate (the "freeing rows": which VERIFIED rows now corroborate the once-blocked claims).
@@ -81,7 +81,11 @@ export async function releaseHeldDrafts(supabase, opts) {
     try {
       const store = stores[row.game_slug] || { entities: [] };
       const draft = { slug: row.slug, editor: row.editor, created_at: row.created_at, body: row.body, game_slug: row.game_slug };
-      const res = runGate(store, draft, { runDate });   // mode + verifiedOnly derived; never throws
+      // ROUTED THROUGH THE SHARED GATE (2026-09-24): gateDraftForInsert with a PRE-LOADED store
+      // (the release cron batches its loads) and no recFindings returns runGate's OWN complete
+      // decision -- byte-identical to the former runGate(store, draft) call. One gate, two callers.
+      const gateOut = await gateDraftForInsert(null, draft, { store, runDate });
+      const res = gateOut.gateRes;   // mode + verifiedOnly derived inside; never throws
 
       // SURFACE a bad game_slug LOUDLY: runGate holds an unknown/unregistered game (fail-closed,
       // surgical -- we do NOT abort the whole run), but a silently-held typo'd row would never be

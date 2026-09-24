@@ -15,9 +15,7 @@ import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalCo
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
 import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
-import { runGate } from '@/lib/gsc/runGate';
-import { decideGate } from '@/lib/gsc/prePublishGate';
-import { loadGateStore } from '@/lib/gsc/storeLoader';
+import { gateDraftForInsert } from '@/lib/gsc/insertGate';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { loadSurvivorCorpus, findCorpusDuplicate } from '@/lib/content/dedupGate';
 import { runGateLogPass } from '@/lib/content/gateLogPass';
@@ -496,57 +494,51 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // [] when the flag is OFF (no recommendations field) -> gate byte-identical.
     var recFindings = validateRecommendations(result.recommendations, vsRegistry);
 
+    // SHARED INSERT GATE (2026-09-24): gateDraftForInsert loads the FULL game-scoped store, runs
+    // runGate, and decides over runGate's COMPLETE finding set (findings + unparseable + crossGame)
+    // with recFindings folded in. It replaces the former inline block, which (RC-2) hand-rebuilt the
+    // store as { entities, game_slug } -- DROPPING crossGameEntities so the cross-game stage no-op'd --
+    // and (RC-3) re-decided from gateRes.findings ONLY, discarding crossGame + unparseable. Both let a
+    // Marathon-contaminated Wardogs draft clear (2026-09-23). One function now = one decision; the
+    // golden-corpus tests bypassed this call site, which is why they missed it. Store-load throw ->
+    // fail-closed HELD inside the function (gateOut.storeThrew).
     var gateDecision;
-    var gateStore = null;
-    var gateStoreThrew = false;
-    try {
-      // Per-game store (Phase 3a): Marathon -> loadMarathonStore (fail-open); DMZ -> loadDMZStore
-      // (fail-closed, throws on a read error -> HOLD below). A store-load throw is a run-level failure
-      // (the store never loaded), handled here; runGate handles per-draft classifier/detector throws.
-      gateStore = await loadGateStore(supabase, PRODUCING_GAME_SLUG);
-    } catch (e) {
-      gateStoreThrew = true;
-      console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): ' + (e && e.message));
-    }
-
-    if (!gateStoreThrew) {
-      var gateRes = runGate({ entities: gateStore.entities, game_slug: gateStore.game_slug }, gateDraftObj, { runDate: new Date().toISOString().slice(0, 10) });
-      // STEP 3: fold the recommendation-premise findings into the gate decision. On
-      // Marathon (log-only) decideGate publishes regardless (never holds) -- so this only
-      // LOGS + records the finding; on DMZ (fail-closed) an UNSUPPORTED-RECOMMENDATION would
-      // hold. recFindings is [] when the flag is off -> gateDecision == gateRes.decision.
-      gateDecision = decideGate((gateRes.findings || []).concat(recFindings), gateMode, gateRes.threw);
-      recFindings.forEach(function (f) {
-        console.log('[gate]   UNSUPPORTED-RECOMMENDATION  "' + (f.claim_text || '') + '"  premises=' +
-          JSON.stringify(f.supporting_block_ids) + '  ' + f.reason + '  (log-only on Marathon -- publishes)');
+    var gateOut = await gateDraftForInsert(supabase, gateDraftObj, {
+      recFindings: recFindings,
+      runDate: new Date().toISOString().slice(0, 10),
+    });
+    gateDecision = gateOut.decision;
+    var gateRes = gateOut.gateRes; // null only on a store-load throw
+    recFindings.forEach(function (f) {
+      console.log('[gate]   UNSUPPORTED-RECOMMENDATION  "' + (f.claim_text || '') + '"  premises=' +
+        JSON.stringify(f.supporting_block_ids) + '  ' + f.reason + '  (log-only on Marathon -- publishes)');
+    });
+    if (gateOut.storeThrew || (gateRes && gateRes.threw)) {
+      // Store-load OR classifier/detector throw -> fail-closed HOLD (Marathon log-only still publishes).
+      console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): '
+        + (gateOut.storeThrew ? 'store-load error' : 'classifier/detector error'));
+    } else if (gateRes) {
+      var gateContra = gateRes.findings.filter(function (f) { return f.class === 'CONTRADICTED'; });
+      var gateUncorr = gateRes.findings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
+      // GAP METRIC in the [gate] line (Ruling 2): the live blindness measure on Marathon log-only.
+      console.log('[gate] ' + editorName + ' (' + PRODUCING_GAME_SLUG + '/' + gateMode + ') draft "' + gateDraftSlug + '": '
+        + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
+        + gateRes.crossGame.length + ' CROSS_GAME_ENTITY, '
+        + gateRes.corroborations.length + ' corroborated | stage1=' + gateRes.gap.stage1_hits
+        + ' stage2_parsed=' + gateRes.gap.stage2_parsed + ' GAP=' + gateRes.gap.gap + ' unparseable');
+      gateContra.forEach(function (f) {
+        console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value)
+          + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
       });
-      if (gateRes.threw) {
-        // FAIL-CLOSED (DMZ): a classifier/detector throw inside runGate -> held (Marathon publishes).
-        console.error('[gate] corroboration gate threw (' + PRODUCING_GAME_SLUG + '/' + gateMode + '): classifier/detector error');
-      } else {
-        var gateContra = gateRes.findings.filter(function (f) { return f.class === 'CONTRADICTED'; });
-        var gateUncorr = gateRes.findings.filter(function (f) { return f.class === 'UNCORROBORATED'; });
-        // GAP METRIC in the [gate] line (Ruling 2): the live blindness measure on Marathon log-only.
-        console.log('[gate] ' + editorName + ' (' + PRODUCING_GAME_SLUG + '/' + gateMode + ') draft "' + gateDraftSlug + '": '
-          + gateContra.length + ' CONTRADICTED, ' + gateUncorr.length + ' UNCORROBORATED, '
-          + gateRes.corroborations.length + ' corroborated | stage1=' + gateRes.gap.stage1_hits
-          + ' stage2_parsed=' + gateRes.gap.stage2_parsed + ' GAP=' + gateRes.gap.gap + ' unparseable');
-        gateContra.forEach(function (f) {
-          console.log('[gate]   CONTRADICTED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value)
-            + '  store=' + (f.store_display == null ? 'NULL' : JSON.stringify(f.store_display)));
-        });
-        gateUncorr.forEach(function (f) {
-          console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
-        });
-        gateRes.unparseable.forEach(function (f) {
-          console.log('[gate]   UNPARSEABLE  ' + f.entity + '  signal=' + f.signal + '  "' + f.verbatim + '"  (Stage-1 hit, Stage-2 could not parse -> golden-corpus/extractor to-do)');
-        });
-      }
-    } else {
-      // Store-load throw -> fail-closed HOLD (Marathon log-only still publishes via decideGate).
-      // decideGate is the ONLY producer of the insert's is_published / gate_status / gate_findings.
-      // recFindings still folds in (independent of the gate store; [] when the flag is off).
-      gateDecision = decideGate(recFindings, gateMode, true);
+      gateUncorr.forEach(function (f) {
+        console.log('[gate]   UNCORROBORATED  ' + f.entity + '.' + f.field + '  draft=' + JSON.stringify(f.claimed_value) + '  store=NULL (field unset)');
+      });
+      gateRes.unparseable.forEach(function (f) {
+        console.log('[gate]   UNPARSEABLE  ' + f.entity + '  signal=' + f.signal + '  "' + f.verbatim + '"  (Stage-1 hit, Stage-2 could not parse -> golden-corpus/extractor to-do)');
+      });
+      gateRes.crossGame.forEach(function (f) {
+        console.log('[gate]   CROSS_GAME_ENTITY  "' + f.entity + '" (from ' + f.source_game + ')  "' + f.verbatim + '"  (cross-game bleed -> fail-closed hold)');
+      });
     }
 
     if (gateDecision.hold) {
@@ -733,7 +725,11 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       insertData.provenance_tier = 'sourced';
     }
 
-    if (editorName === 'NEXUS' && result.meta_update && Array.isArray(result.meta_update)) {
+    // NEXUS tier regrade WRITE -- gated on the per-game config flag (2026-09-24). Only a game WITH a
+    // shell/weapon tier model (marathon: nexusTierRegrade) writes meta_tiers. A game without one
+    // (wardogs/dmz/pubg-dednet/bodycam) NEVER writes tier rows -- this is what let a contaminated
+    // wardogs run clobber Marathon shell rows via the onConflict:'name' upsert (2026-09-23).
+    if (editorName === 'NEXUS' && PRODUCING_GAME.nexusTierRegrade && result.meta_update && Array.isArray(result.meta_update)) {
       if (!regradeContext.shouldRegrade) {
         console.log('[CRON] NEXUS tier regrade SKIPPED (last regrade: ' +
           (regradeContext.lastRegrade ? regradeContext.lastRegrade.toISOString() : 'never') +
@@ -1147,10 +1143,16 @@ export async function GET(req) {
       currentTiers: [],
     };
 
+    if (!PRODUCING_GAME.nexusTierRegrade) {
+      // No tier model for this game (config flag) -> NEXUS never regrades: skip the meta_tiers read
+      // entirely (it was unfiltered + cross-game -- the 2026-09-23 leak) and force shouldRegrade false.
+      regradeContext.shouldRegrade = false;
+    } else {
     try {
       var { data: currentTiersData } = await supabase
         .from('meta_tiers')
         .select('name, type, tier, note, updated_at')
+        .eq('game_slug', PRODUCING_GAME_SLUG)
         .order('type', { ascending: true })
         .order('name', { ascending: true });
 
@@ -1186,8 +1188,13 @@ export async function GET(req) {
         console.log('[CRON] Failed to record patch_regrade marker (non-fatal): ' + prErr.message);
       }
     }
+    } // end: nexusTierRegrade-gated read + patch marker
 
-    var currentTierBlock = buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade);
+    // Only a tier-model game gets a CURRENT TIER STATE block in the NEXUS prompt (config flag);
+    // others get '' (no-op append) so no cross-game tier rows can enter the prompt.
+    var currentTierBlock = PRODUCING_GAME.nexusTierRegrade
+      ? buildCurrentTierStateBlock(regradeContext.currentTiers, regradeContext.shouldRegrade)
+      : '';
 
     // Historical-context block (AI-quality roadmap #2/#3, Stage 2): background
     // awareness/texture for the meta + build editors. Read once; non-fatal

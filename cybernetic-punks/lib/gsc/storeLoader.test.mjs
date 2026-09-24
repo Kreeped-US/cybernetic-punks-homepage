@@ -58,7 +58,11 @@ test('loadGateStore: dmz -> loadDMZStore; an unknown game -> empty store (no loa
   const dmz = await loadGateStore(mockClient(FULL), 'dmz');
   assert.equal(dmz.entities.length, 5);
   // game_slug is stamped on the returned store (game_slug boundary: runGate asserts store==draft game).
-  assert.deepEqual(await loadGateStore(mockClient({}), 'valorant'), { entities: [], counts: {}, game_slug: 'valorant' });
+  // loadGateStore also attaches crossGameEntities (added 2026-09-22) -- assert the entity store shape
+  // on the fields under test and that the cross-game vocabulary is present as an array.
+  const val = await loadGateStore(mockClient({}), 'valorant');
+  assert.deepEqual({ entities: val.entities, counts: val.counts, game_slug: val.game_slug }, { entities: [], counts: {}, game_slug: 'valorant' });
+  assert.ok(Array.isArray(val.crossGameEntities));
 });
 
 // REGISTRY DISPATCH (2026-09-17): the if-switch became a slug->loader registry. These prove the
@@ -77,6 +81,8 @@ test('loadGateStore: marathon -> loadMarathonStore (registry dispatch, loader un
   const types = m.entities.map((e) => e.type).sort();
   assert.deepEqual(types, ['shell', 'unique', 'weapon']);
 });
-test('loadGateStore: a game with no registered loader (wardogs) -> empty store', async () => {
-  assert.deepEqual(await loadGateStore(mockClient({}), 'wardogs'), { entities: [], counts: {}, game_slug: 'wardogs' });
+test('loadGateStore: a game with no registered loader (wardogs) -> empty entity store (+ cross-game vocab)', async () => {
+  const w = await loadGateStore(mockClient({}), 'wardogs');
+  assert.deepEqual({ entities: w.entities, counts: w.counts, game_slug: w.game_slug }, { entities: [], counts: {}, game_slug: 'wardogs' });
+  assert.ok(Array.isArray(w.crossGameEntities));
 });

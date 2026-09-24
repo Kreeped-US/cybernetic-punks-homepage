@@ -7,6 +7,91 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Close the wardogs NEXUS meta_tiers leak + wire the insert gate correctly (fix/wardogs-nexus-leak-and-gate)
+Forensics of the 2026-09-23 contaminated wardogs draft (id 4a7116f0, NEXUS, "Season 2 ... October 15
+Teaser", a Marathon tier table). THREE root causes; all closed here. Backend generation logic only
+(no URL/title/structure/crawler-visible change -- freeze-compatible). No DB writes by me.
+
+ROOT CAUSES
+- RC-1 (LEAK, the contamination source): app/api/cron/route.js read meta_tiers with NO game_slug
+  filter AND ran the NEXUS tier regrade for EVERY game. meta_tiers has game_slug (32 marathon + 8
+  wardogs rows). A wardogs NEXUS run pulled Marathon's tier list into its prompt as "CURRENT TIER
+  STATE (from prior NEXUS regrade) ... Treat it as your prior reasoning", so the model reproduced
+  Marathon shells/weapons (Destroyer/Thief/Triage/BR33 Volley Rifle/...) as the wardogs "tier table".
+- RC-2 (GATE, vocab dropped): the insert path called runGate with a hand-rebuilt store
+  { entities, game_slug } -- omitting crossGameEntities -- so the CROSS_GAME_ENTITY stage got an empty
+  vocabulary and no-op'd (0 findings).
+- RC-3 (GATE, findings dropped): the insert path re-decided from gateRes.findings ONLY, discarding
+  gateRes.crossGame AND gateRes.unparseable -- so even a produced cross-game finding never reached the
+  written decision. Either RC-2 or RC-3 alone left the cross-game hold dead.
+- WHY THE GOLDEN CORPUS MISSED IT: its tests call runGate/decideGate DIRECTLY; the two defects lived
+  at the ONE real call site (the cron), which the tests bypassed. The new lib/gsc/insertGate.test.mjs
+  exercises the REAL path (loadGateStore -> runGate -> decide) so this class cannot regress silently.
+- meta_tiers WRITE-BACK (item 7a): the regrade upsert is .upsert(metaRows, { onConflict: 'name' }) --
+  conflict key is NAME ONLY, not (name, game_slug). So the contaminated wardogs regrade OVERWROTE the
+  Marathon shell rows: all 8 Marathon shells (Assassin/Destroyer/Recon/Rook/Sentinel/Thief/Triage/
+  Vandal) are now game_slug=wardogs, and marathon has ZERO type=shell meta_tiers rows. 0 cross-game
+  name collisions remain BECAUSE name is unique -> the marathon originals were clobbered.
+
+FIXES
+- lib/games/marathon.js: new config flag `nexusTierRegrade: true`. Only a game WITH a shell/weapon
+  tier model opts in (marathon only). Config flag, not a hardcoded game name.
+- app/api/cron/route.js:
+  * NEXUS regrade READ gated on PRODUCING_GAME.nexusTierRegrade AND filtered .eq('game_slug',
+    PRODUCING_GAME_SLUG); the CURRENT-TIER block is '' for a game without the flag.
+  * NEXUS regrade WRITE (meta_tiers upsert) gated on the same flag -> wardogs/dmz/pubg NEVER write
+    tier rows, so the onConflict:'name' clobber can no longer fire cross-game.
+  * INSERT GATE routed through the new gateDraftForInsert (no hand-rebuilt store, no subset re-decide);
+    added a CROSS_GAME_ENTITY log line.
+- lib/gsc/insertGate.js (NEW): gateDraftForInsert(client, draft, {recFindings, runDate, store}) --
+  the SINGLE gate entry point. Loads the FULL store (crossGameEntities included), runs runGate, decides
+  over the COMPLETE set (findings+unparseable+crossGame) with recFindings folded in; never downgrades a
+  runGate hold; store-load throw -> fail-closed HELD. Accepts a pre-loaded store (release batches loads).
+- lib/gsc/releaseHeld.js: routed through gateDraftForInsert (pre-loaded store, no recFindings) ->
+  byte-identical to the former runGate call (releaseHeld already used runGate's complete res.decision).
+- lib/gather/miranda.js (item 5 fix): fetchShellContext + fetchModContext were UNFILTERED reads of
+  shell_stats / mod_stats (both game-shared) feeding the MIRANDA prompt, which runs for wardogs -> a
+  second active cross-game leak. Now scoped .eq('game_slug', config.slug). shell_stats/mod_stats are
+  marathon-only today (8/203 rows) so marathon MIRANDA is byte-identical; wardogs gets [] (correct).
+- lib/gsc/storeLoader.test.mjs: fixed two PRE-EXISTING stale assertions (a5d65bb added crossGameEntities
+  to loadGateStore's return but never updated the deepEqual). Unrelated to this bug; fixed to keep green.
+
+VERIFY (real path, gateDraftForInsert with the live store)
+- (a) the contaminated draft -> HELD, 12 CROSS_GAME_ENTITY (V66 Lookout, BR33 Volley Rifle, BRRT SMG,
+  Bully SMG, Triage, Thief, Destroyer, Twin Tap HBR, WSTR Combat Shotgun, Misriah 2442, Stryder M1T,
+  Assassin). (b) all 9 wardogs REJECTED drafts -> HELD with CROSS_GAME_ENTITY (operator cited 7; 9 now).
+  (c) published wardogs 14 / dmz 8 / pubg 6 -> 0 CROSS_GAME_ENTITY, 0 false holds. (d) 30 recent
+  marathon -> 0 held (log-only unchanged).
+- ITEM 4 (RC-3 side effect: UNPARSEABLE can now hold a fail-closed game on this path): last 20
+  wardogs+dmz drafts -> 9 held total, all CROSS_GAME_ENTITY, 0 held for UNPARSEABLE. Armed but 0 impact.
+- Tests: lib/gsc all green (40 pass incl. the new insertGate 7 + releaseHeld 7). eslint clean; byte-clean.
+
+REPORTED, NOT FIXED HERE (out of the gate/leak scope; recommend follow-ups)
+- SWEEP (item 5): remaining unfiltered game_slug reads are Marathon-only prompt paths (lib/gather/
+  cipher.js x8: 153/154/237/303/317/325/392/556 -- CIPHER hardcodes marathon today) or non-prompt
+  (cron:67 provenance probe, cron:748 regrade shell read (now write-gated), dexter-stats 235/243 stat
+  targets). editor_directives (cron:1067 -> all editor prompts) and factions (editorCore:580) have NO
+  game_slug column (per docs/MULTI_GAME_READINESS_AUDIT.md) -> a schema migration, already flagged in
+  that audit; not fixable as a filter.
+- READERS (item 7c): PUBLIC readers of meta_tiers with NO game_slug filter that can surface the 8
+  wardogs rows: app/api/homepage-data/route.js:38 and app/api/sitrep-data/route.js:33 (return the whole
+  table), app/marathon/meta/page.js:66 (JSON-LD + MetaClient), and conditionally app/marathon/page.js:113,
+  ranked/page.js:71, sitrep/page.js:135, builds/page.js:204. Recommend adding .eq('game_slug','marathon')
+  to these (defense-in-depth), separate from this change.
+- onConflict:'name' -> the durable fix is a composite unique (name, game_slug) + onConflict:'name,
+  game_slug' (operator DDL). Not reachable now (only marathon writes after the flag gate), so deferred.
+
+OPERATOR REMEDIATION (item 7d -- do AFTER this ships)
+- The 8 "wardogs" meta_tiers rows ARE the clobbered Marathon shell rows. DELETING them loses Marathon's
+  shell tier list until a Marathon NEXUS regrade recreates them. Preferred: UPDATE those 8 rows SET
+  game_slug='marathon' (restores the ladder immediately); the next Marathon regrade also self-heals
+  them (it re-derives shells and upserts game_slug='marathon'). Do NOT just delete. Operator runs SQL.
+- After the fix ships, marathon's NEXUS tier block temporarily has no shells (they read as wardogs)
+  until the restore/regrade -- expected, resolved by the remediation above.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-23 -- One-hop redirects for bare migration hubs (fix/one-hop-migration-hubs)
 FINDING (production-only): every wildcard-only Marathon migration source, hit at its BARE path on
 Vercel, took TWO hops: e.g. /advisor -> 301 /marathon/advisor/ (trailing slash) -> 308

@@ -188,11 +188,11 @@ async function fetchDevRedditPosts(subreddits) {
 
 // ─── STAT CONTEXT ─────────────────────────────────────────────
 
-async function fetchShellContext() {
+async function fetchShellContext(gameSlug) {
   try {
     const { data } = await supabase.from('shell_stats').select(
       'name,role,difficulty,best_for,active_ability_name,active_ability_description,active_ability_cooldown_seconds,passive_ability_name,passive_ability_description,trait_1_name,trait_1_description,trait_2_name,trait_2_description,base_health,base_shield,base_speed,strengths,weaknesses,countered_by,synergizes_with,ranked_tier,ranked_tier_solo,ranked_tier_squad,ranked_notes,holotag_tier_recommendation,verified,verified_source,patch_verified'
-    ).order('name');
+    ).eq('game_slug', gameSlug).order('name'); // scope: shell_stats is game-shared -- only the producing game's shells (else Marathon shells leak into a non-Marathon MIRANDA prompt, 2026-09-23 class)
     return data || [];
   } catch (err) {
     console.error('[miranda.js] Shell context:', err.message);
@@ -212,11 +212,11 @@ async function fetchWeaponContext(gameSlug) {
   }
 }
 
-async function fetchModContext() {
+async function fetchModContext(gameSlug) {
   try {
     const { data } = await supabase.from('mod_stats').select(
       'name,slot_type,effect_summary,effect_detail,compatible_categories,ranked_impact,ranked_notes,verified,verified_source,patch_verified'
-    ).order('slot_type');
+    ).eq('game_slug', gameSlug).order('slot_type'); // scope: mod_stats is game-shared -- only the producing game's mods (else Marathon mods leak into a non-Marathon MIRANDA prompt)
     return data || [];
   } catch (err) {
     console.error('[miranda.js] Mod context:', err.message);
@@ -262,9 +262,9 @@ export async function gatherMirandaData(config = getGameConfig()) {
     fetchRedditGuides(subreddits),
     fetchSteamDevNews(),
     fetchDevRedditPosts(subreddits),
-    fetchShellContext(),
+    fetchShellContext(config.slug),
     fetchWeaponContext(config.slug),
-    fetchModContext(),
+    fetchModContext(config.slug),
     fetchRecentMirandaHeadlines(config.slug),
   ]);
 

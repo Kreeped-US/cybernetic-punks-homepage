@@ -52,6 +52,15 @@ export const marathon = {
   // Marathon publishes regardless (identical to the Phase 1 probe).
   prePublishGate: 'log-only',
 
+  // NEXUS TIER REGRADE (2026-09-24): whether NEXUS maintains a meta_tiers tier list for this game
+  // (the read of the "current tier state" into the NEXUS prompt AND the write-back of regrade
+  // results). Marathon is the ONLY game with a shell/weapon tier model (shell_stats + the derived
+  // weapon tier model -> meta_tiers), so it opts IN. Games WITHOUT a tier model (wardogs/dmz/
+  // pubg-dednet/bodycam) leave this UNSET (falsy): the cron then neither reads meta_tiers into their
+  // NEXUS prompt (which had leaked Marathon rows -- the 2026-09-23 contamination) nor writes tier
+  // rows for them. Config flag, never a hardcoded game name.
+  nexusTierRegrade: true,
+
   // Lifecycle status + launch date -- mirror of the dmz.js fields (see the
   // three-concepts note there: status is lifecycle, distinct from any SEO/live
   // flag). ADDITIVE; nothing reads these yet.
