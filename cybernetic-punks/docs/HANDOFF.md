@@ -7,6 +7,71 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- PIPELINE_LEAK pre-publish gate stage (feat/gate-pipeline-leak)
+New game-agnostic gate stage that HOLDS a draft when PIPELINE/META vocabulary or a BARE ROUTE PATH
+leaks into reader-facing text -- the dominant driver of operator draft rejections (2026-09-24 noon
+drafts: "all stat values in the database remain unverified", "only partially available this cycle",
+"cite them ... verify them yourself", "the exact numbers are not verified", "Map it to /cradle").
+Goal: reduce operator review load by auto-holding these before a human sees them.
+
+DETECTOR (lib/gsc/detectPipelineLeak.js, PURE, zero-I/O):
+- (a) BLOCK pipeline/meta PHRASES -- one DATA array PIPELINE_LEAK_PHRASES, case-insensitive, over
+  headline+body. Tuned deltas vs the original brief: DROPPED 'this cycle' (fires on legit reader prose)
+  and NARROWED bare 'not verified' -> 'are not verified' (reader-facing "announced, not verified
+  in-game" is legitimate; the pipeline construction "the exact numbers are not verified" is not).
+- (b) BLOCK BARE ROUTE PATHS in body prose: /segment(/segment)*, first segment LETTER-LED (so a 9/24
+  date/fraction never matches). Markdown links + bare URLs are STRIPPED FIRST, so a real
+  [Cradle](/marathon/cradle) href is never a hit -- only a raw /cradle sitting in prose. Body is
+  MARKDOWN (lib/articleBody.js).
+- (c) FLAG (log, NEVER block) the word 'verified' -- high-volume + mostly legitimate. Returned as a
+  SEPARATE flags[] array, never fed to decideGate.
+Each BLOCK finding carries class/kind/matched/verbatim(snippet)/slug so a held row shows WHY + WHERE.
+
+ENFORCE-IN-ALL-MODES (the mode question): decideGate previously fail-OPENED on log-only (Marathon)
+BEFORE inspecting findings, so no finding class could ever hold Marathon. Added ALWAYS_HOLD_CLASSES =
+['PIPELINE_LEAK'] (a SEPARATE list from HOLD_CLASSES) + a pre-check at the TOP of decideGate, before
+the log-only branch: an ALWAYS_HOLD finding holds in EVERY mode. A leak is a reader-facing DEFECT, not
+a corroboration question, so a game's fail-open posture must not release it. HOLD_CLASSES semantics
+(fail-closed only) are unchanged.
+
+WIRING: runGate runs detectPipelineLeak([draft]) as a new stage (after cross-game), concats its
+findings into decideGate's argument, and exposes pipelineLeak + pipelineLeakFlags on its return. It
+runs on BOTH gate callers (insert + release) via runGate. Held rows do NOT appear in /admin/review --
+the draft-list query excludes gate_status='held' (app/api/admin/drafts/route.js:91, the Ruling-5
+held-release worklist), so PIPELINE_LEAK holds land in the release worklist, not the review panel.
+That is the review-load reduction.
+
+DRY RUN (final phrase list, no writes): rejected 2026-09-24 drafts -> BLOCK 2/2 (validated). ALL
+published, every game: 56 would fail -- ALL Marathon (56/370); wardogs 0/14, dmz 0/8, pubg-dednet 0/6,
+bodycam 0/2 (the two deltas cleaned up every non-Marathon false positive). The 56 are driven by bare
+/cradle, /marathon/cradle, /factions, /marathon/ranked route literals + phrases 'in the database' /
+'exact values are unconfirmed'. NOTE: the gate runs only at INSERT/RELEASE, so these 56 PUBLISHED rows
+are NOT auto-pulled -- the count measures how routinely the WRITER emits the pattern. Full
+slug+matched+snippet cleanup brief saved OUTSIDE the repo (session scratchpad,
+pipeline-leak-cleanup-brief.txt).
+
+NEXT TWO BRIEFS (not in this change):
+1. WRITER-TEMPLATE FIX -- stop the Marathon writer emitting bare route literals (emit
+   [Cradle](/marathon/cradle)) + the pipeline phrases; else the gate will HOLD most new Marathon
+   drafts on pre-existing style rather than reducing load.
+2. PUBLISHED CLEANUP -- the 56 Marathon articles in the cleanup brief (bare paths -> markdown links;
+   note bare /cradle is also a WRONG route -- the planner lives at /marathon/cradle).
+
+FILES (6): lib/gsc/detectPipelineLeak.js (new), lib/gsc/detectPipelineLeak.test.mjs (new),
+lib/gsc/prePublishGate.js (ALWAYS_HOLD_CLASSES + pre-check), lib/gsc/prePublishGate.test.mjs,
+lib/gsc/runGate.js (stage wiring), docs/HANDOFF.md.
+INCIDENTAL (in-scope): prePublishGate.test.mjs's HOLD_CLASSES assertion was ALREADY STALE on main --
+the CROSS_GAME_ENTITY commit grew the constant to 5 but never updated the 4-element assertion, so that
+test was FAILING on main. Corrected it to the actual 5 as part of this change (the file is in scope and
+"all gate tests" must pass).
+
+VERIFY: npm run build -> exit 0. node --test lib/gsc/*.test.mjs -> 151 pass / 0 fail (adds the detector
+suite + the PIPELINE_LEAK decideGate cases; corrects the stale HOLD_CLASSES assertion). Marathon's
+existing "publishes on a hold-class finding" test still passes (CONTRADICTED != PIPELINE_LEAK).
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Loud failure for feed_items render reads (non-Marathon set) (fix/loud-failure-render-reads)
 supabase-js RESOLVES { data:null, error } on a DB error (it does not throw), so the old
 `const {data}=await...; return data||[]` / try/catch-to-null collapsed a transient READ ERROR into the

@@ -17,10 +17,11 @@
 import { classifyCorroboration } from './corroboration.js';
 import { detectUnparseable } from './hardStatDetector.js';
 import { detectCrossGameEntities } from './crossGameEntities.js';
+import { detectPipelineLeak } from './detectPipelineLeak.js';
 import { decideGate } from './prePublishGate.js';
 import { getGameConfig } from '../games/index.js';
 
-// runGate(store, draft, opts) -> { mode, decision, findings, unparseable, crossGame, corroborations, gap, threw }
+// runGate(store, draft, opts) -> { mode, decision, findings, unparseable, crossGame, pipelineLeak, pipelineLeakFlags, corroborations, gap, threw }
 //   store: { entities, crossGameEntities } (loaded by the caller -- FULL store, recognition-
 //          preserving; the verified-only bar is the classifier opt, NOT a row-filtered store --
 //          see the 3a amendment. crossGameEntities is the cross-game contamination vocabulary
@@ -71,6 +72,8 @@ export function runGate(store, draft, opts) {
   let findings = [];
   let unparseable = [];
   let crossGame = [];
+  let pipelineLeak = [];
+  let pipelineLeakFlags = [];
   let corroborations = [];
   let gap = null;
   let threw = false;
@@ -88,10 +91,17 @@ export function runGate(store, draft, opts) {
     // draft holds on it while Marathon (log-only) only observes -- the observe-then-arm pattern.
     const cg = detectCrossGameEntities([draft], (store && store.crossGameEntities) || []);
     crossGame = cg.findings || [];
+    // PIPELINE_LEAK stage: pipeline/meta phrases + bare route paths leaking into reader text.
+    // A PIPELINE_LEAK finding is an ALWAYS_HOLD class (prePublishGate.ALWAYS_HOLD_CLASSES), so it
+    // holds in EVERY mode -- Marathon (log-only) included, unlike the observe-then-arm classes above.
+    // Flags ('verified') are logged, never fed to decideGate.
+    const pl = detectPipelineLeak([draft]);
+    pipelineLeak = pl.findings || [];
+    pipelineLeakFlags = pl.flags || [];
   } catch (e) {
     threw = true;   // classifier/detector infra failure -> fail-closed hold (decideGate below)
   }
 
-  const decision = decideGate(findings.concat(unparseable).concat(crossGame), mode, threw);
-  return { mode, decision, findings, unparseable, crossGame, corroborations, gap, threw };
+  const decision = decideGate(findings.concat(unparseable).concat(crossGame).concat(pipelineLeak), mode, threw);
+  return { mode, decision, findings, unparseable, crossGame, pipelineLeak, pipelineLeakFlags, corroborations, gap, threw };
 }

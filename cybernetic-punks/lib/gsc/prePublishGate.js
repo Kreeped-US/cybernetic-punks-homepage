@@ -35,8 +35,21 @@
 // never holds), so it is OBSERVED there -- the same observe-then-arm posture as the classes above.
 export const HOLD_CLASSES = ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE', 'UNSUPPORTED-RECOMMENDATION', 'CROSS_GAME_ENTITY'];
 
+// MODE-INDEPENDENT hold classes (2026-09-24). Unlike HOLD_CLASSES (which only hold a fail-closed
+// draft), an ALWAYS_HOLD class holds a draft in EVERY mode -- including Marathon's log-only, which
+// otherwise fails open on everything. PIPELINE_LEAK (pipeline/meta phrases + bare route paths
+// leaking into reader text; see lib/gsc/detectPipelineLeak.js) is a reader-facing DEFECT, not a
+// corroboration question, so a game's fail-open posture must not release it. Kept a SEPARATE list
+// (not folded into HOLD_CLASSES) so the mode-independent property is explicit and greppable, and so
+// a future ordinary hold-class can never accidentally inherit enforce-in-all-modes.
+export const ALWAYS_HOLD_CLASSES = ['PIPELINE_LEAK'];
+
 function holdClassFindings(findings) {
   return (findings || []).filter((f) => HOLD_CLASSES.indexOf(f.class) !== -1);
+}
+
+function alwaysHoldFindings(findings) {
+  return (findings || []).filter((f) => ALWAYS_HOLD_CLASSES.indexOf(f.class) !== -1);
 }
 
 // A clean pass -> publish. Shared shape so the two publish paths can't drift.
@@ -50,6 +63,14 @@ function publish() {
 // (Ruling 1a productive holds). On a THROW with no findings, it records a GATE_INFRA_FAILURE
 // marker so a held row's "why" is never blank + the failure is auditable.
 export function decideGate(findings, mode, threw) {
+  // ALWAYS-HOLD pre-check (runs BEFORE the mode branches). A mode-independent hold class
+  // (ALWAYS_HOLD_CLASSES, e.g. PIPELINE_LEAK) holds the draft in EVERY mode -- including log-only,
+  // which the branch below would otherwise fail-open. Its findings are recorded as the why.
+  const always = alwaysHoldFindings(findings);
+  if (always.length > 0) {
+    return { hold: true, is_published: false, gate_status: 'held', gate_findings: always };
+  }
+
   // log-only (Marathon): fail-OPEN. Never holds -- not on findings, not on a throw.
   if (mode === 'log-only') return publish();
 

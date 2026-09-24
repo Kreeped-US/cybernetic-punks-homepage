@@ -5,7 +5,7 @@
 // Run: node --test lib/gsc/prePublishGate.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decideGate, HOLD_CLASSES } from './prePublishGate.js';
+import { decideGate, HOLD_CLASSES, ALWAYS_HOLD_CLASSES } from './prePublishGate.js';
 
 const CONTRA = { class: 'CONTRADICTED', entity: 'Test Rifle', field: 'damage', claimed_value: 99 };
 const UNCORR = { class: 'UNCORROBORATED', entity: 'Test Rifle', field: 'fire_rate', claimed_value: 600 };
@@ -67,8 +67,43 @@ test('unknown/absent mode: PUBLISHES (house fail-open default; a game without th
   assert.equal(decideGate([CONTRA], 'off', true).is_published, true);
 });
 
-test('hold-class set = CONTRADICTED + UNCORROBORATED + UNPARSEABLE + UNSUPPORTED-RECOMMENDATION (decideGate logic unchanged)', () => {
-  assert.deepEqual(HOLD_CLASSES, ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE', 'UNSUPPORTED-RECOMMENDATION']);
+test('hold-class set = CONTRADICTED + UNCORROBORATED + UNPARSEABLE + UNSUPPORTED-RECOMMENDATION + CROSS_GAME_ENTITY (decideGate logic unchanged)', () => {
+  assert.deepEqual(HOLD_CLASSES, ['CONTRADICTED', 'UNCORROBORATED', 'UNPARSEABLE', 'UNSUPPORTED-RECOMMENDATION', 'CROSS_GAME_ENTITY']);
+});
+
+// ── ALWAYS-HOLD (mode-independent): PIPELINE_LEAK holds in EVERY mode, log-only included ──────────
+const PIPELINE = { class: 'PIPELINE_LEAK', kind: 'route', matched: '/cradle', verbatim: 'Map it to /cradle to plan', slug: 'x' };
+
+test('always-hold set = PIPELINE_LEAK (separate list, not folded into HOLD_CLASSES)', () => {
+  assert.deepEqual(ALWAYS_HOLD_CLASSES, ['PIPELINE_LEAK']);
+  assert.equal(HOLD_CLASSES.indexOf('PIPELINE_LEAK'), -1, 'PIPELINE_LEAK is NOT an ordinary hold-class');
+});
+
+test('log-only (Marathon): a PIPELINE_LEAK finding HOLDS -- the enforce-in-all-modes guarantee', () => {
+  const d = decideGate([PIPELINE], 'log-only', false);
+  assert.equal(d.hold, true, 'PIPELINE_LEAK must hold even a fail-open (log-only) draft');
+  assert.equal(d.is_published, false);
+  assert.equal(d.gate_status, 'held');
+  assert.deepEqual(d.gate_findings, [PIPELINE], 'the leak is recorded as the why');
+});
+
+test('fail-closed: a PIPELINE_LEAK finding HOLDS (records the leak as the why)', () => {
+  const d = decideGate([PIPELINE], 'fail-closed', false);
+  assert.equal(d.hold, true);
+  assert.equal(d.gate_status, 'held');
+  assert.deepEqual(d.gate_findings, [PIPELINE]);
+});
+
+test('unknown/absent mode: a PIPELINE_LEAK finding STILL holds (ungated game is not exempt)', () => {
+  const d = decideGate([PIPELINE], undefined, false);
+  assert.equal(d.hold, true, 'the always-hold pre-check runs before the mode branches');
+  assert.equal(d.is_published, false);
+});
+
+test('log-only: the always-hold pre-check does not disturb the fail-open path when NO leak present', () => {
+  const d = decideGate([CONTRA], 'log-only', false);
+  assert.equal(d.hold, false, 'a non-always-hold finding still fails open in log-only');
+  assert.equal(d.is_published, true);
 });
 
 // STEP 3 (content model): UNSUPPORTED-RECOMMENDATION follows the same observe-then-arm pattern.
