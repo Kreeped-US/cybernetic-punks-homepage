@@ -11,6 +11,7 @@
 // The 6 pre-launch pieces are DRAFTS (is_published=false), so this renders nothing for them
 // until they are published (Track-2 flip). It is wired now so the render path exists.
 import { supabase } from '@/lib/supabase';
+import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
@@ -35,21 +36,19 @@ var WARDOGS_GAME_SLUG = 'wardogs';
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
 
 async function fetchArticle(slug) {
-  try {
-    var { data } = await supabase
-      .from('feed_items')
-      // select('*') so operator_approved_at (Brief 2e) is picked up whether or not the column has
-      // been added yet -- no deploy-ordering hazard (a missing column just reads as legacy). Matches
-      // the marathon-intel fetch pattern.
-      .select('*')
-      .eq('slug', slug)
-      .eq('game_slug', WARDOGS_GAME_SLUG)
-      .eq('is_published', true)
-      .maybeSingle();
-    return data || null;
-  } catch (err) {
-    return null; // treat as missing -> 404
-  }
+  // select('*') so operator_approved_at (Brief 2e) is picked up whether or not the column has been
+  // added yet -- no deploy-ordering hazard (a missing column just reads as legacy). Matches the
+  // marathon-intel fetch pattern. LOUD FAILURE: a real read error THROWS (-> Next default 500, which
+  // crawlers retry) instead of the old swallow-to-null that turned a transient blip into a 404 for a
+  // live indexable article; a genuine miss still returns null -> notFound() (404), unchanged.
+  var res = await supabase
+    .from('feed_items')
+    .select('*')
+    .eq('slug', slug)
+    .eq('game_slug', WARDOGS_GAME_SLUG)
+    .eq('is_published', true)
+    .maybeSingle();
+  return dataOrThrow(res, 'wardogs article (slug=' + slug + ')', null);
 }
 
 function metaDescription(body, fallback) {

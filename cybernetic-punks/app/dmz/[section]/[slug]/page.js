@@ -25,6 +25,7 @@
 // force-dynamic: queried at request time.
 
 import { supabase } from '@/lib/supabase';
+import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
@@ -57,20 +58,19 @@ var DMZ_GAME_SLUG = 'dmz';
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
 
 async function fetchArticle(slug) {
-  try {
-    var { data } = await supabase
-      .from('feed_items')
-      // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet
-      // -- no deploy-ordering hazard (missing column reads as legacy). Matches marathon-intel.
-      .select('*')
-      .eq('slug', slug)
-      .eq('game_slug', DMZ_GAME_SLUG)
-      .eq('is_published', true)
-      .maybeSingle();
-    return data || null;
-  } catch (err) {
-    return null; // treat as missing -> 404
-  }
+  // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet -- no
+  // deploy-ordering hazard (missing column reads as legacy). Matches marathon-intel. LOUD FAILURE: a
+  // real read error THROWS (-> Next default 500, crawler-retryable) instead of the old swallow-to-null
+  // that turned a transient blip into a 404 for a live indexable article; a genuine miss still returns
+  // null -> notFound() (404), unchanged.
+  var res = await supabase
+    .from('feed_items')
+    .select('*')
+    .eq('slug', slug)
+    .eq('game_slug', DMZ_GAME_SLUG)
+    .eq('is_published', true)
+    .maybeSingle();
+  return dataOrThrow(res, 'dmz article (slug=' + slug + ')', null);
 }
 
 function readTime(body) {

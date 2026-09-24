@@ -10,6 +10,7 @@
 
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { Exo_2 } from 'next/font/google';
 import { tierMapFrom } from '@/lib/wardogs/weaponTiers';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
@@ -46,7 +47,9 @@ async function loadData() {
     sb.from('weapon_stats').select('name, weapon_type, category, image_filename, verified_source').eq('game_slug', 'wardogs'),
     sb.from('wardogs_ttk').select('weapon_name, ammo_type, armor_tier, ttk_ms').eq('game_slug', 'wardogs'),
   ]);
-  return { weapons: wRes.data || [], ttk: tRes.data || [] };
+  // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of rendering an empty tier
+  // ladder at 200/indexable on this flagship page; a genuine empty table still returns [] (unchanged).
+  return { weapons: dataOrThrow(wRes, 'wardogs tier-list weapon_stats', []), ttk: dataOrThrow(tRes, 'wardogs tier-list wardogs_ttk', []) };
 }
 
 const A = 'var(--accent)';

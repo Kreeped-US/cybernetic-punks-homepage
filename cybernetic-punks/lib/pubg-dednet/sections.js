@@ -11,6 +11,7 @@
 // Uses the lazy anon supabase proxy. Imports carry .js so the module loads under node --test.
 
 import { supabase } from '../supabase.js';
+import { countOrThrow } from '../data/dataOrThrow.js';
 import { dednetArticleSlugsForSection } from '../games/pubg-dednet.js';
 
 var DEDNET_GAME_SLUG = 'pubg-dednet';
@@ -22,16 +23,15 @@ var DEDNET_GAME_SLUG = 'pubg-dednet';
 export async function sectionHasContent(section, client) {
   if (!section || section.source !== 'editor') return false; // data sections: coming-soon shell
   var db = client || supabase;
-  try {
-    var sectionSlugs = dednetArticleSlugsForSection(section.slug);
-    if (sectionSlugs.length === 0) return false;
-    var { count } = await db
-      .from('feed_items')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_published', true).eq('game_slug', DEDNET_GAME_SLUG)
-      .in('slug', sectionSlugs);
-    return (count || 0) > 0;
-  } catch (err) {
-    return false; // fail-safe: errored count -> treat as empty -> noindex
-  }
+  // LOUD FAILURE: a real count error THROWS (-> Next default 500) rather than the old fail-safe that
+  // returned false and silently noindexed a section with real content. A genuine zero count still
+  // returns false -> noindex (unchanged).
+  var sectionSlugs = dednetArticleSlugsForSection(section.slug);
+  if (sectionSlugs.length === 0) return false;
+  var slugRes = await db
+    .from('feed_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_published', true).eq('game_slug', DEDNET_GAME_SLUG)
+    .in('slug', sectionSlugs);
+  return countOrThrow(slugRes, 'pubg-dednet section ' + section.slug) > 0;
 }

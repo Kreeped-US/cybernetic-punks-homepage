@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Loud failure for feed_items render reads (non-Marathon set) (fix/loud-failure-render-reads)
+supabase-js RESOLVES { data:null, error } on a DB error (it does not throw), so the old
+`const {data}=await...; return data||[]` / try/catch-to-null collapsed a transient READ ERROR into the
+SAME empty result as "no rows" -- silently 404ing a live article, noindexing a live section, or serving
+an empty-but-indexable 200. Fixed the MUST-THROW render reads to split on the ERROR object.
+
+There is NO error.js / global-error.js anywhere in app/ (verified), so a thrown Server-Component error
+falls to Next's DEFAULT HTTP 500 -- the correct, crawler-retryable signal, never a 404. Genuine zero-row
+behavior is UNCHANGED (notFound / empty state / noindex on real empties).
+
+HELPER (one shared module):
+- MOVED lib/dmz/dataOrThrow.js -> lib/data/dataOrThrow.js (game-agnostic); label is caller-supplied (no
+  hardcoded [dmz] prefix). Added countOrThrow(res,label) for head/count reads (throw on error, else
+  res.count ?? 0). lib/dmz/dataOrThrow.js is now a one-line re-export so existing imports (entities.js,
+  weaponBuilds.js) are unchanged. New unit test lib/data/dataOrThrow.test.mjs (error->throw; empty->
+  fallback/0; rows->passthrough), 5 pass.
+
+APPLIED (MUST-THROW only; genuine zero rows keeps today's notFound/empty/noindex):
+- wardogs: app/wardogs/[section]/[slug]/page.js (article -> dataOrThrow), app/wardogs/[section]/page.js
+  (section list), lib/wardogs/sections.js (sectionHasContent -> countOrThrow), app/wardogs/tier-list/
+  page.js (weapon_stats + wardogs_ttk -> dataOrThrow; the flagship silent-empty-200 site).
+- dmz: app/dmz/[section]/[slug]/page.js, app/dmz/[section]/page.js, lib/dmz/sections.js.
+- pubg-dednet: app/pubg-dednet/[section]/[slug]/page.js, app/pubg-dednet/[section]/page.js,
+  lib/pubg-dednet/sections.js.
+- shared: components/game/GameArticle.js (fetchArticle), components/game/GameSectionPage.js
+  (sectionHasContent -> countOrThrow, section list -> dataOrThrow) -- covers Bodycam + future games.
+Removed only the try/catch wrappers that converted a Supabase error into null/[] (they caught nothing
+else). ACCEPTABLE-DEGRADE sites untouched (OG images, landing counts, marathon related blocks, economy).
+Supersedes the earlier "fail-safe noindex by design" catch in lib/*/sections.js: on a real DB error,
+noindexing a page that HAS content is the harm; a 500 is crawler-retryable. Genuine zero rows still noindex.
+
+STALE TEST FIXED (surfaced by this change, added to the set): lib/dmz/sections.test.mjs -- the "empty
+slug-map (field-intel) returns false without a DB count" test used field-intel, which NOW maps to 5
+articles (config drift); it only passed before because the removed fail-safe try/catch swallowed the
+explodingDb throw. Retargeted to 'meta' (a currently 0-slug editor section) so it still asserts the
+genuine pre-DB short-circuit. No production behavior change. Fragile: this goes stale when 'meta' gets
+content -- follow-up: inject a fixture section map instead of reading live config.
+
+DEFERRED -- Marathon M1-M3 (freeze, separate commit pending operator timing call): the same swallow->
+throw fix is NOT in this commit for app/marathon/intel/[slug]/page.js:1306 (main article -> 404 on
+error) & :218 (metadata -> drops noindex), and app/marathon/intel/page.js:199 (hub -> ?page>=2 404).
+These are migrated Marathon routes under the Oct-20 SEO freeze.
+
+NOT CHANGED (flagged borderline): app/wardogs/economy/page.js -- a read error silently drops a secondary
+intel list + zeroes modeled figures but does NOT flip robots/status (hub stays 200/indexable). Data-
+honesty degrade, not the MUST-THROW class; left for a separate decision.
+
+VERIFY: npm run build -> exit 0. Tests 51 pass / 0 fail (dataOrThrow 5, the 3 games' sections tests, and
+the gsc gate+insertGate suite). eslint: no new errors.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Operator DB write: removed DMZ placeholder test data (pre-launch cleanup)
 Deleted, FK-safe order (all FKs ON DELETE RESTRICT): dmz_weapon_builds placeholder-rifle-alpha (1),
 dmz_attachments test-optic-one, test-muzzle-one, test-apex-one (3), dmz_weapons placeholder-rifle-alpha

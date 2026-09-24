@@ -14,6 +14,7 @@
 // This page sets NO robots of its own -> inherits that gate.
 
 import { supabase } from '@/lib/supabase';
+import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
@@ -175,34 +176,33 @@ export default async function DmzSectionPage({ params }) {
   // column). The Discourse section maps by TAG (contentFilter.byTag) -- its slugs
   // are generated, not hand-curated. No members -> empty state.
   var byTag = section.contentFilter && section.contentFilter.byTag;
+  // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty,
+  // which rendered an empty section at 200 while its metadata (sectionHasContent) reported it
+  // indexable. A genuine zero-row result still falls through to the empty state (unchanged).
   var articles = [];
-  try {
-    if (byTag) {
-      var { data: tagData } = await supabase
+  if (byTag) {
+    var tagRes = await supabase
+      .from('feed_items')
+      .select('id, headline, slug, editor, tags, body, source_url, created_at')
+      .eq('is_published', true)
+      .eq('game_slug', DMZ_GAME_SLUG)
+      .contains('tags', [byTag])
+      .order('created_at', { ascending: false })
+      .limit(30);
+    articles = dataOrThrow(tagRes, 'dmz section ' + section.slug + ' (tag ' + byTag + ')', []);
+  } else {
+    var sectionSlugs = dmzArticleSlugsForSection(section.slug);
+    if (sectionSlugs.length > 0) {
+      var slugRes = await supabase
         .from('feed_items')
         .select('id, headline, slug, editor, tags, body, source_url, created_at')
         .eq('is_published', true)
         .eq('game_slug', DMZ_GAME_SLUG)
-        .contains('tags', [byTag])
+        .in('slug', sectionSlugs)
         .order('created_at', { ascending: false })
         .limit(30);
-      if (tagData) articles = tagData;
-    } else {
-      var sectionSlugs = dmzArticleSlugsForSection(section.slug);
-      if (sectionSlugs.length > 0) {
-        var { data } = await supabase
-          .from('feed_items')
-          .select('id, headline, slug, editor, tags, body, source_url, created_at')
-          .eq('is_published', true)
-          .eq('game_slug', DMZ_GAME_SLUG)
-          .in('slug', sectionSlugs)
-          .order('created_at', { ascending: false })
-          .limit(30);
-        if (data) articles = data;
-      }
+      articles = dataOrThrow(slugRes, 'dmz section ' + section.slug, []);
     }
-  } catch (err) {
-    // non-fatal: fall through to empty-state
   }
 
   if (articles.length === 0) {

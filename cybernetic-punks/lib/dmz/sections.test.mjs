@@ -39,12 +39,15 @@ test('data section (printer) returns false and never queries the DB', async () =
 });
 
 // ── EDITOR + empty slug-map -> false, WITHOUT touching the DB ──────────────────
-// field-intel has NO entry in DMZ_ARTICLE_SECTION (Hajin+FOB moved out), so
+// 'meta' is an editor section with NO published article mapped to it yet, so
 // dmzArticleSlugsForSection returns [] and the predicate short-circuits pre-DB.
-test('editor section with empty slug-map (field-intel) returns false without a DB count', async () => {
-  const fi = sectionBySlug('field-intel');
-  assert.equal(fi.source, 'editor', 'fixture: field-intel is an editor section');
-  const result = await sectionHasContent(fi, explodingDb); // empty map -> no DB call
+// (The former fixture 'field-intel' now maps to 5 articles -- it no longer
+// short-circuits; the old fail-safe try/catch had masked the explodingDb throw.
+// With loud-failure (2026-09-24), the short-circuit is asserted on a truly-empty section.)
+test('editor section with empty slug-map (meta) returns false without a DB count', async () => {
+  const m = sectionBySlug('meta');
+  assert.equal(m.source, 'editor', 'fixture: meta is an editor section');
+  const result = await sectionHasContent(m, explodingDb); // empty map -> no DB call
   assert.equal(result, false, 'no article maps here -> empty slug-set -> not indexable');
 });
 

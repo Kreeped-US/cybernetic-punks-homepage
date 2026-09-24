@@ -18,6 +18,7 @@
 // mapping is unit-tested in sections.test.mjs with an injected fake client).
 
 import { supabase } from '../supabase.js';
+import { countOrThrow } from '../data/dataOrThrow.js';
 import { dmzArticleSlugsForSection } from '../games/dmz.js';
 
 var DMZ_GAME_SLUG = 'dmz';
@@ -36,24 +37,24 @@ export async function sectionHasContent(section, client) {
   if (!section || section.source !== 'editor') return false; // data sections: coming-soon shell
   var db = client || supabase;
   var byTag = section.contentFilter && section.contentFilter.byTag;
-  try {
-    if (byTag) {
-      var { count: tagCount } = await db
-        .from('feed_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_published', true).eq('game_slug', DMZ_GAME_SLUG)
-        .contains('tags', [byTag]);
-      return (tagCount || 0) > 0;
-    }
-    var sectionSlugs = dmzArticleSlugsForSection(section.slug);
-    if (sectionSlugs.length === 0) return false;
-    var { count } = await db
+  // LOUD FAILURE: a real count error THROWS (-> Next default 500) rather than the old fail-safe that
+  // returned false and silently NOINDEXED a section with real content. A genuine zero count still
+  // returns false -> noindex (unchanged). No try/catch: a DB error resolves to { error }, and
+  // countOrThrow raises it.
+  if (byTag) {
+    var tagRes = await db
       .from('feed_items')
       .select('id', { count: 'exact', head: true })
       .eq('is_published', true).eq('game_slug', DMZ_GAME_SLUG)
-      .in('slug', sectionSlugs);
-    return (count || 0) > 0;
-  } catch (err) {
-    return false; // fail-safe: an errored count -> treat as empty -> noindex (never over-expose)
+      .contains('tags', [byTag]);
+    return countOrThrow(tagRes, 'dmz section ' + section.slug + ' (tag ' + byTag + ')') > 0;
   }
+  var sectionSlugs = dmzArticleSlugsForSection(section.slug);
+  if (sectionSlugs.length === 0) return false;
+  var slugRes = await db
+    .from('feed_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_published', true).eq('game_slug', DMZ_GAME_SLUG)
+    .in('slug', sectionSlugs);
+  return countOrThrow(slugRes, 'dmz section ' + section.slug) > 0;
 }

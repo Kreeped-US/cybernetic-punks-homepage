@@ -6,6 +6,7 @@
 // so this module imports no game. First used by Bodycam; legacy games keep their own copies.
 
 import { supabase } from '@/lib/supabase';
+import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
@@ -19,18 +20,16 @@ var CANONICAL_BASE = 'https://cyberneticpunks.com';
 var FONT = 'Exo_2, system-ui, sans-serif';
 
 async function fetchArticle(config, slug) {
-  try {
-    var { data } = await supabase
-      .from('feed_items')
-      // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet
-      // -- no deploy-ordering hazard (missing column reads as legacy). Matches marathon-intel.
-      .select('*')
-      .eq('slug', slug).eq('game_slug', config.slug).eq('is_published', true)
-      .maybeSingle();
-    return data || null;
-  } catch (err) {
-    return null;
-  }
+  // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet -- no
+  // deploy-ordering hazard (missing column reads as legacy). Matches marathon-intel. LOUD FAILURE: a
+  // real read error THROWS (-> Next default 500, crawler-retryable) instead of swallowing to null (a
+  // transient blip -> 404 for a live article); a genuine miss still returns null -> notFound().
+  var res = await supabase
+    .from('feed_items')
+    .select('*')
+    .eq('slug', slug).eq('game_slug', config.slug).eq('is_published', true)
+    .maybeSingle();
+  return dataOrThrow(res, config.slug + ' article (slug=' + slug + ')', null);
 }
 
 function metaDescription(body, fallback) {

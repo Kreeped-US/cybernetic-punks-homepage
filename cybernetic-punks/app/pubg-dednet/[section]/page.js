@@ -12,6 +12,7 @@
 // route's generateMetadata also noindexes an EMPTY section (belt-and-suspenders).
 
 import { supabase } from '@/lib/supabase';
+import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
 import { dednetArticleSlugsForSection } from '@/lib/games/pubg-dednet';
@@ -86,18 +87,18 @@ export default async function PubgDednetSectionPage({ params }) {
 
   if (section.source !== 'editor') return <EmptyState section={section} />;
 
+  // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty;
+  // a genuine zero-row result still falls through to the empty state (unchanged).
   var articles = [];
-  try {
-    var sectionSlugs = dednetArticleSlugsForSection(section.slug);
-    if (sectionSlugs.length > 0) {
-      var { data } = await supabase
-        .from('feed_items')
-        .select('id, headline, slug, editor, tags, body, source_url, created_at')
-        .eq('is_published', true).eq('game_slug', DEDNET_GAME_SLUG)
-        .in('slug', sectionSlugs).order('created_at', { ascending: false }).limit(30);
-      if (data) articles = data;
-    }
-  } catch (err) { /* non-fatal -> empty state */ }
+  var sectionSlugs = dednetArticleSlugsForSection(section.slug);
+  if (sectionSlugs.length > 0) {
+    var slugRes = await supabase
+      .from('feed_items')
+      .select('id, headline, slug, editor, tags, body, source_url, created_at')
+      .eq('is_published', true).eq('game_slug', DEDNET_GAME_SLUG)
+      .in('slug', sectionSlugs).order('created_at', { ascending: false }).limit(30);
+    articles = dataOrThrow(slugRes, 'pubg-dednet section ' + section.slug, []);
+  }
 
   if (articles.length === 0) return <EmptyState section={section} />;
 

@@ -11,6 +11,7 @@
 // lib/<game>/sections.js copies) and CoverageCard (the landing's per-section card).
 
 import { supabase } from '@/lib/supabase';
+import { dataOrThrow, countOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
@@ -26,18 +27,17 @@ var FONT = 'Exo_2, system-ui, sans-serif';
 export async function sectionHasContent(config, section, articleSlugsForSection, client) {
   if (!section || section.source !== 'editor') return false;
   var db = client || supabase;
-  try {
-    var sectionSlugs = articleSlugsForSection(section.slug);
-    if (!sectionSlugs || sectionSlugs.length === 0) return false;
-    var { count } = await db
-      .from('feed_items')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_published', true).eq('game_slug', config.slug)
-      .in('slug', sectionSlugs);
-    return (count || 0) > 0;
-  } catch (err) {
-    return false;
-  }
+  // LOUD FAILURE: a real count error THROWS (-> Next default 500) rather than the old fail-safe that
+  // returned false and silently noindexed a section with real content. Genuine zero count -> false
+  // (noindex), unchanged.
+  var sectionSlugs = articleSlugsForSection(section.slug);
+  if (!sectionSlugs || sectionSlugs.length === 0) return false;
+  var slugRes = await db
+    .from('feed_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_published', true).eq('game_slug', config.slug)
+    .in('slug', sectionSlugs);
+  return countOrThrow(slugRes, config.slug + ' section ' + section.slug) > 0;
 }
 
 // Metadata for a section route. Noindex an empty section (follow:true) until it has content AND the
@@ -153,18 +153,18 @@ export default async function GameSectionPage({ config, articleSlugsForSection, 
     return <EmptyState config={config} section={section} />;
   }
 
+  // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty;
+  // a genuine zero-row result still falls through to the empty state (unchanged).
   var articles = [];
-  try {
-    var sectionSlugs = articleSlugsForSection(section.slug);
-    if (sectionSlugs && sectionSlugs.length > 0) {
-      var { data } = await supabase
-        .from('feed_items')
-        .select('id, headline, slug, editor, tags, body, source_url, created_at')
-        .eq('is_published', true).eq('game_slug', config.slug)
-        .in('slug', sectionSlugs).order('created_at', { ascending: false }).limit(30);
-      if (data) articles = data;
-    }
-  } catch (err) { /* non-fatal -> empty state */ }
+  var listSlugs = articleSlugsForSection(section.slug);
+  if (listSlugs && listSlugs.length > 0) {
+    var listRes = await supabase
+      .from('feed_items')
+      .select('id, headline, slug, editor, tags, body, source_url, created_at')
+      .eq('is_published', true).eq('game_slug', config.slug)
+      .in('slug', listSlugs).order('created_at', { ascending: false }).limit(30);
+    articles = dataOrThrow(listRes, config.slug + ' section ' + section.slug, []);
+  }
 
   if (articles.length === 0) return <EmptyState config={config} section={section} />;
 
