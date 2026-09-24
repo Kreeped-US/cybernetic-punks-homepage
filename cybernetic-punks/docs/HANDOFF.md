@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Operator DB write: removed DMZ placeholder test data (pre-launch cleanup)
+Deleted, FK-safe order (all FKs ON DELETE RESTRICT): dmz_weapon_builds placeholder-rifle-alpha (1),
+dmz_attachments test-optic-one, test-muzzle-one, test-apex-one (3), dmz_weapons placeholder-rifle-alpha
+(1), dmz_weapon_classes placeholder-class (1). saved_build refs: 0. Rows were manually seeded
+(2026-08-06); no repo script re-inserts them. Verified counts builds/attachments/weapons/classes = 0.
+Result: /dmz/builds = empty state, noindex, out of sitemap; /dmz/builds/placeholder-rifle-alpha = 404.
+KEPT: dmz_attachment_slots 9 rows (optic..laser), verified=false, attributed to creator Gunsmith
+walkthroughs Jun-Jul 2026 -- real provisional data, not test data.
+LAUNCH TODO (Oct 23): confirm slot list against in-game Gunsmith, set verified=true, add/remove slots
+if the shipped game differs.
+
 ## 2026-09-24 -- Game-scope the 9 LATENT unfiltered shared-table reads (fix/scope-shared-tier-reads)
 Defense-in-depth follow-up to the DMZ launch audit + the 2026-09-23 NEXUS leak class. Added
 .eq('game_slug', PRODUCING_GAME_SLUG) to the 9 remaining unfiltered reads of the game-shared tables
