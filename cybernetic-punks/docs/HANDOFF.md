@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Game-scope the 9 LATENT unfiltered shared-table reads (fix/scope-shared-tier-reads)
+Defense-in-depth follow-up to the DMZ launch audit + the 2026-09-23 NEXUS leak class. Added
+.eq('game_slug', PRODUCING_GAME_SLUG) to the 9 remaining unfiltered reads of the game-shared tables
+meta_tiers / shell_stats in the generation pipeline. Prerequisite for turning on DMZ (or any second
+tier-model game) generation without re-opening the cross-game bleed class.
+
+ALL 9 SITES WERE LATENT -- NO LIVE EXPOSURE (audit findings, verified this session):
+- getGenerationGames() = ['marathon','wardogs'] (generateNews:true). Both rosters are
+  editorial.editors=['NEXUS','MIRANDA'] -- CIPHER is in NEITHER active roster, so gatherCipher runs
+  every cycle but its prompt is built-then-discarded (never processed -> never published).
+- cron/route.js:744 shell_stats read is inside the NEXUS-regrade block, gated on
+  PRODUCING_GAME.nexusTierRegrade (marathon-only, 10fc49f) + shell_stats is marathon-only data.
+- DATA is 100% marathon: meta_tiers 40/0 (marathon/other), shell_stats 8/0, ZERO cross-game name
+  collisions -- nothing to bleed even latently. The former live vector (the NEXUS regrade meta_tiers
+  READ) was already game-scoped in 10fc49f; the write rows were restored to marathon in ffd1b93.
+
+WHAT SHIPPED (defense-in-depth; no behavior change on marathon-only data today):
+- lib/gather/cipher.js: 8 reads now carry .eq('game_slug', PRODUCING_GAME_SLUG) -- shell_stats at the
+  shellRes(:153), rankedShellNames(:303), shellRankedMap(:317), buildCounterMetaForShell(:325); and
+  meta_tiers at tierRes(:154), buildCounterMetaPrompt(:237), buildWeeklyClimbPrompt topShells(:392),
+  buildPatchImpactPrompt currentMeta(:556). (cipher's feed_items reads were already scoped.)
+- app/api/cron/route.js: the shell_stats regrade read (:744) now carries .eq('game_slug',
+  PRODUCING_GAME_SLUG), matching the weapon_stats read one line above.
+- These hard-close the class if CIPHER is re-added to a roster, a second game writes meta_tiers/
+  shell_stats, or dmz/others join getGenerationGames().
+
+NOT IN SCOPE (separate item): meta_tiers onConflict:'name' -> composite unique (name, game_slug) +
+onConflict change (needs operator DDL). Unreachable now (only marathon writes).
+
+VERIFY: npm run build -> exit 0. lib/gsc gate + insertGate tests: 40 pass / 0 fail. Grep confirms all 9
+reads carry the game_slug filter. eslint: no new errors (RankedClient's pre-existing unescaped-entities
+are unrelated + untouched).
+
+OPERATOR EVIDENCE SCAN (published feed_items since 2026-09-10, foreign meta_tiers/shell_stats names):
+1 hit, FALSE POSITIVE -- wardogs week-one article, "Recon" = Wardogs class in the official class-pick
+breakdown. Published content clean. Note: bare short names false-match; any automated version needs a
+cross-game homonym allowlist.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare
+it to the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Remove leftover editor persona portraits from Marathon surfaces (fix/related-intel-depersona)
 Recovery-bundle (Brief 2a) follow-up. The de-person bundle switched bylines to desk labels, but four
 MARATHON surfaces still rendered /images/editors/<name>.jpg persona portraits (Ahrefs 2026-09-22: 902

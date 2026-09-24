@@ -150,10 +150,10 @@ async function buildShellBuildPrompt() {
     : SHELLS[Math.floor(Math.random() * SHELLS.length)];
 
   const [shellRes, tierRes] = await Promise.all([
-    supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle(),
+    supabase.from('shell_stats').select('*').eq('name', targetShell).eq('game_slug', PRODUCING_GAME_SLUG).maybeSingle(),
     supabase.from('meta_tiers')
       .select('tier, note, trend')
-      .eq('name', targetShell).eq('type', 'shell').maybeSingle(),
+      .eq('name', targetShell).eq('type', 'shell').eq('game_slug', PRODUCING_GAME_SLUG).maybeSingle(),
   ]);
 
   const shell = shellRes.data;
@@ -237,6 +237,7 @@ async function buildCounterMetaPrompt() {
     .from('meta_tiers')
     .select('name, tier, note, trend')
     .eq('type', 'shell')
+    .eq('game_slug', PRODUCING_GAME_SLUG)
     // Filter source: shell_stats (see rankedShellNames). Data source stays here.
     .in('name', await rankedShellNames(['S', 'A']))
     .order('ranked_tier_solo'); // S first, then A
@@ -302,6 +303,7 @@ async function rankedShellNames(tiers) {
   const { data } = await supabase
     .from('shell_stats')
     .select('name')
+    .eq('game_slug', PRODUCING_GAME_SLUG)
     .in('ranked_tier_solo', tiers);
   return (data || []).map(function(r) { return r.name; });
 }
@@ -315,14 +317,15 @@ async function rankedShellNames(tiers) {
 async function shellRankedMap() {
   const { data } = await supabase
     .from('shell_stats')
-    .select('name, ranked_tier_solo, ranked_tier_squad, ranked_notes');
+    .select('name, ranked_tier_solo, ranked_tier_squad, ranked_notes')
+    .eq('game_slug', PRODUCING_GAME_SLUG);
   const m = {};
   (data || []).forEach(function(r) { m[r.name] = r; });
   return m;
 }
 
 async function buildCounterMetaForShell(targetShell, tierInfo) {
-  const shellRes = await supabase.from('shell_stats').select('*').eq('name', targetShell).maybeSingle();
+  const shellRes = await supabase.from('shell_stats').select('*').eq('name', targetShell).eq('game_slug', PRODUCING_GAME_SLUG).maybeSingle();
 
   const shell = shellRes.data;
 
@@ -392,6 +395,7 @@ async function buildWeeklyClimbPrompt() {
     supabase.from('meta_tiers')
       .select('name, tier, trend')
       .eq('type', 'shell')
+      .eq('game_slug', PRODUCING_GAME_SLUG)
       .in('name', rankedShellsSA)
       .order('ranked_tier_solo').limit(6),
     supabase.from('feed_items')
@@ -555,6 +559,7 @@ async function buildPatchImpactPrompt(patchItems) {
   const { data: currentMeta } = await supabase
     .from('meta_tiers')
     .select('name, type, trend')
+    .eq('game_slug', PRODUCING_GAME_SLUG)
     // Filter source: shell_stats. 'BAN' kept in the requested set for symmetry
     // with the old query; no shell currently holds it.
     .in('name', await rankedShellNames(['S', 'A', 'BAN']))

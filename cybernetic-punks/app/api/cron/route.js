@@ -741,7 +741,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
         try {
           var [validWeaponsRes, validShellsRes] = await Promise.all([
             supabase.from('weapon_stats').select('*').eq('game_slug', PRODUCING_GAME_SLUG),
-            supabase.from('shell_stats').select('name, ranked_tier_solo, ranked_tier_squad'),
+            supabase.from('shell_stats').select('name, ranked_tier_solo, ranked_tier_squad').eq('game_slug', PRODUCING_GAME_SLUG),
           ]);
           var weaponRows = validWeaponsRes.data || [];
           var validWeapons = new Map(weaponRows.map(function(w) { return [w.name.toLowerCase().trim(), w.name]; }));
