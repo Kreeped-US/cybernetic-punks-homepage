@@ -5,8 +5,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { heldForReviewApplies, heldPublishState, HELD_EDITORS } from './heldForReview.js';
 
-test('heldForReviewApplies: ON + NEXUS -> true (armed reasoning editor is reviewed first)', () => {
+test('heldForReviewApplies: ON + a held editor (NEXUS or MIRANDA) -> true', () => {
   assert.equal(heldForReviewApplies('NEXUS', true), true);
+  assert.equal(heldForReviewApplies('MIRANDA', true), true); // MIRANDA added to HELD_EDITORS a46f273 (2026-09-15)
 });
 
 test('heldForReviewApplies: flag OFF -> false for everyone (byte-identical to today)', () => {
@@ -15,11 +16,10 @@ test('heldForReviewApplies: flag OFF -> false for everyone (byte-identical to to
   assert.equal(heldForReviewApplies('MIRANDA', false), false);
 });
 
-test('heldForReviewApplies: ON but a non-reasoning editor -> false (scoped to NEXUS)', () => {
+test('heldForReviewApplies: ON but a non-held editor -> false (scoped to HELD_EDITORS)', () => {
   assert.equal(heldForReviewApplies('CIPHER', true), false);
   assert.equal(heldForReviewApplies('DEXTER', true), false);
   assert.equal(heldForReviewApplies('GHOST', true), false);
-  assert.equal(heldForReviewApplies('MIRANDA', true), false);
 });
 
 test('heldForReviewApplies: falsy/garbage inputs -> false (never throws)', () => {
@@ -36,8 +36,8 @@ test('heldPublishState: is_published=false + gate_status=clear (DRAFT state, NEV
   assert.notEqual(hp.gate_status, 'held');
 });
 
-test('HELD_EDITORS: the reasoning editor set is [NEXUS] (the only active producer)', () => {
-  assert.deepEqual(HELD_EDITORS, ['NEXUS']);
+test('HELD_EDITORS: the held-for-review set is [NEXUS, MIRANDA] (MIRANDA added a46f273, 2026-09-15)', () => {
+  assert.deepEqual(HELD_EDITORS, ['NEXUS', 'MIRANDA']);
 });
 
 test('the override applied over gate-driven values yields the held draft shape', () => {

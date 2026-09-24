@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Fix stale test assertions (test-only) + FULL-SUITE process rule (chore/fix-stale-tests)
+Updated stale test assertions to match deliberate code changes (all diagnosed STALE-TEST, NO code change).
+No production behavior changed.
+
+FIXED (the 3 diagnosed 2026-09-24):
+- lib/content/heldForReview.test.mjs: HELD_EDITORS -> ['NEXUS','MIRANDA'] (MIRANDA added a46f273,
+  2026-09-15 "hold MIRANDA for review"); heldForReviewApplies('MIRANDA', true) -> true (moved MIRANDA from
+  the false-group into the held-group; renamed the two tests accordingly).
+- lib/content/substanceFloor.test.mjs: FACET_TABLE_MAP -- weapon/shell/mod/core/implant now assert
+  gameScoped:true (a5d65bb, 2026-09-22 "game-aware substance floor"; all five tables now carry a game_slug
+  column, verified read-only). Test now loops Object.keys and asserts EVERY facet is gameScoped; comment
+  corrected (no more "no game_slug column").
+
+SCOPE EXPANSION (flagged): running the TRULY-full suite surfaced 3 MORE pre-existing STALE failures the old
+partial glob (lib/**/*.test.mjs) had HIDDEN -- lib/buildToolCta.test.mjs is a TOP-LEVEL lib/*.test.mjs that
+** did not match. Diagnosed STALE-TEST and fixed in the same branch to meet the 0-fail gate:
+- href '/advisor...' -> '/marathon/advisor...' (route migration STAGE 2, c359f9e, 2026-08-20).
+- generic copy "Open the Build Advisor" -> "Open the Loadout Finder" (rename bc2c7d2, 2026-09-15).
+This makes the staged set 3 test files + HANDOFF (not the 2 the brief named); called out for approval. That the
+full suite exposed failures a subset run missed is exactly why the rule below exists.
+
+STANDING PROCESS RULE (2026-09-24): every brief runs the FULL test suite before staging, NOT a subset, and
+reports total pass/fail. The partial glob lib/**/*.test.mjs silently EXCLUDES top-level lib/*.test.mjs files
+(e.g. buildToolCta.test.mjs), so a green subset can hide real failures.
+FULL-SUITE COMMAND (run from the cybernetic-punks/ project root; the ext-resolve hook is required for tests
+that import editorCore's extensionless modules, harmless for the rest):
+  node --import ./scripts/ext-resolve.register.mjs --test $(find lib -name '*.test.mjs')
+Result this brief: 525 tests, 525 pass, 0 fail.
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare it to
+the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Low-risk cost cleanup from the pipeline audit (chore/cost-cleanup)
 Applied the safe subset of the 2026-09-24 read-only cost audit. External APIs in the cron pipeline are all
 FREE/quota (the pay-per-call X API is NOT wired into any cron), so the only real $ is Anthropic tokens +

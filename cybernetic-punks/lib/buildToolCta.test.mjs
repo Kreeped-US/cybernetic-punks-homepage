@@ -10,22 +10,22 @@ test('CONTEXTUAL: a shell-naming marathon article -> prefilled deep-link + "Plan
   const r = resolveBuildToolCta(art({ headline: 'Marathon Vandal runner build: movement mods' }));
   assert.equal(r.show, true);
   assert.equal(r.shell, 'Vandal');
-  assert.equal(r.href, '/advisor?shell=vandal');
+  assert.equal(r.href, '/marathon/advisor?shell=vandal'); // route migration STAGE 2 c359f9e (2026-08-20)
   assert.equal(r.copy, 'Plan your Vandal build →');
 });
 
 test('CONTEXTUAL via TAGS too (not just headline)', () => {
   const r = resolveBuildToolCta(art({ headline: 'Season 2 economy shift', tags: ['recon', 'meta'] }));
   assert.equal(r.shell, 'Recon');
-  assert.equal(r.href, '/advisor?shell=recon');
+  assert.equal(r.href, '/marathon/advisor?shell=recon');
 });
 
 test('GENERIC: build-relevant but no single shell -> generic /advisor link', () => {
   const r = resolveBuildToolCta(art({ headline: 'Best loadout tips for the current meta', tags: ['weapon'] }));
   assert.equal(r.show, true);
   assert.equal(r.shell, null);
-  assert.equal(r.href, '/advisor');
-  assert.equal(r.copy, 'Want a build based on this intel? Open the Build Advisor →');
+  assert.equal(r.href, '/marathon/advisor');
+  assert.equal(r.copy, 'Want a build based on this intel? Open the Loadout Finder →'); // renamed bc2c7d2 (2026-09-15)
 });
 
 test('NOTHING: unrelated news/lore -> no CTA', () => {

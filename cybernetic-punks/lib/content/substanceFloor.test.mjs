@@ -24,13 +24,11 @@ test('resolveFacet: known facets map to a table entry; unknown -> null', () => {
   assert.equal(resolveFacet(123), null);
 });
 
-test('FACET_TABLE_MAP: game-world facets are gameScoped; marathon-implicit are not', () => {
-  // marathon-implicit tables are NOT game-scoped (no game_slug column)
-  for (const f of ['weapon', 'shell', 'mod', 'core', 'implant']) {
-    assert.equal(FACET_TABLE_MAP[f].gameScoped, false, f + ' has no game_slug column');
-  }
-  // per-game tables ARE game-scoped
-  for (const f of ['cradle', 'armory', 'map', 'zone', 'boss', 'event', 'mode']) {
+test('FACET_TABLE_MAP: every facet is gameScoped (all stat tables carry game_slug)', () => {
+  // a5d65bb (2026-09-22, game-aware substance floor): weapon/shell/mod/core/implant gained a
+  // game_slug column and are now game-scoped, like the per-game world tables. So EVERY facet
+  // filters on game_slug -- there are no longer any "marathon-implicit" un-scoped tables.
+  for (const f of Object.keys(FACET_TABLE_MAP)) {
     assert.equal(FACET_TABLE_MAP[f].gameScoped, true, f + ' filters on game_slug');
   }
 });
