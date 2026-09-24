@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Operator DB write: meta_tiers shell restore
+The 2026-09-23 wardogs NEXUS regrade (onConflict 'name' upsert) overwrote Marathon's 8 shell rows and
+relabeled them game_slug='wardogs'. Restored: UPDATE game_slug='marathon' for Assassin, Destroyer,
+Recon, Rook, Sentinel, Thief, Triage, Vandal (8 rows, verified). Residual: all 8 notes were rewritten
+by the contaminated run; Rook and Sentinel tier/trend are null (prior values unknown) -- left null
+pending the next Marathon regrade or operator confirmation. Follow-ups: game_slug filter on the 7
+public meta_tiers readers; unique key (name, game_slug) DDL + onConflict change.
+
 ## 2026-09-24 -- Close the wardogs NEXUS meta_tiers leak + wire the insert gate correctly (fix/wardogs-nexus-leak-and-gate)
 Forensics of the 2026-09-23 contaminated wardogs draft (id 4a7116f0, NEXUS, "Season 2 ... October 15
 Teaser", a Marathon tier table). THREE root causes; all closed here. Backend generation logic only
