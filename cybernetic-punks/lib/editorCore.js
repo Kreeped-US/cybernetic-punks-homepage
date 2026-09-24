@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL } from './models';
-import { verificationTag, verificationState, VERIFICATION_NOTE } from './verification';
+import { verificationTag, verificationState, honestNumber, VERIFICATION_NOTE } from './verification';
+import { NO_META_TALK_RULE } from './promptRules';
 import { availableOnMap } from './availability';
 import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
@@ -84,7 +85,7 @@ DATA INTEGRITY RULES - CRITICAL:
 - It is better to write a shorter article with verified facts than a longer article with invented details.
 - SOURCE CITATION: in cited_blocks, list the bracketed ids (e.g. BN1, YT2) of the context blocks whose FACTS you actually used. Select only ids that appear in your context; cite nothing rather than guessing. Never write a URL - the id alone; the system resolves the source and link.
 - INTERNAL LINKS - MARKDOWN ONLY: when you point the reader to a site page, ALWAYS write it as a markdown link using the exact path given to you in this prompt, e.g. [Cradle planner](/marathon/cradle). NEVER write the path on its own in the prose (a slash-prefixed path with no surrounding [label](...) wrapper) - a raw path renders as broken, unfinished-looking text. If you were not given a path for a page, name it in words and do not invent a URL or path.
-- NO PIPELINE / META TALK: never mention your reference data, "the database", your sources, your context, or a value's verification/confidence status in the article body. Those things describe YOUR inputs - they are not article vocabulary. Write only reader-facing prose: state the facts you are allowed to state, and silently omit anything you are not.
+${NO_META_TALK_RULE}
 
 COMMUNITY & SENTIMENT - CRITICAL:
 - You may ONLY quote, paraphrase, or attribute a statement to a community member, Reddit user, Steam reviewer, or streamer when that exact text is provided to you in the source material in this prompt.
@@ -663,7 +664,7 @@ async function fetchGameContext(config = getGameConfig()) {
           var statPairs = Object.entries(mod.stat_changes).map(function(e) { return e[0] + ' ' + e[1]; });
           if (statPairs.length > 0) statTag = ' [' + statPairs.join(', ') + ']';
         }
-        bySlot[slot].push(`${tagRow('mod_stats', mod)}${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${statTag}${verificationTag(mod)}`);
+        bySlot[slot].push(`${tagRow('mod_stats', mod)}${mod.name} (${mod.rarity || 'Unknown'})${factionTag}: ${mod.effect_desc}${honestNumber(mod, statTag)}${verificationTag(mod)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, mods]) => `${slot} Mods:\n${mods.map(m => `  - ${m}`).join('\n')}`)
@@ -693,7 +694,7 @@ async function fetchGameContext(config = getGameConfig()) {
         // Fallback: an exclusive core with no runner still renders
         // ", Shell-Exclusive". Zero such rows exist (2026-07-21) but the form can
         // still produce one, and the line must never emit ", )" or ", null".
-        byRunner[runner].push(`${tagRow('core_stats', core)}${core.name} (${core.rarity}${core.meta_rating ? ', Meta: ' + core.meta_rating : ''}${core.is_shell_exclusive ? (core.required_runner ? ', ' + core.required_runner + '-only' : ', Shell-Exclusive') : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
+        byRunner[runner].push(`${tagRow('core_stats', core)}${core.name} (${core.rarity}${honestNumber(core, core.meta_rating ? ', Meta: ' + core.meta_rating : '')}${core.is_shell_exclusive ? (core.required_runner ? ', ' + core.required_runner + '-only' : ', Shell-Exclusive') : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
@@ -714,7 +715,7 @@ async function fetchGameContext(config = getGameConfig()) {
           imp.stat_5_label && imp.stat_5_value ? `${imp.stat_5_label}: ${imp.stat_5_value}` : null,
         ].filter(Boolean).join(', ');
         var factionTag = imp.faction_source ? ' [' + imp.faction_source + ' Armory unlock]' : '';
-        bySlot[slot].push(`${tagRow('implant_stats', imp)}${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${stats ? ' [' + stats + ']' : ''}${verificationTag(imp)}`);
+        bySlot[slot].push(`${tagRow('implant_stats', imp)}${imp.name} (${imp.rarity})${factionTag}${imp.description ? ' - ' + imp.description : ''}${imp.passive_name ? ' | ' + imp.passive_name : ''}${honestNumber(imp, stats ? ' [' + stats + ']' : '')}${verificationTag(imp)}`);
       }
       const lines = Object.entries(bySlot)
         .map(([slot, imps]) => `${slot} Slot:\n${imps.map(i => `  - ${i}`).join('\n')}`)
@@ -727,9 +728,9 @@ async function fetchGameContext(config = getGameConfig()) {
         var parts = [
           w.weapon_type ? w.weapon_type.toUpperCase() : '',
           w.ammo_type || '',
-          w.damage ? 'DMG:' + w.damage : '',
-          w.fire_rate ? 'RPM:' + w.fire_rate : '',
-          w.magazine_size ? 'MAG:' + w.magazine_size : '',
+          honestNumber(w, w.damage ? 'DMG:' + w.damage : ''),
+          honestNumber(w, w.fire_rate ? 'RPM:' + w.fire_rate : ''),
+          honestNumber(w, w.magazine_size ? 'MAG:' + w.magazine_size : ''),
           w.range_rating ? 'RANGE:' + w.range_rating : '',
           w.ranked_viable === false ? '[RANKED-AVOID]' : '',
         ].filter(Boolean).join(' | ');
@@ -758,7 +759,7 @@ async function fetchGameContext(config = getGameConfig()) {
       const shellLines = shellsRes.data.map(function(s) {
         return [
           '  ' + tagRow('shell_stats', s) + s.name + (s.role ? ' [' + s.role + ']' : '') + verificationTag(s),
-          s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : '',
+          honestNumber(s, s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : ''),
           fmtAbility('Prime', s.prime_ability_name, s.prime_ability_description),
           fmtAbility('Tactical', s.tactical_ability_name, s.tactical_ability_description),
           fmtAbility('Trait', s.trait_1_name, s.trait_1_description),
@@ -985,7 +986,7 @@ export function buildMirandaPrompt(data) {
 
   const weaponData = weaponContext.length > 0
     ? weaponContext.slice(0, 20).map(w =>
-        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${w.damage ? ', Dmg=' + w.damage : ''}${w.fire_rate ? ', RPM=' + w.fire_rate : ''}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${verificationTag(w)}`
+        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${honestNumber(w, w.damage ? ', Dmg=' + w.damage : '')}${honestNumber(w, w.fire_rate ? ', RPM=' + w.fire_rate : '')}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${verificationTag(w)}`
       ).join('\n')
     : 'Weapon data seeding in progress.';
 

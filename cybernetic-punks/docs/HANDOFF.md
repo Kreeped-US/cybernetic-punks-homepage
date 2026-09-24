@@ -7,6 +7,67 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Advisor + editors: honest-null + no-meta-talk across both generators (fix/advisor-honest-null)
+Extends the writer-template fix (bb34280) to the ADVISOR build generator (public indexed build pages) and
+closes bb34280's non-cradle honest-null follow-up. generateLoadout.js (Wardogs) untouched -- clean by design.
+
+PRE-CHECK (UNCHECKED vs total per marathon table, via verificationState):
+  weapon_stats 0/32 | mod_stats 0/203 | shell_stats 0/8 | core_stats 23/85 (27%) | implant_stats 39/120 (33%)
+  | cradle_nodes 84/84 (100%).
+cradle_nodes is the only table >50% UNCHECKED. Per the operator's gate this required a decision:
+
+CRADLE DECISION = OPTION 3 (honest-null in BOTH generators; cradle Energy numbers withheld everywhere).
+RATIONALE: cradle_nodes 84/84 UNCHECKED; Bungie's "Future of Marathon" roadmap says the Nightfall Refresh
+(early Oct) changes progression and March brings a refactored Cradle -- so verifying the current numbers is
+wasted effort. Verification DEFERRED until after Nightfall; re-evaluate then. (bb34280's editorCore
+renderCradlePerkLine already withheld all 84 for the news writer; this aligns generateBuild to match.)
+
+DOCTRINE (unchanged from bb34280): UNCHECKED numbers OMITTED, not narrated. SOURCE-LISTED attribution +
+never-inflate STATUS RULE unchanged. The [UNVERIFIED] MARKER and the "never state precise numbers"
+PROHIBITION both remain (verified in bb34280); honest-null only withholds the number.
+
+CHANGES:
+- lib/verification.js: NEW honestNumber(row, rendered) -> '' for UNCHECKED, else rendered. The shared
+  primitive both generators wrap each precise-number fragment with (damage/RPM/mag/HP/stat-deltas/Energy).
+- lib/promptRules.js: NEW single home for NO_META_TALK_RULE (hoisted verbatim from editorCore's
+  DATA_INTEGRITY_RULES, byte-identical). editorCore now interpolates ${NO_META_TALK_RULE} (no second copy);
+  generateBuild appends it to its system prompt (its reason/summary/analysis fields are reader-facing).
+- lib/editorCore.js: non-cradle stat lines (mod/core/implant/weapon/shell + MIRANDA weapon context) wrap
+  numeric fragments in honestNumber (closes the bb34280 follow-up). Range ratings / flags kept.
+- lib/advisor/generateBuild.js: import renderCradlePerkLine (DELETED the duplicate cradle renderer -> aligns
+  to bb34280 honest-null); weapon/mod/core/implant numbers wrapped in honestNumber; all "... DATABASE"
+  section names + "the databases below" + the DEXTER system prompt "from the databases provided" ->
+  "REFERENCE"/"reference sections" (kills the "in the database" priming); appends NO_META_TALK_RULE.
+
+DRY-RUN (PIPELINE_LEAK detector over published outputs, read-only, before fix):
+- build_pages (advisor, marathon): 14 indexed, 5 would BLOCK -- "in the database" (sentinel/destroyer/
+  assassin-knife/assassin/vandal x2) + "exact values are unconfirmed" (assassin-knife). LIVE indexed content.
+- wardogs_loadout_pages: 0 indexed (3 total, all is_indexable=false), 0 block/flag.
+
+STALE PUBLISHED (separate brief): the 5 leaking build_pages predate this fix. FIX = SURGICAL PHRASE EDIT
+(strip "in the database"/"exact values are unconfirmed" from build_json reason text), NOT regeneration.
+Slugs: sentinel, destroyer, assassin-knife, assassin, vandal (marathon). Wardogs loadouts: none indexed.
+
+READ-ONLY finding (no change): the public /marathon/cradle planner displays cradle_nodes Energy AS FACT and
+explicitly LABELS them "verified" (app/marathon/cradle/CradleClient.js:231 "NEXT PERK @ {e} ENERGY", :248
+"@{e}", :209 tooltip, :296 "Perk breakpoints and effects are verified from Season 2") -- despite the rows
+being 100% UNCHECKED. Cross-surface inconsistency: the planner asserts what the generators now withhold.
+Reinforces option 3 (defer verification to post-Nightfall) and is a candidate for a labeling pass later.
+
+DATA NOTE: core_stats + implant_stats have NO patch_verified column, so their rows can only ever be
+CONFIRMED or UNCHECKED (never SOURCE_AGREED). Fine for honest-null.
+
+VERIFY:
+- npm run build -> exit 0.
+- node --test (gsc gate + marathonRoutes + editorCore.writerLeaks + advisor/generateBuild + promptVocab)
+  -> 178 pass / 0 fail. New: honestNumber primitive; UNCHECKED cradle perk no-number in the advisor path;
+  advisor prompt has no "database" priming (outside the rule's own quoted example) + ends with NO_META_TALK_RULE.
+- HARNESS: rendered ALL games before/after -> 0 changed lines (rule single-sourcing is byte-identical; the
+  honest-null wraps + generateBuild are runtime/non-template, so no editor-template drift).
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare it to
+the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Writer-template fix: stop PIPELINE_LEAK at the source (fix/writer-no-leaks)
 The PIPELINE_LEAK gate (0f22d4b) HOLDS pipeline/meta text + bare route paths; 56/370 published Marathon
 articles carried them. This fixes GENERATION so drafts stop being held: the prompt no longer teaches the

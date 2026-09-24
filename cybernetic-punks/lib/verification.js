@@ -72,6 +72,16 @@ export function verificationState(row, site) {
   return 'UNCHECKED';
 }
 
+// HONEST-NULL primitive (doctrine 2026-09-24). Given a row and an already-rendered numeric fragment,
+// returns '' when the row is UNCHECKED (the raw, unconfirmed number never reaches the prompt -- the
+// model cannot narrate a figure it never saw) and the fragment unchanged otherwise. CONFIRMED and
+// SOURCE_AGREED keep their numbers (SOURCE_AGREED's attribution marker comes from verificationTag);
+// this only withholds the UNCHECKED figure. Callers wrap each precise-number fragment (damage, RPM,
+// magazine, HP, stat deltas, Energy) so a partly-unchecked line still shows its non-numeric facts.
+export function honestNumber(row, rendered) {
+  return verificationState(row) === 'UNCHECKED' ? '' : (rendered == null ? '' : String(rendered));
+}
+
 // Inline marker appended to a rendered stat line, one per register.
 // CONFIRMED renders nothing; the other two carry distinct markers the shared
 // note (below) tells the model how to treat.
