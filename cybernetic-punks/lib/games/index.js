@@ -45,9 +45,9 @@ export function getGameConfig(slug = DEFAULT_GAME_SLUG) {
 // the generation switch and is DELIBERATELY separate from `indexable` (SEO exposure) and
 // `status`/`launch_date` (lifecycle): decoupling them is the whole point -- flipping a game
 // indexable can never accidentally start generation. Absent/false generateNews = not active
-// (fail-closed; unconfigured = not generated, never a runtime toggle). Marathon is the only
-// generation-active game today, so this returns ['marathon'] -- byte-identical to the prior
-// hardcoded marathon default. Order follows GAMES insertion order (stable).
+// (fail-closed; unconfigured = not generated, never a runtime toggle). Marathon and Wardogs are
+// the generation-active games today (wardogs joined 2026-09-17), so this returns
+// ['marathon', 'wardogs']. Order follows GAMES insertion order (stable).
 export function getGenerationGames() {
   return Object.keys(GAMES).filter(function (slug) {
     var c = GAMES[slug];

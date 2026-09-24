@@ -1,7 +1,6 @@
 import { gatherYouTube, formatForEditor } from './youtube';
 import { gatherReddit, formatForGhost } from './reddit';
 import { gatherTwitchClips, formatClipsForCipher, formatClipsForGhost } from './twitch';
-import { refreshWikiData } from './wiki';
 import { gatherMirandaData } from './miranda';
 import { fetchSteamPlayerCount, fetchSteamReviews } from './steam.js';
 import { gatherBungieNews, formatBungieNewsForEditor, formatBungieNewsForEditorParts } from './bungie.js';
@@ -70,8 +69,8 @@ function communityTopicalityBlock(descriptor, body) {
 export async function gatherAll(config = getGameConfig()) {
   console.log('[GATHER] Starting data collection for ' + config.slug + '...');
 
-  const wikiResults = await refreshWikiData();
-  console.log('[GATHER] Wiki refresh:', wikiResults);
+  // refreshWikiData() call REMOVED 2026-09-24 (cost cleanup): it short-circuits at wiki.js
+  // (scraper disabled) and reached no fetch -- a no-op invocation every run. wiki.js itself is kept.
 
   const [
     youtubeVideos,

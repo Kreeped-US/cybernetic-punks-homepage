@@ -34,7 +34,8 @@ export const dynamic = 'force-dynamic';
 //
 // STAGE 3: the game is selected by the explicit generation switch
 // (editorial.generateNews) via getGenerationGames() -- NOT a hardcoded default and
-// NOT any SEO/indexable signal. getGenerationGames() returns ['marathon'] today.
+// NOT any SEO/indexable signal. getGenerationGames() returns ['marathon', 'wardogs'] today
+// (wardogs joined generation 2026-09-17).
 //
 // PHASE D (per-game cron): the module-level values below are the DEFAULT (the first
 // generation-active game). GET(req) RE-SELECTS per request from the ?game= query

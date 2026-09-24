@@ -7,6 +7,68 @@ Newest entries on top.
 
 ---
 
+## 2026-09-24 -- Low-risk cost cleanup from the pipeline audit (chore/cost-cleanup)
+Applied the safe subset of the 2026-09-24 read-only cost audit. External APIs in the cron pipeline are all
+FREE/quota (the pay-per-call X API is NOT wired into any cron), so the only real $ is Anthropic tokens +
+Vercel function-time; this pass cuts function-time/quota waste and one redundant external call.
+
+AUDIT TOP-10 (ranked by impact; est. cost/day):
+  1. Oversized editor context: full mod(203)/implant(120)/core(85)/cradle(84) tables (~12k tok) injected into
+     every editor prompt incl. NEXUS which doesn't cite them (editorCore.js:595-600). [DEFERRED]
+  2. Discarded editor gather: gatherAll builds all 5 editor prompts (index.js:207) but roster runs only
+     MIRANDA (+NEXUS on patch); CIPHER/DEXTER/GHOST gather always thrown away (index.js:121 gatherCipher,
+     172-179 GHOST Reddit/Steam-reviews/Twitch). [DEFERRED]
+  3. /api/cron/inspect over-frequent: 8x96 = ~768 GSC calls/day for slow-changing index status. [DONE]
+  4. /api/cron/stats over-frequent + Marathon-hardcoded: 96/day. [DONE - frequency]
+  5. /api/cron/gate-release hourly (24/day) vs held set changing ~1-2x/day. [DONE]
+  6. Duplicate DB reads per gen run: feed_items ~13x from 6 modules; shell/weapon/meta_tiers 4-6x each, no
+     shared cache. [DEFERRED]
+  7. Gate loader double-read: marathon reads weapon_stats/shell_stats/unique_weapons twice per draft
+     (storeLoader.js:128-130 cross-game vocab + :37-39 entity store). [DEFERRED]
+  8. 3 orphaned write tables never read: meta_tier_snapshots (route.js:843), coverage_shadow
+     (coverageShadow.js:303), cron_runs (cronRunLog.js:68). [KEPT INTENTIONALLY]
+  9. Duplicate Steam-news call: MIRANDA fetchSteamDevNews duplicated the patch-notes adapter, result
+     overwritten by bungieNews (index.js:188). [DONE]
+ 10. Dead code: refreshWikiData() invoked every run (index.js:73) but short-circuits before any fetch. [DONE]
+
+DONE this commit:
+- vercel.json: /api/cron/stats */15 -> hourly "0 * * * *"; /api/cron/gate-release hourly -> "0 */4 * * *";
+  /api/cron/inspect */15 -> DAILY "0 9 * * *". Inspect frequency chosen after a READ-ONLY backlog check
+  (selectInspectionCandidates): total DUE + ELIGIBLE = 1 of 444 tracked URLs (near-zero) -> daily is
+  ample; the 96/day cadence was ~1 real inspection + ~95 empty spins. (GSC quota-guard unchanged.)
+- lib/gather/miranda.js: removed fetchSteamDevNews() (call replaced with Promise.resolve([]) to keep the
+  Promise.all destructure; dead function deleted). devNews now comes solely from bungieNews (or [] when
+  none). Byte-equivalent: when bungieNews is empty the Steam feed is empty too (same appid). Patch-notes
+  adapter call KEPT.
+- lib/gather/index.js: removed the no-op refreshWikiData() call + its now-unused import. wiki.js untouched.
+- Stale comments fixed: app/api/cron/route.js (getGenerationGames comment) + lib/games/index.js
+  (getGenerationGames doc) now say ['marathon','wardogs'] (wardogs joined generation 2026-09-17).
+
+DEFERRED (with reasons):
+- #1 oversized context: the ONLY real token saver, but medium risk (per-editor context selection could
+  starve an editor of data it does use) -> its own brief with per-editor field analysis.
+- #2 roster-aware gather: medium risk -- gatherAll also feeds patch-detection (bungieNews) and NEXUS-on-patch;
+  making it roster-aware must preserve those paths -> its own brief.
+- #6 duplicate DB reads: HARD (request-scoped cache across 6 modules in the protected /api/cron pipeline).
+- #7 gate-loader double-read: medium (dedupe cross-game-vocab vs entity-store read paths in storeLoader) --
+  and this brief was told NOT to touch storeLoader.
+- #8 orphan tables KEPT: cron_runs + coverage_shadow are scaffolding for explicitly-unbuilt admin features
+  (app/admin/page.js:95 "v2 (NOT built): cron heartbeat (from cron_runs)"); dropping them forecloses that.
+  meta_tier_snapshots is a cheap history insert. Left for an explicit product decision, not a cost delete.
+
+PRE-EXISTING TEST FAILURES (discovered, NOT introduced by this change; verified failing on the clean tree):
+  lib/content/heldForReview.test.mjs -- "HELD_EDITORS: reasoning editor set is [NEXUS]" +
+  "heldForReviewApplies: ON but a non-reasoning editor -> false"; lib/content/substanceFloor.test.mjs --
+  "FACET_TABLE_MAP: game-world facets are gameScoped...". They import heldForReview.js / substanceFloor.js
+  (untouched here). Out of scope for this cost brief; flagged for a separate stale-test follow-up.
+
+VERIFY: npm run build -> exit 0. vercel.json valid (8 crons, new schedules confirmed). node --test: all
+tests touching the changed modules pass; the only 3 failures are the pre-existing ones above (same on a
+clean tree).
+
+PROCESS RULE (2026-09-22): immediately before every commit, run git diff --cached --stat and compare it to
+the approved file list. Any mismatch = stop and report.
+
 ## 2026-09-24 -- Cradle perks verified in-game + /marathon/cradle copy narrowed (fix/cradle-verified-copy)
 OPERATOR DB WRITE (in-game verification, 2026-09-24): cradle_nodes PERK rows set verified=true with source
 -> 18 of 18 perks now CONFIRMED (verified + verified_source present; confirmed read-only). Includes the two

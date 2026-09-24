@@ -129,18 +129,9 @@ async function fetchRedditGuides(subreddits) {
 }
 
 // ─── DEV NEWS: Steam ──────────────────────────────────────────
-
-async function fetchSteamDevNews() {
-  try {
-    const { fetchSteamNews } = await import('./steam.js');
-    const articles = await fetchSteamNews();
-    console.log(`[miranda.js] Steam dev news: ${articles.length} articles`);
-    return articles;
-  } catch (err) {
-    console.error('[miranda.js] Steam news failed:', err.message);
-    return [];
-  }
-}
+// fetchSteamDevNews() REMOVED 2026-09-24 (cost cleanup): it duplicated the patch-notes adapter's
+// Steam ISteamNews call for the same appid and its result was always overwritten by bungieNews in
+// gather/index.js. MIRANDA's devNews now comes solely from bungieNews (or [] when there is none).
 
 // ─── DEV NEWS: Reddit official posts ─────────────────────────
 
@@ -260,7 +251,12 @@ export async function gatherMirandaData(config = getGameConfig()) {
   const [videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, recentHeadlines] = await Promise.all([
     fetchYouTubeGuides(guideQueries),
     fetchRedditGuides(subreddits),
-    fetchSteamDevNews(),
+    // devNews: [] here (2026-09-24 cost cleanup). fetchSteamDevNews() was a DUPLICATE Steam
+    // ISteamNews call for the same appid as the patch-notes adapter, and its result was always
+    // overwritten by bungieNews at index.js (`if (bungieNews.length > 0) mirandaData.devNews =
+    // bungieNews.slice(0,6)`). When bungieNews is empty the Steam feed is empty too (same source),
+    // so [] is byte-equivalent to the old fallback -- the extra call was pure waste.
+    Promise.resolve([]),
     fetchDevRedditPosts(subreddits),
     fetchShellContext(config.slug),
     fetchWeaponContext(config.slug),
