@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-09-25 -- Game-aware CTA lines: DMZ pre-generation blocker fixed (fix/game-aware-cta)
+Shared editorCore "PLANNING TOOLS" CTA lines + the NEXUS meta-tier bullet were Marathon-shaped: games
+without primaryTool / links.* (dmz, pubg-dednet, bodycam -- and wardogs for factions/meta) rendered EMPTY
+markdown links ("[]()", "[factions]()", "[meta tier list]()") and an empty "{game} the  " descriptor into
+the prompt. This blocked enabling dmz generateNews. Now the CTA lines render ONLY when the game has that
+route, live+indexable, in a checked per-game allowlist.
+
+MECHANISM (as approved):
+- NEW lib/games/gameRoutes.js: GAME_ROUTES keyed by game -> { primaryTool?, factions?, meta? } each
+  { label?, path, live }. `live:true` = a real INDEXABLE page today (not a source:'data'/SOON shell, not a
+  row-count-gated-noindex hub). Generalizes marathonRoutes.js; also exports MARATHON_ROUTES, and
+  lib/games/marathonRoutes.js now RE-EXPORTS it (marathon.js import unchanged -- one route source).
+- lib/editors/promptVocab.js resolveKit: builds cta.dexterPlanning / cta.mirandaPlanning (whole
+  PLANNING-TOOLS block: header + only the live bullets + footer, or '' when none live) + cta.metaTierBullet
+  (NEXUS split-tier bullet) from GAME_ROUTES. Sentence parts (progressionSystem^, progressionMetric,
+  primaryTool label/path, factions/meta path) are substituted in resolveKit (a kit block does not
+  re-resolve nested {{kit:...}}); factions/meta paths come straight from the allowlist (no vocabulary.links
+  dependency -> no empty-href path). Also builds gameDescriptor = "<game> the <dev> <genre>" with missing
+  parts omitted (no "the  ").
+- lib/editorCore.js: the two PLANNING-TOOLS blocks -> {{kit:cta.dexterPlanning}} / {{kit:cta.mirandaPlanning}};
+  the meta bullet -> {{kit:cta.metaTierBullet}}; both "{{cnp:game}} the {{cnp:dev}} {{kit:genre}}" occurrences
+  (video-relevance rule + MIRANDA YouTube-guide line) -> {{kit:gameDescriptor}}.
+- NEW lib/games/gameRoutes.test.mjs: every allowlist entry has a real app/<...>/page.js; live is a boolean;
+  dmz/pubg/bodycam must be live:false pre-launch (no live CTA route).
+
+DECISIONS APPLIED:
+(a) Wardogs: primaryTool CTA byte-identical ([Loadout Finder](/wardogs/loadouts)); factions CTA OMITTED
+    (no faction system / no /wardogs/factions); meta CTA rewired to [meta tier list](/wardogs/tier-list) via
+    GAME_ROUTES.wardogs.meta (the approved allowlist -- same rendered effect as "via links.meta"). Wardogs
+    diff = factions-omit + meta-rewire + the (c) descriptor fix, nothing else.
+(b) DMZ: NO primaryTool pre-launch -> the whole PLANNING-TOOLS block OMITS (no orphaned header). Every
+    tool-like DMZ page is noindex/SOON now (printer=source:'data'; builds/pois/items/keys/missions =
+    row-count-gated noindex with empty tables). LAUNCH-DAY (Oct 23): set GAME_ROUTES.dmz.primaryTool to
+    whichever of /dmz/printer or /dmz/builds is live+indexable first (see LAUNCH LIST below).
+(c) gameDescriptor omits missing dev/genre (no "the  "). Marathon unchanged ("Marathon the Bungie extraction
+    shooter"). NO developer/genre values were POPULATED this pass (conservative: "do not add from general
+    knowledge"). Candidates the operator may add EXPLICITLY (with the source line), otherwise they stay
+    omitted:
+      - bodycam developer: config lib/games/bodycam.js:25 `developer: 'Reissad Studio'` (top-level, NOT in
+        vocabulary -> {{cnp:dev}} empty); genre: tagline :23 "...body-cam tactical FPS".
+      - dmz developer: legal block records "ACTIVISION PUBLISHING" (trademark notice, not a developer field).
+      - pubg-dednet developer: legal/comment records "KRAFTON / PUBG Studios".
+      - wardogs genre: none in config (dev='Bulkhead' already set -> "Wardogs the Bulkhead").
+
+HARNESS (rendered all 5 games before/after):
+- Marathon: 0 changed lines (byte-identical). Wardogs: only (a) + (c). dmz/pubg-dednet/bodycam: every empty
+  "[]()", "[factions]()", "[meta tier list]()", and "the  " GONE (0 artifacts across all 5 games); every
+  non-Marathon diff line is a CTA-block omission, the (a) rewire, or the (c) descriptor fix.
+
+VERIFY: npm run build -> exit 0. FULL suite -> 528 tests, 528 pass, 0 fail (+3 gameRoutes.test.mjs).
+  Command: node --import ./scripts/ext-resolve.register.mjs --test $(find lib -name '*.test.mjs').
+
+DMZ LAUNCH LIST (add): before/at enabling dmz generateNews (Oct 23), set GAME_ROUTES.dmz.primaryTool =
+whichever of /dmz/printer or /dmz/builds is live+indexable first; optionally populate dmz vocabulary.developer
++ promptKit.genre from a sourced value if desired (else they stay omitted, which is fine).
+
+PROCESS RULE (2026-09-22): before every commit, git diff --cached --stat vs the approved file list; mismatch
+= stop and report.
+PROCESS RULE (2026-09-24): every brief runs the FULL test suite before staging; report total pass/fail.
+
 ## 2026-09-25 -- meta_tiers incident CLOSED + honesty-leak published-content cleanup APPLIED
 Two records.
 

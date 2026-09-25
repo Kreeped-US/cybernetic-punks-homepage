@@ -13,9 +13,8 @@
 // CONSUMED by lib/games/marathon.js (vocabulary.links + editorial.primaryTool.href) -- i.e. the
 // PROMPT path only. No page/component renders these values (verified 2026-09-24), so changing them
 // changes only what the prompt teaches, never a live page link.
+//
+// 2026-09-25: generalized into lib/games/gameRoutes.js (per-game CTA allowlist for all games). This
+// file now RE-EXPORTS MARATHON_ROUTES from there so marathon.js's import is unchanged (one source).
 
-export const MARATHON_ROUTES = {
-  cradle: '/marathon/cradle',
-  factions: '/marathon/factions',
-  meta: '/marathon/meta',
-};
+export { MARATHON_ROUTES } from './gameRoutes.js';

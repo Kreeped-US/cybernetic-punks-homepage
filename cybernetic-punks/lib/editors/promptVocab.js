@@ -21,6 +21,11 @@
 // vocabulary resolves every token it uses (e.g. Marathon) never hits this path and is
 // byte-identical. (Previously this THREW fail-closed, which caused the wardogs total_outage.)
 
+// GAME-AWARE CTA route allowlist (2026-09-25): resolveKit builds the "PLANNING TOOLS" CTA lines +
+// the NEXUS meta-tier bullet from this per-game allowlist, emitting a line ONLY for a route with
+// live:true. Pure data import (no runtime deps), keeps this module node-importable.
+import { GAME_ROUTES } from '../games/gameRoutes.js';
+
 // The fixed token set (documented for review; resolveVocab supplies each from config).
 export var VOCAB_KEYS = [
   'game', 'dev', 'reader', 'readers',
@@ -238,6 +243,40 @@ export function resolveKit(config) {
     '- BAD: Essential [topic] Tips For New Players: Start Here Before You Go Any Further Into The Grind\n' +
     '  GOOD: {{cnp:game}} [topic] Guide: Essential Beginner Tips'
   );
+
+  // GAME-AWARE CTA lines (2026-09-25). Built from the per-game route allowlist (GAME_ROUTES): each
+  // line renders ONLY when the game has that route with live:true; otherwise it is '' (omitted -- no
+  // empty markdown links, no Marathon fallback). Marathon defines all three -> byte-identical to the
+  // prior static text. progressionSystem^/progressionMetric/primaryTool are substituted here (not left
+  // as {{kit:...}}, which would not re-resolve inside a kit block); factions/meta paths come straight
+  // from the allowlist, so there is no dependency on vocabulary.links and no empty-href path.
+  var vocab = c.vocabulary || {};
+  var ge = (c.slug && GAME_ROUTES[c.slug]) || {};
+  var ptR   = ge.primaryTool && ge.primaryTool.live ? ge.primaryTool : null;
+  var facR  = ge.factions   && ge.factions.live   ? ge.factions   : null;
+  var metaR = ge.meta       && ge.meta.live       ? ge.meta       : null;
+  var progCap = out.progressionSystem.charAt(0).toUpperCase() + out.progressionSystem.slice(1);
+  var metric  = out.progressionMetric;
+
+  var dexPt = ptR ? ('- For STAT builds (' + progCap + ' allocation, which perks to chase): link to the ' + ptR.label + ' as a markdown link - [' + ptR.label + '](' + ptR.path + ') - so readers can map their exact ' + metric + ' path and see perks light up at breakpoints. Include that link (never a bare path) when a build hinges on a specific ' + progCap + ' profile.') : '';
+  var dexFac = facR ? ('- For GEAR progression (which faction gates what): the [factions](' + facR.path + ') page covers faction Armories and reputation. Point readers there with that markdown link (never a bare path) instead of citing specific unlock costs.') : '';
+  out['cta.dexterPlanning'] = (dexPt || dexFac)
+    ? ('PLANNING TOOLS YOU CAN POINT READERS TO:\n' + [dexPt, dexFac].filter(Boolean).join('\n') + '\nUse these naturally - only when knowing the path would genuinely help the reader commit to the build.')
+    : '';
+
+  var mirPt = ptR ? ('- For STAT builds and ' + progCap + ' planning: link to the ' + ptR.label + ' as a markdown link - [' + ptR.label + '](' + ptR.path + ') - so players can map their ' + metric + ' path and preview perks at each breakpoint. Point stat-focused guides there with that markdown link, never a bare path.') : '';
+  var mirFac = facR ? ('- For GEAR and faction progression: the [factions](' + facR.path + ') page covers faction Armories and reputation. Point gear-progression guides there with that markdown link, never a bare path.') : '';
+  out['cta.mirandaPlanning'] = (mirPt || mirFac)
+    ? ('PLANNING TOOLS YOU CAN POINT READERS TO:\n' + [mirPt, mirFac].filter(Boolean).join('\n') + '\nUse these sparingly - only when the article meaningfully benefits players planning that path, not as a forced CTA.')
+    : '';
+
+  out['cta.metaTierBullet'] = metaR
+    ? ('- This ensures items competitive in at least one mode appear in higher tier groupings on the [' + metaR.label + '](' + metaR.path + ') page, while the mode-specific badges still show the full picture')
+    : '';
+
+  // gameDescriptor: "<game> the <dev> <genre>" with missing parts omitted (no "the  ").
+  var descriptor = [vocab.developer, pk.genre].filter(Boolean).join(' ');
+  out['gameDescriptor'] = descriptor ? ((c.displayName || '') + ' the ' + descriptor) : (c.displayName || '');
 
   return out;
 }

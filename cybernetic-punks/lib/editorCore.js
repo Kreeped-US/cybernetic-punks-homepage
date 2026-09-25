@@ -98,7 +98,7 @@ VIDEO & STREAM CONTENT - CRITICAL:
 - For any YouTube video, Twitch clip, or stream referenced in your sources, you have ONLY its title, channel, and short description. You did NOT watch it.
 - You may cite a video's title, creator, and stated topic. You may NOT describe what happens inside it, its outcome, specific plays, durations, or claims made in it unless that detail is explicitly in the provided title or description text.
 - NEVER write "this video demonstrates," "the creator shows," "in the clip they," or similar - you cannot see the content. Attribute only what the metadata states.
-- If a source video's title/description is not clearly about {{cnp:game}} the {{cnp:dev}} {{kit:genre}}, IGNORE it entirely. Do not write around it, do not mention it, do not reference running, marathons-the-race, or any off-topic interpretation.
+- If a source video's title/description is not clearly about {{kit:gameDescriptor}}, IGNORE it entirely. Do not write around it, do not mention it, do not reference running, marathons-the-race, or any off-topic interpretation.
 
 WORLD FACTS & GAME SYSTEMS - CRITICAL:
 - Game-world facts not held in the database below - map zones, named bosses, game modes, in-game events, currencies, seasonal mechanics, ability names, patch specifics - may ONLY be stated when they appear in the OFFICIAL {{cnp:dev^}} NEWS provided in this prompt or in the database blocks below.
@@ -421,7 +421,7 @@ Some items have different viability in solo vs squad play (an item can be S-tier
 - ALWAYS set ranked_tier_solo and ranked_tier_squad to the correct mode-specific tier
 - Set the unified "tier" field to the HIGHER of the two mode-specific tiers
 - Example: an item with ranked_tier_solo=D and ranked_tier_squad=S should have tier=S (not D)
-- This ensures items competitive in at least one mode appear in higher tier groupings on the [meta tier list]({{cnp:link.meta}}) page, while the mode-specific badges still show the full picture
+{{kit:cta.metaTierBullet}}
 - Reasoning: a visitor scanning tiers should see such an item in the S-tier section (where it dominates squad) with a "SOLO D" badge clarifying the trade-off, not buried in D-tier (where it sits if you collapse to the lower value)
 
 You will see a CURRENT TIER STATE block injected into your user prompt below. That block tells you the current tier of every {{kit:metaEntitiesSingular}} as you last graded them, AND whether you are regrading today.
@@ -480,10 +480,7 @@ A score of 85 is WRONG. A score of 75 is WRONG. If you write a number above 10, 
 
 {{kit:economy.dexter}}
 
-PLANNING TOOLS YOU CAN POINT READERS TO:
-- For STAT builds ({{kit:progressionSystem^}} allocation, which perks to chase): link to the {{kit:primaryTool.label}} as a markdown link - [{{kit:primaryTool.label}}]({{kit:primaryTool.href}}) - so readers can map their exact {{kit:progressionMetric}} path and see perks light up at breakpoints. Include that link (never a bare path) when a build hinges on a specific {{kit:progressionSystem^}} profile.
-- For GEAR progression (which faction gates what): the [factions]({{cnp:link.factions}}) page covers faction Armories and reputation. Point readers there with that markdown link (never a bare path) instead of citing specific unlock costs.
-Use these naturally - only when knowing the path would genuinely help the reader commit to the build.
+{{kit:cta.dexterPlanning}}
 
 CONTENT VARIETY: {{kit:classRotationHint}}Rotate through weapon categories. If you analyzed an aggressive build last cycle, analyze support or stealth this cycle.
 
@@ -544,10 +541,7 @@ ${HEADLINE_RULES}
 
 {{kit:economy.miranda}}
 
-PLANNING TOOLS YOU CAN POINT READERS TO:
-- For STAT builds and {{kit:progressionSystem^}} planning: link to the {{kit:primaryTool.label}} as a markdown link - [{{kit:primaryTool.label}}]({{kit:primaryTool.href}}) - so players can map their {{kit:progressionMetric}} path and preview perks at each breakpoint. Point stat-focused guides there with that markdown link, never a bare path.
-- For GEAR and faction progression: the [factions]({{cnp:link.factions}}) page covers faction Armories and reputation. Point gear-progression guides there with that markdown link, never a bare path.
-Use these sparingly - only when the article meaningfully benefits players planning that path, not as a forced CTA.
+{{kit:cta.mirandaPlanning}}
 
 Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
 };
@@ -1107,7 +1101,7 @@ ${devRedditData}
 COMMUNITY REDDIT POSTS (what players are discussing - use as topic signals and sentiment; cite only what a post actually states, never restate as fact):
 ${redditSummaries}
 
-YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about {{cnp:game}} the {{cnp:dev}} {{kit:genre}}):
+YOUTUBE GUIDE CONTENT (TITLES & DESCRIPTIONS ONLY - you have NOT watched these; cite only what the title/description states, and IGNORE any item not clearly about {{kit:gameDescriptor}}):
 ${videoSummaries}`,
     'official dev news, community Reddit posts, and YouTube video titles/descriptions'
   );
