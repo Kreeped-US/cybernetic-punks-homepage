@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-09-25 -- Stop daily Wardogs NEXUS speculation: patch-gate NEXUS + rejected-aware dedup (fix/wardogs-nexus-patchgate)
+Wardogs NEXUS ran daily and produced pure speculation ("Season 02 teaser", rejected 2026-09-24 AND
+2026-09-25; the second passed dedup because rejected rows were absent from the corpus). Two fixes.
+
+(a) PATCH-GATE NEXUS for Wardogs -- lib/games/wardogs.js:
+- Added editorial.editorsRequiringPatch: ['NEXUS'] (mirrors Marathon). NEXUS now runs ONLY on a detected
+  patch cycle; MIRANDA stays daily (grounded evergreen). Same activeRoster freeze path as Marathon
+  (app/api/cron/route.js:1398): !hasPatch -> NEXUS skipped.
+- DETECTION EXTENDED (pre-check requirement): wardogs sources.patchNotes.detection.versionRe
+  /update\s+\d+(\.\d+)+/i -> /(?:update|patch)\s+\d+(\.\d+)+/i, because Bulkhead titles its patch posts
+  "... PATCH 0.11" (which /update.../ missed). Deduped a doubled 'patch notes' keyword. Marathon detection
+  untouched.
+- PRE-CHECK vs the LIVE Bulkhead feed (appId 1867240, last ~18 announcements): with the extended rule,
+  "SCHEDULED MAINTENANCE & PATCH 0.11" FIRES (versionRe), "Launch Stability Hotfix #1" FIRES (hotfix keyword);
+  "WARDOGS | Season 02 Teaser", "2 MILLION COPIES SOLD", "1.25 MILLION COPIES SOLD!", "WARDOGS LAUNCH TRAILER",
+  "Pre-Load Live & Season 1 Changelog", "Closed Beta 02 Announcement", and all press do NOT fire -- 0 false
+  positives. (Freshness 48h still applies at runtime: a patch fires NEXUS only within 48h of the post, so
+  Patch 0.11 from 2026-09-14 no longer triggers -- correct.)
+
+(b) REJECTED-AWARE DEDUP -- lib/content/dedupGate.js:
+- NEW const REJECTED_COVERAGE_DAYS = 14. loadSurvivorCorpus now also loads REJECTED drafts (is_published=false,
+  rejected=true) with created_at within 14 days, game-scoped, into the SAME corpus -> a re-mint of a
+  recently-rejected topic is caught by the existing near-dup/overview machinery. Bounded window (not permanent):
+  a topic rejected as speculation may legitimately return once real data exists. Game-agnostic (all games).
+  Root cause fixed: the held-draft query excluded rejected rows (.or('rejected.is.null,rejected.eq.false')),
+  so a rejected topic was invisible and re-minted the next day.
+  NOTE: a heavily-REWORDED near-dup may land in the REVIEW band (flag, not hard block) rather than a block. That is why (a) the PATCH GATE is the PRIMARY fix (NEXUS does not run at all on a quiet day) and (b) rejected-aware dedup is the BACKSTOP; a near-identical re-mint blocks, a paraphrase is flagged.
+
+TESTS:
+- NEW lib/games/wardogsPatchGate.test.mjs: NEXUS patch-gated / MIRANDA not; Patch 0.11 + hotfix + Update N.N.N
+  fire; teaser/marketing/press don't; freshness gates a >48h patch; press feedname never fires.
+- NEW lib/content/dedupGate.test.mjs (fake supabase): corpus includes a recent rejected draft, excludes one
+  older than the window, and never leaks another game's rejected rows; a re-mint of the rejected topic is
+  BLOCKED with the row and NOT caught without it.
+- ENABLER: scripts/ext-resolve.hooks.mjs now also resolves the "@/" path alias (dedupGate.js imports
+  @/lib/topicTokens + @/lib/content/topicBucket). Test/harness tooling only; never app runtime.
+
+REPORT-ONLY (condition 2) -- wardogs launched:false / status:'pre-launch' vs EA since 2026-09-10:
+- `launched` is a DEAD field -- no functional reader anywhere (gameStatus.js comment says so). launched:false
+  has zero runtime effect.
+- `status` is read only by lib/network/gameStatus.js (networkGameStatus / isGameLive), which PREFERS the
+  launch_date clock: wardogs launch_date '2026-09-10' (past) + earlyAccess:true -> every surface (homepage
+  tile, /wardogs hero + countdown, cross-game footer, /about roster) already renders LIVE/EA regardless of
+  status:'pre-launch'. So both fields are cosmetically stale with NO effect on badges or generation
+  (generation is gated by generateNews + the patch gate). Left unchanged per the brief; flag for a later
+  config tidy if desired.
+
+EXPECTED EFFECT on tomorrow's Wardogs run: no fresh Bulkhead patch -> NEXUS does NOT run (no teaser); only
+MIRANDA runs, and only with a grounded candidate (wardogs has no allowSelfSelect). Belt-and-suspenders: even
+if a teaser were generated, the two recent rejected teasers now sit in the dedup corpus and block/flag the repeat.
+
+VERIFY: npm run build -> exit 0. FULL suite -> 537 tests, 537 pass, 0 fail
+  (node --import ./scripts/ext-resolve.register.mjs --test $(find lib -name '*.test.mjs')).
+
+PROCESS RULE (2026-09-22): before every commit, git diff --cached --stat vs the approved file list.
+PROCESS RULE (2026-09-24): every brief runs the FULL suite before staging; report total pass/fail.
 ## 2026-09-25 -- weapon_stats provenance audit (Marathon) [docs-only]
 Operator provenance audit of Marathon weapon_stats (from the planning chat):
 - D54 Battle Pistol: stat line FILLED (was the "no confirmed stat lines" hedge target -- see the 2026-09-25

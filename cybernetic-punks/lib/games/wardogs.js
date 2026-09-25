@@ -121,14 +121,20 @@ export const wardogs = {
     // Loadout Finder (/wardogs/loadouts).
     primaryTool: { label: 'Loadout Finder', href: '/wardogs/loadouts' },
     editors: ['NEXUS', 'MIRANDA'],
+    // PATCH-GATE NEXUS (2026-09-25): NEXUS runs ONLY on a detected patch/hotfix cycle (mirrors
+    // Marathon's editorsRequiringPatch). WHY: pre/early-launch, daily NEXUS produced pure SPECULATION
+    // ("Season 02 teaser", rejected 2026-09-24 AND 2026-09-25). Bulkhead's steam-news detection
+    // (sources.patchNotes.detection) fires is_patch_note only for a real Update/Patch N.N / hotfix /
+    // update-preview within 48h, so on a quiet day NEXUS freezes and only MIRANDA (grounded evergreen)
+    // runs. MIRANDA stays OUT of this list -> unchanged.
+    editorsRequiringPatch: ['NEXUS'],
     // ON-SWITCH (2026-09-17): Wardogs joins autonomous generation. generateNews=true makes
     // getGenerationGames() include 'wardogs', which (a) lets the scheduled /api/cron?game=wardogs
     // invocation pass the fail-closed ?game= authorization, and (b) turns on generation for the
-    // roster above. NEXUS = news; MIRANDA = evergreen weapon guides grounded in the COMMUNITY-
-    // ATTRIBUTED wardogs_ttk/ballistics data (fetchWardogsWeaponBlock, Brief A) with the
+    // roster above. NEXUS = news (patch-gated, above); MIRANDA = evergreen weapon guides grounded in
+    // the COMMUNITY-ATTRIBUTED wardogs_ttk/ballistics data (fetchWardogsWeaponBlock, Brief A) with the
     // structural "not owner-verified" caveat (Brief B). MIRANDA is in HELD_EDITORS -> her drafts
-    // land is_published=false for review; she is NOT patch-gated (no editorsRequiringPatch) -> she
-    // runs daily as the evergreen producer.
+    // land is_published=false for review; she is NOT patch-gated -> she runs daily as the evergreen producer.
     generateNews: true,
   },
 
@@ -191,8 +197,12 @@ export const wardogs = {
       appId: '1867240',
       detection: {
         officialFeedName: 'steam_community_announcements',
-        versionRe: /update\s+\d+(\.\d+)+/i,
-        keywords: ['hotfix', 'patch notes', 'update preview', 'patch notes'],
+        // Matches BOTH "Update 0.11" and "Patch 0.11" (2026-09-25): Bulkhead titles its patch posts
+        // "... PATCH 0.11", which /update.../ missed -> real patches were never detected. Requires a
+        // dotted version number after update|patch, so marketing/reveal titles ("Season 02 Teaser",
+        // "2 MILLION COPIES SOLD", "1.25 MILLION COPIES SOLD!") do NOT match (verified against the live feed).
+        versionRe: /(?:update|patch)\s+\d+(\.\d+)+/i,
+        keywords: ['hotfix', 'patch notes', 'update preview'],
         freshnessMs: 48 * 60 * 60 * 1000,
       },
       label: 'BULKHEAD NEWS',

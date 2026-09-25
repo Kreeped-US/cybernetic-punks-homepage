@@ -30,6 +30,13 @@ import { buildOverviewIndex, overviewBucket, loadGameEntities } from '@/lib/cont
 export const DEDUP_BLOCK_THRESHOLD = 0.7;   // >= this (with shared>=MIN) -> block
 export const DEDUP_REVIEW_THRESHOLD = 0.5;  // >= this and < block -> review-band log
 export const DEDUP_MIN_SHARED_TOKENS = 3;   // require real overlap, not a 2-word spike
+// REJECTED-AWARE window (2026-09-25): a REJECTED draft's topic counts as COVERED for this many days,
+// so the writer does not re-mint the same rejected topic day after day (the Wardogs "Season 02 teaser"
+// churn -- rejected 2026-09-24, regenerated + passed dedup 2026-09-25, because rejected rows were absent
+// from the corpus). BOUNDED (not permanent): a topic rejected as speculation may legitimately return once
+// real data exists, and NEXUS is patch-gated separately. 14 days clears the daily-repeat window well past
+// the immediate retry without foreclosing a later, newsworthy return. Game-agnostic. Tunable.
+export const REJECTED_COVERAGE_DAYS = 14;
 
 // Load the surviving published corpus ONCE per run + build the IDF map. The CALLER runs
 // this a single time per cron cycle and passes { corpus, idf } to each editor's gate call
@@ -73,6 +80,26 @@ export async function loadSurvivorCorpus(supabase, gameSlug) {
     for (var h = 0; h < heldRes.data.length; h++) corpus.push(heldRes.data[h]);
     if (heldRes.data.length < 1000) break;
     heldFrom += 1000;
+  }
+  // REJECTED-AWARE (2026-09-25): also add REJECTED drafts from the last REJECTED_COVERAGE_DAYS so a
+  // rejected topic counts as covered (see the constant). Bounded by created_at; game-scoped like the
+  // reads above. They join the SAME near-dup + overview machinery, so a re-mint of a recently-rejected
+  // topic is caught. Fail-open: a query error just skips them (no throw).
+  var rejFrom = 0;
+  var rejCutoff = new Date(Date.now() - REJECTED_COVERAGE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  for (;;) {
+    var rejRes = await supabase
+      .from('feed_items')
+      .select('headline, slug, editor')
+      .eq('game_slug', gameSlug)
+      .eq('is_published', false)
+      .eq('rejected', true)
+      .gte('created_at', rejCutoff)
+      .range(rejFrom, rejFrom + 999);
+    if (rejRes.error || !rejRes.data) break;
+    for (var rj = 0; rj < rejRes.data.length; rj++) corpus.push(rejRes.data[rj]);
+    if (rejRes.data.length < 1000) break;
+    rejFrom += 1000;
   }
   var idf = buildIdfMap(corpus.map(function (r) { return r.headline || ''; }));
   // Layer 1b: load THIS game's entities (all types, config-driven per game) and precompute the
