@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-09-25 -- meta_tiers incident CLOSED + honesty-leak published-content cleanup APPLIED
+Two records.
+
+META_TIERS INCIDENT -- CLOSED. After the 2026-09-24 crons, meta_tiers holds all 8 Marathon shells (confirmed
+read-only 2026-09-25: Assassin, Destroyer, Recon, Rook, Sentinel, Thief, Triage, Vandal). The
+onConflict/latent-upsert fix (10fc49f) was HELD; the shells populated cleanly on the next cron. No further
+action -- the shell tier list is whole.
+
+HONESTY-LEAK CLEANUP -- APPLIED (operator-run SQL, 2026-09-25). Surgical, phrase-only removal of PIPELINE_LEAK
+HONESTY talk from published Marathon content. Bare-route leaks (/cradle etc.) were NOT touched -- they remain
+in the 56-article set and are DEFERRED to post-Oct-20 (Nightfall). Scope phrases: "in the database", "exact
+values are unconfirmed", "are not verified", "in your data", + the other PIPELINE_LEAK phrases (routes ignored).
+
+DETECTOR RE-RUN (phrase-only, full-sentence): build_pages (marathon, indexed) 8 hits / 5 rows (sentinel,
+destroyer, assassin-knife x2, assassin, vandal x3 of which two identical); feed_items (published, ALL games)
+18 hits / 16 rows -- ALL marathon (wardogs/dmz/pubg/bodycam CLEAN). 25 UPDATE statements (the two identical
+vandal notes collapse to one replace).
+
+REWRITE DOCTRINE: never added a number/claim. Superlative "X in the database" -> "X we track" (e.g. "highest
+melee damage bonus among the implants we track", "fastest-firing precision rifle we track"); hedge-only
+sentences deleted; reader meaning preserved. Specific decisions:
+- #18 cradle-guide-spend-smart: FRAGMENT-replace (no ';' in any SQL literal) -> "Focus on the order of perks
+  here; plan the shape of the track, not the precise numbers."
+- #14 destroyer-riot-barricade: fragment-replace removed the "[UNVERIFIED] in the database" meta; the "; map
+  ... /cradle ..." tail was left (route out of scope).
+- #10 d54-battle-pistol: the "We do not have confirmed stat lines...in the database..." sentence was DELETED
+  because a read-only check showed D54 Battle Pistol is now CONFIRMED in weapon_stats -- the hedge was false.
+SIDE CHECK (read-only): the entities named in every surviving superlative are ALL CONFIRMED -- weapons
+Demolition HMG, BR33 Volley Rifle, Twin Tap HBR, BRRT SMG, Repeater HPR; implants Knife Fight V4 (Melee
+Damage 50), Augmented Capacitors V4. NONE unchecked -- the "we track / highest / fastest" claims rest on
+verified rows.
+
+OPERATOR RESULTS (2026-09-25): PASTE A preview = 25/25 rows match_count 1. PASTE B (25 UPDATEs) = success.
+VERIFY (re-run phrase detector on the touched rows) = build_pages 0, feed_items 0. Honesty leaks cleared from
+the touched published rows.
+
+updated_at / source_updated_at: NOT modified by the UPDATEs (no auto-update trigger in repo SQL; regenerate-
+Canonical sets source_updated_at only, nothing sets these tables' updated_at on a plain UPDATE) -- so freshness
+/ dateModified stamps were not bumped by this edit.
+
+SQL: full v2 script (25 SELECT previews + 25 UPDATEs + VERIFY) was delivered to the operator and saved OUTSIDE
+the repo (session scratchpad honesty-cleanup.sql). Not committed to the repo.
+
+STILL DEFERRED: bare-route (/cradle, /factions, /meta, /marathon/*) leaks in the ~56 published Marathon
+articles -- post-Oct-20 pass.
+
+PROCESS RULE (2026-09-22): before every commit, git diff --cached --stat vs the approved file list; mismatch
+= stop and report.
+PROCESS RULE (2026-09-24): every brief runs the FULL test suite before staging, not a subset; report total
+pass/fail. Command: node --import ./scripts/ext-resolve.register.mjs --test $(find lib -name '*.test.mjs').
+
 ## 2026-09-24 -- Fix stale test assertions (test-only) + FULL-SUITE process rule (chore/fix-stale-tests)
 Updated stale test assertions to match deliberate code changes (all diagnosed STALE-TEST, NO code change).
 No production behavior changed.
