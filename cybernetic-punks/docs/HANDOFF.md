@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-09-25 -- Operator DB write: hand-published Marathon roadmap article
+slug marathon-roadmap-nightfall-symbiosis-bishop-and-march, editor NEXUS (desk), provenance_tier sourced,
+operator_approved_at set (author = Justin, AI-tooling disclosure accurate: drafted with AI, fact-checked and
+approved by Justin). Sources: Bungie "The Future of Marathon" (2026-09-24) + "Nightfall Refresh and Symbiosis"
+dev update (Oct 6 Nightfall, Dec 8 Symbiosis, operator-confirmed). Bypassed the generation gate (hand-
+published). Existing oct-6-dec-7 article checked: consistent (Nightfall window Oct 6-Dec 7, Symbiosis Dec 8),
+no correction. Confirmed live read-only 2026-09-25: is_published=true, noindex=false, rejected=false,
+gate_status=clear, operator_approved_at set; live at /marathon/intel/marathon-roadmap-nightfall-symbiosis-
+bishop-and-march. Body is honest-null (markdown, no bare routes, no pipeline-leak phrases).
 ## 2026-09-25 -- Missing og:image on non-Marathon pages: shared OG-image helper (fix/og-image-nonmarathon)
 Ahrefs (crawl 2026-09-22) flagged ~60 pages "Open Graph tags invalid" -- valid except NO og:image.
 
