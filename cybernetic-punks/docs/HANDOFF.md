@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-09-25 -- weapon_stats provenance audit (Marathon) [docs-only]
+Operator provenance audit of Marathon weapon_stats (from the planning chat):
+- D54 Battle Pistol: stat line FILLED (was the "no confirmed stat lines" hedge target -- see the 2026-09-25
+  honesty-cleanup entry; that hedge was deleted because D54 is now confirmed).
+- V22 Volt Thrower and V75 Scar: VERIFIED in-game, with the fields the operator reported as
+  ranges/approximations left NULL rather than guessed -- V22: weight, recoil; V75: range_meters, reload_speed,
+  aim_assist, zoom, equip_speed. (This is NOT the range_rating/range_meters columns in general -- e.g. V22
+  range_meters=21 is correct and operator-reported.)
+- 9 rows PENDING in-game re-verify: rows still verified=true whose verified_source (Bungie Update 1.1.0 patch
+  notes / partial) does NOT back their base values. verificationState reads them CONFIRMED because it is
+  flag-based -- that is the DEFECT being recorded, not a resolution. verificationState is row-flag based; it
+  cannot detect a verified flag whose source does not cover the values.
+- FOLLOW-UP: Volt Battery / charge-shot SCHEMA -- charge-shot weapons (Volt family) need a schema extension to
+  represent charge/battery mechanics that the flat weapon_stats columns cannot; tracked for a later pass.
+
+No code or data change in this entry.
+
+PROCESS RULE (2026-09-22): before every commit, git diff --cached --stat vs the approved file list; mismatch
+= stop and report.
 ## 2026-09-25 -- Game-aware CTA lines: DMZ pre-generation blocker fixed (fix/game-aware-cta)
 Shared editorCore "PLANNING TOOLS" CTA lines + the NEXUS meta-tier bullet were Marathon-shaped: games
 without primaryTool / links.* (dmz, pubg-dednet, bodycam -- and wardogs for factions/meta) rendered EMPTY
