@@ -25,6 +25,7 @@ import { getGameConfig } from '@/lib/games';
 import { getAllEditors, getEditorDisplay, editorByline } from '@/lib/editors/roster';
 import { networkGameStatus } from '@/lib/network/gameStatus';
 import { JUSTIN_PERSON, AUTHOR_URL } from '@/lib/authorEntity';
+import { withOgImages } from '@/lib/seo/ogImage';
 import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
 
 // The Person entity for the accountable human (Justin), anchored at /about#justin -- this is the
@@ -38,7 +39,7 @@ var JUSTIN_PERSON_LD = Object.assign(
   JUSTIN_PERSON
 );
 
-export const metadata = {
+export const metadata = withOgImages({
   title: 'About the Network',
   description: 'Cybernetic Punks is an autonomous FPS intelligence network - verified, first-party intel across every game we cover. No hype, just intel.',
   alternates: { canonical: 'https://cyberneticpunks.com/about' },
@@ -49,7 +50,7 @@ export const metadata = {
     siteName: 'Cybernetic Punks',
     type: 'website',
   },
-};
+});
 
 // Per-editor beat copy, keyed by roster key (Phase 3 refines the prose). Membership, order, names,
 // and the incoming state come from the roster - only the beat sentence lives here.

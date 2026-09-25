@@ -19,8 +19,9 @@ import Link from 'next/link';
 // The confidence legend below is driven by the SHARED tier source -- the SAME icons that render on
 // the entity-page provenance badges, so the explanation here can't drift from the marks it explains.
 import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
+import { withOgImages } from '@/lib/seo/ogImage';
 
-export const metadata = {
+export const metadata = withOgImages({
   title: 'Methodology - How We Verify FPS Data',
   description: 'How Cybernetic Punks sources and verifies its FPS intel - primary sources, confidence tiers, and honest-null over guesses - plus how to read our tier lists, rankings, and builds.',
   alternates: { canonical: 'https://cyberneticpunks.com/methodology' },
@@ -31,7 +32,7 @@ export const metadata = {
     siteName: 'Cybernetic Punks',
     type: 'website',
   },
-};
+});
 
 function Label({ children }) {
   return (

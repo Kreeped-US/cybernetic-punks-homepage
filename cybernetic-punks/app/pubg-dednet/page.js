@@ -11,10 +11,11 @@
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { pubgDednet, dednetArticleSlugsForSection } from '@/lib/games/pubg-dednet';
+import { withOgImages } from '@/lib/seo/ogImage';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
+export const metadata = withOgImages({
   title: { absolute: 'PUBG: DED.NET - Verified Intel Hub | Cybernetic Punks' },
   description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Release date TBA; closed beta incoming. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/pubg-dednet' },
@@ -26,7 +27,7 @@ export const metadata = {
     siteName: 'Cybernetic Punks',
     type: 'website',
   },
-};
+}, 'pubg-dednet');
 
 async function publishedDednetSlugs() {
   try {

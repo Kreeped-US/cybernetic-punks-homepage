@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-09-25 -- Missing og:image on non-Marathon pages: shared OG-image helper (fix/og-image-nonmarathon)
+Ahrefs (crawl 2026-09-22) flagged ~60 pages "Open Graph tags invalid" -- valid except NO og:image.
+
+ROOT CAUSE: a page that sets its own metadata.openGraph object (title/description/url) with NO `images`
+emits no og:image, and Next.js does NOT inherit a parent segment's file-convention opengraph-image.js into
+nested routes. The root app/layout.js openGraph/twitter carry no explicit images (they rely on the root
+app/opengraph-image.js file, which only covers routes that don't override openGraph). So every non-Marathon
+hub/section page that self-sets openGraph shipped og:title but no og:image; twitter:image the same. Confirmed:
+the in-scope pages all set openGraph/twitter without images, and none has a co-located opengraph-image.js
+(app/dmz/opengraph-image.js exists but covers /dmz only, NOT /dmz/pois or /dmz/[section]).
+
+FIX (game-agnostic, minimal): NEW lib/seo/ogImage.js -- withOgImages(meta, game) returns a copy of the
+metadata with openGraph.images + twitter.images ALWAYS present (idempotent: preserves any images the page
+already set; never touches title/description/url/canonical). Image = the per-game hero where one exists, else
+the network default:
+- network default: /og-image.png (public/, 1200x630).
+- per-game heroes: /images/games/{wardogs,dmz,pubg-dednet}-hero.jpg (landscape, OG-usable). Marathon is
+  deliberately ABSENT from the map (frozen; see deferral) -> would fall to the network default anyway.
+Relative paths are absolutized by Next against metadataBase (app/layout.js) -> rendered tags are absolute.
+
+APPLIED (in-scope only, 6 page files -> 9 routes):
+- app/wardogs/attachments/page.js (wardogs), app/pubg-dednet/page.js (pubg-dednet),
+  app/(network)/about/page.js + app/(network)/methodology/page.js (network default),
+  app/dmz/pois/page.js (dmz), app/dmz/[section]/page.js (dmz -- covers /dmz/loadouts, /dmz/fob,
+  /dmz/field-intel, /dmz/regions AND the other dmz sections uniformly).
+TEST: NEW lib/seo/ogImage.test.mjs (per-game vs network default; images always present; non-destructive;
+tolerates missing openGraph/twitter).
+
+VERIFY: npm run build -> exit 0. Rendered <head> via the dev server, all 9 in-scope routes -> og:image AND
+twitter:image PRESENT with ABSOLUTE URLs:
+  /wardogs/attachments -> .../images/games/wardogs-hero.jpg
+  /pubg-dednet         -> .../images/games/pubg-dednet-hero.jpg
+  /about, /methodology -> .../og-image.png
+  /dmz/pois, /dmz/loadouts, /dmz/fob, /dmz/field-intel, /dmz/regions -> .../images/games/dmz-hero.jpg
+FULL suite -> 542 tests, 542 pass, 0 fail (+5 ogImage.test.mjs).
+
+DEFERRED: the 51 /marathon/* pages (Ahrefs same finding) are FROZEN until post-Oct-20. The SAME helper
+applies then: wrap each marathon page's metadata with withOgImages(meta, 'marathon') and add a marathon
+hero (public/images/games/marathon-hero.jpg exists but is 1440x1440 square -- consider a 1200x630 crop) to
+GAME_OG_IMAGE, or let it fall to the network default.
+
+PROCESS RULE (2026-09-22): before every commit, git diff --cached --stat vs the approved file list.
+PROCESS RULE (2026-09-24): every brief runs the FULL suite before staging; report total pass/fail.
 ## 2026-09-25 -- Stop daily Wardogs NEXUS speculation: patch-gate NEXUS + rejected-aware dedup (fix/wardogs-nexus-patchgate)
 Wardogs NEXUS ran daily and produced pure speculation ("Season 02 teaser", rejected 2026-09-24 AND
 2026-09-25; the second passed dedup because rejected rows were absent from the corpus). Two fixes.

@@ -19,6 +19,7 @@ import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
 import { dmzArticleSlugsForSection } from '@/lib/games/dmz';
+import { withOgImages } from '@/lib/seo/ogImage';
 import { sectionHasContent } from '@/lib/dmz/sections';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
@@ -58,7 +59,7 @@ export async function generateMetadata({ params }) {
   // hub and the article pages are unaffected -- they set their own metadata.
   var hasContent = await sectionHasContent(section);
   var robots = hasContent ? undefined : { index: false, follow: true };
-  return {
+  return withOgImages({
     title: ogTitle,
     description: desc,
     keywords: ['DMZ', 'DMZ ' + section.label, 'Modern Warfare 4 DMZ', 'MW4 DMZ', 'Call of Duty DMZ'],
@@ -77,7 +78,7 @@ export async function generateMetadata({ params }) {
       title: ogTitle,
       description: desc,
     },
-  };
+  }, 'dmz');
 }
 
 function ArticleCard({ section, article }) {

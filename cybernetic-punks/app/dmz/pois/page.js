@@ -4,6 +4,7 @@
 // pre-launch), flips to index automatically once rows exist -- same mechanism as
 // the keys/missions/items hubs. Wrapped by app/dmz/layout.
 import { getDmzEntity, fetchDmzRows } from '@/lib/dmz/entities';
+import { withOgImages } from '@/lib/seo/ogImage';
 import DmzEntityHub from '@/components/dmz/DmzEntityHub';
 
 export const dynamic = 'force-dynamic';
@@ -14,14 +15,14 @@ export async function generateMetadata() {
   var rows = await fetchDmzRows(entity);
   var url = 'https://cyberneticpunks.com' + entity.routeBase;
   var robots = rows.length > 0 ? undefined : { index: false, follow: true };
-  return {
+  return withOgImages({
     title: { absolute: entity.hubTitle },
     description: entity.hubDesc,
     robots: robots,
     alternates: { canonical: url },
     openGraph: { title: entity.hubTitle + ' | Cybernetic Punks', description: entity.hubDesc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: entity.hubTitle, description: entity.hubDesc },
-  };
+  }, 'dmz');
 }
 
 export default async function DmzPoiHubPage() {

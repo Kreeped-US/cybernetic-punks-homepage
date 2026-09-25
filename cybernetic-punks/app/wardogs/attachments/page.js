@@ -16,20 +16,21 @@ import Link from 'next/link';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ViewTracker from '@/components/ViewTracker';
+import { withOgImages } from '@/lib/seo/ogImage';
 
 export const dynamic = 'force-dynamic';
 
 const BASE = 'https://cyberneticpunks.com';
 const GAME = 'wardogs';
 
-export const metadata = {
+export const metadata = withOgImages({
   title: { absolute: 'Wardogs Attachments - Muzzles, Optics, Grips, Mags & Costs | Cybernetic Punks' },
   description: 'Every Wardogs attachment by slot -- muzzles, optics, grips, magazines, stocks, barrels, bipods -- with community-attributed prices and weights, and which weapons they fit. Priced against the economy; honest where a price is not published.',
   keywords: 'Wardogs attachments, Wardogs muzzles, Wardogs optics, Wardogs scopes, Wardogs grips, Wardogs magazines, Wardogs suppressors, Wardogs attachment prices, Wardogs attachment list',
   alternates: { canonical: BASE + '/wardogs/attachments' },
   openGraph: { title: 'Wardogs Attachments - Full Catalog, Prices & Fitment', description: 'Every Wardogs attachment by slot with community-attributed prices, weights, and weapon fitment. Priced against the economy.', url: BASE + '/wardogs/attachments', siteName: 'Cybernetic Punks', type: 'website' },
   twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: 'Wardogs Attachments - Full Catalog, Prices & Fitment', description: 'Every Wardogs attachment by slot with community-attributed prices + weapon fitment.' },
-};
+}, 'wardogs');
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
